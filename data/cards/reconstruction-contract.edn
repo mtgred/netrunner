@@ -1,19 +1,20 @@
-{:code "21020",
- :cost 1,
- :cycle_code "kitara",
- :faction "Weyland Consortium",
- :factioncost 4,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN50_20.png",
- :limited 3,
- :normalizedtitle "reconstruction-contract",
- :number 20,
- :packquantity 3,
- :rotated false,
- :set_code "ss",
- :setname "Sovereign Sight",
- :side "Corp",
- :text "Whenever the Runner suffers any amount of meat damage, you may place 1 advancement token on Reconstruction Contract.\n[trash]: Move any number of advancement tokens from Reconstruction Contract to a card that can be advanced.",
- :title "Reconstruction Contract",
- :trash 4,
- :type "Asset",
+{:code "21020"
+ :cost 1
+ :cycle_code "kitara"
+ :faction "Weyland Consortium"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_20.png"
+ :limited 3
+ :normalizedtitle "reconstruction-contract"
+ :number 20
+ :packquantity 3
+ :rotated false
+ :set_code "sovereign-sight"
+ :setname "Sovereign Sight"
+ :side "Corp"
+ :strength 0
+ :text "Whenever the Runner suffers any amount of meat damage, you may place 1 advancement token on Reconstruction Contract.\n[trash]: Move any number of advancement tokens from Reconstruction Contract to a card that can be advanced."
+ :title "Reconstruction Contract"
+ :trash 4
+ :type "Asset"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "04110",
- :cost 2,
- :cycle_code "spin",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04110.png",
- :limited 3,
- :normalizedtitle "gyri-labyrinth",
- :number 110,
- :packquantity 3,
- :rotated true,
- :set_code "dt",
- :setname "Double Time",
- :side "Corp",
- :strength 2,
- :subtype "Code Gate",
- :text "[subroutine] The Runner's maximum hand size is reduced by 2 until the beginning of the Corp's next turn.",
- :title "Gyri Labyrinth",
- :type "ICE",
+{:code "04110"
+ :cost 2
+ :cycle_code "spin"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04110.png"
+ :limited 3
+ :normalizedtitle "gyri-labyrinth"
+ :number 110
+ :packquantity 3
+ :rotated true
+ :set_code "double-time"
+ :setname "Double Time"
+ :side "Corp"
+ :strength 2
+ :subtype "Code Gate"
+ :text "[subroutine] The Runner's maximum hand size is reduced by 2 until the beginning of the Corp's next turn."
+ :title "Gyri Labyrinth"
+ :type "ICE"
  :uniqueness false}

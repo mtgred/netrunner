@@ -1,19 +1,20 @@
-{:code "09034",
- :cost 0,
- :cycle_code "data-and-destiny",
- :faction "Apex",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN29_34.png",
- :limited 3,
- :memoryunits 0,
- :normalizedtitle "harbinger",
- :number 34,
- :packquantity 3,
- :rotated false,
- :set_code "dad",
- :setname "Data and Destiny",
- :side "Runner",
- :text "When Harbinger is trashed, install it facedown instead of adding it to your heap.",
- :title "Harbinger",
- :type "Program",
+{:code "09034"
+ :cost 0
+ :cycle_code "data-and-destiny"
+ :faction "Apex"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_34.png"
+ :limited 3
+ :memoryunits 0
+ :normalizedtitle "harbinger"
+ :number 34
+ :packquantity 3
+ :rotated false
+ :set_code "data-and-destiny"
+ :setname "Data and Destiny"
+ :side "Runner"
+ :strength 0
+ :text "When Harbinger is trashed, install it facedown instead of adding it to your heap."
+ :title "Harbinger"
+ :type "Program"
  :uniqueness false}

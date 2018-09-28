@@ -1,19 +1,20 @@
-{:code "05043",
- :cost 0,
- :cycle_code "honor-and-profit",
- :faction "Criminal",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/05043.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "bug",
- :number 43,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Runner",
- :text "Install only if you made a successful run on HQ this turn.\nWhenever the Corp draws a card, you may pay 2[credit] to reveal that card.",
- :title "Bug",
- :type "Program",
+{:code "05043"
+ :cost 0
+ :cycle_code "honor-and-profit"
+ :faction "Criminal"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/05043.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "bug"
+ :number 43
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Runner"
+ :strength 0
+ :text "Install only if you made a successful run on HQ this turn.\nWhenever the Corp draws a card, you may pay 2[credit] to reveal that card."
+ :title "Bug"
+ :type "Program"
  :uniqueness false}

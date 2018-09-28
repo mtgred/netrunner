@@ -1,18 +1,19 @@
-{:code "06073",
- :cost 1,
- :cycle_code "lunar",
- :faction "Anarch",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN19_73.png",
- :limited 3,
- :normalizedtitle "inject",
- :number 73,
- :packquantity 3,
- :rotated false,
- :set_code "uao",
- :setname "Up and Over",
- :side "Runner",
- :text "Reveal the top 4 cards of your stack and trash all programs revealed. Gain 1[credit] for each program trashed, and add the rest of the revealed cards to your grip.",
- :title "Inject",
- :type "Event",
+{:code "06073"
+ :cost 1
+ :cycle_code "lunar"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_73.png"
+ :limited 3
+ :normalizedtitle "inject"
+ :number 73
+ :packquantity 3
+ :rotated false
+ :set_code "up-and-over"
+ :setname "Up and Over"
+ :side "Runner"
+ :strength 0
+ :text "Reveal the top 4 cards of your stack and trash all programs revealed. Gain 1[credit] for each program trashed, and add the rest of the revealed cards to your grip."
+ :title "Inject"
+ :type "Event"
  :uniqueness false}

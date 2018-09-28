@@ -1,19 +1,20 @@
-{:code "11106",
- :cost 2,
- :cycle_code "flashpoint",
- :faction "Criminal",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN41_106.png",
- :limited 3,
- :normalizedtitle "aaron-marron",
- :number 106,
- :packquantity 3,
- :rotated false,
- :set_code "qu",
- :setname "Quorum",
- :side "Runner",
- :subtype "Connection",
- :text "Whenever an agenda is scored or stolen, place 2 power counters on Aaron Marrón.\n<strong>Hosted power counter:</strong> Remove 1 tag and draw 1 card.",
- :title "Aaron Marrón",
- :type "Resource",
+{:code "11106"
+ :cost 2
+ :cycle_code "flashpoint"
+ :faction "Criminal"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_106.png"
+ :limited 3
+ :normalizedtitle "aaron-marron"
+ :number 106
+ :packquantity 3
+ :rotated false
+ :set_code "quorum"
+ :setname "Quorum"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "Whenever an agenda is scored or stolen, place 2 power counters on Aaron Marrón.\n<strong>Hosted power counter:</strong> Remove 1 tag and draw 1 card."
+ :title "Aaron Marrón"
+ :type "Resource"
  :uniqueness true}

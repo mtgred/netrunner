@@ -1,20 +1,21 @@
-{:code "05011",
- :cost 0,
- :cycle_code "honor-and-profit",
- :faction "Jinteki",
- :factioncost 4,
- :image_url "https://netrunnerdb.com/card_image/05011.png",
- :limited 3,
- :normalizedtitle "shi-kyu",
- :number 11,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Corp",
- :subtype "Ambush",
- :text "When the Runner accesses Shi.Kyū, you may pay X[credit]. The Runner must take either X net damage or add Shi.Kyū to his or her score area as an agenda worth -1 agenda point. Ignore this ability if the Runner accesses Shi.Kyū from R&D.",
- :title "Shi.Kyū",
- :trash 0,
- :type "Asset",
+{:code "05011"
+ :cost 0
+ :cycle_code "honor-and-profit"
+ :faction "Jinteki"
+ :factioncost 4
+ :image_url "https://netrunnerdb.com/card_image/05011.png"
+ :limited 3
+ :normalizedtitle "shi-kyu"
+ :number 11
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Corp"
+ :strength 0
+ :subtype "Ambush"
+ :text "When the Runner accesses Shi.Kyū, you may pay X[credit]. The Runner must take either X net damage or add Shi.Kyū to his or her score area as an agenda worth -1 agenda point. Ignore this ability if the Runner accesses Shi.Kyū from R&D."
+ :title "Shi.Kyū"
+ :trash 0
+ :type "Asset"
  :uniqueness false}

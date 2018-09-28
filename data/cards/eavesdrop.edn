@@ -1,19 +1,20 @@
-{:code "22047",
- :cost 1,
- :cycle_code "reign-and-reverie",
- :faction "NBN",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN56_47.png",
- :limited 3,
- :normalizedtitle "eavesdrop",
- :number 47,
- :packquantity 3,
- :rotated false,
- :set_code "rar",
- :setname "Reign and Reverie",
- :side "Corp",
- :subtype "Gray Ops - Condition",
- :text "Install Eavesdrop on a piece of ice as a hosted condition counter with the text \"Whenever the Runner encounters host ice, <trace>trace 3</trace> If successful, give the Runner 1 tag.\"",
- :title "Eavesdrop",
- :type "Operation",
+{:code "22047"
+ :cost 1
+ :cycle_code "reign-and-reverie"
+ :faction "NBN"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_47.png"
+ :limited 3
+ :normalizedtitle "eavesdrop"
+ :number 47
+ :packquantity 3
+ :rotated false
+ :set_code "reign-and-reverie"
+ :setname "Reign and Reverie"
+ :side "Corp"
+ :strength 0
+ :subtype "Gray Ops - Condition"
+ :text "Install Eavesdrop on a piece of ice as a hosted condition counter with the text \"Whenever the Runner encounters host ice, <trace>trace 3</trace> If successful, give the Runner 1 tag.\""
+ :title "Eavesdrop"
+ :type "Operation"
  :uniqueness false}

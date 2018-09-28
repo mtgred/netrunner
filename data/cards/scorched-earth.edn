@@ -1,19 +1,19 @@
-{:code "01099",
- :cost 3,
- :cycle_code "core",
- :faction "Weyland Consortium",
- :factioncost 4,
- :image_url "https://netrunnerdb.com/card_image/01099.png",
- :limited 3,
- :normalizedtitle "scorched-earth",
- :number 99,
- :packquantity 2,
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Corp",
- :subtype "Black Ops",
- :text "Play only if the Runner is tagged.\nDo 4 meat damage.",
- :title "Scorched Earth",
- :type "Operation",
+{:code "01099"
+ :cost 3
+ :cycle_code "core"
+ :faction "Weyland Consortium"
+ :factioncost 4
+ :image_url "https://netrunnerdb.com/card_image/01099.png"
+ :limited 3
+ :normalizedtitle "scorched-earth"
+ :number 99
+ :packquantity 2
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 0
+ :subtype "Black Ops"
+ :text "Play only if the Runner is tagged.\nDo 4 meat damage."
+ :title "Scorched Earth"
+ :type "Operation"
  :uniqueness false}

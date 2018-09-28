@@ -1,19 +1,20 @@
-{:code "07020",
- :cost 2,
- :cycle_code "order-and-chaos",
- :faction "Weyland Consortium",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN22_20.png",
- :limited 3,
- :normalizedtitle "housekeeping",
- :number 20,
- :packquantity 3,
- :rotated false,
- :set_code "oac",
- :setname "Order and Chaos",
- :side "Corp",
- :subtype "Current - Gray Ops",
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nThe first time the Runner installs a card each turn, he or she must trash 1 card from his or her grip.",
- :title "Housekeeping",
- :type "Operation",
+{:code "07020"
+ :cost 2
+ :cycle_code "order-and-chaos"
+ :faction "Weyland Consortium"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_20.png"
+ :limited 3
+ :normalizedtitle "housekeeping"
+ :number 20
+ :packquantity 3
+ :rotated false
+ :set_code "order-and-chaos"
+ :setname "Order and Chaos"
+ :side "Corp"
+ :strength 0
+ :subtype "Current - Gray Ops"
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nThe first time the Runner installs a card each turn, he or she must trash 1 card from his or her grip."
+ :title "Housekeeping"
+ :type "Operation"
  :uniqueness false}

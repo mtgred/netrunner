@@ -1,19 +1,21 @@
-{:advancementcost 3,
- :agendapoints 1,
- :code "10088",
- :cycle_code "mumbad",
- :faction "Jinteki",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN34_88.png",
- :limited 3,
- :normalizedtitle "dedicated-neural-net",
- :number 88,
- :packquantity 3,
- :rotated false,
- :set_code "tlm",
- :setname "The Liberated Mind",
- :side "Corp",
- :subtype "Initiative - Psi",
- :text "The first time there is a successful run on HQ each turn, you and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, you choose which cards the Runner accesses from HQ for the remainder of this run.",
- :title "Dedicated Neural Net",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 1
+ :code "10088"
+ :cost 0
+ :cycle_code "mumbad"
+ :faction "Jinteki"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_88.png"
+ :limited 3
+ :normalizedtitle "dedicated-neural-net"
+ :number 88
+ :packquantity 3
+ :rotated false
+ :set_code "the-liberated-mind"
+ :setname "The Liberated Mind"
+ :side "Corp"
+ :strength 0
+ :subtype "Initiative - Psi"
+ :text "The first time there is a successful run on HQ each turn, you and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, you choose which cards the Runner accesses from HQ for the remainder of this run."
+ :title "Dedicated Neural Net"
+ :type "Agenda"
  :uniqueness false}

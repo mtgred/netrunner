@@ -1,19 +1,20 @@
-{:code "06118",
- :cost 0,
- :cycle_code "lunar",
- :faction "Criminal",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN21_118.png",
- :limited 3,
- :normalizedtitle "bribery",
- :number 118,
- :packquantity 3,
- :rotated false,
- :set_code "ts",
- :setname "The Source",
- :side "Runner",
- :subtype "Run",
- :text "Make a run. During this run, the Corp must pay X[credit] as an additional cost to rez the first unrezzed piece of ice approached.",
- :title "Bribery",
- :type "Event",
+{:code "06118"
+ :cost 0
+ :cycle_code "lunar"
+ :faction "Criminal"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_118.png"
+ :limited 3
+ :normalizedtitle "bribery"
+ :number 118
+ :packquantity 3
+ :rotated false
+ :set_code "the-source"
+ :setname "The Source"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Make a run. During this run, the Corp must pay X[credit] as an additional cost to rez the first unrezzed piece of ice approached."
+ :title "Bribery"
+ :type "Event"
  :uniqueness false}

@@ -1,20 +1,22 @@
-{:baselink 0,
- :code "08025",
- :cycle_code "sansan",
- :faction "Shaper",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN24_25.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "hayley-kaplan-universal-scholar",
- :number 25,
- :packquantity 3,
- :rotated false,
- :set_code "bb",
- :setname "Breaker Bay",
- :side "Runner",
- :subtype "G-Mod",
- :text "The first time you install a card each turn, you may install another card of the same type from your grip (paying its install cost).",
- :title "Hayley Kaplan: Universal Scholar",
- :type "Identity",
+{:baselink 0
+ :code "08025"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Shaper"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_25.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "hayley-kaplan-universal-scholar"
+ :number 25
+ :packquantity 3
+ :rotated false
+ :set_code "breaker-bay"
+ :setname "Breaker Bay"
+ :side "Runner"
+ :strength 0
+ :subtype "G-mod"
+ :text "The first time you install a card each turn, you may install another card of the same type from your grip (paying its install cost)."
+ :title "Hayley Kaplan: Universal Scholar"
+ :type "Identity"
  :uniqueness false}

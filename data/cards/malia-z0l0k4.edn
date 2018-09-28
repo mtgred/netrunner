@@ -1,20 +1,21 @@
-{:code "21069",
- :cost 1,
- :cycle_code "kitara",
- :faction "Haas-Bioroid",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN53_69.png",
- :limited 3,
- :normalizedtitle "malia-z0l0k4",
- :number 69,
- :packquantity 3,
- :rotated false,
- :set_code "tdatd",
- :setname "The Devil and the Dragon",
- :side "Corp",
- :subtype "Bioroid",
- :text "When you rez Malia Z0L0K4, choose an installed non-<strong>virtual</strong> resource. The text box of that resource is blank.",
- :title "Malia Z0L0K4",
- :trash 3,
- :type "Asset",
+{:code "21069"
+ :cost 1
+ :cycle_code "kitara"
+ :faction "Haas-Bioroid"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_69.png"
+ :limited 3
+ :normalizedtitle "malia-z0l0k4"
+ :number 69
+ :packquantity 3
+ :rotated false
+ :set_code "the-devil-and-the-dragon"
+ :setname "The Devil and the Dragon"
+ :side "Corp"
+ :strength 0
+ :subtype "Bioroid"
+ :text "When you rez Malia Z0L0K4, choose an installed non-<strong>virtual</strong> resource. The text box of that resource is blank."
+ :title "Malia Z0L0K4"
+ :trash 3
+ :type "Asset"
  :uniqueness true}

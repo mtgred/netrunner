@@ -1,21 +1,21 @@
-{:code "04065",
- :cost 7,
- :cycle_code "spin",
- :faction "Criminal",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/04065.png",
- :limited 3,
- :memoryunits 2,
- :normalizedtitle "garrote",
- :number 65,
- :packquantity 3,
- :rotated true,
- :set_code "tc",
- :setname "True Colors",
- :side "Runner",
- :strength 2,
- :subtype "Icebreaker - Killer",
- :text "1[credit]: Break <strong>sentry</strong> subroutine.\n1[credit]: +1 strength.",
- :title "Garrote",
- :type "Program",
+{:code "04065"
+ :cost 7
+ :cycle_code "spin"
+ :faction "Criminal"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/04065.png"
+ :limited 3
+ :memoryunits 2
+ :normalizedtitle "garrote"
+ :number 65
+ :packquantity 3
+ :rotated true
+ :set_code "true-colors"
+ :setname "True Colors"
+ :side "Runner"
+ :strength 2
+ :subtype "Icebreaker - Killer"
+ :text "1[credit]: Break <strong>sentry</strong> subroutine.\n1[credit]: +1 strength."
+ :title "Garrote"
+ :type "Program"
  :uniqueness false}

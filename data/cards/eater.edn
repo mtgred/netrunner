@@ -1,21 +1,21 @@
-{:code "07040",
- :cost 4,
- :cycle_code "order-and-chaos",
- :faction "Anarch",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN22_40.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "eater",
- :number 40,
- :packquantity 3,
- :rotated false,
- :set_code "oac",
- :setname "Order and Chaos",
- :side "Runner",
- :strength 2,
- :subtype "Icebreaker - AI",
- :text "1[credit]: Break ice subroutine. You cannot access more than 0 cards for the remainder of this run.\n1[credit]: +1 strength.",
- :title "Eater",
- :type "Program",
+{:code "07040"
+ :cost 4
+ :cycle_code "order-and-chaos"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_40.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "eater"
+ :number 40
+ :packquantity 3
+ :rotated false
+ :set_code "order-and-chaos"
+ :setname "Order and Chaos"
+ :side "Runner"
+ :strength 2
+ :subtype "Icebreaker - AI"
+ :text "1[credit]: Break ice subroutine. You cannot access more than 0 cards for the remainder of this run.\n1[credit]: +1 strength."
+ :title "Eater"
+ :type "Program"
  :uniqueness false}

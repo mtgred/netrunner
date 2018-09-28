@@ -1,18 +1,19 @@
-{:code "11074",
- :cost 0,
- :cycle_code "flashpoint",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN39_74.png",
- :limited 3,
- :normalizedtitle "hasty-relocation",
- :number 74,
- :packquantity 3,
- :rotated false,
- :set_code "in",
- :setname "Intervention",
- :side "Corp",
- :text "As an additional cost to play this operation, trash the top card of R&D.\nDraw 3 cards. Add 3 cards from HQ to the top of R&D in any order.",
- :title "Hasty Relocation",
- :type "Operation",
+{:code "11074"
+ :cost 0
+ :cycle_code "flashpoint"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_74.png"
+ :limited 3
+ :normalizedtitle "hasty-relocation"
+ :number 74
+ :packquantity 3
+ :rotated false
+ :set_code "intervention"
+ :setname "Intervention"
+ :side "Corp"
+ :strength 0
+ :text "As an additional cost to play this operation, trash the top card of R&D.\nDraw 3 cards. Add 3 cards from HQ to the top of R&D in any order."
+ :title "Hasty Relocation"
+ :type "Operation"
  :uniqueness false}

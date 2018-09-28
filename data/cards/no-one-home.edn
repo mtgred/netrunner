@@ -1,19 +1,20 @@
-{:code "21045",
- :cost 0,
- :cycle_code "kitara",
- :faction "Criminal",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN52_45.png",
- :limited 3,
- :normalizedtitle "no-one-home",
- :number 45,
- :packquantity 3,
- :rotated false,
- :set_code "cotc",
- :setname "Council of the Crest",
- :side "Runner",
- :subtype "Virtual",
- :text "The first time you would take any number of tags or suffer any amount of net damage each turn, you may trash No One Home to force the Corp to \"<trace>trace 0</trace> If unsuccessful, the Runner avoids any number of tags or prevents any amount of net damage.\"",
- :title "No One Home",
- :type "Resource",
+{:code "21045"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Criminal"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_45.png"
+ :limited 3
+ :normalizedtitle "no-one-home"
+ :number 45
+ :packquantity 3
+ :rotated false
+ :set_code "council-of-the-crest"
+ :setname "Council of the Crest"
+ :side "Runner"
+ :strength 0
+ :subtype "Virtual"
+ :text "The first time you would take any number of tags or suffer any amount of net damage each turn, you may trash No One Home to force the Corp to \"<trace>trace 0</trace> If unsuccessful, the Runner avoids any number of tags or prevents any amount of net damage.\""
+ :title "No One Home"
+ :type "Resource"
  :uniqueness false}

@@ -1,21 +1,20 @@
-{:code "01077",
- :cost 4,
- :cycle_code "core",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/01077.png",
- :limited 3,
- :normalizedtitle "neural-katana",
- :number 77,
- :packquantity 3,
- :replaced_by "20100",
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Corp",
- :strength 3,
- :subtype "Sentry - AP",
- :text "[subroutine] Do 3 net damage.",
- :title "Neural Katana",
- :type "ICE",
+{:code "01077"
+ :cost 4
+ :cycle_code "core"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/01077.png"
+ :limited 3
+ :normalizedtitle "neural-katana"
+ :number 77
+ :packquantity 3
+ :replaced_by "20100"
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 3
+ :subtype "Sentry - AP"
+ :text "[subroutine] Do 3 net damage."
+ :title "Neural Katana"
+ :type "ICE"
  :uniqueness false}

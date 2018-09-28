@@ -1,20 +1,21 @@
-{:code "05021",
- :cost 2,
- :cycle_code "honor-and-profit",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/05021.png",
- :limited 3,
- :normalizedtitle "neotokyo-grid",
- :number 21,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Corp",
- :subtype "Region",
- :text "The first time an advancement token is a placed on a card in this server each turn, gain 1[credit].\nLimit 1 <strong>region</strong> per server.",
- :title "NeoTokyo Grid",
- :trash 5,
- :type "Upgrade",
+{:code "05021"
+ :cost 2
+ :cycle_code "honor-and-profit"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/05021.png"
+ :limited 3
+ :normalizedtitle "neotokyo-grid"
+ :number 21
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Corp"
+ :strength 0
+ :subtype "Region"
+ :text "The first time an advancement token is a placed on a card in this server each turn, gain 1[credit].\nLimit 1 <strong>region</strong> per server."
+ :title "NeoTokyo Grid"
+ :trash 5
+ :type "Upgrade"
  :uniqueness false}

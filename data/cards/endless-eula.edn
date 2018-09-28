@@ -1,21 +1,20 @@
-{:code "21074",
- :cost 6,
- :cycle_code "kitara",
- :faction "NBN",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN53_74.png",
- :limited 3,
- :normalizedtitle "endless-eula",
- :number 74,
- :packquantity 3,
- :rotated false,
- :set_code "tdatd",
- :setname "The Devil and the Dragon",
- :side "Corp",
- :strength 0,
- :subtype "Barrier",
- :text
- "[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].",
- :title "Endless EULA",
- :type "ICE",
+{:code "21074"
+ :cost 6
+ :cycle_code "kitara"
+ :faction "NBN"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_74.png"
+ :limited 3
+ :normalizedtitle "endless-eula"
+ :number 74
+ :packquantity 3
+ :rotated false
+ :set_code "the-devil-and-the-dragon"
+ :setname "The Devil and the Dragon"
+ :side "Corp"
+ :strength 0
+ :subtype "Barrier"
+ :text "[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit]."
+ :title "Endless EULA"
+ :type "ICE"
  :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "12014",
- :cost 0,
- :cycle_code "red-sand",
- :faction "NBN",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN43_14.png",
- :limited 3,
- :normalizedtitle "net-analytics",
- :number 14,
- :packquantity 3,
- :rotated false,
- :set_code "dc",
- :setname "Daedalus Complex",
- :side "Corp",
- :text "Whenever the Runner avoids or removes 1 or more tags, you may draw 1 card.",
- :title "Net Analytics",
- :trash 3,
- :type "Asset",
+{:code "12014"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "NBN"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_14.png"
+ :limited 3
+ :normalizedtitle "net-analytics"
+ :number 14
+ :packquantity 3
+ :rotated false
+ :set_code "daedalus-complex"
+ :setname "Daedalus Complex"
+ :side "Corp"
+ :strength 0
+ :text "Whenever the Runner avoids or removes 1 or more tags, you may draw 1 card."
+ :title "Net Analytics"
+ :trash 3
+ :type "Asset"
  :uniqueness false}

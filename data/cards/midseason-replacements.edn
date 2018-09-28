@@ -1,18 +1,19 @@
-{:code "02116",
- :cost 5,
- :cycle_code "genesis",
- :faction "NBN",
- :factioncost 4,
- :image_url "https://netrunnerdb.com/card_image/02116.png",
- :limited 3,
- :normalizedtitle "midseason-replacements",
- :number 116,
- :packquantity 3,
- :rotated true,
- :set_code "fp",
- :setname "Future Proof",
- :side "Corp",
- :text "Play only if the Runner stole an agenda during his or her last turn.\n<trace>Trace 6</trace> If successful, give the Runner tags equal to the amount by which your trace strength exceeded his or her link strength.",
- :title "Midseason Replacements",
- :type "Operation",
+{:code "02116"
+ :cost 5
+ :cycle_code "genesis"
+ :faction "NBN"
+ :factioncost 4
+ :image_url "https://netrunnerdb.com/card_image/02116.png"
+ :limited 3
+ :normalizedtitle "midseason-replacements"
+ :number 116
+ :packquantity 3
+ :rotated true
+ :set_code "future-proof"
+ :setname "Future Proof"
+ :side "Corp"
+ :strength 0
+ :text "Play only if the Runner stole an agenda during his or her last turn.\n<trace>Trace 6</trace> If successful, give the Runner tags equal to the amount by which your trace strength exceeded his or her link strength."
+ :title "Midseason Replacements"
+ :type "Operation"
  :uniqueness false}

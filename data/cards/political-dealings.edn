@@ -1,20 +1,21 @@
-{:code "10051",
- :cost 4,
- :cycle_code "mumbad",
- :faction "Jinteki",
- :factioncost 4,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN32_51.png",
- :limited 3,
- :normalizedtitle "political-dealings",
- :number 51,
- :packquantity 3,
- :rotated false,
- :set_code "dag",
- :setname "Democracy and Dogma",
- :side "Corp",
- :subtype "Seedy",
- :text "Whenever you draw an agenda, you may reveal and install it.",
- :title "Political Dealings",
- :trash 3,
- :type "Asset",
+{:code "10051"
+ :cost 4
+ :cycle_code "mumbad"
+ :faction "Jinteki"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_51.png"
+ :limited 3
+ :normalizedtitle "political-dealings"
+ :number 51
+ :packquantity 3
+ :rotated false
+ :set_code "democracy-and-dogma"
+ :setname "Democracy and Dogma"
+ :side "Corp"
+ :strength 0
+ :subtype "Seedy"
+ :text "Whenever you draw an agenda, you may reveal and install it."
+ :title "Political Dealings"
+ :trash 3
+ :type "Asset"
  :uniqueness false}

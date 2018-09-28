@@ -1,19 +1,20 @@
-{:code "10004",
- :cost 6,
- :cycle_code "mumbad",
- :faction "Criminal",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN30_4.png",
- :limited 3,
- :normalizedtitle "high-stakes-job",
- :number 4,
- :packquantity 3,
- :rotated false,
- :set_code "kg",
- :setname "Kala Ghoda",
- :side "Runner",
- :subtype "Run - Job",
- :text "Make a run on a server with at least 1 piece of unrezzed ice. When the run ends, gain 12[credit] if it was successful.",
- :title "High-Stakes Job",
- :type "Event",
+{:code "10004"
+ :cost 6
+ :cycle_code "mumbad"
+ :faction "Criminal"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_4.png"
+ :limited 3
+ :normalizedtitle "high-stakes-job"
+ :number 4
+ :packquantity 3
+ :rotated false
+ :set_code "kala-ghoda"
+ :setname "Kala Ghoda"
+ :side "Runner"
+ :strength 0
+ :subtype "Run - Job"
+ :text "Make a run on a server with at least 1 piece of unrezzed ice. When the run ends, gain 12[credit] if it was successful."
+ :title "High-Stakes Job"
+ :type "Event"
  :uniqueness false}

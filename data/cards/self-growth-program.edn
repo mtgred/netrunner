@@ -1,19 +1,20 @@
-{:code "21016",
- :cost 0,
- :cycle_code "kitara",
- :faction "NBN",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN50_16.png",
- :limited 3,
- :normalizedtitle "self-growth-program",
- :number 16,
- :packquantity 3,
- :rotated false,
- :set_code "ss",
- :setname "Sovereign Sight",
- :side "Corp",
- :subtype "Gray Ops",
- :text "Play only if the Runner is tagged.\nAdd 2 installed Runner cards to the grip.",
- :title "Self-Growth Program",
- :type "Operation",
+{:code "21016"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "NBN"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_16.png"
+ :limited 3
+ :normalizedtitle "self-growth-program"
+ :number 16
+ :packquantity 3
+ :rotated false
+ :set_code "sovereign-sight"
+ :setname "Sovereign Sight"
+ :side "Corp"
+ :strength 0
+ :subtype "Gray Ops"
+ :text "Play only if the Runner is tagged.\nAdd 2 installed Runner cards to the grip."
+ :title "Self-Growth Program"
+ :type "Operation"
  :uniqueness false}

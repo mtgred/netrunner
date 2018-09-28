@@ -1,20 +1,21 @@
-{:code "10049",
- :cost 1,
- :cycle_code "mumbad",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN32_49.png",
- :limited 3,
- :normalizedtitle "clone-suffrage-movement",
- :number 49,
- :packquantity 3,
- :rotated false,
- :set_code "dag",
- :setname "Democracy and Dogma",
- :side "Corp",
- :subtype "Political",
- :text "When your turn begins, you may add 1 operation from Archives to HQ if there is no ice protecting this server.",
- :title "Clone Suffrage Movement",
- :trash 2,
- :type "Asset",
+{:code "10049"
+ :cost 1
+ :cycle_code "mumbad"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_49.png"
+ :limited 3
+ :normalizedtitle "clone-suffrage-movement"
+ :number 49
+ :packquantity 3
+ :rotated false
+ :set_code "democracy-and-dogma"
+ :setname "Democracy and Dogma"
+ :side "Corp"
+ :strength 0
+ :subtype "Political"
+ :text "When your turn begins, you may add 1 operation from Archives to HQ if there is no ice protecting this server."
+ :title "Clone Suffrage Movement"
+ :trash 2
+ :type "Asset"
  :uniqueness false}

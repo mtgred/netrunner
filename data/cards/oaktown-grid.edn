@@ -1,20 +1,21 @@
-{:code "08053",
- :cost 1,
- :cycle_code "sansan",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN25_53.png",
- :limited 3,
- :normalizedtitle "oaktown-grid",
- :number 53,
- :packquantity 3,
- :rotated false,
- :set_code "cc",
- :setname "Chrome City",
- :side "Corp",
- :subtype "Region",
- :text "The trash cost of cards installed in this server is increased by 3.\nLimit 1 <strong>region</strong> per server.",
- :title "Oaktown Grid",
- :trash 1,
- :type "Upgrade",
+{:code "08053"
+ :cost 1
+ :cycle_code "sansan"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_53.png"
+ :limited 3
+ :normalizedtitle "oaktown-grid"
+ :number 53
+ :packquantity 3
+ :rotated false
+ :set_code "chrome-city"
+ :setname "Chrome City"
+ :side "Corp"
+ :strength 0
+ :subtype "Region"
+ :text "The trash cost of cards installed in this server is increased by 3.\nLimit 1 <strong>region</strong> per server."
+ :title "Oaktown Grid"
+ :trash 1
+ :type "Upgrade"
  :uniqueness false}

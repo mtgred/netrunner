@@ -1,20 +1,21 @@
-{:code "13020",
- :cost 2,
- :cycle_code "terminal-directive",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_20.png",
- :limited 3,
- :memoryunits 0,
- :normalizedtitle "dhegdheer",
- :number 20,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Runner",
- :subtype "Daemon",
- :text "Dhegdheer can host a single program.\nLower the install cost of programs you install on Dhegdheer by 1.\nThe memory cost of the hosted program does not count against your memory limit.\n<errata>Errata from FAQ 4.0</errata>",
- :title "Dhegdheer",
- :type "Program",
+{:code "13020"
+ :cost 2
+ :cycle_code "terminal-directive"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_20.png"
+ :limited 3
+ :memoryunits 0
+ :normalizedtitle "dhegdheer"
+ :number 20
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Runner"
+ :strength 0
+ :subtype "Daemon"
+ :text "Dhegdheer can host a single program.\nLower the install cost of programs you install on Dhegdheer by 1.\nThe memory cost of the hosted program does not count against your memory limit.\n<errata>Errata from FAQ 4.0</errata>"
+ :title "Dhegdheer"
+ :type "Program"
  :uniqueness false}

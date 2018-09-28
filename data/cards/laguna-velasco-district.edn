@@ -1,19 +1,20 @@
-{:code "13022",
- :cost 5,
- :cycle_code "terminal-directive",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_22.png",
- :limited 3,
- :normalizedtitle "laguna-velasco-district",
- :number 22,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Runner",
- :subtype "Location - Ritzy",
- :text "Whenever you spend [click] to draw 1 card (not through a card ability), draw 1 additional card.",
- :title "Laguna Velasco District",
- :type "Resource",
+{:code "13022"
+ :cost 5
+ :cycle_code "terminal-directive"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_22.png"
+ :limited 3
+ :normalizedtitle "laguna-velasco-district"
+ :number 22
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Runner"
+ :strength 0
+ :subtype "Location - Ritzy"
+ :text "Whenever you spend [click] to draw 1 card (not through a card ability), draw 1 additional card."
+ :title "Laguna Velasco District"
+ :type "Resource"
  :uniqueness true}

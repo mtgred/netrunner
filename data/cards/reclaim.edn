@@ -1,18 +1,19 @@
-{:code "21107",
- :cost 0,
- :cycle_code "kitara",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN55_107.png",
- :limited 3,
- :normalizedtitle "reclaim",
- :number 107,
- :packquantity 3,
- :rotated false,
- :set_code "ka",
- :setname "Kampala Ascendent",
- :side "Runner",
- :text "[click], [trash], <strong>trash a card from your grip</strong>: Install a program, piece of hardware, or <strong>virtual</strong> resource from your heap, paying its install cost.",
- :title "Reclaim",
- :type "Resource",
+{:code "21107"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_107.png"
+ :limited 3
+ :normalizedtitle "reclaim"
+ :number 107
+ :packquantity 3
+ :rotated false
+ :set_code "kampala-ascendent"
+ :setname "Kampala Ascendent"
+ :side "Runner"
+ :strength 0
+ :text "[click], [trash], <strong>trash a card from your grip</strong>: Install a program, piece of hardware, or <strong>virtual</strong> resource from your heap, paying its install cost."
+ :title "Reclaim"
+ :type "Resource"
  :uniqueness false}

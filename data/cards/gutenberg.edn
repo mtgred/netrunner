@@ -1,20 +1,20 @@
-{:code "08037",
- :cost 2,
- :cycle_code "sansan",
- :faction "NBN",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN24_37.png",
- :limited 3,
- :normalizedtitle "gutenberg",
- :number 37,
- :packquantity 3,
- :rotated false,
- :set_code "bb",
- :setname "Breaker Bay",
- :side "Corp",
- :strength 3,
- :subtype "Sentry - Tracer",
- :text "Gutenberg has +3 strength while protecting R&D.\n[subroutine] <trace>Trace 7</trace> If successful, give the Runner 1 tag.",
- :title "Gutenberg",
- :type "ICE",
+{:code "08037"
+ :cost 2
+ :cycle_code "sansan"
+ :faction "NBN"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_37.png"
+ :limited 3
+ :normalizedtitle "gutenberg"
+ :number 37
+ :packquantity 3
+ :rotated false
+ :set_code "breaker-bay"
+ :setname "Breaker Bay"
+ :side "Corp"
+ :strength 3
+ :subtype "Sentry - Tracer"
+ :text "Gutenberg has +3 strength while protecting R&D.\n[subroutine] <trace>Trace 7</trace> If successful, give the Runner 1 tag."
+ :title "Gutenberg"
+ :type "ICE"
  :uniqueness false}

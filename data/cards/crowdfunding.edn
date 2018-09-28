@@ -1,0 +1,20 @@
+{:code "23013"
+ :cost 0
+ :cycle_code "magnum-opus"
+ :faction "Criminal"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/23013.png"
+ :limited 3
+ :normalizedtitle "crowdfunding"
+ :number 2
+ :packquantity 3
+ :rotated false
+ :set_code "magnum-opus"
+ :setname "Magnum Opus"
+ :side "Runner"
+ :strength 0
+ :subtype "Virtual - Seedy"
+ :text "Place 3[credit] from the bank on Crowdfunding when it is installed. When there are no credits left on Crowdfunding, trash it and draw 1 card.\nWhen your turn begins, take 1[credit] from Crowdfunding.\nWhen your turn ends, if you made at least 3 successful runs this turn, you may install Crowdfunding from your heap, ignoring all costs."
+ :title "Crowdfunding"
+ :type "Resource"
+ :uniqueness false}

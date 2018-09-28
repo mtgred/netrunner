@@ -1,19 +1,20 @@
-{:code "21065",
- :cost 0,
- :cycle_code "kitara",
- :faction "Criminal",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN53_65.png",
- :limited 3,
- :normalizedtitle "rogue-trading",
- :number 65,
- :packquantity 3,
- :rotated false,
- :set_code "tdatd",
- :setname "The Devil and the Dragon",
- :side "Runner",
- :subtype "Job",
- :text "Place 18[credit] from the bank on Rogue Trading when it is installed. When there are no credits left on Rogue Trading, trash it.\n[click], [click]: Take 6[credit] from Rogue Trading and take 1 tag.",
- :title "Rogue Trading",
- :type "Resource",
+{:code "21065"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Criminal"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_65.png"
+ :limited 3
+ :normalizedtitle "rogue-trading"
+ :number 65
+ :packquantity 3
+ :rotated false
+ :set_code "the-devil-and-the-dragon"
+ :setname "The Devil and the Dragon"
+ :side "Runner"
+ :strength 0
+ :subtype "Job"
+ :text "Place 18[credit] from the bank on Rogue Trading when it is installed. When there are no credits left on Rogue Trading, trash it.\n[click], [click]: Take 6[credit] from Rogue Trading and take 1 tag."
+ :title "Rogue Trading"
+ :type "Resource"
  :uniqueness false}

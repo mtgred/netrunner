@@ -1,19 +1,20 @@
-{:code "12046",
- :cost 5,
- :cycle_code "red-sand",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN45_46.png",
- :limited 3,
- :normalizedtitle "adjusted-matrix",
- :number 46,
- :packquantity 3,
- :rotated false,
- :set_code "eas",
- :setname "Earth's Scion",
- :side "Runner",
- :subtype "Mod",
- :text "Install Adjusted Matrix on an <strong>icebreaker</strong>. Host <strong>icebreaker</strong> gains <strong>AI</strong> and \"You may spend [click] to break any subroutine on a piece of ice currently being encountered.\"\n<errata>Errata from FAQ 4.1</errata>",
- :title "Adjusted Matrix",
- :type "Hardware",
+{:code "12046"
+ :cost 5
+ :cycle_code "red-sand"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_46.png"
+ :limited 3
+ :normalizedtitle "adjusted-matrix"
+ :number 46
+ :packquantity 3
+ :rotated false
+ :set_code "earth-s-scion"
+ :setname "Earth's Scion"
+ :side "Runner"
+ :strength 0
+ :subtype "Mod"
+ :text "Install Adjusted Matrix on an <strong>icebreaker</strong>. Host <strong>icebreaker</strong> gains <strong>AI</strong> and \"You may spend [click] to break any subroutine on a piece of ice currently being encountered.\"\n<errata>Errata from FAQ 4.1</errata>"
+ :title "Adjusted Matrix"
+ :type "Hardware"
  :uniqueness false}

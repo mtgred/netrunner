@@ -1,20 +1,22 @@
-{:baselink 0,
- :code "09029",
- :cycle_code "data-and-destiny",
- :faction "Apex",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN29_29.png",
- :influencelimit 25,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "apex-invasive-predator",
- :number 29,
- :packquantity 3,
- :rotated false,
- :set_code "dad",
- :setname "Data and Destiny",
- :side "Runner",
- :subtype "Digital",
- :text "You cannot install non-<strong>virtual</strong> resources.\nWhen your turn begins, you may install 1 card from your grip facedown.",
- :title "Apex: Invasive Predator",
- :type "Identity",
+{:baselink 0
+ :code "09029"
+ :cost 0
+ :cycle_code "data-and-destiny"
+ :faction "Apex"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_29.png"
+ :influencelimit 25
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "apex-invasive-predator"
+ :number 29
+ :packquantity 3
+ :rotated false
+ :set_code "data-and-destiny"
+ :setname "Data and Destiny"
+ :side "Runner"
+ :strength 0
+ :subtype "Digital"
+ :text "You cannot install non-<strong>virtual</strong> resources.\nWhen your turn begins, you may install 1 card from your grip facedown."
+ :title "Apex: Invasive Predator"
+ :type "Identity"
  :uniqueness false}

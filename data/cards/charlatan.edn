@@ -1,19 +1,20 @@
-{:code "13010",
- :cost 5,
- :cycle_code "terminal-directive",
- :faction "Criminal",
- :factioncost 4,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_10.png",
- :limited 3,
- :normalizedtitle "charlatan",
- :number 10,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Runner",
- :subtype "Virtual",
- :text "[click], [click]: Make a run. The first time you approach a rezzed piece of ice during this run, you may pay credits equal to the strength of that ice to bypass it.",
- :title "Charlatan",
- :type "Resource",
+{:code "13010"
+ :cost 5
+ :cycle_code "terminal-directive"
+ :faction "Criminal"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_10.png"
+ :limited 3
+ :normalizedtitle "charlatan"
+ :number 10
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Runner"
+ :strength 0
+ :subtype "Virtual"
+ :text "[click], [click]: Make a run. The first time you approach a rezzed piece of ice during this run, you may pay credits equal to the strength of that ice to bypass it."
+ :title "Charlatan"
+ :type "Resource"
  :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "06090",
- :cost 0,
- :cycle_code "lunar",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN20_90.png",
- :limited 3,
- :normalizedtitle "snatch-and-grab",
- :number 90,
- :packquantity 3,
- :rotated false,
- :set_code "atr",
- :setname "All That Remains",
- :side "Corp",
- :subtype "Gray Ops",
- :text "<trace>Trace 3</trace> If successful, trash 1 <strong>connection</strong>. The Runner can take 1 tag to prevent this.",
- :title "Snatch and Grab",
- :type "Operation",
+{:code "06090"
+ :cost 0
+ :cycle_code "lunar"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_90.png"
+ :limited 3
+ :normalizedtitle "snatch-and-grab"
+ :number 90
+ :packquantity 3
+ :rotated false
+ :set_code "all-that-remains"
+ :setname "All That Remains"
+ :side "Corp"
+ :strength 0
+ :subtype "Gray Ops"
+ :text "<trace>Trace 3</trace> If successful, trash 1 <strong>connection</strong>. The Runner can take 1 tag to prevent this."
+ :title "Snatch and Grab"
+ :type "Operation"
  :uniqueness false}

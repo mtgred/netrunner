@@ -1,19 +1,20 @@
-{:code "12021",
- :cost 2,
- :cycle_code "red-sand",
- :faction "Anarch",
- :factioncost 4,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN44_21.png",
- :limited 3,
- :normalizedtitle "severnius-stim-implant",
- :number 21,
- :packquantity 3,
- :rotated false,
- :set_code "so",
- :setname "Station One",
- :side "Runner",
- :subtype "Cybernetic",
- :text "[click]: Make a run on R&D or HQ and trash 2 or more cards from your grip. Whenever you access cards from that server during this run, access 1 additional card for every 2 cards trashed.\n<errata>Errata from FAQ 4.0</errata>",
- :title "Severnius Stim Implant",
- :type "Hardware",
+{:code "12021"
+ :cost 2
+ :cycle_code "red-sand"
+ :faction "Anarch"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_21.png"
+ :limited 3
+ :normalizedtitle "severnius-stim-implant"
+ :number 21
+ :packquantity 3
+ :rotated false
+ :set_code "station-one"
+ :setname "Station One"
+ :side "Runner"
+ :strength 0
+ :subtype "Cybernetic"
+ :text "[click]: Make a run on R&D or HQ and trash 2 or more cards from your grip. Whenever you access cards from that server during this run, access 1 additional card for every 2 cards trashed.\n<errata>Errata from FAQ 4.0</errata>"
+ :title "Severnius Stim Implant"
+ :type "Hardware"
  :uniqueness false}

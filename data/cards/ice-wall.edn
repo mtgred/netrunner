@@ -1,21 +1,20 @@
-{:code "20088",
- :cost 1,
- :cycle_code "core2",
- :faction "Weyland Consortium",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN49_119.png",
- :limited 3,
- :normalizedtitle "ice-wall",
- :number 119,
- :packquantity 2,
- :replaces "01103",
- :rotated false,
- :set_code "core2",
- :setname "Revised Core Set",
- :side "Corp",
- :strength 1,
- :subtype "Barrier",
- :text "Ice Wall can be advanced and has +1 strength for each advancement token on it.\n[subroutine] End the run.",
- :title "Ice Wall",
- :type "ICE",
+{:code "20088"
+ :cost 1
+ :cycle_code "core2"
+ :faction "Weyland Consortium"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_119.png"
+ :limited 3
+ :normalizedtitle "ice-wall"
+ :number 119
+ :packquantity 2
+ :replaces "01103"
+ :set_code "revised-core-set"
+ :setname "Revised Core Set"
+ :side "Corp"
+ :strength 1
+ :subtype "Barrier"
+ :text "Ice Wall can be advanced and has +1 strength for each advancement token on it.\n[subroutine] End the run."
+ :title "Ice Wall"
+ :type "ICE"
  :uniqueness false}

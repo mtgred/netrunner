@@ -1,19 +1,21 @@
-{:advancementcost 4,
- :agendapoints 2,
- :code "03007",
- :cycle_code "creation-and-control",
- :faction "Haas-Bioroid",
- :image_url "https://netrunnerdb.com/card_image/03007.png",
- :limited 3,
- :normalizedtitle "sentinel-defense-program",
- :number 7,
- :packquantity 3,
- :rotated false,
- :set_code "cac",
- :setname "Creation and Control",
- :side "Corp",
- :subtype "Security",
- :text "Whenever the Runner suffers at least 1 brain damage, do 1 net damage.",
- :title "Sentinel Defense Program",
- :type "Agenda",
+{:advancementcost 4
+ :agendapoints 2
+ :code "03007"
+ :cost 0
+ :cycle_code "creation-and-control"
+ :faction "Haas-Bioroid"
+ :image_url "https://netrunnerdb.com/card_image/03007.png"
+ :limited 3
+ :normalizedtitle "sentinel-defense-program"
+ :number 7
+ :packquantity 3
+ :rotated false
+ :set_code "creation-and-control"
+ :setname "Creation and Control"
+ :side "Corp"
+ :strength 0
+ :subtype "Security"
+ :text "Whenever the Runner suffers at least 1 brain damage, do 1 net damage."
+ :title "Sentinel Defense Program"
+ :type "Agenda"
  :uniqueness false}

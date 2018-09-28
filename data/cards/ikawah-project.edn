@@ -1,19 +1,21 @@
-{:advancementcost 5,
- :agendapoints 3,
- :code "21010",
- :cycle_code "kitara",
- :faction "Haas-Bioroid",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN50_10.png",
- :limited 3,
- :normalizedtitle "ikawah-project",
- :number 10,
- :packquantity 3,
- :rotated false,
- :set_code "ss",
- :setname "Sovereign Sight",
- :side "Corp",
- :subtype "Security",
- :text "As an additional cost to steal Ikawah Project, the Runner must spend [click] and 2[credit].",
- :title "Ikawah Project",
- :type "Agenda",
+{:advancementcost 5
+ :agendapoints 3
+ :code "21010"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Haas-Bioroid"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_10.png"
+ :limited 3
+ :normalizedtitle "ikawah-project"
+ :number 10
+ :packquantity 3
+ :rotated false
+ :set_code "sovereign-sight"
+ :setname "Sovereign Sight"
+ :side "Corp"
+ :strength 0
+ :subtype "Security"
+ :text "As an additional cost to steal Ikawah Project, the Runner must spend [click] and 2[credit]."
+ :title "Ikawah Project"
+ :type "Agenda"
  :uniqueness false}

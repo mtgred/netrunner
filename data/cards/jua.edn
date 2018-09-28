@@ -1,20 +1,20 @@
-{:code "21034",
- :cost 2,
- :cycle_code "kitara",
- :faction "NBN",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN51_34.png",
- :limited 3,
- :normalizedtitle "jua",
- :number 34,
- :packquantity 3,
- :rotated false,
- :set_code "dtwn",
- :setname "Down the White Nile",
- :side "Corp",
- :strength 3,
- :subtype "Sentry",
- :text "When the Runner encounters Jua, he or she cannot install cards for the remainder of the turn.\n[subroutine] Choose 2 installed Runner cards, if able. The Runner must add 1 of those cards to the top of the stack.",
- :title "Jua",
- :type "ICE",
+{:code "21034"
+ :cost 2
+ :cycle_code "kitara"
+ :faction "NBN"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_34.png"
+ :limited 3
+ :normalizedtitle "jua"
+ :number 34
+ :packquantity 3
+ :rotated false
+ :set_code "down-the-white-nile"
+ :setname "Down the White Nile"
+ :side "Corp"
+ :strength 3
+ :subtype "Sentry"
+ :text "When the Runner encounters Jua, he or she cannot install cards for the remainder of the turn.\n[subroutine] Choose 2 installed Runner cards, if able. The Runner must add 1 of those cards to the top of the stack."
+ :title "Jua"
+ :type "ICE"
  :uniqueness false}

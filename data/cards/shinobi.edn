@@ -1,20 +1,20 @@
-{:code "04115",
- :cost 7,
- :cycle_code "spin",
- :faction "Jinteki",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/04115.png",
- :limited 3,
- :normalizedtitle "shinobi",
- :number 115,
- :packquantity 3,
- :rotated true,
- :set_code "dt",
- :setname "Double Time",
- :side "Corp",
- :strength 5,
- :subtype "Sentry - Tracer - AP - Illicit",
- :text "When you rez Shinobi, take 1 bad publicity.\n[subroutine] <trace>Trace 1</trace> If successful, do 1 net damage.\n[subroutine] <trace>Trace 2</trace> If successful, do 2 net damage.\n[subroutine] <trace>Trace 3</trace> If successful, do 3 net damage and end the run.",
- :title "Shinobi",
- :type "ICE",
+{:code "04115"
+ :cost 7
+ :cycle_code "spin"
+ :faction "Jinteki"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/04115.png"
+ :limited 3
+ :normalizedtitle "shinobi"
+ :number 115
+ :packquantity 3
+ :rotated true
+ :set_code "double-time"
+ :setname "Double Time"
+ :side "Corp"
+ :strength 5
+ :subtype "Sentry - Tracer - AP - Illicit"
+ :text "When you rez Shinobi, take 1 bad publicity.\n[subroutine] <trace>Trace 1</trace> If successful, do 1 net damage.\n[subroutine] <trace>Trace 2</trace> If successful, do 2 net damage.\n[subroutine] <trace>Trace 3</trace> If successful, do 3 net damage and end the run."
+ :title "Shinobi"
+ :type "ICE"
  :uniqueness false}

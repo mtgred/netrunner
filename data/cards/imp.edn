@@ -1,21 +1,22 @@
-{:code "02003",
- :cost 2,
- :cycle_code "genesis",
- :faction "Anarch",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/02003.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "imp",
- :number 3,
- :packquantity 3,
- :replaced_by "20011",
- :rotated true,
- :set_code "wla",
- :setname "What Lies Ahead",
- :side "Runner",
- :subtype "Virus",
- :text "Place 2 virus counters on Imp when it is installed.\nOnce per turn, you may remove 1 hosted virus counter to trash a card you access at no cost (even if it cannot normally be trashed).",
- :title "Imp",
- :type "Program",
+{:code "02003"
+ :cost 2
+ :cycle_code "genesis"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/02003.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "imp"
+ :number 3
+ :packquantity 3
+ :replaced_by "20011"
+ :rotated true
+ :set_code "what-lies-ahead"
+ :setname "What Lies Ahead"
+ :side "Runner"
+ :strength 0
+ :subtype "Virus"
+ :text "Place 2 virus counters on Imp when it is installed.\nOnce per turn, you may remove 1 hosted virus counter to trash a card you access at no cost (even if it cannot normally be trashed)."
+ :title "Imp"
+ :type "Program"
  :uniqueness false}

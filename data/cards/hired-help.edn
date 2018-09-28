@@ -1,0 +1,21 @@
+{:code "23101"
+ :cost 1
+ :cycle_code "magnum-opus"
+ :faction "Neutral"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/23101.png"
+ :limited 1
+ :normalizedtitle "hired-help"
+ :number 8
+ :packquantity 1
+ :rotated false
+ :set_code "magnum-opus"
+ :setname "Magnum Opus"
+ :side "Corp"
+ :strength 0
+ :subtype " - "
+ :text "As an additional cost to run this server, the Runner must trash an agenda in his or her score area. Ignore this ability if the Runner made a successful run on HQ this turn.\nLimit 1 per Deck."
+ :title "Hired Help"
+ :trash 3
+ :type "Upgrade"
+ :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "21036",
- :cost 0,
- :cycle_code "kitara",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN51_36.png",
- :limited 3,
- :normalizedtitle "economic-warfare",
- :number 36,
- :packquantity 3,
- :rotated false,
- :set_code "dtwn",
- :setname "Down the White Nile",
- :side "Corp",
- :subtype "Gray Ops",
- :text "Play only if the Runner made a successful run during his or her last turn.\nThe Runner loses 4[credit], if able.",
- :title "Economic Warfare",
- :type "Operation",
+{:code "21036"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_36.png"
+ :limited 3
+ :normalizedtitle "economic-warfare"
+ :number 36
+ :packquantity 3
+ :rotated false
+ :set_code "down-the-white-nile"
+ :setname "Down the White Nile"
+ :side "Corp"
+ :strength 0
+ :subtype "Gray Ops"
+ :text "Play only if the Runner made a successful run during his or her last turn.\nThe Runner loses 4[credit], if able."
+ :title "Economic Warfare"
+ :type "Operation"
  :uniqueness false}

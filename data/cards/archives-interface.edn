@@ -1,18 +1,19 @@
-{:code "07044",
- :cost 3,
- :cycle_code "order-and-chaos",
- :faction "Anarch",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN22_44.png",
- :limited 3,
- :normalizedtitle "archives-interface",
- :number 44,
- :packquantity 3,
- :rotated false,
- :set_code "oac",
- :setname "Order and Chaos",
- :side "Runner",
- :text "Whenever you access cards in Archives, you may remove 1 card in Archives from the game, instead of accessing it.",
- :title "Archives Interface",
- :type "Hardware",
+{:code "07044"
+ :cost 3
+ :cycle_code "order-and-chaos"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_44.png"
+ :limited 3
+ :normalizedtitle "archives-interface"
+ :number 44
+ :packquantity 3
+ :rotated false
+ :set_code "order-and-chaos"
+ :setname "Order and Chaos"
+ :side "Runner"
+ :strength 0
+ :text "Whenever you access cards in Archives, you may remove 1 card in Archives from the game, instead of accessing it."
+ :title "Archives Interface"
+ :type "Hardware"
  :uniqueness false}

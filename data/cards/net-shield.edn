@@ -1,19 +1,19 @@
-{:code "01045",
- :cost 2,
- :cycle_code "core",
- :faction "Shaper",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/01045.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "net-shield",
- :number 45,
- :packquantity 2,
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Runner",
- :text "1[credit]: Prevent the first net damage this turn.",
- :title "Net Shield",
- :type "Program",
+{:code "01045"
+ :cost 2
+ :cycle_code "core"
+ :faction "Shaper"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/01045.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "net-shield"
+ :number 45
+ :packquantity 2
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Runner"
+ :strength 0
+ :text "1[credit]: Prevent the first net damage this turn."
+ :title "Net Shield"
+ :type "Program"
  :uniqueness false}

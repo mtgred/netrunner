@@ -1,20 +1,21 @@
-{:baselink 1,
- :code "01033",
- :cycle_code "core",
- :faction "Shaper",
- :image_url "https://netrunnerdb.com/card_image/01033.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "kate-mac-mccaffrey-digital-tinker",
- :number 33,
- :packquantity 1,
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Runner",
- :subtype "Natural",
- :text "Lower the install cost of the first program or piece of hardware you install each turn by 1.",
- :title "Kate \"Mac\" McCaffrey: Digital Tinker",
- :type "Identity",
+{:baselink 1
+ :code "01033"
+ :cost 0
+ :cycle_code "core"
+ :faction "Shaper"
+ :image_url "https://netrunnerdb.com/card_image/01033.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "kate-mac-mccaffrey-digital-tinker"
+ :number 33
+ :packquantity 1
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Runner"
+ :strength 0
+ :subtype "Natural"
+ :text "Lower the install cost of the first program or piece of hardware you install each turn by 1."
+ :title "Kate \"Mac\" McCaffrey: Digital Tinker"
+ :type "Identity"
  :uniqueness false}

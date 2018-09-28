@@ -1,21 +1,21 @@
-{:code "12067",
- :cost 8,
- :cycle_code "red-sand",
- :faction "Shaper",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN46_67.png",
- :limited 3,
- :memoryunits 2,
- :normalizedtitle "mass-driver",
- :number 67,
- :packquantity 3,
- :rotated false,
- :set_code "baw",
- :setname "Blood and Water",
- :side "Runner",
- :strength 1,
- :subtype "Icebreaker - Decoder",
- :text "Whenever you use Mass-Driver to break all subroutines on a piece of ice during a single encounter, the first 3 subroutines on the next piece of ice you encounter this run do not resolve.\n2[credit]: Break <strong>code gate</strong> subroutine.\n1[credit]: +1 strength.",
- :title "Mass-Driver",
- :type "Program",
+{:code "12067"
+ :cost 8
+ :cycle_code "red-sand"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_67.png"
+ :limited 3
+ :memoryunits 2
+ :normalizedtitle "mass-driver"
+ :number 67
+ :packquantity 3
+ :rotated false
+ :set_code "blood-and-water"
+ :setname "Blood and Water"
+ :side "Runner"
+ :strength 1
+ :subtype "Icebreaker - Decoder"
+ :text "Whenever you use Mass-Driver to break all subroutines on a piece of ice during a single encounter, the first 3 subroutines on the next piece of ice you encounter this run do not resolve.\n2[credit]: Break <strong>code gate</strong> subroutine.\n1[credit]: +1 strength."
+ :title "Mass-Driver"
+ :type "Program"
  :uniqueness false}

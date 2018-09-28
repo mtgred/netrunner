@@ -1,19 +1,20 @@
-{:code "03031",
- :cost 3,
- :cycle_code "creation-and-control",
- :faction "Shaper",
- :factioncost 5,
- :image_url "https://netrunnerdb.com/card_image/03031.png",
- :limited 3,
- :normalizedtitle "escher",
- :number 31,
- :packquantity 3,
- :rotated false,
- :set_code "cac",
- :setname "Creation and Control",
- :side "Runner",
- :subtype "Run",
- :text "Make a run on HQ. If successful, instead of accessing cards, rearrange any number of ice protecting all servers (without rezzing or derezzing the ice). The same number of ice must be protecting each server after the rearrangement as before.",
- :title "Escher",
- :type "Event",
+{:code "03031"
+ :cost 3
+ :cycle_code "creation-and-control"
+ :faction "Shaper"
+ :factioncost 5
+ :image_url "https://netrunnerdb.com/card_image/03031.png"
+ :limited 3
+ :normalizedtitle "escher"
+ :number 31
+ :packquantity 3
+ :rotated false
+ :set_code "creation-and-control"
+ :setname "Creation and Control"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Make a run on HQ. If successful, instead of accessing cards, rearrange any number of ice protecting all servers (without rezzing or derezzing the ice). The same number of ice must be protecting each server after the rearrangement as before."
+ :title "Escher"
+ :type "Event"
  :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "21059",
- :cost 1,
- :cycle_code "kitara",
- :faction "Weyland Consortium",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN52_59.png",
- :limited 3,
- :normalizedtitle "trojan-horse",
- :number 59,
- :packquantity 3,
- :rotated false,
- :set_code "cotc",
- :setname "Council of the Crest",
- :side "Corp",
- :subtype "Gray Ops",
- :text "Play only if the Runner accessed at least 1 card during his or her last turn.\n<trace>Trace 4</trace> If successful, trash 1 installed program with an install cost equal to or less than the amount by which your trace strength exceeded the Runner's link strength.",
- :title "Trojan Horse",
- :type "Operation",
+{:code "21059"
+ :cost 1
+ :cycle_code "kitara"
+ :faction "Weyland Consortium"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_59.png"
+ :limited 3
+ :normalizedtitle "trojan-horse"
+ :number 59
+ :packquantity 3
+ :rotated false
+ :set_code "council-of-the-crest"
+ :setname "Council of the Crest"
+ :side "Corp"
+ :strength 0
+ :subtype "Gray Ops"
+ :text "Play only if the Runner accessed at least 1 card during his or her last turn.\n<trace>Trace 4</trace> If successful, trash 1 installed program with an install cost equal to or less than the amount by which your trace strength exceeded the Runner's link strength."
+ :title "Trojan Horse"
+ :type "Operation"
  :uniqueness false}

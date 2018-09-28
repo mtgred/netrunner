@@ -1,19 +1,20 @@
-{:code "08108",
- :cost 1,
- :cycle_code "sansan",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN28_108.png",
- :limited 3,
- :normalizedtitle "wireless-net-pavilion",
- :number 108,
- :packquantity 3,
- :rotated false,
- :set_code "uot",
- :setname "The Universe of Tomorrow",
- :side "Runner",
- :subtype "Location",
- :text "As an additional cost to spend [click] to trash a resource (not through a card ability), the Corp must pay 2[credit].\n<errata>Errata from FAQ 3.0.1</errata>",
- :title "Wireless Net Pavilion",
- :type "Resource",
+{:code "08108"
+ :cost 1
+ :cycle_code "sansan"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_108.png"
+ :limited 3
+ :normalizedtitle "wireless-net-pavilion"
+ :number 108
+ :packquantity 3
+ :rotated false
+ :set_code "the-universe-of-tomorrow"
+ :setname "The Universe of Tomorrow"
+ :side "Runner"
+ :strength 0
+ :subtype "Location"
+ :text "As an additional cost to spend [click] to trash a resource (not through a card ability), the Corp must pay 2[credit].\n<errata>Errata from FAQ 3.0.1</errata>"
+ :title "Wireless Net Pavilion"
+ :type "Resource"
  :uniqueness true}

@@ -1,20 +1,20 @@
-{:code "13037",
- :cost 5,
- :cycle_code "terminal-directive",
- :faction "Haas-Bioroid",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_37.png",
- :limited 3,
- :normalizedtitle "tapestry",
- :number 37,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Corp",
- :strength 6,
- :subtype "Code Gate",
- :text "[subroutine] The Runner loses [click], if able.\n[subroutine] The Corp may draw 1 card.\n[subroutine] The Corp may add 1 card from HQ to the top of R&D.",
- :title "Tapestry",
- :type "ICE",
+{:code "13037"
+ :cost 5
+ :cycle_code "terminal-directive"
+ :faction "Haas-Bioroid"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_37.png"
+ :limited 3
+ :normalizedtitle "tapestry"
+ :number 37
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Corp"
+ :strength 6
+ :subtype "Code Gate"
+ :text "[subroutine] The Runner loses [click], if able.\n[subroutine] The Corp may draw 1 card.\n[subroutine] The Corp may add 1 card from HQ to the top of R&D."
+ :title "Tapestry"
+ :type "ICE"
  :uniqueness false}

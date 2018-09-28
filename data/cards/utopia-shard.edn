@@ -1,19 +1,20 @@
-{:code "06100",
- :cost 7,
- :cycle_code "lunar",
- :faction "Neutral",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN20_100.png",
- :limited 1,
- :normalizedtitle "utopia-shard",
- :number 100,
- :packquantity 3,
- :rotated false,
- :set_code "atr",
- :setname "All That Remains",
- :side "Runner",
- :subtype "Virtual - Source",
- :text "Whenever you make a successful run on HQ, instead of accessing cards, you may install Utopia Shard from your grip, ignoring all costs.\n[trash]: The Corp discards 2 cards from HQ at random.\nLimit 1 per deck.",
- :title "Utopia Shard",
- :type "Resource",
+{:code "06100"
+ :cost 7
+ :cycle_code "lunar"
+ :faction "Neutral"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_100.png"
+ :limited 1
+ :normalizedtitle "utopia-shard"
+ :number 100
+ :packquantity 3
+ :rotated false
+ :set_code "all-that-remains"
+ :setname "All That Remains"
+ :side "Runner"
+ :strength 0
+ :subtype "Virtual - Source"
+ :text "Whenever you make a successful run on HQ, instead of accessing cards, you may install Utopia Shard from your grip, ignoring all costs.\n[trash]: The Corp discards 2 cards from HQ at random.\nLimit 1 per deck."
+ :title "Utopia Shard"
+ :type "Resource"
  :uniqueness true}

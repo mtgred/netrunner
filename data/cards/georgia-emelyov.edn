@@ -1,20 +1,21 @@
-{:code "11014",
- :cost 1,
- :cycle_code "flashpoint",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN36_14.png",
- :limited 3,
- :normalizedtitle "georgia-emelyov",
- :number 14,
- :packquantity 3,
- :rotated false,
- :set_code "23s",
- :setname "23 Seconds",
- :side "Corp",
- :subtype "Sysop",
- :text "Whenever the Runner makes an unsuccessful run on this server, do 1 net damage.\n2[credit]: Move Georgia Emelyov to another server.",
- :title "Georgia Emelyov",
- :trash 3,
- :type "Upgrade",
+{:code "11014"
+ :cost 1
+ :cycle_code "flashpoint"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_14.png"
+ :limited 3
+ :normalizedtitle "georgia-emelyov"
+ :number 14
+ :packquantity 3
+ :rotated false
+ :set_code "23-seconds"
+ :setname "23 Seconds"
+ :side "Corp"
+ :strength 0
+ :subtype "Sysop"
+ :text "Whenever the Runner makes an unsuccessful run on this server, do 1 net damage.\n2[credit]: Move Georgia Emelyov to another server."
+ :title "Georgia Emelyov"
+ :trash 3
+ :type "Upgrade"
  :uniqueness true}

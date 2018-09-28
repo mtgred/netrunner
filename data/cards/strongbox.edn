@@ -1,20 +1,20 @@
-{:code "20076",
- :cost 3,
- :cycle_code "core2",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN49_76.png",
- :limited 3,
- :normalizedtitle "strongbox",
- :number 76,
- :packquantity 1,
- :replaces "04091",
- :rotated false,
- :set_code "core2",
- :setname "Revised Core Set",
- :side "Corp",
- :text "Each time the Runner accesses an agenda from this server, he or she must spend [click] as an additional cost in order to steal it. This applies even during the run on which the Runner trashes Strongbox.",
- :title "Strongbox",
- :trash 1,
- :type "Upgrade",
+{:code "20076"
+ :cost 3
+ :cycle_code "core2"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_76.png"
+ :limited 3
+ :normalizedtitle "strongbox"
+ :number 76
+ :packquantity 1
+ :replaces "04091"
+ :set_code "revised-core-set"
+ :setname "Revised Core Set"
+ :side "Corp"
+ :strength 0
+ :text "Each time the Runner accesses an agenda from this server, he or she must spend [click] as an additional cost in order to steal it. This applies even during the run on which the Runner trashes Strongbox."
+ :title "Strongbox"
+ :trash 1
+ :type "Upgrade"
  :uniqueness false}

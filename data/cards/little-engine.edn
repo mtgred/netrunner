@@ -1,20 +1,20 @@
-{:code "08057",
- :cost 5,
- :cycle_code "sansan",
- :faction "NBN",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN25_57.png",
- :limited 3,
- :normalizedtitle "little-engine",
- :number 57,
- :packquantity 3,
- :rotated false,
- :set_code "cc",
- :setname "Chrome City",
- :side "Corp",
- :strength 7,
- :subtype "Code Gate",
- :text "[subroutine] End the run.\n[subroutine] End the run.\n[subroutine] The Runner gains 5[credit].",
- :title "Little Engine",
- :type "ICE",
+{:code "08057"
+ :cost 5
+ :cycle_code "sansan"
+ :faction "NBN"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_57.png"
+ :limited 3
+ :normalizedtitle "little-engine"
+ :number 57
+ :packquantity 3
+ :rotated false
+ :set_code "chrome-city"
+ :setname "Chrome City"
+ :side "Corp"
+ :strength 7
+ :subtype "Code Gate"
+ :text "[subroutine] End the run.\n[subroutine] End the run.\n[subroutine] The Runner gains 5[credit]."
+ :title "Little Engine"
+ :type "ICE"
  :uniqueness false}

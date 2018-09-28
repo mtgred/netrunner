@@ -1,19 +1,20 @@
-{:code "13011",
- :cost 1,
- :cycle_code "terminal-directive",
- :faction "Criminal",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_11.png",
- :limited 3,
- :normalizedtitle "maxwell-james",
- :number 11,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Runner",
- :subtype "Connection",
- :text "+1[link]\n[trash]: Derez a piece of ice protecting a remote server. Use this ability only if you made a successful run on HQ during this turn.\n<errata>Errata from FAQ 4.0</errata>.",
- :title "Maxwell James",
- :type "Resource",
+{:code "13011"
+ :cost 1
+ :cycle_code "terminal-directive"
+ :faction "Criminal"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_11.png"
+ :limited 3
+ :normalizedtitle "maxwell-james"
+ :number 11
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "+1[link]\n[trash]: Derez a piece of ice protecting a remote server. Use this ability only during the next paid ability window after a successful run on HQ ends.\n<errata>Errata from FAQ 4.2</errata>."
+ :title "Maxwell James"
+ :type "Resource"
  :uniqueness true}

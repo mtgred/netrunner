@@ -1,19 +1,21 @@
-{:advancementcost 4,
- :agendapoints 2,
- :code "12009",
- :cycle_code "red-sand",
- :faction "Haas-Bioroid",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN43_9.png",
- :limited 3,
- :normalizedtitle "next-wave-2",
- :number 9,
- :packquantity 3,
- :rotated false,
- :set_code "dc",
- :setname "Daedalus Complex",
- :side "Corp",
- :subtype "NEXT",
- :text "If there is a rezzed piece of <strong>NEXT</strong> ice when you score NEXT Wave 2, you may do 1 brain damage.",
- :title "NEXT Wave 2",
- :type "Agenda",
+{:advancementcost 4
+ :agendapoints 2
+ :code "12009"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Haas-Bioroid"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_9.png"
+ :limited 3
+ :normalizedtitle "next-wave-2"
+ :number 9
+ :packquantity 3
+ :rotated false
+ :set_code "daedalus-complex"
+ :setname "Daedalus Complex"
+ :side "Corp"
+ :strength 0
+ :subtype "NEXT"
+ :text "If there is a rezzed piece of <strong>NEXT</strong> ice when you score NEXT Wave 2, you may do 1 brain damage."
+ :title "NEXT Wave 2"
+ :type "Agenda"
  :uniqueness false}

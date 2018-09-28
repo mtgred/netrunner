@@ -1,19 +1,20 @@
-{:code "08041",
- :cost 0,
- :cycle_code "sansan",
- :faction "Anarch",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN25_41.png",
- :limited 3,
- :normalizedtitle "immolation-script",
- :number 41,
- :packquantity 3,
- :rotated false,
- :set_code "cc",
- :setname "Chrome City",
- :side "Runner",
- :subtype "Run",
- :text "Make a run on Archives. If successful, instead of accessing a piece of ice in Archives, trash a rezzed copy of that ice.",
- :title "Immolation Script",
- :type "Event",
+{:code "08041"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_41.png"
+ :limited 3
+ :normalizedtitle "immolation-script"
+ :number 41
+ :packquantity 3
+ :rotated false
+ :set_code "chrome-city"
+ :setname "Chrome City"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Make a run on Archives. If successful, instead of accessing a piece of ice in Archives, trash a rezzed copy of that ice."
+ :title "Immolation Script"
+ :type "Event"
  :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "06093",
- :cost 2,
- :cycle_code "lunar",
- :faction "Anarch",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN20_93.png",
- :limited 3,
- :normalizedtitle "ekomind",
- :number 93,
- :packquantity 3,
- :rotated false,
- :set_code "atr",
- :setname "All That Remains",
- :side "Runner",
- :subtype "Console",
- :text "Your memory limit is equal to the number of cards in your grip.\nLimit 1 <strong>console</strong> per player.",
- :title "Ekomind",
- :type "Hardware",
+{:code "06093"
+ :cost 2
+ :cycle_code "lunar"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_93.png"
+ :limited 3
+ :normalizedtitle "ekomind"
+ :number 93
+ :packquantity 3
+ :rotated false
+ :set_code "all-that-remains"
+ :setname "All That Remains"
+ :side "Runner"
+ :strength 0
+ :subtype "Console"
+ :text "Your memory limit is equal to the number of cards in your grip.\nLimit 1 <strong>console</strong> per player."
+ :title "Ekomind"
+ :type "Hardware"
  :uniqueness true}

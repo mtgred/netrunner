@@ -1,19 +1,20 @@
-{:code "02040",
- :cost 0,
- :cycle_code "genesis",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/02040.png",
- :limited 3,
- :normalizedtitle "freelancer",
- :number 40,
- :packquantity 3,
- :rotated true,
- :set_code "ta",
- :setname "Trace Amount",
- :side "Corp",
- :subtype "Gray Ops",
- :text "Play only if the Runner is tagged.\nTrash up to 2 resources.",
- :title "Freelancer",
- :type "Operation",
+{:code "02040"
+ :cost 0
+ :cycle_code "genesis"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/02040.png"
+ :limited 3
+ :normalizedtitle "freelancer"
+ :number 40
+ :packquantity 3
+ :rotated true
+ :set_code "trace-amount"
+ :setname "Trace Amount"
+ :side "Corp"
+ :strength 0
+ :subtype "Gray Ops"
+ :text "Play only if the Runner is tagged.\nTrash up to 2 resources."
+ :title "Freelancer"
+ :type "Operation"
  :uniqueness false}

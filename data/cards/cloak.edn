@@ -1,20 +1,21 @@
-{:code "03041",
- :cost 1,
- :cycle_code "creation-and-control",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/03041.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "cloak",
- :number 41,
- :packquantity 3,
- :rotated false,
- :set_code "cac",
- :setname "Creation and Control",
- :side "Runner",
- :subtype "Stealth",
- :text "1[recurring-credit]\nUse this credit to pay for using <strong>icebreakers</strong>.",
- :title "Cloak",
- :type "Program",
+{:code "03041"
+ :cost 1
+ :cycle_code "creation-and-control"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/03041.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "cloak"
+ :number 41
+ :packquantity 3
+ :rotated false
+ :set_code "creation-and-control"
+ :setname "Creation and Control"
+ :side "Runner"
+ :strength 0
+ :subtype "Stealth"
+ :text "1[recurring-credit]\nUse this credit to pay for using <strong>icebreakers</strong>."
+ :title "Cloak"
+ :type "Program"
  :uniqueness false}

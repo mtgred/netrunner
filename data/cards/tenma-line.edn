@@ -1,20 +1,21 @@
-{:code "05012",
- :cost 2,
- :cycle_code "honor-and-profit",
- :faction "Jinteki",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/05012.png",
- :limited 3,
- :normalizedtitle "tenma-line",
- :number 12,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Corp",
- :subtype "Clone",
- :text "[click]: Swap 2 pieces of installed ice.",
- :title "Tenma Line",
- :trash 4,
- :type "Asset",
+{:code "05012"
+ :cost 2
+ :cycle_code "honor-and-profit"
+ :faction "Jinteki"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/05012.png"
+ :limited 3
+ :normalizedtitle "tenma-line"
+ :number 12
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Corp"
+ :strength 0
+ :subtype "Clone"
+ :text "[click]: Swap 2 pieces of installed ice."
+ :title "Tenma Line"
+ :trash 4
+ :type "Asset"
  :uniqueness false}

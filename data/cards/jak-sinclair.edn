@@ -1,19 +1,20 @@
-{:code "09052",
- :cost 3,
- :cycle_code "data-and-destiny",
- :faction "Sunny Lebeau",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN29_52.png",
- :limited 3,
- :normalizedtitle "jak-sinclair",
- :number 52,
- :packquantity 3,
- :rotated false,
- :set_code "dad",
- :setname "Data and Destiny",
- :side "Runner",
- :subtype "Connection",
- :text "Reduce the cost to install Jak Sinclair by 1 for each [link] you have.\nWhen your turn begins, you may make a run. You cannot use programs during this run.",
- :title "Jak Sinclair",
- :type "Resource",
+{:code "09052"
+ :cost 3
+ :cycle_code "data-and-destiny"
+ :faction "Sunny Lebeau"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_52.png"
+ :limited 3
+ :normalizedtitle "jak-sinclair"
+ :number 52
+ :packquantity 3
+ :rotated false
+ :set_code "data-and-destiny"
+ :setname "Data and Destiny"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "Reduce the cost to install Jak Sinclair by 1 for each [link] you have.\nWhen your turn begins, you may make a run. You cannot use programs during this run."
+ :title "Jak Sinclair"
+ :type "Resource"
  :uniqueness true}

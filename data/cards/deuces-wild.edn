@@ -1,18 +1,19 @@
-{:code "11008",
- :cost 2,
- :cycle_code "flashpoint",
- :faction "Neutral",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN36_8.png",
- :limited 3,
- :normalizedtitle "deuces-wild",
- :number 8,
- :packquantity 3,
- :rotated false,
- :set_code "23s",
- :setname "23 Seconds",
- :side "Runner",
- :text "Resolve two of the following in any order:<ul><li>Gain 3[credit].</li><li>Draw 2 cards.</li><li>Remove 1 tag.</li><li>Expose 1 piece of ice, then make a run.</li></ul>",
- :title "Deuces Wild",
- :type "Event",
+{:code "11008"
+ :cost 2
+ :cycle_code "flashpoint"
+ :faction "Neutral"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_8.png"
+ :limited 3
+ :normalizedtitle "deuces-wild"
+ :number 8
+ :packquantity 3
+ :rotated false
+ :set_code "23-seconds"
+ :setname "23 Seconds"
+ :side "Runner"
+ :strength 0
+ :text "Resolve two of the following in any order:<ul><li>Gain 3[credit].</li><li>Draw 2 cards.</li><li>Remove 1 tag.</li><li>Expose 1 piece of ice, then make a run.</li></ul>"
+ :title "Deuces Wild"
+ :type "Event"
  :uniqueness false}

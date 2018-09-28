@@ -1,19 +1,20 @@
-{:code "04025",
- :cost 1,
- :cycle_code "spin",
- :faction "Criminal",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/04025.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "copycat",
- :number 25,
- :packquantity 3,
- :rotated true,
- :set_code "st",
- :setname "Second Thoughts",
- :side "Runner",
- :text "Whenever you pass a piece of ice, you may trash Copycat. If you do, choose another rezzed copy of that piece of ice protecting any server. The run continues as if you had just passed the chosen piece of ice (you are now running from the new position).",
- :title "Copycat",
- :type "Program",
+{:code "04025"
+ :cost 1
+ :cycle_code "spin"
+ :faction "Criminal"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/04025.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "copycat"
+ :number 25
+ :packquantity 3
+ :rotated true
+ :set_code "second-thoughts"
+ :setname "Second Thoughts"
+ :side "Runner"
+ :strength 0
+ :text "Whenever you pass a piece of ice, you may trash Copycat. If you do, choose another rezzed copy of that piece of ice protecting any server. The run continues as if you had just passed the chosen piece of ice (you are now running from the new position)."
+ :title "Copycat"
+ :type "Program"
  :uniqueness false}

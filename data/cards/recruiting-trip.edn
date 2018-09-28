@@ -1,18 +1,19 @@
-{:code "08035",
- :cost 0,
- :cycle_code "sansan",
- :faction "Jinteki",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN24_35.png",
- :limited 3,
- :normalizedtitle "recruiting-trip",
- :number 35,
- :packquantity 3,
- :rotated false,
- :set_code "bb",
- :setname "Breaker Bay",
- :side "Corp",
- :text "Search R&D for up to X different <strong>sysops</strong> (by title), reveal them, and add them to HQ. Shuffle R&D.",
- :title "Recruiting Trip",
- :type "Operation",
+{:code "08035"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Jinteki"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_35.png"
+ :limited 3
+ :normalizedtitle "recruiting-trip"
+ :number 35
+ :packquantity 3
+ :rotated false
+ :set_code "breaker-bay"
+ :setname "Breaker Bay"
+ :side "Corp"
+ :strength 0
+ :text "Search R&D for up to X different <strong>sysops</strong> (by title), reveal them, and add them to HQ. Shuffle R&D."
+ :title "Recruiting Trip"
+ :type "Operation"
  :uniqueness false}

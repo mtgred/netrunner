@@ -1,21 +1,21 @@
-{:code "04002",
- :cost 0,
- :cycle_code "spin",
- :faction "Anarch",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/04002.png",
- :limited 3,
- :memoryunits 0,
- :normalizedtitle "pawn",
- :number 2,
- :packquantity 3,
- :rotated true,
- :set_code "om",
- :setname "Opening Moves",
- :side "Runner",
- :subtype "Caïssa",
- :text
- "[click]: Host Pawn on an outermost piece of ice protecting a central server.\nWhenever you make a successful run while Pawn is hosted on a piece of ice, move Pawn to the piece of ice directly after the current ice hosting Pawn, if able; otherwise, trash Pawn instead and install a <strong>Caïssa</strong> program from your grip or heap, ignoring all costs.\n<errata>Errata from FAQ 3.0.1</errata>",
- :title "Pawn",
- :type "Program",
+{:code "04002"
+ :cost 0
+ :cycle_code "spin"
+ :faction "Anarch"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/04002.png"
+ :limited 3
+ :memoryunits 0
+ :normalizedtitle "pawn"
+ :number 2
+ :packquantity 3
+ :rotated true
+ :set_code "opening-moves"
+ :setname "Opening Moves"
+ :side "Runner"
+ :strength 0
+ :subtype "Caïssa"
+ :text "[click]: Host Pawn on an outermost piece of ice protecting a central server.\nWhenever you make a successful run while Pawn is hosted on a piece of ice, move Pawn to the piece of ice directly after the current ice hosting Pawn, if able; otherwise, trash Pawn instead and install a <strong>Caïssa</strong> program from your grip or heap, ignoring all costs.\n<errata>Errata from FAQ 3.0.1</errata>"
+ :title "Pawn"
+ :type "Program"
  :uniqueness false}

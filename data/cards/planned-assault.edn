@@ -1,19 +1,20 @@
-{:code "05036",
- :cost 2,
- :cycle_code "honor-and-profit",
- :faction "Criminal",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/05036.png",
- :limited 3,
- :normalizedtitle "planned-assault",
- :number 36,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Runner",
- :subtype "Double",
- :text "As an additional cost to play this event, spend [click].\nSearch your stack for a <strong>run</strong> event and play that <strong>run</strong> event (paying its play cost), ignoring any additional costs. Shuffle your stack.",
- :title "Planned Assault",
- :type "Event",
+{:code "05036"
+ :cost 2
+ :cycle_code "honor-and-profit"
+ :faction "Criminal"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/05036.png"
+ :limited 3
+ :normalizedtitle "planned-assault"
+ :number 36
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Runner"
+ :strength 0
+ :subtype "Double"
+ :text "As an additional cost to play this event, spend [click].\nSearch your stack for a <strong>run</strong> event and play that <strong>run</strong> event (paying its play cost), ignoring any additional costs. Shuffle your stack."
+ :title "Planned Assault"
+ :type "Event"
  :uniqueness false}

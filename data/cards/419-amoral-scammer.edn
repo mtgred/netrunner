@@ -1,20 +1,22 @@
-{:baselink 1,
- :code "21063",
- :cycle_code "kitara",
- :faction "Criminal",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN53_63.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "419-amoral-scammer",
- :number 63,
- :packquantity 3,
- :rotated false,
- :set_code "tdatd",
- :setname "The Devil and the Dragon",
- :side "Runner",
- :subtype "Natural",
- :text "The first time the Corp installs a card each turn, you may expose that card unless the Corp pays 1[credit].",
- :title "419: Amoral Scammer",
- :type "Identity",
+{:baselink 1
+ :code "21063"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Criminal"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_63.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "419-amoral-scammer"
+ :number 63
+ :packquantity 3
+ :rotated false
+ :set_code "the-devil-and-the-dragon"
+ :setname "The Devil and the Dragon"
+ :side "Runner"
+ :strength 0
+ :subtype "Natural"
+ :text "The first time the Corp installs a card each turn, you may expose that card unless the Corp pays 1[credit]."
+ :title "419: Amoral Scammer"
+ :type "Identity"
  :uniqueness false}

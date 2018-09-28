@@ -1,19 +1,20 @@
-{:code "07038",
- :cost 1,
- :cycle_code "order-and-chaos",
- :faction "Anarch",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN22_38.png",
- :limited 3,
- :normalizedtitle "knifed",
- :number 38,
- :packquantity 3,
- :rotated false,
- :set_code "oac",
- :setname "Order and Chaos",
- :side "Runner",
- :subtype "Run - Sabotage",
- :text "Make a run. The first time you break all subroutines on a <strong>barrier</strong> during this run, trash that <strong>barrier</strong>.",
- :title "Knifed",
- :type "Event",
+{:code "07038"
+ :cost 1
+ :cycle_code "order-and-chaos"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_38.png"
+ :limited 3
+ :normalizedtitle "knifed"
+ :number 38
+ :packquantity 3
+ :rotated false
+ :set_code "order-and-chaos"
+ :setname "Order and Chaos"
+ :side "Runner"
+ :strength 0
+ :subtype "Run - Sabotage"
+ :text "Make a run. The first time you break all subroutines on a <strong>barrier</strong> during this run, trash that <strong>barrier</strong>."
+ :title "Knifed"
+ :type "Event"
  :uniqueness false}

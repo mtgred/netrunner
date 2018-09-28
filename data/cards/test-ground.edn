@@ -1,19 +1,20 @@
-{:code "08071",
- :cost 0,
- :cycle_code "sansan",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN26_71.png",
- :limited 3,
- :normalizedtitle "test-ground",
- :number 71,
- :packquantity 3,
- :rotated false,
- :set_code "uw",
- :setname "The Underway",
- :side "Corp",
- :text "Test Ground can be advanced.\n[trash]: Derez 1 card for each advancement token on Test Ground.",
- :title "Test Ground",
- :trash 2,
- :type "Asset",
+{:code "08071"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_71.png"
+ :limited 3
+ :normalizedtitle "test-ground"
+ :number 71
+ :packquantity 3
+ :rotated false
+ :set_code "the-underway"
+ :setname "The Underway"
+ :side "Corp"
+ :strength 0
+ :text "Test Ground can be advanced.\n[trash]: Derez 1 card for each advancement token on Test Ground."
+ :title "Test Ground"
+ :trash 2
+ :type "Asset"
  :uniqueness false}

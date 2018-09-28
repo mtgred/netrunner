@@ -1,21 +1,20 @@
-{:code "01112",
- :cost 1,
- :cycle_code "core",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/01112.png",
- :limited 3,
- :normalizedtitle "hunter",
- :number 112,
- :packquantity 2,
- :replaced_by "20130",
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Corp",
- :strength 4,
- :subtype "Sentry - Tracer - Observer",
- :text "[subroutine] <trace>Trace 3</trace> If successful, give the Runner 1 tag.",
- :title "Hunter",
- :type "ICE",
+{:code "01112"
+ :cost 1
+ :cycle_code "core"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/01112.png"
+ :limited 3
+ :normalizedtitle "hunter"
+ :number 112
+ :packquantity 2
+ :replaced_by "20130"
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 4
+ :subtype "Sentry - Tracer - Observer"
+ :text "[subroutine] <trace>Trace 3</trace> If successful, give the Runner 1 tag."
+ :title "Hunter"
+ :type "ICE"
  :uniqueness false}

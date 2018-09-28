@@ -1,20 +1,20 @@
-{:code "02015",
- :cost 1,
- :cycle_code "genesis",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/02015.png",
- :limited 3,
- :normalizedtitle "snowflake",
- :number 15,
- :packquantity 3,
- :rotated true,
- :set_code "wla",
- :setname "What Lies Ahead",
- :side "Corp",
- :strength 3,
- :subtype "Barrier - Psi",
- :text "[subroutine] You and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. End the run if you and the Runner spent a different number of credits.",
- :title "Snowflake",
- :type "ICE",
+{:code "02015"
+ :cost 1
+ :cycle_code "genesis"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/02015.png"
+ :limited 3
+ :normalizedtitle "snowflake"
+ :number 15
+ :packquantity 3
+ :rotated true
+ :set_code "what-lies-ahead"
+ :setname "What Lies Ahead"
+ :side "Corp"
+ :strength 3
+ :subtype "Barrier - Psi"
+ :text "[subroutine] You and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. End the run if you and the Runner spent a different number of credits."
+ :title "Snowflake"
+ :type "ICE"
  :uniqueness false}

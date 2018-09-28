@@ -1,20 +1,20 @@
-{:code "12029",
- :cost 4,
- :cycle_code "red-sand",
- :faction "Haas-Bioroid",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN44_29.png",
- :limited 3,
- :normalizedtitle "seidr-adaptive-barrier",
- :number 29,
- :packquantity 3,
- :rotated false,
- :set_code "so",
- :setname "Station One",
- :side "Corp",
- :strength 2,
- :subtype "Barrier",
- :text "Seidr Adaptive Barrier has +1 strength for each piece of ice protecting this server.\n[subroutine] End the run.",
- :title "Seidr Adaptive Barrier",
- :type "ICE",
+{:code "12029"
+ :cost 4
+ :cycle_code "red-sand"
+ :faction "Haas-Bioroid"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_29.png"
+ :limited 3
+ :normalizedtitle "seidr-adaptive-barrier"
+ :number 29
+ :packquantity 3
+ :rotated false
+ :set_code "station-one"
+ :setname "Station One"
+ :side "Corp"
+ :strength 2
+ :subtype "Barrier"
+ :text "Seidr Adaptive Barrier has +1 strength for each piece of ice protecting this server.\n[subroutine] End the run."
+ :title "Seidr Adaptive Barrier"
+ :type "ICE"
  :uniqueness false}

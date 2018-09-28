@@ -1,19 +1,20 @@
-{:code "21087",
- :cost 1,
- :cycle_code "kitara",
- :faction "Shaper",
- :factioncost 4,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN54_87.png",
- :limited 3,
- :normalizedtitle "gebrselassie",
- :number 87,
- :packquantity 3,
- :rotated false,
- :set_code "win",
- :setname "Whispers in Nalubaale",
- :side "Runner",
- :subtype "Mod",
- :text "[click]: Host Gebrselassie on an installed non-<strong>AI icebreaker</strong>.\nHost <strong>icebreaker</strong> returns to its base strength at the end of each turn rather than each encounter.",
- :title "Gebrselassie",
- :type "Hardware",
+{:code "21087"
+ :cost 1
+ :cycle_code "kitara"
+ :faction "Shaper"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_87.png"
+ :limited 3
+ :normalizedtitle "gebrselassie"
+ :number 87
+ :packquantity 3
+ :rotated false
+ :set_code "whispers-in-nalubaale"
+ :setname "Whispers in Nalubaale"
+ :side "Runner"
+ :strength 0
+ :subtype "Mod"
+ :text "[click]: Host Gebrselassie on an installed non-<strong>AI icebreaker</strong>.\nHost <strong>icebreaker</strong> returns to its base strength at the end of each turn rather than each encounter."
+ :title "Gebrselassie"
+ :type "Hardware"
  :uniqueness true}

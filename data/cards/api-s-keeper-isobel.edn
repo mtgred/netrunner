@@ -1,20 +1,21 @@
-{:code "22036",
- :cost 2,
- :cycle_code "reign-and-reverie",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN56_36.png",
- :limited 3,
- :normalizedtitle "api-s-keeper-isobel",
- :number 36,
- :packquantity 3,
- :rotated false,
- :set_code "rar",
- :setname "Reign and Reverie",
- :side "Corp",
- :subtype "Character",
- :text "When your turn begins, you may remove an advancement token from an installed card to gain 3[credit].",
- :title "API-S Keeper Isobel",
- :trash 4,
- :type "Asset",
+{:code "22036"
+ :cost 2
+ :cycle_code "reign-and-reverie"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_36.png"
+ :limited 3
+ :normalizedtitle "api-s-keeper-isobel"
+ :number 36
+ :packquantity 3
+ :rotated false
+ :set_code "reign-and-reverie"
+ :setname "Reign and Reverie"
+ :side "Corp"
+ :strength 0
+ :subtype "Character"
+ :text "When your turn begins, you may remove an advancement token from an installed card to gain 3[credit]."
+ :title "API-S Keeper Isobel"
+ :trash 4
+ :type "Asset"
  :uniqueness true}

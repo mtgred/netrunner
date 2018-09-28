@@ -1,19 +1,21 @@
-{:advancementcost 3,
- :agendapoints 1,
- :code "06024",
- :cycle_code "lunar",
- :faction "Jinteki",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN17_24.png",
- :limited 3,
- :normalizedtitle "encrypted-portals",
- :number 24,
- :packquantity 3,
- :rotated false,
- :set_code "tsb",
- :setname "The Spaces Between",
- :side "Corp",
- :subtype "Security",
- :text "All <strong>code gate</strong> ice have +1 strength.\nWhen you score Encrypted Portals, gain 1[credit] for each rezzed <strong>code gate</strong>.",
- :title "Encrypted Portals",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 1
+ :code "06024"
+ :cost 0
+ :cycle_code "lunar"
+ :faction "Jinteki"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_24.png"
+ :limited 3
+ :normalizedtitle "encrypted-portals"
+ :number 24
+ :packquantity 3
+ :rotated false
+ :set_code "the-spaces-between"
+ :setname "The Spaces Between"
+ :side "Corp"
+ :strength 0
+ :subtype "Security"
+ :text "All <strong>code gate</strong> ice have +1 strength.\nWhen you score Encrypted Portals, gain 1[credit] for each rezzed <strong>code gate</strong>."
+ :title "Encrypted Portals"
+ :type "Agenda"
  :uniqueness false}

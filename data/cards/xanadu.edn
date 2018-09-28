@@ -1,20 +1,20 @@
-{:code "20018",
- :cost 3,
- :cycle_code "core2",
- :faction "Anarch",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN49_18.png",
- :limited 3,
- :normalizedtitle "xanadu",
- :number 18,
- :packquantity 1,
- :replaces "02082",
- :rotated false,
- :set_code "core2",
- :setname "Revised Core Set",
- :side "Runner",
- :subtype "Virtual",
- :text "The rez cost of all ice is increased by 1.",
- :title "Xanadu",
- :type "Resource",
+{:code "20018"
+ :cost 3
+ :cycle_code "core2"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_18.png"
+ :limited 3
+ :normalizedtitle "xanadu"
+ :number 18
+ :packquantity 1
+ :replaces "02082"
+ :set_code "revised-core-set"
+ :setname "Revised Core Set"
+ :side "Runner"
+ :strength 0
+ :subtype "Virtual"
+ :text "The rez cost of all ice is increased by 1."
+ :title "Xanadu"
+ :type "Resource"
  :uniqueness true}

@@ -1,18 +1,19 @@
-{:code "03034",
- :cost 0,
- :cycle_code "creation-and-control",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/03034.png",
- :limited 3,
- :normalizedtitle "scavenge",
- :number 34,
- :packquantity 3,
- :rotated false,
- :set_code "cac",
- :setname "Creation and Control",
- :side "Runner",
- :text "Trash an installed program.\nIf you do, install a program from your grip or heap, lowering the install cost of that program by the cost of the program trashed.\n<errata>Errata from FAQ 4.0</errata>",
- :title "Scavenge",
- :type "Event",
+{:code "03034"
+ :cost 0
+ :cycle_code "creation-and-control"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/03034.png"
+ :limited 3
+ :normalizedtitle "scavenge"
+ :number 34
+ :packquantity 3
+ :rotated false
+ :set_code "creation-and-control"
+ :setname "Creation and Control"
+ :side "Runner"
+ :strength 0
+ :text "Trash an installed program.\nIf you do, install a program from your grip or heap, lowering the install cost of that program by the cost of the program trashed.\n<errata>Errata from FAQ 4.0</errata>"
+ :title "Scavenge"
+ :type "Event"
  :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "13038",
- :cost 6,
- :cycle_code "terminal-directive",
- :faction "Haas-Bioroid",
- :factioncost 4,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_38.png",
- :limited 3,
- :normalizedtitle "ultraviolet-clearance",
- :number 38,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Corp",
- :subtype "Transaction - Triple",
- :text "As an additional cost to play this operation, spend [click][click].\nGain 10[credit] and draw 4 cards. Install 1 card (paying all costs).",
- :title "Ultraviolet Clearance",
- :type "Operation",
+{:code "13038"
+ :cost 6
+ :cycle_code "terminal-directive"
+ :faction "Haas-Bioroid"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_38.png"
+ :limited 3
+ :normalizedtitle "ultraviolet-clearance"
+ :number 38
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Corp"
+ :strength 0
+ :subtype "Transaction - Triple"
+ :text "As an additional cost to play this operation, spend [click][click].\nGain 10[credit] and draw 4 cards. Install 1 card (paying all costs)."
+ :title "Ultraviolet Clearance"
+ :type "Operation"
  :uniqueness false}

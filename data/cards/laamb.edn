@@ -1,21 +1,21 @@
-{:code "21086",
- :cost 4,
- :cycle_code "kitara",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN54_86.png",
- :limited 3,
- :memoryunits 2,
- :normalizedtitle "laamb",
- :number 86,
- :packquantity 3,
- :rotated false,
- :set_code "win",
- :setname "Whispers in Nalubaale",
- :side "Runner",
- :strength 2,
- :subtype "Icebreaker - Fracter",
- :text "When you encounter a piece of ice, you may pay 2[credit] to have it gain <strong>barrier</strong> until the end of the encounter. Use this ability only once per turn.\n2[credit]: break any number of <strong>barrier</strong> subroutines.\n3[credit]: +6 strength.",
- :title "Laamb",
- :type "Program",
+{:code "21086"
+ :cost 4
+ :cycle_code "kitara"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_86.png"
+ :limited 3
+ :memoryunits 2
+ :normalizedtitle "laamb"
+ :number 86
+ :packquantity 3
+ :rotated false
+ :set_code "whispers-in-nalubaale"
+ :setname "Whispers in Nalubaale"
+ :side "Runner"
+ :strength 2
+ :subtype "Icebreaker - Fracter"
+ :text "When you encounter a piece of ice, you may pay 2[credit] to have it gain <strong>barrier</strong> until the end of the encounter. Use this ability only once per turn.\n2[credit]: break any number of <strong>barrier</strong> subroutines.\n3[credit]: +6 strength."
+ :title "Laamb"
+ :type "Program"
  :uniqueness false}

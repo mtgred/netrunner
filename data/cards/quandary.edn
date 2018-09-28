@@ -1,20 +1,20 @@
-{:code "04120",
- :cost 1,
- :cycle_code "spin",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/04120.png",
- :limited 3,
- :normalizedtitle "quandary",
- :number 120,
- :packquantity 3,
- :rotated true,
- :set_code "dt",
- :setname "Double Time",
- :side "Corp",
- :strength 0,
- :subtype "Code Gate",
- :text "[subroutine] End the run.",
- :title "Quandary",
- :type "ICE",
+{:code "04120"
+ :cost 1
+ :cycle_code "spin"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/04120.png"
+ :limited 3
+ :normalizedtitle "quandary"
+ :number 120
+ :packquantity 3
+ :rotated true
+ :set_code "double-time"
+ :setname "Double Time"
+ :side "Corp"
+ :strength 0
+ :subtype "Code Gate"
+ :text "[subroutine] End the run."
+ :title "Quandary"
+ :type "ICE"
  :uniqueness false}

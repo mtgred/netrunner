@@ -1,20 +1,21 @@
-{:code "10076",
- :cost 0,
- :cycle_code "mumbad",
- :faction "Neutral",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN33_76.png",
- :limited 3,
- :normalizedtitle "mumbad-virtual-tour",
- :number 76,
- :packquantity 3,
- :rotated false,
- :set_code "si",
- :setname "Salsette Island",
- :side "Corp",
- :subtype "Alliance",
- :text "This card costs 0 influence if you have 7 or more assets in your deck.\nIf the Runner accesses Mumbad Virtual Tour while it is installed, he or she must trash it, if able.",
- :title "Mumbad Virtual Tour",
- :trash 5,
- :type "Upgrade",
+{:code "10076"
+ :cost 0
+ :cycle_code "mumbad"
+ :faction "Neutral"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_76.png"
+ :limited 3
+ :normalizedtitle "mumbad-virtual-tour"
+ :number 76
+ :packquantity 3
+ :rotated false
+ :set_code "salsette-island"
+ :setname "Salsette Island"
+ :side "Corp"
+ :strength 0
+ :subtype "Alliance"
+ :text "This card costs 0 influence if you have 7 or more assets in your deck.\nIf the Runner accesses Mumbad Virtual Tour while it is installed, he or she must trash it, if able."
+ :title "Mumbad Virtual Tour"
+ :trash 5
+ :type "Upgrade"
  :uniqueness false}

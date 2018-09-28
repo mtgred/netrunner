@@ -1,20 +1,21 @@
-{:code "11093",
- :cost 1,
- :cycle_code "flashpoint",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN40_93.png",
- :limited 3,
- :normalizedtitle "nihongai-grid",
- :number 93,
- :packquantity 3,
- :rotated false,
- :set_code "ml",
- :setname "Martial Law",
- :side "Corp",
- :subtype "Region",
- :text "If the Runner has fewer than 6[credit] or fewer than 2 cards in his or her grip when there is a successful run on this server, you may look at the top 5 cards of R&D and swap 1 of those cards with a card in HQ.\nLimit 1 <strong>region</strong> per server.",
- :title "Nihongai Grid",
- :trash 5,
- :type "Upgrade",
+{:code "11093"
+ :cost 1
+ :cycle_code "flashpoint"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_93.png"
+ :limited 3
+ :normalizedtitle "nihongai-grid"
+ :number 93
+ :packquantity 3
+ :rotated false
+ :set_code "martial-law"
+ :setname "Martial Law"
+ :side "Corp"
+ :strength 0
+ :subtype "Region"
+ :text "If the Runner has fewer than 6[credit] or fewer than 2 cards in his or her grip when there is a successful run on this server, you may look at the top 5 cards of R&D and swap 1 of those cards with a card in HQ.\nLimit 1 <strong>region</strong> per server."
+ :title "Nihongai Grid"
+ :trash 5
+ :type "Upgrade"
  :uniqueness true}

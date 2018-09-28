@@ -1,18 +1,19 @@
-{:code "11062",
- :cost 3,
- :cycle_code "flashpoint",
- :faction "Anarch",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN39_62.png",
- :limited 3,
- :normalizedtitle "frantic-coding",
- :number 62,
- :packquantity 3,
- :rotated false,
- :set_code "in",
- :setname "Intervention",
- :side "Runner",
- :text "Look at the top 10 cards of your stack. If any of those cards are programs, you may install one of them, lowering the install cost by 5. Trash the rest of those cards.",
- :title "Frantic Coding",
- :type "Event",
+{:code "11062"
+ :cost 3
+ :cycle_code "flashpoint"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_62.png"
+ :limited 3
+ :normalizedtitle "frantic-coding"
+ :number 62
+ :packquantity 3
+ :rotated false
+ :set_code "intervention"
+ :setname "Intervention"
+ :side "Runner"
+ :strength 0
+ :text "Look at the top 10 cards of your stack. If any of those cards are programs, you may install one of them, lowering the install cost by 5. Trash the rest of those cards."
+ :title "Frantic Coding"
+ :type "Event"
  :uniqueness false}

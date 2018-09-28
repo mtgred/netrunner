@@ -1,19 +1,20 @@
-{:code "12081",
- :cost 0,
- :cycle_code "red-sand",
- :faction "Anarch",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN47_81.png",
- :limited 3,
- :normalizedtitle "mars-for-martians",
- :number 81,
- :packquantity 3,
- :rotated false,
- :set_code "fm",
- :setname "Free Mars",
- :side "Runner",
- :subtype "Priority",
- :text "Play only as your first [click].\nDraw 1 card for each installed <strong>clan</strong> resource. Gain 1[credit] for each tag you have.",
- :title "Mars for Martians",
- :type "Event",
+{:code "12081"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Anarch"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_81.png"
+ :limited 3
+ :normalizedtitle "mars-for-martians"
+ :number 81
+ :packquantity 3
+ :rotated false
+ :set_code "free-mars"
+ :setname "Free Mars"
+ :side "Runner"
+ :strength 0
+ :subtype "Priority"
+ :text "Play only as your first [click].\nDraw 1 card for each installed <strong>clan</strong> resource. Gain 1[credit] for each tag you have."
+ :title "Mars for Martians"
+ :type "Event"
  :uniqueness false}

@@ -1,20 +1,21 @@
-{:code "21072",
- :cost 0,
- :cycle_code "kitara",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN53_72.png",
- :limited 3,
- :normalizedtitle "bio-vault",
- :number 72,
- :packquantity 3,
- :rotated false,
- :set_code "tdatd",
- :setname "The Devil and the Dragon",
- :side "Corp",
- :subtype "Off-Site",
- :text "Install only in a remote server.\nBio Vault can be advanced.\n[trash], <strong>2 hosted advancement tokens:</strong>\nEnd the run.",
- :title "Bio Vault",
- :trash 2,
- :type "Upgrade",
+{:code "21072"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_72.png"
+ :limited 3
+ :normalizedtitle "bio-vault"
+ :number 72
+ :packquantity 3
+ :rotated false
+ :set_code "the-devil-and-the-dragon"
+ :setname "The Devil and the Dragon"
+ :side "Corp"
+ :strength 0
+ :subtype "Off-site"
+ :text "Install only in a remote server.\nBio Vault can be advanced.\n[trash], <strong>2 hosted advancement tokens:</strong>\nEnd the run."
+ :title "Bio Vault"
+ :trash 2
+ :type "Upgrade"
  :uniqueness false}

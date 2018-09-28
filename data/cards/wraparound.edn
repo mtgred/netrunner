@@ -1,21 +1,20 @@
-{:code "20117",
- :cost 2,
- :cycle_code "core2",
- :faction "NBN",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN49_101.png",
- :limited 3,
- :normalizedtitle "wraparound",
- :number 101,
- :packquantity 2,
- :replaces "04096",
- :rotated false,
- :set_code "core2",
- :setname "Revised Core Set",
- :side "Corp",
- :strength 0,
- :subtype "Barrier",
- :text "If there is no installed <strong>fracter</strong>, Wraparound has +7 strength.\n[subroutine] End the run.",
- :title "Wraparound",
- :type "ICE",
+{:code "20117"
+ :cost 2
+ :cycle_code "core2"
+ :faction "NBN"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_101.png"
+ :limited 3
+ :normalizedtitle "wraparound"
+ :number 101
+ :packquantity 2
+ :replaces "04096"
+ :set_code "revised-core-set"
+ :setname "Revised Core Set"
+ :side "Corp"
+ :strength 0
+ :subtype "Barrier"
+ :text "If there is no installed <strong>fracter</strong>, Wraparound has +7 strength.\n[subroutine] End the run."
+ :title "Wraparound"
+ :type "ICE"
  :uniqueness false}

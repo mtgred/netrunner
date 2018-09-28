@@ -1,18 +1,19 @@
-{:code "05027",
- :cost 0,
- :cycle_code "honor-and-profit",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/05027.png",
- :limited 3,
- :normalizedtitle "fast-track",
- :number 27,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Corp",
- :text "Search R&D for an agenda, reveal it, and add it to HQ. Shuffle R&D.",
- :title "Fast Track",
- :type "Operation",
+{:code "05027"
+ :cost 0
+ :cycle_code "honor-and-profit"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/05027.png"
+ :limited 3
+ :normalizedtitle "fast-track"
+ :number 27
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Corp"
+ :strength 0
+ :text "Search R&D for an agenda, reveal it, and add it to HQ. Shuffle R&D."
+ :title "Fast Track"
+ :type "Operation"
  :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "12080",
- :cost 0,
- :cycle_code "red-sand",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN46_80.png",
- :limited 3,
- :normalizedtitle "mass-commercialization",
- :number 80,
- :packquantity 3,
- :rotated false,
- :set_code "baw",
- :setname "Blood and Water",
- :side "Corp",
- :subtype "Transaction",
- :text "Gain 2[credit] for each card with at least 1 advancement token on it.",
- :title "Mass Commercialization",
- :type "Operation",
+{:code "12080"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_80.png"
+ :limited 3
+ :normalizedtitle "mass-commercialization"
+ :number 80
+ :packquantity 3
+ :rotated false
+ :set_code "blood-and-water"
+ :setname "Blood and Water"
+ :side "Corp"
+ :strength 0
+ :subtype "Transaction"
+ :text "Gain 2[credit] for each card with at least 1 advancement token on it."
+ :title "Mass Commercialization"
+ :type "Operation"
  :uniqueness false}

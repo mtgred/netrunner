@@ -1,20 +1,21 @@
-{:code "02038",
- :cost 4,
- :cycle_code "genesis",
- :faction "Weyland Consortium",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/02038.png",
- :limited 3,
- :normalizedtitle "amazon-industrial-zone",
- :number 38,
- :packquantity 3,
- :rotated true,
- :set_code "ta",
- :setname "Trace Amount",
- :side "Corp",
- :subtype "Region",
- :text "Whenever you install a piece of ice protecting this server, you may immediately rez it, lowering its rez cost by 3.\nLimit 1 <strong>region</strong> per server.",
- :title "Amazon Industrial Zone",
- :trash 2,
- :type "Upgrade",
+{:code "02038"
+ :cost 4
+ :cycle_code "genesis"
+ :faction "Weyland Consortium"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/02038.png"
+ :limited 3
+ :normalizedtitle "amazon-industrial-zone"
+ :number 38
+ :packquantity 3
+ :rotated true
+ :set_code "trace-amount"
+ :setname "Trace Amount"
+ :side "Corp"
+ :strength 0
+ :subtype "Region"
+ :text "Whenever you install a piece of ice protecting this server, you may immediately rez it, lowering its rez cost by 3.\nLimit 1 <strong>region</strong> per server."
+ :title "Amazon Industrial Zone"
+ :trash 2
+ :type "Upgrade"
  :uniqueness false}

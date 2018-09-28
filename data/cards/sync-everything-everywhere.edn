@@ -1,19 +1,21 @@
-{:code "09001",
- :cycle_code "data-and-destiny",
- :faction "NBN",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN29_1a.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 40,
- :normalizedtitle "sync-everything-everywhere",
- :number 1,
- :packquantity 3,
- :rotated false,
- :set_code "dad",
- :setname "Data and Destiny",
- :side "Corp",
- :subtype "Division",
- :text "[click]: Flip this identity.\nThe Runner pays 1[credit] more when spending a [click] to remove a tag (not through a card ability).\nFlip side:\n[click]: Flip this identity.\nYou may pay 2[credit] fewer when spending a [click] to trash a resource (not through a card ability).",
- :title "SYNC: Everything, Everywhere",
- :type "Identity",
+{:code "09001"
+ :cost 0
+ :cycle_code "data-and-destiny"
+ :faction "NBN"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_1a.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 40
+ :normalizedtitle "sync-everything-everywhere"
+ :number 1
+ :packquantity 3
+ :rotated false
+ :set_code "data-and-destiny"
+ :setname "Data and Destiny"
+ :side "Corp"
+ :strength 0
+ :subtype "Division"
+ :text "[click]: Flip this identity.\nThe Runner pays 1[credit] more when spending a [click] to remove a tag (not through a card ability).\nFlip side:\n[click]: Flip this identity.\nYou may pay 2[credit] fewer when spending a [click] to trash a resource (not through a card ability)."
+ :title "SYNC: Everything, Everywhere"
+ :type "Identity"
  :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "22041",
- :cost 1,
- :cycle_code "reign-and-reverie",
- :faction "Jinteki",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN56_41.png",
- :limited 3,
- :normalizedtitle "daruma",
- :number 41,
- :packquantity 3,
- :rotated false,
- :set_code "rar",
- :setname "Reign and Reverie",
- :side "Corp",
- :text "When the Runner approaches this server, you may trash Daruma. If you do, swap a card installed in this server with either another card installed in a server or with an agenda, asset or upgrade from HQ.",
- :title "Daruma",
- :trash 2,
- :type "Upgrade",
+{:code "22041"
+ :cost 1
+ :cycle_code "reign-and-reverie"
+ :faction "Jinteki"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_41.png"
+ :limited 3
+ :normalizedtitle "daruma"
+ :number 41
+ :packquantity 3
+ :rotated false
+ :set_code "reign-and-reverie"
+ :setname "Reign and Reverie"
+ :side "Corp"
+ :strength 0
+ :text "When the Runner approaches this server, you may trash Daruma. If you do, swap a card installed in this server with either another card installed in a server or with an agenda, asset or upgrade from HQ."
+ :title "Daruma"
+ :trash 2
+ :type "Upgrade"
  :uniqueness false}

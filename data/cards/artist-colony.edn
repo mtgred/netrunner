@@ -1,19 +1,20 @@
-{:code "10009",
- :cost 0,
- :cycle_code "mumbad",
- :faction "Shaper",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN30_9.png",
- :limited 3,
- :normalizedtitle "artist-colony",
- :number 9,
- :packquantity 3,
- :rotated false,
- :set_code "kg",
- :setname "Kala Ghoda",
- :side "Runner",
- :subtype "Location",
- :text "<strong>Forfeit an agenda:</strong> Search your stack for a card and install it (paying the install cost). Shuffle your stack.",
- :title "Artist Colony",
- :type "Resource",
+{:code "10009"
+ :cost 0
+ :cycle_code "mumbad"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_9.png"
+ :limited 3
+ :normalizedtitle "artist-colony"
+ :number 9
+ :packquantity 3
+ :rotated false
+ :set_code "kala-ghoda"
+ :setname "Kala Ghoda"
+ :side "Runner"
+ :strength 0
+ :subtype "Location"
+ :text "<strong>Forfeit an agenda:</strong> Search your stack for a card and install it (paying the install cost). Shuffle your stack."
+ :title "Artist Colony"
+ :type "Resource"
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "11102",
- :cost 3,
- :cycle_code "flashpoint",
- :faction "Anarch",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN41_102.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "sunya",
- :number 102,
- :packquantity 3,
- :rotated false,
- :set_code "qu",
- :setname "Quorum",
- :side "Runner",
- :strength 1,
- :subtype "Icebreaker - Killer",
- :text "When an encounter in which you used Sūnya to break all subroutines on that piece of ice ends, place 1 power counter on Sūnya.\nSūnya has +1 strength for each power counter on it.\n2[credit]: Break <strong>sentry</strong> subroutine.",
- :title "Sūnya",
- :type "Program",
+{:code "11102"
+ :cost 3
+ :cycle_code "flashpoint"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_102.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "sunya"
+ :number 102
+ :packquantity 3
+ :rotated false
+ :set_code "quorum"
+ :setname "Quorum"
+ :side "Runner"
+ :strength 1
+ :subtype "Icebreaker - Killer"
+ :text "When an encounter in which you used Sūnya to break all subroutines on that piece of ice ends, place 1 power counter on Sūnya.\nSūnya has +1 strength for each power counter on it.\n2[credit]: Break <strong>sentry</strong> subroutine."
+ :title "Sūnya"
+ :type "Program"
  :uniqueness false}

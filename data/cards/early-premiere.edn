@@ -1,19 +1,20 @@
-{:code "08095",
- :cost 0,
- :cycle_code "sansan",
- :faction "NBN",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN27_95.png",
- :limited 3,
- :normalizedtitle "early-premiere",
- :number 95,
- :packquantity 3,
- :rotated false,
- :set_code "oh",
- :setname "Old Hollywood",
- :side "Corp",
- :text "When your turn begins, you may pay 1[credit]. If you do, place 1 advancement token on a card that can be advanced in a server.",
- :title "Early Premiere",
- :trash 2,
- :type "Asset",
+{:code "08095"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "NBN"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_95.png"
+ :limited 3
+ :normalizedtitle "early-premiere"
+ :number 95
+ :packquantity 3
+ :rotated false
+ :set_code "old-hollywood"
+ :setname "Old Hollywood"
+ :side "Corp"
+ :strength 0
+ :text "When your turn begins, you may pay 1[credit]. If you do, place 1 advancement token on a card that can be advanced in a server."
+ :title "Early Premiere"
+ :trash 2
+ :type "Asset"
  :uniqueness false}

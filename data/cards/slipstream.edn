@@ -1,19 +1,20 @@
-{:code "21085",
- :cost 0,
- :cycle_code "kitara",
- :faction "Criminal",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN54_85.png",
- :limited 3,
- :normalizedtitle "slipstream",
- :number 85,
- :packquantity 3,
- :rotated false,
- :set_code "win",
- :setname "Whispers in Nalubaale",
- :side "Runner",
- :subtype "Virtual",
- :text "Whenever you pass a rezzed piece of ice, you may trash Slipstream. If you do, choose a piece of ice protecting a central server in the same position as the passed ice. You are now approaching that ice.",
- :title "Slipstream",
- :type "Resource",
+{:code "21085"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Criminal"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_85.png"
+ :limited 3
+ :normalizedtitle "slipstream"
+ :number 85
+ :packquantity 3
+ :rotated false
+ :set_code "whispers-in-nalubaale"
+ :setname "Whispers in Nalubaale"
+ :side "Runner"
+ :strength 0
+ :subtype "Virtual"
+ :text "Whenever you pass a rezzed piece of ice, you may trash Slipstream. If you do, choose a piece of ice protecting a central server in the same position as the passed ice. You are now approaching that ice."
+ :title "Slipstream"
+ :type "Resource"
  :uniqueness false}

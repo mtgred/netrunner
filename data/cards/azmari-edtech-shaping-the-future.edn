@@ -1,19 +1,21 @@
-{:code "21054",
- :cycle_code "kitara",
- :faction "NBN",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN52_54.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 40,
- :normalizedtitle "azmari-edtech-shaping-the-future",
- :number 54,
- :packquantity 3,
- :rotated false,
- :set_code "cotc",
- :setname "Council of the Crest",
- :side "Corp",
- :subtype "Division",
- :text "When your turn ends, you may name a card type. Gain 2[credit] the first time each turn the Runner plays or installs a card that has the type you last named this way.",
- :title "Azmari EdTech: Shaping the Future",
- :type "Identity",
+{:code "21054"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "NBN"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_54.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 40
+ :normalizedtitle "azmari-edtech-shaping-the-future"
+ :number 54
+ :packquantity 3
+ :rotated false
+ :set_code "council-of-the-crest"
+ :setname "Council of the Crest"
+ :side "Corp"
+ :strength 0
+ :subtype "Division"
+ :text "When your turn ends, you may name a card type. Gain 2[credit] the first time each turn the Runner plays or installs a card that has the type you last named this way."
+ :title "Azmari EdTech: Shaping the Future"
+ :type "Identity"
  :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "03055",
- :cost 2,
- :cycle_code "creation-and-control",
- :faction "Neutral",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/03055.png",
- :limited 3,
- :normalizedtitle "the-source",
- :number 55,
- :packquantity 3,
- :rotated false,
- :set_code "cac",
- :setname "Creation and Control",
- :side "Runner",
- :subtype "Connection",
- :text "The advancement requirement of all agendas is increased by 1.\nAs an additional cost to steal an agenda, you must pay 3[credit].\nTrash The Source when an agenda is scored or stolen.",
- :title "The Source",
- :type "Resource",
+{:code "03055"
+ :cost 2
+ :cycle_code "creation-and-control"
+ :faction "Neutral"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/03055.png"
+ :limited 3
+ :normalizedtitle "the-source"
+ :number 55
+ :packquantity 3
+ :rotated false
+ :set_code "creation-and-control"
+ :setname "Creation and Control"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "The advancement requirement of all agendas is increased by 1.\nAs an additional cost to steal an agenda, you must pay 3[credit].\nTrash The Source when an agenda is scored or stolen."
+ :title "The Source"
+ :type "Resource"
  :uniqueness true}

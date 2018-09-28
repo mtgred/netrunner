@@ -1,19 +1,20 @@
-{:code "04113",
- :cost 0,
- :cycle_code "spin",
- :faction "NBN",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04113.png",
- :limited 3,
- :normalizedtitle "corporate-shuffle",
- :number 113,
- :packquantity 3,
- :rotated true,
- :set_code "dt",
- :setname "Double Time",
- :side "Corp",
- :subtype "Double",
- :text "As an additional cost to play this operation, spend [click].\nShuffle all cards in HQ into R&D. Draw 5 cards.",
- :title "Corporate Shuffle",
- :type "Operation",
+{:code "04113"
+ :cost 0
+ :cycle_code "spin"
+ :faction "NBN"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04113.png"
+ :limited 3
+ :normalizedtitle "corporate-shuffle"
+ :number 113
+ :packquantity 3
+ :rotated true
+ :set_code "double-time"
+ :setname "Double Time"
+ :side "Corp"
+ :strength 0
+ :subtype "Double"
+ :text "As an additional cost to play this operation, spend [click].\nShuffle all cards in HQ into R&D. Draw 5 cards."
+ :title "Corporate Shuffle"
+ :type "Operation"
  :uniqueness false}

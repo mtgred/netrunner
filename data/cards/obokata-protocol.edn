@@ -1,19 +1,21 @@
-{:advancementcost 5,
- :agendapoints 3,
- :code "12070",
- :cycle_code "red-sand",
- :faction "Jinteki",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN46_70.png",
- :limited 3,
- :normalizedtitle "obokata-protocol",
- :number 70,
- :packquantity 3,
- :rotated false,
- :set_code "baw",
- :setname "Blood and Water",
- :side "Corp",
- :subtype "Ambush",
- :text "As an additional cost to steal Obokata Protocol, the Runner must suffer 4 net damage.",
- :title "Obokata Protocol",
- :type "Agenda",
+{:advancementcost 5
+ :agendapoints 3
+ :code "12070"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Jinteki"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_70.png"
+ :limited 3
+ :normalizedtitle "obokata-protocol"
+ :number 70
+ :packquantity 3
+ :rotated false
+ :set_code "blood-and-water"
+ :setname "Blood and Water"
+ :side "Corp"
+ :strength 0
+ :subtype "Ambush"
+ :text "As an additional cost to steal Obokata Protocol, the Runner must suffer 4 net damage."
+ :title "Obokata Protocol"
+ :type "Agenda"
  :uniqueness false}

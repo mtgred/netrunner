@@ -1,19 +1,20 @@
-{:code "04016",
- :cost 2,
- :cycle_code "spin",
- :faction "NBN",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/04016.png",
- :limited 3,
- :normalizedtitle "invasion-of-privacy",
- :number 16,
- :packquantity 3,
- :rotated true,
- :set_code "om",
- :setname "Opening Moves",
- :side "Corp",
- :subtype "Double - Gray Ops",
- :text "As additional cost to play this operation, spend [click].\n<trace>Trace 2</trace> If successful, reveal the Runner's grip and trash a number of resources and/or events from it up to the amount by which your trace strength exceeded the Runner's link strength. If unsuccessful, take 1 bad publicity.",
- :title "Invasion of Privacy",
- :type "Operation",
+{:code "04016"
+ :cost 2
+ :cycle_code "spin"
+ :faction "NBN"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/04016.png"
+ :limited 3
+ :normalizedtitle "invasion-of-privacy"
+ :number 16
+ :packquantity 3
+ :rotated true
+ :set_code "opening-moves"
+ :setname "Opening Moves"
+ :side "Corp"
+ :strength 0
+ :subtype "Double - Gray Ops"
+ :text "As additional cost to play this operation, spend [click].\n<trace>Trace 2</trace> If successful, reveal the Runner's grip and trash a number of resources and/or events from it up to the amount by which your trace strength exceeded the Runner's link strength. If unsuccessful, take 1 bad publicity."
+ :title "Invasion of Privacy"
+ :type "Operation"
  :uniqueness false}

@@ -1,19 +1,21 @@
-{:code "06068",
- :cycle_code "lunar",
- :faction "Weyland Consortium",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN19_68.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "blue-sun-powering-the-future",
- :number 68,
- :packquantity 3,
- :rotated false,
- :set_code "uao",
- :setname "Up and Over",
- :side "Corp",
- :subtype "Corp",
- :text "When your turn begins, you may add 1 rezzed card to HQ and gain credits equal to its rez cost.",
- :title "Blue Sun: Powering the Future",
- :type "Identity",
+{:code "06068"
+ :cost 0
+ :cycle_code "lunar"
+ :faction "Weyland Consortium"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_68.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "blue-sun-powering-the-future"
+ :number 68
+ :packquantity 3
+ :rotated false
+ :set_code "up-and-over"
+ :setname "Up and Over"
+ :side "Corp"
+ :strength 0
+ :subtype "Corp"
+ :text "When your turn begins, you may add 1 rezzed card to HQ and gain credits equal to its rez cost."
+ :title "Blue Sun: Powering the Future"
+ :type "Identity"
  :uniqueness false}

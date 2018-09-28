@@ -1,20 +1,21 @@
-{:code "01093",
- :cycle_code "core",
- :faction "Weyland Consortium",
- :image_url "https://netrunnerdb.com/card_image/01093.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "weyland-consortium-building-a-better-world",
- :number 93,
- :packquantity 1,
- :replaced_by "20077",
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Corp",
- :subtype "Megacorp",
- :text "Gain 1[credit] whenever you play a <strong>transaction</strong> operation.",
- :title "Weyland Consortium: Building a Better World",
- :type "Identity",
+{:code "01093"
+ :cost 0
+ :cycle_code "core"
+ :faction "Weyland Consortium"
+ :image_url "https://netrunnerdb.com/card_image/01093.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "weyland-consortium-building-a-better-world"
+ :number 93
+ :packquantity 1
+ :replaced_by "20077"
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 0
+ :subtype "Megacorp"
+ :text "Gain 1[credit] whenever you play a <strong>transaction</strong> operation."
+ :title "Weyland Consortium: Building a Better World"
+ :type "Identity"
  :uniqueness false}

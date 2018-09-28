@@ -1,19 +1,20 @@
-{:code "04027",
- :cost 3,
- :cycle_code "spin",
- :faction "Shaper",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/04027.png",
- :limited 3,
- :normalizedtitle "eureka",
- :number 27,
- :packquantity 3,
- :rotated true,
- :set_code "st",
- :setname "Second Thoughts",
- :side "Runner",
- :subtype "Double",
- :text "As an additional cost to play this event, spend [click].\nReveal the top card of your stack. You may install that card, lowering the install cost by 10[credit], if able; otherwise, trash it.",
- :title "Eureka!",
- :type "Event",
+{:code "04027"
+ :cost 3
+ :cycle_code "spin"
+ :faction "Shaper"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/04027.png"
+ :limited 3
+ :normalizedtitle "eureka"
+ :number 27
+ :packquantity 3
+ :rotated true
+ :set_code "second-thoughts"
+ :setname "Second Thoughts"
+ :side "Runner"
+ :strength 0
+ :subtype "Double"
+ :text "As an additional cost to play this event, spend [click].\nReveal the top card of your stack. You may install that card, lowering the install cost by 10[credit], if able; otherwise, trash it."
+ :title "Eureka!"
+ :type "Event"
  :uniqueness false}

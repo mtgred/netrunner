@@ -1,20 +1,20 @@
-{:code "03015",
- :cost 11,
- :cycle_code "creation-and-control",
- :faction "Haas-Bioroid",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/03015.png",
- :limited 3,
- :normalizedtitle "heimdall-2-0",
- :number 15,
- :packquantity 3,
- :rotated false,
- :set_code "cac",
- :setname "Creation and Control",
- :side "Corp",
- :strength 7,
- :subtype "Barrier - Bioroid - AP",
- :text "The Runner can spend [click][click] to break up to 2 subroutines on Heimdall 2.0.\n[subroutine] Do 1 brain damage.\n[subroutine] Do 1 brain damage and end the run.\n[subroutine] End the run.",
- :title "Heimdall 2.0",
- :type "ICE",
+{:code "03015"
+ :cost 11
+ :cycle_code "creation-and-control"
+ :faction "Haas-Bioroid"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/03015.png"
+ :limited 3
+ :normalizedtitle "heimdall-2-0"
+ :number 15
+ :packquantity 3
+ :rotated false
+ :set_code "creation-and-control"
+ :setname "Creation and Control"
+ :side "Corp"
+ :strength 7
+ :subtype "Barrier - Bioroid - AP"
+ :text "The Runner can spend [click][click] to break up to 2 subroutines on Heimdall 2.0.\n[subroutine] Do 1 brain damage.\n[subroutine] Do 1 brain damage and end the run.\n[subroutine] End the run."
+ :title "Heimdall 2.0"
+ :type "ICE"
  :uniqueness false}

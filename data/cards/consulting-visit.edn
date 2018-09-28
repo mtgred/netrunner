@@ -1,19 +1,20 @@
-{:code "10094",
- :cost 2,
- :cycle_code "mumbad",
- :faction "Weyland Consortium",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN34_94.png",
- :limited 3,
- :normalizedtitle "consulting-visit",
- :number 94,
- :packquantity 3,
- :rotated false,
- :set_code "tlm",
- :setname "The Liberated Mind",
- :side "Corp",
- :subtype "Alliance - Double",
- :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [weyland-consortium] cards in your deck.\nAs an additional cost to play this operation, spend [click].\nSearch R&D for an operation and play it (paying all costs). Shuffle R&D.",
- :title "Consulting Visit",
- :type "Operation",
+{:code "10094"
+ :cost 2
+ :cycle_code "mumbad"
+ :faction "Weyland Consortium"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_94.png"
+ :limited 3
+ :normalizedtitle "consulting-visit"
+ :number 94
+ :packquantity 3
+ :rotated false
+ :set_code "the-liberated-mind"
+ :setname "The Liberated Mind"
+ :side "Corp"
+ :strength 0
+ :subtype "Alliance - Double"
+ :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [weyland-consortium] cards in your deck.\nAs an additional cost to play this operation, spend [click].\nSearch R&D for an operation and play it (paying all costs). Shuffle R&D."
+ :title "Consulting Visit"
+ :type "Operation"
  :uniqueness false}

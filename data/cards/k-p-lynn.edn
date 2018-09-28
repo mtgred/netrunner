@@ -1,20 +1,21 @@
-{:code "13052",
- :cost 1,
- :cycle_code "terminal-directive",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_52.png",
- :limited 3,
- :normalizedtitle "k-p-lynn",
- :number 52,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Corp",
- :subtype "Executive",
- :text "Whenever the Runner passes all of the ice protecting this server, he or she must either take 1 tag or end the run.",
- :title "K. P. Lynn",
- :trash 3,
- :type "Upgrade",
+{:code "13052"
+ :cost 1
+ :cycle_code "terminal-directive"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_52.png"
+ :limited 3
+ :normalizedtitle "k-p-lynn"
+ :number 52
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Corp"
+ :strength 0
+ :subtype "Executive"
+ :text "Whenever the Runner passes all of the ice protecting this server, he or she must either take 1 tag or end the run."
+ :title "K. P. Lynn"
+ :trash 3
+ :type "Upgrade"
  :uniqueness true}

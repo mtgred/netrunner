@@ -1,18 +1,19 @@
-{:code "04062",
- :cost 1,
- :cycle_code "spin",
- :faction "Anarch",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04062.png",
- :limited 3,
- :normalizedtitle "activist-support",
- :number 62,
- :packquantity 3,
- :rotated true,
- :set_code "tc",
- :setname "True Colors",
- :side "Runner",
- :text "When the Corp turn begins, take 1 tag if you have no tags.\nWhen your turn begins, give the Corp 1 bad publicity if he or she has no bad publicity.",
- :title "Activist Support",
- :type "Resource",
+{:code "04062"
+ :cost 1
+ :cycle_code "spin"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04062.png"
+ :limited 3
+ :normalizedtitle "activist-support"
+ :number 62
+ :packquantity 3
+ :rotated true
+ :set_code "true-colors"
+ :setname "True Colors"
+ :side "Runner"
+ :strength 0
+ :text "When the Corp turn begins, take 1 tag if you have no tags.\nWhen your turn begins, give the Corp 1 bad publicity if he or she has no bad publicity."
+ :title "Activist Support"
+ :type "Resource"
  :uniqueness false}

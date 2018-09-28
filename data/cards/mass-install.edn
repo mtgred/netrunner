@@ -1,18 +1,19 @@
-{:code "05051",
- :cost 1,
- :cycle_code "honor-and-profit",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/05051.png",
- :limited 3,
- :normalizedtitle "mass-install",
- :number 51,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Runner",
- :text "Install up to 3 programs from your grip (paying the install costs).",
- :title "Mass Install",
- :type "Event",
+{:code "05051"
+ :cost 1
+ :cycle_code "honor-and-profit"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/05051.png"
+ :limited 3
+ :normalizedtitle "mass-install"
+ :number 51
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Runner"
+ :strength 0
+ :text "Install up to 3 programs from your grip (paying the install costs)."
+ :title "Mass Install"
+ :type "Event"
  :uniqueness false}

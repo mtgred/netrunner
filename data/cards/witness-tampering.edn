@@ -1,19 +1,20 @@
-{:code "04118",
- :cost 4,
- :cycle_code "spin",
- :faction "Weyland Consortium",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/04118.png",
- :limited 3,
- :normalizedtitle "witness-tampering",
- :number 118,
- :packquantity 3,
- :rotated true,
- :set_code "dt",
- :setname "Double Time",
- :side "Corp",
- :subtype "Double - Gray Ops",
- :text "As an additional cost to play this operation, spend [click].\nRemove up to 2 bad publicity.",
- :title "Witness Tampering",
- :type "Operation",
+{:code "04118"
+ :cost 4
+ :cycle_code "spin"
+ :faction "Weyland Consortium"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/04118.png"
+ :limited 3
+ :normalizedtitle "witness-tampering"
+ :number 118
+ :packquantity 3
+ :rotated true
+ :set_code "double-time"
+ :setname "Double Time"
+ :side "Corp"
+ :strength 0
+ :subtype "Double - Gray Ops"
+ :text "As an additional cost to play this operation, spend [click].\nRemove up to 2 bad publicity."
+ :title "Witness Tampering"
+ :type "Operation"
  :uniqueness false}

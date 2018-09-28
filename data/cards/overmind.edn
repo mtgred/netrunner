@@ -1,21 +1,21 @@
-{:code "05053",
- :cost 4,
- :cycle_code "honor-and-profit",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/05053.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "overmind",
- :number 53,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Runner",
- :strength 0,
- :subtype "Icebreaker - AI",
- :text "Place 1 power counter on Overmind when it is installed for each unused MU.\n<strong>Hosted power counter:</strong> Break ice subroutine.\n1[credit]: +1 strength.",
- :title "Overmind",
- :type "Program",
+{:code "05053"
+ :cost 4
+ :cycle_code "honor-and-profit"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/05053.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "overmind"
+ :number 53
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Runner"
+ :strength 0
+ :subtype "Icebreaker - AI"
+ :text "Place 1 power counter on Overmind when it is installed for each unused MU.\n<strong>Hosted power counter:</strong> Break ice subroutine.\n1[credit]: +1 strength."
+ :title "Overmind"
+ :type "Program"
  :uniqueness false}

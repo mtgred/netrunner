@@ -1,20 +1,21 @@
-{:code "12068",
- :cost 2,
- :cycle_code "red-sand",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN46_68.png",
- :limited 3,
- :normalizedtitle "warroid-tracker",
- :number 68,
- :packquantity 3,
- :rotated false,
- :set_code "baw",
- :setname "Blood and Water",
- :side "Corp",
- :subtype "Bioroid",
- :text "Whenever the Runner trashes 1 or more cards in or protecting this server (including Warroid Tracker), <trace>Trace 4</trace> If successful, the Runner must trash 2 of his or her installed cards.",
- :title "Warroid Tracker",
- :trash 4,
- :type "Upgrade",
+{:code "12068"
+ :cost 2
+ :cycle_code "red-sand"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_68.png"
+ :limited 3
+ :normalizedtitle "warroid-tracker"
+ :number 68
+ :packquantity 3
+ :rotated false
+ :set_code "blood-and-water"
+ :setname "Blood and Water"
+ :side "Corp"
+ :strength 0
+ :subtype "Bioroid"
+ :text "Whenever the Runner trashes 1 or more cards in or protecting this server (including Warroid Tracker), <trace>Trace 4</trace> If successful, the Runner must trash 2 of his or her installed cards."
+ :title "Warroid Tracker"
+ :trash 4
+ :type "Upgrade"
  :uniqueness false}

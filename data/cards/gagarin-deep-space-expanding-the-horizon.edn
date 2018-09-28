@@ -1,19 +1,21 @@
-{:code "07002",
- :cycle_code "order-and-chaos",
- :faction "Weyland Consortium",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN22_2.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "gagarin-deep-space-expanding-the-horizon",
- :number 2,
- :packquantity 3,
- :rotated false,
- :set_code "oac",
- :setname "Order and Chaos",
- :side "Corp",
- :subtype "Corp",
- :text "As an additional cost to access a card in a remote server, the Runner must pay 1[credit].",
- :title "Gagarin Deep Space: Expanding the Horizon",
- :type "Identity",
+{:code "07002"
+ :cost 0
+ :cycle_code "order-and-chaos"
+ :faction "Weyland Consortium"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_2.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "gagarin-deep-space-expanding-the-horizon"
+ :number 2
+ :packquantity 3
+ :rotated false
+ :set_code "order-and-chaos"
+ :setname "Order and Chaos"
+ :side "Corp"
+ :strength 0
+ :subtype "Corp"
+ :text "As an additional cost to access a card in a remote server, the Runner must pay 1[credit]."
+ :title "Gagarin Deep Space: Expanding the Horizon"
+ :type "Identity"
  :uniqueness false}

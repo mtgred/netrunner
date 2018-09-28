@@ -1,18 +1,19 @@
-{:code "12112",
- :cost 1,
- :cycle_code "red-sand",
- :faction "Haas-Bioroid",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN48_112.png",
- :limited 3,
- :normalizedtitle "restore",
- :number 112,
- :packquantity 3,
- :rotated false,
- :set_code "cd",
- :setname "Crimson Dust",
- :side "Corp",
- :text "Install and rez 1 card from Archives (paying all costs). Remove all other copies of that card in Archives from the game.",
- :title "Restore",
- :type "Operation",
+{:code "12112"
+ :cost 1
+ :cycle_code "red-sand"
+ :faction "Haas-Bioroid"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_112.png"
+ :limited 3
+ :normalizedtitle "restore"
+ :number 112
+ :packquantity 3
+ :rotated false
+ :set_code "crimson-dust"
+ :setname "Crimson Dust"
+ :side "Corp"
+ :strength 0
+ :text "Install and rez 1 card from Archives (paying all costs). Remove all other copies of that card in Archives from the game."
+ :title "Restore"
+ :type "Operation"
  :uniqueness false}

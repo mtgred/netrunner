@@ -1,20 +1,21 @@
-{:code "10108",
- :cost 2,
- :cycle_code "mumbad",
- :faction "NBN",
- :factioncost 4,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN35_108.png",
- :limited 3,
- :normalizedtitle "full-immersion-recstudio",
- :number 108,
- :packquantity 3,
- :rotated false,
- :set_code "ftm",
- :setname "Fear the Masses",
- :side "Corp",
- :subtype "Facility",
- :text "Full Immersion RecStudio can host up to 2 assets and/or agendas.\nThe trash cost of Full Immersion RecStudio is increased by 3 for each card hosted on it.",
- :title "Full Immersion RecStudio",
- :trash 3,
- :type "Asset",
+{:code "10108"
+ :cost 2
+ :cycle_code "mumbad"
+ :faction "NBN"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_108.png"
+ :limited 3
+ :normalizedtitle "full-immersion-recstudio"
+ :number 108
+ :packquantity 3
+ :rotated false
+ :set_code "fear-the-masses"
+ :setname "Fear the Masses"
+ :side "Corp"
+ :strength 0
+ :subtype "Facility"
+ :text "Full Immersion RecStudio can host up to 2 assets and/or agendas.\nThe trash cost of Full Immersion RecStudio is increased by 3 for each card hosted on it."
+ :title "Full Immersion RecStudio"
+ :trash 3
+ :type "Asset"
  :uniqueness false}

@@ -1,18 +1,19 @@
-{:code "09030",
- :cost 3,
- :cycle_code "data-and-destiny",
- :faction "Apex",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN29_30.png",
- :limited 3,
- :normalizedtitle "apocalypse",
- :number 30,
- :packquantity 3,
- :rotated false,
- :set_code "dad",
- :setname "Data and Destiny",
- :side "Runner",
- :text "Play only if you made a successful run on HQ, R&D and Archives this turn.\nTrash all installed Corp cards. Turn all installed Runner cards facedown.",
- :title "Apocalypse",
- :type "Event",
+{:code "09030"
+ :cost 3
+ :cycle_code "data-and-destiny"
+ :faction "Apex"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_30.png"
+ :limited 3
+ :normalizedtitle "apocalypse"
+ :number 30
+ :packquantity 3
+ :rotated false
+ :set_code "data-and-destiny"
+ :setname "Data and Destiny"
+ :side "Runner"
+ :strength 0
+ :text "Play only if you made a successful run on HQ, R&D and Archives this turn.\nTrash all installed Corp cards. Turn all installed Runner cards facedown."
+ :title "Apocalypse"
+ :type "Event"
  :uniqueness false}

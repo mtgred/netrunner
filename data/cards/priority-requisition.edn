@@ -1,21 +1,22 @@
-{:advancementcost 5,
- :agendapoints 3,
- :code "01106",
- :cycle_code "core",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/01106.png",
- :limited 3,
- :normalizedtitle "priority-requisition",
- :number 106,
- :packquantity 3,
- :replaced_by "20125",
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Corp",
- :subtype "Security",
- :text "When you score Priority Requisition, you may rez a piece of ice ignoring all costs.",
- :title "Priority Requisition",
- :type "Agenda",
+{:advancementcost 5
+ :agendapoints 3
+ :code "01106"
+ :cost 0
+ :cycle_code "core"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/01106.png"
+ :limited 3
+ :normalizedtitle "priority-requisition"
+ :number 106
+ :packquantity 3
+ :replaced_by "20125"
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 0
+ :subtype "Security"
+ :text "When you score Priority Requisition, you may rez a piece of ice ignoring all costs."
+ :title "Priority Requisition"
+ :type "Agenda"
  :uniqueness false}

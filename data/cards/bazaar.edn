@@ -1,19 +1,20 @@
-{:code "10065",
- :cost 1,
- :cycle_code "mumbad",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN33_65.png",
- :limited 3,
- :normalizedtitle "bazaar",
- :number 65,
- :packquantity 3,
- :rotated false,
- :set_code "si",
- :setname "Salsette Island",
- :side "Runner",
- :subtype "Location - Ritzy",
- :text "Whenever you install a piece of hardware from your grip, you may install another copy of that hardware from your grip (paying all costs).",
- :title "Bazaar",
- :type "Resource",
+{:code "10065"
+ :cost 1
+ :cycle_code "mumbad"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_65.png"
+ :limited 3
+ :normalizedtitle "bazaar"
+ :number 65
+ :packquantity 3
+ :rotated false
+ :set_code "salsette-island"
+ :setname "Salsette Island"
+ :side "Runner"
+ :strength 0
+ :subtype "Location - Ritzy"
+ :text "Whenever you install a piece of hardware from your grip, you may install another copy of that hardware from your grip (paying all costs)."
+ :title "Bazaar"
+ :type "Resource"
  :uniqueness false}

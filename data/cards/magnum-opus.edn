@@ -1,20 +1,20 @@
-{:code "01044",
- :cost 5,
- :cycle_code "core",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/01044.png",
- :limited 3,
- :memoryunits 2,
- :normalizedtitle "magnum-opus",
- :number 44,
- :packquantity 2,
- :replaced_by "20050",
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Runner",
- :text "[click]: Gain 2[credit].",
- :title "Magnum Opus",
- :type "Program",
+{:code "01044"
+ :cost 5
+ :cycle_code "core"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/01044.png"
+ :limited 3
+ :memoryunits 2
+ :normalizedtitle "magnum-opus"
+ :number 44
+ :packquantity 2
+ :replaced_by "20050"
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Runner"
+ :strength 0
+ :text "[click]: Gain 2[credit]."
+ :title "Magnum Opus"
+ :type "Program"
  :uniqueness false}

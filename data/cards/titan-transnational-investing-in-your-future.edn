@@ -1,19 +1,21 @@
-{:code "07003",
- :cycle_code "order-and-chaos",
- :faction "Weyland Consortium",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN22_3.png",
- :influencelimit 17,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "titan-transnational-investing-in-your-future",
- :number 3,
- :packquantity 3,
- :rotated false,
- :set_code "oac",
- :setname "Order and Chaos",
- :side "Corp",
- :subtype "Corp",
- :text "Whenever you score an agenda, you may place 1 agenda counter on it.",
- :title "Titan Transnational: Investing In Your Future",
- :type "Identity",
+{:code "07003"
+ :cost 0
+ :cycle_code "order-and-chaos"
+ :faction "Weyland Consortium"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_3.png"
+ :influencelimit 17
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "titan-transnational-investing-in-your-future"
+ :number 3
+ :packquantity 3
+ :rotated false
+ :set_code "order-and-chaos"
+ :setname "Order and Chaos"
+ :side "Corp"
+ :strength 0
+ :subtype "Corp"
+ :text "Whenever you score an agenda, you may place 1 agenda counter on it."
+ :title "Titan Transnational: Investing In Your Future"
+ :type "Identity"
  :uniqueness false}

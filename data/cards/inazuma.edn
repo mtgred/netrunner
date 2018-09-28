@@ -1,20 +1,20 @@
-{:code "05016",
- :cost 3,
- :cycle_code "honor-and-profit",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/05016.png",
- :limited 3,
- :normalizedtitle "inazuma",
- :number 16,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Corp",
- :strength 5,
- :subtype "Code Gate",
- :text "[subroutine] The Runner cannot break any subroutines on the next piece of ice he or she encounters during this run.\n[subroutine] The Runner cannot jack out until after encountering the next piece of ice during this run.",
- :title "Inazuma",
- :type "ICE",
+{:code "05016"
+ :cost 3
+ :cycle_code "honor-and-profit"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/05016.png"
+ :limited 3
+ :normalizedtitle "inazuma"
+ :number 16
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Corp"
+ :strength 5
+ :subtype "Code Gate"
+ :text "[subroutine] The Runner cannot break any subroutines on the next piece of ice he or she encounters during this run.\n[subroutine] The Runner cannot jack out until after encountering the next piece of ice during this run."
+ :title "Inazuma"
+ :type "ICE"
  :uniqueness false}

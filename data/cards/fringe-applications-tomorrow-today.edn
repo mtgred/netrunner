@@ -1,18 +1,20 @@
-{:code "00013",
- :cycle_code "draft",
- :faction "Weyland Consortium",
- :image_url "https://netrunnerdb.com/card_image/00013.png",
- :limited 1,
- :minimumdecksize 30,
- :normalizedtitle "fringe-applications-tomorrow-today",
- :number 13,
- :packquantity 1,
- :rotated false,
- :set_code "draft",
- :setname "Draft",
- :side "Corp",
- :subtype "Division",
- :text "Draft format only.\nIf you have more [weyland-consortium] cards rezzed than any other faction, when the Runner's turn begins, place an advancement token on a piece of ice.",
- :title "Fringe Applications: Tomorrow, Today",
- :type "Identity",
+{:code "00013"
+ :cost 0
+ :cycle_code "draft"
+ :faction "Weyland Consortium"
+ :image_url "https://netrunnerdb.com/card_image/00013.png"
+ :limited 1
+ :minimumdecksize 30
+ :normalizedtitle "fringe-applications-tomorrow-today"
+ :number 13
+ :packquantity 1
+ :rotated false
+ :set_code "draft"
+ :setname "Draft"
+ :side "Corp"
+ :strength 0
+ :subtype "Division"
+ :text "Draft format only.\nIf you have more [weyland-consortium] cards rezzed than any other faction, when the Runner's turn begins, place an advancement token on a piece of ice."
+ :title "Fringe Applications: Tomorrow, Today"
+ :type "Identity"
  :uniqueness false}

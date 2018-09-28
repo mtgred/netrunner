@@ -1,19 +1,20 @@
-{:code "08030",
- :cost 2,
- :cycle_code "sansan",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN24_30.png",
- :limited 3,
- :normalizedtitle "tyson-observatory",
- :number 30,
- :packquantity 3,
- :rotated false,
- :set_code "bb",
- :setname "Breaker Bay",
- :side "Runner",
- :subtype "Location",
- :text "[click], [click]: Search your stack for a piece of hardware, reveal it, and add it to your grip. Shuffle your stack.",
- :title "Tyson Observatory",
- :type "Resource",
+{:code "08030"
+ :cost 2
+ :cycle_code "sansan"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_30.png"
+ :limited 3
+ :normalizedtitle "tyson-observatory"
+ :number 30
+ :packquantity 3
+ :rotated false
+ :set_code "breaker-bay"
+ :setname "Breaker Bay"
+ :side "Runner"
+ :strength 0
+ :subtype "Location"
+ :text "[click], [click]: Search your stack for a piece of hardware, reveal it, and add it to your grip. Shuffle your stack."
+ :title "Tyson Observatory"
+ :type "Resource"
  :uniqueness true}

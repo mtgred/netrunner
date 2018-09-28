@@ -1,20 +1,20 @@
-{:code "22054",
- :cost 2,
- :cycle_code "reign-and-reverie",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN56_54.png",
- :limited 3,
- :normalizedtitle "formicary",
- :number 54,
- :packquantity 3,
- :rotated false,
- :set_code "rar",
- :setname "Reign and Reverie",
- :side "Corp",
- :strength 2,
- :subtype "Sentry - AP",
- :text "When the Runner approaches a server, you may rez Formicary. If you do, move it to the innermost position of that server. The Runner is now encountering it.\n[subroutine] End the run unless the Runner suffers 2 net damage.",
- :title "Formicary",
- :type "ICE",
+{:code "22054"
+ :cost 2
+ :cycle_code "reign-and-reverie"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_54.png"
+ :limited 3
+ :normalizedtitle "formicary"
+ :number 54
+ :packquantity 3
+ :rotated false
+ :set_code "reign-and-reverie"
+ :setname "Reign and Reverie"
+ :side "Corp"
+ :strength 2
+ :subtype "Sentry - AP"
+ :text "When the Runner approaches a server, you may rez Formicary. If you do, move it to the innermost position of that server. The Runner is now encountering it.\n[subroutine] End the run unless the Runner suffers 2 net damage."
+ :title "Formicary"
+ :type "ICE"
  :uniqueness false}

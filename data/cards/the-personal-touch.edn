@@ -1,20 +1,20 @@
-{:code "01040",
- :cost 2,
- :cycle_code "core",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/01040.png",
- :limited 3,
- :normalizedtitle "the-personal-touch",
- :number 40,
- :packquantity 2,
- :replaced_by "20047",
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Runner",
- :subtype "Mod",
- :text "Install The Personal Touch only on an <strong>icebreaker.</strong>\nHost <strong>icebreaker</strong> has +1 strength.",
- :title "The Personal Touch",
- :type "Hardware",
+{:code "01040"
+ :cost 2
+ :cycle_code "core"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/01040.png"
+ :limited 3
+ :normalizedtitle "the-personal-touch"
+ :number 40
+ :packquantity 2
+ :replaced_by "20047"
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Runner"
+ :strength 0
+ :subtype "Mod"
+ :text "Install The Personal Touch only on an <strong>icebreaker.</strong>\nHost <strong>icebreaker</strong> has +1 strength."
+ :title "The Personal Touch"
+ :type "Hardware"
  :uniqueness false}

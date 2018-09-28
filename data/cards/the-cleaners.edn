@@ -1,20 +1,22 @@
-{:advancementcost 5,
- :agendapoints 3,
- :code "04036",
- :cycle_code "spin",
- :faction "Weyland Consortium",
- :image_url "https://netrunnerdb.com/card_image/04036.png",
- :limited 3,
- :normalizedtitle "the-cleaners",
- :number 36,
- :packquantity 3,
- :replaced_by "20080",
- :rotated true,
- :set_code "st",
- :setname "Second Thoughts",
- :side "Corp",
- :subtype "Security",
- :text "Whenever you do meat damage, do 1 additional meat damage.",
- :title "The Cleaners",
- :type "Agenda",
+{:advancementcost 5
+ :agendapoints 3
+ :code "04036"
+ :cost 0
+ :cycle_code "spin"
+ :faction "Weyland Consortium"
+ :image_url "https://netrunnerdb.com/card_image/04036.png"
+ :limited 3
+ :normalizedtitle "the-cleaners"
+ :number 36
+ :packquantity 3
+ :replaced_by "20080"
+ :rotated true
+ :set_code "second-thoughts"
+ :setname "Second Thoughts"
+ :side "Corp"
+ :strength 0
+ :subtype "Security"
+ :text "Whenever you do meat damage, do 1 additional meat damage."
+ :title "The Cleaners"
+ :type "Agenda"
  :uniqueness false}

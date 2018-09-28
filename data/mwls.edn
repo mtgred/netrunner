@@ -1,0 +1,163 @@
+[{:cards {"architect" {:global-penalty 1}
+          "astroscript-pilot-program" {:global-penalty 1}
+          "cerberus-lady-h1" {:global-penalty 1}
+          "clone-chip" {:global-penalty 1}
+          "desperado" {:global-penalty 1}
+          "eli-1-0" {:global-penalty 1}
+          "napd-contract" {:global-penalty 1}
+          "parasite" {:global-penalty 1}
+          "prepaid-voicepad" {:global-penalty 1}
+          "sansan-city-grid" {:global-penalty 1}
+          "yog-0" {:global-penalty 1}}
+  :code :napd-mwl-1-0
+  :date_start "2016-02-01"
+  :name "NAPD MWL 1.0"}
+ {:cards {"architect" {:global-penalty 1}
+          "breaking-news" {:global-penalty 1}
+          "cerberus-lady-h1" {:global-penalty 1}
+          "clone-chip" {:global-penalty 1}
+          "d4v1d" {:global-penalty 1}
+          "desperado" {:global-penalty 1}
+          "eli-1-0" {:global-penalty 1}
+          "faust" {:global-penalty 1}
+          "mumba-temple" {:global-penalty 1}
+          "napd-contract" {:global-penalty 1}
+          "parasite" {:global-penalty 1}
+          "prepaid-voicepad" {:global-penalty 1}
+          "sansan-city-grid" {:global-penalty 1}
+          "wyldside" {:global-penalty 1}
+          "yog-0" {:global-penalty 1}}
+  :code :napd-mwl-1-1
+  :date_start "2016-08-01"
+  :name "NAPD MWL 1.1"}
+ {:cards {"architect" {:universal-faction-cost 1}
+          "bio-ethics-association" {:universal-faction-cost 1}
+          "blackmail" {:universal-faction-cost 3}
+          "breaking-news" {:universal-faction-cost 1}
+          "cerberus-lady-h1" {:universal-faction-cost 1}
+          "clone-chip" {:universal-faction-cost 1}
+          "d4v1d" {:universal-faction-cost 1}
+          "ddos" {:universal-faction-cost 3}
+          "faust" {:universal-faction-cost 3}
+          "mumba-temple" {:universal-faction-cost 1}
+          "mumbad-city-hall" {:universal-faction-cost 1}
+          "napd-contract" {:universal-faction-cost 1}
+          "parasite" {:universal-faction-cost 1}
+          "rumor-mill" {:universal-faction-cost 3}
+          "sansan-city-grid" {:universal-faction-cost 1}
+          "sensie-actors-union" {:universal-faction-cost 3}
+          "sifr" {:universal-faction-cost 3}
+          "temujin-contract" {:universal-faction-cost 1}
+          "wyldside" {:universal-faction-cost 1}
+          "yog-0" {:universal-faction-cost 1}}
+  :code :napd-mwl-1-2
+  :date_start "2017-04-12"
+  :name "NAPD MWL 1.2"}
+ {:cards {"aaron-marron" {:deck-limit 0}
+          "aesop-s-pawnshop" {:is-restricted 1}
+          "bio-ethics-association" {:is-restricted 1}
+          "bloo-moose" {:deck-limit 0}
+          "clone-chip" {:is-restricted 1}
+          "clone-suffrage-movement" {:deck-limit 0}
+          "employee-strike" {:is-restricted 1}
+          "estelle-moon" {:is-restricted 1}
+          "fairchild-3-0" {:is-restricted 1}
+          "faust" {:deck-limit 0}
+          "film-critic" {:is-restricted 1}
+          "friends-in-high-places" {:deck-limit 0}
+          "gang-sign" {:is-restricted 1}
+          "global-food-initiative" {:is-restricted 1}
+          "hunter-seeker" {:is-restricted 1}
+          "inversificator" {:is-restricted 1}
+          "levy-ar-lab-access" {:is-restricted 1}
+          "magnum-opus" {:is-restricted 1}
+          "mumba-temple" {:is-restricted 1}
+          "mumbad-city-hall" {:deck-limit 0}
+          "museum-of-history" {:is-restricted 1}
+          "obokata-protocol" {:is-restricted 1}
+          "rumor-mill" {:deck-limit 0}
+          "salvaged-vanadis-armory" {:deck-limit 0}
+          "sensie-actors-union" {:deck-limit 0}
+          "sifr" {:deck-limit 0}
+          "temujin-contract" {:deck-limit 0}}
+  :code :napd-mwl-2-0
+  :date_start "2017-10-01"
+  :name "NAPD MWL 2.0"}
+ {:cards {"aaron-marron" {:deck-limit 0}
+          "aesop-s-pawnshop" {:is-restricted 1}
+          "bio-ethics-association" {:is-restricted 1}
+          "bloo-moose" {:deck-limit 0}
+          "brain-rewiring" {:is-restricted 1}
+          "clone-chip" {:is-restricted 1}
+          "clone-suffrage-movement" {:deck-limit 0}
+          "employee-strike" {:is-restricted 1}
+          "estelle-moon" {:is-restricted 1}
+          "fairchild-3-0" {:is-restricted 1}
+          "faust" {:deck-limit 0}
+          "film-critic" {:is-restricted 1}
+          "friends-in-high-places" {:deck-limit 0}
+          "gang-sign" {:is-restricted 1}
+          "global-food-initiative" {:is-restricted 1}
+          "hunter-seeker" {:is-restricted 1}
+          "inversificator" {:is-restricted 1}
+          "levy-ar-lab-access" {:is-restricted 1}
+          "magnum-opus" {:is-restricted 1}
+          "mother-goddess" {:is-restricted 1}
+          "mumba-temple" {:is-restricted 1}
+          "mumbad-city-hall" {:is-restricted 1}
+          "museum-of-history" {:is-restricted 1}
+          "obokata-protocol" {:is-restricted 1}
+          "rumor-mill" {:is-restricted 1}
+          "salvaged-vanadis-armory" {:deck-limit 0}
+          "sensie-actors-union" {:deck-limit 0}
+          "sifr" {:deck-limit 0}
+          "tapwrm" {:is-restricted 1}
+          "temujin-contract" {:deck-limit 0}
+          "violet-level-clearance" {:deck-limit 0}
+          "whampoa-reclamation" {:is-restricted 1}}
+  :code :napd-mwl-2-1
+  :date_start "2018-02-26"
+  :name "NAPD MWL 2.1"}
+ {:cards {"24-7-news-cycle" {:deck-limit 0}
+          "aaron-marron" {:deck-limit 0}
+          "aesop-s-pawnshop" {:is-restricted 1}
+          "bio-ethics-association" {:is-restricted 1}
+          "bloo-moose" {:deck-limit 0}
+          "brain-rewiring" {:is-restricted 1}
+          "bryan-stinson" {:is-restricted 1}
+          "cerebral-imaging-infinite-frontiers" {:deck-limit 0}
+          "clone-suffrage-movement" {:deck-limit 0}
+          "employee-strike" {:is-restricted 1}
+          "estelle-moon" {:deck-limit 0}
+          "faust" {:deck-limit 0}
+          "film-critic" {:is-restricted 1}
+          "friends-in-high-places" {:deck-limit 0}
+          "gang-sign" {:is-restricted 1}
+          "global-food-initiative" {:is-restricted 1}
+          "hunter-seeker" {:is-restricted 1}
+          "hyperdriver" {:deck-limit 0}
+          "inversificator" {:is-restricted 1}
+          "jinteki-potential-unleashed" {:is-restricted 1}
+          "levy-ar-lab-access" {:is-restricted 1}
+          "mad-dash" {:is-restricted 1}
+          "magnum-opus" {:is-restricted 1}
+          "mars-for-martians" {:deck-limit 0}
+          "mother-goddess" {:is-restricted 1}
+          "mumba-temple" {:is-restricted 1}
+          "mumbad-city-hall" {:is-restricted 1}
+          "museum-of-history" {:deck-limit 0}
+          "obokata-protocol" {:is-restricted 1}
+          "rumor-mill" {:is-restricted 1}
+          "salvaged-vanadis-armory" {:deck-limit 0}
+          "sensie-actors-union" {:deck-limit 0}
+          "sifr" {:deck-limit 0}
+          "skorpios-defense-systems-persuasive-power" {:is-restricted 1}
+          "surveyor" {:is-restricted 1}
+          "tapwrm" {:deck-limit 0}
+          "temujin-contract" {:deck-limit 0}
+          "violet-level-clearance" {:is-restricted 1}
+          "whampoa-reclamation" {:is-restricted 1}
+          "zer0" {:deck-limit 0}}
+  :code :napd-mwl-2-2
+  :date_start "2018-09-06"
+  :name "NAPD MWL 2.2"}]

@@ -1,20 +1,21 @@
-{:code "13054",
- :cost 0,
- :cycle_code "terminal-directive",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_54.png",
- :limited 3,
- :normalizedtitle "honeyfarm",
- :number 54,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Corp",
- :subtype "Ambush",
- :text "If Honeyfarm is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Honeyfarm, he or she loses 1[credit].",
- :title "Honeyfarm",
- :trash 2,
- :type "Asset",
+{:code "13054"
+ :cost 0
+ :cycle_code "terminal-directive"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_54.png"
+ :limited 3
+ :normalizedtitle "honeyfarm"
+ :number 54
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Corp"
+ :strength 0
+ :subtype "Ambush"
+ :text "If Honeyfarm is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Honeyfarm, he or she loses 1[credit]."
+ :title "Honeyfarm"
+ :trash 2
+ :type "Asset"
  :uniqueness false}

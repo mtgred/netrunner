@@ -1,20 +1,20 @@
-{:code "02078",
- :cost 7,
- :cycle_code "genesis",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/02078.png",
- :limited 3,
- :normalizedtitle "tyrant",
- :number 78,
- :packquantity 3,
- :rotated true,
- :set_code "asis",
- :setname "A Study in Static",
- :side "Corp",
- :strength 4,
- :subtype "Barrier",
- :text "Tyrant can be advanced only while rezzed and gains \"[subroutine] End the run.\" for each advancement token on it.",
- :title "Tyrant",
- :type "ICE",
+{:code "02078"
+ :cost 7
+ :cycle_code "genesis"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/02078.png"
+ :limited 3
+ :normalizedtitle "tyrant"
+ :number 78
+ :packquantity 3
+ :rotated true
+ :set_code "a-study-in-static"
+ :setname "A Study in Static"
+ :side "Corp"
+ :strength 4
+ :subtype "Barrier"
+ :text "Tyrant can be advanced only while rezzed and gains \"[subroutine] End the run.\" for each advancement token on it."
+ :title "Tyrant"
+ :type "ICE"
  :uniqueness false}

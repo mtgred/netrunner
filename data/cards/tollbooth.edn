@@ -1,21 +1,20 @@
-{:code "20116",
- :cost 8,
- :cycle_code "core2",
- :faction "NBN",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN49_100.png",
- :limited 3,
- :normalizedtitle "tollbooth",
- :number 100,
- :packquantity 2,
- :replaces "01090",
- :rotated false,
- :set_code "core2",
- :setname "Revised Core Set",
- :side "Corp",
- :strength 5,
- :subtype "Code Gate",
- :text "When the Runner encounters Tollbooth, he or she must pay 3[credit], if able. If the Runner cannot pay 3[credit], end the run.\n[subroutine] End the run.",
- :title "Tollbooth",
- :type "ICE",
+{:code "20116"
+ :cost 8
+ :cycle_code "core2"
+ :faction "NBN"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_100.png"
+ :limited 3
+ :normalizedtitle "tollbooth"
+ :number 100
+ :packquantity 2
+ :replaces "01090"
+ :set_code "revised-core-set"
+ :setname "Revised Core Set"
+ :side "Corp"
+ :strength 5
+ :subtype "Code Gate"
+ :text "When the Runner encounters Tollbooth, he or she must pay 3[credit], if able. If the Runner cannot pay 3[credit], end the run.\n[subroutine] End the run."
+ :title "Tollbooth"
+ :type "ICE"
  :uniqueness false}

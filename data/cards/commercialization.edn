@@ -1,19 +1,20 @@
-{:code "02058",
- :cost 0,
- :cycle_code "genesis",
- :faction "Weyland Consortium",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/02058.png",
- :limited 3,
- :normalizedtitle "commercialization",
- :number 58,
- :packquantity 3,
- :rotated true,
- :set_code "ce",
- :setname "Cyber Exodus",
- :side "Corp",
- :subtype "Transaction",
- :text "Choose a piece of ice. Gain 1[credit] for each advancement token on that ice.",
- :title "Commercialization",
- :type "Operation",
+{:code "02058"
+ :cost 0
+ :cycle_code "genesis"
+ :faction "Weyland Consortium"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/02058.png"
+ :limited 3
+ :normalizedtitle "commercialization"
+ :number 58
+ :packquantity 3
+ :rotated true
+ :set_code "cyber-exodus"
+ :setname "Cyber Exodus"
+ :side "Corp"
+ :strength 0
+ :subtype "Transaction"
+ :text "Choose a piece of ice. Gain 1[credit] for each advancement token on that ice."
+ :title "Commercialization"
+ :type "Operation"
  :uniqueness false}

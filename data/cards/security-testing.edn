@@ -1,19 +1,20 @@
-{:code "05048",
- :cost 0,
- :cycle_code "honor-and-profit",
- :faction "Criminal",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/05048.png",
- :limited 3,
- :normalizedtitle "security-testing",
- :number 48,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Runner",
- :subtype "Job",
- :text "When your turn begins, you may choose a server. The first time you make a successful run on that server this turn, instead of accessing cards, gain 2[credit].\n<errata>Errata from FAQ 4.0</errata>",
- :title "Security Testing",
- :type "Resource",
+{:code "05048"
+ :cost 0
+ :cycle_code "honor-and-profit"
+ :faction "Criminal"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/05048.png"
+ :limited 3
+ :normalizedtitle "security-testing"
+ :number 48
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Runner"
+ :strength 0
+ :subtype "Job"
+ :text "When your turn begins, you may choose a server. The first time you make a successful run on that server this turn, instead of accessing cards, gain 2[credit].\n<errata>Errata from FAQ 4.0</errata>"
+ :title "Security Testing"
+ :type "Resource"
  :uniqueness false}

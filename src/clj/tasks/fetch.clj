@@ -2,6 +2,7 @@
   "NetrunnerDB import tasks"
   (:require [web.db :refer [db] :as webdb]
             [clojure.string :as string]
+            [clojure.java.io :as io]
             [tasks.nrdb :refer :all]
             [tasks.altart :refer [add-art]]))
 
@@ -13,24 +14,15 @@
   [& args]
   (webdb/connect)
   (try
-    (let [use-local (some #{"--local"} args)
-          localpath (first (remove #(string/starts-with? % "--") args))
-          download-fn (if use-local
-                        (partial read-local-data localpath)
-                        download-nrdb-data)
-          cycles (fetch-data download-fn (:cycle tables))
-          mwls (fetch-data download-fn (:mwl tables))
-          sets (fetch-data download-fn (:set tables) (partial add-set-fields cycles))
-          card-download-fn (if use-local
-                             (partial read-card-dir localpath)
-                             download-nrdb-data)
-          cards (fetch-cards card-download-fn (:card tables) sets (not (some #{"--no-card-images"} args)))]
-      (println (count cycles) "cycles imported")
-      (println (count sets) "sets imported")
-      (println (count mwls) "MWL versions imported")
-      (println (count cards) "cards imported")
+    (let [localpath (first (remove #(string/starts-with? % "--") args))
+          download-images (not (some #{"--no-card-images"} args))
+          data (fetch-data localpath download-images)]
+      (println (count (:cycles data)) "cycles imported")
+      (println (count (:sets data)) "sets imported")
+      (println (count (:mwls data)) "MWL versions imported")
+      (println (count (:cards data)) "cards imported")
       (add-art false)
-      (update-config (:config tables)))
+      (update-config))
     (catch Exception e (do
                          (println "Import data failed:" (.getMessage e))
                          (.printStackTrace e)))

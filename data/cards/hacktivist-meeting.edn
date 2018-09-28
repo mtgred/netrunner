@@ -1,19 +1,20 @@
-{:code "08021",
- :cost 1,
- :cycle_code "sansan",
- :faction "Anarch",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN24_21.png",
- :limited 3,
- :normalizedtitle "hacktivist-meeting",
- :number 21,
- :packquantity 3,
- :rotated false,
- :set_code "bb",
- :setname "Breaker Bay",
- :side "Runner",
- :subtype "Current",
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is scored.\nAs an additional cost to rez non-ice cards, the Corp must randomly trash a card from HQ.",
- :title "Hacktivist Meeting",
- :type "Event",
+{:code "08021"
+ :cost 1
+ :cycle_code "sansan"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_21.png"
+ :limited 3
+ :normalizedtitle "hacktivist-meeting"
+ :number 21
+ :packquantity 3
+ :rotated false
+ :set_code "breaker-bay"
+ :setname "Breaker Bay"
+ :side "Runner"
+ :strength 0
+ :subtype "Current"
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is scored.\nAs an additional cost to rez non-ice cards, the Corp must randomly trash a card from HQ."
+ :title "Hacktivist Meeting"
+ :type "Event"
  :uniqueness false}

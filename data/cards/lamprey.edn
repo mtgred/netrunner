@@ -1,20 +1,21 @@
-{:code "06014",
- :cost 1,
- :cycle_code "lunar",
- :faction "Anarch",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/06014.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "lamprey",
- :number 14,
- :packquantity 3,
- :rotated false,
- :set_code "up",
- :setname "Upstalk",
- :side "Runner",
- :subtype "Virus",
- :text "Whenever you make a successful run on HQ, the Corp loses 1[credit].\nTrash Lamprey if the Corp purges virus counters.",
- :title "Lamprey",
- :type "Program",
+{:code "06014"
+ :cost 1
+ :cycle_code "lunar"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/06014.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "lamprey"
+ :number 14
+ :packquantity 3
+ :rotated false
+ :set_code "upstalk"
+ :setname "Upstalk"
+ :side "Runner"
+ :strength 0
+ :subtype "Virus"
+ :text "Whenever you make a successful run on HQ, the Corp loses 1[credit].\nTrash Lamprey if the Corp purges virus counters."
+ :title "Lamprey"
+ :type "Program"
  :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "13055",
- :cost 2,
- :cycle_code "terminal-directive",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_55.png",
- :limited 3,
- :normalizedtitle "long-term-investment",
- :number 55,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Corp",
- :text "When your turn begins, place 2[credit] on Long-Term Investment. If there are at least 8[credit] on Long-Term Investment, it gains \"[click]: Take any number of credits from Long-Term Investment.\"",
- :title "Long-Term Investment",
- :trash 4,
- :type "Asset",
+{:code "13055"
+ :cost 2
+ :cycle_code "terminal-directive"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_55.png"
+ :limited 3
+ :normalizedtitle "long-term-investment"
+ :number 55
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Corp"
+ :strength 0
+ :text "When your turn begins, place 2[credit] on Long-Term Investment. If there are at least 8[credit] on Long-Term Investment, it gains \"[click]: Take any number of credits from Long-Term Investment.\""
+ :title "Long-Term Investment"
+ :trash 4
+ :type "Asset"
  :uniqueness false}

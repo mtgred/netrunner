@@ -1,19 +1,22 @@
-{:advancementcost 4,
- :agendapoints 2,
- :code "11099",
- :cycle_code "flashpoint",
- :faction "Neutral",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN40_99.png",
- :limited 3,
- :normalizedtitle "show-of-force",
- :number 99,
- :packquantity 3,
- :rotated false,
- :set_code "ml",
- :setname "Martial Law",
- :side "Corp",
- :subtype "Security",
- :text "When you score Show of Force, do 2 meat damage.",
- :title "Show of Force",
- :type "Agenda",
+{:advancementcost 4
+ :agendapoints 2
+ :code "11099"
+ :cost 0
+ :cycle_code "flashpoint"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_99.png"
+ :limited 3
+ :normalizedtitle "show-of-force"
+ :number 99
+ :packquantity 3
+ :rotated false
+ :set_code "martial-law"
+ :setname "Martial Law"
+ :side "Corp"
+ :strength 0
+ :subtype "Security"
+ :text "When you score Show of Force, do 2 meat damage."
+ :title "Show of Force"
+ :type "Agenda"
  :uniqueness false}

@@ -1,18 +1,19 @@
-{:code "02100",
- :cost 0,
- :cycle_code "genesis",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/02100.png",
- :limited 3,
- :normalizedtitle "foxfire",
- :number 100,
- :packquantity 3,
- :rotated true,
- :set_code "hs",
- :setname "Humanity's Shadow",
- :side "Corp",
- :text "<trace>Trace 7</trace> If successful, trash 1 <strong>virtual</strong> resource or 1 <strong>link</strong>.",
- :title "Foxfire",
- :type "Operation",
+{:code "02100"
+ :cost 0
+ :cycle_code "genesis"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/02100.png"
+ :limited 3
+ :normalizedtitle "foxfire"
+ :number 100
+ :packquantity 3
+ :rotated true
+ :set_code "humanity-s-shadow"
+ :setname "Humanity's Shadow"
+ :side "Corp"
+ :strength 0
+ :text "<trace>Trace 7</trace> If successful, trash 1 <strong>virtual</strong> resource or 1 <strong>link</strong>."
+ :title "Foxfire"
+ :type "Operation"
  :uniqueness false}

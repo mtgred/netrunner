@@ -1,19 +1,20 @@
-{:code "10079",
- :cost 1,
- :cycle_code "mumbad",
- :faction "Criminal",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN34_79.png",
- :limited 3,
- :normalizedtitle "information-sifting",
- :number 79,
- :packquantity 3,
- :rotated false,
- :set_code "tlm",
- :setname "The Liberated Mind",
- :side "Runner",
- :subtype "Run",
- :text "Make a run on HQ. If successful, instead of accessing cards, the Corp separates all cards in HQ into 2 facedown piles. Access all of the cards in one of the piles; you cannot access any cards in the other pile this run.",
- :title "Information Sifting",
- :type "Event",
+{:code "10079"
+ :cost 1
+ :cycle_code "mumbad"
+ :faction "Criminal"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_79.png"
+ :limited 3
+ :normalizedtitle "information-sifting"
+ :number 79
+ :packquantity 3
+ :rotated false
+ :set_code "the-liberated-mind"
+ :setname "The Liberated Mind"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Make a run on HQ. If successful, instead of accessing cards, the Corp separates all cards in HQ into 2 facedown piles. Access all of the cards in one of the piles; you cannot access any cards in the other pile this run."
+ :title "Information Sifting"
+ :type "Event"
  :uniqueness false}

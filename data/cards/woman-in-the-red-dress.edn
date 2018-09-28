@@ -1,19 +1,20 @@
-{:code "04048",
- :cost 3,
- :cycle_code "spin",
- :faction "Shaper",
- :factioncost 4,
- :image_url "https://netrunnerdb.com/card_image/04048.png",
- :limited 3,
- :normalizedtitle "woman-in-the-red-dress",
- :number 48,
- :packquantity 3,
- :rotated true,
- :set_code "mt",
- :setname "Mala Tempora",
- :side "Runner",
- :subtype "Connection - Virtual",
- :text "When your turn begins, reveal the top card of R&D. The Corp may draw that card.",
- :title "Woman in the Red Dress",
- :type "Resource",
+{:code "04048"
+ :cost 3
+ :cycle_code "spin"
+ :faction "Shaper"
+ :factioncost 4
+ :image_url "https://netrunnerdb.com/card_image/04048.png"
+ :limited 3
+ :normalizedtitle "woman-in-the-red-dress"
+ :number 48
+ :packquantity 3
+ :rotated true
+ :set_code "mala-tempora"
+ :setname "Mala Tempora"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection - Virtual"
+ :text "When your turn begins, reveal the top card of R&D. The Corp may draw that card."
+ :title "Woman in the Red Dress"
+ :type "Resource"
  :uniqueness true}

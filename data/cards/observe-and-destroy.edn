@@ -1,19 +1,20 @@
-{:code "11056",
- :cost 0,
- :cycle_code "flashpoint",
- :faction "NBN",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN38_56.png",
- :limited 3,
- :normalizedtitle "observe-and-destroy",
- :number 56,
- :packquantity 3,
- :rotated false,
- :set_code "es",
- :setname "Escalation",
- :side "Corp",
- :subtype "Gray Ops",
- :text "Play only if the Runner has fewer than 6[credit].\nAs an additional cost to play this operation, remove 1 tag.\nTrash 1 installed card.",
- :title "Observe and Destroy",
- :type "Operation",
+{:code "11056"
+ :cost 0
+ :cycle_code "flashpoint"
+ :faction "NBN"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_56.png"
+ :limited 3
+ :normalizedtitle "observe-and-destroy"
+ :number 56
+ :packquantity 3
+ :rotated false
+ :set_code "escalation"
+ :setname "Escalation"
+ :side "Corp"
+ :strength 0
+ :subtype "Gray Ops"
+ :text "Play only if the Runner has fewer than 6[credit].\nAs an additional cost to play this operation, remove 1 tag.\nTrash 1 installed card."
+ :title "Observe and Destroy"
+ :type "Operation"
  :uniqueness false}

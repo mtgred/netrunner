@@ -1,20 +1,21 @@
-{:code "10068",
- :cost 1,
- :cycle_code "mumbad",
- :faction "Jinteki",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN33_68.png",
- :limited 3,
- :normalizedtitle "raman-rai",
- :number 68,
- :packquantity 3,
- :rotated false,
- :set_code "si",
- :setname "Salsette Island",
- :side "Corp",
- :subtype "Alliance - Executive",
- :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [jinteki] cards in your deck.\nOnce per turn, you may lose [click] when you draw a card. If you do, reveal that card and a card in Archives of the same type, then swap those cards.",
- :title "Raman Rai",
- :trash 3,
- :type "Asset",
+{:code "10068"
+ :cost 1
+ :cycle_code "mumbad"
+ :faction "Jinteki"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_68.png"
+ :limited 3
+ :normalizedtitle "raman-rai"
+ :number 68
+ :packquantity 3
+ :rotated false
+ :set_code "salsette-island"
+ :setname "Salsette Island"
+ :side "Corp"
+ :strength 0
+ :subtype "Alliance - Executive"
+ :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [jinteki] cards in your deck.\nOnce per turn, you may lose [click] when you draw a card. If you do, reveal that card and a card in Archives of the same type, then swap those cards."
+ :title "Raman Rai"
+ :trash 3
+ :type "Asset"
  :uniqueness true}

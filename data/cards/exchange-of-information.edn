@@ -1,19 +1,20 @@
-{:code "10092",
- :cost 0,
- :cycle_code "mumbad",
- :faction "NBN",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN34_92.png",
- :limited 3,
- :normalizedtitle "exchange-of-information",
- :number 92,
- :packquantity 3,
- :rotated false,
- :set_code "tlm",
- :setname "The Liberated Mind",
- :side "Corp",
- :subtype "Gray Ops",
- :text "Play only if the Runner is tagged.\nSwap an agenda in your score area with an agenda in the Runner's score area.",
- :title "Exchange of Information",
- :type "Operation",
+{:code "10092"
+ :cost 0
+ :cycle_code "mumbad"
+ :faction "NBN"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_92.png"
+ :limited 3
+ :normalizedtitle "exchange-of-information"
+ :number 92
+ :packquantity 3
+ :rotated false
+ :set_code "the-liberated-mind"
+ :setname "The Liberated Mind"
+ :side "Corp"
+ :strength 0
+ :subtype "Gray Ops"
+ :text "Play only if the Runner is tagged.\nSwap an agenda in your score area with an agenda in the Runner's score area."
+ :title "Exchange of Information"
+ :type "Operation"
  :uniqueness false}

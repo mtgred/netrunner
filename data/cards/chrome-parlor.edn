@@ -1,19 +1,20 @@
-{:code "08044",
- :cost 1,
- :cycle_code "sansan",
- :faction "Anarch",
- :factioncost 1,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN25_44.png",
- :limited 3,
- :normalizedtitle "chrome-parlor",
- :number 44,
- :packquantity 3,
- :rotated false,
- :set_code "cc",
- :setname "Chrome City",
- :side "Runner",
- :subtype "Location",
- :text "Prevent all meat damage and brain damage from installing <strong>cybernetics</strong>.",
- :title "Chrome Parlor",
- :type "Resource",
+{:code "08044"
+ :cost 1
+ :cycle_code "sansan"
+ :faction "Anarch"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_44.png"
+ :limited 3
+ :normalizedtitle "chrome-parlor"
+ :number 44
+ :packquantity 3
+ :rotated false
+ :set_code "chrome-city"
+ :setname "Chrome City"
+ :side "Runner"
+ :strength 0
+ :subtype "Location"
+ :text "Prevent all meat damage and brain damage from installing <strong>cybernetics</strong>."
+ :title "Chrome Parlor"
+ :type "Resource"
  :uniqueness false}

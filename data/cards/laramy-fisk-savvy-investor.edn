@@ -1,20 +1,22 @@
-{:baselink 0,
- :code "08104",
- :cycle_code "sansan",
- :faction "Criminal",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN28_104.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "laramy-fisk-savvy-investor",
- :number 104,
- :packquantity 3,
- :rotated false,
- :set_code "uot",
- :setname "The Universe of Tomorrow",
- :side "Runner",
- :subtype "Natural",
- :text "The first time you make a successful run on a central server each turn, you may force the Corp to draw 1 card.",
- :title "Laramy Fisk: Savvy Investor",
- :type "Identity",
+{:baselink 0
+ :code "08104"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Criminal"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_104.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "laramy-fisk-savvy-investor"
+ :number 104
+ :packquantity 3
+ :rotated false
+ :set_code "the-universe-of-tomorrow"
+ :setname "The Universe of Tomorrow"
+ :side "Runner"
+ :strength 0
+ :subtype "Natural"
+ :text "The first time you make a successful run on a central server each turn, you may force the Corp to draw 1 card."
+ :title "Laramy Fisk: Savvy Investor"
+ :type "Identity"
  :uniqueness false}

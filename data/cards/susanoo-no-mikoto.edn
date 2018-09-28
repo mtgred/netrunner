@@ -1,20 +1,20 @@
-{:code "05020",
- :cost 9,
- :cycle_code "honor-and-profit",
- :faction "Jinteki",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/05020.png",
- :limited 3,
- :normalizedtitle "susanoo-no-mikoto",
- :number 20,
- :packquantity 3,
- :rotated false,
- :set_code "hap",
- :setname "Honor and Profit",
- :side "Corp",
- :strength 7,
- :subtype "Sentry - Deflector",
- :text "[subroutine] If not already running on Archives, the Runner is now running on Archives instead of passing Susanoo-no-Mikoto. The Runner cannot jack out until after he or she encounters a piece of ice.",
- :title "Susanoo-no-Mikoto",
- :type "ICE",
+{:code "05020"
+ :cost 9
+ :cycle_code "honor-and-profit"
+ :faction "Jinteki"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/05020.png"
+ :limited 3
+ :normalizedtitle "susanoo-no-mikoto"
+ :number 20
+ :packquantity 3
+ :rotated false
+ :set_code "honor-and-profit"
+ :setname "Honor and Profit"
+ :side "Corp"
+ :strength 7
+ :subtype "Sentry - Deflector"
+ :text "[subroutine] If not already running on Archives, the Runner is now running on Archives instead of passing Susanoo-no-Mikoto. The Runner cannot jack out until after he or she encounters a piece of ice."
+ :title "Susanoo-no-Mikoto"
+ :type "ICE"
  :uniqueness true}

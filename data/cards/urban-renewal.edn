@@ -1,20 +1,21 @@
-{:code "21018",
- :cost 1,
- :cycle_code "kitara",
- :faction "Weyland Consortium",
- :factioncost 4,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN50_18.png",
- :limited 3,
- :normalizedtitle "urban-renewal",
- :number 18,
- :packquantity 3,
- :rotated false,
- :set_code "ss",
- :setname "Sovereign Sight",
- :side "Corp",
- :subtype "Hostile",
- :text "Place 3 power counters on Urban Renewal when it is rezzed. When there are no power counters left on Urban Renewal, trash it and do 4 meat damage.\nWhen your turn begins, remove 1 power counter from Urban Renewal.",
- :title "Urban Renewal",
- :trash 3,
- :type "Asset",
+{:code "21018"
+ :cost 1
+ :cycle_code "kitara"
+ :faction "Weyland Consortium"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_18.png"
+ :limited 3
+ :normalizedtitle "urban-renewal"
+ :number 18
+ :packquantity 3
+ :rotated false
+ :set_code "sovereign-sight"
+ :setname "Sovereign Sight"
+ :side "Corp"
+ :strength 0
+ :subtype "Hostile"
+ :text "Place 3 power counters on Urban Renewal when it is rezzed. When there are no power counters left on Urban Renewal, trash it and do 4 meat damage.\nWhen your turn begins, remove 1 power counter from Urban Renewal."
+ :title "Urban Renewal"
+ :trash 3
+ :type "Asset"
  :uniqueness false}

@@ -1,20 +1,21 @@
-{:code "04114",
- :cost 2,
- :cycle_code "spin",
- :faction "Jinteki",
- :factioncost 4,
- :image_url "https://netrunnerdb.com/card_image/04114.png",
- :limited 3,
- :normalizedtitle "caprice-nisei",
- :number 114,
- :packquantity 3,
- :rotated true,
- :set_code "dt",
- :setname "Double Time",
- :side "Corp",
- :subtype "Clone - Psi",
- :text "Whenever the Runner passes all of the ice protecting this server, you and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, end the run.",
- :title "Caprice Nisei",
- :trash 1,
- :type "Upgrade",
+{:code "04114"
+ :cost 2
+ :cycle_code "spin"
+ :faction "Jinteki"
+ :factioncost 4
+ :image_url "https://netrunnerdb.com/card_image/04114.png"
+ :limited 3
+ :normalizedtitle "caprice-nisei"
+ :number 114
+ :packquantity 3
+ :rotated true
+ :set_code "double-time"
+ :setname "Double Time"
+ :side "Corp"
+ :strength 0
+ :subtype "Clone - Psi"
+ :text "Whenever the Runner passes all of the ice protecting this server, you and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, end the run."
+ :title "Caprice Nisei"
+ :trash 1
+ :type "Upgrade"
  :uniqueness true}

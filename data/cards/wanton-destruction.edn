@@ -1,19 +1,20 @@
-{:code "07035",
- :cost 1,
- :cycle_code "order-and-chaos",
- :faction "Anarch",
- :factioncost 4,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN22_35.png",
- :limited 3,
- :normalizedtitle "wanton-destruction",
- :number 35,
- :packquantity 3,
- :rotated false,
- :set_code "oac",
- :setname "Order and Chaos",
- :side "Runner",
- :subtype "Run - Sabotage",
- :text "Make a run on HQ. If successful, instead of accessing cards, you may spend any number of [click] to force the Corp to trash an equal number of cards from HQ at random.",
- :title "Wanton Destruction",
- :type "Event",
+{:code "07035"
+ :cost 1
+ :cycle_code "order-and-chaos"
+ :faction "Anarch"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_35.png"
+ :limited 3
+ :normalizedtitle "wanton-destruction"
+ :number 35
+ :packquantity 3
+ :rotated false
+ :set_code "order-and-chaos"
+ :setname "Order and Chaos"
+ :side "Runner"
+ :strength 0
+ :subtype "Run - Sabotage"
+ :text "Make a run on HQ. If successful, instead of accessing cards, you may spend any number of [click] to force the Corp to trash an equal number of cards from HQ at random."
+ :title "Wanton Destruction"
+ :type "Event"
  :uniqueness false}

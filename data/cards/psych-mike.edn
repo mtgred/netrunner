@@ -1,19 +1,20 @@
-{:code "22021",
- :cost 1,
- :cycle_code "reign-and-reverie",
- :faction "Shaper",
- :factioncost 4,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN56_21.png",
- :limited 3,
- :normalizedtitle "psych-mike",
- :number 21,
- :packquantity 3,
- :rotated false,
- :set_code "rar",
- :setname "Reign and Reverie",
- :side "Runner",
- :subtype "Connection",
- :text "The first time a successful run on R&D ends each turn, you may gain 1[credit] for each card you accessed from R&D.",
- :title "Psych Mike",
- :type "Resource",
+{:code "22021"
+ :cost 1
+ :cycle_code "reign-and-reverie"
+ :faction "Shaper"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_21.png"
+ :limited 3
+ :normalizedtitle "psych-mike"
+ :number 21
+ :packquantity 3
+ :rotated false
+ :set_code "reign-and-reverie"
+ :setname "Reign and Reverie"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "The first time a successful run on R&D ends each turn, you may gain 1[credit] for each card you accessed from R&D."
+ :title "Psych Mike"
+ :type "Resource"
  :uniqueness true}

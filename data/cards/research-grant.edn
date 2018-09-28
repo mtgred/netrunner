@@ -1,19 +1,21 @@
-{:advancementcost 3,
- :agendapoints 1,
- :code "08032",
- :cycle_code "sansan",
- :faction "Haas-Bioroid",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN24_32.png",
- :limited 3,
- :normalizedtitle "research-grant",
- :number 32,
- :packquantity 3,
- :rotated false,
- :set_code "bb",
- :setname "Breaker Bay",
- :side "Corp",
- :subtype "Research",
- :text "When you score Research Grant, you may score another copy of Research Grant that is installed.",
- :title "Research Grant",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 1
+ :code "08032"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Haas-Bioroid"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_32.png"
+ :limited 3
+ :normalizedtitle "research-grant"
+ :number 32
+ :packquantity 3
+ :rotated false
+ :set_code "breaker-bay"
+ :setname "Breaker Bay"
+ :side "Corp"
+ :strength 0
+ :subtype "Research"
+ :text "When you score Research Grant, you may score another copy of Research Grant that is installed."
+ :title "Research Grant"
+ :type "Agenda"
  :uniqueness false}

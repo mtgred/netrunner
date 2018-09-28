@@ -1,21 +1,21 @@
-{:code "04013",
- :cost 2,
- :cycle_code "spin",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04013.png",
- :limited 3,
- :normalizedtitle "himitsu-bako",
- :number 13,
- :packquantity 3,
- :replaced_by "20099",
- :rotated true,
- :set_code "om",
- :setname "Opening Moves",
- :side "Corp",
- :strength 2,
- :subtype "Barrier",
- :text "1[credit]: Add Himitsu-Bako to HQ.\n[subroutine] End the run.",
- :title "Himitsu-Bako",
- :type "ICE",
+{:code "04013"
+ :cost 2
+ :cycle_code "spin"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04013.png"
+ :limited 3
+ :normalizedtitle "himitsu-bako"
+ :number 13
+ :packquantity 3
+ :replaced_by "20099"
+ :rotated true
+ :set_code "opening-moves"
+ :setname "Opening Moves"
+ :side "Corp"
+ :strength 2
+ :subtype "Barrier"
+ :text "1[credit]: Add Himitsu-Bako to HQ.\n[subroutine] End the run."
+ :title "Himitsu-Bako"
+ :type "ICE"
  :uniqueness false}

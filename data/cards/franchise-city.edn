@@ -1,20 +1,21 @@
-{:code "08114",
- :cost 3,
- :cycle_code "sansan",
- :faction "NBN",
- :factioncost 5,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN28_114.png",
- :limited 3,
- :normalizedtitle "franchise-city",
- :number 114,
- :packquantity 3,
- :rotated false,
- :set_code "uot",
- :setname "The Universe of Tomorrow",
- :side "Corp",
- :subtype "Facility",
- :text "When the Runner accesses an agenda, add Franchise City to your score area as an agenda worth 1 agenda point.",
- :title "Franchise City",
- :trash 2,
- :type "Asset",
+{:code "08114"
+ :cost 3
+ :cycle_code "sansan"
+ :faction "NBN"
+ :factioncost 5
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_114.png"
+ :limited 3
+ :normalizedtitle "franchise-city"
+ :number 114
+ :packquantity 3
+ :rotated false
+ :set_code "the-universe-of-tomorrow"
+ :setname "The Universe of Tomorrow"
+ :side "Corp"
+ :strength 0
+ :subtype "Facility"
+ :text "If the Runner accesses an agenda from R&D, he or she must reveal it.\nWhen the Runner accesses an agenda, add Franchise City to your score area as an agenda worth 1 agenda point.\n<errata>Errata from FAQ 4.2</errata>"
+ :title "Franchise City"
+ :trash 2
+ :type "Asset"
  :uniqueness false}

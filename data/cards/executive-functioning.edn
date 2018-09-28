@@ -1,20 +1,20 @@
-{:code "13035",
- :cost 2,
- :cycle_code "terminal-directive",
- :faction "Haas-Bioroid",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_35.png",
- :limited 3,
- :normalizedtitle "executive-functioning",
- :number 35,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Corp",
- :strength 1,
- :subtype "Code Gate - AP - Tracer",
- :text "[subroutine] <trace>Trace 4</trace> If successful, do 1 brain damage.\n<errata>Errata from FAQ 4.0</errata>",
- :title "Executive Functioning",
- :type "ICE",
+{:code "13035"
+ :cost 2
+ :cycle_code "terminal-directive"
+ :faction "Haas-Bioroid"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_35.png"
+ :limited 3
+ :normalizedtitle "executive-functioning"
+ :number 35
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Corp"
+ :strength 1
+ :subtype "Code Gate - AP - Tracer"
+ :text "[subroutine] <trace>Trace 4</trace> If successful, do 1 brain damage.\n<errata>Errata from FAQ 4.0</errata>"
+ :title "Executive Functioning"
+ :type "ICE"
  :uniqueness false}

@@ -1,21 +1,20 @@
-{:code "01078",
- :cost 8,
- :cycle_code "core",
- :faction "Jinteki",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/01078.png",
- :limited 3,
- :normalizedtitle "wall-of-thorns",
- :number 78,
- :packquantity 3,
- :replaced_by "20102",
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Corp",
- :strength 5,
- :subtype "Barrier - AP",
- :text "[subroutine] Do 2 net damage.\n[subroutine] End the run.",
- :title "Wall of Thorns",
- :type "ICE",
+{:code "01078"
+ :cost 8
+ :cycle_code "core"
+ :faction "Jinteki"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/01078.png"
+ :limited 3
+ :normalizedtitle "wall-of-thorns"
+ :number 78
+ :packquantity 3
+ :replaced_by "20102"
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 5
+ :subtype "Barrier - AP"
+ :text "[subroutine] Do 2 net damage.\n[subroutine] End the run."
+ :title "Wall of Thorns"
+ :type "ICE"
  :uniqueness false}

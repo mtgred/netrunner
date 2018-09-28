@@ -1,21 +1,23 @@
-{:baselink 0,
- :code "02046",
- :cycle_code "genesis",
- :faction "Shaper",
- :image_url "https://netrunnerdb.com/card_image/02046.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 40,
- :normalizedtitle "chaos-theory-wunderkind",
- :number 46,
- :packquantity 3,
- :replaced_by "20037",
- :rotated true,
- :set_code "ce",
- :setname "Cyber Exodus",
- :side "Runner",
- :subtype "G-Mod",
- :text "+1[mu]",
- :title "Chaos Theory: Wünderkind",
- :type "Identity",
+{:baselink 0
+ :code "02046"
+ :cost 0
+ :cycle_code "genesis"
+ :faction "Shaper"
+ :image_url "https://netrunnerdb.com/card_image/02046.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 40
+ :normalizedtitle "chaos-theory-wunderkind"
+ :number 46
+ :packquantity 3
+ :replaced_by "20037"
+ :rotated true
+ :set_code "cyber-exodus"
+ :setname "Cyber Exodus"
+ :side "Runner"
+ :strength 0
+ :subtype "G-mod"
+ :text "+1[mu]"
+ :title "Chaos Theory: Wünderkind"
+ :type "Identity"
  :uniqueness false}

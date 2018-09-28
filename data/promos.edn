@@ -1,0 +1,12 @@
+[{:description "Alternate art from a variety of sources."
+  :name "Alternate"
+  :position 0
+  :version "alt"}
+ {:description "Card art from the 2015 World Champion decks."
+  :name "World Champion"
+  :position 1
+  :version "wc2015"}
+ {:description "Card art from the Original Core Set."
+  :name "Original Core Set"
+  :position 2
+  :version "core1"}]

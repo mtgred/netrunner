@@ -1,19 +1,20 @@
-{:code "21119",
- :cost 2,
- :cycle_code "kitara",
- :faction "Weyland Consortium",
- :factioncost 5,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN55_119.png",
- :limited 3,
- :normalizedtitle "high-profile-target",
- :number 119,
- :packquantity 3,
- :rotated false,
- :set_code "ka",
- :setname "Kampala Ascendent",
- :side "Corp",
- :subtype "Black Ops",
- :text "Play only if the Runner is tagged.\nDo 2 meat damage for each tag the Runner has.",
- :title "High-Profile Target",
- :type "Operation",
+{:code "21119"
+ :cost 2
+ :cycle_code "kitara"
+ :faction "Weyland Consortium"
+ :factioncost 5
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_119.png"
+ :limited 3
+ :normalizedtitle "high-profile-target"
+ :number 119
+ :packquantity 3
+ :rotated false
+ :set_code "kampala-ascendent"
+ :setname "Kampala Ascendent"
+ :side "Corp"
+ :strength 0
+ :subtype "Black Ops"
+ :text "Play only if the Runner is tagged.\nDo 2 meat damage for each tag the Runner has."
+ :title "High-Profile Target"
+ :type "Operation"
  :uniqueness false}

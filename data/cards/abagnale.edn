@@ -1,21 +1,21 @@
-{:code "13006",
- :cost 4,
- :cycle_code "terminal-directive",
- :faction "Criminal",
- :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_6.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "abagnale",
- :number 6,
- :packquantity 3,
- :rotated false,
- :set_code "td",
- :setname "Terminal Directive",
- :side "Runner",
- :strength 2,
- :subtype "Icebreaker - Decoder",
- :text "1[credit]: Break <strong>code gate</strong> subroutine.\n2[credit]: +2 strength.\n[trash]: Bypass a piece of <strong>code gate</strong> ice currently being encountered, even if it has strength greater than Abagnale.",
- :title "Abagnale",
- :type "Program",
+{:code "13006"
+ :cost 4
+ :cycle_code "terminal-directive"
+ :faction "Criminal"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_6.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "abagnale"
+ :number 6
+ :packquantity 3
+ :rotated false
+ :set_code "terminal-directive"
+ :setname "Terminal Directive"
+ :side "Runner"
+ :strength 2
+ :subtype "Icebreaker - Decoder"
+ :text "1[credit]: Break <strong>code gate</strong> subroutine.\n2[credit]: +2 strength.\n[trash]: Bypass a piece of <strong>code gate</strong> ice currently being encountered, even if it has strength greater than Abagnale."
+ :title "Abagnale"
+ :type "Program"
  :uniqueness false}

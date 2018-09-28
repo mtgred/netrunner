@@ -1,21 +1,21 @@
-{:code "02094",
- :cost 0,
- :cycle_code "genesis",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/02094.png",
- :limited 3,
- :normalizedtitle "whirlpool",
- :number 94,
- :packquantity 3,
- :replaced_by "20103",
- :rotated true,
- :set_code "hs",
- :setname "Humanity's Shadow",
- :side "Corp",
- :strength 1,
- :subtype "Trap",
- :text "[subroutine] The Runner cannot jack out for the remainder of this run. Trash Whirlpool.",
- :title "Whirlpool",
- :type "ICE",
+{:code "02094"
+ :cost 0
+ :cycle_code "genesis"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/02094.png"
+ :limited 3
+ :normalizedtitle "whirlpool"
+ :number 94
+ :packquantity 3
+ :replaced_by "20103"
+ :rotated true
+ :set_code "humanity-s-shadow"
+ :setname "Humanity's Shadow"
+ :side "Corp"
+ :strength 1
+ :subtype "Trap"
+ :text "[subroutine] The Runner cannot jack out for the remainder of this run. Trash Whirlpool."
+ :title "Whirlpool"
+ :type "ICE"
  :uniqueness false}

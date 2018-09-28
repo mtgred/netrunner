@@ -1,18 +1,19 @@
-{:advancementcost 2,
- :agendapoints 1,
- :code "01082",
- :cycle_code "core",
- :faction "NBN",
- :image_url "https://netrunnerdb.com/card_image/01082.png",
- :limited 3,
- :normalizedtitle "breaking-news",
- :number 82,
- :packquantity 2,
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Corp",
- :text "When you score Breaking News, give the Runner 2 tags.\nWhen the turn on which you scored Breaking News ends, the Runner loses 2 tags.",
- :title "Breaking News",
- :type "Agenda",
+{:advancementcost 2
+ :agendapoints 1
+ :code "01082"
+ :cost 0
+ :cycle_code "core"
+ :faction "NBN"
+ :image_url "https://netrunnerdb.com/card_image/01082.png"
+ :limited 3
+ :normalizedtitle "breaking-news"
+ :number 82
+ :packquantity 2
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 0
+ :text "When you score Breaking News, give the Runner 2 tags.\nWhen the turn on which you scored Breaking News ends, the Runner loses 2 tags."
+ :title "Breaking News"
+ :type "Agenda"
  :uniqueness false}

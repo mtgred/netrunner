@@ -1,19 +1,20 @@
-{:code "11047",
- :cost 0,
- :cycle_code "flashpoint",
- :faction "Adam",
- :factioncost 3,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN38_47.png",
- :limited 3,
- :normalizedtitle "find-the-truth",
- :number 47,
- :packquantity 3,
- :rotated false,
- :set_code "es",
- :setname "Escalation",
- :side "Runner",
- :subtype "Directive - Virtual",
- :text "Whenever you draw a card, reveal that card.\nThe first time you make a successful run each turn, you may look at the top card of R&D.",
- :title "Find the Truth",
- :type "Resource",
+{:code "11047"
+ :cost 0
+ :cycle_code "flashpoint"
+ :faction "Adam"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_47.png"
+ :limited 3
+ :normalizedtitle "find-the-truth"
+ :number 47
+ :packquantity 3
+ :rotated false
+ :set_code "escalation"
+ :setname "Escalation"
+ :side "Runner"
+ :strength 0
+ :subtype "Directive - Virtual"
+ :text "Whenever you draw a card, reveal that card.\nThe first time you make a successful run each turn, you may look at the top card of R&D."
+ :title "Find the Truth"
+ :type "Resource"
  :uniqueness true}

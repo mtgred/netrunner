@@ -1,22 +1,21 @@
-{:code "01042",
- :cost 5,
- :cycle_code "core",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/01042.png",
- :limited 3,
- :memoryunits 2,
- :normalizedtitle "battering-ram",
- :number 42,
- :packquantity 2,
- :replaced_by "20048",
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Runner",
- :strength 3,
- :subtype "Icebreaker - Fracter",
- :text "2[credit]: Break up to 2 <strong>barrier</strong> subroutines.\n1[credit]: +1 strength for the remainder of this run.",
- :title "Battering Ram",
- :type "Program",
+{:code "01042"
+ :cost 5
+ :cycle_code "core"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/01042.png"
+ :limited 3
+ :memoryunits 2
+ :normalizedtitle "battering-ram"
+ :number 42
+ :packquantity 2
+ :replaced_by "20048"
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Runner"
+ :strength 3
+ :subtype "Icebreaker - Fracter"
+ :text "2[credit]: Break up to 2 <strong>barrier</strong> subroutines.\n1[credit]: +1 strength for the remainder of this run."
+ :title "Battering Ram"
+ :type "Program"
  :uniqueness false}

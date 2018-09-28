@@ -1,20 +1,20 @@
-{:code "01092",
- :cost 6,
- :cycle_code "core",
- :faction "NBN",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/01092.png",
- :limited 3,
- :normalizedtitle "sansan-city-grid",
- :number 92,
- :packquantity 1,
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Corp",
- :subtype "Region",
- :text "The advancement requirement of agendas installed in this server is lowered by 1.\nLimit 1 <strong>region</strong> per server.",
- :title "SanSan City Grid",
- :trash 5,
- :type "Upgrade",
+{:code "01092"
+ :cost 6
+ :cycle_code "core"
+ :faction "NBN"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/01092.png"
+ :limited 3
+ :normalizedtitle "sansan-city-grid"
+ :number 92
+ :packquantity 1
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 0
+ :subtype "Region"
+ :text "The advancement requirement of agendas installed in this server is lowered by 1.\nLimit 1 <strong>region</strong> per server."
+ :title "SanSan City Grid"
+ :trash 5
+ :type "Upgrade"
  :uniqueness false}

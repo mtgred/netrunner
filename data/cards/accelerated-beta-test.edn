@@ -1,19 +1,20 @@
-{:advancementcost 3,
- :agendapoints 2,
- :code "01055",
- :cycle_code "core",
- :faction "Haas-Bioroid",
- :image_url "https://netrunnerdb.com/card_image/01055.png",
- :limited 3,
- :normalizedtitle "accelerated-beta-test",
- :number 55,
- :packquantity 3,
- :rotated true,
- :set_code "core",
- :setname "Core Set",
- :side "Corp",
- :subtype "Research",
- :text "When you score Accelerated Beta Test, you may look at the top 3 cards of R&D. If any of those cards are ice, you may install and rez them, ignoring all costs. Trash the rest of the cards you looked at.",
- :title "Accelerated Beta Test",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 2
+ :code "01055"
+ :cost 0
+ :cycle_code "core"
+ :faction "Haas-Bioroid"
+ :image_url "https://netrunnerdb.com/card_image/01055.png"
+ :limited 3
+ :normalizedtitle "accelerated-beta-test"
+ :number 55
+ :packquantity 3
+ :set_code "core-set"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 0
+ :subtype "Research"
+ :text "When you score Accelerated Beta Test, you may look at the top 3 cards of R&D. If any of those cards are ice, you may install and rez them, ignoring all costs. Trash the rest of the cards you looked at."
+ :title "Accelerated Beta Test"
+ :type "Agenda"
  :uniqueness false}

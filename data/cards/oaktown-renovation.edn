@@ -1,19 +1,21 @@
-{:advancementcost 4,
- :agendapoints 2,
- :code "08058",
- :cycle_code "sansan",
- :faction "Weyland Consortium",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN25_58.png",
- :limited 3,
- :normalizedtitle "oaktown-renovation",
- :number 58,
- :packquantity 3,
- :rotated false,
- :set_code "cc",
- :setname "Chrome City",
- :side "Corp",
- :subtype "Initiative - Public",
- :text "Install Oaktown Renovation faceup.\nWhenever you advance Oaktown Renovation, gain 2[credit] (or 3[credit] if there are 5 or more advancement tokens on Oaktown Renovation).",
- :title "Oaktown Renovation",
- :type "Agenda",
+{:advancementcost 4
+ :agendapoints 2
+ :code "08058"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Weyland Consortium"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_58.png"
+ :limited 3
+ :normalizedtitle "oaktown-renovation"
+ :number 58
+ :packquantity 3
+ :rotated false
+ :set_code "chrome-city"
+ :setname "Chrome City"
+ :side "Corp"
+ :strength 0
+ :subtype "Initiative - Public"
+ :text "Install Oaktown Renovation faceup.\nWhenever you advance Oaktown Renovation, gain 2[credit] (or 3[credit] if there are 5 or more advancement tokens on Oaktown Renovation)."
+ :title "Oaktown Renovation"
+ :type "Agenda"
  :uniqueness false}
