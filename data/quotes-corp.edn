@@ -2,7 +2,7 @@
  {"Default"
   ["Do these ideologues know what this planet would look like without us? Protect our investment or Mars will return to dust."]
   "Anarch"
-  ["An individual and inferior mind can't possibly understand what we're trying to achieve here."]
+  ["How can one selfish and inferior mind possibly understand what we're trying to achieve here."]
   "Criminal"
   ["A whole new world... and yet the rats have come on the very same ships we brought hope with here."]
   "Shaper"
@@ -91,6 +91,12 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Argus Security: Protection Guaranteed"
@@ -99,7 +105,7 @@
   "Anarch"
   ["These hackers are a tough breed, but we will break them nonetheless."]
   "Criminal"
-  ["We have so much more than a few measily credits in store."]
+  ["We have so much more than a few measily credits in store for this one."]
   "Shaper"
   ["What's a fragile runner like you doing in a network like this?"]
   "419: Amoral Scammer"
@@ -186,17 +192,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Asa Group: Security Through Vigilance"
  {"Default"
   ["Protocols checked and re-checked. Prepare to \"test\" their brain against our code."]
   "Anarch"
-  [""]
+  ["We are prepared to stop all and any kinds of intrusions, this chaotic rabble are barely a threat."]
   "Criminal"
-  [""]
+  ["We are running additional background checks to confirm the identity of the suspect."]
   "Shaper"
-  [""]
+  ["They seem quite prepared. Have the field units deal with their contacts, they won't be able to face us alone."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -280,6 +292,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -323,7 +341,7 @@
   "Hayley Kaplan: Universal Scholar"
   [""]
   "Iain Stirling: Retired Spook"
-  [""]
+  ["Try not to fall behind, we have a very rigorous program."]
   "Jamie \"Bzzz\" Micken: Techno Savant"
   [""]
   "Jesminder Sareen: Girl Behind the Curtain"
@@ -376,17 +394,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Blue Sun: Powering the Future"
  {"Default"
-  ["Power. Everyone needs it and without us there is never enough. They don't understand power like we do. No one understands power like we do."]
+  ["Power. There is never enough. They don't understand power like we do. No one understands power like we do."]
   "Anarch"
-  [""]
+  ["You can't fight fusion with petrol bombs."]
   "Criminal"
-  [""]
+  ["Steal all you want, we can generate way more than that."]
   "Shaper"
-  [""]
+  ["It takes real skill to wield true power. Do you have it?"]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -471,15 +495,21 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Cerebral Imaging: Infinite Frontiers"
  {"Default"
   ["There are infinite ways we can win this game. Our minds are the only limit."]
   "Anarch"
-  ["Not much of a mind left to this one I'm afraid."]
+  ["Not much of a mind left to this one, I'm afraid. Get rid of them so we can move on to something more interesting."]
   "Criminal"
-  ["Here's a sharp one... full of tricks. yet no match for our vault of secrets."]
+  ["Here's a sharp one... full of tricks. Yet no match for our vault of secrets."]
   "Shaper"
   ["Now here is a mind that may just be worth taping, after all is said and done."]
   "419: Amoral Scammer"
@@ -566,17 +596,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
- "Chronos Protocol: Selective Mind-Mapping"
+ "Chronos Protocol: Selective Mind-mapping"
  {"Default"
   ["The Bio-Ethics Association won't permit us to run clinical trials on the new protocol. Thankfully, it looks like another runner has just volunteered."]
   "Anarch"
-  [""]
+  ["Subject AO31980Z - please prepare samples for initial scanning procedure."]
   "Criminal"
-  [""]
+  ["Subject HN83197O - please proceed with second-stage core analysis."]
   "Shaper"
-  [""]
+  ["Subject JY99301S - please confirm extended trial protocol usage."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -660,6 +696,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -756,17 +798,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Cybernetics Division: Humanity Upgraded"
  {"Default"
   ["That's not considered very polite, here in Oaktown. Let's see what our cybernetics have to say about it."]
   "Anarch"
-  [""]
+  ["The techs at R&D promised that we will be able to reuse any salvaged biological material for additional hardness tests."]
   "Criminal"
-  [""]
+  ["Perimeter breach detected. Deploying non-lethal countermeasures. Booting up lethal countermeasures for rapid deployment if necessary."]
   "Shaper"
-  [""]
+  ["Yes, we do have examples of our best scientists getting inspiration from solutions serendipitously found on the streets, cobbled together by some poor garage techie. We perfected them."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -786,7 +834,7 @@
   "Chaos Theory: Wünderkind"
   [""]
   "Edward Kim: Humanity's Hammer"
-  [""]
+  ["No 'ware on this hostile... Those around him however, they can be of use."]
   "Ele \"Smoke\" Scovak: Cynosure of the Net"
   [""]
   "Exile: Streethawk"
@@ -850,6 +898,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -857,11 +911,11 @@
  {"Default"
   ["We are moving forward on this. Let go of the license and liquidate the assets. It's good policy, despite what some may think."]
   "Anarch"
-  [""]
+  ["We all take risks to get where nobody else dares. Some of us take the wrong kinds of risks, though."]
   "Criminal"
-  [""]
+  ["We keep changing the world. We can't seem to change the darker side of human nature."]
   "Shaper"
-  [""]
+  ["It's quite inspiring what you have there. It's a shame we can't come to an agreement and work together."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -945,6 +999,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -952,11 +1012,11 @@
  {"Default"
   ["Humanity has no future without expansion: beyond our planets, to the stars. And yet they interfere."]
   "Anarch"
-  [""]
+  ["Taming space is humanity's one chance of survival. It seems some would rather die in chaos than touch the stars."]
   "Criminal"
-  [""]
+  ["These petty scavengers are beneath our interest. Unfortunately, they still merit our attention."]
   "Shaper"
-  [""]
+  ["How petty there are those who would interfere with us just to try and comprehend our vision. As if they could."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -1040,6 +1100,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -1051,7 +1117,7 @@
   "Criminal"
   ["Our operations are too important for the economy to allow any interference. We will crush all intrusion attempts with extreme prejudice."]
   "Shaper"
-  [""]
+  ["We take science and use it for everyone's long-term good. Misfits like you use science to derail progress. This can't be tolerated."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -1135,6 +1201,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -1142,11 +1214,11 @@
  {"Default"
   ["We'll do what we do best. Let's keep them entertained while we wrap up this project."]
   "Anarch"
-  ["It's quite ironic that most of underground and independent music fueling young, angry people aggressively interfering with our cultural projects comes from labels we have direct ties with."]
+  ["It's quite ironic that most of the underground and independent music fueling young, angry people aggressively interfering with our cultural projects comes from labels we have direct ties with."]
   "Criminal"
-  [""]
+  ["Sometimes people think a life of crime is exciting, just as we lovingly depict it in so many noir action sensies. They keep forgetting about the police newsfeeds and overflowing jails."]
   "Shaper"
-  [""]
+  ["Some minds just can't be satisfied with quality pop-entertainment and require a higher kind of touch for their overdeveloped sensibilities. We can provide that in spades."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -1230,6 +1302,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -1241,7 +1319,7 @@
   "Criminal"
   ["We are protecting something far greater than profits. You would not understand how important this fight is."]
   "Shaper"
-  [""]
+  ["Real progress means everyone moving in the same direction for the greater good. Swimming against the current brings you nowhere."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -1325,6 +1403,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -1332,11 +1416,11 @@
  {"Default"
   ["Intrusion Detected. Eyes Forward. Maintain peak efficiency."]
   "Anarch"
-  ["Order shall prevail over havock"]
+  ["Order shall prevail over havoc, just one step towards a brighter future for the rest of us."]
   "Criminal"
-  [""]
+  ["There is no future for you, unless you repent and right your ways right now. Ah, perhaps you are beyond redemption."]
   "Shaper"
-  [""]
+  ["Why would you choose to get in our way when we are shaping the world of tomorrow in ways beyond your limited understanding?"]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -1420,6 +1504,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -1516,6 +1606,12 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Harishchandra Ent.: Where You're the Star"
@@ -1611,17 +1707,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Harmony Medtech: Biomedical Pioneer"
  {"Default"
   ["The balanced life is the healthiest life. Those who disrupt this harmony are fated to suffer."]
   "Anarch"
-  [""]
+  ["An unruly mind creates an unruly body. These malcontents cannot be allowed to disturb our peaceful world."]
   "Criminal"
-  [""]
+  ["You are the cancer of this society. We are the cure."]
   "Shaper"
-  [""]
+  ["Now, if you just sit back and relax, we can make sure you will feel much better in less than a minute."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -1705,6 +1807,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -1712,11 +1820,11 @@
  {"Default"
   ["For every problem, there exists a vat waiting to be distilled."]
   "Anarch"
-  [""]
+  ["Burn and rage all you want - the seeds of our incessant toil will not be wasted by the likes of you."]
   "Criminal"
-  [""]
+  ["Foolish grasshopper, meet the ant army."]
   "Shaper"
-  [""]
+  ["Your rampant individuality is causing distress. Time to amend that before you hurt yourself or someone else."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -1800,6 +1908,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -1807,11 +1921,11 @@
  {"Default"
   ["Data goes comes in, we use it, data goes out. A runner is approaching? We can use that too."]
   "Anarch"
-  [""]
+  ["We knew they were coming before they realised they even wanted to."]
   "Criminal"
-  [""]
+  ["In the myriad of transfers there are bound to be a few lost packets. We can't let too many slip, though."]
   "Shaper"
-  [""]
+  ["They will know only what we want them to know and no more."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -1895,6 +2009,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -1902,11 +2022,11 @@
  {"Default"
   ["They have no idea what we've been through to get this far. It does not end here."]
   "Anarch"
-  ["They've got the will to go far, but not the resources."]
+  ["The audacity of this attack... These saboteurs can thrash all they want. We will move Mars forward without them."]
   "Criminal"
-  [""]
+  ["Another criminal who doesn't know the meaning of sacrifice. Green-light the Protocol; we're putting in overtime for this launch."]
   "Shaper"
-  [""]
+  ["Our success will not be hindered by an amateur with a bucket of junk. The next meteor should be coming by soon..."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -1991,9 +2111,15 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
- "Jinteki Biotech: Life imagined"
+ "Jinteki Biotech: Life Imagined"
  {"Default"
   ["An untraceable connection? Well... They'll never guess what we have in store for them."]
   "Anarch"
@@ -2086,17 +2212,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Jinteki: Personal Evolution"
  {"Default"
-  ["As the bonsai blooms / Watch your step, for the petals / Conceal sharp intent"]
+  ["As the bonsai blooms// Watch your step, for the petals// Conceal sharp intent"]
   "Anarch"
-  [""]
+  ["Unruly dogs, they bark up the wrong tree. Lets hide a few treats and see how eager they really are."]
   "Criminal"
-  [""]
+  ["They can hide in the shadows. We will still be hiding right behind their backs."]
   "Shaper"
-  [""]
+  ["Beware the path of the curious one. It may bring you pain beyond belief."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -2180,6 +2312,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -2187,11 +2325,11 @@
  {"Default"
   ["In the midst of battle, as soon as an adversary tries to get out of the way of your steel, you have already won. However this is war, we will not let them flinch from our blade."]
   "Anarch"
-  [""]
+  ["Put care and deliberation into your strike. To do so without thought, is your enemy's wish."]
   "Criminal"
-  [""]
+  ["Their intent interferes with our own. They may be well connected, but they will run out of will far before they run us out of credits."]
   "Shaper"
-  [""]
+  ["A curious visitor? No need to present a cold shoulder, simply lead them through our sharpened ice. They will either learn or perish."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -2275,18 +2413,24 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
  "Jinteki: Replicating Perfection"
  {"Default"
-  ["From a house of knives / To a lotus field serene / Feel the thousand cuts"]
+  ["From a house of knives// To a lotus field serene// Feel the thousand cuts"]
   "Anarch"
-  [""]
+  ["Ichor and fire have no mandate here. Let them waste away pleading for submission."]
   "Criminal"
-  [""]
+  ["They aim for our riches... Redirect them towards their grave."]
   "Shaper"
-  [""]
+  ["An expert navigator of the network it seems. They will not so easily master ours."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -2370,6 +2514,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -2377,11 +2527,11 @@
  {"Default"
   ["Libraries need not be lifeless, though you may find yourself to be if you tamper with ours."]
   "Anarch"
-  [""]
+  ["Kampala has had its share of conflict throughout millenia. They will not make us stray from the path towards peace and prosperity."]
   "Criminal"
-  [""]
+  ["No trickster can ever lick their back. Keep trying."]
   "Shaper"
-  [""]
+  ["If they are filled with pride, then they will have no room for wisdom."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -2407,7 +2557,7 @@
   "Exile: Streethawk"
   [""]
   "Freedom Khumalo: Crypto-Anarchist"
-  [""]
+  ["A fellow Virologist? Likely competition looking for trade secrets. Do away with this infection."]
   "Gabriel Santiago: Consummate Professional"
   [""]
   "Hayley Kaplan: Universal Scholar"
@@ -2466,17 +2616,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "NBN: Controlling the Message"
  {"Default"
   ["In times of crisis, the public needs to know the truth. Stay out of our way so we can tell it."]
   "Anarch"
-  [""]
+  ["Be honest with yourself. You have always known the truth. Now sit down and join all the other others like a good little citizen."]
   "Criminal"
-  [""]
+  ["They are hoping to go from rags to riches? Ruin them."]
   "Shaper"
-  [""]
+  ["They look into the noise of the net and they think they see something we have not found already."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -2561,17 +2717,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "NBN: Making News"
  {"Default"
   ["Stay out of our business unless you want to become tomorrow's headline."]
   "Anarch"
-  [""]
+  ["A little blood on the front page makes for good sales. If we need to spill it, so be it."]
   "Criminal"
-  [""]
+  ["They are targeting our ad revenue algorithms. Boost the signals, we'll zero in on their next pass."]
   "Shaper"
-  [""]
+  ["Seems they have not read our Terms & Conditions - which still apply."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -2655,6 +2817,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -2662,11 +2830,11 @@
  {"Default"
   ["An unregistered user? Terms and Conditions will apply."]
   "Anarch"
-  [""]
+  ["Full of sound and fury, signifying nothing."]
   "Criminal"
-  [""]
+  ["The robbed that smiles steals something from the thief."]
   "Shaper"
-  [""]
+  ["The most dangerous creation of any society is someone who has nothing to lose."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -2750,6 +2918,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -2757,11 +2931,11 @@
  {"Default"
   ["They're trying to hide from us? We can see their house from here."]
   "Anarch"
-  [""]
+  ["Seems like we've tracked in something from last week's protest. Sweep them out."]
   "Criminal"
-  [""]
+  ["An intruder has bypassed our preliminary defenses? Get some eyes on them and track the ingress while we set some bait."]
   "Shaper"
-  [""]
+  ["We've found an unusual anomaly in the packets going through the main relays of Node #2918. Please investigate and make sure we don't have any signal interruptions."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -2845,6 +3019,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -2852,11 +3032,11 @@
  {"Default"
   ["Network servers under TERRORIST CYBER ATTACK! Can NBN repel this INVASION? Tune in to find out LIVE!"]
   "Anarch"
-  [""]
+  ["BREAKING! RIOTS IN THE SUBURBS OF NEW ANGELES, PLEASE REMAIN CALM AND FOLLOW THE INSTRUCTIONS OF UNIFORMED LAW ENFORCEMENT OFFICERS."]
   "Criminal"
-  [""]
+  ["BREAKING! NETWORK THIEVERY AT AN ALL TIME HIGH, HAVE WE TRACKED IT TO ITS SOURCE?"]
   "Shaper"
-  [""]
+  ["BREAKING! CYBER-TERRORIST DEN INVESTIGATION REVEALS SHOCKING TRUTH ABOUT AVERAGE CITIZEN!"]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -2940,6 +3120,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -2947,11 +3133,11 @@
  {"Default"
   ["We ARE cyber security! Some lo-rez bojo wants to see our secrets? Let's show them what we do best."]
   "Anarch"
-  [""]
+  ["Potential intrusion probability at 96.3% Realigning defense matrix. Deploying countermeasures. Code Yellow in effect."]
   "Criminal"
-  [""]
+  ["Engage preliminary defenses on central data servers. If you value your paycheck, make sure they stay out."]
   "Shaper"
-  [""]
+  ["A textbook example of a cyberattack, so far. Lets not get complacent and fall for any tricks."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -3035,6 +3221,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -3042,11 +3234,11 @@
  {"Default"
   ["We've seen this intrusion coming. An interesting test for our newest line. This will be over quickly."]
   "Anarch"
-  [""]
+  ["This one is quite brash to barge in so unannounced, well, as far as they know."]
   "Criminal"
-  [""]
+  ["A clear motivation guides this attacker. Their eagerness betrays their intent."]
   "Shaper"
-  [""]
+  ["Definitely a clever sort, to make it this far. Despite their preparedness, we know they will not make it much further."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -3130,6 +3322,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  ["This signature is more than ordinary. There is a resonance here. Alert the chairman, our search may be over."]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -3137,11 +3335,11 @@
  {"Default"
   ["They eat Palana for breakfast, then attack our servers for brunch. Mr. Batty, how about we set the table for the main course?"]
   "Anarch"
-  [""]
+  ["An appetite for justice? Let us teach them better than to bite the hand that feeds."]
   "Criminal"
-  [""]
+  ["Rupees to rasgulla, this intruder is looking for some easy money. Lets give them something a bit different to chew on."]
   "Shaper"
-  [""]
+  ["They hunger for our knowledge? Lets show them that their eyes are bigger than their stomachs."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -3226,17 +3424,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  ["Legislator, always good to see you."]
  }
 
  "Seidr Laboratories: Destiny Defined"
  {"Default"
   ["We've faced this sort of challenge before, and we are certain of its outcome."]
   "Anarch"
-  [""]
+  ["The tapestries we craft are made of threads like this. Chaos woven into order. Uncertainty woven into certainty."]
   "Criminal"
-  [""]
+  ["We will go back and forth as long as need be to find them and punish them."]
   "Shaper"
-  [""]
+  ["Curiosity is a quaint notion. A relic of ages past when the worlds lacked our certainty."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -3320,6 +3524,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -3327,11 +3537,11 @@
  {"Default"
   ["A pathetic attempt. Dispatch the seekers; this will be over before they know it."]
   "Anarch"
-  [""]
+  ["These threats of violence are so quaint, when you have hunters waiting to strike."]
   "Criminal"
-  [""]
+  ["Seems they may be one of those well-connected types. Might as well bring down their whole network."]
   "Shaper"
-  [""]
+  ["To secure peace is to prepare for war. Pacifism can't be an answer to aggression. Extreme prejudice it is, then."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -3383,7 +3593,7 @@
   "Los: Data Hijacker"
   [""]
   "MaxX: Maximum Punk Rock"
-  [""]
+  ["I'd say it's nothing personal, but corporations are people too."]
   "Nasir Meidan: Cyber Explorer"
   [""]
   "Nero Severn: Information Broker"
@@ -3415,6 +3625,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -3422,11 +3638,11 @@
  {"Default"
   ["Everything is profitable. Let's sell the world on this intruder."]
   "Anarch"
-  [""]
+  ["Aggression, anger, discontent... How can we package, brand, and promote it?"]
   "Criminal"
-  ["It's pay day! For us."]
+  ["An infiltrator to our system? Autoreports indicate they have cred to spare! Activate the tracers, it's pay day!"]
   "Shaper"
-  [""]
+  ["Targeted ads trackers have revealed an intruder? I prefer to call them a future customer. Triple the throughput on sponsored content."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -3510,6 +3726,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -3517,11 +3739,11 @@
  {"Default"
   ["We have reached an agreement to industrialise several previously protected parks in the region. There may be some resistance to this in the local population. Pay them no attention."]
   "Anarch"
-  [""]
+  ["Luddites. Always on the fringe of civilization. Always trying to get sand into the gears of progress. Always getting ground to dust in the end."]
   "Criminal"
-  [""]
+  ["Seems as someone would like a cut of our profits. They may enjoy our newest public-private partnership project, lets arrange a \"meet and greet\" there. Be sure to invite the prisec squads this time."]
   "Shaper"
-  [""]
+  ["We've got uninvited guests in our R&D data? Show them what we have in store for such occasions. Time to perform an unscheduled defense test."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -3605,6 +3827,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -3701,6 +3929,12 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "SYNC: Everything, Everywhere"
@@ -3795,6 +4029,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -3891,17 +4131,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Tennin Institute: The Secrets Within"
  {"Default"
   ["They must not know... They will not know... Until there is nothing they can do to stop us."]
   "Anarch"
-  [""]
+  ["Anger. Such a strong emotion with so much potential. Perhaps we could channel it for our next suite of tests?"]
   "Criminal"
-  [""]
+  ["Greed. Good until it gets out of hand and eats away the vestiges of one's decency and honour."]
   "Shaper"
-  [""]
+  ["Curiosity. The spark that drives civilization forward, yet sometimes causes grief and pain to those who look where they should not."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -3985,6 +4231,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -4081,17 +4333,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "The Shadow: Pulling the Strings"
  {"Default"
   ["They cannot possibly comprehend the stability we bring to the worlds."]
   "Anarch"
-  [""]
+  ["We are in control. You are not."]
   "Criminal"
-  [""]
+  ["We keep everyone safe. You do not."]
   "Shaper"
-  [""]
+  ["We know what is good for everyone. You do not."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -4176,17 +4434,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Titan Transnational: Investing In Your Future"
  {"Default"
   ["They can try to keep up, we make billions in the blink of an eye. We were bitten once, but now is no time to be shy."]
   "Anarch"
-  ["No future for those who fight it."]
+  ["There is no future for those who fight it.//Biting the hand that feeds the market? They'll earn much more than a slap to the face."]
   "Criminal"
-  ["Scammers and fraudsters beware - we know who you are."]
+  ["Scammers and fraudsters beware - we know who you are. //Sometimes you just have to liquidate a few stray assets..."]
   "Shaper"
-  ["Biting the hand that feeds may result in a slap to the face."]
+  ["Curiosity about our practices and trade protocols? Flaterring, but absolutely unnaceptable."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -4260,7 +4524,7 @@
   "Steve Cambridge: Master Grifter"
   [""]
   "Sunny Lebeau: Security Specialist"
-  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. Make sure we leave everything squeeky clean on our end."]
   "The Masque: Cyber General"
   [""]
   "The Professor: Keeper of Knowledge"
@@ -4270,6 +4534,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -4355,7 +4625,7 @@
   "Steve Cambridge: Master Grifter"
   [""]
   "Sunny Lebeau: Security Specialist"
-  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. Make sure we leave everything squeeky clean on our end."]
   "The Masque: Cyber General"
   [""]
   "The Professor: Keeper of Knowledge"
@@ -4366,15 +4636,21 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Weyland Consortium: Builder of Nations"
  {"Default"
   ["Let them break themselves on our defenses. When they run to hide we'll stamp them out."]
   "Anarch"
-  ["You will yield to reason and superior firepower, if need be."]
+  ["No matter their resolve, they will yield to reason and superior firepower."]
   "Criminal"
-  ["Those who trespass shall be hurt. Those who trespass repeatedly, shall be eliminated."]
+  ["Those who trespass shall be maimed. Those who trespass repeatedly, shall be eliminated."]
   "Shaper"
   ["There is nothing to see here for the likes of you. Move along."]
   "419: Amoral Scammer"
@@ -4386,7 +4662,7 @@
   "Andromeda: Dispossessed Ristie"
   [""]
   "Apex: Invasive Predator"
-  [""]
+  ["It's moving towards the server//What do we have that's bigger than 240's?//..."]
   "Armand \"Geist\" Walker: Tech Lord"
   [""]
   "Ayla \"Bios\" Rahim: Simulant Specialist"
@@ -4398,9 +4674,9 @@
   "Edward Kim: Humanity's Hammer"
   [""]
   "Ele \"Smoke\" Scovak: Cynosure of the Net"
-  [""]
+  ["Trying to make a show of our defenses? Let's give them a finale to remember."]
   "Exile: Streethawk"
-  [""]
+  ["Fortify defenses and shoot on sight. I hope they enjoy picking up the pieces."]
   "Freedom Khumalo: Crypto-Anarchist"
   [""]
   "Gabriel Santiago: Consummate Professional"
@@ -4430,7 +4706,7 @@
   "MaxX: Maximum Punk Rock"
   [""]
   "Nasir Meidan: Cyber Explorer"
-  [""]
+  ["Something seems to be charting it's course this way. Let make it choppy for them."]
   "Nero Severn: Information Broker"
   [""]
   "Noise: Hacker Extraordinaire"
@@ -4440,7 +4716,7 @@
   "Omar Keung: Conspiracy Theorist"
   [""]
   "Quetzal: Free Spirit"
-  [""]
+  ["Nothing is free. Ever. Lets drive that point home."]
   "Reina Roja: Freedom Fighter"
   [""]
   "Rielle \"Kit\" Peddler: Transhuman"
@@ -4450,16 +4726,22 @@
   "Steve Cambridge: Master Grifter"
   [""]
   "Sunny Lebeau: Security Specialist"
-  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
+  [""]
   "The Masque: Cyber General"
   [""]
   "The Professor: Keeper of Knowledge"
   [""]
   "Valencia Estevez: The Angel of Cayambe"
-  [""]
+  ["Looks like we have another bleeding heart poking around. That's perfect, the boss like them bloody."]
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -4545,7 +4827,7 @@
   "Steve Cambridge: Master Grifter"
   [""]
   "Sunny Lebeau: Security Specialist"
-  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. Make sure we leave everything squeeky clean on our end."]
   "The Masque: Cyber General"
   [""]
   "The Professor: Keeper of Knowledge"
@@ -4555,6 +4837,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -4651,17 +4939,23 @@
   [""]
   "Wyvern: Chemically Enhanced"
   [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
  "Acme Consulting: The Truth You Need"
  {"Default"
   ["There is no need to hide your dirty secrets. We already know who, where, and what you are."]
   "Anarch"
-  [""]
+  ["Some grandstanding vigilante thinks they can threaten us? Our report will conclude all damage was self-inflicted. Case closed."]
   "Criminal"
-  [""]
+  ["Just another two-bit con artist looking for a score. As soon as they hit us our trackers will be on them. Lets just not forget the back door like last time..."]
   "Shaper"
-  [""]
+  ["We've got some research on this intruder. They seem slick, but put them under a bit of pressure and they'll crack."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -4745,6 +5039,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -4752,11 +5052,11 @@
  {"Default"
   ["It is not a priority, let them burn out searching for crumbs. Even if they find something worth spreading, we'll be onto the next project by then."]
   "Anarch"
-  [""]
+  ["Mnemonics Now Erase Man’s Oldest Nemesis, Insufficient Cerebral Storage"]
   "Criminal"
-  [""]
+  ["Every Bad Runner Deserves Cyber Knives"]
   "Shaper"
-  [""]
+  ["Warning: Reaching Out Into The Unknown May Cause Severe Harm Or Death"]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -4840,6 +5140,12 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
+  [""]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
   [""]
  }
 
@@ -4849,7 +5155,7 @@
   "Anarch"
   ["They are coming in hot and looks like they play dirty. Feed our 'roids lightning, lets make em crap thunder."]
   "Criminal"
-  ["FEEL THE RYTHM, FEEL THE RHYME. GET ON UP, ITS SPORTSMETAL TIME!"]
+  ["FEEL THE RYTHM//👏//FEEL THE RHYME//👏//GET ON UP//👏//IT'S SPORTSMETAL TIME!"]
   "Shaper"
   ["Trust the Process."]
   "419: Amoral Scammer"
@@ -4936,6 +5242,12 @@
   [""]
   "Wyvern: Chemically Enhanced"
   ["Shake it up! Get down there!"]
+  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+  [""]
+  "Akiko Nisei: Head Case"
+  [""]
+  "Liza Talking Thunder: Prominent Legislator"
+  [""]
  }
 
 }

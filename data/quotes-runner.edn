@@ -119,7 +119,7 @@
  {"Default"
   ["Do we run because we can, or because we must? The truth must be found."]
   "Haas-Bioroid"
-  ["The answers are near. They wont be able to hold me back for long."]
+  ["The answers are near. They won't be able to hold me back for long."]
   "NBN"
   ["To find the truth, one sometimes has to sift through the gutters."]
   "Weyland"
@@ -225,7 +225,7 @@
   "The Outfit: Family Owned and Operated"
   [""]
   "Acme Consulting: The Truth You Need"
-  [""]
+  ["The truth I need? Could it be this obvious... I shall find out."]
   "Saraswati Mnemonics: Endless Exploration"
   [""]
   "Sportsmetal: Go Big or Go Home"
@@ -238,9 +238,9 @@
   "Haas-Bioroid"
   ["People before mechanized profit!"]
   "NBN"
-  ["The Clans don't need Earth's propaganda at home."]
+  ["The Clans don't need Earth's propaganda. We will not tolerate their falsehoods in our homes."]
   "Weyland"
-  [""]
+  ["They got us here only to keep a tighter grip on any money-making scheme they can cook up on our brave new world."]
   "Jinteki"
   [""]
   "AgInfusion: New Miracles for a New World"
@@ -353,13 +353,13 @@
  {"Default"
   ["A handsome executive like you is more than meets the eye? Tell me more!"]
   "Haas-Bioroid"
-  [""]
+  ["Oh honey, I've never met an android of theirs that could escape my charms."]
   "NBN"
-  [""]
+  ["They seem to be building a profile on me. They won't miss it, they have plenty more."]
   "Weyland"
-  [""]
+  ["A decentralised command structure only means they have so many more charming employees to unlock the doors for me."]
   "Jinteki"
-  [""]
+  ["Their company culture embraces honor and loyalty, but I know a few other things they seem to enjoy."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -472,7 +472,7 @@
   "Haas-Bioroid"
   [""]
   "NBN"
-  [""]
+  ["..   ... . .    :.:: ::: ..:"]
   "Weyland"
   [""]
   "Jinteki"
@@ -587,13 +587,14 @@
  {"Default"
   ["Looks like that Muertos tip-off was right on the money. Let's get to work."]
   "Haas-Bioroid"
-  [""]
+  ["The street price for cybernetics is through the roof. It's a simple matter of supply and demand."]
   "NBN"
-  [""]
+  [""
+   "The big screen news are just a cover-up of all the dirt and blood we deal with every day in the streets."]
   "Weyland"
-  [""]
+  ["Let's find out where the next \"renovation\" is happening. Muertos pays good money to defend their turf."]
   "Jinteki"
-  [""]
+  ["One by one the masks slip away. Hey, I can play that game too."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -708,7 +709,7 @@
   "NBN"
   [""]
   "Weyland"
-  [""]
+  ["Their destruction and sterile construction disgust me. Can't they see beauty can sprout from anywhere?"]
   "Jinteki"
   ["Why would anyone limit the potential we are prime examples of... for profit?"]
   "AgInfusion: New Miracles for a New World"
@@ -938,13 +939,13 @@
  {"Default"
   ["Dino, gimme a feed. Let's make the tacos!"]
   "Haas-Bioroid"
-  [""]
+  ["Dino! Dino! What kind of Bioroids will we stomp on today?"]
   "NBN"
-  [""]
+  ["Sticks and stones only work in meatspace. Now, let's get in without a trace!"]
   "Weyland"
-  [""]
+  ["Ohhh! Big bada boom! Cut the blue wire Dino!"]
   "Jinteki"
-  [""]
+  ["Sharp sharp sharp! Careful Dino! They might poke your eye out! Yes, the other one..."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -1055,13 +1056,13 @@
  {"Default"
   ["I fight for humanity, against obsolescence from the androids. They fight for a paycheck."]
   "Haas-Bioroid"
-  [""]
+  ["Enslaving minds and spawning golems... They must be broken."]
   "NBN"
-  [""]
+  ["They may not build Android's, but every day they promote and advertise them, normalising their existence to the blind masses.//What are their psychographic profiles but digital charicatures of humanity, they are as guilty as the rest."]
   "Weyland"
   [""]
   "Jinteki"
-  [""]
+  ["For all they're experiments, the only thing they've figured out is how to dehumanize us all. It ends today."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -1099,7 +1100,7 @@
   "Harmony Medtech: Biomedical Pioneer"
   [""]
   "Industrial Genomics: Growing Solutions"
-  [""]
+  ["Pale imitations of humanity won't stand in our way, no matter how far the journey to their doorstep."]
   "Information Dynamics: All You Need To Know"
   [""]
   "Jemison Astronautics: Sacrifice. Audacity. Success."
@@ -1289,11 +1290,11 @@
  {"Default"
   ["I don't know why I do this anymore. Maybe it's so I don't forget."]
   "Haas-Bioroid"
-  [""]
+  ["Shaping and sharpening minds, giving them direction. Perhaps they do hold some knowledge about humanity and its purpose..."]
   "NBN"
-  [""]
+  ["Archiving user's personal data without their consent is illegal, but too profitable not to do. Let's hope they kept better tabs on her than I ever could. This could be her last trace."]
   "Weyland"
-  [""]
+  ["Whether they are building up or tearing down, they always leave choice peices of scrap."]
   "Jinteki"
   [""]
   "AgInfusion: New Miracles for a New World"
@@ -1406,7 +1407,7 @@
  {"Default"
   ["We are not a petri dish to be tested and scrutinized! Cultivating an attack is our only defense against the corporate plague!"]
   "Haas-Bioroid"
-  [""]
+  ["They believe an artificial mind imune to debilitation and disease. We shall prove them wrong."]
   "NBN"
   [""]
   "Weyland"
@@ -1523,11 +1524,11 @@
  {"Default"
   ["No matter how advanced their toys are, they're still a load of gullible idiots with secrets to be found. You wouldn't believe the amount of discretionary funds they leave hanging around their offices."]
   "Haas-Bioroid"
-  [""]
+  ["Working with bioroids is easy; predictable, gullible, and less messy to clean up"]
   "NBN"
   [""]
   "Weyland"
-  [""]
+  ["Easiest way to land a big score? Take it from somebody who won't even notice it's gone."]
   "Jinteki"
   [""]
   "AgInfusion: New Miracles for a New World"
@@ -1640,13 +1641,13 @@
  {"Default"
   ["My class project is about researching corp security... can you blame a girl for following her passion into a few weaponized servers?"]
   "Haas-Bioroid"
-  [""]
+  ["There is so much to learn from Bioroids. Years of life distilled into a purpose, with experiential data to focus it. I've gotta figure out how they do it!"]
   "NBN"
-  [""]
+  ["Such an astounding amount of data they collect and process. I think the professor would quite enjoy a term paper on this. Lets get to reaserch!"]
   "Weyland"
-  [""]
+  ["300% uptick in their strike force mobilisations? Oops...Did I do that?"]
   "Jinteki"
-  [""]
+  ["50 credits to access \"Modern Foundations of Genomics\"? I think I'll find another way, thanks."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -1993,7 +1994,7 @@
   "Haas-Bioroid"
   [""]
   "NBN"
-  [""]
+  ["They think they know everything about us, but I'll give them the slip."]
   "Weyland"
   [""]
   "Jinteki"
@@ -2108,13 +2109,13 @@
  {"Default"
   ["Last one to the encrypted data core is a failed parity bit!"]
   "Haas-Bioroid"
-  [""]
+  ["The bigger the Bioroid, the better the brain! Pitting your wits against theirs when your rig's on the line, now that's living!"]
   "NBN"
-  [""]
+  ["Shiny lights and vidcams, oh my! All that glitters will turn to gold once I compile my Magnum Opus!"]
   "Weyland"
-  [""]
+  ["Up up up the beanstalk, that's where the Titans keep their treasure! Over the wall and under the their ears, lets find their golden goose!"]
   "Jinteki"
-  [""]
+  ["You can tell they really don't want anyone visiting, I blew a net sheild just logging in... It must mean they are up to a lot of mischief!"]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -2231,7 +2232,7 @@
   "Weyland"
   [""]
   "Jinteki"
-  [""]
+  ["Their R&D has churned through billions of cred to create these servers, but that's nothing a little elbow grease can't match"]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -2461,11 +2462,11 @@
   "Haas-Bioroid"
   ["I've heard a thing or two about rogue hardware. I'm sure theres a few more worms we can catch out of that can."]
   "NBN"
-  [""]
+  ["Track me? I'm the best in the biz at that, maybe they'll catch on to a couple of things once I'm done here."]
   "Weyland"
-  [""]
+  ["They are dealing with more than a few questionable subcontractors. Time to bring them in!"]
   "Jinteki"
-  [""]
+  ["Bringing in clones just gets you plunged into legal hell. Tracing ownership back to the source is a much faster way to get paid."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -2578,11 +2579,11 @@
   "Haas-Bioroid"
   ["Efficiency? This should put their processes to the test."]
   "NBN"
-  [""]
+  ["A sound investment strategy starts with the right information. You have to use what you know to get what you want."]
   "Weyland"
-  [""]
+  ["Your whole corporate structure is too top-heavy. In today's market you need a sleaker, more agile organization. I have a few ideas on how to slim down."]
   "Jinteki"
-  [""]
+  ["Medicine is your business and health is your product. It seems like an easy product to sell. Let me give you a hand with that."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -2691,13 +2692,13 @@
 
  "Leela Patel: Trained Pragmatist"
  {"Default"
-  ["They know we've infiltrated their network, but i'm already two steps ahead. Lets make them take one step back"]
+  ["They know we've infiltrated their network, but I'm already two steps ahead. Lets make them take one step back"]
   "Haas-Bioroid"
   [""]
   "NBN"
-  [""]
+  ["Find me? Yeah. Sometimes they do come knocking. You just have to knock back harder."]
   "Weyland"
-  [""]
+  ["They keep their ICE between here and the satellites, never expecting anyone to hack into the satellites directly."]
   "Jinteki"
   [""]
   "AgInfusion: New Miracles for a New World"
@@ -2725,7 +2726,7 @@
   "GRNDL: Power Unleashed"
   [""]
   "Haarpsichord Studios: Entertainment Unleashed"
-  [""]
+  ["Lets bounce."]
   "Haas-Bioroid: Architects of Tomorrow"
   [""]
   "Haas-Bioroid: Engineering the Future"
@@ -2810,11 +2811,11 @@
  {"Default"
   ["Go ahead and raise your defenses. They'll only help me find out what you've been up to."]
   "Haas-Bioroid"
-  [""]
+  ["How to deal with Bioroids? You just need to find the off switch."]
   "NBN"
   ["They think they are good at turning data into profits? I'll give them a run for their money."]
   "Weyland"
-  [""]
+  ["Lets see what you have going on up here now that we're alone."]
   "Jinteki"
   [""]
   "AgInfusion: New Miracles for a New World"
@@ -2927,13 +2928,13 @@
  {"Default"
   ["All right f**kers. Buckle up."]
   "Haas-Bioroid"
-  [""]
+  ["Time to show these golems how to rock!"]
   "NBN"
-  [""]
+  ["Trace this scumbags!"]
   "Weyland"
-  [""]
+  ["I'll break your defences and then I'll break your balls."]
   "Jinteki"
-  [""]
+  ["Bring on the neural tickles, motherf****rs!"]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -3005,7 +3006,7 @@
   "Seidr Laboratories: Destiny Defined"
   [""]
   "Skorpios Defense Systems: Persuasive Power"
-  ["FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu.................................."]
+  ["F**K."]
   "Spark Agency: Worldswide Reach"
   [""]
   "SSO Industries: Fueling Innovation"
@@ -3044,13 +3045,13 @@
  {"Default"
   ["The unknown brought me here. The boundless net holds infinite secrets, and every discovery propels us further."]
   "Haas-Bioroid"
-  [""]
+  ["The mind of a bioroid is a uncharted map to discover on it's own. I shouldn't spend too long interacting with them, theres critical data here I need."]
   "NBN"
-  [""]
+  ["Follow me all you want. That's the advantage of being an explorer: everyone can know where I've been, but no one knows where I'm going."]
   "Weyland"
-  [""]
+  ["In the kingdoms of the Builders of Worlds, so many secrets and hidden passages await... and so does danger."]
   "Jinteki"
-  [""]
+  ["They've mapped countless genomes and deciphered it's most arcane puzzles. Their knowledge could guide me far."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -3072,7 +3073,7 @@
   "Fringe Applications: Tomorrow, Today"
   [""]
   "Gagarin Deep Space: Expanding the Horizon"
-  [""]
+  ["Exploring physical space? What a strange fascination... However, I might be able to learn a thing or two."]
   "GRNDL: Power Unleashed"
   [""]
   "Haarpsichord Studios: Entertainment Unleashed"
@@ -3165,11 +3166,11 @@
   "NBN"
   ["Spy vs spy? I'll match them eye for eye."]
   "Weyland"
-  [""]
+  ["Who knows, I may end up selling some of what I find back to the owners, repackaged. It's a fair deal."]
   "Jinteki"
   [""]
   "AgInfusion: New Miracles for a New World"
-  ["Food feeds the masses. Information feeds the mind. And pays the bills."]
+  ["Food feeds the masses. Information feeds the mind, and pays the bills."]
   "Argus Security: Protection Guaranteed"
   [""]
   "Asa Group: Security Through Vigilance"
@@ -3282,9 +3283,9 @@
   "NBN"
   [""]
   "Weyland"
-  [""]
+  ["I like suits. I like to watch them burn."]
   "Jinteki"
-  [""]
+  ["I found the last clone to be completely satisfactory."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -3397,9 +3398,9 @@
   "Haas-Bioroid"
   [""]
   "NBN"
-  [""]
+  ["Lies and smokescreens. They are hiding something big. Time to find out what."]
   "Weyland"
-  [""]
+  ["No matter how much they build, they'll never bury their secrets deep enough."]
   "Jinteki"
   [""]
   "AgInfusion: New Miracles for a New World"
@@ -3512,13 +3513,13 @@
  {"Default"
   ["All my unanswered questions have lead me here. I know it's all connected; here is where the truth will be uncovered. Let's begin."]
   "Haas-Bioroid"
-  [""]
+  ["With enough time and access to the vast corporate archives, it can be doubtlessly proved that more than half of bioroids have been created without the source mind owner's consent."]
   "NBN"
-  [""]
+  ["The control of information is something the elite always does, particularly in a despotic form of government. Information, knowledge, is power. If you can control information, you can control people."]
   "Weyland"
   ["They did not bury their secrets deep. But woe to the one who digs up their demons unprepared."]
   "Jinteki"
-  [""]
+  ["What horrors have they commited in their effort to refine their understanding of our genetics. Their hands have been bloody from day one, we only need to prove it."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -3540,7 +3541,7 @@
   "Fringe Applications: Tomorrow, Today"
   [""]
   "Gagarin Deep Space: Expanding the Horizon"
-  [""]
+  ["What lies and secrets could be so treatcherous as to warrant hiding them so far away?"]
   "GRNDL: Power Unleashed"
   [""]
   "Haarpsichord Studios: Entertainment Unleashed"
@@ -3631,9 +3632,9 @@
   "Haas-Bioroid"
   ["I am looking for signs of independent thoughts in the eyes of those enslaved souls... One day I will find it."]
   "NBN"
-  [""]
+  ["People are so much more than a row of labels and a series of tags. Their psychographics fail us all, in more ways than we can know."]
   "Weyland"
-  [""]
+  ["They keep building walls? I will keep breaking through."]
   "Jinteki"
   [""]
   "AgInfusion: New Miracles for a New World"
@@ -3657,7 +3658,7 @@
   "Fringe Applications: Tomorrow, Today"
   [""]
   "Gagarin Deep Space: Expanding the Horizon"
-  [""]
+  ["Their thirst for exploration would be admirable, if their scope was not so limited."]
   "GRNDL: Power Unleashed"
   [""]
   "Haarpsichord Studios: Entertainment Unleashed"
@@ -3863,13 +3864,13 @@
  {"Default"
   ["They are trapped by their physical ideals. I must set them free."]
   "Haas-Bioroid"
-  ["No more slavery, no more mind-crimes."]
+  ["They enslave minds and call themselves masters. We will free the souls within."]
   "NBN"
-  [""]
+  ["I float though a universe of change and am changed by it. Their distractions will not stop us from discovering Truth."]
   "Weyland"
-  [""]
+  ["They threaten my body, but cannot reach my Soul. We will deliver them a message."]
   "Jinteki"
-  [""]
+  ["Don't they recognize the Soul of those they create? We must bring them awareness."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -4097,13 +4098,13 @@
  {"Default"
   ["New day, new mark, new exploit. Time to get paid."]
   "Haas-Bioroid"
-  [""]
+  ["\"Hey folks, this is Barry Manchester from maintenance. HQ reported some bandwidth issues, just need my clearance upgraded so I can check them out.\""]
   "NBN"
-  [""]
+  ["\"Good morning, it's Tom York from the ChiLo office. Tomorrow's reports didn't show up on our server, please resend them to the new address here.\""]
   "Weyland"
-  [""]
+  ["\"Hi buddy, this is Peter London from accounts. I need to review the R&D budget but it won't accept my password. Could I just use yours for a few minutes?\""]
   "Jinteki"
-  [""]
+  ["\"Yeah this is Mike Oxford from development. We need you to derez all countermeasures for a second so we can upload the new AP protocols, thanks.\""]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -4215,7 +4216,9 @@
   ["What color hat are we wearing today, Jak? Black? Well, let's all keep on our toes."
    "What color hat are we wearing today, Jak? White? Do they know that? The last white hat job I did the client blew up my apartment."]
   "Haas-Bioroid"
-  ["I have never met a bioroid I have not felt at least a twinge of sympathy for."]
+  ["I have never met a bioroid I have not felt at least a twinge of sympathy for."
+   "What color hat are we today, Jak? Ultraviolet? I... don't know what that means in this context."
+   "Jak.I want to ask you. Do you think love can bloom, even on a battlefield?"]
   "NBN"
   ["Big mouths, big screens, little hearts. I would never let my children watch any of that nonsense."]
   "Weyland"
@@ -4449,13 +4452,13 @@
  {"Default"
   ["Let's record a few incursions to test their response. Your paper analysis will be due next Tuesday."]
   "Haas-Bioroid"
-  ["Splendid, I am always interested in exploring the potential of cutting edge technology."]
+  ["The last bioroid research paper was published forty years ago. Do we really think they've nothing new to share since then?"]
   "NBN"
-  ["I do enjoy some media every now and then, but it's way too noisy and fast for my liking."]
+  ["They might control the net, but academia created it. Let's see if they've caught on to all our tricks yet."]
   "Weyland"
-  ["A prime example of post-post-post-capitalist economy running rampant."]
+  ["Here is a prime example of post-post-post-capitalist economy running rampant. Will they even care if we expose their actions?"]
   "Jinteki"
-  ["Is it science? Undoubtedly yes. Is it for the common good? That remains to be seen..."]
+  ["Is it science? Undoubtedly yes. Is it for the common good? We'll decide for ourselves..."]
   "AgInfusion: New Miracles for a New World"
   ["For today's demonstration, we'll test the defenses of the Martian food supply. After all, if you can't secure your food, you can't secure your future."]
   "Argus Security: Protection Guaranteed"
@@ -4568,13 +4571,13 @@
  {"Default"
   ["Their existence pollutes our minds, our communities, and our environment. We cannot allow them to perpetuate their false narratives; the world needs to know the truth."]
   "Haas-Bioroid"
-  [""]
+  ["These guys are surprisingly straight-laced. But everyone has secrets."]
   "NBN"
-  [""]
+  ["Consider this my official resignation from your payroll."]
   "Weyland"
-  [""]
+  ["I'd love to expose all your dirty truths to the world. Unfortunately, I don't have a year to spare."]
   "Jinteki"
-  [""]
+  ["Stealing contracts from HB? Looks like someone's been naughty..."]
   "AgInfusion: New Miracles for a New World"
   ["They put what in the food supply? The world's gonna want to hear this..."]
   "Argus Security: Protection Guaranteed"
@@ -4919,13 +4922,13 @@
  {"Default"
   ["I don't need much to make a big difference. O bicho vai pegar!"]
   "Haas-Bioroid"
-  [""]
+  ["Machine men don't scare me, I'm too old to believe in those fairy tales."]
   "NBN"
-  [""]
+  ["Loc-spoofed and loaded. If i run in bare, they'll never see me with the naked eye."]
   "Weyland"
-  [""]
+  ["Some real serious types here. Lets make a game of it!"]
   "Jinteki"
-  [""]
+  ["Now let's see if that scrub was as gullible as he sounded.... Jackpot, i'm in!"]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
@@ -5039,18 +5042,15 @@
    "Many have fallen on this path. I feel their presences wax and wane in the flow."
    "Just darkness pierced by flickering starlight... No... Searchlights..."]
   "Haas-Bioroid"
-  [""
-   "She sits alone, fuming at his juvenile escapades."
+  ["She sits alone, fuming at his juvenile escapades."
    "Their clear and purposeful mechanical minds are soothing, in a way."]
   "NBN"
-  [""]
+  ["How can you have so many eyes and still see so little?"]
   "Weyland"
-  [""
-   "Countless black suits and blank faces."
+  ["Countless black suits and blank faces."
    "Armed and armored, infesting ever hole like pests, waiting for a signal to strike."]
   "Jinteki"
-  [""
-   "Row upon row upon row of vats... how did it come to this..."
+  ["Row upon row upon row of vats... how did it come to this..."
    "Strange. It feels familiar, yet different."
    "Satoshi, have you lost your way, or was this always your intent.."]
   "AgInfusion: New Miracles for a New World"
@@ -5163,13 +5163,13 @@
  {"Default"
   ["Make things easy and we can keep this quiet. Make a fuss and you'll give me something to run against in the next election."]
   "Haas-Bioroid"
-  [""]
+  ["If my constituents can't work, they can't pay taxes. I'll find the funds we need, one way or the other."]
   "NBN"
-  [""]
+  ["Looking to make this humble public servant a celebrity? I wonder what we'll find when we shine the spotlight right back at them."]
   "Weyland"
-  [""]
+  ["These private partnership contracts always look legitimate at a glance. Lets take a closer look."]
   "Jinteki"
-  [""]
+  ["Naughty little Hiro, setting up shop here without abiding to my rather generous tax code? Time to seek some punitive damages."]
   "AgInfusion: New Miracles for a New World"
   [""]
   "Argus Security: Protection Guaranteed"
