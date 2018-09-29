@@ -29,7 +29,7 @@
         opp-faction (get-in @identity-quotes [player-ident opp-faction])
         opp-specific (get-in @identity-quotes [player-ident opp-ident])
         weighted (concat (choose-and-repeat generic 1)
-                         (choose-and-repeat opp-faction 0)
+                         (choose-and-repeat opp-faction 3)
                          (choose-and-repeat opp-specific 0))
         non-blank (filter identity weighted)]
     (if (not-empty non-blank)

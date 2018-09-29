@@ -1405,8 +1405,7 @@
            (toast msg type options)))
 
     :reagent-render
-    (fn [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent sfx] :as cursor}]
-      (let [_ @sfx]) ;; hack: make this component rebuild when sfx changes. Could probably move audio to its own component.
+    (fn [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
       [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                          :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
        (if-let [prompt (first (:prompt @me))]
