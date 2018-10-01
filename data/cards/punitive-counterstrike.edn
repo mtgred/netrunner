@@ -14,7 +14,7 @@
  :setname "True Colors",
  :side "Corp",
  :subtype "Black Ops",
- :text "<trace>Trace 5</trace> If successful, do meat damage to the Runner equal to the number of printed agenda points on agendas he or she stole during his or her last turn.\n<errata>Errata from FAQ 3.1</errata>",
+ :text "<trace>Trace 5</trace> If successful, do meat damage to the Runner equal to the number of printed agenda points on agendas he or she stole during his or her last turn.",
  :title "Punitive Counterstrike",
  :type "Operation",
  :uniqueness false}
