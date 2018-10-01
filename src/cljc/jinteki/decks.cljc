@@ -165,7 +165,8 @@
 (defn contains-banned-cards
   "Returns true if any of the cards are in the MWL banned list"
   [deck]
-  (some #(banned? (:card %)) (:cards deck)))
+  (or (some #(banned? (:card %)) (:cards deck))
+      (banned? (:identity deck))))
 
 (defn restricted-cards
   "Returns a list of card codes that are on the MWL restricted list"
@@ -183,7 +184,7 @@
 (defn restricted-card-count
   "Returns the number of *types* of restricted cards"
   [deck]
-  (->> (:cards deck)
+  (->> (conj (:cards deck) {:card (:identity deck)})
        (filter (fn [c] (restricted? (:card c))))
        (map (fn [c] (:title (:card c))))
        (distinct)

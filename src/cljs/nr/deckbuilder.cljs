@@ -661,9 +661,9 @@
                          :on-mouse-enter #(put! zoom-channel {:card identity :art (:art identity) :id (:id identity)})
                          :on-mouse-leave #(put! zoom-channel false)}
                     (:title identity)
-                    (if (decks/banned? identity)
-                      banned-span
-                      (when (:rotated identity) rotated-span))]
+                    (when (decks/banned? identity) banned-span)
+                    (when (decks/restricted? identity) restricted-span)
+                    (when (:rotated identity) rotated-span)]
                    (let [count (decks/card-count cards)
                          min-count (decks/min-deck-size identity)]
                      [:div count " cards"
