@@ -1,20 +1,20 @@
-{:code "12109"
- :cost 0
- :cycle_code "red-sand"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_109.png"
- :limited 3
- :normalizedtitle "corporate-defector"
- :number 109
- :packquantity 3
- :rotated false
- :set_code "crimson-dust"
- :setname "Crimson Dust"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "Whenever the Corp spends a [click] to draw a card (not through a card effect), reveal that card."
- :title "Corporate Defector"
- :type "Resource"
+{:code "12109",
+ :cost 0,
+ :cycle_code "red-sand",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_109.png",
+ :limited 3,
+ :normalizedtitle "corporate-defector",
+ :number 109,
+ :packquantity 3,
+ :rotated false,
+ :set_code "crimson-dust",
+ :setname "Crimson Dust",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "Whenever the Corp spends a [click] to draw a card (not through a card effect), reveal that card.",
+ :title "Corporate Defector",
+ :type "Resource",
  :uniqueness false}

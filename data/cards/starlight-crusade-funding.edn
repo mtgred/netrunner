@@ -1,19 +1,19 @@
-{:code "04069"
- :cost 1
- :cycle_code "spin"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/04069.png"
- :limited 3
- :normalizedtitle "starlight-crusade-funding"
- :number 69
- :packquantity 3
- :rotated true
- :set_code "true-colors"
- :setname "True Colors"
- :side "Runner"
- :strength 0
- :text "When your turn begins, lose [click].\nIgnore any additional costs on each <strong>double</strong> event you play."
- :title "Starlight Crusade Funding"
- :type "Resource"
+{:code "04069",
+ :cost 1,
+ :cycle_code "spin",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/04069.png",
+ :limited 3,
+ :normalizedtitle "starlight-crusade-funding",
+ :number 69,
+ :packquantity 3,
+ :rotated true,
+ :set_code "true-colors",
+ :setname "True Colors",
+ :side "Runner",
+ :strength 0,
+ :text "When your turn begins, lose [click].\nIgnore any additional costs on each <strong>double</strong> event you play.",
+ :title "Starlight Crusade Funding",
+ :type "Resource",
  :uniqueness false}

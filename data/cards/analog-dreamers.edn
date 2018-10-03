@@ -1,20 +1,20 @@
-{:code "08048"
- :cost 2
- :cycle_code "sansan"
- :faction "Shaper"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_48.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "analog-dreamers"
- :number 48
- :packquantity 3
- :rotated false
- :set_code "chrome-city"
- :setname "Chrome City"
- :side "Runner"
- :strength 0
- :text "[click]: Make a run on R&D. If successful, instead of accessing cards, you may choose an unrezzed non-ice card with no advancement tokens on it. The Corp shuffles that card into R&D."
- :title "Analog Dreamers"
- :type "Program"
+{:code "08048",
+ :cost 2,
+ :cycle_code "sansan",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_48.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "analog-dreamers",
+ :number 48,
+ :packquantity 3,
+ :rotated false,
+ :set_code "chrome-city",
+ :setname "Chrome City",
+ :side "Runner",
+ :strength 0,
+ :text "[click]: Make a run on R&D. If successful, instead of accessing cards, you may choose an unrezzed non-ice card with no advancement tokens on it. The Corp shuffles that card into R&D.",
+ :title "Analog Dreamers",
+ :type "Program",
  :uniqueness false}

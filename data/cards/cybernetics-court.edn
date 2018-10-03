@@ -1,21 +1,21 @@
-{:code "08109"
- :cost 0
- :cycle_code "sansan"
- :faction "Haas-Bioroid"
- :factioncost 5
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_109.png"
- :limited 3
- :normalizedtitle "cybernetics-court"
- :number 109
- :packquantity 3
- :rotated false
- :set_code "the-universe-of-tomorrow"
- :setname "The Universe of Tomorrow"
- :side "Corp"
- :strength 0
- :subtype "Facility - Ritzy"
- :text "Your maximum hand size is increased by 4."
- :title "Cybernetics Court"
- :trash 5
- :type "Asset"
+{:code "08109",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "Haas-Bioroid",
+ :factioncost 5,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_109.png",
+ :limited 3,
+ :normalizedtitle "cybernetics-court",
+ :number 109,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-universe-of-tomorrow",
+ :setname "The Universe of Tomorrow",
+ :side "Corp",
+ :strength 0,
+ :subtype "Facility - Ritzy",
+ :text "Your maximum hand size is increased by 4.",
+ :title "Cybernetics Court",
+ :trash 5,
+ :type "Asset",
  :uniqueness true}

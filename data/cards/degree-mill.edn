@@ -1,21 +1,21 @@
-{:advancementcost 5
- :agendapoints 3
- :code "21055"
- :cost 0
- :cycle_code "kitara"
- :faction "NBN"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_55.png"
- :limited 3
- :normalizedtitle "degree-mill"
- :number 55
- :packquantity 3
- :rotated false
- :set_code "council-of-the-crest"
- :setname "Council of the Crest"
- :side "Corp"
- :strength 0
- :subtype "Initiative"
- :text "As an additional cost to steal Degree Mill, the Runner must shuffle 2 installed Runner cards into the stack."
- :title "Degree Mill"
- :type "Agenda"
+{:advancementcost 5,
+ :agendapoints 3,
+ :code "21055",
+ :cost 0,
+ :cycle_code "kitara",
+ :faction "NBN",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_55.png",
+ :limited 3,
+ :normalizedtitle "degree-mill",
+ :number 55,
+ :packquantity 3,
+ :rotated false,
+ :set_code "council-of-the-crest",
+ :setname "Council of the Crest",
+ :side "Corp",
+ :strength 0,
+ :subtype "Initiative",
+ :text "As an additional cost to steal Degree Mill, the Runner must shuffle 2 installed Runner cards into the stack.",
+ :title "Degree Mill",
+ :type "Agenda",
  :uniqueness false}

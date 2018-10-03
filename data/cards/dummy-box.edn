@@ -1,20 +1,20 @@
-{:code "12108"
- :cost 1
- :cycle_code "red-sand"
- :faction "Shaper"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_108.png"
- :limited 3
- :normalizedtitle "dummy-box"
- :number 108
- :packquantity 3
- :rotated false
- :set_code "crimson-dust"
- :setname "Crimson Dust"
- :side "Runner"
- :strength 0
- :subtype "Virtual"
- :text "<strong>Trash a card from your grip:</strong> Prevent an installed card of the same type from being trashed by the Corp."
- :title "Dummy Box"
- :type "Resource"
+{:code "12108",
+ :cost 1,
+ :cycle_code "red-sand",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_108.png",
+ :limited 3,
+ :normalizedtitle "dummy-box",
+ :number 108,
+ :packquantity 3,
+ :rotated false,
+ :set_code "crimson-dust",
+ :setname "Crimson Dust",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virtual",
+ :text "<strong>Trash a card from your grip:</strong> Prevent an installed card of the same type from being trashed by the Corp.",
+ :title "Dummy Box",
+ :type "Resource",
  :uniqueness false}

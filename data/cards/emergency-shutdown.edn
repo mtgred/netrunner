@@ -1,21 +1,21 @@
-{:code "02043"
- :cost 0
- :cycle_code "genesis"
- :faction "Criminal"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02043.png"
- :limited 3
- :normalizedtitle "emergency-shutdown"
- :number 43
- :packquantity 3
- :replaced_by "20021"
- :rotated true
- :set_code "cyber-exodus"
- :setname "Cyber Exodus"
- :side "Runner"
- :strength 0
- :subtype "Sabotage"
- :text "Play only if you made a successful run on HQ this turn.\nDerez a piece of ice."
- :title "Emergency Shutdown"
- :type "Event"
+{:code "02043",
+ :cost 0,
+ :cycle_code "genesis",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02043.png",
+ :limited 3,
+ :normalizedtitle "emergency-shutdown",
+ :number 43,
+ :packquantity 3,
+ :replaced_by "20021",
+ :rotated true,
+ :set_code "cyber-exodus",
+ :setname "Cyber Exodus",
+ :side "Runner",
+ :strength 0,
+ :subtype "Sabotage",
+ :text "Play only if you made a successful run on HQ this turn.\nDerez a piece of ice.",
+ :title "Emergency Shutdown",
+ :type "Event",
  :uniqueness false}

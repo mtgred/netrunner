@@ -1,21 +1,21 @@
-{:advancementcost 4
- :agendapoints 2
- :code "20062"
- :cost 0
- :cycle_code "core2"
- :faction "Haas-Bioroid"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_62.png"
- :limited 3
- :normalizedtitle "project-ares"
- :number 62
- :packquantity 2
- :replaces "04010"
- :set_code "revised-core-set"
- :setname "Revised Core Set"
- :side "Corp"
- :strength 0
- :subtype "Security"
- :text "When you score Project Ares, the Runner trashes 1 of his or her installed cards for each advancement token on Project Ares over 4. If the Runner trashes at least 1 card, take 1 bad publicity."
- :title "Project Ares"
- :type "Agenda"
+{:advancementcost 4,
+ :agendapoints 2,
+ :code "20062",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "Haas-Bioroid",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_62.png",
+ :limited 3,
+ :normalizedtitle "project-ares",
+ :number 62,
+ :packquantity 2,
+ :replaces "04010",
+ :set_code "revised-core-set",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :strength 0,
+ :subtype "Security",
+ :text "When you score Project Ares, the Runner trashes 1 of his or her installed cards for each advancement token on Project Ares over 4. If the Runner trashes at least 1 card, take 1 bad publicity.",
+ :title "Project Ares",
+ :type "Agenda",
  :uniqueness false}

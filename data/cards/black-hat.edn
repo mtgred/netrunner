@@ -1,19 +1,19 @@
-{:code "21110"
- :cost 2
- :cycle_code "kitara"
- :faction "Sunny Lebeau"
- :factioncost 5
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_110.png"
- :limited 3
- :normalizedtitle "black-hat"
- :number 110
- :packquantity 3
- :rotated false
- :set_code "kampala-ascendent"
- :setname "Kampala Ascendent"
- :side "Runner"
- :strength 0
- :text "Force the Corp to \"<trace>Trace 4</trace> If unsuccessful, the Runner accesses 2 additional cards whenever he or she accesses cards from HQ or R&D for the remainder of this turn\"."
- :title "Black Hat"
- :type "Event"
+{:code "21110",
+ :cost 2,
+ :cycle_code "kitara",
+ :faction "Sunny Lebeau",
+ :factioncost 5,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_110.png",
+ :limited 3,
+ :normalizedtitle "black-hat",
+ :number 110,
+ :packquantity 3,
+ :rotated false,
+ :set_code "kampala-ascendent",
+ :setname "Kampala Ascendent",
+ :side "Runner",
+ :strength 0,
+ :text "Force the Corp to \"<trace>Trace 4</trace> If unsuccessful, the Runner accesses 2 additional cards whenever he or she accesses cards from HQ or R&D for the remainder of this turn\".",
+ :title "Black Hat",
+ :type "Event",
  :uniqueness false}

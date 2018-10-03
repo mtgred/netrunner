@@ -1,21 +1,21 @@
-{:code "08092"
- :cost 0
- :cycle_code "sansan"
- :faction "NBN"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_92.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "haarpsichord-studios-entertainment-unleashed"
- :number 92
- :packquantity 3
- :rotated false
- :set_code "old-hollywood"
- :setname "Old Hollywood"
- :side "Corp"
- :strength 0
- :subtype "Division"
- :text "The Runner cannot steal more than one agenda each turn."
- :title "Haarpsichord Studios: Entertainment Unleashed"
- :type "Identity"
+{:code "08092",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "NBN",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_92.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "haarpsichord-studios-entertainment-unleashed",
+ :number 92,
+ :packquantity 3,
+ :rotated false,
+ :set_code "old-hollywood",
+ :setname "Old Hollywood",
+ :side "Corp",
+ :strength 0,
+ :subtype "Division",
+ :text "The Runner cannot steal more than one agenda each turn.",
+ :title "Haarpsichord Studios: Entertainment Unleashed",
+ :type "Identity",
  :uniqueness false}

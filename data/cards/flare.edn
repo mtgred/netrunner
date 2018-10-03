@@ -1,20 +1,20 @@
-{:code "20114"
- :cost 9
- :cycle_code "core2"
- :faction "NBN"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_98.png"
- :limited 3
- :normalizedtitle "flare"
- :number 98
- :packquantity 1
- :replaces "02117"
- :set_code "revised-core-set"
- :setname "Revised Core Set"
- :side "Corp"
- :strength 6
- :subtype "Sentry - Tracer - AP"
- :text "[subroutine]<trace>Trace 6</trace> If successful, trash 1 piece of hardware, do 2 meat damage (cannot be prevented), and end the run."
- :title "Flare"
- :type "ICE"
+{:code "20114",
+ :cost 9,
+ :cycle_code "core2",
+ :faction "NBN",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_98.png",
+ :limited 3,
+ :normalizedtitle "flare",
+ :number 98,
+ :packquantity 1,
+ :replaces "02117",
+ :set_code "revised-core-set",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :strength 6,
+ :subtype "Sentry - Tracer - AP",
+ :text "[subroutine]<trace>Trace 6</trace> If successful, trash 1 piece of hardware, do 2 meat damage (cannot be prevented), and end the run.",
+ :title "Flare",
+ :type "ICE",
  :uniqueness false}

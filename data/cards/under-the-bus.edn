@@ -1,20 +1,20 @@
-{:code "22057"
- :cost 1
- :cycle_code "reign-and-reverie"
- :faction "Weyland Consortium"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_57.png"
- :limited 3
- :normalizedtitle "under-the-bus"
- :number 57
- :packquantity 3
- :rotated false
- :set_code "reign-and-reverie"
- :setname "Reign and Reverie"
- :side "Corp"
- :strength 0
- :subtype "Gray Ops - Illicit"
- :text "Play only if the Runner accessed at least 1 card during his or her last turn.\nTrash 1 <strong>connection</strong> resource and take 1 bad publicity."
- :title "Under the Bus"
- :type "Operation"
+{:code "22057",
+ :cost 1,
+ :cycle_code "reign-and-reverie",
+ :faction "Weyland Consortium",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_57.png",
+ :limited 3,
+ :normalizedtitle "under-the-bus",
+ :number 57,
+ :packquantity 3,
+ :rotated false,
+ :set_code "reign-and-reverie",
+ :setname "Reign and Reverie",
+ :side "Corp",
+ :strength 0,
+ :subtype "Gray Ops - Illicit",
+ :text "Play only if the Runner accessed at least 1 card during his or her last turn.\nTrash 1 <strong>connection</strong> resource and take 1 bad publicity.",
+ :title "Under the Bus",
+ :type "Operation",
  :uniqueness false}

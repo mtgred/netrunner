@@ -1,20 +1,20 @@
-{:code "02008"
- :cost 2
- :cycle_code "genesis"
- :faction "Shaper"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02008.png"
- :limited 3
- :normalizedtitle "the-helpful-ai"
- :number 8
- :packquantity 3
- :rotated true
- :set_code "what-lies-ahead"
- :setname "What Lies Ahead"
- :side "Runner"
- :strength 0
- :subtype "Connection - Link - Virtual"
- :text "+1[link]\n[trash]: Choose an <strong>icebreaker</strong>. That <strong>icebreaker</strong> has +2 strength until the end of the turn."
- :title "The Helpful AI"
- :type "Resource"
+{:code "02008",
+ :cost 2,
+ :cycle_code "genesis",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02008.png",
+ :limited 3,
+ :normalizedtitle "the-helpful-ai",
+ :number 8,
+ :packquantity 3,
+ :rotated true,
+ :set_code "what-lies-ahead",
+ :setname "What Lies Ahead",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection - Link - Virtual",
+ :text "+1[link]\n[trash]: Choose an <strong>icebreaker</strong>. That <strong>icebreaker</strong> has +2 strength until the end of the turn.",
+ :title "The Helpful AI",
+ :type "Resource",
  :uniqueness true}

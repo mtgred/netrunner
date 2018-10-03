@@ -1,20 +1,20 @@
-{:code "13024"
- :cost 0
- :cycle_code "terminal-directive"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_24.png"
- :limited 3
- :normalizedtitle "officer-frank"
- :number 24
- :packquantity 3
- :rotated false
- :set_code "terminal-directive"
- :setname "Terminal Directive"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "[trash], 1[credit]: The Corp trashes 2 cards from HQ at random. Use this ability only if you suffered meat damage this turn."
- :title "Officer Frank"
- :type "Resource"
+{:code "13024",
+ :cost 0,
+ :cycle_code "terminal-directive",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_24.png",
+ :limited 3,
+ :normalizedtitle "officer-frank",
+ :number 24,
+ :packquantity 3,
+ :rotated false,
+ :set_code "terminal-directive",
+ :setname "Terminal Directive",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "[trash], 1[credit]: The Corp trashes 2 cards from HQ at random. Use this ability only if you suffered meat damage this turn.",
+ :title "Officer Frank",
+ :type "Resource",
  :uniqueness true}

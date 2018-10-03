@@ -1,20 +1,20 @@
-{:code "01009"
- :cost 2
- :cycle_code "core"
- :faction "Anarch"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01009.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "djinn"
- :number 9
- :packquantity 2
- :set_code "core-set"
- :setname "Core Set"
- :side "Runner"
- :strength 0
- :subtype "Daemon"
- :text "Djinn can host up to 3[mu] of non-<strong>icebreaker</strong> programs.\nThe memory costs of hosted programs do not count against your memory limit.\n[click], 1[credit]: Search your stack for a <strong>virus</strong> program, reveal it, and add it to your grip. Shuffle your stack."
- :title "Djinn"
- :type "Program"
+{:code "01009",
+ :cost 2,
+ :cycle_code "core",
+ :faction "Anarch",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/01009.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "djinn",
+ :number 9,
+ :packquantity 2,
+ :set_code "core-set",
+ :setname "Core Set",
+ :side "Runner",
+ :strength 0,
+ :subtype "Daemon",
+ :text "Djinn can host up to 3[mu] of non-<strong>icebreaker</strong> programs.\nThe memory costs of hosted programs do not count against your memory limit.\n[click], 1[credit]: Search your stack for a <strong>virus</strong> program, reveal it, and add it to your grip. Shuffle your stack.",
+ :title "Djinn",
+ :type "Program",
  :uniqueness false}

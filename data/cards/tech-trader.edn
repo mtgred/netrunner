@@ -1,20 +1,20 @@
-{:code "10023"
- :cost 1
- :cycle_code "mumbad"
- :faction "Criminal"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_23.png"
- :limited 3
- :normalizedtitle "tech-trader"
- :number 23
- :packquantity 3
- :rotated false
- :set_code "business-first"
- :setname "Business First"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "Whenever you use a [trash] ability, gain 1[credit]."
- :title "Tech Trader"
- :type "Resource"
+{:code "10023",
+ :cost 1,
+ :cycle_code "mumbad",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_23.png",
+ :limited 3,
+ :normalizedtitle "tech-trader",
+ :number 23,
+ :packquantity 3,
+ :rotated false,
+ :set_code "business-first",
+ :setname "Business First",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "Whenever you use a [trash] ability, gain 1[credit].",
+ :title "Tech Trader",
+ :type "Resource",
  :uniqueness false}

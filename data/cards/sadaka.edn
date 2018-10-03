@@ -1,20 +1,20 @@
-{:code "21073"
- :cost 2
- :cycle_code "kitara"
- :faction "Jinteki"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_73.png"
- :limited 3
- :normalizedtitle "sadaka"
- :number 73
- :packquantity 3
- :rotated false
- :set_code "the-devil-and-the-dragon"
- :setname "The Devil and the Dragon"
- :side "Corp"
- :strength 3
- :subtype "Trap"
- :text "[subroutine] Look at the top 3 cards of R&D and either arrange them in any order or shuffle R&D. You may draw 1 card.\n[subroutine] You may trash 1 card in HQ. If you do, trash 1 resource. Trash Sadaka."
- :title "Sadaka"
- :type "ICE"
+{:code "21073",
+ :cost 2,
+ :cycle_code "kitara",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_73.png",
+ :limited 3,
+ :normalizedtitle "sadaka",
+ :number 73,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-devil-and-the-dragon",
+ :setname "The Devil and the Dragon",
+ :side "Corp",
+ :strength 3,
+ :subtype "Trap",
+ :text "[subroutine] Look at the top 3 cards of R&D and either arrange them in any order or shuffle R&D. You may draw 1 card.\n[subroutine] You may trash 1 card in HQ. If you do, trash 1 resource. Trash Sadaka.",
+ :title "Sadaka",
+ :type "ICE",
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "21096"
- :cost 0
- :cycle_code "kitara"
- :faction "Jinteki"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_96.png"
- :limited 3
- :normalizedtitle "mwanza-city-grid"
- :number 96
- :packquantity 3
- :rotated false
- :set_code "whispers-in-nalubaale"
- :setname "Whispers in Nalubaale"
- :side "Corp"
- :strength 0
- :subtype "Region"
- :text "Install only in the root of HQ or R&D.\nWhenever the Runner accesses cards from this server, he or she accesses 3 additional cards. After accessing, gain 2[credit] for each card accessed. This applies even during the run on which the Runner trashes Mwanza City Grid.\nLimit 1 <strong>region</strong> per server."
- :title "Mwanza City Grid"
- :trash 5
- :type "Upgrade"
+{:code "21096",
+ :cost 0,
+ :cycle_code "kitara",
+ :faction "Jinteki",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_96.png",
+ :limited 3,
+ :normalizedtitle "mwanza-city-grid",
+ :number 96,
+ :packquantity 3,
+ :rotated false,
+ :set_code "whispers-in-nalubaale",
+ :setname "Whispers in Nalubaale",
+ :side "Corp",
+ :strength 0,
+ :subtype "Region",
+ :text "Install only in the root of HQ or R&D.\nWhenever the Runner accesses cards from this server, he or she accesses 3 additional cards. After accessing, gain 2[credit] for each card accessed. This applies even during the run on which the Runner trashes Mwanza City Grid.\nLimit 1 <strong>region</strong> per server.",
+ :title "Mwanza City Grid",
+ :trash 5,
+ :type "Upgrade",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "10041"
- :cost 2
- :cycle_code "mumbad"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_41.png"
- :limited 3
- :normalizedtitle "reflection"
- :number 41
- :packquantity 3
- :rotated false
- :set_code "democracy-and-dogma"
- :setname "Democracy and Dogma"
- :side "Runner"
- :strength 0
- :subtype "Console"
- :text " +1[mu] +1[link]\nWhenever you jack out, the Corp reveals 1 card from HQ at random.\nLimit 1 <strong>console</strong> per player."
- :title "Reflection"
- :type "Hardware"
+{:code "10041",
+ :cost 2,
+ :cycle_code "mumbad",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_41.png",
+ :limited 3,
+ :normalizedtitle "reflection",
+ :number 41,
+ :packquantity 3,
+ :rotated false,
+ :set_code "democracy-and-dogma",
+ :setname "Democracy and Dogma",
+ :side "Runner",
+ :strength 0,
+ :subtype "Console",
+ :text " +1[mu] +1[link]\nWhenever you jack out, the Corp reveals 1 card from HQ at random.\nLimit 1 <strong>console</strong> per player.",
+ :title "Reflection",
+ :type "Hardware",
  :uniqueness true}

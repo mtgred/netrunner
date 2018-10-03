@@ -1,20 +1,20 @@
-{:code "21043"
- :cost 0
- :cycle_code "kitara"
- :faction "Anarch"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_43.png"
- :limited 3
- :normalizedtitle "crypt"
- :number 43
- :packquantity 3
- :rotated false
- :set_code "council-of-the-crest"
- :setname "Council of the Crest"
- :side "Runner"
- :strength 0
- :subtype "Virtual"
- :text "Whenever you make a successful run on Archives, you may place 1 virus counter on Crypt.\n[click], [trash], <strong>3 hosted virus counters</strong>: Search your stack for a <strong>virus</strong> program and install it (paying its install cost), then shuffle your stack."
- :title "Crypt"
- :type "Resource"
+{:code "21043",
+ :cost 0,
+ :cycle_code "kitara",
+ :faction "Anarch",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_43.png",
+ :limited 3,
+ :normalizedtitle "crypt",
+ :number 43,
+ :packquantity 3,
+ :rotated false,
+ :set_code "council-of-the-crest",
+ :setname "Council of the Crest",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virtual",
+ :text "Whenever you make a successful run on Archives, you may place 1 virus counter on Crypt.\n[click], [trash], <strong>3 hosted virus counters</strong>: Search your stack for a <strong>virus</strong> program and install it (paying its install cost), then shuffle your stack.",
+ :title "Crypt",
+ :type "Resource",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "12033"
- :cost 1
- :cycle_code "red-sand"
- :faction "Jinteki"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_33.png"
- :limited 3
- :normalizedtitle "replanting"
- :number 33
- :packquantity 3
- :rotated false
- :set_code "station-one"
- :setname "Station One"
- :side "Corp"
- :strength 0
- :subtype "Double"
- :text "As an additional cost to play this operation, spend [click].\nAdd one of your installed cards to HQ. Install 2 cards from HQ, ignoring all costs."
- :title "Replanting"
- :type "Operation"
+{:code "12033",
+ :cost 1,
+ :cycle_code "red-sand",
+ :faction "Jinteki",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_33.png",
+ :limited 3,
+ :normalizedtitle "replanting",
+ :number 33,
+ :packquantity 3,
+ :rotated false,
+ :set_code "station-one",
+ :setname "Station One",
+ :side "Corp",
+ :strength 0,
+ :subtype "Double",
+ :text "As an additional cost to play this operation, spend [click].\nAdd one of your installed cards to HQ. Install 2 cards from HQ, ignoring all costs.",
+ :title "Replanting",
+ :type "Operation",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "11048"
- :cost 2
- :cycle_code "flashpoint"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_48.png"
- :limited 3
- :normalizedtitle "first-responders"
- :number 48
- :packquantity 3
- :rotated false
- :set_code "escalation"
- :setname "Escalation"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "2[credit]: Draw 1 card. Use this ability only if you have suffered damage from a Corp card ability this turn."
- :title "First Responders"
- :type "Resource"
+{:code "11048",
+ :cost 2,
+ :cycle_code "flashpoint",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_48.png",
+ :limited 3,
+ :normalizedtitle "first-responders",
+ :number 48,
+ :packquantity 3,
+ :rotated false,
+ :set_code "escalation",
+ :setname "Escalation",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "2[credit]: Draw 1 card. Use this ability only if you have suffered damage from a Corp card ability this turn.",
+ :title "First Responders",
+ :type "Resource",
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "13017"
- :cost 5
- :cycle_code "terminal-directive"
- :faction "Shaper"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_17.png"
- :limited 3
- :memoryunits 2
- :normalizedtitle "adept"
- :number 17
- :packquantity 3
- :rotated false
- :set_code "terminal-directive"
- :setname "Terminal Directive"
- :side "Runner"
- :strength 2
- :subtype "Icebreaker - Fracter - Killer"
- :text "Adept has +1 strength for each unused MU.\n2[credit]: Break <strong>sentry</strong> or <strong>barrier</strong> subroutine."
- :title "Adept"
- :type "Program"
+{:code "13017",
+ :cost 5,
+ :cycle_code "terminal-directive",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_17.png",
+ :limited 3,
+ :memoryunits 2,
+ :normalizedtitle "adept",
+ :number 17,
+ :packquantity 3,
+ :rotated false,
+ :set_code "terminal-directive",
+ :setname "Terminal Directive",
+ :side "Runner",
+ :strength 2,
+ :subtype "Icebreaker - Fracter - Killer",
+ :text "Adept has +1 strength for each unused MU.\n2[credit]: Break <strong>sentry</strong> or <strong>barrier</strong> subroutine.",
+ :title "Adept",
+ :type "Program",
  :uniqueness false}

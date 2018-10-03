@@ -1,21 +1,21 @@
-{:code "09010"
- :cost 0
- :cycle_code "data-and-destiny"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_10.png"
- :limited 3
- :normalizedtitle "shannon-claire"
- :number 10
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Corp"
- :strength 0
- :subtype "Character"
- :text "[click]: Draw 1 card from the bottom of R&D.\n[trash]: Search R&D or Archives for an agenda and reveal it. Shuffle the rest of R&D if you searched it. Add the agenda to the bottom of R&D."
- :title "Shannon Claire"
- :trash 3
- :type "Asset"
+{:code "09010",
+ :cost 0,
+ :cycle_code "data-and-destiny",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_10.png",
+ :limited 3,
+ :normalizedtitle "shannon-claire",
+ :number 10,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :strength 0,
+ :subtype "Character",
+ :text "[click]: Draw 1 card from the bottom of R&D.\n[trash]: Search R&D or Archives for an agenda and reveal it. Shuffle the rest of R&D if you searched it. Add the agenda to the bottom of R&D.",
+ :title "Shannon Claire",
+ :trash 3,
+ :type "Asset",
  :uniqueness true}

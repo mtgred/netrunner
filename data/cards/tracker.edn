@@ -1,20 +1,20 @@
-{:code "11105"
- :cost 0
- :cycle_code "flashpoint"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_105.png"
- :limited 3
- :memoryunits 2
- :normalizedtitle "tracker"
- :number 105
- :packquantity 3
- :rotated false
- :set_code "quorum"
- :setname "Quorum"
- :side "Runner"
- :strength 0
- :text "When your turn begins, choose a server.\n[click],2[credit]: Make a run on the chosen server. Prevent the first subroutine that would resolve this run from resolving."
- :title "Tracker"
- :type "Program"
+{:code "11105",
+ :cost 0,
+ :cycle_code "flashpoint",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_105.png",
+ :limited 3,
+ :memoryunits 2,
+ :normalizedtitle "tracker",
+ :number 105,
+ :packquantity 3,
+ :rotated false,
+ :set_code "quorum",
+ :setname "Quorum",
+ :side "Runner",
+ :strength 0,
+ :text "When your turn begins, choose a server.\n[click],2[credit]: Make a run on the chosen server. Prevent the first subroutine that would resolve this run from resolving.",
+ :title "Tracker",
+ :type "Program",
  :uniqueness false}

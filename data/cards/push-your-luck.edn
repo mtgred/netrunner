@@ -1,19 +1,19 @@
-{:code "05047"
- :cost 2
- :cycle_code "honor-and-profit"
- :faction "Criminal"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/05047.png"
- :limited 3
- :normalizedtitle "push-your-luck"
- :number 47
- :packquantity 3
- :rotated false
- :set_code "honor-and-profit"
- :setname "Honor and Profit"
- :side "Runner"
- :strength 0
- :text "Secretly spend any number of credits. The Corp guesses if you spent an even or odd amount. Reveal spent credits. If the Corp guessed incorrectly, gain credits equal to twice the amount spent."
- :title "Push Your Luck"
- :type "Event"
+{:code "05047",
+ :cost 2,
+ :cycle_code "honor-and-profit",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/05047.png",
+ :limited 3,
+ :normalizedtitle "push-your-luck",
+ :number 47,
+ :packquantity 3,
+ :rotated false,
+ :set_code "honor-and-profit",
+ :setname "Honor and Profit",
+ :side "Runner",
+ :strength 0,
+ :text "Secretly spend any number of credits. The Corp guesses if you spent an even or odd amount. Reveal spent credits. If the Corp guessed incorrectly, gain credits equal to twice the amount spent.",
+ :title "Push Your Luck",
+ :type "Event",
  :uniqueness false}

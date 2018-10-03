@@ -1,22 +1,22 @@
-{:baselink 1
- :code "05028"
- :cost 0
- :cycle_code "honor-and-profit"
- :faction "Criminal"
- :image_url "https://netrunnerdb.com/card_image/05028.png"
- :influencelimit 10
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "iain-stirling-retired-spook"
- :number 28
- :packquantity 3
- :rotated false
- :set_code "honor-and-profit"
- :setname "Honor and Profit"
- :side "Runner"
- :strength 0
- :subtype "Natural"
- :text "When your turn begins, gain 2[credit] if the Corp has more scored agenda points than you."
- :title "Iain Stirling: Retired Spook"
- :type "Identity"
+{:baselink 1,
+ :code "05028",
+ :cost 0,
+ :cycle_code "honor-and-profit",
+ :faction "Criminal",
+ :image_url "https://netrunnerdb.com/card_image/05028.png",
+ :influencelimit 10,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "iain-stirling-retired-spook",
+ :number 28,
+ :packquantity 3,
+ :rotated false,
+ :set_code "honor-and-profit",
+ :setname "Honor and Profit",
+ :side "Runner",
+ :strength 0,
+ :subtype "Natural",
+ :text "When your turn begins, gain 2[credit] if the Corp has more scored agenda points than you.",
+ :title "Iain Stirling: Retired Spook",
+ :type "Identity",
  :uniqueness false}

@@ -1,22 +1,22 @@
-{:baselink 0
- :code "03029"
- :cost 0
- :cycle_code "creation-and-control"
- :faction "Shaper"
- :image_url "https://netrunnerdb.com/card_image/03029.png"
- :influencelimit 1
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "the-professor-keeper-of-knowledge"
- :number 29
- :packquantity 3
- :rotated false
- :set_code "creation-and-control"
- :setname "Creation and Control"
- :side "Runner"
- :strength 0
- :subtype "Natural"
- :text "The first copy of each program in this deck does not count against your influence limit."
- :title "The Professor: Keeper of Knowledge"
- :type "Identity"
+{:baselink 0,
+ :code "03029",
+ :cost 0,
+ :cycle_code "creation-and-control",
+ :faction "Shaper",
+ :image_url "https://netrunnerdb.com/card_image/03029.png",
+ :influencelimit 1,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "the-professor-keeper-of-knowledge",
+ :number 29,
+ :packquantity 3,
+ :rotated false,
+ :set_code "creation-and-control",
+ :setname "Creation and Control",
+ :side "Runner",
+ :strength 0,
+ :subtype "Natural",
+ :text "The first copy of each program in this deck does not count against your influence limit.",
+ :title "The Professor: Keeper of Knowledge",
+ :type "Identity",
  :uniqueness false}

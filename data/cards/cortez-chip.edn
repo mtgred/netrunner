@@ -1,20 +1,20 @@
-{:code "02005"
- :cost 0
- :cycle_code "genesis"
- :faction "Criminal"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02005.png"
- :limited 3
- :normalizedtitle "cortez-chip"
- :number 5
- :packquantity 3
- :rotated true
- :set_code "what-lies-ahead"
- :setname "What Lies Ahead"
- :side "Runner"
- :strength 0
- :subtype "Chip"
- :text "[trash]: Choose a piece of ice. The Corp must pay 2[credit] as an additional cost to rez that ice until the end of the turn."
- :title "Cortez Chip"
- :type "Hardware"
+{:code "02005",
+ :cost 0,
+ :cycle_code "genesis",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02005.png",
+ :limited 3,
+ :normalizedtitle "cortez-chip",
+ :number 5,
+ :packquantity 3,
+ :rotated true,
+ :set_code "what-lies-ahead",
+ :setname "What Lies Ahead",
+ :side "Runner",
+ :strength 0,
+ :subtype "Chip",
+ :text "[trash]: Choose a piece of ice. The Corp must pay 2[credit] as an additional cost to rez that ice until the end of the turn.",
+ :title "Cortez Chip",
+ :type "Hardware",
  :uniqueness false}

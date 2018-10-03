@@ -1,22 +1,22 @@
-{:code "02118"
- :cost 2
- :cycle_code "genesis"
- :faction "Weyland Consortium"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/02118.png"
- :limited 3
- :normalizedtitle "dedicated-response-team"
- :number 118
- :packquantity 3
- :replaced_by "20081"
- :rotated true
- :set_code "future-proof"
- :setname "Future Proof"
- :side "Corp"
- :strength 0
- :subtype "Hostile"
- :text "If the Runner is tagged, Dedicated Response Team gains \"Whenever a successful run ends, do 2 meat damage.\""
- :title "Dedicated Response Team"
- :trash 3
- :type "Asset"
+{:code "02118",
+ :cost 2,
+ :cycle_code "genesis",
+ :faction "Weyland Consortium",
+ :factioncost 3,
+ :image_url "https://netrunnerdb.com/card_image/02118.png",
+ :limited 3,
+ :normalizedtitle "dedicated-response-team",
+ :number 118,
+ :packquantity 3,
+ :replaced_by "20081",
+ :rotated true,
+ :set_code "future-proof",
+ :setname "Future Proof",
+ :side "Corp",
+ :strength 0,
+ :subtype "Hostile",
+ :text "If the Runner is tagged, Dedicated Response Team gains \"Whenever a successful run ends, do 2 meat damage.\"",
+ :title "Dedicated Response Team",
+ :trash 3,
+ :type "Asset",
  :uniqueness false}

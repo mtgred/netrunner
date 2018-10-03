@@ -1,20 +1,20 @@
-{:code "10063"
- :cost 3
- :cycle_code "mumbad"
- :faction "Shaper"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_63.png"
- :limited 3
- :normalizedtitle "patron"
- :number 63
- :packquantity 3
- :rotated false
- :set_code "salsette-island"
- :setname "Salsette Island"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "When your turn begins, you may choose a server.\nThe first time you make a successful run on that server this turn, instead of accessing cards, draw 2 cards."
- :title "Patron"
- :type "Resource"
+{:code "10063",
+ :cost 3,
+ :cycle_code "mumbad",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_63.png",
+ :limited 3,
+ :normalizedtitle "patron",
+ :number 63,
+ :packquantity 3,
+ :rotated false,
+ :set_code "salsette-island",
+ :setname "Salsette Island",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "When your turn begins, you may choose a server.\nThe first time you make a successful run on that server this turn, instead of accessing cards, draw 2 cards.",
+ :title "Patron",
+ :type "Resource",
  :uniqueness false}

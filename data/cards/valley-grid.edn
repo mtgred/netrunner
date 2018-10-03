@@ -1,21 +1,21 @@
-{:code "08015"
- :cost 3
- :cycle_code "sansan"
- :faction "Jinteki"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_15.png"
- :limited 3
- :normalizedtitle "valley-grid"
- :number 15
- :packquantity 3
- :rotated false
- :set_code "the-valley"
- :setname "The Valley"
- :side "Corp"
- :strength 0
- :subtype "Region"
- :text "Whenever the Runner breaks all subroutines on a piece of ice protecting this server, his or her maximum hand size is reduced by 1 until the beginning of your next turn.\nLimit 1 <strong>region</strong> per server."
- :title "Valley Grid"
- :trash 3
- :type "Upgrade"
+{:code "08015",
+ :cost 3,
+ :cycle_code "sansan",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_15.png",
+ :limited 3,
+ :normalizedtitle "valley-grid",
+ :number 15,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-valley",
+ :setname "The Valley",
+ :side "Corp",
+ :strength 0,
+ :subtype "Region",
+ :text "Whenever the Runner breaks all subroutines on a piece of ice protecting this server, his or her maximum hand size is reduced by 1 until the beginning of your next turn.\nLimit 1 <strong>region</strong> per server.",
+ :title "Valley Grid",
+ :trash 3,
+ :type "Upgrade",
  :uniqueness false}

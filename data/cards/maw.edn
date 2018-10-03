@@ -1,20 +1,20 @@
-{:code "12002"
- :cost 6
- :cycle_code "red-sand"
- :faction "Anarch"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_2.png"
- :limited 3
- :normalizedtitle "maw"
- :number 2
- :packquantity 3
- :rotated false
- :set_code "daedalus-complex"
- :setname "Daedalus Complex"
- :side "Runner"
- :strength 0
- :subtype "Console"
- :text "+2[mu]\nThe first time each turn you access a card not in Archives and do not steal or trash it, the Corp must trash 1 card from HQ at random.\nLimit 1 <strong>console</strong> per player."
- :title "Maw"
- :type "Hardware"
+{:code "12002",
+ :cost 6,
+ :cycle_code "red-sand",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_2.png",
+ :limited 3,
+ :normalizedtitle "maw",
+ :number 2,
+ :packquantity 3,
+ :rotated false,
+ :set_code "daedalus-complex",
+ :setname "Daedalus Complex",
+ :side "Runner",
+ :strength 0,
+ :subtype "Console",
+ :text "+2[mu]\nThe first time each turn you access a card not in Archives and do not steal or trash it, the Corp must trash 1 card from HQ at random.\nLimit 1 <strong>console</strong> per player.",
+ :title "Maw",
+ :type "Hardware",
  :uniqueness true}

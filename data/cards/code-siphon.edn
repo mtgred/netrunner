@@ -1,20 +1,20 @@
-{:code "06115"
- :cost 0
- :cycle_code "lunar"
- :faction "Shaper"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_115.png"
- :limited 3
- :normalizedtitle "code-siphon"
- :number 115
- :packquantity 3
- :rotated false
- :set_code "the-source"
- :setname "The Source"
- :side "Runner"
- :strength 0
- :subtype "Run"
- :text "Make a run on R&D. If successful, instead of accessing cards, you may search your stack for a program and install it, lowering the install cost by 3 for each piece of ice protecting R&D, and then take 1 tag. Shuffle your stack."
- :title "Code Siphon"
- :type "Event"
+{:code "06115",
+ :cost 0,
+ :cycle_code "lunar",
+ :faction "Shaper",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_115.png",
+ :limited 3,
+ :normalizedtitle "code-siphon",
+ :number 115,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-source",
+ :setname "The Source",
+ :side "Runner",
+ :strength 0,
+ :subtype "Run",
+ :text "Make a run on R&D. If successful, instead of accessing cards, you may search your stack for a program and install it, lowering the install cost by 3 for each piece of ice protecting R&D, and then take 1 tag. Shuffle your stack.",
+ :title "Code Siphon",
+ :type "Event",
  :uniqueness false}

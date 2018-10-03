@@ -1,20 +1,20 @@
-{:code "06020"
- :cost 7
- :cycle_code "lunar"
- :faction "Neutral"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/06020.png"
- :limited 1
- :normalizedtitle "eden-shard"
- :number 20
- :packquantity 3
- :rotated false
- :set_code "upstalk"
- :setname "Upstalk"
- :side "Runner"
- :strength 0
- :subtype "Virtual - Source"
- :text "Whenever you make a successful run on R&D, instead of accessing cards, you may install Eden Shard from your grip, ignoring all costs.\n[trash]: The Corp draws 2 cards.\nLimit 1 per deck."
- :title "Eden Shard"
- :type "Resource"
+{:code "06020",
+ :cost 7,
+ :cycle_code "lunar",
+ :faction "Neutral",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/06020.png",
+ :limited 1,
+ :normalizedtitle "eden-shard",
+ :number 20,
+ :packquantity 3,
+ :rotated false,
+ :set_code "upstalk",
+ :setname "Upstalk",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virtual - Source",
+ :text "Whenever you make a successful run on R&D, instead of accessing cards, you may install Eden Shard from your grip, ignoring all costs.\n[trash]: The Corp draws 2 cards.\nLimit 1 per deck.",
+ :title "Eden Shard",
+ :type "Resource",
  :uniqueness true}

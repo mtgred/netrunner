@@ -1,20 +1,20 @@
-{:code "06119"
- :cost 1
- :cycle_code "lunar"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_119.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "au-revoir"
- :number 119
- :packquantity 3
- :rotated false
- :set_code "the-source"
- :setname "The Source"
- :side "Runner"
- :strength 0
- :text "Gain 1[credit] whenever you jack out."
- :title "Au Revoir"
- :type "Program"
+{:code "06119",
+ :cost 1,
+ :cycle_code "lunar",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_119.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "au-revoir",
+ :number 119,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-source",
+ :setname "The Source",
+ :side "Runner",
+ :strength 0,
+ :text "Gain 1[credit] whenever you jack out.",
+ :title "Au Revoir",
+ :type "Program",
  :uniqueness false}

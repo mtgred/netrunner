@@ -1,20 +1,20 @@
-{:code "22046"
- :cost 10
- :cycle_code "reign-and-reverie"
- :faction "NBN"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_46.png"
- :limited 3
- :normalizedtitle "hydra"
- :number 46
- :packquantity 3
- :rotated false
- :set_code "reign-and-reverie"
- :setname "Reign and Reverie"
- :side "Corp"
- :strength 6
- :subtype "Sentry - AP"
- :text "[subroutine] Do 3 net damage if the Runner is tagged; otherwise, give the Runner 1 tag.\n[subroutine] Gain 5[credit] if the Runner is tagged; otherwise, give the Runner 1 tag.\n[subroutine] End the run if the Runner is tagged; otherwise, give the Runner 1 tag.\n"
- :title "Hydra"
- :type "ICE"
+{:code "22046",
+ :cost 10,
+ :cycle_code "reign-and-reverie",
+ :faction "NBN",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_46.png",
+ :limited 3,
+ :normalizedtitle "hydra",
+ :number 46,
+ :packquantity 3,
+ :rotated false,
+ :set_code "reign-and-reverie",
+ :setname "Reign and Reverie",
+ :side "Corp",
+ :strength 6,
+ :subtype "Sentry - AP",
+ :text "[subroutine] Do 3 net damage if the Runner is tagged; otherwise, give the Runner 1 tag.\n[subroutine] Gain 5[credit] if the Runner is tagged; otherwise, give the Runner 1 tag.\n[subroutine] End the run if the Runner is tagged; otherwise, give the Runner 1 tag.\n",
+ :title "Hydra",
+ :type "ICE",
  :uniqueness false}

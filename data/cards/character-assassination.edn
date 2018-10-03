@@ -1,21 +1,21 @@
-{:advancementcost 4
- :agendapoints 2
- :code "04014"
- :cost 0
- :cycle_code "spin"
- :faction "NBN"
- :image_url "https://netrunnerdb.com/card_image/04014.png"
- :limited 3
- :normalizedtitle "character-assassination"
- :number 14
- :packquantity 3
- :rotated true
- :set_code "opening-moves"
- :setname "Opening Moves"
- :side "Corp"
- :strength 0
- :subtype "Security"
- :text "When you score Character Assassination, trash 1 resource (cannot be prevented)."
- :title "Character Assassination"
- :type "Agenda"
+{:advancementcost 4,
+ :agendapoints 2,
+ :code "04014",
+ :cost 0,
+ :cycle_code "spin",
+ :faction "NBN",
+ :image_url "https://netrunnerdb.com/card_image/04014.png",
+ :limited 3,
+ :normalizedtitle "character-assassination",
+ :number 14,
+ :packquantity 3,
+ :rotated true,
+ :set_code "opening-moves",
+ :setname "Opening Moves",
+ :side "Corp",
+ :strength 0,
+ :subtype "Security",
+ :text "When you score Character Assassination, trash 1 resource (cannot be prevented).",
+ :title "Character Assassination",
+ :type "Agenda",
  :uniqueness false}

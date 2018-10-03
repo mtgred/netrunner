@@ -1,20 +1,20 @@
-{:code "09036"
- :cost 2
- :cycle_code "data-and-destiny"
- :faction "Apex"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_36.png"
- :limited 3
- :normalizedtitle "wasteland"
- :number 36
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Runner"
- :strength 0
- :subtype "Location - Virtual"
- :text "The first time each turn you trash 1 of your installed cards, gain 1[credit]."
- :title "Wasteland"
- :type "Resource"
+{:code "09036",
+ :cost 2,
+ :cycle_code "data-and-destiny",
+ :faction "Apex",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_36.png",
+ :limited 3,
+ :normalizedtitle "wasteland",
+ :number 36,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Runner",
+ :strength 0,
+ :subtype "Location - Virtual",
+ :text "The first time each turn you trash 1 of your installed cards, gain 1[credit].",
+ :title "Wasteland",
+ :type "Resource",
  :uniqueness false}

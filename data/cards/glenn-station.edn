@@ -1,21 +1,21 @@
-{:advancementcost 4
- :agendapoints 2
- :code "07005"
- :cost 0
- :cycle_code "order-and-chaos"
- :faction "Weyland Consortium"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_5.png"
- :limited 3
- :normalizedtitle "glenn-station"
- :number 5
- :packquantity 3
- :rotated false
- :set_code "order-and-chaos"
- :setname "Order and Chaos"
- :side "Corp"
- :strength 0
- :subtype "Expansion"
- :text "Glenn Station can host a single card.\n[click]: Host a card from HQ facedown on Glenn Station.\n[click]: Add a card on Glenn Station to HQ."
- :title "Glenn Station"
- :type "Agenda"
+{:advancementcost 4,
+ :agendapoints 2,
+ :code "07005",
+ :cost 0,
+ :cycle_code "order-and-chaos",
+ :faction "Weyland Consortium",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_5.png",
+ :limited 3,
+ :normalizedtitle "glenn-station",
+ :number 5,
+ :packquantity 3,
+ :rotated false,
+ :set_code "order-and-chaos",
+ :setname "Order and Chaos",
+ :side "Corp",
+ :strength 0,
+ :subtype "Expansion",
+ :text "Glenn Station can host a single card.\n[click]: Host a card from HQ facedown on Glenn Station.\n[click]: Add a card on Glenn Station to HQ.",
+ :title "Glenn Station",
+ :type "Agenda",
  :uniqueness false}

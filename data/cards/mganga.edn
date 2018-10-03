@@ -1,20 +1,20 @@
-{:code "21013"
- :cost 1
- :cycle_code "kitara"
- :faction "Jinteki"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_13.png"
- :limited 3
- :normalizedtitle "mganga"
- :number 13
- :packquantity 3
- :rotated false
- :set_code "sovereign-sight"
- :setname "Sovereign Sight"
- :side "Corp"
- :strength 3
- :subtype "Trap - Psi - AP"
- :text "[subroutine] You and the Runner secretly spend 0[credit], 1[credit] or 2[credit]. Reveal spent credits. If you and the Runner spend a different number of credits, do 2 net damage; otherwise do 1 net damage. Trash Mganga."
- :title "Mganga"
- :type "ICE"
+{:code "21013",
+ :cost 1,
+ :cycle_code "kitara",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_13.png",
+ :limited 3,
+ :normalizedtitle "mganga",
+ :number 13,
+ :packquantity 3,
+ :rotated false,
+ :set_code "sovereign-sight",
+ :setname "Sovereign Sight",
+ :side "Corp",
+ :strength 3,
+ :subtype "Trap - Psi - AP",
+ :text "[subroutine] You and the Runner secretly spend 0[credit], 1[credit] or 2[credit]. Reveal spent credits. If you and the Runner spend a different number of credits, do 2 net damage; otherwise do 1 net damage. Trash Mganga.",
+ :title "Mganga",
+ :type "ICE",
  :uniqueness false}

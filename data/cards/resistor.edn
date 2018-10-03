@@ -1,20 +1,20 @@
-{:code "09015"
- :cost 0
- :cycle_code "data-and-destiny"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_15.png"
- :limited 3
- :normalizedtitle "resistor"
- :number 15
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Corp"
- :strength 0
- :subtype "Barrier - Tracer"
- :text "Resistor has +1 strength for each tag the Runner has.\n[subroutine] <trace>Trace 4</trace> If successful, end the run."
- :title "Resistor"
- :type "ICE"
+{:code "09015",
+ :cost 0,
+ :cycle_code "data-and-destiny",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_15.png",
+ :limited 3,
+ :normalizedtitle "resistor",
+ :number 15,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :strength 0,
+ :subtype "Barrier - Tracer",
+ :text "Resistor has +1 strength for each tag the Runner has.\n[subroutine] <trace>Trace 4</trace> If successful, end the run.",
+ :title "Resistor",
+ :type "ICE",
  :uniqueness false}

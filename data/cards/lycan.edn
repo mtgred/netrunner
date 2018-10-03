@@ -1,20 +1,20 @@
-{:code "06089"
- :cost 6
- :cycle_code "lunar"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_89.png"
- :limited 3
- :normalizedtitle "lycan"
- :number 89
- :packquantity 3
- :rotated false
- :set_code "all-that-remains"
- :setname "All That Remains"
- :side "Corp"
- :strength 3
- :subtype "Sentry - Destroyer - Morph"
- :text "Lycan can be advanced.\nWhile Lycan has an odd number of advancement tokens on it, it gains <strong>code gate</strong> and loses <strong>sentry</strong>.\n[subroutine] Trash 1 program."
- :title "Lycan"
- :type "ICE"
+{:code "06089",
+ :cost 6,
+ :cycle_code "lunar",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_89.png",
+ :limited 3,
+ :normalizedtitle "lycan",
+ :number 89,
+ :packquantity 3,
+ :rotated false,
+ :set_code "all-that-remains",
+ :setname "All That Remains",
+ :side "Corp",
+ :strength 3,
+ :subtype "Sentry - Destroyer - Morph",
+ :text "Lycan can be advanced.\nWhile Lycan has an odd number of advancement tokens on it, it gains <strong>code gate</strong> and loses <strong>sentry</strong>.\n[subroutine] Trash 1 program.",
+ :title "Lycan",
+ :type "ICE",
  :uniqueness false}

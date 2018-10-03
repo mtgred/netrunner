@@ -1,20 +1,20 @@
-{:code "01012"
- :cost 2
- :cycle_code "core"
- :faction "Anarch"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01012.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "parasite"
- :number 12
- :packquantity 3
- :set_code "core-set"
- :setname "Core Set"
- :side "Runner"
- :strength 0
- :subtype "Virus"
- :text "Install Parasite only on a rezzed piece of ice.\nHost ice has -1 strength for each virus counter on Parasite and is trashed if its strength is 0 or less.\nWhen your turn begins, place 1 virus counter on Parasite."
- :title "Parasite"
- :type "Program"
+{:code "01012",
+ :cost 2,
+ :cycle_code "core",
+ :faction "Anarch",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/01012.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "parasite",
+ :number 12,
+ :packquantity 3,
+ :set_code "core-set",
+ :setname "Core Set",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virus",
+ :text "Install Parasite only on a rezzed piece of ice.\nHost ice has -1 strength for each virus counter on Parasite and is trashed if its strength is 0 or less.\nWhen your turn begins, place 1 virus counter on Parasite.",
+ :title "Parasite",
+ :type "Program",
  :uniqueness false}

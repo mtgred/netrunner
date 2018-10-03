@@ -1,20 +1,20 @@
-{:code "10085"
- :cost 2
- :cycle_code "mumbad"
- :faction "Neutral"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_85.png"
- :limited 3
- :normalizedtitle "the-turning-wheel"
- :number 85
- :packquantity 3
- :rotated false
- :set_code "the-liberated-mind"
- :setname "The Liberated Mind"
- :side "Runner"
- :strength 0
- :subtype "Virtual"
- :text "Whenever a run on HQ or R&D ends, place 1 power counter on The Turning Wheel if you stole no agendas during the run.\n<strong>2 hosted power counters:</strong> For the remainder of this run, access 1 additional card from HQ or R&D."
- :title "The Turning Wheel"
- :type "Resource"
+{:code "10085",
+ :cost 2,
+ :cycle_code "mumbad",
+ :faction "Neutral",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_85.png",
+ :limited 3,
+ :normalizedtitle "the-turning-wheel",
+ :number 85,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-liberated-mind",
+ :setname "The Liberated Mind",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virtual",
+ :text "Whenever a run on HQ or R&D ends, place 1 power counter on The Turning Wheel if you stole no agendas during the run.\n<strong>2 hosted power counters:</strong> For the remainder of this run, access 1 additional card from HQ or R&D.",
+ :title "The Turning Wheel",
+ :type "Resource",
  :uniqueness true}

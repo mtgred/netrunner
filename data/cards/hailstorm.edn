@@ -1,20 +1,20 @@
-{:code "13049"
- :cost 6
- :cycle_code "terminal-directive"
- :faction "Weyland Consortium"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_49.png"
- :limited 3
- :normalizedtitle "hailstorm"
- :number 49
- :packquantity 3
- :rotated false
- :set_code "terminal-directive"
- :setname "Terminal Directive"
- :side "Corp"
- :strength 5
- :subtype "Barrier"
- :text "[subroutine] Remove a card in the heap from the game.\n[subroutine] End the run."
- :title "Hailstorm"
- :type "ICE"
+{:code "13049",
+ :cost 6,
+ :cycle_code "terminal-directive",
+ :faction "Weyland Consortium",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_49.png",
+ :limited 3,
+ :normalizedtitle "hailstorm",
+ :number 49,
+ :packquantity 3,
+ :rotated false,
+ :set_code "terminal-directive",
+ :setname "Terminal Directive",
+ :side "Corp",
+ :strength 5,
+ :subtype "Barrier",
+ :text "[subroutine] Remove a card in the heap from the game.\n[subroutine] End the run.",
+ :title "Hailstorm",
+ :type "ICE",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "21106"
- :cost 0
- :cycle_code "kitara"
- :faction "Criminal"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_106.png"
- :limited 3
- :normalizedtitle "pad-tap"
- :number 106
- :packquantity 3
- :rotated false
- :set_code "kampala-ascendent"
- :setname "Kampala Ascendent"
- :side "Runner"
- :strength 0
- :text "The first time the Corp gains credits through a card ability each turn, you may gain 1[credit].\n[click], 3[credit]: Trash PAD Tap. Only the Corp can use this ability."
- :title "PAD Tap"
- :type "Resource"
+{:code "21106",
+ :cost 0,
+ :cycle_code "kitara",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_106.png",
+ :limited 3,
+ :normalizedtitle "pad-tap",
+ :number 106,
+ :packquantity 3,
+ :rotated false,
+ :set_code "kampala-ascendent",
+ :setname "Kampala Ascendent",
+ :side "Runner",
+ :strength 0,
+ :text "The first time the Corp gains credits through a card ability each turn, you may gain 1[credit].\n[click], 3[credit]: Trash PAD Tap. Only the Corp can use this ability.",
+ :title "PAD Tap",
+ :type "Resource",
  :uniqueness false}

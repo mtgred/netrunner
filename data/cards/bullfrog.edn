@@ -1,20 +1,20 @@
-{:code "02073"
- :cost 3
- :cycle_code "genesis"
- :faction "Jinteki"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02073.png"
- :limited 3
- :normalizedtitle "bullfrog"
- :number 73
- :packquantity 3
- :rotated true
- :set_code "a-study-in-static"
- :setname "A Study in Static"
- :side "Corp"
- :strength 4
- :subtype "Code Gate - Deflector - Psi"
- :text "[subroutine] You and the Runner secretly spend 0[credit], 1[credit] or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, move Bullfrog so that it is the outermost piece of ice protecting another server (the Runner continues the run from this new position and is now running on this new server)."
- :title "Bullfrog"
- :type "ICE"
+{:code "02073",
+ :cost 3,
+ :cycle_code "genesis",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02073.png",
+ :limited 3,
+ :normalizedtitle "bullfrog",
+ :number 73,
+ :packquantity 3,
+ :rotated true,
+ :set_code "a-study-in-static",
+ :setname "A Study in Static",
+ :side "Corp",
+ :strength 4,
+ :subtype "Code Gate - Deflector - Psi",
+ :text "[subroutine] You and the Runner secretly spend 0[credit], 1[credit] or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, move Bullfrog so that it is the outermost piece of ice protecting another server (the Runner continues the run from this new position and is now running on this new server).",
+ :title "Bullfrog",
+ :type "ICE",
  :uniqueness false}

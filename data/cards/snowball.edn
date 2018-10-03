@@ -1,21 +1,21 @@
-{:code "02027"
- :cost 4
- :cycle_code "genesis"
- :faction "Shaper"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02027.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "snowball"
- :number 27
- :packquantity 3
- :rotated true
- :set_code "trace-amount"
- :setname "Trace Amount"
- :side "Runner"
- :strength 1
- :subtype "Icebreaker - Fracter"
- :text "1[credit]: Break <strong>barrier</strong> subroutine.\n1[credit]: +1 strength.\nWhenever you use Snowball to break a subroutine, it has +1 strength for the remainder of the run."
- :title "Snowball"
- :type "Program"
+{:code "02027",
+ :cost 4,
+ :cycle_code "genesis",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02027.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "snowball",
+ :number 27,
+ :packquantity 3,
+ :rotated true,
+ :set_code "trace-amount",
+ :setname "Trace Amount",
+ :side "Runner",
+ :strength 1,
+ :subtype "Icebreaker - Fracter",
+ :text "1[credit]: Break <strong>barrier</strong> subroutine.\n1[credit]: +1 strength.\nWhenever you use Snowball to break a subroutine, it has +1 strength for the remainder of the run.",
+ :title "Snowball",
+ :type "Program",
  :uniqueness false}

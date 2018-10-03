@@ -1,20 +1,20 @@
-{:code "20032"
- :cost 4
- :cycle_code "core2"
- :faction "Criminal"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_32.png"
- :limited 3
- :memoryunits 2
- :normalizedtitle "sneakdoor-beta"
- :number 32
- :packquantity 1
- :replaces "01028"
- :set_code "revised-core-set"
- :setname "Revised Core Set"
- :side "Runner"
- :strength 0
- :text "[click]: Make a run on Archives. If successful, instead treat it as a successful run on HQ."
- :title "Sneakdoor Beta"
- :type "Program"
+{:code "20032",
+ :cost 4,
+ :cycle_code "core2",
+ :faction "Criminal",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_32.png",
+ :limited 3,
+ :memoryunits 2,
+ :normalizedtitle "sneakdoor-beta",
+ :number 32,
+ :packquantity 1,
+ :replaces "01028",
+ :set_code "revised-core-set",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :strength 0,
+ :text "[click]: Make a run on Archives. If successful, instead treat it as a successful run on HQ.",
+ :title "Sneakdoor Beta",
+ :type "Program",
  :uniqueness false}

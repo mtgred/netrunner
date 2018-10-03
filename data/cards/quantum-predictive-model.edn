@@ -1,21 +1,21 @@
-{:advancementcost 3
- :agendapoints 1
- :code "09007"
- :cost 0
- :cycle_code "data-and-destiny"
- :faction "NBN"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_7.png"
- :limited 3
- :normalizedtitle "quantum-predictive-model"
- :number 7
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Corp"
- :strength 0
- :subtype "Security"
- :text "If Quantum Predictive Model is accessed from R&D, the Runner must reveal it.\nIf the Runner is tagged when Quantum Predictive Model is accessed, add it to your score area."
- :title "Quantum Predictive Model"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "09007",
+ :cost 0,
+ :cycle_code "data-and-destiny",
+ :faction "NBN",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_7.png",
+ :limited 3,
+ :normalizedtitle "quantum-predictive-model",
+ :number 7,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :strength 0,
+ :subtype "Security",
+ :text "If Quantum Predictive Model is accessed from R&D, the Runner must reveal it.\nIf the Runner is tagged when Quantum Predictive Model is accessed, add it to your score area.",
+ :title "Quantum Predictive Model",
+ :type "Agenda",
  :uniqueness false}

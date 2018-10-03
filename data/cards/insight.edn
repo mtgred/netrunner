@@ -1,20 +1,20 @@
-{:code "22016"
- :cost 0
- :cycle_code "reign-and-reverie"
- :faction "Shaper"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_16.png"
- :limited 3
- :normalizedtitle "insight"
- :number 16
- :packquantity 3
- :rotated false
- :set_code "reign-and-reverie"
- :setname "Reign and Reverie"
- :side "Runner"
- :strength 0
- :subtype "Double"
- :text "As an additional cost to play this event, spend [click].\nThe Corp may look at the top 4 cards of R&D and arrange them in any order.\nReveal the top 4 cards of R&D."
- :title "Insight"
- :type "Event"
+{:code "22016",
+ :cost 0,
+ :cycle_code "reign-and-reverie",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_16.png",
+ :limited 3,
+ :normalizedtitle "insight",
+ :number 16,
+ :packquantity 3,
+ :rotated false,
+ :set_code "reign-and-reverie",
+ :setname "Reign and Reverie",
+ :side "Runner",
+ :strength 0,
+ :subtype "Double",
+ :text "As an additional cost to play this event, spend [click].\nThe Corp may look at the top 4 cards of R&D and arrange them in any order.\nReveal the top 4 cards of R&D.",
+ :title "Insight",
+ :type "Event",
  :uniqueness false}

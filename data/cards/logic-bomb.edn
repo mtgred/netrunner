@@ -1,20 +1,20 @@
-{:code "21089"
- :cost 0
- :cycle_code "kitara"
- :faction "Adam"
- :factioncost 5
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_89.png"
- :limited 3
- :normalizedtitle "logic-bomb"
- :number 89
- :packquantity 3
- :rotated false
- :set_code "whispers-in-nalubaale"
- :setname "Whispers in Nalubaale"
- :side "Runner"
- :strength 0
- :subtype "Virtual"
- :text "[trash]: Bypass a piece of ice you are currently encountering. Lose any remaining clicks."
- :title "Logic Bomb"
- :type "Resource"
+{:code "21089",
+ :cost 0,
+ :cycle_code "kitara",
+ :faction "Adam",
+ :factioncost 5,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_89.png",
+ :limited 3,
+ :normalizedtitle "logic-bomb",
+ :number 89,
+ :packquantity 3,
+ :rotated false,
+ :set_code "whispers-in-nalubaale",
+ :setname "Whispers in Nalubaale",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virtual",
+ :text "[trash]: Bypass a piece of ice you are currently encountering. Lose any remaining clicks.",
+ :title "Logic Bomb",
+ :type "Resource",
  :uniqueness false}

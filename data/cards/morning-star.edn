@@ -1,21 +1,21 @@
-{:code "20014"
- :cost 8
- :cycle_code "core2"
- :faction "Anarch"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_14.png"
- :limited 3
- :memoryunits 2
- :normalizedtitle "morning-star"
- :number 14
- :packquantity 3
- :replaces "02004"
- :set_code "revised-core-set"
- :setname "Revised Core Set"
- :side "Runner"
- :strength 5
- :subtype "Icebreaker - Fracter"
- :text "1[credit]: Break any number of <strong>barrier</strong> subroutines."
- :title "Morning Star"
- :type "Program"
+{:code "20014",
+ :cost 8,
+ :cycle_code "core2",
+ :faction "Anarch",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_14.png",
+ :limited 3,
+ :memoryunits 2,
+ :normalizedtitle "morning-star",
+ :number 14,
+ :packquantity 3,
+ :replaces "02004",
+ :set_code "revised-core-set",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :strength 5,
+ :subtype "Icebreaker - Fracter",
+ :text "1[credit]: Break any number of <strong>barrier</strong> subroutines.",
+ :title "Morning Star",
+ :type "Program",
  :uniqueness false}

@@ -1,21 +1,22 @@
-{:code "08012"
- :cost 0
- :cycle_code "sansan"
- :faction "Jinteki"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_12.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "jinteki-biotech-life-imagined"
- :number 12
- :packquantity 3
- :rotated false
- :set_code "the-valley"
- :setname "The Valley"
- :side "Corp"
- :strength 0
- :subtype "Division"
- :text "Before taking your first turn, you may swap this card with any copy of Jinteki Biotech.\n[click],[click],[click]: Flip this identity.\nThe Brewery: When you flip this identity, do 2 net damage.\nThe Tank: When you flip this identity, shuffle Archives into R&D.\nThe Greenhouse: When you flip this identity, place 4 advancement tokens on a card that can be advanced."
- :title "Jinteki Biotech: Life Imagined"
- :type "Identity"
+{:code "08012",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "Jinteki",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_12.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "jinteki-biotech-life-imagined",
+ :number 12,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-valley",
+ :setname "The Valley",
+ :side "Corp",
+ :strength 0,
+ :subtype "Division",
+ :text
+ "Before taking your first turn, you may swap this card with any copy of Jinteki Biotech.\n[click],[click],[click]: Flip this identity.\nThe Brewery: When you flip this identity, do 2 net damage.\nThe Tank: When you flip this identity, shuffle Archives into R&D.\nThe Greenhouse: When you flip this identity, place 4 advancement tokens on a card that can be advanced.",
+ :title "Jinteki Biotech: Life Imagined",
+ :type "Identity",
  :uniqueness false}

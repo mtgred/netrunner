@@ -1,20 +1,20 @@
-{:code "08096"
- :cost 0
- :cycle_code "sansan"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_96.png"
- :limited 3
- :normalizedtitle "casting-call"
- :number 96
- :packquantity 3
- :rotated false
- :set_code "old-hollywood"
- :setname "Old Hollywood"
- :side "Corp"
- :strength 0
- :subtype "Condition"
- :text "Install an agenda from HQ faceup and install Casting Call on that agenda as a hosted condition counter with text \"Whenever the Runner accesses this agenda, he or she takes 2 tags.\""
- :title "Casting Call"
- :type "Operation"
+{:code "08096",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_96.png",
+ :limited 3,
+ :normalizedtitle "casting-call",
+ :number 96,
+ :packquantity 3,
+ :rotated false,
+ :set_code "old-hollywood",
+ :setname "Old Hollywood",
+ :side "Corp",
+ :strength 0,
+ :subtype "Condition",
+ :text "Install an agenda from HQ faceup and install Casting Call on that agenda as a hosted condition counter with text \"Whenever the Runner accesses this agenda, he or she takes 2 tags.\"",
+ :title "Casting Call",
+ :type "Operation",
  :uniqueness false}

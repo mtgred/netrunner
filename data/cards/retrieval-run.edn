@@ -1,21 +1,21 @@
-{:code "02101"
- :cost 3
- :cycle_code "genesis"
- :faction "Anarch"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02101.png"
- :limited 3
- :normalizedtitle "retrieval-run"
- :number 101
- :packquantity 3
- :replaced_by "20003"
- :rotated true
- :set_code "future-proof"
- :setname "Future Proof"
- :side "Runner"
- :strength 0
- :subtype "Run"
- :text "Make a run on Archives. If successful, instead of accessing cards you may install a program from your heap, ignoring all costs."
- :title "Retrieval Run"
- :type "Event"
+{:code "02101",
+ :cost 3,
+ :cycle_code "genesis",
+ :faction "Anarch",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02101.png",
+ :limited 3,
+ :normalizedtitle "retrieval-run",
+ :number 101,
+ :packquantity 3,
+ :replaced_by "20003",
+ :rotated true,
+ :set_code "future-proof",
+ :setname "Future Proof",
+ :side "Runner",
+ :strength 0,
+ :subtype "Run",
+ :text "Make a run on Archives. If successful, instead of accessing cards you may install a program from your heap, ignoring all costs.",
+ :title "Retrieval Run",
+ :type "Event",
  :uniqueness false}

@@ -1,22 +1,22 @@
-{:baselink 0
- :code "09037"
- :cost 0
- :cycle_code "data-and-destiny"
- :faction "Adam"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_37.png"
- :influencelimit 25
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "adam-compulsive-hacker"
- :number 37
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Runner"
- :strength 0
- :subtype "Bioroid"
- :text "You start the game with 3 different <strong>directive</strong> cards installed (these cards are not considered part of your deck)."
- :title "Adam: Compulsive Hacker"
- :type "Identity"
+{:baselink 0,
+ :code "09037",
+ :cost 0,
+ :cycle_code "data-and-destiny",
+ :faction "Adam",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_37.png",
+ :influencelimit 25,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "adam-compulsive-hacker",
+ :number 37,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Runner",
+ :strength 0,
+ :subtype "Bioroid",
+ :text "You start the game with 3 different <strong>directive</strong> cards installed (these cards are not considered part of your deck).",
+ :title "Adam: Compulsive Hacker",
+ :type "Identity",
  :uniqueness false}

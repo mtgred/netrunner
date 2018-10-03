@@ -1,21 +1,21 @@
-{:advancementcost 3
- :agendapoints 1
- :code "05004"
- :cost 0
- :cycle_code "honor-and-profit"
- :faction "Jinteki"
- :image_url "https://netrunnerdb.com/card_image/05004.png"
- :limited 3
- :normalizedtitle "house-of-knives"
- :number 4
- :packquantity 3
- :rotated false
- :set_code "honor-and-profit"
- :setname "Honor and Profit"
- :side "Corp"
- :strength 0
- :subtype "Security"
- :text "Place 3 agenda counters on House of Knives when you score it.\n<strong>Hosted agenda counter:</strong> Do 1 net damage. Use this ability only during a run and only once per run."
- :title "House of Knives"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "05004",
+ :cost 0,
+ :cycle_code "honor-and-profit",
+ :faction "Jinteki",
+ :image_url "https://netrunnerdb.com/card_image/05004.png",
+ :limited 3,
+ :normalizedtitle "house-of-knives",
+ :number 4,
+ :packquantity 3,
+ :rotated false,
+ :set_code "honor-and-profit",
+ :setname "Honor and Profit",
+ :side "Corp",
+ :strength 0,
+ :subtype "Security",
+ :text "Place 3 agenda counters on House of Knives when you score it.\n<strong>Hosted agenda counter:</strong> Do 1 net damage. Use this ability only during a run and only once per run.",
+ :title "House of Knives",
+ :type "Agenda",
  :uniqueness false}

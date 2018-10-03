@@ -1,19 +1,19 @@
-{:code "01075"
- :cost 1
- :cycle_code "core"
- :faction "Jinteki"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/01075.png"
- :limited 3
- :normalizedtitle "chum"
- :number 75
- :packquantity 2
- :set_code "core-set"
- :setname "Core Set"
- :side "Corp"
- :strength 4
- :subtype "Code Gate"
- :text "[subroutine] The next piece of ice the Runner encounters during this run has +2 strength. Do 3 net damage unless the Runner breaks all subroutines on that piece of ice."
- :title "Chum"
- :type "ICE"
+{:code "01075",
+ :cost 1,
+ :cycle_code "core",
+ :faction "Jinteki",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/01075.png",
+ :limited 3,
+ :normalizedtitle "chum",
+ :number 75,
+ :packquantity 2,
+ :set_code "core-set",
+ :setname "Core Set",
+ :side "Corp",
+ :strength 4,
+ :subtype "Code Gate",
+ :text "[subroutine] The next piece of ice the Runner encounters during this run has +2 strength. Do 3 net damage unless the Runner breaks all subroutines on that piece of ice.",
+ :title "Chum",
+ :type "ICE",
  :uniqueness false}

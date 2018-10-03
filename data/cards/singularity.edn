@@ -1,21 +1,21 @@
-{:code "04101"
- :cost 4
- :cycle_code "spin"
- :faction "Anarch"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/04101.png"
- :limited 3
- :normalizedtitle "singularity"
- :number 101
- :packquantity 3
- :replaced_by "20004"
- :rotated true
- :set_code "double-time"
- :setname "Double Time"
- :side "Runner"
- :strength 0
- :subtype "Double - Run"
- :text "As an additional cost to play this event, spend [click].\nMake a run on a remote server. If successful, instead of accessing cards, trash all cards in the server at no cost (even if they cannot normally be trashed)."
- :title "Singularity"
- :type "Event"
+{:code "04101",
+ :cost 4,
+ :cycle_code "spin",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "https://netrunnerdb.com/card_image/04101.png",
+ :limited 3,
+ :normalizedtitle "singularity",
+ :number 101,
+ :packquantity 3,
+ :replaced_by "20004",
+ :rotated true,
+ :set_code "double-time",
+ :setname "Double Time",
+ :side "Runner",
+ :strength 0,
+ :subtype "Double - Run",
+ :text "As an additional cost to play this event, spend [click].\nMake a run on a remote server. If successful, instead of accessing cards, trash all cards in the server at no cost (even if they cannot normally be trashed).",
+ :title "Singularity",
+ :type "Event",
  :uniqueness false}

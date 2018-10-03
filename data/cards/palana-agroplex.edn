@@ -1,21 +1,21 @@
-{:code "10031"
- :cost 1
- :cycle_code "mumbad"
- :faction "Jinteki"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_31.png"
- :limited 3
- :normalizedtitle "palana-agroplex"
- :number 31
- :packquantity 3
- :rotated false
- :set_code "business-first"
- :setname "Business First"
- :side "Corp"
- :strength 0
- :subtype "Facility"
- :text "When your turn begins, each player draws 1 card. "
- :title "Pālanā Agroplex"
- :trash 5
- :type "Asset"
+{:code "10031",
+ :cost 1,
+ :cycle_code "mumbad",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_31.png",
+ :limited 3,
+ :normalizedtitle "palana-agroplex",
+ :number 31,
+ :packquantity 3,
+ :rotated false,
+ :set_code "business-first",
+ :setname "Business First",
+ :side "Corp",
+ :strength 0,
+ :subtype "Facility",
+ :text "When your turn begins, each player draws 1 card. ",
+ :title "Pālanā Agroplex",
+ :trash 5,
+ :type "Asset",
  :uniqueness false}

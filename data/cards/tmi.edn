@@ -1,20 +1,20 @@
-{:code "02017"
- :cost 3
- :cycle_code "genesis"
- :faction "NBN"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/02017.png"
- :limited 3
- :normalizedtitle "tmi"
- :number 17
- :packquantity 3
- :rotated true
- :set_code "what-lies-ahead"
- :setname "What Lies Ahead"
- :side "Corp"
- :strength 5
- :subtype "Barrier"
- :text "When you rez TMI, <trace>trace 2</trace> if unsuccessful, derez TMI.\n[subroutine] End the run."
- :title "TMI"
- :type "ICE"
+{:code "02017",
+ :cost 3,
+ :cycle_code "genesis",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/02017.png",
+ :limited 3,
+ :normalizedtitle "tmi",
+ :number 17,
+ :packquantity 3,
+ :rotated true,
+ :set_code "what-lies-ahead",
+ :setname "What Lies Ahead",
+ :side "Corp",
+ :strength 5,
+ :subtype "Barrier",
+ :text "When you rez TMI, <trace>trace 2</trace> if unsuccessful, derez TMI.\n[subroutine] End the run.",
+ :title "TMI",
+ :type "ICE",
  :uniqueness false}

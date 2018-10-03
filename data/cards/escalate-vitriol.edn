@@ -1,21 +1,21 @@
-{:advancementcost 4
- :agendapoints 2
- :code "12073"
- :cost 0
- :cycle_code "red-sand"
- :faction "NBN"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_73.png"
- :limited 3
- :normalizedtitle "escalate-vitriol"
- :number 73
- :packquantity 3
- :rotated false
- :set_code "blood-and-water"
- :setname "Blood and Water"
- :side "Corp"
- :strength 0
- :subtype "Initiative"
- :text "[click]: Gain 1[credit] for each tag the Runner has. Use this ability only once per turn."
- :title "Escalate Vitriol"
- :type "Agenda"
+{:advancementcost 4,
+ :agendapoints 2,
+ :code "12073",
+ :cost 0,
+ :cycle_code "red-sand",
+ :faction "NBN",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_73.png",
+ :limited 3,
+ :normalizedtitle "escalate-vitriol",
+ :number 73,
+ :packquantity 3,
+ :rotated false,
+ :set_code "blood-and-water",
+ :setname "Blood and Water",
+ :side "Corp",
+ :strength 0,
+ :subtype "Initiative",
+ :text "[click]: Gain 1[credit] for each tag the Runner has. Use this ability only once per turn.",
+ :title "Escalate Vitriol",
+ :type "Agenda",
  :uniqueness false}

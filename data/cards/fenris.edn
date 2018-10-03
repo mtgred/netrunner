@@ -1,20 +1,20 @@
-{:code "04071"
- :cost 4
- :cycle_code "spin"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/04071.png"
- :limited 3
- :normalizedtitle "fenris"
- :number 71
- :packquantity 3
- :rotated true
- :set_code "true-colors"
- :setname "True Colors"
- :side "Corp"
- :strength 2
- :subtype "Sentry - AP - Illicit"
- :text "When you rez Fenris, take 1 bad publicity.\n[subroutine] Do 1 brain damage.\n[subroutine] End the run."
- :title "Fenris"
- :type "ICE"
+{:code "04071",
+ :cost 4,
+ :cycle_code "spin",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/04071.png",
+ :limited 3,
+ :normalizedtitle "fenris",
+ :number 71,
+ :packquantity 3,
+ :rotated true,
+ :set_code "true-colors",
+ :setname "True Colors",
+ :side "Corp",
+ :strength 2,
+ :subtype "Sentry - AP - Illicit",
+ :text "When you rez Fenris, take 1 bad publicity.\n[subroutine] Do 1 brain damage.\n[subroutine] End the run.",
+ :title "Fenris",
+ :type "ICE",
  :uniqueness false}

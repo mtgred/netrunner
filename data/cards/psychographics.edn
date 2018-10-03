@@ -1,19 +1,19 @@
-{:code "20120"
- :cost 0
- :cycle_code "core2"
- :faction "NBN"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_104.png"
- :limited 3
- :normalizedtitle "psychographics"
- :number 104
- :packquantity 3
- :replaces "01085"
- :set_code "revised-core-set"
- :setname "Revised Core Set"
- :side "Corp"
- :strength 0
- :text "X is equal to or less than the number of tags the Runner has.\nPlace X advancement tokens on a card that can be advanced."
- :title "Psychographics"
- :type "Operation"
+{:code "20120",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "NBN",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_104.png",
+ :limited 3,
+ :normalizedtitle "psychographics",
+ :number 104,
+ :packquantity 3,
+ :replaces "01085",
+ :set_code "revised-core-set",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :strength 0,
+ :text "X is equal to or less than the number of tags the Runner has.\nPlace X advancement tokens on a card that can be advanced.",
+ :title "Psychographics",
+ :type "Operation",
  :uniqueness false}

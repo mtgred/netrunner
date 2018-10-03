@@ -1,20 +1,20 @@
-{:code "11061"
- :cost 0
- :cycle_code "flashpoint"
- :faction "Anarch"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_61.png"
- :limited 3
- :normalizedtitle "en-passant"
- :number 61
- :packquantity 3
- :rotated false
- :set_code "intervention"
- :setname "Intervention"
- :side "Runner"
- :strength 0
- :subtype "Sabotage"
- :text "Play only if you made a successful run this turn.\nTrash an unrezzed piece of ice you passed during the last run you made this turn."
- :title "En Passant"
- :type "Event"
+{:code "11061",
+ :cost 0,
+ :cycle_code "flashpoint",
+ :faction "Anarch",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_61.png",
+ :limited 3,
+ :normalizedtitle "en-passant",
+ :number 61,
+ :packquantity 3,
+ :rotated false,
+ :set_code "intervention",
+ :setname "Intervention",
+ :side "Runner",
+ :strength 0,
+ :subtype "Sabotage",
+ :text "Play only if you made a successful run this turn.\nTrash an unrezzed piece of ice you passed during the last run you made this turn.",
+ :title "En Passant",
+ :type "Event",
  :uniqueness false}

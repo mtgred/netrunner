@@ -1,20 +1,20 @@
-{:code "06027"
- :cost 6
- :cycle_code "lunar"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_27.png"
- :limited 3
- :normalizedtitle "information-overload"
- :number 27
- :packquantity 3
- :rotated false
- :set_code "the-spaces-between"
- :setname "The Spaces Between"
- :side "Corp"
- :strength 4
- :subtype "Sentry - Tracer"
- :text "When the Runner encounters Information Overload, <trace>trace 1</trace> if the trace is successful, give the Runner 1 tag.\nInformation Overload gains \"[subroutine] The Runner trashes 1 of his or her installed cards.\" for each tag the Runner has."
- :title "Information Overload"
- :type "ICE"
+{:code "06027",
+ :cost 6,
+ :cycle_code "lunar",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_27.png",
+ :limited 3,
+ :normalizedtitle "information-overload",
+ :number 27,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-spaces-between",
+ :setname "The Spaces Between",
+ :side "Corp",
+ :strength 4,
+ :subtype "Sentry - Tracer",
+ :text "When the Runner encounters Information Overload, <trace>trace 1</trace> if the trace is successful, give the Runner 1 tag.\nInformation Overload gains \"[subroutine] The Runner trashes 1 of his or her installed cards.\" for each tag the Runner has.",
+ :title "Information Overload",
+ :type "ICE",
  :uniqueness false}

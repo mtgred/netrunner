@@ -1,21 +1,21 @@
-{:code "21104"
- :cost 7
- :cycle_code "kitara"
- :faction "Criminal"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_104.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "amina"
- :number 104
- :packquantity 3
- :rotated false
- :set_code "kampala-ascendent"
- :setname "Kampala Ascendent"
- :side "Runner"
- :strength 3
- :subtype "Icebreaker - Decoder"
- :text "2[credit]: Break up to 3 <strong>code gate</strong> subroutines.\n2[credit]: +3 strength.\nThe first time each turn an encounter ends in which you used Amina to break all subroutines on a piece of ice, the Corp loses 1[credit]."
- :title "Amina"
- :type "Program"
+{:code "21104",
+ :cost 7,
+ :cycle_code "kitara",
+ :faction "Criminal",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_104.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "amina",
+ :number 104,
+ :packquantity 3,
+ :rotated false,
+ :set_code "kampala-ascendent",
+ :setname "Kampala Ascendent",
+ :side "Runner",
+ :strength 3,
+ :subtype "Icebreaker - Decoder",
+ :text "2[credit]: Break up to 3 <strong>code gate</strong> subroutines.\n2[credit]: +3 strength.\nThe first time each turn an encounter ends in which you used Amina to break all subroutines on a piece of ice, the Corp loses 1[credit].",
+ :title "Amina",
+ :type "Program",
  :uniqueness false}

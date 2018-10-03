@@ -1,21 +1,21 @@
-{:advancementcost 3
- :agendapoints 1
- :code "22043"
- :cost 0
- :cycle_code "reign-and-reverie"
- :faction "NBN"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_43.png"
- :limited 3
- :normalizedtitle "fly-on-the-wall"
- :number 43
- :packquantity 3
- :rotated false
- :set_code "reign-and-reverie"
- :setname "Reign and Reverie"
- :side "Corp"
- :strength 0
- :subtype "Initiative"
- :text "When you score Fly on the Wall, give the Runner 1 tag."
- :title "Fly on the Wall"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "22043",
+ :cost 0,
+ :cycle_code "reign-and-reverie",
+ :faction "NBN",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_43.png",
+ :limited 3,
+ :normalizedtitle "fly-on-the-wall",
+ :number 43,
+ :packquantity 3,
+ :rotated false,
+ :set_code "reign-and-reverie",
+ :setname "Reign and Reverie",
+ :side "Corp",
+ :strength 0,
+ :subtype "Initiative",
+ :text "When you score Fly on the Wall, give the Runner 1 tag.",
+ :title "Fly on the Wall",
+ :type "Agenda",
  :uniqueness false}

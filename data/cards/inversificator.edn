@@ -1,21 +1,21 @@
-{:code "12048"
- :cost 6
- :cycle_code "red-sand"
- :faction "Shaper"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_48.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "inversificator"
- :number 48
- :packquantity 3
- :rotated false
- :set_code "earth-s-scion"
- :setname "Earth's Scion"
- :side "Runner"
- :strength 2
- :subtype "Icebreaker - Decoder"
- :text "The first time you pass a piece of ice each turn in which you used Inversificator to break all subroutines, you may swap that ice with another piece of ice.\n1[credit]: Break <strong>code gate</strong> subroutine.\n1[credit]: +1 strength."
- :title "Inversificator"
- :type "Program"
+{:code "12048",
+ :cost 6,
+ :cycle_code "red-sand",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_48.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "inversificator",
+ :number 48,
+ :packquantity 3,
+ :rotated false,
+ :set_code "earth-s-scion",
+ :setname "Earth's Scion",
+ :side "Runner",
+ :strength 2,
+ :subtype "Icebreaker - Decoder",
+ :text "The first time you pass a piece of ice each turn in which you used Inversificator to break all subroutines, you may swap that ice with another piece of ice.\n1[credit]: Break <strong>code gate</strong> subroutine.\n1[credit]: +1 strength.",
+ :title "Inversificator",
+ :type "Program",
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "12085"
- :cost 5
- :cycle_code "red-sand"
- :faction "Criminal"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_85.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "flashbang"
- :number 85
- :packquantity 3
- :rotated false
- :set_code "free-mars"
- :setname "Free Mars"
- :side "Runner"
- :strength 0
- :subtype "Icebreaker - Killer"
- :text "6[credit]: Derez a sentry currently being encountered.\n1[credit]: +1 strength."
- :title "Flashbang"
- :type "Program"
+{:code "12085",
+ :cost 5,
+ :cycle_code "red-sand",
+ :faction "Criminal",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_85.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "flashbang",
+ :number 85,
+ :packquantity 3,
+ :rotated false,
+ :set_code "free-mars",
+ :setname "Free Mars",
+ :side "Runner",
+ :strength 0,
+ :subtype "Icebreaker - Killer",
+ :text "6[credit]: Derez a sentry currently being encountered.\n1[credit]: +1 strength.",
+ :title "Flashbang",
+ :type "Program",
  :uniqueness false}

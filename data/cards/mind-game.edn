@@ -1,20 +1,21 @@
-{:code "11092"
- :cost 0
- :cycle_code "flashpoint"
- :faction "Jinteki"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_92.png"
- :limited 3
- :normalizedtitle "mind-game"
- :number 92
- :packquantity 3
- :rotated false
- :set_code "martial-law"
- :setname "Martial Law"
- :side "Corp"
- :strength 4
- :subtype "Code Gate - Psi - Deflector"
- :text "[subroutine] You and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, choose another server. The Runner is now running on that server instead of passing Mind Game. For the remainder of the run, the Runner must add 1 installed card to the bottom of his or her stack as an additional cost to jack out."
- :title "Mind Game"
- :type "ICE"
+{:code "11092",
+ :cost 0,
+ :cycle_code "flashpoint",
+ :faction "Jinteki",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_92.png",
+ :limited 3,
+ :normalizedtitle "mind-game",
+ :number 92,
+ :packquantity 3,
+ :rotated false,
+ :set_code "martial-law",
+ :setname "Martial Law",
+ :side "Corp",
+ :strength 4,
+ :subtype "Code Gate - Psi - Deflector",
+ :text
+ "[subroutine] You and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, choose another server. The Runner is now running on that server instead of passing Mind Game. For the remainder of the run, the Runner must add 1 installed card to the bottom of his or her stack as an additional cost to jack out.",
+ :title "Mind Game",
+ :type "ICE",
  :uniqueness false}

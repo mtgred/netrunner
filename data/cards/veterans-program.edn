@@ -1,22 +1,22 @@
-{:advancementcost 3
- :agendapoints 1
- :code "04080"
- :cost 0
- :cycle_code "spin"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/04080.png"
- :limited 3
- :normalizedtitle "veterans-program"
- :number 80
- :packquantity 3
- :rotated true
- :set_code "true-colors"
- :setname "True Colors"
- :side "Corp"
- :strength 0
- :subtype "Initiative"
- :text "When you score Veterans Program, you may remove up to 2 bad publicity."
- :title "Veterans Program"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "04080",
+ :cost 0,
+ :cycle_code "spin",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/04080.png",
+ :limited 3,
+ :normalizedtitle "veterans-program",
+ :number 80,
+ :packquantity 3,
+ :rotated true,
+ :set_code "true-colors",
+ :setname "True Colors",
+ :side "Corp",
+ :strength 0,
+ :subtype "Initiative",
+ :text "When you score Veterans Program, you may remove up to 2 bad publicity.",
+ :title "Veterans Program",
+ :type "Agenda",
  :uniqueness false}

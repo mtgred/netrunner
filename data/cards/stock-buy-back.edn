@@ -1,20 +1,20 @@
-{:code "11019"
- :cost 1
- :cycle_code "flashpoint"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_19.png"
- :limited 3
- :normalizedtitle "stock-buy-back"
- :number 19
- :packquantity 3
- :rotated false
- :set_code "23-seconds"
- :setname "23 Seconds"
- :side "Corp"
- :strength 0
- :subtype "Terminal - Transaction"
- :text "After you resolve this operation, end your action phase.\nGain 3[credit] for each agenda in the Runner's score area."
- :title "Stock Buy-Back"
- :type "Operation"
+{:code "11019",
+ :cost 1,
+ :cycle_code "flashpoint",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_19.png",
+ :limited 3,
+ :normalizedtitle "stock-buy-back",
+ :number 19,
+ :packquantity 3,
+ :rotated false,
+ :set_code "23-seconds",
+ :setname "23 Seconds",
+ :side "Corp",
+ :strength 0,
+ :subtype "Terminal - Transaction",
+ :text "After you resolve this operation, end your action phase.\nGain 3[credit] for each agenda in the Runner's score area.",
+ :title "Stock Buy-Back",
+ :type "Operation",
  :uniqueness false}

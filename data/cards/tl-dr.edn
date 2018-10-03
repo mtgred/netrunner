@@ -1,20 +1,20 @@
-{:code "09017"
- :cost 1
- :cycle_code "data-and-destiny"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_17.png"
- :limited 3
- :normalizedtitle "tl-dr"
- :number 17
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Corp"
- :strength 4
- :subtype "Code Gate"
- :text "[subroutine] When the Runner encounters the next piece of ice during this run, that ice gains a second copy of each subroutine on it (after the original subroutine) for the remainder of the encounter."
- :title "TL;DR"
- :type "ICE"
+{:code "09017",
+ :cost 1,
+ :cycle_code "data-and-destiny",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_17.png",
+ :limited 3,
+ :normalizedtitle "tl-dr",
+ :number 17,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :strength 4,
+ :subtype "Code Gate",
+ :text "[subroutine] When the Runner encounters the next piece of ice during this run, that ice gains a second copy of each subroutine on it (after the original subroutine) for the remainder of the encounter.",
+ :title "TL;DR",
+ :type "ICE",
  :uniqueness false}

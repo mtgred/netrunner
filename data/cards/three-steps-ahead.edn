@@ -1,20 +1,20 @@
-{:code "06035"
- :cost 1
- :cycle_code "lunar"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_35.png"
- :limited 3
- :normalizedtitle "three-steps-ahead"
- :number 35
- :packquantity 3
- :rotated false
- :set_code "the-spaces-between"
- :setname "The Spaces Between"
- :side "Runner"
- :strength 0
- :subtype "Priority"
- :text "Play only as your first [click].\nWhen this turn ends, gain 2[credit] for each successful run you made during it."
- :title "Three Steps Ahead"
- :type "Event"
+{:code "06035",
+ :cost 1,
+ :cycle_code "lunar",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_35.png",
+ :limited 3,
+ :normalizedtitle "three-steps-ahead",
+ :number 35,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-spaces-between",
+ :setname "The Spaces Between",
+ :side "Runner",
+ :strength 0,
+ :subtype "Priority",
+ :text "Play only as your first [click].\nWhen this turn ends, gain 2[credit] for each successful run you made during it.",
+ :title "Three Steps Ahead",
+ :type "Event",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "09022"
- :cost 1
- :cycle_code "data-and-destiny"
- :faction "NBN"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_22.png"
- :limited 3
- :normalizedtitle "the-all-seeing-i"
- :number 22
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Corp"
- :strength 0
- :text "Play only if the Runner is tagged.\nTrash all resources. The Runner can remove 1 bad publicity to prevent this."
- :title "The All-Seeing I"
- :type "Operation"
+{:code "09022",
+ :cost 1,
+ :cycle_code "data-and-destiny",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_22.png",
+ :limited 3,
+ :normalizedtitle "the-all-seeing-i",
+ :number 22,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :strength 0,
+ :text "Play only if the Runner is tagged.\nTrash all resources. The Runner can remove 1 bad publicity to prevent this.",
+ :title "The All-Seeing I",
+ :type "Operation",
  :uniqueness false}

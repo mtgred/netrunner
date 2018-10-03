@@ -1,21 +1,21 @@
-{:code "08010"
- :cost 1
- :cycle_code "sansan"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_10.png"
- :limited 3
- :normalizedtitle "brain-taping-warehouse"
- :number 10
- :packquantity 3
- :rotated false
- :set_code "the-valley"
- :setname "The Valley"
- :side "Corp"
- :strength 0
- :subtype "Facility"
- :text "The rez cost of <strong>bioroid</strong> ice is lowered by 1 for each unspent click the Runner has."
- :title "Brain-Taping Warehouse"
- :trash 4
- :type "Asset"
+{:code "08010",
+ :cost 1,
+ :cycle_code "sansan",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_10.png",
+ :limited 3,
+ :normalizedtitle "brain-taping-warehouse",
+ :number 10,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-valley",
+ :setname "The Valley",
+ :side "Corp",
+ :strength 0,
+ :subtype "Facility",
+ :text "The rez cost of <strong>bioroid</strong> ice is lowered by 1 for each unspent click the Runner has.",
+ :title "Brain-Taping Warehouse",
+ :trash 4,
+ :type "Asset",
  :uniqueness false}

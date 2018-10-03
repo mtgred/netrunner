@@ -1,21 +1,21 @@
-{:advancementcost 4
- :agendapoints 2
- :code "12092"
- :cost 0
- :cycle_code "red-sand"
- :faction "Jinteki"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_92.png"
- :limited 3
- :normalizedtitle "mandatory-seed-replacement"
- :number 92
- :packquantity 3
- :rotated false
- :set_code "free-mars"
- :setname "Free Mars"
- :side "Corp"
- :strength 0
- :subtype "Security"
- :text "When you score Mandatory Seed Replacement, rearrange any number of ice protecting all servers."
- :title "Mandatory Seed Replacement"
- :type "Agenda"
+{:advancementcost 4,
+ :agendapoints 2,
+ :code "12092",
+ :cost 0,
+ :cycle_code "red-sand",
+ :faction "Jinteki",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_92.png",
+ :limited 3,
+ :normalizedtitle "mandatory-seed-replacement",
+ :number 92,
+ :packquantity 3,
+ :rotated false,
+ :set_code "free-mars",
+ :setname "Free Mars",
+ :side "Corp",
+ :strength 0,
+ :subtype "Security",
+ :text "When you score Mandatory Seed Replacement, rearrange any number of ice protecting all servers.",
+ :title "Mandatory Seed Replacement",
+ :type "Agenda",
  :uniqueness false}

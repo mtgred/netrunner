@@ -1,20 +1,20 @@
-{:code "08086"
- :cost 1
- :cycle_code "sansan"
- :faction "Shaper"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_86.png"
- :limited 3
- :normalizedtitle "film-critic"
- :number 86
- :packquantity 3
- :rotated false
- :set_code "old-hollywood"
- :setname "Old Hollywood"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "Film Critic can host a single agenda.\nWhenever you access an agenda, you may host that agenda on Film Critic (the agenda is no longer being accessed and is uninstalled).\n[click],[click]: Add an agenda hosted on Film Critic to your score area."
- :title "Film Critic"
- :type "Resource"
+{:code "08086",
+ :cost 1,
+ :cycle_code "sansan",
+ :faction "Shaper",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_86.png",
+ :limited 3,
+ :normalizedtitle "film-critic",
+ :number 86,
+ :packquantity 3,
+ :rotated false,
+ :set_code "old-hollywood",
+ :setname "Old Hollywood",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "Film Critic can host a single agenda.\nWhenever you access an agenda, you may host that agenda on Film Critic (the agenda is no longer being accessed and is uninstalled).\n[click],[click]: Add an agenda hosted on Film Critic to your score area.",
+ :title "Film Critic",
+ :type "Resource",
  :uniqueness false}

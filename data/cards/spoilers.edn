@@ -1,20 +1,20 @@
-{:code "08082"
- :cost 1
- :cycle_code "sansan"
- :faction "Anarch"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_82.png"
- :limited 3
- :normalizedtitle "spoilers"
- :number 82
- :packquantity 3
- :rotated false
- :set_code "old-hollywood"
- :setname "Old Hollywood"
- :side "Runner"
- :strength 0
- :subtype "Virtual"
- :text "Whenever the Corp scores an agenda, he or she trashes the top card of R&D."
- :title "Spoilers"
- :type "Resource"
+{:code "08082",
+ :cost 1,
+ :cycle_code "sansan",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_82.png",
+ :limited 3,
+ :normalizedtitle "spoilers",
+ :number 82,
+ :packquantity 3,
+ :rotated false,
+ :set_code "old-hollywood",
+ :setname "Old Hollywood",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virtual",
+ :text "Whenever the Corp scores an agenda, he or she trashes the top card of R&D.",
+ :title "Spoilers",
+ :type "Resource",
  :uniqueness false}

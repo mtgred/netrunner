@@ -1,19 +1,19 @@
-{:code "21103"
- :cost 2
- :cycle_code "kitara"
- :faction "Anarch"
- :factioncost 5
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_103.png"
- :limited 3
- :normalizedtitle "hippo"
- :number 103
- :packquantity 3
- :rotated false
- :set_code "kampala-ascendent"
- :setname "Kampala Ascendent"
- :side "Runner"
- :strength 0
- :text "The first time you break all subroutines on the outermost piece of ice during a run each turn, you may remove Hippo from the game to trash that piece of ice."
- :title "Hippo"
- :type "Hardware"
+{:code "21103",
+ :cost 2,
+ :cycle_code "kitara",
+ :faction "Anarch",
+ :factioncost 5,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_103.png",
+ :limited 3,
+ :normalizedtitle "hippo",
+ :number 103,
+ :packquantity 3,
+ :rotated false,
+ :set_code "kampala-ascendent",
+ :setname "Kampala Ascendent",
+ :side "Runner",
+ :strength 0,
+ :text "The first time you break all subroutines on the outermost piece of ice during a run each turn, you may remove Hippo from the game to trash that piece of ice.",
+ :title "Hippo",
+ :type "Hardware",
  :uniqueness true}

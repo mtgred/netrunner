@@ -1,20 +1,20 @@
-{:code "06091"
- :cost 6
- :cycle_code "lunar"
- :faction "Neutral"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_91.png"
- :limited 3
- :normalizedtitle "merlin"
- :number 91
- :packquantity 3
- :rotated false
- :set_code "all-that-remains"
- :setname "All That Remains"
- :side "Corp"
- :strength 4
- :subtype "Code Gate - Grail - AP"
- :text "When the Runner encounters Merlin, you may reveal up to 2 <strong>grail</strong> ice from HQ. For the remainder of this run, Merlin gains the subroutines of the revealed ice in the order of your choice.\n[subroutine] Do 2 net damage."
- :title "Merlin"
- :type "ICE"
+{:code "06091",
+ :cost 6,
+ :cycle_code "lunar",
+ :faction "Neutral",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_91.png",
+ :limited 3,
+ :normalizedtitle "merlin",
+ :number 91,
+ :packquantity 3,
+ :rotated false,
+ :set_code "all-that-remains",
+ :setname "All That Remains",
+ :side "Corp",
+ :strength 4,
+ :subtype "Code Gate - Grail - AP",
+ :text "When the Runner encounters Merlin, you may reveal up to 2 <strong>grail</strong> ice from HQ. For the remainder of this run, Merlin gains the subroutines of the revealed ice in the order of your choice.\n[subroutine] Do 2 net damage.",
+ :title "Merlin",
+ :type "ICE",
  :uniqueness false}

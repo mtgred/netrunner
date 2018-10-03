@@ -1,21 +1,21 @@
-{:advancementcost 5
- :agendapoints 3
- :code "21033"
- :cost 0
- :cycle_code "kitara"
- :faction "Jinteki"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_33.png"
- :limited 3
- :normalizedtitle "bacterial-programming"
- :number 33
- :packquantity 3
- :rotated false
- :set_code "down-the-white-nile"
- :setname "Down the White Nile"
- :side "Corp"
- :strength 0
- :subtype "Research"
- :text "When Bacterial Programming is scored or stolen, you may look at the top 7 cards of R&D, add any number of them to HQ, trash any number of them, and arrange the rest in any order."
- :title "Bacterial Programming"
- :type "Agenda"
+{:advancementcost 5,
+ :agendapoints 3,
+ :code "21033",
+ :cost 0,
+ :cycle_code "kitara",
+ :faction "Jinteki",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_33.png",
+ :limited 3,
+ :normalizedtitle "bacterial-programming",
+ :number 33,
+ :packquantity 3,
+ :rotated false,
+ :set_code "down-the-white-nile",
+ :setname "Down the White Nile",
+ :side "Corp",
+ :strength 0,
+ :subtype "Research",
+ :text "When Bacterial Programming is scored or stolen, you may look at the top 7 cards of R&D, add any number of them to HQ, trash any number of them, and arrange the rest in any order.",
+ :title "Bacterial Programming",
+ :type "Agenda",
  :uniqueness false}

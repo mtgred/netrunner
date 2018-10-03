@@ -1,20 +1,20 @@
-{:code "06046"
- :cost 3
- :cycle_code "lunar"
- :faction "NBN"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_46.png"
- :limited 3
- :normalizedtitle "manhunt"
- :number 46
- :packquantity 3
- :rotated false
- :set_code "first-contact"
- :setname "First Contact"
- :side "Corp"
- :strength 0
- :subtype "Current"
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nThe first time the Runner makes a successful run each turn, <trace>trace 2</trace> if successful, give the Runner 1 tag."
- :title "Manhunt"
- :type "Operation"
+{:code "06046",
+ :cost 3,
+ :cycle_code "lunar",
+ :faction "NBN",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_46.png",
+ :limited 3,
+ :normalizedtitle "manhunt",
+ :number 46,
+ :packquantity 3,
+ :rotated false,
+ :set_code "first-contact",
+ :setname "First Contact",
+ :side "Corp",
+ :strength 0,
+ :subtype "Current",
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nThe first time the Runner makes a successful run each turn, <trace>trace 2</trace> if successful, give the Runner 1 tag.",
+ :title "Manhunt",
+ :type "Operation",
  :uniqueness false}

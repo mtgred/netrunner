@@ -1,21 +1,21 @@
-{:advancementcost 4
- :agendapoints 2
- :code "04095"
- :cost 0
- :cycle_code "spin"
- :faction "NBN"
- :image_url "https://netrunnerdb.com/card_image/04095.png"
- :limited 3
- :normalizedtitle "market-research"
- :number 95
- :packquantity 3
- :rotated true
- :set_code "fear-and-loathing"
- :setname "Fear and Loathing"
- :side "Corp"
- :strength 0
- :subtype "Research"
- :text "If the Runner is tagged when you score Market Research, place 1 agenda counter on it.\nMarket Research is worth 1 additional agenda point while it has an agenda counter on it."
- :title "Market Research"
- :type "Agenda"
+{:advancementcost 4,
+ :agendapoints 2,
+ :code "04095",
+ :cost 0,
+ :cycle_code "spin",
+ :faction "NBN",
+ :image_url "https://netrunnerdb.com/card_image/04095.png",
+ :limited 3,
+ :normalizedtitle "market-research",
+ :number 95,
+ :packquantity 3,
+ :rotated true,
+ :set_code "fear-and-loathing",
+ :setname "Fear and Loathing",
+ :side "Corp",
+ :strength 0,
+ :subtype "Research",
+ :text "If the Runner is tagged when you score Market Research, place 1 agenda counter on it.\nMarket Research is worth 1 additional agenda point while it has an agenda counter on it.",
+ :title "Market Research",
+ :type "Agenda",
  :uniqueness false}

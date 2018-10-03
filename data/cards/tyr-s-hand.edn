@@ -1,21 +1,21 @@
-{:code "03022"
- :cost 1
- :cycle_code "creation-and-control"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/03022.png"
- :limited 3
- :normalizedtitle "tyr-s-hand"
- :number 22
- :packquantity 3
- :rotated false
- :set_code "creation-and-control"
- :setname "Creation and Control"
- :side "Corp"
- :strength 0
- :subtype "Hostile"
- :text "If the Runner is about to break a subroutine on a piece of <strong>bioroid</strong> ice protecting this server, you may rez Tyr's Hand.\n[trash]: Prevent a subroutine from being broken on a piece of <strong>bioroid</strong> ice protecting this server."
- :title "Tyr's Hand"
- :trash 1
- :type "Upgrade"
+{:code "03022",
+ :cost 1,
+ :cycle_code "creation-and-control",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/03022.png",
+ :limited 3,
+ :normalizedtitle "tyr-s-hand",
+ :number 22,
+ :packquantity 3,
+ :rotated false,
+ :set_code "creation-and-control",
+ :setname "Creation and Control",
+ :side "Corp",
+ :strength 0,
+ :subtype "Hostile",
+ :text "If the Runner is about to break a subroutine on a piece of <strong>bioroid</strong> ice protecting this server, you may rez Tyr's Hand.\n[trash]: Prevent a subroutine from being broken on a piece of <strong>bioroid</strong> ice protecting this server.",
+ :title "Tyr's Hand",
+ :trash 1,
+ :type "Upgrade",
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "09009"
- :cost 0
- :cycle_code "data-and-destiny"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_9.png"
- :limited 3
- :normalizedtitle "news-team"
- :number 9
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Corp"
- :strength 0
- :subtype "Ambush"
- :text "If News Team is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses News Team, he or she must either take 2 tags or add News Team to his or her score area as an agenda worth -1 agenda point."
- :title "News Team"
- :trash 0
- :type "Asset"
+{:code "09009",
+ :cost 0,
+ :cycle_code "data-and-destiny",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_9.png",
+ :limited 3,
+ :normalizedtitle "news-team",
+ :number 9,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :strength 0,
+ :subtype "Ambush",
+ :text "If News Team is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses News Team, he or she must either take 2 tags or add News Team to his or her score area as an agenda worth -1 agenda point.",
+ :title "News Team",
+ :trash 0,
+ :type "Asset",
  :uniqueness false}

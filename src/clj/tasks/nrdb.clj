@@ -8,7 +8,7 @@
             [clojure.string :as string]
             [clojure.java.io :as io]
             [clojure.edn :as edn]
-            [zprint.core :as zp]))
+            [clojure.pprint :as pprint]))
 
 (def ^:const base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-cards-edn/master/edn/raw_data.edn")
 (def ^:const cgdb-image-url "https://www.cardgamedb.com/forums/uploads/an/")
@@ -80,7 +80,10 @@
             :let [path (:normalizedtitle card)
                   filename (str "data/cards/" path ".edn")]]
       (io/make-parents filename)
-      (spit filename (zp/zprint-str card zp-settings)))
+      (with-open [w (clojure.java.io/writer filename)]
+        (binding [*out* w
+                  pprint/*print-right-margin* 1000]
+          (pprint/write (into (sorted-map) card)))))
     (replace-collection "cards" cards)
 
     (doseq [[k v] data

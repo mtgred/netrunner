@@ -1,20 +1,20 @@
-{:code "12098"
- :cost 9
- :cycle_code "red-sand"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_98.png"
- :limited 3
- :normalizedtitle "tithonium"
- :number 98
- :packquantity 3
- :rotated false
- :set_code "free-mars"
- :setname "Free Mars"
- :side "Corp"
- :strength 5
- :subtype "Barrier - Destroyer"
- :text "You may forfeit an agenda to rez Tithonium instead of paying its rez cost.\nTithonium cannot host cards.\n[subroutine] Trash 1 program.\n[subroutine] Trash 1 program.\n[subroutine] Trash 1 resource and end the run."
- :title "Tithonium"
- :type "ICE"
+{:code "12098",
+ :cost 9,
+ :cycle_code "red-sand",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_98.png",
+ :limited 3,
+ :normalizedtitle "tithonium",
+ :number 98,
+ :packquantity 3,
+ :rotated false,
+ :set_code "free-mars",
+ :setname "Free Mars",
+ :side "Corp",
+ :strength 5,
+ :subtype "Barrier - Destroyer",
+ :text "You may forfeit an agenda to rez Tithonium instead of paying its rez cost.\nTithonium cannot host cards.\n[subroutine] Trash 1 program.\n[subroutine] Trash 1 program.\n[subroutine] Trash 1 resource and end the run.",
+ :title "Tithonium",
+ :type "ICE",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "06013"
- :cost 1
- :cycle_code "lunar"
- :faction "Anarch"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/06013.png"
- :limited 3
- :normalizedtitle "cyber-threat"
- :number 13
- :packquantity 3
- :rotated false
- :set_code "upstalk"
- :setname "Upstalk"
- :side "Runner"
- :strength 0
- :subtype "Priority"
- :text "Play only as your first [click].\nChoose a server. The Corp can rez a piece of ice protecting this server. If he or she does not, make a run on that server, during which the Corp cannot rez ice."
- :title "Cyber Threat"
- :type "Event"
+{:code "06013",
+ :cost 1,
+ :cycle_code "lunar",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "https://netrunnerdb.com/card_image/06013.png",
+ :limited 3,
+ :normalizedtitle "cyber-threat",
+ :number 13,
+ :packquantity 3,
+ :rotated false,
+ :set_code "upstalk",
+ :setname "Upstalk",
+ :side "Runner",
+ :strength 0,
+ :subtype "Priority",
+ :text "Play only as your first [click].\nChoose a server. The Corp can rez a piece of ice protecting this server. If he or she does not, make a run on that server, during which the Corp cannot rez ice.",
+ :title "Cyber Threat",
+ :type "Event",
  :uniqueness false}

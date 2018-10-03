@@ -1,22 +1,22 @@
-{:baselink 1
- :code "08063"
- :cost 0
- :cycle_code "sansan"
- :faction "Criminal"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_63.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "armand-geist-walker-tech-lord"
- :number 63
- :packquantity 3
- :rotated false
- :set_code "the-underway"
- :setname "The Underway"
- :side "Runner"
- :strength 0
- :subtype "G-mod"
- :text "Whenever you use a [trash] ability, draw 1 card."
- :title "Armand \"Geist\" Walker: Tech Lord"
- :type "Identity"
+{:baselink 1,
+ :code "08063",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "Criminal",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_63.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "armand-geist-walker-tech-lord",
+ :number 63,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-underway",
+ :setname "The Underway",
+ :side "Runner",
+ :strength 0,
+ :subtype "G-mod",
+ :text "Whenever you use a [trash] ability, draw 1 card.",
+ :title "Armand \"Geist\" Walker: Tech Lord",
+ :type "Identity",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "22007"
- :cost 3
- :cycle_code "reign-and-reverie"
- :faction "Anarch"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_7.png"
- :limited 3
- :normalizedtitle "district-99"
- :number 7
- :packquantity 3
- :rotated false
- :set_code "reign-and-reverie"
- :setname "Reign and Reverie"
- :side "Runner"
- :strength 0
- :subtype "Location - Seedy"
- :text "The first time each turn a program or a piece of hardware is trashed (from any location), you may place 1 power counter on District 99.\n[click], <strong>3 hosted power counters</strong>: Add a card that matches the faction of your identity from your heap to your grip."
- :title "District 99"
- :type "Resource"
+{:code "22007",
+ :cost 3,
+ :cycle_code "reign-and-reverie",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_7.png",
+ :limited 3,
+ :normalizedtitle "district-99",
+ :number 7,
+ :packquantity 3,
+ :rotated false,
+ :set_code "reign-and-reverie",
+ :setname "Reign and Reverie",
+ :side "Runner",
+ :strength 0,
+ :subtype "Location - Seedy",
+ :text "The first time each turn a program or a piece of hardware is trashed (from any location), you may place 1 power counter on District 99.\n[click], <strong>3 hosted power counters</strong>: Add a card that matches the faction of your identity from your heap to your grip.",
+ :title "District 99",
+ :type "Resource",
  :uniqueness true}

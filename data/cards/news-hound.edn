@@ -1,20 +1,20 @@
-{:code "09014"
- :cost 2
- :cycle_code "data-and-destiny"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_14.png"
- :limited 3
- :normalizedtitle "news-hound"
- :number 14
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Corp"
- :strength 4
- :subtype "Sentry - Tracer"
- :text "If a <strong>current</strong> is active, News Hound gains \"[subroutine] End the run.\" after all its other subroutines.\n[subroutine] <trace>Trace 3</trace> If successful, give the Runner 1 tag."
- :title "News Hound"
- :type "ICE"
+{:code "09014",
+ :cost 2,
+ :cycle_code "data-and-destiny",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_14.png",
+ :limited 3,
+ :normalizedtitle "news-hound",
+ :number 14,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :strength 4,
+ :subtype "Sentry - Tracer",
+ :text "If a <strong>current</strong> is active, News Hound gains \"[subroutine] End the run.\" after all its other subroutines.\n[subroutine] <trace>Trace 3</trace> If successful, give the Runner 1 tag.",
+ :title "News Hound",
+ :type "ICE",
  :uniqueness false}

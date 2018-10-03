@@ -1,20 +1,20 @@
-{:code "12071"
- :cost 2
- :cycle_code "red-sand"
- :faction "Jinteki"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_71.png"
- :limited 3
- :normalizedtitle "miraju"
- :number 71
- :packquantity 3
- :rotated false
- :set_code "blood-and-water"
- :setname "Blood and Water"
- :side "Corp"
- :strength 0
- :subtype "Code Gate - Deflector"
- :text "If the Runner breaks the printed subroutine on Mirāju, he or she is now running on Archives instead of passing Mirāju and approaches the outermost ice, if any. Derez Mirāju.\n[subroutine] The Corp may draw 1 card. Then, shuffle 1 card from HQ into R&D."
- :title "Mirāju"
- :type "ICE"
+{:code "12071",
+ :cost 2,
+ :cycle_code "red-sand",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_71.png",
+ :limited 3,
+ :normalizedtitle "miraju",
+ :number 71,
+ :packquantity 3,
+ :rotated false,
+ :set_code "blood-and-water",
+ :setname "Blood and Water",
+ :side "Corp",
+ :strength 0,
+ :subtype "Code Gate - Deflector",
+ :text "If the Runner breaks the printed subroutine on Mirāju, he or she is now running on Archives instead of passing Mirāju and approaches the outermost ice, if any. Derez Mirāju.\n[subroutine] The Corp may draw 1 card. Then, shuffle 1 card from HQ into R&D.",
+ :title "Mirāju",
+ :type "ICE",
  :uniqueness false}

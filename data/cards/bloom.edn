@@ -1,20 +1,20 @@
-{:code "12032"
- :cost 2
- :cycle_code "red-sand"
- :faction "Jinteki"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_32.png"
- :limited 3
- :normalizedtitle "bloom"
- :number 32
- :packquantity 3
- :rotated false
- :set_code "station-one"
- :setname "Station One"
- :side "Corp"
- :strength 3
- :subtype "Code Gate - Observer"
- :text "[subroutine] You may install a piece of ice from HQ protecting another server, ignoring all costs.\n[subroutine] You may install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs."
- :title "Bloom"
- :type "ICE"
+{:code "12032",
+ :cost 2,
+ :cycle_code "red-sand",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_32.png",
+ :limited 3,
+ :normalizedtitle "bloom",
+ :number 32,
+ :packquantity 3,
+ :rotated false,
+ :set_code "station-one",
+ :setname "Station One",
+ :side "Corp",
+ :strength 3,
+ :subtype "Code Gate - Observer",
+ :text "[subroutine] You may install a piece of ice from HQ protecting another server, ignoring all costs.\n[subroutine] You may install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs.",
+ :title "Bloom",
+ :type "ICE",
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "11072"
- :cost 0
- :cycle_code "flashpoint"
- :faction "Haas-Bioroid"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_72.png"
- :influencelimit 12
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "haas-bioroid-architects-of-tomorrow"
- :number 72
- :packquantity 3
- :rotated false
- :set_code "intervention"
- :setname "Intervention"
- :side "Corp"
- :strength 0
- :subtype "Megacorp"
- :text "The first time the Runner passes a rezzed piece of <strong>bioroid</strong> ice each turn, you may rez a <strong>bioroid</strong>, lowering its rez cost by 4."
- :title "Haas-Bioroid: Architects of Tomorrow"
- :type "Identity"
+{:code "11072",
+ :cost 0,
+ :cycle_code "flashpoint",
+ :faction "Haas-Bioroid",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_72.png",
+ :influencelimit 12,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "haas-bioroid-architects-of-tomorrow",
+ :number 72,
+ :packquantity 3,
+ :rotated false,
+ :set_code "intervention",
+ :setname "Intervention",
+ :side "Corp",
+ :strength 0,
+ :subtype "Megacorp",
+ :text "The first time the Runner passes a rezzed piece of <strong>bioroid</strong> ice each turn, you may rez a <strong>bioroid</strong>, lowering its rez cost by 4.",
+ :title "Haas-Bioroid: Architects of Tomorrow",
+ :type "Identity",
  :uniqueness false}

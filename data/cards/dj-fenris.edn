@@ -1,20 +1,20 @@
-{:code "22025"
- :cost 3
- :cycle_code "reign-and-reverie"
- :faction "Neutral"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_25.png"
- :limited 1
- :normalizedtitle "dj-fenris"
- :number 25
- :packquantity 1
- :rotated false
- :set_code "reign-and-reverie"
- :setname "Reign and Reverie"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "Host a <strong>g-mod</strong> identity that does not match the faction of your identity on DJ Fenris when he is installed. Remove hosted identity from the game if DJ Fenris is uninstalled.\nDJ Fenris gains the text of the hosted identity.\nLimit 1 per deck."
- :title "DJ Fenris"
- :type "Resource"
+{:code "22025",
+ :cost 3,
+ :cycle_code "reign-and-reverie",
+ :faction "Neutral",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_25.png",
+ :limited 1,
+ :normalizedtitle "dj-fenris",
+ :number 25,
+ :packquantity 1,
+ :rotated false,
+ :set_code "reign-and-reverie",
+ :setname "Reign and Reverie",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "Host a <strong>g-mod</strong> identity that does not match the faction of your identity on DJ Fenris when he is installed. Remove hosted identity from the game if DJ Fenris is uninstalled.\nDJ Fenris gains the text of the hosted identity.\nLimit 1 per deck.",
+ :title "DJ Fenris",
+ :type "Resource",
  :uniqueness true}

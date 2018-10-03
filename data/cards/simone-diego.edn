@@ -1,21 +1,21 @@
-{:code "02099"
- :cost 4
- :cycle_code "genesis"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02099.png"
- :limited 3
- :normalizedtitle "simone-diego"
- :number 99
- :packquantity 3
- :rotated true
- :set_code "humanity-s-shadow"
- :setname "Humanity's Shadow"
- :side "Corp"
- :strength 0
- :subtype "Sysop"
- :text "2[recurring-credit]\nUse these credits to advance cards in or protecting this server."
- :title "Simone Diego"
- :trash 3
- :type "Upgrade"
+{:code "02099",
+ :cost 4,
+ :cycle_code "genesis",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02099.png",
+ :limited 3,
+ :normalizedtitle "simone-diego",
+ :number 99,
+ :packquantity 3,
+ :rotated true,
+ :set_code "humanity-s-shadow",
+ :setname "Humanity's Shadow",
+ :side "Corp",
+ :strength 0,
+ :subtype "Sysop",
+ :text "2[recurring-credit]\nUse these credits to advance cards in or protecting this server.",
+ :title "Simone Diego",
+ :trash 3,
+ :type "Upgrade",
  :uniqueness true}

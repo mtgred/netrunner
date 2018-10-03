@@ -1,21 +1,21 @@
-{:code "08040"
- :cost 0
- :cycle_code "sansan"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_40.png"
- :limited 3
- :normalizedtitle "breaker-bay-grid"
- :number 40
- :packquantity 3
- :rotated false
- :set_code "breaker-bay"
- :setname "Breaker Bay"
- :side "Corp"
- :strength 0
- :subtype "Region"
- :text "The rez cost of cards in this server is lowered by 5.\nLimit 1 <strong>region</strong> per server."
- :title "Breaker Bay Grid"
- :trash 2
- :type "Upgrade"
+{:code "08040",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_40.png",
+ :limited 3,
+ :normalizedtitle "breaker-bay-grid",
+ :number 40,
+ :packquantity 3,
+ :rotated false,
+ :set_code "breaker-bay",
+ :setname "Breaker Bay",
+ :side "Corp",
+ :strength 0,
+ :subtype "Region",
+ :text "The rez cost of cards in this server is lowered by 5.\nLimit 1 <strong>region</strong> per server.",
+ :title "Breaker Bay Grid",
+ :trash 2,
+ :type "Upgrade",
  :uniqueness false}

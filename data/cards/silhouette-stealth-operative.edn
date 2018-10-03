@@ -1,22 +1,22 @@
-{:baselink 0
- :code "05030"
- :cost 0
- :cycle_code "honor-and-profit"
- :faction "Criminal"
- :image_url "https://netrunnerdb.com/card_image/05030.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 40
- :normalizedtitle "silhouette-stealth-operative"
- :number 30
- :packquantity 3
- :rotated false
- :set_code "honor-and-profit"
- :setname "Honor and Profit"
- :side "Runner"
- :strength 0
- :subtype "Natural"
- :text "The first time you make a successful run on HQ each turn, you may expose 1 card."
- :title "Silhouette: Stealth Operative"
- :type "Identity"
+{:baselink 0,
+ :code "05030",
+ :cost 0,
+ :cycle_code "honor-and-profit",
+ :faction "Criminal",
+ :image_url "https://netrunnerdb.com/card_image/05030.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 40,
+ :normalizedtitle "silhouette-stealth-operative",
+ :number 30,
+ :packquantity 3,
+ :rotated false,
+ :set_code "honor-and-profit",
+ :setname "Honor and Profit",
+ :side "Runner",
+ :strength 0,
+ :subtype "Natural",
+ :text "The first time you make a successful run on HQ each turn, you may expose 1 card.",
+ :title "Silhouette: Stealth Operative",
+ :type "Identity",
  :uniqueness false}

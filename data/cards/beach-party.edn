@@ -1,19 +1,19 @@
-{:code "08031"
- :cost 0
- :cycle_code "sansan"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_31.png"
- :limited 3
- :normalizedtitle "beach-party"
- :number 31
- :packquantity 3
- :rotated false
- :set_code "breaker-bay"
- :setname "Breaker Bay"
- :side "Runner"
- :strength 0
- :text "When your turn begins, lose [click].\nYour maximum hand size is increased by 5."
- :title "Beach Party"
- :type "Resource"
+{:code "08031",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_31.png",
+ :limited 3,
+ :normalizedtitle "beach-party",
+ :number 31,
+ :packquantity 3,
+ :rotated false,
+ :set_code "breaker-bay",
+ :setname "Breaker Bay",
+ :side "Runner",
+ :strength 0,
+ :text "When your turn begins, lose [click].\nYour maximum hand size is increased by 5.",
+ :title "Beach Party",
+ :type "Resource",
  :uniqueness false}

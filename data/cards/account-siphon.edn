@@ -1,19 +1,19 @@
-{:code "01018"
- :cost 0
- :cycle_code "core"
- :faction "Criminal"
- :factioncost 4
- :image_url "https://netrunnerdb.com/card_image/01018.png"
- :limited 3
- :normalizedtitle "account-siphon"
- :number 18
- :packquantity 2
- :set_code "core-set"
- :setname "Core Set"
- :side "Runner"
- :strength 0
- :subtype "Run - Sabotage"
- :text "Make a run on HQ. If successful, instead of accessing cards you may force the Corp to lose up to 5[credit], then you gain 2[credit] for each credit lost and take 2 tags."
- :title "Account Siphon"
- :type "Event"
+{:code "01018",
+ :cost 0,
+ :cycle_code "core",
+ :faction "Criminal",
+ :factioncost 4,
+ :image_url "https://netrunnerdb.com/card_image/01018.png",
+ :limited 3,
+ :normalizedtitle "account-siphon",
+ :number 18,
+ :packquantity 2,
+ :set_code "core-set",
+ :setname "Core Set",
+ :side "Runner",
+ :strength 0,
+ :subtype "Run - Sabotage",
+ :text "Make a run on HQ. If successful, instead of accessing cards you may force the Corp to lose up to 5[credit], then you gain 2[credit] for each credit lost and take 2 tags.",
+ :title "Account Siphon",
+ :type "Event",
  :uniqueness false}

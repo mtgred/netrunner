@@ -1,20 +1,20 @@
-{:code "22009"
- :cost 2
- :cycle_code "reign-and-reverie"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_9.png"
- :limited 3
- :normalizedtitle "hot-pursuit"
- :number 9
- :packquantity 3
- :rotated false
- :set_code "reign-and-reverie"
- :setname "Reign and Reverie"
- :side "Runner"
- :strength 0
- :subtype "Run"
- :text "Make a run on HQ. If successful, gain 9[credit] and take 1 tag."
- :title "Hot Pursuit"
- :type "Event"
+{:code "22009",
+ :cost 2,
+ :cycle_code "reign-and-reverie",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_9.png",
+ :limited 3,
+ :normalizedtitle "hot-pursuit",
+ :number 9,
+ :packquantity 3,
+ :rotated false,
+ :set_code "reign-and-reverie",
+ :setname "Reign and Reverie",
+ :side "Runner",
+ :strength 0,
+ :subtype "Run",
+ :text "Make a run on HQ. If successful, gain 9[credit] and take 1 tag.",
+ :title "Hot Pursuit",
+ :type "Event",
  :uniqueness false}

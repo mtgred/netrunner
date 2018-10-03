@@ -1,20 +1,20 @@
-{:code "03016"
- :cost 1
- :cycle_code "creation-and-control"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/03016.png"
- :limited 3
- :normalizedtitle "howler"
- :number 16
- :packquantity 3
- :rotated false
- :set_code "creation-and-control"
- :setname "Creation and Control"
- :side "Corp"
- :strength 0
- :subtype "Trap"
- :text "[subroutine] You may install and rez a piece of <strong>bioroid</strong> ice from HQ or Archives, ignoring all costs, placing it directly behind Howler. If you do, derez that piece of ice and trash Howler after the run is completed."
- :title "Howler"
- :type "ICE"
+{:code "03016",
+ :cost 1,
+ :cycle_code "creation-and-control",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/03016.png",
+ :limited 3,
+ :normalizedtitle "howler",
+ :number 16,
+ :packquantity 3,
+ :rotated false,
+ :set_code "creation-and-control",
+ :setname "Creation and Control",
+ :side "Corp",
+ :strength 0,
+ :subtype "Trap",
+ :text "[subroutine] You may install and rez a piece of <strong>bioroid</strong> ice from HQ or Archives, ignoring all costs, placing it directly behind Howler. If you do, derez that piece of ice and trash Howler after the run is completed.",
+ :title "Howler",
+ :type "ICE",
  :uniqueness false}

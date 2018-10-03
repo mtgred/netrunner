@@ -1,20 +1,20 @@
-{:code "03025"
- :cost 3
- :cycle_code "creation-and-control"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/03025.png"
- :limited 3
- :normalizedtitle "server-diagnostics"
- :number 25
- :packquantity 3
- :rotated false
- :set_code "creation-and-control"
- :setname "Creation and Control"
- :side "Corp"
- :strength 0
- :text "Gain 2[credit] when your turn begins.\nTrash Server Diagnostics when you install a piece of ice."
- :title "Server Diagnostics"
- :trash 2
- :type "Asset"
+{:code "03025",
+ :cost 3,
+ :cycle_code "creation-and-control",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/03025.png",
+ :limited 3,
+ :normalizedtitle "server-diagnostics",
+ :number 25,
+ :packquantity 3,
+ :rotated false,
+ :set_code "creation-and-control",
+ :setname "Creation and Control",
+ :side "Corp",
+ :strength 0,
+ :text "Gain 2[credit] when your turn begins.\nTrash Server Diagnostics when you install a piece of ice.",
+ :title "Server Diagnostics",
+ :trash 2,
+ :type "Asset",
  :uniqueness false}

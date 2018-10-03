@@ -1,19 +1,19 @@
-{:code "08024"
- :cost 0
- :cycle_code "sansan"
- :faction "Criminal"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_24.png"
- :limited 3
- :normalizedtitle "dorm-computer"
- :number 24
- :packquantity 3
- :rotated false
- :set_code "breaker-bay"
- :setname "Breaker Bay"
- :side "Runner"
- :strength 0
- :text "Place 4 power counters on Dorm Computer when you install it.\n[click], <strong>hosted power counter:</strong> Make a run. Avoid all tags for the remainder of the run."
- :title "Dorm Computer"
- :type "Hardware"
+{:code "08024",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_24.png",
+ :limited 3,
+ :normalizedtitle "dorm-computer",
+ :number 24,
+ :packquantity 3,
+ :rotated false,
+ :set_code "breaker-bay",
+ :setname "Breaker Bay",
+ :side "Runner",
+ :strength 0,
+ :text "Place 4 power counters on Dorm Computer when you install it.\n[click], <strong>hosted power counter:</strong> Make a run. Avoid all tags for the remainder of the run.",
+ :title "Dorm Computer",
+ :type "Hardware",
  :uniqueness false}

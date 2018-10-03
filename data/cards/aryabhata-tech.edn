@@ -1,21 +1,21 @@
-{:code "10070"
- :cost 2
- :cycle_code "mumbad"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_70.png"
- :limited 3
- :normalizedtitle "aryabhata-tech"
- :number 70
- :packquantity 3
- :rotated false
- :set_code "salsette-island"
- :setname "Salsette Island"
- :side "Corp"
- :strength 0
- :subtype "Ritzy"
- :text "Whenever there is a successful trace, gain 1[credit] and the Runner loses 1[credit]."
- :title "Aryabhata Tech"
- :trash 3
- :type "Asset"
+{:code "10070",
+ :cost 2,
+ :cycle_code "mumbad",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_70.png",
+ :limited 3,
+ :normalizedtitle "aryabhata-tech",
+ :number 70,
+ :packquantity 3,
+ :rotated false,
+ :set_code "salsette-island",
+ :setname "Salsette Island",
+ :side "Corp",
+ :strength 0,
+ :subtype "Ritzy",
+ :text "Whenever there is a successful trace, gain 1[credit] and the Runner loses 1[credit].",
+ :title "Aryabhata Tech",
+ :trash 3,
+ :type "Asset",
  :uniqueness false}

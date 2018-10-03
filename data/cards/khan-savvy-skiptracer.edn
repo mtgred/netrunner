@@ -1,22 +1,22 @@
-{:baselink 0
- :code "11027"
- :cost 0
- :cycle_code "flashpoint"
- :faction "Criminal"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_27.png"
- :influencelimit 12
- :limited 1
- :minimumdecksize 40
- :normalizedtitle "khan-savvy-skiptracer"
- :number 27
- :packquantity 3
- :rotated false
- :set_code "blood-money"
- :setname "Blood Money"
- :side "Runner"
- :strength 0
- :subtype "Natural"
- :text "The first time you pass a piece of ice each turn, you may install an <strong>icebreaker</strong> from your hand, lowering the install cost by 1."
- :title "Khan: Savvy Skiptracer"
- :type "Identity"
+{:baselink 0,
+ :code "11027",
+ :cost 0,
+ :cycle_code "flashpoint",
+ :faction "Criminal",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_27.png",
+ :influencelimit 12,
+ :limited 1,
+ :minimumdecksize 40,
+ :normalizedtitle "khan-savvy-skiptracer",
+ :number 27,
+ :packquantity 3,
+ :rotated false,
+ :set_code "blood-money",
+ :setname "Blood Money",
+ :side "Runner",
+ :strength 0,
+ :subtype "Natural",
+ :text "The first time you pass a piece of ice each turn, you may install an <strong>icebreaker</strong> from your hand, lowering the install cost by 1.",
+ :title "Khan: Savvy Skiptracer",
+ :type "Identity",
  :uniqueness false}

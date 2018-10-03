@@ -1,20 +1,20 @@
-{:code "21061"
- :cost 2
- :cycle_code "kitara"
- :faction "Anarch"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_61.png"
- :limited 3
- :normalizedtitle "glut-cipher"
- :number 61
- :packquantity 3
- :rotated false
- :set_code "the-devil-and-the-dragon"
- :setname "The Devil and the Dragon"
- :side "Runner"
- :strength 0
- :subtype "Run - Sabotage"
- :text "Make a run on Archives. If successful, instead of accessing cards, force the Corp to choose 5 cards from Archives and add them to HQ, if able, then trash that many cards from HQ at random."
- :title "Glut Cipher"
- :type "Event"
+{:code "21061",
+ :cost 2,
+ :cycle_code "kitara",
+ :faction "Anarch",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_61.png",
+ :limited 3,
+ :normalizedtitle "glut-cipher",
+ :number 61,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-devil-and-the-dragon",
+ :setname "The Devil and the Dragon",
+ :side "Runner",
+ :strength 0,
+ :subtype "Run - Sabotage",
+ :text "Make a run on Archives. If successful, instead of accessing cards, force the Corp to choose 5 cards from Archives and add them to HQ, if able, then trash that many cards from HQ at random.",
+ :title "Glut Cipher",
+ :type "Event",
  :uniqueness false}

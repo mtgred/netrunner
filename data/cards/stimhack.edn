@@ -1,20 +1,20 @@
-{:code "20005"
- :cost 0
- :cycle_code "core2"
- :faction "Anarch"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_5.png"
- :limited 3
- :normalizedtitle "stimhack"
- :number 5
- :packquantity 1
- :replaces "01004"
- :set_code "revised-core-set"
- :setname "Revised Core Set"
- :side "Runner"
- :strength 0
- :subtype "Run"
- :text "Make a run, and gain 9[credit], which you may use only during this run. After the run is completed, suffer 1 brain damage (cannot be prevented) and return to the bank any of the 9[credit] not spent."
- :title "Stimhack"
- :type "Event"
+{:code "20005",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "Anarch",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_5.png",
+ :limited 3,
+ :normalizedtitle "stimhack",
+ :number 5,
+ :packquantity 1,
+ :replaces "01004",
+ :set_code "revised-core-set",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :strength 0,
+ :subtype "Run",
+ :text "Make a run, and gain 9[credit], which you may use only during this run. After the run is completed, suffer 1 brain damage (cannot be prevented) and return to the bank any of the 9[credit] not spent.",
+ :title "Stimhack",
+ :type "Event",
  :uniqueness false}

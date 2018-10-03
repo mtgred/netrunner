@@ -1,20 +1,20 @@
-{:code "21118"
- :cost 5
- :cycle_code "kitara"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_118.png"
- :limited 3
- :normalizedtitle "surveyor"
- :number 118
- :packquantity 3
- :rotated false
- :set_code "kampala-ascendent"
- :setname "Kampala Ascendent"
- :side "Corp"
- :strength 0
- :subtype "Sentry - Tracer"
- :text "X is twice the number of ice protecting this server.\n[subroutine]<trace>Trace X</trace> If successful, give the Runner 2 tags.\n[subroutine]<trace>Trace X</trace> If successful, end the run."
- :title "Surveyor"
- :type "ICE"
+{:code "21118",
+ :cost 5,
+ :cycle_code "kitara",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_118.png",
+ :limited 3,
+ :normalizedtitle "surveyor",
+ :number 118,
+ :packquantity 3,
+ :rotated false,
+ :set_code "kampala-ascendent",
+ :setname "Kampala Ascendent",
+ :side "Corp",
+ :strength 0,
+ :subtype "Sentry - Tracer",
+ :text "X is twice the number of ice protecting this server.\n[subroutine]<trace>Trace X</trace> If successful, give the Runner 2 tags.\n[subroutine]<trace>Trace X</trace> If successful, end the run.",
+ :title "Surveyor",
+ :type "ICE",
  :uniqueness false}

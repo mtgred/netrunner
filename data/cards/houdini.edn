@@ -1,21 +1,21 @@
-{:code "11045"
- :cost 2
- :cycle_code "flashpoint"
- :faction "Shaper"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_45.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "houdini"
- :number 45
- :packquantity 3
- :rotated false
- :set_code "escalation"
- :setname "Escalation"
- :side "Runner"
- :strength 2
- :subtype "Icebreaker - Decoder"
- :text "1[credit]: Break <strong>code gate</strong> subroutine.\n2[credit]: +4 strength for the remainder of this run. Use this ability only by spending at least 1 credit from a <strong>stealth</strong> card."
- :title "Houdini"
- :type "Program"
+{:code "11045",
+ :cost 2,
+ :cycle_code "flashpoint",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_45.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "houdini",
+ :number 45,
+ :packquantity 3,
+ :rotated false,
+ :set_code "escalation",
+ :setname "Escalation",
+ :side "Runner",
+ :strength 2,
+ :subtype "Icebreaker - Decoder",
+ :text "1[credit]: Break <strong>code gate</strong> subroutine.\n2[credit]: +4 strength for the remainder of this run. Use this ability only by spending at least 1 credit from a <strong>stealth</strong> card.",
+ :title "Houdini",
+ :type "Program",
  :uniqueness false}

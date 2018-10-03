@@ -1,20 +1,20 @@
-{:code "10099"
- :cost 5
- :cycle_code "mumbad"
- :faction "Criminal"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_99.png"
- :limited 1
- :normalizedtitle "the-black-file"
- :number 99
- :packquantity 3
- :rotated false
- :set_code "fear-the-masses"
- :setname "Fear the Masses"
- :side "Runner"
- :strength 0
- :subtype "Virtual"
- :text "The Corp cannot win the game unless the Runner is flatlined.\nWhen your turn begins, place 1 power counter on The Black File. When there are 3 or more power counters on The Black File, remove it from the game.\nLimit 1 per deck."
- :title "The Black File"
- :type "Resource"
+{:code "10099",
+ :cost 5,
+ :cycle_code "mumbad",
+ :faction "Criminal",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_99.png",
+ :limited 1,
+ :normalizedtitle "the-black-file",
+ :number 99,
+ :packquantity 3,
+ :rotated false,
+ :set_code "fear-the-masses",
+ :setname "Fear the Masses",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virtual",
+ :text "The Corp cannot win the game unless the Runner is flatlined.\nWhen your turn begins, place 1 power counter on The Black File. When there are 3 or more power counters on The Black File, remove it from the game.\nLimit 1 per deck.",
+ :title "The Black File",
+ :type "Resource",
  :uniqueness true}

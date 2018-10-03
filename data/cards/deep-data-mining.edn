@@ -1,20 +1,20 @@
-{:code "13014"
- :cost 3
- :cycle_code "terminal-directive"
- :faction "Shaper"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_14.png"
- :limited 3
- :normalizedtitle "deep-data-mining"
- :number 14
- :packquantity 3
- :rotated false
- :set_code "terminal-directive"
- :setname "Terminal Directive"
- :side "Runner"
- :strength 0
- :subtype "Run"
- :text "Make a run on R&D. If successful, access 1 additional card for each unused MU up to 4."
- :title "Deep Data Mining"
- :type "Event"
+{:code "13014",
+ :cost 3,
+ :cycle_code "terminal-directive",
+ :faction "Shaper",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_14.png",
+ :limited 3,
+ :normalizedtitle "deep-data-mining",
+ :number 14,
+ :packquantity 3,
+ :rotated false,
+ :set_code "terminal-directive",
+ :setname "Terminal Directive",
+ :side "Runner",
+ :strength 0,
+ :subtype "Run",
+ :text "Make a run on R&D. If successful, access 1 additional card for each unused MU up to 4.",
+ :title "Deep Data Mining",
+ :type "Event",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "06016"
- :cost 2
- :cycle_code "lunar"
- :faction "Criminal"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/06016.png"
- :limited 3
- :normalizedtitle "power-tap"
- :number 16
- :packquantity 3
- :rotated false
- :set_code "upstalk"
- :setname "Upstalk"
- :side "Runner"
- :strength 0
- :text "Gain 1[credit] whenever a trace is initiated."
- :title "Power Tap"
- :type "Resource"
+{:code "06016",
+ :cost 2,
+ :cycle_code "lunar",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/06016.png",
+ :limited 3,
+ :normalizedtitle "power-tap",
+ :number 16,
+ :packquantity 3,
+ :rotated false,
+ :set_code "upstalk",
+ :setname "Upstalk",
+ :side "Runner",
+ :strength 0,
+ :text "Gain 1[credit] whenever a trace is initiated.",
+ :title "Power Tap",
+ :type "Resource",
  :uniqueness false}

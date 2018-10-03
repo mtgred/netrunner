@@ -1,21 +1,21 @@
-{:code "11040"
- :cost 0
- :cycle_code "flashpoint"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_40.png"
- :limited 3
- :normalizedtitle "prisec"
- :number 40
- :packquantity 3
- :rotated false
- :set_code "blood-money"
- :setname "Blood Money"
- :side "Corp"
- :strength 0
- :subtype "Ambush"
- :text "If the Runner accesses Prisec while installed, you may pay 2[credit] to give the Runner 1 tag and do 1 meat damage."
- :title "Prisec"
- :trash 3
- :type "Upgrade"
+{:code "11040",
+ :cost 0,
+ :cycle_code "flashpoint",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_40.png",
+ :limited 3,
+ :normalizedtitle "prisec",
+ :number 40,
+ :packquantity 3,
+ :rotated false,
+ :set_code "blood-money",
+ :setname "Blood Money",
+ :side "Corp",
+ :strength 0,
+ :subtype "Ambush",
+ :text "If the Runner accesses Prisec while installed, you may pay 2[credit] to give the Runner 1 tag and do 1 meat damage.",
+ :title "Prisec",
+ :trash 3,
+ :type "Upgrade",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "21084"
- :cost 1
- :cycle_code "kitara"
- :faction "Criminal"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_84.png"
- :limited 3
- :normalizedtitle "embezzle"
- :number 84
- :packquantity 3
- :rotated false
- :set_code "whispers-in-nalubaale"
- :setname "Whispers in Nalubaale"
- :side "Runner"
- :strength 0
- :subtype "Run - Sabotage"
- :text "Make a run on HQ. If successful, instead of accessing cards, name asset, ice, operation or upgrade, then reveal 2 cards from HQ at random. Trash each revealed card that has the named type, then gain 4[credit] for each card trashed this way."
- :title "Embezzle"
- :type "Event"
+{:code "21084",
+ :cost 1,
+ :cycle_code "kitara",
+ :faction "Criminal",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_84.png",
+ :limited 3,
+ :normalizedtitle "embezzle",
+ :number 84,
+ :packquantity 3,
+ :rotated false,
+ :set_code "whispers-in-nalubaale",
+ :setname "Whispers in Nalubaale",
+ :side "Runner",
+ :strength 0,
+ :subtype "Run - Sabotage",
+ :text "Make a run on HQ. If successful, instead of accessing cards, name asset, ice, operation or upgrade, then reveal 2 cards from HQ at random. Trash each revealed card that has the named type, then gain 4[credit] for each card trashed this way.",
+ :title "Embezzle",
+ :type "Event",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "22048"
- :cost 2
- :cycle_code "reign-and-reverie"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_48.png"
- :limited 3
- :normalizedtitle "attitude-adjustment"
- :number 48
- :packquantity 3
- :rotated false
- :set_code "reign-and-reverie"
- :setname "Reign and Reverie"
- :side "Corp"
- :strength 0
- :text "Draw 2 cards. Reveal up to 2 agendas in HQ and/or Archives. Gain 2[credit] for each agenda revealed, then shuffle those agendas into R&D."
- :title "Attitude Adjustment"
- :type "Operation"
+{:code "22048",
+ :cost 2,
+ :cycle_code "reign-and-reverie",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_48.png",
+ :limited 3,
+ :normalizedtitle "attitude-adjustment",
+ :number 48,
+ :packquantity 3,
+ :rotated false,
+ :set_code "reign-and-reverie",
+ :setname "Reign and Reverie",
+ :side "Corp",
+ :strength 0,
+ :text "Draw 2 cards. Reveal up to 2 agendas in HQ and/or Archives. Gain 2[credit] for each agenda revealed, then shuffle those agendas into R&D.",
+ :title "Attitude Adjustment",
+ :type "Operation",
  :uniqueness false}

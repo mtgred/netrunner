@@ -1,20 +1,20 @@
-{:code "13025"
- :cost 2
- :cycle_code "terminal-directive"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_25.png"
- :limited 3
- :normalizedtitle "dean-lister"
- :number 25
- :packquantity 3
- :rotated false
- :set_code "terminal-directive"
- :setname "Terminal Directive"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "[trash]: Choose an <strong>icebreaker</strong>. Until the end of the run, that <strong>icebreaker</strong> has +1 strength for each card in your grip."
- :title "Dean Lister"
- :type "Resource"
+{:code "13025",
+ :cost 2,
+ :cycle_code "terminal-directive",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_25.png",
+ :limited 3,
+ :normalizedtitle "dean-lister",
+ :number 25,
+ :packquantity 3,
+ :rotated false,
+ :set_code "terminal-directive",
+ :setname "Terminal Directive",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "[trash]: Choose an <strong>icebreaker</strong>. Until the end of the run, that <strong>icebreaker</strong> has +1 strength for each card in your grip.",
+ :title "Dean Lister",
+ :type "Resource",
  :uniqueness true}

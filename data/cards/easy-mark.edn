@@ -1,20 +1,20 @@
-{:code "20020"
- :cost 0
- :cycle_code "core2"
- :faction "Criminal"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_20.png"
- :limited 3
- :normalizedtitle "easy-mark"
- :number 20
- :packquantity 3
- :replaces "01019"
- :set_code "revised-core-set"
- :setname "Revised Core Set"
- :side "Runner"
- :strength 0
- :subtype "Job"
- :text "Gain 3[credit]."
- :title "Easy Mark"
- :type "Event"
+{:code "20020",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_20.png",
+ :limited 3,
+ :normalizedtitle "easy-mark",
+ :number 20,
+ :packquantity 3,
+ :replaces "01019",
+ :set_code "revised-core-set",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :strength 0,
+ :subtype "Job",
+ :text "Gain 3[credit].",
+ :title "Easy Mark",
+ :type "Event",
  :uniqueness false}

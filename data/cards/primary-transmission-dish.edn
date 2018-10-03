@@ -1,21 +1,21 @@
-{:code "06006"
- :cost 2
- :cycle_code "lunar"
- :faction "NBN"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/06006.png"
- :limited 3
- :normalizedtitle "primary-transmission-dish"
- :number 6
- :packquantity 3
- :rotated false
- :set_code "upstalk"
- :setname "Upstalk"
- :side "Corp"
- :strength 0
- :subtype "Beanstalk"
- :text "3[recurring-credit]\nUse these credits during traces."
- :title "Primary Transmission Dish"
- :trash 3
- :type "Asset"
+{:code "06006",
+ :cost 2,
+ :cycle_code "lunar",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/06006.png",
+ :limited 3,
+ :normalizedtitle "primary-transmission-dish",
+ :number 6,
+ :packquantity 3,
+ :rotated false,
+ :set_code "upstalk",
+ :setname "Upstalk",
+ :side "Corp",
+ :strength 0,
+ :subtype "Beanstalk",
+ :text "3[recurring-credit]\nUse these credits during traces.",
+ :title "Primary Transmission Dish",
+ :trash 3,
+ :type "Asset",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "04008"
- :cost 0
- :cycle_code "spin"
- :faction "Shaper"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/04008.png"
- :limited 3
- :normalizedtitle "motivation"
- :number 8
- :packquantity 3
- :rotated true
- :set_code "opening-moves"
- :setname "Opening Moves"
- :side "Runner"
- :strength 0
- :text "When your turn begins, you may look at the top card of your stack."
- :title "Motivation"
- :type "Resource"
+{:code "04008",
+ :cost 0,
+ :cycle_code "spin",
+ :faction "Shaper",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/04008.png",
+ :limited 3,
+ :normalizedtitle "motivation",
+ :number 8,
+ :packquantity 3,
+ :rotated true,
+ :set_code "opening-moves",
+ :setname "Opening Moves",
+ :side "Runner",
+ :strength 0,
+ :text "When your turn begins, you may look at the top card of your stack.",
+ :title "Motivation",
+ :type "Resource",
  :uniqueness false}

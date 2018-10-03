@@ -1,21 +1,21 @@
-{:code "05009"
- :cost 0
- :cycle_code "honor-and-profit"
- :faction "Jinteki"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/05009.png"
- :limited 3
- :normalizedtitle "mental-health-clinic"
- :number 9
- :packquantity 3
- :rotated false
- :set_code "honor-and-profit"
- :setname "Honor and Profit"
- :side "Corp"
- :strength 0
- :subtype "Facility"
- :text "Gain 1[credit] when your turn begins.\nThe Runner's maximum hand size is increased by 1."
- :title "Mental Health Clinic"
- :trash 3
- :type "Asset"
+{:code "05009",
+ :cost 0,
+ :cycle_code "honor-and-profit",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/05009.png",
+ :limited 3,
+ :normalizedtitle "mental-health-clinic",
+ :number 9,
+ :packquantity 3,
+ :rotated false,
+ :set_code "honor-and-profit",
+ :setname "Honor and Profit",
+ :side "Corp",
+ :strength 0,
+ :subtype "Facility",
+ :text "Gain 1[credit] when your turn begins.\nThe Runner's maximum hand size is increased by 1.",
+ :title "Mental Health Clinic",
+ :trash 3,
+ :type "Asset",
  :uniqueness false}

@@ -1,22 +1,22 @@
-{:advancementcost 3
- :agendapoints 1
- :code "04075"
- :cost 0
- :cycle_code "spin"
- :faction "NBN"
- :image_url "https://netrunnerdb.com/card_image/04075.png"
- :limited 3
- :normalizedtitle "tgtbt"
- :number 75
- :packquantity 3
- :replaced_by "20111"
- :rotated true
- :set_code "true-colors"
- :setname "True Colors"
- :side "Corp"
- :strength 0
- :subtype "Ambush"
- :text "If TGTBT is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses TGTBT, give the Runner 1 tag."
- :title "TGTBT"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "04075",
+ :cost 0,
+ :cycle_code "spin",
+ :faction "NBN",
+ :image_url "https://netrunnerdb.com/card_image/04075.png",
+ :limited 3,
+ :normalizedtitle "tgtbt",
+ :number 75,
+ :packquantity 3,
+ :replaced_by "20111",
+ :rotated true,
+ :set_code "true-colors",
+ :setname "True Colors",
+ :side "Corp",
+ :strength 0,
+ :subtype "Ambush",
+ :text "If TGTBT is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses TGTBT, give the Runner 1 tag.",
+ :title "TGTBT",
+ :type "Agenda",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "09020"
- :cost 0
- :cycle_code "data-and-destiny"
- :faction "NBN"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_20.png"
- :limited 3
- :normalizedtitle "ad-blitz"
- :number 20
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Corp"
- :strength 0
- :subtype "Double"
- :text "As an additional cost to play this operation, spend [click].\nInstall and rez (paying all costs) X <strong>advertisements</strong> from Archives and/or HQ, if able."
- :title "Ad Blitz"
- :type "Operation"
+{:code "09020",
+ :cost 0,
+ :cycle_code "data-and-destiny",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_20.png",
+ :limited 3,
+ :normalizedtitle "ad-blitz",
+ :number 20,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :strength 0,
+ :subtype "Double",
+ :text "As an additional cost to play this operation, spend [click].\nInstall and rez (paying all costs) X <strong>advertisements</strong> from Archives and/or HQ, if able.",
+ :title "Ad Blitz",
+ :type "Operation",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "21024"
- :cost 1
- :cycle_code "kitara"
- :faction "Criminal"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_24.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "wari"
- :number 24
- :packquantity 3
- :rotated false
- :set_code "down-the-white-nile"
- :setname "Down the White Nile"
- :side "Runner"
- :strength 0
- :text "The first time you make a successful run on HQ each turn, you may trash Wari to name <strong>sentry</strong>, <strong>code gate</strong> or <strong>barrier</strong>. Expose a piece of ice, then add it to HQ if it has the named subtype."
- :title "Wari"
- :type "Program"
+{:code "21024",
+ :cost 1,
+ :cycle_code "kitara",
+ :faction "Criminal",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_24.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "wari",
+ :number 24,
+ :packquantity 3,
+ :rotated false,
+ :set_code "down-the-white-nile",
+ :setname "Down the White Nile",
+ :side "Runner",
+ :strength 0,
+ :text "The first time you make a successful run on HQ each turn, you may trash Wari to name <strong>sentry</strong>, <strong>code gate</strong> or <strong>barrier</strong>. Expose a piece of ice, then add it to HQ if it has the named subtype.",
+ :title "Wari",
+ :type "Program",
  :uniqueness true}

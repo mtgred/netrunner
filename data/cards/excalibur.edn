@@ -1,20 +1,20 @@
-{:code "06111"
- :cost 2
- :cycle_code "lunar"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_111.png"
- :limited 3
- :normalizedtitle "excalibur"
- :number 111
- :packquantity 3
- :rotated false
- :set_code "the-source"
- :setname "The Source"
- :side "Corp"
- :strength 3
- :subtype "Mythic - Grail"
- :text "[subroutine] The Runner cannot make another run this turn."
- :title "Excalibur"
- :type "ICE"
+{:code "06111",
+ :cost 2,
+ :cycle_code "lunar",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_111.png",
+ :limited 3,
+ :normalizedtitle "excalibur",
+ :number 111,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-source",
+ :setname "The Source",
+ :side "Corp",
+ :strength 3,
+ :subtype "Mythic - Grail",
+ :text "[subroutine] The Runner cannot make another run this turn.",
+ :title "Excalibur",
+ :type "ICE",
  :uniqueness true}

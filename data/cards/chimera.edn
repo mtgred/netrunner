@@ -1,20 +1,20 @@
-{:code "02060"
- :cost 2
- :cycle_code "genesis"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/02060.png"
- :limited 3
- :normalizedtitle "chimera"
- :number 60
- :packquantity 3
- :rotated true
- :set_code "cyber-exodus"
- :setname "Cyber Exodus"
- :side "Corp"
- :strength 0
- :subtype "Mythic"
- :text "When you rez Chimera, choose <strong>sentry</strong>, <strong>code gate</strong>, or <strong>barrier</strong>. Chimera gains that subtype until derezzed.\nWhen a turn ends, derez Chimera.\n[subroutine] End the run."
- :title "Chimera"
- :type "ICE"
+{:code "02060",
+ :cost 2,
+ :cycle_code "genesis",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/02060.png",
+ :limited 3,
+ :normalizedtitle "chimera",
+ :number 60,
+ :packquantity 3,
+ :rotated true,
+ :set_code "cyber-exodus",
+ :setname "Cyber Exodus",
+ :side "Corp",
+ :strength 0,
+ :subtype "Mythic",
+ :text "When you rez Chimera, choose <strong>sentry</strong>, <strong>code gate</strong>, or <strong>barrier</strong>. Chimera gains that subtype until derezzed.\nWhen a turn ends, derez Chimera.\n[subroutine] End the run.",
+ :title "Chimera",
+ :type "ICE",
  :uniqueness false}

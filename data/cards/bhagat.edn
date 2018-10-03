@@ -1,20 +1,20 @@
-{:code "10098"
- :cost 3
- :cycle_code "mumbad"
- :faction "Anarch"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_98.png"
- :limited 3
- :normalizedtitle "bhagat"
- :number 98
- :packquantity 3
- :rotated false
- :set_code "fear-the-masses"
- :setname "Fear the Masses"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "The first time you make a successful run on HQ each turn, force the Corp to trash the top card of R&D."
- :title "Bhagat"
- :type "Resource"
+{:code "10098",
+ :cost 3,
+ :cycle_code "mumbad",
+ :faction "Anarch",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_98.png",
+ :limited 3,
+ :normalizedtitle "bhagat",
+ :number 98,
+ :packquantity 3,
+ :rotated false,
+ :set_code "fear-the-masses",
+ :setname "Fear the Masses",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "The first time you make a successful run on HQ each turn, force the Corp to trash the top card of R&D.",
+ :title "Bhagat",
+ :type "Resource",
  :uniqueness true}

@@ -1,21 +1,21 @@
-{:code "04003"
- :cost 2
- :cycle_code "spin"
- :faction "Anarch"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/04003.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "rook"
- :number 3
- :packquantity 3
- :rotated true
- :set_code "opening-moves"
- :setname "Opening Moves"
- :side "Runner"
- :strength 0
- :subtype "Caïssa"
- :text "[click]: Host Rook on a piece of ice not hosting a <strong>Caïssa</strong>. If already hosted, Rook can be hosted only on ice protecting this server or on ice in the same position (counting from the innermost spot) protecting another server.\nThe rez cost of each piece of ice protecting this server is increased by 2."
- :title "Rook"
- :type "Program"
+{:code "04003",
+ :cost 2,
+ :cycle_code "spin",
+ :faction "Anarch",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/04003.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "rook",
+ :number 3,
+ :packquantity 3,
+ :rotated true,
+ :set_code "opening-moves",
+ :setname "Opening Moves",
+ :side "Runner",
+ :strength 0,
+ :subtype "Caïssa",
+ :text "[click]: Host Rook on a piece of ice not hosting a <strong>Caïssa</strong>. If already hosted, Rook can be hosted only on ice protecting this server or on ice in the same position (counting from the innermost spot) protecting another server.\nThe rez cost of each piece of ice protecting this server is increased by 2.",
+ :title "Rook",
+ :type "Program",
  :uniqueness false}

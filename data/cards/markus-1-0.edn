@@ -1,20 +1,20 @@
-{:code "06104"
- :cost 4
- :cycle_code "lunar"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_104.png"
- :limited 3
- :normalizedtitle "markus-1-0"
- :number 104
- :packquantity 3
- :rotated false
- :set_code "the-source"
- :setname "The Source"
- :side "Corp"
- :strength 3
- :subtype "Barrier - Bioroid"
- :text "The Runner may spend [click] to break any subroutine on Markus 1.0.\n[subroutine] The Runner trashes 1 of his or her installed cards.\n[subroutine] End the run."
- :title "Markus 1.0"
- :type "ICE"
+{:code "06104",
+ :cost 4,
+ :cycle_code "lunar",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_104.png",
+ :limited 3,
+ :normalizedtitle "markus-1-0",
+ :number 104,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-source",
+ :setname "The Source",
+ :side "Corp",
+ :strength 3,
+ :subtype "Barrier - Bioroid",
+ :text "The Runner may spend [click] to break any subroutine on Markus 1.0.\n[subroutine] The Runner trashes 1 of his or her installed cards.\n[subroutine] End the run.",
+ :title "Markus 1.0",
+ :type "ICE",
  :uniqueness false}

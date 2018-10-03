@@ -1,20 +1,20 @@
-{:code "10086"
- :cost 9
- :cycle_code "mumbad"
- :faction "Haas-Bioroid"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_86.png"
- :limited 3
- :normalizedtitle "brainstorm"
- :number 86
- :packquantity 3
- :rotated false
- :set_code "the-liberated-mind"
- :setname "The Liberated Mind"
- :side "Corp"
- :strength 2
- :subtype "Sentry - AP"
- :text "When the Runner encounters Brainstorm, it gains \"[subroutine] Do 1 brain damage.\" for each card in the Runner's grip for the remainder of this run."
- :title "Brainstorm"
- :type "ICE"
+{:code "10086",
+ :cost 9,
+ :cycle_code "mumbad",
+ :faction "Haas-Bioroid",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_86.png",
+ :limited 3,
+ :normalizedtitle "brainstorm",
+ :number 86,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-liberated-mind",
+ :setname "The Liberated Mind",
+ :side "Corp",
+ :strength 2,
+ :subtype "Sentry - AP",
+ :text "When the Runner encounters Brainstorm, it gains \"[subroutine] Do 1 brain damage.\" for each card in the Runner's grip for the remainder of this run.",
+ :title "Brainstorm",
+ :type "ICE",
  :uniqueness false}

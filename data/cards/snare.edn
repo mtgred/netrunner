@@ -1,21 +1,21 @@
-{:code "20098"
- :cost 0
- :cycle_code "core2"
- :faction "Jinteki"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_82.png"
- :limited 3
- :normalizedtitle "snare"
- :number 82
- :packquantity 2
- :replaces "01070"
- :set_code "revised-core-set"
- :setname "Revised Core Set"
- :side "Corp"
- :strength 0
- :subtype "Ambush"
- :text "If Snare! is accessed from R&D, the Runner must reveal it.\nIf you pay 4[credit] when the Runner accesses Snare!, do 3 net damage and give the Runner 1 tag. Ignore this effect if the Runner accesses Snare! from Archives."
- :title "Snare!"
- :trash 0
- :type "Asset"
+{:code "20098",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_82.png",
+ :limited 3,
+ :normalizedtitle "snare",
+ :number 82,
+ :packquantity 2,
+ :replaces "01070",
+ :set_code "revised-core-set",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :strength 0,
+ :subtype "Ambush",
+ :text "If Snare! is accessed from R&D, the Runner must reveal it.\nIf you pay 4[credit] when the Runner accesses Snare!, do 3 net damage and give the Runner 1 tag. Ignore this effect if the Runner accesses Snare! from Archives.",
+ :title "Snare!",
+ :trash 0,
+ :type "Asset",
  :uniqueness false}

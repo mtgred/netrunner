@@ -1,20 +1,20 @@
-{:code "11031"
- :cost 4
- :cycle_code "flashpoint"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_31.png"
- :limited 3
- :normalizedtitle "fairchild-2-0"
- :number 31
- :packquantity 3
- :rotated false
- :set_code "blood-money"
- :setname "Blood Money"
- :side "Corp"
- :strength 3
- :subtype "Code Gate - Bioroid - AP"
- :text "The Runner can spend [click][click] to break up to 2 subroutines on Fairchild 2.0.\n[subroutine] The Runner must pay 2[credit] or trash 1 of his or her installed cards.\n[subroutine] The Runner must pay 2[credit] or trash 1 of his or her installed cards.\n[subroutine] Do 1 brain damage."
- :title "Fairchild 2.0"
- :type "ICE"
+{:code "11031",
+ :cost 4,
+ :cycle_code "flashpoint",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_31.png",
+ :limited 3,
+ :normalizedtitle "fairchild-2-0",
+ :number 31,
+ :packquantity 3,
+ :rotated false,
+ :set_code "blood-money",
+ :setname "Blood Money",
+ :side "Corp",
+ :strength 3,
+ :subtype "Code Gate - Bioroid - AP",
+ :text "The Runner can spend [click][click] to break up to 2 subroutines on Fairchild 2.0.\n[subroutine] The Runner must pay 2[credit] or trash 1 of his or her installed cards.\n[subroutine] The Runner must pay 2[credit] or trash 1 of his or her installed cards.\n[subroutine] Do 1 brain damage.",
+ :title "Fairchild 2.0",
+ :type "ICE",
  :uniqueness false}

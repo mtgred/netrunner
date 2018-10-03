@@ -1,20 +1,20 @@
-{:code "11015"
- :cost 0
- :cycle_code "flashpoint"
- :faction "NBN"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_15.png"
- :limited 3
- :normalizedtitle "watchdog"
- :number 15
- :packquantity 3
- :rotated false
- :set_code "23-seconds"
- :setname "23 Seconds"
- :side "Corp"
- :strength 0
- :text "The rez cost of the first piece of ice you rez each turn is lowered by 1 for each tag the Runner has."
- :title "Watchdog"
- :trash 4
- :type "Asset"
+{:code "11015",
+ :cost 0,
+ :cycle_code "flashpoint",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_15.png",
+ :limited 3,
+ :normalizedtitle "watchdog",
+ :number 15,
+ :packquantity 3,
+ :rotated false,
+ :set_code "23-seconds",
+ :setname "23 Seconds",
+ :side "Corp",
+ :strength 0,
+ :text "The rez cost of the first piece of ice you rez each turn is lowered by 1 for each tag the Runner has.",
+ :title "Watchdog",
+ :trash 4,
+ :type "Asset",
  :uniqueness false}

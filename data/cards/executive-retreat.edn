@@ -1,21 +1,21 @@
-{:advancementcost 5
- :agendapoints 3
- :code "02039"
- :cost 0
- :cycle_code "genesis"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/02039.png"
- :limited 3
- :normalizedtitle "executive-retreat"
- :number 39
- :packquantity 3
- :rotated true
- :set_code "trace-amount"
- :setname "Trace Amount"
- :side "Corp"
- :strength 0
- :text "When you score Executive Retreat, place 1 agenda counter on it and shuffle HQ into R&D.\n[click], <strong>hosted agenda counter:</strong> Draw 5 cards."
- :title "Executive Retreat"
- :type "Agenda"
+{:advancementcost 5,
+ :agendapoints 3,
+ :code "02039",
+ :cost 0,
+ :cycle_code "genesis",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/02039.png",
+ :limited 3,
+ :normalizedtitle "executive-retreat",
+ :number 39,
+ :packquantity 3,
+ :rotated true,
+ :set_code "trace-amount",
+ :setname "Trace Amount",
+ :side "Corp",
+ :strength 0,
+ :text "When you score Executive Retreat, place 1 agenda counter on it and shuffle HQ into R&D.\n[click], <strong>hosted agenda counter:</strong> Draw 5 cards.",
+ :title "Executive Retreat",
+ :type "Agenda",
  :uniqueness false}

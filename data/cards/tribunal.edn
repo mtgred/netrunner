@@ -1,20 +1,20 @@
-{:code "11120"
- :cost 7
- :cycle_code "flashpoint"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_120.png"
- :limited 3
- :normalizedtitle "tribunal"
- :number 120
- :packquantity 3
- :rotated false
- :set_code "quorum"
- :setname "Quorum"
- :side "Corp"
- :strength 3
- :subtype "Sentry"
- :text "[subroutine] The Runner trashes 1 of his or her installed cards.\n[subroutine] The Runner trashes 1 of his or her installed cards.\n[subroutine] The Runner trashes 1 of his or her installed cards."
- :title "Tribunal"
- :type "ICE"
+{:code "11120",
+ :cost 7,
+ :cycle_code "flashpoint",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_120.png",
+ :limited 3,
+ :normalizedtitle "tribunal",
+ :number 120,
+ :packquantity 3,
+ :rotated false,
+ :set_code "quorum",
+ :setname "Quorum",
+ :side "Corp",
+ :strength 3,
+ :subtype "Sentry",
+ :text "[subroutine] The Runner trashes 1 of his or her installed cards.\n[subroutine] The Runner trashes 1 of his or her installed cards.\n[subroutine] The Runner trashes 1 of his or her installed cards.",
+ :title "Tribunal",
+ :type "ICE",
  :uniqueness false}

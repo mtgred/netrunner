@@ -1,21 +1,21 @@
-{:advancementcost 4
- :agendapoints 2
- :code "21057"
- :cost 0
- :cycle_code "kitara"
- :faction "Weyland Consortium"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_57.png"
- :limited 3
- :normalizedtitle "armed-intimidation"
- :number 57
- :packquantity 3
- :rotated false
- :set_code "council-of-the-crest"
- :setname "Council of the Crest"
- :side "Corp"
- :strength 0
- :subtype "Security"
- :text "When you score Armed Intimidation, the Runner must either suffer 5 meat damage or take 2 tags."
- :title "Armed Intimidation"
- :type "Agenda"
+{:advancementcost 4,
+ :agendapoints 2,
+ :code "21057",
+ :cost 0,
+ :cycle_code "kitara",
+ :faction "Weyland Consortium",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_57.png",
+ :limited 3,
+ :normalizedtitle "armed-intimidation",
+ :number 57,
+ :packquantity 3,
+ :rotated false,
+ :set_code "council-of-the-crest",
+ :setname "Council of the Crest",
+ :side "Corp",
+ :strength 0,
+ :subtype "Security",
+ :text "When you score Armed Intimidation, the Runner must either suffer 5 meat damage or take 2 tags.",
+ :title "Armed Intimidation",
+ :type "Agenda",
  :uniqueness false}

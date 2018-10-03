@@ -1,21 +1,21 @@
-{:code "13041"
- :cost 0
- :cycle_code "terminal-directive"
- :faction "Weyland Consortium"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_41.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 40
- :normalizedtitle "skorpios-defense-systems-persuasive-power"
- :number 41
- :packquantity 1
- :rotated false
- :set_code "terminal-directive"
- :setname "Terminal Directive"
- :side "Corp"
- :strength 0
- :subtype "Subsidiary"
- :text "Whenever a Runner card is trashed (from any location), you may force the Runner to remove it from the game instead of adding it to the heap. Use this ability only once per turn."
- :title "Skorpios Defense Systems: Persuasive Power"
- :type "Identity"
+{:code "13041",
+ :cost 0,
+ :cycle_code "terminal-directive",
+ :faction "Weyland Consortium",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_41.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 40,
+ :normalizedtitle "skorpios-defense-systems-persuasive-power",
+ :number 41,
+ :packquantity 1,
+ :rotated false,
+ :set_code "terminal-directive",
+ :setname "Terminal Directive",
+ :side "Corp",
+ :strength 0,
+ :subtype "Subsidiary",
+ :text "Whenever a Runner card is trashed (from any location), you may force the Runner to remove it from the game instead of adding it to the heap. Use this ability only once per turn.",
+ :title "Skorpios Defense Systems: Persuasive Power",
+ :type "Identity",
  :uniqueness false}

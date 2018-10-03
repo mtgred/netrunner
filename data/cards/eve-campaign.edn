@@ -1,21 +1,21 @@
-{:code "02092"
- :cost 5
- :cycle_code "genesis"
- :faction "Haas-Bioroid"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/02092.png"
- :limited 3
- :normalizedtitle "eve-campaign"
- :number 92
- :packquantity 3
- :rotated true
- :set_code "humanity-s-shadow"
- :setname "Humanity's Shadow"
- :side "Corp"
- :strength 0
- :subtype "Advertisement"
- :text "Place 16[credit] from the bank on Eve Campaign when it is rezzed. When there are no credits left on Eve Campaign, trash it.\nWhen your turn begins, take 2[credit] from Eve Campaign."
- :title "Eve Campaign"
- :trash 5
- :type "Asset"
+{:code "02092",
+ :cost 5,
+ :cycle_code "genesis",
+ :faction "Haas-Bioroid",
+ :factioncost 3,
+ :image_url "https://netrunnerdb.com/card_image/02092.png",
+ :limited 3,
+ :normalizedtitle "eve-campaign",
+ :number 92,
+ :packquantity 3,
+ :rotated true,
+ :set_code "humanity-s-shadow",
+ :setname "Humanity's Shadow",
+ :side "Corp",
+ :strength 0,
+ :subtype "Advertisement",
+ :text "Place 16[credit] from the bank on Eve Campaign when it is rezzed. When there are no credits left on Eve Campaign, trash it.\nWhen your turn begins, take 2[credit] from Eve Campaign.",
+ :title "Eve Campaign",
+ :trash 5,
+ :type "Asset",
  :uniqueness false}

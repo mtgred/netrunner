@@ -1,20 +1,20 @@
-{:code "06003"
- :cost 5
- :cycle_code "lunar"
- :faction "Jinteki"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/06003.png"
- :limited 3
- :normalizedtitle "lotus-field"
- :number 3
- :packquantity 3
- :rotated false
- :set_code "upstalk"
- :setname "Upstalk"
- :side "Corp"
- :strength 4
- :subtype "Code Gate"
- :text "The strength of Lotus Field cannot be lowered.\n[subroutine] End the run."
- :title "Lotus Field"
- :type "ICE"
+{:code "06003",
+ :cost 5,
+ :cycle_code "lunar",
+ :faction "Jinteki",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/06003.png",
+ :limited 3,
+ :normalizedtitle "lotus-field",
+ :number 3,
+ :packquantity 3,
+ :rotated false,
+ :set_code "upstalk",
+ :setname "Upstalk",
+ :side "Corp",
+ :strength 4,
+ :subtype "Code Gate",
+ :text "The strength of Lotus Field cannot be lowered.\n[subroutine] End the run.",
+ :title "Lotus Field",
+ :type "ICE",
  :uniqueness false}

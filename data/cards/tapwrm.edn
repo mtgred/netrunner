@@ -1,21 +1,21 @@
-{:code "11104"
- :cost 0
- :cycle_code "flashpoint"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_104.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "tapwrm"
- :number 104
- :packquantity 3
- :rotated false
- :set_code "quorum"
- :setname "Quorum"
- :side "Runner"
- :strength 0
- :subtype "Virus"
- :text "Install only if you made a successful run on a central server this turn.\nWhen your turn begins, gain 1[credit] for every 5[credit] in the Corp's credit pool.\nTrash Tapwrm if the Corp purges virus counters."
- :title "Tapwrm"
- :type "Program"
+{:code "11104",
+ :cost 0,
+ :cycle_code "flashpoint",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_104.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "tapwrm",
+ :number 104,
+ :packquantity 3,
+ :rotated false,
+ :set_code "quorum",
+ :setname "Quorum",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virus",
+ :text "Install only if you made a successful run on a central server this turn.\nWhen your turn begins, gain 1[credit] for every 5[credit] in the Corp's credit pool.\nTrash Tapwrm if the Corp purges virus counters.",
+ :title "Tapwrm",
+ :type "Program",
  :uniqueness false}

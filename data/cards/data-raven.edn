@@ -1,20 +1,20 @@
-{:code "01088"
- :cost 4
- :cycle_code "core"
- :faction "NBN"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01088.png"
- :limited 3
- :normalizedtitle "data-raven"
- :number 88
- :packquantity 3
- :replaced_by "20113"
- :set_code "core-set"
- :setname "Core Set"
- :side "Corp"
- :strength 4
- :subtype "Sentry - Tracer - Observer"
- :text "When the Runner encounters Data Raven, he or she must either take 1 tag or end the run.\n<strong>Hosted power counter:</strong> Give the Runner 1 tag.\n[subroutine] <trace>Trace 3</trace> If successful, place 1 power counter on Data Raven."
- :title "Data Raven"
- :type "ICE"
+{:code "01088",
+ :cost 4,
+ :cycle_code "core",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/01088.png",
+ :limited 3,
+ :normalizedtitle "data-raven",
+ :number 88,
+ :packquantity 3,
+ :replaced_by "20113",
+ :set_code "core-set",
+ :setname "Core Set",
+ :side "Corp",
+ :strength 4,
+ :subtype "Sentry - Tracer - Observer",
+ :text "When the Runner encounters Data Raven, he or she must either take 1 tag or end the run.\n<strong>Hosted power counter:</strong> Give the Runner 1 tag.\n[subroutine] <trace>Trace 3</trace> If successful, place 1 power counter on Data Raven.",
+ :title "Data Raven",
+ :type "ICE",
  :uniqueness false}

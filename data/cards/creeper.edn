@@ -1,21 +1,21 @@
-{:code "02089"
- :cost 5
- :cycle_code "genesis"
- :faction "Shaper"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/02089.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "creeper"
- :number 89
- :packquantity 3
- :rotated true
- :set_code "humanity-s-shadow"
- :setname "Humanity's Shadow"
- :side "Runner"
- :strength 2
- :subtype "Icebreaker - Killer - Cloud"
- :text "If you have at least 2[link], the memory cost of Creeper is 0, even if it is not installed.\n2[credit]: Break <strong>sentry</strong> subroutine.\n1[credit]: +1 strength."
- :title "Creeper"
- :type "Program"
+{:code "02089",
+ :cost 5,
+ :cycle_code "genesis",
+ :faction "Shaper",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/02089.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "creeper",
+ :number 89,
+ :packquantity 3,
+ :rotated true,
+ :set_code "humanity-s-shadow",
+ :setname "Humanity's Shadow",
+ :side "Runner",
+ :strength 2,
+ :subtype "Icebreaker - Killer - Cloud",
+ :text "If you have at least 2[link], the memory cost of Creeper is 0, even if it is not installed.\n2[credit]: Break <strong>sentry</strong> subroutine.\n1[credit]: +1 strength.",
+ :title "Creeper",
+ :type "Program",
  :uniqueness false}

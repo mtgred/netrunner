@@ -1,21 +1,21 @@
-{:advancementcost 3
- :agendapoints 1
- :code "06085"
- :cost 0
- :cycle_code "lunar"
- :faction "NBN"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_85.png"
- :limited 3
- :normalizedtitle "license-acquisition"
- :number 85
- :packquantity 3
- :rotated false
- :set_code "all-that-remains"
- :setname "All That Remains"
- :side "Corp"
- :strength 0
- :subtype "Expansion"
- :text "When you score License Acquisition, install and rez an asset or upgrade from Archives or HQ, ignoring all costs."
- :title "License Acquisition"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "06085",
+ :cost 0,
+ :cycle_code "lunar",
+ :faction "NBN",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_85.png",
+ :limited 3,
+ :normalizedtitle "license-acquisition",
+ :number 85,
+ :packquantity 3,
+ :rotated false,
+ :set_code "all-that-remains",
+ :setname "All That Remains",
+ :side "Corp",
+ :strength 0,
+ :subtype "Expansion",
+ :text "When you score License Acquisition, install and rez an asset or upgrade from Archives or HQ, ignoring all costs.",
+ :title "License Acquisition",
+ :type "Agenda",
  :uniqueness false}

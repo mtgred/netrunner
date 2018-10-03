@@ -1,21 +1,21 @@
-{:code "02106"
- :cost 0
- :cycle_code "genesis"
- :faction "Shaper"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/02106.png"
- :limited 3
- :normalizedtitle "indexing"
- :number 106
- :packquantity 3
- :replaced_by "20039"
- :rotated true
- :set_code "future-proof"
- :setname "Future Proof"
- :side "Runner"
- :strength 0
- :subtype "Run"
- :text "Make a run on R&D. If successful, instead of accessing cards you may look at the top 5 cards of R&D and arrange them in any order."
- :title "Indexing"
- :type "Event"
+{:code "02106",
+ :cost 0,
+ :cycle_code "genesis",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "https://netrunnerdb.com/card_image/02106.png",
+ :limited 3,
+ :normalizedtitle "indexing",
+ :number 106,
+ :packquantity 3,
+ :replaced_by "20039",
+ :rotated true,
+ :set_code "future-proof",
+ :setname "Future Proof",
+ :side "Runner",
+ :strength 0,
+ :subtype "Run",
+ :text "Make a run on R&D. If successful, instead of accessing cards you may look at the top 5 cards of R&D and arrange them in any order.",
+ :title "Indexing",
+ :type "Event",
  :uniqueness false}

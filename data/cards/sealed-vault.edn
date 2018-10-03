@@ -1,21 +1,21 @@
-{:code "06029"
- :cost 0
- :cycle_code "lunar"
- :faction "Weyland Consortium"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_29.png"
- :limited 3
- :normalizedtitle "sealed-vault"
- :number 29
- :packquantity 3
- :rotated false
- :set_code "the-spaces-between"
- :setname "The Spaces Between"
- :side "Corp"
- :strength 0
- :subtype "Facility"
- :text "1[credit]: Move any number of credits from your credit pool to Sealed Vault.\n[click] or [trash]: Move any number of credits from Sealed Vault to your credit pool."
- :title "Sealed Vault"
- :trash 8
- :type "Asset"
+{:code "06029",
+ :cost 0,
+ :cycle_code "lunar",
+ :faction "Weyland Consortium",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_29.png",
+ :limited 3,
+ :normalizedtitle "sealed-vault",
+ :number 29,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-spaces-between",
+ :setname "The Spaces Between",
+ :side "Corp",
+ :strength 0,
+ :subtype "Facility",
+ :text "1[credit]: Move any number of credits from your credit pool to Sealed Vault.\n[click] or [trash]: Move any number of credits from Sealed Vault to your credit pool.",
+ :title "Sealed Vault",
+ :trash 8,
+ :type "Asset",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "07037"
- :cost 2
- :cycle_code "order-and-chaos"
- :faction "Anarch"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_37.png"
- :limited 3
- :normalizedtitle "forked"
- :number 37
- :packquantity 3
- :rotated false
- :set_code "order-and-chaos"
- :setname "Order and Chaos"
- :side "Runner"
- :strength 0
- :subtype "Run - Sabotage"
- :text "Make a run. The first time you break all subroutines on a <strong>sentry</strong> during this run, trash that <strong>sentry</strong>."
- :title "Forked"
- :type "Event"
+{:code "07037",
+ :cost 2,
+ :cycle_code "order-and-chaos",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_37.png",
+ :limited 3,
+ :normalizedtitle "forked",
+ :number 37,
+ :packquantity 3,
+ :rotated false,
+ :set_code "order-and-chaos",
+ :setname "Order and Chaos",
+ :side "Runner",
+ :strength 0,
+ :subtype "Run - Sabotage",
+ :text "Make a run. The first time you break all subroutines on a <strong>sentry</strong> during this run, trash that <strong>sentry</strong>.",
+ :title "Forked",
+ :type "Event",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "02034"
- :cost 3
- :cycle_code "genesis"
- :faction "Jinteki"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/02034.png"
- :limited 3
- :normalizedtitle "sensei"
- :number 34
- :packquantity 3
- :rotated true
- :set_code "trace-amount"
- :setname "Trace Amount"
- :side "Corp"
- :strength 5
- :subtype "Code Gate"
- :text "[subroutine] For the remainder of this run, each piece of ice encountered except Sensei gains \"[subroutine] End the run\" after all its other subroutines."
- :title "Sensei"
- :type "ICE"
+{:code "02034",
+ :cost 3,
+ :cycle_code "genesis",
+ :faction "Jinteki",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/02034.png",
+ :limited 3,
+ :normalizedtitle "sensei",
+ :number 34,
+ :packquantity 3,
+ :rotated true,
+ :set_code "trace-amount",
+ :setname "Trace Amount",
+ :side "Corp",
+ :strength 5,
+ :subtype "Code Gate",
+ :text "[subroutine] For the remainder of this run, each piece of ice encountered except Sensei gains \"[subroutine] End the run\" after all its other subroutines.",
+ :title "Sensei",
+ :type "ICE",
  :uniqueness false}

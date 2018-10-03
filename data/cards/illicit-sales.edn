@@ -1,21 +1,21 @@
-{:advancementcost 3
- :agendapoints 1
- :code "13043"
- :cost 0
- :cycle_code "terminal-directive"
- :faction "Weyland Consortium"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_43.png"
- :limited 3
- :normalizedtitle "illicit-sales"
- :number 43
- :packquantity 3
- :rotated false
- :set_code "terminal-directive"
- :setname "Terminal Directive"
- :side "Corp"
- :strength 0
- :subtype "Expansion"
- :text "When you score Illicit Sales, you may take 1 bad publicity. Gain 3[credit] for each bad publicity that you have."
- :title "Illicit Sales"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "13043",
+ :cost 0,
+ :cycle_code "terminal-directive",
+ :faction "Weyland Consortium",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_43.png",
+ :limited 3,
+ :normalizedtitle "illicit-sales",
+ :number 43,
+ :packquantity 3,
+ :rotated false,
+ :set_code "terminal-directive",
+ :setname "Terminal Directive",
+ :side "Corp",
+ :strength 0,
+ :subtype "Expansion",
+ :text "When you score Illicit Sales, you may take 1 bad publicity. Gain 3[credit] for each bad publicity that you have.",
+ :title "Illicit Sales",
+ :type "Agenda",
  :uniqueness false}

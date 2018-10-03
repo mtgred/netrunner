@@ -1,20 +1,20 @@
-{:code "07014"
- :cost 9
- :cycle_code "order-and-chaos"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_14.png"
- :limited 3
- :normalizedtitle "nebula"
- :number 14
- :packquantity 3
- :rotated false
- :set_code "order-and-chaos"
- :setname "Order and Chaos"
- :side "Corp"
- :strength 5
- :subtype "Sentry - Destroyer"
- :text "Nebula can be advanced and its rez cost is lowered by 3 for each advancement token on it.\n[subroutine] Trash 1 program."
- :title "Nebula"
- :type "ICE"
+{:code "07014",
+ :cost 9,
+ :cycle_code "order-and-chaos",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_14.png",
+ :limited 3,
+ :normalizedtitle "nebula",
+ :number 14,
+ :packquantity 3,
+ :rotated false,
+ :set_code "order-and-chaos",
+ :setname "Order and Chaos",
+ :side "Corp",
+ :strength 5,
+ :subtype "Sentry - Destroyer",
+ :text "Nebula can be advanced and its rez cost is lowered by 3 for each advancement token on it.\n[subroutine] Trash 1 program.",
+ :title "Nebula",
+ :type "ICE",
  :uniqueness false}

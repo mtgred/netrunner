@@ -1,20 +1,20 @@
-{:code "12010"
- :cost 6
- :cycle_code "red-sand"
- :faction "Haas-Bioroid"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_10.png"
- :limited 3
- :normalizedtitle "zed-2-0"
- :number 10
- :packquantity 3
- :rotated false
- :set_code "daedalus-complex"
- :setname "Daedalus Complex"
- :side "Corp"
- :strength 4
- :subtype "Sentry - Bioroid - AP - Destroyer"
- :text "The Runner can spend [click][click] to break up to 2 subroutines on Zed 2.0.\n[subroutine] Trash 1 hardware.\n[subroutine] Trash 1 hardware.\n[subroutine] If the Runner has spent at least 1 [click] to break a subroutine during this run, do 2 brain damage."
- :title "Zed 2.0"
- :type "ICE"
+{:code "12010",
+ :cost 6,
+ :cycle_code "red-sand",
+ :faction "Haas-Bioroid",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_10.png",
+ :limited 3,
+ :normalizedtitle "zed-2-0",
+ :number 10,
+ :packquantity 3,
+ :rotated false,
+ :set_code "daedalus-complex",
+ :setname "Daedalus Complex",
+ :side "Corp",
+ :strength 4,
+ :subtype "Sentry - Bioroid - AP - Destroyer",
+ :text "The Runner can spend [click][click] to break up to 2 subroutines on Zed 2.0.\n[subroutine] Trash 1 hardware.\n[subroutine] Trash 1 hardware.\n[subroutine] If the Runner has spent at least 1 [click] to break a subroutine during this run, do 2 brain damage.",
+ :title "Zed 2.0",
+ :type "ICE",
  :uniqueness false}

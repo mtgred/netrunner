@@ -1,20 +1,20 @@
-{:code "04009"
- :cost 2
- :cycle_code "spin"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/04009.png"
- :limited 3
- :normalizedtitle "john-masanori"
- :number 9
- :packquantity 3
- :rotated true
- :set_code "opening-moves"
- :setname "Opening Moves"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "The first time you make a successful run each turn, draw 1 card.\nThe first time you make an unsuccessful run each turn, take 1 tag."
- :title "John Masanori"
- :type "Resource"
+{:code "04009",
+ :cost 2,
+ :cycle_code "spin",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/04009.png",
+ :limited 3,
+ :normalizedtitle "john-masanori",
+ :number 9,
+ :packquantity 3,
+ :rotated true,
+ :set_code "opening-moves",
+ :setname "Opening Moves",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "The first time you make a successful run each turn, draw 1 card.\nThe first time you make an unsuccessful run each turn, take 1 tag.",
+ :title "John Masanori",
+ :type "Resource",
  :uniqueness true}

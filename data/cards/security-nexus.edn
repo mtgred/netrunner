@@ -1,20 +1,20 @@
-{:code "09047"
- :cost 8
- :cycle_code "data-and-destiny"
- :faction "Sunny Lebeau"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_47.png"
- :limited 3
- :normalizedtitle "security-nexus"
- :number 47
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Runner"
- :strength 0
- :subtype "Console"
- :text "+1[mu] +1[link]\nOnce per turn, when you encounter a piece of ice, you may force the Corp to \"<trace>trace 5</trace> If successful, give the Runner 1 tag and end the run. If unsuccessful, the Runner bypasses the currently encountered ice.\"\nLimit 1 <strong>console</strong> per player."
- :title "Security Nexus"
- :type "Hardware"
+{:code "09047",
+ :cost 8,
+ :cycle_code "data-and-destiny",
+ :faction "Sunny Lebeau",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_47.png",
+ :limited 3,
+ :normalizedtitle "security-nexus",
+ :number 47,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Runner",
+ :strength 0,
+ :subtype "Console",
+ :text "+1[mu] +1[link]\nOnce per turn, when you encounter a piece of ice, you may force the Corp to \"<trace>trace 5</trace> If successful, give the Runner 1 tag and end the run. If unsuccessful, the Runner bypasses the currently encountered ice.\"\nLimit 1 <strong>console</strong> per player.",
+ :title "Security Nexus",
+ :type "Hardware",
  :uniqueness true}

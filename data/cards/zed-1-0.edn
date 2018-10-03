@@ -1,20 +1,20 @@
-{:code "03020"
- :cost 2
- :cycle_code "creation-and-control"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/03020.png"
- :limited 3
- :normalizedtitle "zed-1-0"
- :number 20
- :packquantity 3
- :rotated false
- :set_code "creation-and-control"
- :setname "Creation and Control"
- :side "Corp"
- :strength 1
- :subtype "Sentry - Bioroid - AP"
- :text "The Runner can spend [click] to break any subroutine on Zed 1.0.\n[subroutine] If the Runner has spent at least 1[click] to break a subroutine during this run, do 1 brain damage.\n[subroutine] If the Runner has spent at least 1[click] to break a subroutine during this run, do 1 brain damage."
- :title "Zed 1.0"
- :type "ICE"
+{:code "03020",
+ :cost 2,
+ :cycle_code "creation-and-control",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/03020.png",
+ :limited 3,
+ :normalizedtitle "zed-1-0",
+ :number 20,
+ :packquantity 3,
+ :rotated false,
+ :set_code "creation-and-control",
+ :setname "Creation and Control",
+ :side "Corp",
+ :strength 1,
+ :subtype "Sentry - Bioroid - AP",
+ :text "The Runner can spend [click] to break any subroutine on Zed 1.0.\n[subroutine] If the Runner has spent at least 1[click] to break a subroutine during this run, do 1 brain damage.\n[subroutine] If the Runner has spent at least 1[click] to break a subroutine during this run, do 1 brain damage.",
+ :title "Zed 1.0",
+ :type "ICE",
  :uniqueness false}

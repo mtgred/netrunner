@@ -1,21 +1,21 @@
-{:code "06005"
- :cost 0
- :cycle_code "lunar"
- :faction "NBN"
- :image_url "https://netrunnerdb.com/card_image/06005.png"
- :influencelimit 17
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "near-earth-hub-broadcast-center"
- :number 5
- :packquantity 3
- :rotated false
- :set_code "upstalk"
- :setname "Upstalk"
- :side "Corp"
- :strength 0
- :subtype "Division"
- :text "The first time you create a server each turn, draw 1 card."
- :title "Near-Earth Hub: Broadcast Center"
- :type "Identity"
+{:code "06005",
+ :cost 0,
+ :cycle_code "lunar",
+ :faction "NBN",
+ :image_url "https://netrunnerdb.com/card_image/06005.png",
+ :influencelimit 17,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "near-earth-hub-broadcast-center",
+ :number 5,
+ :packquantity 3,
+ :rotated false,
+ :set_code "upstalk",
+ :setname "Upstalk",
+ :side "Corp",
+ :strength 0,
+ :subtype "Division",
+ :text "The first time you create a server each turn, draw 1 card.",
+ :title "Near-Earth Hub: Broadcast Center",
+ :type "Identity",
  :uniqueness false}

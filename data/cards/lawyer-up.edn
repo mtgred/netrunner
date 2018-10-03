@@ -1,20 +1,20 @@
-{:code "04063"
- :cost 2
- :cycle_code "spin"
- :faction "Criminal"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/04063.png"
- :limited 3
- :normalizedtitle "lawyer-up"
- :number 63
- :packquantity 3
- :rotated true
- :set_code "true-colors"
- :setname "True Colors"
- :side "Runner"
- :strength 0
- :subtype "Double"
- :text "As an additional cost to play this event, spend [click].\nRemove up to 2 tags and draw 3 cards."
- :title "Lawyer Up"
- :type "Event"
+{:code "04063",
+ :cost 2,
+ :cycle_code "spin",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/04063.png",
+ :limited 3,
+ :normalizedtitle "lawyer-up",
+ :number 63,
+ :packquantity 3,
+ :rotated true,
+ :set_code "true-colors",
+ :setname "True Colors",
+ :side "Runner",
+ :strength 0,
+ :subtype "Double",
+ :text "As an additional cost to play this event, spend [click].\nRemove up to 2 tags and draw 3 cards.",
+ :title "Lawyer Up",
+ :type "Event",
  :uniqueness false}

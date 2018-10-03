@@ -1,20 +1,20 @@
-{:code "08052"
- :cost 2
- :cycle_code "sansan"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_52.png"
- :limited 3
- :normalizedtitle "lab-dog"
- :number 52
- :packquantity 3
- :rotated false
- :set_code "chrome-city"
- :setname "Chrome City"
- :side "Corp"
- :strength 0
- :subtype "Trap"
- :text "[subroutine] The Runner trashes an installed piece of hardware. Trash Lab Dog."
- :title "Lab Dog"
- :type "ICE"
+{:code "08052",
+ :cost 2,
+ :cycle_code "sansan",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_52.png",
+ :limited 3,
+ :normalizedtitle "lab-dog",
+ :number 52,
+ :packquantity 3,
+ :rotated false,
+ :set_code "chrome-city",
+ :setname "Chrome City",
+ :side "Corp",
+ :strength 0,
+ :subtype "Trap",
+ :text "[subroutine] The Runner trashes an installed piece of hardware. Trash Lab Dog.",
+ :title "Lab Dog",
+ :type "ICE",
  :uniqueness false}

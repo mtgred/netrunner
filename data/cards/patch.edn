@@ -1,20 +1,20 @@
-{:code "07021"
- :cost 0
- :cycle_code "order-and-chaos"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_21.png"
- :limited 3
- :normalizedtitle "patch"
- :number 21
- :packquantity 3
- :rotated false
- :set_code "order-and-chaos"
- :setname "Order and Chaos"
- :side "Corp"
- :strength 0
- :subtype "Condition"
- :text "Install Patch on a rezzed piece of ice as a hosted condition counter with the text \"Host ice has +2 strength.\""
- :title "Patch"
- :type "Operation"
+{:code "07021",
+ :cost 0,
+ :cycle_code "order-and-chaos",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_21.png",
+ :limited 3,
+ :normalizedtitle "patch",
+ :number 21,
+ :packquantity 3,
+ :rotated false,
+ :set_code "order-and-chaos",
+ :setname "Order and Chaos",
+ :side "Corp",
+ :strength 0,
+ :subtype "Condition",
+ :text "Install Patch on a rezzed piece of ice as a hosted condition counter with the text \"Host ice has +2 strength.\"",
+ :title "Patch",
+ :type "Operation",
  :uniqueness false}

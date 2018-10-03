@@ -1,19 +1,19 @@
-{:code "02088"
- :cost 2
- :cycle_code "genesis"
- :faction "Shaper"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02088.png"
- :limited 3
- :normalizedtitle "replicator"
- :number 88
- :packquantity 3
- :rotated true
- :set_code "humanity-s-shadow"
- :setname "Humanity's Shadow"
- :side "Runner"
- :strength 0
- :text "Whenever you install a piece of hardware (including Replicator), you may search your stack for another copy of that hardware, reveal it, and add it your grip. Shuffle your stack."
- :title "Replicator"
- :type "Hardware"
+{:code "02088",
+ :cost 2,
+ :cycle_code "genesis",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02088.png",
+ :limited 3,
+ :normalizedtitle "replicator",
+ :number 88,
+ :packquantity 3,
+ :rotated true,
+ :set_code "humanity-s-shadow",
+ :setname "Humanity's Shadow",
+ :side "Runner",
+ :strength 0,
+ :text "Whenever you install a piece of hardware (including Replicator), you may search your stack for another copy of that hardware, reveal it, and add it your grip. Shuffle your stack.",
+ :title "Replicator",
+ :type "Hardware",
  :uniqueness false}

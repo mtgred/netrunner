@@ -1,21 +1,21 @@
-{:advancementcost 2
- :agendapoints 1
- :code "20078"
- :cost 0
- :cycle_code "core2"
- :faction "Weyland Consortium"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_109.png"
- :limited 3
- :normalizedtitle "hostile-takeover"
- :number 109
- :packquantity 1
- :replaces "01094"
- :set_code "revised-core-set"
- :setname "Revised Core Set"
- :side "Corp"
- :strength 0
- :subtype "Expansion"
- :text "When you score Hostile Takeover, gain 7[credit] and take 1 bad publicity."
- :title "Hostile Takeover"
- :type "Agenda"
+{:advancementcost 2,
+ :agendapoints 1,
+ :code "20078",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "Weyland Consortium",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_109.png",
+ :limited 3,
+ :normalizedtitle "hostile-takeover",
+ :number 109,
+ :packquantity 1,
+ :replaces "01094",
+ :set_code "revised-core-set",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :strength 0,
+ :subtype "Expansion",
+ :text "When you score Hostile Takeover, gain 7[credit] and take 1 bad publicity.",
+ :title "Hostile Takeover",
+ :type "Agenda",
  :uniqueness false}

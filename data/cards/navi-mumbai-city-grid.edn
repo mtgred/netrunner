@@ -1,21 +1,21 @@
-{:code "10110"
- :cost 2
- :cycle_code "mumbad"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_110.png"
- :limited 3
- :normalizedtitle "navi-mumbai-city-grid"
- :number 110
- :packquantity 3
- :rotated false
- :set_code "fear-the-masses"
- :setname "Fear the Masses"
- :side "Corp"
- :strength 0
- :subtype "Region"
- :text "During a run on this server, the Runner cannot use paid abilities on non-<strong>icebreaker</strong> cards.\nLimit 1 <strong>region</strong> per server."
- :title "Navi Mumbai City Grid"
- :trash 3
- :type "Upgrade"
+{:code "10110",
+ :cost 2,
+ :cycle_code "mumbad",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_110.png",
+ :limited 3,
+ :normalizedtitle "navi-mumbai-city-grid",
+ :number 110,
+ :packquantity 3,
+ :rotated false,
+ :set_code "fear-the-masses",
+ :setname "Fear the Masses",
+ :side "Corp",
+ :strength 0,
+ :subtype "Region",
+ :text "During a run on this server, the Runner cannot use paid abilities on non-<strong>icebreaker</strong> cards.\nLimit 1 <strong>region</strong> per server.",
+ :title "Navi Mumbai City Grid",
+ :trash 3,
+ :type "Upgrade",
  :uniqueness false}

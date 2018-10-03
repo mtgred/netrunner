@@ -1,20 +1,20 @@
-{:code "06054"
- :cost 2
- :cycle_code "lunar"
- :faction "Anarch"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_54.png"
- :limited 3
- :normalizedtitle "duggar-s"
- :number 54
- :packquantity 3
- :rotated false
- :set_code "first-contact"
- :setname "First Contact"
- :side "Runner"
- :strength 0
- :subtype "Location - Seedy"
- :text "[click],[click],[click],[click]: Draw 10 cards."
- :title "Duggar's"
- :type "Resource"
+{:code "06054",
+ :cost 2,
+ :cycle_code "lunar",
+ :faction "Anarch",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_54.png",
+ :limited 3,
+ :normalizedtitle "duggar-s",
+ :number 54,
+ :packquantity 3,
+ :rotated false,
+ :set_code "first-contact",
+ :setname "First Contact",
+ :side "Runner",
+ :strength 0,
+ :subtype "Location - Seedy",
+ :text "[click],[click],[click],[click]: Draw 10 cards.",
+ :title "Duggar's",
+ :type "Resource",
  :uniqueness true}

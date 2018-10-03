@@ -1,20 +1,20 @@
-{:code "12044"
- :cost 0
- :cycle_code "red-sand"
- :faction "Criminal"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_44.png"
- :limited 3
- :normalizedtitle "aeneas-informant"
- :number 44
- :packquantity 3
- :rotated false
- :set_code "earth-s-scion"
- :setname "Earth's Scion"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "Whenever you access a card with a trash cost not in Archives and do not trash it, you may reveal it and gain 1[credit]."
- :title "Aeneas Informant"
- :type "Resource"
+{:code "12044",
+ :cost 0,
+ :cycle_code "red-sand",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_44.png",
+ :limited 3,
+ :normalizedtitle "aeneas-informant",
+ :number 44,
+ :packquantity 3,
+ :rotated false,
+ :set_code "earth-s-scion",
+ :setname "Earth's Scion",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "Whenever you access a card with a trash cost not in Archives and do not trash it, you may reveal it and gain 1[credit].",
+ :title "Aeneas Informant",
+ :type "Resource",
  :uniqueness false}

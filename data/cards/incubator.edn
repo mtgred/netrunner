@@ -1,21 +1,21 @@
-{:code "06113"
- :cost 3
- :cycle_code "lunar"
- :faction "Anarch"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_113.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "incubator"
- :number 113
- :packquantity 3
- :rotated false
- :set_code "the-source"
- :setname "The Source"
- :side "Runner"
- :strength 0
- :subtype "Virus"
- :text "When your turn begins, place 1 virus counter on Incubator.\n[click], [trash]: Move all virus counters from Incubator to another installed <strong>virus</strong> program."
- :title "Incubator"
- :type "Program"
+{:code "06113",
+ :cost 3,
+ :cycle_code "lunar",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_113.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "incubator",
+ :number 113,
+ :packquantity 3,
+ :rotated false,
+ :set_code "the-source",
+ :setname "The Source",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virus",
+ :text "When your turn begins, place 1 virus counter on Incubator.\n[click], [trash]: Move all virus counters from Incubator to another installed <strong>virus</strong> program.",
+ :title "Incubator",
+ :type "Program",
  :uniqueness false}

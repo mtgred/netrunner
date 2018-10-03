@@ -1,20 +1,20 @@
-{:code "04011"
- :cost 2
- :cycle_code "spin"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/04011.png"
- :limited 3
- :normalizedtitle "next-bronze"
- :number 11
- :packquantity 3
- :rotated true
- :set_code "opening-moves"
- :setname "Opening Moves"
- :side "Corp"
- :strength 0
- :subtype "Code Gate - NEXT"
- :text "NEXT Bronze has +1 strength for each rezzed piece of <strong>NEXT</strong> ice.\n[subroutine] End the run."
- :title "NEXT Bronze"
- :type "ICE"
+{:code "04011",
+ :cost 2,
+ :cycle_code "spin",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/04011.png",
+ :limited 3,
+ :normalizedtitle "next-bronze",
+ :number 11,
+ :packquantity 3,
+ :rotated true,
+ :set_code "opening-moves",
+ :setname "Opening Moves",
+ :side "Corp",
+ :strength 0,
+ :subtype "Code Gate - NEXT",
+ :text "NEXT Bronze has +1 strength for each rezzed piece of <strong>NEXT</strong> ice.\n[subroutine] End the run.",
+ :title "NEXT Bronze",
+ :type "ICE",
  :uniqueness false}

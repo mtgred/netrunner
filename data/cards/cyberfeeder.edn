@@ -1,20 +1,20 @@
-{:code "01005"
- :cost 2
- :cycle_code "core"
- :faction "Anarch"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/01005.png"
- :limited 3
- :normalizedtitle "cyberfeeder"
- :number 5
- :packquantity 3
- :replaced_by "20006"
- :set_code "core-set"
- :setname "Core Set"
- :side "Runner"
- :strength 0
- :subtype "Chip"
- :text "1[recurring-credit]\nUse this credit to pay for using <strong>icebreakers</strong> or for installing <strong>virus</strong> programs."
- :title "Cyberfeeder"
- :type "Hardware"
+{:code "01005",
+ :cost 2,
+ :cycle_code "core",
+ :faction "Anarch",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/01005.png",
+ :limited 3,
+ :normalizedtitle "cyberfeeder",
+ :number 5,
+ :packquantity 3,
+ :replaced_by "20006",
+ :set_code "core-set",
+ :setname "Core Set",
+ :side "Runner",
+ :strength 0,
+ :subtype "Chip",
+ :text "1[recurring-credit]\nUse this credit to pay for using <strong>icebreakers</strong> or for installing <strong>virus</strong> programs.",
+ :title "Cyberfeeder",
+ :type "Hardware",
  :uniqueness false}

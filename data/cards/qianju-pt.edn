@@ -1,20 +1,20 @@
-{:code "07054"
- :cost 2
- :cycle_code "order-and-chaos"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_54.png"
- :limited 3
- :normalizedtitle "qianju-pt"
- :number 54
- :packquantity 3
- :rotated false
- :set_code "order-and-chaos"
- :setname "Order and Chaos"
- :side "Runner"
- :strength 0
- :subtype "Vehicle"
- :text "When your turn begins, you may lose [click]. If you do, avoid the first tag you take until the beginning of your next turn."
- :title "Qianju PT"
- :type "Hardware"
+{:code "07054",
+ :cost 2,
+ :cycle_code "order-and-chaos",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_54.png",
+ :limited 3,
+ :normalizedtitle "qianju-pt",
+ :number 54,
+ :packquantity 3,
+ :rotated false,
+ :set_code "order-and-chaos",
+ :setname "Order and Chaos",
+ :side "Runner",
+ :strength 0,
+ :subtype "Vehicle",
+ :text "When your turn begins, you may lose [click]. If you do, avoid the first tag you take until the beginning of your next turn.",
+ :title "Qianju PT",
+ :type "Hardware",
  :uniqueness false}

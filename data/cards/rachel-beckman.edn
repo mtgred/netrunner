@@ -1,20 +1,20 @@
-{:code "06060"
- :cost 8
- :cycle_code "lunar"
- :faction "Neutral"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_60.png"
- :limited 3
- :normalizedtitle "rachel-beckman"
- :number 60
- :packquantity 3
- :rotated false
- :set_code "first-contact"
- :setname "First Contact"
- :side "Runner"
- :strength 0
- :subtype "Connection"
- :text "You have 1 additional [click] to spend during your turn.\nTrash Rachel Beckman if you are tagged.\n<errata>Errata from FAQ 3.1</errata>"
- :title "Rachel Beckman"
- :type "Resource"
+{:code "06060",
+ :cost 8,
+ :cycle_code "lunar",
+ :faction "Neutral",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_60.png",
+ :limited 3,
+ :normalizedtitle "rachel-beckman",
+ :number 60,
+ :packquantity 3,
+ :rotated false,
+ :set_code "first-contact",
+ :setname "First Contact",
+ :side "Runner",
+ :strength 0,
+ :subtype "Connection",
+ :text "You have 1 additional [click] to spend during your turn.\nTrash Rachel Beckman if you are tagged.\n<errata>Errata from FAQ 3.1</errata>",
+ :title "Rachel Beckman",
+ :type "Resource",
  :uniqueness true}

@@ -1,21 +1,21 @@
-{:code "02076"
- :cost 0
- :cycle_code "genesis"
- :faction "Weyland Consortium"
- :image_url "https://netrunnerdb.com/card_image/02076.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "weyland-consortium-because-we-built-it"
- :number 76
- :packquantity 3
- :rotated true
- :set_code "a-study-in-static"
- :setname "A Study in Static"
- :side "Corp"
- :strength 0
- :subtype "Megacorp"
- :text "1[recurring-credit]\nUse this credit to advance ice."
- :title "Weyland Consortium: Because We Built It"
- :type "Identity"
+{:code "02076",
+ :cost 0,
+ :cycle_code "genesis",
+ :faction "Weyland Consortium",
+ :image_url "https://netrunnerdb.com/card_image/02076.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "weyland-consortium-because-we-built-it",
+ :number 76,
+ :packquantity 3,
+ :rotated true,
+ :set_code "a-study-in-static",
+ :setname "A Study in Static",
+ :side "Corp",
+ :strength 0,
+ :subtype "Megacorp",
+ :text "1[recurring-credit]\nUse this credit to advance ice.",
+ :title "Weyland Consortium: Because We Built It",
+ :type "Identity",
  :uniqueness false}

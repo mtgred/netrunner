@@ -1,21 +1,21 @@
-{:code "12051"
- :cost 2
- :cycle_code "red-sand"
- :faction "Haas-Bioroid"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_51.png"
- :limited 3
- :normalizedtitle "bioroid-work-crew"
- :number 51
- :packquantity 3
- :rotated false
- :set_code "earth-s-scion"
- :setname "Earth's Scion"
- :side "Corp"
- :strength 0
- :subtype "Bioroid"
- :text "[trash]: Install 1 card, paying all costs. Use this ability only during the next paid ability window after playing and resolving an operation.\n<errata>Errata from FAQ 4.1</errata>"
- :title "Bioroid Work Crew"
- :trash 4
- :type "Asset"
+{:code "12051",
+ :cost 2,
+ :cycle_code "red-sand",
+ :faction "Haas-Bioroid",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_51.png",
+ :limited 3,
+ :normalizedtitle "bioroid-work-crew",
+ :number 51,
+ :packquantity 3,
+ :rotated false,
+ :set_code "earth-s-scion",
+ :setname "Earth's Scion",
+ :side "Corp",
+ :strength 0,
+ :subtype "Bioroid",
+ :text "[trash]: Install 1 card, paying all costs. Use this ability only during the next paid ability window after playing and resolving an operation.\n<errata>Errata from FAQ 4.1</errata>",
+ :title "Bioroid Work Crew",
+ :trash 4,
+ :type "Asset",
  :uniqueness false}

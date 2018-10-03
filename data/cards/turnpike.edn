@@ -1,20 +1,20 @@
-{:code "09018"
- :cost 2
- :cycle_code "data-and-destiny"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_18.png"
- :limited 3
- :normalizedtitle "turnpike"
- :number 18
- :packquantity 3
- :rotated false
- :set_code "data-and-destiny"
- :setname "Data and Destiny"
- :side "Corp"
- :strength 3
- :subtype "Sentry - Tracer"
- :text "When the Runner encounters Turnpike, he or she loses 1[credit].\n[subroutine] <trace>Trace 5</trace> If successful, give the Runner 1 tag."
- :title "Turnpike"
- :type "ICE"
+{:code "09018",
+ :cost 2,
+ :cycle_code "data-and-destiny",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_18.png",
+ :limited 3,
+ :normalizedtitle "turnpike",
+ :number 18,
+ :packquantity 3,
+ :rotated false,
+ :set_code "data-and-destiny",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :strength 3,
+ :subtype "Sentry - Tracer",
+ :text "When the Runner encounters Turnpike, he or she loses 1[credit].\n[subroutine] <trace>Trace 5</trace> If successful, give the Runner 1 tag.",
+ :title "Turnpike",
+ :type "ICE",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "11016"
- :cost 3
- :cycle_code "flashpoint"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_16.png"
- :limited 3
- :normalizedtitle "hard-hitting-news"
- :number 16
- :packquantity 3
- :rotated false
- :set_code "23-seconds"
- :setname "23 Seconds"
- :side "Corp"
- :strength 0
- :subtype "Terminal"
- :text "After you resolve this operation, end your action phase.\nPlay only if the Runner made a run during his or her last turn.\n<trace>Trace 4</trace> If successful, give the Runner 4 tags."
- :title "Hard-Hitting News"
- :type "Operation"
+{:code "11016",
+ :cost 3,
+ :cycle_code "flashpoint",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_16.png",
+ :limited 3,
+ :normalizedtitle "hard-hitting-news",
+ :number 16,
+ :packquantity 3,
+ :rotated false,
+ :set_code "23-seconds",
+ :setname "23 Seconds",
+ :side "Corp",
+ :strength 0,
+ :subtype "Terminal",
+ :text "After you resolve this operation, end your action phase.\nPlay only if the Runner made a run during his or her last turn.\n<trace>Trace 4</trace> If successful, give the Runner 4 tags.",
+ :title "Hard-Hitting News",
+ :type "Operation",
  :uniqueness false}

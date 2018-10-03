@@ -1,21 +1,21 @@
-{:code "21049"
- :cost 3
- :cycle_code "kitara"
- :faction "Haas-Bioroid"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_49.png"
- :limited 3
- :normalizedtitle "kuwinda-k4h1u3"
- :number 49
- :packquantity 3
- :rotated false
- :set_code "council-of-the-crest"
- :setname "Council of the Crest"
- :side "Corp"
- :strength 0
- :subtype "Bioroid"
- :text "When your turn begins, you may <trace>trace X</trace> If successful, do 1 brain damage and trash Kuwinda K4H1U3. If unsuccessful, place 1 power counter on Kuwinda K4H1U3.\nX is the number of power counters on Kuwinda K4H1U3."
- :title "Kuwinda K4H1U3"
- :trash 3
- :type "Asset"
+{:code "21049",
+ :cost 3,
+ :cycle_code "kitara",
+ :faction "Haas-Bioroid",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_49.png",
+ :limited 3,
+ :normalizedtitle "kuwinda-k4h1u3",
+ :number 49,
+ :packquantity 3,
+ :rotated false,
+ :set_code "council-of-the-crest",
+ :setname "Council of the Crest",
+ :side "Corp",
+ :strength 0,
+ :subtype "Bioroid",
+ :text "When your turn begins, you may <trace>trace X</trace> If successful, do 1 brain damage and trash Kuwinda K4H1U3. If unsuccessful, place 1 power counter on Kuwinda K4H1U3.\nX is the number of power counters on Kuwinda K4H1U3.",
+ :title "Kuwinda K4H1U3",
+ :trash 3,
+ :type "Asset",
  :uniqueness true}

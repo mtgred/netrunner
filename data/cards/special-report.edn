@@ -1,19 +1,19 @@
-{:code "11035"
- :cost 1
- :cycle_code "flashpoint"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_35.png"
- :limited 3
- :normalizedtitle "special-report"
- :number 35
- :packquantity 3
- :rotated false
- :set_code "blood-money"
- :setname "Blood Money"
- :side "Corp"
- :strength 0
- :text "Shuffle any number of cards from HQ into R&D. Draw that number of cards."
- :title "Special Report"
- :type "Operation"
+{:code "11035",
+ :cost 1,
+ :cycle_code "flashpoint",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_35.png",
+ :limited 3,
+ :normalizedtitle "special-report",
+ :number 35,
+ :packquantity 3,
+ :rotated false,
+ :set_code "blood-money",
+ :setname "Blood Money",
+ :side "Corp",
+ :strength 0,
+ :text "Shuffle any number of cards from HQ into R&D. Draw that number of cards.",
+ :title "Special Report",
+ :type "Operation",
  :uniqueness false}

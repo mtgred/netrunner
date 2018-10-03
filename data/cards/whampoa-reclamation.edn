@@ -1,21 +1,21 @@
-{:code "12079"
- :cost 3
- :cycle_code "red-sand"
- :faction "Neutral"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_79.png"
- :limited 3
- :normalizedtitle "whampoa-reclamation"
- :number 79
- :packquantity 3
- :rotated false
- :set_code "blood-and-water"
- :setname "Blood and Water"
- :side "Corp"
- :strength 0
- :subtype "Corporation"
- :text "<strong>Trash 1 card from HQ:</strong> Add 1 card from Archives to the bottom of R&D. Use this ability only once per turn."
- :title "Whampoa Reclamation"
- :trash 3
- :type "Asset"
+{:code "12079",
+ :cost 3,
+ :cycle_code "red-sand",
+ :faction "Neutral",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_79.png",
+ :limited 3,
+ :normalizedtitle "whampoa-reclamation",
+ :number 79,
+ :packquantity 3,
+ :rotated false,
+ :set_code "blood-and-water",
+ :setname "Blood and Water",
+ :side "Corp",
+ :strength 0,
+ :subtype "Corporation",
+ :text "<strong>Trash 1 card from HQ:</strong> Add 1 card from Archives to the bottom of R&D. Use this ability only once per turn.",
+ :title "Whampoa Reclamation",
+ :trash 3,
+ :type "Asset",
  :uniqueness false}

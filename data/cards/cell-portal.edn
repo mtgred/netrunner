@@ -1,19 +1,19 @@
-{:code "01074"
- :cost 5
- :cycle_code "core"
- :faction "Jinteki"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01074.png"
- :limited 3
- :normalizedtitle "cell-portal"
- :number 74
- :packquantity 2
- :set_code "core-set"
- :setname "Core Set"
- :side "Corp"
- :strength 7
- :subtype "Code Gate - Deflector"
- :text "[subroutine] The Runner approaches the outermost piece of ice protecting the attacked server. Derez Cell Portal."
- :title "Cell Portal"
- :type "ICE"
+{:code "01074",
+ :cost 5,
+ :cycle_code "core",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/01074.png",
+ :limited 3,
+ :normalizedtitle "cell-portal",
+ :number 74,
+ :packquantity 2,
+ :set_code "core-set",
+ :setname "Core Set",
+ :side "Corp",
+ :strength 7,
+ :subtype "Code Gate - Deflector",
+ :text "[subroutine] The Runner approaches the outermost piece of ice protecting the attacked server. Derez Cell Portal.",
+ :title "Cell Portal",
+ :type "ICE",
  :uniqueness false}

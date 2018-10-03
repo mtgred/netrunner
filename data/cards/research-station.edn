@@ -1,20 +1,20 @@
-{:code "01105"
- :cost 2
- :cycle_code "core"
- :faction "Weyland Consortium"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/01105.png"
- :limited 3
- :normalizedtitle "research-station"
- :number 105
- :packquantity 2
- :set_code "core-set"
- :setname "Core Set"
- :side "Corp"
- :strength 0
- :subtype "Facility"
- :text "Install only in the root of HQ.\nYour maximum hand size is +2."
- :title "Research Station"
- :trash 3
- :type "Upgrade"
+{:code "01105",
+ :cost 2,
+ :cycle_code "core",
+ :faction "Weyland Consortium",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/01105.png",
+ :limited 3,
+ :normalizedtitle "research-station",
+ :number 105,
+ :packquantity 2,
+ :set_code "core-set",
+ :setname "Core Set",
+ :side "Corp",
+ :strength 0,
+ :subtype "Facility",
+ :text "Install only in the root of HQ.\nYour maximum hand size is +2.",
+ :title "Research Station",
+ :trash 3,
+ :type "Upgrade",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "21051"
- :cost 8
- :cycle_code "kitara"
- :faction "Jinteki"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_51.png"
- :limited 3
- :normalizedtitle "anansi"
- :number 51
- :packquantity 3
- :rotated false
- :set_code "council-of-the-crest"
- :setname "Council of the Crest"
- :side "Corp"
- :strength 5
- :subtype "Sentry - AP"
- :text "Whenever an encounter with Anansi ends, do 3 net damage unless the Runner broke all subroutines on it.\n[subroutine] Look at the top 5 cards of R&D and arrange them in any order.\n[subroutine] You may draw 1 card. The Runner may pay 2[credit] to draw 1 card.\n[subroutine] Do 1 net damage."
- :title "Anansi"
- :type "ICE"
+{:code "21051",
+ :cost 8,
+ :cycle_code "kitara",
+ :faction "Jinteki",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_51.png",
+ :limited 3,
+ :normalizedtitle "anansi",
+ :number 51,
+ :packquantity 3,
+ :rotated false,
+ :set_code "council-of-the-crest",
+ :setname "Council of the Crest",
+ :side "Corp",
+ :strength 5,
+ :subtype "Sentry - AP",
+ :text "Whenever an encounter with Anansi ends, do 3 net damage unless the Runner broke all subroutines on it.\n[subroutine] Look at the top 5 cards of R&D and arrange them in any order.\n[subroutine] You may draw 1 card. The Runner may pay 2[credit] to draw 1 card.\n[subroutine] Do 1 net damage.",
+ :title "Anansi",
+ :type "ICE",
  :uniqueness false}

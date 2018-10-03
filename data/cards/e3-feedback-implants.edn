@@ -1,20 +1,20 @@
-{:code "02024"
- :cost 2
- :cycle_code "genesis"
- :faction "Criminal"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02024.png"
- :limited 3
- :normalizedtitle "e3-feedback-implants"
- :number 24
- :packquantity 3
- :rotated true
- :set_code "trace-amount"
- :setname "Trace Amount"
- :side "Runner"
- :strength 0
- :subtype "Mod"
- :text "Whenever you break a subroutine on a piece of ice, you may pay 1[credit] to break 1 subroutine on that ice.\n<errata>Errata from FAQ 3.0.1</errata>"
- :title "e3 Feedback Implants"
- :type "Hardware"
+{:code "02024",
+ :cost 2,
+ :cycle_code "genesis",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02024.png",
+ :limited 3,
+ :normalizedtitle "e3-feedback-implants",
+ :number 24,
+ :packquantity 3,
+ :rotated true,
+ :set_code "trace-amount",
+ :setname "Trace Amount",
+ :side "Runner",
+ :strength 0,
+ :subtype "Mod",
+ :text "Whenever you break a subroutine on a piece of ice, you may pay 1[credit] to break 1 subroutine on that ice.\n<errata>Errata from FAQ 3.0.1</errata>",
+ :title "e3 Feedback Implants",
+ :type "Hardware",
  :uniqueness false}
