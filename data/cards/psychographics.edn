@@ -1,4 +1,5 @@
 {:code "20120"
+ :cost 0
  :cycle_code "core2"
  :faction "NBN"
  :factioncost 3

@@ -1,4 +1,5 @@
 {:code "06118"
+ :cost 0
  :cycle_code "lunar"
  :faction "Criminal"
  :factioncost 2

@@ -1,4 +1,5 @@
 {:code "06080"
+ :cost 0
  :cycle_code "lunar"
  :faction "Neutral"
  :factioncost 0

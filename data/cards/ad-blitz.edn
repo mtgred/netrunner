@@ -1,4 +1,5 @@
 {:code "09020"
+ :cost 0
  :cycle_code "data-and-destiny"
  :faction "NBN"
  :factioncost 1

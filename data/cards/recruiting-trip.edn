@@ -1,4 +1,5 @@
 {:code "08035"
+ :cost 0
  :cycle_code "sansan"
  :faction "Jinteki"
  :factioncost 1

@@ -12,6 +12,7 @@
  :set_code "ka"
  :setname "Kampala Ascendent"
  :side "Corp"
+ :strength 0
  :subtype "Sentry - Tracer"
  :text "X is twice the number of ice protecting this server.\n[subroutine]<trace>Trace X</trace> If successful, give the Runner 2 tags.\n[subroutine]<trace>Trace X</trace> If successful, end the run."
  :title "Surveyor"

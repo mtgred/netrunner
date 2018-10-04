@@ -1,4 +1,5 @@
 {:code "12064"
+ :cost 0
  :cycle_code "red-sand"
  :faction "Criminal"
  :factioncost 2

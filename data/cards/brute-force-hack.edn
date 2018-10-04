@@ -1,4 +1,5 @@
 {:code "13002"
+ :cost 0
  :cycle_code "terminal-directive"
  :faction "Criminal"
  :factioncost 3
