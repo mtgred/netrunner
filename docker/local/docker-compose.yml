@@ -1,7 +1,9 @@
 version: '3'
 services:
   jnet:
-    build: .
+    build:
+      context: ../../
+      dockerfile: docker/local/Dockerfile
     volumes:
       - ./config.edn:/netrunner/config.edn
     ports:

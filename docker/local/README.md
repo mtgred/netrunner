@@ -7,6 +7,7 @@ Docker needs to be installed on your local machine. Setup instructions can be fo
 
 # Instructions
 ```
+% cd docker/local
 % docker-compose up
 % docker-compose exec jnet lein fetch
 % docker-compose restart jnet

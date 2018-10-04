@@ -8,9 +8,8 @@ RUN apk --no-cache add \
 
 RUN npm install -g bower stylus
 
-WORKDIR /
-RUN git clone https://github.com/mtgred/netrunner.git
 WORKDIR /netrunner
+COPY . .
 RUN lein deps
 RUN bower --allow-root install
 RUN stylus src/css -o resources/public/css/
@@ -18,5 +17,3 @@ RUN lein cljsbuild once prod
 RUN lein uberjar
 
 ENTRYPOINT ["java", "-jar", "target/netrunner-standalone.jar"]
-
-
