@@ -1,20 +1,20 @@
-{:code "03047",
- :cost 2,
- :cycle_code "creation-and-control",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/03047.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "sahasrara",
- :number 47,
- :packquantity 3,
- :rotated false,
- :set_code "creation-and-control",
- :setname "Creation and Control",
- :side "Runner",
- :strength 0,
- :text "2[recurring-credit]\nUse these credits to install programs (you cannot use Sahasrara to install a program that trashes Sahasrara).",
- :title "Sahasrara",
- :type "Program",
+{:code "03047"
+ :cost 2
+ :cycle_code "creation-and-control"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/03047.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "sahasrara"
+ :number 47
+ :packquantity 3
+ :rotated false
+ :set_code "cac"
+ :setname "Creation and Control"
+ :side "Runner"
+ :strength 0
+ :text "2[recurring-credit]\nUse these credits to install programs (you cannot use Sahasrara to install a program that trashes Sahasrara)."
+ :title "Sahasrara"
+ :type "Program"
  :uniqueness false}

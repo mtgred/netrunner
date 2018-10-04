@@ -1,19 +1,19 @@
-{:code "09038",
- :cost 1,
- :cycle_code "data-and-destiny",
- :faction "Adam",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_38.png",
- :limited 3,
- :normalizedtitle "independent-thinking",
- :number 38,
- :packquantity 3,
- :rotated false,
- :set_code "data-and-destiny",
- :setname "Data and Destiny",
- :side "Runner",
- :strength 0,
- :text "Trash up to 5 of your installed cards. Draw 1 card for each card trashed (or 2 cards for each card trashed if you trashed at least 1 <strong>directive</strong>).",
- :title "Independent Thinking",
- :type "Event",
+{:code "09038"
+ :cost 1
+ :cycle_code "data-and-destiny"
+ :faction "Adam"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_38.png"
+ :limited 3
+ :normalizedtitle "independent-thinking"
+ :number 38
+ :packquantity 3
+ :rotated false
+ :set_code "dad"
+ :setname "Data and Destiny"
+ :side "Runner"
+ :strength 0
+ :text "Trash up to 5 of your installed cards. Draw 1 card for each card trashed (or 2 cards for each card trashed if you trashed at least 1 <strong>directive</strong>)."
+ :title "Independent Thinking"
+ :type "Event"
  :uniqueness false}

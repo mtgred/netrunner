@@ -1,21 +1,21 @@
-{:code "07027",
- :cost 3,
- :cycle_code "order-and-chaos",
- :faction "Neutral",
- :factioncost 0,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_27.png",
- :limited 3,
- :normalizedtitle "cyberdex-virus-suite",
- :number 27,
- :packquantity 3,
- :rotated false,
- :set_code "order-and-chaos",
- :setname "Order and Chaos",
- :side "Corp",
- :strength 0,
- :subtype "Ambush",
- :text "If Cyberdex Virus Suite is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Cyberdex Virus Suite, you may purge virus counters.\n[trash]: Purge virus counters.",
- :title "Cyberdex Virus Suite",
- :trash 1,
- :type "Upgrade",
+{:code "07027"
+ :cost 3
+ :cycle_code "order-and-chaos"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_27.png"
+ :limited 3
+ :normalizedtitle "cyberdex-virus-suite"
+ :number 27
+ :packquantity 3
+ :rotated false
+ :set_code "oac"
+ :setname "Order and Chaos"
+ :side "Corp"
+ :strength 0
+ :subtype "Ambush"
+ :text "If Cyberdex Virus Suite is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Cyberdex Virus Suite, you may purge virus counters.\n[trash]: Purge virus counters."
+ :title "Cyberdex Virus Suite"
+ :trash 1
+ :type "Upgrade"
  :uniqueness false}

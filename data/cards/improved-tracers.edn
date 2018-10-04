@@ -1,21 +1,21 @@
-{:advancementcost 3,
- :agendapoints 1,
- :code "09005",
- :cost 0,
- :cycle_code "data-and-destiny",
- :faction "NBN",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_5.png",
- :limited 3,
- :normalizedtitle "improved-tracers",
- :number 5,
- :packquantity 3,
- :rotated false,
- :set_code "data-and-destiny",
- :setname "Data and Destiny",
- :side "Corp",
- :strength 0,
- :subtype "Security",
- :text "All <strong>tracer</strong> ice have +1 strength.\nThe base trace strength of each subroutine is increased by 1.",
- :title "Improved Tracers",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 1
+ :code "09005"
+ :cost 0
+ :cycle_code "data-and-destiny"
+ :faction "NBN"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_5.png"
+ :limited 3
+ :normalizedtitle "improved-tracers"
+ :number 5
+ :packquantity 3
+ :rotated false
+ :set_code "dad"
+ :setname "Data and Destiny"
+ :side "Corp"
+ :strength 0
+ :subtype "Security"
+ :text "All <strong>tracer</strong> ice have +1 strength.\nThe base trace strength of each subroutine is increased by 1."
+ :title "Improved Tracers"
+ :type "Agenda"
  :uniqueness false}

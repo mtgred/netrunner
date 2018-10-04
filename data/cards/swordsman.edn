@@ -1,20 +1,20 @@
-{:code "20101",
- :cost 3,
- :cycle_code "core2",
- :faction "Jinteki",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_85.png",
- :limited 3,
- :normalizedtitle "swordsman",
- :number 85,
- :packquantity 2,
- :replaces "04033",
- :set_code "revised-core-set",
- :setname "Revised Core Set",
- :side "Corp",
- :strength 2,
- :subtype "Sentry - Destroyer - AP",
- :text "The Runner cannot use <strong>AI</strong> programs to break subroutines on Swordsman.\n[subroutine] Trash 1 <strong>AI</strong> program.\n[subroutine] Do 1 net damage.",
- :title "Swordsman",
- :type "ICE",
+{:code "20101"
+ :cost 3
+ :cycle_code "core2"
+ :faction "Jinteki"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_85.png"
+ :limited 3
+ :normalizedtitle "swordsman"
+ :number 85
+ :packquantity 2
+ :replaces "04033"
+ :set_code "core2"
+ :setname "Revised Core Set"
+ :side "Corp"
+ :strength 2
+ :subtype "Sentry - Destroyer - AP"
+ :text "The Runner cannot use <strong>AI</strong> programs to break subroutines on Swordsman.\n[subroutine] Trash 1 <strong>AI</strong> program.\n[subroutine] Do 1 net damage."
+ :title "Swordsman"
+ :type "ICE"
  :uniqueness false}

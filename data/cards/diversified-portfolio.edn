@@ -1,20 +1,20 @@
-{:code "05026",
- :cost 1,
- :cycle_code "honor-and-profit",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/05026.png",
- :limited 3,
- :normalizedtitle "diversified-portfolio",
- :number 26,
- :packquantity 3,
- :rotated false,
- :set_code "honor-and-profit",
- :setname "Honor and Profit",
- :side "Corp",
- :strength 0,
- :subtype "Transaction",
- :text "Gain 1[credit] for each remote server with a card installed in it.",
- :title "Diversified Portfolio",
- :type "Operation",
+{:code "05026"
+ :cost 1
+ :cycle_code "honor-and-profit"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/05026.png"
+ :limited 3
+ :normalizedtitle "diversified-portfolio"
+ :number 26
+ :packquantity 3
+ :rotated false
+ :set_code "hap"
+ :setname "Honor and Profit"
+ :side "Corp"
+ :strength 0
+ :subtype "Transaction"
+ :text "Gain 1[credit] for each remote server with a card installed in it."
+ :title "Diversified Portfolio"
+ :type "Operation"
  :uniqueness false}

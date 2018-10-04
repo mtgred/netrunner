@@ -1,20 +1,20 @@
-{:code "06069",
- :cost 5,
- :cycle_code "lunar",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_69.png",
- :limited 3,
- :normalizedtitle "changeling",
- :number 69,
- :packquantity 3,
- :rotated false,
- :set_code "up-and-over",
- :setname "Up and Over",
- :side "Corp",
- :strength 4,
- :subtype "Barrier - Morph",
- :text "Changeling can be advanced.\nWhile Changeling has an odd number of advancement tokens on it, it gains <strong>sentry</strong> and loses <strong>barrier</strong>.\n[subroutine] End the run.",
- :title "Changeling",
- :type "ICE",
+{:code "06069"
+ :cost 5
+ :cycle_code "lunar"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_69.png"
+ :limited 3
+ :normalizedtitle "changeling"
+ :number 69
+ :packquantity 3
+ :rotated false
+ :set_code "uao"
+ :setname "Up and Over"
+ :side "Corp"
+ :strength 4
+ :subtype "Barrier - Morph"
+ :text "Changeling can be advanced.\nWhile Changeling has an odd number of advancement tokens on it, it gains <strong>sentry</strong> and loses <strong>barrier</strong>.\n[subroutine] End the run."
+ :title "Changeling"
+ :type "ICE"
  :uniqueness false}

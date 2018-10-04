@@ -1,21 +1,21 @@
-{:code "22049",
- :cost 2,
- :cycle_code "reign-and-reverie",
- :faction "NBN",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_49.png",
- :limited 3,
- :normalizedtitle "arella-salvatore",
- :number 49,
- :packquantity 3,
- :rotated false,
- :set_code "reign-and-reverie",
- :setname "Reign and Reverie",
- :side "Corp",
- :strength 0,
- :subtype "Sysop",
- :text "Whenever an agenda is scored from this server, you may install a card from HQ, ignoring all costs, and place 1 advancement token on it.",
- :title "Arella Salvatore",
- :trash 5,
- :type "Upgrade",
+{:code "22049"
+ :cost 2
+ :cycle_code "reign-and-reverie"
+ :faction "NBN"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_49.png"
+ :limited 3
+ :normalizedtitle "arella-salvatore"
+ :number 49
+ :packquantity 3
+ :rotated false
+ :set_code "rar"
+ :setname "Reign and Reverie"
+ :side "Corp"
+ :strength 0
+ :subtype "Sysop"
+ :text "Whenever an agenda is scored from this server, you may install a card from HQ, ignoring all costs, and place 1 advancement token on it."
+ :title "Arella Salvatore"
+ :trash 5
+ :type "Upgrade"
  :uniqueness true}

@@ -1,21 +1,21 @@
-{:code "08069",
- :cost 2,
- :cycle_code "sansan",
- :faction "Shaper",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_69.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "chameleon",
- :number 69,
- :packquantity 3,
- :rotated false,
- :set_code "the-underway",
- :setname "The Underway",
- :side "Runner",
- :strength 3,
- :subtype "Icebreaker",
- :text "When you install Chameleon, name <strong>sentry</strong>, <strong>code gate</strong> or <strong>barrier</strong>.\nAdd Chameleon to your grip when your turn ends.\n1[credit]: Break a subroutine of the named subtype.",
- :title "Chameleon",
- :type "Program",
+{:code "08069"
+ :cost 2
+ :cycle_code "sansan"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_69.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "chameleon"
+ :number 69
+ :packquantity 3
+ :rotated false
+ :set_code "uw"
+ :setname "The Underway"
+ :side "Runner"
+ :strength 3
+ :subtype "Icebreaker"
+ :text "When you install Chameleon, name <strong>sentry</strong>, <strong>code gate</strong> or <strong>barrier</strong>.\nAdd Chameleon to your grip when your turn ends.\n1[credit]: Break a subroutine of the named subtype."
+ :title "Chameleon"
+ :type "Program"
  :uniqueness false}

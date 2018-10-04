@@ -1,21 +1,21 @@
-{:code "07043",
- :cost 0,
- :cycle_code "order-and-chaos",
- :faction "Anarch",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_43.png",
- :limited 3,
- :memoryunits 0,
- :normalizedtitle "progenitor",
- :number 43,
- :packquantity 3,
- :rotated false,
- :set_code "order-and-chaos",
- :setname "Order and Chaos",
- :side "Runner",
- :strength 0,
- :subtype "Daemon",
- :text "You may host a single <strong>virus</strong> program on Progenitor.\nThe memory cost of the hosted program does not count against your memory limit.\nWhenever virus counters are purged, instead of removing all virus counters from the hosted card, remove all but 1 virus counter from the hosted card.\n<errata>Errata from FAQ 4.0</errata>",
- :title "Progenitor",
- :type "Program",
+{:code "07043"
+ :cost 0
+ :cycle_code "order-and-chaos"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_43.png"
+ :limited 3
+ :memoryunits 0
+ :normalizedtitle "progenitor"
+ :number 43
+ :packquantity 3
+ :rotated false
+ :set_code "oac"
+ :setname "Order and Chaos"
+ :side "Runner"
+ :strength 0
+ :subtype "Daemon"
+ :text "You may host a single <strong>virus</strong> program on Progenitor.\nThe memory cost of the hosted program does not count against your memory limit.\nWhenever virus counters are purged, instead of removing all virus counters from the hosted card, remove all but 1 virus counter from the hosted card.\n<errata>Errata from FAQ 4.0</errata>"
+ :title "Progenitor"
+ :type "Program"
  :uniqueness false}

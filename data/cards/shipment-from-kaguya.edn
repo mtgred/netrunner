@@ -1,19 +1,19 @@
-{:code "01100",
- :cost 0,
- :cycle_code "core",
- :faction "Weyland Consortium",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/01100.png",
- :limited 3,
- :normalizedtitle "shipment-from-kaguya",
- :number 100,
- :packquantity 2,
- :replaced_by "20092",
- :set_code "core-set",
- :setname "Core Set",
- :side "Corp",
- :strength 0,
- :text "Place 1 advancement token on each of up to 2 different installed cards that can be advanced.",
- :title "Shipment from Kaguya",
- :type "Operation",
+{:code "01100"
+ :cost 0
+ :cycle_code "core"
+ :faction "Weyland Consortium"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/01100.png"
+ :limited 3
+ :normalizedtitle "shipment-from-kaguya"
+ :number 100
+ :packquantity 2
+ :replaced_by "20092"
+ :set_code "core"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 0
+ :text "Place 1 advancement token on each of up to 2 different installed cards that can be advanced."
+ :title "Shipment from Kaguya"
+ :type "Operation"
  :uniqueness false}

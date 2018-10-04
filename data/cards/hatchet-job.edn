@@ -1,21 +1,21 @@
-{:code "11034",
- :cost 2,
- :cycle_code "flashpoint",
- :faction "NBN",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_34.png",
- :limited 3,
- :normalizedtitle "hatchet-job",
- :number 34,
- :packquantity 3,
- :rotated false,
- :set_code "blood-money",
- :setname "Blood Money",
- :side "Corp",
- :strength 0,
- :subtype "Double - Gray Ops",
- :text "As an additional cost to play this operation, spend [click].\n<trace>Trace 5</trace> If successful, add an installed non-<strong>virtual</strong> card to the Runner's grip.",
- :title "Hatchet Job",
- :trash 0,
- :type "Operation",
+{:code "11034"
+ :cost 2
+ :cycle_code "flashpoint"
+ :faction "NBN"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_34.png"
+ :limited 3
+ :normalizedtitle "hatchet-job"
+ :number 34
+ :packquantity 3
+ :rotated false
+ :set_code "bm"
+ :setname "Blood Money"
+ :side "Corp"
+ :strength 0
+ :subtype "Double - Gray Ops"
+ :text "As an additional cost to play this operation, spend [click].\n<trace>Trace 5</trace> If successful, add an installed non-<strong>virtual</strong> card to the Runner's grip."
+ :title "Hatchet Job"
+ :trash 0
+ :type "Operation"
  :uniqueness false}

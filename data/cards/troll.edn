@@ -1,20 +1,20 @@
-{:code "06108",
- :cost 1,
- :cycle_code "lunar",
- :faction "NBN",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_108.png",
- :limited 3,
- :normalizedtitle "troll",
- :number 108,
- :packquantity 3,
- :rotated false,
- :set_code "the-source",
- :setname "The Source",
- :side "Corp",
- :strength 3,
- :subtype "Sentry",
- :text "When the Runner encounters Troll, <trace>trace 2</trace> if successful, the Runner must lose [click] or end the run.",
- :title "Troll",
- :type "ICE",
+{:code "06108"
+ :cost 1
+ :cycle_code "lunar"
+ :faction "NBN"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_108.png"
+ :limited 3
+ :normalizedtitle "troll"
+ :number 108
+ :packquantity 3
+ :rotated false
+ :set_code "ts"
+ :setname "The Source"
+ :side "Corp"
+ :strength 3
+ :subtype "Sentry"
+ :text "When the Runner encounters Troll, <trace>trace 2</trace> if successful, the Runner must lose [click] or end the run."
+ :title "Troll"
+ :type "ICE"
  :uniqueness false}

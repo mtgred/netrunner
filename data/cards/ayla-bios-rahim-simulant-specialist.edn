@@ -1,22 +1,22 @@
-{:baselink 0,
- :code "13012",
- :cost 0,
- :cycle_code "terminal-directive",
- :faction "Shaper",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_12.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "ayla-bios-rahim-simulant-specialist",
- :number 12,
- :packquantity 1,
- :rotated false,
- :set_code "terminal-directive",
- :setname "Terminal Directive",
- :side "Runner",
- :strength 0,
- :subtype "Natural",
- :text "Before drawing your starting hand, look at the top 6 cards of your stack. Set 4 of them facedown, as NVRAM. Shuffle the rest into your stack.\n[click]: Add 1 card from NVRAM to your grip. ",
- :title "Ayla \"Bios\" Rahim: Simulant Specialist",
- :type "Identity",
+{:baselink 0
+ :code "13012"
+ :cost 0
+ :cycle_code "terminal-directive"
+ :faction "Shaper"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_12.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "ayla-bios-rahim-simulant-specialist"
+ :number 12
+ :packquantity 1
+ :rotated false
+ :set_code "td"
+ :setname "Terminal Directive"
+ :side "Runner"
+ :strength 0
+ :subtype "Natural"
+ :text "Before drawing your starting hand, look at the top 6 cards of your stack. Set 4 of them facedown, as NVRAM. Shuffle the rest into your stack.\n[click]: Add 1 card from NVRAM to your grip. "
+ :title "Ayla \"Bios\" Rahim: Simulant Specialist"
+ :type "Identity"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "01061",
- :cost 8,
- :cycle_code "core",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/01061.png",
- :limited 3,
- :normalizedtitle "heimdall-1-0",
- :number 61,
- :packquantity 2,
- :replaced_by "20066",
- :set_code "core-set",
- :setname "Core Set",
- :side "Corp",
- :strength 6,
- :subtype "Barrier - Bioroid - AP",
- :text "The Runner can spend [click] to break any subroutine on Heimdall 1.0.\n[subroutine] Do 1 brain damage.\n[subroutine] End the run.\n[subroutine] End the run.",
- :title "Heimdall 1.0",
- :type "ICE",
+{:code "01061"
+ :cost 8
+ :cycle_code "core"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/01061.png"
+ :limited 3
+ :normalizedtitle "heimdall-1-0"
+ :number 61
+ :packquantity 2
+ :replaced_by "20066"
+ :set_code "core"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 6
+ :subtype "Barrier - Bioroid - AP"
+ :text "The Runner can spend [click] to break any subroutine on Heimdall 1.0.\n[subroutine] Do 1 brain damage.\n[subroutine] End the run.\n[subroutine] End the run."
+ :title "Heimdall 1.0"
+ :type "ICE"
  :uniqueness false}

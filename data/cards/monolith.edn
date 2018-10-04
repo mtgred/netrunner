@@ -1,20 +1,20 @@
-{:code "03036",
- :cost 18,
- :cycle_code "creation-and-control",
- :faction "Shaper",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/03036.png",
- :limited 3,
- :normalizedtitle "monolith",
- :number 36,
- :packquantity 3,
- :rotated false,
- :set_code "creation-and-control",
- :setname "Creation and Control",
- :side "Runner",
- :strength 0,
- :subtype "Console",
- :text "+3[mu]\nWhen you install Monolith, install up to 3 programs from your grip, lowering the install cost of each by 4[credit].\n<strong>Trash a program from your grip:</strong> Prevent 1 brain or net damage.\nLimit 1 <strong>console</strong> per player.",
- :title "Monolith",
- :type "Hardware",
+{:code "03036"
+ :cost 18
+ :cycle_code "creation-and-control"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/03036.png"
+ :limited 3
+ :normalizedtitle "monolith"
+ :number 36
+ :packquantity 3
+ :rotated false
+ :set_code "cac"
+ :setname "Creation and Control"
+ :side "Runner"
+ :strength 0
+ :subtype "Console"
+ :text "+3[mu]\nWhen you install Monolith, install up to 3 programs from your grip, lowering the install cost of each by 4[credit].\n<strong>Trash a program from your grip:</strong> Prevent 1 brain or net damage.\nLimit 1 <strong>console</strong> per player."
+ :title "Monolith"
+ :type "Hardware"
  :uniqueness true}

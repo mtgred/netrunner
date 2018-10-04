@@ -1,22 +1,22 @@
-{:baselink 0,
- :code "03028",
- :cost 0,
- :cycle_code "creation-and-control",
- :faction "Shaper",
- :image_url "https://netrunnerdb.com/card_image/03028.png",
- :influencelimit 10,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "rielle-kit-peddler-transhuman",
- :number 28,
- :packquantity 3,
- :rotated false,
- :set_code "creation-and-control",
- :setname "Creation and Control",
- :side "Runner",
- :strength 0,
- :subtype "Cyborg",
- :text "The first piece of ice you encounter each turn gains <strong>code gate</strong> until the end of the run.",
- :title "Rielle \"Kit\" Peddler: Transhuman",
- :type "Identity",
+{:baselink 0
+ :code "03028"
+ :cost 0
+ :cycle_code "creation-and-control"
+ :faction "Shaper"
+ :image_url "https://netrunnerdb.com/card_image/03028.png"
+ :influencelimit 10
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "rielle-kit-peddler-transhuman"
+ :number 28
+ :packquantity 3
+ :rotated false
+ :set_code "cac"
+ :setname "Creation and Control"
+ :side "Runner"
+ :strength 0
+ :subtype "Cyborg"
+ :text "The first piece of ice you encounter each turn gains <strong>code gate</strong> until the end of the run."
+ :title "Rielle \"Kit\" Peddler: Transhuman"
+ :type "Identity"
  :uniqueness false}

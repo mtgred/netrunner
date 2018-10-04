@@ -1,20 +1,20 @@
-{:code "20052",
- :cost 1,
- :cycle_code "core2",
- :faction "Shaper",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_52.png",
- :limited 3,
- :normalizedtitle "aesop-s-pawnshop",
- :number 52,
- :packquantity 1,
- :replaces "01047",
- :set_code "revised-core-set",
- :setname "Revised Core Set",
- :side "Runner",
- :strength 0,
- :subtype "Location - Connection",
- :text "When your turn begins, you may trash another of your installed cards to gain 3[credit].",
- :title "Aesop's Pawnshop",
- :type "Resource",
+{:code "20052"
+ :cost 1
+ :cycle_code "core2"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_52.png"
+ :limited 3
+ :normalizedtitle "aesop-s-pawnshop"
+ :number 52
+ :packquantity 1
+ :replaces "01047"
+ :set_code "core2"
+ :setname "Revised Core Set"
+ :side "Runner"
+ :strength 0
+ :subtype "Location - Connection"
+ :text "When your turn begins, you may trash another of your installed cards to gain 3[credit]."
+ :title "Aesop's Pawnshop"
+ :type "Resource"
  :uniqueness true}

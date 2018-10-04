@@ -1,21 +1,21 @@
-{:code "21093",
- :cost 1,
- :cycle_code "kitara",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_93.png",
- :limited 3,
- :normalizedtitle "warden-fatuma",
- :number 93,
- :packquantity 3,
- :rotated false,
- :set_code "whispers-in-nalubaale",
- :setname "Whispers in Nalubaale",
- :side "Corp",
- :strength 0,
- :subtype "Character",
- :text "Each piece of rezzed <strong>bioroid</strong> ice gains \"[subroutine] The Runner loses [click], if able.\" before all of its other subroutines.",
- :title "Warden Fatuma",
- :trash 5,
- :type "Asset",
+{:code "21093"
+ :cost 1
+ :cycle_code "kitara"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_93.png"
+ :limited 3
+ :normalizedtitle "warden-fatuma"
+ :number 93
+ :packquantity 3
+ :rotated false
+ :set_code "win"
+ :setname "Whispers in Nalubaale"
+ :side "Corp"
+ :strength 0
+ :subtype "Character"
+ :text "Each piece of rezzed <strong>bioroid</strong> ice gains \"[subroutine] The Runner loses [click], if able.\" before all of its other subroutines."
+ :title "Warden Fatuma"
+ :trash 5
+ :type "Asset"
  :uniqueness true}

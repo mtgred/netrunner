@@ -1,20 +1,20 @@
-{:advancementcost 4,
- :agendapoints 2,
- :code "06101",
- :cost 0,
- :cycle_code "lunar",
- :faction "Weyland Consortium",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_101.png",
- :limited 3,
- :normalizedtitle "helium-3-deposit",
- :number 101,
- :packquantity 3,
- :rotated false,
- :set_code "the-source",
- :setname "The Source",
- :side "Corp",
- :strength 0,
- :text "When you score Helium-3 Deposit, place up to 2 power counters on a card with at least 1 power counter on it.",
- :title "Helium-3 Deposit",
- :type "Agenda",
+{:advancementcost 4
+ :agendapoints 2
+ :code "06101"
+ :cost 0
+ :cycle_code "lunar"
+ :faction "Weyland Consortium"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_101.png"
+ :limited 3
+ :normalizedtitle "helium-3-deposit"
+ :number 101
+ :packquantity 3
+ :rotated false
+ :set_code "ts"
+ :setname "The Source"
+ :side "Corp"
+ :strength 0
+ :text "When you score Helium-3 Deposit, place up to 2 power counters on a card with at least 1 power counter on it."
+ :title "Helium-3 Deposit"
+ :type "Agenda"
  :uniqueness false}

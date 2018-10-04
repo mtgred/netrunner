@@ -1,20 +1,20 @@
-{:code "21052",
- :cost 2,
- :cycle_code "kitara",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_52.png",
- :limited 3,
- :normalizedtitle "code-replicator",
- :number 52,
- :packquantity 3,
- :rotated false,
- :set_code "council-of-the-crest",
- :setname "Council of the Crest",
- :side "Corp",
- :strength 0,
- :text "When the Runner passes a rezzed piece of ice protecting this server, you may trash Code Replicator to force the Runner to approach that piece of ice again.",
- :title "Code Replicator",
- :trash 2,
- :type "Upgrade",
+{:code "21052"
+ :cost 2
+ :cycle_code "kitara"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_52.png"
+ :limited 3
+ :normalizedtitle "code-replicator"
+ :number 52
+ :packquantity 3
+ :rotated false
+ :set_code "cotc"
+ :setname "Council of the Crest"
+ :side "Corp"
+ :strength 0
+ :text "When the Runner passes a rezzed piece of ice protecting this server, you may trash Code Replicator to force the Runner to approach that piece of ice again."
+ :title "Code Replicator"
+ :trash 2
+ :type "Upgrade"
  :uniqueness false}

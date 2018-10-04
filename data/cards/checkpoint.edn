@@ -1,20 +1,20 @@
-{:code "07017",
- :cost 4,
- :cycle_code "order-and-chaos",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_17.png",
- :limited 3,
- :normalizedtitle "checkpoint",
- :number 17,
- :packquantity 3,
- :rotated false,
- :set_code "order-and-chaos",
- :setname "Order and Chaos",
- :side "Corp",
- :strength 7,
- :subtype "Code Gate - Tracer - Illicit",
- :text "When you rez Checkpoint, take 1 bad publicity.\n[subroutine] <trace>Trace 5</trace> If successful, do 3 meat damage when this run is successful.",
- :title "Checkpoint",
- :type "ICE",
+{:code "07017"
+ :cost 4
+ :cycle_code "order-and-chaos"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_17.png"
+ :limited 3
+ :normalizedtitle "checkpoint"
+ :number 17
+ :packquantity 3
+ :rotated false
+ :set_code "oac"
+ :setname "Order and Chaos"
+ :side "Corp"
+ :strength 7
+ :subtype "Code Gate - Tracer - Illicit"
+ :text "When you rez Checkpoint, take 1 bad publicity.\n[subroutine] <trace>Trace 5</trace> If successful, do 3 meat damage when this run is successful."
+ :title "Checkpoint"
+ :type "ICE"
  :uniqueness false}

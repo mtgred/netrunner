@@ -1,21 +1,21 @@
-{:code "09024",
- :cost 0,
- :cycle_code "data-and-destiny",
- :faction "NBN",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_24.png",
- :limited 3,
- :normalizedtitle "keegan-lane",
- :number 24,
- :packquantity 3,
- :rotated false,
- :set_code "data-and-destiny",
- :setname "Data and Destiny",
- :side "Corp",
- :strength 0,
- :subtype "Sysop",
- :text "[trash], <strong>remove 1 tag:</strong> Trash 1 program. Use this ability only during a run on this server.",
- :title "Keegan Lane",
- :trash 3,
- :type "Upgrade",
+{:code "09024"
+ :cost 0
+ :cycle_code "data-and-destiny"
+ :faction "NBN"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_24.png"
+ :limited 3
+ :normalizedtitle "keegan-lane"
+ :number 24
+ :packquantity 3
+ :rotated false
+ :set_code "dad"
+ :setname "Data and Destiny"
+ :side "Corp"
+ :strength 0
+ :subtype "Sysop"
+ :text "[trash], <strong>remove 1 tag:</strong> Trash 1 program. Use this ability only during a run on this server."
+ :title "Keegan Lane"
+ :trash 3
+ :type "Upgrade"
  :uniqueness true}

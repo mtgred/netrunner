@@ -1,22 +1,22 @@
-{:baselink 0,
- :code "12025",
- :cost 0,
- :cycle_code "red-sand",
- :faction "Criminal",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_25.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "los-data-hijacker",
- :number 25,
- :packquantity 3,
- :rotated false,
- :set_code "station-one",
- :setname "Station One",
- :side "Runner",
- :strength 0,
- :subtype "G-mod",
- :text "The first time the Corp rezzes a piece of ice each turn, gain 2[credit].",
- :title "Los: Data Hijacker",
- :type "Identity",
+{:baselink 0
+ :code "12025"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Criminal"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_25.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "los-data-hijacker"
+ :number 25
+ :packquantity 3
+ :rotated false
+ :set_code "so"
+ :setname "Station One"
+ :side "Runner"
+ :strength 0
+ :subtype "G-mod"
+ :text "The first time the Corp rezzes a piece of ice each turn, gain 2[credit]."
+ :title "Los: Data Hijacker"
+ :type "Identity"
  :uniqueness false}

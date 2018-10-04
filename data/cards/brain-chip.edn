@@ -1,20 +1,20 @@
-{:code "09039",
- :cost 2,
- :cycle_code "data-and-destiny",
- :faction "Adam",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_39.png",
- :limited 3,
- :normalizedtitle "brain-chip",
- :number 39,
- :packquantity 3,
- :rotated false,
- :set_code "data-and-destiny",
- :setname "Data and Destiny",
- :side "Runner",
- :strength 0,
- :subtype "Console",
- :text "+X[mu]\nYour maximum hand size is increased by X.\nX is equal to the number of agenda points you have.\nLimit 1 <strong>console</strong> per player.",
- :title "Brain Chip",
- :type "Hardware",
+{:code "09039"
+ :cost 2
+ :cycle_code "data-and-destiny"
+ :faction "Adam"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_39.png"
+ :limited 3
+ :normalizedtitle "brain-chip"
+ :number 39
+ :packquantity 3
+ :rotated false
+ :set_code "dad"
+ :setname "Data and Destiny"
+ :side "Runner"
+ :strength 0
+ :subtype "Console"
+ :text "+X[mu]\nYour maximum hand size is increased by X.\nX is equal to the number of agenda points you have.\nLimit 1 <strong>console</strong> per player."
+ :title "Brain Chip"
+ :type "Hardware"
  :uniqueness true}

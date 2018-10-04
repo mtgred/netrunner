@@ -1,22 +1,22 @@
-{:code "04037",
- :cost 2,
- :cycle_code "spin",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04037.png",
- :limited 3,
- :normalizedtitle "elizabeth-mills",
- :number 37,
- :packquantity 3,
- :replaced_by "20082",
- :rotated true,
- :set_code "second-thoughts",
- :setname "Second Thoughts",
- :side "Corp",
- :strength 0,
- :subtype "Executive",
- :text "When you rez Elizabeth Mills, remove 1 bad publicity.\n[click], [trash]: Trash 1 <strong>location</strong>. Take 1 bad publicity.",
- :title "Elizabeth Mills",
- :trash 1,
- :type "Asset",
+{:code "04037"
+ :cost 2
+ :cycle_code "spin"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04037.png"
+ :limited 3
+ :normalizedtitle "elizabeth-mills"
+ :number 37
+ :packquantity 3
+ :replaced_by "20082"
+ :rotated true
+ :set_code "st"
+ :setname "Second Thoughts"
+ :side "Corp"
+ :strength 0
+ :subtype "Executive"
+ :text "When you rez Elizabeth Mills, remove 1 bad publicity.\n[click], [trash]: Trash 1 <strong>location</strong>. Take 1 bad publicity."
+ :title "Elizabeth Mills"
+ :trash 1
+ :type "Asset"
  :uniqueness true}

@@ -1,20 +1,20 @@
-{:code "04035",
- :cost 5,
- :cycle_code "spin",
- :faction "NBN",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/04035.png",
- :limited 3,
- :normalizedtitle "muckraker",
- :number 35,
- :packquantity 3,
- :rotated true,
- :set_code "second-thoughts",
- :setname "Second Thoughts",
- :side "Corp",
- :strength 3,
- :subtype "Sentry - Tracer - Illicit",
- :text "When you rez Muckraker, take 1 bad publicity.\n[subroutine] <trace>Trace 1</trace> If successful, give the Runner 1 tag.\n[subroutine] <trace>Trace 2</trace> If successful, give the Runner 1 tag.\n[subroutine] <trace>Trace 3</trace> If successful, give the Runner 1 tag.\n[subroutine] End the run if the Runner is tagged.",
- :title "Muckraker",
- :type "ICE",
+{:code "04035"
+ :cost 5
+ :cycle_code "spin"
+ :faction "NBN"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/04035.png"
+ :limited 3
+ :normalizedtitle "muckraker"
+ :number 35
+ :packquantity 3
+ :rotated true
+ :set_code "st"
+ :setname "Second Thoughts"
+ :side "Corp"
+ :strength 3
+ :subtype "Sentry - Tracer - Illicit"
+ :text "When you rez Muckraker, take 1 bad publicity.\n[subroutine] <trace>Trace 1</trace> If successful, give the Runner 1 tag.\n[subroutine] <trace>Trace 2</trace> If successful, give the Runner 1 tag.\n[subroutine] <trace>Trace 3</trace> If successful, give the Runner 1 tag.\n[subroutine] End the run if the Runner is tagged."
+ :title "Muckraker"
+ :type "ICE"
  :uniqueness false}

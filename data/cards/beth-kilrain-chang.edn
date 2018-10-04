@@ -1,20 +1,20 @@
-{:code "11030",
- :cost 2,
- :cycle_code "flashpoint",
- :faction "Shaper",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_30.png",
- :limited 3,
- :normalizedtitle "beth-kilrain-chang",
- :number 30,
- :packquantity 3,
- :rotated false,
- :set_code "blood-money",
- :setname "Blood Money",
- :side "Runner",
- :strength 0,
- :subtype "Connection",
- :text "If the Corp has 5-9[credit] when your turn begins, gain 1[credit].\nIf the Corp has 10-14[credit] when your turn begins, draw 1 card.\nIf the Corp has at least 15[credit] when your turn begins, gain [click].",
- :title "Beth Kilrain-Chang",
- :type "Resource",
+{:code "11030"
+ :cost 2
+ :cycle_code "flashpoint"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_30.png"
+ :limited 3
+ :normalizedtitle "beth-kilrain-chang"
+ :number 30
+ :packquantity 3
+ :rotated false
+ :set_code "bm"
+ :setname "Blood Money"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "If the Corp has 5-9[credit] when your turn begins, gain 1[credit].\nIf the Corp has 10-14[credit] when your turn begins, draw 1 card.\nIf the Corp has at least 15[credit] when your turn begins, gain [click]."
+ :title "Beth Kilrain-Chang"
+ :type "Resource"
  :uniqueness true}

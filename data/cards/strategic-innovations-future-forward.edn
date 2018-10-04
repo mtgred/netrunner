@@ -1,20 +1,20 @@
-{:code "00010",
- :cost 0,
- :cycle_code "draft",
- :faction "Haas-Bioroid",
- :image_url "https://netrunnerdb.com/card_image/00010.png",
- :limited 1,
- :minimumdecksize 30,
- :normalizedtitle "strategic-innovations-future-forward",
- :number 10,
- :packquantity 1,
- :rotated false,
- :set_code "draft",
- :setname "Draft",
- :side "Corp",
- :strength 0,
- :subtype "Division",
- :text "Draft format only.\nIf you have more [haas-bioroid] cards rezzed than any other faction, when the Runner's turn ends, shuffle 1 card in Archives into R&D.",
- :title "Strategic Innovations: Future Forward",
- :type "Identity",
+{:code "00010"
+ :cost 0
+ :cycle_code "draft"
+ :faction "Haas-Bioroid"
+ :image_url "https://netrunnerdb.com/card_image/00010.png"
+ :limited 1
+ :minimumdecksize 30
+ :normalizedtitle "strategic-innovations-future-forward"
+ :number 10
+ :packquantity 1
+ :rotated false
+ :set_code "draft"
+ :setname "Draft"
+ :side "Corp"
+ :strength 0
+ :subtype "Division"
+ :text "Draft format only.\nIf you have more [haas-bioroid] cards rezzed than any other faction, when the Runner's turn ends, shuffle 1 card in Archives into R&D."
+ :title "Strategic Innovations: Future Forward"
+ :type "Identity"
  :uniqueness false}

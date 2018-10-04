@@ -1,20 +1,20 @@
-{:code "13036",
- :cost 7,
- :cycle_code "terminal-directive",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_36.png",
- :limited 3,
- :normalizedtitle "holmegaard",
- :number 36,
- :packquantity 3,
- :rotated false,
- :set_code "terminal-directive",
- :setname "Terminal Directive",
- :side "Corp",
- :strength 5,
- :subtype "Sentry - Tracer - Destroyer",
- :text "[subroutine] <trace>Trace 4</trace> If successful, the runner cannot access any cards during this run.\n[subroutine] Trash 1 <strong>icebreaker</strong>.\n<errata>Errata from FAQ 4.0</errata>",
- :title "Holmegaard",
- :type "ICE",
+{:code "13036"
+ :cost 7
+ :cycle_code "terminal-directive"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_36.png"
+ :limited 3
+ :normalizedtitle "holmegaard"
+ :number 36
+ :packquantity 3
+ :rotated false
+ :set_code "td"
+ :setname "Terminal Directive"
+ :side "Corp"
+ :strength 5
+ :subtype "Sentry - Tracer - Destroyer"
+ :text "[subroutine] <trace>Trace 4</trace> If successful, the runner cannot access any cards during this run.\n[subroutine] Trash 1 <strong>icebreaker</strong>.\n<errata>Errata from FAQ 4.0</errata>"
+ :title "Holmegaard"
+ :type "ICE"
  :uniqueness false}

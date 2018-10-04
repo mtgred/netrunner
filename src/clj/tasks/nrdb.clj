@@ -7,8 +7,9 @@
             [throttler.core :refer [throttle-fn]]
             [clojure.string :as string]
             [clojure.java.io :as io]
+            [clojure.pprint :as pprint]
             [clojure.edn :as edn]
-            [clojure.pprint :as pprint]))
+            [zprint.core :as zp]))
 
 (def ^:const base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-cards-edn/master/edn/raw_data.edn")
 (def ^:const cgdb-image-url "https://www.cardgamedb.com/forums/uploads/an/")
@@ -80,10 +81,7 @@
             :let [path (:normalizedtitle card)
                   filename (str "data/cards/" path ".edn")]]
       (io/make-parents filename)
-      (with-open [w (clojure.java.io/writer filename)]
-        (binding [*out* w
-                  pprint/*print-right-margin* 1000]
-          (pprint/write (into (sorted-map) card)))))
+      (spit filename (zp/zprint-str card zp-settings)))
     (replace-collection "cards" cards)
 
     (doseq [[k v] data

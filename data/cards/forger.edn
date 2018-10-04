@@ -1,20 +1,20 @@
-{:code "08065",
- :cost 1,
- :cycle_code "sansan",
- :faction "Criminal",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_65.png",
- :limited 3,
- :normalizedtitle "forger",
- :number 65,
- :packquantity 3,
- :rotated false,
- :set_code "the-underway",
- :setname "The Underway",
- :side "Runner",
- :strength 0,
- :subtype "Console",
- :text "+1[link]\n[trash]: Avoid or remove 1 tag.\nLimit 1 <strong>console</strong> per player.",
- :title "Forger",
- :type "Hardware",
+{:code "08065"
+ :cost 1
+ :cycle_code "sansan"
+ :faction "Criminal"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_65.png"
+ :limited 3
+ :normalizedtitle "forger"
+ :number 65
+ :packquantity 3
+ :rotated false
+ :set_code "uw"
+ :setname "The Underway"
+ :side "Runner"
+ :strength 0
+ :subtype "Console"
+ :text "+1[link]\n[trash]: Avoid or remove 1 tag.\nLimit 1 <strong>console</strong> per player."
+ :title "Forger"
+ :type "Hardware"
  :uniqueness false}

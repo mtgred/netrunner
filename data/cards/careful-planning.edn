@@ -1,20 +1,20 @@
-{:code "13013",
- :cost 3,
- :cycle_code "terminal-directive",
- :faction "Shaper",
- :factioncost 4,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_13.png",
- :limited 3,
- :normalizedtitle "careful-planning",
- :number 13,
- :packquantity 3,
- :rotated false,
- :set_code "terminal-directive",
- :setname "Terminal Directive",
- :side "Runner",
- :strength 0,
- :subtype "Priority",
- :text "Play only as your first [click].\nChoose a card in or protecting a remote server. That card cannot be rezzed this turn.",
- :title "Careful Planning",
- :type "Event",
+{:code "13013"
+ :cost 3
+ :cycle_code "terminal-directive"
+ :faction "Shaper"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_13.png"
+ :limited 3
+ :normalizedtitle "careful-planning"
+ :number 13
+ :packquantity 3
+ :rotated false
+ :set_code "td"
+ :setname "Terminal Directive"
+ :side "Runner"
+ :strength 0
+ :subtype "Priority"
+ :text "Play only as your first [click].\nChoose a card in or protecting a remote server. That card cannot be rezzed this turn."
+ :title "Careful Planning"
+ :type "Event"
  :uniqueness false}

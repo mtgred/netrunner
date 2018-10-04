@@ -1,20 +1,20 @@
-{:code "06070",
- :cost 0,
- :cycle_code "lunar",
- :faction "Weyland Consortium",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_70.png",
- :limited 3,
- :normalizedtitle "reuse",
- :number 70,
- :packquantity 3,
- :rotated false,
- :set_code "up-and-over",
- :setname "Up and Over",
- :side "Corp",
- :strength 0,
- :subtype "Double",
- :text "As an additional cost to play this operation, spend [click].\nTrash any number of cards from HQ. Gain 2[credit] for each card trashed.",
- :title "Reuse",
- :type "Operation",
+{:code "06070"
+ :cost 0
+ :cycle_code "lunar"
+ :faction "Weyland Consortium"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_70.png"
+ :limited 3
+ :normalizedtitle "reuse"
+ :number 70
+ :packquantity 3
+ :rotated false
+ :set_code "uao"
+ :setname "Up and Over"
+ :side "Corp"
+ :strength 0
+ :subtype "Double"
+ :text "As an additional cost to play this operation, spend [click].\nTrash any number of cards from HQ. Gain 2[credit] for each card trashed."
+ :title "Reuse"
+ :type "Operation"
  :uniqueness false}

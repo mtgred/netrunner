@@ -1,19 +1,19 @@
-{:code "01031",
- :cost 0,
- :cycle_code "core",
- :faction "Criminal",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/01031.png",
- :limited 3,
- :normalizedtitle "data-dealer",
- :number 31,
- :packquantity 1,
- :set_code "core-set",
- :setname "Core Set",
- :side "Runner",
- :strength 0,
- :subtype "Connection - Seedy",
- :text "<strong>Forfeit an agenda,</strong> [click]: Gain 9[credit].",
- :title "Data Dealer",
- :type "Resource",
+{:code "01031"
+ :cost 0
+ :cycle_code "core"
+ :faction "Criminal"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/01031.png"
+ :limited 3
+ :normalizedtitle "data-dealer"
+ :number 31
+ :packquantity 1
+ :set_code "core"
+ :setname "Core Set"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection - Seedy"
+ :text "<strong>Forfeit an agenda,</strong> [click]: Gain 9[credit]."
+ :title "Data Dealer"
+ :type "Resource"
  :uniqueness false}

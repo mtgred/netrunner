@@ -1,20 +1,20 @@
-{:code "10002",
- :cost 1,
- :cycle_code "mumbad",
- :faction "Anarch",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_2.png",
- :limited 6,
- :normalizedtitle "ramujan-reliant-550-bmi",
- :number 2,
- :packquantity 6,
- :rotated false,
- :set_code "kala-ghoda",
- :setname "Kala Ghoda",
- :side "Runner",
- :strength 0,
- :subtype "Consumer Grade",
- :text "[trash]: Prevent up to X net or brain damage. Trash cards from the top of your stack equal to the amount of damage prevented. X is the number of copies of Ramujan-reliant 550 BMI installed (including the one just trashed).\nLimit 6 per deck.",
- :title "Ramujan-reliant 550 BMI",
- :type "Hardware",
+{:code "10002"
+ :cost 1
+ :cycle_code "mumbad"
+ :faction "Anarch"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_2.png"
+ :limited 6
+ :normalizedtitle "ramujan-reliant-550-bmi"
+ :number 2
+ :packquantity 6
+ :rotated false
+ :set_code "kg"
+ :setname "Kala Ghoda"
+ :side "Runner"
+ :strength 0
+ :subtype "Consumer Grade"
+ :text "[trash]: Prevent up to X net or brain damage. Trash cards from the top of your stack equal to the amount of damage prevented. X is the number of copies of Ramujan-reliant 550 BMI installed (including the one just trashed).\nLimit 6 per deck."
+ :title "Ramujan-reliant 550 BMI"
+ :type "Hardware"
  :uniqueness false}

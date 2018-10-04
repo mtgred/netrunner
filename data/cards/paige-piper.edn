@@ -1,20 +1,20 @@
-{:code "08002",
- :cost 0,
- :cycle_code "sansan",
- :faction "Anarch",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_2.png",
- :limited 3,
- :normalizedtitle "paige-piper",
- :number 2,
- :packquantity 3,
- :rotated false,
- :set_code "the-valley",
- :setname "The Valley",
- :side "Runner",
- :strength 0,
- :subtype "Connection",
- :text "The first time you install a card each turn (including Paige Piper), you may search your stack for any number of copies of that card and add them to your heap. Shuffle your stack.",
- :title "Paige Piper",
- :type "Resource",
+{:code "08002"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_2.png"
+ :limited 3
+ :normalizedtitle "paige-piper"
+ :number 2
+ :packquantity 3
+ :rotated false
+ :set_code "val"
+ :setname "The Valley"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "The first time you install a card each turn (including Paige Piper), you may search your stack for any number of copies of that card and add them to your heap. Shuffle your stack."
+ :title "Paige Piper"
+ :type "Resource"
  :uniqueness true}

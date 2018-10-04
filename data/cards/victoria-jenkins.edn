@@ -1,21 +1,21 @@
-{:code "09011",
- :cost 3,
- :cycle_code "data-and-destiny",
- :faction "NBN",
- :factioncost 5,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_11.png",
- :limited 3,
- :normalizedtitle "victoria-jenkins",
- :number 11,
- :packquantity 3,
- :rotated false,
- :set_code "data-and-destiny",
- :setname "Data and Destiny",
- :side "Corp",
- :strength 0,
- :subtype "Executive",
- :text "The Runner has 1 fewer [click] to spend during his or her turn.\nIf Victoria Jenkins is trashed while being accessed, add her to the Runner's score area as an agenda worth 2 agenda points.",
- :title "Victoria Jenkins",
- :trash 5,
- :type "Asset",
+{:code "09011"
+ :cost 3
+ :cycle_code "data-and-destiny"
+ :faction "NBN"
+ :factioncost 5
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_11.png"
+ :limited 3
+ :normalizedtitle "victoria-jenkins"
+ :number 11
+ :packquantity 3
+ :rotated false
+ :set_code "dad"
+ :setname "Data and Destiny"
+ :side "Corp"
+ :strength 0
+ :subtype "Executive"
+ :text "The Runner has 1 fewer [click] to spend during his or her turn.\nIf Victoria Jenkins is trashed while being accessed, add her to the Runner's score area as an agenda worth 2 agenda points."
+ :title "Victoria Jenkins"
+ :trash 5
+ :type "Asset"
  :uniqueness true}

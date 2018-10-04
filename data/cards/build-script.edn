@@ -1,19 +1,19 @@
-{:code "12028",
- :cost 0,
- :cycle_code "red-sand",
- :faction "Neutral",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_28.png",
- :limited 3,
- :normalizedtitle "build-script",
- :number 28,
- :packquantity 3,
- :rotated false,
- :set_code "station-one",
- :setname "Station One",
- :side "Runner",
- :strength 0,
- :text "Gain 1[credit] and draw 2 cards.",
- :title "Build Script",
- :type "Event",
+{:code "12028"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Neutral"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_28.png"
+ :limited 3
+ :normalizedtitle "build-script"
+ :number 28
+ :packquantity 3
+ :rotated false
+ :set_code "so"
+ :setname "Station One"
+ :side "Runner"
+ :strength 0
+ :text "Gain 1[credit] and draw 2 cards."
+ :title "Build Script"
+ :type "Event"
  :uniqueness false}

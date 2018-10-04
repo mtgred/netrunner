@@ -1,20 +1,20 @@
-{:code "06009",
- :cost 5,
- :cycle_code "lunar",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/06009.png",
- :limited 3,
- :normalizedtitle "taurus",
- :number 9,
- :packquantity 3,
- :rotated false,
- :set_code "upstalk",
- :setname "Upstalk",
- :side "Corp",
- :strength 5,
- :subtype "Sentry - Tracer",
- :text "[subroutine] <trace>Trace 2</trace> If successful, trash 1 piece of hardware. If your trace strength is 5 or greater, trash 1 piece of hardware.",
- :title "Taurus",
- :type "ICE",
+{:code "06009"
+ :cost 5
+ :cycle_code "lunar"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/06009.png"
+ :limited 3
+ :normalizedtitle "taurus"
+ :number 9
+ :packquantity 3
+ :rotated false
+ :set_code "up"
+ :setname "Upstalk"
+ :side "Corp"
+ :strength 5
+ :subtype "Sentry - Tracer"
+ :text "[subroutine] <trace>Trace 2</trace> If successful, trash 1 piece of hardware. If your trace strength is 5 or greater, trash 1 piece of hardware."
+ :title "Taurus"
+ :type "ICE"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "08105",
- :cost 0,
- :cycle_code "sansan",
- :faction "Criminal",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_105.png",
- :limited 3,
- :normalizedtitle "fisk-investment-seminar",
- :number 105,
- :packquantity 3,
- :rotated false,
- :set_code "the-universe-of-tomorrow",
- :setname "The Universe of Tomorrow",
- :side "Runner",
- :strength 0,
- :subtype "Priority",
- :text "Play only as your first [click].\nEach player draws 3 cards.",
- :title "Fisk Investment Seminar",
- :type "Event",
+{:code "08105"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Criminal"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_105.png"
+ :limited 3
+ :normalizedtitle "fisk-investment-seminar"
+ :number 105
+ :packquantity 3
+ :rotated false
+ :set_code "uot"
+ :setname "The Universe of Tomorrow"
+ :side "Runner"
+ :strength 0
+ :subtype "Priority"
+ :text "Play only as your first [click].\nEach player draws 3 cards."
+ :title "Fisk Investment Seminar"
+ :type "Event"
  :uniqueness false}

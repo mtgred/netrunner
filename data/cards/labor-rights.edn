@@ -1,19 +1,19 @@
-{:code "23001",
- :cost 0,
- :cycle_code "magnum-opus",
- :faction "Anarch",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/23001.png",
- :limited 3,
- :normalizedtitle "labor-rights",
- :number 1,
- :packquantity 3,
- :rotated false,
- :set_code "magnum-opus",
- :setname "Magnum Opus",
- :side "Runner",
- :strength 0,
- :text "Trash the top 3 cards of your stack, then shuffle 3 cards from your heap into your stack. Draw 1 card. Remove Labor Rights from the game instead of trashing it.",
- :title "Labor Rights",
- :type "Event",
+{:code "23001"
+ :cost 0
+ :cycle_code "magnum-opus"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/23001.png"
+ :limited 3
+ :normalizedtitle "labor-rights"
+ :number 1
+ :packquantity 3
+ :rotated false
+ :set_code "mo"
+ :setname "Magnum Opus"
+ :side "Runner"
+ :strength 0
+ :text "Trash the top 3 cards of your stack, then shuffle 3 cards from your heap into your stack. Draw 1 card. Remove Labor Rights from the game instead of trashing it."
+ :title "Labor Rights"
+ :type "Event"
  :uniqueness false}

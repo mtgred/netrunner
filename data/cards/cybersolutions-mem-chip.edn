@@ -1,20 +1,20 @@
-{:code "04086",
- :cost 4,
- :cycle_code "spin",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04086.png",
- :limited 3,
- :normalizedtitle "cybersolutions-mem-chip",
- :number 86,
- :packquantity 3,
- :rotated true,
- :set_code "fear-and-loathing",
- :setname "Fear and Loathing",
- :side "Runner",
- :strength 0,
- :subtype "Chip",
- :text "+2[mu]",
- :title "CyberSolutions Mem Chip",
- :type "Hardware",
+{:code "04086"
+ :cost 4
+ :cycle_code "spin"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04086.png"
+ :limited 3
+ :normalizedtitle "cybersolutions-mem-chip"
+ :number 86
+ :packquantity 3
+ :rotated true
+ :set_code "fal"
+ :setname "Fear and Loathing"
+ :side "Runner"
+ :strength 0
+ :subtype "Chip"
+ :text "+2[mu]"
+ :title "CyberSolutions Mem Chip"
+ :type "Hardware"
  :uniqueness false}

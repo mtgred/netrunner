@@ -1,21 +1,21 @@
-{:advancementcost 3,
- :agendapoints 1,
- :code "08013",
- :cost 0,
- :cycle_code "sansan",
- :faction "Jinteki",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_13.png",
- :limited 3,
- :normalizedtitle "genetic-resequencing",
- :number 13,
- :packquantity 3,
- :rotated false,
- :set_code "the-valley",
- :setname "The Valley",
- :side "Corp",
- :strength 0,
- :subtype "Research",
- :text "When you score Genetic Resequencing, you may place 1 agenda counter on an agenda in your score area.",
- :title "Genetic Resequencing",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 1
+ :code "08013"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Jinteki"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_13.png"
+ :limited 3
+ :normalizedtitle "genetic-resequencing"
+ :number 13
+ :packquantity 3
+ :rotated false
+ :set_code "val"
+ :setname "The Valley"
+ :side "Corp"
+ :strength 0
+ :subtype "Research"
+ :text "When you score Genetic Resequencing, you may place 1 agenda counter on an agenda in your score area."
+ :title "Genetic Resequencing"
+ :type "Agenda"
  :uniqueness false}

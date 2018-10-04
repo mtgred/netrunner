@@ -1,21 +1,21 @@
-{:code "03001",
- :cost 0,
- :cycle_code "creation-and-control",
- :faction "Haas-Bioroid",
- :image_url "https://netrunnerdb.com/card_image/03001.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "cerebral-imaging-infinite-frontiers",
- :number 1,
- :packquantity 3,
- :rotated false,
- :set_code "creation-and-control",
- :setname "Creation and Control",
- :side "Corp",
- :strength 0,
- :subtype "Division",
- :text "Your maximum hand size is equal to the number of credits in your credit pool.",
- :title "Cerebral Imaging: Infinite Frontiers",
- :type "Identity",
+{:code "03001"
+ :cost 0
+ :cycle_code "creation-and-control"
+ :faction "Haas-Bioroid"
+ :image_url "https://netrunnerdb.com/card_image/03001.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "cerebral-imaging-infinite-frontiers"
+ :number 1
+ :packquantity 3
+ :rotated false
+ :set_code "cac"
+ :setname "Creation and Control"
+ :side "Corp"
+ :strength 0
+ :subtype "Division"
+ :text "Your maximum hand size is equal to the number of credits in your credit pool."
+ :title "Cerebral Imaging: Infinite Frontiers"
+ :type "Identity"
  :uniqueness false}

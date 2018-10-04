@@ -1,20 +1,20 @@
-{:code "00011",
- :cost 0,
- :cycle_code "draft",
- :faction "Jinteki",
- :image_url "https://netrunnerdb.com/card_image/00011.png",
- :limited 1,
- :minimumdecksize 30,
- :normalizedtitle "synthetic-systems-the-world-re-imagined",
- :number 11,
- :packquantity 1,
- :rotated false,
- :set_code "draft",
- :setname "Draft",
- :side "Corp",
- :strength 0,
- :subtype "Division",
- :text "Draft format only.\nIf you have more [jinteki] cards rezzed than any other faction, when your turn begins, you may swap 2 pieces of installed ice.",
- :title "Synthetic Systems: The World Re-imagined",
- :type "Identity",
+{:code "00011"
+ :cost 0
+ :cycle_code "draft"
+ :faction "Jinteki"
+ :image_url "https://netrunnerdb.com/card_image/00011.png"
+ :limited 1
+ :minimumdecksize 30
+ :normalizedtitle "synthetic-systems-the-world-re-imagined"
+ :number 11
+ :packquantity 1
+ :rotated false
+ :set_code "draft"
+ :setname "Draft"
+ :side "Corp"
+ :strength 0
+ :subtype "Division"
+ :text "Draft format only.\nIf you have more [jinteki] cards rezzed than any other faction, when your turn begins, you may swap 2 pieces of installed ice."
+ :title "Synthetic Systems: The World Re-imagined"
+ :type "Identity"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "12024",
- :cost 0,
- :cycle_code "red-sand",
- :faction "Criminal",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_24.png",
- :limited 3,
- :normalizedtitle "mobius",
- :number 24,
- :packquantity 3,
- :rotated false,
- :set_code "station-one",
- :setname "Station One",
- :side "Runner",
- :strength 0,
- :subtype "Run",
- :text "Make a run on R&D. If successful, you may make another run on R&D when this run ends. If the second run is successful, gain 4[credit].",
- :title "Möbius",
- :type "Event",
+{:code "12024"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Criminal"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_24.png"
+ :limited 3
+ :normalizedtitle "mobius"
+ :number 24
+ :packquantity 3
+ :rotated false
+ :set_code "so"
+ :setname "Station One"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Make a run on R&D. If successful, you may make another run on R&D when this run ends. If the second run is successful, gain 4[credit]."
+ :title "Möbius"
+ :type "Event"
  :uniqueness false}

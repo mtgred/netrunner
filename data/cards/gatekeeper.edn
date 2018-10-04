@@ -1,20 +1,20 @@
-{:code "22029",
- :cost 3,
- :cycle_code "reign-and-reverie",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_29.png",
- :limited 3,
- :normalizedtitle "gatekeeper",
- :number 29,
- :packquantity 3,
- :rotated false,
- :set_code "reign-and-reverie",
- :setname "Reign and Reverie",
- :side "Corp",
- :strength 0,
- :subtype "Code Gate",
- :text "Gatekeeper has +6 strength if you rezzed it this turn.\n[subroutine] Draw up to 3 cards. Reveal up to 3 agendas in HQ and/or Archives, then shuffle those agendas into R&D.\n[subroutine] End the run.",
- :title "Gatekeeper",
- :type "ICE",
+{:code "22029"
+ :cost 3
+ :cycle_code "reign-and-reverie"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_29.png"
+ :limited 3
+ :normalizedtitle "gatekeeper"
+ :number 29
+ :packquantity 3
+ :rotated false
+ :set_code "rar"
+ :setname "Reign and Reverie"
+ :side "Corp"
+ :strength 0
+ :subtype "Code Gate"
+ :text "Gatekeeper has +6 strength if you rezzed it this turn.\n[subroutine] Draw up to 3 cards. Reveal up to 3 agendas in HQ and/or Archives, then shuffle those agendas into R&D.\n[subroutine] End the run."
+ :title "Gatekeeper"
+ :type "ICE"
  :uniqueness false}

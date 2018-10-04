@@ -1,21 +1,21 @@
-{:code "12052",
- :cost 0,
- :cycle_code "red-sand",
- :faction "Jinteki",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_52.png",
- :influencelimit 17,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "aginfusion-new-miracles-for-a-new-world",
- :number 52,
- :packquantity 3,
- :rotated false,
- :set_code "earth-s-scion",
- :setname "Earth's Scion",
- :side "Corp",
- :strength 0,
- :subtype "Division",
- :text "Once per turn, instead of rezzing an approached piece of ice, you may trash it to choose another server. The Runner is now running on that server and encountering the outermost piece of ice, if any.",
- :title "AgInfusion: New Miracles for a New World",
- :type "Identity",
+{:code "12052"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Jinteki"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_52.png"
+ :influencelimit 17
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "aginfusion-new-miracles-for-a-new-world"
+ :number 52
+ :packquantity 3
+ :rotated false
+ :set_code "eas"
+ :setname "Earth's Scion"
+ :side "Corp"
+ :strength 0
+ :subtype "Division"
+ :text "Once per turn, instead of rezzing an approached piece of ice, you may trash it to choose another server. The Runner is now running on that server and encountering the outermost piece of ice, if any."
+ :title "AgInfusion: New Miracles for a New World"
+ :type "Identity"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "06083",
- :cost 5,
- :cycle_code "lunar",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_83.png",
- :limited 3,
- :normalizedtitle "hostile-infrastructure",
- :number 83,
- :packquantity 3,
- :rotated false,
- :set_code "all-that-remains",
- :setname "All That Remains",
- :side "Corp",
- :strength 0,
- :text "Whenever the Runner trashes a Corp card (including Hostile Infrastructure), do 1 net damage.",
- :title "Hostile Infrastructure",
- :trash 5,
- :type "Asset",
+{:code "06083"
+ :cost 5
+ :cycle_code "lunar"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_83.png"
+ :limited 3
+ :normalizedtitle "hostile-infrastructure"
+ :number 83
+ :packquantity 3
+ :rotated false
+ :set_code "atr"
+ :setname "All That Remains"
+ :side "Corp"
+ :strength 0
+ :text "Whenever the Runner trashes a Corp card (including Hostile Infrastructure), do 1 net damage."
+ :title "Hostile Infrastructure"
+ :trash 5
+ :type "Asset"
  :uniqueness false}

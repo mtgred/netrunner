@@ -1,20 +1,20 @@
-{:code "04054",
- :cost 2,
- :cycle_code "spin",
- :faction "Jinteki",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/04054.png",
- :limited 3,
- :normalizedtitle "sundew",
- :number 54,
- :packquantity 3,
- :rotated true,
- :set_code "mala-tempora",
- :setname "Mala Tempora",
- :side "Corp",
- :strength 0,
- :text "The first time the Runner spends at least 1[click] on his or her turn, gain 2[credit] unless the Runner just initiated a run on this server.",
- :title "Sundew",
- :trash 2,
- :type "Asset",
+{:code "04054"
+ :cost 2
+ :cycle_code "spin"
+ :faction "Jinteki"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/04054.png"
+ :limited 3
+ :normalizedtitle "sundew"
+ :number 54
+ :packquantity 3
+ :rotated true
+ :set_code "mt"
+ :setname "Mala Tempora"
+ :side "Corp"
+ :strength 0
+ :text "The first time the Runner spends at least 1[click] on his or her turn, gain 2[credit] unless the Runner just initiated a run on this server."
+ :title "Sundew"
+ :trash 2
+ :type "Asset"
  :uniqueness false}

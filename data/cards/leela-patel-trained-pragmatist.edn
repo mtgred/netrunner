@@ -1,22 +1,22 @@
-{:baselink 0,
- :code "06095",
- :cost 0,
- :cycle_code "lunar",
- :faction "Criminal",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_95.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "leela-patel-trained-pragmatist",
- :number 95,
- :packquantity 3,
- :rotated false,
- :set_code "all-that-remains",
- :setname "All That Remains",
- :side "Runner",
- :strength 0,
- :subtype "Natural",
- :text "Whenever an agenda is scored or stolen, add 1 unrezzed card to HQ.",
- :title "Leela Patel: Trained Pragmatist",
- :type "Identity",
+{:baselink 0
+ :code "06095"
+ :cost 0
+ :cycle_code "lunar"
+ :faction "Criminal"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_95.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "leela-patel-trained-pragmatist"
+ :number 95
+ :packquantity 3
+ :rotated false
+ :set_code "atr"
+ :setname "All That Remains"
+ :side "Runner"
+ :strength 0
+ :subtype "Natural"
+ :text "Whenever an agenda is scored or stolen, add 1 unrezzed card to HQ."
+ :title "Leela Patel: Trained Pragmatist"
+ :type "Identity"
  :uniqueness false}

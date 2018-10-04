@@ -1,20 +1,20 @@
-{:code "11059",
- :cost 3,
- :cycle_code "flashpoint",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_59.png",
- :limited 3,
- :normalizedtitle "door-to-door",
- :number 59,
- :packquantity 3,
- :rotated false,
- :set_code "escalation",
- :setname "Escalation",
- :side "Corp",
- :strength 0,
- :subtype "Current - Black Ops",
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nWhen the Runner's turn begins, <trace>trace 1</trace> If successful, do 1 meat damage if the Runner is tagged; otherwise, give the Runner 1 tag.",
- :title "Door to Door",
- :type "Operation",
+{:code "11059"
+ :cost 3
+ :cycle_code "flashpoint"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_59.png"
+ :limited 3
+ :normalizedtitle "door-to-door"
+ :number 59
+ :packquantity 3
+ :rotated false
+ :set_code "es"
+ :setname "Escalation"
+ :side "Corp"
+ :strength 0
+ :subtype "Current - Black Ops"
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nWhen the Runner's turn begins, <trace>trace 1</trace> If successful, do 1 meat damage if the Runner is tagged; otherwise, give the Runner 1 tag."
+ :title "Door to Door"
+ :type "Operation"
  :uniqueness false}

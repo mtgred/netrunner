@@ -1,20 +1,19 @@
-{:code "24001",
- :cost 0,
- :cycle_code "napd",
- :faction "Neutral",
- :image_url "https://netrunnerdb.com/card_image/24001.png",
- :limited 1,
- :minimumdecksize 40,
- :normalizedtitle "cyber-bureau-keeping-the-peace",
- :number 1,
- :packquantity 1,
- :set_code "napd-multiplayer",
- :setname "NAPD Multiplayer",
- :side "Corp",
- :strength 0,
- :subtype "",
- :text
- "You draw a starting hand of 10 cards.\nBefore taking your first turn, install up to 5 cards, ignoring all install costs. Rez any number of them, lowering the total rez cost among all cards by 20. Flip this identity.\nDetective's Bureau: Upholding the Law\nThe first time the Runner initiates a run each turn, force the Runner to lose 1[credit] for each agenda point in his or her score area, then you gain 1[credit] for each credit lost.\n[click]: Gain 3[credit] or draw 3 cards.",
- :title "Cyber Bureau: Keeping the Peace",
- :type "Identity",
+{:code "24001"
+ :cost 0
+ :cycle_code "napd"
+ :faction "Neutral"
+ :image_url "https://netrunnerdb.com/card_image/24001.png"
+ :limited 1
+ :minimumdecksize 40
+ :normalizedtitle "cyber-bureau-keeping-the-peace"
+ :number 1
+ :packquantity 1
+ :set_code "napd"
+ :setname "NAPD Multiplayer"
+ :side "Corp"
+ :strength 0
+ :subtype ""
+ :text "You draw a starting hand of 10 cards.\nBefore taking your first turn, install up to 5 cards, ignoring all install costs. Rez any number of them, lowering the total rez cost among all cards by 20. Flip this identity.\nDetective's Bureau: Upholding the Law\nThe first time the Runner initiates a run each turn, force the Runner to lose 1[credit] for each agenda point in his or her score area, then you gain 1[credit] for each credit lost.\n[click]: Gain 3[credit] or draw 3 cards."
+ :title "Cyber Bureau: Keeping the Peace"
+ :type "Identity"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "12020",
- :cost 0,
- :cycle_code "red-sand",
- :faction "Neutral",
- :factioncost 0,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_20.png",
- :limited 3,
- :normalizedtitle "signal-jamming",
- :number 20,
- :packquantity 3,
- :rotated false,
- :set_code "daedalus-complex",
- :setname "Daedalus Complex",
- :side "Corp",
- :strength 0,
- :text "[trash]: Cards cannot be installed until the end of the run. Use this ability only during a run on this server.",
- :title "Signal Jamming",
- :trash 2,
- :type "Upgrade",
+{:code "12020"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_20.png"
+ :limited 3
+ :normalizedtitle "signal-jamming"
+ :number 20
+ :packquantity 3
+ :rotated false
+ :set_code "dc"
+ :setname "Daedalus Complex"
+ :side "Corp"
+ :strength 0
+ :text "[trash]: Cards cannot be installed until the end of the run. Use this ability only during a run on this server."
+ :title "Signal Jamming"
+ :trash 2
+ :type "Upgrade"
  :uniqueness false}

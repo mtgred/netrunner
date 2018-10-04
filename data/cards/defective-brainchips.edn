@@ -1,20 +1,20 @@
-{:code "08072",
- :cost 2,
- :cycle_code "sansan",
- :faction "Haas-Bioroid",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_72.png",
- :limited 3,
- :normalizedtitle "defective-brainchips",
- :number 72,
- :packquantity 3,
- :rotated false,
- :set_code "the-underway",
- :setname "The Underway",
- :side "Corp",
- :strength 0,
- :subtype "Current",
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nThe first time the Runner takes brain damage each turn, he or she takes 1 additional brain damage.",
- :title "Defective Brainchips",
- :type "Operation",
+{:code "08072"
+ :cost 2
+ :cycle_code "sansan"
+ :faction "Haas-Bioroid"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_72.png"
+ :limited 3
+ :normalizedtitle "defective-brainchips"
+ :number 72
+ :packquantity 3
+ :rotated false
+ :set_code "uw"
+ :setname "The Underway"
+ :side "Corp"
+ :strength 0
+ :subtype "Current"
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nThe first time the Runner takes brain damage each turn, he or she takes 1 additional brain damage."
+ :title "Defective Brainchips"
+ :type "Operation"
  :uniqueness false}

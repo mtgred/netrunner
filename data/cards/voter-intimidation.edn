@@ -1,20 +1,20 @@
-{:code "10106",
- :cost 1,
- :cycle_code "mumbad",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_106.png",
- :limited 3,
- :normalizedtitle "voter-intimidation",
- :number 106,
- :packquantity 3,
- :rotated false,
- :set_code "fear-the-masses",
- :setname "Fear the Masses",
- :side "Corp",
- :strength 0,
- :subtype "Gray Ops - Psi",
- :text "Play only if there is an agenda in the Runner's score area.\nYou and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, trash 1 resource.",
- :title "Voter Intimidation",
- :type "Operation",
+{:code "10106"
+ :cost 1
+ :cycle_code "mumbad"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_106.png"
+ :limited 3
+ :normalizedtitle "voter-intimidation"
+ :number 106
+ :packquantity 3
+ :rotated false
+ :set_code "ftm"
+ :setname "Fear the Masses"
+ :side "Corp"
+ :strength 0
+ :subtype "Gray Ops - Psi"
+ :text "Play only if there is an agenda in the Runner's score area.\nYou and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, trash 1 resource."
+ :title "Voter Intimidation"
+ :type "Operation"
  :uniqueness false}

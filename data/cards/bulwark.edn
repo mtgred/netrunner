@@ -1,20 +1,20 @@
-{:code "11078",
- :cost 10,
- :cycle_code "flashpoint",
- :faction "Weyland Consortium",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_78.png",
- :limited 3,
- :normalizedtitle "bulwark",
- :number 78,
- :packquantity 3,
- :rotated false,
- :set_code "intervention",
- :setname "Intervention",
- :side "Corp",
- :strength 8,
- :subtype "Barrier - Illicit",
- :text "When you rez Bulwark, take 1 bad publicity.\nWhen the Runner encounters Bulwark, gain 2[credit] if there is an installed <strong>AI</strong>.\n[subroutine] The Runner trashes 1 program.\n[subroutine] The Corp gains 2[credit]. End the run.\n[subroutine] The Corp gains 2[credit]. End the run.",
- :title "Bulwark",
- :type "ICE",
+{:code "11078"
+ :cost 10
+ :cycle_code "flashpoint"
+ :faction "Weyland Consortium"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_78.png"
+ :limited 3
+ :normalizedtitle "bulwark"
+ :number 78
+ :packquantity 3
+ :rotated false
+ :set_code "in"
+ :setname "Intervention"
+ :side "Corp"
+ :strength 8
+ :subtype "Barrier - Illicit"
+ :text "When you rez Bulwark, take 1 bad publicity.\nWhen the Runner encounters Bulwark, gain 2[credit] if there is an installed <strong>AI</strong>.\n[subroutine] The Runner trashes 1 program.\n[subroutine] The Corp gains 2[credit]. End the run.\n[subroutine] The Corp gains 2[credit]. End the run."
+ :title "Bulwark"
+ :type "ICE"
  :uniqueness false}

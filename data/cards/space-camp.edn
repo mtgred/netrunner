@@ -1,21 +1,21 @@
-{:code "07010",
- :cost 0,
- :cycle_code "order-and-chaos",
- :faction "Weyland Consortium",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_10.png",
- :limited 3,
- :normalizedtitle "space-camp",
- :number 10,
- :packquantity 3,
- :rotated false,
- :set_code "order-and-chaos",
- :setname "Order and Chaos",
- :side "Corp",
- :strength 0,
- :subtype "Ambush",
- :text "If Space Camp is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Space Camp, you may place 1 advancement token on a card that can be advanced.",
- :title "Space Camp",
- :trash 3,
- :type "Asset",
+{:code "07010"
+ :cost 0
+ :cycle_code "order-and-chaos"
+ :faction "Weyland Consortium"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_10.png"
+ :limited 3
+ :normalizedtitle "space-camp"
+ :number 10
+ :packquantity 3
+ :rotated false
+ :set_code "oac"
+ :setname "Order and Chaos"
+ :side "Corp"
+ :strength 0
+ :subtype "Ambush"
+ :text "If Space Camp is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Space Camp, you may place 1 advancement token on a card that can be advanced."
+ :title "Space Camp"
+ :trash 3
+ :type "Asset"
  :uniqueness false}

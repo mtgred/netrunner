@@ -1,20 +1,20 @@
-{:code "10059",
- :cost 2,
- :cycle_code "mumbad",
- :faction "Anarch",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_59.png",
- :limited 3,
- :normalizedtitle "salsette-slums",
- :number 59,
- :packquantity 3,
- :rotated false,
- :set_code "salsette-island",
- :setname "Salsette Island",
- :side "Runner",
- :strength 0,
- :subtype "Location - Seedy",
- :text "Once per turn, you may pay the trash cost of a card you access that is not in Archives to remove that card from the game.\n<errata>Errata from FAQ 4.1</errata>",
- :title "Salsette Slums",
- :type "Resource",
+{:code "10059"
+ :cost 2
+ :cycle_code "mumbad"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_59.png"
+ :limited 3
+ :normalizedtitle "salsette-slums"
+ :number 59
+ :packquantity 3
+ :rotated false
+ :set_code "si"
+ :setname "Salsette Island"
+ :side "Runner"
+ :strength 0
+ :subtype "Location - Seedy"
+ :text "Once per turn, you may pay the trash cost of a card you access that is not in Archives to remove that card from the game.\n<errata>Errata from FAQ 4.1</errata>"
+ :title "Salsette Slums"
+ :type "Resource"
  :uniqueness false}

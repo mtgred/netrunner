@@ -1,20 +1,20 @@
-{:code "21109",
- :cost 2,
- :cycle_code "kitara",
- :faction "Shaper",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_109.png",
- :limited 3,
- :normalizedtitle "flame-out",
- :number 109,
- :packquantity 3,
- :rotated false,
- :set_code "kampala-ascendent",
- :setname "Kampala Ascendent",
- :side "Runner",
- :strength 0,
- :subtype "Mod",
- :text "Flame-out can host a single program.\nWhen you install Flame-out, place 9[credit] on it. Use these credits to pay for using hosted program.\nWhen a turn ends in which you used credits on Flame-out, trash hosted program.",
- :title "Flame-out",
- :type "Hardware",
+{:code "21109"
+ :cost 2
+ :cycle_code "kitara"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_109.png"
+ :limited 3
+ :normalizedtitle "flame-out"
+ :number 109
+ :packquantity 3
+ :rotated false
+ :set_code "ka"
+ :setname "Kampala Ascendent"
+ :side "Runner"
+ :strength 0
+ :subtype "Mod"
+ :text "Flame-out can host a single program.\nWhen you install Flame-out, place 9[credit] on it. Use these credits to pay for using hosted program.\nWhen a turn ends in which you used credits on Flame-out, trash hosted program."
+ :title "Flame-out"
+ :type "Hardware"
  :uniqueness true}

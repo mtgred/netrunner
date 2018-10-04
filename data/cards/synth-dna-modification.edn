@@ -1,20 +1,20 @@
-{:code "12012",
- :cost 2,
- :cycle_code "red-sand",
- :faction "Jinteki",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_12.png",
- :limited 3,
- :normalizedtitle "synth-dna-modification",
- :number 12,
- :packquantity 3,
- :rotated false,
- :set_code "daedalus-complex",
- :setname "Daedalus Complex",
- :side "Corp",
- :strength 0,
- :text "The first time a subroutine on a piece of <strong>AP</strong> ice is broken each turn, do 1 net damage.",
- :title "Synth DNA Modification",
- :trash 2,
- :type "Asset",
+{:code "12012"
+ :cost 2
+ :cycle_code "red-sand"
+ :faction "Jinteki"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_12.png"
+ :limited 3
+ :normalizedtitle "synth-dna-modification"
+ :number 12
+ :packquantity 3
+ :rotated false
+ :set_code "dc"
+ :setname "Daedalus Complex"
+ :side "Corp"
+ :strength 0
+ :text "The first time a subroutine on a piece of <strong>AP</strong> ice is broken each turn, do 1 net damage."
+ :title "Synth DNA Modification"
+ :trash 2
+ :type "Asset"
  :uniqueness false}

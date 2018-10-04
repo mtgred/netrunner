@@ -1,22 +1,22 @@
-{:baselink 1,
- :code "20001",
- :cost 0,
- :cycle_code "core2",
- :faction "Anarch",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_1.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "reina-roja-freedom-fighter",
- :number 1,
- :packquantity 1,
- :replaces "04041",
- :set_code "revised-core-set",
- :setname "Revised Core Set",
- :side "Runner",
- :strength 0,
- :subtype "Cyborg - G-mod",
- :text "The rez cost of the first piece of ice rezzed each turn is increased by 1.",
- :title "Reina Roja: Freedom Fighter",
- :type "Identity",
+{:baselink 1
+ :code "20001"
+ :cost 0
+ :cycle_code "core2"
+ :faction "Anarch"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_1.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "reina-roja-freedom-fighter"
+ :number 1
+ :packquantity 1
+ :replaces "04041"
+ :set_code "core2"
+ :setname "Revised Core Set"
+ :side "Runner"
+ :strength 0
+ :subtype "Cyborg - G-mod"
+ :text "The rez cost of the first piece of ice rezzed each turn is increased by 1."
+ :title "Reina Roja: Freedom Fighter"
+ :type "Identity"
  :uniqueness false}

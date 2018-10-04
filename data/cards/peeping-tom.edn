@@ -1,20 +1,20 @@
-{:code "22045",
- :cost 4,
- :cycle_code "reign-and-reverie",
- :faction "NBN",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_45.png",
- :limited 3,
- :normalizedtitle "peeping-tom",
- :number 45,
- :packquantity 3,
- :rotated false,
- :set_code "reign-and-reverie",
- :setname "Reign and Reverie",
- :side "Corp",
- :strength 4,
- :subtype "Code Gate",
- :text "When the Runner encounters Peeping Tom, name a card type, then reveal all cards in the grip. Peeping Tom gains \"[subroutine] End the run unless the Runner takes 1 tag.\" for each revealed card that has the named type for the remainder of this run.\n<errata>Errata from FAQ 4.2</errata>.",
- :title "Peeping Tom",
- :type "ICE",
+{:code "22045"
+ :cost 4
+ :cycle_code "reign-and-reverie"
+ :faction "NBN"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_45.png"
+ :limited 3
+ :normalizedtitle "peeping-tom"
+ :number 45
+ :packquantity 3
+ :rotated false
+ :set_code "rar"
+ :setname "Reign and Reverie"
+ :side "Corp"
+ :strength 4
+ :subtype "Code Gate"
+ :text "When the Runner encounters Peeping Tom, name a card type, then reveal all cards in the grip. Peeping Tom gains \"[subroutine] End the run unless the Runner takes 1 tag.\" for each revealed card that has the named type for the remainder of this run.\n<errata>Errata from FAQ 4.2</errata>."
+ :title "Peeping Tom"
+ :type "ICE"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "05015",
- :cost 0,
- :cycle_code "honor-and-profit",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/05015.png",
- :limited 3,
- :normalizedtitle "mushin-no-shin",
- :number 15,
- :packquantity 3,
- :rotated false,
- :set_code "honor-and-profit",
- :setname "Honor and Profit",
- :side "Corp",
- :strength 0,
- :subtype "Double",
- :text "As an additional cost to play this operation, spend [click].\nInstall an asset, agenda, or upgrade from HQ in a new remote server. Place 3 advancement tokens on that card. You cannot score or rez that card until your next turn begins.",
- :title "Mushin No Shin",
- :type "Operation",
+{:code "05015"
+ :cost 0
+ :cycle_code "honor-and-profit"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/05015.png"
+ :limited 3
+ :normalizedtitle "mushin-no-shin"
+ :number 15
+ :packquantity 3
+ :rotated false
+ :set_code "hap"
+ :setname "Honor and Profit"
+ :side "Corp"
+ :strength 0
+ :subtype "Double"
+ :text "As an additional cost to play this operation, spend [click].\nInstall an asset, agenda, or upgrade from HQ in a new remote server. Place 3 advancement tokens on that card. You cannot score or rez that card until your next turn begins."
+ :title "Mushin No Shin"
+ :type "Operation"
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "10061",
- :cost 6,
- :cycle_code "mumbad",
- :faction "Criminal",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_61.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "vamadeva",
- :number 61,
- :packquantity 3,
- :rotated false,
- :set_code "salsette-island",
- :setname "Salsette Island",
- :side "Runner",
- :strength 2,
- :subtype "Icebreaker - AI - Deva",
- :text "1[credit]: Break ice subroutine on a piece of ice with exactly 1 subroutine.\n1[credit]: +1 strength.\n2[credit]: Swap Vamadeva with a <strong>deva</strong> program from your grip.",
- :title "Vamadeva",
- :type "Program",
+{:code "10061"
+ :cost 6
+ :cycle_code "mumbad"
+ :faction "Criminal"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_61.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "vamadeva"
+ :number 61
+ :packquantity 3
+ :rotated false
+ :set_code "si"
+ :setname "Salsette Island"
+ :side "Runner"
+ :strength 2
+ :subtype "Icebreaker - AI - Deva"
+ :text "1[credit]: Break ice subroutine on a piece of ice with exactly 1 subroutine.\n1[credit]: +1 strength.\n2[credit]: Swap Vamadeva with a <strong>deva</strong> program from your grip."
+ :title "Vamadeva"
+ :type "Program"
  :uniqueness true}

@@ -1,19 +1,19 @@
-{:code "01038",
- :cost 1,
- :cycle_code "core",
- :faction "Shaper",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/01038.png",
- :limited 3,
- :normalizedtitle "akamatsu-mem-chip",
- :number 38,
- :packquantity 2,
- :set_code "core-set",
- :setname "Core Set",
- :side "Runner",
- :strength 0,
- :subtype "Chip",
- :text "+1[mu]",
- :title "Akamatsu Mem Chip",
- :type "Hardware",
+{:code "01038"
+ :cost 1
+ :cycle_code "core"
+ :faction "Shaper"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/01038.png"
+ :limited 3
+ :normalizedtitle "akamatsu-mem-chip"
+ :number 38
+ :packquantity 2
+ :set_code "core"
+ :setname "Core Set"
+ :side "Runner"
+ :strength 0
+ :subtype "Chip"
+ :text "+1[mu]"
+ :title "Akamatsu Mem Chip"
+ :type "Hardware"
  :uniqueness false}

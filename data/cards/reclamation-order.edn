@@ -1,20 +1,20 @@
-{:code "04111",
- :cost 1,
- :cycle_code "spin",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04111.png",
- :limited 3,
- :normalizedtitle "reclamation-order",
- :number 111,
- :packquantity 3,
- :rotated true,
- :set_code "double-time",
- :setname "Double Time",
- :side "Corp",
- :strength 0,
- :subtype "Double",
- :text "As an additional cost to play this operation, spend [click].\nName a card other than Reclamation Order. Reveal any number of copies of the named card from Archives and add them to HQ.",
- :title "Reclamation Order",
- :type "Operation",
+{:code "04111"
+ :cost 1
+ :cycle_code "spin"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04111.png"
+ :limited 3
+ :normalizedtitle "reclamation-order"
+ :number 111
+ :packquantity 3
+ :rotated true
+ :set_code "dt"
+ :setname "Double Time"
+ :side "Corp"
+ :strength 0
+ :subtype "Double"
+ :text "As an additional cost to play this operation, spend [click].\nName a card other than Reclamation Order. Reveal any number of copies of the named card from Archives and add them to HQ."
+ :title "Reclamation Order"
+ :type "Operation"
  :uniqueness false}

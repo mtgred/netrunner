@@ -1,21 +1,20 @@
-{:code "02049",
- :cost 1,
- :cycle_code "genesis",
- :faction "Shaper",
- :factioncost 4,
- :image_url "https://netrunnerdb.com/card_image/02049.png",
- :limited 3,
- :normalizedtitle "personal-workshop",
- :number 49,
- :packquantity 3,
- :rotated true,
- :set_code "cyber-exodus",
- :setname "Cyber Exodus",
- :side "Runner",
- :strength 0,
- :subtype "Location",
- :text
- "[click]: Host a program or piece of hardware from your grip on Personal Workshop and place power counters on it equal to its install cost.\n1[credit]: Remove 1 power counter from a hosted card.\nWhen your turn begins, remove 1 power counter from a hosted card.\nWhen there are no power counters left on a hosted card, install it, ignoring all costs.",
- :title "Personal Workshop",
- :type "Resource",
+{:code "02049"
+ :cost 1
+ :cycle_code "genesis"
+ :faction "Shaper"
+ :factioncost 4
+ :image_url "https://netrunnerdb.com/card_image/02049.png"
+ :limited 3
+ :normalizedtitle "personal-workshop"
+ :number 49
+ :packquantity 3
+ :rotated true
+ :set_code "ce"
+ :setname "Cyber Exodus"
+ :side "Runner"
+ :strength 0
+ :subtype "Location"
+ :text "[click]: Host a program or piece of hardware from your grip on Personal Workshop and place power counters on it equal to its install cost.\n1[credit]: Remove 1 power counter from a hosted card.\nWhen your turn begins, remove 1 power counter from a hosted card.\nWhen there are no power counters left on a hosted card, install it, ignoring all costs."
+ :title "Personal Workshop"
+ :type "Resource"
  :uniqueness false}

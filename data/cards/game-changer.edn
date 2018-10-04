@@ -1,20 +1,20 @@
-{:code "22032",
- :cost 6,
- :cycle_code "reign-and-reverie",
- :faction "Haas-Bioroid",
- :factioncost 5,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_32.png",
- :limited 3,
- :normalizedtitle "game-changer",
- :number 32,
- :packquantity 3,
- :rotated false,
- :set_code "reign-and-reverie",
- :setname "Reign and Reverie",
- :side "Corp",
- :strength 0,
- :text "Gain [click] for each agenda in the Runner's score area. Remove Game Changer from the game instead of trashing it.",
- :title "Game Changer",
- :trash 2,
- :type "Operation",
+{:code "22032"
+ :cost 6
+ :cycle_code "reign-and-reverie"
+ :faction "Haas-Bioroid"
+ :factioncost 5
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_32.png"
+ :limited 3
+ :normalizedtitle "game-changer"
+ :number 32
+ :packquantity 3
+ :rotated false
+ :set_code "rar"
+ :setname "Reign and Reverie"
+ :side "Corp"
+ :strength 0
+ :text "Gain [click] for each agenda in the Runner's score area. Remove Game Changer from the game instead of trashing it."
+ :title "Game Changer"
+ :trash 2
+ :type "Operation"
  :uniqueness false}

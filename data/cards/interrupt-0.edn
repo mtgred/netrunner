@@ -1,21 +1,20 @@
-{:code "10016",
- :cost 2,
- :cycle_code "mumbad",
- :faction "NBN",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_16.png",
- :limited 3,
- :normalizedtitle "interrupt-0",
- :number 16,
- :packquantity 3,
- :rotated false,
- :set_code "kala-ghoda",
- :setname "Kala Ghoda",
- :side "Corp",
- :strength 4,
- :subtype "Code Gate",
- :text
- "[subroutine] For the remainder of this run, the Runner must pay 1[credit] as an additional cost each time he or she uses an <strong>icebreaker</strong> to break at least 1 subroutine.\n[subroutine] For the remainder of this run, the Runner must pay 1[credit] as an additional cost each time he or she uses an <strong>icebreaker</strong> to break at least 1 subroutine.",
- :title "Interrupt 0",
- :type "ICE",
+{:code "10016"
+ :cost 2
+ :cycle_code "mumbad"
+ :faction "NBN"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_16.png"
+ :limited 3
+ :normalizedtitle "interrupt-0"
+ :number 16
+ :packquantity 3
+ :rotated false
+ :set_code "kg"
+ :setname "Kala Ghoda"
+ :side "Corp"
+ :strength 4
+ :subtype "Code Gate"
+ :text "[subroutine] For the remainder of this run, the Runner must pay 1[credit] as an additional cost each time he or she uses an <strong>icebreaker</strong> to break at least 1 subroutine.\n[subroutine] For the remainder of this run, the Runner must pay 1[credit] as an additional cost each time he or she uses an <strong>icebreaker</strong> to break at least 1 subroutine."
+ :title "Interrupt 0"
+ :type "ICE"
  :uniqueness false}

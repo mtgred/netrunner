@@ -1,21 +1,21 @@
-{:advancementcost 3,
- :agendapoints 2,
- :code "20094",
- :cost 0,
- :cycle_code "core2",
- :faction "Jinteki",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_78.png",
- :limited 3,
- :normalizedtitle "braintrust",
- :number 78,
- :packquantity 3,
- :replaces "02014",
- :set_code "revised-core-set",
- :setname "Revised Core Set",
- :side "Corp",
- :strength 0,
- :subtype "Research",
- :text "When you score Braintrust, place 1 agenda counter on it for every 2 advancement tokens on it over 3.\nThe rez cost of all ice is lowered by 1 for each agenda counter on Braintrust.",
- :title "Braintrust",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 2
+ :code "20094"
+ :cost 0
+ :cycle_code "core2"
+ :faction "Jinteki"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_78.png"
+ :limited 3
+ :normalizedtitle "braintrust"
+ :number 78
+ :packquantity 3
+ :replaces "02014"
+ :set_code "core2"
+ :setname "Revised Core Set"
+ :side "Corp"
+ :strength 0
+ :subtype "Research"
+ :text "When you score Braintrust, place 1 agenda counter on it for every 2 advancement tokens on it over 3.\nThe rez cost of all ice is lowered by 1 for each agenda counter on Braintrust."
+ :title "Braintrust"
+ :type "Agenda"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "03052",
- :cost 2,
- :cycle_code "creation-and-control",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/03052.png",
- :limited 3,
- :normalizedtitle "dirty-laundry",
- :number 52,
- :packquantity 3,
- :rotated false,
- :set_code "creation-and-control",
- :setname "Creation and Control",
- :side "Runner",
- :strength 0,
- :subtype "Run",
- :text "Make a run. After the run is completed, gain 5[credit] if it was successful.",
- :title "Dirty Laundry",
- :type "Event",
+{:code "03052"
+ :cost 2
+ :cycle_code "creation-and-control"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/03052.png"
+ :limited 3
+ :normalizedtitle "dirty-laundry"
+ :number 52
+ :packquantity 3
+ :rotated false
+ :set_code "cac"
+ :setname "Creation and Control"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Make a run. After the run is completed, gain 5[credit] if it was successful."
+ :title "Dirty Laundry"
+ :type "Event"
  :uniqueness false}

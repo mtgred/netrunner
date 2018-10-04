@@ -1,20 +1,20 @@
-{:code "12047",
- :cost 2,
- :cycle_code "red-sand",
- :faction "Shaper",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_47.png",
- :limited 3,
- :normalizedtitle "dedicated-processor",
- :number 47,
- :packquantity 3,
- :rotated false,
- :set_code "earth-s-scion",
- :setname "Earth's Scion",
- :side "Runner",
- :strength 0,
- :subtype "Mod",
- :text "Install Dedicated Processor on a non-<strong>AI icebreaker</strong>.\nHost <strong>icebreaker</strong> gains \"2[credit]: +4 strength.\"",
- :title "Dedicated Processor",
- :type "Hardware",
+{:code "12047"
+ :cost 2
+ :cycle_code "red-sand"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_47.png"
+ :limited 3
+ :normalizedtitle "dedicated-processor"
+ :number 47
+ :packquantity 3
+ :rotated false
+ :set_code "eas"
+ :setname "Earth's Scion"
+ :side "Runner"
+ :strength 0
+ :subtype "Mod"
+ :text "Install Dedicated Processor on a non-<strong>AI icebreaker</strong>.\nHost <strong>icebreaker</strong> gains \"2[credit]: +4 strength.\""
+ :title "Dedicated Processor"
+ :type "Hardware"
  :uniqueness false}

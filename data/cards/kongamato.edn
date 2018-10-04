@@ -1,20 +1,20 @@
-{:code "21027",
- :cost 1,
- :cycle_code "kitara",
- :faction "Shaper",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_27.png",
- :limited 3,
- :normalizedtitle "kongamato",
- :number 27,
- :packquantity 3,
- :rotated false,
- :set_code "down-the-white-nile",
- :setname "Down the White Nile",
- :side "Runner",
- :strength 0,
- :subtype "Virtual",
- :text "[trash]: Break the first subroutine on the encountered piece of ice.",
- :title "Kongamato",
- :type "Resource",
+{:code "21027"
+ :cost 1
+ :cycle_code "kitara"
+ :faction "Shaper"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_27.png"
+ :limited 3
+ :normalizedtitle "kongamato"
+ :number 27
+ :packquantity 3
+ :rotated false
+ :set_code "dtwn"
+ :setname "Down the White Nile"
+ :side "Runner"
+ :strength 0
+ :subtype "Virtual"
+ :text "[trash]: Break the first subroutine on the encountered piece of ice."
+ :title "Kongamato"
+ :type "Resource"
  :uniqueness false}

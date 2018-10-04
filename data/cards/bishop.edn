@@ -1,21 +1,21 @@
-{:code "04021",
- :cost 0,
- :cycle_code "spin",
- :faction "Anarch",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04021.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "bishop",
- :number 21,
- :packquantity 3,
- :rotated true,
- :set_code "second-thoughts",
- :setname "Second Thoughts",
- :side "Runner",
- :strength 0,
- :subtype "Caïssa",
- :text "[click]: Host Bishop on a piece of ice not hosting a <strong>Caïssa</strong>. If already hosted, Bishop can be hosted only on ice protecting a central server if Bishop is on ice protecting a remote server, or on ice protecting a remote server if Bishop is on ice protecting a central server.\nHost ice has -2 strength.",
- :title "Bishop",
- :type "Program",
+{:code "04021"
+ :cost 0
+ :cycle_code "spin"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04021.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "bishop"
+ :number 21
+ :packquantity 3
+ :rotated true
+ :set_code "st"
+ :setname "Second Thoughts"
+ :side "Runner"
+ :strength 0
+ :subtype "Caïssa"
+ :text "[click]: Host Bishop on a piece of ice not hosting a <strong>Caïssa</strong>. If already hosted, Bishop can be hosted only on ice protecting a central server if Bishop is on ice protecting a remote server, or on ice protecting a remote server if Bishop is on ice protecting a central server.\nHost ice has -2 strength."
+ :title "Bishop"
+ :type "Program"
  :uniqueness false}

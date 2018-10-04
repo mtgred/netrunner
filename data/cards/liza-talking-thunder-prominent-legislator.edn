@@ -1,22 +1,22 @@
-{:baselink 0,
- :code "22008",
- :cost 0,
- :cycle_code "reign-and-reverie",
- :faction "Criminal",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_8.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 50,
- :normalizedtitle "liza-talking-thunder-prominent-legislator",
- :number 8,
- :packquantity 1,
- :rotated false,
- :set_code "reign-and-reverie",
- :setname "Reign and Reverie",
- :side "Runner",
- :strength 0,
- :subtype "G-mod",
- :text "The first time you make a successful run on a central server each turn, draw 2 cards and take 1 tag.",
- :title "Liza Talking Thunder: Prominent Legislator",
- :type "Identity",
+{:baselink 0
+ :code "22008"
+ :cost 0
+ :cycle_code "reign-and-reverie"
+ :faction "Criminal"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_8.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 50
+ :normalizedtitle "liza-talking-thunder-prominent-legislator"
+ :number 8
+ :packquantity 1
+ :rotated false
+ :set_code "rar"
+ :setname "Reign and Reverie"
+ :side "Runner"
+ :strength 0
+ :subtype "G-mod"
+ :text "The first time you make a successful run on a central server each turn, draw 2 cards and take 1 tag."
+ :title "Liza Talking Thunder: Prominent Legislator"
+ :type "Identity"
  :uniqueness false}

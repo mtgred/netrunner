@@ -1,20 +1,20 @@
-{:code "09032",
- :cost 2,
- :cycle_code "data-and-destiny",
- :faction "Apex",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_32.png",
- :limited 3,
- :normalizedtitle "heartbeat",
- :number 32,
- :packquantity 3,
- :rotated false,
- :set_code "data-and-destiny",
- :setname "Data and Destiny",
- :side "Runner",
- :strength 0,
- :subtype "Console",
- :text "+1[mu]\n<strong>Trash an installed card:</strong> Prevent 1 damage.\nLimit 1 <strong>console</strong> per player.",
- :title "Heartbeat",
- :type "Hardware",
+{:code "09032"
+ :cost 2
+ :cycle_code "data-and-destiny"
+ :faction "Apex"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_32.png"
+ :limited 3
+ :normalizedtitle "heartbeat"
+ :number 32
+ :packquantity 3
+ :rotated false
+ :set_code "dad"
+ :setname "Data and Destiny"
+ :side "Runner"
+ :strength 0
+ :subtype "Console"
+ :text "+1[mu]\n<strong>Trash an installed card:</strong> Prevent 1 damage.\nLimit 1 <strong>console</strong> per player."
+ :title "Heartbeat"
+ :type "Hardware"
  :uniqueness true}

@@ -1,20 +1,20 @@
-{:code "03037",
- :cost 2,
- :cycle_code "creation-and-control",
- :faction "Shaper",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/03037.png",
- :limited 3,
- :normalizedtitle "feedback-filter",
- :number 37,
- :packquantity 3,
- :rotated false,
- :set_code "creation-and-control",
- :setname "Creation and Control",
- :side "Runner",
- :strength 0,
- :subtype "Gear",
- :text "3[credit]: Prevent 1 net damage.\n[trash]: Prevent up to 2 brain damage.",
- :title "Feedback Filter",
- :type "Hardware",
+{:code "03037"
+ :cost 2
+ :cycle_code "creation-and-control"
+ :faction "Shaper"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/03037.png"
+ :limited 3
+ :normalizedtitle "feedback-filter"
+ :number 37
+ :packquantity 3
+ :rotated false
+ :set_code "cac"
+ :setname "Creation and Control"
+ :side "Runner"
+ :strength 0
+ :subtype "Gear"
+ :text "3[credit]: Prevent 1 net damage.\n[trash]: Prevent up to 2 brain damage."
+ :title "Feedback Filter"
+ :type "Hardware"
  :uniqueness false}

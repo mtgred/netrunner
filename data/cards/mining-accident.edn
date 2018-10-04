@@ -1,19 +1,19 @@
-{:code "12101",
- :cost 2,
- :cycle_code "red-sand",
- :faction "Anarch",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_101.png",
- :limited 3,
- :normalizedtitle "mining-accident",
- :number 101,
- :packquantity 3,
- :rotated false,
- :set_code "crimson-dust",
- :setname "Crimson Dust",
- :side "Runner",
- :strength 0,
- :text "Play only if you made a successful run on a central server this turn.\nThe Corp must pay 5[credit] or take 1 bad publicity. Remove Mining Accident from the game instead of trashing it.",
- :title "Mining Accident",
- :type "Event",
+{:code "12101"
+ :cost 2
+ :cycle_code "red-sand"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_101.png"
+ :limited 3
+ :normalizedtitle "mining-accident"
+ :number 101
+ :packquantity 3
+ :rotated false
+ :set_code "cd"
+ :setname "Crimson Dust"
+ :side "Runner"
+ :strength 0
+ :text "Play only if you made a successful run on a central server this turn.\nThe Corp must pay 5[credit] or take 1 bad publicity. Remove Mining Accident from the game instead of trashing it."
+ :title "Mining Accident"
+ :type "Event"
  :uniqueness false}

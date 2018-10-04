@@ -1,21 +1,21 @@
-{:advancementcost 5,
- :agendapoints 2,
- :code "02032",
- :cost 0,
- :cycle_code "genesis",
- :faction "Jinteki",
- :image_url "https://netrunnerdb.com/card_image/02032.png",
- :limited 3,
- :normalizedtitle "fetal-ai",
- :number 32,
- :packquantity 3,
- :rotated true,
- :set_code "trace-amount",
- :setname "Trace Amount",
- :side "Corp",
- :strength 0,
- :subtype "Ambush",
- :text "If Fetal AI is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Fetal AI, do 2 net damage. Ignore this ability if the Runner accesses Fetal AI from Archives.\nAs an additional cost to steal Fetal AI, the Runner must pay 2[credit].",
- :title "Fetal AI",
- :type "Agenda",
+{:advancementcost 5
+ :agendapoints 2
+ :code "02032"
+ :cost 0
+ :cycle_code "genesis"
+ :faction "Jinteki"
+ :image_url "https://netrunnerdb.com/card_image/02032.png"
+ :limited 3
+ :normalizedtitle "fetal-ai"
+ :number 32
+ :packquantity 3
+ :rotated true
+ :set_code "ta"
+ :setname "Trace Amount"
+ :side "Corp"
+ :strength 0
+ :subtype "Ambush"
+ :text "If Fetal AI is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Fetal AI, do 2 net damage. Ignore this ability if the Runner accesses Fetal AI from Archives.\nAs an additional cost to steal Fetal AI, the Runner must pay 2[credit]."
+ :title "Fetal AI"
+ :type "Agenda"
  :uniqueness false}

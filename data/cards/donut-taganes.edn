@@ -1,20 +1,20 @@
-{:code "05055",
- :cost 3,
- :cycle_code "honor-and-profit",
- :faction "Neutral",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/05055.png",
- :limited 3,
- :normalizedtitle "donut-taganes",
- :number 55,
- :packquantity 3,
- :rotated false,
- :set_code "honor-and-profit",
- :setname "Honor and Profit",
- :side "Runner",
- :strength 0,
- :subtype "Connection",
- :text "The play cost of operations and events is increased by 1.",
- :title "Donut Taganes",
- :type "Resource",
+{:code "05055"
+ :cost 3
+ :cycle_code "honor-and-profit"
+ :faction "Neutral"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/05055.png"
+ :limited 3
+ :normalizedtitle "donut-taganes"
+ :number 55
+ :packquantity 3
+ :rotated false
+ :set_code "hap"
+ :setname "Honor and Profit"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "The play cost of operations and events is increased by 1."
+ :title "Donut Taganes"
+ :type "Resource"
  :uniqueness true}

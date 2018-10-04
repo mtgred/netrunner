@@ -1,20 +1,20 @@
-{:code "10077",
- :cost 0,
- :cycle_code "mumbad",
- :faction "Anarch",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_77.png",
- :limited 3,
- :normalizedtitle "the-noble-path",
- :number 77,
- :packquantity 3,
- :rotated false,
- :set_code "the-liberated-mind",
- :setname "The Liberated Mind",
- :side "Runner",
- :strength 0,
- :subtype "Run",
- :text "Trash your grip. Make a run. Prevent all damage during this run.",
- :title "The Noble Path",
- :type "Event",
+{:code "10077"
+ :cost 0
+ :cycle_code "mumbad"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_77.png"
+ :limited 3
+ :normalizedtitle "the-noble-path"
+ :number 77
+ :packquantity 3
+ :rotated false
+ :set_code "tlm"
+ :setname "The Liberated Mind"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Trash your grip. Make a run. Prevent all damage during this run."
+ :title "The Noble Path"
+ :type "Event"
  :uniqueness false}

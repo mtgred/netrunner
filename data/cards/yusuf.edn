@@ -1,21 +1,21 @@
-{:code "21002",
- :cost 1,
- :cycle_code "kitara",
- :faction "Anarch",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_2.png",
- :limited 3,
- :memoryunits 2,
- :normalizedtitle "yusuf",
- :number 2,
- :packquantity 3,
- :rotated false,
- :set_code "sovereign-sight",
- :setname "Sovereign Sight",
- :side "Runner",
- :strength 3,
- :subtype "Icebreaker - Fracter - Virus",
- :text "Whenever you make a successful run, you may place 1 virus counter on Yusuf.\n<strong>Virus counter from any installed card</strong>: Break <strong>barrier</strong> subroutine.\n<strong>Virus counter from any installed card</strong>: +1 strength.",
- :title "Yusuf",
- :type "Program",
+{:code "21002"
+ :cost 1
+ :cycle_code "kitara"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_2.png"
+ :limited 3
+ :memoryunits 2
+ :normalizedtitle "yusuf"
+ :number 2
+ :packquantity 3
+ :rotated false
+ :set_code "ss"
+ :setname "Sovereign Sight"
+ :side "Runner"
+ :strength 3
+ :subtype "Icebreaker - Fracter - Virus"
+ :text "Whenever you make a successful run, you may place 1 virus counter on Yusuf.\n<strong>Virus counter from any installed card</strong>: Break <strong>barrier</strong> subroutine.\n<strong>Virus counter from any installed card</strong>: +1 strength."
+ :title "Yusuf"
+ :type "Program"
  :uniqueness false}

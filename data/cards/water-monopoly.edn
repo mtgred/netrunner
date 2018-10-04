@@ -1,21 +1,21 @@
-{:advancementcost 3,
- :agendapoints 1,
- :code "12093",
- :cost 0,
- :cycle_code "red-sand",
- :faction "Jinteki",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_93.png",
- :limited 3,
- :normalizedtitle "water-monopoly",
- :number 93,
- :packquantity 3,
- :rotated false,
- :set_code "free-mars",
- :setname "Free Mars",
- :side "Corp",
- :strength 0,
- :subtype "Initiative",
- :text "The install cost of each non-<strong>virtual</strong> resource is increased by 1.",
- :title "Water Monopoly",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 1
+ :code "12093"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Jinteki"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_93.png"
+ :limited 3
+ :normalizedtitle "water-monopoly"
+ :number 93
+ :packquantity 3
+ :rotated false
+ :set_code "fm"
+ :setname "Free Mars"
+ :side "Corp"
+ :strength 0
+ :subtype "Initiative"
+ :text "The install cost of each non-<strong>virtual</strong> resource is increased by 1."
+ :title "Water Monopoly"
+ :type "Agenda"
  :uniqueness false}

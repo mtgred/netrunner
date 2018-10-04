@@ -1,20 +1,20 @@
-{:code "07039",
- :cost 2,
- :cycle_code "order-and-chaos",
- :faction "Anarch",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_39.png",
- :limited 3,
- :normalizedtitle "spooned",
- :number 39,
- :packquantity 3,
- :rotated false,
- :set_code "order-and-chaos",
- :setname "Order and Chaos",
- :side "Runner",
- :strength 0,
- :subtype "Run - Sabotage",
- :text "Make a run. The first time you break all subroutines on a <strong>code gate</strong> during this run, trash that <strong>code gate</strong>.",
- :title "Spooned",
- :type "Event",
+{:code "07039"
+ :cost 2
+ :cycle_code "order-and-chaos"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_39.png"
+ :limited 3
+ :normalizedtitle "spooned"
+ :number 39
+ :packquantity 3
+ :rotated false
+ :set_code "oac"
+ :setname "Order and Chaos"
+ :side "Runner"
+ :strength 0
+ :subtype "Run - Sabotage"
+ :text "Make a run. The first time you break all subroutines on a <strong>code gate</strong> during this run, trash that <strong>code gate</strong>."
+ :title "Spooned"
+ :type "Event"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "04046",
- :cost 2,
- :cycle_code "spin",
- :faction "Criminal",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/04046.png",
- :limited 3,
- :normalizedtitle "grifter",
- :number 46,
- :packquantity 3,
- :rotated true,
- :set_code "mala-tempora",
- :setname "Mala Tempora",
- :side "Runner",
- :strength 0,
- :subtype "Virtual",
- :text "When your turn ends, gain 1[credit] if you made a successful run this turn; otherwise, trash Grifter.",
- :title "Grifter",
- :type "Resource",
+{:code "04046"
+ :cost 2
+ :cycle_code "spin"
+ :faction "Criminal"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/04046.png"
+ :limited 3
+ :normalizedtitle "grifter"
+ :number 46
+ :packquantity 3
+ :rotated true
+ :set_code "mt"
+ :setname "Mala Tempora"
+ :side "Runner"
+ :strength 0
+ :subtype "Virtual"
+ :text "When your turn ends, gain 1[credit] if you made a successful run this turn; otherwise, trash Grifter."
+ :title "Grifter"
+ :type "Resource"
  :uniqueness false}

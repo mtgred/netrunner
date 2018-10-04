@@ -1,21 +1,21 @@
-{:code "06007",
- :cost 4,
- :cycle_code "lunar",
- :faction "NBN",
- :factioncost 4,
- :image_url "https://netrunnerdb.com/card_image/06007.png",
- :limited 3,
- :normalizedtitle "midway-station-grid",
- :number 7,
- :packquantity 3,
- :rotated false,
- :set_code "upstalk",
- :setname "Upstalk",
- :side "Corp",
- :strength 0,
- :subtype "Beanstalk - Region",
- :text "The Runner must pay 1[credit] as an additional cost each time he or she uses an <strong>icebreaker</strong> to break at least 1 subroutine during a run on this server.\nLimit 1 <strong>region</strong> per server.",
- :title "Midway Station Grid",
- :trash 4,
- :type "Upgrade",
+{:code "06007"
+ :cost 4
+ :cycle_code "lunar"
+ :faction "NBN"
+ :factioncost 4
+ :image_url "https://netrunnerdb.com/card_image/06007.png"
+ :limited 3
+ :normalizedtitle "midway-station-grid"
+ :number 7
+ :packquantity 3
+ :rotated false
+ :set_code "up"
+ :setname "Upstalk"
+ :side "Corp"
+ :strength 0
+ :subtype "Beanstalk - Region"
+ :text "The Runner must pay 1[credit] as an additional cost each time he or she uses an <strong>icebreaker</strong> to break at least 1 subroutine during a run on this server.\nLimit 1 <strong>region</strong> per server."
+ :title "Midway Station Grid"
+ :trash 4
+ :type "Upgrade"
  :uniqueness false}

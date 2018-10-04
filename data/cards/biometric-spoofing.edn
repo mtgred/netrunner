@@ -1,19 +1,19 @@
-{:code "13026",
- :cost 2,
- :cycle_code "terminal-directive",
- :faction "Neutral",
- :factioncost 0,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_26.png",
- :limited 3,
- :normalizedtitle "biometric-spoofing",
- :number 26,
- :packquantity 3,
- :rotated false,
- :set_code "terminal-directive",
- :setname "Terminal Directive",
- :side "Runner",
- :strength 0,
- :text "[trash]: Prevent 2 damage.",
- :title "Biometric Spoofing",
- :type "Resource",
+{:code "13026"
+ :cost 2
+ :cycle_code "terminal-directive"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_26.png"
+ :limited 3
+ :normalizedtitle "biometric-spoofing"
+ :number 26
+ :packquantity 3
+ :rotated false
+ :set_code "td"
+ :setname "Terminal Directive"
+ :side "Runner"
+ :strength 0
+ :text "[trash]: Prevent 2 damage."
+ :title "Biometric Spoofing"
+ :type "Resource"
  :uniqueness false}

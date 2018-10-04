@@ -1,19 +1,19 @@
-{:code "05033",
- :cost 1,
- :cycle_code "honor-and-profit",
- :faction "Criminal",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/05033.png",
- :limited 3,
- :normalizedtitle "express-delivery",
- :number 33,
- :packquantity 3,
- :rotated false,
- :set_code "honor-and-profit",
- :setname "Honor and Profit",
- :side "Runner",
- :strength 0,
- :text "Look at the top 4 cards of your stack and add 1 of those cards to your grip. Shuffle your stack.",
- :title "Express Delivery",
- :type "Event",
+{:code "05033"
+ :cost 1
+ :cycle_code "honor-and-profit"
+ :faction "Criminal"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/05033.png"
+ :limited 3
+ :normalizedtitle "express-delivery"
+ :number 33
+ :packquantity 3
+ :rotated false
+ :set_code "hap"
+ :setname "Honor and Profit"
+ :side "Runner"
+ :strength 0
+ :text "Look at the top 4 cards of your stack and add 1 of those cards to your grip. Shuffle your stack."
+ :title "Express Delivery"
+ :type "Event"
  :uniqueness false}

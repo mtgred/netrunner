@@ -1,20 +1,20 @@
-{:code "08027",
- :cost 4,
- :cycle_code "sansan",
- :faction "Shaper",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_27.png",
- :limited 3,
- :normalizedtitle "comet",
- :number 27,
- :packquantity 3,
- :rotated false,
- :set_code "breaker-bay",
- :setname "Breaker Bay",
- :side "Runner",
- :strength 0,
- :subtype "Console",
- :text "+1[mu]\nThe first time you play an event each turn, you may play another event (without spending a click) after the first one resolves.\nLimit 1 <strong>console</strong> per player.",
- :title "Comet",
- :type "Hardware",
+{:code "08027"
+ :cost 4
+ :cycle_code "sansan"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_27.png"
+ :limited 3
+ :normalizedtitle "comet"
+ :number 27
+ :packquantity 3
+ :rotated false
+ :set_code "bb"
+ :setname "Breaker Bay"
+ :side "Runner"
+ :strength 0
+ :subtype "Console"
+ :text "+1[mu]\nThe first time you play an event each turn, you may play another event (without spending a click) after the first one resolves.\nLimit 1 <strong>console</strong> per player."
+ :title "Comet"
+ :type "Hardware"
  :uniqueness true}

@@ -1,19 +1,19 @@
-{:code "02093",
- :cost 0,
- :cycle_code "genesis",
- :faction "Haas-Bioroid",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/02093.png",
- :limited 3,
- :normalizedtitle "rework",
- :number 93,
- :packquantity 3,
- :rotated true,
- :set_code "humanity-s-shadow",
- :setname "Humanity's Shadow",
- :side "Corp",
- :strength 0,
- :text "Shuffle 1 card from HQ into R&D.",
- :title "Rework",
- :type "Operation",
+{:code "02093"
+ :cost 0
+ :cycle_code "genesis"
+ :faction "Haas-Bioroid"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/02093.png"
+ :limited 3
+ :normalizedtitle "rework"
+ :number 93
+ :packquantity 3
+ :rotated true
+ :set_code "hs"
+ :setname "Humanity's Shadow"
+ :side "Corp"
+ :strength 0
+ :text "Shuffle 1 card from HQ into R&D."
+ :title "Rework"
+ :type "Operation"
  :uniqueness false}

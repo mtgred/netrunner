@@ -1,20 +1,20 @@
-{:code "03019",
- :cost 5,
- :cycle_code "creation-and-control",
- :faction "Haas-Bioroid",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/03019.png",
- :limited 3,
- :normalizedtitle "viktor-2-0",
- :number 19,
- :packquantity 3,
- :rotated false,
- :set_code "creation-and-control",
- :setname "Creation and Control",
- :side "Corp",
- :strength 5,
- :subtype "Code Gate - Bioroid - Tracer - AP",
- :text "The Runner can spend [click][click] to break up to 2 subroutines on Viktor 2.0.\n<strong>Hosted power counter:</strong> Do 1 brain damage.\n[subroutine] <trace>Trace 2</trace> If successful, place 1 power counter on Viktor 2.0.\n[subroutine] End the run.",
- :title "Viktor 2.0",
- :type "ICE",
+{:code "03019"
+ :cost 5
+ :cycle_code "creation-and-control"
+ :faction "Haas-Bioroid"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/03019.png"
+ :limited 3
+ :normalizedtitle "viktor-2-0"
+ :number 19
+ :packquantity 3
+ :rotated false
+ :set_code "cac"
+ :setname "Creation and Control"
+ :side "Corp"
+ :strength 5
+ :subtype "Code Gate - Bioroid - Tracer - AP"
+ :text "The Runner can spend [click][click] to break up to 2 subroutines on Viktor 2.0.\n<strong>Hosted power counter:</strong> Do 1 brain damage.\n[subroutine] <trace>Trace 2</trace> If successful, place 1 power counter on Viktor 2.0.\n[subroutine] End the run."
+ :title "Viktor 2.0"
+ :type "ICE"
  :uniqueness false}

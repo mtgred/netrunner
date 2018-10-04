@@ -1,20 +1,20 @@
-{:code "06039",
- :cost 0,
- :cycle_code "lunar",
- :faction "Shaper",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_39.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "llds-energy-regulator",
- :number 39,
- :packquantity 3,
- :rotated false,
- :set_code "the-spaces-between",
- :setname "The Spaces Between",
- :side "Runner",
- :strength 0,
- :text "3[credit] or [trash]: Prevent an installed piece of hardware from being trashed.",
- :title "LLDS Energy Regulator",
- :type "Program",
+{:code "06039"
+ :cost 0
+ :cycle_code "lunar"
+ :faction "Shaper"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_39.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "llds-energy-regulator"
+ :number 39
+ :packquantity 3
+ :rotated false
+ :set_code "tsb"
+ :setname "The Spaces Between"
+ :side "Runner"
+ :strength 0
+ :text "3[credit] or [trash]: Prevent an installed piece of hardware from being trashed."
+ :title "LLDS Energy Regulator"
+ :type "Program"
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:advancementcost 4,
- :agendapoints 2,
- :code "22051",
- :cost 0,
- :cycle_code "reign-and-reverie",
- :faction "Weyland Consortium",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_51.png",
- :limited 3,
- :normalizedtitle "broad-daylight",
- :number 51,
- :packquantity 3,
- :rotated false,
- :set_code "reign-and-reverie",
- :setname "Reign and Reverie",
- :side "Corp",
- :strength 0,
- :subtype "Security",
- :text "When you score Broad Daylight, you may take 1 bad publicity. Place 1 agenda counter on Broad Daylight for each bad publicity you have.\n[click], <strong>hosted agenda counter</strong>: Do 2 meat damage. Use this ability only once per turn.",
- :title "Broad Daylight",
- :type "Agenda",
+{:advancementcost 4
+ :agendapoints 2
+ :code "22051"
+ :cost 0
+ :cycle_code "reign-and-reverie"
+ :faction "Weyland Consortium"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_51.png"
+ :limited 3
+ :normalizedtitle "broad-daylight"
+ :number 51
+ :packquantity 3
+ :rotated false
+ :set_code "rar"
+ :setname "Reign and Reverie"
+ :side "Corp"
+ :strength 0
+ :subtype "Security"
+ :text "When you score Broad Daylight, you may take 1 bad publicity. Place 1 agenda counter on Broad Daylight for each bad publicity you have.\n[click], <strong>hosted agenda counter</strong>: Do 2 meat damage. Use this ability only once per turn."
+ :title "Broad Daylight"
+ :type "Agenda"
  :uniqueness false}

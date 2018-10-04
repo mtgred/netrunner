@@ -1,21 +1,21 @@
-{:code "02002",
- :cost 4,
- :cycle_code "genesis",
- :faction "Anarch",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/02002.png",
- :limited 3,
- :normalizedtitle "spinal-modem",
- :number 2,
- :packquantity 3,
- :replaced_by "20007",
- :rotated true,
- :set_code "what-lies-ahead",
- :setname "What Lies Ahead",
- :side "Runner",
- :strength 0,
- :subtype "Console",
- :text "+1[mu], 2[recurring-credit]\nUse these credits to pay for using <strong>icebreakers</strong>.\nWhenever there is a successful trace during a run, suffer 1 brain damage.\nLimit 1 <strong>console</strong> per player.",
- :title "Spinal Modem",
- :type "Hardware",
+{:code "02002"
+ :cost 4
+ :cycle_code "genesis"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/02002.png"
+ :limited 3
+ :normalizedtitle "spinal-modem"
+ :number 2
+ :packquantity 3
+ :replaced_by "20007"
+ :rotated true
+ :set_code "wla"
+ :setname "What Lies Ahead"
+ :side "Runner"
+ :strength 0
+ :subtype "Console"
+ :text "+1[mu], 2[recurring-credit]\nUse these credits to pay for using <strong>icebreakers</strong>.\nWhenever there is a successful trace during a run, suffer 1 brain damage.\nLimit 1 <strong>console</strong> per player."
+ :title "Spinal Modem"
+ :type "Hardware"
  :uniqueness true}

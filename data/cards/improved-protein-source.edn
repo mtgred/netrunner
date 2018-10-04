@@ -1,21 +1,21 @@
-{:advancementcost 4,
- :agendapoints 3,
- :code "10105",
- :cost 0,
- :cycle_code "mumbad",
- :faction "Jinteki",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_105.png",
- :limited 3,
- :normalizedtitle "improved-protein-source",
- :number 105,
- :packquantity 3,
- :rotated false,
- :set_code "fear-the-masses",
- :setname "Fear the Masses",
- :side "Corp",
- :strength 0,
- :subtype "Research",
- :text "When Improved Protein Source is scored or stolen, the Runner gains 4[credit].",
- :title "Improved Protein Source",
- :type "Agenda",
+{:advancementcost 4
+ :agendapoints 3
+ :code "10105"
+ :cost 0
+ :cycle_code "mumbad"
+ :faction "Jinteki"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_105.png"
+ :limited 3
+ :normalizedtitle "improved-protein-source"
+ :number 105
+ :packquantity 3
+ :rotated false
+ :set_code "ftm"
+ :setname "Fear the Masses"
+ :side "Corp"
+ :strength 0
+ :subtype "Research"
+ :text "When Improved Protein Source is scored or stolen, the Runner gains 4[credit]."
+ :title "Improved Protein Source"
+ :type "Agenda"
  :uniqueness false}

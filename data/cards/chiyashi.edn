@@ -1,20 +1,20 @@
-{:code "11112",
- :cost 12,
- :cycle_code "flashpoint",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_112.png",
- :limited 3,
- :normalizedtitle "chiyashi",
- :number 112,
- :packquantity 3,
- :rotated false,
- :set_code "quorum",
- :setname "Quorum",
- :side "Corp",
- :strength 8,
- :subtype "Barrier - AP",
- :text "Whenever the Runner breaks a subroutine on Chiyashi while there is an <strong>AI</strong> installed, trash the top 2 cards of the Runner's stack.\n[subroutine] Do 2 net damage.\n[subroutine] Do 2 net damage.\n[subroutine] End the run.",
- :title "Chiyashi",
- :type "ICE",
+{:code "11112"
+ :cost 12
+ :cycle_code "flashpoint"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_112.png"
+ :limited 3
+ :normalizedtitle "chiyashi"
+ :number 112
+ :packquantity 3
+ :rotated false
+ :set_code "qu"
+ :setname "Quorum"
+ :side "Corp"
+ :strength 8
+ :subtype "Barrier - AP"
+ :text "Whenever the Runner breaks a subroutine on Chiyashi while there is an <strong>AI</strong> installed, trash the top 2 cards of the Runner's stack.\n[subroutine] Do 2 net damage.\n[subroutine] Do 2 net damage.\n[subroutine] End the run."
+ :title "Chiyashi"
+ :type "ICE"
  :uniqueness false}

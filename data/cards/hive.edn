@@ -1,20 +1,20 @@
-{:code "20087",
- :cost 5,
- :cycle_code "core2",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_118.png",
- :limited 3,
- :normalizedtitle "hive",
- :number 118,
- :packquantity 2,
- :replaces "04117",
- :set_code "revised-core-set",
- :setname "Revised Core Set",
- :side "Corp",
- :strength 3,
- :subtype "Barrier",
- :text "Hive loses an \"[subroutine] End the run.\" subroutine for each agenda point in the Corp's score area.\n[subroutine] End the run.\n[subroutine] End the run.\n[subroutine] End the run.\n[subroutine] End the run.\n[subroutine] End the run.",
- :title "Hive",
- :type "ICE",
+{:code "20087"
+ :cost 5
+ :cycle_code "core2"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_118.png"
+ :limited 3
+ :normalizedtitle "hive"
+ :number 118
+ :packquantity 2
+ :replaces "04117"
+ :set_code "core2"
+ :setname "Revised Core Set"
+ :side "Corp"
+ :strength 3
+ :subtype "Barrier"
+ :text "Hive loses an \"[subroutine] End the run.\" subroutine for each agenda point in the Corp's score area.\n[subroutine] End the run.\n[subroutine] End the run.\n[subroutine] End the run.\n[subroutine] End the run.\n[subroutine] End the run."
+ :title "Hive"
+ :type "ICE"
  :uniqueness false}

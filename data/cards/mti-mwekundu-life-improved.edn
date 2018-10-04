@@ -1,21 +1,21 @@
-{:code "21114",
- :cost 0,
- :cycle_code "kitara",
- :faction "Jinteki",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_114.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "mti-mwekundu-life-improved",
- :number 114,
- :packquantity 3,
- :rotated false,
- :set_code "kampala-ascendent",
- :setname "Kampala Ascendent",
- :side "Corp",
- :strength 0,
- :subtype "Division",
- :text "Once per turn, when the Runner approaches a server, you may install a piece of ice protecting that server in the innermost position, ignoring all costs. The Runner is now approaching that ice.",
- :title "Mti Mwekundu: Life Improved",
- :type "Identity",
+{:code "21114"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Jinteki"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_114.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "mti-mwekundu-life-improved"
+ :number 114
+ :packquantity 3
+ :rotated false
+ :set_code "ka"
+ :setname "Kampala Ascendent"
+ :side "Corp"
+ :strength 0
+ :subtype "Division"
+ :text "Once per turn, when the Runner approaches a server, you may install a piece of ice protecting that server in the innermost position, ignoring all costs. The Runner is now approaching that ice."
+ :title "Mti Mwekundu: Life Improved"
+ :type "Identity"
  :uniqueness false}

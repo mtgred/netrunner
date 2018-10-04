@@ -1,21 +1,21 @@
-{:advancementcost 3,
- :agendapoints 1,
- :code "03004",
- :cost 0,
- :cycle_code "creation-and-control",
- :faction "Haas-Bioroid",
- :image_url "https://netrunnerdb.com/card_image/03004.png",
- :limited 1,
- :normalizedtitle "director-haas-pet-project",
- :number 4,
- :packquantity 3,
- :rotated false,
- :set_code "creation-and-control",
- :setname "Creation and Control",
- :side "Corp",
- :strength 0,
- :subtype "Initiative",
- :text "When you score Director Haas' Pet Project, you may create a new remote server by installing up to 3 cards from HQ and/or Archives in that server and/or protecting that server (one at a time), ignoring all install costs.\nLimit 1 Director Haas' Pet Project per deck.",
- :title "Director Haas' Pet Project",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 1
+ :code "03004"
+ :cost 0
+ :cycle_code "creation-and-control"
+ :faction "Haas-Bioroid"
+ :image_url "https://netrunnerdb.com/card_image/03004.png"
+ :limited 1
+ :normalizedtitle "director-haas-pet-project"
+ :number 4
+ :packquantity 3
+ :rotated false
+ :set_code "cac"
+ :setname "Creation and Control"
+ :side "Corp"
+ :strength 0
+ :subtype "Initiative"
+ :text "When you score Director Haas' Pet Project, you may create a new remote server by installing up to 3 cards from HQ and/or Archives in that server and/or protecting that server (one at a time), ignoring all install costs.\nLimit 1 Director Haas' Pet Project per deck."
+ :title "Director Haas' Pet Project"
+ :type "Agenda"
  :uniqueness true}

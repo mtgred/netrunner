@@ -1,21 +1,21 @@
-{:code "04106",
- :cost 0,
- :cycle_code "spin",
- :faction "Criminal",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/04106.png",
- :limited 3,
- :normalizedtitle "fall-guy",
- :number 106,
- :packquantity 3,
- :replaced_by "20035",
- :rotated true,
- :set_code "double-time",
- :setname "Double Time",
- :side "Runner",
- :strength 0,
- :subtype "Connection",
- :text "[trash]: Prevent another installed resource from being trashed.\n[trash]: Gain 2[credit].",
- :title "Fall Guy",
- :type "Resource",
+{:code "04106"
+ :cost 0
+ :cycle_code "spin"
+ :faction "Criminal"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/04106.png"
+ :limited 3
+ :normalizedtitle "fall-guy"
+ :number 106
+ :packquantity 3
+ :replaced_by "20035"
+ :rotated true
+ :set_code "dt"
+ :setname "Double Time"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "[trash]: Prevent another installed resource from being trashed.\n[trash]: Gain 2[credit]."
+ :title "Fall Guy"
+ :type "Resource"
  :uniqueness false}

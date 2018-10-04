@@ -1,20 +1,20 @@
-{:code "11094",
- :cost 2,
- :cycle_code "flashpoint",
- :faction "NBN",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_94.png",
- :limited 3,
- :normalizedtitle "ip-block",
- :number 94,
- :packquantity 3,
- :rotated false,
- :set_code "martial-law",
- :setname "Martial Law",
- :side "Corp",
- :strength 4,
- :subtype "Barrier - Tracer",
- :text "When the Runner encounters IP Block, give him or her 1 tag if there is an installed <strong>AI</strong>.\n[subroutine] <trace>Trace 3</trace> If successful, give the Runner 1 tag.\n[subroutine] End the run if the Runner is tagged.",
- :title "IP Block",
- :type "ICE",
+{:code "11094"
+ :cost 2
+ :cycle_code "flashpoint"
+ :faction "NBN"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_94.png"
+ :limited 3
+ :normalizedtitle "ip-block"
+ :number 94
+ :packquantity 3
+ :rotated false
+ :set_code "ml"
+ :setname "Martial Law"
+ :side "Corp"
+ :strength 4
+ :subtype "Barrier - Tracer"
+ :text "When the Runner encounters IP Block, give him or her 1 tag if there is an installed <strong>AI</strong>.\n[subroutine] <trace>Trace 3</trace> If successful, give the Runner 1 tag.\n[subroutine] End the run if the Runner is tagged."
+ :title "IP Block"
+ :type "ICE"
  :uniqueness false}

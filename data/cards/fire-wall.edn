@@ -1,20 +1,20 @@
-{:code "07018",
- :cost 5,
- :cycle_code "order-and-chaos",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_18.png",
- :limited 3,
- :normalizedtitle "fire-wall",
- :number 18,
- :packquantity 3,
- :rotated false,
- :set_code "order-and-chaos",
- :setname "Order and Chaos",
- :side "Corp",
- :strength 5,
- :subtype "Barrier",
- :text "Fire Wall can be advanced and gains +1 strength for each advancement token on it.\n[subroutine] End the run.",
- :title "Fire Wall",
- :type "ICE",
+{:code "07018"
+ :cost 5
+ :cycle_code "order-and-chaos"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_18.png"
+ :limited 3
+ :normalizedtitle "fire-wall"
+ :number 18
+ :packquantity 3
+ :rotated false
+ :set_code "oac"
+ :setname "Order and Chaos"
+ :side "Corp"
+ :strength 5
+ :subtype "Barrier"
+ :text "Fire Wall can be advanced and gains +1 strength for each advancement token on it.\n[subroutine] End the run."
+ :title "Fire Wall"
+ :type "ICE"
  :uniqueness false}

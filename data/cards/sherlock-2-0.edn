@@ -1,21 +1,20 @@
-{:code "11011",
- :cost 7,
- :cycle_code "flashpoint",
- :faction "Haas-Bioroid",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_11.png",
- :limited 3,
- :normalizedtitle "sherlock-2-0",
- :number 11,
- :packquantity 3,
- :rotated false,
- :set_code "23-seconds",
- :setname "23 Seconds",
- :side "Corp",
- :strength 6,
- :subtype "Sentry - Bioroid - Tracer",
- :text
- "The Runner can spend [click][click] to break up to 2 subroutines on Sherlock 2.0.\n[subroutine]<trace>Trace 4</trace> If successful, add 1 installed program to the bottom of the Runner's stack.\n[subroutine]<trace>Trace 4</trace> If successful, add 1 installed program to the bottom of the Runner's stack.\n[subroutine]Give the Runner 1 tag.",
- :title "Sherlock 2.0",
- :type "ICE",
+{:code "11011"
+ :cost 7
+ :cycle_code "flashpoint"
+ :faction "Haas-Bioroid"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_11.png"
+ :limited 3
+ :normalizedtitle "sherlock-2-0"
+ :number 11
+ :packquantity 3
+ :rotated false
+ :set_code "23s"
+ :setname "23 Seconds"
+ :side "Corp"
+ :strength 6
+ :subtype "Sentry - Bioroid - Tracer"
+ :text "The Runner can spend [click][click] to break up to 2 subroutines on Sherlock 2.0.\n[subroutine]<trace>Trace 4</trace> If successful, add 1 installed program to the bottom of the Runner's stack.\n[subroutine]<trace>Trace 4</trace> If successful, add 1 installed program to the bottom of the Runner's stack.\n[subroutine]Give the Runner 1 tag."
+ :title "Sherlock 2.0"
+ :type "ICE"
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "11073",
- :cost 4,
- :cycle_code "flashpoint",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_73.png",
- :limited 3,
- :normalizedtitle "fumiko-yamamori",
- :number 73,
- :packquantity 3,
- :rotated false,
- :set_code "intervention",
- :setname "Intervention",
- :side "Corp",
- :strength 0,
- :subtype "Character",
- :text "Whenever you and the Runner reveal secretly spent credits, do 1 meat damage if you and the Runner spent a different number of credits.",
- :title "Fumiko Yamamori",
- :trash 4,
- :type "Asset",
+{:code "11073"
+ :cost 4
+ :cycle_code "flashpoint"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_73.png"
+ :limited 3
+ :normalizedtitle "fumiko-yamamori"
+ :number 73
+ :packquantity 3
+ :rotated false
+ :set_code "in"
+ :setname "Intervention"
+ :side "Corp"
+ :strength 0
+ :subtype "Character"
+ :text "Whenever you and the Runner reveal secretly spent credits, do 1 meat damage if you and the Runner spent a different number of credits."
+ :title "Fumiko Yamamori"
+ :trash 4
+ :type "Asset"
  :uniqueness true}

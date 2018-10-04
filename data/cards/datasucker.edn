@@ -1,21 +1,21 @@
-{:code "01008",
- :cost 1,
- :cycle_code "core",
- :faction "Anarch",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/01008.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "datasucker",
- :number 8,
- :packquantity 2,
- :replaced_by "20009",
- :set_code "core-set",
- :setname "Core Set",
- :side "Runner",
- :strength 0,
- :subtype "Virus",
- :text "Whenever you make a successful run on a central server, place 1 virus counter on Datasucker.\n<strong>Hosted virus counter:</strong> Rezzed piece of ice currently being encountered has -1 strength until the end of the encounter.",
- :title "Datasucker",
- :type "Program",
+{:code "01008"
+ :cost 1
+ :cycle_code "core"
+ :faction "Anarch"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/01008.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "datasucker"
+ :number 8
+ :packquantity 2
+ :replaced_by "20009"
+ :set_code "core"
+ :setname "Core Set"
+ :side "Runner"
+ :strength 0
+ :subtype "Virus"
+ :text "Whenever you make a successful run on a central server, place 1 virus counter on Datasucker.\n<strong>Hosted virus counter:</strong> Rezzed piece of ice currently being encountered has -1 strength until the end of the encounter."
+ :title "Datasucker"
+ :type "Program"
  :uniqueness false}

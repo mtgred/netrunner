@@ -1,20 +1,20 @@
-{:code "08090",
- :cost 2,
- :cycle_code "sansan",
- :faction "Jinteki",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_90.png",
- :limited 3,
- :normalizedtitle "it-s-a-trap",
- :number 90,
- :packquantity 3,
- :rotated false,
- :set_code "old-hollywood",
- :setname "Old Hollywood",
- :side "Corp",
- :strength 0,
- :subtype "Trap",
- :text "Whenever It's a Trap! is exposed, do 2 net damage.\n[subroutine] The Runner trashes 1 of his or her installed cards. Trash It's a Trap!.",
- :title "It's a Trap!",
- :type "ICE",
+{:code "08090"
+ :cost 2
+ :cycle_code "sansan"
+ :faction "Jinteki"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_90.png"
+ :limited 3
+ :normalizedtitle "it-s-a-trap"
+ :number 90
+ :packquantity 3
+ :rotated false
+ :set_code "oh"
+ :setname "Old Hollywood"
+ :side "Corp"
+ :strength 0
+ :subtype "Trap"
+ :text "Whenever It's a Trap! is exposed, do 2 net damage.\n[subroutine] The Runner trashes 1 of his or her installed cards. Trash It's a Trap!."
+ :title "It's a Trap!"
+ :type "ICE"
  :uniqueness false}

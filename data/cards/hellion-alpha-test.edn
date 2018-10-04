@@ -1,20 +1,20 @@
-{:code "04031",
- :cost 1,
- :cycle_code "spin",
- :faction "Haas-Bioroid",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/04031.png",
- :limited 3,
- :normalizedtitle "hellion-alpha-test",
- :number 31,
- :packquantity 3,
- :rotated true,
- :set_code "second-thoughts",
- :setname "Second Thoughts",
- :side "Corp",
- :strength 0,
- :subtype "Black Ops",
- :text "Play only if the Runner installed a resource during his or her last turn.\n<trace>Trace 2</trace> If successful, add 1 installed resource to the top of the Runner's stack. If unsuccessful, take 1 bad publicity.",
- :title "Hellion Alpha Test",
- :type "Operation",
+{:code "04031"
+ :cost 1
+ :cycle_code "spin"
+ :faction "Haas-Bioroid"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/04031.png"
+ :limited 3
+ :normalizedtitle "hellion-alpha-test"
+ :number 31
+ :packquantity 3
+ :rotated true
+ :set_code "st"
+ :setname "Second Thoughts"
+ :side "Corp"
+ :strength 0
+ :subtype "Black Ops"
+ :text "Play only if the Runner installed a resource during his or her last turn.\n<trace>Trace 2</trace> If successful, add 1 installed resource to the top of the Runner's stack. If unsuccessful, take 1 bad publicity."
+ :title "Hellion Alpha Test"
+ :type "Operation"
  :uniqueness false}

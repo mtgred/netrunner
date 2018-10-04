@@ -1,20 +1,20 @@
-{:code "04083",
- :cost 2,
- :cycle_code "spin",
- :faction "Anarch",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/04083.png",
- :limited 3,
- :normalizedtitle "tallie-perrault",
- :number 83,
- :packquantity 3,
- :rotated true,
- :set_code "fear-and-loathing",
- :setname "Fear and Loathing",
- :side "Runner",
- :strength 0,
- :subtype "Connection",
- :text "Whenever a <strong>gray ops</strong> or <strong>black ops</strong> operation is trashed after resolving, you may give the Corp 1 bad publicity and take 1 tag.\n[trash]: Draw 1 card for each bad publicity the Corp has.",
- :title "Tallie Perrault",
- :type "Resource",
+{:code "04083"
+ :cost 2
+ :cycle_code "spin"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/04083.png"
+ :limited 3
+ :normalizedtitle "tallie-perrault"
+ :number 83
+ :packquantity 3
+ :rotated true
+ :set_code "fal"
+ :setname "Fear and Loathing"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "Whenever a <strong>gray ops</strong> or <strong>black ops</strong> operation is trashed after resolving, you may give the Corp 1 bad publicity and take 1 tag.\n[trash]: Draw 1 card for each bad publicity the Corp has."
+ :title "Tallie Perrault"
+ :type "Resource"
  :uniqueness true}

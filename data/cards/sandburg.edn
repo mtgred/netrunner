@@ -1,20 +1,20 @@
-{:code "11020",
- :cost 0,
- :cycle_code "flashpoint",
- :faction "Neutral",
- :factioncost 0,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_20.png",
- :limited 3,
- :normalizedtitle "sandburg",
- :number 20,
- :packquantity 3,
- :rotated false,
- :set_code "23-seconds",
- :setname "23 Seconds",
- :side "Corp",
- :strength 0,
- :text "If you have at least 10[credit], each piece of ice has +1 strength for every 5[credit] in your credit pool.",
- :title "Sandburg",
- :trash 4,
- :type "Asset",
+{:code "11020"
+ :cost 0
+ :cycle_code "flashpoint"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_20.png"
+ :limited 3
+ :normalizedtitle "sandburg"
+ :number 20
+ :packquantity 3
+ :rotated false
+ :set_code "23s"
+ :setname "23 Seconds"
+ :side "Corp"
+ :strength 0
+ :text "If you have at least 10[credit], each piece of ice has +1 strength for every 5[credit] in your credit pool."
+ :title "Sandburg"
+ :trash 4
+ :type "Asset"
  :uniqueness true}

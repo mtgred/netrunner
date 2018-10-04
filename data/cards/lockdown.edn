@@ -1,20 +1,20 @@
-{:code "08056",
- :cost 0,
- :cycle_code "sansan",
- :faction "Jinteki",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_56.png",
- :limited 3,
- :normalizedtitle "lockdown",
- :number 56,
- :packquantity 3,
- :rotated false,
- :set_code "chrome-city",
- :setname "Chrome City",
- :side "Corp",
- :strength 5,
- :subtype "Code Gate",
- :text "[subroutine] The Runner cannot draw cards for the remainder of this turn.",
- :title "Lockdown",
- :type "ICE",
+{:code "08056"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Jinteki"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_56.png"
+ :limited 3
+ :normalizedtitle "lockdown"
+ :number 56
+ :packquantity 3
+ :rotated false
+ :set_code "cc"
+ :setname "Chrome City"
+ :side "Corp"
+ :strength 5
+ :subtype "Code Gate"
+ :text "[subroutine] The Runner cannot draw cards for the remainder of this turn."
+ :title "Lockdown"
+ :type "ICE"
  :uniqueness false}

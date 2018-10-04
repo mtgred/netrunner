@@ -1,20 +1,20 @@
-{:code "21046",
- :cost 1,
- :cycle_code "kitara",
- :faction "Shaper",
- :factioncost 5,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_46.png",
- :limited 3,
- :normalizedtitle "marathon",
- :number 46,
- :packquantity 3,
- :rotated false,
- :set_code "council-of-the-crest",
- :setname "Council of the Crest",
- :side "Runner",
- :strength 0,
- :subtype "Run",
- :text "Make a run on a remote server. When the run ends, gain [click] and add Marathon to your grip instead of trashing it if the run was successful. You may not make another run on that server for the remainder of this turn.",
- :title "Marathon",
- :type "Event",
+{:code "21046"
+ :cost 1
+ :cycle_code "kitara"
+ :faction "Shaper"
+ :factioncost 5
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_46.png"
+ :limited 3
+ :normalizedtitle "marathon"
+ :number 46
+ :packquantity 3
+ :rotated false
+ :set_code "cotc"
+ :setname "Council of the Crest"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Make a run on a remote server. When the run ends, gain [click] and add Marathon to your grip instead of trashing it if the run was successful. You may not make another run on that server for the remainder of this turn."
+ :title "Marathon"
+ :type "Event"
  :uniqueness false}

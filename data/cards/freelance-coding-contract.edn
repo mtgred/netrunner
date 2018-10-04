@@ -1,20 +1,20 @@
-{:code "03033",
- :cost 0,
- :cycle_code "creation-and-control",
- :faction "Shaper",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/03033.png",
- :limited 3,
- :normalizedtitle "freelance-coding-contract",
- :number 33,
- :packquantity 3,
- :rotated false,
- :set_code "creation-and-control",
- :setname "Creation and Control",
- :side "Runner",
- :strength 0,
- :subtype "Job",
- :text "Trash up to 5 programs from your grip. Gain 2[credit] for each program trashed.",
- :title "Freelance Coding Contract",
- :type "Event",
+{:code "03033"
+ :cost 0
+ :cycle_code "creation-and-control"
+ :faction "Shaper"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/03033.png"
+ :limited 3
+ :normalizedtitle "freelance-coding-contract"
+ :number 33
+ :packquantity 3
+ :rotated false
+ :set_code "cac"
+ :setname "Creation and Control"
+ :side "Runner"
+ :strength 0
+ :subtype "Job"
+ :text "Trash up to 5 programs from your grip. Gain 2[credit] for each program trashed."
+ :title "Freelance Coding Contract"
+ :type "Event"
  :uniqueness false}

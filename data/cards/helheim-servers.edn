@@ -1,21 +1,21 @@
-{:code "12091",
- :cost 2,
- :cycle_code "red-sand",
- :faction "Haas-Bioroid",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_91.png",
- :limited 3,
- :normalizedtitle "helheim-servers",
- :number 91,
- :packquantity 3,
- :rotated false,
- :set_code "free-mars",
- :setname "Free Mars",
- :side "Corp",
- :strength 0,
- :subtype "Facility",
- :text "<strong>Trash 1 card from HQ</strong>: All ice protecting this server has +2 strength until the end of the run. Use this ability only during a run on this server.",
- :title "Helheim Servers",
- :trash 3,
- :type "Upgrade",
+{:code "12091"
+ :cost 2
+ :cycle_code "red-sand"
+ :faction "Haas-Bioroid"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_91.png"
+ :limited 3
+ :normalizedtitle "helheim-servers"
+ :number 91
+ :packquantity 3
+ :rotated false
+ :set_code "fm"
+ :setname "Free Mars"
+ :side "Corp"
+ :strength 0
+ :subtype "Facility"
+ :text "<strong>Trash 1 card from HQ</strong>: All ice protecting this server has +2 strength until the end of the run. Use this ability only during a run on this server."
+ :title "Helheim Servers"
+ :trash 3
+ :type "Upgrade"
  :uniqueness true}

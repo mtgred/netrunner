@@ -1,20 +1,20 @@
-{:code "07022",
- :cost 0,
- :cycle_code "order-and-chaos",
- :faction "Weyland Consortium",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_22.png",
- :limited 3,
- :normalizedtitle "traffic-accident",
- :number 22,
- :packquantity 3,
- :rotated false,
- :set_code "order-and-chaos",
- :setname "Order and Chaos",
- :side "Corp",
- :strength 0,
- :subtype "Black Ops",
- :text "Play only if the Runner has at least 2 tags.\nDo 2 meat damage.",
- :title "Traffic Accident",
- :type "Operation",
+{:code "07022"
+ :cost 0
+ :cycle_code "order-and-chaos"
+ :faction "Weyland Consortium"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_22.png"
+ :limited 3
+ :normalizedtitle "traffic-accident"
+ :number 22
+ :packquantity 3
+ :rotated false
+ :set_code "oac"
+ :setname "Order and Chaos"
+ :side "Corp"
+ :strength 0
+ :subtype "Black Ops"
+ :text "Play only if the Runner has at least 2 tags.\nDo 2 meat damage."
+ :title "Traffic Accident"
+ :type "Operation"
  :uniqueness false}

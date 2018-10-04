@@ -1,21 +1,21 @@
-{:code "10107",
- :cost 0,
- :cycle_code "mumbad",
- :faction "NBN",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_107.png",
- :influencelimit 17,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "harishchandra-ent-where-you-re-the-star",
- :number 107,
- :packquantity 3,
- :rotated false,
- :set_code "fear-the-masses",
- :setname "Fear the Masses",
- :side "Corp",
- :strength 0,
- :subtype "Division",
- :text "If the Runner is tagged, he or she plays with his or her grip revealed.",
- :title "Harishchandra Ent.: Where You're the Star",
- :type "Identity",
+{:code "10107"
+ :cost 0
+ :cycle_code "mumbad"
+ :faction "NBN"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_107.png"
+ :influencelimit 17
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "harishchandra-ent-where-you-re-the-star"
+ :number 107
+ :packquantity 3
+ :rotated false
+ :set_code "ftm"
+ :setname "Fear the Masses"
+ :side "Corp"
+ :strength 0
+ :subtype "Division"
+ :text "If the Runner is tagged, he or she plays with his or her grip revealed."
+ :title "Harishchandra Ent.: Where You're the Star"
+ :type "Identity"
  :uniqueness false}

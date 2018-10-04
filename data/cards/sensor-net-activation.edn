@@ -1,21 +1,21 @@
-{:advancementcost 3,
- :agendapoints 1,
- :code "11110",
- :cost 0,
- :cycle_code "flashpoint",
- :faction "Haas-Bioroid",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_110.png",
- :limited 3,
- :normalizedtitle "sensor-net-activation",
- :number 110,
- :packquantity 3,
- :rotated false,
- :set_code "quorum",
- :setname "Quorum",
- :side "Corp",
- :strength 0,
- :subtype "Security",
- :text "Place 1 agenda counter on Sensor Net Activation when you score it.\n<strong>Hosted agenda counter:</strong> Rez a <strong>bioroid</strong>, ignoring all costs. When the turn ends, derez that <strong>bioroid</strong>.",
- :title "Sensor Net Activation",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 1
+ :code "11110"
+ :cost 0
+ :cycle_code "flashpoint"
+ :faction "Haas-Bioroid"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_110.png"
+ :limited 3
+ :normalizedtitle "sensor-net-activation"
+ :number 110
+ :packquantity 3
+ :rotated false
+ :set_code "qu"
+ :setname "Quorum"
+ :side "Corp"
+ :strength 0
+ :subtype "Security"
+ :text "Place 1 agenda counter on Sensor Net Activation when you score it.\n<strong>Hosted agenda counter:</strong> Rez a <strong>bioroid</strong>, ignoring all costs. When the turn ends, derez that <strong>bioroid</strong>."
+ :title "Sensor Net Activation"
+ :type "Agenda"
  :uniqueness false}

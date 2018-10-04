@@ -1,21 +1,21 @@
-{:code "21009",
- :cost 0,
- :cycle_code "kitara",
- :faction "Haas-Bioroid",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_9.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "asa-group-security-through-vigilance",
- :number 9,
- :packquantity 3,
- :rotated false,
- :set_code "sovereign-sight",
- :setname "Sovereign Sight",
- :side "Corp",
- :strength 0,
- :subtype "Division",
- :text "The first time you install a card each turn, you may install an additional non-agenda card from HQ in or protecting that server (paying all costs).",
- :title "Asa Group: Security Through Vigilance",
- :type "Identity",
+{:code "21009"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Haas-Bioroid"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_9.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "asa-group-security-through-vigilance"
+ :number 9
+ :packquantity 3
+ :rotated false
+ :set_code "ss"
+ :setname "Sovereign Sight"
+ :side "Corp"
+ :strength 0
+ :subtype "Division"
+ :text "The first time you install a card each turn, you may install an additional non-agenda card from HQ in or protecting that server (paying all costs)."
+ :title "Asa Group: Security Through Vigilance"
+ :type "Identity"
  :uniqueness false}

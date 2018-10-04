@@ -1,21 +1,20 @@
-{:code "12062",
- :cost 0,
- :cycle_code "red-sand",
- :faction "Anarch",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_62.png",
- :limited 3,
- :normalizedtitle "jarogniew-mercs",
- :number 62,
- :packquantity 3,
- :rotated false,
- :set_code "blood-and-water",
- :setname "Blood and Water",
- :side "Runner",
- :strength 0,
- :subtype "Clan - Connection",
- :text
- "When you install Jarogniew Mercs, take 1 tag. Place 3 power counters on Jarogniew Mercs, and 1 additional power counter for each tag you have. When there are no power counters left on Jarogniew Mercs, trash it.\nThe Corp cannot trash Jarogniew Mercs while there is another resource installed.\n<strong>Hosted power counter:</strong> Prevent 1 meat damage.",
- :title "Jarogniew Mercs",
- :type "Resource",
+{:code "12062"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_62.png"
+ :limited 3
+ :normalizedtitle "jarogniew-mercs"
+ :number 62
+ :packquantity 3
+ :rotated false
+ :set_code "baw"
+ :setname "Blood and Water"
+ :side "Runner"
+ :strength 0
+ :subtype "Clan - Connection"
+ :text "When you install Jarogniew Mercs, take 1 tag. Place 3 power counters on Jarogniew Mercs, and 1 additional power counter for each tag you have. When there are no power counters left on Jarogniew Mercs, trash it.\nThe Corp cannot trash Jarogniew Mercs while there is another resource installed.\n<strong>Hosted power counter:</strong> Prevent 1 meat damage."
+ :title "Jarogniew Mercs"
+ :type "Resource"
  :uniqueness true}

@@ -1,20 +1,20 @@
-{:code "04018",
- :cost 8,
- :cycle_code "spin",
- :faction "Weyland Consortium",
- :factioncost 4,
- :image_url "https://netrunnerdb.com/card_image/04018.png",
- :limited 3,
- :normalizedtitle "swarm",
- :number 18,
- :packquantity 3,
- :rotated true,
- :set_code "opening-moves",
- :setname "Opening Moves",
- :side "Corp",
- :strength 5,
- :subtype "Sentry - Destroyer - Illicit",
- :text "When you rez Swarm, take 1 bad publicity.\nSwarm can be advanced and gains \"[subroutine] Trash 1 program unless the Runner pays 3[credit].\" for each advancement token on it.",
- :title "Swarm",
- :type "ICE",
+{:code "04018"
+ :cost 8
+ :cycle_code "spin"
+ :faction "Weyland Consortium"
+ :factioncost 4
+ :image_url "https://netrunnerdb.com/card_image/04018.png"
+ :limited 3
+ :normalizedtitle "swarm"
+ :number 18
+ :packquantity 3
+ :rotated true
+ :set_code "om"
+ :setname "Opening Moves"
+ :side "Corp"
+ :strength 5
+ :subtype "Sentry - Destroyer - Illicit"
+ :text "When you rez Swarm, take 1 bad publicity.\nSwarm can be advanced and gains \"[subroutine] Trash 1 program unless the Runner pays 3[credit].\" for each advancement token on it."
+ :title "Swarm"
+ :type "ICE"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "12040",
- :cost 3,
- :cycle_code "red-sand",
- :faction "Neutral",
- :factioncost 0,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_40.png",
- :limited 3,
- :normalizedtitle "self-adapting-code-wall",
- :number 40,
- :packquantity 3,
- :rotated false,
- :set_code "station-one",
- :setname "Station One",
- :side "Corp",
- :strength 1,
- :subtype "Barrier",
- :text "The strength of Self-Adapting Code Wall cannot be lowered.\n[subroutine] End the run.",
- :title "Self-Adapting Code Wall",
- :type "ICE",
+{:code "12040"
+ :cost 3
+ :cycle_code "red-sand"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_40.png"
+ :limited 3
+ :normalizedtitle "self-adapting-code-wall"
+ :number 40
+ :packquantity 3
+ :rotated false
+ :set_code "so"
+ :setname "Station One"
+ :side "Corp"
+ :strength 1
+ :subtype "Barrier"
+ :text "The strength of Self-Adapting Code Wall cannot be lowered.\n[subroutine] End the run."
+ :title "Self-Adapting Code Wall"
+ :type "ICE"
  :uniqueness false}

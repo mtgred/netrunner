@@ -1,20 +1,20 @@
-{:code "08070",
- :cost 1,
- :cycle_code "sansan",
- :faction "Shaper",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_70.png",
- :limited 3,
- :memoryunits 3,
- :normalizedtitle "hyperdriver",
- :number 70,
- :packquantity 3,
- :rotated false,
- :set_code "the-underway",
- :setname "The Underway",
- :side "Runner",
- :strength 0,
- :text "When your turn begins, you may remove Hyperdriver from the game and gain [click][click][click].",
- :title "Hyperdriver",
- :type "Program",
+{:code "08070"
+ :cost 1
+ :cycle_code "sansan"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_70.png"
+ :limited 3
+ :memoryunits 3
+ :normalizedtitle "hyperdriver"
+ :number 70
+ :packquantity 3
+ :rotated false
+ :set_code "uw"
+ :setname "The Underway"
+ :side "Runner"
+ :strength 0
+ :text "When your turn begins, you may remove Hyperdriver from the game and gain [click][click][click]."
+ :title "Hyperdriver"
+ :type "Program"
  :uniqueness false}

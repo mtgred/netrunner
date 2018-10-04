@@ -1,21 +1,21 @@
-{:code "11088",
- :cost 5,
- :cycle_code "flashpoint",
- :faction "Neutral",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_88.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "baba-yaga",
- :number 88,
- :packquantity 3,
- :rotated false,
- :set_code "martial-law",
- :setname "Martial Law",
- :side "Runner",
- :strength 0,
- :subtype "Icebreaker - AI",
- :text "You may host any number of non-<strong>AI icebreaker</strong> programs on Baba Yaga.\nBaba Yaga gains the paid abilities of all hosted <strong>icebreaker</strong> programs.",
- :title "Baba Yaga",
- :type "Program",
+{:code "11088"
+ :cost 5
+ :cycle_code "flashpoint"
+ :faction "Neutral"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_88.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "baba-yaga"
+ :number 88
+ :packquantity 3
+ :rotated false
+ :set_code "ml"
+ :setname "Martial Law"
+ :side "Runner"
+ :strength 0
+ :subtype "Icebreaker - AI"
+ :text "You may host any number of non-<strong>AI icebreaker</strong> programs on Baba Yaga.\nBaba Yaga gains the paid abilities of all hosted <strong>icebreaker</strong> programs."
+ :title "Baba Yaga"
+ :type "Program"
  :uniqueness false}

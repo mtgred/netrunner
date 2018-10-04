@@ -1,21 +1,21 @@
-{:code "11012",
- :cost 0,
- :cycle_code "flashpoint",
- :faction "Jinteki",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_12.png",
- :limited 3,
- :normalizedtitle "hyoubu-research-facility",
- :number 12,
- :packquantity 3,
- :rotated false,
- :set_code "23-seconds",
- :setname "23 Seconds",
- :side "Corp",
- :strength 0,
- :subtype "Facility",
- :text "The first time each turn you reveal secretly spent credits, gain that many credits.",
- :title "Hyoubu Research Facility",
- :trash 4,
- :type "Asset",
+{:code "11012"
+ :cost 0
+ :cycle_code "flashpoint"
+ :faction "Jinteki"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_12.png"
+ :limited 3
+ :normalizedtitle "hyoubu-research-facility"
+ :number 12
+ :packquantity 3
+ :rotated false
+ :set_code "23s"
+ :setname "23 Seconds"
+ :side "Corp"
+ :strength 0
+ :subtype "Facility"
+ :text "The first time each turn you reveal secretly spent credits, gain that many credits."
+ :title "Hyoubu Research Facility"
+ :trash 4
+ :type "Asset"
  :uniqueness true}

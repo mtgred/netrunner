@@ -1,20 +1,20 @@
-{:code "10029",
- :cost 0,
- :cycle_code "mumbad",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_29.png",
- :limited 3,
- :normalizedtitle "product-recall",
- :number 29,
- :packquantity 3,
- :rotated false,
- :set_code "business-first",
- :setname "Business First",
- :side "Corp",
- :strength 0,
- :subtype "Alliance",
- :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [haas-bioroid] cards in your deck.\nTrash a rezzed asset or upgrade. If you do, gain credits equal to its trash cost.",
- :title "Product Recall",
- :type "Operation",
+{:code "10029"
+ :cost 0
+ :cycle_code "mumbad"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_29.png"
+ :limited 3
+ :normalizedtitle "product-recall"
+ :number 29
+ :packquantity 3
+ :rotated false
+ :set_code "bf"
+ :setname "Business First"
+ :side "Corp"
+ :strength 0
+ :subtype "Alliance"
+ :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [haas-bioroid] cards in your deck.\nTrash a rezzed asset or upgrade. If you do, gain credits equal to its trash cost."
+ :title "Product Recall"
+ :type "Operation"
  :uniqueness false}

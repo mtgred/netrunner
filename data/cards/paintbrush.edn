@@ -1,20 +1,20 @@
-{:code "04108",
- :cost 3,
- :cycle_code "spin",
- :faction "Shaper",
- :factioncost 4,
- :image_url "https://netrunnerdb.com/card_image/04108.png",
- :limited 3,
- :memoryunits 2,
- :normalizedtitle "paintbrush",
- :number 108,
- :packquantity 3,
- :rotated true,
- :set_code "double-time",
- :setname "Double Time",
- :side "Runner",
- :strength 0,
- :text "[click]: Choose a rezzed piece of ice. That ice gains <strong>sentry</strong>, <strong>code gate</strong> or <strong>barrier</strong> until the end of the next run this turn.",
- :title "Paintbrush",
- :type "Program",
+{:code "04108"
+ :cost 3
+ :cycle_code "spin"
+ :faction "Shaper"
+ :factioncost 4
+ :image_url "https://netrunnerdb.com/card_image/04108.png"
+ :limited 3
+ :memoryunits 2
+ :normalizedtitle "paintbrush"
+ :number 108
+ :packquantity 3
+ :rotated true
+ :set_code "dt"
+ :setname "Double Time"
+ :side "Runner"
+ :strength 0
+ :text "[click]: Choose a rezzed piece of ice. That ice gains <strong>sentry</strong>, <strong>code gate</strong> or <strong>barrier</strong> until the end of the next run this turn."
+ :title "Paintbrush"
+ :type "Program"
  :uniqueness false}

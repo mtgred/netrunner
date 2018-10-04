@@ -1,20 +1,20 @@
-{:code "21058",
- :cost 2,
- :cycle_code "kitara",
- :faction "Weyland Consortium",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_58.png",
- :limited 3,
- :normalizedtitle "death-and-taxes",
- :number 58,
- :packquantity 3,
- :rotated false,
- :set_code "council-of-the-crest",
- :setname "Council of the Crest",
- :side "Corp",
- :strength 0,
- :subtype "Current - Transaction",
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nWhenever the Runner installs a card or trashes an installed card, you may gain 1[credit].",
- :title "Death and Taxes",
- :type "Operation",
+{:code "21058"
+ :cost 2
+ :cycle_code "kitara"
+ :faction "Weyland Consortium"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_58.png"
+ :limited 3
+ :normalizedtitle "death-and-taxes"
+ :number 58
+ :packquantity 3
+ :rotated false
+ :set_code "cotc"
+ :setname "Council of the Crest"
+ :side "Corp"
+ :strength 0
+ :subtype "Current - Transaction"
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nWhenever the Runner installs a card or trashes an installed card, you may gain 1[credit]."
+ :title "Death and Taxes"
+ :type "Operation"
  :uniqueness false}

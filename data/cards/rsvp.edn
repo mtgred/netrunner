@@ -1,20 +1,20 @@
-{:code "04077",
- :cost 3,
- :cycle_code "spin",
- :faction "NBN",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04077.png",
- :limited 3,
- :normalizedtitle "rsvp",
- :number 77,
- :packquantity 3,
- :rotated true,
- :set_code "true-colors",
- :setname "True Colors",
- :side "Corp",
- :strength 4,
- :subtype "Code Gate",
- :text "[subroutine] The Runner cannot spend any credits for the remainder of this run.",
- :title "RSVP",
- :type "ICE",
+{:code "04077"
+ :cost 3
+ :cycle_code "spin"
+ :faction "NBN"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04077.png"
+ :limited 3
+ :normalizedtitle "rsvp"
+ :number 77
+ :packquantity 3
+ :rotated true
+ :set_code "tc"
+ :setname "True Colors"
+ :side "Corp"
+ :strength 4
+ :subtype "Code Gate"
+ :text "[subroutine] The Runner cannot spend any credits for the remainder of this run."
+ :title "RSVP"
+ :type "ICE"
  :uniqueness false}

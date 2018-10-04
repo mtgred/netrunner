@@ -1,22 +1,22 @@
-{:advancementcost 5,
- :agendapoints 3,
- :code "09026",
- :cost 0,
- :cycle_code "data-and-destiny",
- :faction "Neutral",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_26.png",
- :limited 3,
- :normalizedtitle "global-food-initiative",
- :number 26,
- :packquantity 3,
- :rotated false,
- :set_code "data-and-destiny",
- :setname "Data and Destiny",
- :side "Corp",
- :strength 0,
- :subtype "Initiative",
- :text "Global Food Initiative is worth 1 fewer agenda point while in the Runner's score area.",
- :title "Global Food Initiative",
- :type "Agenda",
+{:advancementcost 5
+ :agendapoints 3
+ :code "09026"
+ :cost 0
+ :cycle_code "data-and-destiny"
+ :faction "Neutral"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_26.png"
+ :limited 3
+ :normalizedtitle "global-food-initiative"
+ :number 26
+ :packquantity 3
+ :rotated false
+ :set_code "dad"
+ :setname "Data and Destiny"
+ :side "Corp"
+ :strength 0
+ :subtype "Initiative"
+ :text "Global Food Initiative is worth 1 fewer agenda point while in the Runner's score area."
+ :title "Global Food Initiative"
+ :type "Agenda"
  :uniqueness false}

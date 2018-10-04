@@ -1,20 +1,20 @@
-{:code "06103",
- :cost 2,
- :cycle_code "lunar",
- :faction "Haas-Bioroid",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_103.png",
- :limited 3,
- :normalizedtitle "it-department",
- :number 103,
- :packquantity 3,
- :rotated false,
- :set_code "the-source",
- :setname "The Source",
- :side "Corp",
- :strength 0,
- :text "[click]: Place 1 power counter on IT Department.\n<strong>Hosted power counter:</strong> Choose a rezzed piece of ice. That ice has +1 strength until the end of the turn for each power counter (including the one spent) on IT Department.",
- :title "IT Department",
- :trash 4,
- :type "Asset",
+{:code "06103"
+ :cost 2
+ :cycle_code "lunar"
+ :faction "Haas-Bioroid"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_103.png"
+ :limited 3
+ :normalizedtitle "it-department"
+ :number 103
+ :packquantity 3
+ :rotated false
+ :set_code "ts"
+ :setname "The Source"
+ :side "Corp"
+ :strength 0
+ :text "[click]: Place 1 power counter on IT Department.\n<strong>Hosted power counter:</strong> Choose a rezzed piece of ice. That ice has +1 strength until the end of the turn for each power counter (including the one spent) on IT Department."
+ :title "IT Department"
+ :trash 4
+ :type "Asset"
  :uniqueness false}

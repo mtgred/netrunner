@@ -1,20 +1,20 @@
-{:code "08073",
- :cost 2,
- :cycle_code "sansan",
- :faction "Jinteki",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_73.png",
- :limited 3,
- :normalizedtitle "allele-repression",
- :number 73,
- :packquantity 3,
- :rotated false,
- :set_code "the-underway",
- :setname "The Underway",
- :side "Corp",
- :strength 0,
- :text "Allele Repression can be advanced.\n[trash]: Swap 1 card in HQ with 1 card in Archives for each advancement token on Allele Repression.",
- :title "Allele Repression",
- :trash 2,
- :type "Asset",
+{:code "08073"
+ :cost 2
+ :cycle_code "sansan"
+ :faction "Jinteki"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_73.png"
+ :limited 3
+ :normalizedtitle "allele-repression"
+ :number 73
+ :packquantity 3
+ :rotated false
+ :set_code "uw"
+ :setname "The Underway"
+ :side "Corp"
+ :strength 0
+ :text "Allele Repression can be advanced.\n[trash]: Swap 1 card in HQ with 1 card in Archives for each advancement token on Allele Repression."
+ :title "Allele Repression"
+ :trash 2
+ :type "Asset"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "12059",
- :cost 5,
- :cycle_code "red-sand",
- :faction "Weyland Consortium",
- :factioncost 4,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_59.png",
- :limited 3,
- :normalizedtitle "red-planet-couriers",
- :number 59,
- :packquantity 3,
- :rotated false,
- :set_code "earth-s-scion",
- :setname "Earth's Scion",
- :side "Corp",
- :strength 0,
- :subtype "Triple",
- :text "As an additional cost to play this operation, spend [click], [click].\nMove all advancement tokens from all installed cards to 1 card that can be advanced.",
- :title "Red Planet Couriers",
- :type "Operation",
+{:code "12059"
+ :cost 5
+ :cycle_code "red-sand"
+ :faction "Weyland Consortium"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_59.png"
+ :limited 3
+ :normalizedtitle "red-planet-couriers"
+ :number 59
+ :packquantity 3
+ :rotated false
+ :set_code "eas"
+ :setname "Earth's Scion"
+ :side "Corp"
+ :strength 0
+ :subtype "Triple"
+ :text "As an additional cost to play this operation, spend [click], [click].\nMove all advancement tokens from all installed cards to 1 card that can be advanced."
+ :title "Red Planet Couriers"
+ :type "Operation"
  :uniqueness false}

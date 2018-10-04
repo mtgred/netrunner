@@ -1,20 +1,20 @@
-{:code "10087",
- :cost 3,
- :cycle_code "mumbad",
- :faction "Haas-Bioroid",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_87.png",
- :limited 3,
- :normalizedtitle "ravana-1-0",
- :number 87,
- :packquantity 3,
- :rotated false,
- :set_code "the-liberated-mind",
- :setname "The Liberated Mind",
- :side "Corp",
- :strength 5,
- :subtype "Code Gate - Bioroid",
- :text "The Runner can spend [click] to break any subroutine on Ravana 1.0.\n[subroutine] Resolve a subroutine on another piece of rezzed <strong>bioroid</strong> ice.\n[subroutine] Resolve a subroutine on another piece of rezzed <strong>bioroid</strong> ice.",
- :title "Ravana 1.0",
- :type "ICE",
+{:code "10087"
+ :cost 3
+ :cycle_code "mumbad"
+ :faction "Haas-Bioroid"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_87.png"
+ :limited 3
+ :normalizedtitle "ravana-1-0"
+ :number 87
+ :packquantity 3
+ :rotated false
+ :set_code "tlm"
+ :setname "The Liberated Mind"
+ :side "Corp"
+ :strength 5
+ :subtype "Code Gate - Bioroid"
+ :text "The Runner can spend [click] to break any subroutine on Ravana 1.0.\n[subroutine] Resolve a subroutine on another piece of rezzed <strong>bioroid</strong> ice.\n[subroutine] Resolve a subroutine on another piece of rezzed <strong>bioroid</strong> ice."
+ :title "Ravana 1.0"
+ :type "ICE"
  :uniqueness false}

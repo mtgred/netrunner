@@ -1,21 +1,21 @@
-{:code "10101",
- :cost 6,
- :cycle_code "mumbad",
- :faction "Shaper",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_101.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "ankusa",
- :number 101,
- :packquantity 3,
- :rotated false,
- :set_code "fear-the-masses",
- :setname "Fear the Masses",
- :side "Runner",
- :strength 0,
- :subtype "Icebreaker - Fracter",
- :text "If you use Ankusa to break all subroutines on a <strong>barrier</strong> during a single encounter, add that <strong>barrier</strong> to HQ.\n2[credit]: Break <strong>barrier</strong> subroutine.\n1[credit]: +1 strength.",
- :title "Ankusa",
- :type "Program",
+{:code "10101"
+ :cost 6
+ :cycle_code "mumbad"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_101.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "ankusa"
+ :number 101
+ :packquantity 3
+ :rotated false
+ :set_code "ftm"
+ :setname "Fear the Masses"
+ :side "Runner"
+ :strength 0
+ :subtype "Icebreaker - Fracter"
+ :text "If you use Ankusa to break all subroutines on a <strong>barrier</strong> during a single encounter, add that <strong>barrier</strong> to HQ.\n2[credit]: Break <strong>barrier</strong> subroutine.\n1[credit]: +1 strength."
+ :title "Ankusa"
+ :type "Program"
  :uniqueness false}

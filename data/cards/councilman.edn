@@ -1,20 +1,20 @@
-{:code "10047",
- :cost 0,
- :cycle_code "mumbad",
- :faction "Neutral",
- :factioncost 0,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_47.png",
- :limited 3,
- :normalizedtitle "councilman",
- :number 47,
- :packquantity 3,
- :rotated false,
- :set_code "democracy-and-dogma",
- :setname "Democracy and Dogma",
- :side "Runner",
- :strength 0,
- :subtype "Connection",
- :text "Whenever the Corp rezzes an asset or upgrade, you may pay credits equal to its rez cost and trash Councilman. If you do, derez that asset or upgrade. The Corp cannot rez it for the remainder of this turn.",
- :title "Councilman",
- :type "Resource",
+{:code "10047"
+ :cost 0
+ :cycle_code "mumbad"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_47.png"
+ :limited 3
+ :normalizedtitle "councilman"
+ :number 47
+ :packquantity 3
+ :rotated false
+ :set_code "dag"
+ :setname "Democracy and Dogma"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "Whenever the Corp rezzes an asset or upgrade, you may pay credits equal to its rez cost and trash Councilman. If you do, derez that asset or upgrade. The Corp cannot rez it for the remainder of this turn."
+ :title "Councilman"
+ :type "Resource"
  :uniqueness false}

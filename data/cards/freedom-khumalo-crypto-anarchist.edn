@@ -1,22 +1,22 @@
-{:baselink 0,
- :code "21081",
- :cost 0,
- :cycle_code "kitara",
- :faction "Anarch",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_81.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "freedom-khumalo-crypto-anarchist",
- :number 81,
- :packquantity 3,
- :rotated false,
- :set_code "whispers-in-nalubaale",
- :setname "Whispers in Nalubaale",
- :side "Runner",
- :strength 0,
- :subtype "Cyborg",
- :text "Once per turn, you may remove X virus counters from your installed cards to trash a card that you access at no cost (even if it cannot normally be trashed). X is that card's rez or play cost.",
- :title "Freedom Khumalo: Crypto-Anarchist",
- :type "Identity",
+{:baselink 0
+ :code "21081"
+ :cost 0
+ :cycle_code "kitara"
+ :faction "Anarch"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_81.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "freedom-khumalo-crypto-anarchist"
+ :number 81
+ :packquantity 3
+ :rotated false
+ :set_code "win"
+ :setname "Whispers in Nalubaale"
+ :side "Runner"
+ :strength 0
+ :subtype "Cyborg"
+ :text "Once per turn, you may remove X virus counters from your installed cards to trash a card that you access at no cost (even if it cannot normally be trashed). X is that card's rez or play cost."
+ :title "Freedom Khumalo: Crypto-Anarchist"
+ :type "Identity"
  :uniqueness false}

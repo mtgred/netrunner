@@ -1,20 +1,20 @@
-{:code "12063",
- :cost 5,
- :cycle_code "red-sand",
- :faction "Criminal",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_63.png",
- :limited 3,
- :normalizedtitle "maui",
- :number 63,
- :packquantity 3,
- :rotated false,
- :set_code "blood-and-water",
- :setname "Blood and Water",
- :side "Runner",
- :strength 0,
- :subtype "Console",
- :text "+2[mu]\nX[recurring-credit]\nUse these credits during runs on HQ. X is the number of pieces of ice protecting HQ.\nLimit 1 <strong>console</strong> per player.",
- :title "Māui",
- :type "Hardware",
+{:code "12063"
+ :cost 5
+ :cycle_code "red-sand"
+ :faction "Criminal"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_63.png"
+ :limited 3
+ :normalizedtitle "maui"
+ :number 63
+ :packquantity 3
+ :rotated false
+ :set_code "baw"
+ :setname "Blood and Water"
+ :side "Runner"
+ :strength 0
+ :subtype "Console"
+ :text "+2[mu]\nX[recurring-credit]\nUse these credits during runs on HQ. X is the number of pieces of ice protecting HQ.\nLimit 1 <strong>console</strong> per player."
+ :title "Māui"
+ :type "Hardware"
  :uniqueness true}

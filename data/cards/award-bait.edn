@@ -1,21 +1,21 @@
-{:advancementcost 3,
- :agendapoints 1,
- :code "08093",
- :cost 0,
- :cycle_code "sansan",
- :faction "NBN",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_93.png",
- :limited 3,
- :normalizedtitle "award-bait",
- :number 93,
- :packquantity 3,
- :rotated false,
- :set_code "old-hollywood",
- :setname "Old Hollywood",
- :side "Corp",
- :strength 0,
- :subtype "Sensie",
- :text "If Award Bait is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Award Bait, you may place up to 2 advancement tokens on a card that can be advanced.",
- :title "Award Bait",
- :type "Agenda",
+{:advancementcost 3
+ :agendapoints 1
+ :code "08093"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "NBN"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_93.png"
+ :limited 3
+ :normalizedtitle "award-bait"
+ :number 93
+ :packquantity 3
+ :rotated false
+ :set_code "oh"
+ :setname "Old Hollywood"
+ :side "Corp"
+ :strength 0
+ :subtype "Sensie"
+ :text "If Award Bait is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Award Bait, you may place up to 2 advancement tokens on a card that can be advanced."
+ :title "Award Bait"
+ :type "Agenda"
  :uniqueness false}

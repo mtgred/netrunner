@@ -1,21 +1,21 @@
-{:code "04079",
- :cost 3,
- :cycle_code "spin",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04079.png",
- :limited 3,
- :normalizedtitle "punitive-counterstrike",
- :number 79,
- :packquantity 3,
- :replaced_by "20091",
- :rotated true,
- :set_code "true-colors",
- :setname "True Colors",
- :side "Corp",
- :strength 0,
- :subtype "Black Ops",
- :text "<trace>Trace 5</trace> If successful, do meat damage to the Runner equal to the number of printed agenda points on agendas he or she stole during his or her last turn.",
- :title "Punitive Counterstrike",
- :type "Operation",
+{:code "04079"
+ :cost 3
+ :cycle_code "spin"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04079.png"
+ :limited 3
+ :normalizedtitle "punitive-counterstrike"
+ :number 79
+ :packquantity 3
+ :replaced_by "20091"
+ :rotated true
+ :set_code "tc"
+ :setname "True Colors"
+ :side "Corp"
+ :strength 0
+ :subtype "Black Ops"
+ :text "<trace>Trace 5</trace> If successful, do meat damage to the Runner equal to the number of printed agenda points on agendas he or she stole during his or her last turn."
+ :title "Punitive Counterstrike"
+ :type "Operation"
  :uniqueness false}

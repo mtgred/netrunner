@@ -1,21 +1,21 @@
-{:code "10067",
- :cost 2,
- :cycle_code "mumbad",
- :faction "Haas-Bioroid",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_67.png",
- :limited 3,
- :normalizedtitle "jeeves-model-bioroids",
- :number 67,
- :packquantity 3,
- :rotated false,
- :set_code "salsette-island",
- :setname "Salsette Island",
- :side "Corp",
- :strength 0,
- :subtype "Alliance",
- :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [haas-bioroid] cards in your deck.\nThe first time you spend 3[click] on the same action each turn, gain [click].",
- :title "Jeeves Model Bioroids",
- :trash 5,
- :type "Asset",
+{:code "10067"
+ :cost 2
+ :cycle_code "mumbad"
+ :faction "Haas-Bioroid"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_67.png"
+ :limited 3
+ :normalizedtitle "jeeves-model-bioroids"
+ :number 67
+ :packquantity 3
+ :rotated false
+ :set_code "si"
+ :setname "Salsette Island"
+ :side "Corp"
+ :strength 0
+ :subtype "Alliance"
+ :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [haas-bioroid] cards in your deck.\nThe first time you spend 3[click] on the same action each turn, gain [click]."
+ :title "Jeeves Model Bioroids"
+ :trash 5
+ :type "Asset"
  :uniqueness true}

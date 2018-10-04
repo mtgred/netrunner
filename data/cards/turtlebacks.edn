@@ -1,21 +1,21 @@
-{:code "06106",
- :cost 2,
- :cycle_code "lunar",
- :faction "Jinteki",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_106.png",
- :limited 3,
- :normalizedtitle "turtlebacks",
- :number 106,
- :packquantity 3,
- :rotated false,
- :set_code "the-source",
- :setname "The Source",
- :side "Corp",
- :strength 0,
- :subtype "Clone",
- :text "Gain 1[credit] whenever you create a server.",
- :title "Turtlebacks",
- :trash 4,
- :type "Asset",
+{:code "06106"
+ :cost 2
+ :cycle_code "lunar"
+ :faction "Jinteki"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_106.png"
+ :limited 3
+ :normalizedtitle "turtlebacks"
+ :number 106
+ :packquantity 3
+ :rotated false
+ :set_code "ts"
+ :setname "The Source"
+ :side "Corp"
+ :strength 0
+ :subtype "Clone"
+ :text "Gain 1[credit] whenever you create a server."
+ :title "Turtlebacks"
+ :trash 4
+ :type "Asset"
  :uniqueness false}

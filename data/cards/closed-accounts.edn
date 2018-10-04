@@ -1,20 +1,20 @@
-{:code "20119",
- :cost 1,
- :cycle_code "core2",
- :faction "NBN",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_103.png",
- :limited 3,
- :normalizedtitle "closed-accounts",
- :number 103,
- :packquantity 2,
- :replaces "01084",
- :set_code "revised-core-set",
- :setname "Revised Core Set",
- :side "Corp",
- :strength 0,
- :subtype "Gray Ops",
- :text "Play only if the Runner is tagged.\nThe Runner loses all credits in his or her credit pool.",
- :title "Closed Accounts",
- :type "Operation",
+{:code "20119"
+ :cost 1
+ :cycle_code "core2"
+ :faction "NBN"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_103.png"
+ :limited 3
+ :normalizedtitle "closed-accounts"
+ :number 103
+ :packquantity 2
+ :replaces "01084"
+ :set_code "core2"
+ :setname "Revised Core Set"
+ :side "Corp"
+ :strength 0
+ :subtype "Gray Ops"
+ :text "Play only if the Runner is tagged.\nThe Runner loses all credits in his or her credit pool."
+ :title "Closed Accounts"
+ :type "Operation"
  :uniqueness false}

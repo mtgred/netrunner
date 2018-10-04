@@ -1,20 +1,20 @@
-{:code "09031",
- :cost 0,
- :cycle_code "data-and-destiny",
- :faction "Apex",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_31.png",
- :limited 3,
- :normalizedtitle "prey",
- :number 31,
- :packquantity 3,
- :rotated false,
- :set_code "data-and-destiny",
- :setname "Data and Destiny",
- :side "Runner",
- :strength 0,
- :subtype "Run",
- :text "Make a run. Once during this run, when you pass a piece of ice, you may trash a number of your installed cards equal to the strength of that ice. If you do, trash that ice.",
- :title "Prey",
- :type "Event",
+{:code "09031"
+ :cost 0
+ :cycle_code "data-and-destiny"
+ :faction "Apex"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_31.png"
+ :limited 3
+ :normalizedtitle "prey"
+ :number 31
+ :packquantity 3
+ :rotated false
+ :set_code "dad"
+ :setname "Data and Destiny"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Make a run. Once during this run, when you pass a piece of ice, you may trash a number of your installed cards equal to the strength of that ice. If you do, trash that ice."
+ :title "Prey"
+ :type "Event"
  :uniqueness false}

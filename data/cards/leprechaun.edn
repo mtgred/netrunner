@@ -1,21 +1,21 @@
-{:code "06019",
- :cost 2,
- :cycle_code "lunar",
- :faction "Shaper",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/06019.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "leprechaun",
- :number 19,
- :packquantity 3,
- :rotated false,
- :set_code "upstalk",
- :setname "Upstalk",
- :side "Runner",
- :strength 0,
- :subtype "Daemon",
- :text "Leprechaun can host up to 2 programs. The memory costs of hosted programs do not count against your memory limit.",
- :title "Leprechaun",
- :type "Program",
+{:code "06019"
+ :cost 2
+ :cycle_code "lunar"
+ :faction "Shaper"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/06019.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "leprechaun"
+ :number 19
+ :packquantity 3
+ :rotated false
+ :set_code "up"
+ :setname "Upstalk"
+ :side "Runner"
+ :strength 0
+ :subtype "Daemon"
+ :text "Leprechaun can host up to 2 programs. The memory costs of hosted programs do not count against your memory limit."
+ :title "Leprechaun"
+ :type "Program"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "12097",
- :cost 1,
- :cycle_code "red-sand",
- :faction "Weyland Consortium",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_97.png",
- :limited 3,
- :normalizedtitle "open-forum",
- :number 97,
- :packquantity 3,
- :rotated false,
- :set_code "free-mars",
- :setname "Free Mars",
- :side "Corp",
- :strength 0,
- :text "After your mandatory draw, reveal the top card of R&D and add it to HQ. Add 1 card from HQ to the top of R&D.",
- :title "Open Forum",
- :trash 3,
- :type "Asset",
+{:code "12097"
+ :cost 1
+ :cycle_code "red-sand"
+ :faction "Weyland Consortium"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_97.png"
+ :limited 3
+ :normalizedtitle "open-forum"
+ :number 97
+ :packquantity 3
+ :rotated false
+ :set_code "fm"
+ :setname "Free Mars"
+ :side "Corp"
+ :strength 0
+ :text "After your mandatory draw, reveal the top card of R&D and add it to HQ. Add 1 card from HQ to the top of R&D."
+ :title "Open Forum"
+ :trash 3
+ :type "Asset"
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "01011",
- :cost 3,
- :cycle_code "core",
- :faction "Anarch",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/01011.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "mimic",
- :number 11,
- :packquantity 2,
- :replaced_by "20013",
- :set_code "core-set",
- :setname "Core Set",
- :side "Runner",
- :strength 3,
- :subtype "Icebreaker - Killer",
- :text "1[credit]: Break <strong>sentry</strong> subroutine.",
- :title "Mimic",
- :type "Program",
+{:code "01011"
+ :cost 3
+ :cycle_code "core"
+ :faction "Anarch"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/01011.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "mimic"
+ :number 11
+ :packquantity 2
+ :replaced_by "20013"
+ :set_code "core"
+ :setname "Core Set"
+ :side "Runner"
+ :strength 3
+ :subtype "Icebreaker - Killer"
+ :text "1[credit]: Break <strong>sentry</strong> subroutine."
+ :title "Mimic"
+ :type "Program"
  :uniqueness false}

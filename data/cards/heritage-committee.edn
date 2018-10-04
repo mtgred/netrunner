@@ -1,20 +1,20 @@
-{:code "10013",
- :cost 1,
- :cycle_code "mumbad",
- :faction "Jinteki",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_13.png",
- :limited 3,
- :normalizedtitle "heritage-committee",
- :number 13,
- :packquantity 3,
- :rotated false,
- :set_code "kala-ghoda",
- :setname "Kala Ghoda",
- :side "Corp",
- :strength 0,
- :subtype "Alliance",
- :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [jinteki] cards in your deck.\nDraw 3 cards. Add 1 card from HQ to the top of R&D.",
- :title "Heritage Committee",
- :type "Operation",
+{:code "10013"
+ :cost 1
+ :cycle_code "mumbad"
+ :faction "Jinteki"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_13.png"
+ :limited 3
+ :normalizedtitle "heritage-committee"
+ :number 13
+ :packquantity 3
+ :rotated false
+ :set_code "kg"
+ :setname "Kala Ghoda"
+ :side "Corp"
+ :strength 0
+ :subtype "Alliance"
+ :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [jinteki] cards in your deck.\nDraw 3 cards. Add 1 card from HQ to the top of R&D."
+ :title "Heritage Committee"
+ :type "Operation"
  :uniqueness false}

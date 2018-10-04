@@ -1,22 +1,22 @@
-{:advancementcost 4,
- :agendapoints 2,
- :code "01107",
- :cost 0,
- :cycle_code "core",
- :faction "Neutral",
- :factioncost 0,
- :image_url "https://netrunnerdb.com/card_image/01107.png",
- :limited 3,
- :normalizedtitle "private-security-force",
- :number 107,
- :packquantity 3,
- :replaced_by "20126",
- :set_code "core-set",
- :setname "Core Set",
- :side "Corp",
- :strength 0,
- :subtype "Security",
- :text "If the Runner is tagged, Private Security Force gains: \"[click]: Do 1 meat damage.\"",
- :title "Private Security Force",
- :type "Agenda",
+{:advancementcost 4
+ :agendapoints 2
+ :code "01107"
+ :cost 0
+ :cycle_code "core"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "https://netrunnerdb.com/card_image/01107.png"
+ :limited 3
+ :normalizedtitle "private-security-force"
+ :number 107
+ :packquantity 3
+ :replaced_by "20126"
+ :set_code "core"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 0
+ :subtype "Security"
+ :text "If the Runner is tagged, Private Security Force gains: \"[click]: Do 1 meat damage.\""
+ :title "Private Security Force"
+ :type "Agenda"
  :uniqueness false}

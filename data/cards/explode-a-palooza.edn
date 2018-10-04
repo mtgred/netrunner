@@ -1,21 +1,21 @@
-{:advancementcost 4,
- :agendapoints 2,
- :code "08094",
- :cost 0,
- :cycle_code "sansan",
- :faction "NBN",
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_94.png",
- :limited 3,
- :normalizedtitle "explode-a-palooza",
- :number 94,
- :packquantity 3,
- :rotated false,
- :set_code "old-hollywood",
- :setname "Old Hollywood",
- :side "Corp",
- :strength 0,
- :subtype "Sensie",
- :text "If Explode-a-palooza is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Explode-a-palooza, you may gain 5[credit].",
- :title "Explode-a-palooza",
- :type "Agenda",
+{:advancementcost 4
+ :agendapoints 2
+ :code "08094"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "NBN"
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_94.png"
+ :limited 3
+ :normalizedtitle "explode-a-palooza"
+ :number 94
+ :packquantity 3
+ :rotated false
+ :set_code "oh"
+ :setname "Old Hollywood"
+ :side "Corp"
+ :strength 0
+ :subtype "Sensie"
+ :text "If Explode-a-palooza is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Explode-a-palooza, you may gain 5[credit]."
+ :title "Explode-a-palooza"
+ :type "Agenda"
  :uniqueness false}

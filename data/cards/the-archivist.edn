@@ -1,20 +1,20 @@
-{:code "12003",
- :cost 1,
- :cycle_code "red-sand",
- :faction "Anarch",
- :factioncost 4,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_3.png",
- :limited 3,
- :normalizedtitle "the-archivist",
- :number 3,
- :packquantity 3,
- :rotated false,
- :set_code "daedalus-complex",
- :setname "Daedalus Complex",
- :side "Runner",
- :strength 0,
- :subtype "Connection",
- :text "+1[link]\nWhenever the Corp scores an <strong>initiative</strong> or <strong>security</strong> agenda, force the Corp to \"<trace>Trace 1</trace> if unsuccessful, take 1 bad publicity.\"",
- :title "The Archivist",
- :type "Resource",
+{:code "12003"
+ :cost 1
+ :cycle_code "red-sand"
+ :faction "Anarch"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_3.png"
+ :limited 3
+ :normalizedtitle "the-archivist"
+ :number 3
+ :packquantity 3
+ :rotated false
+ :set_code "dc"
+ :setname "Daedalus Complex"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "+1[link]\nWhenever the Corp scores an <strong>initiative</strong> or <strong>security</strong> agenda, force the Corp to \"<trace>Trace 1</trace> if unsuccessful, take 1 bad publicity.\""
+ :title "The Archivist"
+ :type "Resource"
  :uniqueness true}

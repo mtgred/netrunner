@@ -1,20 +1,20 @@
-{:code "10028",
- :cost 1,
- :cycle_code "mumbad",
- :faction "Haas-Bioroid",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_28.png",
- :limited 3,
- :normalizedtitle "lakshmi-smartfabrics",
- :number 28,
- :packquantity 3,
- :rotated false,
- :set_code "business-first",
- :setname "Business First",
- :side "Corp",
- :strength 0,
- :text "Whenever you rez a card, place 1 power counter on Lakshmi Smartfabrics.\n<strong>X hosted power counters:</strong> Reveal an agenda worth X points from HQ. The Runner cannot steal copies of that agenda for the remainder of this turn.",
- :title "Lakshmi Smartfabrics",
- :trash 3,
- :type "Asset",
+{:code "10028"
+ :cost 1
+ :cycle_code "mumbad"
+ :faction "Haas-Bioroid"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_28.png"
+ :limited 3
+ :normalizedtitle "lakshmi-smartfabrics"
+ :number 28
+ :packquantity 3
+ :rotated false
+ :set_code "bf"
+ :setname "Business First"
+ :side "Corp"
+ :strength 0
+ :text "Whenever you rez a card, place 1 power counter on Lakshmi Smartfabrics.\n<strong>X hosted power counters:</strong> Reveal an agenda worth X points from HQ. The Runner cannot steal copies of that agenda for the remainder of this turn."
+ :title "Lakshmi Smartfabrics"
+ :trash 3
+ :type "Asset"
  :uniqueness false}

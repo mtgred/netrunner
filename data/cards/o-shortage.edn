@@ -1,19 +1,19 @@
-{:code "12090",
- :cost 3,
- :cycle_code "red-sand",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_90.png",
- :limited 3,
- :normalizedtitle "o-shortage",
- :number 90,
- :packquantity 3,
- :rotated false,
- :set_code "free-mars",
- :setname "Free Mars",
- :side "Corp",
- :strength 0,
- :text "The Runner may trash 1 card from his or her grip at random. If he or she does not, gain [click][click].",
- :title "O₂ Shortage",
- :type "Operation",
+{:code "12090"
+ :cost 3
+ :cycle_code "red-sand"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_90.png"
+ :limited 3
+ :normalizedtitle "o-shortage"
+ :number 90
+ :packquantity 3
+ :rotated false
+ :set_code "fm"
+ :setname "Free Mars"
+ :side "Corp"
+ :strength 0
+ :text "The Runner may trash 1 card from his or her grip at random. If he or she does not, gain [click][click]."
+ :title "O₂ Shortage"
+ :type "Operation"
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "08113",
- :cost 1,
- :cycle_code "sansan",
- :faction "Jinteki",
- :factioncost 5,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_113.png",
- :limited 3,
- :normalizedtitle "genetics-pavilion",
- :number 113,
- :packquantity 3,
- :rotated false,
- :set_code "the-universe-of-tomorrow",
- :setname "The Universe of Tomorrow",
- :side "Corp",
- :strength 0,
- :subtype "Facility - Ritzy",
- :text "The Runner cannot draw more than 2 cards during his or her turn.",
- :title "Genetics Pavilion",
- :trash 5,
- :type "Asset",
+{:code "08113"
+ :cost 1
+ :cycle_code "sansan"
+ :faction "Jinteki"
+ :factioncost 5
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_113.png"
+ :limited 3
+ :normalizedtitle "genetics-pavilion"
+ :number 113
+ :packquantity 3
+ :rotated false
+ :set_code "uot"
+ :setname "The Universe of Tomorrow"
+ :side "Corp"
+ :strength 0
+ :subtype "Facility - Ritzy"
+ :text "The Runner cannot draw more than 2 cards during his or her turn."
+ :title "Genetics Pavilion"
+ :trash 5
+ :type "Asset"
  :uniqueness true}

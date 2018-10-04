@@ -1,21 +1,21 @@
-{:code "08001",
- :cost 2,
- :cycle_code "sansan",
- :faction "Anarch",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_1.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "clot",
- :number 1,
- :packquantity 3,
- :rotated false,
- :set_code "the-valley",
- :setname "The Valley",
- :side "Runner",
- :strength 0,
- :subtype "Virus",
- :text "The Corp cannot score an agenda on the same turn he or she installed it.\nTrash Clot if the Corp purges virus counters.",
- :title "Clot",
- :type "Program",
+{:code "08001"
+ :cost 2
+ :cycle_code "sansan"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_1.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "clot"
+ :number 1
+ :packquantity 3
+ :rotated false
+ :set_code "val"
+ :setname "The Valley"
+ :side "Runner"
+ :strength 0
+ :subtype "Virus"
+ :text "The Corp cannot score an agenda on the same turn he or she installed it.\nTrash Clot if the Corp purges virus counters."
+ :title "Clot"
+ :type "Program"
  :uniqueness false}

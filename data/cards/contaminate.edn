@@ -1,19 +1,19 @@
-{:code "21083",
- :cost 1,
- :cycle_code "kitara",
- :faction "Anarch",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_83.png",
- :limited 3,
- :normalizedtitle "contaminate",
- :number 83,
- :packquantity 3,
- :rotated false,
- :set_code "whispers-in-nalubaale",
- :setname "Whispers in Nalubaale",
- :side "Runner",
- :strength 0,
- :text "Place 3 virus counters on an installed Runner card with no hosted virus counters.",
- :title "Contaminate",
- :type "Event",
+{:code "21083"
+ :cost 1
+ :cycle_code "kitara"
+ :faction "Anarch"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_83.png"
+ :limited 3
+ :normalizedtitle "contaminate"
+ :number 83
+ :packquantity 3
+ :rotated false
+ :set_code "win"
+ :setname "Whispers in Nalubaale"
+ :side "Runner"
+ :strength 0
+ :text "Place 3 virus counters on an installed Runner card with no hosted virus counters."
+ :title "Contaminate"
+ :type "Event"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "12078",
- :cost 0,
- :cycle_code "red-sand",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_78.png",
- :limited 3,
- :normalizedtitle "success",
- :number 78,
- :packquantity 3,
- :rotated false,
- :set_code "blood-and-water",
- :setname "Blood and Water",
- :side "Corp",
- :strength 0,
- :subtype "Triple",
- :text "As an additional cost to play this operation, forfeit an agenda and spend [click][click].\nAdvance a card X times. X equals the advancement requirement of the agenda just forfeited.",
- :title "Success",
- :type "Operation",
+{:code "12078"
+ :cost 0
+ :cycle_code "red-sand"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_78.png"
+ :limited 3
+ :normalizedtitle "success"
+ :number 78
+ :packquantity 3
+ :rotated false
+ :set_code "baw"
+ :setname "Blood and Water"
+ :side "Corp"
+ :strength 0
+ :subtype "Triple"
+ :text "As an additional cost to play this operation, forfeit an agenda and spend [click][click].\nAdvance a card X times. X equals the advancement requirement of the agenda just forfeited."
+ :title "Success"
+ :type "Operation"
  :uniqueness false}

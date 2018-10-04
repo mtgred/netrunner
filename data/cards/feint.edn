@@ -1,20 +1,20 @@
-{:code "05034",
- :cost 2,
- :cycle_code "honor-and-profit",
- :faction "Criminal",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/05034.png",
- :limited 3,
- :normalizedtitle "feint",
- :number 34,
- :packquantity 3,
- :rotated false,
- :set_code "honor-and-profit",
- :setname "Honor and Profit",
- :side "Runner",
- :strength 0,
- :subtype "Run",
- :text "Make a run on HQ. Bypass the first 2 pieces of ice encountered during this run. If successful, you cannot access any cards.",
- :title "Feint",
- :type "Event",
+{:code "05034"
+ :cost 2
+ :cycle_code "honor-and-profit"
+ :faction "Criminal"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/05034.png"
+ :limited 3
+ :normalizedtitle "feint"
+ :number 34
+ :packquantity 3
+ :rotated false
+ :set_code "hap"
+ :setname "Honor and Profit"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Make a run on HQ. Bypass the first 2 pieces of ice encountered during this run. If successful, you cannot access any cards."
+ :title "Feint"
+ :type "Event"
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "08099",
- :cost 0,
- :cycle_code "sansan",
- :faction "Weyland Consortium",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_99.png",
- :limited 3,
- :normalizedtitle "back-channels",
- :number 99,
- :packquantity 3,
- :rotated false,
- :set_code "old-hollywood",
- :setname "Old Hollywood",
- :side "Corp",
- :strength 0,
- :subtype "Transaction",
- :text "Trash a card installed in a server and gain 3[credit] for each advancement token on that card.",
- :title "Back Channels",
- :type "Operation",
+{:code "08099"
+ :cost 0
+ :cycle_code "sansan"
+ :faction "Weyland Consortium"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_99.png"
+ :limited 3
+ :normalizedtitle "back-channels"
+ :number 99
+ :packquantity 3
+ :rotated false
+ :set_code "oh"
+ :setname "Old Hollywood"
+ :side "Corp"
+ :strength 0
+ :subtype "Transaction"
+ :text "Trash a card installed in a server and gain 3[credit] for each advancement token on that card."
+ :title "Back Channels"
+ :type "Operation"
  :uniqueness false}

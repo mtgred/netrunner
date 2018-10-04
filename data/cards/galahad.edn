@@ -1,20 +1,20 @@
-{:code "06011",
- :cost 2,
- :cycle_code "lunar",
- :faction "Neutral",
- :factioncost 1,
- :image_url "https://netrunnerdb.com/card_image/06011.png",
- :limited 3,
- :normalizedtitle "galahad",
- :number 11,
- :packquantity 3,
- :rotated false,
- :set_code "upstalk",
- :setname "Upstalk",
- :side "Corp",
- :strength 1,
- :subtype "Barrier - Grail",
- :text "When the Runner encounters Galahad, you may reveal up to 2 <strong>grail</strong> ice from HQ. For the remainder of this run, Galahad gains the subroutines of the revealed ice in the order of your choice.\n[subroutine] End the run.",
- :title "Galahad",
- :type "ICE",
+{:code "06011"
+ :cost 2
+ :cycle_code "lunar"
+ :faction "Neutral"
+ :factioncost 1
+ :image_url "https://netrunnerdb.com/card_image/06011.png"
+ :limited 3
+ :normalizedtitle "galahad"
+ :number 11
+ :packquantity 3
+ :rotated false
+ :set_code "up"
+ :setname "Upstalk"
+ :side "Corp"
+ :strength 1
+ :subtype "Barrier - Grail"
+ :text "When the Runner encounters Galahad, you may reveal up to 2 <strong>grail</strong> ice from HQ. For the remainder of this run, Galahad gains the subroutines of the revealed ice in the order of your choice.\n[subroutine] End the run."
+ :title "Galahad"
+ :type "ICE"
  :uniqueness false}

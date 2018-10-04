@@ -1,21 +1,21 @@
-{:code "21108",
- :cost 5,
- :cycle_code "kitara",
- :faction "Shaper",
- :factioncost 4,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_108.png",
- :limited 3,
- :memoryunits 2,
- :normalizedtitle "engolo",
- :number 108,
- :packquantity 3,
- :rotated false,
- :set_code "kampala-ascendent",
- :setname "Kampala Ascendent",
- :side "Runner",
- :strength 2,
- :subtype "Icebreaker - Decoder",
- :text "When you encounter a piece of ice, you may pay 2[credit] to have it gain <strong>code gate</strong> until the end of the encounter. Use this ability only once per turn.\n1[credit]: Break <strong>code gate</strong> subroutine.\n2[credit]: +4 strength.",
- :title "Engolo",
- :type "Program",
+{:code "21108"
+ :cost 5
+ :cycle_code "kitara"
+ :faction "Shaper"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_108.png"
+ :limited 3
+ :memoryunits 2
+ :normalizedtitle "engolo"
+ :number 108
+ :packquantity 3
+ :rotated false
+ :set_code "ka"
+ :setname "Kampala Ascendent"
+ :side "Runner"
+ :strength 2
+ :subtype "Icebreaker - Decoder"
+ :text "When you encounter a piece of ice, you may pay 2[credit] to have it gain <strong>code gate</strong> until the end of the encounter. Use this ability only once per turn.\n1[credit]: Break <strong>code gate</strong> subroutine.\n2[credit]: +4 strength."
+ :title "Engolo"
+ :type "Program"
  :uniqueness false}

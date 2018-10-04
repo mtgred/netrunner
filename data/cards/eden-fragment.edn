@@ -1,22 +1,22 @@
-{:advancementcost 5,
- :agendapoints 3,
- :code "06030",
- :cost 0,
- :cycle_code "lunar",
- :faction "Neutral",
- :factioncost 0,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_30.png",
- :limited 1,
- :normalizedtitle "eden-fragment",
- :number 30,
- :packquantity 3,
- :rotated false,
- :set_code "the-spaces-between",
- :setname "The Spaces Between",
- :side "Corp",
- :strength 0,
- :subtype "Source",
- :text "Ignore the install cost of the first piece of ice you install each turn.\nLimit 1 per deck.",
- :title "Eden Fragment",
- :type "Agenda",
+{:advancementcost 5
+ :agendapoints 3
+ :code "06030"
+ :cost 0
+ :cycle_code "lunar"
+ :faction "Neutral"
+ :factioncost 0
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_30.png"
+ :limited 1
+ :normalizedtitle "eden-fragment"
+ :number 30
+ :packquantity 3
+ :rotated false
+ :set_code "tsb"
+ :setname "The Spaces Between"
+ :side "Corp"
+ :strength 0
+ :subtype "Source"
+ :text "Ignore the install cost of the first piece of ice you install each turn.\nLimit 1 per deck."
+ :title "Eden Fragment"
+ :type "Agenda"
  :uniqueness true}

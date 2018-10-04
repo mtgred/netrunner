@@ -1,22 +1,22 @@
-{:baselink 0,
- :code "02001",
- :cost 0,
- :cycle_code "genesis",
- :faction "Anarch",
- :image_url "https://netrunnerdb.com/card_image/02001.png",
- :influencelimit 15,
- :limited 1,
- :minimumdecksize 45,
- :normalizedtitle "whizzard-master-gamer",
- :number 1,
- :packquantity 3,
- :rotated true,
- :set_code "what-lies-ahead",
- :setname "What Lies Ahead",
- :side "Runner",
- :strength 0,
- :subtype "Natural",
- :text "3[recurring-credit]\nUse these credits to trash cards.",
- :title "Whizzard: Master Gamer",
- :type "Identity",
+{:baselink 0
+ :code "02001"
+ :cost 0
+ :cycle_code "genesis"
+ :faction "Anarch"
+ :image_url "https://netrunnerdb.com/card_image/02001.png"
+ :influencelimit 15
+ :limited 1
+ :minimumdecksize 45
+ :normalizedtitle "whizzard-master-gamer"
+ :number 1
+ :packquantity 3
+ :rotated true
+ :set_code "wla"
+ :setname "What Lies Ahead"
+ :side "Runner"
+ :strength 0
+ :subtype "Natural"
+ :text "3[recurring-credit]\nUse these credits to trash cards."
+ :title "Whizzard: Master Gamer"
+ :type "Identity"
  :uniqueness false}

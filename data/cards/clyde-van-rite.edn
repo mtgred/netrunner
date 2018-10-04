@@ -1,21 +1,21 @@
-{:code "12037",
- :cost 2,
- :cycle_code "red-sand",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_37.png",
- :limited 3,
- :normalizedtitle "clyde-van-rite",
- :number 37,
- :packquantity 3,
- :rotated false,
- :set_code "station-one",
- :setname "Station One",
- :side "Corp",
- :strength 0,
- :subtype "Executive",
- :text "When your turn begins, the Runner must pay 1[credit] or trash the top card of the stack.",
- :title "Clyde Van Rite",
- :trash 3,
- :type "Asset",
+{:code "12037"
+ :cost 2
+ :cycle_code "red-sand"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_37.png"
+ :limited 3
+ :normalizedtitle "clyde-van-rite"
+ :number 37
+ :packquantity 3
+ :rotated false
+ :set_code "so"
+ :setname "Station One"
+ :side "Corp"
+ :strength 0
+ :subtype "Executive"
+ :text "When your turn begins, the Runner must pay 1[credit] or trash the top card of the stack."
+ :title "Clyde Van Rite"
+ :trash 3
+ :type "Asset"
  :uniqueness true}

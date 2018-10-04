@@ -1,20 +1,20 @@
-{:code "04102",
- :cost 0,
- :cycle_code "spin",
- :faction "Anarch",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/04102.png",
- :limited 3,
- :normalizedtitle "queen-s-gambit",
- :number 102,
- :packquantity 3,
- :rotated true,
- :set_code "double-time",
- :setname "Double Time",
- :side "Runner",
- :strength 0,
- :subtype "Double",
- :text "As an additional cost to play this event, spend [click].\nPlace up to 3 advancement tokens on an unrezzed card in a remote server. Gain 2[credit] for each advancement token placed. You cannot access that card this turn.",
- :title "Queen's Gambit",
- :type "Event",
+{:code "04102"
+ :cost 0
+ :cycle_code "spin"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/04102.png"
+ :limited 3
+ :normalizedtitle "queen-s-gambit"
+ :number 102
+ :packquantity 3
+ :rotated true
+ :set_code "dt"
+ :setname "Double Time"
+ :side "Runner"
+ :strength 0
+ :subtype "Double"
+ :text "As an additional cost to play this event, spend [click].\nPlace up to 3 advancement tokens on an unrezzed card in a remote server. Gain 2[credit] for each advancement token placed. You cannot access that card this turn."
+ :title "Queen's Gambit"
+ :type "Event"
  :uniqueness false}

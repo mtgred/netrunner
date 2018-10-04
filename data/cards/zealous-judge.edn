@@ -1,21 +1,21 @@
-{:code "10111",
- :cost 2,
- :cycle_code "mumbad",
- :faction "Weyland Consortium",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_111.png",
- :limited 3,
- :normalizedtitle "zealous-judge",
- :number 111,
- :packquantity 3,
- :rotated false,
- :set_code "fear-the-masses",
- :setname "Fear the Masses",
- :side "Corp",
- :strength 0,
- :subtype "Character",
- :text "Zealous Judge can only be rezzed if the Runner is tagged.\n[click], 1[credit]: Give the Runner 1 tag.",
- :title "Zealous Judge",
- :trash 2,
- :type "Asset",
+{:code "10111"
+ :cost 2
+ :cycle_code "mumbad"
+ :faction "Weyland Consortium"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_111.png"
+ :limited 3
+ :normalizedtitle "zealous-judge"
+ :number 111
+ :packquantity 3
+ :rotated false
+ :set_code "ftm"
+ :setname "Fear the Masses"
+ :side "Corp"
+ :strength 0
+ :subtype "Character"
+ :text "Zealous Judge can only be rezzed if the Runner is tagged.\n[click], 1[credit]: Give the Runner 1 tag."
+ :title "Zealous Judge"
+ :trash 2
+ :type "Asset"
  :uniqueness false}

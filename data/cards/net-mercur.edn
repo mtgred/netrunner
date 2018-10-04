@@ -1,20 +1,20 @@
-{:code "11046",
- :cost 3,
- :cycle_code "flashpoint",
- :faction "Shaper",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_46.png",
- :limited 3,
- :normalizedtitle "net-mercur",
- :number 46,
- :packquantity 3,
- :rotated false,
- :set_code "escalation",
- :setname "Escalation",
- :side "Runner",
- :strength 0,
- :subtype "Virtual - Stealth",
- :text "The first time you spend at least 1[credit] from a <strong>stealth</strong> card each run, place 1[credit] on Net Mercur or draw 1 card.\nUse credits on Net Mercur for anything.",
- :title "Net Mercur",
- :type "Resource",
+{:code "11046"
+ :cost 3
+ :cycle_code "flashpoint"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_46.png"
+ :limited 3
+ :normalizedtitle "net-mercur"
+ :number 46
+ :packquantity 3
+ :rotated false
+ :set_code "es"
+ :setname "Escalation"
+ :side "Runner"
+ :strength 0
+ :subtype "Virtual - Stealth"
+ :text "The first time you spend at least 1[credit] from a <strong>stealth</strong> card each run, place 1[credit] on Net Mercur or draw 1 card.\nUse credits on Net Mercur for anything."
+ :title "Net Mercur"
+ :type "Resource"
  :uniqueness true}

@@ -1,21 +1,21 @@
-{:code "13046",
- :cost 2,
- :cycle_code "terminal-directive",
- :faction "Weyland Consortium",
- :factioncost 4,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_46.png",
- :limited 3,
- :normalizedtitle "mr-stone",
- :number 46,
- :packquantity 3,
- :rotated false,
- :set_code "terminal-directive",
- :setname "Terminal Directive",
- :side "Corp",
- :strength 0,
- :subtype "Executive",
- :text "Whenever the Runner takes 1 or more tags, do 1 meat damage.",
- :title "Mr. Stone",
- :trash 2,
- :type "Asset",
+{:code "13046"
+ :cost 2
+ :cycle_code "terminal-directive"
+ :faction "Weyland Consortium"
+ :factioncost 4
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_46.png"
+ :limited 3
+ :normalizedtitle "mr-stone"
+ :number 46
+ :packquantity 3
+ :rotated false
+ :set_code "td"
+ :setname "Terminal Directive"
+ :side "Corp"
+ :strength 0
+ :subtype "Executive"
+ :text "Whenever the Runner takes 1 or more tags, do 1 meat damage."
+ :title "Mr. Stone"
+ :trash 2
+ :type "Asset"
  :uniqueness true}

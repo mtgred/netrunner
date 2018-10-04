@@ -1,21 +1,21 @@
-{:code "21022",
- :cost 2,
- :cycle_code "kitara",
- :faction "Anarch",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_22.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "plague",
- :number 22,
- :packquantity 3,
- :rotated false,
- :set_code "down-the-white-nile",
- :setname "Down the White Nile",
- :side "Runner",
- :strength 0,
- :subtype "Virus",
- :text "When you install Plague, choose a server.\nWhenever you make a successful run on the chosen server, you may place 2 virus counters on Plague.",
- :title "Plague",
- :type "Program",
+{:code "21022"
+ :cost 2
+ :cycle_code "kitara"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_22.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "plague"
+ :number 22
+ :packquantity 3
+ :rotated false
+ :set_code "dtwn"
+ :setname "Down the White Nile"
+ :side "Runner"
+ :strength 0
+ :subtype "Virus"
+ :text "When you install Plague, choose a server.\nWhenever you make a successful run on the chosen server, you may place 2 virus counters on Plague."
+ :title "Plague"
+ :type "Program"
  :uniqueness false}

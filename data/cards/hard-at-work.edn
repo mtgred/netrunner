@@ -1,19 +1,19 @@
-{:code "04023",
- :cost 5,
- :cycle_code "spin",
- :faction "Anarch",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04023.png",
- :limited 3,
- :normalizedtitle "hard-at-work",
- :number 23,
- :packquantity 3,
- :rotated true,
- :set_code "second-thoughts",
- :setname "Second Thoughts",
- :side "Runner",
- :strength 0,
- :text "When your turn begins, gain 2[credit] and lose [click].",
- :title "Hard at Work",
- :type "Resource",
+{:code "04023"
+ :cost 5
+ :cycle_code "spin"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04023.png"
+ :limited 3
+ :normalizedtitle "hard-at-work"
+ :number 23
+ :packquantity 3
+ :rotated true
+ :set_code "st"
+ :setname "Second Thoughts"
+ :side "Runner"
+ :strength 0
+ :text "When your turn begins, gain 2[credit] and lose [click]."
+ :title "Hard at Work"
+ :type "Resource"
  :uniqueness false}

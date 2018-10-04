@@ -1,20 +1,20 @@
-{:code "07034",
- :cost 2,
- :cycle_code "order-and-chaos",
- :faction "Anarch",
- :factioncost 3,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_34.png",
- :limited 3,
- :normalizedtitle "showing-off",
- :number 34,
- :packquantity 3,
- :rotated false,
- :set_code "order-and-chaos",
- :setname "Order and Chaos",
- :side "Runner",
- :strength 0,
- :subtype "Run",
- :text "Make a run on R&D. If successful, instead of accessing cards from the top of R&D, access cards from the bottom of R&D (starting with the bottom card and working your way up).",
- :title "Showing Off",
- :type "Event",
+{:code "07034"
+ :cost 2
+ :cycle_code "order-and-chaos"
+ :faction "Anarch"
+ :factioncost 3
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_34.png"
+ :limited 3
+ :normalizedtitle "showing-off"
+ :number 34
+ :packquantity 3
+ :rotated false
+ :set_code "oac"
+ :setname "Order and Chaos"
+ :side "Runner"
+ :strength 0
+ :subtype "Run"
+ :text "Make a run on R&D. If successful, instead of accessing cards from the top of R&D, access cards from the bottom of R&D (starting with the bottom card and working your way up)."
+ :title "Showing Off"
+ :type "Event"
  :uniqueness false}

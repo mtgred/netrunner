@@ -1,21 +1,21 @@
-{:code "04088",
- :cost 7,
- :cycle_code "spin",
- :faction "Shaper",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/04088.png",
- :limited 3,
- :memoryunits 1,
- :normalizedtitle "omega",
- :number 88,
- :packquantity 3,
- :rotated true,
- :set_code "fear-and-loathing",
- :setname "Fear and Loathing",
- :side "Runner",
- :strength 1,
- :subtype "Icebreaker - AI",
- :text "1[credit]: Break ice subroutine.\n1[credit]: +1 strength.\nUse Omega only on the innermost piece of ice protecting a server.",
- :title "Omega",
- :type "Program",
+{:code "04088"
+ :cost 7
+ :cycle_code "spin"
+ :faction "Shaper"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/04088.png"
+ :limited 3
+ :memoryunits 1
+ :normalizedtitle "omega"
+ :number 88
+ :packquantity 3
+ :rotated true
+ :set_code "fal"
+ :setname "Fear and Loathing"
+ :side "Runner"
+ :strength 1
+ :subtype "Icebreaker - AI"
+ :text "1[credit]: Break ice subroutine.\n1[credit]: +1 strength.\nUse Omega only on the innermost piece of ice protecting a server."
+ :title "Omega"
+ :type "Program"
  :uniqueness false}

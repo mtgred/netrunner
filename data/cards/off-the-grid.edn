@@ -1,20 +1,20 @@
-{:code "04038",
- :cost 6,
- :cycle_code "spin",
- :faction "Weyland Consortium",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/04038.png",
- :limited 3,
- :normalizedtitle "off-the-grid",
- :number 38,
- :packquantity 3,
- :rotated true,
- :set_code "second-thoughts",
- :setname "Second Thoughts",
- :side "Corp",
- :strength 0,
- :text "Install only in a remote server.\nThe Runner cannot initiate a run on this server.\nWhenever the Runner makes a successful run on HQ, trash Off the Grid.",
- :title "Off the Grid",
- :trash 0,
- :type "Upgrade",
+{:code "04038"
+ :cost 6
+ :cycle_code "spin"
+ :faction "Weyland Consortium"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/04038.png"
+ :limited 3
+ :normalizedtitle "off-the-grid"
+ :number 38
+ :packquantity 3
+ :rotated true
+ :set_code "st"
+ :setname "Second Thoughts"
+ :side "Corp"
+ :strength 0
+ :text "Install only in a remote server.\nThe Runner cannot initiate a run on this server.\nWhenever the Runner makes a successful run on HQ, trash Off the Grid."
+ :title "Off the Grid"
+ :trash 0
+ :type "Upgrade"
  :uniqueness false}

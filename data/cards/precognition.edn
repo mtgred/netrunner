@@ -1,18 +1,18 @@
-{:code "01073",
- :cost 0,
- :cycle_code "core",
- :faction "Jinteki",
- :factioncost 3,
- :image_url "https://netrunnerdb.com/card_image/01073.png",
- :limited 3,
- :normalizedtitle "precognition",
- :number 73,
- :packquantity 2,
- :set_code "core-set",
- :setname "Core Set",
- :side "Corp",
- :strength 0,
- :text "Look at the top 5 cards of R&D and arrange them in any order.",
- :title "Precognition",
- :type "Operation",
+{:code "01073"
+ :cost 0
+ :cycle_code "core"
+ :faction "Jinteki"
+ :factioncost 3
+ :image_url "https://netrunnerdb.com/card_image/01073.png"
+ :limited 3
+ :normalizedtitle "precognition"
+ :number 73
+ :packquantity 2
+ :set_code "core"
+ :setname "Core Set"
+ :side "Corp"
+ :strength 0
+ :text "Look at the top 5 cards of R&D and arrange them in any order."
+ :title "Precognition"
+ :type "Operation"
  :uniqueness false}

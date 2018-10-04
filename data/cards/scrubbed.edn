@@ -1,20 +1,20 @@
-{:code "06034",
- :cost 2,
- :cycle_code "lunar",
- :faction "Anarch",
- :factioncost 2,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_34.png",
- :limited 3,
- :normalizedtitle "scrubbed",
- :number 34,
- :packquantity 3,
- :rotated false,
- :set_code "the-spaces-between",
- :setname "The Spaces Between",
- :side "Runner",
- :strength 0,
- :subtype "Current",
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is scored.\nThe first piece of ice encountered each turn has -2 strength for the remainder of the run.",
- :title "Scrubbed",
- :type "Event",
+{:code "06034"
+ :cost 2
+ :cycle_code "lunar"
+ :faction "Anarch"
+ :factioncost 2
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_34.png"
+ :limited 3
+ :normalizedtitle "scrubbed"
+ :number 34
+ :packquantity 3
+ :rotated false
+ :set_code "tsb"
+ :setname "The Spaces Between"
+ :side "Runner"
+ :strength 0
+ :subtype "Current"
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is scored.\nThe first piece of ice encountered each turn has -2 strength for the remainder of the run."
+ :title "Scrubbed"
+ :type "Event"
  :uniqueness false}

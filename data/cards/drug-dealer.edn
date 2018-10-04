@@ -1,20 +1,20 @@
-{:code "08083",
- :cost 1,
- :cycle_code "sansan",
- :faction "Criminal",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_83.png",
- :limited 3,
- :normalizedtitle "drug-dealer",
- :number 83,
- :packquantity 3,
- :rotated false,
- :set_code "old-hollywood",
- :setname "Old Hollywood",
- :side "Runner",
- :strength 0,
- :subtype "Connection",
- :text "When your turn begins, lose 1[credit].\nWhen the Corp's turn begins, draw 1 card.",
- :title "Drug Dealer",
- :type "Resource",
+{:code "08083"
+ :cost 1
+ :cycle_code "sansan"
+ :faction "Criminal"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_83.png"
+ :limited 3
+ :normalizedtitle "drug-dealer"
+ :number 83
+ :packquantity 3
+ :rotated false
+ :set_code "oh"
+ :setname "Old Hollywood"
+ :side "Runner"
+ :strength 0
+ :subtype "Connection"
+ :text "When your turn begins, lose 1[credit].\nWhen the Corp's turn begins, draw 1 card."
+ :title "Drug Dealer"
+ :type "Resource"
  :uniqueness false}

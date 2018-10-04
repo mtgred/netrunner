@@ -1,20 +1,20 @@
-{:code "04090",
- :cost 2,
- :cycle_code "spin",
- :faction "Haas-Bioroid",
- :factioncost 2,
- :image_url "https://netrunnerdb.com/card_image/04090.png",
- :limited 3,
- :normalizedtitle "blue-level-clearance",
- :number 90,
- :packquantity 3,
- :rotated true,
- :set_code "fear-and-loathing",
- :setname "Fear and Loathing",
- :side "Corp",
- :strength 0,
- :subtype "Double - Transaction",
- :text "As an additional cost to play this operation, spend [click].\nGain 5[credit] and draw 2 cards.",
- :title "Blue Level Clearance",
- :type "Operation",
+{:code "04090"
+ :cost 2
+ :cycle_code "spin"
+ :faction "Haas-Bioroid"
+ :factioncost 2
+ :image_url "https://netrunnerdb.com/card_image/04090.png"
+ :limited 3
+ :normalizedtitle "blue-level-clearance"
+ :number 90
+ :packquantity 3
+ :rotated true
+ :set_code "fal"
+ :setname "Fear and Loathing"
+ :side "Corp"
+ :strength 0
+ :subtype "Double - Transaction"
+ :text "As an additional cost to play this operation, spend [click].\nGain 5[credit] and draw 2 cards."
+ :title "Blue Level Clearance"
+ :type "Operation"
  :uniqueness false}

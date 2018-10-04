@@ -1,20 +1,20 @@
-{:code "00005",
- :cost 0,
- :cycle_code "draft",
- :faction "Neutral",
- :image_url "https://netrunnerdb.com/card_image/00005.png",
- :limited 1,
- :minimumdecksize 30,
- :normalizedtitle "the-shadow-pulling-the-strings",
- :number 5,
- :packquantity 1,
- :rotated false,
- :set_code "draft",
- :setname "Draft",
- :side "Corp",
- :strength 0,
- :subtype "Megacorp",
- :text "Draft format only.\nYou can use agendas from all factions in this deck.",
- :title "The Shadow: Pulling the Strings",
- :type "Identity",
+{:code "00005"
+ :cost 0
+ :cycle_code "draft"
+ :faction "Neutral"
+ :image_url "https://netrunnerdb.com/card_image/00005.png"
+ :limited 1
+ :minimumdecksize 30
+ :normalizedtitle "the-shadow-pulling-the-strings"
+ :number 5
+ :packquantity 1
+ :rotated false
+ :set_code "draft"
+ :setname "Draft"
+ :side "Corp"
+ :strength 0
+ :subtype "Megacorp"
+ :text "Draft format only.\nYou can use agendas from all factions in this deck."
+ :title "The Shadow: Pulling the Strings"
+ :type "Identity"
  :uniqueness false}

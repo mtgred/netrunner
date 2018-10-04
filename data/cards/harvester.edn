@@ -1,20 +1,20 @@
-{:code "10032",
- :cost 1,
- :cycle_code "mumbad",
- :faction "Jinteki",
- :factioncost 1,
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_32.png",
- :limited 3,
- :normalizedtitle "harvester",
- :number 32,
- :packquantity 3,
- :rotated false,
- :set_code "business-first",
- :setname "Business First",
- :side "Corp",
- :strength 3,
- :subtype "Code Gate",
- :text "[subroutine] The Runner draws 3 cards and then discards down to his or her maximum hand size.\n[subroutine] The Runner draws 3 cards and then discards down to his or her maximum hand size.",
- :title "Harvester",
- :type "ICE",
+{:code "10032"
+ :cost 1
+ :cycle_code "mumbad"
+ :faction "Jinteki"
+ :factioncost 1
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_32.png"
+ :limited 3
+ :normalizedtitle "harvester"
+ :number 32
+ :packquantity 3
+ :rotated false
+ :set_code "bf"
+ :setname "Business First"
+ :side "Corp"
+ :strength 3
+ :subtype "Code Gate"
+ :text "[subroutine] The Runner draws 3 cards and then discards down to his or her maximum hand size.\n[subroutine] The Runner draws 3 cards and then discards down to his or her maximum hand size."
+ :title "Harvester"
+ :type "ICE"
  :uniqueness false}
