@@ -3,6 +3,7 @@
 .gitignore
 .lein-*
 figwheel_server.log
+andb-*.json
 
 node_modules/
 
