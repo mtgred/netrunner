@@ -2,10 +2,11 @@
   (:require [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clj-time.core :as t]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.string :as string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.java.io :as io]
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
+            [clojure.edn :as edn]
             [jinteki.utils :refer [str->int other-side is-tagged?]]
             [jinteki.cards :refer [all-cards]]
             [game.quotes :as quotes]))
