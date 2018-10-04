@@ -12,7 +12,6 @@
  :set_code "ka"
  :setname "Kampala Ascendent"
  :side "Runner"
- :strength 0
  :subtype "Mod"
  :text "Flame-out can host a single program.\nWhen you install Flame-out, place 9[credit] on it. Use these credits to pay for using hosted program.\nWhen a turn ends in which you used credits on Flame-out, trash hosted program."
  :title "Flame-out"

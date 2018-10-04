@@ -12,7 +12,6 @@
  :set_code "mo"
  :setname "Magnum Opus"
  :side "Runner"
- :strength 0
  :subtype " - Run - Terminal"
  :text "After you resolve this event, end your action phase.\nMake a run on a remote server. If successful, remove the first non-agenda card that you access from the game.\nUntil the game ends, whenever you access a copy of tha card, remove it from the game.\nLimit 1 per Deck."
  :title "Watch the World Burn"

@@ -12,7 +12,6 @@
  :set_code "atr"
  :setname "All That Remains"
  :side "Corp"
- :strength 0
  :subtype "Cast"
  :text "The first time you draw a card each turn, draw 1 additional card. Add 1 of the drawn cards to the bottom of R&D."
  :title "Daily Business Show"

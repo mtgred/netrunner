@@ -1,6 +1,5 @@
 {:baselink 0
  :code "00008"
- :cost 0
  :cycle_code "draft"
  :faction "Criminal"
  :image_url "https://netrunnerdb.com/card_image/00008.png"
@@ -13,7 +12,6 @@
  :set_code "draft"
  :setname "Draft"
  :side "Runner"
- :strength 0
  :subtype "Cyborg"
  :text "Draft format only.\nIf you have more [criminal] cards installed than any other faction, when your turn begins, remove 1 tag."
  :title "Boris \"Syfr\" Kovac: Crafty Veteran"

@@ -12,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Corp"
- :strength 0
  :text "When your turn begins, place 2[credit] on Long-Term Investment. If there are at least 8[credit] on Long-Term Investment, it gains \"[click]: Take any number of credits from Long-Term Investment.\""
  :title "Long-Term Investment"
  :trash 4

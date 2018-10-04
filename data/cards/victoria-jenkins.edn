@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Corp"
- :strength 0
  :subtype "Executive"
  :text "The Runner has 1 fewer [click] to spend during his or her turn.\nIf Victoria Jenkins is trashed while being accessed, add her to the Runner's score area as an agenda worth 2 agenda points."
  :title "Victoria Jenkins"

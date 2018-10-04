@@ -12,7 +12,6 @@
  :set_code "bf"
  :setname "Business First"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "When your turn begins, each player draws 1 card. "
  :title "Pālanā Agroplex"

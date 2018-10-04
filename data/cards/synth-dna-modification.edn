@@ -12,7 +12,6 @@
  :set_code "dc"
  :setname "Daedalus Complex"
  :side "Corp"
- :strength 0
  :text "The first time a subroutine on a piece of <strong>AP</strong> ice is broken each turn, do 1 net damage."
  :title "Synth DNA Modification"
  :trash 2

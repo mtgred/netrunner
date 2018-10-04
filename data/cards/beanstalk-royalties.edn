@@ -12,7 +12,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "Gain 3[credit]."
  :title "Beanstalk Royalties"

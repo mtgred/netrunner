@@ -12,7 +12,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Runner"
- :strength 0
  :subtype "Priority"
  :text "Play only as your first [click].\nEach player draws 3 cards."
  :title "Fisk Investment Seminar"

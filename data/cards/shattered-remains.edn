@@ -12,7 +12,6 @@
  :set_code "fc"
  :setname "First Contact"
  :side "Corp"
- :strength 0
  :subtype "Ambush"
  :text "Shattered Remains can be advanced.\nIf you pay 1[credit] when the Runner accesses Shattered Remains, trash 1 piece of hardware for each advancement token on Shattered Remains."
  :title "Shattered Remains"

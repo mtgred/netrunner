@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "06030"
- :cost 0
  :cycle_code "lunar"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "tsb"
  :setname "The Spaces Between"
  :side "Corp"
- :strength 0
  :subtype "Source"
  :text "Ignore the install cost of the first piece of ice you install each turn.\nLimit 1 per deck."
  :title "Eden Fragment"

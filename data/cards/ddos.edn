@@ -12,7 +12,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "[trash]: The Corp cannot rez the outermost piece of ice during a run on any server this turn."
  :title "DDoS"

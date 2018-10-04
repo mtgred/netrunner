@@ -12,7 +12,6 @@
  :set_code "cc"
  :setname "Chrome City"
  :side "Runner"
- :strength 0
  :subtype "Location"
  :text "Prevent all meat damage and brain damage from installing <strong>cybernetics</strong>."
  :title "Chrome Parlor"

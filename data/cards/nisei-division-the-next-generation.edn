@@ -1,5 +1,4 @@
 {:code "05002"
- :cost 0
  :cycle_code "honor-and-profit"
  :faction "Jinteki"
  :image_url "https://netrunnerdb.com/card_image/05002.png"
@@ -13,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "Whenever you and the Runner reveal secretly spent credits, gain 1[credit]."
  :title "Nisei Division: The Next Generation"

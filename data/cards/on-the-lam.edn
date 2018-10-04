@@ -12,7 +12,6 @@
  :set_code "ml"
  :setname "Martial Law"
  :side "Runner"
- :strength 0
  :subtype "Condition"
  :text "Install On the Lam on a resource as a hosted condition counter with the text \"[trash]: Avoid up to 3 tags or prevent up to 3 damage.\""
  :title "On the Lam"

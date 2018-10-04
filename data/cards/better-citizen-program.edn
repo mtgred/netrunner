@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "21116"
- :cost 0
  :cycle_code "kitara"
  :faction "NBN"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_116.png"
@@ -13,7 +12,6 @@
  :set_code "ka"
  :setname "Kampala Ascendent"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "The first time the Runner plays a <strong>run</strong> event or installs an <strong>icebreaker</strong> program each turn, you may give the Runner 1 tag."
  :title "Better Citizen Program"

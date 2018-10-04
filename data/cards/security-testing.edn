@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Runner"
- :strength 0
  :subtype "Job"
  :text "When your turn begins, you may choose a server. The first time you make a successful run on that server this turn, instead of accessing cards, gain 2[credit].\n<errata>Errata from FAQ 4.0</errata>"
  :title "Security Testing"

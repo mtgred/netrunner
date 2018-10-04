@@ -12,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Runner"
- :strength 0
  :subtype "Location - Ritzy"
  :text "Whenever you spend [click] to draw 1 card (not through a card ability), draw 1 additional card."
  :title "Laguna Velasco District"

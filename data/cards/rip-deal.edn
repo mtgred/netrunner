@@ -12,7 +12,6 @@
  :set_code "fm"
  :setname "Free Mars"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on HQ. If successful, when you would access any number of cards from HQ, you may instead add that many cards from your heap to your grip. Remove Rip Deal from the game instead of trashing it."
  :title "Rip Deal"

@@ -12,7 +12,6 @@
  :set_code "eas"
  :setname "Earth's Scion"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "When your turn begins, gain 1[credit] if you have fewer than 6[credit].\nWhenever you have 0[credit], trash Dadiana Chacon and take 3 meat damage."
  :title "Dadiana Chacon"

@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Runner"
- :strength 0
  :subtype "Directive - Virtual"
  :text "The first time each turn you access a card with a trash cost, you must trash it by paying its trash cost, if able.\nWhenever you access cards from HQ, access 1 additional card."
  :title "Neutralize All Threats"

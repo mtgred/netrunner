@@ -12,7 +12,6 @@
  :set_code "val"
  :setname "The Valley"
  :side "Runner"
- :strength 0
  :subtype "Location"
  :text "<strong>Genetics</strong> also trigger the second time each turn their trigger condition is met."
  :title "Gene Conditioning Shoppe"

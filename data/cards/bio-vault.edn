@@ -12,7 +12,6 @@
  :set_code "tdatd"
  :setname "The Devil and the Dragon"
  :side "Corp"
- :strength 0
  :subtype "Off-site"
  :text "Install only in a remote server.\nBio Vault can be advanced.\n[trash], <strong>2 hosted advancement tokens:</strong>\nEnd the run."
  :title "Bio Vault"

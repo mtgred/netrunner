@@ -12,7 +12,6 @@
  :set_code "fal"
  :setname "Fear and Loathing"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+2[mu]\nWhenever you expose a card, the Corp must rez it by paying its rez cost, if able.\nLimit 1 <strong>console</strong> per player."
  :title "Blackguard"

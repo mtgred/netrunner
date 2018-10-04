@@ -12,7 +12,6 @@
  :set_code "cd"
  :setname "Crimson Dust"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "3[credit]: Prevent 1 net or brain damage."
  :title "Caldera"

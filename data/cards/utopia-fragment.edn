@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "06110"
- :cost 0
  :cycle_code "lunar"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "ts"
  :setname "The Source"
  :side "Corp"
- :strength 0
  :subtype "Source"
  :text "As an additional cost to steal an agenda, the Runner must pay 2[credit] for each advancement token on that agenda.\nLimit 1 per deck."
  :title "Utopia Fragment"

@@ -12,7 +12,6 @@
  :set_code "so"
  :setname "Station One"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on R&D. If successful, you may make another run on R&D when this run ends. If the second run is successful, gain 4[credit]."
  :title "Möbius"

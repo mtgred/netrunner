@@ -12,7 +12,6 @@
  :set_code "so"
  :setname "Station One"
  :side "Corp"
- :strength 0
  :subtype "Advertisement"
  :text "The first time the Runner spends [click] to gain 1[credit] each turn (not through a card effect), gain 1[credit]."
  :title "CPC Generator"

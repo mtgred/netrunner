@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "12115"
- :cost 0
  :cycle_code "red-sand"
  :faction "NBN"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_115.png"
@@ -13,7 +12,6 @@
  :set_code "cd"
  :setname "Crimson Dust"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "The first time the Runner trashes a Corp card each turn, give him or her 1 tag."
  :title "AR-Enhanced Security"

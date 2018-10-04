@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops - Illicit"
  :text "Play only if the Runner accessed at least 1 card during his or her last turn.\nTrash 1 <strong>connection</strong> resource and take 1 bad publicity."
  :title "Under the Bus"

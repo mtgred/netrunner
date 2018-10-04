@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Corp"
- :strength 0
  :subtype "Advertisement"
  :text "Place 6[credit] from the bank on Launch Campaign when it is rezzed. When there are no credits left on Launch Campaign, trash it.\nWhen your turn begins, take 2[credit] from Launch Campaign."
  :title "Launch Campaign"

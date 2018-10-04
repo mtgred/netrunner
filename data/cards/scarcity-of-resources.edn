@@ -12,7 +12,6 @@
  :set_code "es"
  :setname "Escalation"
  :side "Corp"
- :strength 0
  :subtype "Current"
  :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nThe install cost of each resource is increased by 2."
  :title "Scarcity of Resources"

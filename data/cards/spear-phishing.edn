@@ -12,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run. When you encounter the innermost piece of ice protecting that server, bypass it."
  :title "Spear Phishing"

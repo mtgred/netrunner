@@ -12,7 +12,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Runner"
- :strength 0
  :subtype "Link"
  :text "+1[link]\nWhen Rabbit Hole is installed, you may search your stack for another copy of Rabbit Hole and install it by paying its install cost. Shuffle your stack."
  :title "Rabbit Hole"

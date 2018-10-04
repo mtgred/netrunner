@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops"
  :text "Play only if the Runner is tagged.\nThe Runner loses all credits in his or her credit pool."
  :title "Closed Accounts"

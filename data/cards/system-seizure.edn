@@ -12,7 +12,6 @@
  :set_code "so"
  :setname "Station One"
  :side "Runner"
- :strength 0
  :subtype "Current"
  :text "This card is not trashed until another <strong>current</strong> is played or an agenda is scored.\nThe first <strong>icebreaker</strong> whose strength you increase each turn does not return to its base strength until the end of the run."
  :title "System Seizure"

@@ -12,7 +12,6 @@
  :set_code "ss"
  :setname "Sovereign Sight"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "[click],[click]: Turn one of your facedown installed cards faceup. If that card is an event, trash it."
  :title "Assimilator"

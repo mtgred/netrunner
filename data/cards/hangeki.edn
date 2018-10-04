@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :subtype "Reprisal - Gray Ops"
  :text "Play only if the Runner trashed a Corp card during his or her last turn.\nChoose an installed Corp card. The Runner may access that card. If he or she does, remove Hangeki from the game instead of trashing it; otherwise, add Hangeki to the Runner's score area as an agenda worth -1 agenda point."
  :title "Hangeki"

@@ -12,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on R&D. If successful, access 1 additional card for each unused MU up to 4."
  :title "Deep Data Mining"

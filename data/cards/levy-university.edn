@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :subtype "Ritzy"
  :text "[click], 1[credit]: Search R&D for a piece of ice, reveal it, and add it to HQ. Shuffle R&D."
  :title "Levy University"

@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "06087"
- :cost 0
  :cycle_code "lunar"
  :faction "Weyland Consortium"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_87.png"
@@ -13,7 +12,6 @@
  :set_code "atr"
  :setname "All That Remains"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "All <strong>barrier</strong> ice have +1 strength.\nWhen you score Superior Cyberwalls, gain 1[credit] for each rezzed <strong>barrier</strong>."
  :title "Superior Cyberwalls"

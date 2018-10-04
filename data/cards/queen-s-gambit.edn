@@ -12,7 +12,6 @@
  :set_code "dt"
  :setname "Double Time"
  :side "Runner"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this event, spend [click].\nPlace up to 3 advancement tokens on an unrezzed card in a remote server. Gain 2[credit] for each advancement token placed. You cannot access that card this turn."
  :title "Queen's Gambit"

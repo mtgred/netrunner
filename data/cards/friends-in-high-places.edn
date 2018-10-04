@@ -12,7 +12,6 @@
  :set_code "ml"
  :setname "Martial Law"
  :side "Corp"
- :strength 0
  :subtype "Terminal"
  :text "After you resolve this operation, end your action phase.\nInstall up to 2 cards from Archives (paying all install costs)."
  :title "Friends in High Places"

@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Chip - Link"
  :text "+1[mu], +1[link]"
  :title "Dyson Mem Chip"

@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "01107"
- :cost 0
  :cycle_code "core"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "If the Runner is tagged, Private Security Force gains: \"[click]: Do 1 meat damage.\""
  :title "Private Security Force"

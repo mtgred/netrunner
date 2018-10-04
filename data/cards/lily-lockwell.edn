@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Corp"
- :strength 0
  :subtype "Character"
  :text "When you rez Lily Lockwell, draw 3 cards.\n[click], <strong>remove 1 tag:</strong> Search R&D for an operation, reveal it, and shuffle the rest of R&D. Add the operation to the top of R&D."
  :title "Lily Lockwell"

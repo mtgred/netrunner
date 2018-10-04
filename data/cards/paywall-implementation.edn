@@ -12,7 +12,6 @@
  :set_code "tsb"
  :setname "The Spaces Between"
  :side "Corp"
- :strength 0
  :subtype "Current - Transaction"
  :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nGain 1[credit] whenever the Runner makes a successful run."
  :title "Paywall Implementation"

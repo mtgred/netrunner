@@ -12,7 +12,6 @@
  :set_code "tlm"
  :setname "The Liberated Mind"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "Whenever a run on HQ or R&D ends, place 1 power counter on The Turning Wheel if you stole no agendas during the run.\n<strong>2 hosted power counters:</strong> For the remainder of this run, access 1 additional card from HQ or R&D."
  :title "The Turning Wheel"

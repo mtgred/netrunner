@@ -12,7 +12,6 @@
  :set_code "tsb"
  :setname "The Spaces Between"
  :side "Runner"
- :strength 0
  :subtype "Stealth - Virtual"
  :text "Place 3[credit] on Ghost Runner when it is installed. When there are no credits left on Ghost Runner, trash it.\nYou can use the credits on Ghost Runner during a run."
  :title "Ghost Runner"

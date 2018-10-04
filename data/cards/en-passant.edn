@@ -12,7 +12,6 @@
  :set_code "in"
  :setname "Intervention"
  :side "Runner"
- :strength 0
  :subtype "Sabotage"
  :text "Play only if you made a successful run this turn.\nTrash an unrezzed piece of ice you passed during the last run you made this turn."
  :title "En Passant"

@@ -12,7 +12,6 @@
  :set_code "in"
  :setname "Intervention"
  :side "Corp"
- :strength 0
  :subtype "Character"
  :text "Whenever an encounter with a piece of ice ends, place 1 power counter on Chief Slee for each unbroken subroutine on the encountered piece of ice.\n[click], <strong>5 hosted power counters</strong>: Do 5 meat damage."
  :title "Chief Slee"

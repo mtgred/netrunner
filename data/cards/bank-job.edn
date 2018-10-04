@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Job"
  :text "Place 8[credit] from the bank on Bank Job when it is installed. When there are no credits left on Bank Job, trash it.\nWhenever you make a successful run on a remote server, instead of accessing cards you may take any number of credits from Bank Job."
  :title "Bank Job"

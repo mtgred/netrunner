@@ -12,7 +12,6 @@
  :set_code "in"
  :setname "Intervention"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops"
  :text "Trash 1 installed card with an install cost equal to or less than the number of tags the Runner has."
  :title "Best Defense"

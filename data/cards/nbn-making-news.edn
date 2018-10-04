@@ -1,5 +1,4 @@
 {:code "01080"
- :cost 0
  :cycle_code "core"
  :faction "NBN"
  :image_url "https://netrunnerdb.com/card_image/01080.png"
@@ -13,7 +12,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Corp"
- :strength 0
  :subtype "Megacorp"
  :text "2[recurring-credit]\nUse these credits during trace attempts."
  :title "NBN: Making News"

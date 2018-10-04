@@ -12,7 +12,6 @@
  :set_code "dtwn"
  :setname "Down the White Nile"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "Whenever you draw a piece of ice, you may reveal it and install it protecting this server, lowering the install cost by 4[credit].\nLimit 1 <strong>region</strong> per server."
  :title "Jinja City Grid"

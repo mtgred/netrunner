@@ -1,5 +1,4 @@
 {:code "03001"
- :cost 0
  :cycle_code "creation-and-control"
  :faction "Haas-Bioroid"
  :image_url "https://netrunnerdb.com/card_image/03001.png"
@@ -13,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "Your maximum hand size is equal to the number of credits in your credit pool."
  :title "Cerebral Imaging: Infinite Frontiers"

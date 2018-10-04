@@ -12,7 +12,6 @@
  :set_code "val"
  :setname "The Valley"
  :side "Runner"
- :strength 0
  :subtype "Genetics"
  :text "The first time you take damage each turn, draw 1 card."
  :title "Synthetic Blood"

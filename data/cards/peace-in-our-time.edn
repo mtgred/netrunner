@@ -12,7 +12,6 @@
  :set_code "qu"
  :setname "Quorum"
  :side "Runner"
- :strength 0
  :subtype "Priority"
  :text "Play only as your first [click] and only if the Corp scored no agendas during his or her last turn.\nGain 10[credit]. The Corp gains 5[credit]. You cannot initiate any runs this turn."
  :title "Peace in Our Time"

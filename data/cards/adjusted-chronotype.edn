@@ -12,7 +12,6 @@
  :set_code "val"
  :setname "The Valley"
  :side "Runner"
- :strength 0
  :subtype "Genetics"
  :text "The first time you lose [click] each turn, gain [click]."
  :title "Adjusted Chronotype"

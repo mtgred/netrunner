@@ -12,7 +12,6 @@
  :set_code "dtwn"
  :setname "Down the White Nile"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops"
  :text "Play only if the Runner made a successful run during his or her last turn.\nThe Runner loses 4[credit], if able."
  :title "Economic Warfare"

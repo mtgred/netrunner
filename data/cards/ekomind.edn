@@ -12,7 +12,6 @@
  :set_code "atr"
  :setname "All That Remains"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "Your memory limit is equal to the number of cards in your grip.\nLimit 1 <strong>console</strong> per player."
  :title "Ekomind"

@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Runner"
- :strength 0
  :subtype "Directive - Virtual"
  :text "Your maximum hand size is reduced by 2.\nWhen your turn ends, draw 1 card if you do not have cards in your grip equal to or greater than your maximum hand size."
  :title "Safety First"

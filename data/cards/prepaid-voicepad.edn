@@ -12,7 +12,6 @@
  :set_code "st"
  :setname "Second Thoughts"
  :side "Runner"
- :strength 0
  :subtype "Gear"
  :text "1[recurring-credit]\nUse this credit to play events."
  :title "Prepaid VoicePAD"

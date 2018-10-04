@@ -13,7 +13,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Corp"
- :strength 0
  :subtype "Hostile"
  :text "If the Runner is tagged, Dedicated Response Team gains \"Whenever a successful run ends, do 2 meat damage.\""
  :title "Dedicated Response Team"

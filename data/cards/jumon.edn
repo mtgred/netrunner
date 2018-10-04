@@ -1,7 +1,6 @@
 {:advancementcost 6
  :agendapoints 2
  :code "22035"
- :cost 0
  :cycle_code "reign-and-reverie"
  :faction "Jinteki"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_35.png"
@@ -13,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :subtype "Research"
  :text "When your turn ends, place 2 advancement tokens on a card installed in a server."
  :title "Jumon"

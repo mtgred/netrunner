@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Job"
  :text "Place 12[credit] from the bank on Armitage Codebusting when it is installed. When there are no credits left on Armitage Codebusting, trash it.\n[click]: Take 2[credit] from Armitage Codebusting."
  :title "Armitage Codebusting"

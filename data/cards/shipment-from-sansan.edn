@@ -12,7 +12,6 @@
  :set_code "st"
  :setname "Second Thoughts"
  :side "Corp"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this operation, spend [click].\nPlace up to 2 advancement tokens on a card that can be advanced."
  :title "Shipment from SanSan"

@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Corp"
- :strength 0
  :subtype "Black Ops"
  :text "Play only if the Runner has at least 2 tags.\nDo 2 meat damage."
  :title "Traffic Accident"

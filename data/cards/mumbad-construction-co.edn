@@ -12,7 +12,6 @@
  :set_code "bf"
  :setname "Business First"
  :side "Corp"
- :strength 0
  :text "When your turn begins, place 1 advancement token on Mumbad Construction Co.\n2[credit]: Move 1 advancement token from Mumbad Construction Co. to a faceup card. "
  :title "Mumbad Construction Co."
  :trash 3

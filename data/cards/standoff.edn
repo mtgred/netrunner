@@ -1,7 +1,6 @@
 {:advancementcost 2
  :agendapoints 0
  :code "12077"
- :cost 0
  :cycle_code "red-sand"
  :faction "Weyland Consortium"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_77.png"
@@ -13,7 +12,6 @@
  :set_code "baw"
  :setname "Blood and Water"
  :side "Corp"
- :strength 0
  :text "When you score Standoff, each player, starting with the Runner, trashes 1 of his or her installed cards until 1 player declines to trash a card. If the Runner declines, draw 1 card and gain 5[credit].\n<errata>Errata from FAQ 4.1</errata>"
  :title "Standoff"
  :type "Agenda"

@@ -1,6 +1,5 @@
 {:baselink 0
  :code "02001"
- :cost 0
  :cycle_code "genesis"
  :faction "Anarch"
  :image_url "https://netrunnerdb.com/card_image/02001.png"
@@ -14,7 +13,6 @@
  :set_code "wla"
  :setname "What Lies Ahead"
  :side "Runner"
- :strength 0
  :subtype "Natural"
  :text "3[recurring-credit]\nUse these credits to trash cards."
  :title "Whizzard: Master Gamer"

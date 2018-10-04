@@ -12,7 +12,6 @@
  :set_code "up"
  :setname "Upstalk"
  :side "Corp"
- :strength 0
  :subtype "Beanstalk - Region"
  :text "The Runner must pay 1[credit] as an additional cost each time he or she uses an <strong>icebreaker</strong> to break at least 1 subroutine during a run on this server.\nLimit 1 <strong>region</strong> per server."
  :title "Midway Station Grid"

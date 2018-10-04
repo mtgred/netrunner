@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "When your turn begins, gain 1[credit] if you have at least 2[link]."
  :title "Underworld Contact"

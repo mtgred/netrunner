@@ -12,7 +12,6 @@
  :set_code "ta"
  :setname "Trace Amount"
  :side "Runner"
- :strength 0
  :text "Expose up to 2 cards."
  :title "Satellite Uplink"
  :type "Event"

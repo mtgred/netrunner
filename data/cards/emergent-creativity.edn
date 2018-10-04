@@ -12,7 +12,6 @@
  :set_code "dtwn"
  :setname "Down the White Nile"
  :side "Runner"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this event, spend [click].\nTrash any number of programs and/or pieces of hardware from your grip. Search your stack for a program or piece of hardware and install it, lowering its install cost by the total install cost of the trashed cards. Shuffle your stack.\n<errata>Errata from FAQ 4.2</errata>"
  :title "Emergent Creativity"

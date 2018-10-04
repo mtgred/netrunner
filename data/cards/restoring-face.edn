@@ -12,7 +12,6 @@
  :set_code "fal"
  :setname "Fear and Loathing"
  :side "Corp"
- :strength 0
  :text "Trash one of your installed <strong>sysops</strong>, <strong>executives</strong>, or <strong>clones</strong>. If you do, remove up to 2 bad publicity."
  :title "Restoring Face"
  :type "Operation"

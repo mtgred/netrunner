@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Corp"
- :strength 0
  :subtype "Clone"
  :text "[click]: Swap 2 pieces of installed ice."
  :title "Tenma Line"

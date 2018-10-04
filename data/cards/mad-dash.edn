@@ -12,7 +12,6 @@
  :set_code "dc"
  :setname "Daedalus Complex"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run. When this run ends, add Mad Dash to your score area as an agenda worth 1 agenda point if you stole at least 1 agenda during the run; otherwise, suffer 1 meat damage."
  :title "Mad Dash"

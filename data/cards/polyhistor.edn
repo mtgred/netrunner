@@ -12,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+1[mu], +1[link]\nThe first time each turn you pass all of the ice protecting HQ, you may draw 1 card to force the Corp to draw 1 card.\nLimit 1 <strong>console</strong> per player."
  :title "Polyhistor"

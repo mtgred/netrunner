@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run, and gain 9[credit], which you may use only during this run. After the run is completed, suffer 1 brain damage (cannot be prevented) and return to the bank any of the 9[credit] not spent."
  :title "Stimhack"

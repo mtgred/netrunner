@@ -13,7 +13,6 @@
  :set_code "wla"
  :setname "What Lies Ahead"
  :side "Corp"
- :strength 0
  :subtype "Bioroid"
  :text "Whenever there is a successful run on this server, <trace>trace 4</trace> if successful, the Runner cannot access any cards other than Ash 2X3ZB9CY for the remainder of this run."
  :title "Ash 2X3ZB9CY"

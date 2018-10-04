@@ -13,7 +13,6 @@
  :set_code "ta"
  :setname "Trace Amount"
  :side "Corp"
- :strength 0
  :text "Move up to 2 advancement tokens from a card to another installed card that can be advanced."
  :title "Trick of Light"
  :type "Operation"

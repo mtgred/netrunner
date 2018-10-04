@@ -12,7 +12,6 @@
  :set_code "ka"
  :setname "Kampala Ascendent"
  :side "Runner"
- :strength 0
  :text "Force the Corp to \"<trace>Trace 4</trace> If unsuccessful, the Runner accesses 2 additional cards whenever he or she accesses cards from HQ or R&D for the remainder of this turn\"."
  :title "Black Hat"
  :type "Event"

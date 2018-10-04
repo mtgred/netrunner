@@ -12,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "[click]<strong>, forfeit an agenda:</strong> Play an event from your heap, ignoring all costs."
  :title "The Shadow Net"

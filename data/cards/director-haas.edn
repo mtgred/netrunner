@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :subtype "Executive"
  :text "You have 1 additional [click] to spend during your turn.\nIf Director Haas is trashed while being accessed, add her to the Runner's score area as an agenda worth 2 agenda points.\n<errata>Errata from FAQ 3.1</errata>"
  :title "Director Haas"

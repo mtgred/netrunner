@@ -12,7 +12,6 @@
  :set_code "dag"
  :setname "Democracy and Dogma"
  :side "Corp"
- :strength 0
  :subtype "Political"
  :text "When your turn begins, do 1 net damage if there is no ice protecting this server."
  :title "Bio-Ethics Association"

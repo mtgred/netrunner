@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "09006"
- :cost 0
  :cycle_code "data-and-destiny"
  :faction "NBN"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_6.png"
@@ -13,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "All assets gain <strong>advertisement</strong>."
  :title "Rebranding Team"

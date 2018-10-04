@@ -12,7 +12,6 @@
  :set_code "23s"
  :setname "23 Seconds"
  :side "Runner"
- :strength 0
  :text "Whenever you approach a piece of ice, you may expose it. You may then trash GPI Net Tap to jack out."
  :title "GPI Net Tap"
  :type "Hardware"

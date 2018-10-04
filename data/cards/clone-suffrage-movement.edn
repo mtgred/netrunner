@@ -12,7 +12,6 @@
  :set_code "dag"
  :setname "Democracy and Dogma"
  :side "Corp"
- :strength 0
  :subtype "Political"
  :text "When your turn begins, you may add 1 operation from Archives to HQ if there is no ice protecting this server."
  :title "Clone Suffrage Movement"

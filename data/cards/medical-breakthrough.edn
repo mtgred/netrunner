@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "05005"
- :cost 0
  :cycle_code "honor-and-profit"
  :faction "Jinteki"
  :image_url "https://netrunnerdb.com/card_image/05005.png"
@@ -13,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Corp"
- :strength 0
  :subtype "Research"
  :text "Lower the advancement requirement of each Medical Breakthrough by 1. This ability is active even while Medical Breakthrough is in the Runner's score area."
  :title "Medical Breakthrough"

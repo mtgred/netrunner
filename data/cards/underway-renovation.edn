@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "08077"
- :cost 0
  :cycle_code "sansan"
  :faction "Weyland Consortium"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_77.png"
@@ -13,7 +12,6 @@
  :set_code "uw"
  :setname "The Underway"
  :side "Corp"
- :strength 0
  :subtype "Initiative - Public"
  :text "Install Underway Renovation faceup.\nWhenever you advance Underway Renovation, trash the top card of the Runner's stack (or top 2 cards instead if there are 4 or more advancement tokens on Underway Renovation)."
  :title "Underway Renovation"

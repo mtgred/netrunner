@@ -12,7 +12,6 @@
  :set_code "fal"
  :setname "Fear and Loathing"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops"
  :text "Gain 1[credit]. Gain [click] if you have not played another Subliminal Messaging this turn.\nIf the Runner did not make a run during his or her last turn, you may add Subliminal Messaging to HQ from Archives when your turn begins."
  :title "Subliminal Messaging"

@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "Gain 8[credit]. The Runner gains 3[credit]."
  :title "Medical Research Fundraiser"

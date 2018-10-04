@@ -12,7 +12,6 @@
  :set_code "baw"
  :setname "Blood and Water"
  :side "Corp"
- :strength 0
  :subtype "Triple"
  :text "As an additional cost to play this operation, forfeit an agenda and spend [click][click].\nAdvance a card X times. X equals the advancement requirement of the agenda just forfeited."
  :title "Success"

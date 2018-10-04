@@ -12,7 +12,6 @@
  :set_code "fc"
  :setname "First Contact"
  :side "Corp"
- :strength 0
  :subtype "Ritzy"
  :text "[click],[click],[click]: Rez a card, ignoring all costs."
  :title "Eliza's Toybox"

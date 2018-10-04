@@ -1,6 +1,5 @@
 {:baselink 0
  :code "08104"
- :cost 0
  :cycle_code "sansan"
  :faction "Criminal"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_104.png"
@@ -14,7 +13,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Runner"
- :strength 0
  :subtype "Natural"
  :text "The first time you make a successful run on a central server each turn, you may force the Corp to draw 1 card."
  :title "Laramy Fisk: Savvy Investor"

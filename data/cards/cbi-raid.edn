@@ -12,7 +12,6 @@
  :set_code "bf"
  :setname "Business First"
  :side "Runner"
- :strength 0
  :subtype "Run - Sabotage"
  :text "Make a run on HQ. If successful, instead of accessing cards, the Corp adds all cards in HQ to the top of R&D in the order of his or her choice."
  :title "CBI Raid"

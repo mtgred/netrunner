@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Runner"
- :strength 0
  :subtype "Gear"
  :text "3[credit]: Prevent 1 net damage.\n[trash]: Prevent up to 2 brain damage."
  :title "Feedback Filter"

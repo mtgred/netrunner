@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Runner"
- :strength 0
  :text "[click]: Draw 1 card from the bottom of your stack."
  :title "Window"
  :type "Hardware"

@@ -1,5 +1,4 @@
 {:code "06068"
- :cost 0
  :cycle_code "lunar"
  :faction "Weyland Consortium"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_68.png"
@@ -13,7 +12,6 @@
  :set_code "uao"
  :setname "Up and Over"
  :side "Corp"
- :strength 0
  :subtype "Corp"
  :text "When your turn begins, you may add 1 rezzed card to HQ and gain credits equal to its rez cost."
  :title "Blue Sun: Powering the Future"

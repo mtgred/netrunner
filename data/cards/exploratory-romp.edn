@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run. If successful, instead of accessing cards, remove up to 3 advancement tokens from a single card in or protecting the attacked server."
  :title "Exploratory Romp"

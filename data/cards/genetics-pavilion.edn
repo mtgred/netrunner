@@ -12,7 +12,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Corp"
- :strength 0
  :subtype "Facility - Ritzy"
  :text "The Runner cannot draw more than 2 cards during his or her turn."
  :title "Genetics Pavilion"

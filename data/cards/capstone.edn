@@ -12,7 +12,6 @@
  :set_code "tc"
  :setname "True Colors"
  :side "Runner"
- :strength 0
  :text "[click]: Trash any number of cards from your grip. For each trashed card of which you have another copy installed, draw 1 card."
  :title "Capstone"
  :type "Hardware"

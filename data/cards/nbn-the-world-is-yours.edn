@@ -1,5 +1,4 @@
 {:code "02114"
- :cost 0
  :cycle_code "genesis"
  :faction "NBN"
  :image_url "https://netrunnerdb.com/card_image/02114.png"
@@ -13,7 +12,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Corp"
- :strength 0
  :subtype "Megacorp"
  :text "Your maximum hand size is increased by 1."
  :title "NBN: The World is Yours*"

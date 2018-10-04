@@ -13,7 +13,6 @@
  :set_code "wla"
  :setname "What Lies Ahead"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+1[mu], 2[recurring-credit]\nUse these credits to pay for using <strong>icebreakers</strong>.\nWhenever there is a successful trace during a run, suffer 1 brain damage.\nLimit 1 <strong>console</strong> per player."
  :title "Spinal Modem"

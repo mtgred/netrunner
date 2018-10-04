@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "12092"
- :cost 0
  :cycle_code "red-sand"
  :faction "Jinteki"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_92.png"
@@ -13,7 +12,6 @@
  :set_code "fm"
  :setname "Free Mars"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "When you score Mandatory Seed Replacement, rearrange any number of ice protecting all servers."
  :title "Mandatory Seed Replacement"

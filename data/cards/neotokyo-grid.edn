@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "The first time an advancement token is a placed on a card in this server each turn, gain 1[credit].\nLimit 1 <strong>region</strong> per server."
  :title "NeoTokyo Grid"

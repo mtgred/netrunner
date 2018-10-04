@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "02080"
- :cost 0
  :cycle_code "genesis"
  :faction "Neutral"
  :factioncost 0
@@ -15,7 +14,6 @@
  :set_code "asis"
  :setname "A Study in Static"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "<strong>Forfeit False Lead:</strong> The Runner loses [click][click], if able."
  :title "False Lead"

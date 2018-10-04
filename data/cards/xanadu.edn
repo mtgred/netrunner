@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "The rez cost of all ice is increased by 1."
  :title "Xanadu"

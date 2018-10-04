@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "13031"
- :cost 0
  :cycle_code "terminal-directive"
  :faction "Haas-Bioroid"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_31.png"
@@ -13,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Corp"
- :strength 0
  :subtype "Research"
  :text "When you score Successful Field Test, install any number of cards from HQ, ignoring all costs."
  :title "Successful Field Test"

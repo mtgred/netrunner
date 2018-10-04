@@ -12,7 +12,6 @@
  :set_code "si"
  :setname "Salsette Island"
  :side "Corp"
- :strength 0
  :subtype "Alliance - Gray Ops"
  :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [nbn] cards in your deck.\nName a card. The Runner reveals his or her grip and trashes all copies of the named card from his or her grip."
  :title "Salem's Hospitality"

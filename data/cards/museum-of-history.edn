@@ -12,7 +12,6 @@
  :set_code "kg"
  :setname "Kala Ghoda"
  :side "Corp"
- :strength 0
  :subtype "Alliance - Ritzy"
  :text "This card costs 0 influence if you have 50 or more cards in your deck.\nWhen your turn begins, you may shuffle 1 card from Archives into R&D.\n<errata>Errata from FAQ 3.1</errata>"
  :title "Museum of History"

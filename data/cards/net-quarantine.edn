@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "11114"
- :cost 0
  :cycle_code "flashpoint"
  :faction "NBN"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_114.png"
@@ -13,7 +12,6 @@
  :set_code "qu"
  :setname "Quorum"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "The Runner's base link strength is reduced to 0 during the first trace each turn.\nWhenever the Runner increases his or her link strength by spending credits, gain 1[credit] for every 2[credit] spent."
  :title "Net Quarantine"

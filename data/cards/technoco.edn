@@ -12,7 +12,6 @@
  :set_code "cotc"
  :setname "Council of the Crest"
  :side "Corp"
- :strength 0
  :subtype "Corporation"
  :text "The install cost of each program, piece of hardware, and <strong>virtual</strong> resource is increased by 1.\nWhenever the Runner installs a program, piece of hardware, or <strong>virtual</strong> resource, you may gain 1[credit]."
  :title "TechnoCo"

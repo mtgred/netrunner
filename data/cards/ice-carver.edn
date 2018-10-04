@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "All ice is encountered with its strength lowered by 1."
  :title "Ice Carver"

@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :subtype "Sysop"
  :text "Whenever an agenda is scored from this server, you may install a card from HQ, ignoring all costs, and place 1 advancement token on it."
  :title "Arella Salvatore"

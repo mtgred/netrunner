@@ -12,7 +12,6 @@
  :set_code "so"
  :setname "Station One"
  :side "Runner"
- :strength 0
  :subtype "Clan"
  :text "[click], [trash]: Make a run. If successful, instead of accessing, pay X[credit] to access up to X cards from this server, if able. X is the number of tags you have."
  :title "Counter Surveillance"

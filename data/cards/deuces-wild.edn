@@ -12,7 +12,6 @@
  :set_code "23s"
  :setname "23 Seconds"
  :side "Runner"
- :strength 0
  :text "Resolve two of the following in any order:<ul><li>Gain 3[credit].</li><li>Draw 2 cards.</li><li>Remove 1 tag.</li><li>Expose 1 piece of ice, then make a run.</li></ul>"
  :title "Deuces Wild"
  :type "Event"

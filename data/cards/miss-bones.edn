@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "Place 12[credit] from the bank on Miss Bones when she is installed. When there are no credits left on Miss Bones, trash her.\nUse these credits to trash installed cards."
  :title "Miss Bones"

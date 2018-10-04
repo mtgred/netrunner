@@ -12,7 +12,6 @@
  :set_code "dt"
  :setname "Double Time"
  :side "Corp"
- :strength 0
  :subtype "Clone - Psi"
  :text "Whenever the Runner passes all of the ice protecting this server, you and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, end the run."
  :title "Caprice Nisei"

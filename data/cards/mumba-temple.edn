@@ -12,7 +12,6 @@
  :set_code "kg"
  :setname "Kala Ghoda"
  :side "Corp"
- :strength 0
  :subtype "Alliance - Facility"
  :text "This card costs 0 influence if you have 15 or fewer ice in your deck.\n2[recurring-credit]\nUse these credits to rez cards."
  :title "Mumba Temple"

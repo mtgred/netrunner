@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "04017"
- :cost 0
  :cycle_code "spin"
  :faction "Weyland Consortium"
  :image_url "https://netrunnerdb.com/card_image/04017.png"
@@ -13,7 +12,6 @@
  :set_code "om"
  :setname "Opening Moves"
  :side "Corp"
- :strength 0
  :subtype "Expansion"
  :text "Place 2 agenda counters on Geothermal Fracking when you score it.\n[click], <strong>hosted agenda counter:</strong> Gain 7[credit] and take 1 bad publicity."
  :title "Geothermal Fracking"

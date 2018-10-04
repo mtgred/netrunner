@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "21038"
- :cost 0
  :cycle_code "kitara"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "dtwn"
  :setname "Down the White Nile"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "When SSL Endorsement is scored or stolen, place 9[credit] from the bank on it.\nWhen the Corp's turn begins, he or she may take 3[credit] from SSL Endorsement. This ability is active even while SSL Endorsement is in the Runner's score area."
  :title "SSL Endorsement"

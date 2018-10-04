@@ -12,7 +12,6 @@
  :set_code "ftm"
  :setname "Fear the Masses"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops - Psi"
  :text "Play only if there is an agenda in the Runner's score area.\nYou and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, trash 1 resource."
  :title "Voter Intimidation"

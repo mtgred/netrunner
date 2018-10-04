@@ -12,7 +12,6 @@
  :set_code "mt"
  :setname "Mala Tempora"
  :side "Runner"
- :strength 0
  :subtype "Double - Run"
  :text "As an additional cost to play this event, spend [click].\nMake a run. During this run, the Corp must pay X[credit] as an additional cost to rez each piece of ice, where X is the rez cost of that ice."
  :title "Running Interference"

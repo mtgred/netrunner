@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Sabotage"
  :text "Choose an unrezzed piece of ice. The Corp must either rez that ice or trash it."
  :title "Forged Activation Orders"

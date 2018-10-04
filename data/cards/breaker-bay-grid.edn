@@ -12,7 +12,6 @@
  :set_code "bb"
  :setname "Breaker Bay"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "The rez cost of cards in this server is lowered by 5.\nLimit 1 <strong>region</strong> per server."
  :title "Breaker Bay Grid"

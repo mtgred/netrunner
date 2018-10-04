@@ -12,7 +12,6 @@
  :set_code "bm"
  :setname "Blood Money"
  :side "Corp"
- :strength 0
  :subtype "Double - Gray Ops"
  :text "As an additional cost to play this operation, spend [click].\n<trace>Trace 5</trace> If successful, add an installed non-<strong>virtual</strong> card to the Runner's grip."
  :title "Hatchet Job"

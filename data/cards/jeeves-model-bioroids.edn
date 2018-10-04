@@ -12,7 +12,6 @@
  :set_code "si"
  :setname "Salsette Island"
  :side "Corp"
- :strength 0
  :subtype "Alliance"
  :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [haas-bioroid] cards in your deck.\nThe first time you spend 3[click] on the same action each turn, gain [click]."
  :title "Jeeves Model Bioroids"

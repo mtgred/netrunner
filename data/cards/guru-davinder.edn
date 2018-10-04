@@ -12,7 +12,6 @@
  :set_code "tlm"
  :setname "The Liberated Mind"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "Prevent all net and meat damage.\nWhenever Guru Davinder prevents at least 1 net or meat damage, trash him unless you pay 4[credit]."
  :title "Guru Davinder"

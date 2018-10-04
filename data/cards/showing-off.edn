@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on R&D. If successful, instead of accessing cards from the top of R&D, access cards from the bottom of R&D (starting with the bottom card and working your way up)."
  :title "Showing Off"

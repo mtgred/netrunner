@@ -12,7 +12,6 @@
  :set_code "mt"
  :setname "Mala Tempora"
  :side "Corp"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this operation, spend [click].\nInstall a card from Archives or HQ, ignoring the install cost."
  :title "Interns"

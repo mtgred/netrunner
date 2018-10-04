@@ -12,7 +12,6 @@
  :set_code "hs"
  :setname "Humanity's Shadow"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "You cannot use Kati Jones more than once per turn.\n[click]: Place 3[credit] from the bank on Kati Jones.\n[click]: Take all credits from Kati Jones."
  :title "Kati Jones"

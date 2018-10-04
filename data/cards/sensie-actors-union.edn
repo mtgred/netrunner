@@ -12,7 +12,6 @@
  :set_code "dag"
  :setname "Democracy and Dogma"
  :side "Corp"
- :strength 0
  :subtype "Political"
  :text "When your turn begins, you may draw 3 cards if there is no ice protecting this server. If you do, add 1 card from HQ to the bottom of R&D."
  :title "Sensie Actors Union"

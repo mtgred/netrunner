@@ -12,7 +12,6 @@
  :set_code "tlm"
  :setname "The Liberated Mind"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops"
  :text "Play only if the Runner is tagged.\nSwap an agenda in your score area with an agenda in the Runner's score area."
  :title "Exchange of Information"

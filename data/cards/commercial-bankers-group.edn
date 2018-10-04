@@ -12,7 +12,6 @@
  :set_code "dag"
  :setname "Democracy and Dogma"
  :side "Corp"
- :strength 0
  :subtype "Political"
  :text "When your turn begins, gain 3[credit] if there is no ice protecting this server."
  :title "Commercial Bankers Group"

@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "GRNDL Refinery can be advanced.\n[click], [trash]: Gain 4[credit] for each advancement token on GRNDL Refinery."
  :title "GRNDL Refinery"

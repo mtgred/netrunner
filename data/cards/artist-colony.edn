@@ -12,7 +12,6 @@
  :set_code "kg"
  :setname "Kala Ghoda"
  :side "Runner"
- :strength 0
  :subtype "Location"
  :text "<strong>Forfeit an agenda:</strong> Search your stack for a card and install it (paying the install cost). Shuffle your stack."
  :title "Artist Colony"

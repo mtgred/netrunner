@@ -12,7 +12,6 @@
  :set_code "eas"
  :setname "Earth's Scion"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "Install only in the root of R&D.\n[click]: Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order.\nLimit 1 <strong>region</strong> per server."
  :title "Bamboo Dome"

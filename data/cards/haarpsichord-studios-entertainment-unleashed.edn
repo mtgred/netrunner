@@ -1,5 +1,4 @@
 {:code "08092"
- :cost 0
  :cycle_code "sansan"
  :faction "NBN"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_92.png"
@@ -13,7 +12,6 @@
  :set_code "oh"
  :setname "Old Hollywood"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "The Runner cannot steal more than one agenda each turn."
  :title "Haarpsichord Studios: Entertainment Unleashed"

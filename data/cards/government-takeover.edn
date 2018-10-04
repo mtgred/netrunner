@@ -1,7 +1,6 @@
 {:advancementcost 9
  :agendapoints 6
  :code "07006"
- :cost 0
  :cycle_code "order-and-chaos"
  :faction "Weyland Consortium"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_6.png"
@@ -13,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Corp"
- :strength 0
  :subtype "Expansion"
  :text "[click]: Gain 3[credit].\nLimit 1 Government Takeover per deck."
  :title "Government Takeover"

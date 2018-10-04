@@ -12,7 +12,6 @@
  :set_code "tdatd"
  :setname "The Devil and the Dragon"
  :side "Runner"
- :strength 0
  :subtype "Run - Sabotage"
  :text "Make a run on Archives. If successful, instead of accessing cards, force the Corp to choose 5 cards from Archives and add them to HQ, if able, then trash that many cards from HQ at random."
  :title "Glut Cipher"

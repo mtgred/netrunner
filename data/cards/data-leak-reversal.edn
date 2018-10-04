@@ -12,7 +12,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Runner"
- :strength 0
  :subtype "Virtual - Sabotage"
  :text "Install only if you made a successful run on a central server this turn.\nIf you are tagged, Data Leak Reversal gains \"[click]: The Corp trashes the top card of R&D.\""
  :title "Data Leak Reversal"

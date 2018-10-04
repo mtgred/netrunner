@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Runner"
- :strength 0
  :subtype "Run - Sabotage"
  :text "Make a run on HQ. If successful, instead of accessing cards, you may spend any number of [click] to force the Corp to trash an equal number of cards from HQ at random."
  :title "Wanton Destruction"

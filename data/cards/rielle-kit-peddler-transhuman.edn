@@ -1,6 +1,5 @@
 {:baselink 0
  :code "03028"
- :cost 0
  :cycle_code "creation-and-control"
  :faction "Shaper"
  :image_url "https://netrunnerdb.com/card_image/03028.png"
@@ -14,7 +13,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Runner"
- :strength 0
  :subtype "Cyborg"
  :text "The first piece of ice you encounter each turn gains <strong>code gate</strong> until the end of the run."
  :title "Rielle \"Kit\" Peddler: Transhuman"

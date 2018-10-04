@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "Reduce the cost to install Jak Sinclair by 1 for each [link] you have.\nWhen your turn begins, you may make a run. You cannot use programs during this run."
  :title "Jak Sinclair"

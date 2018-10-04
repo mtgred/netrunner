@@ -1,5 +1,4 @@
 {:code "08035"
- :cost 0
  :cycle_code "sansan"
  :faction "Jinteki"
  :factioncost 1
@@ -12,7 +11,6 @@
  :set_code "bb"
  :setname "Breaker Bay"
  :side "Corp"
- :strength 0
  :text "Search R&D for up to X different <strong>sysops</strong> (by title), reveal them, and add them to HQ. Shuffle R&D."
  :title "Recruiting Trip"
  :type "Operation"

@@ -12,7 +12,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Runner"
- :strength 0
  :subtype "Mod"
  :text "Install The Personal Touch only on an <strong>icebreaker.</strong>\nHost <strong>icebreaker</strong> has +1 strength."
  :title "The Personal Touch"

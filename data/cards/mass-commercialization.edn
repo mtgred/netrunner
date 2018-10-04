@@ -12,7 +12,6 @@
  :set_code "baw"
  :setname "Blood and Water"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "Gain 2[credit] for each card with at least 1 advancement token on it."
  :title "Mass Commercialization"

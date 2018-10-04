@@ -12,7 +12,6 @@
  :set_code "baw"
  :setname "Blood and Water"
  :side "Runner"
- :strength 0
  :subtype "Clan - Connection"
  :text "When you install Jarogniew Mercs, take 1 tag. Place 3 power counters on Jarogniew Mercs, and 1 additional power counter for each tag you have. When there are no power counters left on Jarogniew Mercs, trash it.\nThe Corp cannot trash Jarogniew Mercs while there is another resource installed.\n<strong>Hosted power counter:</strong> Prevent 1 meat damage."
  :title "Jarogniew Mercs"

@@ -12,7 +12,6 @@
  :set_code "ss"
  :setname "Sovereign Sight"
  :side "Corp"
- :strength 0
  :subtype "Off-site"
  :text "Install only in a remote server.\n[trash]: Place 1 advancement token on a card in this server."
  :title "Calibration Testing"

@@ -12,7 +12,6 @@
  :set_code "23s"
  :setname "23 Seconds"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "If the Corp has at least 10[credit], as an additional cost to rez each piece of ice, the Corp must spend credits equal to the number of subroutines on that ice."
  :title "Hernando Cortez"

@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "04036"
- :cost 0
  :cycle_code "spin"
  :faction "Weyland Consortium"
  :image_url "https://netrunnerdb.com/card_image/04036.png"
@@ -14,7 +13,6 @@
  :set_code "st"
  :setname "Second Thoughts"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "Whenever you do meat damage, do 1 additional meat damage."
  :title "The Cleaners"

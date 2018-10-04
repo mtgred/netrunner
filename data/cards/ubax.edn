@@ -12,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+1[mu]\nWhen your turn begins, draw 1 card.\nLimit 1 <strong>console</strong> per player."
  :title "Ubax"

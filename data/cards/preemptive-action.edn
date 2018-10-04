@@ -12,7 +12,6 @@
  :set_code "in"
  :setname "Intervention"
  :side "Corp"
- :strength 0
  :subtype "Terminal"
  :text "After you resolve this operation, end your action phase.\nShuffle 3 cards from Archives into R&D. Remove Preemptive Action from the game instead of trashing it."
  :title "Preemptive Action"

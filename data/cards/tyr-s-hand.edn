@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :subtype "Hostile"
  :text "If the Runner is about to break a subroutine on a piece of <strong>bioroid</strong> ice protecting this server, you may rez Tyr's Hand.\n[trash]: Prevent a subroutine from being broken on a piece of <strong>bioroid</strong> ice protecting this server."
  :title "Tyr's Hand"

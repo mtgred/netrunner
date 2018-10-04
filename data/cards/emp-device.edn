@@ -12,7 +12,6 @@
  :set_code "bf"
  :setname "Business First"
  :side "Runner"
- :strength 0
  :subtype "Bomb"
  :text "[trash]: The Corp cannot rez more than 1 piece of ice for the remainder of this run. Use this ability only during a run."
  :title "EMP Device"

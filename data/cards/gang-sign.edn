@@ -12,7 +12,6 @@
  :set_code "uw"
  :setname "The Underway"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "Whenever the Corp scores an agenda, access 1 card from HQ."
  :title "Gang Sign"

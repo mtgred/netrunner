@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Location - Connection"
  :text "When your turn begins, you may trash another of your installed cards to gain 3[credit]."
  :title "Aesop's Pawnshop"

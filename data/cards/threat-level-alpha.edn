@@ -12,7 +12,6 @@
  :set_code "cd"
  :setname "Crimson Dust"
  :side "Corp"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this operation, spend [click].\n<trace>Trace 1</trace> If successful, give the Runner 1 tag for each tag he or she has; if the Runner has no tags, give him or her 1 tag.\n<errata>Errata from FAQ 4.1</errata>"
  :title "Threat Level Alpha"

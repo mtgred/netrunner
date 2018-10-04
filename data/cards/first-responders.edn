@@ -12,7 +12,6 @@
  :set_code "es"
  :setname "Escalation"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "2[credit]: Draw 1 card. Use this ability only if you have suffered damage from a Corp card ability this turn."
  :title "First Responders"

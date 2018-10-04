@@ -12,7 +12,6 @@
  :set_code "st"
  :setname "Second Thoughts"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "Gain 15[credit]."
  :title "Restructure"

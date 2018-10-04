@@ -1,6 +1,5 @@
 {:baselink 1
  :code "03030"
- :cost 0
  :cycle_code "creation-and-control"
  :faction "Shaper"
  :image_url "https://netrunnerdb.com/card_image/03030.png"
@@ -14,7 +13,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Runner"
- :strength 0
  :subtype "Natural"
  :text "Whenever you install a program from your heap, draw 1 card."
  :title "Exile: Streethawk"

@@ -12,7 +12,6 @@
  :set_code "uao"
  :setname "Up and Over"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "Whenever the Corp purges virus counters, he or she loses 2[credit], if able."
  :title "Fester"

@@ -12,7 +12,6 @@
  :set_code "dag"
  :setname "Democracy and Dogma"
  :side "Corp"
- :strength 0
  :subtype "Seedy"
  :text "Whenever you draw an agenda, you may reveal and install it."
  :title "Political Dealings"

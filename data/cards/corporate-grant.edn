@@ -12,7 +12,6 @@
  :set_code "cotc"
  :setname "Council of the Crest"
  :side "Runner"
- :strength 0
  :subtype "Current"
  :text "This card is not trashed until another <strong>current</strong> is played or an agenda is scored.\nThe first time you install a card each turn, the Corp loses 1[credit]."
  :title "Corporate \"Grant\""

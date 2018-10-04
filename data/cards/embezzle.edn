@@ -12,7 +12,6 @@
  :set_code "win"
  :setname "Whispers in Nalubaale"
  :side "Runner"
- :strength 0
  :subtype "Run - Sabotage"
  :text "Make a run on HQ. If successful, instead of accessing cards, name asset, ice, operation or upgrade, then reveal 2 cards from HQ at random. Trash each revealed card that has the named type, then gain 4[credit] for each card trashed this way."
  :title "Embezzle"

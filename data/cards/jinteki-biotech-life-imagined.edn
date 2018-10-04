@@ -1,5 +1,4 @@
 {:code "08012"
- :cost 0
  :cycle_code "sansan"
  :faction "Jinteki"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_12.png"
@@ -13,7 +12,6 @@
  :set_code "val"
  :setname "The Valley"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "Before taking your first turn, you may swap this card with any copy of Jinteki Biotech.\n[click],[click],[click]: Flip this identity.\nThe Brewery: When you flip this identity, do 2 net damage.\nThe Tank: When you flip this identity, shuffle Archives into R&D.\nThe Greenhouse: When you flip this identity, place 4 advancement tokens on a card that can be advanced."
  :title "Jinteki Biotech: Life Imagined"

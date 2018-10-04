@@ -12,7 +12,6 @@
  :set_code "si"
  :setname "Salsette Island"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "When your turn begins, you may choose a server.\nThe first time you make a successful run on that server this turn, instead of accessing cards, draw 2 cards."
  :title "Patron"

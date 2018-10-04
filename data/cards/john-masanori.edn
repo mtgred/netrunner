@@ -12,7 +12,6 @@
  :set_code "om"
  :setname "Opening Moves"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "The first time you make a successful run each turn, draw 1 card.\nThe first time you make an unsuccessful run each turn, take 1 tag."
  :title "John Masanori"

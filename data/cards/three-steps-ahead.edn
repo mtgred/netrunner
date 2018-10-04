@@ -12,7 +12,6 @@
  :set_code "tsb"
  :setname "The Spaces Between"
  :side "Runner"
- :strength 0
  :subtype "Priority"
  :text "Play only as your first [click].\nWhen this turn ends, gain 2[credit] for each successful run you made during it."
  :title "Three Steps Ahead"

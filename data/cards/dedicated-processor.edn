@@ -12,7 +12,6 @@
  :set_code "eas"
  :setname "Earth's Scion"
  :side "Runner"
- :strength 0
  :subtype "Mod"
  :text "Install Dedicated Processor on a non-<strong>AI icebreaker</strong>.\nHost <strong>icebreaker</strong> gains \"2[credit]: +4 strength.\""
  :title "Dedicated Processor"

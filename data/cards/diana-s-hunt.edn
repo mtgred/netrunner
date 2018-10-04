@@ -12,7 +12,6 @@
  :set_code "cd"
  :setname "Crimson Dust"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run. Whenever you encounter a piece of ice during this run, you may install a program from your grip, ignoring all costs. When this run ends, trash all programs installed using Diana's Hunt."
  :title "Diana's Hunt"

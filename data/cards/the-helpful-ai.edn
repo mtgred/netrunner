@@ -12,7 +12,6 @@
  :set_code "wla"
  :setname "What Lies Ahead"
  :side "Runner"
- :strength 0
  :subtype "Connection - Link - Virtual"
  :text "+1[link]\n[trash]: Choose an <strong>icebreaker</strong>. That <strong>icebreaker</strong> has +2 strength until the end of the turn."
  :title "The Helpful AI"

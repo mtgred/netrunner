@@ -12,7 +12,6 @@
  :set_code "baw"
  :setname "Blood and Water"
  :side "Corp"
- :strength 0
  :subtype "Bioroid"
  :text "Whenever the Runner trashes 1 or more cards in or protecting this server (including Warroid Tracker), <trace>Trace 4</trace> If successful, the Runner must trash 2 of his or her installed cards."
  :title "Warroid Tracker"

@@ -13,7 +13,6 @@
  :set_code "ce"
  :setname "Cyber Exodus"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "Dinosaurus can host a single non-<strong>AI icebreaker</strong>. The memory cost of the hosted <strong>icebreaker</strong> does not count against your memory limit.\nHosted <strong>icebreaker</strong> has +2 strength.\nLimit 1 <strong>console</strong> per player."
  :title "Dinosaurus"

@@ -1,6 +1,5 @@
 {:baselink 0
  :code "22001"
- :cost 0
  :cycle_code "reign-and-reverie"
  :faction "Anarch"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_1.png"
@@ -14,7 +13,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Runner"
- :strength 0
  :subtype "Natural"
  :text "When your turn begins, gain 1[credit] if you have 2 or fewer cards in your grip."
  :title "Nathaniel \"Gnat\" Hall: One-of-a-Kind"

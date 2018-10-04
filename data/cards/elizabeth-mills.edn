@@ -13,7 +13,6 @@
  :set_code "st"
  :setname "Second Thoughts"
  :side "Corp"
- :strength 0
  :subtype "Executive"
  :text "When you rez Elizabeth Mills, remove 1 bad publicity.\n[click], [trash]: Trash 1 <strong>location</strong>. Take 1 bad publicity."
  :title "Elizabeth Mills"

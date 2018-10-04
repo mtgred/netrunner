@@ -12,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Corp"
- :strength 0
  :subtype "Security Protocol"
  :text "Whenever there is a successful run on this server, the Runner must either take 1 brain damage or jack out. If the Runner jacks out, gain 5[credit], draw 1 card, and trash Black Level Clearance."
  :title "Black Level Clearance"

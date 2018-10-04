@@ -12,7 +12,6 @@
  :set_code "bb"
  :setname "Breaker Bay"
  :side "Runner"
- :strength 0
  :subtype "Location"
  :text "Trash all programs hosted on London Library when your turn ends.\n[click]: Install a non-<strong>virus</strong> program from your grip on London Library, ignoring the install cost.\n[click]: Add a program on London Library to your grip."
  :title "London Library"

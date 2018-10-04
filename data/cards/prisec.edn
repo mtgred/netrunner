@@ -12,7 +12,6 @@
  :set_code "bm"
  :setname "Blood Money"
  :side "Corp"
- :strength 0
  :subtype "Ambush"
  :text "If the Runner accesses Prisec while installed, you may pay 2[credit] to give the Runner 1 tag and do 1 meat damage."
  :title "Prisec"

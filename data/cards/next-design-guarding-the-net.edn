@@ -1,5 +1,4 @@
 {:code "03003"
- :cost 0
  :cycle_code "creation-and-control"
  :faction "Haas-Bioroid"
  :image_url "https://netrunnerdb.com/card_image/03003.png"
@@ -13,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "Before taking your first turn, you may install up to 3 pieces of ice, with no more than a single piece of ice per server. Draw until you have 5 cards in HQ."
  :title "NEXT Design: Guarding the Net"

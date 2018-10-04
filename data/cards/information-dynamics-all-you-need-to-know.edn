@@ -1,5 +1,4 @@
 {:code "00012"
- :cost 0
  :cycle_code "draft"
  :faction "NBN"
  :image_url "https://netrunnerdb.com/card_image/00012.png"
@@ -12,7 +11,6 @@
  :set_code "draft"
  :setname "Draft"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "Draft format only.\nIf you have more [nbn] cards rezzed than any other faction, whenever an agenda is scored or stolen, give the runner 1 tag."
  :title "Information Dynamics: All You Need To Know"

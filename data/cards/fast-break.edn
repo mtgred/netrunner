@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :text "Gain X[credit]. Draw up to X cards. Install up to X cards in and/or protecting a single remote server (paying all install costs). X is the number of agendas in the Runner's score area."
  :title "Fast Break"
  :type "Operation"

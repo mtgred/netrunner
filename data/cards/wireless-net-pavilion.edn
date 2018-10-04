@@ -12,7 +12,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Runner"
- :strength 0
  :subtype "Location"
  :text "As an additional cost to spend [click] to trash a resource (not through a card ability), the Corp must pay 2[credit].\n<errata>Errata from FAQ 3.0.1</errata>"
  :title "Wireless Net Pavilion"

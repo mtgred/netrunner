@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "10011"
- :cost 0
  :cycle_code "mumbad"
  :faction "Haas-Bioroid"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_11.png"
@@ -13,7 +12,6 @@
  :set_code "kg"
  :setname "Kala Ghoda"
  :side "Corp"
- :strength 0
  :subtype "Research"
  :text "The first time the Runner initiates  a run each turn, you may draw 1 card or gain 1[credit]."
  :title "Advanced Concept Hopper"

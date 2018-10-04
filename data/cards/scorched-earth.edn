@@ -11,7 +11,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Corp"
- :strength 0
  :subtype "Black Ops"
  :text "Play only if the Runner is tagged.\nDo 4 meat damage."
  :title "Scorched Earth"

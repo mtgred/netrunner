@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Runner"
- :strength 0
  :subtype "Directive - Virtual"
  :text "Your first [click] each turn must be spent to make a run or a play a <strong>run</strong> event.\nOnce per turn, you can spend [click][click] to break a subroutine on a piece of ice currently being encountered."
  :title "Always Be Running"

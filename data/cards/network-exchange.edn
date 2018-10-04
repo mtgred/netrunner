@@ -12,7 +12,6 @@
  :set_code "dc"
  :setname "Daedalus Complex"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "The install cost of each piece of ice that is not installed in the innermost position is increased by 1."
  :title "Network Exchange"

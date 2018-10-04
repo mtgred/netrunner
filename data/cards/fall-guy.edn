@@ -13,7 +13,6 @@
  :set_code "dt"
  :setname "Double Time"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "[trash]: Prevent another installed resource from being trashed.\n[trash]: Gain 2[credit]."
  :title "Fall Guy"

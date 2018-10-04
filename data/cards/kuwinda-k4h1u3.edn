@@ -12,7 +12,6 @@
  :set_code "cotc"
  :setname "Council of the Crest"
  :side "Corp"
- :strength 0
  :subtype "Bioroid"
  :text "When your turn begins, you may <trace>trace X</trace> If successful, do 1 brain damage and trash Kuwinda K4H1U3. If unsuccessful, place 1 power counter on Kuwinda K4H1U3.\nX is the number of power counters on Kuwinda K4H1U3."
  :title "Kuwinda K4H1U3"

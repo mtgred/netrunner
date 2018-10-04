@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :text "Awakening Center can host <strong>bioroid</strong> ice (each piece is installed facedown, ignoring all install costs).\nWhenever the Runner passes all of the ice protecting this server, you may rez a piece of ice on Awakening Center, lowering the rez cost by 7[credit], to force the Runner to encounter it. Trash that ice after the run is completed."
  :title "Awakening Center"
  :trash 3

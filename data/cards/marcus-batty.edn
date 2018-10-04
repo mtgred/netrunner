@@ -12,7 +12,6 @@
  :set_code "uw"
  :setname "The Underway"
  :side "Corp"
- :strength 0
  :subtype "Sysop - Psi"
  :text "[trash]: You and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, resolve 1 subroutine on a rezzed piece of ice protecting this server. Use this ability only during a run on this server."
  :title "Marcus Batty"

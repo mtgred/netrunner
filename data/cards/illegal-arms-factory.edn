@@ -12,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Corp"
- :strength 0
  :subtype "Facility - Illicit"
  :text "If the Runner trashes Illegal Arms Factory while it is installed, take 1 bad publicity.\nWhen your turn begins, gain 1[credit] and draw 1 card."
  :title "Illegal Arms Factory"

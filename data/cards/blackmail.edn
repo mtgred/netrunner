@@ -12,7 +12,6 @@
  :set_code "fal"
  :setname "Fear and Loathing"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Play only if the Corp has at least 1 bad publicity.\nMake a run. The Corp cannot rez ice for the duration of this run."
  :title "Blackmail"

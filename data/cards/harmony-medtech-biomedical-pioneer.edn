@@ -1,5 +1,4 @@
 {:code "05001"
- :cost 0
  :cycle_code "honor-and-profit"
  :faction "Jinteki"
  :image_url "https://netrunnerdb.com/card_image/05001.png"
@@ -13,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "Each player needs 1 fewer agenda point to win the game."
  :title "Harmony Medtech: Biomedical Pioneer"

@@ -12,7 +12,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Corp"
- :strength 0
  :subtype "Advertisement"
  :text "Gain 1[credit] when your turn begins."
  :title "PAD Campaign"

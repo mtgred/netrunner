@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+1[mu]\nWhenever you make a successful run on R&D, you may place 1 power counter on Mind's Eye.\n[click], <strong>3 hosted power counters</strong>: Access the top card of R&D.\nLimit 1 <strong>console</strong> per player."
  :title "Mind's Eye"

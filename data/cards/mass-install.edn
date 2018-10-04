@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Runner"
- :strength 0
  :text "Install up to 3 programs from your grip (paying the install costs)."
  :title "Mass Install"
  :type "Event"

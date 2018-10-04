@@ -12,7 +12,6 @@
  :set_code "fm"
  :setname "Free Mars"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run. If you have 3 or fewer programs installed, all <strong>icebreakers</strong> have +2 strength during this run."
  :title "Lean and Mean"

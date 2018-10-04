@@ -1,5 +1,4 @@
 {:code "13002"
- :cost 0
  :cycle_code "terminal-directive"
  :faction "Criminal"
  :factioncost 3
@@ -12,7 +11,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Runner"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this event, spend [click].\nDerez a piece of ice that has a rez cost of X or lower."
  :title "Brute-Force-Hack"

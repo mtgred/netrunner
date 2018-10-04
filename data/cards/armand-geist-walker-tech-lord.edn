@@ -1,6 +1,5 @@
 {:baselink 1
  :code "08063"
- :cost 0
  :cycle_code "sansan"
  :faction "Criminal"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_63.png"
@@ -14,7 +13,6 @@
  :set_code "uw"
  :setname "The Underway"
  :side "Runner"
- :strength 0
  :subtype "G-mod"
  :text "Whenever you use a [trash] ability, draw 1 card."
  :title "Armand \"Geist\" Walker: Tech Lord"

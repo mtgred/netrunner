@@ -12,7 +12,6 @@
  :set_code "up"
  :setname "Upstalk"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops"
  :text "Play only if the Runner is tagged.\nThe Runner's memory limit is reduced by 2 until the end of the turn."
  :title "Bad Times"

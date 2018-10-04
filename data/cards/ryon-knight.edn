@@ -12,7 +12,6 @@
  :set_code "cc"
  :setname "Chrome City"
  :side "Corp"
- :strength 0
  :subtype "Sysop"
  :text "[trash]: Do 1 brain damage. Use this ability only during a run on this server and only if the Runner has no unspent clicks."
  :title "Ryon Knight"

@@ -12,7 +12,6 @@
  :set_code "dt"
  :setname "Double Time"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "Whenever you are about to take at least 1 bad publicity, <trace>trace 3</trace> if successful, avoid taking the bad publicity."
  :title "Broadcast Square"

@@ -12,7 +12,6 @@
  :set_code "si"
  :setname "Salsette Island"
  :side "Corp"
- :strength 0
  :subtype "Alliance"
  :text "This card costs 0 influence if you have 7 or more assets in your deck.\nIf the Runner accesses Mumbad Virtual Tour while it is installed, he or she must trash it, if able."
  :title "Mumbad Virtual Tour"

@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :text "Derez any number of cards. You may rez a card, lowering its rez cost by 3 for each card that you derezzed this way."
  :title "Divert Power"
  :type "Operation"

@@ -12,7 +12,6 @@
  :set_code "so"
  :setname "Station One"
  :side "Runner"
- :strength 0
  :subtype "Cybernetic"
  :text "[click]: Make a run on R&D or HQ and trash 2 or more cards from your grip. Whenever you access cards from that server during this run, access 1 additional card for every 2 cards trashed.\n<errata>Errata from FAQ 4.0</errata>"
  :title "Severnius Stim Implant"

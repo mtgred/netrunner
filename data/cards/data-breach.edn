@@ -12,7 +12,6 @@
  :set_code "bm"
  :setname "Blood Money"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on R&D. If successful, you may make another run on R&D when this run ends."
  :title "Data Breach"

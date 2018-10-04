@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Runner"
- :strength 0
  :subtype "Location - Virtual"
  :text "The first time each turn you trash 1 of your installed cards, gain 1[credit]."
  :title "Wasteland"

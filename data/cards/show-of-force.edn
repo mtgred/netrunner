@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "11099"
- :cost 0
  :cycle_code "flashpoint"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "ml"
  :setname "Martial Law"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "When you score Show of Force, do 2 meat damage."
  :title "Show of Force"

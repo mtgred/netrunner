@@ -12,7 +12,6 @@
  :set_code "es"
  :setname "Escalation"
  :side "Corp"
- :strength 0
  :subtype "Current"
  :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nAs an additional cost to make the first run on his or her turn (even through a card ability), the Runner must spend 1[credit]."
  :title "Service Outage"

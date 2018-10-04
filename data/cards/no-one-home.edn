@@ -12,7 +12,6 @@
  :set_code "cotc"
  :setname "Council of the Crest"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "The first time you would take any number of tags or suffer any amount of net damage each turn, you may trash No One Home to force the Corp to \"<trace>trace 0</trace> If unsuccessful, the Runner avoids any number of tags or prevents any amount of net damage.\""
  :title "No One Home"

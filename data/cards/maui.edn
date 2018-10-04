@@ -12,7 +12,6 @@
  :set_code "baw"
  :setname "Blood and Water"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+2[mu]\nX[recurring-credit]\nUse these credits during runs on HQ. X is the number of pieces of ice protecting HQ.\nLimit 1 <strong>console</strong> per player."
  :title "Māui"

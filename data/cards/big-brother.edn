@@ -12,7 +12,6 @@
  :set_code "ta"
  :setname "Trace Amount"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops"
  :text "Play only if the Runner is tagged.\nGive the Runner 2 tags."
  :title "Big Brother"

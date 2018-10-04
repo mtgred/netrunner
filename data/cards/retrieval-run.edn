@@ -13,7 +13,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on Archives. If successful, instead of accessing cards you may install a program from your heap, ignoring all costs."
  :title "Retrieval Run"

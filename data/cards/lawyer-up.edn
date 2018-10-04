@@ -12,7 +12,6 @@
  :set_code "tc"
  :setname "True Colors"
  :side "Runner"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this event, spend [click].\nRemove up to 2 tags and draw 3 cards."
  :title "Lawyer Up"

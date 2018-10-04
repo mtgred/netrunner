@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "08032"
- :cost 0
  :cycle_code "sansan"
  :faction "Haas-Bioroid"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_32.png"
@@ -13,7 +12,6 @@
  :set_code "bb"
  :setname "Breaker Bay"
  :side "Corp"
- :strength 0
  :subtype "Research"
  :text "When you score Research Grant, you may score another copy of Research Grant that is installed."
  :title "Research Grant"

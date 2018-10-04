@@ -12,7 +12,6 @@
  :set_code "om"
  :setname "Opening Moves"
  :side "Runner"
- :strength 0
  :text "When your turn begins, you may look at the top card of your stack."
  :title "Motivation"
  :type "Resource"

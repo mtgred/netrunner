@@ -1,6 +1,5 @@
 {:baselink 0
  :code "09037"
- :cost 0
  :cycle_code "data-and-destiny"
  :faction "Adam"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_37.png"
@@ -14,7 +13,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Runner"
- :strength 0
  :subtype "Bioroid"
  :text "You start the game with 3 different <strong>directive</strong> cards installed (these cards are not considered part of your deck)."
  :title "Adam: Compulsive Hacker"

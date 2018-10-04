@@ -13,7 +13,6 @@
  :set_code "asis"
  :setname "A Study in Static"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "Gain 3[credit] and draw 1 card."
  :title "Green Level Clearance"

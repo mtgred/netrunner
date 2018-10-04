@@ -12,7 +12,6 @@
  :set_code "dag"
  :setname "Democracy and Dogma"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "Whenever you rez a card in or protecting this server (not including Surat City Grid), you may rez another card, lowering the rez cost by 2.\nLimit 1 <strong>region</strong> per server."
  :title "Surat City Grid"

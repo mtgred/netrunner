@@ -12,7 +12,6 @@
  :set_code "ce"
  :setname "Cyber Exodus"
  :side "Runner"
- :strength 0
  :subtype "Gear"
  :text "Prevent the first meat damage each turn."
  :title "Muresh Bodysuit"

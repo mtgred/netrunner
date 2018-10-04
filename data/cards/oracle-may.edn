@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "You cannot use Oracle May more than once per turn.\n[click]: Name a card type. Reveal the top card of your stack. If the revealed card is of the named type, draw it and gain 2[credit]. Otherwise, trash it."
  :title "Oracle May"

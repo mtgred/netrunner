@@ -12,7 +12,6 @@
  :set_code "bb"
  :setname "Breaker Bay"
  :side "Runner"
- :strength 0
  :subtype "Location"
  :text "[click], [click]: Search your stack for a piece of hardware, reveal it, and add it to your grip. Shuffle your stack."
  :title "Tyson Observatory"

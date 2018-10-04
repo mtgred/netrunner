@@ -12,7 +12,6 @@
  :set_code "dc"
  :setname "Daedalus Complex"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run. If you have 2 or fewer cards in your grip, each installed <strong>icebreaker</strong> has +2 strength until the end of the run."
  :title "Pushing the Envelope"

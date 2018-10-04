@@ -12,7 +12,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "Worlds Plaza can host up to 3 assets.\n[click]: Install an asset from HQ on Worlds Plaza and rez it, lowering its rez cost by 2, if able."
  :title "Worlds Plaza"

@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "08120"
- :cost 0
  :cycle_code "sansan"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "When you score The Future is Now, search R&D for a card and add it to HQ. Shuffle R&D."
  :title "The Future is Now"

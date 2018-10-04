@@ -1,5 +1,4 @@
 {:code "09020"
- :cost 0
  :cycle_code "data-and-destiny"
  :faction "NBN"
  :factioncost 1
@@ -12,7 +11,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Corp"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this operation, spend [click].\nInstall and rez (paying all costs) X <strong>advertisements</strong> from Archives and/or HQ, if able."
  :title "Ad Blitz"

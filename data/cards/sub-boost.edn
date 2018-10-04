@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Corp"
- :strength 0
  :subtype "Condition"
  :text "Install Sub Boost on a rezzed piece of ice as a hosted condition counter with the text \"Host ice gains <strong>barrier</strong> and '[subroutine] End the run.' after all its other subroutines.\""
  :title "Sub Boost"

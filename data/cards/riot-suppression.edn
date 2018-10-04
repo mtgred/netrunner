@@ -12,7 +12,6 @@
  :set_code "ka"
  :setname "Kampala Ascendent"
  :side "Corp"
- :strength 0
  :subtype "Reprisal - Gray Ops"
  :text "Play only if the Runner trashed at least 1 Corp card during his or her last turn.\nThe Runner has 3 fewer [click] to spend during his or her next turn. The Runner may immediately suffer 1 brain damage to prevent this. Remove Riot Suppression from the game instead of trashing it."
  :title "Riot Suppression"

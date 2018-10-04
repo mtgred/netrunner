@@ -12,7 +12,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Corp"
- :strength 0
  :subtype "Sysop"
  :text "Once per run, when the Runner approaches a piece of ice protecting this server, you may swap that ice with a piece of ice from HQ. The new ice is installed unrezzed."
  :title "Midori"

@@ -1,7 +1,6 @@
 {:advancementcost 6
  :agendapoints 4
  :code "08100"
- :cost 0
  :cycle_code "sansan"
  :faction "Neutral"
  :factioncost 1
@@ -14,7 +13,6 @@
  :set_code "oh"
  :setname "Old Hollywood"
  :side "Corp"
- :strength 0
  :title "Vanity Project"
  :type "Agenda"
  :uniqueness false}

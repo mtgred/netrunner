@@ -12,7 +12,6 @@
  :set_code "eas"
  :setname "Earth's Scion"
  :side "Corp"
- :strength 0
  :text "Play only if there are at least 3 cards in HQ.\nTrash all cards in HQ. Place a total of 2 advancement tokens on up to 2 cards that can be advanced."
  :title "Audacity"
  :type "Operation"

@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+3[mu]\nWhen you install Monolith, install up to 3 programs from your grip, lowering the install cost of each by 4[credit].\n<strong>Trash a program from your grip:</strong> Prevent 1 brain or net damage.\nLimit 1 <strong>console</strong> per player."
  :title "Monolith"

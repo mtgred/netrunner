@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Corp"
- :strength 0
  :subtype "Executive"
  :text "Whenever you spend an agenda counter, gain 1[credit].\n[trash] or <strong>any agenda counter:</strong> Gain 2[credit]."
  :title "Mark Yale"

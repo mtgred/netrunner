@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "Whenever an agenda is scored or stolen, gain credits equal to the agenda points on that agenda."
  :title "Human First"

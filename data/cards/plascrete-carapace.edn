@@ -12,7 +12,6 @@
  :set_code "wla"
  :setname "What Lies Ahead"
  :side "Runner"
- :strength 0
  :subtype "Gear"
  :text "Place 4 power counters on Plascrete Carapace when it is installed. When there are no power counters left on Plascrete Carapace, trash it.\n<strong>Hosted power counter:</strong> Prevent 1 meat damage."
  :title "Plascrete Carapace"

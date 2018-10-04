@@ -12,7 +12,6 @@
  :set_code "cotc"
  :setname "Council of the Crest"
  :side "Corp"
- :strength 0
  :subtype "Current - Transaction"
  :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nWhenever the Runner installs a card or trashes an installed card, you may gain 1[credit]."
  :title "Death and Taxes"

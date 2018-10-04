@@ -12,7 +12,6 @@
  :set_code "fc"
  :setname "First Contact"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "Successful runs against this server are not considered to be successful or unsuccessful for the purposes of card abilities.\nLimit 1 <strong>region</strong> per server."
  :title "Crisium Grid"

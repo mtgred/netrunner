@@ -12,7 +12,6 @@
  :set_code "cc"
  :setname "Chrome City"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+1[mu]\nWhenever you steal an agenda, you may swap that agenda with an agenda in the Corp's score area.\nLimit 1 <strong>console</strong> per player."
  :title "Turntable"

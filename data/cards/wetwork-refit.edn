@@ -12,7 +12,6 @@
  :set_code "in"
  :setname "Intervention"
  :side "Corp"
- :strength 0
  :subtype "Condition"
  :text "Install Wetwork Refit on a rezzed piece of <strong>bioroid</strong> ice as a condition counter with the text \"Host ice gains \"[subroutine] Do 1 brain damage.\" before all its other subroutines.\""
  :title "Wetwork Refit"

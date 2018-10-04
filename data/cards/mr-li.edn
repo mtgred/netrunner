@@ -13,7 +13,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "[click]: Draw 2 cards. Add 1 of these cards to the bottom of your stack."
  :title "Mr. Li"

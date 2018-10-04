@@ -1,5 +1,4 @@
 {:code "21077"
- :cost 0
  :cycle_code "kitara"
  :faction "Weyland Consortium"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_77.png"
@@ -13,7 +12,6 @@
  :set_code "tdatd"
  :setname "The Devil and the Dragon"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "When your turn ends, you may choose a piece of ice with no advancement tokens on it. If you do, place 1 advancement token on that piece of ice for each agenda point on all installed faceup agendas."
  :title "SSO Industries: Fueling Innovation"

@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Runner"
- :strength 0
  :text "Whenever you access cards in Archives, you may remove 1 card in Archives from the game, instead of accessing it."
  :title "Archives Interface"
  :type "Hardware"

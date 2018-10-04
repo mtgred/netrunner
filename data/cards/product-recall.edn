@@ -12,7 +12,6 @@
  :set_code "bf"
  :setname "Business First"
  :side "Corp"
- :strength 0
  :subtype "Alliance"
  :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [haas-bioroid] cards in your deck.\nTrash a rezzed asset or upgrade. If you do, gain credits equal to its trash cost."
  :title "Product Recall"

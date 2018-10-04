@@ -1,5 +1,4 @@
 {:code "00005"
- :cost 0
  :cycle_code "draft"
  :faction "Neutral"
  :image_url "https://netrunnerdb.com/card_image/00005.png"
@@ -12,7 +11,6 @@
  :set_code "draft"
  :setname "Draft"
  :side "Corp"
- :strength 0
  :subtype "Megacorp"
  :text "Draft format only.\nYou can use agendas from all factions in this deck."
  :title "The Shadow: Pulling the Strings"

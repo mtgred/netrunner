@@ -12,7 +12,6 @@
  :set_code "eas"
  :setname "Earth's Scion"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "[click], <strong>remove an installed program from the game</strong>: Search your stack for a non-<strong>virus</strong> program, shuffle your stack, then install that program, lowering the install cost by the cost of the program removed from the game."
  :title "Rosetta 2.0"

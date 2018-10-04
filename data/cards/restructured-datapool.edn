@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "02016"
- :cost 0
  :cycle_code "genesis"
  :faction "NBN"
  :image_url "https://netrunnerdb.com/card_image/02016.png"
@@ -13,7 +12,6 @@
  :set_code "wla"
  :setname "What Lies Ahead"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "[click]: <trace>Trace 2</trace> If successful, give the Runner 1 tag."
  :title "Restructured Datapool"

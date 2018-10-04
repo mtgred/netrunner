@@ -12,7 +12,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Runner"
- :strength 0
  :subtype "Mod"
  :text "Choose a piece of ice. That ice gains <strong>sentry</strong>, <strong>code gate</strong>, and <strong>barrier</strong> until the end of the turn."
  :title "Tinkering"

@@ -1,6 +1,5 @@
 {:baselink 1
  :code "02083"
- :cost 0
  :cycle_code "genesis"
  :faction "Criminal"
  :image_url "https://netrunnerdb.com/card_image/02083.png"
@@ -14,7 +13,6 @@
  :set_code "hs"
  :setname "Humanity's Shadow"
  :side "Runner"
- :strength 0
  :subtype "Natural"
  :text "You draw a starting hand of 9 cards."
  :title "Andromeda: Dispossessed Ristie"

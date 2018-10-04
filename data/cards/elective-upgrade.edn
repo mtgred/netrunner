@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "13030"
- :cost 0
  :cycle_code "terminal-directive"
  :faction "Haas-Bioroid"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_30.png"
@@ -13,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "Place 2 agenda counters on Elective Upgrade when you score it.\n[click], <strong>hosted agenda counter</strong>: Gain [click][click]. Use this ability only once per turn."
  :title "Elective Upgrade"

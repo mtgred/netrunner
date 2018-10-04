@@ -12,7 +12,6 @@
  :set_code "dc"
  :setname "Daedalus Complex"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+2[mu]\nThe first time each turn you access a card not in Archives and do not steal or trash it, the Corp must trash 1 card from HQ at random.\nLimit 1 <strong>console</strong> per player."
  :title "Maw"

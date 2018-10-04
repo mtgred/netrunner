@@ -12,7 +12,6 @@
  :set_code "val"
  :setname "The Valley"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "The rez cost of <strong>bioroid</strong> ice is lowered by 1 for each unspent click the Runner has."
  :title "Brain-Taping Warehouse"

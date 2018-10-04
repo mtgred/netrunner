@@ -12,7 +12,6 @@
  :set_code "win"
  :setname "Whispers in Nalubaale"
  :side "Corp"
- :strength 0
  :subtype "Ambush"
  :text "If Intake is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Intake, <trace>trace 4</trace> If successful, add an installed program or <strong>virtual</strong> resource to the grip. Ignore this ability if the Runner accesses Intake from Archives."
  :title "Intake"

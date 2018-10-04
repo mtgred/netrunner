@@ -12,7 +12,6 @@
  :set_code "ta"
  :setname "Trace Amount"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "Whenever there is a successful trace during a run on this server, give the Runner 1 tag.\nLimit 1 <strong>region</strong> per server."
  :title "ChiLo City Grid"

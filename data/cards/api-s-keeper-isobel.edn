@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :subtype "Character"
  :text "When your turn begins, you may remove an advancement token from an installed card to gain 3[credit]."
  :title "API-S Keeper Isobel"

@@ -12,7 +12,6 @@
  :set_code "ce"
  :setname "Cyber Exodus"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "Place 14[credit] from the bank on Private Contracts when it is rezzed. When there are no credits left on Private Contracts, trash it.\n[click]: Take 2[credit] from Private Contracts."
  :title "Private Contracts"

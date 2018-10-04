@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Runner"
- :strength 0
  :subtype "Link"
  :text "+1[link]\nYour maximum hand size is increased by 1."
  :title "Borrowed Satellite"

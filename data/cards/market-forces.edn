@@ -12,7 +12,6 @@
  :set_code "ka"
  :setname "Kampala Ascendent"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops"
  :text "Play only if the Runner is tagged.\nThe Runner loses 3[credit] for each tag he or she has, then you gain 1[credit] for each credit lost."
  :title "Market Forces"

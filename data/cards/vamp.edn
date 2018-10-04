@@ -12,7 +12,6 @@
  :set_code "ta"
  :setname "Trace Amount"
  :side "Runner"
- :strength 0
  :subtype "Run - Sabotage"
  :text "Make a run on HQ. If successful, instead of accessing cards you may pay X[credit] to force the Corp to lose up to X[credit], then take 1 tag."
  :title "Vamp"

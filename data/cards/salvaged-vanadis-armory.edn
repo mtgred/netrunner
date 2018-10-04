@@ -12,7 +12,6 @@
  :set_code "cd"
  :setname "Crimson Dust"
  :side "Runner"
- :strength 0
  :subtype "Clan"
  :text "[trash]: The Corp trashes the top X cards of R&D. X is the amount of damage you have suffered this turn. Use this ability only during the next paid ability window after suffering any amount of damage.\n<errata>Errata from FAQ 4.1</errata>"
  :title "Salvaged Vanadis Armory"

@@ -12,7 +12,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Runner"
- :strength 0
  :subtype "Location - Government"
  :text "2[credit]: Avoid 1 tag.\nTrash New Angeles City Hall when you steal an agenda."
  :title "New Angeles City Hall"

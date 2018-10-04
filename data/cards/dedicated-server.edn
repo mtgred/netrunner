@@ -12,7 +12,6 @@
  :set_code "asis"
  :setname "A Study in Static"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "2[recurring-credit]\nUse these credits to rez ice."
  :title "Dedicated Server"

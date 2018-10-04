@@ -12,7 +12,6 @@
  :set_code "tsb"
  :setname "The Spaces Between"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "If the Runner loses or spends a click during a run on this server, he or she loses all credits in his or her credit pool.\nLimit 1 <strong>region</strong> per server."
  :title "Heinlein Grid"

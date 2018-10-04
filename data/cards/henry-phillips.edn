@@ -12,7 +12,6 @@
  :set_code "eas"
  :setname "Earth's Scion"
  :side "Corp"
- :strength 0
  :subtype "Sysop"
  :text "Whenever the Runner breaks a subroutine during a run on this server, gain 2[credit] if he or she is tagged."
  :title "Henry Phillips"

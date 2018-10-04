@@ -1,5 +1,4 @@
 {:code "01067"
- :cost 0
  :cycle_code "core"
  :faction "Jinteki"
  :image_url "https://netrunnerdb.com/card_image/01067.png"
@@ -13,7 +12,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Corp"
- :strength 0
  :subtype "Megacorp"
  :text "Whenever an agenda is scored or stolen, do 1 net damage."
  :title "Jinteki: Personal Evolution"

@@ -12,7 +12,6 @@
  :set_code "dc"
  :setname "Daedalus Complex"
  :side "Corp"
- :strength 0
  :text "Defense Construct can be advanced.\n[trash]: Add 1 facedown card from Archives to HQ for each advancement token on Defense Construct. Use this ability only during a run on Archives."
  :title "Defense Construct"
  :trash 0

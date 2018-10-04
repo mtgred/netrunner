@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "The play cost of operations and events is increased by 1."
  :title "Donut Taganes"

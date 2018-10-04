@@ -12,7 +12,6 @@
  :set_code "uao"
  :setname "Up and Over"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+1[mu]\nDraw 1 card whenever the Corp creates a server.\nLimit 1 <strong>console</strong> per player."
  :title "Astrolabe"

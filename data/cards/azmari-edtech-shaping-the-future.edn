@@ -1,5 +1,4 @@
 {:code "21054"
- :cost 0
  :cycle_code "kitara"
  :faction "NBN"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_54.png"
@@ -13,7 +12,6 @@
  :set_code "cotc"
  :setname "Council of the Crest"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "When your turn ends, you may name a card type. Gain 2[credit] the first time each turn the Runner plays or installs a card that has the type you last named this way."
  :title "Azmari EdTech: Shaping the Future"

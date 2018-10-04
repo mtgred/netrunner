@@ -12,7 +12,6 @@
  :set_code "ka"
  :setname "Kampala Ascendent"
  :side "Runner"
- :strength 0
  :subtype "Double - Run - Sabotage"
  :text "As an additional cost to play this event, spend [click].\nMake a run on HQ. If successful, instead of accessing cards, you may force the corp to lose up to 5[credit], then you may gain 1[credit] for each credit lost."
  :title "Diversion of Funds"

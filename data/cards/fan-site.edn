@@ -12,7 +12,6 @@
  :set_code "oh"
  :setname "Old Hollywood"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "Whenever the Corp scores an agenda, add Fan Site to your score area as an agenda worth 0 agenda points."
  :title "Fan Site"

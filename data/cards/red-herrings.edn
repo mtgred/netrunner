@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Corp"
- :strength 0
  :text "Each time the Runner accesses an agenda from this server, he or she must pay 5[credit] as an additional cost in order to steal it. This applies even during the run on which the Runner trashes Red Herrings."
  :title "Red Herrings"
  :trash 1

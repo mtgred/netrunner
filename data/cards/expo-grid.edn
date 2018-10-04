@@ -12,7 +12,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "When your turn begins, gain 1[credit] if there is a rezzed asset installed in this server.\nLimit 1 <strong>region</strong> per server."
  :title "Expo Grid"

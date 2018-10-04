@@ -1,5 +1,4 @@
 {:code "06118"
- :cost 0
  :cycle_code "lunar"
  :faction "Criminal"
  :factioncost 2
@@ -12,7 +11,6 @@
  :set_code "ts"
  :setname "The Source"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run. During this run, the Corp must pay X[credit] as an additional cost to rez the first unrezzed piece of ice approached."
  :title "Bribery"

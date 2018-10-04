@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :subtype "Bioroid"
  :text "Place 1 power counter on Alix T4LB07 whenever you install a card.\n[click],[trash]: Gain 2[credit] for each power counter on Alix T4LB07."
  :title "Alix T4LB07"

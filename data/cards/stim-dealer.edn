@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "When your turn begins, if there are 2 or more power counters on Stim Dealer, remove all power counters from it and suffer 1 brain damage (cannot be prevented); otherwise, place 1 power counter on Stim Dealer and gain [click]."
  :title "Stim Dealer"

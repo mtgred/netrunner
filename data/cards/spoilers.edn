@@ -12,7 +12,6 @@
  :set_code "oh"
  :setname "Old Hollywood"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "Whenever the Corp scores an agenda, he or she trashes the top card of R&D."
  :title "Spoilers"

@@ -1,5 +1,4 @@
 {:code "08050"
- :cost 0
  :cycle_code "sansan"
  :faction "Haas-Bioroid"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_50.png"
@@ -13,7 +12,6 @@
  :set_code "cc"
  :setname "Chrome City"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "Each player's maximum hand size is reduced by 1."
  :title "Cybernetics Division: Humanity Upgraded"

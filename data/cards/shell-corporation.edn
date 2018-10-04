@@ -12,7 +12,6 @@
  :set_code "atr"
  :setname "All That Remains"
  :side "Corp"
- :strength 0
  :text "You cannot use Shell Corporation more than once per turn.\n[click]: Place 3[credit] on Shell Corporation.\n[click]: Take all credits from Shell Corporation."
  :title "Shell Corporation"
  :trash 3

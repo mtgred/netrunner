@@ -13,7 +13,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Icebreaker - AI - Virus"
  :text "2[credit]: Break ice subroutine.\nX is the number of virus counters on Darwin.\nWhen your turn begins, you may pay 1[credit] to place 1 virus counter on Darwin."
  :title "Darwin"

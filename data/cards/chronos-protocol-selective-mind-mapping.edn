@@ -1,5 +1,4 @@
 {:code "08111"
- :cost 0
  :cycle_code "sansan"
  :faction "Jinteki"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_111.png"
@@ -13,7 +12,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "For the first net damage the Runner suffers each turn, you may look at the Runner's grip and select the card that is trashed."
  :title "Chronos Protocol: Selective Mind-mapping"

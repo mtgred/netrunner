@@ -13,7 +13,6 @@
  :set_code "dt"
  :setname "Double Time"
  :side "Runner"
- :strength 0
  :subtype "Double - Run"
  :text "As an additional cost to play this event, spend [click].\nMake a run on a remote server. If successful, instead of accessing cards, trash all cards in the server at no cost (even if they cannot normally be trashed)."
  :title "Singularity"

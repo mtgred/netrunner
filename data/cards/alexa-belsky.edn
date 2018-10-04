@@ -12,7 +12,6 @@
  :set_code "es"
  :setname "Escalation"
  :side "Corp"
- :strength 0
  :subtype "Character"
  :text "[trash]: Shuffle all cards in HQ into R&D. The Runner may pay any number of credits to prevent 1 random card in HQ from being shuffled into R&D for every 2[credit] spent."
  :title "Alexa Belsky"

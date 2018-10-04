@@ -1,6 +1,5 @@
 {:baselink 0
  :code "11066"
- :cost 0
  :cycle_code "flashpoint"
  :faction "Shaper"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_66.png"
@@ -14,7 +13,6 @@
  :set_code "in"
  :setname "Intervention"
  :side "Runner"
- :strength 0
  :subtype "G-mod - Stealth"
  :text "1[recurring-credit]\nUse this credit to pay for using <strong>icebreakers</strong>."
  :title "Ele \"Smoke\" Scovak: Cynosure of the Net"

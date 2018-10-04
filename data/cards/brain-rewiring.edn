@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "13029"
- :cost 0
  :cycle_code "terminal-directive"
  :faction "Haas-Bioroid"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_29.png"
@@ -13,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "When you score Brain Rewiring, you may pay X[credit] to force the Runner to add X cards from his or her grip to the bottom of his or her stack at random then draw 1 card."
  :title "Brain Rewiring"

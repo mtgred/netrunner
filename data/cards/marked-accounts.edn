@@ -12,7 +12,6 @@
  :set_code "ce"
  :setname "Cyber Exodus"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "When your turn begins, take 1[credit] from Marked Accounts, if able.\n[click]: Place 3[credit] from the bank on Marked Accounts."
  :title "Marked Accounts"

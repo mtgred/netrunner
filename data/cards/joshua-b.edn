@@ -12,7 +12,6 @@
  :set_code "ce"
  :setname "Cyber Exodus"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "When your turn begins, you may gain [click]. If you do, take 1 tag when this turn ends."
  :title "Joshua B."

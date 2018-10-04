@@ -12,7 +12,6 @@
  :set_code "uw"
  :setname "The Underway"
  :side "Runner"
- :strength 0
  :subtype "Connection - Seedy"
  :text "When you install Street Peddler, host the top 3 cards of your stack facedown on Street Peddler (you may look at these cards at any time).\n[trash]: Install 1 card hosted on Street Peddler, lowering its install cost by 1."
  :title "Street Peddler"

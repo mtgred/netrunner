@@ -12,7 +12,6 @@
  :set_code "mt"
  :setname "Mala Tempora"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "Whenever the Corp takes at least 1 bad publicity, access 1 card from HQ.\n[trash]: Expose 1 card."
  :title "Raymond Flint"

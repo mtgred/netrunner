@@ -12,7 +12,6 @@
  :set_code "kg"
  :setname "Kala Ghoda"
  :side "Runner"
- :strength 0
  :subtype "Run - Sabotage"
  :text "Make a run. When the run ends, trash 1 piece of ice that was rezzed during this run."
  :title "Run Amok"

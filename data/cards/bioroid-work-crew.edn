@@ -12,7 +12,6 @@
  :set_code "eas"
  :setname "Earth's Scion"
  :side "Corp"
- :strength 0
  :subtype "Bioroid"
  :text "[trash]: Install 1 card, paying all costs. Use this ability only during the next paid ability window after playing and resolving an operation.\n<errata>Errata from FAQ 4.1</errata>"
  :title "Bioroid Work Crew"

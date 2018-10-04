@@ -12,7 +12,6 @@
  :set_code "si"
  :setname "Salsette Island"
  :side "Corp"
- :strength 0
  :subtype "Ritzy"
  :text "Whenever there is a successful trace, gain 1[credit] and the Runner loses 1[credit]."
  :title "Aryabhata Tech"

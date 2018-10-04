@@ -12,7 +12,6 @@
  :set_code "ss"
  :setname "Sovereign Sight"
  :side "Runner"
- :strength 0
  :subtype "Chip"
  :text "+1[mu]\nThe first time you break all subroutines on a piece of ice each turn, you may gain 1[credit]."
  :title "Cyberdelia"

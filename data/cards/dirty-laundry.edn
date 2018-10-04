@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run. After the run is completed, gain 5[credit] if it was successful."
  :title "Dirty Laundry"

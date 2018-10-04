@@ -12,7 +12,6 @@
  :set_code "dtwn"
  :setname "Down the White Nile"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "[trash]: Break the first subroutine on the encountered piece of ice."
  :title "Kongamato"

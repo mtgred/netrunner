@@ -13,7 +13,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on R&D. If successful, instead of accessing cards you may look at the top 5 cards of R&D and arrange them in any order."
  :title "Indexing"

@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "10048"
- :cost 0
  :cycle_code "mumbad"
  :faction "Haas-Bioroid"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_48.png"
@@ -13,7 +12,6 @@
  :set_code "dag"
  :setname "Democracy and Dogma"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "Place 3 agenda counters on Voting Machine Initiative when you score it.\nWhen the Runner's turn begins, you may spend 1 hosted agenda counter. If you do, the Runner loses [click], if able."
  :title "Voting Machine Initiative"

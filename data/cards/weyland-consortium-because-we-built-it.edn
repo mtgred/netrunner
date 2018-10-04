@@ -1,5 +1,4 @@
 {:code "02076"
- :cost 0
  :cycle_code "genesis"
  :faction "Weyland Consortium"
  :image_url "https://netrunnerdb.com/card_image/02076.png"
@@ -13,7 +12,6 @@
  :set_code "asis"
  :setname "A Study in Static"
  :side "Corp"
- :strength 0
  :subtype "Megacorp"
  :text "1[recurring-credit]\nUse this credit to advance ice."
  :title "Weyland Consortium: Because We Built It"

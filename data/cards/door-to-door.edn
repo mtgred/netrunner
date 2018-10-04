@@ -12,7 +12,6 @@
  :set_code "es"
  :setname "Escalation"
  :side "Corp"
- :strength 0
  :subtype "Current - Black Ops"
  :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nWhen the Runner's turn begins, <trace>trace 1</trace> If successful, do 1 meat damage if the Runner is tagged; otherwise, give the Runner 1 tag."
  :title "Door to Door"

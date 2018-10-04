@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "03005"
- :cost 0
  :cycle_code "creation-and-control"
  :faction "Haas-Bioroid"
  :image_url "https://netrunnerdb.com/card_image/03005.png"
@@ -13,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "Place 3 agenda counters on Efficiency Committee when you score it.\n[click], <strong>hosted agenda counter:</strong> Gain [click][click]. You cannot advance cards for the remainder of this turn."
  :title "Efficiency Committee"

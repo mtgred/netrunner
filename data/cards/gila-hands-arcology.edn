@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "03023"
- :cost 0
  :cycle_code "creation-and-control"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :subtype "Expansion"
  :text "[click], [click]: Gain 3[credit]."
  :title "Gila Hands Arcology"

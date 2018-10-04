@@ -12,7 +12,6 @@
  :set_code "si"
  :setname "Salsette Island"
  :side "Runner"
- :strength 0
  :subtype "Vehicle"
  :text " +1[link]\n[trash]: Draw 3 cards."
  :title "Sports Hopper"

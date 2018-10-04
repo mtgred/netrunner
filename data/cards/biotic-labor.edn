@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Corp"
- :strength 0
  :text "Gain [click][click]."
  :title "Biotic Labor"
  :type "Operation"

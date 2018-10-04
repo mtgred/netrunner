@@ -12,7 +12,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "As an additional cost to make a run on this server, the Runner must spend [click].\nLimit 1 <strong>region</strong> per server."
  :title "Ruhr Valley"

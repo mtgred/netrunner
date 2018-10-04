@@ -12,7 +12,6 @@
  :set_code "in"
  :setname "Intervention"
  :side "Corp"
- :strength 0
  :text "If the Runner is tagged, Drone Screen gains \"Whenever the Runner initiates a run on this server, <trace>Trace 3</trace> If successful, do 1 meat damage (cannot be prevented).\""
  :title "Drone Screen"
  :trash 4

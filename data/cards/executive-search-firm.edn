@@ -12,7 +12,6 @@
  :set_code "si"
  :setname "Salsette Island"
  :side "Corp"
- :strength 0
  :subtype "Alliance - Ritzy"
  :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [weyland-consortium] cards in your deck.\n[click]: Search R&D for an <strong>executive</strong>, <strong>sysop</strong>, or <strong>character</strong>, reveal it, and add it to HQ. Shuffle R&D."
  :title "Executive Search Firm"

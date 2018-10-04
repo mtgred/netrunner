@@ -1,6 +1,5 @@
 {:baselink 0
  :code "01017"
- :cost 0
  :cycle_code "core"
  :faction "Criminal"
  :image_url "https://netrunnerdb.com/card_image/01017.png"
@@ -14,7 +13,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Runner"
- :strength 0
  :subtype "Cyborg"
  :text "The first time you make a successful run on HQ each turn, gain 2[credit]."
  :title "Gabriel Santiago: Consummate Professional"

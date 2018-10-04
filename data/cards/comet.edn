@@ -12,7 +12,6 @@
  :set_code "bb"
  :setname "Breaker Bay"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text "+1[mu]\nThe first time you play an event each turn, you may play another event (without spending a click) after the first one resolves.\nLimit 1 <strong>console</strong> per player."
  :title "Comet"

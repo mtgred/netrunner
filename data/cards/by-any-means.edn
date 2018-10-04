@@ -12,7 +12,6 @@
  :set_code "ss"
  :setname "Sovereign Sight"
  :side "Runner"
- :strength 0
  :subtype "Priority - Sabotage"
  :text "Play only as your first [click].\nUntil the turn ends, whenever you access a card not in Archives, trash it at no cost (even if it cannot normally be trashed) and suffer 1 meat damage."
  :title "By Any Means"

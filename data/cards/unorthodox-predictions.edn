@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "04053"
- :cost 0
  :cycle_code "spin"
  :faction "Jinteki"
  :image_url "https://netrunnerdb.com/card_image/04053.png"
@@ -13,7 +12,6 @@
  :set_code "mt"
  :setname "Mala Tempora"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "When you score Unorthodox Predictions, choose <strong>sentry</strong>, <strong>code gate</strong> or <strong>barrier</strong>. Subroutines on ice of the chosen type cannot be broken until the beginning of your next turn."
  :title "Unorthodox Predictions"

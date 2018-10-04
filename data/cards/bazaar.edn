@@ -12,7 +12,6 @@
  :set_code "si"
  :setname "Salsette Island"
  :side "Runner"
- :strength 0
  :subtype "Location - Ritzy"
  :text "Whenever you install a piece of hardware from your grip, you may install another copy of that hardware from your grip (paying all costs)."
  :title "Bazaar"

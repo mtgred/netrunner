@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :subtype "Ambush"
  :text "Cerebral Overwriter can be advanced.\nIf you pay 3[credit] when the Runner accesses Cerebral Overwriter, do 1 brain damage for each advancement token on Cerebral Overwriter."
  :title "Cerebral Overwriter"

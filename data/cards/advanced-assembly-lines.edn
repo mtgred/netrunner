@@ -12,7 +12,6 @@
  :set_code "bf"
  :setname "Business First"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "When you rez Advanced Assembly Lines, gain 3[credit].\n[trash]: Install a non-agenda card from HQ (paying the install cost). You cannot use this ability during a run."
  :title "Advanced Assembly Lines"

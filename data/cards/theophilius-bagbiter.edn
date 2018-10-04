@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "When you install Theophilius Bagbiter, lose all credits in your credit pool.\nYour maximum hand size is equal to the number of credits in your credit pool."
  :title "Theophilius Bagbiter"

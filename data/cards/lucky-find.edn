@@ -12,7 +12,6 @@
  :set_code "dt"
  :setname "Double Time"
  :side "Runner"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this event, spend [click].\nGain 9[credit]."
  :title "Lucky Find"

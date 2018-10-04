@@ -12,7 +12,6 @@
  :set_code "ss"
  :setname "Sovereign Sight"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "When your turn begins, either lose 1[credit] or trash Lewi Guilherme.\nThe Corp's maximum hand size is reduced by 1."
  :title "Lewi Guilherme"

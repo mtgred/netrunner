@@ -12,7 +12,6 @@
  :set_code "ml"
  :setname "Martial Law"
  :side "Runner"
- :strength 0
  :subtype "Run - Stealth"
  :text "Make a run, and place 4[credit] on this card, which you may use only during this run. When this run ends, trash 1 program (cannot be prevented) used during this run."
  :title "Cold Read"

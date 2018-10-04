@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "06081"
- :cost 0
  :cycle_code "lunar"
  :faction "Haas-Bioroid"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_81.png"
@@ -13,7 +12,6 @@
  :set_code "atr"
  :setname "All That Remains"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "When you score Bifrost Array, you may trigger the \"when scored\" ability of another agenda that is not a copy of Bifrost Array in your score area."
  :title "Bifrost Array"

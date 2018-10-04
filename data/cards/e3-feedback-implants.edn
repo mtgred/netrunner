@@ -12,7 +12,6 @@
  :set_code "ta"
  :setname "Trace Amount"
  :side "Runner"
- :strength 0
  :subtype "Mod"
  :text "Whenever you break a subroutine on a piece of ice, you may pay 1[credit] to break 1 subroutine on that ice.\n<errata>Errata from FAQ 3.0.1</errata>"
  :title "e3 Feedback Implants"

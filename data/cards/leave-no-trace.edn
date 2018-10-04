@@ -12,7 +12,6 @@
  :set_code "fm"
  :setname "Free Mars"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run. When the run ends, derez all ice that was rezzed during this run."
  :title "Leave No Trace"

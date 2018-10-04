@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :subtype "Transaction - Illicit"
  :text "Play only if you have fewer than 10[credit].\nGain 7[credit] and take 1 bad publicity."
  :title "Too Big to Fail"

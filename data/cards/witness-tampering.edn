@@ -12,7 +12,6 @@
  :set_code "dt"
  :setname "Double Time"
  :side "Corp"
- :strength 0
  :subtype "Double - Gray Ops"
  :text "As an additional cost to play this operation, spend [click].\nRemove up to 2 bad publicity."
  :title "Witness Tampering"

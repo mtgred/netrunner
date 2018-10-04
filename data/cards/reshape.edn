@@ -12,7 +12,6 @@
  :set_code "cd"
  :setname "Crimson Dust"
  :side "Runner"
- :strength 0
  :text "Swap 2 pieces of unrezzed ice."
  :title "Reshape"
  :type "Event"

@@ -12,7 +12,6 @@
  :set_code "fal"
  :setname "Fear and Loathing"
  :side "Runner"
- :strength 0
  :subtype "Chip"
  :text "+2[mu]"
  :title "CyberSolutions Mem Chip"

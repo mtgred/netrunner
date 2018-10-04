@@ -1,6 +1,5 @@
 {:baselink 0
  :code "05029"
- :cost 0
  :cycle_code "honor-and-profit"
  :faction "Criminal"
  :image_url "https://netrunnerdb.com/card_image/05029.png"
@@ -14,7 +13,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Runner"
- :strength 0
  :subtype "Clone"
  :text "The first time you play a <strong>run</strong> event each turn, gain 1[credit]."
  :title "Ken \"Express\" Tenma: Disappeared Clone"

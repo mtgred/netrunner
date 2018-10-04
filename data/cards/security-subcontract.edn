@@ -11,7 +11,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "[click], <strong>trash a rezzed piece of ice:</strong> Gain 4[credit]."
  :title "Security Subcontract"

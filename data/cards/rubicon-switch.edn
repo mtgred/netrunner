@@ -12,7 +12,6 @@
  :set_code "eas"
  :setname "Earth's Scion"
  :side "Runner"
- :strength 0
  :text "X[credit],[click]: Derez a piece of ice rezzed this turn. X is its printed rez cost. Use this ability once per turn."
  :title "Rubicon Switch"
  :type "Hardware"

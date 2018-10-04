@@ -13,7 +13,6 @@
  :set_code "ce"
  :setname "Cyber Exodus"
  :side "Runner"
- :strength 0
  :subtype "Sabotage"
  :text "Play only if you made a successful run on HQ this turn.\nDerez a piece of ice."
  :title "Emergency Shutdown"

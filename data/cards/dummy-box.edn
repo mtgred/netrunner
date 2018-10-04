@@ -12,7 +12,6 @@
  :set_code "cd"
  :setname "Crimson Dust"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "<strong>Trash a card from your grip:</strong> Prevent an installed card of the same type from being trashed by the Corp."
  :title "Dummy Box"

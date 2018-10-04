@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Corp"
- :strength 0
  :subtype "Condition"
  :text "Install Patch on a rezzed piece of ice as a hosted condition counter with the text \"Host ice has +2 strength.\""
  :title "Patch"

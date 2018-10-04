@@ -12,7 +12,6 @@
  :set_code "ml"
  :setname "Martial Law"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "If the Runner has fewer than 6[credit] or no unspent clicks when a successful run on this server ends, you have 1 additional [click] to spend your next turn.\nLimit 1 <strong>region</strong> per server."
  :title "Manta Grid"

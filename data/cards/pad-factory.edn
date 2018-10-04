@@ -12,7 +12,6 @@
  :set_code "bf"
  :setname "Business First"
  :side "Corp"
- :strength 0
  :subtype "Alliance - Facility"
  :text "This card costs 0 influence if you have 3 PAD Campaigns in your deck.\n[click]: Place 1 advancement token on a card. You cannot score that card until your next turn begins."
  :title "PAD Factory"

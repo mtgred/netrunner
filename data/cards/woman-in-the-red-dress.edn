@@ -12,7 +12,6 @@
  :set_code "mt"
  :setname "Mala Tempora"
  :side "Runner"
- :strength 0
  :subtype "Connection - Virtual"
  :text "When your turn begins, reveal the top card of R&D. The Corp may draw that card."
  :title "Woman in the Red Dress"

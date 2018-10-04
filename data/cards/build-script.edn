@@ -12,7 +12,6 @@
  :set_code "so"
  :setname "Station One"
  :side "Runner"
- :strength 0
  :text "Gain 1[credit] and draw 2 cards."
  :title "Build Script"
  :type "Event"

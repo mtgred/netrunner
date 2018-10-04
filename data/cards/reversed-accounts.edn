@@ -12,7 +12,6 @@
  :set_code "uao"
  :setname "Up and Over"
  :side "Corp"
- :strength 0
  :subtype "Hostile"
  :text "Reversed Accounts can be advanced.\n[click], [trash]: The Runner loses 4[credit] for each advancement token on Reversed Accounts."
  :title "Reversed Accounts"

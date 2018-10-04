@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "Play only if the Runner made an unsuccessful run during his or her last turn.\nGain 7[credit]."
  :title "Successful Demonstration"

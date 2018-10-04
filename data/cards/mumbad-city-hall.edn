@@ -12,7 +12,6 @@
  :set_code "dag"
  :setname "Democracy and Dogma"
  :side "Corp"
- :strength 0
  :subtype "Facility - Government"
  :text "[click]: Search R&D for an <strong>alliance</strong> card, reveal it, and play or install it (paying all costs). Shuffle R&D."
  :title "Mumbad City Hall"

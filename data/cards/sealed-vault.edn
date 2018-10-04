@@ -12,7 +12,6 @@
  :set_code "tsb"
  :setname "The Spaces Between"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "1[credit]: Move any number of credits from your credit pool to Sealed Vault.\n[click] or [trash]: Move any number of credits from Sealed Vault to your credit pool."
  :title "Sealed Vault"

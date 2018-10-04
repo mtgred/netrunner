@@ -12,7 +12,6 @@
  :set_code "uw"
  :setname "The Underway"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "Ice protecting this server cannot be bypassed.\nCards in and protecting this server cannot be exposed.\nLimit 1 <strong>region</strong> per server."
  :title "Underway Grid"

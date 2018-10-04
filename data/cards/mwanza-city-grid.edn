@@ -12,7 +12,6 @@
  :set_code "win"
  :setname "Whispers in Nalubaale"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "Install only in the root of HQ or R&D.\nWhenever the Runner accesses cards from this server, he or she accesses 3 additional cards. After accessing, gain 2[credit] for each card accessed. This applies even during the run on which the Runner trashes Mwanza City Grid.\nLimit 1 <strong>region</strong> per server."
  :title "Mwanza City Grid"

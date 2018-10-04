@@ -13,7 +13,6 @@
  :set_code "ce"
  :setname "Cyber Exodus"
  :side "Runner"
- :strength 0
  :text "Search your stack or heap for a program. Install that program, ignoring all costs. Shuffle your stack if you searched it. When this turn ends, add the program to the top of your stack if it is still installed."
  :title "Test Run"
  :type "Event"

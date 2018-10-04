@@ -12,7 +12,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Corp"
- :strength 0
  :subtype "Facility - Ritzy"
  :text "Your maximum hand size is increased by 4."
  :title "Cybernetics Court"

@@ -12,7 +12,6 @@
  :set_code "uot"
  :setname "The Universe of Tomorrow"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "If the Runner accesses an agenda from R&D, he or she must reveal it.\nWhen the Runner accesses an agenda, add Franchise City to your score area as an agenda worth 1 agenda point.\n<errata>Errata from FAQ 4.2</errata>"
  :title "Franchise City"

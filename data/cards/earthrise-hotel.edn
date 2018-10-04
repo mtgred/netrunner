@@ -12,7 +12,6 @@
  :set_code "ts"
  :setname "The Source"
  :side "Runner"
- :strength 0
  :subtype "Location - Ritzy"
  :text "Place 3 power counters on Earthrise Hotel when it is installed. When there are no power counters left on Earthrise Hotel, trash it.\nWhen your turn begins, draw 2 cards and remove 1 power counter from Earthrise Hotel."
  :title "Earthrise Hotel"

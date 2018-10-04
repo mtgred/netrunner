@@ -12,7 +12,6 @@
  :set_code "win"
  :setname "Whispers in Nalubaale"
  :side "Runner"
- :strength 0
  :subtype "Mod"
  :text "[click]: Host Gebrselassie on an installed non-<strong>AI icebreaker</strong>.\nHost <strong>icebreaker</strong> returns to its base strength at the end of each turn rather than each encounter."
  :title "Gebrselassie"

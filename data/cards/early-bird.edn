@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Runner"
- :strength 0
  :subtype "Priority - Run"
  :text "Play only as your first click.\nMake a run and gain [click]."
  :title "Early Bird"

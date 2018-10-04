@@ -1,7 +1,6 @@
 {:advancementcost 2
  :agendapoints 1
  :code "04032"
- :cost 0
  :cycle_code "spin"
  :faction "Jinteki"
  :image_url "https://netrunnerdb.com/card_image/04032.png"
@@ -13,7 +12,6 @@
  :set_code "st"
  :setname "Second Thoughts"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "When you score Clone Retirement, you may remove 1 bad publicity.\nWhen the Runner steals Clone Retirement, the Corp takes 1 bad publicity."
  :title "Clone Retirement"

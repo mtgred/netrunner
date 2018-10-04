@@ -12,7 +12,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops"
  :text "Play only if the Runner made a run during his or her last turn.\nDo 1 net damage."
  :title "Neural EMP"

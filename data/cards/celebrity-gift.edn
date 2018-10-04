@@ -13,7 +13,6 @@
  :set_code "om"
  :setname "Opening Moves"
  :side "Corp"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this operation, spend [click].\nReveal up to 5 cards in HQ to the Runner. Gain 2[credit] for each card revealed."
  :title "Celebrity Gift"

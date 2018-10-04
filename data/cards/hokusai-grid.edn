@@ -13,7 +13,6 @@
  :set_code "hs"
  :setname "Humanity's Shadow"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "Whenever there is a successful run on this server, do 1 net damage.\nLimit 1 <strong>region</strong> per server."
  :title "Hokusai Grid"

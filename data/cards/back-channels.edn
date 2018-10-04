@@ -12,7 +12,6 @@
  :set_code "oh"
  :setname "Old Hollywood"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "Trash a card installed in a server and gain 3[credit] for each advancement token on that card."
  :title "Back Channels"

@@ -12,7 +12,6 @@
  :set_code "ftm"
  :setname "Fear the Masses"
  :side "Corp"
- :strength 0
  :subtype "Character"
  :text "Zealous Judge can only be rezzed if the Runner is tagged.\n[click], 1[credit]: Give the Runner 1 tag."
  :title "Zealous Judge"

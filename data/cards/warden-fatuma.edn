@@ -12,7 +12,6 @@
  :set_code "win"
  :setname "Whispers in Nalubaale"
  :side "Corp"
- :strength 0
  :subtype "Character"
  :text "Each piece of rezzed <strong>bioroid</strong> ice gains \"[subroutine] The Runner loses [click], if able.\" before all of its other subroutines."
  :title "Warden Fatuma"

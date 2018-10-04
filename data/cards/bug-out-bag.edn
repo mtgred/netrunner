@@ -1,5 +1,4 @@
 {:code "12064"
- :cost 0
  :cycle_code "red-sand"
  :faction "Criminal"
  :factioncost 2
@@ -12,7 +11,6 @@
  :set_code "baw"
  :setname "Blood and Water"
  :side "Runner"
- :strength 0
  :text "Place X power counters on Bug Out Bag when you install it. If you have no cards in your grip at the end of your turn, draw 1 card for each counter on Bug Out Bag, then trash it."
  :title "Bug Out Bag"
  :type "Resource"

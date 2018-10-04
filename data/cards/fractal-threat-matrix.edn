@@ -12,7 +12,6 @@
  :set_code "cd"
  :setname "Crimson Dust"
  :side "Corp"
- :strength 0
  :subtype "Security Protocol"
  :text "Each time all the subroutines are broken on a piece of ice protecting this server, trash the top 2 cards of the stack."
  :title "Fractal Threat Matrix"

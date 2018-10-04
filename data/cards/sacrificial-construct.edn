@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Runner"
- :strength 0
  :subtype "Remote"
  :text "[trash]: Prevent an installed program or an installed piece of hardware from being trashed."
  :title "Sacrificial Construct"

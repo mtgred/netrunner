@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "Whenever there is a successful run on this server, end the run unless the Runner pays 2[credit] for each agenda in his or her score area."
  :title "Giordano Memorial Field"

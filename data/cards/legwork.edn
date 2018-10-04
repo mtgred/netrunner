@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on HQ. If successful, access 2 additional cards from HQ."
  :title "Legwork"

@@ -12,7 +12,6 @@
  :set_code "ce"
  :setname "Cyber Exodus"
  :side "Corp"
- :strength 0
  :subtype "Ambush"
  :text "If Edge of World is installed and you pay 3[credit] when the Runner accesses it, do 1 brain damage for each piece of ice protecting this server."
  :title "Edge of World"

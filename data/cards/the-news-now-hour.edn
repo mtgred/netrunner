@@ -12,7 +12,6 @@
  :set_code "fc"
  :setname "First Contact"
  :side "Corp"
- :strength 0
  :subtype "Cast"
  :text "The Runner cannot play <strong>current</strong> events."
  :title "The News Now Hour"

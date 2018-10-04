@@ -12,7 +12,6 @@
  :set_code "cc"
  :setname "Chrome City"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on Archives. If successful, instead of accessing a piece of ice in Archives, trash a rezzed copy of that ice."
  :title "Immolation Script"

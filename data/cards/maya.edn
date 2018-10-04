@@ -12,7 +12,6 @@
  :set_code "kg"
  :setname "Kala Ghoda"
  :side "Runner"
- :strength 0
  :subtype "Console"
  :text " +2[mu]\nOnce per turn, immediately after you access a card from R&D, you may add that card to the bottom of R&D. If you do, take 1 tag.\nLimit 1 <strong>console</strong> per player."
  :title "Maya"

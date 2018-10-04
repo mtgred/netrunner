@@ -12,7 +12,6 @@
  :set_code "tdatd"
  :setname "The Devil and the Dragon"
  :side "Corp"
- :strength 0
  :subtype "Bioroid"
  :text "When you rez Malia Z0L0K4, choose an installed non-<strong>virtual</strong> resource. The text box of that resource is blank."
  :title "Malia Z0L0K4"

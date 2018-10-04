@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "05007"
- :cost 0
  :cycle_code "honor-and-profit"
  :faction "Jinteki"
  :image_url "https://netrunnerdb.com/card_image/05007.png"
@@ -13,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Corp"
- :strength 0
  :subtype "Initiative - Psi"
  :text "When the Runner accesses The Future Perfect, you and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, prevent The Future Perfect from being stolen. Ignore this ability if the Runner accesses The Future Perfect while it is installed."
  :title "The Future Perfect"

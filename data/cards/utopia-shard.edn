@@ -12,7 +12,6 @@
  :set_code "atr"
  :setname "All That Remains"
  :side "Runner"
- :strength 0
  :subtype "Virtual - Source"
  :text "Whenever you make a successful run on HQ, instead of accessing cards, you may install Utopia Shard from your grip, ignoring all costs.\n[trash]: The Corp discards 2 cards from HQ at random.\nLimit 1 per deck."
  :title "Utopia Shard"

@@ -12,7 +12,6 @@
  :set_code "bf"
  :setname "Business First"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "Whenever you use a [trash] ability, gain 1[credit]."
  :title "Tech Trader"

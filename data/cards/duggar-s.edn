@@ -12,7 +12,6 @@
  :set_code "fc"
  :setname "First Contact"
  :side "Runner"
- :strength 0
  :subtype "Location - Seedy"
  :text "[click],[click],[click],[click]: Draw 10 cards."
  :title "Duggar's"

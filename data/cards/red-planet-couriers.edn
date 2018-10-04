@@ -12,7 +12,6 @@
  :set_code "eas"
  :setname "Earth's Scion"
  :side "Corp"
- :strength 0
  :subtype "Triple"
  :text "As an additional cost to play this operation, spend [click], [click].\nMove all advancement tokens from all installed cards to 1 card that can be advanced."
  :title "Red Planet Couriers"

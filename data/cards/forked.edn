@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Runner"
- :strength 0
  :subtype "Run - Sabotage"
  :text "Make a run. The first time you break all subroutines on a <strong>sentry</strong> during this run, trash that <strong>sentry</strong>."
  :title "Forked"

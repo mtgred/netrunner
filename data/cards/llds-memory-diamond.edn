@@ -12,7 +12,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Runner"
- :strength 0
  :subtype "Mod"
  :text "+1[mu], +1[link]\nYour maximum hand size is increased by 1."
  :title "LLDS Memory Diamond"

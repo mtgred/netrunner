@@ -12,7 +12,6 @@
  :set_code "uw"
  :setname "The Underway"
  :side "Corp"
- :strength 0
  :subtype "Hostile"
  :text "Contract Killer can be advanced.\nIf there are at least 2 advancement tokens on Contract Killer, it gains: \"[click], [trash]: Trash a <strong>connection</strong> or do 2 meat damage.\""
  :title "Contract Killer"

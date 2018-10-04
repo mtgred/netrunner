@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Corp"
- :strength 0
  :subtype "Region"
  :text "The base trace strength of each trace during a run on this server is increased by 2.\nLimit 1 <strong>region</strong> per server."
  :title "Rutherford Grid"

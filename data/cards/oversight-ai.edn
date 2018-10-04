@@ -12,7 +12,6 @@
  :set_code "asis"
  :setname "A Study in Static"
  :side "Corp"
- :strength 0
  :subtype "Condition"
  :text "Rez a piece of ice, ignoring all costs, and install Oversight AI on that ice as a hosted condition counter with the text \"Trash host ice if all its subroutines are broken during a single encounter.\""
  :title "Oversight AI"

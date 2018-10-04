@@ -12,7 +12,6 @@
  :set_code "kg"
  :setname "Kala Ghoda"
  :side "Runner"
- :strength 0
  :subtype "Location - Ritzy"
  :text "[click]: Place 1 power counter on Chatterjee University.\n[click]: Install a program from your grip, lowering the install cost by 1 for each power counter on Chatterjee University. Remove 1 hosted power counter."
  :title "Chatterjee University"

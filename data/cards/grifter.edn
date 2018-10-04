@@ -12,7 +12,6 @@
  :set_code "mt"
  :setname "Mala Tempora"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "When your turn ends, gain 1[credit] if you made a successful run this turn; otherwise, trash Grifter."
  :title "Grifter"

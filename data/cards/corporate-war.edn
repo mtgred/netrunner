@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "02120"
- :cost 0
  :cycle_code "genesis"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Corp"
- :strength 0
  :subtype "Expansion"
  :text "If you have at least 7[credit] when you score Corporate War, gain 7[credit]; otherwise, lose all credits in your credit pool."
  :title "Corporate War"

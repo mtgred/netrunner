@@ -1,7 +1,6 @@
 {:advancementcost 6
  :agendapoints 2
  :code "02011"
- :cost 0
  :cycle_code "genesis"
  :faction "Haas-Bioroid"
  :image_url "https://netrunnerdb.com/card_image/02011.png"
@@ -13,7 +12,6 @@
  :set_code "wla"
  :setname "What Lies Ahead"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "You have 1 additional [click] to spend each turn."
  :title "Mandatory Upgrades"

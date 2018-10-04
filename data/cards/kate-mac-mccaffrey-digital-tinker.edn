@@ -1,6 +1,5 @@
 {:baselink 1
  :code "01033"
- :cost 0
  :cycle_code "core"
  :faction "Shaper"
  :image_url "https://netrunnerdb.com/card_image/01033.png"
@@ -13,7 +12,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Runner"
- :strength 0
  :subtype "Natural"
  :text "Lower the install cost of the first program or piece of hardware you install each turn by 1."
  :title "Kate \"Mac\" McCaffrey: Digital Tinker"

@@ -12,7 +12,6 @@
  :set_code "eas"
  :setname "Earth's Scion"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "Whenever you access a card with a trash cost not in Archives and do not trash it, you may reveal it and gain 1[credit]."
  :title "Aeneas Informant"

@@ -12,7 +12,6 @@
  :set_code "baw"
  :setname "Blood and Water"
  :side "Corp"
- :strength 0
  :subtype "Corporation"
  :text "<strong>Trash 1 card from HQ:</strong> Add 1 card from Archives to the bottom of R&D. Use this ability only once per turn."
  :title "Whampoa Reclamation"

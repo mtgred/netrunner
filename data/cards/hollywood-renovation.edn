@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "08098"
- :cost 0
  :cycle_code "sansan"
  :faction "Weyland Consortium"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_98.png"
@@ -13,7 +12,6 @@
  :set_code "oh"
  :setname "Old Hollywood"
  :side "Corp"
- :strength 0
  :subtype "Initiative - Public"
  :text "Install Hollywood Renovation faceup.\nWhenever you advance Hollywood Renovation, you may place 1 advancement token on another card that can be advanced (or 2 advancement tokens instead if there are 6 or more advancement tokens on Hollywood Renovation)."
  :title "Hollywood Renovation"

@@ -12,7 +12,6 @@
  :set_code "dt"
  :setname "Double Time"
  :side "Runner"
- :strength 0
  :subtype "Chip - Stealth"
  :text "1[recurring-credit]\nUse this credit to pay for using <strong>killers</strong>."
  :title "Silencer"

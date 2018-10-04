@@ -1,5 +1,4 @@
 {:code "11038"
- :cost 0
  :cycle_code "flashpoint"
  :faction "Weyland Consortium"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_38.png"
@@ -13,7 +12,6 @@
  :set_code "bm"
  :setname "Blood Money"
  :side "Corp"
- :strength 0
  :subtype "Megacorp"
  :text "The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage.\n<errata>Errata from FAQ 3.1.1</errata>"
  :title "Weyland Consortium: Builder of Nations"

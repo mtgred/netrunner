@@ -12,7 +12,6 @@
  :set_code "cc"
  :setname "Chrome City"
  :side "Runner"
- :strength 0
  :subtype "Cybernetic"
  :text "When you install Titanium Ribs, suffer 2 meat damage.\nYou choose the card(s) from your grip to trash whenever you take damage (including the damage taken by installing Titanium Ribs)."
  :title "Titanium Ribs"

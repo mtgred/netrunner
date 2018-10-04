@@ -12,7 +12,6 @@
  :set_code "cc"
  :setname "Chrome City"
  :side "Runner"
- :strength 0
  :subtype "Cybernetic"
  :text "When you install Skulljack, suffer 1 brain damage.\nThe trash cost of all cards is lowered by 1."
  :title "Skulljack"

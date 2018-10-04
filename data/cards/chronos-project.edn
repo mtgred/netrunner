@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "06049"
- :cost 0
  :cycle_code "lunar"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "fc"
  :setname "First Contact"
  :side "Corp"
- :strength 0
  :subtype "Research"
  :text "When you score Chronos Project, the Runner removes all cards in his or her heap from the game."
  :title "Chronos Project"

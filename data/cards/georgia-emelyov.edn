@@ -12,7 +12,6 @@
  :set_code "23s"
  :setname "23 Seconds"
  :side "Corp"
- :strength 0
  :subtype "Sysop"
  :text "Whenever the Runner makes an unsuccessful run on this server, do 1 net damage.\n2[credit]: Move Georgia Emelyov to another server."
  :title "Georgia Emelyov"

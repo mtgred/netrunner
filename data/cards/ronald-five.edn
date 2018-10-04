@@ -12,7 +12,6 @@
  :set_code "oh"
  :setname "Old Hollywood"
  :side "Corp"
- :strength 0
  :subtype "Bioroid"
  :text "Whenever the Runner trashes a Corp card (including Ronald Five), he or she loses [click]."
  :title "Ronald Five"

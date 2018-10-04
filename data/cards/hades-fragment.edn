@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "06071"
- :cost 0
  :cycle_code "lunar"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "uao"
  :setname "Up and Over"
  :side "Corp"
- :strength 0
  :subtype "Source"
  :text "When your turn begins, you may add 1 card from Archives to the bottom of R&D.\nLimit 1 per deck."
  :title "Hades Fragment"

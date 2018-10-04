@@ -12,7 +12,6 @@
  :set_code "ss"
  :setname "Sovereign Sight"
  :side "Corp"
- :strength 0
  :subtype "Ambush"
  :text "Gene Splicer can be advanced.\nWhen the runner accesses Gene Splicer, do 1 net damage for each advancement token on Gene Splicer.\n<strong>[click], 3 advancement tokens:</strong> Add Gene Splicer to your score area as an agenda worth 1 agenda point."
  :title "Gene Splicer"

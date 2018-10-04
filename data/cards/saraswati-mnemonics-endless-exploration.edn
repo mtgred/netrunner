@@ -1,5 +1,4 @@
 {:code "22034"
- :cost 0
  :cycle_code "reign-and-reverie"
  :faction "Jinteki"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_34.png"
@@ -13,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "[click], 1[credit]: Install a card from HQ in a remote server, then place 1 advancement token on it. You cannot score or rez that card until your next turn begins."
  :title "Saraswati Mnemonics: Endless Exploration"

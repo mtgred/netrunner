@@ -1,5 +1,4 @@
 {:code "06080"
- :cost 0
  :cycle_code "lunar"
  :faction "Neutral"
  :factioncost 0
@@ -12,7 +11,6 @@
  :set_code "uao"
  :setname "Up and Over"
  :side "Runner"
- :strength 0
  :subtype "Location"
  :text "Place X power counters on Angel Arena when it is installed. When there are no power counters left on Angel Arena, trash it.\n<strong>Hosted power counter:</strong> Reveal the top card of your stack. You may add that card to the bottom of your stack."
  :title "Angel Arena"

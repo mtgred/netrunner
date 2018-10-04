@@ -1,6 +1,5 @@
 {:baselink 0
  :code "01001"
- :cost 0
  :cycle_code "core"
  :faction "Anarch"
  :image_url "https://netrunnerdb.com/card_image/01001.png"
@@ -13,7 +12,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Runner"
- :strength 0
  :subtype "G-mod"
  :text "Whenever you install a <strong>virus</strong> program, the Corp trashes the top card of R&D."
  :title "Noise: Hacker Extraordinaire"

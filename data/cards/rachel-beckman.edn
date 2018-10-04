@@ -12,7 +12,6 @@
  :set_code "fc"
  :setname "First Contact"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "You have 1 additional [click] to spend during your turn.\nTrash Rachel Beckman if you are tagged.\n<errata>Errata from FAQ 3.1</errata>"
  :title "Rachel Beckman"

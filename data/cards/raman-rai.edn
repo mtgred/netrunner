@@ -12,7 +12,6 @@
  :set_code "si"
  :setname "Salsette Island"
  :side "Corp"
- :strength 0
  :subtype "Alliance - Executive"
  :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [jinteki] cards in your deck.\nOnce per turn, you may lose [click] when you draw a card. If you do, reveal that card and a card in Archives of the same type, then swap those cards."
  :title "Raman Rai"

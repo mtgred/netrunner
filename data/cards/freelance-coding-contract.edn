@@ -12,7 +12,6 @@
  :set_code "cac"
  :setname "Creation and Control"
  :side "Runner"
- :strength 0
  :subtype "Job"
  :text "Trash up to 5 programs from your grip. Gain 2[credit] for each program trashed."
  :title "Freelance Coding Contract"

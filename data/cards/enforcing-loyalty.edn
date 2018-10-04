@@ -12,7 +12,6 @@
  :set_code "bm"
  :setname "Blood Money"
  :side "Corp"
- :strength 0
  :subtype "Double - Gray Ops"
  :text "As an additional cost to play this operation, spend [click].\n<trace>Trace 3</trace> If successful, trash an installed card that does not match the faction of the Runner's identity."
  :title "Enforcing Loyalty"

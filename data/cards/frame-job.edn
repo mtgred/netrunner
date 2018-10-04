@@ -12,7 +12,6 @@
  :set_code "om"
  :setname "Opening Moves"
  :side "Runner"
- :strength 0
  :subtype "Double"
  :text "As an additional cost to play this event, spend [click].\nForfeit an agenda. If you do, give the Corp 1 bad publicity."
  :title "Frame Job"

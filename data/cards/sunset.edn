@@ -12,7 +12,6 @@
  :set_code "ce"
  :setname "Cyber Exodus"
  :side "Corp"
- :strength 0
  :text "Choose a server. Arrange the ice protecting that server in any order."
  :title "Sunset"
  :type "Operation"

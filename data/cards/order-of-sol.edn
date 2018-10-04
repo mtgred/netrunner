@@ -12,7 +12,6 @@
  :set_code "fc"
  :setname "First Contact"
  :side "Runner"
- :strength 0
  :subtype "Location"
  :text "The first time you have no credits in your credit pool each turn, gain 1[credit]."
  :title "Order of Sol"

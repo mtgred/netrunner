@@ -1,5 +1,4 @@
 {:code "02010"
- :cost 0
  :cycle_code "genesis"
  :faction "Haas-Bioroid"
  :image_url "https://netrunnerdb.com/card_image/02010.png"
@@ -14,7 +13,6 @@
  :set_code "wla"
  :setname "What Lies Ahead"
  :side "Corp"
- :strength 0
  :subtype "Megacorp"
  :text "All <strong>bioroid</strong> ice has +1 strength."
  :title "Haas-Bioroid: Stronger Together"

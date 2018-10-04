@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Corp"
- :strength 0
  :text "Play only if the Runner is tagged.\nTrash all resources. The Runner can remove 1 bad publicity to prevent this."
  :title "The All-Seeing I"
  :type "Operation"

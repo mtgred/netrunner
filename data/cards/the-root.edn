@@ -12,7 +12,6 @@
  :set_code "up"
  :setname "Upstalk"
  :side "Corp"
- :strength 0
  :subtype "Beanstalk"
  :text "3[recurring-credit]\nUse these credits to advance, install, and rez cards."
  :title "The Root"

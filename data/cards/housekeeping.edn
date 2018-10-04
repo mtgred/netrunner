@@ -12,7 +12,6 @@
  :set_code "oac"
  :setname "Order and Chaos"
  :side "Corp"
- :strength 0
  :subtype "Current - Gray Ops"
  :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nThe first time the Runner installs a card each turn, he or she must trash 1 card from his or her grip."
  :title "Housekeeping"

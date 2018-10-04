@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops - Condition"
  :text "Install Eavesdrop on a piece of ice as a hosted condition counter with the text \"Whenever the Runner encounters host ice, <trace>trace 3</trace> If successful, give the Runner 1 tag.\""
  :title "Eavesdrop"

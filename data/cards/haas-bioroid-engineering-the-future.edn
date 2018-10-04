@@ -1,5 +1,4 @@
 {:code "01054"
- :cost 0
  :cycle_code "core"
  :faction "Haas-Bioroid"
  :image_url "https://netrunnerdb.com/card_image/01054.png"
@@ -12,7 +11,6 @@
  :set_code "core"
  :setname "Core Set"
  :side "Corp"
- :strength 0
  :subtype "Megacorp"
  :text "The first time you install a card each turn, gain 1[credit]."
  :title "Haas-Bioroid: Engineering the Future"

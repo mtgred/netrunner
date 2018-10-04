@@ -12,7 +12,6 @@
  :set_code "ka"
  :setname "Kampala Ascendent"
  :side "Corp"
- :strength 0
  :subtype "Ambush"
  :text "False Flag can be advanced.\nWhen the Runner accesses False Flag, give the Runner 1 tag for every 2 advancement tokens on False Flag.\n[click], <strong>7 hosted advancement tokens</strong>: add False Flag to your score area as an agenda worth 3 agenda points."
  :title "False Flag"

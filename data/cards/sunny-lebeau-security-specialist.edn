@@ -1,6 +1,5 @@
 {:baselink 2
  :code "09045"
- :cost 0
  :cycle_code "data-and-destiny"
  :faction "Sunny Lebeau"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_45.png"
@@ -14,7 +13,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Runner"
- :strength 0
  :subtype "Natural"
  :title "Sunny Lebeau: Security Specialist"
  :type "Identity"

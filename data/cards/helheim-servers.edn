@@ -12,7 +12,6 @@
  :set_code "fm"
  :setname "Free Mars"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "<strong>Trash 1 card from HQ</strong>: All ice protecting this server has +2 strength until the end of the run. Use this ability only during a run on this server."
  :title "Helheim Servers"

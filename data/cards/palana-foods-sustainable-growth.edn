@@ -1,5 +1,4 @@
 {:code "10030"
- :cost 0
  :cycle_code "mumbad"
  :faction "Jinteki"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_30.png"
@@ -13,7 +12,6 @@
  :set_code "bf"
  :setname "Business First"
  :side "Corp"
- :strength 0
  :subtype "Division"
  :text "The first time each turn the Runner draws a card, gain 1[credit]."
  :title "Pālanā Foods: Sustainable Growth"

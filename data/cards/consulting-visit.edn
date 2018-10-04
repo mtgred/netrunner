@@ -12,7 +12,6 @@
  :set_code "tlm"
  :setname "The Liberated Mind"
  :side "Corp"
- :strength 0
  :subtype "Alliance - Double"
  :text "This card costs 0 influence if you have 6 or more non-<strong>alliance</strong> [weyland-consortium] cards in your deck.\nAs an additional cost to play this operation, spend [click].\nSearch R&D for an operation and play it (paying all costs). Shuffle R&D."
  :title "Consulting Visit"

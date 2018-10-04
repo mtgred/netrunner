@@ -1,7 +1,6 @@
 {:advancementcost 2
  :agendapoints 0
  :code "11052"
- :cost 0
  :cycle_code "flashpoint"
  :faction "Jinteki"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_52.png"
@@ -13,7 +12,6 @@
  :set_code "es"
  :setname "Escalation"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "When you score Project Kusanagi, place 1 agenda counter on it for each advancement token on it over 2.\n<strong>Hosted agenda counter:</strong> Choose 1 piece of ice to gain \"[subroutine] Do 1 net damage.\" after all its other subroutines for the remainder of this run."
  :title "Project Kusanagi"

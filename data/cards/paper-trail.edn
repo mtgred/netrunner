@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "13053"
- :cost 0
  :cycle_code "terminal-directive"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "td"
  :setname "Terminal Directive"
  :side "Corp"
- :strength 0
  :subtype "Security"
  :text "When you score Paper Trail, <trace>Trace 6</trace> If successful, trash all <strong>connection</strong> and <strong>job</strong> resources."
  :title "Paper Trail"

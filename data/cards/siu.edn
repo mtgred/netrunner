@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :text "When your turn begins, you may trash SIU to <trace>trace 3</trace> If successful, give the Runner 1 tag."
  :title "SIU"
  :trash 1

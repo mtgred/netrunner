@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "22027"
- :cost 0
  :cycle_code "reign-and-reverie"
  :faction "Haas-Bioroid"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_27.png"
@@ -13,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :subtype "Expansion"
  :text "When Hyperloop Extension is scored or stolen, the Corp gains 3[credit]."
  :title "Hyperloop Extension"

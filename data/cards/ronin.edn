@@ -13,7 +13,6 @@
  :set_code "fp"
  :setname "Future Proof"
  :side "Corp"
- :strength 0
  :subtype "Hostile"
  :text "Ronin can be advanced.\nIf there are at least 4 advancement tokens on Ronin, it gains \"[click], [trash]: Do 3 net damage.\""
  :title "Ronin"

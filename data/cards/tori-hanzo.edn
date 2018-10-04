@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Corp"
- :strength 0
  :subtype "Sysop"
  :text "The first time you would do any amount of net damage during each run on this server, instead you may pay 2[credit] to do 1 brain damage."
  :title "Tori Hanzō"

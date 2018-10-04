@@ -12,7 +12,6 @@
  :set_code "si"
  :setname "Salsette Island"
  :side "Runner"
- :strength 0
  :text "Draw 1 card. Gain 1[credit] for each copy of Exclusive Party in your heap.\nLimit 6 per deck."
  :title "Exclusive Party"
  :type "Event"

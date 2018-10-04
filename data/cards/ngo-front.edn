@@ -12,7 +12,6 @@
  :set_code "dtwn"
  :setname "Down the White Nile"
  :side "Corp"
- :strength 0
  :text "NGO Front can be advanced.\n[trash],<strong>1 hosted advancement token</strong>: Gain 5[credit].\n[trash],<strong>2 hosted advancement tokens</strong>: Gain 8[credit]."
  :title "NGO Front"
  :trash 1

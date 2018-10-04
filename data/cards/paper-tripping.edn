@@ -12,7 +12,6 @@
  :set_code "up"
  :setname "Upstalk"
  :side "Runner"
- :strength 0
  :subtype "Priority"
  :text "Play only as your first [click].\nRemove all tags."
  :title "Paper Tripping"

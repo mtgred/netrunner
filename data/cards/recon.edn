@@ -12,7 +12,6 @@
  :set_code "st"
  :setname "Second Thoughts"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run. You may jack out when you encounter the first piece of ice."
  :title "Recon"

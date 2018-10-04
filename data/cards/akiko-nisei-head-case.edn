@@ -1,6 +1,5 @@
 {:baselink 1
  :code "22015"
- :cost 0
  :cycle_code "reign-and-reverie"
  :faction "Shaper"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_15.png"
@@ -14,7 +13,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Runner"
- :strength 0
  :subtype "Clone"
  :text "Whenever you access cards from R&D, you and the Corp secretly spend 0[credit], 1[credit] or 2[credit]. Reveal spent credits. If you and the Corp spent the same number of credits, access 1 additional card from R&D."
  :title "Akiko Nisei: Head Case"

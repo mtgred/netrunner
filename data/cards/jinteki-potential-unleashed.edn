@@ -1,5 +1,4 @@
 {:code "11054"
- :cost 0
  :cycle_code "flashpoint"
  :faction "Jinteki"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_54.png"
@@ -13,7 +12,6 @@
  :set_code "es"
  :setname "Escalation"
  :side "Corp"
- :strength 0
  :subtype "Megacorp"
  :text "Whenever the Runner takes at least 1 net damage, trash the top card of the stack."
  :title "Jinteki: Potential Unleashed"

@@ -12,7 +12,6 @@
  :set_code "hap"
  :setname "Honor and Profit"
  :side "Corp"
- :strength 0
  :subtype "Facility"
  :text "Gain 1[credit] when your turn begins.\nThe Runner's maximum hand size is increased by 1."
  :title "Mental Health Clinic"

@@ -1,7 +1,6 @@
 {:advancementcost 3
  :agendapoints 1
  :code "04039"
- :cost 0
  :cycle_code "spin"
  :faction "Neutral"
  :factioncost 0
@@ -14,7 +13,6 @@
  :set_code "st"
  :setname "Second Thoughts"
  :side "Corp"
- :strength 0
  :text "When you score Profiteering, take up to 3 bad publicity. Gain 5[credit] for each bad publicity taken."
  :title "Profiteering"
  :type "Agenda"

@@ -12,7 +12,6 @@
  :set_code "tc"
  :setname "True Colors"
  :side "Runner"
- :strength 0
  :subtype "Chip"
  :text "Whenever you install an <strong>icebreaker</strong>, that <strong>icebreaker</strong> has +1 strength until the end of the turn."
  :title "LLDS Processor"

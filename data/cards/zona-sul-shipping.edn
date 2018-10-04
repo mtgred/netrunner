@@ -12,7 +12,6 @@
  :set_code "atr"
  :setname "All That Remains"
  :side "Runner"
- :strength 0
  :text "Place 1[credit] on Zona Sul Shipping when your turn begins.\n[click]: Take all credits from Zona Sul Shipping.\nTrash Zona Sul Shipping if you are tagged."
  :title "Zona Sul Shipping"
  :type "Resource"

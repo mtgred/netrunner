@@ -12,7 +12,6 @@
  :set_code "cd"
  :setname "Crimson Dust"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "Whenever the Corp spends a [click] to draw a card (not through a card effect), reveal that card."
  :title "Corporate Defector"

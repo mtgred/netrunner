@@ -12,7 +12,6 @@
  :set_code "mo"
  :setname "Magnum Opus"
  :side "Corp"
- :strength 0
  :text "When your turn begins, you may pay 1[credit] to place 1 power counter on Embolus.\nWhenever the Runner makes a successful run, remove 1 power counter from Embolus.\n<strong>Hosted power counter</strong>: End the run. Use this ability only during a run on this server."
  :title "Embolus"
  :trash 2

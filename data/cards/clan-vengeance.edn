@@ -12,7 +12,6 @@
  :set_code "so"
  :setname "Station One"
  :side "Runner"
- :strength 0
  :subtype "Clan"
  :text "Whenever you suffer any amount of damage, place 1 power counter on Clan Vengeance.\n[trash]: Trash 1 card from HQ at random for each power counter on Clan Vengeance."
  :title "Clan Vengeance"

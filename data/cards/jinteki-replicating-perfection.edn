@@ -1,5 +1,4 @@
 {:code "02031"
- :cost 0
  :cycle_code "genesis"
  :faction "Jinteki"
  :image_url "https://netrunnerdb.com/card_image/02031.png"
@@ -13,7 +12,6 @@
  :set_code "ta"
  :setname "Trace Amount"
  :side "Corp"
- :strength 0
  :subtype "Megacorp"
  :text "The Runner cannot run on remote servers. Ignore this ability until the end of the turn whenever the Runner runs on a central server."
  :title "Jinteki: Replicating Perfection"

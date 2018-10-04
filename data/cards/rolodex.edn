@@ -12,7 +12,6 @@
  :set_code "oh"
  :setname "Old Hollywood"
  :side "Runner"
- :strength 0
  :subtype "Virtual"
  :text "When you install Rolodex, look at the top 5 cards of your stack and arrange them in any order.\nWhen Rolodex is trashed, trash the top 3 cards of your stack."
  :title "Rolodex"

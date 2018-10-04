@@ -12,7 +12,6 @@
  :set_code "rar"
  :setname "Reign and Reverie"
  :side "Corp"
- :strength 0
  :text "When the Runner approaches this server, you may trash Daruma. If you do, swap a card installed in this server with either another card installed in a server or with an agenda, asset or upgrade from HQ."
  :title "Daruma"
  :trash 2

@@ -12,7 +12,6 @@
  :set_code "dad"
  :setname "Data and Destiny"
  :side "Runner"
- :strength 0
  :subtype "Connection"
  :text "When your turn begins, choose one of your installed cards. The text box of that card is blank for the remainder of the turn."
  :title "Dr. Lovegood"

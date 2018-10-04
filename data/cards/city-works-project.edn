@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "21078"
- :cost 0
  :cycle_code "kitara"
  :faction "Weyland Consortium"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_78.png"
@@ -13,7 +12,6 @@
  :set_code "tdatd"
  :setname "The Devil and the Dragon"
  :side "Corp"
- :strength 0
  :subtype "Public"
  :text "Install City Works Project faceup.\nWhen the Runner accesses City Works Project while it is installed, do 2 meat damage and 1 additional meat damage for each advancement token on it."
  :title "City Works Project"

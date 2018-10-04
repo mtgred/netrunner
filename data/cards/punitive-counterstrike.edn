@@ -13,7 +13,6 @@
  :set_code "tc"
  :setname "True Colors"
  :side "Corp"
- :strength 0
  :subtype "Black Ops"
  :text "<trace>Trace 5</trace> If successful, do meat damage to the Runner equal to the number of printed agenda points on agendas he or she stole during his or her last turn."
  :title "Punitive Counterstrike"

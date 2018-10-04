@@ -1,7 +1,6 @@
 {:advancementcost 4
  :agendapoints 2
  :code "10035"
- :cost 0
  :cycle_code "mumbad"
  :faction "Weyland Consortium"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_35.png"
@@ -13,7 +12,6 @@
  :set_code "bf"
  :setname "Business First"
  :side "Corp"
- :strength 0
  :subtype "Public"
  :text "Install New Construction faceup.\nWhenever you advance New Construction, you may install a card from HQ in a new server (and rez that card ignoring all costs if there are 5 or more advancement tokens on New Construction). "
  :title "New Construction"

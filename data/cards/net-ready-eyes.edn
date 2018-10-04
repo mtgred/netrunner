@@ -12,7 +12,6 @@
  :set_code "cc"
  :setname "Chrome City"
  :side "Runner"
- :strength 0
  :subtype "Cybernetic"
  :text "When you install Net-Ready Eyes, suffer 2 meat damage.\nWhenever you initiate a run, choose an <strong>icebreaker</strong>. That <strong>icebreaker</strong> has +1 strength for the remainder of the run."
  :title "Net-Ready Eyes"

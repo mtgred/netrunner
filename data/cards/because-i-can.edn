@@ -12,7 +12,6 @@
  :set_code "tdatd"
  :setname "The Devil and the Dragon"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on a remote server. If successful, instead of accessing cards, you may force the Corp to shuffle all cards in that server into R&D."
  :title "Because I Can"

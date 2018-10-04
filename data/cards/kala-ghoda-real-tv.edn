@@ -12,7 +12,6 @@
  :set_code "kg"
  :setname "Kala Ghoda"
  :side "Corp"
- :strength 0
  :subtype "Cast"
  :text "When your turn begins, you may look at the top card of the Runner's stack.\n[trash]: The Runner trashes the top card of his or her stack."
  :title "Kala Ghoda Real TV"

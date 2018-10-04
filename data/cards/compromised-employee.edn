@@ -12,7 +12,6 @@
  :set_code "ta"
  :setname "Trace Amount"
  :side "Runner"
- :strength 0
  :subtype "Connection - Link"
  :text "1[recurring-credit]\nUse this credit during traces.\nGain 1[credit] whenever the Corp rezzes a piece of ice."
  :title "Compromised Employee"

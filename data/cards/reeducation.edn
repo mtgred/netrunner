@@ -1,7 +1,6 @@
 {:advancementcost 5
  :agendapoints 3
  :code "12074"
- :cost 0
  :cycle_code "red-sand"
  :faction "NBN"
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_74.png"
@@ -13,7 +12,6 @@
  :set_code "baw"
  :setname "Blood and Water"
  :side "Corp"
- :strength 0
  :subtype "Initiative"
  :text "When you score Reeducation, add any number of cards from HQ to the bottom of R&D and draw that many cards. The Runner randomly adds the same number of cards from his or her grip to the bottom of the stack, if able."
  :title "Reeducation"

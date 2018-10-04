@@ -12,7 +12,6 @@
  :set_code "qu"
  :setname "Quorum"
  :side "Corp"
- :strength 0
  :subtype "Character"
  :text "While the Runner has fewer than 6[credit], Bryan Stinson gains \"[click]: Play a <strong>transaction</strong> operation from Archives, ignoring all costs. Remove that <strong>transaction</strong> from the game instead of trashing it.\""
  :title "Bryan Stinson"

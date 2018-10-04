@@ -12,7 +12,6 @@
  :set_code "tlm"
  :setname "The Liberated Mind"
  :side "Runner"
- :strength 0
  :subtype "Run"
  :text "Make a run on HQ. If successful, instead of accessing cards, the Corp separates all cards in HQ into 2 facedown piles. Access all of the cards in one of the piles; you cannot access any cards in the other pile this run."
  :title "Information Sifting"

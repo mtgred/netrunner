@@ -12,7 +12,6 @@
  :set_code "atr"
  :setname "All That Remains"
  :side "Corp"
- :strength 0
  :subtype "Gray Ops"
  :text "<trace>Trace 3</trace> If successful, trash 1 <strong>connection</strong>. The Runner can take 1 tag to prevent this."
  :title "Snatch and Grab"

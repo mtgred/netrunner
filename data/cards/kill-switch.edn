@@ -12,7 +12,6 @@
  :set_code "tdatd"
  :setname "The Devil and the Dragon"
  :side "Corp"
- :strength 0
  :subtype "Current"
  :text "If the Runner accesses an agenda from R&D, he or she must reveal it.\nThis card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nWhenever an agenda is accessed or scored, <trace>trace 3</trace> If successful, do 1 brain damage.\n<errata>Errata from FAQ 4.2</errata>"
  :title "Kill Switch"

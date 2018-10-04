@@ -12,7 +12,6 @@
  :set_code "kg"
  :setname "Kala Ghoda"
  :side "Corp"
- :strength 0
  :text "Place 3 advancement tokens on a faceup card. You cannot score that card until your next turn begins."
  :title "Dedication Ceremony"
  :type "Operation"

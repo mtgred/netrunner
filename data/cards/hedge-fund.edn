@@ -12,7 +12,6 @@
  :set_code "core2"
  :setname "Revised Core Set"
  :side "Corp"
- :strength 0
  :subtype "Transaction"
  :text "Gain 9[credit]."
  :title "Hedge Fund"
