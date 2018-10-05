@@ -20,6 +20,7 @@ FROM clojure:lein-alpine
 LABEL maintainer="John Warwick <jwarwick@gmail.com>"
 
 WORKDIR /netrunner
+COPY --from=build /netrunner/dev.edn /netrunner/dev.edn
 COPY --from=build /netrunner/data /netrunner/data
 COPY --from=build /netrunner/resources /netrunner/resources
 COPY --from=build /netrunner/target/netrunner-standalone.jar /netrunner/target/netrunner-standalone.jar
