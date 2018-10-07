@@ -42,7 +42,7 @@
     (web.db/connect)
     (let [sets (mc/find-maps db "sets" nil)
           cycles (mc/find-maps db "cycles" nil)
-          mwl (mc/find-maps db "mwl" nil)
+          mwl (mc/find-maps db "mwls" nil)
           latest_mwl (->> mwl
                        (map (fn [e] (update e :date_start #(f/parse (f/formatters :date) %))))
                        (sort-by :date_start)
