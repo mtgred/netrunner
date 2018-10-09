@@ -1004,9 +1004,12 @@
                                    (= (:zone %) (:zone cice))
                                    (= 1 (abs (- (ice-index state %)
                                                 (ice-index state cice)))))}
-              :msg "swap a piece of Barrier ICE"
               :effect (req (let [tgtndx (ice-index state target)
                                  cidx (ice-index state cice)]
+                             (system-msg state :runner (str "uses Surfer to swap "
+                                                            (card-str state cice)
+                                                            " and "
+                                                            (card-str state (nth run-ices tgtndx))))
                              (swap! state update-in (cons :corp (:zone cice))
                                     #(assoc % tgtndx cice))
                              (swap! state update-in (cons :corp (:zone cice))
@@ -1015,6 +1018,7 @@
                              (update-all-ice state side)
                              (trigger-event state side :approach-ice current-ice)))})]
      {:abilities [{:cost [:credit 2]
+                   :msg "swap a piece of Barrier ICE"
                    :req (req (and (:run @state)
                                   (rezzed? current-ice)
                                   (has-subtype? current-ice "Barrier")))
