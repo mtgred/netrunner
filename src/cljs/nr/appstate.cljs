@@ -26,5 +26,5 @@
            :stats (:stats (js->clj js/user :keywordize-keys true))
            :games [] :gameid nil :messages []
            :channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
-                      :español [] :italia [] :português [] :sverige [] :stimhack-league []}
+                      :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
            }))
