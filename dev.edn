@@ -5,7 +5,8 @@
          :list-id nil}
  :db    {:address "localhost"
          :port    27017
-         :name    "netrunner"}
+         :name    "netrunner"
+         :connection-string #or [#env MONGO_CONNECTION_URI nil]} ; Monger requires a db name in the URI string, be sure to specify
  :auth  {:expiration 60
          :secret     "Dev salt"
          :cookie     {:http-only true

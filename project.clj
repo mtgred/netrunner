@@ -17,7 +17,7 @@
                  [ring/ring-json "0.4.0"]
                  [compojure "1.6.0"]
                  [hiccup "1.0.5"]
-                 [aero "1.1.2"]
+                 [aero "1.1.3"]
                  [buddy/buddy-sign "2.2.0"]
                  [buddy/buddy-auth "1.4.1"]
                  [crypto-password "0.2.0"]
