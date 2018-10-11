@@ -118,8 +118,9 @@
         (is (= 4 (:credit (get-runner))) "Runner lost 1 credit from Blockchain"))))
   (testing "Face down transactions"
     (do-game
-      (new-game {:corp {:deck ["Blockchain" (qty "Beanstalk Royalties" 5)]}})
-      (core/gain state :corp :credit 2 :click 5)
+      (new-game {:corp {:hand ["Blockchain" (qty "Beanstalk Royalties" 5)]
+                        :credit 7}})
+      (core/gain state :corp :click 5)
       (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :discard)
       (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :discard)
       (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :discard)
