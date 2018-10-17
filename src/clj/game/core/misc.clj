@@ -31,7 +31,10 @@
       ;; Install req function overrides normal list of install locations
       (install-req state :corp card (make-eid state) base-list)
       ;; Standard list
-      base-list)))
+      (if (or (is-type? card "Agenda")
+              (is-type? card "Asset"))
+        (remove #{"HQ" "R&D" "Archives"} base-list)
+        base-list))))
 
 
 (defn server->zone [state server]

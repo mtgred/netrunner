@@ -2473,6 +2473,19 @@
     (click-card state :corp (get-program state 0))
     (is (= 1 (-> (get-runner) :discard count)) "Wyrm should be in heap after Runner loses Trojan Horse trace")))
 
+(deftest ultraviolet-clearance
+  ;; Ultraviolet Clearance - Only allow agenda to be installed in remote servers
+  (do-game
+    (new-game {:corp {:deck [(qty "Ultraviolet Clearance" 2) "Improved Tracers" "Remote Enforcement"]}})
+    (core/gain state :corp :click 3 :credit 7)
+    (play-from-hand state :corp "Ultraviolet Clearance")
+    (click-card state :corp (find-card "Improved Tracers" (:hand (get-corp))))
+    (is (= 1 (count (:choices (first (:prompt (get-corp)))))) "Wrong number of options in install prompt")
+    (click-prompt state :corp "New remote")
+    (play-from-hand state :corp "Ultraviolet Clearance")
+    (click-card state :corp (find-card "Remote Enforcement" (:hand (get-corp))))
+    (is (= 2 (count (:choices (first (:prompt (get-corp)))))) "Wrong number of options in install prompt")))
+
 (deftest under-the-bus
   ;; Under the Bus
   (do-game
