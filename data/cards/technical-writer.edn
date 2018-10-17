@@ -1,18 +1,18 @@
-{:code "09055"
- :cost 0
- :cycle_code "data-and-destiny"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_55.png"
- :limited 3
- :normalizedtitle "technical-writer"
- :number 55
- :packquantity 3
- :rotated false
- :set_code "dad"
- :setname "Data and Destiny"
- :side "Runner"
- :text "Whenever you install a piece of hardware or a program, place 1[credit] from the bank on Technical Writer.\n[click],[trash]: Take all credits from Technical Writer."
- :title "Technical Writer"
- :type "Resource"
+{:code "09055",
+ :cost 0,
+ :cycle_code "data-and-destiny",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_55.png",
+ :limited 3,
+ :normalizedtitle "technical-writer",
+ :number 55,
+ :packquantity 3,
+ :rotated false,
+ :set_code "dad",
+ :setname "Data and Destiny",
+ :side "Runner",
+ :text "Whenever you install a piece of hardware or a program, place 1[credit] from the bank on Technical Writer.\n[click],[trash]: Take all credits from Technical Writer.",
+ :title "Technical Writer",
+ :type "Resource",
  :uniqueness false}

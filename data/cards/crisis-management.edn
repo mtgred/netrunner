@@ -1,19 +1,19 @@
-{:advancementcost 3
- :agendapoints 1
- :code "11018"
- :cycle_code "flashpoint"
- :faction "Weyland Consortium"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_18.png"
- :limited 3
- :normalizedtitle "crisis-management"
- :number 18
- :packquantity 3
- :rotated false
- :set_code "23s"
- :setname "23 Seconds"
- :side "Corp"
- :subtype "Security"
- :text "If the Runner is tagged, Crisis Management gains \"When your turn begins, do 1 meat damage.\""
- :title "Crisis Management"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "11018",
+ :cycle_code "flashpoint",
+ :faction "Weyland Consortium",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_18.png",
+ :limited 3,
+ :normalizedtitle "crisis-management",
+ :number 18,
+ :packquantity 3,
+ :rotated false,
+ :set_code "23s",
+ :setname "23 Seconds",
+ :side "Corp",
+ :subtype "Security",
+ :text "If the Runner is tagged, Crisis Management gains \"When your turn begins, do 1 meat damage.\"",
+ :title "Crisis Management",
+ :type "Agenda",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:baselink 0
- :code "05029"
- :cycle_code "honor-and-profit"
- :faction "Criminal"
- :image_url "https://netrunnerdb.com/card_image/05029.png"
- :influencelimit 17
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "ken-express-tenma-disappeared-clone"
- :number 29
- :packquantity 3
- :rotated false
- :set_code "hap"
- :setname "Honor and Profit"
- :side "Runner"
- :subtype "Clone"
- :text "The first time you play a <strong>run</strong> event each turn, gain 1[credit]."
- :title "Ken \"Express\" Tenma: Disappeared Clone"
- :type "Identity"
+{:baselink 0,
+ :code "05029",
+ :cycle_code "honor-and-profit",
+ :faction "Criminal",
+ :image_url "https://netrunnerdb.com/card_image/05029.png",
+ :influencelimit 17,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "ken-express-tenma-disappeared-clone",
+ :number 29,
+ :packquantity 3,
+ :rotated false,
+ :set_code "hap",
+ :setname "Honor and Profit",
+ :side "Runner",
+ :subtype "Clone",
+ :text "The first time you play a <strong>run</strong> event each turn, gain 1[credit].",
+ :title "Ken \"Express\" Tenma: Disappeared Clone",
+ :type "Identity",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "11054"
- :cycle_code "flashpoint"
- :faction "Jinteki"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_54.png"
- :influencelimit 12
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "jinteki-potential-unleashed"
- :number 54
- :packquantity 3
- :rotated false
- :set_code "es"
- :setname "Escalation"
- :side "Corp"
- :subtype "Megacorp"
- :text "Whenever the Runner takes at least 1 net damage, trash the top card of the stack."
- :title "Jinteki: Potential Unleashed"
- :type "Identity"
+{:code "11054",
+ :cycle_code "flashpoint",
+ :faction "Jinteki",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_54.png",
+ :influencelimit 12,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "jinteki-potential-unleashed",
+ :number 54,
+ :packquantity 3,
+ :rotated false,
+ :set_code "es",
+ :setname "Escalation",
+ :side "Corp",
+ :subtype "Megacorp",
+ :text "Whenever the Runner takes at least 1 net damage, trash the top card of the stack.",
+ :title "Jinteki: Potential Unleashed",
+ :type "Identity",
  :uniqueness false}

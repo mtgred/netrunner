@@ -1,20 +1,20 @@
-{:code "04007"
- :cost 1
- :cycle_code "spin"
- :faction "Shaper"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/04007.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "false-echo"
- :number 7
- :packquantity 3
- :rotated true
- :set_code "om"
- :setname "Opening Moves"
- :side "Runner"
- :strength 0
- :text "Whenever you pass a piece of unrezzed ice, you may trash False Echo. If you do, the Corp must rez that ice or add it to HQ."
- :title "False Echo"
- :type "Program"
+{:code "04007",
+ :cost 1,
+ :cycle_code "spin",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/04007.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "false-echo",
+ :number 7,
+ :packquantity 3,
+ :rotated true,
+ :set_code "om",
+ :setname "Opening Moves",
+ :side "Runner",
+ :strength 0,
+ :text "Whenever you pass a piece of unrezzed ice, you may trash False Echo. If you do, the Corp must rez that ice or add it to HQ.",
+ :title "False Echo",
+ :type "Program",
  :uniqueness false}

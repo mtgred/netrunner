@@ -1,20 +1,19 @@
-{:advancementcost 3
- :agendapoints 2
- :code "02115"
- :cycle_code "genesis"
- :faction "NBN"
- :image_url "https://netrunnerdb.com/card_image/02115.png"
- :limited 3
- :normalizedtitle "project-beale"
- :number 115
- :packquantity 3
- :replaced_by "20110"
- :rotated true
- :set_code "fp"
- :setname "Future Proof"
- :side "Corp"
- :subtype "Research"
- :text "When you score Project Beale, place 1 agenda counter on it for every 2 advancement tokens on it over 3.\nProject Beale is worth 1 additional agenda point for each agenda counter on it."
- :title "Project Beale"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 2,
+ :code "20110",
+ :cycle_code "core2",
+ :faction "NBN",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_94.png",
+ :limited 3,
+ :normalizedtitle "project-beale",
+ :number 94,
+ :packquantity 3,
+ :replaces "02115",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :subtype "Research",
+ :text "When you score Project Beale, place 1 agenda counter on it for every 2 advancement tokens on it over 3.\nProject Beale is worth 1 additional agenda point for each agenda counter on it.",
+ :title "Project Beale",
+ :type "Agenda",
  :uniqueness false}

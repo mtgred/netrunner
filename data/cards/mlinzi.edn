@@ -1,20 +1,20 @@
-{:code "21115"
- :cost 7
- :cycle_code "kitara"
- :faction "Jinteki"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_115.png"
- :limited 3
- :normalizedtitle "mlinzi"
- :number 115
- :packquantity 3
- :rotated false
- :set_code "ka"
- :setname "Kampala Ascendent"
- :side "Corp"
- :strength 5
- :subtype "Sentry - AP"
- :text "[subroutine] Do 1 net damage unless the Runner trashes the top 2 cards of the stack.\n[subroutine] Do 2 net damage unless the Runner trashes the top 3 cards of the stack.\n[subroutine] Do 3 net damage unless the Runner trashes the top 4 cards of the stack."
- :title "Mlinzi"
- :type "ICE"
+{:code "21115",
+ :cost 7,
+ :cycle_code "kitara",
+ :faction "Jinteki",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_115.png",
+ :limited 3,
+ :normalizedtitle "mlinzi",
+ :number 115,
+ :packquantity 3,
+ :rotated false,
+ :set_code "ka",
+ :setname "Kampala Ascendent",
+ :side "Corp",
+ :strength 5,
+ :subtype "Sentry - AP",
+ :text "[subroutine] Do 1 net damage unless the Runner trashes the top 2 cards of the stack.\n[subroutine] Do 2 net damage unless the Runner trashes the top 3 cards of the stack.\n[subroutine] Do 3 net damage unless the Runner trashes the top 4 cards of the stack.",
+ :title "Mlinzi",
+ :type "ICE",
  :uniqueness false}

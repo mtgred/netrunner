@@ -1,20 +1,20 @@
-{:code "21071"
- :cost 0
- :cycle_code "kitara"
- :faction "Haas-Bioroid"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_71.png"
- :limited 3
- :normalizedtitle "tempus"
- :number 71
- :packquantity 3
- :rotated false
- :set_code "tdatd"
- :setname "The Devil and the Dragon"
- :side "Corp"
- :subtype "Ambush"
- :text "If Tempus is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Tempus, <trace>trace 3</trace> If successful, the Runner must lose [click][click] or suffer 1 brain damage. Ignore this ability if the Runner accesses Tempus from Archives."
- :title "Tempus"
- :trash 0
- :type "Upgrade"
+{:code "21071",
+ :cost 0,
+ :cycle_code "kitara",
+ :faction "Haas-Bioroid",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_71.png",
+ :limited 3,
+ :normalizedtitle "tempus",
+ :number 71,
+ :packquantity 3,
+ :rotated false,
+ :set_code "tdatd",
+ :setname "The Devil and the Dragon",
+ :side "Corp",
+ :subtype "Ambush",
+ :text "If Tempus is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Tempus, <trace>trace 3</trace> If successful, the Runner must lose [click][click] or suffer 1 brain damage. Ignore this ability if the Runner accesses Tempus from Archives.",
+ :title "Tempus",
+ :trash 0,
+ :type "Upgrade",
  :uniqueness false}

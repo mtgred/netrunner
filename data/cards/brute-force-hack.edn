@@ -1,19 +1,19 @@
-{:code "13002"
- :cost 0
- :cycle_code "terminal-directive"
- :faction "Criminal"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_2.png"
- :limited 3
- :normalizedtitle "brute-force-hack"
- :number 2
- :packquantity 3
- :rotated false
- :set_code "td"
- :setname "Terminal Directive"
- :side "Runner"
- :subtype "Double"
- :text "As an additional cost to play this event, spend [click].\nDerez a piece of ice that has a rez cost of X or lower."
- :title "Brute-Force-Hack"
- :type "Event"
+{:code "13002",
+ :cost 0,
+ :cycle_code "terminal-directive",
+ :faction "Criminal",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_2.png",
+ :limited 3,
+ :normalizedtitle "brute-force-hack",
+ :number 2,
+ :packquantity 3,
+ :rotated false,
+ :set_code "td",
+ :setname "Terminal Directive",
+ :side "Runner",
+ :subtype "Double",
+ :text "As an additional cost to play this event, spend [click].\nDerez a piece of ice that has a rez cost of X or lower.",
+ :title "Brute-Force-Hack",
+ :type "Event",
  :uniqueness false}

@@ -1,18 +1,18 @@
-{:code "03035"
- :cost 5
- :cycle_code "creation-and-control"
- :faction "Shaper"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/03035.png"
- :limited 3
- :normalizedtitle "levy-ar-lab-access"
- :number 35
- :packquantity 3
- :rotated false
- :set_code "cac"
- :setname "Creation and Control"
- :side "Runner"
- :text "Shuffle your grip and heap into your stack. Draw 5 cards. Remove Levy AR Lab Access from the game instead of trashing it."
- :title "Levy AR Lab Access"
- :type "Event"
+{:code "03035",
+ :cost 5,
+ :cycle_code "creation-and-control",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "https://netrunnerdb.com/card_image/03035.png",
+ :limited 3,
+ :normalizedtitle "levy-ar-lab-access",
+ :number 35,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cac",
+ :setname "Creation and Control",
+ :side "Runner",
+ :text "Shuffle your grip and heap into your stack. Draw 5 cards. Remove Levy AR Lab Access from the game instead of trashing it.",
+ :title "Levy AR Lab Access",
+ :type "Event",
  :uniqueness false}

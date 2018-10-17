@@ -1,19 +1,19 @@
-{:code "11009"
- :cost 1
- :cycle_code "flashpoint"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_9.png"
- :limited 3
- :normalizedtitle "injection-attack"
- :number 9
- :packquantity 3
- :rotated false
- :set_code "23s"
- :setname "23 Seconds"
- :side "Runner"
- :subtype "Run"
- :text "Make a run and choose an <strong>icebreaker</strong>. That <strong>icebreaker</strong> has +2 strength for the remainder of this run."
- :title "Injection Attack"
- :type "Event"
+{:code "11009",
+ :cost 1,
+ :cycle_code "flashpoint",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_9.png",
+ :limited 3,
+ :normalizedtitle "injection-attack",
+ :number 9,
+ :packquantity 3,
+ :rotated false,
+ :set_code "23s",
+ :setname "23 Seconds",
+ :side "Runner",
+ :subtype "Run",
+ :text "Make a run and choose an <strong>icebreaker</strong>. That <strong>icebreaker</strong> has +2 strength for the remainder of this run.",
+ :title "Injection Attack",
+ :type "Event",
  :uniqueness false}

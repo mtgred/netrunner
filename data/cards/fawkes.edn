@@ -1,21 +1,21 @@
-{:code "11108"
- :cost 5
- :cycle_code "flashpoint"
- :faction "Shaper"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_108.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "fawkes"
- :number 108
- :packquantity 3
- :rotated false
- :set_code "qu"
- :setname "Quorum"
- :side "Runner"
- :strength 1
- :subtype "Icebreaker - Killer"
- :text "1[credit]: Break <strong>sentry</strong> subroutine.\nX[credit]: +X strength for the remainder of this run. Use this ability only by spending at least 1 credit from a <strong>stealth</strong> card."
- :title "Fawkes"
- :type "Program"
+{:code "11108",
+ :cost 5,
+ :cycle_code "flashpoint",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_108.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "fawkes",
+ :number 108,
+ :packquantity 3,
+ :rotated false,
+ :set_code "qu",
+ :setname "Quorum",
+ :side "Runner",
+ :strength 1,
+ :subtype "Icebreaker - Killer",
+ :text "1[credit]: Break <strong>sentry</strong> subroutine.\nX[credit]: +X strength for the remainder of this run. Use this ability only by spending at least 1 credit from a <strong>stealth</strong> card.",
+ :title "Fawkes",
+ :type "Program",
  :uniqueness false}

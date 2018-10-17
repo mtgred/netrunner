@@ -1,18 +1,18 @@
-{:code "04076"
- :cost 1
- :cycle_code "spin"
- :faction "NBN"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/04076.png"
- :limited 3
- :normalizedtitle "sweeps-week"
- :number 76
- :packquantity 3
- :rotated true
- :set_code "tc"
- :setname "True Colors"
- :side "Corp"
- :text "Gain 1[credit] for each card in the Runner's grip."
- :title "Sweeps Week"
- :type "Operation"
+{:code "04076",
+ :cost 1,
+ :cycle_code "spin",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/04076.png",
+ :limited 3,
+ :normalizedtitle "sweeps-week",
+ :number 76,
+ :packquantity 3,
+ :rotated true,
+ :set_code "tc",
+ :setname "True Colors",
+ :side "Corp",
+ :text "Gain 1[credit] for each card in the Runner's grip.",
+ :title "Sweeps Week",
+ :type "Operation",
  :uniqueness false}

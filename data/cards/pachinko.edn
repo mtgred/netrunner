@@ -1,20 +1,20 @@
-{:code "08076"
- :cost 1
- :cycle_code "sansan"
- :faction "NBN"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_76.png"
- :limited 3
- :normalizedtitle "pachinko"
- :number 76
- :packquantity 3
- :rotated false
- :set_code "uw"
- :setname "The Underway"
- :side "Corp"
- :strength 4
- :subtype "Barrier"
- :text "[subroutine] End the run if the Runner is tagged.\n[subroutine] End the run if the Runner is tagged."
- :title "Pachinko"
- :type "ICE"
+{:code "08076",
+ :cost 1,
+ :cycle_code "sansan",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN26_76.png",
+ :limited 3,
+ :normalizedtitle "pachinko",
+ :number 76,
+ :packquantity 3,
+ :rotated false,
+ :set_code "uw",
+ :setname "The Underway",
+ :side "Corp",
+ :strength 4,
+ :subtype "Barrier",
+ :text "[subroutine] End the run if the Runner is tagged.\n[subroutine] End the run if the Runner is tagged.",
+ :title "Pachinko",
+ :type "ICE",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "11101"
- :cost 5
- :cycle_code "flashpoint"
- :faction "Anarch"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_101.png"
- :limited 3
- :normalizedtitle "sifr"
- :number 101
- :packquantity 3
- :rotated false
- :set_code "qu"
- :setname "Quorum"
- :side "Runner"
- :subtype "Console"
- :text "+2[mu]\nOnce per turn, when you encounter a piece of ice, you may reduce your maximum hand size by 1 until the beginning of your next turn. If you do, the strength of that ice is lowered to 0 for the remainder of the encounter.\nLimit 1 <strong>console</strong> per player."
- :title "Şifr"
- :type "Hardware"
+{:code "11101",
+ :cost 5,
+ :cycle_code "flashpoint",
+ :faction "Anarch",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_101.png",
+ :limited 3,
+ :normalizedtitle "sifr",
+ :number 101,
+ :packquantity 3,
+ :rotated false,
+ :set_code "qu",
+ :setname "Quorum",
+ :side "Runner",
+ :subtype "Console",
+ :text "+2[mu]\nOnce per turn, when you encounter a piece of ice, you may reduce your maximum hand size by 1 until the beginning of your next turn. If you do, the strength of that ice is lowered to 0 for the remainder of the encounter.\nLimit 1 <strong>console</strong> per player.",
+ :title "Şifr",
+ :type "Hardware",
  :uniqueness true}

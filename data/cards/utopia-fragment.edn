@@ -1,20 +1,20 @@
-{:advancementcost 5
- :agendapoints 3
- :code "06110"
- :cycle_code "lunar"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_110.png"
- :limited 1
- :normalizedtitle "utopia-fragment"
- :number 110
- :packquantity 3
- :rotated false
- :set_code "ts"
- :setname "The Source"
- :side "Corp"
- :subtype "Source"
- :text "As an additional cost to steal an agenda, the Runner must pay 2[credit] for each advancement token on that agenda.\nLimit 1 per deck."
- :title "Utopia Fragment"
- :type "Agenda"
+{:advancementcost 5,
+ :agendapoints 3,
+ :code "06110",
+ :cycle_code "lunar",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_110.png",
+ :limited 1,
+ :normalizedtitle "utopia-fragment",
+ :number 110,
+ :packquantity 3,
+ :rotated false,
+ :set_code "ts",
+ :setname "The Source",
+ :side "Corp",
+ :subtype "Source",
+ :text "As an additional cost to steal an agenda, the Runner must pay 2[credit] for each advancement token on that agenda.\nLimit 1 per deck.",
+ :title "Utopia Fragment",
+ :type "Agenda",
  :uniqueness true}

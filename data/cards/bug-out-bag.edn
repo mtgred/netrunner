@@ -1,18 +1,18 @@
-{:code "12064"
- :cost 0
- :cycle_code "red-sand"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_64.png"
- :limited 3
- :normalizedtitle "bug-out-bag"
- :number 64
- :packquantity 3
- :rotated false
- :set_code "baw"
- :setname "Blood and Water"
- :side "Runner"
- :text "Place X power counters on Bug Out Bag when you install it. If you have no cards in your grip at the end of your turn, draw 1 card for each counter on Bug Out Bag, then trash it."
- :title "Bug Out Bag"
- :type "Resource"
+{:code "12064",
+ :cost 0,
+ :cycle_code "red-sand",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_64.png",
+ :limited 3,
+ :normalizedtitle "bug-out-bag",
+ :number 64,
+ :packquantity 3,
+ :rotated false,
+ :set_code "baw",
+ :setname "Blood and Water",
+ :side "Runner",
+ :text "Place X power counters on Bug Out Bag when you install it. If you have no cards in your grip at the end of your turn, draw 1 card for each counter on Bug Out Bag, then trash it.",
+ :title "Bug Out Bag",
+ :type "Resource",
  :uniqueness false}

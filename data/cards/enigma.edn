@@ -1,20 +1,20 @@
-{:code "01111"
- :cost 3
- :cycle_code "core"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/01111.png"
- :limited 3
- :normalizedtitle "enigma"
- :number 111
- :packquantity 3
- :replaced_by "20129"
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :strength 2
- :subtype "Code Gate"
- :text "[subroutine] The Runner loses [click], if able.\n[subroutine] End the run."
- :title "Enigma"
- :type "ICE"
+{:code "20129",
+ :cost 3,
+ :cycle_code "core2",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_129.png",
+ :limited 3,
+ :normalizedtitle "enigma",
+ :number 129,
+ :packquantity 3,
+ :replaces "01111",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :strength 2,
+ :subtype "Code Gate",
+ :text "[subroutine] The Runner loses [click], if able.\n[subroutine] End the run.",
+ :title "Enigma",
+ :type "ICE",
  :uniqueness false}

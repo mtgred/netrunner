@@ -1,21 +1,21 @@
-{:code "11115"
- :cost 2
- :cycle_code "flashpoint"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_115.png"
- :limited 3
- :normalizedtitle "herald"
- :number 115
- :packquantity 3
- :rotated false
- :set_code "qu"
- :setname "Quorum"
- :side "Corp"
- :strength 1
- :subtype "Code Gate"
- :text "If Herald is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Herald, he or she encounters it. Ignore this ability if the Runner accesses Herald from Archives.\n[subroutine] The Corp gains 2[credit].\n[subroutine] The Corp may pay up to 2[credit] to place that number of advancement tokens on a card that can be advanced."
- :title "Herald"
- :trash 1
- :type "ICE"
+{:code "11115",
+ :cost 2,
+ :cycle_code "flashpoint",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_115.png",
+ :limited 3,
+ :normalizedtitle "herald",
+ :number 115,
+ :packquantity 3,
+ :rotated false,
+ :set_code "qu",
+ :setname "Quorum",
+ :side "Corp",
+ :strength 1,
+ :subtype "Code Gate",
+ :text "If Herald is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Herald, he or she encounters it. Ignore this ability if the Runner accesses Herald from Archives.\n[subroutine] The Corp gains 2[credit].\n[subroutine] The Corp may pay up to 2[credit] to place that number of advancement tokens on a card that can be advanced.",
+ :title "Herald",
+ :trash 1,
+ :type "ICE",
  :uniqueness false}

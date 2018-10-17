@@ -1,18 +1,18 @@
-{:code "07031"
- :cost 1
- :cycle_code "order-and-chaos"
- :faction "Anarch"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_31.png"
- :limited 3
- :normalizedtitle "amped-up"
- :number 31
- :packquantity 3
- :rotated false
- :set_code "oac"
- :setname "Order and Chaos"
- :side "Runner"
- :text "Gain [click][click][click] and suffer 1 brain damage (cannot be prevented)."
- :title "Amped Up"
- :type "Event"
+{:code "07031",
+ :cost 1,
+ :cycle_code "order-and-chaos",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_31.png",
+ :limited 3,
+ :normalizedtitle "amped-up",
+ :number 31,
+ :packquantity 3,
+ :rotated false,
+ :set_code "oac",
+ :setname "Order and Chaos",
+ :side "Runner",
+ :text "Gain [click][click][click] and suffer 1 brain damage (cannot be prevented).",
+ :title "Amped Up",
+ :type "Event",
  :uniqueness false}

@@ -1,19 +1,20 @@
-{:code "01089"
- :cost 1
- :cycle_code "core"
- :faction "NBN"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01089.png"
- :limited 3
- :normalizedtitle "matrix-analyzer"
- :number 89
- :packquantity 3
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :strength 3
- :subtype "Sentry - Tracer - Observer"
- :text "When the Runner encounters Matrix Analyzer, you may pay 1[credit] to place 1 advancement token on a card that can be advanced.\n[subroutine] <trace>Trace 2</trace> If successful, give the Runner 1 tag."
- :title "Matrix Analyzer"
- :type "ICE"
+{:code "01089",
+ :cost 1,
+ :cycle_code "core",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/01089.png",
+ :limited 3,
+ :normalizedtitle "matrix-analyzer",
+ :number 89,
+ :packquantity 3,
+ :rotated true,
+ :set_code "core",
+ :setname "Core Set",
+ :side "Corp",
+ :strength 3,
+ :subtype "Sentry - Tracer - Observer",
+ :text "When the Runner encounters Matrix Analyzer, you may pay 1[credit] to place 1 advancement token on a card that can be advanced.\n[subroutine] <trace>Trace 2</trace> If successful, give the Runner 1 tag.",
+ :title "Matrix Analyzer",
+ :type "ICE",
  :uniqueness false}

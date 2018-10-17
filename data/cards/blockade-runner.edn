@@ -1,19 +1,19 @@
-{:code "11065"
- :cost 1
- :cycle_code "flashpoint"
- :faction "Criminal"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_65.png"
- :limited 3
- :normalizedtitle "blockade-runner"
- :number 65
- :packquantity 3
- :rotated false
- :set_code "in"
- :setname "Intervention"
- :side "Runner"
- :subtype "Connection"
- :text "[click],[click]: Draw 3 cards. Shuffle 1 card from your grip into your stack."
- :title "Blockade Runner"
- :type "Resource"
+{:code "11065",
+ :cost 1,
+ :cycle_code "flashpoint",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_65.png",
+ :limited 3,
+ :normalizedtitle "blockade-runner",
+ :number 65,
+ :packquantity 3,
+ :rotated false,
+ :set_code "in",
+ :setname "Intervention",
+ :side "Runner",
+ :subtype "Connection",
+ :text "[click],[click]: Draw 3 cards. Shuffle 1 card from your grip into your stack.",
+ :title "Blockade Runner",
+ :type "Resource",
  :uniqueness false}

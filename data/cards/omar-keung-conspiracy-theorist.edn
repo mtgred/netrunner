@@ -1,20 +1,20 @@
-{:baselink 0
- :code "11043"
- :cycle_code "flashpoint"
- :faction "Anarch"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_43.png"
- :influencelimit 12
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "omar-keung-conspiracy-theorist"
- :number 43
- :packquantity 3
- :rotated false
- :set_code "es"
- :setname "Escalation"
- :side "Runner"
- :subtype "Natural"
- :text "[click]: Make a run on Archives. If successful, instead treat it as a successful run on another central server. Use this ability only once per turn."
- :title "Omar Keung: Conspiracy Theorist"
- :type "Identity"
+{:baselink 0,
+ :code "11043",
+ :cycle_code "flashpoint",
+ :faction "Anarch",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_43.png",
+ :influencelimit 12,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "omar-keung-conspiracy-theorist",
+ :number 43,
+ :packquantity 3,
+ :rotated false,
+ :set_code "es",
+ :setname "Escalation",
+ :side "Runner",
+ :subtype "Natural",
+ :text "[click]: Make a run on Archives. If successful, instead treat it as a successful run on another central server. Use this ability only once per turn.",
+ :title "Omar Keung: Conspiracy Theorist",
+ :type "Identity",
  :uniqueness false}

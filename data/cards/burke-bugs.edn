@@ -1,20 +1,20 @@
-{:code "02119"
- :cost 0
- :cycle_code "genesis"
- :faction "Weyland Consortium"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/02119.png"
- :limited 3
- :normalizedtitle "burke-bugs"
- :number 119
- :packquantity 3
- :rotated true
- :set_code "fp"
- :setname "Future Proof"
- :side "Corp"
- :strength 0
- :subtype "Sentry - Destroyer"
- :text "[subroutine] <trace>Trace 0</trace> If successful, the Runner trashes 1 program."
- :title "Burke Bugs"
- :type "ICE"
+{:code "02119",
+ :cost 0,
+ :cycle_code "genesis",
+ :faction "Weyland Consortium",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/02119.png",
+ :limited 3,
+ :normalizedtitle "burke-bugs",
+ :number 119,
+ :packquantity 3,
+ :rotated true,
+ :set_code "fp",
+ :setname "Future Proof",
+ :side "Corp",
+ :strength 0,
+ :subtype "Sentry - Destroyer",
+ :text "[subroutine] <trace>Trace 0</trace> If successful, the Runner trashes 1 program.",
+ :title "Burke Bugs",
+ :type "ICE",
  :uniqueness false}

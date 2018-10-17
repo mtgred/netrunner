@@ -1,19 +1,19 @@
-{:code "20034"
- :cost 2
- :cycle_code "core2"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_34.png"
- :limited 3
- :normalizedtitle "crash-space"
- :number 34
- :packquantity 2
- :replaces "01030"
- :set_code "core2"
- :setname "Revised Core Set"
- :side "Runner"
- :subtype "Location"
- :text "2[recurring-credit]\nUse these credits to pay for removing tags.\n[trash]: Prevent up to 3 meat damage."
- :title "Crash Space"
- :type "Resource"
+{:code "20034",
+ :cost 2,
+ :cycle_code "core2",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_34.png",
+ :limited 3,
+ :normalizedtitle "crash-space",
+ :number 34,
+ :packquantity 2,
+ :replaces "01030",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :subtype "Location",
+ :text "2[recurring-credit]\nUse these credits to pay for removing tags.\n[trash]: Prevent up to 3 meat damage.",
+ :title "Crash Space",
+ :type "Resource",
  :uniqueness false}

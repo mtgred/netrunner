@@ -1,19 +1,19 @@
-{:code "11079"
- :cost 2
- :cycle_code "flashpoint"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_79.png"
- :limited 3
- :normalizedtitle "best-defense"
- :number 79
- :packquantity 3
- :rotated false
- :set_code "in"
- :setname "Intervention"
- :side "Corp"
- :subtype "Gray Ops"
- :text "Trash 1 installed card with an install cost equal to or less than the number of tags the Runner has."
- :title "Best Defense"
- :type "Operation"
+{:code "11079",
+ :cost 2,
+ :cycle_code "flashpoint",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_79.png",
+ :limited 3,
+ :normalizedtitle "best-defense",
+ :number 79,
+ :packquantity 3,
+ :rotated false,
+ :set_code "in",
+ :setname "Intervention",
+ :side "Corp",
+ :subtype "Gray Ops",
+ :text "Trash 1 installed card with an install cost equal to or less than the number of tags the Runner has.",
+ :title "Best Defense",
+ :type "Operation",
  :uniqueness false}

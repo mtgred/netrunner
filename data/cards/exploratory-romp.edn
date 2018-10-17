@@ -1,19 +1,19 @@
-{:code "03032"
- :cost 1
- :cycle_code "creation-and-control"
- :faction "Shaper"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/03032.png"
- :limited 3
- :normalizedtitle "exploratory-romp"
- :number 32
- :packquantity 3
- :rotated false
- :set_code "cac"
- :setname "Creation and Control"
- :side "Runner"
- :subtype "Run"
- :text "Make a run. If successful, instead of accessing cards, remove up to 3 advancement tokens from a single card in or protecting the attacked server."
- :title "Exploratory Romp"
- :type "Event"
+{:code "03032",
+ :cost 1,
+ :cycle_code "creation-and-control",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/03032.png",
+ :limited 3,
+ :normalizedtitle "exploratory-romp",
+ :number 32,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cac",
+ :setname "Creation and Control",
+ :side "Runner",
+ :subtype "Run",
+ :text "Make a run. If successful, instead of accessing cards, remove up to 3 advancement tokens from a single card in or protecting the attacked server.",
+ :title "Exploratory Romp",
+ :type "Event",
  :uniqueness false}

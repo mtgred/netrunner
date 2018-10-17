@@ -1,19 +1,19 @@
-{:code "06031"
- :cost 2
- :cycle_code "lunar"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_31.png"
- :limited 3
- :normalizedtitle "lag-time"
- :number 31
- :packquantity 3
- :rotated false
- :set_code "tsb"
- :setname "The Spaces Between"
- :side "Corp"
- :subtype "Current"
- :text "This operation is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nAll <strong>ice</strong> have +1 strength."
- :title "Lag Time"
- :type "Operation"
+{:code "06031",
+ :cost 2,
+ :cycle_code "lunar",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_31.png",
+ :limited 3,
+ :normalizedtitle "lag-time",
+ :number 31,
+ :packquantity 3,
+ :rotated false,
+ :set_code "tsb",
+ :setname "The Spaces Between",
+ :side "Corp",
+ :subtype "Current",
+ :text "This operation is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nAll <strong>ice</strong> have +1 strength.",
+ :title "Lag Time",
+ :type "Operation",
  :uniqueness false}

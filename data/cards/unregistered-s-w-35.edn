@@ -1,19 +1,19 @@
-{:code "05039"
- :cost 1
- :cycle_code "honor-and-profit"
- :faction "Criminal"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/05039.png"
- :limited 3
- :normalizedtitle "unregistered-s-w-35"
- :number 39
- :packquantity 3
- :rotated false
- :set_code "hap"
- :setname "Honor and Profit"
- :side "Runner"
- :subtype "Weapon"
- :text "Use Unregistered S&W '35 only if you have made a successful run on HQ this turn.\n[click], [click]: Trash 1 rezzed <strong>bioroid</strong>, <strong>clone</strong>, <strong>executive</strong>, or <strong>sysop</strong> in a server without paying its trash cost."
- :title "Unregistered S&W '35"
- :type "Hardware"
+{:code "05039",
+ :cost 1,
+ :cycle_code "honor-and-profit",
+ :faction "Criminal",
+ :factioncost 3,
+ :image_url "https://netrunnerdb.com/card_image/05039.png",
+ :limited 3,
+ :normalizedtitle "unregistered-s-w-35",
+ :number 39,
+ :packquantity 3,
+ :rotated false,
+ :set_code "hap",
+ :setname "Honor and Profit",
+ :side "Runner",
+ :subtype "Weapon",
+ :text "Use Unregistered S&W '35 only if you have made a successful run on HQ this turn.\n[click], [click]: Trash 1 rezzed <strong>bioroid</strong>, <strong>clone</strong>, <strong>executive</strong>, or <strong>sysop</strong> in a server without paying its trash cost.",
+ :title "Unregistered S&W '35",
+ :type "Hardware",
  :uniqueness false}

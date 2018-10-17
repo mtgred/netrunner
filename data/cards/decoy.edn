@@ -1,18 +1,19 @@
-{:code "01032"
- :cost 1
- :cycle_code "core"
- :faction "Criminal"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01032.png"
- :limited 3
- :normalizedtitle "decoy"
- :number 32
- :packquantity 2
- :set_code "core"
- :setname "Core Set"
- :side "Runner"
- :subtype "Connection"
- :text "[trash]: Avoid receiving 1 tag."
- :title "Decoy"
- :type "Resource"
+{:code "01032",
+ :cost 1,
+ :cycle_code "core",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/01032.png",
+ :limited 3,
+ :normalizedtitle "decoy",
+ :number 32,
+ :packquantity 2,
+ :rotated true,
+ :set_code "core",
+ :setname "Core Set",
+ :side "Runner",
+ :subtype "Connection",
+ :text "[trash]: Avoid receiving 1 tag.",
+ :title "Decoy",
+ :type "Resource",
  :uniqueness false}

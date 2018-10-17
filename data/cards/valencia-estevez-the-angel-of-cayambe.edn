@@ -1,20 +1,20 @@
-{:baselink 0
- :code "07030"
- :cycle_code "order-and-chaos"
- :faction "Anarch"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_30.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 50
- :normalizedtitle "valencia-estevez-the-angel-of-cayambe"
- :number 30
- :packquantity 3
- :rotated false
- :set_code "oac"
- :setname "Order and Chaos"
- :side "Runner"
- :subtype "Natural"
- :text "The Corp starts the game with 1 bad publicity."
- :title "Valencia Estevez: The Angel of Cayambe"
- :type "Identity"
+{:baselink 0,
+ :code "07030",
+ :cycle_code "order-and-chaos",
+ :faction "Anarch",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_30.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 50,
+ :normalizedtitle "valencia-estevez-the-angel-of-cayambe",
+ :number 30,
+ :packquantity 3,
+ :rotated false,
+ :set_code "oac",
+ :setname "Order and Chaos",
+ :side "Runner",
+ :subtype "Natural",
+ :text "The Corp starts the game with 1 bad publicity.",
+ :title "Valencia Estevez: The Angel of Cayambe",
+ :type "Identity",
  :uniqueness false}

@@ -1,20 +1,21 @@
-{:code "01013"
- :cost 1
- :cycle_code "core"
- :faction "Anarch"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01013.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "wyrm"
- :number 13
- :packquantity 2
- :set_code "core"
- :setname "Core Set"
- :side "Runner"
- :strength 1
- :subtype "Icebreaker - AI"
- :text "3[credit]: Break ice subroutine on a piece of ice with 0 or less strength.\n1[credit]: Ice has -1 strength.\n1[credit]: +1 strength."
- :title "Wyrm"
- :type "Program"
+{:code "01013",
+ :cost 1,
+ :cycle_code "core",
+ :faction "Anarch",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/01013.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "wyrm",
+ :number 13,
+ :packquantity 2,
+ :rotated true,
+ :set_code "core",
+ :setname "Core Set",
+ :side "Runner",
+ :strength 1,
+ :subtype "Icebreaker - AI",
+ :text "3[credit]: Break ice subroutine on a piece of ice with 0 or less strength.\n1[credit]: Ice has -1 strength.\n1[credit]: +1 strength.",
+ :title "Wyrm",
+ :type "Program",
  :uniqueness false}

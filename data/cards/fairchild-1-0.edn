@@ -1,20 +1,20 @@
-{:code "11010"
- :cost 1
- :cycle_code "flashpoint"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_10.png"
- :limited 3
- :normalizedtitle "fairchild-1-0"
- :number 10
- :packquantity 3
- :rotated false
- :set_code "23s"
- :setname "23 Seconds"
- :side "Corp"
- :strength 2
- :subtype "Code Gate - Bioroid"
- :text "The Runner can spend [click] to break any subroutine on Fairchild 1.0.\n[subroutine]The Runner must pay 1[credit] or trash 1 of his or her installed cards.\n[subroutine]The Runner must pay 1[credit] or trash 1 of his or her installed cards."
- :title "Fairchild 1.0"
- :type "ICE"
+{:code "11010",
+ :cost 1,
+ :cycle_code "flashpoint",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_10.png",
+ :limited 3,
+ :normalizedtitle "fairchild-1-0",
+ :number 10,
+ :packquantity 3,
+ :rotated false,
+ :set_code "23s",
+ :setname "23 Seconds",
+ :side "Corp",
+ :strength 2,
+ :subtype "Code Gate - Bioroid",
+ :text "The Runner can spend [click] to break any subroutine on Fairchild 1.0.\n[subroutine]The Runner must pay 1[credit] or trash 1 of his or her installed cards.\n[subroutine]The Runner must pay 1[credit] or trash 1 of his or her installed cards.",
+ :title "Fairchild 1.0",
+ :type "ICE",
  :uniqueness false}

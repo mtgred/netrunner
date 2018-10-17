@@ -1,20 +1,20 @@
-{:code "04078"
- :cost 14
- :cycle_code "spin"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/04078.png"
- :limited 3
- :normalizedtitle "curtain-wall"
- :number 78
- :packquantity 3
- :rotated true
- :set_code "tc"
- :setname "True Colors"
- :side "Corp"
- :strength 6
- :subtype "Barrier"
- :text "If Curtain Wall is the outermost piece of ice protecting a server, it has +4 strength.\n[subroutine] End the run.\n[subroutine] End the run.\n[subroutine] End the run."
- :title "Curtain Wall"
- :type "ICE"
+{:code "04078",
+ :cost 14,
+ :cycle_code "spin",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/04078.png",
+ :limited 3,
+ :normalizedtitle "curtain-wall",
+ :number 78,
+ :packquantity 3,
+ :rotated true,
+ :set_code "tc",
+ :setname "True Colors",
+ :side "Corp",
+ :strength 6,
+ :subtype "Barrier",
+ :text "If Curtain Wall is the outermost piece of ice protecting a server, it has +4 strength.\n[subroutine] End the run.\n[subroutine] End the run.\n[subroutine] End the run.",
+ :title "Curtain Wall",
+ :type "ICE",
  :uniqueness false}

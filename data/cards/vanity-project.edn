@@ -1,18 +1,18 @@
-{:advancementcost 6
- :agendapoints 4
- :code "08100"
- :cycle_code "sansan"
- :faction "Neutral"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_100.png"
- :limited 3
- :normalizedtitle "vanity-project"
- :number 100
- :packquantity 3
- :rotated false
- :set_code "oh"
- :setname "Old Hollywood"
- :side "Corp"
- :title "Vanity Project"
- :type "Agenda"
+{:advancementcost 6,
+ :agendapoints 4,
+ :code "08100",
+ :cycle_code "sansan",
+ :faction "Neutral",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN27_100.png",
+ :limited 3,
+ :normalizedtitle "vanity-project",
+ :number 100,
+ :packquantity 3,
+ :rotated false,
+ :set_code "oh",
+ :setname "Old Hollywood",
+ :side "Corp",
+ :title "Vanity Project",
+ :type "Agenda",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "05018"
- :cost 1
- :cycle_code "honor-and-profit"
- :faction "Jinteki"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/05018.png"
- :limited 3
- :normalizedtitle "pup"
- :number 18
- :packquantity 3
- :rotated false
- :set_code "hap"
- :setname "Honor and Profit"
- :side "Corp"
- :strength 0
- :subtype "Sentry - AP"
- :text "[subroutine] Do 1 net damage unless the Runner pays 1[credit].\n[subroutine] Do 1 net damage unless the Runner pays 1[credit]."
- :title "Pup"
- :type "ICE"
+{:code "05018",
+ :cost 1,
+ :cycle_code "honor-and-profit",
+ :faction "Jinteki",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/05018.png",
+ :limited 3,
+ :normalizedtitle "pup",
+ :number 18,
+ :packquantity 3,
+ :rotated false,
+ :set_code "hap",
+ :setname "Honor and Profit",
+ :side "Corp",
+ :strength 0,
+ :subtype "Sentry - AP",
+ :text "[subroutine] Do 1 net damage unless the Runner pays 1[credit].\n[subroutine] Do 1 net damage unless the Runner pays 1[credit].",
+ :title "Pup",
+ :type "ICE",
  :uniqueness false}

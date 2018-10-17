@@ -1,20 +1,20 @@
-{:advancementcost 4
- :agendapoints 2
- :code "13053"
- :cycle_code "terminal-directive"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_53.png"
- :limited 3
- :normalizedtitle "paper-trail"
- :number 53
- :packquantity 3
- :rotated false
- :set_code "td"
- :setname "Terminal Directive"
- :side "Corp"
- :subtype "Security"
- :text "When you score Paper Trail, <trace>Trace 6</trace> If successful, trash all <strong>connection</strong> and <strong>job</strong> resources."
- :title "Paper Trail"
- :type "Agenda"
+{:advancementcost 4,
+ :agendapoints 2,
+ :code "13053",
+ :cycle_code "terminal-directive",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_53.png",
+ :limited 3,
+ :normalizedtitle "paper-trail",
+ :number 53,
+ :packquantity 3,
+ :rotated false,
+ :set_code "td",
+ :setname "Terminal Directive",
+ :side "Corp",
+ :subtype "Security",
+ :text "When you score Paper Trail, <trace>Trace 6</trace> If successful, trash all <strong>connection</strong> and <strong>job</strong> resources.",
+ :title "Paper Trail",
+ :type "Agenda",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:baselink 0
- :code "06052"
- :cycle_code "lunar"
- :faction "Anarch"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_52.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "quetzal-free-spirit"
- :number 52
- :packquantity 3
- :rotated false
- :set_code "fc"
- :setname "First Contact"
- :side "Runner"
- :subtype "G-mod"
- :text "Once per turn, break 1 <strong>barrier</strong> subroutine."
- :title "Quetzal: Free Spirit"
- :type "Identity"
+{:baselink 0,
+ :code "06052",
+ :cycle_code "lunar",
+ :faction "Anarch",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_52.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "quetzal-free-spirit",
+ :number 52,
+ :packquantity 3,
+ :rotated false,
+ :set_code "fc",
+ :setname "First Contact",
+ :side "Runner",
+ :subtype "G-mod",
+ :text "Once per turn, break 1 <strong>barrier</strong> subroutine.",
+ :title "Quetzal: Free Spirit",
+ :type "Identity",
  :uniqueness false}

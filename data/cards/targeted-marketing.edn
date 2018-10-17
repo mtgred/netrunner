@@ -1,19 +1,19 @@
-{:code "06026"
- :cost 0
- :cycle_code "lunar"
- :faction "NBN"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_26.png"
- :limited 3
- :normalizedtitle "targeted-marketing"
- :number 26
- :packquantity 3
- :rotated false
- :set_code "tsb"
- :setname "The Spaces Between"
- :side "Corp"
- :subtype "Current"
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nName a card. Gain 10[credit] whenever the Runner plays or installs a copy of that card."
- :title "Targeted Marketing"
- :type "Operation"
+{:code "06026",
+ :cost 0,
+ :cycle_code "lunar",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_26.png",
+ :limited 3,
+ :normalizedtitle "targeted-marketing",
+ :number 26,
+ :packquantity 3,
+ :rotated false,
+ :set_code "tsb",
+ :setname "The Spaces Between",
+ :side "Corp",
+ :subtype "Current",
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nName a card. Gain 10[credit] whenever the Runner plays or installs a copy of that card.",
+ :title "Targeted Marketing",
+ :type "Operation",
  :uniqueness false}

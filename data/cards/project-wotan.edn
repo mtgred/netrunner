@@ -1,19 +1,19 @@
-{:advancementcost 5
- :agendapoints 3
- :code "03006"
- :cycle_code "creation-and-control"
- :faction "Haas-Bioroid"
- :image_url "https://netrunnerdb.com/card_image/03006.png"
- :limited 3
- :normalizedtitle "project-wotan"
- :number 6
- :packquantity 3
- :rotated false
- :set_code "cac"
- :setname "Creation and Control"
- :side "Corp"
- :subtype "Research"
- :text "Place 3 agenda counters on Project Wotan when you score it.\n<strong>Hosted agenda counter:</strong> Choose a rezzed piece of <strong>bioroid</strong> ice currently being approached. For the remainder of this run, that ice gains \"[subroutine] End the run.\" after all its other subroutines."
- :title "Project Wotan"
- :type "Agenda"
+{:advancementcost 5,
+ :agendapoints 3,
+ :code "03006",
+ :cycle_code "creation-and-control",
+ :faction "Haas-Bioroid",
+ :image_url "https://netrunnerdb.com/card_image/03006.png",
+ :limited 3,
+ :normalizedtitle "project-wotan",
+ :number 6,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cac",
+ :setname "Creation and Control",
+ :side "Corp",
+ :subtype "Research",
+ :text "Place 3 agenda counters on Project Wotan when you score it.\n<strong>Hosted agenda counter:</strong> Choose a rezzed piece of <strong>bioroid</strong> ice currently being approached. For the remainder of this run, that ice gains \"[subroutine] End the run.\" after all its other subroutines.",
+ :title "Project Wotan",
+ :type "Agenda",
  :uniqueness false}

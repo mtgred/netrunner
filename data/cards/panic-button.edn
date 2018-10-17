@@ -1,19 +1,19 @@
-{:code "04072"
- :cost 1
- :cycle_code "spin"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/04072.png"
- :limited 3
- :normalizedtitle "panic-button"
- :number 72
- :packquantity 3
- :rotated true
- :set_code "tc"
- :setname "True Colors"
- :side "Corp"
- :text "Install only in the root of HQ.\n1[credit]: Draw 1 card. Use this ability only during a run on HQ."
- :title "Panic Button"
- :trash 2
- :type "Upgrade"
+{:code "04072",
+ :cost 1,
+ :cycle_code "spin",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/04072.png",
+ :limited 3,
+ :normalizedtitle "panic-button",
+ :number 72,
+ :packquantity 3,
+ :rotated true,
+ :set_code "tc",
+ :setname "True Colors",
+ :side "Corp",
+ :text "Install only in the root of HQ.\n1[credit]: Draw 1 card. Use this ability only during a run on HQ.",
+ :title "Panic Button",
+ :trash 2,
+ :type "Upgrade",
  :uniqueness false}

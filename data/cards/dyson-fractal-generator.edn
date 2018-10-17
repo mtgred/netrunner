@@ -1,19 +1,19 @@
-{:code "04103"
- :cost 1
- :cycle_code "spin"
- :faction "Anarch"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/04103.png"
- :limited 3
- :normalizedtitle "dyson-fractal-generator"
- :number 103
- :packquantity 3
- :rotated true
- :set_code "dt"
- :setname "Double Time"
- :side "Runner"
- :subtype "Chip - Stealth"
- :text "1[recurring-credit]\nUse this credit to pay for using <strong>fracters</strong>."
- :title "Dyson Fractal Generator"
- :type "Hardware"
+{:code "04103",
+ :cost 1,
+ :cycle_code "spin",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "https://netrunnerdb.com/card_image/04103.png",
+ :limited 3,
+ :normalizedtitle "dyson-fractal-generator",
+ :number 103,
+ :packquantity 3,
+ :rotated true,
+ :set_code "dt",
+ :setname "Double Time",
+ :side "Runner",
+ :subtype "Chip - Stealth",
+ :text "1[recurring-credit]\nUse this credit to pay for using <strong>fracters</strong>.",
+ :title "Dyson Fractal Generator",
+ :type "Hardware",
  :uniqueness false}

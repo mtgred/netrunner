@@ -1,19 +1,19 @@
-{:code "11113"
- :cost 1
- :cycle_code "flashpoint"
- :faction "Jinteki"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_113.png"
- :limited 3
- :normalizedtitle "psychokinesis"
- :number 113
- :packquantity 3
- :rotated false
- :set_code "qu"
- :setname "Quorum"
- :side "Corp"
- :subtype "Terminal"
- :text "After you resolve this operation, end your action phase.\nLook at the top 5 cards of R&D. If any of those cards are agendas, assets, or upgrades, you may install 1 of those cards in a remote server."
- :title "Psychokinesis"
- :type "Operation"
+{:code "11113",
+ :cost 1,
+ :cycle_code "flashpoint",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_113.png",
+ :limited 3,
+ :normalizedtitle "psychokinesis",
+ :number 113,
+ :packquantity 3,
+ :rotated false,
+ :set_code "qu",
+ :setname "Quorum",
+ :side "Corp",
+ :subtype "Terminal",
+ :text "After you resolve this operation, end your action phase.\nLook at the top 5 cards of R&D. If any of those cards are agendas, assets, or upgrades, you may install 1 of those cards in a remote server.",
+ :title "Psychokinesis",
+ :type "Operation",
  :uniqueness false}

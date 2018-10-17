@@ -1,20 +1,20 @@
-{:baselink 0
- :code "10006"
- :cycle_code "mumbad"
- :faction "Shaper"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_6.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "jesminder-sareen-girl-behind-the-curtain"
- :number 6
- :packquantity 3
- :rotated false
- :set_code "kg"
- :setname "Kala Ghoda"
- :side "Runner"
- :subtype "Natural"
- :text "Avoid the first tag during each run."
- :title "Jesminder Sareen: Girl Behind the Curtain"
- :type "Identity"
+{:baselink 0,
+ :code "10006",
+ :cycle_code "mumbad",
+ :faction "Shaper",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_6.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "jesminder-sareen-girl-behind-the-curtain",
+ :number 6,
+ :packquantity 3,
+ :rotated false,
+ :set_code "kg",
+ :setname "Kala Ghoda",
+ :side "Runner",
+ :subtype "Natural",
+ :text "Avoid the first tag during each run.",
+ :title "Jesminder Sareen: Girl Behind the Curtain",
+ :type "Identity",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "11021"
- :cost 1
- :cycle_code "flashpoint"
- :faction "Anarch"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_21.png"
- :limited 3
- :normalizedtitle "credit-crash"
- :number 21
- :packquantity 3
- :rotated false
- :set_code "bm"
- :setname "Blood Money"
- :side "Runner"
- :subtype "Run"
- :text "Make a run. Trash the first non-agenda card you access during this run at no cost. The Corp can spend credits equal to the rez or play cost of the accessed card to prevent this trash."
- :title "Credit Crash"
- :type "Event"
+{:code "11021",
+ :cost 1,
+ :cycle_code "flashpoint",
+ :faction "Anarch",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_21.png",
+ :limited 3,
+ :normalizedtitle "credit-crash",
+ :number 21,
+ :packquantity 3,
+ :rotated false,
+ :set_code "bm",
+ :setname "Blood Money",
+ :side "Runner",
+ :subtype "Run",
+ :text "Make a run. Trash the first non-agenda card you access during this run at no cost. The Corp can spend credits equal to the rez or play cost of the accessed card to prevent this trash.",
+ :title "Credit Crash",
+ :type "Event",
  :uniqueness false}

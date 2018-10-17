@@ -1,19 +1,19 @@
-{:code "02009"
- :cost 3
- :cycle_code "genesis"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/02009.png"
- :limited 3
- :normalizedtitle "plascrete-carapace"
- :number 9
- :packquantity 3
- :rotated true
- :set_code "wla"
- :setname "What Lies Ahead"
- :side "Runner"
- :subtype "Gear"
- :text "Place 4 power counters on Plascrete Carapace when it is installed. When there are no power counters left on Plascrete Carapace, trash it.\n<strong>Hosted power counter:</strong> Prevent 1 meat damage."
- :title "Plascrete Carapace"
- :type "Hardware"
+{:code "02009",
+ :cost 3,
+ :cycle_code "genesis",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/02009.png",
+ :limited 3,
+ :normalizedtitle "plascrete-carapace",
+ :number 9,
+ :packquantity 3,
+ :rotated true,
+ :set_code "wla",
+ :setname "What Lies Ahead",
+ :side "Runner",
+ :subtype "Gear",
+ :text "Place 4 power counters on Plascrete Carapace when it is installed. When there are no power counters left on Plascrete Carapace, trash it.\n<strong>Hosted power counter:</strong> Prevent 1 meat damage.",
+ :title "Plascrete Carapace",
+ :type "Hardware",
  :uniqueness false}

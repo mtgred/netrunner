@@ -1,20 +1,20 @@
-{:code "08054"
- :cost 2
- :cycle_code "sansan"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_54.png"
- :limited 3
- :normalizedtitle "ryon-knight"
- :number 54
- :packquantity 3
- :rotated false
- :set_code "cc"
- :setname "Chrome City"
- :side "Corp"
- :subtype "Sysop"
- :text "[trash]: Do 1 brain damage. Use this ability only during a run on this server and only if the Runner has no unspent clicks."
- :title "Ryon Knight"
- :trash 3
- :type "Upgrade"
+{:code "08054",
+ :cost 2,
+ :cycle_code "sansan",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_54.png",
+ :limited 3,
+ :normalizedtitle "ryon-knight",
+ :number 54,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cc",
+ :setname "Chrome City",
+ :side "Corp",
+ :subtype "Sysop",
+ :text "[trash]: Do 1 brain damage. Use this ability only during a run on this server and only if the Runner has no unspent clicks.",
+ :title "Ryon Knight",
+ :trash 3,
+ :type "Upgrade",
  :uniqueness true}

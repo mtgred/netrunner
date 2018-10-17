@@ -1,19 +1,19 @@
-{:code "12118"
- :cost 1
- :cycle_code "red-sand"
- :faction "Weyland Consortium"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_118.png"
- :limited 3
- :normalizedtitle "priority-construction"
- :number 118
- :packquantity 3
- :rotated false
- :set_code "cd"
- :setname "Crimson Dust"
- :side "Corp"
- :subtype "Double"
- :text "As an additional cost to play this operation, spend [click].\nInstall a piece of ice from HQ protecting a remote server (ignoring all costs). Place 3 advancement tokens on that ice."
- :title "Priority Construction"
- :type "Operation"
+{:code "12118",
+ :cost 1,
+ :cycle_code "red-sand",
+ :faction "Weyland Consortium",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_118.png",
+ :limited 3,
+ :normalizedtitle "priority-construction",
+ :number 118,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cd",
+ :setname "Crimson Dust",
+ :side "Corp",
+ :subtype "Double",
+ :text "As an additional cost to play this operation, spend [click].\nInstall a piece of ice from HQ protecting a remote server (ignoring all costs). Place 3 advancement tokens on that ice.",
+ :title "Priority Construction",
+ :type "Operation",
  :uniqueness false}

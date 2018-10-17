@@ -1,22 +1,21 @@
-{:code "04082"
- :cost 3
- :cycle_code "spin"
- :faction "Anarch"
- :factioncost 4
- :image_url "https://netrunnerdb.com/card_image/04082.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "hemorrhage"
- :number 82
- :packquantity 3
- :replaced_by "20012"
- :rotated true
- :set_code "fal"
- :setname "Fear and Loathing"
- :side "Runner"
- :strength 0
- :subtype "Virus"
- :text "Whenever you make a successful run, place 1 virus counter on Hemorrhage.\n[click], <strong>2 hosted virus counters:</strong> The Corp trashes 1 card from HQ."
- :title "Hemorrhage"
- :type "Program"
+{:code "20012",
+ :cost 3,
+ :cycle_code "core2",
+ :faction "Anarch",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_12.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "hemorrhage",
+ :number 12,
+ :packquantity 1,
+ :replaces "04082",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virus",
+ :text "Whenever you make a successful run, place 1 virus counter on Hemorrhage.\n[click], <strong>2 hosted virus counters:</strong> The Corp trashes 1 card from HQ.",
+ :title "Hemorrhage",
+ :type "Program",
  :uniqueness false}

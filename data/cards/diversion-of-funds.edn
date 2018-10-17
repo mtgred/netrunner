@@ -1,19 +1,19 @@
-{:code "21105"
- :cost 1
- :cycle_code "kitara"
- :faction "Criminal"
- :factioncost 5
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_105.png"
- :limited 3
- :normalizedtitle "diversion-of-funds"
- :number 105
- :packquantity 3
- :rotated false
- :set_code "ka"
- :setname "Kampala Ascendent"
- :side "Runner"
- :subtype "Double - Run - Sabotage"
- :text "As an additional cost to play this event, spend [click].\nMake a run on HQ. If successful, instead of accessing cards, you may force the corp to lose up to 5[credit], then you may gain 1[credit] for each credit lost."
- :title "Diversion of Funds"
- :type "Event"
+{:code "21105",
+ :cost 1,
+ :cycle_code "kitara",
+ :faction "Criminal",
+ :factioncost 5,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN55_105.png",
+ :limited 3,
+ :normalizedtitle "diversion-of-funds",
+ :number 105,
+ :packquantity 3,
+ :rotated false,
+ :set_code "ka",
+ :setname "Kampala Ascendent",
+ :side "Runner",
+ :subtype "Double - Run - Sabotage",
+ :text "As an additional cost to play this event, spend [click].\nMake a run on HQ. If successful, instead of accessing cards, you may force the corp to lose up to 5[credit], then you may gain 1[credit] for each credit lost.",
+ :title "Diversion of Funds",
+ :type "Event",
  :uniqueness false}

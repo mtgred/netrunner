@@ -1,19 +1,19 @@
-{:code "03011"
- :cost 2
- :cycle_code "creation-and-control"
- :faction "Haas-Bioroid"
- :factioncost 4
- :image_url "https://netrunnerdb.com/card_image/03011.png"
- :limited 3
- :normalizedtitle "haas-arcology-ai"
- :number 11
- :packquantity 3
- :rotated false
- :set_code "cac"
- :setname "Creation and Control"
- :side "Corp"
- :text "Haas Arcology AI can be advanced only while unrezzed.\n[click], <strong>hosted advancement token:</strong> Gain [click][click]. Use this ability only once per turn."
- :title "Haas Arcology AI"
- :trash 1
- :type "Asset"
+{:code "03011",
+ :cost 2,
+ :cycle_code "creation-and-control",
+ :faction "Haas-Bioroid",
+ :factioncost 4,
+ :image_url "https://netrunnerdb.com/card_image/03011.png",
+ :limited 3,
+ :normalizedtitle "haas-arcology-ai",
+ :number 11,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cac",
+ :setname "Creation and Control",
+ :side "Corp",
+ :text "Haas Arcology AI can be advanced only while unrezzed.\n[click], <strong>hosted advancement token:</strong> Gain [click][click]. Use this ability only once per turn.",
+ :title "Haas Arcology AI",
+ :trash 1,
+ :type "Asset",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "01063"
- :cost 3
- :cycle_code "core"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01063.png"
- :limited 3
- :normalizedtitle "viktor-1-0"
- :number 63
- :packquantity 2
- :replaced_by "20070"
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :strength 3
- :subtype "Code Gate - Bioroid - AP"
- :text "The Runner can spend [click] to break any subroutine on Viktor 1.0.\n[subroutine] Do 1 brain damage.\n[subroutine] End the run."
- :title "Viktor 1.0"
- :type "ICE"
+{:code "20070",
+ :cost 3,
+ :cycle_code "core2",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_70.png",
+ :limited 3,
+ :normalizedtitle "viktor-1-0",
+ :number 70,
+ :packquantity 3,
+ :replaces "01063",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :strength 3,
+ :subtype "Code Gate - Bioroid - AP",
+ :text "The Runner can spend [click] to break any subroutine on Viktor 1.0.\n[subroutine] Do 1 brain damage.\n[subroutine] End the run.",
+ :title "Viktor 1.0",
+ :type "ICE",
  :uniqueness false}

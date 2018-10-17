@@ -1,18 +1,18 @@
-{:code "05031"
- :cost 0
- :cycle_code "honor-and-profit"
- :faction "Criminal"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/05031.png"
- :limited 3
- :normalizedtitle "calling-in-favors"
- :number 31
- :packquantity 3
- :rotated false
- :set_code "hap"
- :setname "Honor and Profit"
- :side "Runner"
- :text "Gain 1[credit] for each installed <strong>connection</strong> resource."
- :title "Calling in Favors"
- :type "Event"
+{:code "05031",
+ :cost 0,
+ :cycle_code "honor-and-profit",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/05031.png",
+ :limited 3,
+ :normalizedtitle "calling-in-favors",
+ :number 31,
+ :packquantity 3,
+ :rotated false,
+ :set_code "hap",
+ :setname "Honor and Profit",
+ :side "Runner",
+ :text "Gain 1[credit] for each installed <strong>connection</strong> resource.",
+ :title "Calling in Favors",
+ :type "Event",
  :uniqueness false}

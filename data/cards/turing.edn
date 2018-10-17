@@ -1,20 +1,20 @@
-{:code "08033"
- :cost 4
- :cycle_code "sansan"
- :faction "Haas-Bioroid"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_33.png"
- :limited 3
- :normalizedtitle "turing"
- :number 33
- :packquantity 3
- :rotated false
- :set_code "bb"
- :setname "Breaker Bay"
- :side "Corp"
- :strength 2
- :subtype "Code Gate"
- :text "Turing has +3 strength while protecting a remote server.\nThe Runner cannot use <strong>AI</strong> programs to break subroutines on Turing.\n[subroutine] End the run unless the Runner spends [click][click][click]."
- :title "Turing"
- :type "ICE"
+{:code "08033",
+ :cost 4,
+ :cycle_code "sansan",
+ :faction "Haas-Bioroid",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_33.png",
+ :limited 3,
+ :normalizedtitle "turing",
+ :number 33,
+ :packquantity 3,
+ :rotated false,
+ :set_code "bb",
+ :setname "Breaker Bay",
+ :side "Corp",
+ :strength 2,
+ :subtype "Code Gate",
+ :text "Turing has +3 strength while protecting a remote server.\nThe Runner cannot use <strong>AI</strong> programs to break subroutines on Turing.\n[subroutine] End the run unless the Runner spends [click][click][click].",
+ :title "Turing",
+ :type "ICE",
  :uniqueness false}

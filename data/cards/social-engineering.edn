@@ -1,19 +1,19 @@
-{:code "06018"
- :cost 2
- :cycle_code "lunar"
- :faction "Shaper"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/06018.png"
- :limited 3
- :normalizedtitle "social-engineering"
- :number 18
- :packquantity 3
- :rotated false
- :set_code "up"
- :setname "Upstalk"
- :side "Runner"
- :subtype "Priority"
- :text "Play only as your first [click].\nChoose an unrezzed piece of ice. If the Corp rezzes that piece of ice this turn, gain credits equal to its rez cost."
- :title "Social Engineering"
- :type "Event"
+{:code "06018",
+ :cost 2,
+ :cycle_code "lunar",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/06018.png",
+ :limited 3,
+ :normalizedtitle "social-engineering",
+ :number 18,
+ :packquantity 3,
+ :rotated false,
+ :set_code "up",
+ :setname "Upstalk",
+ :side "Runner",
+ :subtype "Priority",
+ :text "Play only as your first [click].\nChoose an unrezzed piece of ice. If the Corp rezzes that piece of ice this turn, gain credits equal to its rez cost.",
+ :title "Social Engineering",
+ :type "Event",
  :uniqueness false}

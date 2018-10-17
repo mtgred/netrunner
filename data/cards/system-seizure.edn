@@ -1,19 +1,19 @@
-{:code "12026"
- :cost 0
- :cycle_code "red-sand"
- :faction "Shaper"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_26.png"
- :limited 3
- :normalizedtitle "system-seizure"
- :number 26
- :packquantity 3
- :rotated false
- :set_code "so"
- :setname "Station One"
- :side "Runner"
- :subtype "Current"
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is scored.\nThe first <strong>icebreaker</strong> whose strength you increase each turn does not return to its base strength until the end of the run."
- :title "System Seizure"
- :type "Event"
+{:code "12026",
+ :cost 0,
+ :cycle_code "red-sand",
+ :faction "Shaper",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_26.png",
+ :limited 3,
+ :normalizedtitle "system-seizure",
+ :number 26,
+ :packquantity 3,
+ :rotated false,
+ :set_code "so",
+ :setname "Station One",
+ :side "Runner",
+ :subtype "Current",
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is scored.\nThe first <strong>icebreaker</strong> whose strength you increase each turn does not return to its base strength until the end of the run.",
+ :title "System Seizure",
+ :type "Event",
  :uniqueness false}

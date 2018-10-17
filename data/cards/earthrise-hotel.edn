@@ -1,19 +1,19 @@
-{:code "06120"
- :cost 4
- :cycle_code "lunar"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_120.png"
- :limited 3
- :normalizedtitle "earthrise-hotel"
- :number 120
- :packquantity 3
- :rotated false
- :set_code "ts"
- :setname "The Source"
- :side "Runner"
- :subtype "Location - Ritzy"
- :text "Place 3 power counters on Earthrise Hotel when it is installed. When there are no power counters left on Earthrise Hotel, trash it.\nWhen your turn begins, draw 2 cards and remove 1 power counter from Earthrise Hotel."
- :title "Earthrise Hotel"
- :type "Resource"
+{:code "06120",
+ :cost 4,
+ :cycle_code "lunar",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN21_120.png",
+ :limited 3,
+ :normalizedtitle "earthrise-hotel",
+ :number 120,
+ :packquantity 3,
+ :rotated false,
+ :set_code "ts",
+ :setname "The Source",
+ :side "Runner",
+ :subtype "Location - Ritzy",
+ :text "Place 3 power counters on Earthrise Hotel when it is installed. When there are no power counters left on Earthrise Hotel, trash it.\nWhen your turn begins, draw 2 cards and remove 1 power counter from Earthrise Hotel.",
+ :title "Earthrise Hotel",
+ :type "Resource",
  :uniqueness true}

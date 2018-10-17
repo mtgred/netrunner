@@ -1,19 +1,19 @@
-{:code "11017"
- :cycle_code "flashpoint"
- :faction "NBN"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_17.png"
- :influencelimit 12
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "nbn-controlling-the-message"
- :number 17
- :packquantity 3
- :rotated false
- :set_code "23s"
- :setname "23 Seconds"
- :side "Corp"
- :subtype "Megacorp"
- :text "The first time the Runner trashes an installed Corp card each turn, you may <trace>trace 4</trace> If successful, give the Runner 1 tag (cannot be avoided)."
- :title "NBN: Controlling the Message"
- :type "Identity"
+{:code "11017",
+ :cycle_code "flashpoint",
+ :faction "NBN",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_17.png",
+ :influencelimit 12,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "nbn-controlling-the-message",
+ :number 17,
+ :packquantity 3,
+ :rotated false,
+ :set_code "23s",
+ :setname "23 Seconds",
+ :side "Corp",
+ :subtype "Megacorp",
+ :text "The first time the Runner trashes an installed Corp card each turn, you may <trace>trace 4</trace> If successful, give the Runner 1 tag (cannot be avoided).",
+ :title "NBN: Controlling the Message",
+ :type "Identity",
  :uniqueness false}

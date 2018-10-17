@@ -1,20 +1,19 @@
-{:code "02048"
- :cost 5
- :cycle_code "genesis"
- :faction "Shaper"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02048.png"
- :limited 3
- :normalizedtitle "dinosaurus"
- :number 48
- :packquantity 3
- :replaced_by "20045"
- :rotated true
- :set_code "ce"
- :setname "Cyber Exodus"
- :side "Runner"
- :subtype "Console"
- :text "Dinosaurus can host a single non-<strong>AI icebreaker</strong>. The memory cost of the hosted <strong>icebreaker</strong> does not count against your memory limit.\nHosted <strong>icebreaker</strong> has +2 strength.\nLimit 1 <strong>console</strong> per player."
- :title "Dinosaurus"
- :type "Hardware"
+{:code "20045",
+ :cost 5,
+ :cycle_code "core2",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_45.png",
+ :limited 3,
+ :normalizedtitle "dinosaurus",
+ :number 45,
+ :packquantity 2,
+ :replaces "02048",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :subtype "Console",
+ :text "Dinosaurus can host a single non-<strong>AI icebreaker</strong>. The memory cost of the hosted <strong>icebreaker</strong> does not count against your memory limit.\nHosted <strong>icebreaker</strong> has +2 strength.\nLimit 1 <strong>console</strong> per player.",
+ :title "Dinosaurus",
+ :type "Hardware",
  :uniqueness true}

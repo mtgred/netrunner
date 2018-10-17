@@ -1,18 +1,18 @@
-{:code "02084"
- :cost 0
- :cycle_code "genesis"
- :faction "Criminal"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/02084.png"
- :limited 3
- :normalizedtitle "networking"
- :number 84
- :packquantity 3
- :rotated true
- :set_code "hs"
- :setname "Humanity's Shadow"
- :side "Runner"
- :text "Remove 1 tag. You may pay 1[credit] to add Networking to your grip instead of trashing it."
- :title "Networking"
- :type "Event"
+{:code "02084",
+ :cost 0,
+ :cycle_code "genesis",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/02084.png",
+ :limited 3,
+ :normalizedtitle "networking",
+ :number 84,
+ :packquantity 3,
+ :rotated true,
+ :set_code "hs",
+ :setname "Humanity's Shadow",
+ :side "Runner",
+ :text "Remove 1 tag. You may pay 1[credit] to add Networking to your grip instead of trashing it.",
+ :title "Networking",
+ :type "Event",
  :uniqueness false}

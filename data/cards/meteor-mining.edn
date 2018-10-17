@@ -1,18 +1,18 @@
-{:advancementcost 5
- :agendapoints 2
- :code "12076"
- :cycle_code "red-sand"
- :faction "Weyland Consortium"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_76.png"
- :limited 3
- :normalizedtitle "meteor-mining"
- :number 76
- :packquantity 3
- :rotated false
- :set_code "baw"
- :setname "Blood and Water"
- :side "Corp"
- :text "When you score Meteor Mining, you may gain 7[credit]. If the Runner has at least 2 tags, you may do 7 meat damage instead."
- :title "Meteor Mining"
- :type "Agenda"
+{:advancementcost 5,
+ :agendapoints 2,
+ :code "12076",
+ :cycle_code "red-sand",
+ :faction "Weyland Consortium",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_76.png",
+ :limited 3,
+ :normalizedtitle "meteor-mining",
+ :number 76,
+ :packquantity 3,
+ :rotated false,
+ :set_code "baw",
+ :setname "Blood and Water",
+ :side "Corp",
+ :text "When you score Meteor Mining, you may gain 7[credit]. If the Runner has at least 2 tags, you may do 7 meat damage instead.",
+ :title "Meteor Mining",
+ :type "Agenda",
  :uniqueness false}

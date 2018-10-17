@@ -1,19 +1,19 @@
-{:code "13051"
- :cost 2
- :cycle_code "terminal-directive"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_51.png"
- :limited 3
- :normalizedtitle "hunter-seeker"
- :number 51
- :packquantity 3
- :rotated false
- :set_code "td"
- :setname "Terminal Directive"
- :side "Corp"
- :subtype "Double - Gray Ops"
- :text "As an additional cost to play this operation, spend [click].\nPlay only if the Runner stole an agenda during his or her last turn.\nTrash 1 card."
- :title "Hunter Seeker"
- :type "Operation"
+{:code "13051",
+ :cost 2,
+ :cycle_code "terminal-directive",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_51.png",
+ :limited 3,
+ :normalizedtitle "hunter-seeker",
+ :number 51,
+ :packquantity 3,
+ :rotated false,
+ :set_code "td",
+ :setname "Terminal Directive",
+ :side "Corp",
+ :subtype "Double - Gray Ops",
+ :text "As an additional cost to play this operation, spend [click].\nPlay only if the Runner stole an agenda during his or her last turn.\nTrash 1 card.",
+ :title "Hunter Seeker",
+ :type "Operation",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "21044"
- :cost 1
- :cycle_code "kitara"
- :faction "Criminal"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_44.png"
- :limited 3
- :normalizedtitle "corporate-grant"
- :number 44
- :packquantity 3
- :rotated false
- :set_code "cotc"
- :setname "Council of the Crest"
- :side "Runner"
- :subtype "Current"
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is scored.\nThe first time you install a card each turn, the Corp loses 1[credit]."
- :title "Corporate \"Grant\""
- :type "Event"
+{:code "21044",
+ :cost 1,
+ :cycle_code "kitara",
+ :faction "Criminal",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_44.png",
+ :limited 3,
+ :normalizedtitle "corporate-grant",
+ :number 44,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cotc",
+ :setname "Council of the Crest",
+ :side "Runner",
+ :subtype "Current",
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is scored.\nThe first time you install a card each turn, the Corp loses 1[credit].",
+ :title "Corporate \"Grant\"",
+ :type "Event",
  :uniqueness false}

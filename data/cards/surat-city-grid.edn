@@ -1,20 +1,20 @@
-{:code "10057"
- :cost 2
- :cycle_code "mumbad"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_57.png"
- :limited 3
- :normalizedtitle "surat-city-grid"
- :number 57
- :packquantity 3
- :rotated false
- :set_code "dag"
- :setname "Democracy and Dogma"
- :side "Corp"
- :subtype "Region"
- :text "Whenever you rez a card in or protecting this server (not including Surat City Grid), you may rez another card, lowering the rez cost by 2.\nLimit 1 <strong>region</strong> per server."
- :title "Surat City Grid"
- :trash 3
- :type "Upgrade"
+{:code "10057",
+ :cost 2,
+ :cycle_code "mumbad",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_57.png",
+ :limited 3,
+ :normalizedtitle "surat-city-grid",
+ :number 57,
+ :packquantity 3,
+ :rotated false,
+ :set_code "dag",
+ :setname "Democracy and Dogma",
+ :side "Corp",
+ :subtype "Region",
+ :text "Whenever you rez a card in or protecting this server (not including Surat City Grid), you may rez another card, lowering the rez cost by 2.\nLimit 1 <strong>region</strong> per server.",
+ :title "Surat City Grid",
+ :trash 3,
+ :type "Upgrade",
  :uniqueness false}

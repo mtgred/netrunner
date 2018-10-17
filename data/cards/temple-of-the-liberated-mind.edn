@@ -1,19 +1,19 @@
-{:code "10082"
- :cost 2
- :cycle_code "mumbad"
- :faction "Shaper"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_82.png"
- :limited 3
- :normalizedtitle "temple-of-the-liberated-mind"
- :number 82
- :packquantity 3
- :rotated false
- :set_code "tlm"
- :setname "The Liberated Mind"
- :side "Runner"
- :subtype "Location - Ritzy"
- :text "[click]: Place 1 power counter on Temple of the Liberated Mind.\n<strong>Hosted power counter:</strong> Gain [click]. Use this ability only on your turn and only once per turn."
- :title "Temple of the Liberated Mind"
- :type "Resource"
+{:code "10082",
+ :cost 2,
+ :cycle_code "mumbad",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_82.png",
+ :limited 3,
+ :normalizedtitle "temple-of-the-liberated-mind",
+ :number 82,
+ :packquantity 3,
+ :rotated false,
+ :set_code "tlm",
+ :setname "The Liberated Mind",
+ :side "Runner",
+ :subtype "Location - Ritzy",
+ :text "[click]: Place 1 power counter on Temple of the Liberated Mind.\n<strong>Hosted power counter:</strong> Gain [click]. Use this ability only on your turn and only once per turn.",
+ :title "Temple of the Liberated Mind",
+ :type "Resource",
  :uniqueness true}

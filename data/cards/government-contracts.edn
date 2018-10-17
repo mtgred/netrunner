@@ -1,18 +1,18 @@
-{:advancementcost 5
- :agendapoints 3
- :code "02077"
- :cycle_code "genesis"
- :faction "Weyland Consortium"
- :image_url "https://netrunnerdb.com/card_image/02077.png"
- :limited 3
- :normalizedtitle "government-contracts"
- :number 77
- :packquantity 3
- :rotated true
- :set_code "asis"
- :setname "A Study in Static"
- :side "Corp"
- :text "[click], [click]: Gain 4[credit]."
- :title "Government Contracts"
- :type "Agenda"
+{:advancementcost 5,
+ :agendapoints 3,
+ :code "02077",
+ :cycle_code "genesis",
+ :faction "Weyland Consortium",
+ :image_url "https://netrunnerdb.com/card_image/02077.png",
+ :limited 3,
+ :normalizedtitle "government-contracts",
+ :number 77,
+ :packquantity 3,
+ :rotated true,
+ :set_code "asis",
+ :setname "A Study in Static",
+ :side "Corp",
+ :text "[click], [click]: Gain 4[credit].",
+ :title "Government Contracts",
+ :type "Agenda",
  :uniqueness false}

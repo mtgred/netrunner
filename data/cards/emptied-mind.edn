@@ -1,18 +1,18 @@
-{:code "10078"
- :cost 0
- :cycle_code "mumbad"
- :faction "Anarch"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_78.png"
- :limited 3
- :normalizedtitle "emptied-mind"
- :number 78
- :packquantity 3
- :rotated false
- :set_code "tlm"
- :setname "The Liberated Mind"
- :side "Runner"
- :text "When your turn begins, gain [click] if you have no cards in your grip."
- :title "Emptied Mind"
- :type "Resource"
+{:code "10078",
+ :cost 0,
+ :cycle_code "mumbad",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN34_78.png",
+ :limited 3,
+ :normalizedtitle "emptied-mind",
+ :number 78,
+ :packquantity 3,
+ :rotated false,
+ :set_code "tlm",
+ :setname "The Liberated Mind",
+ :side "Runner",
+ :text "When your turn begins, gain [click] if you have no cards in your grip.",
+ :title "Emptied Mind",
+ :type "Resource",
  :uniqueness true}

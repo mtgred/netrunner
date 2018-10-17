@@ -1,19 +1,19 @@
-{:code "21077"
- :cycle_code "kitara"
- :faction "Weyland Consortium"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_77.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "sso-industries-fueling-innovation"
- :number 77
- :packquantity 3
- :rotated false
- :set_code "tdatd"
- :setname "The Devil and the Dragon"
- :side "Corp"
- :subtype "Division"
- :text "When your turn ends, you may choose a piece of ice with no advancement tokens on it. If you do, place 1 advancement token on that piece of ice for each agenda point on all installed faceup agendas."
- :title "SSO Industries: Fueling Innovation"
- :type "Identity"
+{:code "21077",
+ :cycle_code "kitara",
+ :faction "Weyland Consortium",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_77.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "sso-industries-fueling-innovation",
+ :number 77,
+ :packquantity 3,
+ :rotated false,
+ :set_code "tdatd",
+ :setname "The Devil and the Dragon",
+ :side "Corp",
+ :subtype "Division",
+ :text "When your turn ends, you may choose a piece of ice with no advancement tokens on it. If you do, place 1 advancement token on that piece of ice for each agenda point on all installed faceup agendas.",
+ :title "SSO Industries: Fueling Innovation",
+ :type "Identity",
  :uniqueness false}

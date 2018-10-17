@@ -1,19 +1,19 @@
-{:code "11082"
- :cost 3
- :cycle_code "flashpoint"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_82.png"
- :limited 3
- :normalizedtitle "on-the-lam"
- :number 82
- :packquantity 3
- :rotated false
- :set_code "ml"
- :setname "Martial Law"
- :side "Runner"
- :subtype "Condition"
- :text "Install On the Lam on a resource as a hosted condition counter with the text \"[trash]: Avoid up to 3 tags or prevent up to 3 damage.\""
- :title "On the Lam"
- :type "Event"
+{:code "11082",
+ :cost 3,
+ :cycle_code "flashpoint",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_82.png",
+ :limited 3,
+ :normalizedtitle "on-the-lam",
+ :number 82,
+ :packquantity 3,
+ :rotated false,
+ :set_code "ml",
+ :setname "Martial Law",
+ :side "Runner",
+ :subtype "Condition",
+ :text "Install On the Lam on a resource as a hosted condition counter with the text \"[trash]: Avoid up to 3 tags or prevent up to 3 damage.\"",
+ :title "On the Lam",
+ :type "Event",
  :uniqueness false}

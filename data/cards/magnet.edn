@@ -1,20 +1,20 @@
-{:code "10103"
- :cost 3
- :cycle_code "mumbad"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_103.png"
- :limited 3
- :normalizedtitle "magnet"
- :number 103
- :packquantity 3
- :rotated false
- :set_code "ftm"
- :setname "Fear the Masses"
- :side "Corp"
- :strength 3
- :subtype "Code Gate"
- :text "When you rez Magnet, host a program on it that is hosted on an installed piece of ice.\nThe text box of each program hosted on Magnet is blank.\n[subroutine] End the run."
- :title "Magnet"
- :type "ICE"
+{:code "10103",
+ :cost 3,
+ :cycle_code "mumbad",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_103.png",
+ :limited 3,
+ :normalizedtitle "magnet",
+ :number 103,
+ :packquantity 3,
+ :rotated false,
+ :set_code "ftm",
+ :setname "Fear the Masses",
+ :side "Corp",
+ :strength 3,
+ :subtype "Code Gate",
+ :text "When you rez Magnet, host a program on it that is hosted on an installed piece of ice.\nThe text box of each program hosted on Magnet is blank.\n[subroutine] End the run.",
+ :title "Magnet",
+ :type "ICE",
  :uniqueness false}

@@ -1,21 +1,21 @@
-{:code "02007"
- :cost 1
- :cycle_code "genesis"
- :faction "Shaper"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02007.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "zu-13-key-master"
- :number 7
- :packquantity 3
- :rotated true
- :set_code "wla"
- :setname "What Lies Ahead"
- :side "Runner"
- :strength 1
- :subtype "Icebreaker - Decoder - Cloud"
- :text "If you have at least 2[link], the memory cost of ZU.13 Key Master is 0, even if it is not installed.\n1[credit]: Break <strong>code gate</strong> subroutine.\n1[credit]: +1 strength."
- :title "ZU.13 Key Master"
- :type "Program"
+{:code "02007",
+ :cost 1,
+ :cycle_code "genesis",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02007.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "zu-13-key-master",
+ :number 7,
+ :packquantity 3,
+ :rotated true,
+ :set_code "wla",
+ :setname "What Lies Ahead",
+ :side "Runner",
+ :strength 1,
+ :subtype "Icebreaker - Decoder - Cloud",
+ :text "If you have at least 2[link], the memory cost of ZU.13 Key Master is 0, even if it is not installed.\n1[credit]: Break <strong>code gate</strong> subroutine.\n1[credit]: +1 strength.",
+ :title "ZU.13 Key Master",
+ :type "Program",
  :uniqueness false}

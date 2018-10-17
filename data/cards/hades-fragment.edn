@@ -1,20 +1,20 @@
-{:advancementcost 5
- :agendapoints 3
- :code "06071"
- :cycle_code "lunar"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_71.png"
- :limited 1
- :normalizedtitle "hades-fragment"
- :number 71
- :packquantity 3
- :rotated false
- :set_code "uao"
- :setname "Up and Over"
- :side "Corp"
- :subtype "Source"
- :text "When your turn begins, you may add 1 card from Archives to the bottom of R&D.\nLimit 1 per deck."
- :title "Hades Fragment"
- :type "Agenda"
+{:advancementcost 5,
+ :agendapoints 3,
+ :code "06071",
+ :cycle_code "lunar",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_71.png",
+ :limited 1,
+ :normalizedtitle "hades-fragment",
+ :number 71,
+ :packquantity 3,
+ :rotated false,
+ :set_code "uao",
+ :setname "Up and Over",
+ :side "Corp",
+ :subtype "Source",
+ :text "When your turn begins, you may add 1 card from Archives to the bottom of R&D.\nLimit 1 per deck.",
+ :title "Hades Fragment",
+ :type "Agenda",
  :uniqueness true}

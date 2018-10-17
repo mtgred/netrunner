@@ -1,18 +1,18 @@
-{:code "01060"
- :cost 1
- :cycle_code "core"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01060.png"
- :limited 3
- :normalizedtitle "shipment-from-mirrormorph"
- :number 60
- :packquantity 2
- :replaced_by "20074"
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :text "Install up to 3 cards from HQ (one at a time and paying all install costs)."
- :title "Shipment from MirrorMorph"
- :type "Operation"
+{:code "20074",
+ :cost 1,
+ :cycle_code "core2",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_74.png",
+ :limited 3,
+ :normalizedtitle "shipment-from-mirrormorph",
+ :number 74,
+ :packquantity 1,
+ :replaces "01060",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :text "Install up to 3 cards from HQ (one at a time and paying all install costs).",
+ :title "Shipment from MirrorMorph",
+ :type "Operation",
  :uniqueness false}

@@ -1,18 +1,18 @@
-{:code "22018"
- :cost 1
- :cycle_code "reign-and-reverie"
- :faction "Shaper"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_18.png"
- :limited 3
- :normalizedtitle "mache"
- :number 18
- :packquantity 3
- :rotated false
- :set_code "rar"
- :setname "Reign and Reverie"
- :side "Runner"
- :text "The first time you trash an accessed card each turn, you may place power counters on Mâché equal to that card's trash cost.\n3 <strong>hosted power counters</strong>: Draw 1 card."
- :title "Mâché"
- :type "Hardware"
+{:code "22018",
+ :cost 1,
+ :cycle_code "reign-and-reverie",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_18.png",
+ :limited 3,
+ :normalizedtitle "mache",
+ :number 18,
+ :packquantity 3,
+ :rotated false,
+ :set_code "rar",
+ :setname "Reign and Reverie",
+ :side "Runner",
+ :text "The first time you trash an accessed card each turn, you may place power counters on Mâché equal to that card's trash cost.\n3 <strong>hosted power counters</strong>: Draw 1 card.",
+ :title "Mâché",
+ :type "Hardware",
  :uniqueness false}

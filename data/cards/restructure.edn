@@ -1,19 +1,19 @@
-{:code "04040"
- :cost 10
- :cycle_code "spin"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/04040.png"
- :limited 3
- :normalizedtitle "restructure"
- :number 40
- :packquantity 3
- :rotated true
- :set_code "st"
- :setname "Second Thoughts"
- :side "Corp"
- :subtype "Transaction"
- :text "Gain 15[credit]."
- :title "Restructure"
- :type "Operation"
+{:code "04040",
+ :cost 10,
+ :cycle_code "spin",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/04040.png",
+ :limited 3,
+ :normalizedtitle "restructure",
+ :number 40,
+ :packquantity 3,
+ :rotated true,
+ :set_code "st",
+ :setname "Second Thoughts",
+ :side "Corp",
+ :subtype "Transaction",
+ :text "Gain 15[credit].",
+ :title "Restructure",
+ :type "Operation",
  :uniqueness false}

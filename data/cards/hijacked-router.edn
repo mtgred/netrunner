@@ -1,18 +1,18 @@
-{:code "22005"
- :cost 2
- :cycle_code "reign-and-reverie"
- :faction "Anarch"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_5.png"
- :limited 3
- :normalizedtitle "hijacked-router"
- :number 5
- :packquantity 3
- :rotated false
- :set_code "rar"
- :setname "Reign and Reverie"
- :side "Runner"
- :text "Whenever the Corp creates a server, he or she loses 1[credit].\nWhenever you make a successful run on Archives, you may trash Hijacked Router to force the Corp to lose 3[credit]."
- :title "Hijacked Router"
- :type "Hardware"
+{:code "22005",
+ :cost 2,
+ :cycle_code "reign-and-reverie",
+ :faction "Anarch",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_5.png",
+ :limited 3,
+ :normalizedtitle "hijacked-router",
+ :number 5,
+ :packquantity 3,
+ :rotated false,
+ :set_code "rar",
+ :setname "Reign and Reverie",
+ :side "Runner",
+ :text "Whenever the Corp creates a server, he or she loses 1[credit].\nWhenever you make a successful run on Archives, you may trash Hijacked Router to force the Corp to lose 3[credit].",
+ :title "Hijacked Router",
+ :type "Hardware",
  :uniqueness true}

@@ -1,21 +1,21 @@
-{:code "13009"
- :cost 3
- :cycle_code "terminal-directive"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_9.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "mammon"
- :number 9
- :packquantity 3
- :rotated false
- :set_code "td"
- :setname "Terminal Directive"
- :side "Runner"
- :strength 0
- :subtype "Icebreaker - AI"
- :text "<strong>Hosted power counter</strong>: Break ice subroutine.\n2[credit]: +2 strength.\nWhen your turn begins, you may pay X[credit] to place X power counters on Mammon.\nWhen your turn ends, remove all hosted power counters."
- :title "Mammon"
- :type "Program"
+{:code "13009",
+ :cost 3,
+ :cycle_code "terminal-directive",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_9.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "mammon",
+ :number 9,
+ :packquantity 3,
+ :rotated false,
+ :set_code "td",
+ :setname "Terminal Directive",
+ :side "Runner",
+ :strength 0,
+ :subtype "Icebreaker - AI",
+ :text "<strong>Hosted power counter</strong>: Break ice subroutine.\n2[credit]: +2 strength.\nWhen your turn begins, you may pay X[credit] to place X power counters on Mammon.\nWhen your turn ends, remove all hosted power counters.",
+ :title "Mammon",
+ :type "Program",
  :uniqueness false}

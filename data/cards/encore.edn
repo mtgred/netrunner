@@ -1,18 +1,18 @@
-{:code "11107"
- :cost 0
- :cycle_code "flashpoint"
- :faction "Shaper"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_107.png"
- :limited 3
- :normalizedtitle "encore"
- :number 107
- :packquantity 3
- :rotated false
- :set_code "qu"
- :setname "Quorum"
- :side "Runner"
- :text "Play only if you made a successful run on R&D, HQ, and Archives this turn.\nTake an additional turn after this one. Remove Encore from the game instead of trashing it."
- :title "Encore"
- :type "Event"
+{:code "11107",
+ :cost 0,
+ :cycle_code "flashpoint",
+ :faction "Shaper",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN41_107.png",
+ :limited 3,
+ :normalizedtitle "encore",
+ :number 107,
+ :packquantity 3,
+ :rotated false,
+ :set_code "qu",
+ :setname "Quorum",
+ :side "Runner",
+ :text "Play only if you made a successful run on R&D, HQ, and Archives this turn.\nTake an additional turn after this one. Remove Encore from the game instead of trashing it.",
+ :title "Encore",
+ :type "Event",
  :uniqueness false}

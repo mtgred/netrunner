@@ -1,19 +1,19 @@
-{:code "10052"
- :cost 3
- :cycle_code "mumbad"
- :faction "Jinteki"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_52.png"
- :limited 3
- :normalizedtitle "clones-are-not-people"
- :number 52
- :packquantity 3
- :rotated false
- :set_code "dag"
- :setname "Democracy and Dogma"
- :side "Corp"
- :subtype "Current"
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nWhen you score an agenda, add \"Clones are not People\" to your score area as an agenda worth 1 agenda point."
- :title "\"Clones are not People\""
- :type "Operation"
+{:code "10052",
+ :cost 3,
+ :cycle_code "mumbad",
+ :faction "Jinteki",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN32_52.png",
+ :limited 3,
+ :normalizedtitle "clones-are-not-people",
+ :number 52,
+ :packquantity 3,
+ :rotated false,
+ :set_code "dag",
+ :setname "Democracy and Dogma",
+ :side "Corp",
+ :subtype "Current",
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nWhen you score an agenda, add \"Clones are not People\" to your score area as an agenda worth 1 agenda point.",
+ :title "\"Clones are not People\"",
+ :type "Operation",
  :uniqueness false}

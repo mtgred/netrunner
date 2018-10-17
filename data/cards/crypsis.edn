@@ -1,21 +1,21 @@
-{:code "20058"
- :cost 5
- :cycle_code "core2"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_58.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "crypsis"
- :number 58
- :packquantity 2
- :replaces "01051"
- :set_code "core2"
- :setname "Revised Core Set"
- :side "Runner"
- :strength 0
- :subtype "Icebreaker - AI - Virus"
- :text "1[credit]: Break ice subroutine.\n1[credit]: +1 strength.\n[click]: Place 1 virus counter on Crypsis.\nWhen an encounter with a piece of ice in which you used Crypsis to break a subroutine ends, remove 1 hosted virus counter or trash Crypsis."
- :title "Crypsis"
- :type "Program"
+{:code "20058",
+ :cost 5,
+ :cycle_code "core2",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_58.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "crypsis",
+ :number 58,
+ :packquantity 2,
+ :replaces "01051",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :strength 0,
+ :subtype "Icebreaker - AI - Virus",
+ :text "1[credit]: Break ice subroutine.\n1[credit]: +1 strength.\n[click]: Place 1 virus counter on Crypsis.\nWhen an encounter with a piece of ice in which you used Crypsis to break a subroutine ends, remove 1 hosted virus counter or trash Crypsis.",
+ :title "Crypsis",
+ :type "Program",
  :uniqueness false}

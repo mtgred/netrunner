@@ -1,19 +1,19 @@
-{:advancementcost 3
- :agendapoints 1
- :code "08112"
- :cycle_code "sansan"
- :faction "Jinteki"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_112.png"
- :limited 3
- :normalizedtitle "ancestral-imager"
- :number 112
- :packquantity 3
- :rotated false
- :set_code "uot"
- :setname "The Universe of Tomorrow"
- :side "Corp"
- :subtype "Security"
- :text "Whenever the Runner jacks out, do 1 net damage."
- :title "Ancestral Imager"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "08112",
+ :cycle_code "sansan",
+ :faction "Jinteki",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_112.png",
+ :limited 3,
+ :normalizedtitle "ancestral-imager",
+ :number 112,
+ :packquantity 3,
+ :rotated false,
+ :set_code "uot",
+ :setname "The Universe of Tomorrow",
+ :side "Corp",
+ :subtype "Security",
+ :text "Whenever the Runner jacks out, do 1 net damage.",
+ :title "Ancestral Imager",
+ :type "Agenda",
  :uniqueness false}

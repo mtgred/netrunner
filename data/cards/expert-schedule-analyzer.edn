@@ -1,20 +1,20 @@
-{:code "04045"
- :cost 1
- :cycle_code "spin"
- :faction "Criminal"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/04045.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "expert-schedule-analyzer"
- :number 45
- :packquantity 3
- :rotated true
- :set_code "mt"
- :setname "Mala Tempora"
- :side "Runner"
- :strength 0
- :text "[click]: Make a run on HQ. If successful, instead of accessing cards, you may reveal all cards in HQ."
- :title "Expert Schedule Analyzer"
- :type "Program"
+{:code "04045",
+ :cost 1,
+ :cycle_code "spin",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/04045.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "expert-schedule-analyzer",
+ :number 45,
+ :packquantity 3,
+ :rotated true,
+ :set_code "mt",
+ :setname "Mala Tempora",
+ :side "Runner",
+ :strength 0,
+ :text "[click]: Make a run on HQ. If successful, instead of accessing cards, you may reveal all cards in HQ.",
+ :title "Expert Schedule Analyzer",
+ :type "Program",
  :uniqueness false}

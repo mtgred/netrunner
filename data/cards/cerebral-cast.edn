@@ -1,19 +1,19 @@
-{:code "05013"
- :cost 1
- :cycle_code "honor-and-profit"
- :faction "Jinteki"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/05013.png"
- :limited 3
- :normalizedtitle "cerebral-cast"
- :number 13
- :packquantity 3
- :rotated false
- :set_code "hap"
- :setname "Honor and Profit"
- :side "Corp"
- :subtype "Gray Ops - Psi"
- :text "Play only if the Runner made a successful run during his or her last turn.\nYou and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, he or she chooses to suffer 1 brain damage or take 1 tag."
- :title "Cerebral Cast"
- :type "Operation"
+{:code "05013",
+ :cost 1,
+ :cycle_code "honor-and-profit",
+ :faction "Jinteki",
+ :factioncost 3,
+ :image_url "https://netrunnerdb.com/card_image/05013.png",
+ :limited 3,
+ :normalizedtitle "cerebral-cast",
+ :number 13,
+ :packquantity 3,
+ :rotated false,
+ :set_code "hap",
+ :setname "Honor and Profit",
+ :side "Corp",
+ :subtype "Gray Ops - Psi",
+ :text "Play only if the Runner made a successful run during his or her last turn.\nYou and the Runner secretly spend 0[credit], 1[credit], or 2[credit]. Reveal spent credits. If you and the Runner spent a different number of credits, he or she chooses to suffer 1 brain damage or take 1 tag.",
+ :title "Cerebral Cast",
+ :type "Operation",
  :uniqueness false}

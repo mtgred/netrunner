@@ -1,18 +1,18 @@
-{:code "01058"
- :cost 0
- :cycle_code "core"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01058.png"
- :limited 3
- :normalizedtitle "archived-memories"
- :number 58
- :packquantity 2
- :replaced_by "20071"
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :text "Add 1 card from Archives to HQ."
- :title "Archived Memories"
- :type "Operation"
+{:code "20071",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_71.png",
+ :limited 3,
+ :normalizedtitle "archived-memories",
+ :number 71,
+ :packquantity 1,
+ :replaces "01058",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :text "Add 1 card from Archives to HQ.",
+ :title "Archived Memories",
+ :type "Operation",
  :uniqueness false}

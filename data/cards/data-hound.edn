@@ -1,20 +1,20 @@
-{:code "02096"
- :cost 1
- :cycle_code "genesis"
- :faction "NBN"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/02096.png"
- :limited 3
- :normalizedtitle "data-hound"
- :number 96
- :packquantity 3
- :rotated true
- :set_code "hs"
- :setname "Humanity's Shadow"
- :side "Corp"
- :strength 2
- :subtype "Sentry - Tracer - Observer"
- :text "[subroutine] <trace>Trace 2</trace> If successful, look at a number of cards from the top of the Runner's stack equal to the amount by which your trace strength exceeded his or her link strength. Trash 1 of those cards, and arrange the rest in any order."
- :title "Data Hound"
- :type "ICE"
+{:code "02096",
+ :cost 1,
+ :cycle_code "genesis",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/02096.png",
+ :limited 3,
+ :normalizedtitle "data-hound",
+ :number 96,
+ :packquantity 3,
+ :rotated true,
+ :set_code "hs",
+ :setname "Humanity's Shadow",
+ :side "Corp",
+ :strength 2,
+ :subtype "Sentry - Tracer - Observer",
+ :text "[subroutine] <trace>Trace 2</trace> If successful, look at a number of cards from the top of the Runner's stack equal to the amount by which your trace strength exceeded his or her link strength. Trash 1 of those cards, and arrange the rest in any order.",
+ :title "Data Hound",
+ :type "ICE",
  :uniqueness false}

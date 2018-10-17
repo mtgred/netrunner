@@ -1,19 +1,19 @@
-{:code "09023"
- :cost 2
- :cycle_code "data-and-destiny"
- :faction "NBN"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_23.png"
- :limited 3
- :normalizedtitle "surveillance-sweep"
- :number 23
- :packquantity 3
- :rotated false
- :set_code "dad"
- :setname "Data and Destiny"
- :side "Corp"
- :subtype "Current"
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nThe Runner must spend credits first for each trace attempt during a run."
- :title "Surveillance Sweep"
- :type "Operation"
+{:code "09023",
+ :cost 2,
+ :cycle_code "data-and-destiny",
+ :faction "NBN",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_23.png",
+ :limited 3,
+ :normalizedtitle "surveillance-sweep",
+ :number 23,
+ :packquantity 3,
+ :rotated false,
+ :set_code "dad",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :subtype "Current",
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nThe Runner must spend credits first for each trace attempt during a run.",
+ :title "Surveillance Sweep",
+ :type "Operation",
  :uniqueness false}

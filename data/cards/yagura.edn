@@ -1,20 +1,20 @@
-{:code "20104"
- :cost 1
- :cycle_code "core2"
- :faction "Jinteki"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_88.png"
- :limited 3
- :normalizedtitle "yagura"
- :number 88
- :packquantity 1
- :replaces "04093"
- :set_code "core2"
- :setname "Revised Core Set"
- :side "Corp"
- :strength 0
- :subtype "Code Gate - AP"
- :text "[subroutine] Look at the top card of R&D. You may add that card to the bottom of R&D.\n[subroutine] Do 1 net damage."
- :title "Yagura"
- :type "ICE"
+{:code "20104",
+ :cost 1,
+ :cycle_code "core2",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_88.png",
+ :limited 3,
+ :normalizedtitle "yagura",
+ :number 88,
+ :packquantity 1,
+ :replaces "04093",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :strength 0,
+ :subtype "Code Gate - AP",
+ :text "[subroutine] Look at the top card of R&D. You may add that card to the bottom of R&D.\n[subroutine] Do 1 net damage.",
+ :title "Yagura",
+ :type "ICE",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "11096"
- :cost 1
- :cycle_code "flashpoint"
- :faction "Weyland Consortium"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_96.png"
- :limited 3
- :normalizedtitle "anson-rose"
- :number 96
- :packquantity 3
- :rotated false
- :set_code "ml"
- :setname "Martial Law"
- :side "Corp"
- :subtype "Executive"
- :text "When your turn begins, place 1 advancement token on Anson Rose.\nWhenever you rez a piece of ice, you may move any number of advancement tokens from Anson Rose to that ice."
- :title "Anson Rose"
- :trash 4
- :type "Asset"
+{:code "11096",
+ :cost 1,
+ :cycle_code "flashpoint",
+ :faction "Weyland Consortium",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN40_96.png",
+ :limited 3,
+ :normalizedtitle "anson-rose",
+ :number 96,
+ :packquantity 3,
+ :rotated false,
+ :set_code "ml",
+ :setname "Martial Law",
+ :side "Corp",
+ :subtype "Executive",
+ :text "When your turn begins, place 1 advancement token on Anson Rose.\nWhenever you rez a piece of ice, you may move any number of advancement tokens from Anson Rose to that ice.",
+ :title "Anson Rose",
+ :trash 4,
+ :type "Asset",
  :uniqueness true}

@@ -1,20 +1,20 @@
-{:code "21075"
- :cost 5
- :cycle_code "kitara"
- :faction "NBN"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_75.png"
- :limited 3
- :normalizedtitle "sandman"
- :number 75
- :packquantity 3
- :rotated false
- :set_code "tdatd"
- :setname "The Devil and the Dragon"
- :side "Corp"
- :strength 3
- :subtype "Code Gate"
- :text "[subroutine]Add an installed Runner card to the grip.\n[subroutine]Add an installed Runner card to the grip."
- :title "Sandman"
- :type "ICE"
+{:code "21075",
+ :cost 5,
+ :cycle_code "kitara",
+ :faction "NBN",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_75.png",
+ :limited 3,
+ :normalizedtitle "sandman",
+ :number 75,
+ :packquantity 3,
+ :rotated false,
+ :set_code "tdatd",
+ :setname "The Devil and the Dragon",
+ :side "Corp",
+ :strength 3,
+ :subtype "Code Gate",
+ :text "[subroutine]Add an installed Runner card to the grip.\n[subroutine]Add an installed Runner card to the grip.",
+ :title "Sandman",
+ :type "ICE",
  :uniqueness false}

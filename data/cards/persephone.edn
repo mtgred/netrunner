@@ -1,21 +1,21 @@
-{:code "12042"
- :cost 5
- :cycle_code "red-sand"
- :faction "Anarch"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_42.png"
- :limited 3
- :memoryunits 2
- :normalizedtitle "persephone"
- :number 42
- :packquantity 3
- :rotated false
- :set_code "eas"
- :setname "Earth's Scion"
- :side "Runner"
- :strength 1
- :subtype "Icebreaker - Killer"
- :text "2[credit]: Break <strong>sentry</strong> subroutine.\n1[credit]: +1 strength.\nWhenever you pass a <strong>sentry</strong>, you may trash the top card of the stack to trash one card from the top of R&D for each subroutine on that <strong>sentry</strong> that resolved."
- :title "Persephone"
- :type "Program"
+{:code "12042",
+ :cost 5,
+ :cycle_code "red-sand",
+ :faction "Anarch",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_42.png",
+ :limited 3,
+ :memoryunits 2,
+ :normalizedtitle "persephone",
+ :number 42,
+ :packquantity 3,
+ :rotated false,
+ :set_code "eas",
+ :setname "Earth's Scion",
+ :side "Runner",
+ :strength 1,
+ :subtype "Icebreaker - Killer",
+ :text "2[credit]: Break <strong>sentry</strong> subroutine.\n1[credit]: +1 strength.\nWhenever you pass a <strong>sentry</strong>, you may trash the top card of the stack to trash one card from the top of R&D for each subroutine on that <strong>sentry</strong> that resolved.",
+ :title "Persephone",
+ :type "Program",
  :uniqueness false}

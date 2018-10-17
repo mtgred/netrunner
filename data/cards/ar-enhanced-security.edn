@@ -1,19 +1,19 @@
-{:advancementcost 3
- :agendapoints 1
- :code "12115"
- :cycle_code "red-sand"
- :faction "NBN"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_115.png"
- :limited 3
- :normalizedtitle "ar-enhanced-security"
- :number 115
- :packquantity 3
- :rotated false
- :set_code "cd"
- :setname "Crimson Dust"
- :side "Corp"
- :subtype "Security"
- :text "The first time the Runner trashes a Corp card each turn, give him or her 1 tag."
- :title "AR-Enhanced Security"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "12115",
+ :cycle_code "red-sand",
+ :faction "NBN",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN48_115.png",
+ :limited 3,
+ :normalizedtitle "ar-enhanced-security",
+ :number 115,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cd",
+ :setname "Crimson Dust",
+ :side "Corp",
+ :subtype "Security",
+ :text "The first time the Runner trashes a Corp card each turn, give him or her 1 tag.",
+ :title "AR-Enhanced Security",
+ :type "Agenda",
  :uniqueness false}

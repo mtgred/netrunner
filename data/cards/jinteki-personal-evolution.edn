@@ -1,19 +1,19 @@
-{:code "01067"
- :cycle_code "core"
- :faction "Jinteki"
- :image_url "https://netrunnerdb.com/card_image/01067.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "jinteki-personal-evolution"
- :number 67
- :packquantity 1
- :replaced_by "20093"
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :subtype "Megacorp"
- :text "Whenever an agenda is scored or stolen, do 1 net damage."
- :title "Jinteki: Personal Evolution"
- :type "Identity"
+{:code "20093",
+ :cycle_code "core2",
+ :faction "Jinteki",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_77.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "jinteki-personal-evolution",
+ :number 77,
+ :packquantity 1,
+ :replaces "01067",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :subtype "Megacorp",
+ :text "Whenever an agenda is scored or stolen, do 1 net damage.",
+ :title "Jinteki: Personal Evolution",
+ :type "Identity",
  :uniqueness false}

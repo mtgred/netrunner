@@ -1,20 +1,20 @@
-{:code "10012"
- :cost 6
- :cycle_code "mumbad"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_12.png"
- :limited 3
- :normalizedtitle "vikram-1-0"
- :number 12
- :packquantity 3
- :rotated false
- :set_code "kg"
- :setname "Kala Ghoda"
- :side "Corp"
- :strength 5
- :subtype "Sentry - Bioroid - Tracer - AP"
- :text "The Runner can spend [click] to break any subroutine on Vikram 1.0.\n[subroutine] The Runner cannot use programs for the remainder of this run.\n[subroutine] <trace>Trace 4</trace> If successful, do 1 brain damage.\n[subroutine] <trace>Trace 4</trace> If successful, do 1 brain damage."
- :title "Vikram 1.0"
- :type "ICE"
+{:code "10012",
+ :cost 6,
+ :cycle_code "mumbad",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_12.png",
+ :limited 3,
+ :normalizedtitle "vikram-1-0",
+ :number 12,
+ :packquantity 3,
+ :rotated false,
+ :set_code "kg",
+ :setname "Kala Ghoda",
+ :side "Corp",
+ :strength 5,
+ :subtype "Sentry - Bioroid - Tracer - AP",
+ :text "The Runner can spend [click] to break any subroutine on Vikram 1.0.\n[subroutine] The Runner cannot use programs for the remainder of this run.\n[subroutine] <trace>Trace 4</trace> If successful, do 1 brain damage.\n[subroutine] <trace>Trace 4</trace> If successful, do 1 brain damage.",
+ :title "Vikram 1.0",
+ :type "ICE",
  :uniqueness false}

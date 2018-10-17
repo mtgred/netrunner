@@ -1,18 +1,18 @@
-{:code "12031"
- :cost 0
- :cycle_code "red-sand"
- :faction "Haas-Bioroid"
- :factioncost 5
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_31.png"
- :limited 3
- :normalizedtitle "load-testing"
- :number 31
- :packquantity 3
- :rotated false
- :set_code "so"
- :setname "Station One"
- :side "Corp"
- :text "When the Runner's next turn begins, he or she loses [click]."
- :title "Load Testing"
- :type "Operation"
+{:code "12031",
+ :cost 0,
+ :cycle_code "red-sand",
+ :faction "Haas-Bioroid",
+ :factioncost 5,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN44_31.png",
+ :limited 3,
+ :normalizedtitle "load-testing",
+ :number 31,
+ :packquantity 3,
+ :rotated false,
+ :set_code "so",
+ :setname "Station One",
+ :side "Corp",
+ :text "When the Runner's next turn begins, he or she loses [click].",
+ :title "Load Testing",
+ :type "Operation",
  :uniqueness false}

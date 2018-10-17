@@ -1,18 +1,18 @@
-{:code "06078"
- :cost 1
- :cycle_code "lunar"
- :faction "Shaper"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_78.png"
- :limited 3
- :normalizedtitle "trade-in"
- :number 78
- :packquantity 3
- :rotated false
- :set_code "uao"
- :setname "Up and Over"
- :side "Runner"
- :text "As an additional cost to play this event, trash an installed piece of hardware.\nGain credits equal to half the install cost of the trashed hardware (rounded down) and search your stack for a piece of hardware, reveal it, and add it to your grip. Shuffle your stack."
- :title "Trade-In"
- :type "Event"
+{:code "06078",
+ :cost 1,
+ :cycle_code "lunar",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN19_78.png",
+ :limited 3,
+ :normalizedtitle "trade-in",
+ :number 78,
+ :packquantity 3,
+ :rotated false,
+ :set_code "uao",
+ :setname "Up and Over",
+ :side "Runner",
+ :text "As an additional cost to play this event, trash an installed piece of hardware.\nGain credits equal to half the install cost of the trashed hardware (rounded down) and search your stack for a piece of hardware, reveal it, and add it to your grip. Shuffle your stack.",
+ :title "Trade-In",
+ :type "Event",
  :uniqueness false}

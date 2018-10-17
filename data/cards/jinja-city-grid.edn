@@ -1,20 +1,20 @@
-{:code "21031"
- :cost 1
- :cycle_code "kitara"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_31.png"
- :limited 3
- :normalizedtitle "jinja-city-grid"
- :number 31
- :packquantity 3
- :rotated false
- :set_code "dtwn"
- :setname "Down the White Nile"
- :side "Corp"
- :subtype "Region"
- :text "Whenever you draw a piece of ice, you may reveal it and install it protecting this server, lowering the install cost by 4[credit].\nLimit 1 <strong>region</strong> per server."
- :title "Jinja City Grid"
- :trash 5
- :type "Upgrade"
+{:code "21031",
+ :cost 1,
+ :cycle_code "kitara",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_31.png",
+ :limited 3,
+ :normalizedtitle "jinja-city-grid",
+ :number 31,
+ :packquantity 3,
+ :rotated false,
+ :set_code "dtwn",
+ :setname "Down the White Nile",
+ :side "Corp",
+ :subtype "Region",
+ :text "Whenever you draw a piece of ice, you may reveal it and install it protecting this server, lowering the install cost by 4[credit].\nLimit 1 <strong>region</strong> per server.",
+ :title "Jinja City Grid",
+ :trash 5,
+ :type "Upgrade",
  :uniqueness false}

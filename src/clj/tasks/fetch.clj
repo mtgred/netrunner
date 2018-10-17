@@ -3,6 +3,7 @@
   (:require [web.db :refer [db] :as webdb]
             [clojure.string :as string]
             [clojure.java.io :as io]
+            [zprint.core :as zp]
             [tasks.nrdb :refer :all]
             [tasks.altart :refer [add-art]]))
 
@@ -12,6 +13,12 @@
   otherwise pulls data from NRDB.
   Specifying `--no-card-images` will not attempt to download images for cards."
   [& args]
+  (zp/set-options!
+    {:style :community
+     :map {:comma? true
+           :force-nl? true}
+     :width 1000})
+
   (webdb/connect)
   (try
     (let [localpath (first (remove #(string/starts-with? % "--") args))

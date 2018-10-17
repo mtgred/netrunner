@@ -1,20 +1,20 @@
-{:code "22028"
- :cost 3
- :cycle_code "reign-and-reverie"
- :faction "Haas-Bioroid"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_28.png"
- :limited 3
- :normalizedtitle "meridian"
- :number 28
- :packquantity 3
- :rotated false
- :set_code "rar"
- :setname "Reign and Reverie"
- :side "Corp"
- :strength 4
- :subtype "Barrier"
- :text "[subroutine] Gain 4[credit] and end the run unless the Runner adds Meridian to his or her score area as an agenda worth -1 agenda point."
- :title "Meridian"
- :type "ICE"
+{:code "22028",
+ :cost 3,
+ :cycle_code "reign-and-reverie",
+ :faction "Haas-Bioroid",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_28.png",
+ :limited 3,
+ :normalizedtitle "meridian",
+ :number 28,
+ :packquantity 3,
+ :rotated false,
+ :set_code "rar",
+ :setname "Reign and Reverie",
+ :side "Corp",
+ :strength 4,
+ :subtype "Barrier",
+ :text "[subroutine] Gain 4[credit] and end the run unless the Runner adds Meridian to his or her score area as an agenda worth -1 agenda point.",
+ :title "Meridian",
+ :type "ICE",
  :uniqueness false}

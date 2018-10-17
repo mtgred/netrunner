@@ -1,18 +1,19 @@
-{:code "01066"
- :cost 2
- :cycle_code "core"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/01066.png"
- :limited 3
- :normalizedtitle "experiential-data"
- :number 66
- :packquantity 2
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :text "All ice protecting this server has +1 strength."
- :title "Experiential Data"
- :trash 2
- :type "Upgrade"
+{:code "01066",
+ :cost 2,
+ :cycle_code "core",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/01066.png",
+ :limited 3,
+ :normalizedtitle "experiential-data",
+ :number 66,
+ :packquantity 2,
+ :rotated true,
+ :set_code "core",
+ :setname "Core Set",
+ :side "Corp",
+ :text "All ice protecting this server has +1 strength.",
+ :title "Experiential Data",
+ :trash 2,
+ :type "Upgrade",
  :uniqueness false}

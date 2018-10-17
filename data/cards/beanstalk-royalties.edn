@@ -1,19 +1,19 @@
-{:code "01098"
- :cost 0
- :cycle_code "core"
- :faction "Weyland Consortium"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/01098.png"
- :limited 3
- :normalizedtitle "beanstalk-royalties"
- :number 98
- :packquantity 3
- :replaced_by "20090"
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :subtype "Transaction"
- :text "Gain 3[credit]."
- :title "Beanstalk Royalties"
- :type "Operation"
+{:code "20090",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "Weyland Consortium",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_121.png",
+ :limited 3,
+ :normalizedtitle "beanstalk-royalties",
+ :number 121,
+ :packquantity 3,
+ :replaces "01098",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :subtype "Transaction",
+ :text "Gain 3[credit].",
+ :title "Beanstalk Royalties",
+ :type "Operation",
  :uniqueness false}

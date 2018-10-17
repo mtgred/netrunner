@@ -1,20 +1,20 @@
-{:code "02053"
- :cost 0
- :cycle_code "genesis"
- :faction "Jinteki"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/02053.png"
- :limited 3
- :normalizedtitle "edge-of-world"
- :number 53
- :packquantity 3
- :rotated true
- :set_code "ce"
- :setname "Cyber Exodus"
- :side "Corp"
- :subtype "Ambush"
- :text "If Edge of World is installed and you pay 3[credit] when the Runner accesses it, do 1 brain damage for each piece of ice protecting this server."
- :title "Edge of World"
- :trash 0
- :type "Asset"
+{:code "02053",
+ :cost 0,
+ :cycle_code "genesis",
+ :faction "Jinteki",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/02053.png",
+ :limited 3,
+ :normalizedtitle "edge-of-world",
+ :number 53,
+ :packquantity 3,
+ :rotated true,
+ :set_code "ce",
+ :setname "Cyber Exodus",
+ :side "Corp",
+ :subtype "Ambush",
+ :text "If Edge of World is installed and you pay 3[credit] when the Runner accesses it, do 1 brain damage for each piece of ice protecting this server.",
+ :title "Edge of World",
+ :trash 0,
+ :type "Asset",
  :uniqueness false}

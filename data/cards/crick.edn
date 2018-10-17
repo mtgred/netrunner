@@ -1,20 +1,20 @@
-{:code "08034"
- :cost 1
- :cycle_code "sansan"
- :faction "Jinteki"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_34.png"
- :limited 3
- :normalizedtitle "crick"
- :number 34
- :packquantity 3
- :rotated false
- :set_code "bb"
- :setname "Breaker Bay"
- :side "Corp"
- :strength 3
- :subtype "Code Gate"
- :text "Crick has +3 strength while protecting Archives.\n[subroutine] Install a card from Archives (paying its install cost)."
- :title "Crick"
- :type "ICE"
+{:code "08034",
+ :cost 1,
+ :cycle_code "sansan",
+ :faction "Jinteki",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_34.png",
+ :limited 3,
+ :normalizedtitle "crick",
+ :number 34,
+ :packquantity 3,
+ :rotated false,
+ :set_code "bb",
+ :setname "Breaker Bay",
+ :side "Corp",
+ :strength 3,
+ :subtype "Code Gate",
+ :text "Crick has +3 strength while protecting Archives.\n[subroutine] Install a card from Archives (paying its install cost).",
+ :title "Crick",
+ :type "ICE",
  :uniqueness false}

@@ -1,18 +1,18 @@
-{:code "21048"
- :cost 0
- :cycle_code "kitara"
- :faction "Sunny Lebeau"
- :factioncost 5
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_48.png"
- :limited 3
- :normalizedtitle "white-hat"
- :number 48
- :packquantity 3
- :rotated false
- :set_code "cotc"
- :setname "Council of the Crest"
- :side "Runner"
- :text "Play only if you made a successful run on a central server this turn.\nForce the Corp to \"<trace>trace 3</trace> If unsuccessful, reveal all cards in HQ. The Runner may choose up to 2 of the revealed cards. Shuffle those cards into R&D.\""
- :title "White Hat"
- :type "Event"
+{:code "21048",
+ :cost 0,
+ :cycle_code "kitara",
+ :faction "Sunny Lebeau",
+ :factioncost 5,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_48.png",
+ :limited 3,
+ :normalizedtitle "white-hat",
+ :number 48,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cotc",
+ :setname "Council of the Crest",
+ :side "Runner",
+ :text "Play only if you made a successful run on a central server this turn.\nForce the Corp to \"<trace>trace 3</trace> If unsuccessful, reveal all cards in HQ. The Runner may choose up to 2 of the revealed cards. Shuffle those cards into R&D.\"",
+ :title "White Hat",
+ :type "Event",
  :uniqueness false}

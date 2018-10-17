@@ -1,19 +1,19 @@
-{:code "12018"
- :cost 2
- :cycle_code "red-sand"
- :faction "Weyland Consortium"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_18.png"
- :limited 3
- :normalizedtitle "oberth-protocol"
- :number 18
- :packquantity 3
- :rotated false
- :set_code "dc"
- :setname "Daedalus Complex"
- :side "Corp"
- :text "As an additional cost to rez Oberth Protocol, forfeit an agenda.\nThe first time you advance a card in or protecting this server each turn, place an additional advancement token on it."
- :title "Oberth Protocol"
- :trash 2
- :type "Upgrade"
+{:code "12018",
+ :cost 2,
+ :cycle_code "red-sand",
+ :faction "Weyland Consortium",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_18.png",
+ :limited 3,
+ :normalizedtitle "oberth-protocol",
+ :number 18,
+ :packquantity 3,
+ :rotated false,
+ :set_code "dc",
+ :setname "Daedalus Complex",
+ :side "Corp",
+ :text "As an additional cost to rez Oberth Protocol, forfeit an agenda.\nThe first time you advance a card in or protecting this server each turn, place an additional advancement token on it.",
+ :title "Oberth Protocol",
+ :trash 2,
+ :type "Upgrade",
  :uniqueness true}

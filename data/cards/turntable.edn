@@ -1,19 +1,19 @@
-{:code "08043"
- :cost 2
- :cycle_code "sansan"
- :faction "Anarch"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_43.png"
- :limited 3
- :normalizedtitle "turntable"
- :number 43
- :packquantity 3
- :rotated false
- :set_code "cc"
- :setname "Chrome City"
- :side "Runner"
- :subtype "Console"
- :text "+1[mu]\nWhenever you steal an agenda, you may swap that agenda with an agenda in the Corp's score area.\nLimit 1 <strong>console</strong> per player."
- :title "Turntable"
- :type "Hardware"
+{:code "08043",
+ :cost 2,
+ :cycle_code "sansan",
+ :faction "Anarch",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_43.png",
+ :limited 3,
+ :normalizedtitle "turntable",
+ :number 43,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cc",
+ :setname "Chrome City",
+ :side "Runner",
+ :subtype "Console",
+ :text "+1[mu]\nWhenever you steal an agenda, you may swap that agenda with an agenda in the Corp's score area.\nLimit 1 <strong>console</strong> per player.",
+ :title "Turntable",
+ :type "Hardware",
  :uniqueness true}

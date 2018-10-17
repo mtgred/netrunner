@@ -1,18 +1,18 @@
-{:code "08106"
- :cost 0
- :cycle_code "sansan"
- :faction "Shaper"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_106.png"
- :limited 3
- :normalizedtitle "bookmark"
- :number 106
- :packquantity 3
- :rotated false
- :set_code "uot"
- :setname "The Universe of Tomorrow"
- :side "Runner"
- :text "[click]: Host up to 3 cards from your grip facedown on Bookmark (you may look at these cards at any time).\n[click] or [trash]: Add all cards on Bookmark to your grip."
- :title "Bookmark"
- :type "Hardware"
+{:code "08106",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_106.png",
+ :limited 3,
+ :normalizedtitle "bookmark",
+ :number 106,
+ :packquantity 3,
+ :rotated false,
+ :set_code "uot",
+ :setname "The Universe of Tomorrow",
+ :side "Runner",
+ :text "[click]: Host up to 3 cards from your grip facedown on Bookmark (you may look at these cards at any time).\n[click] or [trash]: Add all cards on Bookmark to your grip.",
+ :title "Bookmark",
+ :type "Hardware",
  :uniqueness false}

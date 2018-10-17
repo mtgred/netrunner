@@ -1,20 +1,20 @@
-{:code "05019"
- :cost 6
- :cycle_code "honor-and-profit"
- :faction "Jinteki"
- :factioncost 4
- :image_url "https://netrunnerdb.com/card_image/05019.png"
- :limited 3
- :normalizedtitle "shiro"
- :number 19
- :packquantity 3
- :rotated false
- :set_code "hap"
- :setname "Honor and Profit"
- :side "Corp"
- :strength 5
- :subtype "Code Gate"
- :text "[subroutine] Look at the top 3 cards of R&D and arrange them in any order.\n[subroutine] The Runner accesses the top card of R&D unless the Corp pays 1[credit]."
- :title "Shiro"
- :type "ICE"
+{:code "05019",
+ :cost 6,
+ :cycle_code "honor-and-profit",
+ :faction "Jinteki",
+ :factioncost 4,
+ :image_url "https://netrunnerdb.com/card_image/05019.png",
+ :limited 3,
+ :normalizedtitle "shiro",
+ :number 19,
+ :packquantity 3,
+ :rotated false,
+ :set_code "hap",
+ :setname "Honor and Profit",
+ :side "Corp",
+ :strength 5,
+ :subtype "Code Gate",
+ :text "[subroutine] Look at the top 3 cards of R&D and arrange them in any order.\n[subroutine] The Runner accesses the top card of R&D unless the Corp pays 1[credit].",
+ :title "Shiro",
+ :type "ICE",
  :uniqueness false}

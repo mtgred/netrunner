@@ -1,20 +1,20 @@
-{:code "04059"
- :cost 0
- :cycle_code "spin"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/04059.png"
- :limited 3
- :normalizedtitle "paper-wall"
- :number 59
- :packquantity 3
- :rotated true
- :set_code "mt"
- :setname "Mala Tempora"
- :side "Corp"
- :strength 1
- :subtype "Barrier"
- :text "If all subroutines on Paper Wall are broken during a single encounter, trash Paper Wall.\n[subroutine] End the run."
- :title "Paper Wall"
- :type "ICE"
+{:code "04059",
+ :cost 0,
+ :cycle_code "spin",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/04059.png",
+ :limited 3,
+ :normalizedtitle "paper-wall",
+ :number 59,
+ :packquantity 3,
+ :rotated true,
+ :set_code "mt",
+ :setname "Mala Tempora",
+ :side "Corp",
+ :strength 1,
+ :subtype "Barrier",
+ :text "If all subroutines on Paper Wall are broken during a single encounter, trash Paper Wall.\n[subroutine] End the run.",
+ :title "Paper Wall",
+ :type "ICE",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "06041"
- :cost 0
- :cycle_code "lunar"
- :faction "Haas-Bioroid"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_41.png"
- :limited 3
- :normalizedtitle "iq"
- :number 41
- :packquantity 3
- :rotated false
- :set_code "fc"
- :setname "First Contact"
- :side "Corp"
- :strength 0
- :subtype "Code Gate"
- :text "The rez cost of IQ is increased by 1 for each card in HQ.\nIQ has +1 strength for each card in HQ.\n[subroutine] End the run."
- :title "IQ"
- :type "ICE"
+{:code "06041",
+ :cost 0,
+ :cycle_code "lunar",
+ :faction "Haas-Bioroid",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_41.png",
+ :limited 3,
+ :normalizedtitle "iq",
+ :number 41,
+ :packquantity 3,
+ :rotated false,
+ :set_code "fc",
+ :setname "First Contact",
+ :side "Corp",
+ :strength 0,
+ :subtype "Code Gate",
+ :text "The rez cost of IQ is increased by 1 for each card in HQ.\nIQ has +1 strength for each card in HQ.\n[subroutine] End the run.",
+ :title "IQ",
+ :type "ICE",
  :uniqueness false}

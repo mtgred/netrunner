@@ -1,18 +1,18 @@
-{:advancementcost 5
- :agendapoints 3
- :code "13044"
- :cycle_code "terminal-directive"
- :faction "Weyland Consortium"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_44.png"
- :limited 3
- :normalizedtitle "graft"
- :number 44
- :packquantity 3
- :rotated false
- :set_code "td"
- :setname "Terminal Directive"
- :side "Corp"
- :text "When you score Graft, you may search your deck for up to 3 cards, reveal them, and add them to HQ. Shuffle R&D."
- :title "Graft"
- :type "Agenda"
+{:advancementcost 5,
+ :agendapoints 3,
+ :code "13044",
+ :cycle_code "terminal-directive",
+ :faction "Weyland Consortium",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_44.png",
+ :limited 3,
+ :normalizedtitle "graft",
+ :number 44,
+ :packquantity 3,
+ :rotated false,
+ :set_code "td",
+ :setname "Terminal Directive",
+ :side "Corp",
+ :text "When you score Graft, you may search your deck for up to 3 cards, reveal them, and add them to HQ. Shuffle R&D.",
+ :title "Graft",
+ :type "Agenda",
  :uniqueness false}

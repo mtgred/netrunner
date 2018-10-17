@@ -1,20 +1,20 @@
-{:code "08115"
- :cost 0
- :cycle_code "sansan"
- :faction "NBN"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_115.png"
- :limited 3
- :normalizedtitle "product-placement"
- :number 115
- :packquantity 3
- :rotated false
- :set_code "uot"
- :setname "The Universe of Tomorrow"
- :side "Corp"
- :subtype "Advertisement"
- :text "If the Runner accesses Product Placement from R&D, he or she must reveal it.\nWhen the Runner accesses Product Placement, the Corp gains 2[credit]. Ignore this effect if Product Placement is accessed from Archives."
- :title "Product Placement"
- :trash 2
- :type "Upgrade"
+{:code "08115",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN28_115.png",
+ :limited 3,
+ :normalizedtitle "product-placement",
+ :number 115,
+ :packquantity 3,
+ :rotated false,
+ :set_code "uot",
+ :setname "The Universe of Tomorrow",
+ :side "Corp",
+ :subtype "Advertisement",
+ :text "If the Runner accesses Product Placement from R&D, he or she must reveal it.\nWhen the Runner accesses Product Placement, the Corp gains 2[credit]. Ignore this effect if Product Placement is accessed from Archives.",
+ :title "Product Placement",
+ :trash 2,
+ :type "Upgrade",
  :uniqueness false}

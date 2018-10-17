@@ -1,21 +1,21 @@
-{:code "06099"
- :cost 4
- :cycle_code "lunar"
- :faction "Shaper"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_99.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "cerberus-lady-h1"
- :number 99
- :packquantity 3
- :rotated false
- :set_code "atr"
- :setname "All That Remains"
- :side "Runner"
- :strength 3
- :subtype "Icebreaker - Fracter"
- :text "Place 4 power counters on Cerberus \"Lady\" H1 when it is installed.\n<strong>Hosted power counter:</strong> Break up to 2 <strong>barrier</strong> subroutines.\n1[credit]: +1 strength."
- :title "Cerberus \"Lady\" H1"
- :type "Program"
+{:code "06099",
+ :cost 4,
+ :cycle_code "lunar",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN20_99.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "cerberus-lady-h1",
+ :number 99,
+ :packquantity 3,
+ :rotated false,
+ :set_code "atr",
+ :setname "All That Remains",
+ :side "Runner",
+ :strength 3,
+ :subtype "Icebreaker - Fracter",
+ :text "Place 4 power counters on Cerberus \"Lady\" H1 when it is installed.\n<strong>Hosted power counter:</strong> Break up to 2 <strong>barrier</strong> subroutines.\n1[credit]: +1 strength.",
+ :title "Cerberus \"Lady\" H1",
+ :type "Program",
  :uniqueness false}

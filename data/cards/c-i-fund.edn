@@ -1,19 +1,19 @@
-{:code "11036"
- :cost 0
- :cycle_code "flashpoint"
- :faction "Weyland Consortium"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_36.png"
- :limited 3
- :normalizedtitle "c-i-fund"
- :number 36
- :packquantity 3
- :rotated false
- :set_code "bm"
- :setname "Blood Money"
- :side "Corp"
- :text "When your turn begins, you may move up to 3[credit] from your credit pool to C.I. Fund.\nWhen your turn begins, place 2[credit] on C.I. Fund from the bank if there are at least 6[credit] on it.\n2[credit],[trash]: Take all credits from C.I. Fund."
- :title "C.I. Fund"
- :trash 2
- :type "Asset"
+{:code "11036",
+ :cost 0,
+ :cycle_code "flashpoint",
+ :faction "Weyland Consortium",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_36.png",
+ :limited 3,
+ :normalizedtitle "c-i-fund",
+ :number 36,
+ :packquantity 3,
+ :rotated false,
+ :set_code "bm",
+ :setname "Blood Money",
+ :side "Corp",
+ :text "When your turn begins, you may move up to 3[credit] from your credit pool to C.I. Fund.\nWhen your turn begins, place 2[credit] on C.I. Fund from the bank if there are at least 6[credit] on it.\n2[credit],[trash]: Take all credits from C.I. Fund.",
+ :title "C.I. Fund",
+ :trash 2,
+ :type "Asset",
  :uniqueness false}

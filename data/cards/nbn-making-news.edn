@@ -1,19 +1,19 @@
-{:code "01080"
- :cycle_code "core"
- :faction "NBN"
- :image_url "https://netrunnerdb.com/card_image/01080.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "nbn-making-news"
- :number 80
- :packquantity 1
- :replaced_by "20109"
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :subtype "Megacorp"
- :text "2[recurring-credit]\nUse these credits during trace attempts."
- :title "NBN: Making News"
- :type "Identity"
+{:code "20109",
+ :cycle_code "core2",
+ :faction "NBN",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_93.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "nbn-making-news",
+ :number 93,
+ :packquantity 1,
+ :replaces "01080",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :subtype "Megacorp",
+ :text "2[recurring-credit]\nUse these credits during trace attempts.",
+ :title "NBN: Making News",
+ :type "Identity",
  :uniqueness false}

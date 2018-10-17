@@ -1,19 +1,19 @@
-{:code "20054"
- :cost 0
- :cycle_code "core2"
- :faction "Shaper"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_54.png"
- :limited 3
- :normalizedtitle "sacrificial-construct"
- :number 54
- :packquantity 1
- :replaces "01048"
- :set_code "core2"
- :setname "Revised Core Set"
- :side "Runner"
- :subtype "Remote"
- :text "[trash]: Prevent an installed program or an installed piece of hardware from being trashed."
- :title "Sacrificial Construct"
- :type "Resource"
+{:code "20054",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "Shaper",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_54.png",
+ :limited 3,
+ :normalizedtitle "sacrificial-construct",
+ :number 54,
+ :packquantity 1,
+ :replaces "01048",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :subtype "Remote",
+ :text "[trash]: Prevent an installed program or an installed piece of hardware from being trashed.",
+ :title "Sacrificial Construct",
+ :type "Resource",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "11004"
- :cost 2
- :cycle_code "flashpoint"
- :faction "Criminal"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_4.png"
- :limited 3
- :normalizedtitle "hernando-cortez"
- :number 4
- :packquantity 3
- :rotated false
- :set_code "23s"
- :setname "23 Seconds"
- :side "Runner"
- :subtype "Connection"
- :text "If the Corp has at least 10[credit], as an additional cost to rez each piece of ice, the Corp must spend credits equal to the number of subroutines on that ice."
- :title "Hernando Cortez"
- :type "Resource"
+{:code "11004",
+ :cost 2,
+ :cycle_code "flashpoint",
+ :faction "Criminal",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN36_4.png",
+ :limited 3,
+ :normalizedtitle "hernando-cortez",
+ :number 4,
+ :packquantity 3,
+ :rotated false,
+ :set_code "23s",
+ :setname "23 Seconds",
+ :side "Runner",
+ :subtype "Connection",
+ :text "If the Corp has at least 10[credit], as an additional cost to rez each piece of ice, the Corp must spend credits equal to the number of subroutines on that ice.",
+ :title "Hernando Cortez",
+ :type "Resource",
  :uniqueness true}

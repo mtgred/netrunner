@@ -1,20 +1,20 @@
-{:code "21026"
- :cost 2
- :cycle_code "kitara"
- :faction "Shaper"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_26.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "takobi"
- :number 26
- :packquantity 3
- :rotated false
- :set_code "dtwn"
- :setname "Down the White Nile"
- :side "Runner"
- :strength 0
- :text "Whenever you break all subroutines on a piece of ice during a single encounter, you may place 1 power counter on Takobi.\n<strong>2 hosted power counters</strong>: Choose a non-<strong>AI icebreaker</strong>. That <strong>icebreaker</strong> has +3 strength until the end of the current encounter."
- :title "Takobi"
- :type "Program"
+{:code "21026",
+ :cost 2,
+ :cycle_code "kitara",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN51_26.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "takobi",
+ :number 26,
+ :packquantity 3,
+ :rotated false,
+ :set_code "dtwn",
+ :setname "Down the White Nile",
+ :side "Runner",
+ :strength 0,
+ :text "Whenever you break all subroutines on a piece of ice during a single encounter, you may place 1 power counter on Takobi.\n<strong>2 hosted power counters</strong>: Choose a non-<strong>AI icebreaker</strong>. That <strong>icebreaker</strong> has +3 strength until the end of the current encounter.",
+ :title "Takobi",
+ :type "Program",
  :uniqueness true}

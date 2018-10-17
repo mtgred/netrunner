@@ -1,20 +1,20 @@
-{:code "11077"
- :cost 2
- :cycle_code "flashpoint"
- :faction "Weyland Consortium"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_77.png"
- :limited 3
- :normalizedtitle "chief-slee"
- :number 77
- :packquantity 3
- :rotated false
- :set_code "in"
- :setname "Intervention"
- :side "Corp"
- :subtype "Character"
- :text "Whenever an encounter with a piece of ice ends, place 1 power counter on Chief Slee for each unbroken subroutine on the encountered piece of ice.\n[click], <strong>5 hosted power counters</strong>: Do 5 meat damage."
- :title "Chief Slee"
- :trash 3
- :type "Asset"
+{:code "11077",
+ :cost 2,
+ :cycle_code "flashpoint",
+ :faction "Weyland Consortium",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_77.png",
+ :limited 3,
+ :normalizedtitle "chief-slee",
+ :number 77,
+ :packquantity 3,
+ :rotated false,
+ :set_code "in",
+ :setname "Intervention",
+ :side "Corp",
+ :subtype "Character",
+ :text "Whenever an encounter with a piece of ice ends, place 1 power counter on Chief Slee for each unbroken subroutine on the encountered piece of ice.\n[click], <strong>5 hosted power counters</strong>: Do 5 meat damage.",
+ :title "Chief Slee",
+ :trash 3,
+ :type "Asset",
  :uniqueness true}

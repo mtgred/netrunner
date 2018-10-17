@@ -1,19 +1,19 @@
-{:code "01035"
- :cost 0
- :cycle_code "core"
- :faction "Shaper"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/01035.png"
- :limited 3
- :normalizedtitle "modded"
- :number 35
- :packquantity 2
- :replaced_by "20040"
- :set_code "core"
- :setname "Core Set"
- :side "Runner"
- :subtype "Mod"
- :text "Install a program or piece of hardware, lowering the install cost by 3."
- :title "Modded"
- :type "Event"
+{:code "20040",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_40.png",
+ :limited 3,
+ :normalizedtitle "modded",
+ :number 40,
+ :packquantity 3,
+ :replaces "01035",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :subtype "Mod",
+ :text "Install a program or piece of hardware, lowering the install cost by 3.",
+ :title "Modded",
+ :type "Event",
  :uniqueness false}

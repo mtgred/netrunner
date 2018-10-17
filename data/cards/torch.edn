@@ -1,21 +1,21 @@
-{:code "04047"
- :cost 9
- :cycle_code "spin"
- :faction "Shaper"
- :factioncost 4
- :image_url "https://netrunnerdb.com/card_image/04047.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "torch"
- :number 47
- :packquantity 3
- :rotated true
- :set_code "mt"
- :setname "Mala Tempora"
- :side "Runner"
- :strength 4
- :subtype "Icebreaker - Decoder"
- :text "1[credit]: Break <strong>code gate</strong> subroutine.\n1[credit]: +1 strength."
- :title "Torch"
- :type "Program"
+{:code "04047",
+ :cost 9,
+ :cycle_code "spin",
+ :faction "Shaper",
+ :factioncost 4,
+ :image_url "https://netrunnerdb.com/card_image/04047.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "torch",
+ :number 47,
+ :packquantity 3,
+ :rotated true,
+ :set_code "mt",
+ :setname "Mala Tempora",
+ :side "Runner",
+ :strength 4,
+ :subtype "Icebreaker - Decoder",
+ :text "1[credit]: Break <strong>code gate</strong> subroutine.\n1[credit]: +1 strength.",
+ :title "Torch",
+ :type "Program",
  :uniqueness false}

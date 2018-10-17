@@ -1,19 +1,19 @@
-{:code "21056"
- :cost 3
- :cycle_code "kitara"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_56.png"
- :limited 3
- :normalizedtitle "personalized-portal"
- :number 56
- :packquantity 3
- :rotated false
- :set_code "cotc"
- :setname "Council of the Crest"
- :side "Corp"
- :text "When your turn begins, the Runner draws 1 card, then you may gain 1[credit] for every 2 cards in the grip."
- :title "Personalized Portal"
- :trash 3
- :type "Asset"
+{:code "21056",
+ :cost 3,
+ :cycle_code "kitara",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN52_56.png",
+ :limited 3,
+ :normalizedtitle "personalized-portal",
+ :number 56,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cotc",
+ :setname "Council of the Crest",
+ :side "Corp",
+ :text "When your turn begins, the Runner draws 1 card, then you may gain 1[credit] for every 2 cards in the grip.",
+ :title "Personalized Portal",
+ :trash 3,
+ :type "Asset",
  :uniqueness false}

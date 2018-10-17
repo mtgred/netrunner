@@ -1,20 +1,20 @@
-{:baselink 1
- :code "06017"
- :cycle_code "lunar"
- :faction "Shaper"
- :image_url "https://netrunnerdb.com/card_image/06017.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "nasir-meidan-cyber-explorer"
- :number 17
- :packquantity 3
- :rotated false
- :set_code "up"
- :setname "Upstalk"
- :side "Runner"
- :subtype "Cyborg"
- :text "Whenever you encounter a piece of ice that was just rezzed, lose all credits in your credit pool. Gain credits equal to the rez cost of that ice."
- :title "Nasir Meidan: Cyber Explorer"
- :type "Identity"
+{:baselink 1,
+ :code "06017",
+ :cycle_code "lunar",
+ :faction "Shaper",
+ :image_url "https://netrunnerdb.com/card_image/06017.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "nasir-meidan-cyber-explorer",
+ :number 17,
+ :packquantity 3,
+ :rotated false,
+ :set_code "up",
+ :setname "Upstalk",
+ :side "Runner",
+ :subtype "Cyborg",
+ :text "Whenever you encounter a piece of ice that was just rezzed, lose all credits in your credit pool. Gain credits equal to the rez cost of that ice.",
+ :title "Nasir Meidan: Cyber Explorer",
+ :type "Identity",
  :uniqueness false}

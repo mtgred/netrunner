@@ -1,18 +1,19 @@
-{:advancementcost 3
- :agendapoints 1
- :code "01095"
- :cycle_code "core"
- :faction "Weyland Consortium"
- :image_url "https://netrunnerdb.com/card_image/01095.png"
- :limited 3
- :normalizedtitle "posted-bounty"
- :number 95
- :packquantity 2
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :subtype "Security"
- :text "When you score Posted Bounty, you may forfeit it to give the Runner 1 tag and take 1 bad publicity."
- :title "Posted Bounty"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "01095",
+ :cycle_code "core",
+ :faction "Weyland Consortium",
+ :image_url "https://netrunnerdb.com/card_image/01095.png",
+ :limited 3,
+ :normalizedtitle "posted-bounty",
+ :number 95,
+ :packquantity 2,
+ :rotated true,
+ :set_code "core",
+ :setname "Core Set",
+ :side "Corp",
+ :subtype "Security",
+ :text "When you score Posted Bounty, you may forfeit it to give the Runner 1 tag and take 1 bad publicity.",
+ :title "Posted Bounty",
+ :type "Agenda",
  :uniqueness false}

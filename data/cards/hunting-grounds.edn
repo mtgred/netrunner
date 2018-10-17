@@ -1,19 +1,19 @@
-{:code "09035"
- :cost 2
- :cycle_code "data-and-destiny"
- :faction "Apex"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_35.png"
- :limited 3
- :normalizedtitle "hunting-grounds"
- :number 35
- :packquantity 3
- :rotated false
- :set_code "dad"
- :setname "Data and Destiny"
- :side "Runner"
- :subtype "Location - Virtual"
- :text "Once per turn, prevent a \"when encountered\" ability on a piece of ice.\n[trash]: Install the top 3 cards of your stack facedown."
- :title "Hunting Grounds"
- :type "Resource"
+{:code "09035",
+ :cost 2,
+ :cycle_code "data-and-destiny",
+ :faction "Apex",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_35.png",
+ :limited 3,
+ :normalizedtitle "hunting-grounds",
+ :number 35,
+ :packquantity 3,
+ :rotated false,
+ :set_code "dad",
+ :setname "Data and Destiny",
+ :side "Runner",
+ :subtype "Location - Virtual",
+ :text "Once per turn, prevent a \"when encountered\" ability on a piece of ice.\n[trash]: Install the top 3 cards of your stack facedown.",
+ :title "Hunting Grounds",
+ :type "Resource",
  :uniqueness false}

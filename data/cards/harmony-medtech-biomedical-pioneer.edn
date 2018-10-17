@@ -1,19 +1,19 @@
-{:code "05001"
- :cycle_code "honor-and-profit"
- :faction "Jinteki"
- :image_url "https://netrunnerdb.com/card_image/05001.png"
- :influencelimit 12
- :limited 1
- :minimumdecksize 40
- :normalizedtitle "harmony-medtech-biomedical-pioneer"
- :number 1
- :packquantity 3
- :rotated false
- :set_code "hap"
- :setname "Honor and Profit"
- :side "Corp"
- :subtype "Division"
- :text "Each player needs 1 fewer agenda point to win the game."
- :title "Harmony Medtech: Biomedical Pioneer"
- :type "Identity"
+{:code "05001",
+ :cycle_code "honor-and-profit",
+ :faction "Jinteki",
+ :image_url "https://netrunnerdb.com/card_image/05001.png",
+ :influencelimit 12,
+ :limited 1,
+ :minimumdecksize 40,
+ :normalizedtitle "harmony-medtech-biomedical-pioneer",
+ :number 1,
+ :packquantity 3,
+ :rotated false,
+ :set_code "hap",
+ :setname "Honor and Profit",
+ :side "Corp",
+ :subtype "Division",
+ :text "Each player needs 1 fewer agenda point to win the game.",
+ :title "Harmony Medtech: Biomedical Pioneer",
+ :type "Identity",
  :uniqueness false}

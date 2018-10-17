@@ -1,19 +1,19 @@
-{:code "12075"
- :cost 0
- :cycle_code "red-sand"
- :faction "NBN"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_75.png"
- :limited 3
- :normalizedtitle "traffic-analyzer"
- :number 75
- :packquantity 3
- :rotated false
- :set_code "baw"
- :setname "Blood and Water"
- :side "Corp"
- :text "Whenever you rez a piece of ice protecting this server, <trace>Trace 2</trace> If successful, the Corp gains 1[credit]."
- :title "Traffic Analyzer"
- :trash 3
- :type "Upgrade"
+{:code "12075",
+ :cost 0,
+ :cycle_code "red-sand",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_75.png",
+ :limited 3,
+ :normalizedtitle "traffic-analyzer",
+ :number 75,
+ :packquantity 3,
+ :rotated false,
+ :set_code "baw",
+ :setname "Blood and Water",
+ :side "Corp",
+ :text "Whenever you rez a piece of ice protecting this server, <trace>Trace 2</trace> If successful, the Corp gains 1[credit].",
+ :title "Traffic Analyzer",
+ :trash 3,
+ :type "Upgrade",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:advancementcost 5
- :agendapoints 3
- :code "02016"
- :cycle_code "genesis"
- :faction "NBN"
- :image_url "https://netrunnerdb.com/card_image/02016.png"
- :limited 3
- :normalizedtitle "restructured-datapool"
- :number 16
- :packquantity 3
- :rotated true
- :set_code "wla"
- :setname "What Lies Ahead"
- :side "Corp"
- :subtype "Initiative"
- :text "[click]: <trace>Trace 2</trace> If successful, give the Runner 1 tag."
- :title "Restructured Datapool"
- :type "Agenda"
+{:advancementcost 5,
+ :agendapoints 3,
+ :code "02016",
+ :cycle_code "genesis",
+ :faction "NBN",
+ :image_url "https://netrunnerdb.com/card_image/02016.png",
+ :limited 3,
+ :normalizedtitle "restructured-datapool",
+ :number 16,
+ :packquantity 3,
+ :rotated true,
+ :set_code "wla",
+ :setname "What Lies Ahead",
+ :side "Corp",
+ :subtype "Initiative",
+ :text "[click]: <trace>Trace 2</trace> If successful, give the Runner 1 tag.",
+ :title "Restructured Datapool",
+ :type "Agenda",
  :uniqueness false}

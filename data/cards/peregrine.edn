@@ -1,21 +1,21 @@
-{:code "11044"
- :cost 5
- :cycle_code "flashpoint"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_44.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "peregrine"
- :number 44
- :packquantity 3
- :rotated false
- :set_code "es"
- :setname "Escalation"
- :side "Runner"
- :strength 2
- :subtype "Icebreaker - Decoder"
- :text "1[credit]: Break <strong>code gate</strong> subroutine.\n3[credit]: +3 strength.\n2[credit], <strong>return Peregrine to your grip</strong>: Derez a <strong>code gate</strong>. Use this ability only after using Peregrine to break all the subroutines on that <strong>code gate</strong> during a single encounter."
- :title "Peregrine"
- :type "Program"
+{:code "11044",
+ :cost 5,
+ :cycle_code "flashpoint",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN38_44.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "peregrine",
+ :number 44,
+ :packquantity 3,
+ :rotated false,
+ :set_code "es",
+ :setname "Escalation",
+ :side "Runner",
+ :strength 2,
+ :subtype "Icebreaker - Decoder",
+ :text "1[credit]: Break <strong>code gate</strong> subroutine.\n3[credit]: +3 strength.\n2[credit], <strong>return Peregrine to your grip</strong>: Derez a <strong>code gate</strong>. Use this ability only after using Peregrine to break all the subroutines on that <strong>code gate</strong> during a single encounter.",
+ :title "Peregrine",
+ :type "Program",
  :uniqueness false}

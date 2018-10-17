@@ -1,19 +1,19 @@
-{:code "22023"
- :cost 1
- :cycle_code "reign-and-reverie"
- :faction "Apex"
- :factioncost 5
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_23.png"
- :limited 3
- :normalizedtitle "reboot"
- :number 23
- :packquantity 3
- :rotated false
- :set_code "rar"
- :setname "Reign and Reverie"
- :side "Runner"
- :subtype "Run"
- :text "Make a run on Archives. If successful, instead of accessing cards, install up to 5 cards from your heap facedown. Remove Reboot from the game instead of trashing it."
- :title "Reboot"
- :type "Event"
+{:code "22023",
+ :cost 1,
+ :cycle_code "reign-and-reverie",
+ :faction "Apex",
+ :factioncost 5,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_23.png",
+ :limited 3,
+ :normalizedtitle "reboot",
+ :number 23,
+ :packquantity 3,
+ :rotated false,
+ :set_code "rar",
+ :setname "Reign and Reverie",
+ :side "Runner",
+ :subtype "Run",
+ :text "Make a run on Archives. If successful, instead of accessing cards, install up to 5 cards from your heap facedown. Remove Reboot from the game instead of trashing it.",
+ :title "Reboot",
+ :type "Event",
  :uniqueness false}

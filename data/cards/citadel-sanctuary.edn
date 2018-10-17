@@ -1,19 +1,19 @@
-{:code "11070"
- :cost 2
- :cycle_code "flashpoint"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_70.png"
- :limited 3
- :normalizedtitle "citadel-sanctuary"
- :number 70
- :packquantity 3
- :rotated false
- :set_code "in"
- :setname "Intervention"
- :side "Runner"
- :subtype "Location"
- :text "If you are tagged when your turn ends, force the Corp to \"<trace>Trace 1</trace> If unsuccessful, the Runner removes 1 tag.\"\n[trash],<strong>trash all cards in your grip:</strong> Prevent all meat damage."
- :title "Citadel Sanctuary"
- :type "Resource"
+{:code "11070",
+ :cost 2,
+ :cycle_code "flashpoint",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN39_70.png",
+ :limited 3,
+ :normalizedtitle "citadel-sanctuary",
+ :number 70,
+ :packquantity 3,
+ :rotated false,
+ :set_code "in",
+ :setname "Intervention",
+ :side "Runner",
+ :subtype "Location",
+ :text "If you are tagged when your turn ends, force the Corp to \"<trace>Trace 1</trace> If unsuccessful, the Runner removes 1 tag.\"\n[trash],<strong>trash all cards in your grip:</strong> Prevent all meat damage.",
+ :title "Citadel Sanctuary",
+ :type "Resource",
  :uniqueness true}

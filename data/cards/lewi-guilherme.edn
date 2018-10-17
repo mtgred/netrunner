@@ -1,19 +1,19 @@
-{:code "21005"
- :cost 0
- :cycle_code "kitara"
- :faction "Criminal"
- :factioncost 4
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_5.png"
- :limited 3
- :normalizedtitle "lewi-guilherme"
- :number 5
- :packquantity 3
- :rotated false
- :set_code "ss"
- :setname "Sovereign Sight"
- :side "Runner"
- :subtype "Connection"
- :text "When your turn begins, either lose 1[credit] or trash Lewi Guilherme.\nThe Corp's maximum hand size is reduced by 1."
- :title "Lewi Guilherme"
- :type "Resource"
+{:code "21005",
+ :cost 0,
+ :cycle_code "kitara",
+ :faction "Criminal",
+ :factioncost 4,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN50_5.png",
+ :limited 3,
+ :normalizedtitle "lewi-guilherme",
+ :number 5,
+ :packquantity 3,
+ :rotated false,
+ :set_code "ss",
+ :setname "Sovereign Sight",
+ :side "Runner",
+ :subtype "Connection",
+ :text "When your turn begins, either lose 1[credit] or trash Lewi Guilherme.\nThe Corp's maximum hand size is reduced by 1.",
+ :title "Lewi Guilherme",
+ :type "Resource",
  :uniqueness true}

@@ -1,20 +1,20 @@
-{:code "22039"
- :cost 2
- :cycle_code "reign-and-reverie"
- :faction "Jinteki"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_39.png"
- :limited 3
- :normalizedtitle "thimblerig"
- :number 39
- :packquantity 3
- :rotated false
- :set_code "rar"
- :setname "Reign and Reverie"
- :side "Corp"
- :strength 0
- :subtype "Code Gate"
- :text "When your turn begins or whenever the Runner passes Thimblerig, you may swap Thimblerig with another installed piece of ice.\n[subroutine] End the run."
- :title "Thimblerig"
- :type "ICE"
+{:code "22039",
+ :cost 2,
+ :cycle_code "reign-and-reverie",
+ :faction "Jinteki",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_39.png",
+ :limited 3,
+ :normalizedtitle "thimblerig",
+ :number 39,
+ :packquantity 3,
+ :rotated false,
+ :set_code "rar",
+ :setname "Reign and Reverie",
+ :side "Corp",
+ :strength 0,
+ :subtype "Code Gate",
+ :text "When your turn begins or whenever the Runner passes Thimblerig, you may swap Thimblerig with another installed piece of ice.\n[subroutine] End the run.",
+ :title "Thimblerig",
+ :type "ICE",
  :uniqueness false}

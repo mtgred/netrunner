@@ -1,19 +1,19 @@
-{:code "01021"
- :cost 2
- :cycle_code "core"
- :faction "Criminal"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/01021.png"
- :limited 3
- :normalizedtitle "inside-job"
- :number 21
- :packquantity 3
- :replaced_by "20023"
- :set_code "core"
- :setname "Core Set"
- :side "Runner"
- :subtype "Run"
- :text "Make a run. Bypass the first piece of ice encountered during this run."
- :title "Inside Job"
- :type "Event"
+{:code "20023",
+ :cost 2,
+ :cycle_code "core2",
+ :faction "Criminal",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_23.png",
+ :limited 3,
+ :normalizedtitle "inside-job",
+ :number 23,
+ :packquantity 2,
+ :replaces "01021",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :subtype "Run",
+ :text "Make a run. Bypass the first piece of ice encountered during this run.",
+ :title "Inside Job",
+ :type "Event",
  :uniqueness false}

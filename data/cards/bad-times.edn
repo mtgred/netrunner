@@ -1,19 +1,19 @@
-{:code "06012"
- :cost 4
- :cycle_code "lunar"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/06012.png"
- :limited 3
- :normalizedtitle "bad-times"
- :number 12
- :packquantity 3
- :rotated false
- :set_code "up"
- :setname "Upstalk"
- :side "Corp"
- :subtype "Gray Ops"
- :text "Play only if the Runner is tagged.\nThe Runner's memory limit is reduced by 2 until the end of the turn."
- :title "Bad Times"
- :type "Operation"
+{:code "06012",
+ :cost 4,
+ :cycle_code "lunar",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/06012.png",
+ :limited 3,
+ :normalizedtitle "bad-times",
+ :number 12,
+ :packquantity 3,
+ :rotated false,
+ :set_code "up",
+ :setname "Upstalk",
+ :side "Corp",
+ :subtype "Gray Ops",
+ :text "Play only if the Runner is tagged.\nThe Runner's memory limit is reduced by 2 until the end of the turn.",
+ :title "Bad Times",
+ :type "Operation",
  :uniqueness false}

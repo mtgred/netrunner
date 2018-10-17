@@ -1,20 +1,20 @@
-{:code "06047"
- :cost 2
- :cycle_code "lunar"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_47.png"
- :limited 3
- :normalizedtitle "wendigo"
- :number 47
- :packquantity 3
- :rotated false
- :set_code "fc"
- :setname "First Contact"
- :side "Corp"
- :strength 4
- :subtype "Code Gate - Morph"
- :text "Wendigo can be advanced.\nWhile Wendigo has an odd number of advancement tokens on it, it gains <strong>barrier</strong> and loses <strong>code gate</strong>.\n[subroutine] Choose a program.  The Runner cannot use the chosen program for the remainder of this run."
- :title "Wendigo"
- :type "ICE"
+{:code "06047",
+ :cost 2,
+ :cycle_code "lunar",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN18_47.png",
+ :limited 3,
+ :normalizedtitle "wendigo",
+ :number 47,
+ :packquantity 3,
+ :rotated false,
+ :set_code "fc",
+ :setname "First Contact",
+ :side "Corp",
+ :strength 4,
+ :subtype "Code Gate - Morph",
+ :text "Wendigo can be advanced.\nWhile Wendigo has an odd number of advancement tokens on it, it gains <strong>barrier</strong> and loses <strong>code gate</strong>.\n[subroutine] Choose a program.  The Runner cannot use the chosen program for the remainder of this run.",
+ :title "Wendigo",
+ :type "ICE",
  :uniqueness false}

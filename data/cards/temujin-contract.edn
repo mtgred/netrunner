@@ -1,19 +1,19 @@
-{:code "11026"
- :cost 4
- :cycle_code "flashpoint"
- :faction "Criminal"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_26.png"
- :limited 3
- :normalizedtitle "temujin-contract"
- :number 26
- :packquantity 3
- :rotated false
- :set_code "bm"
- :setname "Blood Money"
- :side "Runner"
- :subtype "Job"
- :text "Choose a server and place 20[credit] from the bank on Temüjin Contract when you install it. When there are no credits left on Temüjin Contract, trash it.\nWhenever you make a successful run on the chosen server, take 4[credit] from Temüjin Contract."
- :title "Temüjin Contract"
- :type "Resource"
+{:code "11026",
+ :cost 4,
+ :cycle_code "flashpoint",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_26.png",
+ :limited 3,
+ :normalizedtitle "temujin-contract",
+ :number 26,
+ :packquantity 3,
+ :rotated false,
+ :set_code "bm",
+ :setname "Blood Money",
+ :side "Runner",
+ :subtype "Job",
+ :text "Choose a server and place 20[credit] from the bank on Temüjin Contract when you install it. When there are no credits left on Temüjin Contract, trash it.\nWhenever you make a successful run on the chosen server, take 4[credit] from Temüjin Contract.",
+ :title "Temüjin Contract",
+ :type "Resource",
  :uniqueness true}

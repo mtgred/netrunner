@@ -1,20 +1,20 @@
-{:code "03027"
- :cost 4
- :cycle_code "creation-and-control"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/03027.png"
- :limited 3
- :normalizedtitle "datapike"
- :number 27
- :packquantity 3
- :rotated false
- :set_code "cac"
- :setname "Creation and Control"
- :side "Corp"
- :strength 2
- :subtype "Code Gate"
- :text "[subroutine] The Runner must pay 2[credit], if able. If the Runner cannot pay 2[credit], end the run.\n[subroutine] End the run."
- :title "Datapike"
- :type "ICE"
+{:code "03027",
+ :cost 4,
+ :cycle_code "creation-and-control",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/03027.png",
+ :limited 3,
+ :normalizedtitle "datapike",
+ :number 27,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cac",
+ :setname "Creation and Control",
+ :side "Corp",
+ :strength 2,
+ :subtype "Code Gate",
+ :text "[subroutine] The Runner must pay 2[credit], if able. If the Runner cannot pay 2[credit], end the run.\n[subroutine] End the run.",
+ :title "Datapike",
+ :type "ICE",
  :uniqueness false}

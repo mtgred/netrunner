@@ -1,20 +1,20 @@
-{:advancementcost 4
- :agendapoints 2
- :code "02120"
- :cycle_code "genesis"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/02120.png"
- :limited 3
- :normalizedtitle "corporate-war"
- :number 120
- :packquantity 3
- :rotated true
- :set_code "fp"
- :setname "Future Proof"
- :side "Corp"
- :subtype "Expansion"
- :text "If you have at least 7[credit] when you score Corporate War, gain 7[credit]; otherwise, lose all credits in your credit pool."
- :title "Corporate War"
- :type "Agenda"
+{:advancementcost 4,
+ :agendapoints 2,
+ :code "02120",
+ :cycle_code "genesis",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/02120.png",
+ :limited 3,
+ :normalizedtitle "corporate-war",
+ :number 120,
+ :packquantity 3,
+ :rotated true,
+ :set_code "fp",
+ :setname "Future Proof",
+ :side "Corp",
+ :subtype "Expansion",
+ :text "If you have at least 7[credit] when you score Corporate War, gain 7[credit]; otherwise, lose all credits in your credit pool.",
+ :title "Corporate War",
+ :type "Agenda",
  :uniqueness false}

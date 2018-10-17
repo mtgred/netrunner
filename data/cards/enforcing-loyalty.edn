@@ -1,20 +1,20 @@
-{:code "11033"
- :cost 2
- :cycle_code "flashpoint"
- :faction "Jinteki"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_33.png"
- :limited 3
- :normalizedtitle "enforcing-loyalty"
- :number 33
- :packquantity 3
- :rotated false
- :set_code "bm"
- :setname "Blood Money"
- :side "Corp"
- :subtype "Double - Gray Ops"
- :text "As an additional cost to play this operation, spend [click].\n<trace>Trace 3</trace> If successful, trash an installed card that does not match the faction of the Runner's identity."
- :title "Enforcing Loyalty"
- :trash 1
- :type "Operation"
+{:code "11033",
+ :cost 2,
+ :cycle_code "flashpoint",
+ :faction "Jinteki",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_33.png",
+ :limited 3,
+ :normalizedtitle "enforcing-loyalty",
+ :number 33,
+ :packquantity 3,
+ :rotated false,
+ :set_code "bm",
+ :setname "Blood Money",
+ :side "Corp",
+ :subtype "Double - Gray Ops",
+ :text "As an additional cost to play this operation, spend [click].\n<trace>Trace 3</trace> If successful, trash an installed card that does not match the faction of the Runner's identity.",
+ :title "Enforcing Loyalty",
+ :trash 1,
+ :type "Operation",
  :uniqueness false}

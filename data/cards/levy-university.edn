@@ -1,20 +1,20 @@
-{:code "03024"
- :cost 3
- :cycle_code "creation-and-control"
- :faction "Neutral"
- :factioncost 0
- :image_url "https://netrunnerdb.com/card_image/03024.png"
- :limited 3
- :normalizedtitle "levy-university"
- :number 24
- :packquantity 3
- :rotated false
- :set_code "cac"
- :setname "Creation and Control"
- :side "Corp"
- :subtype "Ritzy"
- :text "[click], 1[credit]: Search R&D for a piece of ice, reveal it, and add it to HQ. Shuffle R&D."
- :title "Levy University"
- :trash 1
- :type "Asset"
+{:code "03024",
+ :cost 3,
+ :cycle_code "creation-and-control",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "https://netrunnerdb.com/card_image/03024.png",
+ :limited 3,
+ :normalizedtitle "levy-university",
+ :number 24,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cac",
+ :setname "Creation and Control",
+ :side "Corp",
+ :subtype "Ritzy",
+ :text "[click], 1[credit]: Search R&D for a piece of ice, reveal it, and add it to HQ. Shuffle R&D.",
+ :title "Levy University",
+ :trash 1,
+ :type "Asset",
  :uniqueness true}

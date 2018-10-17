@@ -1,20 +1,20 @@
-{:code "20123"
- :cost 0
- :cycle_code "core2"
- :faction "NBN"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_107.png"
- :limited 3
- :normalizedtitle "bernice-mai"
- :number 107
- :packquantity 1
- :replaces "02097"
- :set_code "core2"
- :setname "Revised Core Set"
- :side "Corp"
- :subtype "Sysop"
- :text "Whenever there is a successful run on this server, <trace>trace 5</trace> if successful, give the Runner 1 tag. If unsuccessful, trash Bernice Mai."
- :title "Bernice Mai"
- :trash 3
- :type "Upgrade"
+{:code "20123",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_107.png",
+ :limited 3,
+ :normalizedtitle "bernice-mai",
+ :number 107,
+ :packquantity 1,
+ :replaces "02097",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :subtype "Sysop",
+ :text "Whenever there is a successful run on this server, <trace>trace 5</trace> if successful, give the Runner 1 tag. If unsuccessful, trash Bernice Mai.",
+ :title "Bernice Mai",
+ :trash 3,
+ :type "Upgrade",
  :uniqueness true}

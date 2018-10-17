@@ -1,20 +1,20 @@
-{:code "12050"
- :cost 4
- :cycle_code "red-sand"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_50.png"
- :limited 3
- :normalizedtitle "next-opal"
- :number 50
- :packquantity 3
- :rotated false
- :set_code "eas"
- :setname "Earth's Scion"
- :side "Corp"
- :strength 3
- :subtype "Code Gate - Observer - NEXT"
- :text "NEXT Opal gains \"[subroutine] You may install 1 card from HQ, paying all costs.\" for each rezzed piece of <strong>NEXT</strong> ice.\n<errata>Errata from FAQ 4.1</errata>"
- :title "NEXT Opal"
- :type "ICE"
+{:code "12050",
+ :cost 4,
+ :cycle_code "red-sand",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN45_50.png",
+ :limited 3,
+ :normalizedtitle "next-opal",
+ :number 50,
+ :packquantity 3,
+ :rotated false,
+ :set_code "eas",
+ :setname "Earth's Scion",
+ :side "Corp",
+ :strength 3,
+ :subtype "Code Gate - Observer - NEXT",
+ :text "NEXT Opal gains \"[subroutine] You may install 1 card from HQ, paying all costs.\" for each rezzed piece of <strong>NEXT</strong> ice.\n<errata>Errata from FAQ 4.1</errata>",
+ :title "NEXT Opal",
+ :type "ICE",
  :uniqueness false}

@@ -1,20 +1,19 @@
-{:code "02106"
- :cost 0
- :cycle_code "genesis"
- :faction "Shaper"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/02106.png"
- :limited 3
- :normalizedtitle "indexing"
- :number 106
- :packquantity 3
- :replaced_by "20039"
- :rotated true
- :set_code "fp"
- :setname "Future Proof"
- :side "Runner"
- :subtype "Run"
- :text "Make a run on R&D. If successful, instead of accessing cards you may look at the top 5 cards of R&D and arrange them in any order."
- :title "Indexing"
- :type "Event"
+{:code "20039",
+ :cost 0,
+ :cycle_code "core2",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_39.png",
+ :limited 3,
+ :normalizedtitle "indexing",
+ :number 39,
+ :packquantity 2,
+ :replaces "02106",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Runner",
+ :subtype "Run",
+ :text "Make a run on R&D. If successful, instead of accessing cards you may look at the top 5 cards of R&D and arrange them in any order.",
+ :title "Indexing",
+ :type "Event",
  :uniqueness false}

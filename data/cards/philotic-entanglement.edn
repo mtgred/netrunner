@@ -1,19 +1,19 @@
-{:advancementcost 3
- :agendapoints 2
- :code "05006"
- :cycle_code "honor-and-profit"
- :faction "Jinteki"
- :image_url "https://netrunnerdb.com/card_image/05006.png"
- :limited 1
- :normalizedtitle "philotic-entanglement"
- :number 6
- :packquantity 3
- :rotated false
- :set_code "hap"
- :setname "Honor and Profit"
- :side "Corp"
- :subtype "Security"
- :text "When you score Philotic Entanglement, do 1 net damage for each agenda in the Runner's score area.\nLimit 1 Philotic Entanglement per deck."
- :title "Philotic Entanglement"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 2,
+ :code "05006",
+ :cycle_code "honor-and-profit",
+ :faction "Jinteki",
+ :image_url "https://netrunnerdb.com/card_image/05006.png",
+ :limited 1,
+ :normalizedtitle "philotic-entanglement",
+ :number 6,
+ :packquantity 3,
+ :rotated false,
+ :set_code "hap",
+ :setname "Honor and Profit",
+ :side "Corp",
+ :subtype "Security",
+ :text "When you score Philotic Entanglement, do 1 net damage for each agenda in the Runner's score area.\nLimit 1 Philotic Entanglement per deck.",
+ :title "Philotic Entanglement",
+ :type "Agenda",
  :uniqueness true}

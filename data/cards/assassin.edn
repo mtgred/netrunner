@@ -1,20 +1,20 @@
-{:code "09028"
- :cost 7
- :cycle_code "data-and-destiny"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_28.png"
- :limited 3
- :normalizedtitle "assassin"
- :number 28
- :packquantity 3
- :rotated false
- :set_code "dad"
- :setname "Data and Destiny"
- :side "Corp"
- :strength 5
- :subtype "Sentry - Destroyer - AP - Tracer"
- :text "[subroutine] <trace>Trace 5</trace> If successful, do 3 net damage.\n[subroutine] <trace>Trace 4</trace> If successful, trash 1 program."
- :title "Assassin"
- :type "ICE"
+{:code "09028",
+ :cost 7,
+ :cycle_code "data-and-destiny",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN29_28.png",
+ :limited 3,
+ :normalizedtitle "assassin",
+ :number 28,
+ :packquantity 3,
+ :rotated false,
+ :set_code "dad",
+ :setname "Data and Destiny",
+ :side "Corp",
+ :strength 5,
+ :subtype "Sentry - Destroyer - AP - Tracer",
+ :text "[subroutine] <trace>Trace 5</trace> If successful, do 3 net damage.\n[subroutine] <trace>Trace 4</trace> If successful, trash 1 program.",
+ :title "Assassin",
+ :type "ICE",
  :uniqueness false}

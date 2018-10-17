@@ -1,19 +1,19 @@
-{:code "10007"
- :cost 3
- :cycle_code "mumbad"
- :faction "Shaper"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_7.png"
- :limited 3
- :normalizedtitle "maya"
- :number 7
- :packquantity 3
- :rotated false
- :set_code "kg"
- :setname "Kala Ghoda"
- :side "Runner"
- :subtype "Console"
- :text " +2[mu]\nOnce per turn, immediately after you access a card from R&D, you may add that card to the bottom of R&D. If you do, take 1 tag.\nLimit 1 <strong>console</strong> per player."
- :title "Maya"
- :type "Hardware"
+{:code "10007",
+ :cost 3,
+ :cycle_code "mumbad",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_7.png",
+ :limited 3,
+ :normalizedtitle "maya",
+ :number 7,
+ :packquantity 3,
+ :rotated false,
+ :set_code "kg",
+ :setname "Kala Ghoda",
+ :side "Runner",
+ :subtype "Console",
+ :text " +2[mu]\nOnce per turn, immediately after you access a card from R&D, you may add that card to the bottom of R&D. If you do, take 1 tag.\nLimit 1 <strong>console</strong> per player.",
+ :title "Maya",
+ :type "Hardware",
  :uniqueness true}

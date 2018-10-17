@@ -1,20 +1,20 @@
-{:code "04050"
- :cost 0
- :cycle_code "spin"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/04050.png"
- :limited 3
- :normalizedtitle "isabel-mcguire"
- :number 50
- :packquantity 3
- :rotated true
- :set_code "mt"
- :setname "Mala Tempora"
- :side "Corp"
- :subtype "Executive"
- :text "[click]: Add 1 of your installed cards to HQ."
- :title "Isabel McGuire"
- :trash 3
- :type "Asset"
+{:code "04050",
+ :cost 0,
+ :cycle_code "spin",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/04050.png",
+ :limited 3,
+ :normalizedtitle "isabel-mcguire",
+ :number 50,
+ :packquantity 3,
+ :rotated true,
+ :set_code "mt",
+ :setname "Mala Tempora",
+ :side "Corp",
+ :subtype "Executive",
+ :text "[click]: Add 1 of your installed cards to HQ.",
+ :title "Isabel McGuire",
+ :trash 3,
+ :type "Asset",
  :uniqueness true}

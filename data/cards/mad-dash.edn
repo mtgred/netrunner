@@ -1,19 +1,19 @@
-{:code "12008"
- :cost 0
- :cycle_code "red-sand"
- :faction "Neutral"
- :factioncost 0
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_8.png"
- :limited 3
- :normalizedtitle "mad-dash"
- :number 8
- :packquantity 3
- :rotated false
- :set_code "dc"
- :setname "Daedalus Complex"
- :side "Runner"
- :subtype "Run"
- :text "Make a run. When this run ends, add Mad Dash to your score area as an agenda worth 1 agenda point if you stole at least 1 agenda during the run; otherwise, suffer 1 meat damage."
- :title "Mad Dash"
- :type "Event"
+{:code "12008",
+ :cost 0,
+ :cycle_code "red-sand",
+ :faction "Neutral",
+ :factioncost 0,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN43_8.png",
+ :limited 3,
+ :normalizedtitle "mad-dash",
+ :number 8,
+ :packquantity 3,
+ :rotated false,
+ :set_code "dc",
+ :setname "Daedalus Complex",
+ :side "Runner",
+ :subtype "Run",
+ :text "Make a run. When this run ends, add Mad Dash to your score area as an agenda worth 1 agenda point if you stole at least 1 agenda during the run; otherwise, suffer 1 meat damage.",
+ :title "Mad Dash",
+ :type "Event",
  :uniqueness false}

@@ -1,20 +1,20 @@
-{:code "10034"
- :cost 0
- :cycle_code "mumbad"
- :faction "NBN"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_34.png"
- :limited 3
- :normalizedtitle "disposable-hq"
- :number 34
- :packquantity 3
- :rotated false
- :set_code "bf"
- :setname "Business First"
- :side "Corp"
- :subtype "Ambush"
- :text "If Disposable HQ is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Disposable HQ, you may add any number of cards from HQ to the bottom of R&D."
- :title "Disposable HQ"
- :trash 5
- :type "Upgrade"
+{:code "10034",
+ :cost 0,
+ :cycle_code "mumbad",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN31_34.png",
+ :limited 3,
+ :normalizedtitle "disposable-hq",
+ :number 34,
+ :packquantity 3,
+ :rotated false,
+ :set_code "bf",
+ :setname "Business First",
+ :side "Corp",
+ :subtype "Ambush",
+ :text "If Disposable HQ is accessed from R&D, the Runner must reveal it.\nWhen the Runner accesses Disposable HQ, you may add any number of cards from HQ to the bottom of R&D.",
+ :title "Disposable HQ",
+ :trash 5,
+ :type "Upgrade",
  :uniqueness false}

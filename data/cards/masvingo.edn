@@ -1,20 +1,20 @@
-{:code "21099"
- :cost 3
- :cycle_code "kitara"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_99.png"
- :limited 3
- :normalizedtitle "masvingo"
- :number 99
- :packquantity 3
- :rotated false
- :set_code "win"
- :setname "Whispers in Nalubaale"
- :side "Corp"
- :strength 3
- :subtype "Barrier"
- :text "Masvingo can be advanced.\nWhen you rez Masvingo, place 1 advancement token on it.\nMasvingo gains \"[subroutine] End the run.\" for each advancement token on it."
- :title "Masvingo"
- :type "ICE"
+{:code "21099",
+ :cost 3,
+ :cycle_code "kitara",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN54_99.png",
+ :limited 3,
+ :normalizedtitle "masvingo",
+ :number 99,
+ :packquantity 3,
+ :rotated false,
+ :set_code "win",
+ :setname "Whispers in Nalubaale",
+ :side "Corp",
+ :strength 3,
+ :subtype "Barrier",
+ :text "Masvingo can be advanced.\nWhen you rez Masvingo, place 1 advancement token on it.\nMasvingo gains \"[subroutine] End the run.\" for each advancement token on it.",
+ :title "Masvingo",
+ :type "ICE",
  :uniqueness false}

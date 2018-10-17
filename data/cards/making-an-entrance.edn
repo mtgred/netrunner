@@ -1,19 +1,19 @@
-{:code "10058"
- :cost 0
- :cycle_code "mumbad"
- :faction "Anarch"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_58.png"
- :limited 3
- :normalizedtitle "making-an-entrance"
- :number 58
- :packquantity 3
- :rotated false
- :set_code "si"
- :setname "Salsette Island"
- :side "Runner"
- :subtype "Priority"
- :text "Play only as your first [click].\nLook at the top 6 cards of your stack. You may trash any of those cards and arrange the rest in any order."
- :title "Making an Entrance"
- :type "Event"
+{:code "10058",
+ :cost 0,
+ :cycle_code "mumbad",
+ :faction "Anarch",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_58.png",
+ :limited 3,
+ :normalizedtitle "making-an-entrance",
+ :number 58,
+ :packquantity 3,
+ :rotated false,
+ :set_code "si",
+ :setname "Salsette Island",
+ :side "Runner",
+ :subtype "Priority",
+ :text "Play only as your first [click].\nLook at the top 6 cards of your stack. You may trash any of those cards and arrange the rest in any order.",
+ :title "Making an Entrance",
+ :type "Event",
  :uniqueness false}

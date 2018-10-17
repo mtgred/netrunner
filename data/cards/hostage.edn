@@ -1,19 +1,19 @@
-{:code "04004"
- :cost 1
- :cycle_code "spin"
- :faction "Criminal"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/04004.png"
- :limited 3
- :normalizedtitle "hostage"
- :number 4
- :packquantity 3
- :rotated true
- :set_code "om"
- :setname "Opening Moves"
- :side "Runner"
- :subtype "Double"
- :text "As an additional cost to play this event, spend [click].\nSearch your stack for a <strong>connection</strong>, reveal it, and add it to your grip. You may install that <strong>connection</strong> (paying its install cost). Shuffle your stack."
- :title "Hostage"
- :type "Event"
+{:code "04004",
+ :cost 1,
+ :cycle_code "spin",
+ :faction "Criminal",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/04004.png",
+ :limited 3,
+ :normalizedtitle "hostage",
+ :number 4,
+ :packquantity 3,
+ :rotated true,
+ :set_code "om",
+ :setname "Opening Moves",
+ :side "Runner",
+ :subtype "Double",
+ :text "As an additional cost to play this event, spend [click].\nSearch your stack for a <strong>connection</strong>, reveal it, and add it to your grip. You may install that <strong>connection</strong> (paying its install cost). Shuffle your stack.",
+ :title "Hostage",
+ :type "Event",
  :uniqueness false}

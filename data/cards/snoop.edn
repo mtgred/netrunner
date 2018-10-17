@@ -1,20 +1,20 @@
-{:code "04056"
- :cost 6
- :cycle_code "spin"
- :faction "NBN"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/04056.png"
- :limited 3
- :normalizedtitle "snoop"
- :number 56
- :packquantity 3
- :rotated true
- :set_code "mt"
- :setname "Mala Tempora"
- :side "Corp"
- :strength 6
- :subtype "Sentry - Tracer"
- :text "When the Runner encounters Snoop, reveal all cards in the Runner's grip.\n<strong>Hosted power counter:</strong> Reveal all cards in the Runner's grip. Trash 1 of those cards.\n[subroutine] <trace>Trace 3</trace> If successful, place 1 power counter on Snoop."
- :title "Snoop"
- :type "ICE"
+{:code "04056",
+ :cost 6,
+ :cycle_code "spin",
+ :faction "NBN",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/04056.png",
+ :limited 3,
+ :normalizedtitle "snoop",
+ :number 56,
+ :packquantity 3,
+ :rotated true,
+ :set_code "mt",
+ :setname "Mala Tempora",
+ :side "Corp",
+ :strength 6,
+ :subtype "Sentry - Tracer",
+ :text "When the Runner encounters Snoop, reveal all cards in the Runner's grip.\n<strong>Hosted power counter:</strong> Reveal all cards in the Runner's grip. Trash 1 of those cards.\n[subroutine] <trace>Trace 3</trace> If successful, place 1 power counter on Snoop.",
+ :title "Snoop",
+ :type "ICE",
  :uniqueness false}

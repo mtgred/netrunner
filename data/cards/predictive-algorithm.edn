@@ -1,19 +1,19 @@
-{:code "08017"
- :cost 0
- :cycle_code "sansan"
- :faction "NBN"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_17.png"
- :limited 3
- :normalizedtitle "predictive-algorithm"
- :number 17
- :packquantity 3
- :rotated false
- :set_code "val"
- :setname "The Valley"
- :side "Corp"
- :subtype "Current"
- :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nAs an additional cost to steal an agenda, the Runner must pay 2[credit]."
- :title "Predictive Algorithm"
- :type "Operation"
+{:code "08017",
+ :cost 0,
+ :cycle_code "sansan",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_17.png",
+ :limited 3,
+ :normalizedtitle "predictive-algorithm",
+ :number 17,
+ :packquantity 3,
+ :rotated false,
+ :set_code "val",
+ :setname "The Valley",
+ :side "Corp",
+ :subtype "Current",
+ :text "This card is not trashed until another <strong>current</strong> is played or an agenda is stolen.\nAs an additional cost to steal an agenda, the Runner must pay 2[credit].",
+ :title "Predictive Algorithm",
+ :type "Operation",
  :uniqueness false}

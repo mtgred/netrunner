@@ -1,18 +1,18 @@
-{:code "10100"
- :cost 0
- :cycle_code "mumbad"
- :faction "Shaper"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_100.png"
- :limited 3
- :normalizedtitle "the-price-of-freedom"
- :number 100
- :packquantity 3
- :rotated false
- :set_code "ftm"
- :setname "Fear the Masses"
- :side "Runner"
- :text "As an additional cost to play this event, trash an installed <strong>connection</strong>.\nThe Corp cannot advance cards during his or her next turn. Remove The Price of Freedom from the game instead of trashing it."
- :title "The Price of Freedom"
- :type "Event"
+{:code "10100",
+ :cost 0,
+ :cycle_code "mumbad",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN35_100.png",
+ :limited 3,
+ :normalizedtitle "the-price-of-freedom",
+ :number 100,
+ :packquantity 3,
+ :rotated false,
+ :set_code "ftm",
+ :setname "Fear the Masses",
+ :side "Runner",
+ :text "As an additional cost to play this event, trash an installed <strong>connection</strong>.\nThe Corp cannot advance cards during his or her next turn. Remove The Price of Freedom from the game instead of trashing it.",
+ :title "The Price of Freedom",
+ :type "Event",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:advancementcost 3
- :agendapoints 1
- :code "10066"
- :cycle_code "mumbad"
- :faction "Haas-Bioroid"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_66.png"
- :limited 3
- :normalizedtitle "personality-profiles"
- :number 66
- :packquantity 3
- :rotated false
- :set_code "si"
- :setname "Salsette Island"
- :side "Corp"
- :subtype "Security"
- :text "Whenever the Runner searches his or her stack or installs a card from his or her heap, he or she must trash a card from his or her grip at random."
- :title "Personality Profiles"
- :type "Agenda"
+{:advancementcost 3,
+ :agendapoints 1,
+ :code "10066",
+ :cycle_code "mumbad",
+ :faction "Haas-Bioroid",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN33_66.png",
+ :limited 3,
+ :normalizedtitle "personality-profiles",
+ :number 66,
+ :packquantity 3,
+ :rotated false,
+ :set_code "si",
+ :setname "Salsette Island",
+ :side "Corp",
+ :subtype "Security",
+ :text "Whenever the Runner searches his or her stack or installs a card from his or her heap, he or she must trash a card from his or her grip at random.",
+ :title "Personality Profiles",
+ :type "Agenda",
  :uniqueness false}

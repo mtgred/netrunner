@@ -1,19 +1,19 @@
-{:code "12086"
- :cost 2
- :cycle_code "red-sand"
- :faction "Shaper"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_86.png"
- :limited 3
- :normalizedtitle "lean-and-mean"
- :number 86
- :packquantity 3
- :rotated false
- :set_code "fm"
- :setname "Free Mars"
- :side "Runner"
- :subtype "Run"
- :text "Make a run. If you have 3 or fewer programs installed, all <strong>icebreakers</strong> have +2 strength during this run."
- :title "Lean and Mean"
- :type "Event"
+{:code "12086",
+ :cost 2,
+ :cycle_code "red-sand",
+ :faction "Shaper",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN47_86.png",
+ :limited 3,
+ :normalizedtitle "lean-and-mean",
+ :number 86,
+ :packquantity 3,
+ :rotated false,
+ :set_code "fm",
+ :setname "Free Mars",
+ :side "Runner",
+ :subtype "Run",
+ :text "Make a run. If you have 3 or fewer programs installed, all <strong>icebreakers</strong> have +2 strength during this run.",
+ :title "Lean and Mean",
+ :type "Event",
  :uniqueness false}

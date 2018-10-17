@@ -1,19 +1,19 @@
-{:code "22026"
- :cycle_code "reign-and-reverie"
- :faction "Haas-Bioroid"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_26.png"
- :influencelimit 15
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "sportsmetal-go-big-or-go-home"
- :number 26
- :packquantity 1
- :rotated false
- :set_code "rar"
- :setname "Reign and Reverie"
- :side "Corp"
- :subtype "Subsidiary"
- :text "Whenever an agenda is scored or stolen, gain 2[credit] or draw 2 cards."
- :title "Sportsmetal: Go Big or Go Home"
- :type "Identity"
+{:code "22026",
+ :cycle_code "reign-and-reverie",
+ :faction "Haas-Bioroid",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_26.png",
+ :influencelimit 15,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "sportsmetal-go-big-or-go-home",
+ :number 26,
+ :packquantity 1,
+ :rotated false,
+ :set_code "rar",
+ :setname "Reign and Reverie",
+ :side "Corp",
+ :subtype "Subsidiary",
+ :text "Whenever an agenda is scored or stolen, gain 2[credit] or draw 2 cards.",
+ :title "Sportsmetal: Go Big or Go Home",
+ :type "Identity",
  :uniqueness false}

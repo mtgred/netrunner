@@ -1,21 +1,21 @@
-{:code "03043"
- :cost 2
- :cycle_code "creation-and-control"
- :faction "Shaper"
- :factioncost 2
- :image_url "https://netrunnerdb.com/card_image/03043.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "chakana"
- :number 43
- :packquantity 3
- :rotated false
- :set_code "cac"
- :setname "Creation and Control"
- :side "Runner"
- :strength 0
- :subtype "Virus"
- :text "Whenever you make a successful run on R&D, place 1 virus counter on Chakana.\nIf there are at least 3 virus counters on Chakana, the advancement requirement of all agendas is increased by 1."
- :title "Chakana"
- :type "Program"
+{:code "03043",
+ :cost 2,
+ :cycle_code "creation-and-control",
+ :faction "Shaper",
+ :factioncost 2,
+ :image_url "https://netrunnerdb.com/card_image/03043.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "chakana",
+ :number 43,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cac",
+ :setname "Creation and Control",
+ :side "Runner",
+ :strength 0,
+ :subtype "Virus",
+ :text "Whenever you make a successful run on R&D, place 1 virus counter on Chakana.\nIf there are at least 3 virus counters on Chakana, the advancement requirement of all agendas is increased by 1.",
+ :title "Chakana",
+ :type "Program",
  :uniqueness false}

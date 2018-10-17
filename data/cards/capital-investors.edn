@@ -1,19 +1,19 @@
-{:code "08018"
- :cost 2
- :cycle_code "sansan"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_18.png"
- :limited 3
- :normalizedtitle "capital-investors"
- :number 18
- :packquantity 3
- :rotated false
- :set_code "val"
- :setname "The Valley"
- :side "Corp"
- :text "[click]: Gain 2[credit]."
- :title "Capital Investors"
- :trash 2
- :type "Asset"
+{:code "08018",
+ :cost 2,
+ :cycle_code "sansan",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN23_18.png",
+ :limited 3,
+ :normalizedtitle "capital-investors",
+ :number 18,
+ :packquantity 3,
+ :rotated false,
+ :set_code "val",
+ :setname "The Valley",
+ :side "Corp",
+ :text "[click]: Gain 2[credit].",
+ :title "Capital Investors",
+ :trash 2,
+ :type "Asset",
  :uniqueness false}

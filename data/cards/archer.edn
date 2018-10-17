@@ -1,20 +1,20 @@
-{:code "20084"
- :cost 4
- :cycle_code "core2"
- :faction "Weyland Consortium"
- :factioncost 2
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_115.png"
- :limited 3
- :normalizedtitle "archer"
- :number 115
- :packquantity 1
- :replaces "01101"
- :set_code "core2"
- :setname "Revised Core Set"
- :side "Corp"
- :strength 6
- :subtype "Sentry - Destroyer"
- :text "As an additional cost to rez Archer, the Corp must forfeit an agenda.\n[subroutine] The Corp gains 2[credit].\n[subroutine] Trash 1 program.\n[subroutine] Trash 1 program.\n[subroutine] End the run."
- :title "Archer"
- :type "ICE"
+{:code "20084",
+ :cost 4,
+ :cycle_code "core2",
+ :faction "Weyland Consortium",
+ :factioncost 2,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_115.png",
+ :limited 3,
+ :normalizedtitle "archer",
+ :number 115,
+ :packquantity 1,
+ :replaces "01101",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :strength 6,
+ :subtype "Sentry - Destroyer",
+ :text "As an additional cost to rez Archer, the Corp must forfeit an agenda.\n[subroutine] The Corp gains 2[credit].\n[subroutine] Trash 1 program.\n[subroutine] Trash 1 program.\n[subroutine] End the run.",
+ :title "Archer",
+ :type "ICE",
  :uniqueness false}

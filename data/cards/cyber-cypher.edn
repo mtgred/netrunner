@@ -1,21 +1,21 @@
-{:code "03044"
- :cost 2
- :cycle_code "creation-and-control"
- :faction "Shaper"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/03044.png"
- :limited 3
- :memoryunits 1
- :normalizedtitle "cyber-cypher"
- :number 44
- :packquantity 3
- :rotated false
- :set_code "cac"
- :setname "Creation and Control"
- :side "Runner"
- :strength 4
- :subtype "Icebreaker - Decoder"
- :text "1[credit]: Break <strong>code gate</strong> subroutine.\n1[credit]: +1 strength.\nWhen you install Cyber-Cypher, choose a server. Cyber-Cypher can only be used during a run on the chosen server."
- :title "Cyber-Cypher"
- :type "Program"
+{:code "03044",
+ :cost 2,
+ :cycle_code "creation-and-control",
+ :faction "Shaper",
+ :factioncost 3,
+ :image_url "https://netrunnerdb.com/card_image/03044.png",
+ :limited 3,
+ :memoryunits 1,
+ :normalizedtitle "cyber-cypher",
+ :number 44,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cac",
+ :setname "Creation and Control",
+ :side "Runner",
+ :strength 4,
+ :subtype "Icebreaker - Decoder",
+ :text "1[credit]: Break <strong>code gate</strong> subroutine.\n1[credit]: +1 strength.\nWhen you install Cyber-Cypher, choose a server. Cyber-Cypher can only be used during a run on the chosen server.",
+ :title "Cyber-Cypher",
+ :type "Program",
  :uniqueness false}

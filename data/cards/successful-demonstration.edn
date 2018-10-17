@@ -1,19 +1,19 @@
-{:code "03014"
- :cost 2
- :cycle_code "creation-and-control"
- :faction "Haas-Bioroid"
- :factioncost 1
- :image_url "https://netrunnerdb.com/card_image/03014.png"
- :limited 3
- :normalizedtitle "successful-demonstration"
- :number 14
- :packquantity 3
- :rotated false
- :set_code "cac"
- :setname "Creation and Control"
- :side "Corp"
- :subtype "Transaction"
- :text "Play only if the Runner made an unsuccessful run during his or her last turn.\nGain 7[credit]."
- :title "Successful Demonstration"
- :type "Operation"
+{:code "03014",
+ :cost 2,
+ :cycle_code "creation-and-control",
+ :faction "Haas-Bioroid",
+ :factioncost 1,
+ :image_url "https://netrunnerdb.com/card_image/03014.png",
+ :limited 3,
+ :normalizedtitle "successful-demonstration",
+ :number 14,
+ :packquantity 3,
+ :rotated false,
+ :set_code "cac",
+ :setname "Creation and Control",
+ :side "Corp",
+ :subtype "Transaction",
+ :text "Play only if the Runner made an unsuccessful run during his or her last turn.\nGain 7[credit].",
+ :title "Successful Demonstration",
+ :type "Operation",
  :uniqueness false}

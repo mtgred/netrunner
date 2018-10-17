@@ -1,20 +1,20 @@
-{:code "01102"
- :cost 10
- :cycle_code "core"
- :faction "Weyland Consortium"
- :factioncost 3
- :image_url "https://netrunnerdb.com/card_image/01102.png"
- :limited 3
- :normalizedtitle "hadrian-s-wall"
- :number 102
- :packquantity 2
- :replaced_by "20086"
- :set_code "core"
- :setname "Core Set"
- :side "Corp"
- :strength 7
- :subtype "Barrier"
- :text "Hadrian's Wall can be advanced and has +1 strength for each advancement token on it.\n[subroutine] End the run.\n[subroutine] End the run."
- :title "Hadrian's Wall"
- :type "ICE"
+{:code "20086",
+ :cost 10,
+ :cycle_code "core2",
+ :faction "Weyland Consortium",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN49_117.png",
+ :limited 3,
+ :normalizedtitle "hadrian-s-wall",
+ :number 117,
+ :packquantity 1,
+ :replaces "01102",
+ :set_code "core2",
+ :setname "Revised Core Set",
+ :side "Corp",
+ :strength 7,
+ :subtype "Barrier",
+ :text "Hadrian's Wall can be advanced and has +1 strength for each advancement token on it.\n[subroutine] End the run.\n[subroutine] End the run.",
+ :title "Hadrian's Wall",
+ :type "ICE",
  :uniqueness false}

@@ -1,19 +1,19 @@
-{:code "12065"
- :cost 2
- :cycle_code "red-sand"
- :faction "Criminal"
- :factioncost 3
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_65.png"
- :limited 3
- :normalizedtitle "keros-mcintyre"
- :number 65
- :packquantity 3
- :rotated false
- :set_code "baw"
- :setname "Blood and Water"
- :side "Runner"
- :subtype "Connection"
- :text "The first time you derez a piece of ice each turn, gain 2[credit]."
- :title "Keros Mcintyre"
- :type "Resource"
+{:code "12065",
+ :cost 2,
+ :cycle_code "red-sand",
+ :faction "Criminal",
+ :factioncost 3,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_65.png",
+ :limited 3,
+ :normalizedtitle "keros-mcintyre",
+ :number 65,
+ :packquantity 3,
+ :rotated false,
+ :set_code "baw",
+ :setname "Blood and Water",
+ :side "Runner",
+ :subtype "Connection",
+ :text "The first time you derez a piece of ice each turn, gain 2[credit].",
+ :title "Keros Mcintyre",
+ :type "Resource",
  :uniqueness true}

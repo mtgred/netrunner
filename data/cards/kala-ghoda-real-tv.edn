@@ -1,20 +1,20 @@
-{:code "10015"
- :cost 0
- :cycle_code "mumbad"
- :faction "NBN"
- :factioncost 1
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_15.png"
- :limited 3
- :normalizedtitle "kala-ghoda-real-tv"
- :number 15
- :packquantity 3
- :rotated false
- :set_code "kg"
- :setname "Kala Ghoda"
- :side "Corp"
- :subtype "Cast"
- :text "When your turn begins, you may look at the top card of the Runner's stack.\n[trash]: The Runner trashes the top card of his or her stack."
- :title "Kala Ghoda Real TV"
- :trash 4
- :type "Asset"
+{:code "10015",
+ :cost 0,
+ :cycle_code "mumbad",
+ :faction "NBN",
+ :factioncost 1,
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN30_15.png",
+ :limited 3,
+ :normalizedtitle "kala-ghoda-real-tv",
+ :number 15,
+ :packquantity 3,
+ :rotated false,
+ :set_code "kg",
+ :setname "Kala Ghoda",
+ :side "Corp",
+ :subtype "Cast",
+ :text "When your turn begins, you may look at the top card of the Runner's stack.\n[trash]: The Runner trashes the top card of his or her stack.",
+ :title "Kala Ghoda Real TV",
+ :trash 4,
+ :type "Asset",
  :uniqueness false}

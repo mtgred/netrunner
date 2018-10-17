@@ -1,20 +1,20 @@
-{:baselink 1
- :code "22015"
- :cycle_code "reign-and-reverie"
- :faction "Shaper"
- :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_15.png"
- :influencelimit 12
- :limited 1
- :minimumdecksize 45
- :normalizedtitle "akiko-nisei-head-case"
- :number 15
- :packquantity 1
- :rotated false
- :set_code "rar"
- :setname "Reign and Reverie"
- :side "Runner"
- :subtype "Clone"
- :text "Whenever you access cards from R&D, you and the Corp secretly spend 0[credit], 1[credit] or 2[credit]. Reveal spent credits. If you and the Corp spent the same number of credits, access 1 additional card from R&D."
- :title "Akiko Nisei: Head Case"
- :type "Identity"
+{:baselink 1,
+ :code "22015",
+ :cycle_code "reign-and-reverie",
+ :faction "Shaper",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN56_15.png",
+ :influencelimit 12,
+ :limited 1,
+ :minimumdecksize 45,
+ :normalizedtitle "akiko-nisei-head-case",
+ :number 15,
+ :packquantity 1,
+ :rotated false,
+ :set_code "rar",
+ :setname "Reign and Reverie",
+ :side "Runner",
+ :subtype "Clone",
+ :text "Whenever you access cards from R&D, you and the Corp secretly spend 0[credit], 1[credit] or 2[credit]. Reveal spent credits. If you and the Corp spent the same number of credits, access 1 additional card from R&D.",
+ :title "Akiko Nisei: Head Case",
+ :type "Identity",
  :uniqueness false}

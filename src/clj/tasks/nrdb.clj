@@ -70,18 +70,14 @@
   "Find the NRDB card edn files and import them."
   [localpath download-images]
   (let [data (download-edn-data localpath)
-        cards (:cards data)
-        zp-settings {:style :community
-                     :map {:comma? false
-                           :force-nl? true}
-                     :width 1000}]
+        cards (:cards data)]
 
     (println "Writing cards")
     (doseq [card cards
             :let [path (:normalizedtitle card)
                   filename (str "data/cards/" path ".edn")]]
       (io/make-parents filename)
-      (spit filename (zp/zprint-str card zp-settings)))
+      (spit filename (zp/zprint-str card)))
     (replace-collection "cards" cards)
 
     (doseq [[k v] data
@@ -90,7 +86,7 @@
                   filename (str "data/" collection ".edn")]]
       (println (str "Writing " filename))
       (io/make-parents filename)
-      (spit filename (zp/zprint-str v zp-settings))
+      (spit filename (zp/zprint-str v))
       (replace-collection collection v))
     (when download-images
       (download-card-images cards))
