@@ -9,6 +9,7 @@
             [clojure.edn :as edn]
             [jinteki.utils :refer [str->int other-side is-tagged?]]
             [jinteki.cards :refer [all-cards]]
+            [tasks.nrdb :refer [replace-collection]]
             [game.quotes :as quotes]))
 
 (load "core/events")    ; triggering of events

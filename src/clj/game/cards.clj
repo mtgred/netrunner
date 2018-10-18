@@ -218,7 +218,8 @@
        (map edn/read-string)
        (map (juxt :title identity))
        (into {})
-       (swap! all-cards merge)))
+       (swap! all-cards merge))
+  (replace-collection "cards" (vals @all-cards)))
 
 (defn load-all-cards
   "Load all card definitions into their own namespaces"

@@ -2,21 +2,22 @@
   (:require [clojure.edn :as edn]
             [clojure.string :as string]
             [clojure.java.io :as io]
-            [web.api :refer [app]]
-            [monger.collection :as mc]
-            [jinteki.cards :as cards]
-            [web.config :refer [frontend-version server-config server-mode]]
-            [web.ws :as ws]
-            [web.db :refer [db]]
-            [web.chat :as chat]
-            [web.lobby :as lobby]
-            [web.game :as game]
-            [web.stats :as stats]
-            [jinteki.nav :as nav]
             [clj-time.format :as f]
+            [hawk.core :as hawk]
+            [monger.collection :as mc]
             [game.core :as core]
             [game.quotes :as quotes]
-            [hawk.core :as hawk])
+            [jinteki.cards :as cards]
+            [jinteki.nav :as nav]
+            [tasks.nrdb :refer [replace-collection]]
+            [web.api :refer [app]]
+            [web.chat :as chat]
+            [web.config :refer [frontend-version server-config server-mode]]
+            [web.db :refer [db]]
+            [web.game :as game]
+            [web.lobby :as lobby]
+            [web.stats :as stats]
+            [web.ws :as ws])
   (:gen-class :main true))
 
 (defonce server (atom nil))
@@ -35,7 +36,9 @@
       (->> (slurp path)
            edn/read-string
            ((juxt :title identity))
-           (swap! cards/all-cards merge)))))
+           (swap! cards/all-cards merge))
+      (replace-collection "cards" (vals @cards/all-cards)))))
+
 
 (defn -main [& args]
   (let [port (or (-> server-config :web :port) 4141)]
