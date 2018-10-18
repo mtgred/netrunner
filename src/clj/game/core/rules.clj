@@ -323,11 +323,10 @@
   ([state side n] (lose-tags state side (make-eid state) n))
   ([state side eid n]
    (if (= n :all)
-     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0 0) (get-in @state [:runner :tag :base]))
-         (swap! state assoc-in [:runner :tag :base] 0))
+     (lose-tags state side eid (get-in @state [:runner :tag :base]))
      (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
-         (deduct state :runner [:tag {:base n}])))
-   (trigger-event-sync state side eid :runner-lose-tag n side)))
+         (deduct state :runner [:tag {:base n}])
+         (trigger-event-sync state side eid :runner-lose-tag n side)))))
 
 
 ;;;; Bad Publicity

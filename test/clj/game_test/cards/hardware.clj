@@ -926,7 +926,18 @@
       (click-prompt state :runner "No action")
       (run-empty-server state "R&D")
       (click-prompt state :runner "No action")
-      (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run"))))
+      (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run")))
+  (testing "works with Paper Tripping"
+    (do-game
+      (new-game {:runner {:deck ["Obelus" "Paper Tripping"]}})
+      (take-credits state :corp)
+      (core/gain-tags state :runner 3)
+      (is (= 3 (count-tags state)) "Runner starts with 3 tags")
+      (play-from-hand state :runner "Obelus")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paper Tripping")
+      (is (zero? (count-tags state)) "Runner loses all tags"))))
 
 (deftest paragon
   ;; Paragon - Gain 1 credit and may look at and move top card of Stack to bottom
