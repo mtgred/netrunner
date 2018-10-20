@@ -12,7 +12,7 @@
  :set_code "draft",
  :setname "Draft",
  :side "Runner",
- :subtype "G-Mod",
+ :subtype "G-mod",
  :text "Draft format only.\nIf you have more [anarch] cards installed than any other faction, whenever you trash a Corp card, shuffle the top card of your heap into your stack.",
  :title "Wyvern: Chemically Enhanced",
  :type "Identity",

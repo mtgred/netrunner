@@ -1,7 +1,7 @@
 {:code "13028",
  :cycle_code "terminal-directive",
  :faction "Haas-Bioroid",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN42_28.png",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN42_28.png",
  :influencelimit 15,
  :limited 1,
  :minimumdecksize 45,
