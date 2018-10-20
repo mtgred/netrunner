@@ -1631,6 +1631,26 @@
     (click-prompt state :runner "HQ")
     (run-successful state)))
 
+(deftest labor-rights
+  ;; Labor Rights - trash 3 cards, shuffle 3 cards from heap->stack, draw 1 card, rfg Labor Rights
+  (do-game
+    (new-game {:runner {:deck ["Labor Rights" "Sure Gamble" "Lawyer Up" "Knifed"]}})
+    (take-credits state :corp)
+    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Lawyer Up" (:hand (get-runner))) :deck)
+    (core/move state :runner (find-card "Knifed" (:hand (get-runner))) :deck)
+    (is (empty? (:discard (get-runner))) "No cards in discard")
+    (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+    (play-from-hand state :runner "Labor Rights")
+    (is (empty? (:deck (get-runner))) "Milled 3 cards")
+    (is (= 4 (count (:discard (get-runner)))) "4 cards in deck - 3x trashed, 1x Labor Rights")
+    (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
+    (click-card state :runner (find-card "Knifed" (:discard (get-runner))))
+    (click-card state :runner (find-card "Lawyer Up" (:discard (get-runner))))
+    (is (= 2 (count (:deck (get-runner)))) "2 cards in deck")
+    (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
+    (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")))
+
 (deftest lawyer-up
   ;; Lawyer Up - Lose 2 tags and draw 3 cards
   (do-game

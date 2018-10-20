@@ -13,7 +13,7 @@
  :set_code "core",
  :setname "Core Set",
  :side "Runner",
- :subtype "G-Mod",
+ :subtype "G-mod",
  :text "Whenever you install a <strong>virus</strong> program, the Corp trashes the top card of R&D.",
  :title "Noise: Hacker Extraordinaire",
  :type "Identity",

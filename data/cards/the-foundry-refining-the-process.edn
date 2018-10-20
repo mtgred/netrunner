@@ -1,7 +1,7 @@
 {:code "06021",
  :cycle_code "lunar",
  :faction "Haas-Bioroid",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN17_21.png",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN17_21.png",
  :influencelimit 15,
  :limited 1,
  :minimumdecksize 45,
