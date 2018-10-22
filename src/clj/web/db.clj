@@ -1,8 +1,6 @@
 (ns web.db
-  (:require [aero.core :refer [read-config]]
-            [monger.core :as mg]
-            [web.config :refer [server-config]]
-            [monger.core :as mc])
+  (:require [monger.core :as mg]
+            [web.config :refer [server-config]])
 
   (:import org.bson.types.ObjectId))
 
@@ -14,7 +12,7 @@
     (defonce db (:db connection))))
 
 (defn disconnect []
-  (mc/disconnect conn))
+  (mg/disconnect conn))
 
 (defn object-id [id]
   (if (string? id)

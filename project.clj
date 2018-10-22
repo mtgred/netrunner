@@ -17,7 +17,7 @@
                  [ring/ring-json "0.4.0"]
                  [compojure "1.6.0"]
                  [hiccup "1.0.5"]
-                 [aero "1.1.2"]
+                 [aero "1.1.3"]
                  [buddy/buddy-sign "2.2.0"]
                  [buddy/buddy-auth "1.4.1"]
                  [crypto-password "0.2.0"]
@@ -59,9 +59,10 @@
 
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
-    ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test and task namespaces.
+  ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test and (most of the) task namespaces.
   :aot [#"game\.*"
         #"web\.*"
+        #"tasks.fetch"
         #"jinteki\.*"]
   :jar-name "netrunner.jar"
   :uberjar-name "netrunner-standalone.jar"
