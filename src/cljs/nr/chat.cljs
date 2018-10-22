@@ -10,8 +10,6 @@
             [nr.ws :as ws]
             [reagent.core :as r]))
 
-(declare fetch-messages)
-
 (defonce chat-state (atom {}))
 
 (def chat-channel (chan))
@@ -194,13 +192,11 @@
             (fn [i item]
               (when (not-empty item) (create-span item))) parts)))]]])))
 
-(defn fetch-messages [s]
-  (let [channel (:channel @s)
-        messages (get-in @app-state [:channels channel])]
-    (when (empty? messages)
-      (go (let [x (<! (GET (str "/messages/" (name channel))))
-                data (:json x)]
-            (update-message-channel channel data))))))
+(defn fetch-all-messages []
+  (doseq [channel (keys (:channels @app-state))]
+    (go (let [x (<! (GET (str "/messages/" (name channel))))
+              data (:json x)]
+          (update-message-channel channel data)))))
 
 (defn chat []
   (let [s (r/atom {:channel :general
@@ -216,14 +212,13 @@
 
        :component-will-mount
        (fn []
-         (fetch-messages s)
+         (fetch-all-messages)
          (go (while true
                (let [card (<! (:zoom-ch @s))]
                  (swap! s assoc :zoom card)))))
 
        :component-did-update
        (fn []
-         (fetch-messages s)
          (when-let [msg-list (:message-list @chat-state)]
            (let [curr-channel (:channel @s)
                  prev-channel (:prev-channel @old)
