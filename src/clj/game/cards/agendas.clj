@@ -1096,7 +1096,8 @@
    {:interactive (req true)
     :optional {:prompt "Search R&D for a piece of ice to install protecting a remote server?"
                :yes-ability
-               {:effect (req (when (not-empty (filter ice? (:deck corp)))
+               {:async true
+                :effect (req (when (not-empty (filter ice? (:deck corp)))
                                (continue-ability
                                  state side
                                  {:async true
