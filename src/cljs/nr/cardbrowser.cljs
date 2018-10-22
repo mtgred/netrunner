@@ -405,9 +405,10 @@
                                                        cycles-filtered)
                                   cycles-list (filter #(not (= (:size %) 1)) cycles-list-all)
                                   sets-filtered (filter-rotated hide-rotated @sets)
-                                  ;; Draft is specified as a cycle, but contains no set, nor is it marked as a bigbox
-                                  ;; so we handled it specifically here for formatting purposes
-                                  sets-list (map #(if (not (or (:bigbox %) (= (:name %) "Draft")))
+                                  sets-list (map #(if (not (or (:bigbox %)
+                                                               (= (:code %) (:cycle_code %))
+                                                               (= (:code %) "mo"))) ;; Unlike other top-level sets, Magnum Opus
+                                                                                    ;; doesn't have a cycle code that matches the set code
                                                     (update-in % [:name] format-pack-name)
                                                     %)
                                                  sets-filtered)
