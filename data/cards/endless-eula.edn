@@ -3,7 +3,7 @@
  :cycle_code "kitara",
  :faction "NBN",
  :factioncost 2,
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN53_74.png",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN53_74.png",
  :limited 3,
  :normalizedtitle "endless-eula",
  :number 74,
@@ -14,8 +14,7 @@
  :side "Corp",
  :strength 0,
  :subtype "Barrier",
- :text
- "[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].",
+ :text "[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].\n[subroutine]End the run unless the Runner pays 1[credit].",
  :title "Endless EULA",
  :type "ICE",
  :uniqueness false}

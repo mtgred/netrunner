@@ -13,6 +13,7 @@
  :set_code "cac",
  :setname "Creation and Control",
  :side "Runner",
+ :strength 0,
  :subtype "Stealth",
  :text "1[recurring-credit]\nUse this credit to pay for using <strong>icebreakers</strong>.",
  :title "Cloak",

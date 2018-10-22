@@ -13,6 +13,7 @@
  :set_code "cac",
  :setname "Creation and Control",
  :side "Runner",
+ :strength 0,
  :text "2[recurring-credit]\nUse these credits to install programs (you cannot use Sahasrara to install a program that trashes Sahasrara).",
  :title "Sahasrara",
  :type "Program",

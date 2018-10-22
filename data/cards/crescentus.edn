@@ -13,6 +13,7 @@
  :set_code "asis",
  :setname "A Study in Static",
  :side "Runner",
+ :strength 0,
  :text "[trash]: Derez a piece of ice. Use this ability only after breaking all the subroutines of that ice during a single encounter.",
  :title "Crescentus",
  :type "Program",

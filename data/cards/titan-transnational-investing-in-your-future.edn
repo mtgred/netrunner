@@ -1,7 +1,7 @@
 {:code "07003",
  :cycle_code "order-and-chaos",
  :faction "Weyland Consortium",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN22_3.png",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN22_3.png",
  :influencelimit 17,
  :limited 1,
  :minimumdecksize 45,

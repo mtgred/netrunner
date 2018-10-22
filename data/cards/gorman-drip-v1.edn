@@ -13,6 +13,7 @@
  :set_code "om",
  :setname "Opening Moves",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "Whenever the Corp spends a [click] to draw 1 card or gain 1[credit] (not through a card ability), place 1 virus counter on Gorman Drip v1.\n[click], [trash]: Gain 1[credit] for each virus counter on Gorman Drip v1.",
  :title "Gorman Drip v1",

@@ -13,6 +13,7 @@
  :set_code "om",
  :setname "Opening Moves",
  :side "Runner",
+ :strength 0,
  :subtype "Caïssa",
  :text "[click]: Host Rook on a piece of ice not hosting a <strong>Caïssa</strong>. If already hosted, Rook can be hosted only on ice protecting this server or on ice in the same position (counting from the innermost spot) protecting another server.\nThe rez cost of each piece of ice protecting this server is increased by 2.",
  :title "Rook",

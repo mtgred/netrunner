@@ -1,7 +1,7 @@
 {:code "08050",
  :cycle_code "sansan",
  :faction "Haas-Bioroid",
- :image_url "https://www.cardgamedb.com/forums/uploads/an/med_ADN25_50.png",
+ :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN25_50.png",
  :influencelimit 15,
  :limited 1,
  :minimumdecksize 40,

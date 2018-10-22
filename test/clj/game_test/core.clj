@@ -1,17 +1,21 @@
 (ns game-test.core
-  (:require [game.core :as core]
-            [game.utils :as utils :refer [make-cid]]
-            [jinteki.cards :refer [all-cards]]
+  (:require [clojure.string :as string]
+            [clojure.edn :as edn]
+            [clojure.java.io :as io]
+            [clojure.test :refer :all]
             [hawk.core :as hawk]
-            [clojure.test :refer :all]))
+            [game.core :as core]
+            [game.utils :as utils :refer [make-cid]]
+            [jinteki.cards :refer [all-cards]]))
 
 ;; Card information and definitions
 (defn load-cards []
-  (->> (clojure.java.io/file "data/cards")
+  (->> (io/file "data/cards")
        file-seq
-       (filter #(.isFile %))
+       (filter #(and (.isFile %)
+                     (string/ends-with? % ".edn")))
        (map slurp)
-       (map read-string)
+       (map edn/read-string)
        merge))
 
 (defn load-all-cards []

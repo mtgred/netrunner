@@ -13,6 +13,7 @@
  :set_code "st",
  :setname "Second Thoughts",
  :side "Runner",
+ :strength 0,
  :subtype "Daemon",
  :text "Scheherazade can host any number of programs.\nWhenever you install a program on Scheherazade, gain 1[credit].",
  :title "Scheherazade",

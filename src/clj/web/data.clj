@@ -16,7 +16,7 @@
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "sets"))))
 
 (defn mwl-handler [req]
-  (response 200 (map #(dissoc % :_id) (mc/find-maps db "mwl"))))
+  (response 200 (map #(dissoc % :_id) (mc/find-maps db "mwls"))))
 
 (defn cycles-handler [req]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "cycles"))))

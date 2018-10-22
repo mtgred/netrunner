@@ -149,18 +149,22 @@
   (apply + (vals (influence-map deck))))
 
 ;; Rotation and MWL
+(defn title->keyword
+  [card]
+  (-> card :normalizedtitle keyword))
+
 (defn banned-cards
   "Returns a list of card codes that are on the MWL banned list"
   []
   (->> (:cards @cards/mwl)
-       (filter (fn [[k v]] (contains? v :deck_limit)))
-       (map key)))
+       (filter (fn [[k v]] (contains? v :deck-limit)))
+       (map key)
+       set))
 
 (defn banned?
   "Returns true if the card is on the MWL banned list"
   [card]
-  (let [banned (banned-cards)]
-    (some #(= (keyword (:code card)) %) banned)))
+  (contains? (banned-cards) (title->keyword card)))
 
 (defn contains-banned-cards
   "Returns true if any of the cards are in the MWL banned list"
@@ -171,14 +175,14 @@
   "Returns a list of card codes that are on the MWL restricted list"
   []
   (->> (:cards @cards/mwl)
-       (filter (fn [[k v]] (contains? v :is_restricted)))
-       (map key)))
+       (filter (fn [[k v]] (contains? v :is-restricted)))
+       (map key)
+       set))
 
 (defn restricted?
   "Returns true if the card is on the MWL restricted list"
   [card]
-  (let [restricted (restricted-cards)]
-    (not= -1 (.indexOf restricted (keyword (:code card))))))
+  (contains? (restricted-cards) (title->keyword card)))
 
 (defn restricted-card-count
   "Returns the number of *types* of restricted cards"

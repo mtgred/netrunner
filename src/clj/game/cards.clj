@@ -207,7 +207,20 @@
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
 
-;; Load all card definitions into the current namespace.
+;; Load all card data and definitions into the current namespace.
+(defn reset-card-data
+  []
+  (->> (io/file "data/cards")
+       file-seq
+       (filter #(and (.isFile %)
+                     (string/ends-with? % ".edn")))
+       (map slurp)
+       (map edn/read-string)
+       (map (juxt :title identity))
+       (into {})
+       (swap! all-cards merge))
+  (replace-collection "cards" (vals @all-cards)))
+
 (defn load-all-cards
   "Load all card definitions into their own namespaces"
   ([] (load-all-cards nil))
@@ -215,8 +228,8 @@
    (doall (pmap load-file
                 (->> (io/file (str "src/clj/game/cards" (when path (str "/" path ".clj"))))
                      (file-seq)
-                     (filter #(.isFile %))
-                     (filter #(clojure.string/ends-with? (.getPath %) ".clj"))
+                     (filter #(and (.isFile %)
+                                   (string/ends-with? % ".clj")))
                      (map str))))))
 
 (defn get-card-defs

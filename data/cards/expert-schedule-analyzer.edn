@@ -13,6 +13,7 @@
  :set_code "mt",
  :setname "Mala Tempora",
  :side "Runner",
+ :strength 0,
  :text "[click]: Make a run on HQ. If successful, instead of accessing cards, you may reveal all cards in HQ.",
  :title "Expert Schedule Analyzer",
  :type "Program",
