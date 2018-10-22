@@ -91,30 +91,54 @@
       (is (= 1 (count-tags state)) "Run unsuccessful; Runner kept 1 tag"))))
 
 (deftest blockchain
-  (do-game
-    (new-game {:corp {:deck ["Blockchain" (qty "Beanstalk Royalties" 5)]}})
-    (core/gain state :corp :credit 2 :click 5)
-    (play-from-hand state :corp "Blockchain" "HQ")
-    (let [bc (get-ice state :hq 0)]
-      (core/rez state :corp bc)
-      (card-ability state :corp bc 0)
-      (is (last-log-contains? state "uses Blockchain to gain 0 subroutines") "No subroutines gained because no Transactions are in Archives")
-      (play-from-hand state :corp "Beanstalk Royalties")
-      (card-ability state :corp bc 0)
-      (is (last-log-contains? state "uses Blockchain to gain 0 subroutines") "No subroutines gained because only 1 Transaction is in Archives")
-      (play-from-hand state :corp "Beanstalk Royalties")
-      (card-ability state :corp bc 0)
-      (is (last-log-contains? state "uses Blockchain to gain 1 subroutine") "1 subroutine gained because 2 Transactions are in Archives")
-      (play-from-hand state :corp "Beanstalk Royalties")
-      (card-ability state :corp bc 0)
-      (is (last-log-contains? state "uses Blockchain to gain 1 subroutine") "1 subroutine gained because 3 Transactions are in Archives")
-      (play-from-hand state :corp "Beanstalk Royalties")
-      (card-ability state :corp bc 0)
-      (is (last-log-contains? state "uses Blockchain to gain 2 subroutines") "2 subroutines gained because 4 Transactions are in Archives")
-      (is (= 12 (:credit (get-corp))) "Corp has 12 credits from four Beanstalks")
-      (card-subroutine state :corp bc 0)
-      (is (= 13 (:credit (get-corp))) "Corp gained 1 credit from Blockchain")
-      (is (= 4 (:credit (get-runner))) "Runner lost 1 credit from Blockchain"))))
+  (testing "Face up transactions"
+    (do-game
+      (new-game {:corp {:deck ["Blockchain" (qty "Beanstalk Royalties" 5)]}})
+      (core/gain state :corp :credit 2 :click 5)
+      (play-from-hand state :corp "Blockchain" "HQ")
+      (let [bc (get-ice state :hq 0)]
+        (core/rez state :corp bc)
+        (card-ability state :corp bc 0)
+        (is (last-log-contains? state "uses Blockchain to gain 0 additional subroutines") "No subroutines gained because no Transactions are in Archives")
+        (play-from-hand state :corp "Beanstalk Royalties")
+        (card-ability state :corp bc 0)
+        (is (last-log-contains? state "uses Blockchain to gain 0 additional subroutines") "No subroutines gained because only 1 Transaction is in Archives")
+        (play-from-hand state :corp "Beanstalk Royalties")
+        (card-ability state :corp bc 0)
+        (is (last-log-contains? state "uses Blockchain to gain 1 additional subroutine") "1 subroutine gained because 2 Transactions are in Archives")
+        (play-from-hand state :corp "Beanstalk Royalties")
+        (card-ability state :corp bc 0)
+        (is (last-log-contains? state "uses Blockchain to gain 1 additional subroutine") "1 subroutine gained because 3 Transactions are in Archives")
+        (play-from-hand state :corp "Beanstalk Royalties")
+        (card-ability state :corp bc 0)
+        (is (last-log-contains? state "uses Blockchain to gain 2 additional subroutines") "2 subroutines gained because 4 Transactions are in Archives")
+        (is (= 12 (:credit (get-corp))) "Corp has 12 credits from four Beanstalks")
+        (card-subroutine state :corp bc 0)
+        (is (= 13 (:credit (get-corp))) "Corp gained 1 credit from Blockchain")
+        (is (= 4 (:credit (get-runner))) "Runner lost 1 credit from Blockchain"))))
+  (testing "Face down transactions"
+    (do-game
+      (new-game {:corp {:hand ["Blockchain" (qty "Beanstalk Royalties" 5)]
+                        :credit 7}})
+      (core/gain state :corp :click 5)
+      (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :discard)
+      (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :discard)
+      (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :discard)
+      (play-from-hand state :corp "Blockchain" "HQ")
+      (let [bc (get-ice state :hq 0)]
+        (core/rez state :corp bc)
+        (card-ability state :corp bc 0)
+        (is (last-log-contains? state "uses Blockchain to gain 0 additional subroutines")
+            "No subroutines gained because no face up Transactions are in Archives")
+        (play-from-hand state :corp "Beanstalk Royalties")
+        (card-ability state :corp bc 0)
+        (is (last-log-contains? state "uses Blockchain to gain 0 additional subroutines")
+            "No subroutines gained because 1 face up Transactions is in Archives")
+        (play-from-hand state :corp "Beanstalk Royalties")
+        (card-ability state :corp bc 0)
+        (is (last-log-contains? state "uses Blockchain to gain 1 additional subroutine")
+            "1 subroutine gained because 2 face up Transactions are in Archives")
+        (is (= 5 (count (:discard (get-corp)))) "5 cards in discard pile")))))
 
 (deftest bullfrog
   ;; Bullfrog - Win psi to move to outermost position of another server and continue run there

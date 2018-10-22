@@ -400,12 +400,19 @@
    {:subroutines [end-the-run]}
 
    "Blockchain"
-   (letfn [(sub-count [corp] (int (/ (count (filter #(and (is-type? % "Operation") (has-subtype? % "Transaction"))
+   (letfn [(sub-count [corp] (int (/ (count (filter #(and (is-type? % "Operation")
+                                                          (has-subtype? % "Transaction")
+                                                          (:seen %))
                                                     (:discard corp)))
                                      2)))]
-     {:abilities [{:label "Gain subroutines"
-                   :msg (msg (let [c (sub-count corp)]
-                               (str "gain " c (pluralize " subroutine" c))))}]
+     {:implementation "Number of subs is manual"
+      :abilities [{:label "Gain subroutines"
+                   :effect (req (let [c (sub-count corp)]
+                                  (update! state :corp
+                                           (assoc-in card [:special :extra-subs] (pos? c)))
+                                  (system-msg state :corp
+                                              (str "uses Blockchain to gain " c (pluralize " additional subroutine" c)
+                                                   " (" (+ 2 c) " in total)"))))}]
       :subroutines [{:label "Gain 1 [credits], Runner loses 1 [credits]"
                      :msg "gain 1 [credits] and force the Runner to lose 1 [credits]"
                      :effect (effect (gain-credits 1)
