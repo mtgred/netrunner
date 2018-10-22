@@ -13,6 +13,7 @@
  :set_code "rar",
  :setname "Reign and Reverie",
  :side "Runner",
+ :strength 0,
  :text "Whenever you make a successful run, you may place 1[credit] from the bank on Bankroll.\n[trash]: Take all credits from Bankroll.",
  :title "Bankroll",
  :type "Program",

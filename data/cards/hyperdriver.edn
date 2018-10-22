@@ -13,6 +13,7 @@
  :set_code "uw",
  :setname "The Underway",
  :side "Runner",
+ :strength 0,
  :text "When your turn begins, you may remove Hyperdriver from the game and gain [click][click][click].",
  :title "Hyperdriver",
  :type "Program",

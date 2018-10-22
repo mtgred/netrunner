@@ -13,6 +13,7 @@
  :set_code "cotc",
  :setname "Council of the Crest",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "Whenever you access cards from R&D, access 1 additional card.\nTrash eXer if the Corp purges virus counters.",
  :title "eXer",

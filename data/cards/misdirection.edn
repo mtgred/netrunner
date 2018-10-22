@@ -13,6 +13,7 @@
  :set_code "ml",
  :setname "Martial Law",
  :side "Runner",
+ :strength 0,
  :text "[click], [click], X[credit]: Remove X tags.",
  :title "Misdirection",
  :type "Program",

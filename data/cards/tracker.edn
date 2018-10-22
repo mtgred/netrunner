@@ -13,6 +13,7 @@
  :set_code "qu",
  :setname "Quorum",
  :side "Runner",
+ :strength 0,
  :text "When your turn begins, choose a server.\n[click],2[credit]: Make a run on the chosen server. Prevent the first subroutine that would resolve this run from resolving.",
  :title "Tracker",
  :type "Program",

@@ -13,6 +13,7 @@
  :set_code "ml",
  :setname "Martial Law",
  :side "Runner",
+ :strength 0,
  :text "Whenever you make a successful run on R&D, you may reveal the top card of R&D. If you do, you may force the Corp to draw that card.",
  :title "Equivocation",
  :type "Program",

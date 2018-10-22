@@ -13,6 +13,7 @@
  :set_code "ce",
  :setname "Cyber Exodus",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "Whenever you make a successful run on HQ, place 1 virus counter on Nerve Agent.\nEach virus counter after the first on Nerve Agent allows you to access 1 additional card from HQ whenever you access cards from HQ.",
  :title "Nerve Agent",

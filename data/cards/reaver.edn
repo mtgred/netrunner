@@ -13,6 +13,7 @@
  :set_code "ml",
  :setname "Martial Law",
  :side "Runner",
+ :strength 0,
  :text "The first time you trash an installed card each turn, draw 1 card.",
  :title "Reaver",
  :type "Program",

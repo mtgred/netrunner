@@ -13,6 +13,7 @@
  :set_code "dtwn",
  :setname "Down the White Nile",
  :side "Runner",
+ :strength 0,
  :text "Whenever you break all subroutines on a piece of ice during a single encounter, you may place 1 power counter on Takobi.\n<strong>2 hosted power counters</strong>: Choose a non-<strong>AI icebreaker</strong>. That <strong>icebreaker</strong> has +3 strength until the end of the current encounter.",
  :title "Takobi",
  :type "Program",

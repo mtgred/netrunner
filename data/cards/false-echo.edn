@@ -13,6 +13,7 @@
  :set_code "om",
  :setname "Opening Moves",
  :side "Runner",
+ :strength 0,
  :text "Whenever you pass a piece of unrezzed ice, you may trash False Echo. If you do, the Corp must rez that ice or add it to HQ.",
  :title "False Echo",
  :type "Program",

@@ -13,6 +13,7 @@
  :set_code "ts",
  :setname "The Source",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "When your turn begins, place 1 virus counter on Incubator.\n[click], [trash]: Move all virus counters from Incubator to another installed <strong>virus</strong> program.",
  :title "Incubator",

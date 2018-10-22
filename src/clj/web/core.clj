@@ -1,19 +1,23 @@
 (ns web.core
-  (:require [web.api :refer [app]]
-            [monger.collection :as mc]
-            [jinteki.cards :as cards]
-            [web.config :refer [frontend-version server-config server-mode]]
-            [web.ws :as ws]
-            [web.db :refer [db]]
-            [web.chat :as chat]
-            [web.lobby :as lobby]
-            [web.game :as game]
-            [web.stats :as stats]
-            [jinteki.nav :as nav]
+  (:require [clojure.edn :as edn]
+            [clojure.string :as string]
+            [clojure.java.io :as io]
             [clj-time.format :as f]
+            [hawk.core :as hawk]
+            [monger.collection :as mc]
             [game.core :as core]
             [game.quotes :as quotes]
-            [hawk.core :as hawk])
+            [jinteki.cards :as cards]
+            [jinteki.nav :as nav]
+            [tasks.nrdb :refer [replace-collection]]
+            [web.api :refer [app]]
+            [web.chat :as chat]
+            [web.config :refer [frontend-version server-config server-mode]]
+            [web.db :refer [db]]
+            [web.game :as game]
+            [web.lobby :as lobby]
+            [web.stats :as stats]
+            [web.ws :as ws])
   (:gen-class :main true))
 
 (defonce server (atom nil))
@@ -24,20 +28,30 @@
     (@server :timeout 100)
     (reset! server nil)))
 
+(defn load-card-data
+  [e]
+  (let [path (-> e :file str io/file)]
+    (when (and (.isFile path)
+               (string/ends-with? path ".edn"))
+      (->> (slurp path)
+           edn/read-string
+           ((juxt :title identity))
+           (swap! cards/all-cards merge))
+      (replace-collection "cards" (vals @cards/all-cards)))))
+
+
 (defn -main [& args]
   (let [port (or (-> server-config :web :port) 4141)]
     (web.db/connect)
-    (let [cards (mc/find-maps db "cards" nil)
-          sets (mc/find-maps db "sets" nil)
+    (let [sets (mc/find-maps db "sets" nil)
           cycles (mc/find-maps db "cycles" nil)
-          mwl (mc/find-maps db "mwl" nil)
+          mwl (mc/find-maps db "mwls" nil)
           latest_mwl (->> mwl
                        (map (fn [e] (update e :date_start #(f/parse (f/formatters :date) %))))
                        (sort-by :date_start)
                        (last))]
+      (core/reset-card-data)
       (core/reset-card-defs)
-      (reset! cards/all-cards (into {} (map (juxt :title identity)
-                                            (sort-by (complement :rotated) cards))))
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
       (reset! cards/mwl latest_mwl))
@@ -59,8 +73,12 @@
     (println "Frontend version " @frontend-version)
 
     ;; Set up the watch on quotes files, and load them once.
-    (hawk/watch! [{:paths   [quotes/quotes-corp-filename
-                             quotes/quotes-runner-filename]
+    (hawk/watch! [{:paths ["data/cards"]
+                   :filter hawk/file?
+                   :handler (fn [ctx e]
+                              (load-card-data e))}
+                  {:paths [quotes/quotes-corp-filename
+                           quotes/quotes-runner-filename]
                    :handler (fn [ctx e]
                               (when (= :create (:kind e))
                                 (quotes/load-quotes!)))}])

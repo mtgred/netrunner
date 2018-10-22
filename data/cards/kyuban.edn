@@ -13,6 +13,7 @@
  :set_code "rar",
  :setname "Reign and Reverie",
  :side "Runner",
+ :strength 0,
  :text "Install Kyuban only on a piece of ice.\nGain 2[credit] whenever you pass host ice.",
  :title "Kyuban",
  :type "Program",

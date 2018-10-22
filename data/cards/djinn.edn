@@ -13,6 +13,7 @@
  :set_code "core",
  :setname "Core Set",
  :side "Runner",
+ :strength 0,
  :subtype "Daemon",
  :text "Djinn can host up to 3[mu] of non-<strong>icebreaker</strong> programs.\nThe memory costs of hosted programs do not count against your memory limit.\n[click], 1[credit]: Search your stack for a <strong>virus</strong> program, reveal it, and add it to your grip. Shuffle your stack.",
  :title "Djinn",

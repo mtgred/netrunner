@@ -13,6 +13,7 @@
  :set_code "ts",
  :setname "The Source",
  :side "Runner",
+ :strength 0,
  :text "Draw 1 card whenever the Corp rezzes a piece of ice.",
  :title "Collective Consciousness",
  :type "Program",

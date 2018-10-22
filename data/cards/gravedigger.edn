@@ -13,6 +13,7 @@
  :set_code "oac",
  :setname "Order and Chaos",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "Whenever an installed Corp card is trashed, place 1 virus counter on Gravedigger.\n[click], <strong>hosted virus counter:</strong> The Corp trashes the top card of R&D.",
  :title "Gravedigger",

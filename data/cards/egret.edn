@@ -13,6 +13,7 @@
  :set_code "td",
  :setname "Terminal Directive",
  :side "Runner",
+ :strength 0,
  :text "Install Egret only on a rezzed piece of ice.\nHost ice gains <strong>sentry</strong>, <strong>code gate</strong> and <strong>barrier</strong>.",
  :title "Egret",
  :type "Program",

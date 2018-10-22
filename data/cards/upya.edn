@@ -13,6 +13,7 @@
  :set_code "ss",
  :setname "Sovereign Sight",
  :side "Runner",
+ :strength 0,
  :text "Whenever you make a successful run on R&D, you may place 1 power counter on Upya.\n<strong>[click], 3 hosted power counters</strong>: Gain [click][click]. Use this ability only once per turn.",
  :title "Upya",
  :type "Program",

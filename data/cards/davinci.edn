@@ -13,6 +13,7 @@
  :set_code "uot",
  :setname "The Universe of Tomorrow",
  :side "Runner",
+ :strength 0,
  :text "Whenever you make a successful run, place 1 power counter on DaVinci.\n[trash]: Install a card from your grip with an install cost equal to or less than the number of power counters on DaVinci, ignoring the install cost.",
  :title "DaVinci",
  :type "Program",

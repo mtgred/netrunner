@@ -13,6 +13,7 @@
  :set_code "bf",
  :setname "Business First",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "When Diwan is installed, choose a server. As an additional cost to install a card in or protecting that server, the Corp must pay 1[credit].\nTrash Diwan if the Corp purges virus counters.",
  :title "Diwan",

@@ -13,6 +13,7 @@
  :set_code "ts",
  :setname "The Source",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "Whenever the Corp loses at least 1[credit], gain 1[credit].\nTrash Ixodidae if the Corp purges virus counters.",
  :title "Ixodidae",

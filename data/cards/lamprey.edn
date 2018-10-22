@@ -13,6 +13,7 @@
  :set_code "up",
  :setname "Upstalk",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "Whenever you make a successful run on HQ, the Corp loses 1[credit].\nTrash Lamprey if the Corp purges virus counters.",
  :title "Lamprey",

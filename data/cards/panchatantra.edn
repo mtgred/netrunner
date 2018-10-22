@@ -13,6 +13,7 @@
  :set_code "kg",
  :setname "Kala Ghoda",
  :side "Runner",
+ :strength 0,
  :text "Once per turn, when you encounter a piece of ice, you may have it gain 1 subtype of your choice that is not <strong>sentry</strong>, <strong>code gate</strong>, or <strong>barrier</strong> for the remainder of this run.",
  :title "Panchatantra",
  :type "Program",

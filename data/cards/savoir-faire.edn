@@ -13,6 +13,7 @@
  :set_code "dt",
  :setname "Double Time",
  :side "Runner",
+ :strength 0,
  :text "You cannot use Savoir-faire more than once each turn.\n2[credit]: Install a program from your grip, paying the install cost.",
  :title "Savoir-faire",
  :type "Program",

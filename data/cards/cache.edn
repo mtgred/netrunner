@@ -13,6 +13,7 @@
  :set_code "tsb",
  :setname "The Spaces Between",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "Place 3 virus counters on Cache when it is installed.\n<strong>Hosted virus counter:</strong> Gain 1[credit].",
  :title "Cache",

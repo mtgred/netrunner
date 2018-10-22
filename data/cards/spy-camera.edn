@@ -12,7 +12,7 @@
  :set_code "dag",
  :setname "Democracy and Dogma",
  :side "Runner",
- :subtype "Consumer-grade",
+ :subtype "Consumer Grade",
  :text "[click]: Look at the top X cards of your stack and arrange them in any order. X is the number of copies of Spy Camera installed.\n[trash]: Look at the top card of R&D.\nLimit 6 per deck.",
  :title "Spy Camera",
  :type "Hardware",

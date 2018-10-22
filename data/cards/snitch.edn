@@ -13,6 +13,7 @@
  :set_code "ce",
  :setname "Cyber Exodus",
  :side "Runner",
+ :strength 0,
  :text "Once per run, you may expose an unrezzed piece of ice when you approach it. You may then jack out.",
  :title "Snitch",
  :type "Program",

@@ -13,6 +13,7 @@
  :set_code "asis",
  :setname "A Study in Static",
  :side "Runner",
+ :strength 0,
  :text "[trash]: Prevent a trace. That trace initiates again with a base trace strength of 0.",
  :title "Disrupter",
  :type "Program",

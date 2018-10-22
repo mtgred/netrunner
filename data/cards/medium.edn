@@ -13,6 +13,7 @@
  :set_code "core",
  :setname "Core Set",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "Whenever you make a successful run on R&D, place 1 virus counter on Medium.\nEach virus counter after the first on Medium allows you to access 1 additional card from R&D whenever you access cards from R&D.",
  :title "Medium",

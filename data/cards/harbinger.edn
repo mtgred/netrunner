@@ -13,6 +13,7 @@
  :set_code "dad",
  :setname "Data and Destiny",
  :side "Runner",
+ :strength 0,
  :text "When Harbinger is trashed, install it facedown instead of adding it to your heap.",
  :title "Harbinger",
  :type "Program",

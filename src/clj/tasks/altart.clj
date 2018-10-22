@@ -3,23 +3,23 @@
   (:require [web.db :refer [db] :as webdb]
             [monger.collection :as mc]
             [monger.operators :refer :all]
-            [tasks.nrdb :refer [replace-collection tables update-config tables]]
+            [tasks.nrdb :refer [replace-collection update-config]]
             [clojure.string :as string]
             [clojure.java.io :as io]
-            [cheshire.core :as json]))
+            [clojure.edn :as edn]))
 
-(def ^:const alt-art-sets "data/promo.json")
+(def ^:const alt-art-sets "data/promos.edn")
 (def ^:const img-directory ["resources" "public" "img" "cards"])
 
 (def ^:const alt-collection "altarts")
-(def ^:const card-collection (:collection (:card tables)))
+(def ^:const card-collection "cards")
 
 (defn read-alt-sets
   "Read in the alt art set information"
   []
   (-> alt-art-sets
     slurp
-    (json/parse-string true)))
+    edn/read-string))
 
 (defn find-alt-files
   "Find files of the form code-set.png in the card image directory"
@@ -76,7 +76,7 @@
        (remove-old-alt-art)
        (doall (map add-alt-art alt-sets-cards))
        (when standalone?
-         (update-config (:config tables))))
+         (update-config "config")))
      (catch Exception e (do
                           (println "Alt art import failed:" (.getMessage e))
                           (.printStackTrace e)))

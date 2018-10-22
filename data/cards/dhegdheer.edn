@@ -13,6 +13,7 @@
  :set_code "td",
  :setname "Terminal Directive",
  :side "Runner",
+ :strength 0,
  :subtype "Daemon",
  :text "Dhegdheer can host a single program.\nLower the install cost of programs you install on Dhegdheer by 1.\nThe memory cost of the hosted program does not count against your memory limit.\n<errata>Errata from FAQ 4.0</errata>",
  :title "Dhegdheer",

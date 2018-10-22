@@ -13,6 +13,7 @@
  :set_code "ts",
  :setname "The Source",
  :side "Runner",
+ :strength 0,
  :text "Gain 1[credit] whenever you jack out.",
  :title "Au Revoir",
  :type "Program",

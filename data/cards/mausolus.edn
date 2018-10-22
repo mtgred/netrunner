@@ -14,8 +14,7 @@
  :side "Corp",
  :strength 5,
  :subtype "Code Gate - AP",
- :text
- "Mausolus can be advanced.\nIf Mausolus has 3 or more advancement tokens on it, do the parenthetical text instead (otherwise, do not resolve it).\n[subroutine] The Corp gains 1[credit]. (The Corp gains 3[credit].)\n[subroutine] Do 1 net damage. (Do 3 net damage.)\n[subroutine] Give the Runner 1 tag. (Give the Runner 1 tag and end the run.)",
+ :text "Mausolus can be advanced.\nIf Mausolus has 3 or more advancement tokens on it, do the parenthetical text instead (otherwise, do not resolve it).\n[subroutine] The Corp gains 1[credit]. (The Corp gains 3[credit].)\n[subroutine] Do 1 net damage. (Do 3 net damage.)\n[subroutine] Give the Runner 1 tag. (Give the Runner 1 tag and end the run.)",
  :title "Mausolus",
  :type "ICE",
  :uniqueness false}

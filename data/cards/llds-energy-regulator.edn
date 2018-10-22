@@ -13,6 +13,7 @@
  :set_code "tsb",
  :setname "The Spaces Between",
  :side "Runner",
+ :strength 0,
  :text "3[credit] or [trash]: Prevent an installed piece of hardware from being trashed.",
  :title "LLDS Energy Regulator",
  :type "Program",

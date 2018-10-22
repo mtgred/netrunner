@@ -34,6 +34,7 @@
                  [eftest "0.1.4"]
                  [cljsjs/react "16.5.2-0"]
                  [cljsjs/react-dom "16.5.2-0"]
+                 [zprint "0.4.10"]
                  [org.clojars.frozenlock/reagent-modals "0.2.8"]
                  [hawk "0.2.11"]]
 

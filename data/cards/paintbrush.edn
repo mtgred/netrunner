@@ -13,6 +13,7 @@
  :set_code "dt",
  :setname "Double Time",
  :side "Runner",
+ :strength 0,
  :text "[click]: Choose a rezzed piece of ice. That ice gains <strong>sentry</strong>, <strong>code gate</strong> or <strong>barrier</strong> until the end of the next run this turn.",
  :title "Paintbrush",
  :type "Program",

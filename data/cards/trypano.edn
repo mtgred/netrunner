@@ -13,6 +13,7 @@
  :set_code "win",
  :setname "Whispers in Nalubaale",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "Install Trypano only on a piece of ice.\nWhen Trypano has 5 or more virus counters on it, trash host ice.\nWhen your turn begins, you may place 1 virus counter on Trypano.",
  :title "Trypano",

@@ -12,7 +12,7 @@
  :set_code "mo",
  :setname "Magnum Opus",
  :side "Corp",
- :subtype "Orgcrime - Enforcer",
+ :subtype " - ",
  :text "As an additional cost to run this server, the Runner must trash an agenda in his or her score area. Ignore this ability if the Runner made a successful run on HQ this turn.\nLimit 1 per Deck.",
  :title "Hired Help",
  :trash 3,

@@ -13,6 +13,7 @@
  :set_code "oac",
  :setname "Order and Chaos",
  :side "Runner",
+ :strength 0,
  :subtype "Virus",
  :text "Place 1 virus counter on Hivemind when it is installed.\nVirus counters on Hivemind are considered to be hosted on all other <strong>virus</strong> programs for the purposes of card effects (and can be spent as if on them).",
  :title "Hivemind",
