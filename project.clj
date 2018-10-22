@@ -32,9 +32,9 @@
                  [clj-http "3.7.0"]
                  [reagent "0.8.1"]
                  [eftest "0.1.4"]
+                 [cljsjs/react "16.5.2-0"]
+                 [cljsjs/react-dom "16.5.2-0"]
                  [zprint "0.4.10"]
-                 [cljsjs/react "16.4.1-0"]
-                 [cljsjs/react-dom "16.4.1-0"]
                  [org.clojars.frozenlock/reagent-modals "0.2.8"]
                  [hawk "0.2.11"]]
 
