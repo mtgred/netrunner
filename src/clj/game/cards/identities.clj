@@ -380,7 +380,8 @@
       :async true
       :once :per-turn
       :label "[Freedom]: Trash card"
-      :req (req (and (not (is-type? target "Agenda"))
+      :req (req (and (not (:disabled card))
+                     (not (is-type? target "Agenda"))
                      (<= (:cost target)
                          (reduce + (map #(get-counters % :virus)
                                         (all-installed state :runner))))))
