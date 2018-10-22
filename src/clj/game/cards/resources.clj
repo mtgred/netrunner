@@ -479,6 +479,46 @@
                  :msg "prevent up to 3 meat damage"
                  :effect (effect (trash card {:cause :ability-cost}) (damage-prevent :meat 3))}]}
 
+   "Crowdfunding"
+   (let [ability {:once :per-turn
+                  :label "Take 1 [Credits] (start of turn)"
+                  :msg "gain 1 [Credits]"
+                  :req (req (:runner-phase-12 @state))
+                  :counter-cost [:credit 1]
+                  :effect (req (gain-credits state :runner 1)
+                               (when (zero? (get-counters (get-card state card) :credit))
+                                 (trash state :runner card {:unpreventable true})
+                                 (draw state :runner 1)
+                                 (system-msg state :runner (str "trashes Crowdfunding"
+                                                               (when (not (empty? (:deck runner)))
+                                                                " and draws 1 card")))))}
+         install-prompt {:req (req (and (= (:zone card) [:discard])
+                                        (not (install-locked? state :runner))))
+                         :async true
+                         :effect (req (continue-ability
+                                        state side
+                                        {:optional {:req (req (and (>= (count (get-in @state [:runner :register :made-run])) 3)
+                                                                   (not (get-in @state [:runner :register :crowdfunding-prompt]))))
+                                                    :player :runner
+                                                    :prompt "Install Crowdfunding?"
+                                                    :yes-ability {:effect (effect (unregister-events card)
+                                                                                  (runner-install :runner card))}
+                                                    ;; Add a register to note that the player was already asked about installing,
+                                                    ;; to prevent multiple copies from prompting multiple times.
+                                                    :no-ability {:effect (req (swap! state assoc-in [:runner :register :crowdfunding-prompt] true))}}}
+                                        card nil))}
+         heap-event (req (when (= (:zone card) [:discard])
+                           (unregister-events state side card)
+                           (register-events state side
+                                            {:runner-turn-ends install-prompt}
+                                            (assoc card :zone [:discard]))))]
+   {:data {:counter {:credit 3}}
+    :flags {:drip-economy true}
+    :abilities [ability]
+    :move-zone heap-event
+    :events {:runner-turn-begins ability
+             :runner-turn-ends nil}})
+
    "Crypt"
    {:events {:successful-run
              {:silent (req true)
