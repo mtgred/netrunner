@@ -1383,9 +1383,13 @@
                        :choices ["Gain 4 [Credits]" "Draw 4 cards"]
                        :effect (req (cond
                                       (= target "Gain 4 [Credits]")
-                                      (gain-credits state :runner 4)
+                                      (do
+                                        (system-msg state :runner (str "uses Office Supplies to gain 4 [Credits]"))
+                                        (gain-credits state :runner 4))
                                       (= target "Draw 4 cards")
-                                      (draw state :runner 4)))}
+                                      (do
+                                        (system-msg state :runner (str "uses Office Supplies to draw 4 cards"))
+                                        (draw state :runner 4))))}
                       card nil))}
 
    "On the Lam"
