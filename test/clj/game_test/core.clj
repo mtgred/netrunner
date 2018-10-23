@@ -31,7 +31,6 @@
 (hawk/watch! [{:paths ["src/clj/game/cards"]
                :filter hawk/file?
                :handler (fn [ctx e]
-                          (println "loading" e)
                           (core/reset-card-defs
                             (-> e :file io/file .getName (string/split #"\.") first)))}])
 
