@@ -377,11 +377,30 @@
     :derez-effect {:effect (req (update-ice-in-server state side (card->server state card)))}
     :trash-effect {:effect (req (update-all-ice state side))}}
 
+   "Embolus"
+   (let [maybe-gain-counter
+         {:once :per-turn
+          :label "Place a power counter on Embolus"
+          :effect (effect (continue-ability {:optional
+                                             {:prompt "Pay 1 [Credit] to place a power counter on Embolus?"
+                                              :yes-ability {:effect (effect (add-counter card :power 1))
+                                                            :cost [:credit 1]
+                                                            :msg "pay 1 [Credit] to place a power counter on Embolus"}}}
+                                            card nil))}
+         etr
+         {:req (req this-server)
+          :counter-cost [:power 1]
+          :msg "end the run"
+          :effect (effect (end-run))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins maybe-gain-counter
+               :successful-run {:req (req (pos? (get-counters card :power)))
+                                :msg "remove 1 power counter from Embolus"
+                                :effect (effect (add-counter card :power -1))}}
+      :abilities [maybe-gain-counter etr]})
+
    "Expo Grid"
-   (let [ability {:req (req (some #(and (is-type? % "Asset")
-                                        (rezzed? %))
-                                  (get-in corp (:zone card))))
-                  :msg "gain 1 [Credits]"
+   (let [ability {:msg "gain 1 [Credits]"
                   :once :per-turn
                   :label "Gain 1 [Credits] (start of turn)"
                   :effect (effect (gain-credits 1))}]
