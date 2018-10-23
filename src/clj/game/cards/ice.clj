@@ -468,6 +468,18 @@
                                                              :init-data true})
                                (trigger-event state side :corp-install newice)))}]})
 
+  "Border Control"
+   {:abilities [{:label "End the run"
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (end-run))}]
+    :subroutines [{:label "Gain credits for ice on this server"
+                   :msg (msg "gain "
+                             (count (:ices (card->server state card)))
+                             " [credits]")
+                   :effect (req (let [num-ice (count (:ices (card->server state card)))]
+                                  (gain-credits state :corp num-ice)))}
+                  end-the-run]}
+
    "Brainstorm"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (:hand runner)) " subroutines")}]
@@ -475,7 +487,9 @@
 
    "Builder"
    {:abilities [{:label "Move Builder to the outermost position of any server"
-                 :cost [:click 1] :prompt "Choose a server" :choices (req servers)
+                 :cost [:click 1]
+                 :prompt "Choose a server"
+                 :choices (req servers)
                  :msg (msg "move it to the outermost position of " target)
                  :effect (effect (move card (conj (server->zone state target) :ices)))}]
     :subroutines [{:label "Place 1 advancement token on an ICE that can be advanced protecting this server"
