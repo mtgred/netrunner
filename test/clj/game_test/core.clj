@@ -31,7 +31,8 @@
 (hawk/watch! [{:paths ["src/clj/game/cards"]
                :filter hawk/file?
                :handler (fn [ctx e]
-                          (load-file (-> e :file str)))}])
+                          (core/reset-card-defs
+                            (-> e :file io/file .getName (string/split #"\.") first)))}])
 
 ;; General utilities necessary for starting a new game
 (defn find-card

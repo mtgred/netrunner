@@ -2104,6 +2104,38 @@
                    :async true
                    :effect (req (do-access state :runner eid [:rd] {:no-root true}))}]}
 
+   "Slot Machine"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:label "Roll them bones"
+                 :effect (effect (move :runner (first (:deck runner)) :deck)
+                                 (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
+                                                  " then reveal the top 3 cards in the stack: "
+                                                  (join ", " (map :title (take 3 (:deck runner)))))))}]
+    :subroutines [{:label "Runner loses 3 [credits]"
+                   :msg "Runner loses 3 [credits]"
+                   :effect (effect (lose-credits :runner 3))}
+                  {:label "Corp gains 3 [credits]"
+                   :effect (req (let [f (:type (nth (:deck runner) 1))
+                                      s (:type (nth (:deck runner) 2))
+                                      t (:type (nth (:deck runner) 3))]
+                                 (when (or (= f s)
+                                           (= f t)
+                                           (= s t))
+                                   (system-msg state :corp (str "gains 3 [credits]"))
+                                   (gain-credits state :corp 3))))}
+                  {:label "Corp places 3 advancement tokens"
+                   :effect (req (let [f (:type (nth (:deck runner) 1))
+                                      s (:type (nth (:deck runner) 2))
+                                      t (:type (nth (:deck runner) 3))]
+                                 (when (= f s t)
+                                   (continue-ability
+                                     state side
+                                     {:choices {:req installed?}
+                                      :prompt "Choose an installed card"
+                                      :effect (req (system-msg state :corp (str "places 3 advancement tokens"))
+                                                   (add-prop state :corp target :advance-counter 3 {:placed true}))}
+                                     card nil))))}]}
+
    "Snoop"
    {:implementation "Encounter effect is manual"
     :abilities [{:req (req (= current-ice card))
