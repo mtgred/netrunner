@@ -149,7 +149,7 @@
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone host] :as card} to {:keys [front keep-server-alive force]}]
+  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force]}]
    (let [zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)]
@@ -169,7 +169,9 @@
            (remove-old-card state side card)
            (if front
              (swap! state update-in (cons side dest) #(into [] (cons moved-card (vec %))))
-             (swap! state update-in (cons side dest) #(into [] (conj (vec %) moved-card))))
+             (if index ; (vec (concat (take i v) [e] (drop i v))))
+               (swap! state update-in (cons side dest) #(into [] (concat (take index %) [moved-card] (drop index %))))
+               (swap! state update-in (cons side dest) #(into [] (conj (vec %) moved-card)))))
            (let [z (vec (cons :corp (butlast zone)))]
              (when (and (not keep-server-alive)
                         (is-remote? z)

@@ -1266,6 +1266,36 @@
                                        ;; TODO: investigate why this is needed??
                                        (effect-completed eid))}}}}
 
+   "Timely Public Release"
+   {:silent (req true)
+    :effect (effect (add-counter card :agenda 1))
+    :abilities [{:counter-cost [:agenda 1]
+                 :label "Install a piece of ice in any position, ignoring all costs"
+                 :prompt "Select a piece of ice to install"
+                 :show-discard true
+                 :choices {:req #(and (is-type? % "ICE")
+                                      (#{[:hand] [:discard]} (:zone %)))}
+                 :effect (effect
+                          (continue-ability
+                           (let [chosen-ice target]
+                             {:prompt "Choose a server"
+                              :choices (req servers)
+                              :effect (effect
+                                       (continue-ability
+                                        (let [chosen-server target
+                                              num-ice (count (get-in (:corp @state)
+                                                                     (conj (server->zone state target) :ices)))]
+                                          {:prompt "Which position to install in? (0 is innermost)"
+                                           :choices (vec (map str (range (inc num-ice))))
+                                           :effect (req (corp-install state side chosen-ice chosen-server
+                                                                         {:no-install-cost true :index (Integer/parseInt target)})
+                                                        (if (and run (= (:server run) chosen-server))
+                                                          (let [curr-pos (get-in @state [:run :position])] 
+                                                            (if (>= curr-pos (Integer/parseInt target))
+                                                              (swap! state assoc-in [:run :position] (inc curr-pos))))))})
+                                        card nil))})
+                           card nil))}]}
+
    "Underway Renovation"
    (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]
      {:install-state :face-up
