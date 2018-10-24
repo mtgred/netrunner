@@ -167,11 +167,10 @@
          (let [dest (if (sequential? to) (vec to) [to])
                moved-card (get-moved-card state side card to)]
            (remove-old-card state side card)
-           (if front
-             (swap! state update-in (cons side dest) #(into [] (cons moved-card (vec %))))
-             (if index ; (vec (concat (take i v) [e] (drop i v))))
-               (swap! state update-in (cons side dest) #(into [] (concat (take index %) [moved-card] (drop index %))))
-               (swap! state update-in (cons side dest) #(into [] (conj (vec %) moved-card)))))
+           (let [pos-to-move-to (cond index index
+                                      front 0
+                                      :else (count (get-in @state (cons side dest))))]
+             (swap! state update-in (cons side dest) #(into [] (concat (take pos-to-move-to %) [moved-card] (drop pos-to-move-to %)))))
            (let [z (vec (cons :corp (butlast zone)))]
              (when (and (not keep-server-alive)
                         (is-remote? z)
