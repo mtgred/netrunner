@@ -56,7 +56,9 @@
            (GET "/admin/announce" [] pages/announce-page)
            (POST "/admin/announce" [] admin/announcement-handler)
            (GET "/admin/version" [] pages/version-page)
-           (POST "/admin/version" [] admin/version-handler))
+           (POST "/admin/version" [] admin/version-handler)
+           (GET "/admin/fetch" [] pages/fetch-page)
+           (POST "/admin/fetch" [] admin/fetch-handler))
 
 (defroutes user-routes
            (POST "/logout" [] auth/logout-handler)

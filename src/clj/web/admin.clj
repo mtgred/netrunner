@@ -2,6 +2,8 @@
   (:require [web.db :refer [db object-id]]
             [web.lobby :refer [all-games]]
             [game.main :as main]
+            [game.core :refer [reset-card-defs]]
+            [tasks.fetch :refer [fetch-with-db]]
             [web.utils :refer [response]]
             [monger.collection :as mc]
             [monger.operators :refer :all]
@@ -23,3 +25,15 @@
   (reset! frontend-version version)
   (mc/update db "config" {} {$set {:version version}})
   (response 200 {:message "ok" :version version}))
+
+(defn fetch-handler
+  [req]
+  (try
+    (do
+      (fetch-with-db)
+      (reset-card-defs)
+      (response 200 {:message "ok"}))
+    (catch Exception e (do
+                         (println "fetch-handler failed:" (.getMessage e))
+                         (.printStackTrace e)
+                         (response 500 {:message (str "Import data failed: " (.getMessage e))})))))
