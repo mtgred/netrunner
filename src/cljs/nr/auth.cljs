@@ -45,6 +45,10 @@
      (:username user)
      [:b.caret]]
     [:div.dropdown-menu.blue-shade.float-right
+     (when (:isadmin user)
+       [:a.block-link "[Admin]"])
+     (when (:ismoderator user)
+       [:a.block-link "[Moderator]"])
      [:a.block-link {:href "/account"} "Settings"]
      [:a.block-link {:on-click #(handle-logout %)} "Logout"]]]])
 
