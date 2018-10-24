@@ -1289,7 +1289,8 @@
                                            :choices (vec (map str (range (inc num-ice))))
                                            :effect (req (corp-install state side chosen-ice chosen-server
                                                                          {:no-install-cost true :index (Integer/parseInt target)})
-                                                        (if (and run (= (:server run) chosen-server))
+                                                        (if (and run (= (zone->name (first (:server run)))
+                                                                        chosen-server))
                                                           (let [curr-pos (get-in @state [:run :position])] 
                                                             (if (>= curr-pos (Integer/parseInt target))
                                                               (swap! state assoc-in [:run :position] (inc curr-pos))))))})
