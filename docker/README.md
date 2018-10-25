@@ -10,8 +10,9 @@ Contains an application server and a database server. Suitable for experimenting
 ```
 % cd docker
 % docker-compose up
-% docker-compose exec jnet lein fetch
-% docker-compose restart jnet
+% open http://localhost:1042
+# then Sign Up for a new account
+% open http://localhost:1042/admin/fetch
 ```
 
 To stop a running instance, use `docker-compose stop`.
@@ -25,13 +26,14 @@ Contains an application server, database server, and reverse-proxy server. Close
 ```
 % cd docker
 % docker-compose -f docker-compose-production.yml up
-% docker-compose exec jnet lein fetch
-% docker-compose restart jnet
+% open http://localhost:1042
+# then Sign Up for a new account
+% open http://localhost/admin/fetch
 ```
 
 To stop a running instance, use `docker-compose stop`.
 
-The Jinteki interface should now be available at http://localhost:8080
+The Jinteki interface should now be available at http://localhost
 
 ## Data Storage
 The database and card images are stored in Docker volumes. The volumes will persist until `docker-compose down` is executed or the volumes are manually deleted.
