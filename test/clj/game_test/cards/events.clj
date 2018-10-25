@@ -420,7 +420,21 @@
       (click-prompt state :runner "By Any Means")
       (is (nil? (->> (get-runner) :prompt first :choices)) "By Any Means trashes with no prompt")
       (is (= 2 (count (:discard (get-corp)))) "Agenda was trashed")
-      (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage"))))
+      (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
+  (testing "Effect persists when moved from discard"
+    (do-game
+     (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"}
+                :runner {:deck [(qty "By Any Means" 2)]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "By Any Means")
+     (card-ability state :corp (get-in @state [:corp :identity]) 0)
+     (click-prompt state :corp (find-card "By Any Means" (:discard (get-runner))))
+     (is (= 1 (count (get-in @state [:runner :rfg]))) "By Any Means RFGed")
+     (is (= 0 (count (:discard (get-corp)))) "Nothing trashed yet")
+     (is (= 1 (count (:hand (get-runner)))) "No damage yet")
+     (run-empty-server state "HQ")
+     (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
+     (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage"))))
 
 (deftest careful-planning
   ;; Careful Planning - Prevent card in/protecting remote server from being rezzed this turn
