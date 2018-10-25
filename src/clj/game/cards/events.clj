@@ -142,7 +142,7 @@
 
    "By Any Means"
    {:effect (effect (register-events (:events (card-def card))
-                                     (assoc card :zone '(:discard))))
+                                     (dissoc card :zone)))
     :events {:runner-turn-ends {:effect (effect (unregister-events card))}
              :access {:req (req (not= [:discard] (:zone target)))
                       :interactive (req true)

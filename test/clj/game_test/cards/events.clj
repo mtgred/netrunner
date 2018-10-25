@@ -434,7 +434,19 @@
      (is (= 1 (count (:hand (get-runner)))) "No damage yet")
      (run-empty-server state "HQ")
      (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
-     (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage"))))
+     (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
+  (testing "Effect does not persist between turns"
+    (do-game
+     (new-game {:runner {:deck [(qty "By Any Means" 2)]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "By Any Means")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (is (= 0 (count (:discard (get-corp)))) "Nothing trashed yet")
+     (is (= 1 (count (:hand (get-runner)))) "No damage yet")
+     (run-empty-server state "HQ")
+     (is (= 0 (count (:discard (get-corp)))) "Nothing trashed")
+     (is (= 1 (count (:hand (get-runner)))) "No damage"))))
 
 (deftest careful-planning
   ;; Careful Planning - Prevent card in/protecting remote server from being rezzed this turn
