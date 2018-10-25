@@ -1,4 +1,4 @@
-FROM clojure:lein-alpine
+FROM clojure:lein-alpine as builder
 
 RUN apk --no-cache add \
     git \
@@ -15,4 +15,18 @@ RUN lein deps
 RUN lein cljsbuild once prod
 RUN lein uberjar
 
-ENTRYPOINT ["java", "-jar", "target/netrunner-standalone.jar"]
+
+FROM openjdk:8-alpine
+
+WORKDIR /netrunner
+COPY --from=builder /netrunner/target/netrunner-standalone.jar .
+COPY --from=builder /netrunner/dev.edn .
+WORKDIR /netrunner/resources
+COPY --from=builder /netrunner/resources .
+WORKDIR /netrunner/data/cards
+COPY --from=builder /netrunner/data/cards .
+WORKDIR /netrunner/src
+COPY --from=builder /netrunner/src .
+
+WORKDIR /netrunner
+ENTRYPOINT ["java", "-jar", "netrunner-standalone.jar"]
