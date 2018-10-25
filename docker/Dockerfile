@@ -23,8 +23,8 @@ COPY --from=builder /netrunner/target/netrunner-standalone.jar .
 COPY --from=builder /netrunner/dev.edn .
 WORKDIR /netrunner/resources
 COPY --from=builder /netrunner/resources .
-WORKDIR /netrunner/data/cards
-COPY --from=builder /netrunner/data/cards .
+WORKDIR /netrunner/data
+COPY --from=builder /netrunner/data .
 WORKDIR /netrunner/src
 COPY --from=builder /netrunner/src .
 
