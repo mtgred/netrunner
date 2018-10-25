@@ -2065,6 +2065,7 @@
                                  :effect (req (let [t (:title target)]
                                                 (system-msg state :runner (str "to remove " t " from the game, and watch for other copies of " t " to burn"))
                                                 (move state :corp target :rfg)
+                                                ;; in the below, the new :cid ensures that when unregister-events is called, the rfg-card-event is left alone
                                                 (register-events state side (rfg-card-event t) (dissoc (assoc card :cid (make-cid)) :zone))))}
                :run-ends {:effect (effect (unregister-events (dissoc card :zone) ))}}})
 
