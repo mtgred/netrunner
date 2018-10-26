@@ -348,7 +348,7 @@
 
    "Corporate Sales Team"
    (let [e {:effect (req (when (pos? (get-counters card :credit))
-                           (take-credits state :corp 1)
+                           (gain-credits state :corp 1)
                            (system-msg state :corp (str "uses Corporate Sales Team to gain 1 [Credits]"))
                            (add-counter state side card :credit -1)))}]
      {:effect (effect (add-counter card :credit 10))
@@ -757,7 +757,6 @@
    {:msg "gain an additional [Click] per turn"
     :silent (req true)
     :effect (req (gain state :corp
-                       :click 1
                        :click-per-turn 1))
     :swapped {:msg "gain an additional [Click] per turn"
               :effect (req (when (= (:active-player @state) :corp)
@@ -1179,7 +1178,7 @@
                                     :prompt "Gain 3 [Credits] from SSL Endorsement?"
                                     :yes-ability
                                     {:effect (req (when (pos? (get-counters card :credit))
-                                                    (take-credits state :corp 3)
+                                                    (gain-credits state :corp 3)
                                                     (system-msg state :corp (str "uses SSL Endorsement to gain 3 [Credits]"))
                                                     (add-counter state side card :credit -3)))}}}]
      {:effect add-credits
