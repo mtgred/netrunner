@@ -7,9 +7,9 @@
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.edn :as edn]
-            [jinteki.utils :refer [str->int other-side is-tagged?]]
+            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
             [jinteki.cards :refer [all-cards]]
-            [tasks.nrdb :refer [replace-collection]]
+            [tasks.nrdb :refer [replace-collection update-config]]
             [game.quotes :as quotes]))
 
 (load "core/events")    ; triggering of events

@@ -209,17 +209,23 @@
 
 ;; Load all card data and definitions into the current namespace.
 (defn reset-card-data
-  []
-  (->> (io/file "data/cards")
-       file-seq
-       (filter #(and (.isFile %)
-                     (string/ends-with? % ".edn")))
-       (map slurp)
-       (map edn/read-string)
-       (map (juxt :title identity))
-       (into {})
-       (swap! all-cards merge))
-  (replace-collection "cards" (vals @all-cards)))
+  ([] (reset-card-data {}))
+  ([mwl]
+   (->> (io/file "data/cards")
+        file-seq
+        (filter #(and (.isFile %)
+                      (string/ends-with? % ".edn")))
+        (map slurp)
+        (map edn/read-string)
+        (map (juxt :normalizedtitle identity))
+        (into {})
+        (#(merge-with into % (:cards mwl)))
+        vals
+        (map (juxt :title identity))
+        (into {})
+        (swap! all-cards merge))
+   (replace-collection "cards" (vals @all-cards))
+   (update-config)))
 
 (defn load-all-cards
   "Load all card definitions into their own namespaces"

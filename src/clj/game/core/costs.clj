@@ -1,6 +1,7 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg facedown? make-result)
+(declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
+         facedown? make-result)
 
 (defn deduct
   "Deduct the value from the player's attribute."

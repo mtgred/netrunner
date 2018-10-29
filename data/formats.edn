@@ -1,0 +1,20 @@
+[{:code "standard",
+  :cycles ["lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "reign-and-reverie" "magnum-opus" "system-core-2019"],
+  :mwl "standard-mwl-3-0",
+  :name "Standard"}
+ {:code "eternal",
+  :cycles ["core" "genesis" "spin" "lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "terminal-directive" "revised-core" "reign-and-reverie" "magnum-opus" "system-core-2019"],
+  :mwl "eternal-mwl-1-0",
+  :name "Eternal"}
+ {:code "core-experience",
+  :cycles ["system-core-2019"],
+  :mwl nil,
+  :name "Core Experience"}
+ {:code "snapshot",
+  :cycles ["lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "terminal-directive" "revised-core" "reign-and-reverie"],
+  :mwl "napd-mwl-2-2",
+  :name "Snapshot"}
+ {:code "socr8",
+  :cycles ["kitara" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "terminal-directive" "revised-core" "reign-and-reverie" "magnum-opus" "orgcrime"],
+  :mwl "socr8-mwl",
+  :name "Stimhack Online Cache Refresh 8"}]

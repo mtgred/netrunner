@@ -27,9 +27,10 @@
           cycles (:json (<! (GET "/data/cycles")))
           mwl (:json (<! (GET "/data/mwl")))
           latest_mwl (->> mwl
-                          (map (fn [e] (update e :date_start #(js/Date.parse %))))
-                          (sort-by :date_start)
-                          (last))]
+                          (filter #(= "standard" (:format %)))
+                          (map (fn [e] (update e :date-start #(js/Date.parse %))))
+                          (sort-by :date-start)
+                          last)]
       (reset! cards/mwl latest_mwl)
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
@@ -177,9 +178,9 @@
      {:class (if-let [faction (:faction card)]
                (-> faction .toLowerCase (.replace " " "-"))
                "neutral")}
-     (when (decks/banned? card) banned-span)
-     (when (decks/restricted? card) restricted-span)
-     (when (:rotated card) rotated-span)]]
+     (when (decks/legal? :banned card) banned-span)
+     (when (decks/legal? :restricted card) restricted-span)
+     (when (decks/legal? :rotated card) rotated-span)]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
        [:div.anr-icon {:class (str "mu" memory)} ""]

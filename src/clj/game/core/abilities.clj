@@ -1,8 +1,8 @@
 (in-ns 'game.core)
-(declare any-flag-fn? init-trace optional-ability
-         check-optional check-psi check-trace complete-ability
-         do-choices do-ability
-         psi-game resolve-ability-eid resolve-psi resolve-trace show-select)
+
+(declare any-flag-fn? init-trace optional-ability check-optional check-psi check-trace
+         complete-ability do-choices do-ability psi-game resolve-ability-eid
+         resolve-psi resolve-trace show-select)
 
 ;;;; Functions for implementing card abilities and prompts
 

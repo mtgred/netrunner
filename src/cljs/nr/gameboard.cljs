@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
-            [jinteki.utils :refer [str->int is-tagged?] :as utils]
+            [jinteki.utils :refer [str->int is-tagged? has-subtype?] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar] :as auth]
@@ -271,19 +271,6 @@
   (let [dest (when (= (:side card) "Runner")
                (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
-
-(defn has?
-  "Checks the string property of the card to see if it contains the given value"
-  [card property value]
-  (when-let [p (property card)]
-    (> (.indexOf p value) -1)))
-
-(defn has-subtype?
-  "Checks if the specified subtype is present in the card."
-  [card subtype]
-  (or (has? card :subtype subtype)
-      (when-let [persistent-subs (-> card :persistent :subtype)]
-        (includes? persistent-subs subtype))))
 
 (defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
   (let [my-side (:side @game-state)
