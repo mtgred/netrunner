@@ -492,6 +492,31 @@
                  :msg "gain 2 [Credits]"
                  :effect (effect (gain-credits 2))}]}
 
+   "Hired Help"
+   (let [prompt-to-trash-agenda-or-etr
+         {:prompt "Choose one"
+          :player :runner
+          :choices ["Trash 1 scored agenda" "End the run"]
+          :effect (req (if (= target "End the run")
+                         (do (system-msg state :runner (str "declines to pay the additional cost from Hired Help"))
+                             (end-run state side))
+                         (if (seq (:scored runner))
+                           (continue-ability state :runner
+                                             {:prompt "Choose an Agenda to trash"
+                                              :async true
+                                              :choices {:max 1
+                                                        :req #(is-scored? state side %)}
+                                              :effect (req (wait-for (trash state side target {:unpreventable true})
+                                                                     (system-msg state :runner (str "trashes " (:title target)
+                                                                                                    " as an additional cost to initiate a run"))
+                                                                     (effect-completed state side eid)))}
+                                             card nil)
+                           (do (system-msg state :runner (str "wants to pay the additional cost from Hired Help but has no scored agenda to trash"))
+                               (end-run state side)))))}]
+     {:events {:run {:req (req (and this-server
+                                    (empty? (filter #(= :hq %) (:successful-run runner-reg)))))
+                     :effect (req (continue-ability state :runner prompt-to-trash-agenda-or-etr card nil))}}})
+
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server)
                               :msg "do 1 net damage"
