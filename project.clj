@@ -47,7 +47,7 @@
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.16"]
                                   [binaryage/devtools "0.9.7"]
-                                  [com.cemerick/piggieback "0.2.1"]]
+                                  [cider/piggieback "0.3.10"]]
                    :plugins [[lein-figwheel "0.5.16"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
