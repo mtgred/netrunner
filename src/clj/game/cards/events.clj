@@ -142,7 +142,7 @@
 
    "By Any Means"
    {:effect (effect (register-events (:events (card-def card))
-                                     (assoc card :zone '(:discard))))
+                                     (dissoc card :zone)))
     :events {:runner-turn-ends {:effect (effect (unregister-events card))}
              :access {:req (req (not= [:discard] (:zone target)))
                       :interactive (req true)
@@ -2048,6 +2048,28 @@
                                :effect (req (let [n (str->int target)]
                                               (when (pay state :runner card :click n)
                                                 (trash-cards state :corp (take n (shuffle (:hand corp)))))))}} card))}
+
+   "Watch the World Burn"
+   (letfn [(rfg-card-event [burn-name]
+             {:pre-access-card
+              {:req (req (= (:title target) burn-name))
+               :msg (msg (str "uses the previously played Watch the World Burn to remove " burn-name " from the game"))
+               :effect (req (move state :corp target :rfg))}})]
+     {:makes-run true
+      :prompt "Choose a server"
+      :choices (req (filter #(can-run-server? state %) remotes))
+      :effect (effect (run target nil card)
+                      (register-events (:events (card-def card))
+                                       (dissoc card :zone)))
+      :events {:pre-access-card {:req (req (and (not= (:type target) "Agenda")
+                                                (get-in @state [:run :successful])))
+                                 :once :per-run
+                                 :effect (req (let [t (:title target)]
+                                                (system-msg state :runner (str "to remove " t " from the game, and watch for other copies of " t " to burn"))
+                                                (move state :corp target :rfg)
+                                                ;; in the below, the new :cid ensures that when unregister-events is called, the rfg-card-event is left alone
+                                                (register-events state side (rfg-card-event t) (dissoc (assoc card :cid (make-cid)) :zone))))}
+               :run-ends {:effect (effect (unregister-events (dissoc card :zone)))}}})
 
    "White Hat"
    (letfn [(finish-choice [choices]

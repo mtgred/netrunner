@@ -33,9 +33,9 @@
   (let [message (str "\n" name " is pending")]
     `(clojure.test/deftest- ~name (println ~message))))
 
-(defmacro changes-val-macro [change-amt val-form body-form msg]
+(defmacro changes-val-macro [change-amt val-form msg & body-form]
   `(let [start-val# ~val-form]
-     ~body-form
+     (do ~@body-form)
      (let [end-val# ~val-form
            actual-change# (- end-val# start-val#)]
        (clojure.test/do-report
@@ -48,7 +48,7 @@
   (let [change-amt (nth form 1)
         val-form (nth form 2)
         body-form (nth form 3)]
-    `(changes-val-macro ~change-amt ~val-form ~body-form ~msg)))
+    `(changes-val-macro ~change-amt ~val-form ~msg ~body-form)))
 
 ;; Enables you to do this:
 ;; (is (changes-credits (get-runner) -5
@@ -57,4 +57,4 @@
   (let [side (nth form 1)
         change-amt (nth form 2)
         body-form (nth form 3)]
-    `(changes-val-macro ~change-amt (:credit ~side) ~body-form ~msg)))
+    `(changes-val-macro ~change-amt (:credit ~side) ~msg ~body-form)))
