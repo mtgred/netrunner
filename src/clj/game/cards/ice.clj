@@ -2115,19 +2115,21 @@
                    :msg "Runner loses 3 [credits]"
                    :effect (effect (lose-credits :runner 3))}
                   {:label "Gain 3 [credits]"
-                   :effect (req (let [f (:type (nth (:deck runner) 0))
-                                      s (:type (nth (:deck runner) 1))
-                                      t (:type (nth (:deck runner) 2))]
-                                 (when (or (= f s)
-                                           (= f t)
-                                           (= s t))
+                   :effect (req (let [unique-types (->> (:deck runner)
+                                                        (take 3)
+                                                        (map :type)
+                                                        (into #{})
+                                                        count)]
+                                 (when (>= 2 unique-types)
                                    (system-msg state :corp (str "gains 3 [credits]"))
                                    (gain-credits state :corp 3))))}
                   {:label "Place 3 advancement tokens"
-                   :effect (req (let [f (:type (nth (:deck runner) 0))
-                                      s (:type (nth (:deck runner) 1))
-                                      t (:type (nth (:deck runner) 2))]
-                                 (when (= f s t)
+                   :effect (req (let [unique-types (->> (:deck runner)
+                                                        (take 3)
+                                                        (map :type)
+                                                        (into #{})
+                                                        count)]
+                                 (when (= 1 unique-types)
                                    (continue-ability
                                      state side
                                      {:choices {:req installed?}
