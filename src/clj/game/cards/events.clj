@@ -2055,7 +2055,8 @@
               {:req (req (= (:title target) burn-name))
                :msg (msg (str "uses the previously played Watch the World Burn to remove " burn-name " from the game"))
                :effect (req (move state :corp target :rfg))}})]
-     {:prompt "Choose a server" 
+     {:makes-run true
+      :prompt "Choose a server"
       :choices (req (filter #(can-run-server? state %) remotes))
       :effect (effect (run target nil card)
                       (register-events (:events (card-def card))
