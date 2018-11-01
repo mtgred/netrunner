@@ -2114,7 +2114,7 @@
     :subroutines [{:label "Runner loses 3 [credits]"
                    :msg "Runner loses 3 [credits]"
                    :effect (effect (lose-credits :runner 3))}
-                  {:label "Corp gains 3 [credits]"
+                  {:label "Gain 3 [credits]"
                    :effect (req (let [f (:type (nth (:deck runner) 0))
                                       s (:type (nth (:deck runner) 1))
                                       t (:type (nth (:deck runner) 2))]
