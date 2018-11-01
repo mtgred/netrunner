@@ -1622,8 +1622,7 @@
       (card-subroutine state :corp sm 2)
       (is (zero? (get-counters (refresh iw) :advancement)))
       (click-card state :corp iw)
-      (is (= 3 (get-counters (refresh iw) :advancement)))
-    )))
+      (is (= 3 (get-counters (refresh iw) :advancement))))))
 
 (deftest snowflake
   ;; Snowflake - Win a psi game to end the run
