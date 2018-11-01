@@ -140,6 +140,25 @@
             "1 subroutine gained because 2 face up Transactions are in Archives")
         (is (= 5 (count (:discard (get-corp)))) "5 cards in discard pile")))))
 
+(deftest border-control
+  ;; Border Control
+  (do-game
+    (new-game {:corp {:hand ["Border Control" "Ice Wall"]
+                      :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Border Control" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [bc (get-ice state :hq 1)]
+      (core/rez state :corp bc))
+    (let [bc (get-ice state :hq 1)
+          credits (:credit (get-corp))]
+      (card-subroutine state :corp bc 0)
+      (is (= (+ credits 2) (:credit (get-corp))))
+      (card-ability state :corp bc 0)
+      (is (nil? (refresh bc)))
+      (is (nil? (:run @state))))))
+
 (deftest bullfrog
   ;; Bullfrog - Win psi to move to outermost position of another server and continue run there
   (do-game
