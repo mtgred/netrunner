@@ -360,6 +360,61 @@
         (is (= 1 (count (:discard (get-runner)))) "Counter Surveillance trashed")
         (is (zero? (:credit (get-runner))) "Runner has no credits")))))
 
+(deftest crowdfunding
+  (testing "Credit gain behavior"
+    (do-game
+      (new-game {:runner {:deck ["Crowdfunding" "Hedge Fund"]}})
+      (core/move state :runner (find-card "Hedge Fund" (:hand (get-runner))) :deck)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crowdfunding")
+      (let [cf (get-resource state 0)]
+        ;; Number of credits
+        (is (= 3 (get-counters cf :credit)))
+        (is (= 5 (get-in @state [:runner :credit])))
+        ;; End turn
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 2 (get-counters (refresh cf) :credit)))
+        (is (= 9 (get-in @state [:runner :credit])))
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 1 (get-counters (refresh cf) :credit)))
+        (is (= 14 (get-in @state [:runner :credit])))
+        (is (= 1 (count (:deck (get-runner)))) "1 card in deck")
+        (is (empty? (:hand (get-runner))) "No cards in hand")
+        (is (empty? (:discard (get-runner))) "No cards in discard")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 19 (get-in @state [:runner :credit])))
+        (is (empty? (:deck (get-runner))) "No cards in deck")
+        (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
+        (is (= 1 (count (:discard (get-runner)))) "1 card in discard")
+        (is (nil? (get-resource state 0)) "Crowdfunding not installed")
+        (run-empty-server state :archives)
+        (run-empty-server state :archives)
+        (run-empty-server state :archives)
+        (take-credits state :runner)
+        (click-prompt state :runner "Yes")
+        (is (empty? (:discard (get-runner))) "Crowdfunding not in discard")
+        (is (= 1 (count (get-resource state))) "Crowdfunding reinstalled"))))
+  (testing "Install from heap"
+    (do-game
+      (new-game {:runner {:deck ["Crowdfunding"]}})
+      (core/move state :runner (find-card "Crowdfunding" (:hand (get-runner))) :discard)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (empty? (:prompt (get-runner))) "No install prompt if no runs")
+      (is (= 1 (count (:discard (get-runner)))) "1 card in discard")
+      (is (empty? (get-resource state)) "Crowdfunding not installed")
+      (take-credits state :corp)
+      (run-empty-server state :archives)
+      (run-empty-server state :archives)
+      (run-empty-server state :archives)
+      (take-credits state :runner)
+      (click-prompt state :runner "Yes")
+      (is (empty? (:discard (get-runner))) "Crowdfunding not in discard")
+      (is (= 1 (count (get-resource state))) "Crowdfunding reinstalled"))))
+
 (deftest daily-casts
   ;; Play and tick through all turns of daily casts
   (do-game
