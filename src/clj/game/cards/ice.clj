@@ -2123,7 +2123,7 @@
                                            (= s t))
                                    (system-msg state :corp (str "gains 3 [credits]"))
                                    (gain-credits state :corp 3))))}
-                  {:label "Corp places 3 advancement tokens"
+                  {:label "Place 3 advancement tokens"
                    :effect (req (let [f (:type (nth (:deck runner) 0))
                                       s (:type (nth (:deck runner) 1))
                                       t (:type (nth (:deck runner) 2))]
