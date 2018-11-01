@@ -104,8 +104,7 @@
                                 card nil))}]}
 
    "Akshara Sareen"
-   {:in-play [:click 1
-              :click-per-turn 1]
+   {:in-play [:click-per-turn 1]
     :msg "give each player 1 additional [Click] to spend during their turn"
     :effect (effect (gain :corp :click-per-turn 1))
     :leave-play (effect (lose :corp :click-per-turn 1))}
@@ -1238,7 +1237,7 @@
     :abilities [{:counter-cost [:credit 1]
                  :msg "gain 1 [Credits] for trashing installed cards"
                  :async true
-                 :effect (req (take-credits state :runner 1)
+                 :effect (req (gain-credits state :runner 1)
                               (if (zero? (get-counters (get-card state card) :credit))
                                 (trash state :runner eid card {:unpreventable true})
                                 (effect-completed state :runner eid)))}]}
@@ -1574,7 +1573,7 @@
    {:in-play [:hand-size 2]}
 
    "Rachel Beckman"
-   (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click 1 :click-per-turn 1]})
+   (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click-per-turn 1]})
 
    "Raymond Flint"
    {:events {:corp-gain-bad-publicity
