@@ -400,7 +400,10 @@
       :abilities [maybe-gain-counter etr]})
 
    "Expo Grid"
-   (let [ability {:msg "gain 1 [Credits]"
+   (let [ability {:req (req (some #(and (is-type? % "Asset")
+                                        (rezzed? %))
+                                  (get-in corp (:zone card))))
+                  :msg "gain 1 [Credits]"
                   :once :per-turn
                   :label "Gain 1 [Credits] (start of turn)"
                   :effect (effect (gain-credits 1))}]
