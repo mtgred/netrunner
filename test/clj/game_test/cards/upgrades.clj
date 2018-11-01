@@ -639,6 +639,41 @@
       (click-prompt state :runner "0")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should discard 1 card from meat damage from losing Drone Screen trace"))))
 
+(deftest embolus
+  ;; Embolus - 1 power token to end the run, tokens are lost on successful runs
+  (do-game
+    (new-game {:corp {:deck ["Embolus"]}})
+    (play-from-hand state :corp "Embolus" "New remote")
+    (take-credits state :corp)
+    (let [em (get-content state :remote1 0)]
+      (core/rez state :corp em)
+      (take-credits state :runner)
+      (let [credits (:credit (get-corp))
+            powers (get-counters (refresh em) :power)]
+        (is (= 0 powers) "Embolus is rezzed with 0 counters")
+        (click-prompt state :corp "Yes")
+        (is (= (- credits 1) (:credit (get-corp)))
+            "Adding power counters costs a credit")
+        (is (= 1 (get-counters (refresh em) :power))
+            "A power counter was added"))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (card-ability state :corp (refresh em) 1) ; try to etr
+      (is (and (:run @state) (= 1 (get-counters (refresh em) :power)))
+          "Embolus doesn't fire during a run on other servers")
+      (run-successful state)
+      (is (= 0 (get-counters (refresh em) :power))
+          "A successful run removes counters")
+      ;; (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (click-prompt state :corp "Yes")
+      (is (= 1 (get-counters (refresh em) :power)) "A counter was added")
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (card-ability state :corp (refresh em) 1) ; try to etr
+      (is (and (not (:run @state)) (= 0 (get-counters (refresh em) :power)))
+          "Embolus spent a counter to ETR"))))
+
 (deftest forced-connection
   ;; Forced Connection - ambush, trace(3) give the runner 2 tags
   (do-game
