@@ -2055,7 +2055,8 @@
               {:req (req (= (:title target) burn-name))
                :msg (msg (str "uses the previously played Watch the World Burn to remove " burn-name " from the game"))
                :effect (req (move state :corp target :rfg))}})]
-     {:prompt "Choose a server" :choices (req (filter #(can-run-server? state %) remotes))
+     {:prompt "Choose a server" 
+      :choices (req (filter #(can-run-server? state %) remotes))
       :effect (effect (run target nil card)
                       (register-events (:events (card-def card))
                                        (dissoc card :zone)))
@@ -2067,7 +2068,7 @@
                                                 (move state :corp target :rfg)
                                                 ;; in the below, the new :cid ensures that when unregister-events is called, the rfg-card-event is left alone
                                                 (register-events state side (rfg-card-event t) (dissoc (assoc card :cid (make-cid)) :zone))))}
-               :run-ends {:effect (effect (unregister-events (dissoc card :zone) ))}}})
+               :run-ends {:effect (effect (unregister-events (dissoc card :zone)))}}})
 
    "White Hat"
    (letfn [(finish-choice [choices]
