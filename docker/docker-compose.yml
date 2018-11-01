@@ -7,7 +7,7 @@ services:
     volumes:
       - ./config.edn:/netrunner/config.edn
     ports:
-      - "1042:1042"
+      - 1042:1042
     depends_on:
       - mongodb
   mongodb:
