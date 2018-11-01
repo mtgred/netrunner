@@ -472,7 +472,7 @@
    {:abilities [{:label "End the run"
                  :effect (effect (trash card {:cause :ability-cost})
                                  (end-run))}]
-    :subroutines [{:label "Gain credits for ice on this server"
+    :subroutines [{:label "Gain 1 [credits] for each ice protecting this server"
                    :msg (msg "gain "
                              (count (:ices (card->server state card)))
                              " [credits]")
