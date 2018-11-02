@@ -1154,6 +1154,30 @@
                                     (card-str state target))))}
                     card nil)))}
 
+   "Labor Rights"
+   {:req (req (pos? (+ (count (:deck runner)) (count (:discard runner)))))
+    :effect (req (let [mill-count (min 3 (count (:deck runner)))]
+                   (mill state :runner :runner mill-count)
+                   (system-msg state :runner (str "trashes the top " (quantify mill-count "card") " of their Stack"))
+                   (let [heap-count (min 3 (count (get-in @state [:runner :discard])))]
+                     (continue-ability
+                       state side
+                       {:prompt (str "Choose " (quantify heap-count "card") " to shuffle into the stack")
+                        :show-discard true
+                        :choices {:max heap-count
+                                  :all true
+                                  :not-self true
+                                  :req #(and (= (:side %) "Runner")
+                                             (in-discard? %))}
+                        :effect (req (doseq [c targets] (move state side c :deck))
+                                     (system-msg state :runner (str "shuffles " (join ", " (map :title targets))
+                                                                    " from their Heap into their Stack, and draws 1 card"))
+                                     (shuffle! state :runner :deck)
+                                     (draw state :runner 1)
+                                     (move state side (find-latest state card) :rfg)
+                                     (system-msg state :runner "removes Labor Rights from the game"))}
+                       card nil))))}
+
    "Lawyer Up"
    {:msg "remove 2 tags and draw 3 cards"
     :effect (effect (draw 3) (lose-tags 2))}
