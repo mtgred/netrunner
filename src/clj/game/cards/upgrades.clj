@@ -377,6 +377,28 @@
     :derez-effect {:effect (req (update-ice-in-server state side (card->server state card)))}
     :trash-effect {:effect (req (update-all-ice state side))}}
 
+   "Embolus"
+   (let [maybe-gain-counter {:once :per-turn
+                             :label "Place a power counter on Embolus"
+                             :effect (effect
+                                       (continue-ability
+                                         {:optional
+                                          {:prompt "Pay 1 [Credit] to place a power counter on Embolus?"
+                                           :yes-ability {:effect (effect (add-counter card :power 1))
+                                                         :cost [:credit 1]
+                                                         :msg "pay 1 [Credit] to place a power counter on Embolus"}}}
+                                         card nil))}
+         etr {:req (req this-server)
+              :counter-cost [:power 1]
+              :msg "end the run"
+              :effect (effect (end-run))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins maybe-gain-counter
+               :successful-run {:req (req (pos? (get-counters card :power)))
+                                :msg "remove 1 power counter from Embolus"
+                                :effect (effect (add-counter card :power -1))}}
+      :abilities [maybe-gain-counter etr]})
+
    "Expo Grid"
    (let [ability {:req (req (some #(and (is-type? % "Asset")
                                         (rezzed? %))
@@ -491,6 +513,31 @@
     :abilities [{:req (req (and this-server tagged))
                  :msg "gain 2 [Credits]"
                  :effect (effect (gain-credits 2))}]}
+
+   "Hired Help"
+   (let [prompt-to-trash-agenda-or-etr
+         {:prompt "Choose one"
+          :player :runner
+          :choices ["Trash 1 scored agenda" "End the run"]
+          :effect (req (if (= target "End the run")
+                         (do (system-msg state :runner (str "declines to pay the additional cost from Hired Help"))
+                             (end-run state side))
+                         (if (seq (:scored runner))
+                           (continue-ability state :runner
+                                             {:prompt "Choose an Agenda to trash"
+                                              :async true
+                                              :choices {:max 1
+                                                        :req #(is-scored? state side %)}
+                                              :effect (req (wait-for (trash state side target {:unpreventable true})
+                                                                     (system-msg state :runner (str "trashes " (:title target)
+                                                                                                    " as an additional cost to initiate a run"))
+                                                                     (effect-completed state side eid)))}
+                                             card nil)
+                           (do (system-msg state :runner (str "wants to pay the additional cost from Hired Help but has no scored agenda to trash"))
+                               (end-run state side)))))}]
+     {:events {:run {:req (req (and this-server
+                                    (empty? (filter #(= :hq %) (:successful-run runner-reg)))))
+                     :effect (req (continue-ability state :runner prompt-to-trash-agenda-or-etr card nil))}}})
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server)
@@ -984,7 +1031,7 @@
       :msg (msg "gain " (get-counters card :credit) " [Credits]")
       :once :per-turn
       :label "Take all credits"
-      :effect (effect (take-credits (get-counters card :credit))
+      :effect (effect (gain-credits (get-counters card :credit))
                       (set-prop card :counter {:credit 0}))}]}
 
    "Signal Jamming"

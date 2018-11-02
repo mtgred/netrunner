@@ -129,6 +129,25 @@
       [:p
        [:button.btn.btn-primary {:type "submit"} "Submit"]]]]))
 
+(defn fetch-page [req]
+  (hiccup/html5
+    [:head
+     [:title "Update Card Data"]
+     (hiccup/include-css "/css/netrunner.css")]
+    [:body
+     [:div.reset-bg]
+     [:form.panel.blue-shade.reset-form {:method "POST"}
+      (when-let [card-info (mc/find-one-as-map db "config" {})]
+        [:div.admin
+         [:div
+          [:h3 "Card Version:"]
+          (:cards-version card-info)]
+         [:div
+          [:h3 "Last Updated:"]
+          (:last-updated card-info)]])
+      [:br]
+      [:button.btn.btn-primary {:type "submit"} "Fetch Cards"]]]))
+
 (defn reset-password-page
   [{{:keys [token]} :params}]
   (if-let [user (mc/find-one-as-map db "users" {:resetPasswordToken   token

@@ -420,7 +420,33 @@
       (click-prompt state :runner "By Any Means")
       (is (nil? (->> (get-runner) :prompt first :choices)) "By Any Means trashes with no prompt")
       (is (= 2 (count (:discard (get-corp)))) "Agenda was trashed")
-      (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage"))))
+      (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
+  (testing "Effect persists when moved from discard"
+    (do-game
+     (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"}
+                :runner {:deck [(qty "By Any Means" 2)]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "By Any Means")
+     (card-ability state :corp (get-in @state [:corp :identity]) 0)
+     (click-prompt state :corp (find-card "By Any Means" (:discard (get-runner))))
+     (is (= 1 (count (get-in @state [:runner :rfg]))) "By Any Means RFGed")
+     (is (= 0 (count (:discard (get-corp)))) "Nothing trashed yet")
+     (is (= 1 (count (:hand (get-runner)))) "No damage yet")
+     (run-empty-server state "HQ")
+     (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
+     (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
+  (testing "Effect does not persist between turns"
+    (do-game
+     (new-game {:runner {:deck [(qty "By Any Means" 2)]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "By Any Means")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (is (= 0 (count (:discard (get-corp)))) "Nothing trashed yet")
+     (is (= 1 (count (:hand (get-runner)))) "No damage yet")
+     (run-empty-server state "HQ")
+     (is (= 0 (count (:discard (get-corp)))) "Nothing trashed")
+     (is (= 1 (count (:hand (get-runner)))) "No damage"))))
 
 (deftest careful-planning
   ;; Careful Planning - Prevent card in/protecting remote server from being rezzed this turn
@@ -2853,6 +2879,77 @@
     (is (= 1 (count-tags state)) "Took 1 tag")
     (is (= 5 (:credit (get-runner))) "Paid 8 credits")
     (is (zero? (:credit (get-corp))) "Corp lost all 8 credits")))
+
+(deftest watch-the-world-burn
+  ;; Watch the World Burn - run a remote to RFG the first card accessed
+  ;; and all future copies
+  (testing "Standard usage"
+    (do-game
+     (new-game {:corp {:deck [(qty "PAD Campaign" 2) (qty "Launch Campaign" 3)]}
+                :runner {:deck ["Watch the World Burn" (qty "Same Old Thing" 2)]}})
+     (play-from-hand state :corp "PAD Campaign" "New remote")
+     (play-from-hand state :corp "PAD Campaign" "New remote")
+     (play-from-hand state :corp "Launch Campaign" "New remote")
+     (take-credits state :corp)
+     (changes-val-macro 1 (count (get-in @state [:corp :rfg]))
+                        "Server 1 PAD Campaign RFGed"
+                        (play-from-hand state :runner "Watch the World Burn")
+                        (click-prompt state :runner "Server 1")
+                        (run-successful state))
+     (is (= 0 (:click (get-runner))) "Terminal event ends the action phase")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (changes-val-macro 1 (count (get-in @state [:corp :rfg]))
+                        "Server 2 PAD Campaign RFGed even on the next turn"
+                        (run-empty-server state "Server 2"))
+     (changes-val-macro 0 (count (get-in @state [:corp :rfg]))
+                        "Server 3 Launch Campaign not RFGed"
+                        (run-empty-server state "Server 3"))
+     (click-prompt state :runner "No action")
+     (core/move state :runner (find-card "Watch the World Burn" (:discard (get-runner))) :hand)
+     (core/gain state :runner :credit 3) ;need to be able to play the card
+     (changes-val-macro 1 (count (get-in @state [:corp :rfg]))
+                        "Server 3 Launch Campaign RFGed"
+                        (play-from-hand state :runner "Watch the World Burn")
+                        (click-prompt state :runner "Server 3")
+                        (run-successful state))
+     (is (= 0 (:click (get-runner))) "Terminal event ends the action phase")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (changes-val-macro 1 (count (get-in @state [:corp :rfg]))
+                        "HQ Launch Campaign RFGed"
+                        (run-empty-server state "HQ"))))
+  (testing "Mid-run accesses"
+    (do-game
+     (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 2)
+                              "Kitsune"
+                              "Ice Wall"]}
+                :runner {:deck ["Watch the World Burn" (qty "Same Old Thing" 2)]}})
+     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+     (play-from-hand state :corp "Kitsune" "Server 1")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Watch the World Burn")
+     (click-prompt state :runner "Server 1")
+     (let [kitsune (get-ice state :remote1 0)]
+        (core/rez state :corp kitsune)
+        (card-subroutine state :corp kitsune 0)
+        (changes-val-macro 0 (count (get-in @state [:corp :rfg]))
+                           "HQ Ice Wall not RFGed"
+                           (click-card state :corp (find-card "Ice Wall" (:hand (get-corp)))))
+        (click-prompt state :runner "No action"))
+     (core/gain state :runner :credit 5)
+     (is (>= (:credit (get-runner)) 5) "Runner can trash MVT if they want to")
+     (changes-val-macro 0 (:credit (get-runner))
+                        "Server 1 MVT doesn't trigger"
+                        (run-successful state))
+     (is (= 1 (count (get-in @state [:corp :rfg]))) "MVT was RFGed")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (changes-val-macro 0 (:credit (get-runner))
+                        "Server 2 MVT doesn't trigger"
+                        (run-empty-server state "Server 2"))
+     (is (= 2 (count (get-in @state [:corp :rfg]))) "MVT was RFGed"))))
 
 (deftest white-hat
   ;; White Hat

@@ -639,6 +639,41 @@
       (click-prompt state :runner "0")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should discard 1 card from meat damage from losing Drone Screen trace"))))
 
+(deftest embolus
+  ;; Embolus - 1 power token to end the run, tokens are lost on successful runs
+  (do-game
+    (new-game {:corp {:deck ["Embolus"]}})
+    (play-from-hand state :corp "Embolus" "New remote")
+    (take-credits state :corp)
+    (let [em (get-content state :remote1 0)]
+      (core/rez state :corp em)
+      (take-credits state :runner)
+      (let [credits (:credit (get-corp))
+            powers (get-counters (refresh em) :power)]
+        (is (= 0 powers) "Embolus is rezzed with 0 counters")
+        (click-prompt state :corp "Yes")
+        (is (= (- credits 1) (:credit (get-corp)))
+            "Adding power counters costs a credit")
+        (is (= 1 (get-counters (refresh em) :power))
+            "A power counter was added"))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (card-ability state :corp (refresh em) 1) ; try to etr
+      (is (and (:run @state) (= 1 (get-counters (refresh em) :power)))
+          "Embolus doesn't fire during a run on other servers")
+      (run-successful state)
+      (is (= 0 (get-counters (refresh em) :power))
+          "A successful run removes counters")
+      ;; (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (click-prompt state :corp "Yes")
+      (is (= 1 (get-counters (refresh em) :power)) "A counter was added")
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (card-ability state :corp (refresh em) 1) ; try to etr
+      (is (and (not (:run @state)) (= 0 (get-counters (refresh em) :power)))
+          "Embolus spent a counter to ETR"))))
+
 (deftest forced-connection
   ;; Forced Connection - ambush, trace(3) give the runner 2 tags
   (do-game
@@ -740,6 +775,64 @@
       (is (not (:run @state)))
       (is (= 6 (:current-strength (refresh gutenberg))))
       (is (zero? (:current-strength (refresh vanilla)))))))
+
+(deftest hired-help
+  ;; Hired Help - trash an agenda if you wanna run my server
+  (testing "Normal usage"
+    (do-game
+     (new-game {:corp {:deck ["Hired Help" "Accelerated Beta Test"]}})
+     (play-from-hand state :corp "Hired Help" "New remote")
+     (play-from-hand state :corp "Accelerated Beta Test" "New remote")
+     (take-credits state :corp)
+     (core/rez state :corp (get-content state :remote1 0))
+     (let [hh (get-content state :remote1 0)]
+       (run-on state :remote1)
+       (is (prompt-is-card? state :runner (refresh hh)) "Runner prompt is on Hired Help")
+       (click-prompt state :runner "End the run")
+       (is (not (:run @state)) "Run ended")
+       (run-empty-server state :remote2)
+       (click-prompt state :runner "Steal")
+       (run-on state :remote1)
+       (click-prompt state :runner "Trash 1 scored agenda")
+       (click-card state :runner (get-scored state :runner 0))
+       (is (= 1 (count (:discard (get-corp)))) "ABT trashed")
+       (is (zero? (count (:scored (get-runner)))) "No stolen agendas")
+       (run-jack-out state)
+       (run-empty-server state :hq)
+       (run-on state :remote1)
+       (is (empty? (:prompt (get-runner))) "No Hired Help prompt")
+       (is (empty? (:discard (get-runner))) "No net damage done for successful run on R&D")))) 
+  (testing "Crisium Grid, fake agenda interactions"
+    (do-game
+     (new-game {:corp {:deck ["Hired Help" "Crisium Grid"]}
+                :runner {:deck ["Notoriety"]}})
+     (play-from-hand state :corp "Hired Help" "New remote")
+     (play-from-hand state :corp "Crisium Grid" "HQ")
+     (take-credits state :corp)
+     (core/rez state :corp (get-content state :remote1 0))
+     (let [hh (get-content state :remote1 0)]
+       (run-empty-server state :archives)
+       (run-empty-server state :rd)
+       (run-empty-server state :hq)
+       (click-prompt state :runner "No action")
+       (play-from-hand state :runner "Notoriety")
+       (is (= 1 (count (:scored (get-runner)))) "Notoriety scored")
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (run-on state :remote1)
+       (is (prompt-is-card? state :runner (refresh hh)) "Runner prompt is on Hired Help")
+       (click-prompt state :runner "Trash 1 scored agenda")
+       (click-card state :runner (get-scored state :runner 0))
+       (is (= 0 (count (:discard (get-corp)))) "Notoriety does not go in Corp discard")
+       (is (= 1 (count (:discard (get-runner)))) "Notoriety is in Runner discard")
+       (is (zero? (count (:scored (get-runner)))) "No stolen agendas")
+       (run-jack-out state)
+       (core/rez state :corp (get-content state :hq 0)) ;rez crisium
+       (run-empty-server state :hq)
+       (click-prompt state :runner "No action")
+       (run-on state :remote1)
+       (is (prompt-is-card? state :runner (refresh hh))
+           "Runner prompt is on Hired Help despite HQ run because of Crisium")))))
 
 (deftest hokusai-grid
   ;; Hokusai Grid - Do 1 net damage when run successful on its server

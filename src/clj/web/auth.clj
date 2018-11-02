@@ -60,7 +60,8 @@
     (response 423 {:message "Usernames are limited to 20 characters"})
     (if-let [_ (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$") $options "i"}})]
       (response 422 {:message "Username taken"})
-      (let [emailhash (digest/md5 email)
+      (let [first_user (not (mc/any? db "users"))
+            emailhash (digest/md5 email)
             registrationDate (java.util.Date.)
             lastConnection registrationDate
             hash-pw (password/encrypt password)
@@ -70,6 +71,7 @@
                                                        :registrationDate registrationDate
                                                        :lastConnection   lastConnection
                                                        :password         hash-pw
+                                                       :isadmin          first_user
                                                        :options          {}})
             demo-decks (mc/find-maps db "decks" {:username "__demo__"})]
         (when (not-empty demo-decks)

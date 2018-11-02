@@ -348,7 +348,7 @@
 
    "Corporate Sales Team"
    (let [e {:effect (req (when (pos? (get-counters card :credit))
-                           (take-credits state :corp 1)
+                           (gain-credits state :corp 1)
                            (system-msg state :corp (str "uses Corporate Sales Team to gain 1 [Credits]"))
                            (add-counter state side card :credit -1)))}]
      {:effect (effect (add-counter card :credit 10))
@@ -757,7 +757,6 @@
    {:msg "gain an additional [Click] per turn"
     :silent (req true)
     :effect (req (gain state :corp
-                       :click 1
                        :click-per-turn 1))
     :swapped {:msg "gain an additional [Click] per turn"
               :effect (req (when (= (:active-player @state) :corp)
@@ -1179,7 +1178,7 @@
                                     :prompt "Gain 3 [Credits] from SSL Endorsement?"
                                     :yes-ability
                                     {:effect (req (when (pos? (get-counters card :credit))
-                                                    (take-credits state :corp 3)
+                                                    (gain-credits state :corp 3)
                                                     (system-msg state :corp (str "uses SSL Endorsement to gain 3 [Credits]"))
                                                     (add-counter state side card :credit -3)))}}}]
      {:effect add-credits
@@ -1265,6 +1264,37 @@
                                                            (fn [_ _ c] (not= (:cid c) (:cid card))))
                                        ;; TODO: investigate why this is needed??
                                        (effect-completed eid))}}}}
+
+   "Timely Public Release"
+   {:silent (req true)
+    :effect (effect (add-counter card :agenda 1))
+    :abilities [{:counter-cost [:agenda 1]
+                 :label "Install a piece of ice in any position, ignoring all costs"
+                 :prompt "Select a piece of ice to install"
+                 :show-discard true
+                 :choices {:req #(and (is-type? % "ICE")
+                                      (#{[:hand] [:discard]} (:zone %)))}
+                 :effect (effect
+                          (continue-ability
+                           (let [chosen-ice target]
+                             {:prompt "Choose a server"
+                              :choices (req servers)
+                              :effect (effect
+                                       (continue-ability
+                                        (let [chosen-server target
+                                              num-ice (count (get-in (:corp @state)
+                                                                     (conj (server->zone state target) :ices)))]
+                                          {:prompt "Which position to install in? (0 is innermost)"
+                                           :choices (vec (map str (range (inc num-ice))))
+                                           :effect (req (corp-install state side chosen-ice chosen-server
+                                                                         {:no-install-cost true :index (Integer/parseInt target)})
+                                                        (if (and run (= (zone->name (first (:server run)))
+                                                                        chosen-server))
+                                                          (let [curr-pos (get-in @state [:run :position])] 
+                                                            (if (>= curr-pos (Integer/parseInt target))
+                                                              (swap! state assoc-in [:run :position] (inc curr-pos))))))})
+                                        card nil))})
+                           card nil))}]}
 
    "Underway Renovation"
    (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]

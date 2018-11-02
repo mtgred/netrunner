@@ -42,7 +42,7 @@
                  :once :per-turn
                  :req (req (:corp-phase-12 @state))
                  :label (str "Gain " per-turn " [Credits] (start of turn)")
-                 :effect (req (take-credits state :corp per-turn)
+                 :effect (req (gain-credits state :corp per-turn)
                               (when (zero? (get-counters card :credit))
                                 (trash state :corp card)))}]
     {:effect (effect (add-counter card :credit counters))
@@ -298,7 +298,7 @@
                  :cost [:credit 2]
                  :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (take-credits (get-counters card :credit)))}]
+                                 (gain-credits (get-counters card :credit)))}]
     :events {:corp-turn-begins {:req (req (>= (get-counters card :credit) 6))
                                 :effect (effect (add-counter card :credit 2)
                                                 (system-msg (str "adds 2 [Credits] to C.I. Fund")))}}}
@@ -506,7 +506,7 @@
    {:recurring 2}
 
    "Director Haas"
-   {:in-play [:click 1 :click-per-turn 1]
+   {:in-play [:click-per-turn 1]
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
@@ -985,7 +985,7 @@
                  :prompt "How many [Credits]?"
                  :choices {:counter :credit}
                  :msg (msg "gain " target " [Credits]")
-                 :effect (effect (take-credits target))}]
+                 :effect (effect (gain-credits target))}]
     :events {:corp-turn-begins {:effect (effect (add-counter card :credit 2)
                                                 (system-msg (str "adds 2 [Credit] to Long-Term Investment")))}}}
 
@@ -1014,7 +1014,7 @@
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain 2 [Credits] (start of turn)")
                   :async true
-                  :effect (req (take-credits state :corp 2)
+                  :effect (req (gain-credits state :corp 2)
                                (if (zero? (get-counters (get-card state card) :credit))
                                  (trash state :corp eid card {:unpreventable true})
                                  (effect-completed state :corp eid)))}]
@@ -1059,7 +1059,7 @@
                   :label "Take 1 [Credits] (start of turn)"
                   :once :per-turn
                   :counter-cost [:credit 1]
-                  :effect (effect (take-credits 1))}]
+                  :effect (effect (gain-credits 1))}]
    {:abilities [ability
                 {:cost [:click 1]
                  :msg "store 3 [Credits]"
@@ -1373,7 +1373,7 @@
     :abilities [{:cost [:click 1]
                  :counter-cost [:credit 2]
                  :msg "gain 2 [Credits]"
-                 :effect (req (take-credits state :corp 2)
+                 :effect (req (gain-credits state :corp 2)
                               (when (zero? (get-counters (get-card state card) :credit))
                                 (trash state :corp card)))}]}
 
@@ -1901,12 +1901,8 @@
                              (effect-completed state side eid)))}}}
 
    "Victoria Jenkins"
-   {:effect (req (lose state :runner :click-per-turn 1)
-                 (when (= (:active-player @state) :runner)
-                   (lose state :runner :click 1)))
-    :leave-play (req (gain state :runner :click-per-turn 1)
-                     (when (= (:active-player @state) :runner)
-                       (gain state :runner :click 1)))
+   {:effect (req (lose state :runner :click-per-turn 1))
+    :leave-play (req (gain state :runner :click-per-turn 1))
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"

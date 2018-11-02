@@ -468,6 +468,18 @@
                                                              :init-data true})
                                (trigger-event state side :corp-install newice)))}]})
 
+  "Border Control"
+   {:abilities [{:label "End the run"
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (end-run))}]
+    :subroutines [{:label "Gain 1 [credits] for each ice protecting this server"
+                   :msg (msg "gain "
+                             (count (:ices (card->server state card)))
+                             " [credits]")
+                   :effect (req (let [num-ice (count (:ices (card->server state card)))]
+                                  (gain-credits state :corp num-ice)))}
+                  end-the-run]}
+
    "Brainstorm"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (:hand runner)) " subroutines")}]
@@ -475,7 +487,9 @@
 
    "Builder"
    {:abilities [{:label "Move Builder to the outermost position of any server"
-                 :cost [:click 1] :prompt "Choose a server" :choices (req servers)
+                 :cost [:click 1]
+                 :prompt "Choose a server"
+                 :choices (req servers)
                  :msg (msg "move it to the outermost position of " target)
                  :effect (effect (move card (conj (server->zone state target) :ices)))}]
     :subroutines [{:label "Place 1 advancement token on an ICE that can be advanced protecting this server"
@@ -2103,6 +2117,37 @@
                   {:label "Force the Runner to access the top card of R&D"
                    :async true
                    :effect (req (do-access state :runner eid [:rd] {:no-root true}))}]}
+
+   "Slot Machine"
+   (letfn [(name-builder [card] (str (:title card) " (" (:type card) ")"))
+           (top-3 [runner] (take 3 (:deck runner)))
+           (top-3-names [runner] (map name-builder (top-3 runner)))
+           (top-3-types [runner] (->> (top-3 runner) (map :type) (into #{}) count))]
+    {:implementation "Encounter effect is manual"
+     :abilities [{:label "Roll them bones"
+                  :effect (effect (move :runner (first (:deck runner)) :deck)
+                                  (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
+                                                   " then reveal the top 3 cards in the stack: "
+                                                   (join ", " (top-3-names runner)))))}]
+     :subroutines [{:label "Runner loses 3 [Credits]"
+                    :msg "force the Runner to lose 3 [Credits]"
+                    :effect (effect (lose-credits :runner 3))}
+                   {:label "Gain 3 [Credits]"
+                    :effect (req (let [unique-types (top-3-types runner)]
+                                   (when (>= 2 unique-types)
+                                     (system-msg state :corp (str "gains 3 [Credits]"))
+                                     (gain-credits state :corp 3))))}
+                   {:label "Place 3 advancement tokens"
+                    :effect (req (let [unique-types (top-3-types runner)]
+                                   (when (= 1 unique-types)
+                                     (continue-ability
+                                       state side
+                                       {:choices {:req installed?}
+                                        :prompt "Choose an installed card"
+                                        :effect (effect (system-msg (str "places 3 advancement tokens on "
+                                                                         (:title target)))
+                                                        (add-prop target :advance-counter 3 {:placed true}))}
+                                       card nil))))}]})
 
    "Snoop"
    {:implementation "Encounter effect is manual"
