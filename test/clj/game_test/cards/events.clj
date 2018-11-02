@@ -1661,11 +1661,8 @@
   ;; Labor Rights - trash 3 cards, shuffle 3 cards from heap->stack, draw 1 card, rfg Labor Rights
   (testing "Basic behavior"
     (do-game
-      (new-game {:runner {:deck ["Labor Rights" "Sure Gamble" "Lawyer Up" "Knifed"]}})
+      (new-game {:runner {:hand ["Labor Rights"] :deck ["Sure Gamble" "Lawyer Up" "Knifed"]}})
       (take-credits state :corp)
-      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Lawyer Up" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Knifed" (:hand (get-runner))) :deck)
       (is (empty? (:discard (get-runner))) "Starts with no cards in discard")
       (is (= 3 (count (:deck (get-runner)))) "Starts with 3 cards in deck")
       (play-from-hand state :runner "Labor Rights")
@@ -1679,9 +1676,8 @@
       (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")))
   (testing "Less than 3 cards"
     (do-game
-      (new-game {:runner {:deck ["Labor Rights" "Sure Gamble"]}})
+      (new-game {:runner {:hand ["Labor Rights"] :deck ["Sure Gamble"]}})
       (take-credits state :corp)
-      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (is (empty? (:discard (get-runner))) "Starts with no cards in discard")
       (is (= 1 (count (:deck (get-runner)))) "Starts with 1 card in deck")
       (play-from-hand state :runner "Labor Rights")
