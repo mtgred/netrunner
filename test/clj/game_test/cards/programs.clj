@@ -611,7 +611,26 @@
           (core/no-action state :corp nil)
           (run-continue state)
           (is (= (+ starting-creds-2 2) (:credit (get-runner)))
-              "Gained 2 creds for passing rezzed host ice"))))))
+              "Gained 2 creds for passing rezzed host ice")))))
+  (testing "HB: Architects of Tomorrow interaction"
+    (do-game
+      (new-game {:corp {:id "Haas-Bioroid: Architects of Tomorrow"
+                        :deck ["Eli 1.0"]}
+                 :runner {:deck ["Kyuban"]}})
+      (play-from-hand state :corp "Eli 1.0" "HQ")
+      (let [eli (get-ice state :hq 0)]
+        (core/rez state :corp eli)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Kyuban")
+        (click-card state :runner eli)
+        (let [starting-creds (:credit (get-runner))]
+          (run-on state "HQ")
+          (core/no-action state :corp nil)
+          (core/continue state :runner nil)
+          (click-prompt state :corp "Done")
+          (core/continue state :runner nil)
+          (is (= (+ starting-creds 2) (:credit (get-runner)))
+              "Only gained 2 credits for passing Eli"))))))
 
 (deftest lamprey
   ;; Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge
