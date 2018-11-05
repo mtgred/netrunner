@@ -2135,7 +2135,7 @@
                    {:label "Gain 3 [Credits]"
                     :effect (req (let [unique-types (top-3-types state)]
                                    (when (>= 2 unique-types)
-                                     (system-msg state :corp (str "gains 3 [Credits]"))
+                                     (system-msg state :corp (str "uses Slot Machine to gain 3 [Credits]"))
                                      (gain-credits state :corp 3))))}
                    {:label "Place 3 advancement tokens"
                     :effect (req (let [unique-types (top-3-types state)]
