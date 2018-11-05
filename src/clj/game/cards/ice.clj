@@ -2144,7 +2144,7 @@
                                        state side
                                        {:choices {:req installed?}
                                         :prompt "Choose an installed card"
-                                        :msg (msg "places 3 advancement tokens on "
+                                        :msg (msg "place 3 advancement tokens on "
                                                   (card-str state target))
                                         :effect (effect (add-prop target :advance-counter 3 {:placed true}))}
                                        card nil))))}]})
