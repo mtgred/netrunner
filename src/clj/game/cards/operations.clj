@@ -281,7 +281,7 @@
                          (has-subtype? % "Barrier")
                          (in-hand? %))}
     :async true
-    :effect (req (corp-install state side eid target nil {:no-install-cost true :install-state :rezzed-no-cost}))}
+    :effect (req (corp-install state side eid target nil {:ignore-all-cost true :install-state :rezzed-no-cost}))}
 
    "Casting Call"
    {:choices {:req #(and (is-type? % "Agenda")
@@ -828,7 +828,7 @@
     :choices {:req #(and (not (is-type? % "Operation"))
                          (= (:side %) "Corp")
                          (#{[:hand] [:discard]} (:zone %)))}
-    :effect (effect (corp-install target nil {:no-install-cost true}))
+    :effect (effect (corp-install target nil {:ignore-all-cost true}))
     :msg (msg (corp-install-msg target))}
 
    "Invasion of Privacy"
@@ -1161,7 +1161,7 @@
             {:prompt "Select a remote server"
              :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :async true
-             :effect (effect (corp-install (assoc chosen :advance-counter 3) target {:no-install-cost true}))})]
+             :effect (effect (corp-install (assoc chosen :advance-counter 3) target {:ignore-all-cost true}))})]
      {:async true
       :prompt "Choose a piece of ICE in HQ to install"
       :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (ice? %))}
@@ -1297,7 +1297,7 @@
               :choices {:req #(and (= (:side %) "Corp")
                                    (not (is-type? % "Operation"))
                                    (in-hand? %))}
-              :effect (req (wait-for (corp-install state side target nil {:no-install-cost true})
+              :effect (req (wait-for (corp-install state side target nil {:ignore-all-cost true})
                                      (if (< n 2)
                                        (continue-ability state side (replant (inc n)) card nil)
                                        (effect-completed state side eid))))})]

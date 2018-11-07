@@ -340,12 +340,15 @@
   (swap! state update-in [:bonus] dissoc :install-cost)
   (swap! state update-in [:bonus] dissoc :ignore-install-cost))
 
-(defn install-cost [state side card all-cost]
+(defn install-cost
+  [state side card all-cost]
   (vec (map #(if (keyword? %) % (max % 0))
-            (-> (concat (get-in @state [:bonus :install-cost]) all-cost
+            (-> (concat all-cost
+                        (get-in @state [:bonus :install-cost])
                         (when-let [instfun (:install-cost-bonus (card-def card))]
                           (instfun state side (make-eid state) card nil)))
-                merge-costs flatten))))
+                merge-costs
+                flatten))))
 
 (defn modified-install-cost
   "Returns the number of credits required to install the given card, after modification effects including

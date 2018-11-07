@@ -1759,7 +1759,7 @@
                                                   (= (:side %) "Corp")
                                                   (#{[:hand] [:discard]} (:zone %)))}
                              :msg (msg (corp-install-msg target))
-                             :effect (effect (corp-install eid target nil {:no-install-cost true}))}}}
+                             :effect (effect (corp-install eid target nil {:ignore-all-cost true}))}}}
 
    "Tech Startup"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}

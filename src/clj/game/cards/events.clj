@@ -438,7 +438,7 @@
                                                         {:prompt (str "Choose a program in your " chosen-source " to install")
                                                          :choices (req (cancellable (filter #(is-type? % "Program")
                                                                                             ((if (= chosen-source "Heap") :discard :deck) runner))))
-                                                         :effect (req (runner-install state side (assoc-in target [:special :compile-installed] true) {:no-cost true})
+                                                         :effect (req (runner-install state side (assoc-in target [:special :compile-installed] true) {:ignore-all-cost true})
                                                                       (when (= chosen-source "Stack")
                                                                         (shuffle! state :runner :deck)))})
                                                       card nil))}
@@ -472,7 +472,7 @@
                                                          (in-hand? %))}
                                     :msg (msg "install " (:title target))
                                     :effect (req (let [diana-card (assoc-in target [:special :diana-installed] true)]
-                                                   (runner-install state side diana-card {:no-cost true})
+                                                   (runner-install state side diana-card {:ignore-all-cost true})
                                                    (swap! state update :diana #(conj % diana-card))))}
                                    card nil))}]
     :effect (effect (run target nil card)
@@ -1673,7 +1673,8 @@
                        {:prompt "Choose a program to install"
                         :msg (msg "install " (:title target))
                         :choices (req (filter #(is-type? % "Program") (:discard runner)))
-                        :effect (effect (runner-install target {:no-cost true}))}} card))}
+                        :effect (effect (runner-install target {:ignore-all-cost true}))}}
+                      card))}
 
    "Rigged Results"
    (letfn [(choose-ice []
@@ -1934,7 +1935,7 @@
                                                ((if (= target "Heap") :discard :deck) runner))))
                        :effect (effect (trigger-event :searched-stack nil)
                                        (shuffle! :deck)
-                                       (runner-install (assoc-in target [:special :test-run] true) {:no-cost true}))
+                                       (runner-install (assoc-in target [:special :test-run] true) {:ignore-all-cost true}))
                        :end-turn
                        {:req (req (get-in (find-cid (:cid target) (all-installed state :runner)) [:special :test-run]))
                         :msg (msg "move " (:title target) " to the top of their Stack")

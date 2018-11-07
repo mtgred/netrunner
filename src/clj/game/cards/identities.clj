@@ -118,7 +118,7 @@
                                                           :req #(and (= (:side %) "Runner")
                                                                      (= (:zone %) [:play-area]))}
                                                 :effect (req (doseq [c targets]
-                                                               (runner-install state side c {:no-cost true
+                                                               (runner-install state side c {:ignore-all-cost true
                                                                                              :custom-message (str "starts with " (:title c) " in play")}))
                                                              (swap! state assoc-in [:runner :play-area] [])
                                                              (clear-wait-prompt state :corp))}
@@ -771,7 +771,7 @@
                  :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
                  :choices {:req #(and (ice? %)
                                       (in-hand? %))}
-                 :effect (req (corp-install state side target (:server run) {:no-install-cost true
+                 :effect (req (corp-install state side target (:server run) {:ignore-all-cost true
                                                                              :front true})
                               (swap! state assoc-in [:run :position] 1))}]}
 

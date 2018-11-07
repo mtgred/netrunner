@@ -28,7 +28,7 @@
                                (= (:side %) "Corp"))}
           :async true
           :cancel-effect (req (effect-completed state side eid))
-          :effect (req (wait-for (corp-install state :corp target nil {:no-install-cost true :display-message false})
+          :effect (req (wait-for (corp-install state :corp target nil {:ignore-all-cost true :display-message false})
                                  (let [inst-target (find-latest state target)]
                                    (add-prop state :corp inst-target :advance-counter 1 {:placed true})
                                    (system-msg state :corp
@@ -69,7 +69,7 @@
                                       (has-subtype? % "Bioroid")
                                       (in-hand? %))}
                  :msg "host a piece of Bioroid ICE"
-                 :effect (req (corp-install state side target card {:no-install-cost true}))}
+                 :effect (req (corp-install state side target card {:ignore-all-cost true}))}
                 {:req (req (and this-server
                                 (zero? (get-in @state [:run :position]))))
                  :label "Rez a hosted piece of Bioroid ICE"
