@@ -248,7 +248,7 @@
                                           :req (req (not (install-locked? state side)))
                                           :msg (msg "install " (:title target) " at no cost")
                                           :effect (effect (trash card {:cause :ability-cost})
-                                                          (runner-install target {:ignore-all-cost true}))}
+                                                          (runner-install target {:ignore-install-cost true}))}
                                          card nil)))}]}
 
    "Datasucker"

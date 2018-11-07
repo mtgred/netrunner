@@ -263,10 +263,10 @@
 
 (defn- corp-install-pay
   "Used by corp-install to pay install costs, code continues in corp-install-continue"
-  [state side eid card server {:keys [extra-cost ignore-all-cost host-card action] :as args} slot]
+  [state side eid card server {:keys [extra-cost ignore-install-cost ignore-all-cost host-card action] :as args} slot]
   (let [dest-zone (get-in @state (cons :corp slot))
         ice-cost (if (and (ice? card)
-                          (not ignore-all-cost)
+                          (not ignore-install-cost)
                           (not (ignore-install-cost? state side)))
                    (count dest-zone) 0)
         all-cost (concat extra-cost [:credit ice-cost])
@@ -374,11 +374,12 @@
 (defn- runner-get-cost
   "Get the total install cost for specified card"
   [state side {:keys [cost] :as card}
-   {:keys [extra-cost ignore-all-cost facedown] :as params}]
+   {:keys [extra-cost ignore-install-cost ignore-all-cost facedown] :as params}]
   (if ignore-all-cost
     [:credit 0]
     (install-cost state side card
-                  (concat extra-cost (when (not facedown)
+                  (concat extra-cost (when (and (not ignore-install-cost)
+                                                (not facedown))
                                        [:credit cost])))))
 
 (defn- runner-install-message

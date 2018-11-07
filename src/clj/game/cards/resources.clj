@@ -1215,7 +1215,7 @@
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (runner-install target {:host-card card
-                                                         :ignore-all-cost true}))}
+                                                         :ignore-install-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip"
                  :cost [:click 1]
                  :choices {:req #(:host %)} ;TODO: this seems to allow all hosted cards to be bounced

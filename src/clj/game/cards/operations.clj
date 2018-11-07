@@ -828,7 +828,7 @@
     :choices {:req #(and (not (is-type? % "Operation"))
                          (= (:side %) "Corp")
                          (#{[:hand] [:discard]} (:zone %)))}
-    :effect (effect (corp-install target nil {:ignore-all-cost true}))
+    :effect (effect (corp-install target nil {:ignore-install-cost true}))
     :msg (msg (corp-install-msg target))}
 
    "Invasion of Privacy"
