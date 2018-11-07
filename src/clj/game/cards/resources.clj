@@ -498,7 +498,7 @@
                          :async true
                          :effect (req (continue-ability
                                         state side
-                                        {:optional {:req (req (and (>= (count (get-in @state [:runner :register :made-run])) 3)
+                                        {:optional {:req (req (and (>= (count (get-in @state [:runner :register :successful-run])) 3)
                                                                    (not (get-in @state [:runner :register :crowdfunding-prompt]))))
                                                     :player :runner
                                                     :prompt "Install Crowdfunding?"
