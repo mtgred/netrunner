@@ -428,7 +428,25 @@
       (take-credits state :runner)
       (let [credits (:credit (get-runner))]
         (click-prompt state :runner "Yes")
-        (is (= credits (:credit (get-runner))) "Installing Crowdfunding should cost 0")))))
+        (is (= credits (:credit (get-runner))) "Installing Crowdfunding should cost 0"))))
+  (testing "Should only prompt on successful runs (#3926)"
+      (do-game
+        (new-game {:corp {:hand ["Ice Wall"]
+                          :deck [(qty "Hedge Fund" 5)]}
+                   :runner {:deck ["Crowdfunding"]}})
+        (core/move state :runner (find-card "Crowdfunding" (:hand (get-runner))) :discard)
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (take-credits state :corp)
+        (let [iw (get-ice state :hq 0)]
+          (core/rez state :corp iw)
+          (run-on state :hq)
+          (card-subroutine state :corp iw 0)
+          (run-on state :hq)
+          (card-subroutine state :corp iw 0)
+          (run-empty-server state :archives)
+          (run-empty-server state :archives)
+          (take-credits state :runner)
+          (is (empty? (:prompt (get-runner))) "Crowdfunding shouldn't prompt for install")))))
 
 (deftest daily-casts
   ;; Play and tick through all turns of daily casts
