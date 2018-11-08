@@ -470,6 +470,7 @@
 
   "Border Control"
    {:abilities [{:label "End the run"
+                 :msg (msg "end the run")
                  :effect (effect (trash card {:cause :ability-cost})
                                  (end-run))}]
     :subroutines [{:label "Gain 1 [credits] for each ice protecting this server"
