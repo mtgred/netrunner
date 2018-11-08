@@ -1195,7 +1195,9 @@
 
    "Leave No Trace"
    (letfn [(get-rezzed-cids [ice]
-             (map :cid (filter #(and (rezzed? %) (is-type? % "ICE")) ice)))]
+             (map :cid (filter #(and (rezzed? %)
+                                     (is-type? % "ICE"))
+                               ice)))]
      {:prompt "Choose a server"
       :msg "make a run and derez any ICE that are rezzed during this run"
       :choices (req runnable-servers)
@@ -1210,7 +1212,7 @@
                                              diff-cid (seq (clojure.set/difference new old))
                                              diff (map #(find-cid % (all-installed state :corp)) diff-cid)]
                                          (doseq [ice diff]
-                                           (derez state side ice))
+                                           (derez state :runner ice))
                                          (when-not (empty? diff)
                                            (system-msg state side (str "derezzes " (join ", " (map :title diff)) " via Leave No Trace")))
                                          (swap! state dissoc :lnt)
