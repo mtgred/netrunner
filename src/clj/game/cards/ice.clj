@@ -2120,33 +2120,33 @@
 
    "Slot Machine"
    (letfn [(name-builder [card] (str (:title card) " (" (:type card) ")"))
-           (top-3 [runner] (take 3 (:deck runner)))
-           (top-3-names [runner] (map name-builder (top-3 runner)))
-           (top-3-types [runner] (->> (top-3 runner) (map :type) (into #{}) count))]
+           (top-3 [state] (take 3 (get-in @state [:runner :deck])))
+           (top-3-names [state] (map name-builder (top-3 state)))
+           (top-3-types [state] (->> (top-3 state) (map :type) (into #{}) count))]
     {:implementation "Encounter effect is manual"
      :abilities [{:label "Roll them bones"
                   :effect (effect (move :runner (first (:deck runner)) :deck)
                                   (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
                                                    " then reveal the top 3 cards in the stack: "
-                                                   (join ", " (top-3-names runner)))))}]
+                                                   (join ", " (top-3-names state)))))}]
      :subroutines [{:label "Runner loses 3 [Credits]"
                     :msg "force the Runner to lose 3 [Credits]"
                     :effect (effect (lose-credits :runner 3))}
                    {:label "Gain 3 [Credits]"
-                    :effect (req (let [unique-types (top-3-types runner)]
+                    :effect (req (let [unique-types (top-3-types state)]
                                    (when (>= 2 unique-types)
-                                     (system-msg state :corp (str "gains 3 [Credits]"))
+                                     (system-msg state :corp (str "uses Slot Machine to gain 3 [Credits]"))
                                      (gain-credits state :corp 3))))}
                    {:label "Place 3 advancement tokens"
-                    :effect (req (let [unique-types (top-3-types runner)]
+                    :effect (req (let [unique-types (top-3-types state)]
                                    (when (= 1 unique-types)
                                      (continue-ability
                                        state side
                                        {:choices {:req installed?}
                                         :prompt "Choose an installed card"
-                                        :effect (effect (system-msg (str "places 3 advancement tokens on "
-                                                                         (:title target)))
-                                                        (add-prop target :advance-counter 3 {:placed true}))}
+                                        :msg (msg "place 3 advancement tokens on "
+                                                  (card-str state target))
+                                        :effect (effect (add-prop target :advance-counter 3 {:placed true}))}
                                        card nil))))}]})
 
    "Snoop"
