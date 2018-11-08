@@ -464,10 +464,11 @@
                                 {:prompt "Select a Bioroid to rez" :player :corp
                                  :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
                                  :msg (msg "rez " (:title target))
-                                 :cancel-effect (effect (clear-wait-prompt :runner))
+                                 :cancel-effect (effect (clear-wait-prompt :runner)
+                                                        (effect-completed eid))
                                  :effect (effect (rez-cost-bonus -4)
-                                                 (rez target)
-                                                 (clear-wait-prompt :runner))}
+                                                 (clear-wait-prompt :runner)
+                                                 (rez eid target))}
                                card nil))}}}
 
    "Haas-Bioroid: Engineering the Future"
