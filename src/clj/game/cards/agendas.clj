@@ -1285,7 +1285,7 @@
                                               num-ice (count (get-in (:corp @state)
                                                                      (conj (server->zone state target) :ices)))]
                                           {:prompt "Which position to install in? (0 is innermost)"
-                                           :choices (vec (map str (range (inc num-ice))))
+                                           :choices (vec (reverse (map str (range (inc num-ice)))))
                                            :effect (req (corp-install state side chosen-ice chosen-server
                                                                          {:ignore-all-cost true :index (Integer/parseInt target)})
                                                         (if (and run (= (zone->name (first (:server run)))
