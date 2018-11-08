@@ -43,7 +43,7 @@
                                      (ice? %)
                                      (= (:zone %) [:play-area]))}
                 :effect (req (wait-for (corp-install state side target nil
-                                                     {:no-install-cost true :install-state :rezzed-no-cost})
+                                                     {:ignore-all-cost true :install-state :rezzed-no-cost})
                                        (let [card (get-card state card)]
                                          (unregister-events state side card)
                                          (if (not (:shuffle-occurred card))
@@ -412,7 +412,7 @@
               :choices {:req #(and (= (:side %) "Corp")
                                    (not (is-type? % "Operation"))
                                    (#{[:hand] [:discard]} (:zone %)))}
-              :effect (req (corp-install state side target server-name {:no-install-cost true})
+              :effect (req (corp-install state side target server-name {:ignore-all-cost true})
                            (if (< n 2)
                              (continue-ability state side
                                                (install-ability (last (get-remote-names state)) (inc n))
@@ -1222,7 +1222,7 @@
                                               (not (is-type? % "Operation"))
                                               (in-hand? %))}
                          :effect (req (wait-for
-                                        (corp-install state side target nil {:no-install-cost true})
+                                        (corp-install state side target nil {:ignore-all-cost true})
                                         (if (< n max)
                                           (continue-ability state side (sft (inc n) max) card nil)
                                           (effect-completed state side eid))))})]
@@ -1287,7 +1287,7 @@
                                           {:prompt "Which position to install in? (0 is innermost)"
                                            :choices (vec (map str (range (inc num-ice))))
                                            :effect (req (corp-install state side chosen-ice chosen-server
-                                                                         {:no-install-cost true :index (Integer/parseInt target)})
+                                                                         {:ignore-all-cost true :index (Integer/parseInt target)})
                                                         (if (and run (= (zone->name (first (:server run)))
                                                                         chosen-server))
                                                           (let [curr-pos (get-in @state [:run :position])] 

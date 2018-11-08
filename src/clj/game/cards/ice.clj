@@ -344,7 +344,7 @@
                    :effect (effect (system-msg (str "chooses the card in position "
                                                     (+ 1 (.indexOf (take 5 (:deck corp)) target))
                                                     " from R&D (top is 1)"))
-                                   (corp-install (move state side target :play-area) nil {:no-install-cost true}))}
+                                   (corp-install (move state side target :play-area) nil {:ignore-all-cost true}))}
                   {:label "Install a card from HQ or Archives"
                    :prompt "Select a card to install from Archives or HQ"
                    :show-discard true
@@ -450,7 +450,7 @@
                                                  {:prompt (str "Choose a location to install " (:title target))
                                                   :choices (req (remove #(= this %) (corp-install-list state nice)))
                                                   :async true
-                                                  :effect (effect (corp-install nice target {:no-install-cost true}))}
+                                                  :effect (effect (corp-install nice target {:ignore-all-cost true}))}
                                                  card nil)))}
                {:label "Install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs"
                 :prompt "Choose ICE to install from HQ in this server"
@@ -1561,7 +1561,7 @@
                    :choices {:req #(and (ice? %)
                                         (in-hand? %))}
                    :prompt "Choose an ICE to install from HQ"
-                   :effect (req (corp-install state side target (zone->name (first (:server run))) {:no-install-cost true}))}]}
+                   :effect (req (corp-install state side target (zone->name (first (:server run))) {:ignore-all-cost true}))}]}
 
    "Formicary"
    {:optional {:prompt "Move Formicary?"

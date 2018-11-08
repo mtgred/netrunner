@@ -4,7 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags]]
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags INFINITY]]
             [jinteki.cards :refer [all-cards]]))
 
 (defn- genetics-trigger?
@@ -26,7 +26,9 @@
       :abilities [(merge {:effect (effect (trash card {:cause :ability-cost}) (effect-fn eid card target))
                           :msg message}
                          ability-options)]
-      :install-cost-bonus (req (when (can-install-shard? state run) [:credit -15 :click -1]))
+      :install-cost-bonus (req (when (can-install-shard? state run)
+                                 [:credit (- INFINITY)
+                                  :click -1]))
       :effect (req (when (can-install-shard? state run)
                      (wait-for (register-successful-run state side (:server run))
                                (do (clear-wait-prompt state :corp)
@@ -496,12 +498,12 @@
                          :async true
                          :effect (req (continue-ability
                                         state side
-                                        {:optional {:req (req (and (>= (count (get-in @state [:runner :register :made-run])) 3)
+                                        {:optional {:req (req (and (>= (count (get-in @state [:runner :register :successful-run])) 3)
                                                                    (not (get-in @state [:runner :register :crowdfunding-prompt]))))
                                                     :player :runner
                                                     :prompt "Install Crowdfunding?"
                                                     :yes-ability {:effect (effect (unregister-events card)
-                                                                                  (runner-install :runner card))}
+                                                                                  (runner-install :runner card {:ignore-all-cost true}))}
                                                     ;; Add a register to note that the player was already asked about installing,
                                                     ;; to prevent multiple copies from prompting multiple times.
                                                     :no-ability {:effect (req (swap! state assoc-in [:runner :register :crowdfunding-prompt] true))}}}
@@ -1212,7 +1214,8 @@
                                       (not (has-subtype? % "Virus"))
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (runner-install target {:host-card card :no-cost true}))}
+                 :effect (effect (runner-install target {:host-card card
+                                                         :ignore-install-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip"
                  :cost [:click 1]
                  :choices {:req #(:host %)} ;TODO: this seems to allow all hosted cards to be bounced
@@ -1503,7 +1506,7 @@
           :msg (msg "remove 1 counter from " (:title target))
           :choices {:req #(:host %)}
           :effect (req (if (zero? (get-counters (get-card state target) :power))
-                         (runner-install state side (dissoc target :counter) {:no-cost true})
+                         (runner-install state side (dissoc target :counter) {:ignore-all-cost true})
                          (add-counter state side target :power -1)))}]
      {:flags {:drip-economy true}
       :abilities [{:label "Host a program or piece of hardware" :cost [:click 1]
@@ -1533,7 +1536,7 @@
                                      :effect (req (do
                                                     (lose-credits state side target)
                                                     (if (= num-counters target)
-                                                      (runner-install state side (dissoc paydowntarget :counter) {:no-cost true})
+                                                      (runner-install state side (dissoc paydowntarget :counter) {:ignore-all-cost true})
                                                       (add-counter state side paydowntarget :power (- target)))))}
                                     card nil)))}]
       :events {:runner-turn-begins remove-counter}})
