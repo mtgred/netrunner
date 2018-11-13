@@ -178,9 +178,9 @@
      {:class (if-let [faction (:faction card)]
                (-> faction .toLowerCase (.replace " " "-"))
                "neutral")}
-     (when (decks/legal? :banned card) banned-span)
-     (when (decks/legal? :restricted card) restricted-span)
-     (when (decks/legal? :rotated card) rotated-span)]]
+     (when (decks/legal? "banned" card) banned-span)
+     (when (decks/legal? "restricted" card) restricted-span)
+     (when (:rotated card) rotated-span)]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
        [:div.anr-icon {:class (str "mu" memory)} ""]

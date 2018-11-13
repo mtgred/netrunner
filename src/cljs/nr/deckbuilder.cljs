@@ -638,8 +638,7 @@
                 [deck-collection {:sets card-sets
                                   :decks decks
                                   :decks-loaded decks-loaded
-                                  :active-deck (:deck @s)}])
-              ]
+                                  :active-deck (:deck @s)}])]
              [:div {:class (when (:edit @s) "edit")}
               (when-let [line (:zoom @s)]
                 (let [art (:art line)
@@ -748,9 +747,7 @@
                [:span.small "(Type or paste a decklist, it will be parsed)" ]]]
              [:textarea {:ref #(swap! db-dom assoc :deckedit %)
                          :value (:deck-edit @s)
-                         :on-change #(handle-edit s)}]]]]])
-
-       })))
+                         :on-change #(handle-edit s)}]]]]])})))
 
 (go (let [cards (<! cards-channel)
           decks (process-decks (:json (<! (GET (str "/data/decks")))))]
