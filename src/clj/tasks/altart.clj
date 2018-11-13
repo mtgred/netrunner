@@ -76,7 +76,7 @@
        (remove-old-alt-art)
        (doall (map add-alt-art alt-sets-cards))
        (when standalone?
-         (update-config "config")))
+         (update-config)))
      (catch Exception e (do
                           (println "Alt art import failed:" (.getMessage e))
                           (.printStackTrace e)))
