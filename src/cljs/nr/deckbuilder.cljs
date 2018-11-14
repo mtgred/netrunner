@@ -376,7 +376,7 @@
         message (case status
                   "standard" "Standard legal"
                   "eternal" "Eternal legal"
-                  "core-experience" "Core legal"
+                  "core-experience" "Core Experience legal"
                   "snapshot" "Snapshot legal"
                   "casual" "Casual play only"
                   "invalid" "Invalid"
