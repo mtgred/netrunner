@@ -4,9 +4,9 @@
 (def INFINITY 2147483647)
 
 
-(defn str->int [s]
-  #?(:clj  (java.lang.Integer/parseInt s)
-     :cljs (js/parseInt s)))
+(defn str->int [string]
+  #?(:clj  (java.lang.Integer/parseInt string)
+     :cljs (js/parseInt string)))
 
 (defn side-from-str [side-str]
   (keyword (s/lower-case side-str)))
@@ -42,3 +42,18 @@
               (s/includes? (s/lower-case subs) (s/lower-case subtype))))]
     (or (contains-sub? card)
         (contains-sub? (:persistent card)))))
+
+(defn slugify
+  "As defined here: https://you.tools/slugify/"
+  ([string] (slugify string "-"))
+  ([string sep]
+   (if (nil? string) ""
+     (as-> string $
+       #?(:clj (java.text.Normalizer/normalize $ java.text.Normalizer$Form/NFD)
+          :cljs (identity $))
+       (s/replace $ #"[\P{ASCII}]+" "")
+       (s/lower-case $)
+       (s/trim $)
+       (s/split $ #"[\p{Space}\p{Punct}]+")
+       (filter seq $)
+       (s/join sep $)))))

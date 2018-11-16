@@ -6,7 +6,7 @@
             [goog.string.format]
             [jinteki.cards :refer [all-cards] :as cards]
             [jinteki.decks :as decks]
-            [jinteki.utils :refer [str->int INFINITY] :as utils]
+            [jinteki.utils :refer [str->int INFINITY slugify] :as utils]
             [nr.account :refer [load-alt-arts]]
             [nr.ajax :refer [DELETE GET POST PUT]]
             [nr.appstate :refer [app-state]]
@@ -201,11 +201,13 @@
       (assoc card :display-name (:title card)))))
 
 (defn side-identities [side]
-  (let [cards
-        (->> @all-cards
-             (filter #(and (= (:side %) side)
-                           (= (:type %) "Identity")))
-             (remove :rotated))
+  (let [cards (->> @all-cards
+                   (filter #(and (= (:side %) side)
+                                 (= (:type %) "Identity")))
+                   (sort-by :code)
+                   (group-by :title)
+                   vals
+                   (map last))
         all-titles (map :title cards)
         add-deck (partial add-deck-name all-titles)]
     (map add-deck cards)))
@@ -378,6 +380,7 @@
                   "eternal" "Eternal legal"
                   "core-experience" "Core Experience legal"
                   "snapshot" "Snapshot legal"
+                  "socr8" "Stimhack Online Cache Refresh 8 legal"
                   "casual" "Casual play only"
                   "invalid" "Invalid"
                   "")]
@@ -386,7 +389,7 @@
        (build-deck-status-label deck-status violation-details?))]))
 
 (defn deck-status-span-impl [deck tooltip? violation-details? use-trusted-info]
-  (format-deck-status-span (deck-status-details deck use-trusted-info) tooltip? violation-details?))
+  (format-deck-status-span (deck-status-details deck false) tooltip? violation-details?))
 
 (def deck-status-span-memoize (memoize deck-status-span-impl))
 
@@ -545,7 +548,9 @@
                  valid (and (decks/allowed? card identity)
                             (decks/legal-num-copies? identity line))
                  released (decks/released? sets card)
-                 modqty (if (decks/is-prof-prog? deck card) (- qty 1) qty)]
+                 modqty (if (decks/is-prof-prog? deck card)
+                          (- qty 1)
+                          qty)]
              [:span
               [:span {:class (cond
                                (and valid released (not banned)) "fake-link"
@@ -565,7 +570,8 @@
 
 (defn- identity-option-string
   [card]
-  (.stringify js/JSON (clj->js {:title (:title card) :id (:code card)})))
+  (.stringify js/JSON (clj->js {:title (:title card)
+                                :id (:code card)})))
 
 (defn deck-builder
   "Make the deckbuilder view"
@@ -722,7 +728,6 @@
                                                   :type "button"} "+"]
                                   [line-name-span @card-sets deck line]])
                                [line-span @card-sets deck line])]))]))]]))]
-
             [:div.deckedit
              [:div
               [:div
@@ -744,7 +749,7 @@
                      (:display-name card)]))]]
               [card-lookup s]
               [:h3 "Decklist"
-               [:span.small "(Type or paste a decklist, it will be parsed)" ]]]
+               [:span.small "(Type or paste a decklist, it will be parsed)"]]]
              [:textarea {:ref #(swap! db-dom assoc :deckedit %)
                          :value (:deck-edit @s)
                          :on-change #(handle-edit s)}]]]]])})))
@@ -754,4 +759,3 @@
       (load-decks decks)
       (load-alt-arts)
       (>! cards-channel cards)))
-

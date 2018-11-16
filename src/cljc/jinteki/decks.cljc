@@ -150,86 +150,15 @@
   [deck]
   (apply + (vals (influence-map deck))))
 
-;; alternative formats validation
-(defn group-cards-from-restricted-sets
-  "Return map (big boxes and datapacks) of used sets that are restricted by given format"
-  [sets allowed-sets deck]
-  (let [restricted-cards (remove (fn [card] (some #(= (:setname (:card card)) %) allowed-sets)) (:cards deck))
-        restricted-sets (group-by (fn [card] (:setname (:card card))) restricted-cards)
-        sorted-restricted-sets (reverse (sort-by #(count (second %)) restricted-sets))
-        [restricted-bigboxes restricted-datapacks] (split-with (fn [[setname _]]
-                                                                 (some #(when (= (:name %) setname)
-                                                                          (:bigbox %)) sets))
-                                                               sorted-restricted-sets)]
-    {:bigboxes restricted-bigboxes
-     :datapacks restricted-datapacks}))
-
-(defn cards-over-one-core
-  "Returns cards in deck that require more than single box."
-  [cards]
-  (letfn [(one-box-num-copies? [{:keys [qty card]}] (<= qty (:quantity card 3)))]
-    (remove one-box-num-copies? cards)))
-
-(defn get-newest-cycles
-  "Returns n cycles of data packs from newest backwards"
-  [sets n]
-  (let [cycles (group-by :cycle (remove :bigbox sets))
-        parse-date #?(:clj  #(f/parse (f/formatters :date) %)
-                      :cljs identity)
-        cycle-release-date (reduce-kv (fn [result cycle sets-in-cycle]
-                                        (assoc result
-                                          cycle
-                                          (first (sort (mapv #(parse-date (:available %)) sets-in-cycle)))))
-                                      {} cycles)
-        valid-cycles (map first (take-last n (sort-by last (filter (fn [[cycle date]] (before-today? date)) cycle-release-date))))]
-    valid-cycles))
-
-(defn sets-in-newest-cycles
-  "Returns sets in the n cycles of released datapacks"
-  [sets n]
-  (map :name (filter (fn [set] (some #(= (:cycle set) %) (get-newest-cycles sets n))) sets)))
-
-(defn cache-refresh-legal
-  "Returns true if deck is valid under Cache Refresh rules. http://www.cache-refresh.info/"
-  ([sets deck] (cache-refresh-legal sets deck (concat ["Terminal Directive"] (sets-in-newest-cycles sets 2)) "Cache Refresh compliant"))
-  ([sets deck valid-sets description]
-   (let [over-one-core (cards-over-one-core (:cards deck))
-         valid-sets (concat ["Revised Core Set"] valid-sets)
-         deck-with-id (assoc deck :cards (cons {:card (:identity deck)} (:cards deck))) ; identity should also be from valid sets
-         restricted-sets (group-cards-from-restricted-sets sets valid-sets deck-with-id)
-         restricted-bigboxes (rest (:bigboxes restricted-sets)) ; one big box is fine
-         restricted-datapacks (:datapacks restricted-sets)
-         example-card (fn [cardlist] (get-in (first cardlist) [:card :title]))
-         reasons {:onecore (when (not= (count over-one-core) 0)
-                             (str "Only one Revised Core Set permitted - check: " (example-card over-one-core)))
-                  :bigbox (when (not= (count restricted-bigboxes) 0)
-                            (str "Only one Deluxe Expansion permitted - check: " (example-card (second (first restricted-bigboxes)))))
-                  :datapack (when (not= (count restricted-datapacks) 0)
-                              (str "Only latest 2 cycles are permitted - check: " (example-card (second (first restricted-datapacks)))))}]
-     {:legal (not-any? val reasons)
-      :reason (join "\n" (filter identity (vals reasons)))
-      :description description})))
-
 ;; Card and deck validity
-(defn allowed?
-  "Checks if a card is allowed in deck of a given identity - not accounting for influence"
-  [card {:keys [side faction title] :as identity}]
-  (and (not= (:type card) "Identity")
-       (= (:side card) side)
-       (or (not= (:type card) "Agenda")
-           (= (:faction card) "Neutral")
-           (= (:faction card) faction)
-           (draft-id? identity))
-       (or (not= title "Custom Biotics: Engineered for Success")
-           (not= (:faction card) "Jinteki"))))
-
 (defn check-deck-status
   "Checks the valid and standard keys of a deck-status map to check if the deck is legal, casual or invalid."
-  [{:keys [valid standard eternal core-experience snapshot]}]
+  [{:keys [valid standard eternal core-experience snapshot socr8]}]
   (if valid
     (cond
       (:legal core-experience) "core-experience"
       (:legal standard) "standard"
+      (:legal socr8) "socr8"
       (:legal snapshot) "snapshot"
       (:legal eternal) "eternal"
       :else "casual")
@@ -258,11 +187,17 @@
        (>= 1 (count (filter #(legal-line? fmt "restricted" %) cards)))
        (zero? (count (filter #(legal-line? fmt "banned" %) cards)))))
 
-(defn legal-format?
-  [valid fmt deck]
-  {:legal (and valid
-               (mwl-legal? fmt (conj (:cards deck) {:qty 1 :card (:identity deck)}))
-   :description (str "Legal for " (-> fmt name s/capitalize))})
+(defn allowed?
+  "Checks if a card is allowed in deck of a given identity - not accounting for influence"
+  [card {:keys [side faction title] :as identity}]
+  (and (not= (:type card) "Identity")
+       (= (:side card) side)
+       (or (not= (:type card) "Agenda")
+           (= (:faction card) "Neutral")
+           (= (:faction card) faction)
+           (draft-id? identity))
+       (or (not= title "Custom Biotics: Engineered for Success")
+           (not= (:faction card) "Jinteki"))))
 
 (defn valid-deck?
   "Checks that a given deck follows deckbuilding rules"
@@ -276,55 +211,69 @@
            (let [minimum (min-agenda-points deck)]
              (<= minimum (agenda-points deck) (inc minimum))))))
 
-(defn core-experience?
-  [valid {:keys [identity cards]}]
-  (let [over-one-core (cards-over-one-core cards)
-        example-card (first over-one-core)]
-    {:legal (and valid
-                 (mwl-legal? :core-experience cards)
-                 (mwl-legal? :core-experience [identity])
+(defn cards-over-one-core
+  "Returns cards in deck that require more than single box."
+  [cards]
+  (letfn [(one-box-num-copies? [{:keys [qty card]}] (<= qty (:quantity card 3)))]
+    (remove one-box-num-copies? cards)))
+
+(defn combine-id-and-cards
+  [deck]
+  (conj (:cards deck) {:qty 1 :card (:identity deck)}))
+
+(defn legal-format?
+  [valid fmt deck]
+  (and valid
+       (mwl-legal? fmt (combine-id-and-cards deck))))
+
+(defn build-format-legality
+  [valid fmt deck]
+  {:legal (legal-format? valid fmt deck)
+   :description (str "Legal for " (-> fmt name s/capitalize))})
+
+(defn build-deck-validity
+  [valid]
+  {:legal valid
+   :description "Basic deckbuilding rules"})
+
+(defn build-core-experience-legality
+  [valid {:keys [cards] :as deck}]
+  (let [example-card (first (cards-over-one-core cards))]
+    {:legal (and (legal-format? valid :core-experience deck)
                  (nil? example-card))
      :reason (when example-card
                (str "Only one System Core 2019 permitted - check: "
                     (get-in example-card [:card :title])))
      :description "Legal for Core Experience"}))
 
-(defn socr?
-  [valid {:keys [identity cards]}]
-  (every? #(case (get-in % [:card :format :socr8])
-                    ("legal" "restricted" "banned")
-                    true
-                    false)
-                 cards)
-                 (mwl-legal? fmt (:cards deck))
+(defn build-socr-legality
+  [valid deck]
   (let [big-boxes ["creation-and-control"
                    "honor-and-profit"
                    "order-and-chaos"
                    "data-and-destiny"
                    "terminal-directive"]
-        remove-f (fn [card] (some #(= (:cycle_code (:card card)) %) big-boxes))
-        restricted-cards (remove remove-f (:cards deck))
-        ]
-    {:legal (and valid)
-     :reason ""
-     :description "Legal for Stimhack Online Cache Refresh 8"
-     }))
+        single-set? (as-> deck $
+                      (combine-id-and-cards $)
+                      (group-by #(get-in % [:card :cycle_code]) $)
+                      (select-keys $ big-boxes)
+                      (keys $)
+                      (= 1 (count $)))]
+    {:legal (and single-set?
+                 (legal-format? valid :socr8 deck))
+     :description "Legal for Stimhack Online Cache Refresh 8"}))
 
 (defn calculate-deck-status
   "Calculates all the deck's validity for the basic deckbuilding rules, as well as various official and unofficial formats.
   Implement any new formats here."
   [deck]
-  (let [sets @cards/sets
-        valid (valid-deck? deck)
-        socr8 (cache-refresh-legal sets deck
-                                   (concat ["Terminal Directive" "Reign and Reverie"]
-                                           (sets-in-newest-cycles sets 1))
-                                   "Stimhack Online Cache Refresh 8")]
-    {:standard (legal-format? valid :standard deck)
-     :eternal (legal-format? valid :eternal deck)
-     :snapshot (legal-format? valid :snapshot deck)
-     :core-experience (core-experience? valid deck)
-     :socr8 (socr? valid deck)}))
+  (let [valid (valid-deck? deck)]
+    {:valid (build-deck-validity valid)
+     :standard (build-format-legality valid :standard deck)
+     :eternal (build-format-legality valid :eternal deck)
+     :snapshot (build-format-legality valid :snapshot deck)
+     :core-experience (build-core-experience-legality valid deck)
+     :socr8 (build-socr-legality valid deck)}))
 
 (defn trusted-deck-status
   [{:keys [status date] :as deck}]
