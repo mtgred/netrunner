@@ -4,7 +4,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
-            [jinteki.utils :refer [count-tags is-tagged?]]
+            [jinteki.utils :refer [count-tags is-tagged? has-subtype?]]
             [clojure.test :refer :all]))
 
 (deftest aimor
@@ -206,9 +206,9 @@
     (let [ch (get-ice state :hq 0)]
       (core/rez state :corp ch)
       (click-prompt state :corp "Barrier")
-      (is (core/has-subtype? (refresh ch) "Barrier") "Chimera has Barrier")
+      (is (has-subtype? (refresh ch) "Barrier") "Chimera has Barrier")
       (take-credits state :corp)
-      (is (not (core/has-subtype? (refresh ch) "Barrier")) "Chimera does not have Barrier"))))
+      (is (not (has-subtype? (refresh ch) "Barrier")) "Chimera does not have Barrier"))))
 
 (deftest cortex-lock
   ;; Cortex Lock - Do net damage equal to Runner's unused memory
@@ -776,7 +776,7 @@
         (run-on state "R&D")
         (core/rez state :corp kakugo)
         (card-ability state :runner engolo 2)
-        (is (core/has-subtype? (refresh kakugo) "Code Gate") "Kakugo was made into a code gate")
+        (is (has-subtype? (refresh kakugo) "Code Gate") "Kakugo was made into a code gate")
         (run-continue state)
         (empty? (:hand (get-runner)))) "Runner took damage passing kakugo"))
 
@@ -1128,13 +1128,13 @@
     (let [mg (get-ice state :hq 0)
           nb (get-ice state :rd 0)]
       (core/rez state :corp mg)
-      (is (core/has-subtype? (refresh mg) "Mythic") "Mother Goddess has Mythic")
-      (is (not (core/has-subtype? (refresh mg) "Code Gate")) "Mother Goddess does not have Code Gate")
-      (is (not (core/has-subtype? (refresh mg) "NEXT")) "Mother Goddess does not have NEXT")
+      (is (has-subtype? (refresh mg) "Mythic") "Mother Goddess has Mythic")
+      (is (not (has-subtype? (refresh mg) "Code Gate")) "Mother Goddess does not have Code Gate")
+      (is (not (has-subtype? (refresh mg) "NEXT")) "Mother Goddess does not have NEXT")
       (core/rez state :corp nb)
-      (is (core/has-subtype? (refresh mg) "Mythic") "Mother Goddess has Mythic")
-      (is (core/has-subtype? (refresh mg) "Code Gate") "Mother Goddess has Code Gate")
-      (is (core/has-subtype? (refresh mg) "NEXT") "Mother Goddess has NEXT"))))
+      (is (has-subtype? (refresh mg) "Mythic") "Mother Goddess has Mythic")
+      (is (has-subtype? (refresh mg) "Code Gate") "Mother Goddess has Code Gate")
+      (is (has-subtype? (refresh mg) "NEXT") "Mother Goddess has NEXT"))))
 
 (deftest next-bronze
   ;; NEXT Bronze - Add 1 strength for every rezzed NEXT ice

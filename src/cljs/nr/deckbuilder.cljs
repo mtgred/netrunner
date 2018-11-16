@@ -359,7 +359,8 @@
 
 (defn- build-deck-status-label [deck-status violation-details?]
   [:div.status-tooltip.blue-shade
-   (doall (for [[status-key {:keys [legal reason description]}] deck-status]
+   (doall (for [[status-key {:keys [legal reason description]}] deck-status
+                :when description]
             ^{:key status-key}
             [:div {:class (if legal "legal" "invalid")
                    :title (when violation-details? reason)}
@@ -372,18 +373,26 @@
     (decks/trusted-deck-status deck)
     (decks/calculate-deck-status deck)))
 
+(defn check-deck-status
+  [deck-status]
+  (let [fmt (:format deck-status)]
+    (if (get-in deck-status [(keyword fmt) :legal])
+      fmt "invalid")))
+
+(def slug->format
+  {"standard" "Standard"
+   "eternal" "Eternal"
+   "core-experience" "Core Experience"
+   "snapshot" "Snapshot"
+   "socr8" "Stimhack Online Cache Refresh 8"
+   "casual" "Casual"})
+
 (defn format-deck-status-span
-  [deck-status tooltip? violation-details?]
-  (let [status (decks/check-deck-status deck-status)
-        message (case status
-                  "standard" "Standard legal"
-                  "eternal" "Eternal legal"
-                  "core-experience" "Core Experience legal"
-                  "snapshot" "Snapshot legal"
-                  "socr8" "Stimhack Online Cache Refresh 8 legal"
-                  "casual" "Casual play only"
-                  "invalid" "Invalid"
-                  "")]
+  [{:keys [format] :as deck-status} tooltip? violation-details?]
+  (let [status (check-deck-status deck-status)
+        message (str (get slug->format (:format deck-status) "Standard")
+                     " "
+                     (if-not (= "invalid" status) "legal" "illegal"))]
     [:span.deck-status.shift-tooltip {:class status} message
      (when tooltip?
        (build-deck-status-label deck-status violation-details?))]))
@@ -427,7 +436,7 @@
         best-card (lookup (:side card) card)]
     (if (js/isNaN qty)
       (swap! s assoc :quantity 3)
-      (let [max-qty (or (:deck-limit best-card) 3)
+      (let [max-qty (:deck-limit best-card 3)
             limit-qty (if (> qty max-qty) max-qty qty)]
         (put! (:edit-channel @s)
               {:qty limit-qty
@@ -597,7 +606,7 @@
            (go (while true
                  (let [edit (<! edit-channel)
                        card (:card edit)
-                       max-qty (or (:deck-limit card) 3)
+                       max-qty (:deck-limit card 3)
                        cards (get-in @s [:deck :cards])
                        match? #(when (= (get-in % [:card :title]) (:title card)) %)
                        existing-line (some match? cards)
@@ -737,6 +746,13 @@
                                  :ref #(swap! db-dom assoc :deckname %)
                                  :value (get-in @s [:deck :name])
                                  :on-change #(swap! s assoc-in [:deck :name] (.. % -target -value))}]]
+              [:div
+               [:h3 "Format"]
+               [:select.format {:value (get-in @s [:deck :format] "standard")
+                                :on-change #(swap! s assoc-in [:deck :format] (.. % -target -value))}
+                (for [[k v] slug->format]
+                  ^{:key k}
+                  [:option {:value k} v])]]
               [:div
                [:h3 "Identity"]
                [:select.identity {:value (identity-option-string (get-in @s [:deck :identity]))

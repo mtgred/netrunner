@@ -4,7 +4,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
-            [jinteki.utils :refer [count-tags]]
+            [jinteki.utils :refer [count-tags has-subtype?]]
             [clojure.test :refer :all]))
 
 (deftest ^{:card-title "24-7-news-cycle"}
@@ -2003,12 +2003,12 @@
     (play-from-hand state :corp "Quandary" "HQ")
     (let [qu (get-ice state :hq 0)]
       (core/rez state :corp qu)
-      (is (not (core/has-subtype? (refresh qu) "Barrier")) "Quandry starts without Barrier")
+      (is (not (has-subtype? (refresh qu) "Barrier")) "Quandry starts without Barrier")
       (is (= 1 (count (:subroutines (refresh qu)))) "Quandry has 1 subroutine")
       (play-from-hand state :corp "Sub Boost")
       (click-card state :corp (refresh qu))
-      (is (core/has-subtype? (refresh qu) "Code Gate") "Quandary has Code Gate")
-      (is (core/has-subtype? (refresh qu) "Barrier") "Quandary ICE Barrier")
+      (is (has-subtype? (refresh qu) "Code Gate") "Quandary has Code Gate")
+      (is (has-subtype? (refresh qu) "Barrier") "Quandary ICE Barrier")
       (is (= 2 (count (:subroutines (refresh qu)))) "Quandry gains a subroutine"))))
 
 (deftest subcontract
@@ -2445,7 +2445,7 @@
       (click-card state :corp (refresh hostile))
       (is (= 1 (count (:hosted (refresh hostile)))))
       ;; gains Public subtype
-      (is (core/has-subtype? (refresh hostile) "Public"))
+      (is (has-subtype? (refresh hostile) "Public"))
       ;; gain 1 credit when advancing
       (is (= 5 (:credit (get-corp))))
       (core/advance state :corp {:card (refresh hostile)})

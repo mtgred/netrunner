@@ -4,7 +4,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
-            [jinteki.utils :refer [count-tags]]
+            [jinteki.utils :refer [count-tags has-subtype?]]
             [clojure.test :refer :all]))
 
 (deftest account-siphon
@@ -2773,17 +2773,17 @@
     (play-from-hand state :runner "Tinkering")
     (let [iwall (get-ice state :hq 0)]
       (click-card state :runner iwall)
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
-      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
-      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
+      (is (has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
+      (is (has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
       (core/rez state :corp (refresh iwall))
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
-      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
-      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
+      (is (has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
+      (is (has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
       (take-credits state :runner)
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
-      (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have Code Gate")
-      (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have Sentry"))))
+      (is (has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have Code Gate")
+      (is (not (has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have Sentry"))))
 
 (deftest trade-in
   ;; Trade-in - trash an installed Hardware, gain credits equal to half of install cost,
