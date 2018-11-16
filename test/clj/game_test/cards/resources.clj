@@ -363,29 +363,29 @@
 (deftest crowdfunding
   (testing "Credit gain behavior"
     (do-game
-      (new-game {:runner {:deck ["Crowdfunding" "Hedge Fund"]}})
-      (core/move state :runner (find-card "Hedge Fund" (:hand (get-runner))) :deck)
+      (new-game {:runner {:deck ["Crowdfunding" "Sure Gamble"]}})
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (take-credits state :corp)
       (play-from-hand state :runner "Crowdfunding")
       (let [cf (get-resource state 0)]
         ;; Number of credits
         (is (= 3 (get-counters cf :credit)))
-        (is (= 5 (get-in @state [:runner :credit])))
+        (is (= 5 (:credit (get-runner))))
         ;; End turn
         (take-credits state :runner)
         (take-credits state :corp)
         (is (= 2 (get-counters (refresh cf) :credit)))
-        (is (= 9 (get-in @state [:runner :credit])))
+        (is (= 9 (:credit (get-runner))))
         (take-credits state :runner)
         (take-credits state :corp)
         (is (= 1 (get-counters (refresh cf) :credit)))
-        (is (= 14 (get-in @state [:runner :credit])))
+        (is (= 14 (:credit (get-runner))))
         (is (= 1 (count (:deck (get-runner)))) "1 card in deck")
         (is (empty? (:hand (get-runner))) "No cards in hand")
         (is (empty? (:discard (get-runner))) "No cards in discard")
         (take-credits state :runner)
         (take-credits state :corp)
-        (is (= 19 (get-in @state [:runner :credit])))
+        (is (= 19 (:credit (get-runner))))
         (is (empty? (:deck (get-runner))) "No cards in deck")
         (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
         (is (= 1 (count (:discard (get-runner)))) "1 card in discard")
@@ -413,7 +413,40 @@
       (take-credits state :runner)
       (click-prompt state :runner "Yes")
       (is (empty? (:discard (get-runner))) "Crowdfunding not in discard")
-      (is (= 1 (count (get-resource state))) "Crowdfunding reinstalled"))))
+      (is (= 1 (count (get-resource state))) "Crowdfunding reinstalled")))
+  (testing "Ignores costs from cards like Scarcity of Resources (#3924)"
+    (do-game
+      (new-game {:corp {:hand ["Scarcity of Resources"]
+                        :deck [(qty "Hedge Fund" 5)]}
+                 :runner {:deck ["Crowdfunding"]}})
+      (core/move state :runner (find-card "Crowdfunding" (:hand (get-runner))) :discard)
+      (play-from-hand state :corp "Scarcity of Resources")
+      (take-credits state :corp)
+      (run-empty-server state :archives)
+      (run-empty-server state :archives)
+      (run-empty-server state :archives)
+      (take-credits state :runner)
+      (let [credits (:credit (get-runner))]
+        (click-prompt state :runner "Yes")
+        (is (= credits (:credit (get-runner))) "Installing Crowdfunding should cost 0"))))
+  (testing "Should only prompt on successful runs (#3926)"
+      (do-game
+        (new-game {:corp {:hand ["Ice Wall"]
+                          :deck [(qty "Hedge Fund" 5)]}
+                   :runner {:deck ["Crowdfunding"]}})
+        (core/move state :runner (find-card "Crowdfunding" (:hand (get-runner))) :discard)
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (take-credits state :corp)
+        (let [iw (get-ice state :hq 0)]
+          (core/rez state :corp iw)
+          (run-on state :hq)
+          (card-subroutine state :corp iw 0)
+          (run-on state :hq)
+          (card-subroutine state :corp iw 0)
+          (run-empty-server state :archives)
+          (run-empty-server state :archives)
+          (take-credits state :runner)
+          (is (empty? (:prompt (get-runner))) "Crowdfunding shouldn't prompt for install")))))
 
 (deftest daily-casts
   ;; Play and tick through all turns of daily casts

@@ -344,7 +344,7 @@
                    :effect (effect (system-msg (str "chooses the card in position "
                                                     (+ 1 (.indexOf (take 5 (:deck corp)) target))
                                                     " from R&D (top is 1)"))
-                                   (corp-install (move state side target :play-area) nil {:no-install-cost true}))}
+                                   (corp-install (move state side target :play-area) nil {:ignore-all-cost true}))}
                   {:label "Install a card from HQ or Archives"
                    :prompt "Select a card to install from Archives or HQ"
                    :show-discard true
@@ -450,7 +450,7 @@
                                                  {:prompt (str "Choose a location to install " (:title target))
                                                   :choices (req (remove #(= this %) (corp-install-list state nice)))
                                                   :async true
-                                                  :effect (effect (corp-install nice target {:no-install-cost true}))}
+                                                  :effect (effect (corp-install nice target {:ignore-all-cost true}))}
                                                  card nil)))}
                {:label "Install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs"
                 :prompt "Choose ICE to install from HQ in this server"
@@ -470,6 +470,7 @@
 
   "Border Control"
    {:abilities [{:label "End the run"
+                 :msg (msg "end the run")
                  :effect (effect (trash card {:cause :ability-cost})
                                  (end-run))}]
     :subroutines [{:label "Gain 1 [credits] for each ice protecting this server"
@@ -1561,7 +1562,7 @@
                    :choices {:req #(and (ice? %)
                                         (in-hand? %))}
                    :prompt "Choose an ICE to install from HQ"
-                   :effect (req (corp-install state side target (zone->name (first (:server run))) {:no-install-cost true}))}]}
+                   :effect (req (corp-install state side target (zone->name (first (:server run))) {:ignore-all-cost true}))}]}
 
    "Formicary"
    {:optional {:prompt "Move Formicary?"
@@ -2120,33 +2121,33 @@
 
    "Slot Machine"
    (letfn [(name-builder [card] (str (:title card) " (" (:type card) ")"))
-           (top-3 [runner] (take 3 (:deck runner)))
-           (top-3-names [runner] (map name-builder (top-3 runner)))
-           (top-3-types [runner] (->> (top-3 runner) (map :type) (into #{}) count))]
+           (top-3 [state] (take 3 (get-in @state [:runner :deck])))
+           (top-3-names [state] (map name-builder (top-3 state)))
+           (top-3-types [state] (->> (top-3 state) (map :type) (into #{}) count))]
     {:implementation "Encounter effect is manual"
      :abilities [{:label "Roll them bones"
                   :effect (effect (move :runner (first (:deck runner)) :deck)
                                   (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
                                                    " then reveal the top 3 cards in the stack: "
-                                                   (join ", " (top-3-names runner)))))}]
+                                                   (join ", " (top-3-names state)))))}]
      :subroutines [{:label "Runner loses 3 [Credits]"
                     :msg "force the Runner to lose 3 [Credits]"
                     :effect (effect (lose-credits :runner 3))}
                    {:label "Gain 3 [Credits]"
-                    :effect (req (let [unique-types (top-3-types runner)]
+                    :effect (req (let [unique-types (top-3-types state)]
                                    (when (>= 2 unique-types)
-                                     (system-msg state :corp (str "gains 3 [Credits]"))
+                                     (system-msg state :corp (str "uses Slot Machine to gain 3 [Credits]"))
                                      (gain-credits state :corp 3))))}
                    {:label "Place 3 advancement tokens"
-                    :effect (req (let [unique-types (top-3-types runner)]
+                    :effect (req (let [unique-types (top-3-types state)]
                                    (when (= 1 unique-types)
                                      (continue-ability
                                        state side
                                        {:choices {:req installed?}
                                         :prompt "Choose an installed card"
-                                        :effect (effect (system-msg (str "places 3 advancement tokens on "
-                                                                         (:title target)))
-                                                        (add-prop target :advance-counter 3 {:placed true}))}
+                                        :msg (msg "place 3 advancement tokens on "
+                                                  (card-str state target))
+                                        :effect (effect (add-prop target :advance-counter 3 {:placed true}))}
                                        card nil))))}]})
 
    "Snoop"

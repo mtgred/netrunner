@@ -264,14 +264,14 @@
 
 (defn- corp-install-pay
   "Used by corp-install to pay install costs, code continues in corp-install-continue"
-  [state side eid card server {:keys [extra-cost no-install-cost host-card action] :as args} slot]
+  [state side eid card server {:keys [extra-cost ignore-install-cost ignore-all-cost host-card action] :as args} slot]
   (let [dest-zone (get-in @state (cons :corp slot))
         ice-cost (if (and (ice? card)
-                          (not no-install-cost)
+                          (not ignore-install-cost)
                           (not (ignore-install-cost? state side)))
                    (count dest-zone) 0)
         all-cost (concat extra-cost [:credit ice-cost])
-        end-cost (if no-install-cost 0 (install-cost state side card all-cost))
+        end-cost (if ignore-all-cost 0 (install-cost state side card all-cost))
         end-fn #((clear-install-cost-bonus state side)
                  (effect-completed state side eid))]
     (if (and (corp-can-install? state side card dest-zone)
@@ -290,7 +290,7 @@
   The args input takes the following values:
   :host-card - Card to host on
   :extra-cost - Extra install costs
-  :no-install-cost - true if install costs should be ignored
+  :ignore-all-cost - true if install costs should be ignored
   :action - What type of action installed the card
   :install-state - Can be :rezzed-no-cost, :rezzed-no-rez-cost, :rezzed, or :faceup
   :display-message - Print descriptive text to the log window [default=true]"
@@ -375,9 +375,13 @@
 (defn- runner-get-cost
   "Get the total install cost for specified card"
   [state side {:keys [cost] :as card}
-   {:keys [extra-cost no-cost facedown] :as params}]
-  (install-cost state side card
-                (concat extra-cost (when (and (not no-cost) (not facedown)) [:credit cost]))))
+   {:keys [extra-cost ignore-install-cost ignore-all-cost facedown] :as params}]
+  (if ignore-all-cost
+    [:credit 0]
+    (install-cost state side card
+                  (concat extra-cost (when (and (not ignore-install-cost)
+                                                (not facedown))
+                                       [:credit cost])))))
 
 (defn- runner-install-message
   "Prints the correct msg for the card install"

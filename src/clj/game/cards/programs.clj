@@ -248,7 +248,7 @@
                                           :req (req (not (install-locked? state side)))
                                           :msg (msg "install " (:title target) " at no cost")
                                           :effect (effect (trash card {:cause :ability-cost})
-                                                          (runner-install target {:no-cost true}))}
+                                                          (runner-install target {:ignore-install-cost true}))}
                                          card nil)))}]}
 
    "Datasucker"
@@ -773,7 +773,8 @@
    "Pawn"
    {:implementation "All abilities are manual"
     :abilities [{:label "Host Pawn on the outermost ICE of a central server"
-                 :prompt "Host Pawn on the outermost ICE of a central server" :cost [:click 1]
+                 :cost [:click 1]
+                 :prompt "Host Pawn on the outermost ICE of a central server"
                  :choices {:req #(and (ice? %)
                                       (can-host? %)
                                       (= (last (:zone %)) :ices)
@@ -798,11 +799,13 @@
                                                         (not= (:cid %) this-pawn)
                                                         (#{[:hand] [:discard]} (:zone %)))}
                                    :msg (msg "install " (:title target))
-                                   :effect (effect (runner-install target {:no-cost true}))} card nil)
+                                   :effect (effect (runner-install target {:ignore-all-cost true}))}
+                                  card nil)
                                 (trash state side card)))}]}
 
    "Plague"
-   {:prompt "Choose a server for Plague" :choices (req servers)
+   {:prompt "Choose a server for Plague"
+    :choices (req servers)
     :msg (msg "target " target)
     :req (req (not (get-in card [:special :server-target])))
     :effect (effect (update! (assoc-in card [:special :server-target] target)))

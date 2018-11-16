@@ -1731,7 +1731,24 @@
       (core/add-prop state :corp (get-ice state :hq 0) :advance-counter 1)
       (run-successful state)
       (is (= 1 (get-counters (get-ice state :hq 0) :advancement)))
-      (is (:rezzed (get-ice state :hq 0)) "Ice Wall should still be rezzed"))))
+      (is (:rezzed (get-ice state :hq 0)) "Ice Wall should still be rezzed")))
+  (testing "Should trigger :derez events for Runner, not Corp (#3919)"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
+                 :runner {:deck ["Leave No Trace" "Keros Mcintyre"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Keros Mcintyre")
+      (play-from-hand state :runner "Leave No Trace")
+      (let [credits (:credit (get-runner))]
+        (click-prompt state :runner "HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (run-successful state)
+        (is (= (+ credits 2) (:credit (get-runner))) "Keros should trigger off derez")
+        (is (not (:rezzed (get-ice state :hq 0))) "Inner Ice Wall should not be rezzed")
+        (is (:rezzed (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))))
 
 (deftest mad-dash
   ;; Mad Dash - Make a run. Move to score pile as 1 point if steal agenda.  Take 1 meat if not

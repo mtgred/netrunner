@@ -233,6 +233,33 @@
     (swap! state dissoc-in [side :selected])
     (effect-completed state side (:eid fprompt))))
 
+(defn command-install-ice
+  [state side]
+  (when (= side :corp)
+    (resolve-ability
+      state side
+      {:prompt "Select a piece of ice to install"
+       :choices {:req #(and (is-type? % "ICE")
+                            (#{[:hand]} (:zone %)))}
+       :effect (effect
+                 (continue-ability
+                   (let [chosen-ice target]
+                     {:prompt "Choose a server"
+                      :choices (req servers)
+                      :effect (effect
+                                (continue-ability
+                                  (let [chosen-server target
+                                        num-ice (count (get-in (:corp @state)
+                                                               (conj (server->zone state target) :ices)))]
+                                    {:prompt "Which position to install in? (0 is innermost)"
+                                     :choices (vec (reverse (map str (range (inc num-ice)))))
+                                     :effect (effect (corp-install chosen-ice chosen-server
+                                                                   {:no-install-cost true
+                                                                    :index (str->int target)}))})
+                                  card nil))})
+                   card nil))}
+      {:title "/install-ice command"} nil)))
+
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
         value (if-let [n (string->num (first args))] n 1)
@@ -264,6 +291,7 @@
           "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
           "/error"      show-error-toast
           "/handsize"   #(swap! %1 assoc-in [%2 :hand-size :mod] (- value (get-in @%1 [%2 :hand-size :base])))
+          "/install-ice" command-install-ice
           "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
           "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
           "/memory"     #(swap! %1 assoc-in [%2 :memory :used] (- (+ (get-in @%1 [:runner :memory :base])
