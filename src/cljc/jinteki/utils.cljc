@@ -47,13 +47,13 @@
   "As defined here: https://you.tools/slugify/"
   ([string] (slugify string "-"))
   ([string sep]
-   (if (nil? string) ""
+   (if-not (string? string) ""
      (as-> string $
        #?(:clj (java.text.Normalizer/normalize $ java.text.Normalizer$Form/NFD)
-          :cljs (identity $))
-       (s/replace $ #"[\P{ASCII}]+" "")
+          :cljs (.normalize $ "NFD"))
+       (s/replace $ #"[^\x00-\x7F]+" "")
        (s/lower-case $)
        (s/trim $)
-       (s/split $ #"[\p{Space}\p{Punct}]+")
+       (s/split $ #"[ \t\n\x0B\f\r!\"#$%&'()*+,-./:;<=>?@\\\[\]^_`{|}~]+")
        (filter seq $)
        (s/join sep $)))))

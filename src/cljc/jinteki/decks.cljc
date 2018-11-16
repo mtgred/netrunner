@@ -151,19 +151,6 @@
   (apply + (vals (influence-map deck))))
 
 ;; Card and deck validity
-(defn check-deck-status
-  "Checks the valid and standard keys of a deck-status map to check if the deck is legal, casual or invalid."
-  [{:keys [valid standard eternal core-experience snapshot socr8]}]
-  (if valid
-    (cond
-      (:legal core-experience) "core-experience"
-      (:legal standard) "standard"
-      (:legal socr8) "socr8"
-      (:legal snapshot) "snapshot"
-      (:legal eternal) "eternal"
-      :else "casual")
-    "invalid"))
-
 (defn legal?
   ([status card]
    (legal? :standard status card))
@@ -258,7 +245,7 @@
                       (group-by #(get-in % [:card :cycle_code]) $)
                       (select-keys $ big-boxes)
                       (keys $)
-                      (= 1 (count $)))]
+                      (>= 1 (count $)))]
     {:legal (and single-set?
                  (legal-format? valid :socr8 deck))
      :description "Legal for Stimhack Online Cache Refresh 8"}))
@@ -268,7 +255,8 @@
   Implement any new formats here."
   [deck]
   (let [valid (valid-deck? deck)]
-    {:valid (build-deck-validity valid)
+    {:format (:format deck)
+     :casual (build-deck-validity valid)
      :standard (build-format-legality valid :standard deck)
      :eternal (build-format-legality valid :eternal deck)
      :snapshot (build-format-legality valid :snapshot deck)

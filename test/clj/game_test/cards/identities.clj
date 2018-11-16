@@ -4,7 +4,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
-            [jinteki.utils :refer [count-tags is-tagged?]]
+            [jinteki.utils :refer [count-tags is-tagged? has-subtype?]]
             [clojure.test :refer :all]))
 
 (deftest ^{:card-title "419-amoral-scammer"}
@@ -1768,8 +1768,8 @@
           iwall (get-ice state :hq 0)]
       (core/rez state :corp iwall)
       (card-ability state :runner k 0)
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
-      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate"))))
+      (is (has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate"))))
 
 (deftest saraswati-mnemonics-endless-exploration
   ;; Saraswati Mnemonics
