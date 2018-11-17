@@ -384,7 +384,7 @@
    "eternal" "Eternal"
    "core-experience" "Core Experience"
    "snapshot" "Snapshot"
-   "socr8" "Stimhack Online Cache Refresh 8"
+   "socr8" "SOCR8"
    "casual" "Casual"})
 
 (defn format-deck-status-span
