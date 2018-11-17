@@ -166,7 +166,7 @@
 (defn mwl-legal?
   "Returns true if the deck does not contain banned cards or more than one type of restricted card"
   [fmt cards]
-  (and (every? #(case (get-in % [:card :format fmt])
+  (and (every? #(case (name (get-in % [:card :format fmt]))
                   ("legal" "restricted" "banned")
                   true
                   false)
@@ -264,12 +264,5 @@
      :socr8 (build-socr-legality valid deck)}))
 
 (defn trusted-deck-status
-  [{:keys [status date] :as deck}]
-  (let [parse-date #?(:clj  #(f/parse (f/formatters :date-time) %)
-                      :cljs #(js/Date.parse %))
-        deck-date (parse-date date)
-        mwl-date (:date-start @cards/mwl)]
-    (if (and status
-             (> deck-date mwl-date))
-      status
-      (calculate-deck-status deck))))
+  [{:keys [status] :as deck}]
+  status)

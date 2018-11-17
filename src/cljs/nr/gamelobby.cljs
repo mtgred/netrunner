@@ -7,7 +7,7 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated avatar] :as auth]
             [nr.cardbrowser :refer [image-url non-game-toast] :as cb]
-            [nr.deckbuilder :refer [deck-status-span format-deck-status-span num->percent slug->format]]
+            [nr.deckbuilder :refer [deck-format-status-span num->percent slug->format]]
             [nr.gameboard :refer [game-state launch-game parse-state toast]]
             [nr.stats :refer [notnum->zero]]
             [nr.ws :as ws]
@@ -192,7 +192,7 @@
                                            (reagent-modals/close-modal!))}
              [:img {:src (image-url (:identity deck))
                     :alt (get-in deck [:identity :title] "")}]
-             [:div.float-right [deck-status-span deck]]
+             [:div.float-right [deck-format-status-span deck format false]]
              [:h4 (:name deck)]
              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
              [:p (get-in deck [:identity :title])]]))])]])
@@ -513,13 +513,13 @@
                             name
                             "Deck selected")]])
                       (when-let [deck (:deck player)]
-                        [:div.float-right [format-deck-status-span (:status deck) true false]])
+                        [:div.float-right [deck-format-status-span deck (:format game "standard") true]])
                       (when this-player
                         [:span.fake-link.deck-load
                          {:on-click #(reagent-modals/modal!
                                        [deckselect-modal user {:games games :gameid gameid
                                                                :sets sets :decks decks
-                                                               :format (:format @s "standard")}])}
+                                                               :format (:format game "standard")}])}
                          "Select Deck"])
                       ]))]
                 (when (:allowspectator game)

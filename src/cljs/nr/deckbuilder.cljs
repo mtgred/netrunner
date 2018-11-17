@@ -408,6 +408,15 @@
   ([deck tooltip? violation-details? use-trusted-info]
    (deck-status-span-memoize deck tooltip? violation-details? use-trusted-info)))
 
+(defn deck-format-status-span
+  "Returns a [:span] with standardized message and colors depending on the deck validity for a single format."
+  [deck format use-trusted-info?]
+  (format-deck-status-span (assoc
+                             (deck-status-details (assoc deck :format format) use-trusted-info?)
+                             :format
+                             format)
+                           false false))
+
 (defn match [identity query]
   (->> @all-cards
        (filter #(decks/allowed? % identity))
