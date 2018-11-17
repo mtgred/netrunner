@@ -7,7 +7,7 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated avatar] :as auth]
             [nr.cardbrowser :refer [image-url non-game-toast] :as cb]
-            [nr.deckbuilder :refer [deck-status-span format-deck-status-span num->percent]]
+            [nr.deckbuilder :refer [deck-status-span format-deck-status-span num->percent slug->format]]
             [nr.gameboard :refer [game-state launch-game parse-state toast]]
             [nr.stats :refer [notnum->zero]]
             [nr.ws :as ws]
@@ -115,6 +115,7 @@
     (fn [user]
       (swap! s assoc :title (str (:username user) "'s game"))
       (swap! s assoc :side "Corp")
+      (swap! s assoc :format "standard")
       (swap! s assoc :editing true)
       (swap! s assoc :flash-message "")
       (swap! s assoc :protected false)
@@ -139,6 +140,7 @@
                              :allowspectator (:allowspectator @s)
                              :spectatorhands (:spectatorhands @s)
                              :side           (:side @s)
+                             :format         (:format @s)
                              :room           (:current-room @s)
                              :options        (:options @app-state)}])))))))
 
@@ -176,7 +178,7 @@
   (-> "#gameboard" js/$ .fadeOut)
   (-> "#gamelobby" js/$ .fadeIn))
 
-(defn deckselect-modal [user {:keys [gameid games decks]}]
+(defn deckselect-modal [user {:keys [gameid games decks format]}]
   [:div
     [:h3 "Select your deck"]
     [:div.deck-collection
@@ -283,7 +285,7 @@
                      :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
             [:button "Send"]]]])})))
 
-(defn game-view [{:keys [title password started players gameid current-game password-game original-players editing] :as game}]
+(defn game-view [{:keys [title format password started players gameid current-game password-game original-players editing] :as game}]
   (r/with-let [s (r/atom {})
                 join (fn [action]
                        (let [password (:password password-game password)]
@@ -307,6 +309,10 @@
                    (:title game)
                    (when (pos? c)
                      (str  " (" c " spectator" (when (> c 1) "s") ")")))])
+
+       [:div {:class "game-format"}
+        [:span.format-label "Format:  "]
+        [:span.format-type (slug->format format "Unknown")]]
 
        [:div (doall
                (for [player (:players game)]
@@ -440,6 +446,14 @@
                                   :checked (= (:side @s) option)}] option]]))]
 
            [:section
+            [:h3 "Format"]
+            [:select.format {:value (:format @s "standard")
+                             :on-change #(swap! s assoc :format (.. % -target -value))}
+             (for [[k v] slug->format]
+               ^{:key k}
+               [:option {:value k} v])]]
+
+           [:section
             [:h3 "Options"]
             [:p
              [:label
@@ -503,7 +517,9 @@
                       (when this-player
                         [:span.fake-link.deck-load
                          {:on-click #(reagent-modals/modal!
-                                       [deckselect-modal user {:games games :gameid gameid :sets sets :decks decks}])}
+                                       [deckselect-modal user {:games games :gameid gameid
+                                                               :sets sets :decks decks
+                                                               :format (:format @s "standard")}])}
                          "Select Deck"])
                       ]))]
                 (when (:allowspectator game)
