@@ -2,12 +2,12 @@
   (:require [clojure.string :refer [join] :as s]))
 
 ;; Dot definitions
-(def zws "\u200B")                                          ; zero-width space for wrapping dots
-(def influence-dot (str "●" zws))                           ; normal influence dot
-(def banned-dot (str "✘" zws))                              ; on the banned list
-(def restricted-dot (str "🦄" zws))                         ; on the restricted list
-(def alliance-dot (str "○" zws))                            ; alliance free-inf dot
-(def rotated-dot (str "↻" zws))                             ; on the rotation list
+(def zws "\u200B")                  ; zero-width space for wrapping dots
+(def influence-dot (str "●" zws))   ; normal influence dot
+(def banned-dot (str "✘" zws))      ; on the banned list
+(def restricted-dot (str "🦄" zws)) ; on the restricted list
+(def alliance-dot (str "○" zws))    ; alliance free-inf dot
+(def rotated-dot (str "↻" zws))     ; on the rotation list
 
 (def banned-span
   [:span.invalid {:title "Removed"} " " banned-dot])

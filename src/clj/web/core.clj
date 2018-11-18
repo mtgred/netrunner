@@ -46,15 +46,24 @@
     (let [sets (mc/find-maps db "sets" nil)
           cycles (mc/find-maps db "cycles" nil)
           mwl (mc/find-maps db "mwls" nil)
-          latest_mwl (->> mwl
-                       (map (fn [e] (update e :date_start #(f/parse (f/formatters :date) %))))
-                       (sort-by :date_start)
-                       (last))]
+          latest-mwl (->> mwl
+                          (filter #(= "standard" (:format %)))
+                          (map (fn [e] (update e :date-start #(f/parse (f/formatters :date) %))))
+                          (sort-by :date-start)
+                          last)
+          ;; Gotta turn the card names back to strings
+          latest-mwl (assoc latest-mwl
+                            :cards
+                            (reduce-kv (fn [m k v]
+                                         (assoc m (name k) v))
+                                       {}
+                                       (:cards latest-mwl)))
+          ]
       (core/reset-card-data)
       (core/reset-card-defs)
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
-      (reset! cards/mwl latest_mwl))
+      (reset! cards/mwl latest-mwl))
 
     (when (#{"dev" "prod"} (first args))
       (reset! server-mode (first args)))

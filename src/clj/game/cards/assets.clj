@@ -4,7 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags]]
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
             [jinteki.cards :refer [all-cards]]))
 
 ;;; Asset-specific helpers
@@ -470,7 +470,7 @@
               ;; The once and once-key force a single DBS to act on behalf of all rezzed DBS's.
               :once :per-turn
               :once-key :daily-business-show-draw-bonus
-              :effect (req (let [dbs (count (filter #(and (= "06086" (:code %))
+              :effect (req (let [dbs (count (filter #(and (= "Daily Business Show" (:title %))
                                                           (rezzed? %))
                                                     (all-installed state :corp)))]
                              (draw-bonus state side dbs)))}
@@ -479,7 +479,7 @@
               :once :per-turn
               :once-key :daily-business-show-put-bottom
               :async true
-              :effect (req (let [dbs (count (filter #(and (= "06086" (:code %))
+              :effect (req (let [dbs (count (filter #(and (= "Daily Business Show" (:title %))
                                                           (rezzed? %))
                                                     (all-installed state :corp)))
                                  drawn (get-in @state [:corp :register :most-recent-drawn])]

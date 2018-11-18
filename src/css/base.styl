@@ -163,17 +163,17 @@ button.small
   color: orange
   transition(all 0.2s ease-in-out)
 
-.invalid
-  color: orangered
-  border-color: orangered
+.standard, .eternal, .core-experience, .snapshot, .socr8, .legal
+  color: lawngreen
+  border-color: lawngreen
 
 .casual
   color: yellow
   border-color: yellow
 
-.legal
-  color: lawngreen
-  border-color: lawngreen
+.invalid
+  color: orangered
+  border-color: orangered
 
 .smallwarning
   position: relative
@@ -1229,6 +1229,12 @@ nav ul
     margin-bottom: 5px
     clear: both
 
+    .game-format
+      margin-bottom: 10px
+
+    .format-label
+      font-weight: bold
+
     .player
       &:first-child:after
         content: "vs"
@@ -1240,7 +1246,7 @@ nav ul
 
     > button
       float: right
-      margin-top: 7px
+      margin-top: 9px
 
     .password-prompt
       position: absolute

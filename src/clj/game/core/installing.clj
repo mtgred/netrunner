@@ -1,7 +1,8 @@
 (in-ns 'game.core)
 
-(declare available-mu free-mu host in-play? install-locked? make-rid rez run-flag? installable-servers server->zone set-prop system-msg
-         turn-flag? update-breaker-strength update-ice-strength update-run-ice use-mu)
+(declare available-mu free-mu host in-play? install-locked? make-rid rez run-flag?
+         installable-servers server->zone set-prop system-msg turn-flag?
+         update-breaker-strength update-ice-strength update-run-ice use-mu)
 
 ;;;; Functions for the installation and deactivation of cards.
 
