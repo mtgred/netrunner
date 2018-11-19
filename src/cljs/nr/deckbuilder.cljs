@@ -12,7 +12,9 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.cardbrowser :refer [card-view cards-channel expand-alts filter-title image-url show-alt-art? ] :as cb]
-            [nr.utils :refer [alliance-dots banned-span dots-html influence-dot influence-dots make-dots restricted-span rotated-span]]
+            [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
+                              influence-dots make-dots restricted-span rotated-span
+                              slug->format]]
             [reagent.core :as r]))
 
 
@@ -378,14 +380,6 @@
   (let [fmt (:format deck-status)]
     (if (get-in deck-status [(keyword fmt) :legal])
       fmt "invalid")))
-
-(def slug->format
-  {"standard" "Standard"
-   "eternal" "Eternal"
-   "core-experience" "Core Experience"
-   "snapshot" "Snapshot"
-   "socr8" "SOCR8"
-   "casual" "Casual"})
 
 (defn format-deck-status-span
   [{:keys [format] :as deck-status} tooltip? violation-details?]

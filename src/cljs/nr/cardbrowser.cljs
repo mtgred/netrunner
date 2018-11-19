@@ -7,7 +7,8 @@
             [nr.appstate :refer [app-state]]
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
-            [nr.utils :refer [toastr-options banned-span restricted-span influence-dots]]
+            [nr.utils :refer [toastr-options banned-span restricted-span rotated-span
+                              influence-dots slug->format format->slug]]
             [reagent.core :as r]))
 
 (def cards-channel (chan))
@@ -25,7 +26,7 @@
                            (:cards local-cards)))
           sets (:json (<! (GET "/data/sets")))
           cycles (:json (<! (GET "/data/cycles")))
-          mwls (:json (<! (GET "/data/mwls")))
+          mwls (:json (<! (GET "/data/mwl")))
           latest_mwl (->> mwls
                           (filter #(= "standard" (:format %)))
                           (map (fn [e] (update e :date-start #(js/Date.parse %))))
@@ -178,7 +179,8 @@
                (-> faction s/lower-case (s/replace " " "-"))
                "neutral")}
      (when (decks/legal? "banned" card) banned-span)
-     (when (decks/legal? "restricted" card) restricted-span)]]
+     (when (decks/legal? "restricted" card) restricted-span)
+     (when (:rotated card) rotated-span)]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
        [:div.anr-icon {:class (str "mu" memory)} ""]
@@ -252,6 +254,12 @@
     cards
     (filter #(= (get % field) filter-value) cards)))
 
+(defn filter-format [fmt cards]
+  (if (= "All" fmt)
+    cards
+    (let [fmt (keyword (get format->slug fmt))]
+      (filter #(= "legal" (get-in % [:format fmt])) cards))))
+
 (defn filter-title [query cards]
   (if (empty? query)
     cards
@@ -268,15 +276,6 @@
     "Faction" (juxt :side :faction :code)
     "Type" (juxt :side :type)
     "Set number" :number))
-
-(defn card-info-view [state]
-  (let [selected-card (:selected-card @state)]
-    (if (nil? selected-card)
-      [:div {:display "none"}]
-      [:div
-       [:h4 "Card text"]
-       [:div.blue-shade.panel
-        [card-as-text selected-card]]])))
 
 (defn selected-set-name [state]
   (-> (:set-filter @state)
@@ -320,6 +319,7 @@
                    (filter-cards (:side-filter @state) :side)
                    (filter-cards (:faction-filter @state) :faction)
                    (filter-cards (:type-filter @state) :type)
+                   (filter-format (:format-filter @state))
                    (filter-title (:search-query @state))
                    (insert-alt-arts alt-filter)
                    (sort-by (sort-field (:sort-field @state)))
@@ -375,7 +375,7 @@
   (str "&nbsp;&nbsp;&nbsp;&nbsp;" pack-name))
 
 
-(defn drop-down-builder
+(defn dropdown-builder
   [state]
   (let [sets (r/cursor app-state [:sets])
         cycles (r/cursor app-state [:cycles])
@@ -397,20 +397,46 @@
                                 (sort-by :position (:alt-info @app-state))))
         sets-to-display (if (show-alt-art? true)
                           (concat set-names alt-art-sets)
-                          set-names)]
+                          set-names)
+        formats (-> format->slug keys butlast)]
     [:div
      (doall
        (for [[title state-key options]
-             [["Set" :set-filter sets-to-display]
+             [["Format" :format-filter formats]
+              ["Set" :set-filter sets-to-display]
               ["Side" :side-filter ["Corp" "Runner"]]
               ["Faction" :faction-filter (factions (:side-filter @state))]
               ["Type" :type-filter (types (:side-filter @state))]]]
          ^{:key title}
          [simple-filter-builder title state state-key options]))]))
 
+(defn clear-filters [state]
+  [:p [:button
+       {:key "clear-filters"
+        :on-click #(swap! state assoc
+                          :search-query ""
+                          :sort-field "Faction"
+                          :format-filter "All"
+                          :set-filter "All"
+                          :type-filter "All"
+                          :side-filter "All"
+                          :faction-filter "All")}
+       "Clear"]])
+
+(defn card-info-view [state]
+  (let [selected-card (:selected-card @state)]
+    (if (nil? selected-card)
+      [:div {:display "none"}]
+      [:div
+       [:h4 "Card text"]
+       [:div.blue-shade.panel
+        [card-as-text selected-card]]])))
+
+
 (defn card-browser []
   (let [state (r/atom {:search-query ""
                        :sort-field "Faction"
+                       :format-filter "All"
                        :set-filter "All"
                        :type-filter "All"
                        :side-filter "All"
@@ -427,6 +453,7 @@
           [:div.blue-shade.panel.filters
            [query-builder state]
            [sort-by-builder state]
-           [drop-down-builder state]
+           [dropdown-builder state]
+           [clear-filters state]
            [card-info-view state]]
           [card-list-view state]])})))
