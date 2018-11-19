@@ -290,7 +290,7 @@
                 side-identities
                 (sort-by :title)
                 first)]
-    (swap! s assoc :deck {:name "New deck" :cards [] :identity id})
+    (swap! s assoc :deck {:name "New deck" :cards [] :identity id :format "standard"})
     (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
     (edit-deck s)
     (swap! s assoc :old-deck old-deck)))
