@@ -284,7 +284,7 @@
 
 (defn handle-scroll [e state]
   (let [$cardlist (js/$ ".card-list")
-        height (- (.prop $cardlist "scrollHeight") (.innerHeight $cardlist))]
+        height (- (.prop $cardlist "scrollHeight") (.prop $cardlist "clientHeight"))]
     (when (> (.scrollTop $cardlist) (- height 600))
       (swap! state update-in [:page] (fnil inc 0)))))
 
@@ -427,10 +427,8 @@
   (let [selected-card (:selected-card @state)]
     (if (nil? selected-card)
       [:div {:display "none"}]
-      [:div
-       [:h4 "Card text"]
-       [:div.blue-shade.panel
-        [card-as-text selected-card]]])))
+      [:div.blue-shade.panel.filters
+       [card-as-text selected-card]])))
 
 
 (defn card-browser []
@@ -454,6 +452,6 @@
            [query-builder state]
            [sort-by-builder state]
            [dropdown-builder state]
-           [clear-filters state]
-           [card-info-view state]]
-          [card-list-view state]])})))
+           [clear-filters state]]
+          [card-list-view state]
+          [card-info-view state]])})))
