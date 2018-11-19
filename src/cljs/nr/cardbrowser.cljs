@@ -7,7 +7,7 @@
             [nr.appstate :refer [app-state]]
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
-            [nr.utils :refer [toastr-options banned-span restricted-span rotated-span influence-dots]]
+            [nr.utils :refer [toastr-options banned-span restricted-span influence-dots]]
             [reagent.core :as r]))
 
 (def cards-channel (chan))
@@ -178,8 +178,7 @@
                (-> faction s/lower-case (s/replace " " "-"))
                "neutral")}
      (when (decks/legal? "banned" card) banned-span)
-     (when (decks/legal? "restricted" card) restricted-span)
-     (when (:rotated card) rotated-span)]]
+     (when (decks/legal? "restricted" card) restricted-span)]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
        [:div.anr-icon {:class (str "mu" memory)} ""]
@@ -203,7 +202,7 @@
        [:div.heading "Influence "
         [:span.influence
          {:dangerouslySetInnerHTML #js {:__html (influence-dots influence)}
-          :class                   (-> faction s/lower-case (s/replace " " "-"))}]]))
+          :class (-> faction s/lower-case (s/replace " " "-"))}]]))
    [:div.text
     [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
                                           "" (str ": " (:subtype card)))]
@@ -252,11 +251,6 @@
   (if (= filter-value "All")
     cards
     (filter #(= (get % field) filter-value) cards)))
-
-(defn filter-rotated [should-filter cards]
-  (if should-filter
-    (filter-cards false :rotated cards)
-    cards))
 
 (defn filter-title [query cards]
   (if (empty? query)
@@ -385,7 +379,6 @@
   [state]
   (let [sets (r/cursor app-state [:sets])
         cycles (r/cursor app-state [:cycles])
-        hide-rotated (:hide-rotated @state)
         cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
                                      :cycle_position (:position %)
                                      :position 0)
