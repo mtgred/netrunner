@@ -1,13 +1,14 @@
 (ns nr.cardbrowser
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! >! sub pub] :as async]
-            [clojure.string :as str]
+            [clojure.string :as s]
             [jinteki.cards :refer [all-cards] :as cards]
             [jinteki.decks :as decks]
             [nr.appstate :refer [app-state]]
             [nr.account :refer [alt-art-name]]
             [nr.ajax :refer [GET]]
-            [nr.utils :refer [toastr-options banned-span restricted-span rotated-span influence-dots]]
+            [nr.utils :refer [toastr-options banned-span restricted-span rotated-span
+                              influence-dots slug->format format->slug]]
             [reagent.core :as r]))
 
 (def cards-channel (chan))
@@ -25,8 +26,8 @@
                            (:cards local-cards)))
           sets (:json (<! (GET "/data/sets")))
           cycles (:json (<! (GET "/data/cycles")))
-          mwl (:json (<! (GET "/data/mwl")))
-          latest_mwl (->> mwl
+          mwls (:json (<! (GET "/data/mwl")))
+          latest_mwl (->> mwls
                           (filter #(= "standard" (:format %)))
                           (map (fn [e] (update e :date-start #(js/Date.parse %))))
                           (sort-by :date-start)
@@ -41,17 +42,16 @@
       (swap! app-state assoc :cards-loaded true)
       (put! cards-channel cards)))
 
-(defn make-span [text symbol class]
-  (.replace text (js/RegExp. symbol "gi") (str "<span class='anr-icon " class "'></span>")))
+(defn make-span [text sym icon-class]
+  (s/replace text (js/RegExp. sym "gi") (str "<span class='anr-icon " icon-class "'></span>")))
 
 (defn show-alt-art?
   "Is the current user allowed to use alternate art cards and do they want to see them?"
   ([] (show-alt-art? false))
   ([allow-all-users]
-   (and
-     (get-in @app-state [:options :show-alt-art] true)
-     (or allow-all-users
-         (get-in @app-state [:user :special] false)))))
+   (and (get-in @app-state [:options :show-alt-art] true)
+        (or allow-all-users
+            (get-in @app-state [:user :special] false)))))
 
 (defn image-url
   ([card] (image-url card false))
@@ -169,14 +169,14 @@
       (swap! app-state assoc-in [:options :alt-arts] new-alts)
       (nr.account/post-options "/profile" (partial post-response)))))
 
-(defn- card-text
+(defn- card-as-text
   "Generate text html representation a card"
   [card]
   [:div
    [:h4 (str (:title card) " ")
     [:span.influence
      {:class (if-let [faction (:faction card)]
-               (-> faction .toLowerCase (.replace " " "-"))
+               (-> faction s/lower-case (s/replace " " "-"))
                "neutral")}
      (when (decks/legal? "banned" card) banned-span)
      (when (decks/legal? "restricted" card) restricted-span)
@@ -204,7 +204,7 @@
        [:div.heading "Influence "
         [:span.influence
          {:dangerouslySetInnerHTML #js {:__html (influence-dots influence)}
-          :class                   (-> faction .toLowerCase (.replace " " "-"))}]]))
+          :class (-> faction s/lower-case (s/replace " " "-"))}]]))
    [:div.text
     [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
                                           "" (str ": " (:subtype card)))]
@@ -221,8 +221,7 @@
         (when (:art card)
           [:button.alt-art-selector
            {:on-click #(select-alt-art card)}
-           "Select Art"])))
-    ]])
+           "Select Art"])))]])
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
@@ -240,11 +239,6 @@
       "Runner" (conj runner-factions "Neutral")
       "Corp" corp-factions)))
 
-(defn options [list]
-  (let [options (cons "All" list)]
-    (for [option options]
-      [:option {:value option :key option :dangerouslySetInnerHTML #js {:__html option}}])))
-
 (defn filter-alt-art-cards [cards]
   (let [alt-arts (:alt-arts @app-state)]
     (filter #(contains? alt-arts (:code %)) cards)))
@@ -258,19 +252,20 @@
 (defn filter-cards [filter-value field cards]
   (if (= filter-value "All")
     cards
-    (filter #(= (field %) filter-value) cards)))
+    (filter #(= (get % field) filter-value) cards)))
 
-(defn filter-rotated [should-filter cards]
-  (if should-filter
-    (filter-cards false :rotated cards)
-    cards))
+(defn filter-format [fmt cards]
+  (if (= "All" fmt)
+    cards
+    (let [fmt (keyword (get format->slug fmt))]
+      (filter #(= "legal" (get-in % [:format fmt])) cards))))
 
 (defn filter-title [query cards]
   (if (empty? query)
     cards
-    (let [lcquery (.toLowerCase query)]
-      (filter #(or (not= (.indexOf (.toLowerCase (:title %)) lcquery) -1)
-                   (not= (.indexOf (:normalizedtitle %) lcquery) -1))
+    (let [lcquery (s/lower-case query)]
+      (filter #(or (s/includes? (s/lower-case (:title %)) lcquery)
+                   (s/includes? (:normalizedtitle %) lcquery))
               cards))))
 
 (defn sort-field [fieldname]
@@ -282,167 +277,181 @@
     "Type" (juxt :side :type)
     "Set number" :number))
 
-(defn card-info-view [s]
-  (let [selected-card (:selected-card @s)]
-    (if (nil? selected-card)
-      [:div {:display "none"}]
-      [:div
-       [:h4 "Card text"]
-       [:div.blue-shade.panel
-        (card-text selected-card)]])))
+(defn selected-set-name [state]
+  (-> (:set-filter @state)
+      (s/replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
+      (s/replace " Cycle" "")))
 
-(defn selected-set-name [s]
-  (-> (:set-filter @s)
-      (.replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
-      (.replace " Cycle" "")))
-
-(defn selected-set-rotated? [{:keys [sets cycles]} s]
-  (let [set (selected-set-name s)
-        combined (concat sets cycles)]
-    (if (= set "All")
-      false
-      (->> combined
-           (filter #(= set (:name %)))
-           (first)
-           (:rotated)))))
-
-(defn handle-scroll [e s]
+(defn handle-scroll [e state]
   (let [$cardlist (js/$ ".card-list")
-        height (- (.prop $cardlist "scrollHeight") (.innerHeight $cardlist))]
+        height (- (.prop $cardlist "scrollHeight") (.prop $cardlist "clientHeight"))]
     (when (> (.scrollTop $cardlist) (- height 600))
-      (swap! s update-in [:page] (fnil inc 0)))))
+      (swap! state update-in [:page] (fnil inc 0)))))
 
-(defn handle-search [e s]
-  (doseq [filter [:set-filter :type-filter :faction-filter]]
-    (swap! s assoc filter "All"))
-  (swap! s assoc :sort-field "Faction")
-  (swap! s assoc :search-query (.. e -target -value)))
-
-(defn card-view [card s]
+(defn card-view [card state]
   (let [cv (r/atom {:showText false})]
-    (fn [card s]
+    (fn [card state]
       [:div.card-preview.blue-shade
-       (when (:decorate-card @s)
-         {:class (cond (= (:selected-card @s) card) "selected"
+       (when (:decorate-card @state)
+         {:class (cond (= (:selected-card @state) card) "selected"
                        (selected-alt-art card) "selected-alt")})
        (if (:showText @cv)
-         (card-text card)
+         [card-as-text card]
          (when-let [url (image-url card true)]
            [:img {:src url
                   :alt (:title card)
                   :onClick #(do (.preventDefault %)
-                                (swap! s assoc :selected-card card))
+                                (swap! state assoc :selected-card card))
                   :onError #(-> (swap! cv assoc :showText true))
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
-(defn card-list-view [s]
-  (let [selected (selected-set-name s)
-        selected-cycle (-> selected .toLowerCase (.replace " " "-"))
+(defn card-list-view [state]
+  (let [selected (selected-set-name state)
+        selected-cycle (-> selected s/lower-case (s/replace " " "-"))
         [alt-filter cards] (cond
                              (= selected "All") [nil @all-cards]
                              (= selected "Alt Art") [nil (filter-alt-art-cards @all-cards)]
-                             (str/ends-with? (:set-filter @s) " Cycle") [nil (filter #(= (:cycle_code %) selected-cycle) @all-cards)]
+                             (s/ends-with? (:set-filter @state) " Cycle") [nil (filter #(= (:cycle_code %) selected-cycle) @all-cards)]
                              (not (some #(= selected (:name %)) (:sets @app-state))) [selected (filter-alt-art-set selected @all-cards)]
                              :else
                              [nil (filter #(= (:setname %) selected) @all-cards)])
         cards (->> cards
-                   (filter-cards (:side-filter @s) :side)
-                   (filter-cards (:faction-filter @s) :faction)
-                   (filter-cards (:type-filter @s) :type)
-                   (filter-rotated (:hide-rotated @s))
-                   (filter-title (:search-query @s))
+                   (filter-cards (:side-filter @state) :side)
+                   (filter-cards (:faction-filter @state) :faction)
+                   (filter-cards (:type-filter @state) :type)
+                   (filter-format (:format-filter @state))
+                   (filter-title (:search-query @state))
                    (insert-alt-arts alt-filter)
-                   (sort-by (sort-field (:sort-field @s)))
-                   (take (* (:page @s) 28)))]
-    [:div.card-list {:on-scroll #(handle-scroll % s)}
+                   (sort-by (sort-field (:sort-field @state)))
+                   (take (* (:page @state) 28)))]
+    [:div.card-list {:on-scroll #(handle-scroll % state)}
      (doall
        (for [card cards]
          ^{:key (or (:display-name card) (:code card))}
-         [card-view card s]))]))
+         [card-view card state]))]))
+
+(defn handle-search [e state]
+  (doseq [filter [:set-filter :type-filter :faction-filter]]
+    (swap! state assoc filter "All"))
+  (swap! state assoc :sort-field "Faction")
+  (swap! state assoc :search-query (.. e -target -value)))
+
+(defn query-builder [state]
+  (let [query (:search-query @state)]
+    [:div.search-box
+     [:span.e.search-icon {:dangerouslySetInnerHTML #js {:__html "&#xe822;"}}]
+     (when-not (empty? query)
+       [:span.e.search-clear {:dangerouslySetInnerHTML #js {:__html "&#xe819;"}
+                              :on-click #(swap! state assoc :search-query "")}])
+     [:input.search {:on-change #(handle-search % state)
+                     :type "text"
+                     :placeholder "Search cards"
+                     :value query}]]))
+
+(defn sort-by-builder [state]
+  [:div
+   [:h4 "Sort by"]
+   [:select {:value (:sort-field @state)
+             :on-change #(swap! state assoc :sort-field (.. % -target -value))}
+    (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
+      [:option {:value field
+                :key field
+                :dangerouslySetInnerHTML #js {:__html field}}])]])
+
+(defn simple-filter-builder
+  [title state state-key options]
+  [:div
+   [:h4 title]
+   [:select {:value (get @state state-key)
+             :on-change #(swap! state assoc state-key (.. % -target -value))}
+    (for [option (cons "All" options)]
+      ^{:key option}
+      [:option {:value option
+                :key option
+                :dangerouslySetInnerHTML #js {:__html option}}])]])
+
+
+(defn format-set-name [pack-name]
+  (str "&nbsp;&nbsp;&nbsp;&nbsp;" pack-name))
+
+
+(defn dropdown-builder
+  [state]
+  (let [sets (r/cursor app-state [:sets])
+        cycles (r/cursor app-state [:cycles])
+        cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
+                                     :cycle_position (:position %)
+                                     :position 0)
+                             @cycles)
+        cycles-list (filter #(not (= (:size %) 1)) cycles-list-all)
+        sets-list (map #(if (not (or (:bigbox %)
+                                     (= (:id %) (:cycle_code %))))
+                          (update-in % [:name] format-set-name)
+                          %)
+                       @sets)
+        set-names (map :name
+                       (sort-by (juxt :cycle_position :position)
+                                (concat cycles-list sets-list)))
+        alt-art-sets (cons "Alt Art"
+                           (map #(format-set-name (:name %))
+                                (sort-by :position (:alt-info @app-state))))
+        sets-to-display (if (show-alt-art? true)
+                          (concat set-names alt-art-sets)
+                          set-names)
+        formats (-> format->slug keys butlast)]
+    [:div
+     (doall
+       (for [[title state-key options]
+             [["Format" :format-filter formats]
+              ["Set" :set-filter sets-to-display]
+              ["Side" :side-filter ["Corp" "Runner"]]
+              ["Faction" :faction-filter (factions (:side-filter @state))]
+              ["Type" :type-filter (types (:side-filter @state))]]]
+         ^{:key title}
+         [simple-filter-builder title state state-key options]))]))
+
+(defn clear-filters [state]
+  [:p [:button
+       {:key "clear-filters"
+        :on-click #(swap! state assoc
+                          :search-query ""
+                          :sort-field "Faction"
+                          :format-filter "All"
+                          :set-filter "All"
+                          :type-filter "All"
+                          :side-filter "All"
+                          :faction-filter "All")}
+       "Clear"]])
+
+(defn card-info-view [state]
+  (let [selected-card (:selected-card @state)]
+    (if (nil? selected-card)
+      [:div {:display "none"}]
+      [:div.blue-shade.panel.filters
+       [card-as-text selected-card]])))
+
 
 (defn card-browser []
-  (let [s (r/atom {:search-query ""
-                   :sort-field "Faction"
-                   :set-filter "All"
-                   :type-filter "All"
-                   :side-filter "All"
-                   :faction-filter "All"
-                   :hide-rotated true
-                   :page 1
-                   :decorate-card true
-                   :selected-card nil})
-        sets (r/cursor app-state [:sets])
-        cycles (r/cursor app-state [:cycles])]
-
+  (let [state (r/atom {:search-query ""
+                       :sort-field "Faction"
+                       :format-filter "All"
+                       :set-filter "All"
+                       :type-filter "All"
+                       :side-filter "All"
+                       :faction-filter "All"
+                       :page 1
+                       :decorate-card true
+                       :selected-card nil})]
     (r/create-class
       {:display-name "card-browser"
-
        :reagent-render
        (fn []
          (.focus (js/$ ".search"))
-         [:div.cardbrowser [:div.blue-shade.panel.filters
-                            (let [query (:search-query @s)]
-                              [:div.search-box
-                               [:span.e.search-icon {:dangerouslySetInnerHTML #js {:__html "&#xe822;"}}]
-                               (when-not (empty? query)
-                                 [:span.e.search-clear {:dangerouslySetInnerHTML #js {:__html "&#xe819;"}
-                                                        :on-click #(swap! s assoc :search-query "")}])
-                               [:input.search {:on-change #(handle-search % s)
-                                               :type "text" :placeholder "Search cards" :value query}]])
-                            [:div
-                             [:h4 "Sort by"]
-                             [:select {:value (:sort-field @s)
-                                       :on-change #(swap! s assoc :sort-field (.. % -target -value))}
-                              (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
-                                [:option {:value field :key field :dangerouslySetInnerHTML #js {:__html field}}])]
-                             ]
-
-                            (let [format-pack-name (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name))
-                                  hide-rotated (:hide-rotated @s)
-                                  cycles-filtered (filter-rotated hide-rotated @cycles)
-                                  cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
-                                                                 :cycle_position (:position %)
-                                                                 :position 0)
-                                                       cycles-filtered)
-                                  cycles-list (filter #(not (= (:size %) 1)) cycles-list-all)
-                                  sets-filtered (filter-rotated hide-rotated @sets)
-                                  sets-list (map #(if (not (or (:bigbox %)
-                                                               (= (:code %) (:cycle_code %))
-                                                               (= (:code %) "mo"))) ;; Unlike other top-level sets, Magnum Opus
-                                                                                    ;; doesn't have a cycle code that matches the set code
-                                                    (update-in % [:name] format-pack-name)
-                                                    %)
-                                                 sets-filtered)
-                                  set-names (map :name
-                                                 (sort-by (juxt :cycle_position :position)
-                                                          (concat cycles-list sets-list)))
-                                  alt-art-sets (concat `("Alt Art")
-                                                       (map #(format-pack-name (:name %))
-                                                            (sort-by :position (:alt-info @app-state))))]
-                              (doall
-                                (for [[title key f] [["Set" :set-filter (if (show-alt-art? true)
-                                                                          (concat set-names alt-art-sets)
-                                                                          set-names)]
-                                                     ["Side" :side-filter ["Corp" "Runner"]]
-                                                     ["Faction" :faction-filter (factions (:side-filter @s))]
-                                                     ["Type" :type-filter (types (:side-filter @s))]]]
-                                  ^{:key title}
-                                  [:div
-                                   [:h4 title]
-                                   [:select {:value (key @s)
-                                             :on-change #(swap! s assoc key (.. % -target -value))}
-                                    (options f)]])))
-
-                            [:div.hide-rotated-div
-                             [:label [:input.hide-rotated {:type "checkbox"
-                                                           :value true
-                                                           :checked (:hide-rotated @s)
-                                                           :on-change #(let [hide (.. % -target -checked)]
-                                                                         (swap! s assoc :hide-rotated hide)
-                                                                         (when (and hide (selected-set-rotated? @app-state s))
-                                                                           (swap! s assoc :set-filter "All")))}]
-                              "Hide rotated cards"]]
-                            [card-info-view s]
-                            ]
-
-          [card-list-view s]])})))
+         [:div.cardbrowser
+          [:div.blue-shade.panel.filters
+           [query-builder state]
+           [sort-by-builder state]
+           [dropdown-builder state]
+           [clear-filters state]]
+          [card-list-view state]
+          [card-info-view state]])})))

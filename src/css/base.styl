@@ -820,6 +820,8 @@ nav ul
 // Card Browser
 .cardbrowser
   display-flex()
+  justify-content(space-between)
+  height: 100vh
 
   .heading, .type
     font-weight: bold
@@ -839,9 +841,11 @@ nav ul
     padding-top: 8px
 
 .filters
-  flex(0 0 180px)
+  flex(0 0 250px)
   margin: 10px
   padding: 10px
+  align-self: flex-start
+  min-height: 348px
 
   input, select
     width: 100%
@@ -896,16 +900,15 @@ nav ul
     border: 1px solid orange
 
 .card-list
-  position: absolute
-  top: 0
-  bottom: 0
-  left: 201px
   overflow: auto
+  padding: 10px
   -webkit-overflow-scrolling: touch
-  padding-top: 40px
   transform: translateZ(0)
   flex(1)
-
+  display-flex()
+  flex-direction(row)
+  flex-wrap(wrap)
+  justify-content(space-around)
 
 .card-preview
   float: left
