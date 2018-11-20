@@ -217,9 +217,9 @@
 
     [:div.formats
      (doall (for [[k name] (-> slug->format butlast)]
-              ^{:key k}
               (let [status (keyword (get-in card [:format (keyword k)] "unknown"))
                     c (text-class-for-status status)]
+                ^{:key k}
                 [:div {:class c} name
                  (case status
                    :banned banned-span
