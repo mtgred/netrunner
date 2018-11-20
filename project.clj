@@ -63,6 +63,7 @@
   :aot [#"game\.*"
         #"web\.*"
         #"tasks.fetch"
+        #"tasks.altart"
         #"jinteki\.*"]
   :jar-name "netrunner.jar"
   :uberjar-name "netrunner-standalone.jar"

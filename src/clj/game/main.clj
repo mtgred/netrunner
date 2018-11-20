@@ -3,7 +3,6 @@
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.core :refer [card-is-public? game-states show-error-toast toast] :as core]
             [game.utils :refer [private-card]]
-            [jinteki.cards :refer [all-cards]]
             [differ.core :as differ]))
 
 (add-encoder java.lang.Object encode-str)
@@ -110,13 +109,6 @@
      (if (get-in @state [:options :spectatorhands])
        (assoc @state :corp corp-deck :runner runner-deck)
        (assoc @state :corp corp-private :runner runner-private))]))
-
-(defn- reset-all-cards
-  [cards]
-  (let [;; split the cards into regular cards and alt-art cards
-        [regular alt] ((juxt filter remove) #(not= "Alternates" (:setname %)) cards)
-        regular (into {} (map (juxt :title identity) regular))]
-    (reset! all-cards regular)))
 
 (defn public-states [state]
   (let [[new-corp new-runner new-spect] (private-states state)]

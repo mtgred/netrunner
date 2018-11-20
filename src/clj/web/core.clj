@@ -9,7 +9,8 @@
             [game.quotes :as quotes]
             [jinteki.cards :as cards]
             [jinteki.nav :as nav]
-            [tasks.nrdb :refer [replace-collection]]
+            [tasks.nrdb :refer [replace-collection update-config]]
+            [tasks.altart :refer [add-art]]
             [web.api :refer [app]]
             [web.chat :as chat]
             [web.config :refer [frontend-version server-config server-mode]]
@@ -37,7 +38,9 @@
            edn/read-string
            ((juxt :title identity))
            (swap! cards/all-cards merge))
-      (replace-collection "cards" (vals @cards/all-cards)))))
+      (replace-collection "cards" (vals @cards/all-cards))
+      (add-art false)
+      (update-config))))
 
 
 (defn -main [& args]

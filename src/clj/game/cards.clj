@@ -220,6 +220,7 @@
        (into {})
        (swap! all-cards merge))
   (replace-collection "cards" (vals @all-cards))
+  (add-art false)
   (update-config))
 
 (defn load-all-cards
