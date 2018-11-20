@@ -73,3 +73,19 @@
       (cons
         (apply f (map #(if (seq %) (first %) default) colls))
         (apply map-longest f default (map rest colls))))))
+
+(def slug->format
+  {"standard" "Standard"
+   "eternal" "Eternal"
+   "core-experience" "Core Experience"
+   "snapshot" "Snapshot"
+   "socr8" "SOCR8"
+   "casual" "Casual"})
+
+(def format->slug
+  {"Standard" "standard"
+   "Eternal" "eternal"
+   "Core Experience" "core-experience"
+   "Snapshot" "snapshot"
+   "SOCR8" "socr8"
+   "Casual" "casual"})

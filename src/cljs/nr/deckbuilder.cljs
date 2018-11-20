@@ -12,7 +12,9 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.cardbrowser :refer [card-view cards-channel expand-alts filter-title image-url show-alt-art? ] :as cb]
-            [nr.utils :refer [alliance-dots banned-span dots-html influence-dot influence-dots make-dots restricted-span rotated-span]]
+            [nr.utils :refer [alliance-dots banned-span dots-html influence-dot
+                              influence-dots make-dots restricted-span rotated-span
+                              slug->format]]
             [reagent.core :as r]))
 
 
@@ -20,6 +22,10 @@
 (def zoom-channel (chan))
 
 (defonce db-dom (atom {}))
+
+(defn- format-status
+  [format card]
+  (keyword (get-in card [:format (keyword format)] "unknown")))
 
 (defn num->percent
   "Converts an input number to a percent of the second input number for display"
@@ -286,7 +292,7 @@
                 side-identities
                 (sort-by :title)
                 first)]
-    (swap! s assoc :deck {:name "New deck" :cards [] :identity id})
+    (swap! s assoc :deck {:name "New deck" :cards [] :identity id :format "standard"})
     (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
     (edit-deck s)
     (swap! s assoc :old-deck old-deck)))
@@ -334,11 +340,12 @@
 
 (defn card-influence-html
   "Returns hiccup-ready vector with dots for influence as well as rotated / restricted / banned symbols"
-  [card qty in-faction allied?]
+  [format card qty in-faction allied?]
   (let [influence (* (:factioncost card) qty)
-        banned (decks/legal? "banned" card)
-        restricted (decks/legal? "restricted" card)
-        rotated (:rotated card)]
+        card-status (format-status format card)
+        banned (= :banned card-status)
+        restricted (= :restricted card-status)
+        rotated (= :rotated card-status)]
     (list " "
           (when (and (not banned) (not in-faction))
             [:span.influence {:key "influence"
@@ -378,14 +385,6 @@
   (let [fmt (:format deck-status)]
     (if (get-in deck-status [(keyword fmt) :legal])
       fmt "invalid")))
-
-(def slug->format
-  {"standard" "Standard"
-   "eternal" "Eternal"
-   "core-experience" "Core Experience"
-   "snapshot" "Snapshot"
-   "socr8" "SOCR8"
-   "casual" "Casual"})
 
 (defn format-deck-status-span
   [{:keys [format] :as deck-status} tooltip? violation-details?]
@@ -531,24 +530,25 @@
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
-  [sets {:keys [identity cards] :as deck} {:keys [qty card] :as line}]
+  [sets {:keys [identity cards format] :as deck} {:keys [qty card] :as line}]
   [:span qty "  "
    (if-let [name (:title card)]
      (let [infaction (no-inf-cost? identity card)
-           banned (decks/legal? "banned" card)
+           card-status (format-status format card)
+           banned (= :banned card-status)
+           rotated (= :rotated card-status)
            allied (decks/alliance-is-free? cards line)
            valid (and (decks/allowed? card identity)
                       (decks/legal-num-copies? identity line))
-           released (decks/released? sets card)
            modqty (if (decks/is-prof-prog? deck card) (- qty 1) qty)]
        [:span
         [:span {:class (cond
-                         (and valid released (not banned)) "fake-link"
+                         (and valid (not rotated) (not banned)) "fake-link"
                          valid "casual"
                          :else "invalid")
                 :on-mouse-enter #(when (:setname card) (put! zoom-channel line))
                 :on-mouse-leave #(put! zoom-channel false)} name]
-        (card-influence-html card modqty infaction allied)])
+        (card-influence-html format card modqty infaction allied)])
      card)])
 
 (defn line-qty-span
@@ -558,25 +558,26 @@
 
 (defn line-name-span
   "Make the view of a single line in the deck - returns a span"
-  [sets {:keys [identity cards] :as deck} {:keys [qty card] :as line}]
+  [sets {:keys [identity cards format] :as deck} {:keys [qty card] :as line}]
   [:span (if-let [name (:title card)]
            (let [infaction (no-inf-cost? identity card)
-                 banned (decks/legal? "banned" card)
+                 card-status (format-status format card)
+                 banned (= :banned card-status)
+                 rotated (= :rotated card-status)
                  allied (decks/alliance-is-free? cards line)
                  valid (and (decks/allowed? card identity)
                             (decks/legal-num-copies? identity line))
-                 released (decks/released? sets card)
                  modqty (if (decks/is-prof-prog? deck card)
                           (- qty 1)
                           qty)]
              [:span
               [:span {:class (cond
-                               (and valid released (not banned)) "fake-link"
+                               (and valid (not rotated) (not banned)) "fake-link"
                                valid "casual"
                                :else "invalid")
                       :on-mouse-enter #(when (:setname card) (put! zoom-channel line))
                       :on-mouse-leave #(put! zoom-channel false)} name]
-              (card-influence-html card modqty infaction allied)])
+              (card-influence-html format card modqty infaction allied)])
            card)])
 
 (defn- create-identity
@@ -694,15 +695,17 @@
                   [:div.header
                    [:img {:src (image-url identity)
                           :alt (:title identity)}]
-                   [:h4 {:class (if (decks/released? @card-sets identity) "fake-link" "casual")
+                   [:h4 {:class (if (= :legal (format-status (:format deck) identity)) "fake-link" "casual")
                          :on-mouse-enter #(put! zoom-channel {:card identity
                                                               :art (:art identity)
                                                               :id (:id identity)})
-                         :on-mouse-leave #(put! zoom-channel false)}
+                         :on-mouse-leave #(put! zoom-channel false) }
                     (:title identity)
-                    (when (decks/legal? "banned" identity) banned-span)
-                    (when (decks/legal? "restricted" identity) restricted-span)
-                    (when (:rotated identity) rotated-span)]
+                    (case (format-status (:format deck) identity)
+                      :banned banned-span
+                      :restricted restricted-span
+                      :rotated rotated-span
+                      "")]
                    (let [count (decks/card-count cards)
                          min-count (decks/min-deck-size identity)]
                      [:div count " cards"
