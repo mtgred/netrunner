@@ -169,6 +169,14 @@
       (swap! app-state assoc-in [:options :alt-arts] new-alts)
       (nr.account/post-options "/profile" (partial post-response)))))
 
+(defn- text-class-for-status
+  [status]
+  (case (keyword status)
+    (:legal :restricted) "legal"
+    :rotated "casual"
+    :banned "invalid"
+    "casual"))
+
 (defn- card-as-text
   "Generate text html representation a card"
   [card]
@@ -177,10 +185,7 @@
     [:span.influence
      {:class (if-let [faction (:faction card)]
                (-> faction s/lower-case (s/replace " " "-"))
-               "neutral")}
-     (when (decks/legal? "banned" card) banned-span)
-     (when (decks/legal? "restricted" card) restricted-span)
-     (when (:rotated card) rotated-span)]]
+               "neutral")}]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
        [:div.anr-icon {:class (str "mu" memory)} ""]
@@ -209,6 +214,19 @@
     [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
                                           "" (str ": " (:subtype card)))]
     [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]
+
+    [:div.formats
+     (doall (for [[k name] (-> slug->format butlast)]
+              ^{:key k}
+              (let [status (keyword (get-in card [:format (keyword k)] "unknown"))
+                    c (text-class-for-status status)]
+                [:div {:class c} name
+                 (case status
+                   :banned banned-span
+                   :restricted restricted-span
+                   :rotated rotated-span
+                   nil)])))]
+
     [:div.pack
      (when-let [pack (:setname card)]
        (when-let [number (:number card)]
@@ -292,16 +310,17 @@
   (let [cv (r/atom {:showText false})]
     (fn [card state]
       [:div.card-preview.blue-shade
-       (when (:decorate-card @state)
-         {:class (cond (= (:selected-card @state) card) "selected"
-                       (selected-alt-art card) "selected-alt")})
+       {:onClick #(do (.preventDefault %)
+                      (swap! state assoc :selected-card card))
+        :class (if (:decorate-card @state)
+                 (cond (= (:selected-card @state) card) "selected"
+                       (selected-alt-art card) "selected-alt")
+                 nil)}
        (if (:showText @cv)
          [card-as-text card]
          (when-let [url (image-url card true)]
            [:img {:src url
                   :alt (:title card)
-                  :onClick #(do (.preventDefault %)
-                                (swap! state assoc :selected-card card))
                   :onError #(-> (swap! cv assoc :showText true))
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
