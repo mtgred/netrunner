@@ -7,6 +7,7 @@
  :format {:core-experience :rotated,
           :eternal :legal,
           :snapshot :restricted,
+          :snapshot-plus :restricted,
           :socr8 :rotated,
           :standard :restricted},
  :image_url "https://netrunnerdb.com/card_image/06010.png",

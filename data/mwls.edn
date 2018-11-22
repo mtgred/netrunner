@@ -222,7 +222,6 @@
           "museum-of-history" {:deck-limit 0},
           "obokata-protocol" {:is-restricted 1},
           "paperclip" {:is-restricted 1},
-          "rebirth" {:deck-limit 0},
           "rumor-mill" {:is-restricted 1},
           "salvaged-vanadis-armory" {:deck-limit 0},
           "sensie-actors-union" {:deck-limit 0},

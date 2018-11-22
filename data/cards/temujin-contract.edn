@@ -7,6 +7,7 @@
  :format {:core-experience :rotated,
           :eternal :legal,
           :snapshot :banned,
+          :snapshot-plus :banned,
           :socr8 :rotated,
           :standard :banned},
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN37_26.png",

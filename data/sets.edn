@@ -204,7 +204,7 @@
   :size 132}
  {:available "2018-11-11",
   :bigbox true,
-  :code "system-core-2019",
+  :code "sc19",
   :cycle "System Core 2019",
   :cycle_code "system-core-2019",
   :cycle_position 26,

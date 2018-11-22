@@ -7,6 +7,7 @@
  :format {:core-experience :rotated,
           :eternal :legal,
           :snapshot :legal,
+          :snapshot-plus :legal,
           :socr8 :rotated,
           :standard :legal},
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN46_76.png",
