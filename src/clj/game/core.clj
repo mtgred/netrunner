@@ -10,6 +10,7 @@
             [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
             [jinteki.cards :refer [all-cards]]
             [tasks.nrdb :refer [replace-collection update-config]]
+            [tasks.altart :refer [add-art]]
             [game.quotes :as quotes]))
 
 (load "core/events")    ; triggering of events
