@@ -23,9 +23,12 @@
 
 (defonce db-dom (atom {}))
 
-(defn- format-status
+
+(defn- format-status-impl
   [format card]
   (keyword (get-in card [:format (keyword format)] "unknown")))
+
+(def format-status (fnil format-status-impl :standard {}))
 
 (defn num->percent
   "Converts an input number to a percent of the second input number for display"
@@ -346,18 +349,18 @@
         banned (= :banned card-status)
         restricted (= :restricted card-status)
         rotated (= :rotated card-status)]
-    (list " "
-          (when (and (not banned) (not in-faction))
-            [:span.influence {:key "influence"
-                              :class (utils/faction-label card)}
-             (if allied?
-               (alliance-dots influence)
-               (influence-dots influence))])
-          (if banned
-            banned-span
-            [:span {:key "restricted"}
-             (when restricted restricted-span)
-             (when rotated rotated-span)]))))
+    [:span " "
+     (when (and (not banned) (not in-faction))
+       [:span.influence {:key "influence"
+                         :class (utils/faction-label card)}
+        (if allied?
+          (alliance-dots influence)
+          (influence-dots influence))])
+     (if banned
+       banned-span
+       [:span {:key "restricted"}
+        (when restricted restricted-span)
+        (when rotated rotated-span)])]))
 
 (defn deck-influence-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
