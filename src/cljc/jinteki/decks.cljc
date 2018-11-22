@@ -223,6 +223,11 @@
   {:legal valid
    :description "Basic deckbuilding rules"})
 
+(defn build-snapshot-plus-legality
+  [valid fmt deck]
+  (merge (build-format-legality valid fmt deck)
+         {:description "Legal for Snapshot Plus"}))
+
 (defn build-core-experience-legality
   [valid {:keys [cards] :as deck}]
   (let [example-card (first (cards-over-one-core cards))]
@@ -260,6 +265,7 @@
      :standard (build-format-legality valid :standard deck)
      :eternal (build-format-legality valid :eternal deck)
      :snapshot (build-format-legality valid :snapshot deck)
+     :snapshot-plus (build-snapshot-plus-legality valid :snapshot-plus deck)
      :core-experience (build-core-experience-legality valid deck)
      :socr8 (build-socr-legality valid deck)}))
 
