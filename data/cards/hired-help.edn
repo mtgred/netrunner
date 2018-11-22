@@ -7,6 +7,7 @@
  :format {:core-experience :rotated,
           :eternal :banned,
           :snapshot :banned,
+          :snapshot-plus :banned,
           :socr8 :legal,
           :standard :banned},
  :image_url "https://netrunnerdb.com/card_image/23101.png",
