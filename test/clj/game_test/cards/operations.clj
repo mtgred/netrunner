@@ -154,7 +154,7 @@
     (let [hand (-> (get-corp) :hand count dec)] ;; cuz we're playing Attitude Adjustment
       (play-from-hand state :corp "Attitude Adjustment")
       (is (= (+ 2 hand) (-> (get-corp) :hand count)) "Corp should draw 2 cards"))
-    (let [credits (-> (get-corp) :credit)
+    (let [credits (:credit (get-corp))
           hand (-> (get-corp) :hand count)
           discard (-> (get-corp) :discard count)
           deck (-> (get-corp) :deck count)]
@@ -360,7 +360,7 @@
       (starting-hand state :corp ["Consulting Visit"])
       (play-from-hand state :corp "Consulting Visit")
       (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
-            prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+            prompt-names (fn [] (map :title (:choices (get-prompt))))]
         (is (= (list "Beanstalk Royalties" "Green Level Clearance" nil) (prompt-names)))
         (click-prompt state :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
         (is (= 6 (:credit (get-corp)))))))
@@ -378,7 +378,7 @@
       (play-from-hand state :corp "Mumbad City Hall" "New remote")
       (let [hall (get-content state :remote1 0)
             get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
-            prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+            prompt-names (fn [] (map :title (:choices (get-prompt))))]
         (card-ability state :corp hall 0)
         (is (= (list "Consulting Visit" "Mumba Temple" nil) (prompt-names)))
         (click-prompt state :corp (find-card "Consulting Visit" (:deck (get-corp))))
@@ -401,7 +401,7 @@
       (trash-from-hand state :runner "DaVinci")
       (is (= corp-creds (:credit (get-corp))) "Corp did not gain credit when runner trashes / discards from hand")
       (play-from-hand state :runner "Aumakua")
-      (is (= (+ 1 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner installed Aumakua")
+      (is (= (inc corp-creds) (:credit (get-corp))) "Corp gained 1 when runner installed Aumakua")
       (play-from-hand state :runner "Fall Guy")
       (is (= (+ 2 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner installed Fall Guy")
       (card-ability state :runner (get-resource state 0) 1)
@@ -434,7 +434,7 @@
     (starting-hand state :corp ["Hedge Fund" "Hedge Fund" "Hedge Fund" "Distract the Masses" "Distract the Masses"])
     (play-from-hand state :corp "Distract the Masses")
     (click-card state :corp (first (:hand (get-corp))))
-    (click-card state :corp (first (next (:hand (get-corp)))))
+    (click-card state :corp (fnext (:hand (get-corp))))
     (click-card state :corp (first (:discard (get-corp))))
     (click-prompt state :corp "Done")
     (is (= 1 (count (:discard (get-corp)))) "1 card still discarded")
@@ -445,7 +445,7 @@
     (click-card state :corp (first (:hand (get-corp))))
     (click-prompt state :corp "Done")
     (click-card state :corp (first (:discard (get-corp))))
-    (click-card state :corp (first (next (:discard (get-corp)))))
+    (click-card state :corp (fnext (:discard (get-corp))))
     (is (zero? (count (:discard (get-corp)))) "No cards left in archives")
     (is (= 3 (count (:deck (get-corp)))) "2 more cards shuffled into R&D")
     (is (= 2 (count (:rfg (get-corp)))) "Distract the Masses removed from game")
@@ -499,7 +499,7 @@
       (testing "Choose a target to rez for -3 cost"
         (click-card state :corp (refresh ec1)))
       (is (core/rezzed? (refresh ec1)) "First Eve Campaign was rezzed")
-      (is (= 0 (:credit (get-corp))) "Rezzed Eve Campaign for 2 credits")
+      (is (zero? (:credit (get-corp))) "Rezzed Eve Campaign for 2 credits")
       (is (not (core/rezzed? (refresh ec2))) "Second Eve Campaign was derezzed")
       (is (= 32 (get-counters (refresh ec1) :credit)) "First Eve gained 16  more credits on rez"))))
 
@@ -955,7 +955,7 @@
     (click-prompt state :runner "0")
     (click-card state :corp (get-resource state 0))
     (is (empty? (:hand (get-runner))) "Can't choose virtual card")
-    (is (not (empty? (:prompt (get-corp)))))
+    (is (seq (:prompt (get-corp))))
     (click-card state :corp (get-program state 0))
     (is (= 1 (count (:hand (get-runner)))) "Upya returned to grip")))
 
@@ -1091,7 +1091,7 @@
     (click-prompt state :runner "0") ; Runner won't match
     (is (= 5 (count (:hand (get-runner)))))
     (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
-          prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+          prompt-names (fn [] (map :title (:choices (get-prompt))))]
       (is (= (list "Fall Guy" "Sure Gamble" nil) (prompt-names)))
       (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
       (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner)))))
@@ -1102,7 +1102,7 @@
     (click-prompt state :runner "0") ; Runner won't match
     (is (= 3 (count (:hand (get-runner)))))
     (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
-          prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+          prompt-names (fn [] (map :title (:choices (get-prompt))))]
       (is (= (list "Fall Guy" nil) (prompt-names)))
       (click-prompt state :corp (find-card "Fall Guy" (:hand (get-runner))))
       (is (empty? (get-in @state [:corp :prompt])) "No prompt for second card"))
@@ -1557,7 +1557,7 @@
     (core/move state :corp (find-card "Psychokinesis" (:discard (get-corp))) :hand)
     (play-from-hand state :corp "Psychokinesis")
     (click-prompt state :corp "None")
-    (is (= nil (:title (get-content state :remote4 0)))
+    (is (nil? (:title (get-content state :remote4 0)))
         "Nothing is installed by Psychokinesis")))
 
 (deftest punitive-counterstrike

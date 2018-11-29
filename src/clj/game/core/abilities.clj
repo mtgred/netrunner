@@ -612,9 +612,8 @@
                   base (cond force-base force-base
                              (fn? base) (base state :corp (make-eid state) card nil)
                              :else base)
-                  link (if force-link
-                         force-link
-                         (get-in @state [:runner :link] 0))
+                  link (or force-link
+                           (get-in @state [:runner :link] 0))
                   trace (merge trace {:player (determine-initiator state trace)
                                       :other (if (= :corp (determine-initiator state trace)) :runner :corp)
                                       :base base

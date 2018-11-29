@@ -587,7 +587,7 @@
         (is (= "Faerie" (:title (first (:hand (get-runner))))))
         (core/rez state :corp bea)
         (take-credits state :runner)
-        (is (= 0 (count (:hand (get-runner)))) "Faerie was trashed")
+        (is (zero? (count (:hand (get-runner)))) "Faerie was trashed")
         (is (= 2 (get-counters (refresh d99) :power)) "Trashing Faerie from grip placed a counter")
         (card-ability state :runner (get-hardware state 0) 1) ; pop spy camera
         (click-prompt state :runner "OK")
@@ -617,7 +617,7 @@
         (run-on state :hq)
         (core/rez state :corp grim)
         (card-subroutine state :corp (refresh grim) 0)
-        (is (= 0 (get-counters (refresh d99) :power)) "No power counters before Faerie is trashed")
+        (is (zero? (get-counters (refresh d99) :power)) "No power counters before Faerie is trashed")
         (click-card state :corp faerie)
         (is (= 1 (get-counters (refresh d99) :power)) "1 power counter was added for Faerie being trashed")
         (card-ability state :runner spycam 1) ; pop spycam
@@ -723,7 +723,7 @@
         (is (= 2 (:link (get-runner))) "2 link from Sunny, no extra link from Geist")
         (let [hand-count (count (:hand (get-runner)))]
           (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter
-          (is (= (+ 1 hand-count) (count (:hand (get-runner))))
+          (is (= (inc hand-count) (count (:hand (get-runner))))
               "Drew one card with Geist when using All-nighter trash ability")
           (trash-resource state "DJ Fenris")
           (is (not= geist (-> (get-runner) :rfg last :title)) "Geist not moved to rfg")
@@ -732,7 +732,7 @@
           (is (not= geist (-> (get-runner) :identity :title)) "Geist not moved to identity")
           (is (= 2 (count (:discard (get-runner)))) "2 cards in heap: All-nighter and DJ Fenris")
           (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter (again)
-          (is (= (+ 1 hand-count) (count (:hand (get-runner))))
+          (is (= (inc hand-count) (count (:hand (get-runner))))
               "Did not draw another card - Geist ability removed when DJ Fenris was trashed"))))
     (testing "Geist does not trigger Laguna Velasco"
       ;; Regression test for #3759
@@ -756,7 +756,7 @@
         (let [hand-count (count (:hand (get-runner)))]
           ;; Use All-nighter to trigger Geist
           (card-ability state :runner (get-resource state 0) 0)
-          (is (= (+ 1 hand-count) (count (:hand (get-runner))))
+          (is (= (inc hand-count) (count (:hand (get-runner))))
               "Drew one card with Geist when using All-nighter trash ability, not two (from Laguna Velasco District)"))))
     (testing "Disable with Malia"
       (do-game
@@ -1622,7 +1622,7 @@
     (is (= 3 (:credit (get-runner))) "Forced to pay 2c to trash BBG")
     (is (= 1 (count (:discard (get-corp)))) "Breaker Bay Grid trashed")
     (run-empty-server state "Server 2")
-    (is (not (empty? (:prompt (get-runner)))) "Runner prompt to trash Elizabeth Mills")))
+    (is (seq (:prompt (get-runner))) "Runner prompt to trash Elizabeth Mills")))
 
 (deftest new-angeles-city-hall
   ;; New Angeles City Hall - Avoid tags; trash when agenda is stolen
@@ -1795,7 +1795,7 @@
         (core/rez state :corp mel)
         (core/gain state :corp :click 10)
         (card-ability state :corp mel 0)
-        (is (= (+ credits 1) (:credit (get-runner))) "Runner should gain 1 credit from PAD Tap triggering from Melange Mining Corp. ability")
+        (is (= (inc credits) (:credit (get-runner))) "Runner should gain 1 credit from PAD Tap triggering from Melange Mining Corp. ability")
         (card-ability state :corp mel 0) ;; Triggering Melange a second time
         (is (zero? (-> (get-runner) :prompt count)) "Runner should have no prompts from PAD Tap"))
       (take-credits state :corp)
@@ -1805,7 +1805,7 @@
             clicks (:click (get-corp))]
         (card-side-ability state :corp tap 0)
         (is (= (- credits 3) (:credit (get-corp))) "PAD Tap ability should cost Corp 3 credits")
-        (is (= (- clicks 1) (:click (get-corp))) "PAD Tap ability should cost Corp 1 click")))))
+        (is (= (dec clicks) (:click (get-corp))) "PAD Tap ability should cost Corp 1 click")))))
 
 (deftest paige-piper
   ;; Paige Piper
@@ -1894,7 +1894,7 @@
       (is (= credits (:credit (get-runner))) "Runner shouldn't gain any credits from trace")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= (+ tags 1) (count-tags state)) "Runner should gain 1 tag from losing trace"))
+      (is (= (inc tags) (count-tags state)) "Runner should gain 1 tag from losing trace"))
     (take-credits state :corp)
     (play-from-hand state :runner "Power Tap")
     (take-credits state :runner)
@@ -1902,10 +1902,10 @@
           tags (count-tags state)
           credits (:credit (get-runner))]
       (card-ability state :corp agenda 0)
-      (is (= (+ credits 1) (:credit (get-runner))) "Runner should gain 1 credit from trace initiation")
+      (is (= (inc credits) (:credit (get-runner))) "Runner should gain 1 credit from trace initiation")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= (+ tags 1) (count-tags state)) "Runner should gain 1 tag from losing trace"))))
+      (is (= (inc tags) (count-tags state)) "Runner should gain 1 tag from losing trace"))))
 
 (deftest professional-contacts
   ;; Professional Contacts - Click to gain 1 credit and draw 1 card
@@ -2142,7 +2142,7 @@
       (is (= 3 (count (:hand (get-runner)))) "Runner started this part with three cards in hand")
       (core/rez state :corp hostile2)
       (run-empty-server state "Server 1")
-      (is (not (empty? (:prompt (get-runner)))) "Prompting to trash.")
+      (is (seq (:prompt (get-runner))) "Prompting to trash.")
       (card-ability state :runner salsette1 0)
       (is (empty? (:prompt (get-runner))) "All prompts done")
       (is (= 3 (count (:hand (get-runner)))) "On-trash ability of other Hostile didn't fire")
@@ -2150,14 +2150,14 @@
       (is (= 2 (:credit (get-runner))) "Runner paid the trash cost.")
       (is (not (:run @state)) "Run is over")
       (run-empty-server state :remote2)
-      (is (not (empty? (:prompt (get-runner)))) "Prompting to trash")
+      (is (seq (:prompt (get-runner))) "Prompting to trash")
       ;; Only able to use the ability once per turn
       (card-ability state :runner salsette1 0)
-      (is (not (empty? (:prompt (get-runner)))) "Still prompting to trash")
+      (is (seq (:prompt (get-runner))) "Still prompting to trash")
       (is (:run @state) "Run is still occurring")
       ;; Can't use the ability if you can't afford to trash
       (card-ability state :runner salsette2 0)
-      (is (not (empty? (:prompt (get-runner)))) "Still prompting to trash")
+      (is (seq (:prompt (get-runner))) "Still prompting to trash")
       (is (:run @state) "Run is still occurring")
       (click-prompt state :runner "No action")
       ;; Test the "oops I forgot" ability (runner feels bad that they forgot to use Slums when a Hostile is out)
@@ -2166,9 +2166,9 @@
       ;; Can only use that first Slums once
       (card-ability state :runner salsette1 1)
       (is (empty? (:prompt (get-runner))) "Not prompting the runner")
-      (is (not (= (:cid th3) (:cid (last (:rfg (get-corp)))))) "Card was not removed from the game")
+      (is (not= (:cid th3) (:cid (last (:rfg (get-corp))))) "Card was not removed from the game")
       (card-ability state :runner salsette2 1)
-      (is (not (empty? (:prompt (get-runner)))) "Prompting the runner to choose a card")
+      (is (seq (:prompt (get-runner))) "Prompting the runner to choose a card")
       (click-card state :runner (find-card "Thomas Haas" (:discard (get-corp))))
       (is (= (:cid th3) (:cid (last (:rfg (get-corp))))) "Card was removed from the game"))
     ;; Set things up so we can trash the Hostile and then make sure we can't "oops I forgot on a later turn"
@@ -2181,7 +2181,7 @@
           hostile2 (get-content state :remote2 0)]
       (card-ability state :runner salsette1 1)
       (click-card state :runner (find-card "Hostile Infrastructure" (:discard (get-corp))))
-      (is (not (= (:cid hostile2) (:cid (last (:rfg (get-corp)))))) "Did not remove card from game"))))
+      (is (not= (:cid hostile2) (:cid (last (:rfg (get-corp))))) "Did not remove card from game"))))
 
 (deftest scrubber
   ;; Scrubber
@@ -2864,7 +2864,7 @@
       (card-ability state :runner (get-resource state 1) 0)
       (click-prompt state :runner "Done")
       (click-card state :runner "Corroder")
-      (is (= 0 (:credit (get-runner))) "Runner paid one less to install")
+      (is (zero? (:credit (get-runner))) "Runner paid one less to install")
       (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed"))))
 
 (deftest tri-maf-contact

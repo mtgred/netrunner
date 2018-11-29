@@ -259,7 +259,7 @@
       (is (= 1 (count (get-in @state [:corp :servers :remote3 :content]))) "1 cards in server 3 before successful run")
       (run-successful state)
       (click-prompt state :runner "Replacement effect")
-      (is (= (+ n 1) (count (get-in @state [:corp :deck]))) "1 card was shuffled into R&D")
+      (is (= (inc n) (count (get-in @state [:corp :deck]))) "1 card was shuffled into R&D")
       (is (zero? (count (get-in @state [:corp :servers :remote3 :content]))) "No cards left in server 3"))))
 
 (deftest black-hat
@@ -430,11 +430,11 @@
      (card-ability state :corp (get-in @state [:corp :identity]) 0)
      (click-prompt state :corp (find-card "By Any Means" (:discard (get-runner))))
      (is (= 1 (count (get-in @state [:runner :rfg]))) "By Any Means RFGed")
-     (is (= 0 (count (:discard (get-corp)))) "Nothing trashed yet")
+     (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
      (is (= 1 (count (:hand (get-runner)))) "No damage yet")
      (run-empty-server state "HQ")
      (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
-     (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
+     (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
   (testing "Effect does not persist between turns"
     (do-game
      (new-game {:runner {:deck [(qty "By Any Means" 2)]}})
@@ -442,10 +442,10 @@
      (play-from-hand state :runner "By Any Means")
      (take-credits state :runner)
      (take-credits state :corp)
-     (is (= 0 (count (:discard (get-corp)))) "Nothing trashed yet")
+     (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
      (is (= 1 (count (:hand (get-runner)))) "No damage yet")
      (run-empty-server state "HQ")
-     (is (= 0 (count (:discard (get-corp)))) "Nothing trashed")
+     (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
      (is (= 1 (count (:hand (get-runner)))) "No damage"))))
 
 (deftest careful-planning
@@ -553,7 +553,7 @@
         (is (:installed (get-program state 0)) "Gordian Blade should be installed"))
       (let [deck (count (:deck (get-runner)))]
         (run-jack-out state)
-        (is (= (+ 1 deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
+        (is (= (inc deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
         (is (nil? (get-program state 0))))))
   (testing "with Self-modifying Code, neither SMC nor other card should be shuffled back in"
     (do-game
@@ -599,7 +599,7 @@
           (is (:installed (get-program state 0)) "Gordian Blade should be installed"))
         (let [deck (count (:deck (get-runner)))]
           (card-subroutine state :corp iw 0)
-          (is (= (+ 1 deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
+          (is (= (inc deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
           (is (nil? (get-program state 0))))))))
 
 (deftest contaminate
@@ -778,7 +778,7 @@
     (is (= 2 (count (:hand (get-runner)))) "Two cards in after playing Déjà Vu")
     (play-from-hand state :runner "Déjà Vu")
     (click-prompt state :runner (find-card "Cache" (:discard (get-runner))))
-    (is (not (empty? (:prompt (get-runner)))) "Recurring a virus card causes Déjà Vu to prompt for second virus to recur")
+    (is (seq (:prompt (get-runner))) "Recurring a virus card causes Déjà Vu to prompt for second virus to recur")
     (click-prompt state :runner (find-card "Datasucker" (:discard (get-runner))))
     (is (= 3 (count (:hand (get-runner)))) "Three cards in after playing second Déjà Vu")))
 
@@ -1245,7 +1245,7 @@
       (play-from-hand state :runner "Frantic Coding")
       (click-prompt state :runner "OK")
       (let [get-prompt (fn [] (first (#(get-in @state [:runner :prompt]))))
-            prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+            prompt-names (fn [] (map :title (:choices (get-prompt))))]
         (is (= (list "Corroder" "Magnum Opus" nil) (prompt-names)) "No Torch in list because can't afford")
         (is (= 2 (:credit (get-runner))))
         (is (= 1 (count (:discard (get-runner)))))
@@ -1263,7 +1263,7 @@
       (play-from-hand state :runner "Frantic Coding")
       (click-prompt state :runner "OK")
       (let [get-prompt (fn [] (first (#(get-in @state [:runner :prompt]))))
-            prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
+            prompt-names (fn [] (map :title (:choices (get-prompt))))]
         (is (= (list "Corroder" "Magnum Opus" nil) (prompt-names)) "No Torch in list because can't afford")
         (is (= 1 (count (:discard (get-runner)))))
         (click-prompt state :runner "No install")
@@ -1456,7 +1456,7 @@
       (run-empty-server state "Archives")
       (run-empty-server state "R&D")
       (play-from-hand state :runner "Apocalypse")
-      (is (not (= "Flatline" (:reason @state))) "Win condition does not report flatline"))))
+      (is (not= "Flatline" (:reason @state)) "Win condition does not report flatline"))))
 
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
@@ -1967,7 +1967,7 @@
     (take-credits state :corp)
     ;; remove 5 Out of the Ashes from the game
     (dotimes [_ 5]
-      (is (not (empty? (get-in @state [:runner :prompt]))))
+      (is (seq (get-in @state [:runner :prompt])))
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "Archives")
       (is (:run @state))
@@ -1978,7 +1978,7 @@
     (take-credits state :runner)
     (take-credits state :corp)
     ;; ensure that if you decline the rfg, game will still ask the next turn
-    (is (not (empty? (get-in @state [:runner :prompt]))))
+    (is (seq (get-in @state [:runner :prompt])))
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Archives")
     (is (:run @state))
@@ -2817,7 +2817,7 @@
         (play-from-hand state :runner "Trade-In")
         (click-card state :runner (get-hardware state 0))
         (is (= 2 (count (:discard (get-runner)))) "Trade-In and Astrolabe in discard")
-        (is (= (- runner-credits 1) (:credit (get-runner)))
+        (is (= (dec runner-credits) (:credit (get-runner)))
             "Paid 1 credit to play Trade-In and gained 0 credits from trashing Astrolabe")))
     (testing "Trade-In lets runner search for Hardware and add it to Grip"
       (is (= 1 (count (:hand (get-runner)))) "Only 1 Trade-In in Grip")
@@ -2828,7 +2828,7 @@
       (let [runner-credits (:credit (get-runner))]
         (play-from-hand state :runner "Trade-In")
         (click-card state :runner (get-hardware state 0))
-        (is (= (+ runner-credits -1 1) (:credit (get-runner)))
+        (is (= runner-credits (:credit (get-runner)))
             "Paid 1 credit to play Trade-In and gained 1 credits from trashing Sports Hopper")
         (is (= 4 (count (:discard (get-runner)))) "2 Trade-In, 1 Astrolabe and 1 Sports Hopper in discard")))))
 
@@ -2909,7 +2909,7 @@
                         (play-from-hand state :runner "Watch the World Burn")
                         (click-prompt state :runner "Server 1")
                         (run-successful state))
-     (is (= 0 (:click (get-runner))) "Terminal event ends the action phase")
+     (is (zero? (:click (get-runner))) "Terminal event ends the action phase")
      (take-credits state :runner)
      (take-credits state :corp)
      (changes-val-macro 1 (count (get-in @state [:corp :rfg]))
@@ -2926,7 +2926,7 @@
                         (play-from-hand state :runner "Watch the World Burn")
                         (click-prompt state :runner "Server 3")
                         (run-successful state))
-     (is (= 0 (:click (get-runner))) "Terminal event ends the action phase")
+     (is (zero? (:click (get-runner))) "Terminal event ends the action phase")
      (take-credits state :runner)
      (take-credits state :corp)
      (changes-val-macro 1 (count (get-in @state [:corp :rfg]))

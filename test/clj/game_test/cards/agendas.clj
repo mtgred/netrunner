@@ -272,7 +272,7 @@
       (is (= 1 (count-tags state)) "Runner takes 1 tag for playing a Run event")
       (run-successful state)
       (play-from-hand state :runner "Wyrm")
-      (is (empty? (-> (get-corp) :prompt)) "Corp shouldn't get a prompt to use Better Citizen Program")
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")
       (is (= 1 (count-tags state)) "Runner doesn't gain a tag from installing an icebreaker after playing a Run event")
       (take-credits state :runner)
       (take-credits state :corp)
@@ -280,7 +280,7 @@
       (click-prompt state :corp "Yes")
       (is (= 2 (count-tags state)) "Runner gains 1 tag for installing an Icebreaker")
       (play-from-hand state :runner "The Maker's Eye")
-      (is (empty? (-> (get-corp) :prompt)) "Corp shouldn't get a prompt to use Better Citizen Program")
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")
       (is (= 2 (count-tags state)) "Runner doesn't gain a tag from playing a Run event after installing an Icebreaker")
       (run-successful state)))
   (testing "Should only trigger on Run events. #3619"
@@ -292,7 +292,7 @@
       (run-empty-server state "HQ")
       (play-from-hand state :runner "Mining Accident")
       (click-prompt state :corp "Pay 5 [Credits]")
-      (is (empty? (-> (get-corp) :prompt)) "Corp shouldn't get a prompt to use Better Citizen Program")
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't get a prompt to use Better Citizen Program")
       (is (zero? (count-tags state)) "Runner should not gain a tag from playing a non-Run event"))))
 
 (deftest bifrost-array
@@ -554,11 +554,11 @@
                  :runner {:deck ["Ice Analyzer" "All-nighter" "Hunting Grounds"]}})
       (play-from-hand state :corp "Degree Mill" "New remote")
       (take-credits state :corp)
-      (is (= 0 (count (:deck (get-runner)))) "Runner starts with empty deck")
+      (is (zero? (count (:deck (get-runner)))) "Runner starts with empty deck")
       (run-on state "Server 1")
       (run-successful state)
       (click-prompt state :runner "No action")
-      (is (= 0 (:agenda-point (get-runner))) "Runner stole Degree Mill with no installed cards")
+      (is (zero? (:agenda-point (get-runner))) "Runner stole Degree Mill with no installed cards")
       (play-from-hand state :runner "Ice Analyzer")
       (play-from-hand state :runner "All-nighter")
       (let [ia (get-resource state 0)
@@ -1564,7 +1564,7 @@
       (click-prompt state :corp "0")
       (is (zero? (-> (get-runner) :prompt first :link)) "Runner has 0 link during first trace")
       (click-prompt state :runner "3")
-      (is (= (+ credits 1) (:credit (get-corp))) "Corp gained a credit from NQ")
+      (is (= (inc credits) (:credit (get-corp))) "Corp gained a credit from NQ")
       ; second trace of turn - no link reduction
       (core/init-trace state :corp {:title "/trace command" :side :corp} {:base 1})
       (click-prompt state :corp "0")
@@ -2513,7 +2513,7 @@
        (click-prompt state :corp "0")
        (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma was installed")
        (is (empty? (:hand (get-corp))) "Enigma removed from HQ")
-       (is (= 0 (get-counters (refresh tpr) :agenda)) "Agenda counter was spent"))))
+       (is (zero? (get-counters (refresh tpr) :agenda)) "Agenda counter was spent"))))
   (testing "Install on server being run"
     (do-game
      (new-game {:corp {:deck ["Enigma" "Ice Wall" (qty "Timely Public Release" 2)]}})
@@ -2535,7 +2535,7 @@
        (is (= 1 (get-in @state [:run :position])) "Now approaching new ice")
        (run-continue state)
        (let [innermost (get-in @state [:run :position])]
-         (is (= 0 (get-in @state [:run :position])) "Run position is after Enigma")
+         (is (zero? (get-in @state [:run :position])) "Run position is after Enigma")
          (card-ability state :corp (refresh tpr2) 0)
          (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
          (click-prompt state :corp "R&D")

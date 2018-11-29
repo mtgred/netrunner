@@ -406,15 +406,15 @@
               ika (first (:hosted (refresh enigma)))]
           (card-ability state :runner ika 2)
           (click-card state :runner tithonium)
-          (is (= 0 (count (:hosted (refresh tithonium)))) "Ika was not hosted on Tithonium")
+          (is (zero?(count (:hosted (refresh tithonium)))) "Ika was not hosted on Tithonium")
           (is (= creds (:credit (get-runner))) "Clicking invalid targets is free")
           (click-prompt state :runner "Done")
           (core/rez state :corp magnet)
           (click-card state :corp ika)
-          (is (= 0 (count (:hosted (refresh enigma)))) "Ika was removed from Enigma")
+          (is (zero?(count (:hosted (refresh enigma)))) "Ika was removed from Enigma")
           (is (= 1 (count (:hosted (refresh magnet)))) "Ika was hosted onto Magnet")
           (let [ika (first (:hosted (refresh magnet)))]
-            (is (= 0 (count (:abilities ika))) "Ika was blanked")))))))
+            (is (zero?(count (:abilities ika))) "Ika was blanked")))))))
 
 (deftest inversificator
   ;; Inversificator shouldn't hook up events for unrezzed ice
@@ -484,8 +484,8 @@
       (click-card state :runner musaazi)
       (click-card state :runner imp)
       (click-prompt state :runner "Done")
-      (is (= 0 (get-counters (refresh imp) :virus)) "Imp lost its final virus counter")
-      (is (= 0 (get-counters (refresh imp) :virus)) "Musaazi lost its virus counter"))))
+      (is (zero?(get-counters (refresh imp) :virus)) "Imp lost its final virus counter")
+      (is (zero?(get-counters (refresh imp) :virus)) "Musaazi lost its virus counter"))))
 
 (deftest na-not-k
   ;; Na'Not'K - Strength adjusts accordingly when ice installed during run
@@ -781,7 +781,7 @@
       (click-card state :runner yusuf)
       (is (= 2 (get-counters (refresh cache) :virus)) "Cache lost 1 virus counter to pump")
       (is (= 5 (:current-strength (refresh yusuf))) "Yusuf strength 5")
-      (is (= 0 (get-counters (refresh yusuf) :virus)) "Yusuf lost 1 virus counter to pump")
+      (is (zero?(get-counters (refresh yusuf) :virus)) "Yusuf lost 1 virus counter to pump")
       (is (empty? (:prompt (get-runner))) "No prompt open")
       (card-ability state :runner yusuf 0)
       (click-card state :runner cache)

@@ -430,8 +430,8 @@
 (defn get-card-prevention
   "Returns card prevent abilities for a given type"
   [card type]
-  (->> (-> card card-def :interactions :prevent)
-       (filter #(contains? (:type %) type))))
+  (filter #(contains? (:type %) type)
+          (-> card card-def :interactions :prevent)))
 
 (defn card-can-prevent?
   "Checks if a cards req (truthy test) can be met for this type"
@@ -443,10 +443,10 @@
   "Checks if any cards in a list can prevent this type"
   ([state side cards type] (cards-can-prevent? state side cards type nil nil))
   ([state side cards type target args]
-  (some #(true? %) (map #(card-can-prevent? state side % type target args) cards))))
+  (some true? (map #(card-can-prevent? state side % type target args) cards))))
 
 (defn get-prevent-list
   "Get list of cards that have prevent for a given type"
   [state side type]
-  (->> (all-active state side)
-       (filter #(seq (get-card-prevention % type)))))
+  (filter #(seq (get-card-prevention % type))
+          (all-active state side)))

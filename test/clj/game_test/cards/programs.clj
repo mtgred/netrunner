@@ -87,7 +87,7 @@
     (is (= 4 (:credit (get-runner))) "Bankroll cost 1 to install")
     (let [bankroll (get-program state 0)
           hosted-credits #(get-counters (refresh bankroll) :credit)]
-      (is (= 0 (hosted-credits)) "No counters on Bankroll on install")
+      (is (zero? (hosted-credits)) "No counters on Bankroll on install")
       (run-empty-server state "Archives")
       (is (= 1 (hosted-credits)) "One credit counter on Bankroll after one successful run")
       (run-empty-server state "R&D")
@@ -743,9 +743,9 @@
       (click-card state :runner iwall)
       (click-prompt state :runner "Code Gate")
       (is (= 2 (:click (get-runner))) "Click charged")
-      (is (= true (utils/has? (refresh iwall) :subtype "Code Gate")) "Ice Wall gained Code Gate")
+      (is (true? (utils/has? (refresh iwall) :subtype "Code Gate")) "Ice Wall gained Code Gate")
       (run-empty-server state "Archives")
-      (is (= false (utils/has? (refresh iwall) :subtype "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+      (is (false? (utils/has? (refresh iwall) :subtype "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
 
 (deftest parasite
   (testing "Basic functionality: Gain 1 counter every Runner turn"
@@ -1330,4 +1330,4 @@
     (click-prompt state :runner "Barrier")
     (click-card state :runner (get-ice state :rd 0))
     (is (= 1 (count (:discard (get-runner)))) "Wari in heap")
-    (is (not (empty? (get-in @state [:runner :prompt]))) "Runner is currently accessing Ice Wall")))
+    (is (seq (get-in @state [:runner :prompt])) "Runner is currently accessing Ice Wall")))

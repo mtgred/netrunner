@@ -179,7 +179,7 @@
     (play-from-hand state :runner "Comet")
     (let [comet (get-hardware state 0)]
       (play-from-hand state :runner "Easy Mark")
-      (is (= true (:comet-event (core/get-card state comet)))) ; Comet ability enabled
+      (is (true? (:comet-event (core/get-card state comet)))) ; Comet ability enabled
       (card-ability state :runner comet 0)
       (is (= (:cid comet) (-> @state :runner :prompt first :card :cid)))
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
@@ -802,7 +802,7 @@
       (core/gain state :runner :credit 10 :click 20)
       (play-from-hand state :runner "Mind's Eye")
       (let [eye (get-hardware state 0)]
-        (is (= 0 (get-counters (refresh eye) :power)) "0 counters on install")
+        (is (zero? (get-counters (refresh eye) :power)) "0 counters on install")
         (dotimes [_ 3]
           (run-empty-server state :rd)
           (click-prompt state :runner "No action"))
@@ -1216,11 +1216,11 @@
         (is (= 1 (-> (get-runner) :hand count)) "1 card in hand")
         (is (zero? (-> (get-runner) :rig :hardware count)) "Respirocytes expired")
         (play-from-hand state :runner "Sure Gamble")
-        (is (= 0 (-> (get-runner) :hand count))
+        (is (zero? (-> (get-runner) :hand count))
             "Respirocytes did not trigger when trashed")
         (take-credits state :runner)
         (take-credits state :corp)
-        (is (= 0 (-> (get-runner) :hand count))
+        (is (zero? (-> (get-runner) :hand count))
             "Respirocytes still does not trigger when trashed")))))
 
 (deftest rubicon-switch
@@ -1300,16 +1300,16 @@
       (is (= 1 (:position (:run @state))))
       (is (= 2 (count (:hand (get-runner))))) ; pre archangel
       (card-subroutine state :corp arch 0) ; fire archangel
-      (is (not (empty? (:prompt (get-corp)))) "Archangel trace prompt - corp")
+      (is (seq (:prompt (get-corp))) "Archangel trace prompt - corp")
       (click-prompt state :corp "0")
-      (is (not (empty? (:prompt (get-runner)))) "Archangel trace prompt - runner")
+      (is (seq (:prompt (get-runner))) "Archangel trace prompt - runner")
       (click-prompt state :runner "0")
       (click-card state :corp sifr)
       (is (= 3 (count (:hand (get-runner))))) ; sifr got lifted to hand
       (run-jack-out state)
       (is (= 4 (:current-strength (refresh ip))) "IP Block back to standard strength")
       (play-from-hand state :runner "Modded")
-      (is (not (empty? (:prompt (get-runner)))) "Modded choice prompt exists")
+      (is (seq (:prompt (get-runner))) "Modded choice prompt exists")
       (click-card state :runner (find-card "Şifr" (:hand (get-runner))))
       (is (= 4 (:current-strength (refresh ip))) "IP Block back to standard strength")
       (play-from-hand state :runner "Clone Chip")

@@ -37,7 +37,7 @@
                                    (effect-completed state side eid))))}]
      {:events
       {:agenda-scored
-       {:req (req (and (= (:previous-zone target) (:zone card))))
+       {:req (req (= (:previous-zone target) (:zone card)))
         :interactive (req true)
         :silent (req (empty? (filter corp-installable-type? (:hand corp))))
         :async true

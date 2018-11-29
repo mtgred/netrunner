@@ -347,7 +347,7 @@
     :effect (effect (add-counter card :power target))
     :abilities [(break-sub 1 1)]
     :strength-bonus (req (get-counters card :power))
-    :events {:counter-added {:req (req (= :cid target) (:cid card))
+    :events {:counter-added {:req (req (= (:cid target) (:cid card)))
                              :effect (effect (update-breaker-strength card))}}}
 
    "Aumakua"
@@ -363,7 +363,7 @@
                                        (get-in @state [:run :did-access])))
                         :effect (effect (add-counter card :virus 1))}
              :expose {:effect (effect (add-counter card :virus 1))}
-             :counter-added {:req (req (= :cid target) (:cid card))
+             :counter-added {:req (req (= (:cid target) (:cid card)))
                              :effect (effect (update-breaker-strength card))}}}
 
    "Aurora"
