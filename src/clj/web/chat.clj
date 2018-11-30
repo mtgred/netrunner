@@ -1,6 +1,5 @@
 (ns web.chat
-  (:require [buddy.sign.jwt :as jwt]
-            [clojure.string :as s]
+  (:require [clojure.string :as s]
             [clj-time.core :as t]
             [clj-time.coerce :as c]
             [monger.query :as q]

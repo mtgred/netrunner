@@ -1,7 +1,6 @@
 (ns web.ws
   (:require [clojure.core.async :refer [go <! timeout]]
             [aero.core :refer [read-config]]
-            [buddy.sign.jwt :as jwt]
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :refer (get-sch-adapter)]))
 

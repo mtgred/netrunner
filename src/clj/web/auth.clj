@@ -23,8 +23,7 @@
 (defn create-token [{:keys [_id emailhash]}]
   (let [claims {:_id _id
                 :emailhash emailhash
-                :exp (-> (:expiration auth-config) days from-now)}
-        token (jwt/sign claims (:secret auth-config) {:alg :hs512})]
+                :exp (-> (:expiration auth-config) days from-now)}]
     (jwt/sign claims (:secret auth-config) {:alg :hs512})))
 
 (defn unsign-token [token]
