@@ -83,13 +83,13 @@
                                                          (ice? %)
                                                          (can-host? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has-subtype? c "Caïssa"))
-                                                                    (:hosted %))))
+                                                         (not-any? (fn [c] (has-subtype? c "Caïssa"))
+                                                                   (:hosted %)))
                                                     (and (ice? %)
                                                          (can-host? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has-subtype? c "Caïssa"))
-                                                                    (:hosted %)))))}
+                                                         (not-any? (fn [c] (has-subtype? c "Caïssa"))
+                                                                   (:hosted %))))}
                                   :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))} card nil)))}]
     :events {:pre-ice-strength
@@ -482,7 +482,7 @@
 
    "Harbinger"
    {:trash-effect
-     {:req (req (not (some #{:facedown :hand} (:previous-zone card))))
+     {:req (req (not-any? #{:facedown :hand} (:previous-zone card)))
       :effect (req (let [lock (get-in @state [:runner :locked :discard])]
                      (swap! state assoc-in [:runner :locked] nil)
                      (runner-install state :runner card {:facedown true})
@@ -916,11 +916,11 @@
                                                          (= (last (:zone %)) :ices)
                                                          (ice? %)
                                                          (can-host? %)
-                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
+                                                         (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))
                                                     (and (ice? %)
                                                          (can-host? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
+                                                         (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
                                   :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))} card nil)))}]
     :events {:pre-rez-cost {:req (req (= (:zone (:host card)) (:zone target)))

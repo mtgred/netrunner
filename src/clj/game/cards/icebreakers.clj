@@ -747,11 +747,11 @@
                                                          (ice? %)
                                                          (can-host? %)
                                                          (installed? %)
-                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
+                                                         (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))
                                                     (and (ice? %)
                                                          (installed? %)
                                                          (can-host? %)
-                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
+                                                         (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
                                   :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))} card nil)))}
                 {:cost [:credit 2]

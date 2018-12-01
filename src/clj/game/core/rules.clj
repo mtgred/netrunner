@@ -428,7 +428,7 @@
   ([state side card oid args] (prevent-trash state side (make-eid state) card oid args))
   ([state side eid {:keys [zone type] :as card} oid
     {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
-   (if (and card (not (some #{:discard} zone)))
+   (if (and card (not-any? #{:discard} zone))
      (cond
 
        (untrashable-while-rezzed? card)
@@ -546,9 +546,12 @@
   (update! state side (assoc agenda :current-cost (advancement-cost state side agenda))))
 
 (defn update-all-advancement-costs [state side]
-  (doseq [ag (->> (mapcat :content (flatten (seq (get-in @state [:corp :servers]))))
-                  (filter #(is-type? % "Agenda")))]
-    (update-advancement-cost state side ag)))
+  (->> (get-in @state [:corp :servers])
+       seq
+       flatten
+       (mapcat :content)
+       (filter #(is-type? % "Agenda"))
+       (map #(update-advancement-cost state side %))))
 
 (defn as-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points."
