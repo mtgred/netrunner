@@ -1,6 +1,7 @@
 (ns web.lobby
   (:require [web.db :refer [db object-id]]
-            [web.utils :refer [response tick remove-once]]
+            [web.utils :refer [response tick]]
+            [game.utils :refer [remove-once]]
             [web.ws :as ws]
             [web.stats :as stats]
             [game.core :as core]
@@ -164,8 +165,7 @@
   "Adds the given user as a player in the given gameid."
   [{options :options _id :_id :as user} client-id gameid]
   (let [{players :players :as game} (game-for-id gameid)]
-    (when (and (< (count players) 2)
-               (< (count (filter #(not= _id (get-in % [:user :_id])) players)) 2))
+    (when (< (count (filter #(not= _id (get-in % [:user :_id])) players)) 2)
       (let [{side :side :as fplayer} (first players)
             new-side (if (= "Corp" side) "Runner" "Corp")
             new-player {:user    user
@@ -201,7 +201,7 @@
   (mapcat #(get-in % [:user :options :blocked-users]) players))
 
 (defn allowed-in-game [game {:keys [username]}]
-  (not (some #(= username %) (blocked-users game))))
+  (not-any? #(= username %) (blocked-users game)))
 
 (defn handle-ws-connect [{:keys [client-id] :as msg}]
   (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))]))

@@ -169,17 +169,16 @@
           (main/handle-action user command state (side-from-str side) args)
           (swap! all-games assoc-in [gameid :last-update] (t/now))
           (swap-and-send-diffs! game))
-        (when (not spectator)
-          (do
-            (println "handle-game-action unknown state or side")
-            (println "\tGameID:" gameid)
-            (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
-            (println "\tClientID:" client-id)
-            (println "\tSide:" side)
-            (println "\tPlayers:" (map #(select-keys % [:ws-id :side]) players))
-            (println "\tSpectators" (map #(select-keys % [:ws-id]) (:spectators game)))
-            (println "\tCommand:" command)
-            (println "\tArgs:" args "\n")))))))
+        (when-not spectator
+          (println "handle-game-action unknown state or side")
+          (println "\tGameID:" gameid)
+          (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
+          (println "\tClientID:" client-id)
+          (println "\tSide:" side)
+          (println "\tPlayers:" (map #(select-keys % [:ws-id :side]) players))
+          (println "\tSpectators" (map #(select-keys % [:ws-id]) (:spectators game)))
+          (println "\tCommand:" command)
+          (println "\tArgs:" args "\n"))))))
 
 (defn handle-game-watch
   "Handles a watch command when a game has started."
