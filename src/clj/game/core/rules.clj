@@ -551,7 +551,7 @@
        flatten
        (mapcat :content)
        (filter #(is-type? % "Agenda"))
-       (map #(update-advancement-cost state side %))))
+       (mapv #(update-advancement-cost state side %))))
 
 (defn as-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points."
