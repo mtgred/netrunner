@@ -91,6 +91,9 @@
         [:div.account-bg]
         [:div#account]]
        [:div.item
+        [:div.account-bg]
+        [:div#integration]]
+       [:div.item
         [:div.stats-bg]
         [:div#stats]]
        [:div.item

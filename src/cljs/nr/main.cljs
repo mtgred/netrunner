@@ -6,6 +6,7 @@
             [nr.about :refer [about]]
             [nr.auth :refer [auth-forms auth-menu]]
             [nr.account :refer [account]]
+            [nr.integration :refer [integration]]
             [nr.cardbrowser :refer [card-browser]]
             [nr.chat :refer [chat]]
             [nr.deckbuilder :refer [deck-builder]]
@@ -17,7 +18,7 @@
             [reagent.core :as r])
   (:import goog.history.Html5History))
 
-(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about"])
+(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/integration" "/stats" "/about"])
 
 (def history (Html5History.))
 
@@ -90,6 +91,7 @@
   (r/render [gameboard] (.getElementById js/document "gameboard"))
   (r/render [game-lobby] (.getElementById js/document "gamelobby"))
   (r/render [help] (.getElementById js/document "help"))
+  (r/render [integration] (.getElementById js/document "integration"))
   (r/render [news] (.getElementById js/document "news"))
   (r/render [stats] (.getElementById js/document "stats")))
 

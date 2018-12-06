@@ -13,6 +13,7 @@
             [tasks.altart :refer [add-art]]
             [web.api :refer [app]]
             [web.chat :as chat]
+            [web.integration :as integration]
             [web.config :refer [frontend-version server-config server-mode]]
             [web.db :refer [db]]
             [web.game :as game]

@@ -6,5 +6,6 @@
    ["Play" "/play" 3 nil]
    ["Help" "/help" 4 nil]
    ["Settings" "/account" 5 #(:user %)]
-   ["Stats" "/stats" 6 #(:user %)]
-   ["About" "/about" 7 nil]])
+   ["Integration" "/integration" 6 #(:user %)]
+   ["Stats" "/stats" 7 #(:user %)]
+   ["About" "/about" 8 nil]])
