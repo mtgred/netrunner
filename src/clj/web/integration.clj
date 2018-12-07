@@ -9,7 +9,7 @@
 (def api-key-collection "api_keys")
 (def ^:const max-keys 5)
 
-(defn- send-keys
+(defn send-keys
   [emailhash client-id]
   (when client-id
     (let [raw-keys (reverse (q/with-collection db api-key-collection

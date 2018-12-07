@@ -57,9 +57,6 @@
     (r/create-class
       {:display-name "integration"
 
-       ;; :component-did-mount
-       ;; (fn [] (request-all-keys))
-
        :reagent-render
        (fn []
          [:div.integration.panel.content-page.blue-shade

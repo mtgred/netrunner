@@ -3,6 +3,7 @@
             [web.utils :refer [response tick remove-once]]
             [web.ws :as ws]
             [web.stats :as stats]
+            [web.integration :as integration]
             [game.core :as core]
             [crypto.password.bcrypt :as bcrypt]
             [monger.collection :as mc]
@@ -202,8 +203,11 @@
 (defn allowed-in-game [game {:keys [username]}]
   (not (some #(= username %) (blocked-users game))))
 
-(defn handle-ws-connect [{:keys [client-id] :as msg}]
-  (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))]))
+(defn handle-ws-connect
+  [{{{:keys [emailhash]} :user} :ring-req
+    client-id :client-id}]
+  (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))])
+  (integration/send-keys emailhash client-id))
 
 (defn handle-lobby-create
   [{{{:keys [username emailhash] :as user} :user} :ring-req
