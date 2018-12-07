@@ -31,8 +31,11 @@
      (hiccup/include-js "/lib/toastr/toastr.min.js")
      (hiccup/include-js "/lib/howler/dist/howler.min.js")
      (hiccup/include-js "https://browser.sentry-cdn.com/4.1.1/bundle.min.js")
+     (hiccup/include-js "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js")
      [:script {:type "text/javascript"}
       (str "var user=" (json/generate-string user) ";")]
+
+     [:script {:type "text/javascript"} "new ClipboardJS('.clipboard-btn');" ]
 
      (when-let [sentry-dsn (:sentry-dsn server-config)]
        [:script {:type "text/javascript"}

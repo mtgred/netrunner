@@ -1,53 +1,52 @@
 (ns web.integration
-  (:require [clojure.string :as s]
-            [clj-time.core :as t]
-            [clj-time.coerce :as c]
-            [monger.query :as q]
+  (:require [monger.query :as q]
             [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
-            [web.config :refer [server-config]]
             [web.db :refer [db]]
-            [web.utils :refer [response]]
-            [cheshire.core :as json]
+            [web.tokens :as tokens]
             [web.ws :as ws])
   (:import org.bson.types.ObjectId))
 
 (def api-key-collection "api_keys")
+(def ^:const max-keys 5)
 
 (defn- send-keys
-  [username client-id]
+  [emailhash client-id]
   (when client-id
     (let [raw-keys (reverse (q/with-collection db api-key-collection
-                              (q/find {:username username})
+                              (q/find {:emailhash emailhash})
                               (q/sort (array-map :date -1))
-                              (q/limit 10)))
+                              (q/limit max-keys)))
           api-keys (->> raw-keys
-                        (map #(select-keys % [:name :_id]))
+                        (map #(select-keys % [:token :_id :issued :expires]))
                         (map #(update % :_id (fn [x] (.toString x))))
                         vec)]
       (ws/send! client-id [:integration/key-list {:keys api-keys}]))))
 
 (defn list-keys
-  [{{{:keys [username]} :user} :ring-req
+  [{{{:keys [emailhash]} :user} :ring-req
     client-id :client-id}]
-  (send-keys username client-id))
-
-(defn create-key
-  [{{{:keys [username]} :user} :ring-req
-    client-id :client-id}]
-  (mc/insert db api-key-collection
-             {:username username
-              :date (java.util.Date.)
-              :name "A key value"})
-  (send-keys username client-id))
+  (send-keys emailhash client-id))
 
 (defn delete-key
-  [{{{:keys [username]} :user} :ring-req
+  [{{{:keys [emailhash]} :user} :ring-req
     client-id :client-id
   {:keys [_id]} :?data :as event}]
   (mc/remove db api-key-collection {:_id (ObjectId. _id)
-                                    :username username})
-  (send-keys username client-id))
+                                    :emailhash emailhash})
+  (send-keys emailhash client-id))
+
+(defn create-key
+  [{{{:keys [emailhash]} :user} :ring-req
+    client-id :client-id}]
+  (when (< (mc/count db api-key-collection {:emailhash emailhash}) max-keys)
+    (let [{:keys [token public-key issued expires]} (tokens/create-api-token emailhash)]
+      (mc/insert db api-key-collection
+                 {:emailhash emailhash
+                  :token token
+                  :public-key public-key
+                  :issued (.toString issued)
+                  :expires (.toString expires)})
+      (send-keys emailhash client-id))))
 
 (ws/register-ws-handlers!
   :integration/list-keys list-keys
