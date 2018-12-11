@@ -11,6 +11,7 @@
             [web.admin :as admin]
             [web.news :as news]
             [web.decks :as decks]
+            [web.deck-api :as deck-api]
             [compojure.route :as route]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
@@ -46,6 +47,9 @@
            (POST "/forgot" [] auth/forgot-password-handler)
            (GET "/reset/:token" [] pages/reset-password-page)
            (POST "/reset/:token" [] auth/reset-password-handler)
+
+           (GET "/api/v1/decks" [] deck-api/decks-list-handler)
+           (GET "/api/v1/deck/:deck_id" [] deck-api/deck-list-handler)
 
            (GET "/ws" req ws/handshake-handler)
            (POST "/ws" req ws/post-handler)

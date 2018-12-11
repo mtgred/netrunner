@@ -48,3 +48,10 @@
      :public-key public-key-str
      :issued now
      :expires expires}))
+
+(defn verify-api-token [token public-key]
+  (try
+    (let [decoded-key (der-string->pub-key public-key)
+          verified-token (jwt/unsign token decoded-key {:alg :rs256})]
+      [:valid verified-token])
+    (catch Exception e [:invalid (.getMessage e)])))
