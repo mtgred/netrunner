@@ -1173,6 +1173,30 @@ nav ul
   width: 995px
   display-flex()
 
+  .clickable
+    cursor: pointer
+
+  .mod-menu
+    display: block
+    position: absolute
+    z-index: 30
+    width: 200px
+    font-size: 12px
+    line-height: 16px
+
+    > div
+      border: 1px solid white
+      padding: 3px 6px
+      border-radius: 4px
+      margin-bottom: 4px
+      cursor: pointer
+
+      &:last-child
+        margin-bottom: 0
+
+      &:hover
+        border-color: orange
+
   .games
     position: relative
 
