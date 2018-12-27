@@ -3296,8 +3296,9 @@
     (play-from-hand state :runner "Sure Gamble")
     (is (= 13 (:credit (get-runner))) "3rd Gamble played for 2c")))
 
-(deftest-pending sundew
-  ;; Sundew
+(deftest sundew
+  ;; Sundew - gain 2cr when the runner spends his first click each turn, unless
+  ;; it is a run on this server
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Sundew"]}})
@@ -3310,22 +3311,135 @@
         (take-credits state :runner)
         (is (= 7 (:credit (get-corp))) "Corp gained 2cr from Sundew")
         (take-credits state :corp)
+        (is (= 10 (:credit (get-corp))) "Corp now has 10cr")
+        ;; spend a click running but not on the sundew server
+        (run-on state "HQ")
+        (is (= 12 (:credit (get-corp))) "Corp gained 2cr from Sundew")
+        (run-jack-out state)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 15 (:credit (get-corp))) "Corp now has 15cr")
+        ;; spend a click running the sundew server
         (run-on state "Server 1")
-        ; (is (= 10 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew")
+        (is (= 15 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew")
         (is (= 3 (:click (get-runner))) "Runner spent 1 click to start run"))))
+  (testing "Multiple Sundews"
+    (do-game
+      (new-game {:corp {:deck [(qty "Sundew" 2)]}})
+      (play-from-hand state :corp "Sundew" "New remote")
+      (play-from-hand state :corp "Sundew" "New remote")
+      (let [sund (get-content state :remote1 0)
+            sund2 (get-content state :remote2 0)]
+        (is (= 5 (:credit (get-corp))) "Corp has 5cr")
+        (core/rez state :corp sund)
+        (is (= 3 (:credit (get-corp))) "Cost 2cr to rez")
+        (core/rez state :corp sund2)
+        (is (= 1 (:credit (get-corp))) "Cost 2cr to rez")
+        (take-credits state :corp)
+        (is (= 2 (:credit (get-corp))) "Corp now has 2cr")
+        ;; spend a click not on a run
+        (take-credits state :runner)
+        (is (= 6 (:credit (get-corp))) "Corp gained 4cr from Sundew")
+        (take-credits state :corp)
+        (is (= 9 (:credit (get-corp))) "Corp now has 9cr")
+        ;; spend a click running one of the sundew servers
+        (run-on state "Server 1")
+        (is (= 11 (:credit (get-corp))) "Corp gain 2cr from one Sundew")
+        (run-jack-out state)
+        ;; spend a second click running the other sundew server
+        (run-on state "Server 2")
+        (is (= 11 (:credit (get-corp))) "Corp did not gain credits from Sundew"))))
+  (testing "Sundew - Data Breach"
+    (do-game
+      (new-game {:corp {:deck ["Sundew"]}
+                 :runner {:deck ["Data Breach"]}})
+      (play-from-hand state :corp "Sundew" "New remote")
+      (let [sund (get-content state :remote1 0)]
+        (core/rez state :corp sund)
+        (take-credits state :corp 2)
+        (is (= 5 (:credit (get-corp))) "Corp now has 5cr")
+        (play-from-hand state :runner "Data Breach")
+        (is (= 7 (:credit (get-corp))) "Corp gained 2cr from Sundew")
+        (core/no-action state :corp nil)
+        (run-successful state)
+        (click-prompt state :runner "Yes")
+        (is (= 7 (:credit (get-corp))) "Corp did not gain credits from second run"))))
+  (testing "Sundew - Deuces Wild"
+    (do-game
+      (new-game {:corp {:deck ["Sundew" "Wraparound"]}
+                 :runner {:deck ["Deuces Wild"]}})
+      (play-from-hand state :corp "Sundew" "New remote")
+      (play-from-hand state :corp "Wraparound" "Server 1")
+      (let [sund (get-content state :remote1 0)]
+        (core/rez state :corp sund)
+        (take-credits state :corp 2)
+        (is (= 4 (:credit (get-corp))) "Corp now has 4cr")
+        (play-from-hand state :runner "Deuces Wild")
+        (click-prompt state :runner "Expose 1 ice and make a run")
+        (click-card state :runner (get-ice state :remote1 0))
+        (click-prompt state :runner "Server 1")
+        (is (= 6 (:credit (get-corp))) "Corp gained 2cr from Sundew because DW is not a run event"))))
+  (testing "Sundew - Out of the Ashes"
+    (do-game
+      (new-game {:corp {:deck ["Sundew"]}
+                 :runner {:deck [(qty "Out of the Ashes" 2)]}})
+      (play-from-hand state :corp "Sundew" "New remote")
+      (let [sund (get-content state :remote1 0)]
+        (core/rez state :corp sund)
+        (take-credits state :corp 2)
+        (is (= 5 (:credit (get-corp))) "Corp now has 5cr")
+        ; spend click on run event
+        (play-from-hand state :runner "Out of the Ashes")
+        (click-prompt state :runner "Archives")
+        (is (= 7 (:credit (get-corp))) "Corp gained 2cr from Sundew")
+        (run-successful state)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 10 (:credit (get-corp))) "Corp now has 10cr")
+        ; run without spending click
+        (is (not (empty? (get-in @state [:runner :prompt]))))
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Archives")
+        (is (= 10 (:credit (get-corp))) "Corp did not gain credits from Ashes (no click spent)")
+        ; spend click on credits
+        (take-credits state :runner 1)
+        (is (= 12 (:credit (get-corp))) "Corp gained 2cr from Sundew")
+        (play-from-hand state :runner "Out of the Ashes")
+        (click-prompt state :runner "Archives")
+        (run-successful state)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 15 (:credit (get-corp))) "Corp now has 15cr")
+        ; run without spending click
+        (is (not (empty? (get-in @state [:runner :prompt]))))
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Archives")
+        (is (= 15 (:credit (get-corp))) "Corp did not gain credits from Ashes (no click spent)")
+        ; spend click on run
+        (run-on state "Archives")
+        (is (= 17 (:credit (get-corp))) "Corp gained 2cr from Sundew"))))
   (testing "Sundew - Dirty Laundry"
     (do-game
       (new-game {:corp {:deck ["Sundew"]}
-                 :runner {:deck ["Dirty Laundry"]}})
+                 :runner {:deck [(qty "Dirty Laundry" 2)]}})
       (play-from-hand state :corp "Sundew" "New remote")
       (let [sund (get-content state :remote1 0)]
         (core/rez state :corp (refresh sund))
         (is (= 3 (:credit (get-corp))) "Cost 2cr to rez")
         (take-credits state :corp)
+        (is (= 5 (:credit (get-corp))) "Corp now has 5cr")
+        ;; spend a click on a run through a card, not through click-run
         (play-from-hand state :runner "Dirty Laundry")
         (click-prompt state :runner "Server 1")
+        (is (= 5 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew")
+        (run-jack-out state)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 8 (:credit (get-corp))) "Corp now has 8cr")
         ;; spend a click on a run through a card, not through click-run
-        (is (= 5 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew")))))
+        (play-from-hand state :runner "Dirty Laundry")
+        (click-prompt state :runner "HQ")
+        (is (= 10 (:credit (get-corp))) "Corp gained 2cr from Sundew")))))
 
 (deftest synth-dna-modification
   ;; Synth DNA Modification

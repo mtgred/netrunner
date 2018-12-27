@@ -24,6 +24,7 @@
                     :access-bonus 0
                     :run-effect (assoc run-effect :card card)
                     :eid eid})
+       (trigger-event state side :begin-run :server s)
        (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
        (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
        (update-all-ice state :corp)
