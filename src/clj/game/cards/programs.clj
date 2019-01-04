@@ -658,7 +658,7 @@
                                      :choices {:number (req (dec (get-virus-counters state card)))
                                                :default (req (dec (get-virus-counters state card)))}
                                      :msg (msg "access " target " additional cards from R&D")
-                                     :effect (effect (access-bonus (max 0 target)))}
+                                     :effect (effect (access-bonus :rd (max 0 target)))}
                                     card nil))}}}
    "Misdirection"
    {:abilities [{:cost [:click 2]
@@ -683,7 +683,7 @@
                                      :choices {:number (req (dec (get-virus-counters state card)))
                                                :default (req (dec (get-virus-counters state card)))}
                                      :msg (msg "access " target " additional cards from HQ")
-                                     :effect (effect (access-bonus (max 0 target)))}
+                                     :effect (effect (access-bonus :hq (max 0 target)))}
                                     card nil))}}}
 
    "Net Shield"
@@ -702,7 +702,7 @@
                                             {:optional
                                              {:prompt "Spend a power counter on Nyashia to access 1 additional card?"
                                               :yes-ability {:msg "access 1 additional card from R&D"
-                                                            :effect (effect (access-bonus 1)
+                                                            :effect (effect (access-bonus :rd 1)
                                                                             (add-counter card :power -1)
                                                                             (clear-wait-prompt :corp))}
                                               :no-ability {:effect (effect (clear-wait-prompt :corp))}}}

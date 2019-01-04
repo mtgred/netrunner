@@ -21,7 +21,7 @@
        (swap! state assoc :per-run nil
               :run {:server s
                     :position n
-                    :access-bonus 0
+                    :access-bonus []
                     :run-effect (assoc run-effect :card card)
                     :eid eid})
        (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
@@ -399,16 +399,38 @@
   (swap! state assoc-in [:run :max-access] n))
 
 (defn access-bonus
-  "Increase the number of cards to be accessed during this run by n. Legwork, Maker's Eye.
+  "Increase the number of cards to be accessed in server during this run by n.
+  For temporary/per-run effects like Legwork, Maker's Eye.
   Not for permanent increases like RDI."
-  [state side n]
-  (swap! state update-in [:run :access-bonus] (fnil #(+ % n) 0)))
+  [state side server bonus]
+  (when-not (#{:hq :rd} server)
+    (println "access-bonus" server))
+  (swap! state update-in [:run :access-bonus] conj [server bonus]))
 
-(defn access-count [state side kw]
+(defn access-bonus-count
+  [run s]
+  (reduce
+    (fn [acc [server bonus]]
+      (if (= s server)
+        (+ acc bonus)
+        acc))
+    0
+    (:access-bonus run)))
+
+(defn access-count
+  [state side kw]
   (let [run (:run @state)
-        accesses (+ (get-in @state [:runner kw]) (:access-bonus run 0))]
+        s (case kw
+           :rd-access :rd
+           :hq-access :hq
+           kw)
+        _ (when-not (#{:hq :rd} s)
+            (println "access-count" s))
+        accesses (+ (get-in @state [:runner kw])
+                    (access-bonus-count run s))]
     (if-let [max-access (:max-access run)]
-      (min max-access accesses) accesses)))
+      (min max-access accesses)
+      accesses)))
 
 
 ;;; Methods for allowing user-controlled multi-access in servers.

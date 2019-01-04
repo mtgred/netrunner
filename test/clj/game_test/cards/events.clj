@@ -910,19 +910,20 @@
         (core/add-counter state :runner ttw :power 4)
         (play-from-hand state :runner "Divide and Conquer")
         (card-ability state :runner ttw 0)
-        (card-ability state :runner ttw 0)
+        (card-ability state :runner ttw 1)
         (run-successful state)
         ;; HQ
-        (dotimes [_ 3]
+        (dotimes [_ 2]
           (click-prompt state :runner "Card from hand")
           (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
         ;; R&D
-        (dotimes [_ 3]
+        (dotimes [_ 2]
           (click-prompt state :runner "Card from deck")
           (click-prompt state :runner "No action"))
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
-        (is (= 2 (-> (get-runner) :register :last-run :access-bonus)) "The Turning Wheel should provide 2 additional accesses")
-        (is (= 8 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 + 2 in R&D, and 1 + 2 in HQ")))))
+        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :rd))) "The Turning Wheel should provide 1 additional access on R&D")
+        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :hq))) "The Turning Wheel should provide 1 additional access on HQ")
+        (is (= 6 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 + 1 in R&D, and 1 + 1 in HQ")))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
