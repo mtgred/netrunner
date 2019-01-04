@@ -518,14 +518,13 @@
    {:req (req archives-runnable)
     :makes-run true
     :async true
-    :effect
-    (effect (run :archives
-                 {:end-run
-                  {:async true
-                   :effect
-                   (req (wait-for (do-access state side [:hq] {:no-root true})
-                                  (do-access state side eid [:rd] {:no-root true})))}}
-                 card))}
+    :effect (effect (run :archives nil card)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+    :events {:end-access-phase {:async true
+                                :req (req (= :archives (:from-server target)))
+                                :effect (req (wait-for (do-access state side [:hq] {:no-root true})
+                                                       (do-access state side eid [:rd] {:no-root true})))}
+             :run-ends {:effect (effect (unregister-events card))}}}
 
    "Drive By"
    {:choices {:req #(let [topmost (get-nested-host %)]

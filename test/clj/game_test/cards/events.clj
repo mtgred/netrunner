@@ -921,9 +921,30 @@
           (click-prompt state :runner "Card from deck")
           (click-prompt state :runner "No action"))
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
-        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :rd))) "The Turning Wheel should provide 1 additional access on R&D")
-        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :hq))) "The Turning Wheel should provide 1 additional access on HQ")
-        (is (= 6 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 + 1 in R&D, and 1 + 1 in HQ")))))
+        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :rd)))
+            "The Turning Wheel should provide 1 additional access on R&D")
+        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :hq)))
+            "The Turning Wheel should provide 1 additional access on HQ")
+        (is (= 6 (-> (get-runner) :register :last-run core/total-cards-accessed))
+            "Runner should access 2 cards in Archives, 1 + 1 in R&D, and 1 + 1 in HQ"))))
+  (testing "vs Nisei Mk II. Issue #3803"
+    (do-game
+      (new-game {:corp {:deck ["Nisei MK II" (qty "Ice Wall" 100)]}
+                 :runner {:deck ["Divide and Conquer"]}})
+      (starting-hand state :corp ["Nisei MK II" "Ice Wall" "Ice Wall"])
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (play-and-score state "Nisei MK II")
+      (let [scored-nisei (get-scored state :corp 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Divide and Conquer")
+        (run-phase-43 state)
+        (card-ability state :corp (refresh scored-nisei) 0)
+        (click-prompt state :corp "Done") ; close 4.3 corp
+        (is (nil? (-> @state :runner :prompt first)) "No access prompts for runner")
+        (is (not (:run @state)) "Run ended by using Nisei counter")
+        (is (zero? (-> (get-runner) :register :last-run core/total-cards-accessed))
+            "Runner should access 0 cards")))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
