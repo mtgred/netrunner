@@ -15,7 +15,7 @@
   [cards line]
   (<= 6 (card-count (filter #(and (= (get-in line [:card :faction])
                                      (get-in % [:card :faction]))
-                                  (not (has-subtype? % "Alliance")))
+                                  (not (has-subtype? (:card %) "Alliance")))
                             cards))))
 
 (defn alliance-is-free?
