@@ -927,6 +927,25 @@
             "The Turning Wheel should provide 1 additional access on HQ")
         (is (= 6 (-> (get-runner) :register :last-run core/total-cards-accessed))
             "Runner should access 2 cards in Archives, 1 + 1 in R&D, and 1 + 1 in HQ"))))
+  (testing "The Turning Wheel gains counters after using D&C. Issue #3810"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 100)]}
+                 :runner {:deck ["Divide and Conquer" "The Turning Wheel"]}})
+      (starting-hand state :corp ["Ice Wall" "Ice Wall" "Ice Wall"])
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)
+            counters (get-counters (refresh ttw) :power)]
+        (play-from-hand state :runner "Divide and Conquer")
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No action")
+        (is (= counters (get-counters (refresh ttw) :power)) "Gains no counters")
+        (run-empty-server state "R&D")
+        (click-prompt state :runner "No action")
+        (is (= (+ 1 counters) (get-counters (refresh ttw) :power)) "Gains 1 counters"))))
   (testing "vs Nisei Mk II. Issue #3803"
     (do-game
       (new-game {:corp {:deck ["Nisei MK II" (qty "Ice Wall" 100)]}
