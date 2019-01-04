@@ -180,8 +180,8 @@
                                          :effect (effect (add-prop :corp ice :advance-counter target {:placed true})
                                                          (add-prop :corp card :advance-counter (- target) {:placed true})
                                                          (system-msg (str "uses Anson Rose to move " target
-                                                                          " advancement tokens to " (card-str state ice))))
-                                         :end-effect (effect (clear-wait-prompt :runner))}}}
+                                                                          " advancement tokens to " (card-str state ice))))}
+                                        :end-effect (effect (clear-wait-prompt :runner))}}
                                       card nil)))}}
       :abilities [ability]})
 
