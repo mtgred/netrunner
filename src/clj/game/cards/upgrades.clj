@@ -758,11 +758,11 @@
                    :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
 
    "Mwanza City Grid"
-   (let [gain-creds-and-clear {:req (req (= (:from-server target) (second (:zone card))))
+   (let [gain-creds-and-clear {:req (req (= (:from-server target)
+                                            (second (:zone card))))
                                :silent (req true)
                                :effect (req (let [cnt (total-cards-accessed run)
                                                   total (* 2 cnt)]
-                                              (access-bonus state :runner (-> card :zone second) -3)
                                               (when cnt
                                                 (gain-credits state :corp total)
                                                 (system-msg state :corp

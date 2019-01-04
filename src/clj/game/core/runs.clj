@@ -403,8 +403,6 @@
   For temporary/per-run effects like Legwork, Maker's Eye.
   Not for permanent increases like RDI."
   [state side server bonus]
-  (when-not (#{:hq :rd} server)
-    (println "access-bonus" server))
   (swap! state update-in [:run :access-bonus] conj [server bonus]))
 
 (defn access-bonus-count
@@ -424,8 +422,6 @@
            :rd-access :rd
            :hq-access :hq
            kw)
-        _ (when-not (#{:hq :rd} s)
-            (println "access-count" s))
         accesses (+ (get-in @state [:runner kw])
                     (access-bonus-count run s))]
     (if-let [max-access (:max-access run)]
