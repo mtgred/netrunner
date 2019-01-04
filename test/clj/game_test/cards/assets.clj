@@ -591,7 +591,8 @@
         (click-card state :corp (refresh fw))
         (is (zero? (get-counters (refresh iw) :advancement)))
         (is (= 2 (get-counters (refresh fw) :advancement)))
-        (core/end-phase-12 state :corp nil))))
+        (core/end-phase-12 state :corp nil)
+        (is (nil? (-> (get-runner) :prompt first))))))
   (testing "Variable number of advanceable cards"
     (do-game
       (new-game {:corp {:deck ["Constellation Protocol" "Ice Wall" "Hive"]}})
