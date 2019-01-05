@@ -963,7 +963,29 @@
         (is (nil? (-> @state :runner :prompt first)) "No access prompts for runner")
         (is (not (:run @state)) "Run ended by using Nisei counter")
         (is (zero? (-> (get-runner) :register :last-run core/total-cards-accessed))
-            "Runner should access 0 cards")))))
+            "Runner should access 0 cards"))))
+  (testing "interaction with Black Hat. Issue #3798"
+    (do-game
+      (new-game {:corp {:deck ["Hostile Takeover" (qty "Ice Wall" 100)]}
+                 :runner {:deck ["Divide and Conquer" "Black Hat"]
+                          :credits 10}})
+      (starting-hand state :corp (concat "Hostile Takeover" (repeat 5 "Ice Wall")))
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "Black Hat")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "5")
+      (play-from-hand state :runner "Divide and Conquer")
+      (run-successful state)
+      (dotimes [_ 3]
+        (click-prompt state :runner "Card from hand")
+        (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
+      (dotimes [_ 3]
+        (click-prompt state :runner "Card from deck")
+        (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
+      (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
+      (is (= 7 (-> (get-runner) :register :last-run core/total-cards-accessed))))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
