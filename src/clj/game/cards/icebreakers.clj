@@ -1,7 +1,7 @@
 (ns game.cards.icebreakers
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
+            [game.macros :refer :all]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
@@ -251,40 +251,48 @@
   "Spends virus counters from any card to pump/break, gains virus counters for successful runs."
   [ice-type]
   {:events {:successful-run {:silent (req true)
-                             :effect (effect (system-msg "adds 1 virus counter to " (:title card))
+                             :effect (effect (system-msg (str "adds 1 virus counter to " (:title card)))
                                              (add-counter card :virus 1))}}
    :abilities [{:label (str  "Break " ice-type " subroutine(s)")
                 :effect (req (wait-for (resolve-ability
                                          state side (pick-virus-counters-to-spend) card nil)
-                                       (do (if-let [msg (:msg async-result)]
-                                             (do (system-msg state :runner
-                                                             (str "spends " msg" to break " (:number async-result)
-                                                                  " " ice-type " subroutine(s)")))))))}
+                                       (when-let* [msg (:msg async-result)
+                                                   n (:number async-result)]
+                                         (system-msg state :runner
+                                                     (str "spends " msg
+                                                          " to break "
+                                                          (quantify n (str ice-type " subroutine")))))))}
                {:label "Match strength of currently encountered ice"
                 :req (req (and current-ice
                                (> (ice-strength state side current-ice)
-                                  (or (:current-strength card) (:strength card)))))
+                                  (or (:current-strength card)
+                                      (:strength card)))))
                 :effect (req (wait-for (resolve-ability
                                          state side
                                          (pick-virus-counters-to-spend
                                            (- (ice-strength state side current-ice)
-                                              (or (:current-strength card) (:strength card))))
+                                              (or (:current-strength card)
+                                                  (:strength card))))
                                          card nil)
-                                       (if-let [msg (:msg async-result)]
-                                         (do (system-msg state :runner (str "spends " msg " to add "
-                                                                            (:number async-result) " strength"))
-                                             (dotimes [_ (:number async-result)]
-                                               (pump state side (get-card state card) 1))))))}
+                                       (when-let* [msg (:msg async-result)
+                                                   n (:number async-result)]
+                                         (dotimes [_ n]
+                                           (pump state side (get-card state card) 1))
+                                         (system-msg state :runner
+                                                     (str "spends " msg
+                                                          " to add " n
+                                                          " strength")))))}
                {:label "Add strength"
-                :effect (req (wait-for
-                               (resolve-ability
-                                 state side (pick-virus-counters-to-spend) card nil)
-                               (if-let [msg (:msg async-result)]
-                                 (do (system-msg state :runner (str "spends " msg" to add "
-                                                                    (:number async-result)
-                                                                    " strength"))
-                                     (dotimes [_ (:number async-result)]
-                                       (pump state side (get-card state card) 1))))))}]})
+                :effect (req (wait-for (resolve-ability
+                                         state side (pick-virus-counters-to-spend) card nil)
+                                       (when-let* [msg (:msg async-result)
+                                                   n (:number) async-result]
+                                         (dotimes [_ n]
+                                           (pump state side (get-card state card) 1))
+                                         (system-msg state :runner
+                                                     (str "spends " msg
+                                                          " to add " n
+                                                          " strength")))))}]})
 
 ;;; Icebreaker definitions
 (def card-definitions
