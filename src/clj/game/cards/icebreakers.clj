@@ -73,7 +73,7 @@
                       stargets (:subtype-target ice)
                       stypes (:subtype ice)
                       remove-subtype {:effect
-                                      (effect (update! (assoc ice
+                                      (effect (update! (assoc (get-card state ice)
                                                               :subtype-target stargets
                                                               :subtype stypes))
                                               (unregister-events card)
