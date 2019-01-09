@@ -380,23 +380,24 @@
    (letfn [(wrap-function [args kw]
              (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
      (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))
-           all (get-in ability [:choices :all])]
+           all (get-in ability [:choices :all])
+           m (get-in ability [:choices :max])]
        (swap! state update-in [side :selected]
               #(conj (vec %) {:ability (dissoc ability :choices)
                               :req (get-in ability [:choices :req])
                               :not-self (when (get-in ability [:choices :not-self]) (:cid card))
-                              :max (get-in ability [:choices :max])
+                              :max m
                               :all all}))
        (show-prompt state side card
                     (if-let [message (:prompt ability)]
                       message
-                      (if-let [m (get-in ability [:choices :max])]
+                      (if m
                         (str "Select " (if all "" "up to ") m " targets for " (:title card))
                         (str "Select a target for " (:title card))))
                     (if all ["Hide"] ["Done"])
                     (if all
                       (fn [choice]
-                        (toast state side (str "You must choose " (get-in ability [:choices :max])))
+                        (toast state side (str "You must choose " m))
                         (show-select state side card ability args))
                       (fn [choice] (resolve-select state side)))
                     (-> args
