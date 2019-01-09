@@ -132,8 +132,7 @@
       (if (#{:both :runner} mulligan)
         (core/resolve-prompt state :runner {:choice "Mulligan"})
         (core/resolve-prompt state :runner {:choice "Keep"}))
-      (when-not dont-start-turn (core/start-turn state :corp nil))
-      (when (= start-as :runner) (take-credits state :corp)))
+      (when-not dont-start-turn (core/start-turn state :corp nil)))
     ;; Gotta move cards where they need to go
     (doseq [side [:corp :runner]]
       (let [side-map (if (= :corp side) corp runner)]
@@ -145,6 +144,7 @@
                        (find-card (:card card) (get-in @state [side :deck])) :discard)))
         (when (:credits side-map)
           (swap! state assoc-in [side :credit] (:credits side-map)))))
+    (when (= start-as :runner) (take-credits state :corp))
     ;; These are side independent so they happen ouside the loop
     (when (:bad-pub corp)
       (swap! state assoc-in [:corp :bad-publicity] (:bad-pub corp)))

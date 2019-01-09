@@ -1332,8 +1332,8 @@
   (do-game
     (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Wraparound" 2) "Hedge Fund"]}
                :runner {:deck [(qty "Glut Cipher" 3)]}})
-    (take-credits state :corp)
     (trash-from-hand state :corp "Ice Wall")
+    (take-credits state :corp)
     (trash-from-hand state :corp "Ice Wall")
     (trash-from-hand state :corp "Hedge Fund")
     (is (= 3 (count (:discard (get-corp)))) "There are 3 cards in Archives")

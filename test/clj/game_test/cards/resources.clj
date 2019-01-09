@@ -1929,7 +1929,8 @@
   ;; Psych Mike
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Ice Wall" 100)]}
+      (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                        :hand ["Ice Wall"]}
                  :runner {:deck ["Psych Mike" "Deep Data Mining"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Psych Mike")
@@ -1964,9 +1965,9 @@
               "Psych Mike should give 1 credit for second run of the turn, if first on HQ")))))
   (testing "vs upgrades"
     (do-game
-      (new-game {:corp {:deck ["Bryan Stinson" (qty "Ice Wall" 100)]}
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand ["Bryan Stinson"]}
                  :runner {:deck ["Psych Mike"]}})
-      (starting-hand state :corp ["Bryan Stinson"])
       (play-from-hand state :corp "Bryan Stinson" "R&D")
       (take-credits state :corp)
       (play-from-hand state :runner "Psych Mike")

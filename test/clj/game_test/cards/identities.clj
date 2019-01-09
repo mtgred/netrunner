@@ -685,7 +685,8 @@
       (is (= 1 (count (:discard (get-corp)))) "Card should now be properly discarded")))
   (testing "Shouldn't grant additional accesses after trashing accessed card. #3423"
     (do-game
-      (new-game {:corp {:deck [(qty "Ice Wall" 10)]}
+      (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                        :hand ["Ice Wall"]}
                  :runner {:id "Freedom Khumalo: Crypto-Anarchist"
                           :deck ["Cache"]}})
       (take-credits state :corp)
@@ -697,7 +698,8 @@
       (is (not (:run @state)) "Run ended")))
   (testing "Shouldn't give Aumakua additional counters on trash. #3479"
     (do-game
-      (new-game {:corp {:deck [(qty "Ice Wall" 10)]}
+      (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                        :hand ["Ice Wall"]}
                  :runner {:id "Freedom Khumalo: Crypto-Anarchist"
                           :deck ["Cache" "Aumakua"]}})
       (take-credits state :corp)
