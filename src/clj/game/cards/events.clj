@@ -1423,6 +1423,7 @@
     :choices {:req #(and (is-type? % "Resource")
                          (installed? %))}
     :effect (effect (host target (assoc card :zone [:discard] :installed true))
+                    (card-init (find-latest state card) {:resolve-effect false})
                     (system-msg (str "hosts On the Lam on " (:title target))))
     :interactions {:prevent [{:type #{:net :brain :meat :tag}
                               :req (req true)}]}
