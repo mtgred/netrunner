@@ -2420,21 +2420,26 @@
   ;; Rip Deal - replaces number of HQ accesses with heap retrieval
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Crisium Grid" 2)(qty "Vanilla" 2)]}
-                 :runner {:deck ["The Gauntlet" "Rip Deal" (qty "Easy Mark" 2)]}})
-      (trash-from-hand state :runner "Easy Mark")
+      (new-game {:corp {:deck ["Vanilla"]}
+                 :runner {:deck ["Rip Deal" "Easy Mark"]}})
       (trash-from-hand state :runner "Easy Mark")
       (take-credits state :corp)
       (play-from-hand state :runner "Rip Deal")
       (run-successful state)
       (click-prompt state :runner "Replacement effect")
-      (is (= "Choose 1 card(s) to move from the Heap to your Grip" (-> (get-runner) :prompt first :msg)))))
+      (is (= "Choose 1 card to move from the Heap to your Grip" (:msg (prompt-map :runner))))
+      (click-card state :runner "Easy Mark")
+      (is (= 1 (-> (get-runner) :hand count)))
+      (is (= "Easy Mark" (-> (get-runner) :hand first :title)))
+      (is (nil? (prompt-map :corp)) "Corp should have no more prompts")
+      (is (nil? (prompt-map :runner)) "Runner should have no more prompts")
+      (is (nil? (get-run)) "Run is ended")))
   (testing "with Gauntlet #2942"
     (do-game
-      (new-game {:corp {:deck [(qty "Crisium Grid" 2)(qty "Vanilla" 2)]}
-                 :runner {:deck ["The Gauntlet" "Rip Deal" (qty "Easy Mark" 2)]}})
+      (new-game {:corp {:deck [(qty "Vanilla" 3)]}
+                 :runner {:deck ["The Gauntlet" "Rip Deal" "Easy Mark" "Sure Gamble"]}})
       (trash-from-hand state :runner "Easy Mark")
-      (trash-from-hand state :runner "Easy Mark")
+      (trash-from-hand state :runner "Sure Gamble")
       (play-from-hand state :corp "Vanilla" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
@@ -2444,7 +2449,14 @@
       (run-successful state)
       (click-prompt state :runner "1")
       (click-prompt state :runner "Replacement effect")
-      (is (= "Choose 2 card(s) to move from the Heap to your Grip" (-> (get-runner) :prompt first :msg))))))
+      (is (= "Choose 2 cards to move from the Heap to your Grip" (:msg (prompt-map :runner))))
+      (click-card state :runner "Easy Mark")
+      (click-card state :runner "Sure Gamble")
+      (is (= 2 (-> (get-runner) :hand count)))
+      (is (= ["Sure Gamble" "Easy Mark"] (->> (get-runner) :hand (map :title) (into []))))
+      (is (nil? (prompt-map :corp)) "Corp should have no more prompts")
+      (is (nil? (prompt-map :runner)) "Runner should have no more prompts")
+      (is (nil? (get-run)) "Run is ended"))))
 
 (deftest rumor-mill
   ;; Rumor Mill - interactions with rez effects, additional costs, general event handlers, and trash-effects
