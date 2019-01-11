@@ -117,7 +117,7 @@
             :unsuccessful {:effect (effect (register-events (:events (card-def card))
                                                             (assoc card :zone '(:discard))))}}
     :events {:pre-access {:req (req (#{:hq :rd} target))
-                          :effect (effect (access-bonus 2))}
+                          :effect (effect (access-bonus target 2))}
              :runner-turn-ends {:effect (effect (unregister-events card))}}}
 
    "Bribery"
@@ -368,7 +368,7 @@
     :effect (effect (run :rd nil card)
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
-                              :effect (effect (access-bonus (max 0 (min 4 (available-mu state)))))}
+                              :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Demolition Run"
@@ -518,14 +518,13 @@
    {:req (req archives-runnable)
     :makes-run true
     :async true
-    :effect
-    (effect (run :archives
-                 {:end-run
-                  {:async true
-                   :effect
-                   (req (wait-for (do-access state side [:hq] {:no-root true})
-                                  (do-access state side eid [:rd] {:no-root true})))}}
-                 card))}
+    :effect (effect (run :archives nil card)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+    :events {:end-access-phase {:async true
+                                :req (req (= :archives (:from-server target)))
+                                :effect (req (wait-for (do-access state side [:hq] {:no-root true})
+                                                       (do-access state side eid [:rd] {:no-root true})))}
+             :run-ends {:effect (effect (unregister-events card))}}}
 
    "Drive By"
    {:choices {:req #(let [topmost (get-nested-host %)]
@@ -1223,7 +1222,7 @@
     :effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
-                              :effect (effect (access-bonus 2))}
+                              :effect (effect (access-bonus :hq 2))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Leverage"
@@ -1951,7 +1950,7 @@
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
                               :req (req (= target :rd))
-                              :effect (effect (access-bonus 2))}
+                              :effect (effect (access-bonus :rd 2))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "The Noble Path"
@@ -1970,12 +1969,16 @@
                     :effect (req (let [runtgt [(last (server->zone state target))]
                                        ices (get-in @state (concat [:corp :servers] runtgt [:ices]))]
                                    (swap! state assoc :per-run nil
-                                                      :run {:server runtgt :position (count ices)
-                                                            :access-bonus 0 :run-effect nil})
+                                                      :run {:server runtgt
+                                                            :position (count ices)
+                                                            :access-bonus []
+                                                            :run-effect nil})
                                    (gain-run-credits state :runner (:bad-publicity corp))
                                    (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))
-                                   (trigger-event state :runner :run runtgt)))} card nil))
-    :events {:pre-damage nil :run-ends nil}}
+                                   (trigger-event state :runner :run runtgt)))}
+                   card nil))
+    :events {:pre-damage nil
+             :run-ends nil}}
 
    "The Price of Freedom"
    {:additional-cost [:connection 1]

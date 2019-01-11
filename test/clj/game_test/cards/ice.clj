@@ -1609,7 +1609,7 @@
         (core/rez state :corp mwanza)
         (let [credits (:credit (get-corp))]
           (card-subroutine state :corp shiro 1)
-          (is (= 3 (-> @state :run :access-bonus)) "Should access an additional 3 cards")
+          (is (= 3 (core/access-bonus-count (:run @state) :rd)) "Should access an additional 3 cards")
           (dotimes [_ 5]
             (click-prompt state :runner "Card from deck")
             (click-prompt state :runner "No action"))

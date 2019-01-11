@@ -141,7 +141,7 @@
                           :interactive (req true)
                           :psi {:player :runner
                                 :equal {:msg "access 1 additional card"
-                                        :effect (effect (access-bonus 1)
+                                        :effect (effect (access-bonus :rd 1)
                                                         (effect-completed eid))}}}}}
 
    "Alice Merchant: Clan Agitator"

@@ -910,19 +910,82 @@
         (core/add-counter state :runner ttw :power 4)
         (play-from-hand state :runner "Divide and Conquer")
         (card-ability state :runner ttw 0)
-        (card-ability state :runner ttw 0)
+        (card-ability state :runner ttw 1)
         (run-successful state)
         ;; HQ
-        (dotimes [_ 3]
+        (dotimes [_ 2]
           (click-prompt state :runner "Card from hand")
           (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
         ;; R&D
-        (dotimes [_ 3]
+        (dotimes [_ 2]
           (click-prompt state :runner "Card from deck")
           (click-prompt state :runner "No action"))
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
-        (is (= 2 (-> (get-runner) :register :last-run :access-bonus)) "The Turning Wheel should provide 2 additional accesses")
-        (is (= 8 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 + 2 in R&D, and 1 + 2 in HQ")))))
+        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :rd)))
+            "The Turning Wheel should provide 1 additional access on R&D")
+        (is (= 1 (-> (get-runner) :register :last-run (core/access-bonus-count :hq)))
+            "The Turning Wheel should provide 1 additional access on HQ")
+        (is (= 6 (-> (get-runner) :register :last-run core/total-cards-accessed))
+            "Runner should access 2 cards in Archives, 1 + 1 in R&D, and 1 + 1 in HQ"))))
+  (testing "The Turning Wheel gains counters after using D&C. Issue #3810"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 100)]}
+                 :runner {:deck ["Divide and Conquer" "The Turning Wheel"]}})
+      (starting-hand state :corp ["Ice Wall" "Ice Wall" "Ice Wall"])
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)
+            counters (get-counters (refresh ttw) :power)]
+        (play-from-hand state :runner "Divide and Conquer")
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No action")
+        (is (= counters (get-counters (refresh ttw) :power)) "Gains no counters")
+        (run-empty-server state "R&D")
+        (click-prompt state :runner "No action")
+        (is (= (+ 1 counters) (get-counters (refresh ttw) :power)) "Gains 1 counters"))))
+  (testing "vs Nisei Mk II. Issue #3803"
+    (do-game
+      (new-game {:corp {:deck ["Nisei MK II" (qty "Ice Wall" 100)]}
+                 :runner {:deck ["Divide and Conquer"]}})
+      (starting-hand state :corp ["Nisei MK II" "Ice Wall" "Ice Wall"])
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (play-and-score state "Nisei MK II")
+      (let [scored-nisei (get-scored state :corp 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Divide and Conquer")
+        (run-phase-43 state)
+        (card-ability state :corp (refresh scored-nisei) 0)
+        (click-prompt state :corp "Done") ; close 4.3 corp
+        (is (nil? (-> @state :runner :prompt first)) "No access prompts for runner")
+        (is (not (:run @state)) "Run ended by using Nisei counter")
+        (is (zero? (-> (get-runner) :register :last-run core/total-cards-accessed))
+            "Runner should access 0 cards"))))
+  (testing "interaction with Black Hat. Issue #3798"
+    (do-game
+      (new-game {:corp {:deck ["Hostile Takeover" (qty "Ice Wall" 100)]}
+                 :runner {:deck ["Divide and Conquer" "Black Hat"]
+                          :credits 10}})
+      (starting-hand state :corp (concat "Hostile Takeover" (repeat 5 "Ice Wall")))
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "Black Hat")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "5")
+      (play-from-hand state :runner "Divide and Conquer")
+      (run-successful state)
+      (dotimes [_ 3]
+        (click-prompt state :runner "Card from hand")
+        (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
+      (dotimes [_ 3]
+        (click-prompt state :runner "Card from deck")
+        (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
+      (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
+      (is (= 7 (-> (get-runner) :register :last-run core/total-cards-accessed))))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade

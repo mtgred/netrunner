@@ -711,7 +711,8 @@
     (run-on state "R&D")
     (run-successful state)
     (click-prompt state :runner "Yes")
-    (is (= 2 (+ (get-in @state [:runner :rd-access]) (:access-bonus (:run @state) 0))))))
+    (is (= 2 (+ (get-in @state [:runner :rd-access])
+                (core/access-bonus-count (:run @state) :rd))))))
 
 (deftest origami
   ;; Origami - Increases Runner max hand size

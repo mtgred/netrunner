@@ -2229,7 +2229,7 @@
                   (trace-ability 2 {:label "Runner reduces cards accessed by 1 for this run"
                                     :async true
                                     :msg "reduce cards accessed for this run by 1"
-                                    :effect (effect (access-bonus -1))})]}
+                                    :effect (effect (access-bonus (-> card :zone second) -1))})]}
 
    "Tapestry"
    {:subroutines [{:label "force the Runner to lose 1 [Click], if able"
