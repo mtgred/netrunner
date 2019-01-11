@@ -1535,7 +1535,7 @@
     :events {:pre-steal-cost nil :runner-turn-ends nil}}
 
    "Prey"
-   (run-event)
+   (run-event {:implementation "Ice trash is manual"} nil)
 
    "Process Automation"
    {:msg "gain 2 [Credits] and draw 1 card"
