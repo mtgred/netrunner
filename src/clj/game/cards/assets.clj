@@ -415,9 +415,9 @@
                                                                      (str "uses Constellation Protocol to move an advancement token from "
                                                                           (card-str state from-ice)
                                                                           " to "
-                                                                          (card-str state target))))}
-                                                  card nil)))
-                                 :end-effect (effect (clear-wait-prompt :runner))}
+                                                                          (card-str state target)))
+                                                                   (clear-wait-prompt :runner))}
+                                                  card nil)))}
                                 card nil))}]}
 
    "Contract Killer"
