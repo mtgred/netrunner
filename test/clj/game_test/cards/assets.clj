@@ -37,7 +37,7 @@
       (card-ability state :corp aal 0)
       (click-card state :corp (find-card "PAD Campaign" (:hand (get-corp))))
       (click-prompt state :corp "New remote")
-      (is (= (- hq 1) (count (:hand (get-corp)))) "Installed 1 card, hq is empty"))))
+      (is (= (dec hq) (count (:hand (get-corp)))) "Installed 1 card, hq is empty"))))
 
 (deftest aggressive-secretary
   ;; Aggressive Secretary
@@ -132,7 +132,7 @@
         (is (= 1 (count (get-program state))) "There is an Analog Dreamers installed")
         (click-card state :corp (get-program state 0))
         (is (zero? (count (get-program state))) "Analog Dreamers was uninstalled")
-        (is (= (+ grip 1) (-> (get-runner) :hand count)) "Analog Dreamers was added to hand"))
+        (is (= (inc grip) (-> (get-runner) :hand count)) "Analog Dreamers was added to hand"))
       (take-credits state :runner)
       (score-agenda state :corp breakthrough)
       ;; (click-prompt state :corp "Medical Breakthrough") ; there is no simult. effect resolution on score for some reason
@@ -920,7 +920,7 @@
         (click-card state :corp standoff)
         (is (= 3 (count (:deck (get-corp)))) "One more card (the Standoff) shuffled into R&D")
         (is (= 1 (count (:hand (get-corp)))) "Only the Hedge Fund left in HQ")
-        (is (= 0 (:click (get-corp))) "Used a click to activate Drudge Work")
+        (is (zero? (:click (get-corp))) "Used a click to activate Drudge Work")
         (is (= "Drudge Work" (-> (get-corp) :discard first :title)) "Drudge Work trashed after no counters left")
         (is (= (+ 5 -2 3 1) (:credit (get-corp))) "Gained 0 credits when revealing Standoff")))))
 
@@ -1318,7 +1318,7 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (zero? (count (:discard (get-runner)))) "Runner took no net damage")
-      (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
+      (is (nil? (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
       (is (= (:title (last (:discard (get-corp)))) "Gene Splicer") "Gene Splicer trashed")
       (is (= 4 (:credit (get-runner))) "Runner spent 1 credit to trash Gene Splicer")))
   (testing "Runner accesses a single-advanced Gene Splicer and doesn't trash.
@@ -1345,7 +1345,7 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")
-      (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
+      (is (nil? (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
       (is (= (:title (last (:discard (get-corp)))) "Gene Splicer") "Gene Splicer trashed")
       (is (= 4 (:credit (get-runner))) "Runner spent 1 credit to trash Gene Splicer")))
   (testing "Runner accesses a double-advanced Gene Splicer and doesn't trash
@@ -1372,7 +1372,7 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
-      (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
+      (is (nil? (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
       (is (= (:title (last (:discard (get-corp)))) "Gene Splicer") "Gene Splicer trashed")
       (is (= 4 (:credit (get-runner))) "Runner spent 1 credit to trash Gene Splicer")))
   (testing "Corp triple-advances a Gene Splicer and uses its ability to add to their score area as a 1 point agenda"
@@ -1386,7 +1386,7 @@
         (core/add-counter state :corp (refresh gs) :advancement 1)
         (core/rez state :corp (refresh gs))
         (card-ability state :corp (refresh gs) 0)
-        (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
+        (is (nil? (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
         (is (= 1 (:agendapoints (get-scored state :corp 0))) "Gene Splicer added to Corp score area")))))
 
 (deftest genetics-pavilion
@@ -1606,8 +1606,8 @@
                :runner {:deck ["Sure Gamble" "Astrolabe" "Paperclip" "Daily Casts"]}})
     (play-and-score state "Hostile Takeover")
     (play-from-hand state :corp "Ibrahim Salem" "New remote")
-    (let [is (get-content state :remote2 0)]
-      (core/rez state :corp (refresh is))
+    (let [ibrahim (get-content state :remote2 0)]
+      (core/rez state :corp (refresh ibrahim))
       (click-card state :corp (-> (get-corp) :scored first))
       (doseq [[i [card-type card-name]]
               (map-indexed vector ['("Event" "Sure Gamble")
@@ -1617,7 +1617,7 @@
         (take-credits state :corp)
         (take-credits state :runner)
         (is (:corp-phase-12 @state) "Corp is in Step 1.2")
-        (card-ability state :corp is 0)
+        (card-ability state :corp ibrahim 0)
         (click-prompt state :corp card-type)
         (click-prompt state :corp (find-card card-name (:hand (get-runner))))
         (core/end-phase-12 state :corp nil)
@@ -1846,7 +1846,7 @@
       (is (= 2 (-> (get-corp) :prompt first :base)) "Base Trace should be up to 2")
       (click-prompt state :corp "1")
       (click-prompt state :runner "0")
-      (is (= 1 (-> (get-runner) :brain-damage)) "Trace succeeded so runner should take 1 brain damage")
+      (is (= 1 (:brain-damage (get-runner))) "Trace succeeded so runner should take 1 brain damage")
       (is (= 1 (-> (get-runner) :discard count)) "Trace succeeded so runner should discard card from damage")
       (is (= 1 (-> (get-corp) :discard count)) "Kuwinda should be in Archives")
       (is (= "Kuwinda K4H1U3" (-> (get-corp) :discard first :title)) "Kuwinda should be in Archives")
@@ -1967,8 +1967,8 @@
             credits (:credit (get-corp))]
         (card-ability state :corp (refresh levy) 0)
         (click-prompt state :corp (find-card "Ice Wall" (:deck (get-corp))))
-        (is (= (- credits 1) (:credit (get-corp))) "Levy University ability should cost 1 credit")
-        (is (= (- clicks 1) (:click (get-corp))) "Levy University ability should cost 1 click"))
+        (is (= (dec credits) (:credit (get-corp))) "Levy University ability should cost 1 credit")
+        (is (= (dec clicks) (:click (get-corp))) "Levy University ability should cost 1 click"))
       (is (= 1 (-> (get-corp) :hand count)) "HQ should have 1 card")
       (is (= "Ice Wall" (-> (get-corp) :hand first :title)) "HQ should contain Ice Wall")
       (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Corp should shuffle deck"))))
@@ -1992,7 +1992,7 @@
       (click-prompt state :corp (find-card "Beanstalk Royalties" (-> (get-corp) :prompt first :choices)))
       (is (= "Beanstalk Royalties" (-> (get-corp) :deck first :title)) "Beanstalk Royalties should be moved to top of R&D")
       (is (= 1 (count-tags state)) "Runner should have 1 tag from Lily Lockwell ability")
-      (is (= (- clicks 1) (:click (get-corp))) "Lily Lockwell ability should cost 1 click")
+      (is (= (dec clicks) (:click (get-corp))) "Lily Lockwell ability should cost 1 click")
       (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Corp should shuffle deck")
       (core/draw state :corp)
       (card-ability state :corp (refresh lily) 0)
@@ -2135,7 +2135,7 @@
       (take-credits state :corp)
       (let [credits (:credit (get-corp))]
         (take-credits state :runner)
-        (is (= (+ credits 1) (:credit (get-corp))) "Should gain 1 credit at beginning of turn from Marked Accounts")))))
+        (is (= (inc credits) (:credit (get-corp))) "Should gain 1 credit at beginning of turn from Marked Accounts")))))
 
 (deftest mca-austerity-policy
   (do-game
@@ -2281,10 +2281,10 @@
       (take-credits state :corp)
       (let [credits (:credit (get-corp))]
         (take-credits state :runner)
-        (is (= (+ credits 1) (:credit (get-corp))) "Corp should gain 1 credit at start of turn from NASX"))
+        (is (= (inc credits) (:credit (get-corp))) "Corp should gain 1 credit at start of turn from NASX"))
       (let [credits (:credit (get-corp))]
         (card-ability state :corp nasx 1)
-        (is (= (- credits 1) (:credit (get-corp))) "Corp should spend 1 credit on NASX ability")
+        (is (= (dec credits) (:credit (get-corp))) "Corp should spend 1 credit on NASX ability")
         (is (= 1 (get-counters (refresh nasx) :power)) "NASX should gain 1 power counter from spent credits"))
       (let [credits (:credit (get-corp))]
         (card-ability state :corp nasx 2)
@@ -2385,7 +2385,7 @@
       ;; Corp can shuffle two programs
       (click-card state :corp (get-program state 1))
       (click-card state :corp (get-program state 0))
-      (is (= 0 (:credit (get-corp))) "Spent 3 credits to fire ambush")
+      (is (zero? (:credit (get-corp))) "Spent 3 credits to fire ambush")
       (is (empty? (get-program state)) "Removed one installed program")
       (is (= 3 (count (:deck (get-runner)))) "Shuffled two programs into the stack"))))
 
@@ -2468,7 +2468,7 @@
       (take-credits state :corp)
       (let [credits (:credit (get-corp))]
         (take-credits state :runner)
-        (is (= (+ 1 credits) (:credit (get-corp))) "Should gain 1 credit at start of turn from PAD Campaign")))))
+        (is (= (inc credits) (:credit (get-corp))) "Should gain 1 credit at start of turn from PAD Campaign")))))
 
 (deftest pad-factory
   ;; PAD Factory - Click to place an advancement, cannot score target until next turn
@@ -2644,7 +2644,7 @@
     (run-empty-server state "Server 1")
     (let [credits (:credit (get-corp))]
       (click-prompt state :corp "Yes")
-      (is (= (- credits 1) (:credit (get-corp))) "Corp should pay 1 for Project Junebug ability")
+      (is (= (dec credits) (:credit (get-corp))) "Corp should pay 1 for Project Junebug ability")
       (is (= 4 (-> (get-runner) :discard count)) "Project Junebug should do 4 net damage"))))
 
 (deftest psychic-field
@@ -3042,7 +3042,7 @@
         (click-card state :corp iw)
         (is (= (+ credits 4) (:credit (get-corp))) "Corp should gain 4 from Security Subcontract ability")
         (is (= "Ice Wall" (-> (get-corp) :discard first :title)) "Ice Wall should be in Archives from Security Subcontract ability")
-        (is (= (- clicks 1) (:click (get-corp))) "Corp should lose 1 click from Security Subcontract ability")))))
+        (is (= (dec clicks) (:click (get-corp))) "Corp should lose 1 click from Security Subcontract ability")))))
 
 (deftest sensie-actors-union
   ;; Sensie Actors Union
@@ -3134,13 +3134,13 @@
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :corp "Yes")
-      (is (empty? (-> (get-corp) :prompt)) "Corp shouldn't get Shattered Remains ability prompt when no counters")
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't get Shattered Remains ability prompt when no counters")
       (click-prompt state :runner "No action")
       (run-empty-server state :remote2)
       (let [credits (:credit (get-corp))]
         (click-prompt state :corp "Yes")
         (click-card state :corp cyber)
-        (is (= (- credits 1) (:credit (get-corp))) "Shattered Remains ability should cost 1")
+        (is (= (dec credits) (:credit (get-corp))) "Shattered Remains ability should cost 1")
         (is (count (:discard (get-runner))) "Cyberfeeder should be in discard from Shattered Remains")))))
 
 (deftest shi-kyu
@@ -3199,7 +3199,7 @@
       (let [siu (get-content state :remote1 0)]
         (core/rez state :corp siu)
         (card-ability state :corp (refresh siu) 0) ; try to trigger SIU outside phase 1.2
-        (is (= 0 (-> (get-corp) :discard count)) "SIU should not trigger because it's not 1.2")
+        (is (zero? (-> (get-corp) :discard count)) "SIU should not trigger because it's not 1.2")
         (take-credits state :corp)
         (take-credits state :runner)
         (is (:corp-phase-12 @state) "Corp is in Step 1.2 because SIU is on the table")
@@ -3847,7 +3847,7 @@
       (let [credits (:credit (get-corp))]
         (card-ability state :corp plaza 0)
         (click-card state :corp (find-card "Personalized Portal" (:hand (get-corp))))
-        (is (= (- credits 1) (:credit (get-corp))) "Corp should only spend 1 credit to rez Personalized Portal"))
+        (is (= (dec credits) (:credit (get-corp))) "Corp should only spend 1 credit to rez Personalized Portal"))
       (let [credits (:credit (get-corp))]
         (card-ability state :corp plaza 0)
         (click-card state :corp (find-card "Dedicated Response Team" (:hand (get-corp))))
@@ -3879,12 +3879,12 @@
       (is (:rezzed (refresh zai)) "Zaibatsu Loyalty should be rezzed")
       (let [credits (:credit (get-corp))]
         (card-ability state :corp zai 0)
-        (is (= (- credits 1) (:credit (get-corp))) "Corp should lose 1 credit for stopping the expose")
+        (is (= (dec credits) (:credit (get-corp))) "Corp should lose 1 credit for stopping the expose")
         (click-prompt state :corp "Done"))
       (card-ability state :runner code 0)
       (click-card state :runner (refresh iw))
       (is (some? (-> (get-corp) :prompt first)) "Corp should be prompted to prevent")
-      (is (= 0 (-> (get-corp) :discard count)) "No trashed cards")
+      (is (zero? (-> (get-corp) :discard count)) "No trashed cards")
       (card-ability state :corp zai 1)
       (is (= 1 (-> (get-corp) :discard count)) "Zaibatsu Loyalty should be in discard after using ability"))))
 

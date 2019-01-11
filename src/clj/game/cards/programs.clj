@@ -83,13 +83,13 @@
                                                          (ice? %)
                                                          (can-host? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has-subtype? c "Caïssa"))
-                                                                    (:hosted %))))
+                                                         (not-any? (fn [c] (has-subtype? c "Caïssa"))
+                                                                   (:hosted %)))
                                                     (and (ice? %)
                                                          (can-host? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has-subtype? c "Caïssa"))
-                                                                    (:hosted %)))))}
+                                                         (not-any? (fn [c] (has-subtype? c "Caïssa"))
+                                                                   (:hosted %))))}
                                   :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))} card nil)))}]
     :events {:pre-ice-strength
@@ -285,18 +285,22 @@
                                     :choices {:req #(and (is-type? % "Program")
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
-                                    :msg (msg "host " (:title target) (when (-> target :cost pos?) ", lowering its cost by 1 [Credit]"))
+                                    :msg (msg (str "host " (:title target)
+                                                   (when (-> target :cost pos?)
+                                                     ", lowering its cost by 1 [Credit]")))
                                     :effect (effect (when (-> target :cost pos?)
                                                       (install-cost-bonus state side [:credit -1]))
                                                     (runner-install target {:host-card card :no-mu true})
                                                     (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
-                                  card nil))}
+                                   card nil))}
                 {:label "Host an installed program on Dhegdheer with [Credit] discount"
                  :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer with [Credit] discount"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
-                 :msg (msg "host " (:title target) (when (-> target :cost pos?) ", lowering its cost by 1 [Credit]"))
+                 :msg (msg (str "host " (:title target)
+                                (when (-> target :cost pos?)
+                                  ", lowering its cost by 1 [Credit]")))
                  :effect (req (free-mu state (:memoryunits target))
                               (when (-> target :cost pos?)
                                 (gain-credits state side 1))
@@ -308,7 +312,9 @@
                  :prompt "Choose an installed program to host on Dhegdheer"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
-                 :msg (msg "host " (:title target) (when (-> target :cost pos?)))
+                 :msg (msg (str "host " (:title target)
+                                (when (-> target :cost pos?)
+                                  ", lowering its cost by 1 [Credit]")))
                  :effect (effect (free-mu (:memoryunits target))
                                  (update-breaker-strength target)
                                  (host card (get-card state target))
@@ -476,7 +482,7 @@
 
    "Harbinger"
    {:trash-effect
-     {:req (req (not (some #{:facedown :hand} (:previous-zone card))))
+     {:req (req (not-any? #{:facedown :hand} (:previous-zone card)))
       :effect (req (let [lock (get-in @state [:runner :locked :discard])]
                      (swap! state assoc-in [:runner :locked] nil)
                      (runner-install state :runner card {:facedown true})
@@ -910,11 +916,11 @@
                                                          (= (last (:zone %)) :ices)
                                                          (ice? %)
                                                          (can-host? %)
-                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
+                                                         (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))
                                                     (and (ice? %)
                                                          (can-host? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
+                                                         (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
                                   :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))} card nil)))}]
     :events {:pre-rez-cost {:req (req (= (:zone (:host card)) (:zone target)))

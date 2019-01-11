@@ -23,7 +23,7 @@
 
 (defn donors-handler [req]
   (response 200 (->> (mc/find-maps db "donators")
-                     (sort-by :amount #(> %1 %2))
+                     (sort-by :amount >)
                      (map #(let [username (:username %)]
                              (if (empty? username)
                                (:name %)

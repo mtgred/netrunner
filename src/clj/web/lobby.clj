@@ -1,6 +1,7 @@
 (ns web.lobby
   (:require [web.db :refer [db object-id]]
-            [web.utils :refer [response tick remove-once]]
+            [web.utils :refer [response tick]]
+            [game.utils :refer [remove-once]]
             [web.ws :as ws]
             [web.stats :as stats]
             [game.core :as core]
@@ -200,7 +201,7 @@
   (mapcat #(get-in % [:user :options :blocked-users]) players))
 
 (defn allowed-in-game [game {:keys [username]}]
-  (not (some #(= username %) (blocked-users game))))
+  (not-any? #(= username %) (blocked-users game)))
 
 (defn handle-ws-connect [{:keys [client-id] :as msg}]
   (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))]))

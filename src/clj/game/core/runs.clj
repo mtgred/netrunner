@@ -136,10 +136,10 @@
                      (card-flag? card :can-trash-operation true))
         ;; If card has already been trashed this access don't show option to pay to trash (eg. Ed Kim)
         (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
-          (let [trash-ab-cards (->> (concat (all-active state :runner)
-                                            (get-in @state [:runner :play-area]))
-                                    (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [card])))
-                ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
+          (let [trash-ab-cards (filter #(can-trigger? state :runner (get-in (card-def %) [:interactions :trash-ability]) % [card])
+                                       (concat (all-active state :runner)
+                                               (get-in @state [:runner :play-area])))
+                ability-strs (map #(get-in (card-def %) [:interactions :trash-ability :label]) trash-ab-cards)
                 trash-cost-str (when can-pay
                                  [(str "Pay " trash-cost " [Credits] to trash")])
                 ;; If the runner is forced to trash this card (Neutralize All Threats)
@@ -154,7 +154,7 @@
                 prompt-str (str "You accessed " card-name ".")
                 no-action-str (when-not forced-to-trash?
                                 ["No action"])
-                choices (into [] (concat ability-strs trash-cost-str no-action-str))]
+                choices (vec (concat ability-strs trash-cost-str no-action-str))]
             (continue-ability
               state :runner
               {:async true
@@ -237,10 +237,10 @@
         ;; any trash abilities
         can-steal-this? (can-steal? state side c)
         trash-ab-cards (when (not= (:zone c) [:discard])
-                         (->> (concat (all-active state :runner)
-                                      (get-in @state [:runner :play-area]))
-                              (filter #(can-trigger? state :runner (get-in (card-def %) [:interactions :trash-ability]) % [c]))))
-        ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
+                         (filter #(can-trigger? state :runner (get-in (card-def %) [:interactions :trash-ability]) % [c])
+                                 (concat (all-active state :runner)
+                                         (get-in @state [:runner :play-area]))))
+        ability-strs (map #(get-in (card-def %) [:interactions :trash-ability :label]) trash-ab-cards)
         ;; strs
         steal-str (when (and can-steal-this? can-pay-costs?)
                     (if (seq cost-strs)
@@ -252,7 +252,7 @@
                                 (not= steal-str ["Steal"]))
                         ["No action"])
         prompt-str (str "You accessed " card-name ".")
-        choices (into [] (concat ability-strs steal-str no-action-str))]
+        choices (vec (concat ability-strs steal-str no-action-str))]
     ;; Steal costs are additional costs and can be denied by the runner.
     (continue-ability state :runner
                       {:async true
@@ -381,8 +381,8 @@
    (swap! state update-in [:bonus] dissoc :steal-cost)
    (swap! state update-in [:bonus] dissoc :access-cost)
    (when (:run @state)
-     (let [zone (#{:discard :deck :hand} (-> card :zone first))
-           zone (if zone zone (-> card :zone second))]
+     (let [zone (or (#{:discard :deck :hand} (-> card :zone first))
+                    (-> card :zone second))]
        (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
    ;; First trigger pre-access-card, then move to determining if we can trash or steal.
    (wait-for (trigger-event-sync state side :pre-access-card card)

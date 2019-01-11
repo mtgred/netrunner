@@ -1261,7 +1261,7 @@
                   (if (pos? left)
                     {:prompt (str "Choose a Sysop (" (inc (- total left)) "/" total ")")
                      :choices (req (cancellable (filter #(and (has-subtype? % "Sysop")
-                                                              (not (some #{(:title %)} selected))) (:deck corp)) :sorted))
+                                                              (not-any? #{(:title %)} selected)) (:deck corp)) :sorted))
                      :msg (msg "put " (:title target) " into HQ")
                      :async true
                      :effect (req (move state side target :hand)

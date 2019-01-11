@@ -52,7 +52,7 @@
         (is (not= nil (get-ice state :hq 0)) "Architect was trashed, but should be untrashable")
         (core/derez state :corp (refresh architect))
         (core/trash state :corp (refresh architect))
-        (is (= nil (get-ice state :hq 0)) "Architect was not trashed, but should be trashable")
+        (is (nil? (get-ice state :hq 0)) "Architect was not trashed, but should be trashable")
         (core/trash state :corp (get-in @state [:corp :hand 0]))
         (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
         (is (= (get-in @state [:corp :discard 1 :title]) "Architect"))))))
@@ -439,7 +439,7 @@
             responders (get-resource state 0)]
         (run-on state "HQ")
         (run-continue state)             ; pass the first ice
-        (is (= 0 (get-in @state [:run :position])) "Now approaching server")
+        (is (zero? (get-in @state [:run :position])) "Now approaching server")
         (core/rez state :corp form1)
         (click-prompt state :corp "Yes")      ; Move Formicary
         (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
@@ -469,7 +469,7 @@
         (run-on state "HQ")
         (run-continue state)             ; pass the first ice
         (run-continue state)             ; pass the second ice
-        (is (= 0 (get-in @state [:run :position])) "Now approaching server")
+        (is (zero? (get-in @state [:run :position])) "Now approaching server")
         (core/rez state :corp form)
         (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is the innermost piece of ice before swap")
         (is (= "Formicary" (:title (get-ice state :hq 1))) "Formicary is the outermost piece of ice before swap")
@@ -623,7 +623,7 @@
         (is (is-tagged? state) "Runner is tagged")
         (is (= 3 (count (:hand (get-runner)))) "3 cards in Runner grip before Hydra damage")
         (card-subroutine state :corp hydra 0)
-        (is (= 0 (count (:hand (get-runner)))) "Hydra sub 1 did 3 damage when Runner is tagged")
+        (is (zero? (count (:hand (get-runner)))) "Hydra sub 1 did 3 damage when Runner is tagged")
         (card-subroutine state :corp hydra 1)
         (is (= (- corp-creds 5) (:credit (get-corp))) "Hydra sub 2 gave 5 credits to Corp when Runner is tagged")
         (is (:run @state) "Still a run going on before resolving last subroutine")
@@ -1889,14 +1889,14 @@
         (core/rez state :corp wend)
         (is (= 4 (:current-strength (refresh wend))) "Wendigo at normal 4 strength")
         (core/advance state :corp {:card (refresh wend)})
-        (is (= true (utils/has? (refresh wend) :subtype "Barrier")) "Wendigo gained Barrier")
-        (is (= false (utils/has? (refresh wend) :subtype "Code Gate")) "Wendigo lost Code Gate")
+        (is (true? (utils/has? (refresh wend) :subtype "Barrier")) "Wendigo gained Barrier")
+        (is (false? (utils/has? (refresh wend) :subtype "Code Gate")) "Wendigo lost Code Gate")
         (is (= 5 (:current-strength (refresh wend))) "Wendigo boosted to 5 strength by scored Superior Cyberwalls")
         (play-from-hand state :corp "Shipment from SanSan")
         (click-prompt state :corp "1")
         (click-card state :corp wend)
-        (is (= false (utils/has? (refresh wend) :subtype "Barrier")) "Wendigo lost Barrier")
-        (is (= true (utils/has? (refresh wend) :subtype "Code Gate")) "Wendigo gained Code Gate")
+        (is (false? (utils/has? (refresh wend) :subtype "Barrier")) "Wendigo lost Barrier")
+        (is (true? (utils/has? (refresh wend) :subtype "Code Gate")) "Wendigo gained Code Gate")
         (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
 
 (deftest wraparound

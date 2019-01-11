@@ -73,11 +73,9 @@
            (DELETE "/data/decks/:id" [] decks/decks-delete-handler))
 
 (defroutes routes
-           (-> user-routes
-               (wrap-routes auth/wrap-authentication-required))
-           (-> admin-routes
-               (wrap-routes auth/wrap-authorization-required))
-           public-routes)
+  (wrap-routes user-routes auth/wrap-authentication-required)
+  (wrap-routes admin-routes auth/wrap-authorization-required)
+  public-routes)
 
 (defn wrap-return-favicon [handler]
   (fn [req]

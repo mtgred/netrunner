@@ -58,9 +58,9 @@
           n (or n remaining-clicks)
           other (if (= side :corp) :runner :corp)]
      (dotimes [i n] (core/click-credit state side nil))
-     (if (= (get-in @state [side :click]) 0)
-       (do (core/end-turn state side nil)
-           (core/start-turn state other nil))))))
+     (when (zero? (get-in @state [side :click]))
+       (core/end-turn state side nil)
+       (core/start-turn state other nil)))))
 
 
 ;; Deck construction helpers

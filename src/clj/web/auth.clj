@@ -90,9 +90,9 @@
       (do (mc/update db "users"
                      {:username username}
                      {"$set" {:last-connection (java.util.Date.)}})
-          (-> (response 200 {:message "ok"})
-              (assoc :cookies {"session" (merge {:value (create-token user)}
-                                                (get-in server-config [:auth :cookie]))})))
+          (assoc (response 200 {:message "ok"})
+                 :cookies {"session" (merge {:value (create-token user)}
+                                            (get-in server-config [:auth :cookie]))}))
       (response 401 {:error "Invalid login or password"}))))
 
 (defn logout-handler [request]
@@ -125,7 +125,7 @@
 (defn hexadecimalize
   "Converts a byte array to a hex string"
   [a-byte-array]
-  (clojure.string/lower-case (apply str (map #(format "%02X" %) a-byte-array))))
+  (clojure.string/lower-case (clojure.string/join (map #(format "%02X" %) a-byte-array))))
 
 (defn set-password-reset-code!
   "Generates a password-reset code for the given email address. Updates the user's info in the database with the code,

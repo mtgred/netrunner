@@ -486,7 +486,7 @@
         (play-from-hand state :runner "Scrubbed")
         (run-on state :hq)
         (card-subroutine state :corp pup 0)
-        (is (not (empty? (:prompt (get-corp)))) "Employee Strike out of play - Ability turned on correctly")))))
+        (is (seq (:prompt (get-corp))) "Employee Strike out of play - Ability turned on correctly")))))
 
 (deftest edward-kim-humanity-s-hammer
   ;; Edward Kim
