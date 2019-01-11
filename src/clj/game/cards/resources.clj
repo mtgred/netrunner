@@ -48,6 +48,15 @@
     ;; Add an effect only if there is none in the map
     (merge trash-effect definition)))
 
+(defn count-num-subroutines
+  "Count the number of subroutines for Hernando Cortez. Note that this only
+  counts subroutines that exist as part of the card text. It does not count
+  subroutines that the card will gain once rezzed."
+  [card]
+  (->> (-> card :title server-card :text split-lines)
+       (filter #(starts-with? % "[subroutine]"))
+       count))
+
 ;;; Card definitions
 (def card-definitions
   {"Aaron Marrón"
@@ -950,6 +959,11 @@
    {:flags {:drip-economy true}
     :events {:runner-turn-begins ability}
     :abilities [ability]})
+
+   "Hernando Cortez"
+   {:events {:pre-rez-cost {:req (req (and (>= (:credit corp) 10) (ice? target)))
+                            :effect (effect (rez-cost-bonus (count-num-subroutines target)))
+                            :msg (msg "increase the rez cost by " (count-num-subroutines target) " [Credit]")}}}
 
    "Human First"
    {:events {:agenda-scored {:msg (msg "gain " (get-agenda-points state :corp target) " [Credits]")

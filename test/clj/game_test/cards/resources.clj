@@ -1188,6 +1188,95 @@
     (is (= 5 (:credit (get-runner))) "Gained 2c")
     (is (= 3 (:click (get-runner))) "Lost 1 click")))
 
+(deftest hernando-cortez
+  ;; Herando Cortez - Increase all ICE rez cost by 1c if the Corp has 10c or more
+  (testing "Rezzing a one subroutine ICE"
+    (do-game
+      (new-game {:corp {:deck [(qty "Paper Wall" 3) "Launch Campaign"]}
+                 :runner {:deck ["Hernando Cortez"]}})
+      (play-from-hand state :corp "Paper Wall" "HQ")
+      (play-from-hand state :corp "Paper Wall" "R&D")
+      (play-from-hand state :corp "Paper Wall" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hernando Cortez")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp 2)
+      (is (= 12 (:credit (get-corp))) "Corp should have 12 credits")
+      (let [pw1 (get-ice state :hq 0)
+            pw2 (get-ice state :rd 0)
+            pw3 (get-ice state :archives 0)
+            lc (get-content state :remote1 0)]
+        (core/rez state :corp lc)
+        (is (= 11 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
+        (core/rez state :corp pw1)
+        (is (= 10 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
+        (is (second-last-log-contains? state "increase the rez cost by 1 \\[Credit\\]") "Hernando Cortez use was logged")
+        (core/rez state :corp pw2)
+        (is (= 9 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
+        (is (second-last-log-contains? state "increase the rez cost by 1 \\[Credit\\]") "Hernando Cortez use was logged")
+        (core/rez state :corp pw3)
+        (is (= 9 (:credit (get-corp))) "Paid 0 to rez Paper Wall")
+        (is (not (second-last-log-contains? state "increase the rez cost by 1 \\[Credit\\]")) "Hernando Cortez use was not logged"))))
+  (testing "Rezzing a three subroutine ICE"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ichi 1.0" 2) "Launch Campaign"]}
+                 :runner {:deck ["Hernando Cortez"]}})
+      (play-from-hand state :corp "Ichi 1.0" "HQ")
+      (play-from-hand state :corp "Ichi 1.0" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hernando Cortez")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 14 (:credit (get-corp))) "Corp should have 14 credits")
+      (let [ichi1 (get-ice state :hq 0)
+            ichi2 (get-ice state :rd 0)
+            lc (get-content state :remote1 0)]
+        (core/rez state :corp lc)
+        (is (= 13 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
+        (core/rez state :corp ichi1)
+        (is (= 5 (:credit (get-corp))) "Paid 8 instead of 5 to rez Ichi 1.0")
+        (is (second-last-log-contains? state "increase the rez cost by 3 \\[Credit\\]") "Hernando Cortez use was logged")
+        (core/rez state :corp ichi2)
+        (is (= 0 (:credit (get-corp))) "Paid 5 to rez Ichi 1.0")
+        (is (not (second-last-log-contains? state "increase the rez cost by 3 \\[Credit\\]")) "Hernando Cortez use was not logged"))))
+  (testing "Rezzing a zero subroutine ICE"
+    (do-game
+      (new-game {:corp {:deck ["Tour Guide" "NEXT Silver" "Launch Campaign"]}
+                 :runner {:deck ["Hernando Cortez"]}})
+      (play-from-hand state :corp "Tour Guide" "HQ")
+      (play-from-hand state :corp "NEXT Silver" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hernando Cortez")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp 2)
+      (is (= 13 (:credit (get-corp))) "Corp should have 13 credits")
+      (let [tour-guide (get-ice state :hq 0)
+            next-silver (get-ice state :rd 0)
+            lc (get-content state :remote1 0)]
+        (core/rez state :corp lc)
+        (is (= 12 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
+        (core/rez state :corp tour-guide)
+        (is (= 10 (:credit (get-corp))) "Paid 2 to rez Tour Guide")
+        (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged")
+        (core/rez state :corp next-silver)
+        (is (= 7 (:credit (get-corp))) "Paid 3 to rez NEXT Silver")
+        (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged")))))
+
 (deftest ice-carver
   ;; Ice Carver - lower ice strength on encounter
   (do-game
