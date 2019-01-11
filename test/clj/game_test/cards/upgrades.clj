@@ -624,6 +624,26 @@
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters")))))
 
+(deftest disposable-hq
+  ;; Disposable HQ
+  (do-game
+    (new-game {:corp {:hand ["Disposable HQ" "Fire Wall" "Hedge Fund" "Spiderweb"]
+                      :deck ["Ice Wall"]}})
+    (play-from-hand state :corp "Disposable HQ" "New remote")
+    (take-credits state :corp)
+    (run-on state "Server 1")
+    (run-successful state)
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Fire Wall")
+    (click-card state :corp "Hedge Fund")
+    (click-card state :corp "Spiderweb")
+    (click-prompt state :runner "Pay 5 [Credits] to trash")
+    (is (empty? (:prompt (get-corp))) "Corp should be waiting on Runner")
+    (is (empty? (:prompt (get-runner))) "Runner should be able to take actions")
+    (is (= ["Ice Wall" "Fire Wall" "Hedge Fund" "Spiderweb"]
+           (->> (get-corp) :deck (take 4) (map :title) (into [])))
+        "Deck should be ordered top to bottom")))
+
 (deftest drone-screen
   ;; Drone Screen
   (do-game
