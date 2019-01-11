@@ -299,58 +299,75 @@
                      :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
             [:button "Send"]]]])})))
 
+(defn- reset-game-name
+  [gameid]
+  (authenticated
+    (fn [user]
+      (ws/ws-send! [:lobby/rename-game {:gameid gameid}]))))
+
 (defn game-view [{:keys [title format password started players gameid current-game password-game original-players editing] :as game}]
-  (r/with-let [s (r/atom {})
-                join (fn [action]
-                       (let [password (:password password-game password)]
-                         (if (empty? password)
-                           (join-game (if password-game (:gameid password-game) gameid) s action nil)
-                           (if-let [input-password (:password @s)]
-                             (join-game (if password-game (:gameid password-game) gameid) s action input-password)
-                             (do (swap! app-state assoc :password-gameid gameid) (swap! s assoc :prompt action))))))]
-      [:div.gameline {:class (when (= current-game gameid) "active")}
-       (when (and (:allowspectator game) (not (or password-game current-game editing)))
-         [:button {:on-click #(do (join "watch") (resume-sound))} "Watch" editing])
-       (when-not (or current-game editing (= (count players) 2) started password-game)
-         [:button {:on-click #(do (join "join") (resume-sound))} "Join"])
-       (when (and (not current-game) (not editing) started (not password-game)
-                  (some #(= % (get-in @app-state [:user :_id]))
-                        (map #(get-in % [:user :_id]) original-players)))
-         [:button {:on-click #(do (join "rejoin") (resume-sound))} "Rejoin"])
-       (let [c (count (:spectators game))]
-         [:h4 (str (when-not (empty? (:password game))
-                     "[PRIVATE] ")
-                   (:title game)
-                   (when (pos? c)
-                     (str  " (" c " spectator" (when (> c 1) "s") ")")))])
+  (r/with-let [s (r/atom {:show-mod-menu false})
+               user (:user @app-state)
+               join (fn [action]
+                      (let [password (:password password-game password)]
+                        (if (empty? password)
+                          (join-game (if password-game (:gameid password-game) gameid) s action nil)
+                          (if-let [input-password (:password @s)]
+                            (join-game (if password-game (:gameid password-game) gameid) s action input-password)
+                            (do (swap! app-state assoc :password-gameid gameid) (swap! s assoc :prompt action))))))]
+    [:div.gameline {:class (when (= current-game gameid) "active")}
+     (when (and (:allowspectator game) (not (or password-game current-game editing)))
+       [:button {:on-click #(do (join "watch") (resume-sound))} "Watch" editing])
+     (when-not (or current-game editing (= (count players) 2) started password-game)
+       [:button {:on-click #(do (join "join") (resume-sound))} "Join"])
+     (when (and (not current-game) (not editing) started (not password-game)
+                (some #(= % (get-in @app-state [:user :_id]))
+                      (map #(get-in % [:user :_id]) original-players)))
+       [:button {:on-click #(do (join "rejoin") (resume-sound))} "Rejoin"])
+     (let [c (count (:spectators game))]
+       [:h4
+        {:on-click #(swap! s assoc :show-mod-menu (not (:show-mod-menu @s false)))
+         :class (when (or (:isadmin user) (:ismoderator user)) "clickable")}
+        (str (when-not (empty? (:password game))
+               "[PRIVATE] ")
+             (:title game)
+             (when (pos? c)
+               (str  " (" c " spectator" (when (> c 1) "s") ")")))])
 
-       [:div {:class "game-format"}
-        [:span.format-label "Format:  "]
-        [:span.format-type (slug->format format "Unknown")]]
+     (when (and (:show-mod-menu @s)
+                (or (:isadmin user) (:ismoderator user)))
+       [:div.panel.blue-shade.mod-menu
+        [:div {:on-click #(do (reset-game-name gameid)
+                              (swap! s assoc :show-mod-menu false))} "Reset Game Name"]
+        [:div {:on-click #(swap! s assoc :show-mod-menu false)} "Cancel"]])
 
-       [:div (doall
-               (for [player (:players game)]
-                 ^{:key (-> player :user :_id)}
-                 [player-view player game]))]
+     [:div {:class "game-format"}
+      [:span.format-label "Format:  "]
+      [:span.format-type (slug->format format "Unknown")]]
 
-       (when-let [prompt (:prompt @s)]
-         [:div.password-prompt
-          [:h3 (str "Password for " (if password-game (:title password-game) title))]
-          [:p
-           [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
-                               :type "password"
-                               :value (:password @s) :placeholder "Password" :maxLength "30"}]]
-          [:p
-           [:button {:type "button" :on-click #(join prompt)}
-            prompt]
-           [:span.fake-link {:on-click #(do
-                                          (swap! app-state dissoc :password-gameid)
-                                          (swap! s assoc :prompt false)
-                                          (swap! s assoc :error-msg nil)
-                                          (swap! s assoc :password nil))}
-            "Cancel"]]
-          (when-let [error-msg (:error-msg @s)]
-            [:p.flash-message error-msg])])]))
+     [:div (doall
+             (for [player (:players game)]
+               ^{:key (-> player :user :_id)}
+               [player-view player game]))]
+
+     (when-let [prompt (:prompt @s)]
+       [:div.password-prompt
+        [:h3 (str "Password for " (if password-game (:title password-game) title))]
+        [:p
+         [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
+                             :type "password"
+                             :value (:password @s) :placeholder "Password" :maxLength "30"}]]
+        [:p
+         [:button {:type "button" :on-click #(join prompt)}
+          prompt]
+         [:span.fake-link {:on-click #(do
+                                        (swap! app-state dissoc :password-gameid)
+                                        (swap! s assoc :prompt false)
+                                        (swap! s assoc :error-msg nil)
+                                        (swap! s assoc :password nil))}
+          "Cancel"]]
+        (when-let [error-msg (:error-msg @s)]
+          [:p.flash-message error-msg])])]))
 
 (defn- blocked-from-game
   "Remove games for which the user is blocked by one of the players"

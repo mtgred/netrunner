@@ -13,6 +13,8 @@
             [clj-time.core :as t])
   (:import org.bson.types.ObjectId))
 
+(def log-collection "moderator_actions")
+
 ;; All games active on the server.
 (defonce all-games (atom {}))
 
@@ -349,6 +351,27 @@
                         :games/diff
                         {:diff {:update {gameid (game-public-view (game-for-id gameid))}}}))))
 
+(defn handle-rename-game
+  [{{{:keys [username isadmin ismoderator] :as user} :user} :ring-req
+    client-id                                     :client-id
+    {:keys [gameid]} :?data :as event}]
+  (when-let [game (game-for-id gameid)]
+    (when (and username
+               (or isadmin ismoderator))
+      (let [player-name (:username (:user (first (:players game))))
+            bad-name (:title game)]
+        (println username "renamed game '" bad-name "' from first player" player-name)
+        (swap! all-games assoc-in [gameid :title] (str player-name "'s game"))
+        (refresh-lobby :update gameid)
+        (ws/broadcast-to! (lobby-clients gameid)
+                          :games/diff
+                          {:diff {:update {gameid (game-public-view (game-for-id gameid))}}})
+        (mc/insert db log-collection
+                   {:moderator username
+                    :action :rename-game
+                    :game-name bad-name
+                    :first-player player-name
+                    :date (java.util.Date.)})))))
 
 (ws/register-ws-handlers!
   :chsk/uidport-open handle-ws-connect
@@ -358,4 +381,5 @@
   :lobby/watch handle-lobby-watch
   :lobby/say handle-lobby-say
   :lobby/swap handle-swap-sides
-  :lobby/deck handle-select-deck)
+  :lobby/deck handle-select-deck
+  :lobby/rename-game handle-rename-game)
