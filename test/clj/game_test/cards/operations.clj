@@ -1426,7 +1426,8 @@
   ;; Power Shutdown - Trash cards from R&D to force Runner to trash a program or hardware
   (testing "Default behavior"
     (do-game
-      (new-game {:corp {:deck [(qty "Power Shutdown" 3) (qty "Hive" 3)]}
+      (new-game {:corp {:deck ["Power Shutdown"]
+                        :hand [(qty "Power Shutdown" 2) (qty "Hive" 3)]}
                  :runner {:deck ["Grimoire" "Cache"]}})
       (play-from-hand state :corp "Power Shutdown")
       (is (empty? (:discard (get-corp))) "Not played, no run last turn")

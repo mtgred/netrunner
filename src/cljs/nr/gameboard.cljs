@@ -1151,14 +1151,6 @@
     [:button {:on-click f :key text} text]
     [:button.disabled {:key text} text]))
 
-(defn handle-end-turn []
-  (let [me ((:side @game-state) @game-state)
-        {:keys [base mod]} (:hand-size me)
-        max-size (max (+ base mod) 0)]
-    (if (> (count (:hand me)) max-size)
-      (toast (str "Discard to " max-size " card" (when (not= 1 max-size) "s")) "warning" nil)
-      (send-command "end-turn"))))
-
 (defn runnable-servers
   "List of servers the runner can run on"
   [corp runner]
@@ -1502,7 +1494,7 @@
            [:div.panel.blue-shade
             (if (= (keyword @active-player) side)
               (when (and (zero? (:click @me)) (not @end-turn) (not @runner-phase-12) (not @corp-phase-12))
-                [:button {:on-click #(handle-end-turn)} "End Turn"])
+                [:button {:on-click #(send-command "end-turn")} "End Turn"])
               (when @end-turn
                 [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
             (when (and (= (keyword @active-player) side)

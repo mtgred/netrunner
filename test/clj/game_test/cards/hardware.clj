@@ -759,9 +759,9 @@
         (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
         (take-credits state :runner)
         (core/draw state :corp)
-        (take-credits state :corp)
         (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
         (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
+        (take-credits state :corp)
         (let [accessed (first (:deck (get-corp)))]
           (run-empty-server state :rd)
           (click-prompt state :corp "Yes")
