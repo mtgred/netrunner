@@ -2428,8 +2428,8 @@
    {:subroutines [end-the-run]}
 
    "Wall of Thorns"
-   {:subroutines [end-the-run
-                  (do-net-damage 2)]}
+   {:subroutines [(do-net-damage 2)
+                  end-the-run]}
 
    "Watchtower"
    {:subroutines [{:label "Search R&D and add 1 card to HQ"
