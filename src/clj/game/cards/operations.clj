@@ -1124,7 +1124,9 @@
                                              (- target (second targets)))))}}}
 
    "Power Shutdown"
-   {:req (req (last-turn? state :runner :made-run))
+   {:req (req (and (last-turn? state :runner :made-run))
+              (not-empty (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %)))
+                                 (all-active-installed state :runner))))
     :prompt "Trash how many cards from the top R&D?"
     :choices {:number (req (apply max (map :cost (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %))) (all-active-installed state :runner)))))}
     :msg (msg "trash " target " cards from the top of R&D")
