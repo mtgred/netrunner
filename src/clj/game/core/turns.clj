@@ -243,7 +243,7 @@
     (trigger-event state side phase nil)
     (if (not-empty start-cards)
       (toast state side
-                 (str "You may use " (clojure.string/join ", " (map :title start-cards))
+                 (str "You may use " (string/join ", " (map :title start-cards))
                       (if (= side :corp)
                         " between the start of your turn and your mandatory draw."
                         " before taking your first click."))
@@ -283,8 +283,7 @@
        (flatline state))
      (wait-for
        (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends))
-       (do (when (= side :runner)
-             (trigger-event state side :post-runner-turn-ends))
+       (do (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
            (doseq [a (get-in @state [side :register :end-turn])]
              (resolve-ability state side (:ability a) (:card a) (:targets a)))
            (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
@@ -313,5 +312,5 @@
              (when (pos? extra-turns)
                (start-turn state side nil)
                (swap! state update-in [side :extra-turns] dec)
-               (system-msg state side (clojure.string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
+               (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
            (effect-completed state side eid))))))
