@@ -892,7 +892,8 @@
 
    "Null: Whistleblower"
    {:abilities [{:once :per-turn
-                 :req (req (and (:run @state) (rezzed? current-ice)))
+                 :req (req (and (:run @state)
+                                (rezzed? current-ice)))
                  :prompt "Select a card in your Grip to trash"
                  :choices {:req in-hand?}
                  :msg (msg "trash " (:title target) " and reduce the strength of " (:title current-ice)
@@ -914,7 +915,8 @@
                  :effect (effect (update! (assoc card :omar-run-activated true))
                                  (run :archives nil (get-card state card)))}]
     :events {:pre-successful-run {:interactive (req true)
-                                  :req (req (:omar-run-activated card))
+                                  :req (req (and (:omar-run-activated card)
+                                                 (= :archives (-> run :server first))))
                                   :prompt "Treat as a successful run on which server?"
                                   :choices ["HQ" "R&D"]
                                   :effect (req (let [target-server (if (= target "HQ") :hq :rd)]

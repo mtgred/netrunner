@@ -157,7 +157,7 @@
       (is (= (+ credits 2) (:credit (get-corp))))
       (card-ability state :corp bc 0)
       (is (nil? (refresh bc)))
-      (is (nil? (:run @state))))))
+      (is (nil? (get-run))))))
 
 (deftest bullfrog
   ;; Bullfrog - Win psi to move to outermost position of another server and continue run there
@@ -170,13 +170,13 @@
     (run-on state :hq)
     (let [frog (get-ice state :hq 0)]
       (core/rez state :corp frog)
-      (is (= :hq (first (get-in @state [:run :server]))))
+      (is (= :hq (-> (get-run) :server first)))
       (card-subroutine state :corp frog 0)
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
       (click-prompt state :corp "R&D")
-      (is (= :rd (first (get-in @state [:run :server]))) "Run redirected to R&D")
-      (is (= 2 (get-in @state [:run :position])) "Passed Bullfrog")
+      (is (= :rd (-> (get-run) :server first)) "Run redirected to R&D")
+      (is (= 2 (:position (get-run))) "Passed Bullfrog")
       (is (= "Bullfrog" (:title (get-ice state :rd 2))) "Bullfrog at outermost position of R&D"))))
 
 (deftest cell-portal

@@ -95,9 +95,9 @@
 (defn do-psi
   "Start a psi game, if not equal do ability"
   ([{:keys [label] :as ability}]
-  {:label (str "Psi Game - " label)
-   :msg (str "start a psi game (" label ")")
-   :psi {:not-equal ability}})
+   {:label (str "Psi Game - " label)
+    :msg (str "start a psi game (" label ")")
+    :psi {:not-equal ability}})
   ([{:keys [label-neq] :as neq-ability} {:keys [label-eq] :as eq-ability}]
    {:label (str "Psi Game - " label-neq " / " label-eq)
     :msg (str "start a psi game (" label-neq " / " label-eq ")")

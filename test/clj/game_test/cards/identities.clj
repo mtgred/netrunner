@@ -1710,7 +1710,26 @@
         (card-ability state :runner omar 0)
         (run-successful state)
         (click-prompt state :runner "HQ")
-        (is (= 1 (get-counters (refresh nerve) :virus)))))))
+        (is (= 1 (get-counters (refresh nerve) :virus))))))
+  (testing "Moving to a different server shouldn't trigger ability. Issue #3969"
+    (do-game
+      (new-game {:corp {:hand ["Bullfrog"]}
+                 :runner {:id "Omar Keung: Conspiracy Theorist"}})
+      (play-from-hand state :corp "Bullfrog" "Archives")
+      (take-credits state :corp)
+      (let [omar (get-in @state [:runner :identity])
+            frog (get-ice state :archives 0)]
+        (card-ability state :runner omar 0)
+        (core/rez state :corp frog)
+        (is (= :archives (-> (get-run) :server first)))
+        (card-subroutine state :corp frog 0)
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "1 [Credits]")
+        (click-prompt state :corp "R&D")
+        (is (= :rd (-> (get-run) :server first)))
+        (run-successful state)
+        (is (empty? (prompt-map :corp)))
+        (is (empty? (prompt-map :runner)))))))
 
 (deftest quetzal-free-spirit
   ;; Quetzal
