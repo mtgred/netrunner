@@ -179,6 +179,17 @@
   (-> "#gameboard" js/$ .fadeOut)
   (-> "#gamelobby" js/$ .fadeIn))
 
+(defn- deck-sorter
+  [fmt d1 d2]
+  (let [fmt (keyword fmt)
+        d1 (get-in d1 [fmt :legal])
+        d2 (get-in d2 [fmt :legal])]
+    (cond
+      (= d1 d2) 0
+      (true? d1) -1
+      (true? d2) 1
+      :else 0)))
+
 (defn deckselect-modal [user {:keys [gameid games decks format]}]
   [:div
     [:h3 "Select your deck"]
@@ -187,7 +198,9 @@
            side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))]
        [:div
         (doall
-          (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) @decks))]
+          (for [deck (sort-by :status (partial deck-sorter format)
+                              (filter #(= (get-in % [:identity :side]) side)
+                                      (sort-by :date > @decks)))]
             ^{:key (:_id deck)}
             [:div.deckline {:on-click #(do (ws/ws-send! [:lobby/deck (:_id deck)])
                                            (reagent-modals/close-modal!))}
