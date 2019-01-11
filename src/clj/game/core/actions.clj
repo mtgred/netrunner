@@ -555,6 +555,7 @@
     (when (and (can-run? state side)
                (can-run-server? state server)
                (can-pay? state :runner "a run" :click 1 cost-bonus click-cost-bonus))
+      (swap! state assoc-in [:runner :register :click-type] :run)
       (swap! state assoc-in [:runner :register :made-click-run] true)
       (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
         (run state side server)

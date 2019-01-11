@@ -44,6 +44,8 @@
    (swap! state update-in [:bonus] dissoc :play-cost)
    (wait-for (trigger-event-simult state side :pre-play-instant nil card)
              (when (empty? (get-in @state [side :locked (-> card :zone first)]))
+               (if (has-subtype? card "Run")
+                 (swap! state assoc-in [:runner :register :click-type] :run))
                (let [{:keys [req additional-cost]} (card-def card)
                      additional-cost (if (has-subtype? card "Triple")
                                        (concat additional-cost [:click 2])

@@ -1736,11 +1736,22 @@
                               (play-cost-bonus [:credit 2]))}}}
 
    "Sundew"
-   {:implementation "it's all broken just don't even try man"}
-    ; :events {:runner-spent-click {:once :per-turn
-    ;                               :msg (req (when (not this-server) "gain 2 [Credits]"))
-    ;                               :effect (req (when (not this-server)
-    ;                                              (gain-credits state :corp 2)))}}
+   ; If this a run event then handle in :begin-run as we do not know the server
+   ; being run on in :runner-spent-click.
+   {:events {:runner-spent-click {:req (req (first-event? state side :runner-spent-click))
+                                  :msg (req (if (not= :run (get-in @state [:runner :register :click-type]))
+                                              "gain 2 [Credits]"))
+                                  :effect (req (if (not= :run (get-in @state [:runner :register :click-type]))
+                                                 (gain-credits state :corp 2)))}
+             :begin-run {:once :per-turn
+                         :req (req (first-event? state side :runner-spent-click))
+                         :msg (req (if (and (= :run (get-in @state [:runner :register :click-type]))
+                                            (not this-server))
+                                     "gain 2 [Credits]"))
+                         :effect (req (if (and (= :run (get-in @state [:runner :register :click-type]))
+                                               (not this-server))
+                                        (gain-credits state :corp 2)))}}}
+
 
    "Synth DNA Modification"
    {:implementation "Manual fire once subroutine is broken"
