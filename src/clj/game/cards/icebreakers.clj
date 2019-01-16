@@ -288,7 +288,7 @@
                   :effect (req (wait-for (resolve-ability
                                            state side (pick-virus-counters-to-spend) card nil)
                                          (when-let* [message (:msg async-result)
-                                                     n (:number) async-result]
+                                                     n (:number async-result)]
                                            (add-strength state card message n))))}]}))
 
 ;;; Icebreaker definitions
