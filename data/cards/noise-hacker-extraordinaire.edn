@@ -5,7 +5,7 @@
  :faction "Anarch",
  :format {:core-experience :rotated,
           :eternal :legal,
-          :classic :legal,
+          :classic :banned,
           :snapshot :rotated,
           :snapshot-plus :rotated,
           :socr8 :rotated,

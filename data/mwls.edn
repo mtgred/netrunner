@@ -195,7 +195,7 @@
  {:cards {"hired-help" {:deck-limit 0},
           "watch-the-world-burn" {:deck-limit 0}
           "24-7-news-cycle" {:deck-limit 0}
-          "aaron-marrón" {:deck-limit 0}
+          "aaron-marron" {:deck-limit 0}
           "accelerated-diagnostics" {:deck-limit 0}
           "account-siphon" {:deck-limit 0}
           "aeneas-informant" {:deck-limit 0}
