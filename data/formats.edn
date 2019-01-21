@@ -6,6 +6,10 @@
   :cycles ["core" "genesis" "spin" "lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "terminal-directive" "revised-core" "reign-and-reverie" "magnum-opus" "system-core-2019"],
   :mwl "eternal-mwl-1-0",
   :name "Eternal"}
+ {:code "classic",
+  :cycles ["core" "genesis" "spin" "lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "terminal-directive" "revised-core" "reign-and-reverie" "magnum-opus" "system-core-2019"],
+  :mwl "classic-mwl-1-0",
+  :name "Classic"}
  {:code "core-experience",
   :cycles ["system-core-2019"],
   :mwl nil,

@@ -77,6 +77,7 @@
 (def slug->format
   {"standard" "Standard"
    "eternal" "Eternal"
+   "classic" "Classic"
    "core-experience" "Core Experience"
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
@@ -86,6 +87,7 @@
 (def format->slug
   {"Standard" "standard"
    "Eternal" "eternal"
+   "Classic" "classic"
    "Core Experience" "core-experience"
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"

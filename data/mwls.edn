@@ -192,6 +192,61 @@
   :date-start "2018-10-28",
   :format "eternal",
   :name "Eternal MWL 1.0"}
+ {:cards {"hired-help" {:deck-limit 0},
+          "watch-the-world-burn" {:deck-limit 0}
+          "24-7-news-cycle" {:deck-limit 0}
+          "aaron-marrón" {:deck-limit 0}
+          "accelerated-diagnostics" {:deck-limit 0}
+          "account-siphon" {:deck-limit 0}
+          "aeneas-informant" {:deck-limit 0}
+          "astroscript-pilot-program" {:deck-limit 0}
+          "au-revoir" {:deck-limit 0}
+          "bio-ethics-association" {:deck-limit 0}
+          "blackmail" {:deck-limit 0}
+          "bloo-moose" {:deck-limit 0}
+          "breaking-news" {:deck-limit 0}
+          "bryan-stinson" {:deck-limit 0}
+          "clone-suffrage-movement" {:deck-limit 0}
+          "data-leak-reversal" {:deck-limit 0}
+          "estelle-moon" {:deck-limit 0}
+          "faust" {:deck-limit 0}
+          "gang-sign" {:deck-limit 0}
+          "global-food-initiative" {:deck-limit 0}
+          "hired-help" {:deck-limit 0}
+          "hyperdriver" {:deck-limit 0}
+          "inversificator" {:deck-limit 0}
+          "it-department" {:deck-limit 0}
+          "jinteki-potential-unleashed" {:deck-limit 0}
+          "mad-dash" {:deck-limit 0}
+          "mars-for-martians" {:deck-limit 0}
+          "midseason-replacements" {:deck-limit 0}
+          "mti-mwekundu-life-improved" {:deck-limit 0}
+          "mumba-temple" {:deck-limit 0}
+          "mumbad-city-hall" {:deck-limit 0}
+          "museum-of-history" {:deck-limit 0}
+          "na'not'k" {:deck-limit 0}
+          "noise-hacker-extraordinaire" {:deck-limit 0}
+          "paperclip" {:deck-limit 0}
+          "power-tap" {:deck-limit 0}
+          "rumor-mill" {:deck-limit 0}
+          "salvaged-vanadis-armory" {:deck-limit 0}
+          "shipment-from-kaguya" {:deck-limit 0}
+          "shipment-from-mirrormorph" {:deck-limit 0}
+          "skorpios-defense-systems-persuasive-power" {:deck-limit 0}
+          "surveyor" {:deck-limit 0}
+          "tapwrm" {:deck-limit 0}
+          "tech-trader" {:deck-limit 0}
+          "temujin-contract" {:deck-limit 0}
+          "the-shadow-net" {:deck-limit 0}
+          "watch-the-world-burn" {:deck-limit 0}
+          "whampoa-reclamation" {:deck-limit 0}
+          "zamba" {:deck-limit 0}
+          "zer0" {:deck-limit 0}
+          "sifr" {:deck-limit 0}},
+  :code "classic-mwl-1-0",
+  :date-start "2019-01-01",
+  :format "classic",
+  :name "Classic MWL 1.0"}
  {:cards {"24-7-news-cycle" {:deck-limit 0},
           "aaron-marron" {:deck-limit 0},
           "aesop-s-pawnshop" {:is-restricted 1},

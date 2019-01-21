@@ -264,6 +264,7 @@
      :casual (build-deck-validity valid)
      :standard (build-format-legality valid :standard deck)
      :eternal (build-format-legality valid :eternal deck)
+     :classic (build-format-legality valid :classic deck)
      :snapshot (build-format-legality valid :snapshot deck)
      :snapshot-plus (build-snapshot-plus-legality valid :snapshot-plus deck)
      :core-experience (build-core-experience-legality valid deck)
