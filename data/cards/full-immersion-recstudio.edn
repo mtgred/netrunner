@@ -6,6 +6,7 @@
  :factioncost 4,
  :format {:core-experience :rotated,
           :eternal :legal,
+          :classic :legal,
           :snapshot :legal,
           :snapshot-plus :legal,
           :socr8 :rotated,

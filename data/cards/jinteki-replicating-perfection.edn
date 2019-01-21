@@ -4,6 +4,7 @@
  :faction "Jinteki",
  :format {:core-experience :legal,
           :eternal :legal,
+          :classic :legal,
           :snapshot :rotated,
           :snapshot-plus :rotated,
           :socr8 :rotated,

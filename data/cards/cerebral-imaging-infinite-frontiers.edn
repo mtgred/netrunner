@@ -4,6 +4,7 @@
  :faction "Haas-Bioroid",
  :format {:core-experience :rotated,
           :eternal :legal,
+          :classic :legal,
           :snapshot :banned,
           :snapshot-plus :banned,
           :socr8 :legal,

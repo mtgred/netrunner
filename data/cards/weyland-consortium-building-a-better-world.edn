@@ -4,6 +4,7 @@
  :faction "Weyland Consortium",
  :format {:core-experience :legal,
           :eternal :legal,
+          :classic :legal,
           :snapshot :legal,
           :snapshot-plus :legal,
           :socr8 :legal,

@@ -6,6 +6,7 @@
  :faction "Neutral",
  :format {:core-experience :rotated,
           :eternal :legal,
+          :classic :legal,
           :snapshot :rotated,
           :snapshot-plus :legal,
           :socr8 :legal,
