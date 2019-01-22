@@ -192,61 +192,6 @@
   :date-start "2018-10-28",
   :format "eternal",
   :name "Eternal MWL 1.0"}
- {:cards {"hired-help" {:deck-limit 0},
-          "watch-the-world-burn" {:deck-limit 0}
-          "24-7-news-cycle" {:deck-limit 0}
-          "aaron-marron" {:deck-limit 0}
-          "accelerated-diagnostics" {:deck-limit 0}
-          "account-siphon" {:deck-limit 0}
-          "aeneas-informant" {:deck-limit 0}
-          "astroscript-pilot-program" {:deck-limit 0}
-          "au-revoir" {:deck-limit 0}
-          "bio-ethics-association" {:deck-limit 0}
-          "blackmail" {:deck-limit 0}
-          "bloo-moose" {:deck-limit 0}
-          "breaking-news" {:deck-limit 0}
-          "bryan-stinson" {:deck-limit 0}
-          "clone-suffrage-movement" {:deck-limit 0}
-          "data-leak-reversal" {:deck-limit 0}
-          "estelle-moon" {:deck-limit 0}
-          "faust" {:deck-limit 0}
-          "gang-sign" {:deck-limit 0}
-          "global-food-initiative" {:deck-limit 0}
-          "hired-help" {:deck-limit 0}
-          "hyperdriver" {:deck-limit 0}
-          "inversificator" {:deck-limit 0}
-          "it-department" {:deck-limit 0}
-          "jinteki-potential-unleashed" {:deck-limit 0}
-          "mad-dash" {:deck-limit 0}
-          "mars-for-martians" {:deck-limit 0}
-          "midseason-replacements" {:deck-limit 0}
-          "mti-mwekundu-life-improved" {:deck-limit 0}
-          "mumba-temple" {:deck-limit 0}
-          "mumbad-city-hall" {:deck-limit 0}
-          "museum-of-history" {:deck-limit 0}
-          "na-not-k" {:deck-limit 0}
-          "noise-hacker-extraordinaire" {:deck-limit 0}
-          "paperclip" {:deck-limit 0}
-          "power-tap" {:deck-limit 0}
-          "rumor-mill" {:deck-limit 0}
-          "salvaged-vanadis-armory" {:deck-limit 0}
-          "shipment-from-kaguya" {:deck-limit 0}
-          "shipment-from-mirrormorph" {:deck-limit 0}
-          "skorpios-defense-systems-persuasive-power" {:deck-limit 0}
-          "surveyor" {:deck-limit 0}
-          "tapwrm" {:deck-limit 0}
-          "tech-trader" {:deck-limit 0}
-          "temujin-contract" {:deck-limit 0}
-          "the-shadow-net" {:deck-limit 0}
-          "watch-the-world-burn" {:deck-limit 0}
-          "whampoa-reclamation" {:deck-limit 0}
-          "zamba" {:deck-limit 0}
-          "zer0" {:deck-limit 0}
-          "sifr" {:deck-limit 0}},
-  :code "classic-mwl-1-0",
-  :date-start "2019-01-01",
-  :format "classic",
-  :name "Classic MWL 1.0"}
  {:cards {"24-7-news-cycle" {:deck-limit 0},
           "aaron-marron" {:deck-limit 0},
           "aesop-s-pawnshop" {:is-restricted 1},
@@ -291,4 +236,49 @@
   :code "standard-mwl-3-0",
   :date-start "2018-11-08",
   :format "standard",
-  :name "Standard MWL 3.0"}]
+  :name "Standard MWL 3.0"}
+ {:cards {"24-7-news-cycle" {:deck-limit 0},
+          "aaron-marron" {:deck-limit 0},
+          "aesop-s-pawnshop" {:is-restricted 1},
+          "bio-ethics-association" {:is-restricted 1},
+          "bloo-moose" {:deck-limit 0},
+          "bryan-stinson" {:deck-limit 1},
+          "cerebral-imaging-infinite-frontiers" {:deck-limit 0},
+          "clone-suffrage-movement" {:deck-limit 0},
+          "commercial-bankers-group" {:is-restricted 1},
+          "employee-strike" {:is-restricted 1},
+          "excalibur" {:is-restricted 1},
+          "faust" {:deck-limit 0},
+          "film-critic" {:is-restricted 1},
+          "friends-in-high-places" {:deck-limit 0},
+          "gang-sign" {:is-restricted 1},
+          "global-food-initiative" {:is-restricted 1},
+          "hired-help" {:deck-limit 0},
+          "hyperdriver" {:deck-limit 0},
+          "inversificator" {:is-restricted 1},
+          "jinteki-potential-unleashed" {:is-restricted 1},
+          "levy-ar-lab-access" {:is-restricted 1},
+          "mad-dash" {:is-restricted 1},
+          "mars-for-martians" {:deck-limit 0},
+          "mother-goddess" {:is-restricted 1},
+          "mti-mwekundu-life-improved" {:is-restricted 1},
+          "mumba-temple" {:is-restricted 1},
+          "mumbad-city-hall" {:is-restricted 1},
+          "museum-of-history" {:deck-limit 0},
+          "obokata-protocol" {:is-restricted 1},
+          "paperclip" {:is-restricted 1},
+          "rumor-mill" {:is-restricted 1},
+          "salvaged-vanadis-armory" {:deck-limit 0},
+          "sensie-actors-union" {:deck-limit 0},
+          "sifr" {:deck-limit 0},
+          "surveyor" {:is-restricted 1},
+          "tapwrm" {:deck-limit 0},
+          "temujin-contract" {:deck-limit 0},
+          "violet-level-clearance" {:is-restricted 1},
+          "watch-the-world-burn" {:deck-limit 0},
+          "whampoa-reclamation" {:is-restricted 1},
+          "zer0" {:deck-limit 0}},
+  :code "classic-mwl-1-0",
+  :date-start "2019-01-01",
+  :format "classic",
+  :name "Classic MWL 1.0"}]
