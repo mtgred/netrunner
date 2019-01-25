@@ -1060,6 +1060,7 @@
 
    "John Masanori"
    {:events {:successful-run {:req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
+                              :interacive (req true)
                               :msg "draw 1 card" :once-key :john-masanori-draw
                               :effect (effect (draw))}
              :unsuccessful-run {:req (req (= 1 (count (get-in @state [:runner :register :unsuccessful-run]))))

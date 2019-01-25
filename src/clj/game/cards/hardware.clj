@@ -835,6 +835,7 @@
     :events {:successful-run
              {:req (req (first-event? state side :successful-run))
               :async true
+              :interactive (req true)
               :effect (effect
                         (show-wait-prompt :corp "Runner to decide if they will use Paragon")
                         (continue-ability
