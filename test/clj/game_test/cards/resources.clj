@@ -1410,12 +1410,8 @@
      (is (= 4 (count (:hand (get-runner)))))
      (run-empty-server state "HQ")
      (click-prompt state :runner "Pay 5 [Credits] to trash") ; trash crisium #2433
-     (prn (core/event-count state :runner :successful-run))
-     (prn (core/turn-events state :runner :successful-run))
      (run-empty-server state "Archives")
      (is (= 5 (count (:hand (get-runner)))) "1 card drawn from first successful run")
-     ;; (prn (core/event-count state :runner :successful-run))
-     ;; (prn (core/turn-events state :runner :successful-run))
      (run-empty-server state "Archives")
      (is (= 5 (count (:hand (get-runner)))) "No card drawn from second successful run")
      (run-on state "HQ")
