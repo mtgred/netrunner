@@ -1462,7 +1462,7 @@
                                     card nil))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :flags {:corp-phase-12 (req true)}
-      :events {:corp-turn-begins ability}
+      :events {:corp-phase-12 ability}
       :abilities [ability]})
 
    "Reality Threedee"
