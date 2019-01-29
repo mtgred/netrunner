@@ -1011,6 +1011,7 @@
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]
                   :once :per-turn
+                  :interactive (req true)
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain 2 [Credits] (start of turn)")
                   :async true
@@ -1450,8 +1451,9 @@
 
    "Rashida Jaheem"
    (let [ability {:once :per-turn
+                  :async true
                   :label "Gain 3 [Credits] and draw 3 cards (start of turn)"
-                  :effect (effect (resolve-ability
+                  :effect (effect (continue-ability
                                     {:optional
                                      {:prompt "Trash Rashida Jaheem to gain 3 [Credits] and draw 3 cards?"
                                       :yes-ability {:async true
