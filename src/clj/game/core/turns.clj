@@ -199,10 +199,10 @@
   ([state side args] (end-phase-12 state side (make-eid state) args))
   ([state side eid args]
    (turn-message state side true)
-   (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)
+   (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil)
              (when (= side :corp)
                (wait-for (draw state side 1 nil)
-                         (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
+                         (trigger-event-simult state side eid :corp-mandatory-draw nil)))
              (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
              (when (= side :corp)
                (update-all-advancement-costs state side)))))

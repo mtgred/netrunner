@@ -421,7 +421,7 @@
    {:keys [cause suppress-event] :as args}]
   (if (and (not suppress-event)
            (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
-    (wait-for (trigger-event-sync state side (keyword (str (name side) "-trash")) card cause)
+    (wait-for (trigger-event-sync state side (if (= side :corp) :corp-trash :runner-trash) card cause)
               (resolve-trash-end state side eid card oid args))
     (resolve-trash-end state side eid card args))))
 

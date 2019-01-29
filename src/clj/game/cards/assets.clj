@@ -1031,9 +1031,9 @@
                                          :priority 1
                                          :player :corp
                                          :yes-ability {:msg "shuffle it back into R&D"
-                                                       :effect (req (move state :corp card :deck)
-                                                                    (shuffle! state :corp :deck)
-                                                                    (effect-completed state side eid))}
+                                                       :effect (effect (move :corp card :deck)
+                                                                       (shuffle! :corp :deck)
+                                                                       (effect-completed eid))}
                                          :end-effect (effect (clear-wait-prompt :runner))}}
                                       card nil))}})
 
