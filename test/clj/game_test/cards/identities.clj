@@ -1341,7 +1341,7 @@
       (is (= 5 (:credit (get-runner))) "Runner has 5 credits at end of first turn")
       (is (find-card "Wyldside" (get-resource state)) "Wyldside was installed")
       (take-credits state :corp)
-      (is (zero? (:click (get-runner))) "Runner has 0 clicks")
+      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
       (is (:runner-phase-12 @state) "Runner is in Step 1.2")
       (let [maxx (get-in @state [:runner :identity])
             wyld (find-card "Wyldside" (get-resource state))]

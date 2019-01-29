@@ -1011,6 +1011,7 @@
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]
                   :once :per-turn
+                  :interactive (req true)
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain 2 [Credits] (start of turn)")
                   :async true

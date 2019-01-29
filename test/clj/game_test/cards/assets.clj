@@ -230,11 +230,11 @@
       (play-from-hand state :runner "Feedback Filter")
       (take-credits state :runner)
       (let [filter (get-hardware state 0)]
-        (is (= 1 (count (:prompt (get-runner)))) "Runner has a single damage prevention prompt")
+        (is (= 2 (count (:prompt (get-runner)))) "Runner has a single damage prevention prompt")
         (card-ability state :runner filter 0)
         (click-prompt state :runner "Done")
         (is (zero? (count (:discard (get-runner)))) "Runner prevented damage")
-        (is (= 1 (count (:prompt (get-runner)))) "Runner has a next damage prevention prompt")
+        (is (= 2 (count (:prompt (get-runner)))) "Runner has a next damage prevention prompt")
         (click-prompt state :runner "Done")
         (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))))
 
