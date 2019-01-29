@@ -1493,10 +1493,9 @@
                  #(send-command "no-action")]]))
            [:div.panel.blue-shade
             (if (= (keyword @active-player) side)
-              (when (and (zero? (:click @me))
-                         (not @end-turn)
-                         (not @runner-phase-12)
-                         (not @corp-phase-12))
+              (when (and (not (or @runner-phase-12 @corp-phase-12))
+                         (zero? (:click @me))
+                         (not @end-turn))
                 [:button {:on-click #(send-command "end-turn")} "End Turn"])
               (when @end-turn
                 [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
