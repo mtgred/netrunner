@@ -1451,6 +1451,7 @@
 
    "Rashida Jaheem"
    (let [ability {:once :per-turn
+                  :async true
                   :label "Gain 3 [Credits] and draw 3 cards (start of turn)"
                   :effect (effect (continue-ability
                                     {:optional
