@@ -103,7 +103,7 @@
                  (effect (set-prop card :rec-counter recurring))
                  recurring)]
          (register-events state side
-                          {(if (= side :corp) :corp-phase-12 :runner-phase-12)
+                          {(if (= side :corp) :corp-recurring-credits-refill :runner-recurring-credits-refill)
                            {:effect r}} c)))
      (update! state side c)
      (when-let [events (:events cdef)]

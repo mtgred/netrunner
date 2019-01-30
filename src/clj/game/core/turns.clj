@@ -198,12 +198,13 @@
   "End phase 1.2 and trigger appropriate events for the player."
   ([state side args] (end-phase-12 state side (make-eid state) args))
   ([state side eid args]
+   (trigger-event state side (if (= side :corp) :corp-recurring-credits-refill :runner-recurring-credits-refill))
    (turn-message state side true)
    (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil)
+             (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
              (when (= side :corp)
                (wait-for (draw state side 1 nil)
                          (trigger-event-simult state side eid :corp-mandatory-draw nil)))
-             (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
              (when (= side :corp)
                (update-all-advancement-costs state side)))))
 

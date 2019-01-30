@@ -3774,7 +3774,7 @@
     (is (= 1 (-> (get-runner) :hand count)) "Rumor Mill should still be in hand after trying to play it")))
 
 (deftest the-root
-  ;; The Root - recurring credits refill at Step 1.2
+  ;; The Root - recurring credits refill at Step 1.3
   (do-game
     (new-game {:corp {:id "Blue Sun: Powering the Future"
                       :deck ["The Root"]}})
@@ -3789,7 +3789,9 @@
       (take-credits state :runner)
       ;; we expect Step 1.2 to have triggered because of Blue Sun
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
-      (is (= 3 (get-counters (refresh root) :recurring)) "Recurring credits were refilled before Step 1.2 window"))))
+      (is (= 2 (get-counters (refresh root) :recurring)) "Recurring credits were not refilled before Step 1.2 window")
+      (core/end-phase-12 state :corp nil)
+      (is (= 3 (get-counters (refresh root) :recurring)) "Recurring credits were refilled once Step 1.2 window closed"))))
 
 (deftest thomas-haas
   ;; Thomas Haas
