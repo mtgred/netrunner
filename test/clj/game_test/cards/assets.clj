@@ -2832,12 +2832,8 @@
       (let [rj (get-content state :remote1 0)
             mc (get-content state :remote2 0)]
         (core/rez state :corp mc)
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (take-credits state :runner)
+        (core/command-counter state :corp '("2"))
+        (click-card state :corp mc)
         (take-credits state :corp)
         (core/rez state :corp rj)
         (take-credits state :runner)
@@ -2847,9 +2843,9 @@
         (click-prompt state :corp "Marilyn Campaign")
         (click-prompt state :corp "Yes")
         (is (find-card "Marilyn Campaign" (:deck (get-corp))))
-        (is (= 3 (-> (get-corp) :hand count)) "Corp should have 3 cards in hand")
+        (is (= 0 (-> (get-corp) :hand count)) "Corp should have 0 cards in hand")
         (click-prompt state :corp "Yes")
-        (is (= 7 (-> (get-corp) :hand count)) "Corp should draw 3 cards from Rashida plus 1 from Mandatory Draw")
+        (is (= 4 (-> (get-corp) :hand count)) "Corp should draw 3 cards from Rashida plus 1 from Mandatory Draw")
         (is (nil? (:corp-phase-12 @state)) "Corp is not in Step 1.2")))))
 
 (deftest reality-threedee
