@@ -344,6 +344,19 @@
     :leave-play (effect (gain :hand-size 1)
                         (gain :runner :hand-size 1))}
 
+   "Earth Station: On the Grid"
+   {:events {:pre-first-turn {:req (req (= side :corp))
+                              :effect (effect (update! (assoc card :flipped false)))}}
+    :abilities [{:cost [:click 1]
+                 :effect (effect (update! (if (:flipped card)
+                                            (assoc card
+                                                   :flipped false
+                                                   :code "26087")
+                                            (assoc card
+                                                   :flipped true
+                                                   :code "26087flip"))))
+                 :msg (msg "flip their ID")}]}
+
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:once :per-turn
                       :req (req (and (is-type? target "Operation")
@@ -525,6 +538,18 @@
                                     :msg (msg "install " (:title target))
                                     :effect (effect (runner-install eid target nil))}}}
                        card nil)))}}}
+
+   "Hoshiko Shiro"
+   {:events {:pre-first-turn {:req (req (= side :runner))
+                              :effect (effect (update! (assoc card :flipped false)))}}
+    :abilities [{:effect (effect (update! (if (:flipped card)
+                                            (assoc card
+                                                   :flipped false
+                                                   :code "26096")
+                                            (assoc card
+                                                   :flipped true
+                                                   :code "26096flip"))))
+                 :msg (msg "flip their ID")}]}
 
    "Iain Stirling: Retired Spook"
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
