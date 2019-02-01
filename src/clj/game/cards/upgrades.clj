@@ -378,26 +378,27 @@
     :trash-effect {:effect (req (update-all-ice state side))}}
 
    "Embolus"
-   (let [maybe-gain-counter {:once :per-turn
-                             :label "Place a power counter on Embolus"
-                             :effect (effect
-                                       (continue-ability
-                                         {:optional
-                                          {:prompt "Pay 1 [Credit] to place a power counter on Embolus?"
-                                           :yes-ability {:effect (effect (add-counter card :power 1))
-                                                         :cost [:credit 1]
-                                                         :msg "pay 1 [Credit] to place a power counter on Embolus"}}}
-                                         card nil))}
+   (let [ability {:once :per-turn
+                  :req (req (:corp-phase-12 @state))
+                  :label "Place a power counter on Embolus"
+                  :cost [:credit 1]
+                  :effect (effect (system-msg "pays 1 [Credit] to place a power counter on Embolus")
+                                  (add-counter card :power 1))}
          etr {:req (req this-server)
               :counter-cost [:power 1]
               :msg "end the run"
               :effect (effect (end-run))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
-      :events {:corp-turn-begins maybe-gain-counter
+      :flags {:corp-phase-12 (req true)}
+      :events {:corp-turn-begins {:interactive (req true)
+                                  :optional
+                                  {:prompt "Pay 1 [Credit] to place a power counter on Embolus?"
+                                   :yes-ability ability}}
                :successful-run {:req (req (pos? (get-counters card :power)))
-                                :msg "remove 1 power counter from Embolus"
-                                :effect (effect (add-counter card :power -1))}}
-      :abilities [maybe-gain-counter etr]})
+                                :effect (effect (system-msg "removes 1 power counter from Embolus")
+                                                (add-counter card :power -1))}}
+      :abilities [ability
+                  etr]})
 
    "Expo Grid"
    (let [ability {:req (req (some #(and (is-type? % "Asset")

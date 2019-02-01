@@ -1094,26 +1094,34 @@
                            card nil))}]}
 
    "Trypano"
-   (let [trash-if-5 (req (when-let [h (get-card state (:host card))]
+   (let [ability {:label "Place a virus counter on Trypano (start of turn)"
+                  :async true
+                  :req (req (:runner-phase-12 @state))
+                  :effect (effect (system-msg "places a virus counter on Trypano")
+                                  (add-counter card :virus 1)
+                                  (effect-completed eid))}
+         trash-if-5 (req (when-let [h (get-card state (:host card))]
                            (if (and (>= (get-virus-counters state card) 5)
-                                      (not (and (card-flag? h :untrashable-while-rezzed true)
-                                                (rezzed? h))))
+                                    (not (and (card-flag? h :untrashable-while-rezzed true)
+                                              (rezzed? h))))
                              (do (system-msg state :runner (str "uses Trypano to trash " (card-str state h)))
                                  (unregister-events state side card)
                                  (trash state :runner eid h nil))
-                             (effect-completed state side eid))))]
-       {:hosting {:req #(and (ice? %) (can-host? %))}
+                             (effect-completed state side eid))))
+         trash-if-5-ability {:async true
+                             :effect trash-if-5}]
+       {:flags {:runner-phase-12 (req true)}
+        :hosting {:req #(and (ice? %)
+                             (can-host? %))}
         :effect trash-if-5
+        :abilities [ability]
         :events {:runner-turn-begins
-                 {:optional {:prompt (msg "Place a virus counter on Trypano?")
-                             :yes-ability {:effect (req (system-msg state :runner "places a virus counter on Trypano")
-                                                        (add-counter state side card :virus 1))}}}
-                 :counter-added {:async true
-                                 :effect trash-if-5}
-                 :card-moved {:effect trash-if-5
-                              :async true}
-                 :runner-install {:effect trash-if-5
-                                  :async true}}})
+                 {:interactive (req true)
+                  :optional {:prompt (msg "Place a virus counter on Trypano?")
+                             :yes-ability ability}}
+                 :counter-added trash-if-5-ability
+                 :card-moved trash-if-5-ability
+                 :runner-install trash-if-5-ability}})
 
    "Upya"
    {:implementation "Power counters added automatically"

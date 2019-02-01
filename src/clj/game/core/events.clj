@@ -74,58 +74,57 @@
   :silent abilities are not shown in the list of handlers, and are resolved last in an arbitrary order."
   [state side eid event handlers cancel-fn event-targets]
   (if (not-empty handlers)
-    (letfn [;; Allow resolution as long as there is no cancel-fn, or if the cancel-fn returns false.
-            (should-continue [state handlers] (and (< 1 (count handlers))
-                                                   (not (and cancel-fn (cancel-fn state)))))
-
-            (choose-handler [handlers]
-              (let [non-silent (filter #(not (and (:silent (:ability %))
-                                                  (let [ans ((:silent (:ability %)) state side (make-eid state) (:card %) event-targets)]
-                                                    ans)))
-                                       handlers)
-                    cards (map :card non-silent)
-                    titles (map :title cards)
-                    interactive (filter #(let [interactive-fn (:interactive (:ability %))]
-                                          (and interactive-fn (interactive-fn state side (make-eid state) (:card %) event-targets)))
-                                        handlers)]
-                ;; If there is only 1 non-silent ability, resolve that then recurse on the rest
-                (if (or (= 1 (count handlers)) (empty? interactive) (= 1 (count non-silent)))
-                  (let [to-resolve
-                        (if (= 1 (count non-silent)) (first non-silent) (first handlers))
-                        ability-to-resolve (dissoc (:ability to-resolve) :req)
-                        card-to-resolve (:card to-resolve)
-                        others (if (= 1 (count non-silent))
-                                 (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
-                                 (next handlers))]
-                    (if-let [the-card (get-card state card-to-resolve)]
-                      {:async true
-                       :effect (req (wait-for (resolve-ability state (to-keyword (:side the-card))
-                                                               ability-to-resolve
-                                                               the-card event-targets)
-                                              (if (should-continue state handlers)
-                                                (continue-ability state side
-                                                                  (choose-handler others) nil event-targets)
-                                                (effect-completed state side eid))))}
-                      {:async true
-                       :effect (req (if (should-continue state handlers)
-                                      (continue-ability state side (choose-handler (next handlers)) nil event-targets)
-                                      (effect-completed state side eid)))}))
-                  {:prompt "Choose a trigger to resolve"
-                   :choices titles
-                   :async true
-                   :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
-                                      ability-to-resolve (dissoc (:ability to-resolve) :req)
-                                      the-card (get-card state (:card to-resolve))]
-                                  (wait-for
-                                    (resolve-ability state (to-keyword (:side the-card))
-                                                     ability-to-resolve the-card event-targets)
-                                    (if (should-continue state handlers)
-                                      (continue-ability state side
-                                                        (choose-handler
-                                                          (remove-once #(= target (:title (:card %))) handlers))
-                                                        nil event-targets)
-                                      (effect-completed state side eid)))))})))]
-
+    (let [;; Allow resolution as long as there is no cancel-fn, or if the cancel-fn returns false.
+          should-continue
+          (fn should-continue [state handlers]
+            (and (< 1 (count handlers))
+                 (not (and cancel-fn (cancel-fn state)))))
+          choose-handler
+          (fn choose-handler [handlers]
+            (let [non-silent (filter #(let [silent-fn (:silent (:ability %))]
+                                        (not (and silent-fn (silent-fn state side (make-eid state) (:card %) event-targets))))
+                                     handlers)
+                  titles (map #(get-in % [:card :title]) non-silent)
+                  interactive (filter #(let [interactive-fn (:interactive (:ability %))]
+                                         (and interactive-fn (interactive-fn state side (make-eid state) (:card %) event-targets)))
+                                      handlers)]
+              ;; If there is only 1 non-silent ability, resolve that then recurse on the rest
+              (if (or (= 1 (count handlers))
+                      (empty? interactive)
+                      (= 1 (count non-silent)))
+                (let [to-resolve (if (= 1 (count non-silent)) (first non-silent) (first handlers))
+                      ability-to-resolve (dissoc (:ability to-resolve) :req)
+                      card-to-resolve (:card to-resolve)
+                      others (if (= 1 (count non-silent))
+                               (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
+                               (next handlers))]
+                  (if-let [the-card (get-card state card-to-resolve)]
+                    {:async true
+                     :effect (req (wait-for (resolve-ability state (to-keyword (:side the-card))
+                                                             ability-to-resolve
+                                                             the-card event-targets)
+                                            (if (should-continue state handlers)
+                                              (continue-ability state side
+                                                                (choose-handler others) nil event-targets)
+                                              (effect-completed state side eid))))}
+                    {:async true
+                     :effect (req (if (should-continue state handlers)
+                                    (continue-ability state side (choose-handler (next handlers)) nil event-targets)
+                                    (effect-completed state side eid)))}))
+                {:prompt "Choose a trigger to resolve"
+                 :choices titles
+                 :async true
+                 :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
+                                    ability-to-resolve (dissoc (:ability to-resolve) :req)
+                                    the-card (get-card state (:card to-resolve))]
+                                (wait-for (resolve-ability state (to-keyword (:side the-card))
+                                                           ability-to-resolve the-card event-targets)
+                                          (if (should-continue state handlers)
+                                            (continue-ability state side
+                                                              (choose-handler
+                                                                (remove-once #(= target (:title (:card %))) handlers))
+                                                              nil event-targets)
+                                            (effect-completed state side eid)))))})))]
       (continue-ability state side (choose-handler handlers) nil event-targets))
     (effect-completed state side eid)))
 
@@ -188,21 +187,20 @@
          active-player-events (get-handlers active-player)
          opponent-events (get-handlers opponent)]
      ; let active player activate their events first
-     (wait-for
-       (resolve-ability state side first-ability nil nil)
-       (do (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
-                             {:priority -1})
-           (wait-for
-             (trigger-event-simult-player state side event active-player-events cancel-fn targets)
-             (do (when after-active-player
-                   (resolve-ability state side after-active-player nil nil))
-                 (clear-wait-prompt state opponent)
-                 (show-wait-prompt state active-player
-                                   (str (side-str opponent) " to resolve " (event-title event) " triggers")
-                                   {:priority -1})
-                 (wait-for (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
-                           (do (clear-wait-prompt state active-player)
-                               (effect-completed state side eid))))))))))
+     (wait-for (resolve-ability state side first-ability nil nil)
+               (show-wait-prompt state opponent
+                                 (str (side-str active-player) " to resolve " (event-title event) " triggers")
+                                 {:priority -1})
+               (wait-for (trigger-event-simult-player state side event active-player-events cancel-fn targets)
+                         (when after-active-player
+                           (resolve-ability state side after-active-player nil nil))
+                         (clear-wait-prompt state opponent)
+                         (show-wait-prompt state active-player
+                                           (str (side-str opponent) " to resolve " (event-title event) " triggers")
+                                           {:priority -1})
+                         (wait-for (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
+                                   (clear-wait-prompt state active-player)
+                                   (effect-completed state side eid)))))))
 
 
 ; Functions for registering trigger suppression events.

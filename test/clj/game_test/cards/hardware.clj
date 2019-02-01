@@ -413,6 +413,7 @@
       (is (= 1 (get-counters (refresh aum) :virus)) "Aumakua gains a counter on non-trash")
       (take-credits state :runner)
       (take-credits state :corp)
+      (card-ability state :runner fc 0)
       (click-card state :runner aum)
       (is (= 2 (get-counters (refresh aum) :virus)) "Aumakua gained 1 counter")
       (is (zero? (get-counters (refresh fc) :virus)) "Friday Chip lost 1 counter"))))

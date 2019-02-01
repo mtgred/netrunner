@@ -638,6 +638,7 @@
         (click-card state :runner (refresh iw))
         (take-credits state :runner)
         (take-credits state :corp)
+        (core/end-phase-12 state :runner nil)
         (click-prompt state :runner "Yes")
         (run-empty-server state "HQ")
         (click-prompt state :runner "[Freedom]: Trash card")

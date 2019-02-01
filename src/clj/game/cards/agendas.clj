@@ -347,14 +347,15 @@
              :effect (effect (gain-bad-publicity :corp 1))}}
 
    "Corporate Sales Team"
-   (let [e {:effect (req (when (pos? (get-counters card :credit))
-                           (gain-credits state :corp 1)
-                           (system-msg state :corp (str "uses Corporate Sales Team to gain 1 [Credits]"))
-                           (add-counter state side card :credit -1)))}]
+   (let [ability {:silent (req true)
+                  :effect (req (when (pos? (get-counters card :credit))
+                                 (gain-credits state :corp 1)
+                                 (system-msg state :corp (str "uses Corporate Sales Team to gain 1 [Credits]"))
+                                 (add-counter state side card :credit -1)))}]
      {:effect (effect (add-counter card :credit 10))
       :silent (req true)
-      :events {:runner-turn-begins e
-               :corp-turn-begins e}})
+      :events {:runner-turn-begins ability
+               :corp-turn-begins ability}})
 
    "Corporate War"
    {:msg (msg (if (> (:credit corp) 6) "gain 7 [Credits]" "lose all credits"))
@@ -365,6 +366,7 @@
    "Crisis Management"
    (let [ability {:req (req tagged)
                   :async true
+                  :silent (req true)
                   :label "Do 1 meat damage (start of turn)"
                   :once :per-turn
                   :msg "do 1 meat damage"
@@ -1174,7 +1176,8 @@
 
    "SSL Endorsement"
    (let [add-credits (effect (add-counter card :credit 9))
-         remove-credits {:optional {:req (req (pos? (get-counters card :credit)))
+         remove-credits {:interactive (req true)
+                         :optional {:req (req (pos? (get-counters card :credit)))
                                     :prompt "Gain 3 [Credits] from SSL Endorsement?"
                                     :yes-ability
                                     {:effect (req (when (pos? (get-counters card :credit))

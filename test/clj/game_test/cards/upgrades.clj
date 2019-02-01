@@ -671,6 +671,7 @@
       (let [credits (:credit (get-corp))
             powers (get-counters (refresh em) :power)]
         (is (zero? powers) "Embolus is rezzed with 0 counters")
+        (core/end-phase-12 state :corp nil)
         (click-prompt state :corp "Yes")
         (is (= (dec credits) (:credit (get-corp)))
             "Adding power counters costs a credit")
@@ -686,6 +687,7 @@
           "A successful run removes counters")
       ;; (click-prompt state :runner "No action")
       (take-credits state :runner)
+      (core/end-phase-12 state :corp nil)
       (click-prompt state :corp "Yes")
       (is (= 1 (get-counters (refresh em) :power)) "A counter was added")
       (take-credits state :corp)

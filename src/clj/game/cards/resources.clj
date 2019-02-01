@@ -74,14 +74,14 @@
    {:events
     {:corp-turn-begins {:async true
                         :effect (req (if (zero? (count-tags state))
-                                       (do (gain-tags state :runner eid 1)
-                                           (system-msg state :runner (str "uses " (:title card) " to take 1 tag")))
+                                       (do (system-msg state :runner (str "uses Activist Support to take 1 tag"))
+                                           (gain-tags state :runner eid 1))
                                        (effect-completed state :runner eid)))}
      :runner-turn-begins {:async true
                           :effect (req (if (not has-bad-pub)
-                                         (do (gain-bad-publicity state :corp eid 1)
-                                             (system-msg state :runner
-                                                         (str "uses " (:title card) " to give the corp 1 bad publicity")))
+                                         (do (system-msg state :runner
+                                                         (str "uses Activist Support to give the corp 1 bad publicity"))
+                                             (gain-bad-publicity state :corp eid 1))
                                          (effect-completed state :runner eid)))}}}
 
    "Adjusted Chronotype"
@@ -104,15 +104,14 @@
 
    "Aesops Pawnshop"
    {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
-    :abilities [{:effect (req (resolve-ability
-                                state side
-                                {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                                 :choices {:req #(and (card-is? % :side :runner)
-                                                      (installed? %)
-                                                      (not (card-is? % :cid (:cid card))))}
-                                 :effect (effect (gain-credits 3)
-                                                 (trash target {:unpreventable true}))}
-                                card nil))}]}
+    :abilities [{:effect (effect (resolve-ability
+                                   {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
+                                    :choices {:req #(and (card-is? % :side :runner)
+                                                         (installed? %)
+                                                         (not (card-is? % :cid (:cid card))))}
+                                    :effect (effect (gain-credits 3)
+                                                    (trash target {:unpreventable true}))}
+                                   card nil))}]}
 
    "Akshara Sareen"
    {:in-play [:click-per-turn 1]
@@ -123,7 +122,8 @@
    "Algo Trading"
    {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
     :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"
-                 :prompt "Choose how many [Credit] to move" :once :per-turn
+                 :prompt "Choose how many [Credit] to move"
+                 :once :per-turn
                  :choices {:number (req (min (:credit runner) 3))}
                  :effect (effect (lose-credits target)
                                  (add-counter card :credit target))
@@ -320,16 +320,22 @@
                                   card nil))}]}
 
    "Bloo Moose"
-   {:flags {:runner-phase-12 (req true)}
-    :abilities [{:req (req (and (:runner-phase-12 @state)
-                                (not (seq (get-in @state [:runner :locked :discard])))))
-                 :once :per-turn
-                 :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
-                 :show-discard true
-                 :choices {:req #(and (in-discard? %) (= (:side %) "Runner"))}
-                 :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
-                 :effect (effect (gain-credits 2)
-                                 (move target :rfg))}]}
+   (let [ability {:req (req (and (:runner-phase-12 @state)
+                                 (not (seq (get-in @state [:runner :locked :discard])))))
+                  :once :per-turn
+                  :interactive (req true)
+                  :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
+                  :show-discard true
+                  :choices {:req #(and (in-discard? %) (= (:side %) "Runner"))}
+                  :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
+                  :effect (effect (gain-credits 2)
+                                  (move target :rfg))}]
+     {:flags {:runner-phase-12 (req true)}
+      :abilities [ability]
+      :events {:runner-turn-begins
+               {:optional
+                {:prompt "Remove a card from the heap and gain 2 [Credits]?"
+                 :yes-ability ability}}}})
 
    "Borrowed Satellite"
    {:in-play [:hand-size 1 :link 1]}
@@ -751,10 +757,13 @@
                                                       "0 [Credits] (runner has no credits to lose)"
                                                       "1 [Credits]"))
                                   :once :per-turn
+                                  :interactive (req true)
                                   :effect (effect (lose-credits 1))}}}
 
    "Duggars"
-   {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
+   {:abilities [{:cost [:click 4]
+                 :effect (effect (draw 10))
+                 :msg "draw 10 cards"}]}
 
    "Dummy Box"
    (letfn [(dummy-prevent [type] {:msg (str "prevent a " type " from being trashed")
@@ -1005,7 +1014,13 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Jackpot!"
-   (let [jackpot {:interactive (req true)
+   (let [ability {:label "Place 1 [Credit] on Jackpot! (start of turn)"
+                  :silent (req true)
+                  :once :per-turn
+                  :req (req (:runner-phase-12 @state))
+                  :effect (effect (system-msg "places 1 [Credit] on Jackpot!")
+                                  (add-counter :runner card :credit 1))}
+         jackpot {:interactive (req true)
                   :async true
                   :req (req (= :runner (:as-agenda-side target)))
                   :effect (req (show-wait-prompt state :corp "Runner to use Jackpot!")
@@ -1019,14 +1034,15 @@
                                     :choices {:number (req (get-counters card :credit))}
                                     :async true
                                     :effect (req (gain-credits state :runner target)
-                                                 (system-msg state :runner (str "trashes Jackpot! to gain " target " credits"))
+                                                 (system-msg state :runner (str "trashes Jackpot! to gain " target " [Credits]"))
                                                  (clear-wait-prompt state :corp)
                                                  (trash state :runner eid card nil))}}}
                                  card nil))}]
-     {:events
-      {:runner-turn-begins {:effect (effect (add-counter :runner card :credit 1))}
-       :agenda-stolen (dissoc jackpot :req)
-       :as-agenda jackpot}})
+     {:flags {:runner-phase-12 (req true)}
+      :events {:runner-turn-begins ability
+               :agenda-stolen (dissoc jackpot :req)
+               :as-agenda jackpot}
+      :abilities [ability]})
 
    "Jak Sinclair"
    (let [ability {:label "Make a run (start of turn)"

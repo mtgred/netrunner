@@ -1320,9 +1320,11 @@
         (is (zero? (get-counters (refresh jak) :credit)) "Jackpot! starts with 0 credits")
         (take-credits state :runner)
         (take-credits state :corp)
+        (core/end-phase-12 state :runner nil)
         (is (= 1 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn")
         (take-credits state :runner)
         (take-credits state :corp)
+        (core/end-phase-12 state :runner nil)
         (is (= 2 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn (2nd turn)")
         (run-empty-server state "HQ")
         (click-prompt state :runner "Steal")
@@ -1347,6 +1349,7 @@
         (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
         (take-credits state :runner)
         (take-credits state :corp)
+        (core/end-phase-12 state :runner nil)
         (card-ability state :runner fc 0)
         (click-prompt state :runner "Yes")
         (click-prompt state :runner "1")
@@ -1363,6 +1366,7 @@
       (let [jak (get-resource state 0)]
         (take-credits state :runner)
         (take-credits state :corp)
+        (core/end-phase-12 state :runner nil)
         (is (= 1 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn")
         (run-empty-server state "Server 1")
         (click-prompt state :runner "Pay 6 [Credits] to trash") ;trash CH

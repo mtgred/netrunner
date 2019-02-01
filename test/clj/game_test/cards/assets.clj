@@ -2802,7 +2802,6 @@
             cards (count (:hand (get-corp)))
             rj (get-content state :remote1 0)]
         (card-ability state :corp rj 0)
-        (click-prompt state :corp "Yes")
         (is (= (+ 3 credits) (:credit (get-corp))))
         (is (= (+ 3 cards) (count (:hand (get-corp))))))))
   (testing "when there aren't enough cards in R&D"
@@ -2819,7 +2818,6 @@
             cards (count (:hand (get-corp)))
             rj (get-content state :remote1 0)]
         (card-ability state :corp rj 0)
-        (click-prompt state :corp "Yes")
         (is (= (+ 3 credits) (:credit (get-corp))))
         (is (= (+ 2 cards) (count (:hand (get-corp)))))
         (is (= :runner (:winner @state)) "Runner wins"))))

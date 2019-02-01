@@ -1261,6 +1261,8 @@
       (dotimes [n 4]
         (take-credits state :runner)
         (take-credits state :corp)
+        (core/end-phase-12 state :runner nil)
+        (click-prompt state :runner "Trypano")
         (click-prompt state :runner "Yes")
         (click-prompt state :runner "Yes"))
       (is (zero? (count (:discard (get-runner)))) "Trypano not in discard yet")
