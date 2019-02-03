@@ -466,10 +466,11 @@
                  :effect (effect (trash card {:cause :ability-cost}) (lose-tags 1))}]}
 
    "Friday Chip"
-   {:flags {:runner-phase-12 (req true)}
+   {:flags {:runner-phase-12 (req (pos? (get-counters card :virus)))}
     :abilities [{:label "Move 1 hosted virus counter (start of turn)"
                  :msg (msg "move 1 virus counter to " (:title target))
-                 :req (req (and (pos? (get-counters card :virus))
+                 :req (req (and (:runner-phase-12 @state)
+                                (pos? (get-counters card :virus))
                                 (pos? (count-virus-programs state))))
                  :choices {:req is-virus-program?}
                  :effect (req (add-counter state :runner card :virus -1)

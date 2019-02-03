@@ -1814,6 +1814,7 @@
         (is (:rezzed (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))))
 
 (deftest leverage
+  ;; Leverage
   (do-game
     (new-game {:corp {:hand ["Scorched Earth" "Cerebral Overwriter"]
                       :deck ["Cerebral Overwriter"]}

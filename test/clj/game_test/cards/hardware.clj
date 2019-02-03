@@ -1008,6 +1008,29 @@
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-hardware state)) "Plascrete depleted and trashed"))))
 
+(deftest qianju-pt
+  (do-game
+    (new-game {:corp {:hand [(qty "SEA Source" 2) "Hard-Hitting News"]}
+               :runner {:hand ["Qianju PT"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Qianju PT")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner is in Step 1.2")
+    (core/end-phase-12 state :runner nil)
+    (click-prompt state :runner "Yes")
+    (is (= 3 (:click (get-runner))) "Runner should lose a click to Qianju PT")
+    (run-empty-server state "Archives")
+    (take-credits state :runner)
+    (play-from-hand state :corp "SEA Source")
+    (click-prompt state :corp "0")
+    (click-prompt state :runner "0")
+    (is (zero? (count-tags state)) "Runner should avoid first tag")
+    (play-from-hand state :corp "Hard-Hitting News")
+    (click-prompt state :corp "0")
+    (click-prompt state :runner "0")
+    (is (= 4 (count-tags state)) "Runner should take 4 tags and avoid none")))
+
 (deftest rabbit-hole
   ;; Rabbit Hole - +1 link, optionally search Stack to install more copies
   (do-game
