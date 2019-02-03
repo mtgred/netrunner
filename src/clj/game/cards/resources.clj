@@ -1097,11 +1097,12 @@
       :flags {:runner-phase-12 (req true)}
       :install-cost-bonus (req [:credit (- (:link runner))])
       :abilities [ability]
-      :events {:runner-turn-begins {:interactive (req true)
-                                    :req (req (not (get-in @state [:per-turn (:cid card)])))
-                                    :optional
-                                    {:prompt "Use Jak Sinclair to make a run?"
-                                     :yes-ability ability}}}})
+      :events {:runner-turn-begins
+               {:interactive (req true)
+                :req (req (not (get-in @state [:per-turn (:cid card)])))
+                :optional
+                {:prompt "Use Jak Sinclair to make a run?"
+                 :yes-ability ability}}}})
 
    "Jarogniew Mercs"
    {:effect (effect (gain-tags :runner eid 1)
