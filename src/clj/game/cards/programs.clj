@@ -281,7 +281,8 @@
               :req (req (>= (get-virus-counters state card) 3))
               :msg "look at the top card of R&D"
               :effect (effect (prompt! card (str "The top card of R&D is "
-                                                 (:title (first (:deck corp)))) ["OK"] {}))}}}
+                                                 (:title (first (:deck corp))) ".")
+                                       ["OK"] {}))}}}
 
    "Dhegdheer"
    {:abilities [{:label "Install a program on Dhegdheer"

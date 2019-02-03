@@ -227,6 +227,31 @@
         (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Datasucker")
         (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Datasucker")))))
 
+(deftest deep-thought
+  (do-game
+    (new-game {:corp {:deck [(qty "Ice Wall" 10)]}
+               :runner {:deck ["Deep Thought"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Deep Thought")
+    (let [dt (get-program state 0)]
+      (is (zero? (get-counters (refresh dt) :virus)) "Deep Thought starts with 0 counters")
+      (run-empty-server state :rd)
+      (click-prompt state :runner "No action")
+      (run-empty-server state :rd)
+      (click-prompt state :runner "No action")
+      (is (= 2 (get-counters (refresh dt) :virus)) "Deep Thought gains 1 counter per run")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (empty? (:prompt (get-runner))) "No prompt to look at R&D")
+      (run-empty-server state :rd)
+      (click-prompt state :runner "No action")
+      (is (= 3 (get-counters (refresh dt) :virus)))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= "The top card of R&D is Ice Wall." (-> (get-runner) :prompt first :msg)))
+      (click-prompt state :runner "OK")
+      (is (empty? (:prompt (get-runner)))))))
+
 (deftest dhegdheer
   ;; Dheghdheer - hosting a breaker with strength based on unused MU should calculate correctly
   (do-game
