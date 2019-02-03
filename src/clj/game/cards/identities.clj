@@ -348,14 +348,14 @@
    {:events {:pre-first-turn {:req (req (= side :corp))
                               :effect (effect (update! (assoc card :flipped false)))}}
     :abilities [{:cost [:click 1]
+                 :msg "flip their ID"
                  :effect (effect (update! (if (:flipped card)
                                             (assoc card
                                                    :flipped false
                                                    :code "26087")
                                             (assoc card
                                                    :flipped true
-                                                   :code "26087flip"))))
-                 :msg (msg "flip their ID")}]}
+                                                   :code "26087flip"))))}]}
 
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:once :per-turn
@@ -542,14 +542,14 @@
    "Hoshiko Shiro"
    {:events {:pre-first-turn {:req (req (= side :runner))
                               :effect (effect (update! (assoc card :flipped false)))}}
-    :abilities [{:effect (effect (update! (if (:flipped card)
+    :abilities [{:msg "flip their ID"
+                 :effect (effect (update! (if (:flipped card)
                                             (assoc card
                                                    :flipped false
                                                    :code "26096")
                                             (assoc card
                                                    :flipped true
-                                                   :code "26096flip"))))
-                 :msg (msg "flip their ID")}]}
+                                                   :code "26096flip"))))}]}
 
    "Iain Stirling: Retired Spook"
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
