@@ -320,7 +320,8 @@
               :silent (req true)
               :effect (effect (update! (assoc card :dopp-active true)))}
              :runner-turn-begins
-             {:effect (effect (update! (assoc card :dopp-active true)))}
+             {:silent (req true)
+              :effect (effect (update! (assoc card :dopp-active true)))}
              :successful-run-ends
              {:interactive (req true)
               :optional
@@ -942,19 +943,25 @@
               {:runner-trash e :corp-trash e})}
 
    "Qianju PT"
-   {:flags {:runner-phase-12 (req true)}
-    :abilities [{:label "Lose [Click], avoid 1 tag (start of turn)"
-                 :once :per-turn
-                 :req (req (:runner-phase-12 @state))
-                 :effect (effect (update! (assoc card :qianju-active true)))
-                 :msg "lose [Click] and avoid the first tag received until their next turn"}]
-    :events {:corp-turn-ends {:effect (effect (update! (dissoc card :qianju-active)))}
-             :runner-turn-begins {:req (req (:qianju-active card))
-                                  :effect (effect (lose :click 1))}
-             :pre-tag {:req (req (:qianju-active card))
-                       :msg "avoid the first tag received"
-                       :effect (effect (tag-prevent :runner 1)
-                                       (update! (dissoc card :qianju-active)))}}}
+   (let [ability {:label "Lose [Click], avoid 1 tag (start of turn)"
+                  :once :per-turn
+                  :silent (req true)
+                  :req (req (:runner-phase-12 @state))
+                  :effect (effect (update! (assoc card :qianju-active true))
+                                  (lose :click 1))
+                  :msg "lose [Click] and avoid the first tag received until their next turn"}]
+     {:flags {:runner-phase-12 (req true)}
+      :abilities [ability]
+      :events {:corp-turn-ends {:effect (effect (update! (dissoc card :qianju-active)))}
+               :runner-turn-begins
+               {:interactive (req true)
+                :optional
+                {:prompt "Lose [Click] to avoid 1 tag?"
+                 :yes-ability ability}}
+               :pre-tag {:req (req (:qianju-active card))
+                         :msg "avoid the first tag received"
+                         :effect (effect (tag-prevent :runner 1)
+                                         (update! (dissoc card :qianju-active)))}}})
 
    "R&D Interface"
    {:in-play [:rd-access 1]}
@@ -1060,8 +1067,10 @@
       :trash-effect {:effect (req (remove-watch state (watch-id card)))}
       :leave-play (req (remove-watch state (watch-id card)))
       :events {:runner-turn-begins {:req (req (empty? (get-in @state [:runner :hand])))
+                                    :silent (req true)
                                     :effect (effect (resolve-ability ability card nil))}
                :corp-turn-begins {:req (req (empty? (get-in @state [:runner :hand])))
+                                  :silent (req true)
                                   :effect (effect (resolve-ability ability card nil))}}})
 
    "Rubicon Switch"
@@ -1151,6 +1160,7 @@
                                  (update! (assoc card :sifr-target current-ice :sifr-used true))
                                  (update-ice-strength current-ice))}]
     :events {:runner-turn-begins {:req (req (:sifr-used card))
+                                  :silent (req true)
                                   :effect (effect (gain :runner :hand-size 1)
                                                   (update! (dissoc card :sifr-used)))}
              :pre-ice-strength {:req (req (= (:cid target) (get-in card [:sifr-target :cid])))
@@ -1305,6 +1315,7 @@
 
    "Ubax"
    (let [ability {:req (req (:runner-phase-12 @state))
+                  :silent (req true)
                   :msg "draw 1 card"
                   :label "Draw 1 card (start of turn)"
                   :once :per-turn
@@ -1330,20 +1341,24 @@
                                (has-subtype? % "Sysop"))
                            (or (and (= (last (:zone %)) :content) (is-remote? (second (:zone %))))
                                (= (last (:zone %)) :onhost)))}
-      :msg (msg "trash " (:title target)) :effect (effect (trash target))}]}
+      :msg (msg "trash " (:title target))
+      :effect (effect (trash target))}]}
 
    "Vigil"
-   (let [ability {:req (req (and (:runner-phase-12 @state) (= (count (:hand corp)) (hand-size state :corp))))
+   (let [ability {:req (req (and (:runner-phase-12 @state)
+                                 (= (count (:hand corp)) (hand-size state :corp))))
+                  :silent (req true)
                   :msg "draw 1 card"
                   :label "Draw 1 card (start of turn)"
                   :once :per-turn
                   :effect (effect (draw 1))}]
-   {:in-play [:memory 1]
-    :events {:runner-turn-begins ability}
-    :abilities [ability]})
+     {:in-play [:memory 1]
+      :events {:runner-turn-begins ability}
+      :abilities [ability]})
 
    "Window"
-   {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of their Stack"
+   {:abilities [{:cost [:click 1]
+                 :msg "draw 1 card from the bottom of their Stack"
                  :effect (effect (move (last (:deck runner)) :hand))}]}
 
    "Zamba"

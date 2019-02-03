@@ -1119,7 +1119,8 @@
                          true))))]
      {:msg "prevent the Corp from rezzing non-ICE cards on the Runner's turn"
       :effect ab
-      :events {:runner-turn-begins {:effect ab}}
+      :events {:runner-turn-begins {:silent (req true)
+                                    :effect ab}}
       :leave-play (req (clear-all-flags-for-card! state side card))})
 
    "Itinerant Protesters"
@@ -1227,21 +1228,20 @@
 
    "Leverage"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
-    :player :corp
-    :prompt "Take 2 bad publicity?"
-    :choices ["Yes" "No"]
-    :effect (req (if (= target "Yes")
-                   (do (gain-bad-publicity state :corp 2)
-                       (system-msg state :corp "takes 2 bad publicity"))
-                   (do (register-events state side
-                                        {:pre-damage {:effect (effect (damage-prevent :net Integer/MAX_VALUE)
-                                                                      (damage-prevent :meat Integer/MAX_VALUE)
-                                                                      (damage-prevent :brain Integer/MAX_VALUE))}
-                                         :runner-turn-begins {:effect (effect (unregister-events card))}}
-                                        (assoc card :zone '(:discard)))
-                       (system-msg state :runner "is immune to damage until the beginning of the Runner's next turn"))))
-    ; This :events is a hack so that the unregister-events above will fire.
-    :events {:runner-turn-begins nil :pre-damage nil}}
+    :optional {:player :corp
+               :prompt "Take 2 bad publicity?"
+               :yes-ability {:effect (effect (gain-bad-publicity 2)
+                                             (system-msg "takes 2 bad publicity"))}
+               :no-ability {:effect (effect (register-events
+                                              {:pre-damage {:effect (effect (damage-prevent :net Integer/MAX_VALUE)
+                                                                            (damage-prevent :meat Integer/MAX_VALUE)
+                                                                            (damage-prevent :brain Integer/MAX_VALUE))}
+                                               :runner-turn-begins {:silent (req true)
+                                                                    :effect (effect (unregister-events card))}}
+                                              (assoc card :zone '(:discard)))
+                                            (system-msg :runner "is immune to damage until the beginning of the Runner's next turn"))}}
+    :events {:runner-turn-begins nil
+             :pre-damage nil}}
 
    "Levy AR Lab Access"
    {:msg "shuffle their Grip and Heap into their Stack and draw 5 cards"
@@ -1995,7 +1995,8 @@
     :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
                     (move (first (:play-area runner)) :rfg))
     :events {:corp-turn-begins
-             {:effect (effect (register-turn-flag! card :can-advance
+             {:silent (req true)
+              :effect (effect (register-turn-flag! card :can-advance
                                 (fn [state side card]
                                   ((constantly false)
                                    (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning"))))

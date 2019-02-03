@@ -9,27 +9,32 @@
 
 (def card-definitions
   {"Algernon"
-   {:events
-    {:runner-turn-begins
-     {:req (req (can-pay? state :runner nil [:credit 2]))
-      :optional
-      {:prompt (msg "Pay 2 [Credits] to gain [Click]")
-       :player :runner
-       :yes-ability {:msg "gain [Click]"
-                     :effect (req (gain state :runner :click 1)
-                                  (update! state :runner (assoc-in (get-card state card) [:special :used-algernon] true)))
-                     :cost [:credit 2]}}}
-     :runner-turn-ends
-     {:async true
-      :effect (req (if (get-in card [:special :used-algernon])
-                     (do
-                       (update! state :runner (dissoc-in card [:special :used-algernon]))
-                       (if-not (:successful-run runner-reg)
-                         (do
-                           (system-msg state :runner "trashes Algernon because a successful run did not occur")
-                           (trash state :runner eid card nil))
-                         (effect-completed state side eid)))
-                     (effect-completed state side eid)))}}}
+   (let [ability {:msg "gain [Click]"
+                  :req (req (:runner-phase-12 @state))
+                  :cost [:credit 2]
+                  :effect (effect (gain :click 1)
+                                  (update! (assoc-in (get-card state card) [:special :used-algernon] true)))}]
+     {:flags {:runner-phase-12 (req (and (not (can-pay? state :runner nil [:credit 2]))
+                                         (some #(card-flag? % :drip-economy true) (all-active-installed state :runner))))}
+      :abilities [ability]
+      :events
+      {:runner-turn-begins
+       {:interactive (req (some #(card-flag? % :drip-economy true) (all-active-installed state :runner)))
+        :req (req (can-pay? state :runner nil [:credit 2]))
+        :optional
+        {:prompt "Pay 2 [Credits] to gain [Click]"
+         :yes-ability ability}}
+       :runner-turn-ends
+       {:async true
+        :effect (req (if (get-in card [:special :used-algernon])
+                       (do
+                         (update! state :runner (dissoc-in card [:special :used-algernon]))
+                         (if-not (:successful-run runner-reg)
+                           (do
+                             (system-msg state :runner "trashes Algernon because a successful run did not occur")
+                             (trash state :runner eid card nil))
+                           (effect-completed state side eid)))
+                       (effect-completed state side eid)))}}})
 
    "Analog Dreamers"
    {:abilities [{:cost [:click 1]
@@ -269,12 +274,14 @@
 
    "Deep Thought"
    {:events {:successful-run {:silent (req true)
-                              :effect (effect (add-counter card :virus 1))
-                              :req (req (= target :rd))}
+                              :req (req (= target :rd))
+                              :effect (effect (add-counter card :virus 1))}
              :runner-turn-begins
-                             {:req (req (>= (get-virus-counters state card) 3)) :msg "look at the top card of R&D"
-                              :effect (effect (prompt! card (str "The top card of R&D is "
-                                                                 (:title (first (:deck corp)))) ["OK"] {}))}}}
+             {:interactive (req true)
+              :req (req (>= (get-virus-counters state card) 3))
+              :msg "look at the top card of R&D"
+              :effect (effect (prompt! card (str "The top card of R&D is "
+                                                 (:title (first (:deck corp)))) ["OK"] {}))}}}
 
    "Dhegdheer"
    {:abilities [{:label "Install a program on Dhegdheer"
@@ -560,7 +567,8 @@
                                    :effect (effect (trash-no-cost eid target))}}}
 
    "Incubator"
-   {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}
+   {:events {:runner-turn-begins {:silent (req true)
+                                  :effect (effect (add-counter card :virus 1))}}
     :abilities [{:cost [:click 1]
                  :msg (msg "move " (get-counters card :virus) " virus counter to " (:title target))
                  :choices {:req #(and (installed? %)
@@ -754,7 +762,8 @@
                    (when-let [card (get-card state card)]
                      (update! state side (update-in card [:special] dissoc :installing)))))
     :events {:runner-turn-begins
-             {:effect (req (add-counter state side card :virus 1))}
+             {:silent (req true)
+              :effect (req (add-counter state side card :virus 1))}
              :counter-added
              {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
               :effect (effect (update-ice-strength (:host card)))}
@@ -1055,6 +1064,7 @@
    (let [ability {:label "Gain [Credits] (start of turn)"
                   :msg (msg "gain " (quot (:credit corp) 5) " [Credits]")
                   :once :per-turn
+                  :silent (req true)
                   :req (req (:runner-phase-12 @state))
                   :effect (effect (gain-credits (quot (:credit corp) 5)))}]
      {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
@@ -1064,11 +1074,15 @@
                :purge {:effect (effect (trash card {:cause :purge}))}}})
 
    "Tracker"
-   (let [ability {:prompt "Choose a server for Tracker" :choices (req servers)
+   (let [ability {:prompt "Choose a server for Tracker"
+                  :choices (req servers)
+                  :interactive (req true)
                   :msg (msg "target " target)
                   :req (req (not (:server-target card)))
                   :effect (effect (update! (assoc card :server-target target)))}]
-     {:abilities [{:label "Make a run on targeted server" :cost [:click 1 :credit 2]
+     {:implementation "Prevention is manual"
+      :abilities [{:label "Make a run on targeted server"
+                   :cost [:click 1 :credit 2]
                    :req (req (some #(= (:server-target card) %) runnable-servers))
                    :msg (msg "make a run on " (:server-target card) ". Prevent the first subroutine that would resolve from resolving")
                    :effect (effect (run (:server-target card) nil card))}]
@@ -1076,7 +1090,8 @@
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}})
 
    "Trope"
-   {:events {:runner-turn-begins {:effect (effect (add-counter card :power 1))}}
+   {:events {:runner-turn-begins {:silent (req true)
+                                  :effect (effect (add-counter card :power 1))}}
     :abilities [{:cost [:click 1]
                  :label "[Click], remove Trope from the game: Reshuffle cards from Heap back into Stack"
                  :effect (effect
@@ -1089,7 +1104,8 @@
                                                  (in-discard? %))}
                             :msg (msg "shuffle " (join ", " (map :title targets))
                                       " into their Stack")
-                            :effect (req (doseq [c targets] (move state side c :deck))
+                            :effect (req (doseq [c targets]
+                                           (move state side c :deck))
                                          (shuffle! state side :deck))}
                            card nil))}]}
 

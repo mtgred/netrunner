@@ -401,16 +401,19 @@
                   etr]})
 
    "Expo Grid"
-   (let [ability {:req (req (some #(and (is-type? % "Asset")
-                                        (rezzed? %))
-                                  (get-in corp (:zone card))))
+   (let [ability {:req (req (:corp-phase-12 @state))
                   :msg "gain 1 [Credits]"
                   :once :per-turn
+                  :silent (req true)
                   :label "Gain 1 [Credits] (start of turn)"
-                  :effect (effect (gain-credits 1))}]
-   {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins ability}
-    :abilities [ability]})
+                  :effect (req (when (some #(and (is-type? % "Asset")
+                                             (rezzed? %))
+                                       (get-in corp (:zone card)))
+                                 (system-msg state side "uses Expo Grid to gain 1 [Credit]")
+                                 (gain-credits state side 1)))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
 
    "Forced Connection"
    {:flags {:rd-reveal (req true)}
@@ -850,7 +853,8 @@
    "Off the Grid"
    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
     :effect (req (prevent-run-on-server state card (second (:zone card))))
-    :events {:runner-turn-begins {:effect (req (prevent-run-on-server state card (second (:zone card))))}
+    :events {:runner-turn-begins {:silent (req true)
+                                  :effect (req (prevent-run-on-server state card (second (:zone card))))}
              :successful-run {:req (req (= target :hq))
                               :effect (req (trash state :corp card)
                                            (enable-run-on-server state card
@@ -970,6 +974,7 @@
                    :effect (effect (lose :runner :click 1))
                    :msg "force the Runner to spend an additional [Click]"}
              :runner-turn-begins {:req (req (> (:click-per-turn runner) 1))
+                                  :silent (req true)
                                   :effect (req (enable-run-on-server state card (second (:zone card))))}
              :runner-spent-click {:req (req (<= 1 (:click runner)))
                                   :effect (req (prevent-run-on-server state card (second (:zone card))))}
@@ -1195,20 +1200,23 @@
     :abilities [{:req (req this-server)
                  :label "Reduce Runner's maximum hand size by 1 until start of next Corp turn"
                  :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
-                 :effect (req (update! state side (assoc card :times-used (inc (get card :times-used 0))))
-                              (change-hand-size state :runner -1))}]
-    :trash-effect {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
+                 :effect (effect (update! (assoc card :times-used (inc (:times-used card 0))))
+                                 (change-hand-size :runner -1))}]
+    :trash-effect {:req (req (and (= :servers (first (:previous-zone card)))
+                                  (:run @state)))
                    :effect (req (when-let [n (:times-used card)]
-                                  (register-events state side
-                                                   {:corp-turn-begins
-                                                    {:msg (msg "increase the Runner's maximum hand size by " n)
-                                                     :effect (effect (change-hand-size :runner n)
-                                                                     (unregister-events card)
-                                                                     (update! (dissoc card :times-used)))}}
-                                                   (assoc card :zone '(:discard)))))}
+                                  (register-events
+                                    state side
+                                    {:corp-turn-begins
+                                     {:msg (msg "increase the Runner's maximum hand size by " n)
+                                      :silent (req true)
+                                      :effect (effect (change-hand-size :runner n)
+                                                      (unregister-events card)
+                                                      (update! (dissoc card :times-used)))}}
+                                    (assoc card :zone '(:discard)))))}
     :events {:corp-turn-begins {:req (req (:times-used card))
-                                :msg (msg "increase the Runner's maximum hand size by "
-                                          (:times-used card))
+                                :silent (req true)
+                                :msg (msg "increase the Runner's maximum hand size by " (:times-used card))
                                 :effect (effect (change-hand-size :runner (:times-used card))
                                                 (update! (dissoc card :times-used)))}}}
 

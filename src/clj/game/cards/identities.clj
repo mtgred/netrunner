@@ -170,6 +170,7 @@
    (let [ability {:prompt "Select a card to install facedown"
                   :label "Install a card facedown (start of turn)"
                   :once :per-turn
+                  :interactive (req true)
                   :choices {:max 1
                             :req #(and (= (:side %) "Runner")
                                        (in-hand? %))}
@@ -266,7 +267,8 @@
    "Blue Sun: Powering the Future"
    {:flags {:corp-phase-12 (req (and (not (:disabled card))
                                      (some #(rezzed? %) (all-installed state :corp))))}
-    :abilities [{:choices {:req #(:rezzed %)}
+    :abilities [{:choices {:req #(and (:rezzed %)
+                                      (= (:side %) "Corp"))}
                  :effect (req (trigger-event state side :pre-rez-cost target)
                               (let [cost (rez-cost state side target)]
                                 (gain-credits state side cost)
@@ -278,6 +280,7 @@
    {:events {:pre-start-game {:effect draft-points-target}
              :runner-turn-begins {:req (req (and (has-most-faction? state :runner "Criminal")
                                                  (pos? (get-in runner [:tag :base]))))
+                                  :silent (req true)
                                   :msg "remove 1 tag"
                                   :effect (effect (lose-tags 1))}}}
 
@@ -411,6 +414,7 @@
    {:events
     {:pre-start-game {:effect draft-points-target}
      :runner-turn-begins {:player :corp
+                          :interactive (req true)
                           :req (req (and (not (:disabled card))
                                          (has-most-faction? state :corp "Weyland Consortium")
                                          (some ice? (all-installed state side))))
@@ -528,6 +532,8 @@
 
    "Iain Stirling: Retired Spook"
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
+                  :label "Gain 2 [Credits] (start of turn)"
+                  :silent (req true)
                   :once :per-turn
                   :msg "gain 2 [Credits]"
                   :effect (effect (gain-credits 2))}]
@@ -754,7 +760,9 @@
                                 (str "trash " (join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
                                 "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                   :once :per-turn
-                  :effect (effect (mill :runner 2) (draw))}]
+                  :interactive (req true)
+                  :effect (effect (mill :runner 2)
+                                  (draw))}]
      {:flags {:runner-turn-draw true
               :runner-phase-12 (req (and (not (:disabled card))
                                          (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
@@ -795,6 +803,8 @@
 
    "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
    (let [ability {:label "Gain 1 [Credits] (start of turn)"
+                  :interactive (req (and (not (:disabled card))
+                                         (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))
                   :once :per-turn
                   :effect (req (when (and (> 3 (count (:hand runner)))
                                           (:runner-phase-12 @state))

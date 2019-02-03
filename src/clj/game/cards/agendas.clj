@@ -341,17 +341,17 @@
                :effect (effect (damage eid :meat (meat-damage state card) {:card card}))}})
 
    "Clone Retirement"
-   {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
+   {:msg "remove 1 bad publicity"
+    :effect (effect (lose :bad-publicity 1))
     :silent (req true)
     :stolen {:msg "force the Corp to take 1 bad publicity"
              :effect (effect (gain-bad-publicity :corp 1))}}
 
    "Corporate Sales Team"
    (let [ability {:silent (req true)
-                  :effect (req (when (pos? (get-counters card :credit))
-                                 (gain-credits state :corp 1)
-                                 (system-msg state :corp (str "uses Corporate Sales Team to gain 1 [Credits]"))
-                                 (add-counter state side card :credit -1)))}]
+                  :counter-cost [:credit 1]
+                  :msg "gain 1 [Credit]"
+                  :effect (effect (gain-credits :corp 1))}]
      {:effect (effect (add-counter card :credit 10))
       :silent (req true)
       :events {:runner-turn-begins ability
@@ -361,7 +361,8 @@
    {:msg (msg (if (> (:credit corp) 6) "gain 7 [Credits]" "lose all credits"))
     :interactive (req true)
     :effect (req (if (> (:credit corp) 6)
-                   (gain-credits state :corp 7) (lose-credits state :corp :all)))}
+                   (gain-credits state :corp 7)
+                   (lose-credits state :corp :all)))}
 
    "Crisis Management"
    (let [ability {:req (req tagged)
@@ -1348,6 +1349,7 @@
     :effect (effect (add-counter card :agenda 3))
     :events {:runner-turn-begins
              {:async true
+              :interactive (req true)
               :req (req (pos? (get-counters card :agenda)))
               :effect (effect (show-wait-prompt :runner "Corp to use Voting Machine Initiative")
                               (continue-ability
@@ -1355,10 +1357,9 @@
                                  {:player :corp
                                   :prompt "Use Voting Machine Initiative to make the Runner lose 1 [Click]?"
                                   :yes-ability {:msg "make the Runner lose 1 [Click]"
-                                                :effect (effect (lose :runner :click 1)
-                                                                (add-counter card :agenda -1)
-                                                                (clear-wait-prompt :runner))}
-                                  :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                                                :counter-cost [:agenda 1]
+                                                :effect (effect (lose :runner :click 1))}
+                                  :end-effect (effect (clear-wait-prompt :runner))}}
                                 card nil))}}}
 
    "Vulcan Coverup"

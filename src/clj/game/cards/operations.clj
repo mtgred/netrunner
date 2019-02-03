@@ -447,7 +447,8 @@
 
    "Door to Door"
    {:events {:runner-turn-begins
-             {:trace {:base 1
+             {:interactive (req true)
+              :trace {:base 1
                       :label "Do 1 meat damage if Runner is tagged, or give the Runner 1 tag"
                       :successful {:msg (msg (if tagged
                                                "do 1 meat damage"
@@ -527,6 +528,7 @@
                      (system-msg state side (str "uses Enhanced Login Protocol to add an additional cost of [Click]"
                                                  " to make the first run not through a card ability this turn"))))
       :events {:runner-turn-begins {:msg "add an additional cost of [Click] to make the first run not through a card ability this turn"
+                                    :silent (req true)
                                     :effect (effect (add-effect))}
                :runner-turn-ends {:req (req (elp-activated state))
                                   :effect (effect (remove-effect))}
@@ -913,6 +915,7 @@
     :effect (effect (register-events (:events (card-def card))
                                      (assoc card :zone '(:discard))))
     :events {:runner-turn-begins {:msg "make the Runner lose [Click]"
+                                  :silent (req true)
                                   :effect (effect (lose :runner :click 1)
                                                   (unregister-events card))}}}
 
@@ -1494,6 +1497,7 @@
                               (empty? (:made-run runner-reg)))
                      (add-effect state side)))
       :events {:runner-turn-begins {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
+                                    :silent (req true)
                                     :effect (effect (add-effect))}
                :runner-turn-ends {:req (req (so-activated state))
                                   :effect (effect (remove-effect))}
