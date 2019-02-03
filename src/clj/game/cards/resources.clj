@@ -341,17 +341,21 @@
    (let [ability {:req (req (and (:runner-phase-12 @state)
                                  (not (seq (get-in @state [:runner :locked :discard])))))
                   :once :per-turn
-                  :label "RFG a card in Heap to gain 2 [Credits] (start of turn)"
+                  :label "Remove a card in Heap from the game to gain 2 [Credits] (start of turn)"
                   :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
                   :show-discard true
                   :choices {:req #(and (in-discard? %) (= (:side %) "Runner"))}
                   :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
                   :effect (effect (gain-credits 2)
                                   (move target :rfg))}]
-     {:flags {:runner-phase-12 (req true)}
+     {:flags {:runner-phase-12 (req (and (not (seq (get-in @state [:runner :locked :discard])))
+                                         (-> runner :discard count pos?)))}
       :abilities [ability]
       :events {:runner-turn-begins
                {:interactive (req true)
+                :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                               (:runner-phase-12 @state)
+                               (not (seq (get-in @state [:runner :locked :discard])))))
                 :optional
                 {:prompt "Remove a card from the heap and gain 2 [Credits]?"
                  :yes-ability ability}}}})

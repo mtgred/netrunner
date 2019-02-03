@@ -214,6 +214,33 @@
     (run-empty-server state :hq)
     (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
 
+(deftest bloo-moose
+  ;; Bloo Moose
+  (do-game
+    (new-game {:runner {:hand ["Bloo Moose"]
+                        :discard [(qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bloo Moose")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (card-ability state :runner (get-resource state 0) 0)
+    (let [credits (:credit (get-runner))
+          heap (-> (get-runner) :discard count)
+          rfg (-> (get-runner) :rfg count)]
+      (click-card state :runner (-> (get-runner) :discard first))
+      (is (= (- heap 1) (-> (get-runner) :discard count)) "Card in heap is removed from game")
+      (is (= (+ rfg 1) (-> (get-runner) :rfg count)) "Card in heap is removed from game")
+      (is (= (+ credits 2) (:credit (get-runner))) "Runner should gain 2 credits"))
+    (core/end-phase-12 state :runner nil)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
+    (let [credits (:credit (get-runner))]
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (-> (get-runner) :discard first))
+      (is (= (+ credits 2) (:credit (get-runner))) "Runner should gain 2 credits"))))
+
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
   (do-game
