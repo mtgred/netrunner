@@ -105,15 +105,27 @@
                                                  :effect (effect (gain-credits 1))}}}}}
 
    "Aesops Pawnshop"
-   {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
-    :abilities [{:effect (effect (resolve-ability
+   (let [ability {:label "Trash a card to gain 3 [Credits] (start of turn)"
+                  :once :per-turn
+                  :req (req (:runner-phase-12 @state))
+                  :effect (req (let [cid (:cid card)]
+                                 (continue-ability
+                                   state side
                                    {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
                                     :choices {:req #(and (card-is? % :side :runner)
                                                          (installed? %)
-                                                         (not (card-is? % :cid (:cid card))))}
+                                                         (not (card-is? % :cid cid)))}
                                     :effect (effect (gain-credits 3)
                                                     (trash target {:unpreventable true}))}
-                                   card nil))}]}
+                                   card nil)))}]
+     {:flags {:runner-phase-12 (req (< 1 (count (all-installed state :runner))))}
+      :abilities [ability]
+      :events {:runner-turn-begins
+               {:interactive (req true)
+                :req (req (not (get-in @state [:per-turn (:cid card)])))
+                :optional
+                {:prompt "Trash an installed card to gain 3 [Credits]?"
+                 :yes-ability ability}}}})
 
    "Akshara Sareen"
    {:in-play [:click-per-turn 1]

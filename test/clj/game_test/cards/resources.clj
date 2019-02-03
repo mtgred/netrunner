@@ -78,22 +78,33 @@
 (deftest aesop-s-pawnshop
   ;; Tests use cases for Aesop's Pawnshop
   (do-game
-    (new-game {:runner {:deck ["Aesop's Pawnshop" "Cache"]}})
+    (new-game {:runner {:deck ["Aesop's Pawnshop" (qty "Cache" 2)]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Aesop's Pawnshop")
     (play-from-hand state :runner "Cache")
+    (play-from-hand state :runner "Cache")
+    (take-credits state :runner)
+    (take-credits state :corp)
     (let [orig-credits (:credit (get-runner))
           ap (get-resource state 0)
           cache (get-program state 0)]
       (card-ability state :runner ap 0)
-      (click-card state :runner cache)
-      (card-ability state :runner ap 0)
       (click-card state :runner ap)
-      (let [ap (get-resource state 0)
-            cache (get-in @state [:runner :discard 0])]
-        (is (= (+ 3 orig-credits) (:credit (get-runner))) "Should have only gained 3 credits")
-        (is (not= cache nil) "Cache should be in Heap")
-        (is (not= ap nil) "Aesops should still be installed")))))
+      (is (refresh ap) "Aesops should still be installed")
+      (click-card state :runner cache)
+      (is (= (+ 3 orig-credits) (:credit (get-runner))) "Should have only gained 3 credits")
+      (is (nil? (refresh cache)) "Cache should not be installed anymore")
+      (is (find-card "Cache" (:discard (get-runner))) "Cache should be in Heap"))
+    (core/end-phase-12 state :runner nil)
+    (is (empty? (:prompt (get-runner))) "Aesops doesn't trigger at Start of Turn")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
+    (let [cache (get-program state 0)
+          credits (:credit (get-runner))]
+      (click-prompt state :runner "Yes")
+      (click-card state :runner cache)
+      (is (= (+ 3 credits) (:credit (get-runner))) "Should gain 3 credits"))))
 
 (deftest all-nighter
   ;; All-nighter - Click/trash to gain 2 clicks
