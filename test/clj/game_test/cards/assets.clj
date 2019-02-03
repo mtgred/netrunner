@@ -2821,7 +2821,7 @@
         (is (= (+ 3 credits) (:credit (get-corp))))
         (is (= (+ 2 cards) (count (:hand (get-corp)))))
         (is (= :runner (:winner @state)) "Runner wins"))))
-  (testing "when other start-of-turn cards like Marilyn Campaign fire #3855"
+  (testing "when other start-of-turn cards like Marilyn Campaign fire. Issue #3855"
     (do-game
       (new-game {:corp {:deck ["Rashida Jaheem" "Marilyn Campaign" (qty "Hedge Fund" 10)]}})
       (starting-hand state :corp ["Rashida Jaheem" "Marilyn Campaign"])

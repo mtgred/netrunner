@@ -2670,6 +2670,7 @@
                   (is (= counter (get-counters (refresh vmi) :agenda)))
                   (is (= 4 (:click (get-runner))))
                   (click-prompt state :corp choice)
+                  (is (empty? (:prompt (get-runner))) "Runner should lose wait prompt")
                   (is (= (- 4 diff) (:click (get-runner))))
                   (is (= (- counter diff) (get-counters (refresh vmi) :agenda)))
                   (take-credits state :runner)
@@ -2681,7 +2682,7 @@
           (vmi-test vmi-scored "No" 2)
           (vmi-test vmi-scored "Yes" 2)
           (vmi-test vmi-scored "Yes" 1)
-          (is (empty (:prompt (get-corp))) "No prompt as there are no agenda counters left"))))))
+          (is (empty? (:prompt (get-corp))) "No prompt as there are no agenda counters left"))))))
 
 (deftest vulcan-coverup
   ;; Vulcan Coverup

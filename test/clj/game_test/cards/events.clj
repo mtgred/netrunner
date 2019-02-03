@@ -1813,6 +1813,45 @@
         (is (not (:rezzed (get-ice state :hq 0))) "Inner Ice Wall should not be rezzed")
         (is (:rezzed (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))))
 
+(deftest leverage
+  (do-game
+    (new-game {:corp {:hand ["Scorched Earth" "Cerebral Overwriter"]
+                      :deck ["Cerebral Overwriter"]}
+               :runner {:hand [(qty "Leverage" 2) (qty "Sure Gamble" 4)]}})
+    (play-from-hand state :corp "Cerebral Overwriter" "New remote")
+    (core/gain state :corp :click 2 :credit 2)
+    (advance state (get-content state :remote1 0) 2)
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "No action")
+    (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+    (play-from-hand state :runner "Leverage")
+    (click-prompt state :corp "Yes")
+    (is (= 2 (:bad-publicity (get-corp))) "Corp should gain 2 bad publicity")
+    (play-from-hand state :runner "Leverage")
+    (click-prompt state :corp "No")
+    (is (= 2 (:bad-publicity (get-corp))) "Corp shouldn't gain additional bad publicity")
+    (run-on state "Server 1")
+    (run-successful state)
+    (click-prompt state :corp "Yes")
+    (is (zero? (:brain-damage (get-runner))) "Runner should take no brain damage because of Leverage")
+    (click-prompt state :runner "No action")
+    (take-credits state :runner)
+    ;; Setting up Scorched Earth to check prevention works on Corp's turn
+    (core/gain-tags state :runner 1)
+    (core/gain state :corp :credit 20)
+    (is (= 2 (-> (get-runner) :discard count)) "Runner should have 2 cards in discard")
+    (play-from-hand state :corp "Scorched Earth")
+    (is (= 2 (-> (get-runner) :discard count)) "Runner should still have 2 cards in discard")
+    (play-from-hand state :corp "Cerebral Overwriter" "New remote")
+    (core/gain state :corp :click 2 :credit 2)
+    (advance state (get-content state :remote2 0) 2)
+    (take-credits state :corp)
+    (run-on state "Server 2")
+    (run-successful state)
+    (click-prompt state :corp "Yes")
+    (is (= 2 (:brain-damage (get-runner))) "Runner should take brain damage since Leverage ended")))
+
 (deftest mad-dash
   ;; Mad Dash - Make a run. Move to score pile as 1 point if steal agenda.  Take 1 meat if not
   (do-game
