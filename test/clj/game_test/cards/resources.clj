@@ -834,6 +834,41 @@
     (play-from-hand state :corp "Hedge Fund")
     (is (= 11 (:credit (get-corp))) "Corp has 11c")))
 
+(deftest drug-dealer
+  ;; Drug Dealer
+  (testing "Basic test"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:hand ["Drug Dealer"]
+                          :deck [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :runner "Drug Dealer")
+      (let [grip (-> (get-runner) :hand count)]
+        (take-credits state :runner)
+        (is (= (inc grip) (-> (get-runner) :hand count)) "Drug Dealer should draw 1 card"))
+      (let [credits (:credit (get-runner))]
+        (take-credits state :corp)
+        (is (= (dec credits) (:credit (get-runner))) "Drug Dealer should lose 1 credit"))))
+  (testing "With other drip econ cards"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:hand ["Drug Dealer" "Bloo Moose"]
+                          :deck [(qty "Sure Gamble" 5)]
+                          :discard ["Sure Gamble"]}})
+      (play-from-hand state :runner "Drug Dealer")
+      (play-from-hand state :runner "Bloo Moose")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/lose state :runner :credit (:credit (get-runner)))
+      (is (zero? (:credit (get-runner))))
+      (is (:runner-phase-12 @state) "Runner in Step 1.2")
+      (core/end-phase-12 state :runner nil)
+      (click-prompt state :runner "Drug Dealer")
+      (is (zero? (:credit (get-runner))))
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
+      (is (= 2 (:credit (get-runner)))
+          "Runner gained 2 from Bloo Moose and didn't lose 1 to Drug Dealer"))))
+
 (deftest dummy-box
   ;; Dummy Box - trash a card from hand to prevent corp trashing installed card
   (testing "Basic test"
