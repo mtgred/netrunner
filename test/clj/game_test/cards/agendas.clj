@@ -2084,6 +2084,32 @@
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:hand (get-runner))))))))
 
+(deftest remastered-edition
+  ;; Remastered Edition
+  (do-game
+    (new-game {:corp {:deck [(qty "Remastered Edition" 2) (qty "Enigma" 1)]}})
+    (core/gain state :corp :click 3)
+    (letfn [(try-place [from to]
+              (card-ability state :corp (refresh from) 0)
+              (click-card state :corp (refresh to)))
+            (place-counter [from to]
+              (try-place from to)
+              (is (zero? (get-counters (refresh from) :agenda))
+                  (str (:title from) " token was used on " (:title to)))
+              (is (= 1 (get-counters (refresh to) :advancement))
+                  (str "Advancement token placed on " (:title to))))]
+      (play-and-score state "Remastered Edition")
+      (play-from-hand state :corp "Remastered Edition" "New remote")
+      (let [scored-agenda (get-scored state :corp 0)
+            installed-agenda (get-content state :remote2 0)]
+        (place-counter scored-agenda installed-agenda)
+        (advance state installed-agenda 3)
+        (core/score state :corp {:card (refresh installed-agenda)}))
+      (play-from-hand state :corp "Enigma" "HQ")
+      (let [strikeforce (get-scored state :corp 1)
+            enigma (get-ice state :hq 0)]
+        (place-counter strikeforce enigma)))))
+
 (deftest remote-data-farm
   ;; Remote Data Farm
   (do-game

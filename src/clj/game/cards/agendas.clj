@@ -1083,6 +1083,14 @@
                      (do (system-msg state side "does not add any cards from HQ to bottom of R&D")
                          (effect-completed state side eid)))))})
 
+   "Remastered Edition"
+   {:effect (effect (add-counter card :agenda 1))
+    :silent (req true)
+    :abilities [{:counter-cost [:agenda 1] :msg (msg "place 1 advancement token on "
+                                                     (card-str state target))
+                 :choices {:req installed?}
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
+
    "Remote Data Farm"
    {:silent (req true)
     :msg "increase their maximum hand size by 2"
