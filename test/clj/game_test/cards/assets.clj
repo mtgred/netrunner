@@ -3788,6 +3788,47 @@
                 (is (= 1 (-> (get-corp) :discard count)) "Thomas Haas should be in Archives after ability"))))]
     (doall (map haas-test [1 2 3 4 5]))))
 
+(deftest tiered-subscription
+  ;; Tiered Subscription
+  (do-game
+    (new-game {:corp {:deck ["Tiered Subscription" "An Offer You Can't Refuse" "Enigma"]}
+               :runner {:deck ["Deuces Wild" "Dirty Laundry"]}})
+    (play-from-hand state :corp "Tiered Subscription" "New remote")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (core/rez state :corp (get-content state :remote1 0))
+    ;; An offer you can't refuse run
+    (play-from-hand state :corp "An Offer You Can't Refuse")
+    (is (= 1 (:credit (get-corp))))
+    (click-prompt state :corp "R&D")
+    (click-prompt state :runner "Yes")
+    (is (= 2 (:credit (get-corp))) "Gained 1 credit from the first run on this turn")
+    (run-successful state)
+    (take-credits state :corp)
+    ;; Normal run
+    (is (= 2 (:credit (get-corp))))
+    (run-empty-server state "R&D")
+    (is (= 3 (:credit (get-corp))))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    ;; Run event
+    (is (= 6 (:credit (get-corp))))
+    (play-from-hand state :runner "Dirty Laundry")
+    (click-prompt state :runner "R&D")
+    (is (= 7 (:credit (get-corp))))
+    (run-jack-out state)
+    (run-empty-server state "R&D")
+    (is (= 7 (:credit (get-corp))) "Didn't gain credit on second run this turn")
+    (run-jack-out state)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    ;; Non run event
+    (play-from-hand state :runner "Deuces Wild")
+    (click-prompt state :runner "Expose 1 ice and make a run")
+    (click-card state :runner (get-ice state :hq 0))
+    (is (= 10 (:credit (get-corp))))
+    (click-prompt state :runner "R&D")
+    (is (= 11 (:credit (get-corp))))))
+
 (deftest toshiyuki-sakai
   ;; Toshiyuki Sakai - Swap with an asset/agenda from HQ; Runner can choose to access new card or not
   (do-game

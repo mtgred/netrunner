@@ -1831,6 +1831,11 @@
                                   (wait-for (resolve-ability state side (derez-card advancements) card nil)
                                             (clear-wait-prompt state :runner))))}]})
 
+   "Tiered Subscription"
+   {:events {:run {:req (req (first-event? state side :run))
+                   :msg "gain 1 [Credits]"
+                   :effect (effect (gain-credits :corp 1))}}}
+
    "The Board"
    (let [the-board {:req (req (and (= :runner (:as-agenda-side target))
                                    (not= (:cid target) (:cid card))))
