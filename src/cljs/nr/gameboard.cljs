@@ -98,24 +98,24 @@
 (ws/register-ws-handler! :netrunner/diff #(handle-diff (parse-state %)))
 (ws/register-ws-handler! :netrunner/timeout #(handle-timeout (parse-state %)))
 
-(def anr-icons {"[Credits]" "credit"
+(def anr-icons {"[credits]" "credit"
                 "[$]" "credit"
                 "[c]" "credit"
-                "[Credit]" "credit"
-                "[Click]" "click"
-                "[Subroutine]" "subroutine"
-                "[Recurring Credits]" "recurring-credit"
-                "1[Memory Unit]" "mu1"
+                "[credit]" "credit"
+                "[click]" "click"
+                "[subroutine]" "subroutine"
+                "[recurring credits]" "recurring-credit"
+                "1[memory unit]" "mu1"
                 "1[mu]" "mu1"
-                "2[Memory Unit]" "mu2"
+                "2[memory unit]" "mu2"
                 "2[mu]" "mu2"
-                "3[Memory Unit]" "mu3"
+                "3[memory unit]" "mu3"
                 "3[mu]" "mu3"
-                "[Link]" "link"
+                "[link]" "link"
                 "[l]" "link"
-                "[Memory Unit]" "mu"
+                "[memory unit]" "mu"
                 "[mu]" "mu"
-                "[Trash]" "trash"
+                "[trash]" "trash"
                 "[t]" "trash"})
 
 (defn send-command
@@ -323,7 +323,7 @@
     [:hr]
     (if (= "[!]" item)
       [:div.smallwarning "!"]
-      (if-let [class (anr-icons item)]
+      (if-let [class (anr-icons (lower-case item))]
         [:span {:class (str "anr-icon " class) :key class}]
         (if-let [[title code cid] (extract-card-info item)]
           [:span {:class "fake-link" :id code :key title} title]
@@ -1361,7 +1361,7 @@
              :reagent-render
              (fn [{:keys [sfx] :as cursor}]
               (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
-             
+
 
 (defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
   (let [s (r/atom {})
