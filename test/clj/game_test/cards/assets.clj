@@ -802,6 +802,52 @@
       (is (empty? (:prompt (get-runner))) "Runner prompt cleared")
       (is (= 3 (count (:hand (get-corp))))))))
 
+(deftest daily-quest
+  ;; Daily Quest
+  (testing "Can only rez during Corp's action phase"
+    (do-game
+      (new-game {:corp {:deck ["Daily Quest"]}})
+      (play-from-hand state :corp "Daily Quest" "New remote")
+      (let [dq (get-content state :remote1 0)]
+        (core/rez state :corp dq)
+        (is (:rezzed (refresh dq)) "Can rez on Corp turn")
+        (core/derez state :corp dq)
+        (take-credits state :corp)
+        (core/rez state :corp dq)
+        (is (not (:rezzed (refresh dq))) "Cannot rez on Runner turn"))))
+  (testing "Runner gains credits on successful runs"
+    (do-game
+      (new-game {:corp {:deck ["Daily Quest"]}})
+      (play-from-hand state :corp "Daily Quest" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-runner))))
+      (run-empty-server state :remote1)
+      (is (= 7 (:credit (get-runner))))
+      (run-empty-server state :remote1)
+      (is (= 9 (:credit (get-runner))))
+      (run-on state :remote1)
+      (run-jack-out state)
+      (is (= 9 (:credit (get-runner))))
+      (is (= 6 (:credit (get-corp))))
+      (take-credits state :runner)
+      (is (= 6 (:credit (get-corp))) "Corp didn't gain credits due to successful run on Daily Quest server")))
+  (testing "Corp gains credits on no successful runs last turn"
+    (do-game
+      (new-game {:corp {:deck ["Daily Quest"]}})
+      (play-from-hand state :corp "Daily Quest" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (run-empty-server state :rd)
+      (run-empty-server state :archives)
+      (run-on state :remote1)
+      (run-jack-out state)
+      (is (= 5 (:credit (get-runner))) "No successful runs on Daily Quest server")
+      (is (= 6 (:credit (get-corp))))
+      (take-credits state :runner)
+      (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))
+
 (deftest dedicated-response-team
   ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged
   (do-game
