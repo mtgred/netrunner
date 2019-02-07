@@ -82,7 +82,6 @@
               (let [non-silent (filter #(let [silent-fn (:silent (:ability %))]
                                           (not (and silent-fn (silent-fn state side (make-eid state) (:card %) event-targets))))
                                        handlers)
-                    titles (map #(get-in % [:card :title]) non-silent)
                     interactive (filter #(let [interactive-fn (:interactive (:ability %))]
                                            (and interactive-fn (interactive-fn state side (make-eid state) (:card %) event-targets)))
                                         handlers)]
@@ -110,7 +109,7 @@
                                       (continue-ability state side (choose-handler (next handlers)) nil event-targets)
                                       (effect-completed state side eid)))}))
                   {:prompt "Choose a trigger to resolve"
-                   :choices titles
+                   :choices (map #(get-in % [:card :title]) non-silent)
                    :async true
                    :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
                                       ability-to-resolve (dissoc (:ability to-resolve) :req)

@@ -915,7 +915,6 @@
     :effect (effect (register-events (:events (card-def card))
                                      (assoc card :zone '(:discard))))
     :events {:runner-turn-begins {:msg "make the Runner lose [Click]"
-                                  :silent (req true)
                                   :effect (effect (lose :runner :click 1)
                                                   (unregister-events card))}}}
 

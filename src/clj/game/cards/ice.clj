@@ -973,12 +973,12 @@
                    :label "Reduce Runner's maximum hand size by 2 until start of next Corp turn"
                    :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
                    :effect (effect (lose :runner :hand-size 2)
-                                   (register-events {:corp-turn-begins
-                                                     {:msg "increase the Runner's maximum hand size by 2"
-                                                      :silent (req true)
-                                                      :effect (effect (gain :runner :hand-size 2)
-                                                                      (unregister-events card))}}
-                                                    card))}]
+                                   (register-events
+                                     {:corp-turn-begins
+                                      {:msg "increase the Runner's maximum hand size by 2"
+                                       :effect (effect (gain :runner :hand-size 2)
+                                                       (unregister-events card))}}
+                                     card))}]
     :events {:corp-turn-begins nil}}
 
    "Hadrians Wall"

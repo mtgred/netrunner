@@ -348,12 +348,17 @@
              :effect (effect (gain-bad-publicity :corp 1))}}
 
    "Corporate Sales Team"
-   (let [ability {:silent (req true)
-                  :counter-cost [:credit 1]
+   (let [ability {:req (req (:corp-phase-12 @state))
+                  :silent (req (zero? (get-counters card :credit)))
+                  :once :per-turn
                   :msg "gain 1 [Credit]"
-                  :effect (effect (gain-credits :corp 1))}]
+                  :effect (req (when (pos? (get-counters card :credit))
+                                 (gain-credits state side 1)
+                                 (add-counter state side card :credit -1)))}]
      {:effect (effect (add-counter card :credit 10))
+      :flags {:corp-phase-12 (req (pos? (get-counters card :credit)))}
       :silent (req true)
+      :abilities [ability]
       :events {:runner-turn-begins ability
                :corp-turn-begins ability}})
 
@@ -361,19 +366,20 @@
    {:msg (msg (if (> (:credit corp) 6) "gain 7 [Credits]" "lose all credits"))
     :interactive (req true)
     :effect (req (if (> (:credit corp) 6)
-                   (gain-credits state :corp 7)
-                   (lose-credits state :corp :all)))}
+                   (gain-credits state :corp 7) (lose-credits state :corp :all)))}
 
    "Crisis Management"
-   (let [ability {:req (req tagged)
+   (let [ability {:req (req (:corp-phase-12 @state))
+                  :silent (req (not tagged))
                   :async true
-                  :silent (req true)
                   :label "Do 1 meat damage (start of turn)"
                   :once :per-turn
                   :msg "do 1 meat damage"
-                  :effect (effect (damage eid :meat 1 {:card card}))}]
-     {:events {:corp-turn-begins ability}
-      :abilities [ability]})
+                  :effect (req (when tagged
+                                 (damage eid :meat 1 {:card card})))}]
+     {:flags {:corp-phase-12 (req tagged)}
+      :abilities [ability]
+      :events {:corp-turn-begins ability}})
 
    "Dedicated Neural Net"
     (let [psi-effect
@@ -1177,19 +1183,26 @@
 
    "SSL Endorsement"
    (let [add-credits (effect (add-counter card :credit 9))
-         remove-credits {:interactive (req true)
-                         :optional {:req (req (pos? (get-counters card :credit)))
-                                    :prompt "Gain 3 [Credits] from SSL Endorsement?"
-                                    :yes-ability
-                                    {:effect (req (when (pos? (get-counters card :credit))
-                                                    (gain-credits state :corp 3)
-                                                    (system-msg state :corp (str "uses SSL Endorsement to gain 3 [Credits]"))
-                                                    (add-counter state side card :credit -3)))}}}]
+         remove-credits {:req (req (and (:corp-phase-12 @state)
+                                        (pos? (get-counters card :credit))))
+                         :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
+                         :once :per-turn
+                         :effect (req (let [credits (min 3 (get-counters card :credit))]
+                                        (when (pos? credits)
+                                          (gain-credits state :corp credits)
+                                          (add-counter state side card :credit (- credits)))))}]
      {:effect add-credits
       :stolen {:effect add-credits}
       :interactive (req true)
-      :events {:corp-turn-begins remove-credits}
-      :flags {:has-events-when-stolen true}})
+      :flags {:has-events-when-stolen true
+              :corp-phase-12 (req (pos? (get-counters card :credit)))}
+      :abilities [remove-credits]
+      :events {:corp-turn-begins
+               {:silent (req (zero? (get-counters card :credit)))
+                :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                               (pos? (get-counters card :credit))))
+                :optional {:prompt "Gain 3 [Credits] from SSL Endorsement?"
+                           :yes-ability remove-credits}}}})
 
    "Standoff"
    (letfn [(stand [side]
@@ -1294,7 +1307,7 @@
                                                                          {:ignore-all-cost true :index (Integer/parseInt target)})
                                                         (if (and run (= (zone->name (first (:server run)))
                                                                         chosen-server))
-                                                          (let [curr-pos (get-in @state [:run :position])] 
+                                                          (let [curr-pos (get-in @state [:run :position])]
                                                             (if (>= curr-pos (Integer/parseInt target))
                                                               (swap! state assoc-in [:run :position] (inc curr-pos))))))})
                                         card nil))})
@@ -1349,7 +1362,7 @@
     :effect (effect (add-counter card :agenda 3))
     :events {:runner-turn-begins
              {:async true
-              :interactive (req true)
+              :interactive (req (pos? (get-counters card :agenda)))
               :req (req (pos? (get-counters card :agenda)))
               :effect (effect (show-wait-prompt :runner "Corp to use Voting Machine Initiative")
                               (continue-ability

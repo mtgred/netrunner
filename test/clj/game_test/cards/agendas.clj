@@ -476,18 +476,25 @@
 (deftest corporate-sales-team
   ;; Corporate Sales Team
   (do-game
-    (new-game {:corp {:deck [(qty "Corporate Sales Team" 2)]}})
-    (is (= 5 (:credit (get-corp))))
+    (new-game {:corp {:hand ["Corporate Sales Team"]
+                      :deck [(qty "Sure Gamble" 10)]}})
     (play-and-score state "Corporate Sales Team")
-    (let [scored-cst (get-scored state :corp 0)]
+    (let [cst (find-card "Corporate Sales Team" (:scored (get-corp)))
+          cst-credits (get-counters cst :credit)
+          credits (:credit (get-corp))]
       (core/end-turn state :corp nil)
       (core/start-turn state :runner nil)
-      (is (= 6 (:credit (get-corp))) "Increments at runner's start of turn")
-      (is (= 9 (get-counters (refresh scored-cst) :credit)))
+      (core/end-phase-12 state :runner nil)
+      (is (= (+ credits 1) (:credit (get-corp))) "Corp gains 1 credits")
+      (is (= (- cst-credits 1) (get-counters (refresh cst) :credit))))
+    (let [cst (find-card "Corporate Sales Team" (:scored (get-corp)))
+          cst-credits (get-counters cst :credit)
+          credits (:credit (get-corp))]
       (core/end-turn state :runner nil)
       (core/start-turn state :corp nil)
-      (is (= 7 (:credit (get-corp))) "Increments at corp's start of turn")
-      (is (= 8 (get-counters (refresh scored-cst) :credit))))))
+      (core/end-phase-12 state :corp nil)
+      (is (= (+ credits 1) (:credit (get-corp))) "Corp gains 1 credits")
+      (is (= (- cst-credits 1) (get-counters (refresh cst) :credit))))))
 
 (deftest corporate-war
   ;; Corporate War
@@ -2233,25 +2240,16 @@
     (do-game
       (new-game {:corp {:deck ["SSL Endorsement"]}})
       (play-and-score state "SSL Endorsement")
-      (take-credits state :runner)
-      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
       (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 8 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
-      (click-prompt state :corp "No")
-      (is (= 8 (:credit (get-corp))) "Corp doesn't gain 3 credits")
-      (take-credits state :runner)
-      (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 11 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (= 11 (:credit (get-corp))) "Corp starts with 11 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 14 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+      (take-credits state :corp)
+      (let [ssl (get-scored state :corp 0)
+            ssl-credits (get-counters ssl :credit)
+            credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (core/end-phase-12 state :corp nil)
+        (click-prompt state :corp "Yes")
+        (is (= (+ credits 3) (:credit (get-corp))) "Corp gains 3 credits")
+        (is (= (- ssl-credits 3) (get-counters (refresh ssl) :credit))))))
   (testing "gain credits when in runner score area before turn begins"
     (do-game
       (new-game {:corp {:deck ["SSL Endorsement"]}})
@@ -2260,25 +2258,11 @@
       (run-on state "Server 1")
       (run-successful state)
       (click-prompt state :runner "Steal")
-      (take-credits state :runner)
-      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
-      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
-      (click-prompt state :corp "No")
-      (is (= 10 (:credit (get-corp))) "Corp doesn't gain 3 credits")
-      (take-credits state :runner)
-      (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 13 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (= 13 (:credit (get-corp))) "Corp starts with 13 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 16 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+      (let [credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (core/end-phase-12 state :corp nil)
+        (click-prompt state :corp "Yes")
+        (is (= (+ credits 3) (:credit (get-corp))) "Corp gains 3 credits"))))
   (testing "register event when agenda swapped with Turntable"
     ;; Regression test for #3114
     (do-game
@@ -2292,12 +2276,17 @@
       (run-successful state)
       (click-prompt state :runner "Steal")
       (click-prompt state :runner "Yes")
-      (click-card state :runner (find-card "SSL Endorsement" (:scored (get-corp))))  ;; Swap BN with SSL
-      (take-credits state :runner)
-      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+      ;; Swap BN with SSL
+      (click-card state :runner (find-card "SSL Endorsement" (:scored (get-corp))))
       (is (= 6 (:credit (get-corp))) "Corp starts with 7 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 9 (:credit (get-corp))) "Corp gains 3 credits from Turntable'd SSL Endorsement")))
+      (let [ssl (find-card "SSL Endorsement" (:scored (get-runner)))
+            ssl-credits (get-counters ssl :credit)
+            credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (core/end-phase-12 state :corp nil)
+        (click-prompt state :corp "Yes")
+        (is (= (+ credits 3) (:credit (get-corp))) "Corp gains 3 credits from Turntable'd SSL Endorsement")
+        (is (= (- ssl-credits 3) (get-counters (refresh ssl) :credit))))))
   (testing "don't double register event when agenda is swapped"
     (do-game
       (new-game {:corp {:deck ["SSL Endorsement" "Breaking News"
@@ -2308,30 +2297,27 @@
       (run-on state "Server 1")
       (run-successful state)
       (click-prompt state :runner "Steal")
-      (take-credits state :runner)
-      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
-      (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 9 (:credit (get-corp))) "Corp gains 3 credits")
+      (let [ssl (find-card "SSL Endorsement" (:scored (get-runner)))
+            ssl-credits (get-counters ssl :credit)
+            credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (core/end-phase-12 state :corp nil)
+        (click-prompt state :corp "Yes")
+        (is (= (+ credits 3) (:credit (get-corp))) "Corp gains 3 credits")
+        (is (= (- ssl-credits 3) (get-counters (refresh ssl) :credit))))
       (core/gain-tags state :runner 1)
       (play-from-hand state :corp "Exchange of Information")
       (click-card state :corp (find-card "SSL Endorsement" (:scored (get-runner))))
       (click-card state :corp (find-card "Breaking News" (:scored (get-corp))))
-      (take-credits state :runner)
-      (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
-      (click-prompt state :corp "No")
-      (is (empty? (:prompt (get-corp))) "Not double prompted for credits")
-      (is (= 9 (:credit (get-corp))) "Corp doesn't gain 3 credits")
-      (take-credits state :runner)
-      (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 12 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (= 12 (:credit (get-corp))) "Corp starts with 12 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 15 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (empty? (:prompt (get-corp))) "Not prompted when out of money"))))
+      (take-credits state :corp)
+      (let [ssl (find-card "SSL Endorsement" (:scored (get-corp)))
+            ssl-credits (get-counters ssl :credit)
+            credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (core/end-phase-12 state :corp nil)
+        (click-prompt state :corp "Yes")
+        (is (= (+ credits 3) (:credit (get-corp))) "Corp gains 3 credits")
+        (is (= (- ssl-credits 3) (get-counters (refresh ssl) :credit)))))))
 
 (deftest standoff
   ;; Standoff
