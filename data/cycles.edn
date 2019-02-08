@@ -70,15 +70,15 @@
   :name "Magnum Opus",
   :position 23,
   :size 1}
- {:code "orgcrime",
-  :name "Orgcrime",
-  :position 24,
-  :size 1}
  {:code "napd-multiplayer",
   :name "NAPD Multiplayer",
-  :position 25,
+  :position 24,
   :size 1}
  {:code "system-core-2019",
   :name "System Core 2019",
+  :position 25,
+  :size 1}
+ {:code "ashes",
+  :name "Ashes",
   :position 26,
-  :size 1}]
+  :size 2}]

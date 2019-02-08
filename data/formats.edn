@@ -1,9 +1,9 @@
 [{:code "standard",
-  :cycles ["lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "reign-and-reverie" "magnum-opus" "system-core-2019"],
+  :cycles ["lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "ashes" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "reign-and-reverie" "magnum-opus" "system-core-2019"],
   :mwl "standard-mwl-3-0",
   :name "Standard"}
  {:code "eternal",
-  :cycles ["core" "genesis" "spin" "lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "terminal-directive" "revised-core" "reign-and-reverie" "magnum-opus" "system-core-2019"],
+  :cycles ["core" "genesis" "spin" "lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "ashes" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "terminal-directive" "revised-core" "reign-and-reverie" "magnum-opus" "system-core-2019"],
   :mwl "eternal-mwl-1-0",
   :name "Eternal"}
  {:code "core-experience",
