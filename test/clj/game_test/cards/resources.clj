@@ -2743,6 +2743,39 @@
     (click-prompt state :runner "0")
     (is (= 2 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")))
 
+(deftest the-artist)
+;; The Artist
+(do-game
+  (new-game {:runner {:deck ["The Artist","Bankroll","Bankroll"]}})
+  (take-credits state :corp)
+  (play-from-hand state :runner "The Artist")
+  (is (empty? (get-program state)) "No programs installed")
+  (is (= 1 (:credit (get-runner))))
+  (let [artist (get-resource state 0)]
+    (card-ability state :runner artist 0)
+    (is (= 2 (:click (get-runner))))
+    (is (= 3 (:credit (get-runner))) "Gain 2cr from Artist")
+    (card-ability state :runner artist 0)
+    (is (= 2 (:click (get-runner))))
+    (is (= 3 (:credit (get-runner))) "Second use of Artist for creds not allowed")
+    (card-ability state :runner artist 1)
+    (click-card state :runner (find-card "Bankroll" (:hand (get-runner))))
+    (is (= 1 (:click (get-runner))))
+    (is (= 1 (count (get-program state))) "1 Program installed")
+    (is (= 3 (:credit (get-runner))) "Artist discount applied")
+    (card-ability state :runner artist 1)
+    (is (empty? (:prompt (get-runner))) "Second use of Artist for install not allowed")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (card-ability state :runner artist 0)
+    (is (= 3 (:click (get-runner))))
+    (is (= 6 (:credit (get-runner))) "Gain 2cr from Artist new turn")
+    (card-ability state :runner artist 1)
+    (click-card state :runner (find-card "Bankroll" (:hand (get-runner))))
+    (is (= 2 (:click (get-runner))))
+    (is (= 2 (count (get-program state))) "2 Programs installed")
+    (is (= 6 (:credit (get-runner))) "Artist discount applied new turn")))
+
 (deftest the-black-file
   ;; The Black File - Prevent Corp from winning by agenda points
   (testing "Basic test"

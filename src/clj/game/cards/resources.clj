@@ -1975,6 +1975,25 @@
                                      {:effect (effect (gain-bad-publicity :corp 1)
                                                       (system-msg :corp (str "takes 1 bad publicity")))}}}}}
 
+   "The Artist"
+   {:abilities [{:cost [:click 1]
+                 :label "Gain 2 [Credits]"
+                 :msg "gain 2 [Credits]"
+                 :once :per-turn
+                 :once-key :artist-credits
+                 :effect (effect (gain-credits 2))}
+                {:cost [:click 1]
+                 :label "Install a program of piece of hardware"
+                 :prompt "Select a program or piece of hardware to install from your Grip"
+                 :choices {:req #(and (or (is-type? % "Hardware")
+                                          (is-type? % "Program"))
+                                      (in-hand? %))}
+                 :once :per-turn
+                 :once-key :artist-install
+                 :effect (effect (install-cost-bonus [:credit -1]) 
+                                 (runner-install target {:no-msg true})) 
+                 :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]}
+
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"
     :effect (req (swap! state assoc-in [:corp :cannot-win-on-points] true))
