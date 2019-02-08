@@ -1,5 +1,6 @@
 (ns nr.utils
-  (:require [clojure.string :refer [join] :as s]))
+  (:require [clojure.string :refer [join, lower-case, split] :as s]
+            [jinteki.cards :refer [all-cards]]))
 
 ;; Dot definitions
 (def zws "\u200B")                  ; zero-width space for wrapping dots
@@ -91,3 +92,108 @@
    "Snapshot Plus" "snapshot-plus"
    "SOCR8" "socr8"
    "Casual" "casual"})
+
+(defn map-vals [function smap]
+  (into {} (map (fn [[k v]] [k (function v)]) smap)))
+
+(def icon-smap
+  (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon)}])]
+  (map-vals span-of {"[credit]" "credit"
+                     "[credits]" "credit"
+                     "[c]" "credit"
+                     "[recurring credit]" "recurring-credit"
+                     "[recurring credits]" "recurring-credit"
+                     "[recurring-credit]" "recurring-credit"
+                     "[recurring-credits]" "recurring-credit"
+                     "[click]" "click"
+                     "[clicks]" "click"
+                     "1[memory unit]" "mu1"
+                     "1[mu]" "mu1"
+                     "2[memory unit]" "mu2"
+                     "2[mu]" "mu2"
+                     "3[memory unit]" "mu3"
+                     "3[mu]" "mu3"
+                     "[memory unit]" "mu"
+                     "[mu]" "mu"
+                     "[link]" "link"
+                     "[l]" "link"
+                     "[subroutine]" "subroutine"
+                     "[trash]" "trash"
+                     "[t]" "trash"})))
+
+(def card-smap
+  (letfn [(unpack-non-alt-code [[title cards]] [title (:code (first cards))])
+          (span-of [title code] [:span {:class "fake-link" :id code} title])]
+    (->> @all-cards
+         (filter #(not (:replaced_by %)))
+         (group-by :title)
+         (map unpack-non-alt-code)
+         (map (fn [[k v]] [(lower-case k) (span-of k v)]))
+         (into {}))))
+
+(def icon-and-card-smap (merge icon-smap card-smap))
+
+(defn ordered-keys-impl [smap]
+  (sort-by (comp count first) > smap))
+
+(def ordered-keys (memoize ordered-keys-impl))
+
+(defn into-fragment [text]
+  [:<> text])
+
+(def regex-escape-smap
+  (let [esc-chars ".*+?[](){}^$"]
+    (zipmap esc-chars
+            (map #(str "\\" %) esc-chars))))
+
+(defn regex-escape [string]
+  (->> string
+       (replace regex-escape-smap)
+       (reduce str)))
+
+(defn padded-zip [pad s1 & sn]
+  "Zip together any number of sequences of uneven lengths by padding out the
+  shorter ones"
+  (let [seqs (concat [s1] sn)
+        lazy-padded-seqs (map #(concat % (repeat pad)) seqs)
+        max-len (reduce max (map count seqs))]
+    (apply map vector (map (partial take max-len) lazy-padded-seqs))))
+
+(defn replace-in-element [element [pattern replacement]]
+  "If element is a string, split that string on pattern boundaries and replace
+  all patterns with the replacement"
+  (if (string? element)
+    (let [pattern-regex (re-pattern (str "(?i)" (regex-escape pattern)))
+          pop-if-nil #(if (nil? (last %)) (pop %) %)
+          context (split element pattern-regex)
+          match-count (count (re-seq pattern-regex element))
+          replacements (repeat match-count replacement)]
+      (->> (if (empty? context)
+             [replacements]
+             (padded-zip "" context replacements))
+           (reduce concat)
+           (into [])
+           (filter not-empty)))
+    [element]))
+
+(defn replace-in-fragment [fragment substitution]
+  "Split all string elements in a fragment and replace the splitting element
+  according to substitution"
+  (reduce concat (map #(replace-in-element % substitution) fragment)))
+
+(defn render-fragment [fragment replacement-smap]
+  "Given a fragment, shallowly replaces text in the fragment with icon and,
+  optionally, card preview HTML"
+  (->> (reduce replace-in-fragment fragment (ordered-keys replacement-smap))
+       (replace replacement-smap)
+       (into [])))
+
+(defn render-icons [input]
+  (if (string? input)
+    (render-fragment [:<> input] icon-smap)
+    (render-fragment input icon-smap)))
+
+(defn render-icons-and-cards [input]
+  (if (string? input)
+    (render-fragment [:<> input] icon-and-card-smap)
+    (render-fragment input icon-and-card-smap)))

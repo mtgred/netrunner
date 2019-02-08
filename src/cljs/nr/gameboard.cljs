@@ -8,7 +8,7 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar] :as auth]
             [nr.cardbrowser :refer [add-symbols] :as cb]
-            [nr.utils :refer [influence-dot map-longest toastr-options]]
+            [nr.utils :refer [influence-dot map-longest toastr-options render-icons render-icons-and-cards]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -421,15 +421,12 @@
                    (fn [i msg]
                      (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
                        (if (= (:user msg) "__system__")
-                         [:div.system {:key i} (map-indexed (fn [i item] [:<> {:key i} (create-span item)])
-                                                            (get-message-parts (:text msg)))]
+                         [:div.system {:key i} (render-icons-and-cards (:text msg))]
                          [:div.message {:key i}
                           [avatar (:user msg) {:opts {:size 38}}]
                           [:div.content
                            [:div.username (get-in msg [:user :username])]
-                           [:div (doall
-                                   (map-indexed (fn [i item] [:<> {:key i} (create-span item)])
-                                                (get-message-parts (:text msg))))]]])))
+                           [:div (render-icons-and-cards (:text msg))]]])))
                    @log))]
          (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} @typing)))
            [:div [:p.typing (for [i (range 10)] ^{:key i} [:span " " influence-dot " "])]])
@@ -1361,7 +1358,7 @@
              :reagent-render
              (fn [{:keys [sfx] :as cursor}]
               (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
-             
+
 
 (defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
   (let [s (r/atom {})
