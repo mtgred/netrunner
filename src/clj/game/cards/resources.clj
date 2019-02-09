@@ -1991,8 +1991,8 @@
                                       (in-hand? %))}
                  :once :per-turn
                  :once-key :artist-install
-                 :effect (effect (install-cost-bonus [:credit -1]) 
-                                 (runner-install target {:no-msg true})) 
+                 :effect (effect (install-cost-bonus [:credit -1])
+                                 (runner-install target {:no-msg true}))
                  :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]}
 
    "The Black File"

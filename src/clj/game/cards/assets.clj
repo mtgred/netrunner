@@ -518,8 +518,8 @@
    {:rez-req (req (= (:active-player @state) :corp))
     :events {:successful-run {:req (req this-server)
                               :effect (effect (gain-credits :runner 2)
-                                              (system-msg :runner "gains 2 [Credits] for a successful
-                                              run on the Daily Quest server"))}
+                                              (system-msg :runner (str "gains 2 [Credits] for a successful run "
+                                                                       "on the Daily Quest server")))}
              :corp-turn-begins {:req (req (let [servers (get-in @state [:runner :register-last-turn :successful-run])]
                                             (not (some #{(second (:zone card))} servers))))
                                 :msg "gain 3 [Credits]"
