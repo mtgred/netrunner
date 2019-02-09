@@ -96,6 +96,9 @@
 (defn map-vals [function smap]
   (into {} (map (fn [[k v]] [k (function v)]) smap)))
 
+(defn map-if [condition f s]
+  (map #(if (condition %) (f %) %) s))
+
 (def icon-smap
   (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon)}])]
   (map-vals span-of {"[credit]" "credit"
@@ -172,7 +175,6 @@
              [replacements]
              (padded-zip "" context replacements))
            (reduce concat)
-           (into [])
            (filter not-empty)))
     [element]))
 
@@ -181,12 +183,21 @@
   according to substitution"
   (reduce concat (map #(replace-in-element % substitution) fragment)))
 
+(defn set-key [n elem]
+  (let [head (first elem)
+        attr (if (map? (second elem)) (second elem) {})
+        tail (if (map? (second elem)) (drop 2 elem) (drop 1 elem))]
+  (into [] (concat [head (merge attr {:key n})] tail))))
+
 (defn render-fragment [fragment replacement-smap]
   "Given a fragment, shallowly replaces text in the fragment with icon and,
   optionally, card preview HTML"
-  (->> (reduce replace-in-fragment fragment (ordered-keys replacement-smap))
-       (replace replacement-smap)
-       (into [])))
+  (let [counter (atom 0)
+        set-next-key (fn [elem] (set-key (do (swap! counter inc) @counter) elem))]
+    (->> (reduce replace-in-fragment fragment (ordered-keys replacement-smap))
+         (replace replacement-smap)
+         (map-if vector? set-next-key)
+         (into []))))
 
 (defn render-icons [input]
   (if (string? input)
