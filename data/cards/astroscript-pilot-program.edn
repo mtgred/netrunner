@@ -2,7 +2,7 @@
  :agendapoints 2,
  :code "01081",
  :cycle_code "core",
- :deck-limit 3,
+ :deck-limit 1,
  :faction "NBN",
  :format {:core-experience :rotated,
           :eternal :legal,
@@ -19,7 +19,7 @@
  :setname "Core Set",
  :side "Corp",
  :subtype "Initiative",
- :text "Place 1 agenda counter on AstroScript Pilot Program when you score it.\n<strong>Hosted agenda counter:</strong> Place 1 advancement token on a card that can be advanced.",
+ :text "Place 1 agenda counter on AstroScript Pilot Program when you score it.\n<strong>Hosted agenda counter:</strong> Place 1 advancement token on a card that can be advanced.\nLimit 1 per deck.\n<errata>Errata from FAQ 3.1</errata>",
  :title "AstroScript Pilot Program",
  :type "Agenda",
  :uniqueness false}

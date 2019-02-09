@@ -5,7 +5,7 @@
  :faction "NBN",
  :factioncost 3,
  :format {:core-experience :rotated,
-          :eternal :legal,
+          :eternal :banned,
           :snapshot :banned,
           :snapshot-plus :banned,
           :socr8 :legal,

@@ -21,7 +21,7 @@
  :side "Runner",
  :strength 0,
  :subtype "Virus",
- :text "Whenever you trash a Corp card, you may place 1 virus counter on Consume\n[click]: Gain 2[credit] for each hosted virus counter, then remove all virus counters from Consume.",
+ :text "Whenever you trash a Corp card, you may place 1 virus counter on Consume.\n[click]: Gain 2[credit] for each hosted virus counter, then remove all virus counters from Consume.",
  :title "Consume",
  :type "Program",
  :uniqueness false}

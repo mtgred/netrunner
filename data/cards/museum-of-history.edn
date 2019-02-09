@@ -5,7 +5,7 @@
  :faction "Neutral",
  :factioncost 2,
  :format {:core-experience :rotated,
-          :eternal :banned,
+          :eternal :legal,
           :snapshot :banned,
           :snapshot-plus :banned,
           :socr8 :rotated,
