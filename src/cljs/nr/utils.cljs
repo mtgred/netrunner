@@ -124,7 +124,7 @@
                      "[trash]" "trash"
                      "[t]" "trash"})))
 
-(def card-smap
+(defn card-smap-impl []
   (letfn [(unpack-non-alt-code [[title cards]] [title (:code (first cards))])
           (span-of [title code] [:span {:class "fake-link" :id code} title])]
     (->> @all-cards
@@ -134,7 +134,7 @@
          (map (fn [[k v]] [(lower-case k) (span-of k v)]))
          (into {}))))
 
-(def icon-and-card-smap (merge icon-smap card-smap))
+(def card-smap (memoize card-smap-impl))
 
 (defn ordered-keys-impl [smap]
   (sort-by (comp count first) > smap))
@@ -200,11 +200,14 @@
          (into []))))
 
 (defn render-icons [input]
-  (if (string? input)
-    (render-fragment [:<> input] icon-smap)
-    (render-fragment input icon-smap)))
+    (render-fragment
+      (if (string? input) [:<> input] input)
+      icon-smap))
+
+(defn render-cards [input]
+    (render-fragment
+      (if (string? input) [:<> input] input)
+      (card-smap)))
 
 (defn render-icons-and-cards [input]
-  (if (string? input)
-    (render-fragment [:<> input] icon-and-card-smap)
-    (render-fragment input icon-and-card-smap)))
+  (render-cards (render-icons input)))
