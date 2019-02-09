@@ -213,18 +213,16 @@
    :prompt (str "Set auto-resolve on " ability-name " to:")
    :choices ["Always" "Never" "Ask"]
    :effect (effect (update! (update-in card [:special toggle-kw] (fn [x] (keyword (clojure.string/lower-case target)))))
-                   (toast
-                    (str "From now on, " ability-name " will "
-                         ({:always "always" :never "never" :ask "ask whether it should"}
-                          (get-in (get-card state card) [:special toggle-kw]))
-                         " resolve.") "info"))})
+                   (toast (str "From now on, " ability-name " will "
+                               ({:always "always" :never "never" :ask "ask whether it should"}
+                                (get-in (get-card state card) [:special toggle-kw]))
+                               " resolve.") "info"))})
 
 (defn autoresolve-lookup [toggle-kw]
   "Returns a 5-fn intended for use in the :autoresolve of an optional ability.
   Function checks whether its card has [:special toggle-kw] set, and returns
   'Yes', 'No' or nil depending on whether it's :always, :never or something else."
-  (req ({:always "Yes"
-         :never "No"} (get-in card [:special toggle-kw]))))
+  (req ({:always "Yes" :never "No"} (get-in card [:special toggle-kw]))))
 
 ;; Load all card data and definitions into the current namespace.
 (defn reset-card-data
