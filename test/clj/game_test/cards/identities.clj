@@ -418,7 +418,7 @@
     (is (= 4 (:credit (get-runner))) "Az discount not applied on 2nd install")    
     (take-credits state :runner)
     (take-credits state :corp)
-    (let [creds (:credits (get-runner))]
+    (let [creds (:credit (get-runner))]
       (play-from-hand state :runner "HQ Interface")
       (is (= 1 (count (get-hardware state))) "One installed hardware")
       (is (= (- creds 3) (:credit (get-runner))) "Az discount was applied"))))
