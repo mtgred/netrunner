@@ -372,37 +372,28 @@
         (is (= 8 (- (:credit (get-corp)) credits)))
         (is (zero? (get-counters (refresh ci) :credit)))))))
 
-(deftest calvin-b4l3y)
+(deftest calvin-b4l3y
   ;; Calvin B4L3Y
   (do-game
-    (new-game {:corp {:deck [(qty "Calvin B4L3Y" 3)
-                              (qty "Hedge Fund" 3)
-                              (qty "IPO" 2)]}})
-    ;; guaranteed to be at least 1 Calvin in hand after draw, and 2 cards in R&D
+    (new-game {:corp {:hand ["Calvin B4L3Y"]
+                      :deck [(qty "Hedge Fund" 3) (qty "IPO" 2)]}})
     (play-from-hand state :corp "Calvin B4L3Y" "New remote")
     (let [cal (get-content state :remote1 0)]
-      (core/rez state :corp cal)
-      (is (= 5 (count (:hand (get-corp)))))
-      (is (= 2 (:click (get-corp))))
-      (card-ability state :corp cal 0)
-      (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")
-      (is (= 1 (:click (get-corp))))
-      (card-ability state :corp cal 0)
-      (is (= 1 (:click (get-corp))) "Second use of Calvin in same turn not allowed")
-      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :rd)
-      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :rd)
-      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :rd)
-      (is (= 3 (count (:rd (get-corp)))))
-      (is (= 4 (count (:hand (get-corp)))))
+      (let [hand (count (:hand (get-corp)))
+            click (:click (get-corp))]
+        (core/rez state :corp cal)
+        (card-ability state :corp cal 0)
+        (is (= (+ hand 2) (count (:hand (get-corp)))) "Drew 2 cards")
+        (card-ability state :corp cal 0)
+        (is (= (dec click) (:click (get-corp))) "Second use of Calvin in same turn not allowed"))
       (take-credits state :corp)
       (run-on state :remote1)
       (run-successful state)
       (click-prompt state :runner "Pay 3 [Credits] to trash")
-      (let [hand (count (:hand (get-corp)))
-            deck (count (:rd (get-corp)))]
+      (let [hand (count (:hand (get-corp)))]
         (click-prompt state :corp "Yes")
         (is (= (+ hand 2) (count (:hand (get-corp)))) "Drew two cards")
-        (is (= (- deck 2) (count (:rd (get-corp)))) "Two cards gone from R&D"))))
+        (is (find-card "Calvin B4L3Y" (:discard (get-corp))) "Calvin is in the discard")))))
 
 (deftest capital-investors
   ;; Capital Investors - Click for 2 credits
