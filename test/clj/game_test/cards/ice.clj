@@ -851,6 +851,35 @@
       (is (= 3 (count (:hand (get-runner))))
           "New turn ends prevention; remaining 3 cards drawn from Stack"))))
 
+(deftest loot-box
+  ;; Loot Box
+  (do-game
+    (new-game {:corp {:deck ["Loot Box"]}
+               :runner {:deck ["Sure Gamble" "Dirty Laundry" "Datasucker" "Liberated Account"]}})
+    (starting-hand state :runner ["Sure Gamble"])
+    (play-from-hand state :corp "Loot Box" "HQ")
+    (take-credits state :corp)
+    (let [lootbox (get-ice state :rd 0)]
+      (run-on state "R&D")
+      (core/rez state :corp lootbox)
+      (card-subroutine state :corp lootbox 0)
+      (is (= 5 (:credit (get-runner))))
+      (click-prompt state :runner "Pay 2 [Credits]")
+      (is (= 3 (:credit (get-runner))))
+      (card-subroutine state :corp lootbox 1)
+      (true? (find-card "Liberated Account" (:deck (get-runner))))
+      (false? (find-card "Liberated Account" (:hand (get-runner))))
+      (is (= 3 (count (:deck (get-runner)))))
+      (is (= 1 (count (:hand (get-runner)))))
+      (is (= 7 (:credit (get-corp))))
+      (click-prompt state :corp "Liberated Account")
+      (true? (find-card "Liberated Account" (:hand (get-runner))))
+      (false? (find-card "Liberated Account" (:deck (get-runner))))
+      (is (= 2 (count (:deck (get-runner)))) "One card removed from Stack")
+      (is (= 2 (count (:hand (get-runner)))) "One card added to Grip")
+      (is (= 13 (:credit (get-corp))) "Gained 6 credits from Liberated Account")
+      (is (= (get-in @state [:corp :discard 0 :title]) "Loot Box") "Loot Box trashed"))))
+
 (deftest lotus-field
   ;; Lotus Field strength cannot be lowered
   (do-game
