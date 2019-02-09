@@ -709,17 +709,19 @@
    {:events
     {:successful-run
      {:async true
-      :interactive (req true)
+      :interactive (req (not= :never (get-in card [:special :auto-fisk])))
       :req (req (and (is-central? (:server run))
                      (first-event? state side :successful-run is-central?)))
       :effect (effect (continue-ability
                         {:optional
-                         {:prompt "Force the Corp to draw a card?"
+                         {:autoresolve (autoresolve-lookup :auto-fisk)
+                          :prompt "Force the Corp to draw a card?"
                           :yes-ability {:msg "force the Corp to draw 1 card"
                                         :async true
                                         :effect (effect (draw :corp eid 1 nil))}
                           :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
-                        card nil))}}}
+                        card nil))}}
+    :abilities [(autoresolve-toggler :auto-fisk "force Corp draw")]}
 
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
