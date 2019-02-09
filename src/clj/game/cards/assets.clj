@@ -254,6 +254,24 @@
                                          :successful {:msg "prevents all bad publicity"
                                                       :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}}
 
+   "Calvin B4L3Y"
+   {:abilities [{:cost [:click 1]
+                 :msg "draw 2 cards"
+                 :once :per-turn
+                 :effect (effect (draw 2))}]
+    :trash-effect {:req (req (= :servers (first (:previous-zone card))))
+                   :async true
+                   :effect (effect (show-wait-prompt :runner "Corp to use Calvin B4L3Y")
+                                   (continue-ability :corp
+                                     {:optional
+                                      {:prompt "Draw 2 cards?"
+                                       :priority 1
+                                       :player :corp
+                                       :yes-ability {:msg "draw 2 cards"
+                                                     :effect (effect (draw :eid 2 nil))}
+                                       :end-effect (effect (clear-wait-prompt :runner))}}
+                                    card nil))}}
+
    "Capital Investors"
    {:abilities [{:cost [:click 1]
                  :msg "gain 2 [Credits]"
@@ -495,6 +513,17 @@
                                          card targets)
                                        (do (clear-wait-prompt state :runner)
                                            (effect-completed state side eid)))))}}}
+
+   "Daily Quest"
+   {:rez-req (req (= (:active-player @state) :corp))
+    :events {:successful-run {:req (req this-server)
+                              :effect (effect (gain-credits :runner 2)
+                                              (system-msg :runner "gains 2 [Credits] for a successful
+                                              run on the Daily Quest server"))}
+             :corp-turn-begins {:req (req (let [servers (get-in @state [:runner :register-last-turn :successful-run])]
+                                            (not (some #{(second (:zone card))} servers))))
+                                :msg "gain 3 [Credits]"
+                                :effect (effect (gain-credits :corp 3))}}}
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged)

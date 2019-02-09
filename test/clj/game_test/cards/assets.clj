@@ -372,6 +372,29 @@
         (is (= 8 (- (:credit (get-corp)) credits)))
         (is (zero? (get-counters (refresh ci) :credit)))))))
 
+(deftest calvin-b4l3y
+  ;; Calvin B4L3Y
+  (do-game
+    (new-game {:corp {:hand ["Calvin B4L3Y"]
+                      :deck [(qty "Hedge Fund" 3) (qty "IPO" 2)]}})
+    (play-from-hand state :corp "Calvin B4L3Y" "New remote")
+    (let [cal (get-content state :remote1 0)]
+      (let [hand (count (:hand (get-corp)))
+            click (:click (get-corp))]
+        (core/rez state :corp cal)
+        (card-ability state :corp cal 0)
+        (is (= (+ hand 2) (count (:hand (get-corp)))) "Drew 2 cards")
+        (card-ability state :corp cal 0)
+        (is (= (dec click) (:click (get-corp))) "Second use of Calvin in same turn not allowed"))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (let [hand (count (:hand (get-corp)))]
+        (click-prompt state :corp "Yes")
+        (is (= (+ hand 2) (count (:hand (get-corp)))) "Drew two cards")
+        (is (find-card "Calvin B4L3Y" (:discard (get-corp))) "Calvin is in the discard")))))
+
 (deftest capital-investors
   ;; Capital Investors - Click for 2 credits
   (do-game
@@ -801,6 +824,52 @@
       (click-card state :corp (find-card "Resistor" (:hand (get-corp))))
       (is (empty? (:prompt (get-runner))) "Runner prompt cleared")
       (is (= 3 (count (:hand (get-corp))))))))
+
+(deftest daily-quest
+  ;; Daily Quest
+  (testing "Can only rez during Corp's action phase"
+    (do-game
+      (new-game {:corp {:deck ["Daily Quest"]}})
+      (play-from-hand state :corp "Daily Quest" "New remote")
+      (let [dq (get-content state :remote1 0)]
+        (core/rez state :corp dq)
+        (is (:rezzed (refresh dq)) "Can rez on Corp turn")
+        (core/derez state :corp dq)
+        (take-credits state :corp)
+        (core/rez state :corp dq)
+        (is (not (:rezzed (refresh dq))) "Cannot rez on Runner turn"))))
+  (testing "Runner gains credits on successful runs"
+    (do-game
+      (new-game {:corp {:deck ["Daily Quest"]}})
+      (play-from-hand state :corp "Daily Quest" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-runner))))
+      (run-empty-server state :remote1)
+      (is (= 7 (:credit (get-runner))))
+      (run-empty-server state :remote1)
+      (is (= 9 (:credit (get-runner))))
+      (run-on state :remote1)
+      (run-jack-out state)
+      (is (= 9 (:credit (get-runner))))
+      (is (= 6 (:credit (get-corp))))
+      (take-credits state :runner)
+      (is (= 6 (:credit (get-corp))) "Corp didn't gain credits due to successful run on Daily Quest server")))
+  (testing "Corp gains credits on no successful runs last turn"
+    (do-game
+      (new-game {:corp {:deck ["Daily Quest"]}})
+      (play-from-hand state :corp "Daily Quest" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (run-empty-server state :rd)
+      (run-empty-server state :archives)
+      (run-on state :remote1)
+      (run-jack-out state)
+      (is (= 5 (:credit (get-runner))) "No successful runs on Daily Quest server")
+      (is (= 6 (:credit (get-corp))))
+      (take-credits state :runner)
+      (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))
 
 (deftest dedicated-response-team
   ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged
