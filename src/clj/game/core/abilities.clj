@@ -292,18 +292,15 @@
                  (if-let [no-ability (:no-ability ability)]
                    (resolve-ability state side (assoc no-ability :eid eid) card targets)
                    (effect-completed state side eid)))))]
-     (let [autoresolve-as (if-let [autoresolve-fn (:autoresolve ability)]
+     (let [autoresolve-as (when-let [autoresolve-fn (:autoresolve ability)]
                             (autoresolve-fn state side eid card targets))]
-       (cond (= autoresolve-as "Yes")
-             (prompt-fn "Yes")
-
-             (= autoresolve-as "No")
-             (prompt-fn "No")
-
-             true
-             (show-prompt state side eid card message ["Yes" "No"]
-                    prompt-fn
-                    ability))))))
+       (case (when-let [autoresolve-fn (:autoresolve ability)]
+               (autoresolve-fn state side eid card targets))
+         "Yes" (prompt-fn "Yes")
+         "No"  (prompt-fn "No")
+               (show-prompt state side eid card message ["Yes" "No"]
+                            prompt-fn
+                            ability))))))
 
 ;;; Prompts
 (defn prompt!
