@@ -93,7 +93,7 @@
              handler's :silent function returns true, then no menu entry will be shown for the handler. In that case,
              the ability will only be resolved once all non-silent abilities are resolved. Example: AstroScript has no
              important interactions with other 'agenda scored' effects, and doesn't care when an agenda token is placed.
-             Example: Haley Kaplan will not show a prompt if there are no valid targets in the grip.
+             Example: Hayley Kaplan will not show a prompt if there are no valid targets in the grip.
 
   OTHER KEYS
   :counter-cost / :advance-counter-cost -- number of counters to remove to resolve the ability
