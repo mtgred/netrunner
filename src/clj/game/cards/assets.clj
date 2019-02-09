@@ -1450,8 +1450,9 @@
 
    "Rashida Jaheem"
    (let [ability {:once :per-turn
+                  :async true
                   :label "Gain 3 [Credits] and draw 3 cards (start of turn)"
-                  :effect (effect (resolve-ability
+                  :effect (effect (continue-ability
                                     {:optional
                                      {:prompt "Trash Rashida Jaheem to gain 3 [Credits] and draw 3 cards?"
                                       :yes-ability {:async true

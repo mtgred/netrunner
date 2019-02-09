@@ -1396,29 +1396,55 @@
 
 (deftest john-masanori
   ;; John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run
-  (do-game
-    (new-game {:corp {:deck ["Crisium Grid"]}
-               :runner {:deck [(qty "John Masanori" 3)
-                               (qty "Sure Gamble" 3)
-                               "Fall Guy"]}})
-    (play-from-hand state :corp "Crisium Grid" "HQ")
-    (core/rez state :corp (get-content state :hq 0))
-    (take-credits state :corp)
-    (core/gain state :runner :click 2 :credit 2)
-    (play-from-hand state :runner "John Masanori")
-    (is (= 4 (count (:hand (get-runner)))))
-    (run-empty-server state "HQ")
-    (click-prompt state :runner "Pay 5 [Credits] to trash") ; trash crisium #2433
-    (run-empty-server state "Archives")
-    (is (= 5 (count (:hand (get-runner)))) "1 card drawn from first successful run")
-    (run-empty-server state "Archives")
-    (is (= 5 (count (:hand (get-runner)))) "No card drawn from second successful run")
-    (run-on state "HQ")
-    (run-jack-out state)
-    (is (= 1 (count-tags state)) "1 tag taken from first unsuccessful run")
-    (run-on state "HQ")
-    (run-jack-out state)
-    (is (= 1 (count-tags state)) "No tag taken from second unsuccessful run")))
+  (testing "Crisium grid interaction"
+    (do-game
+     (new-game {:corp {:deck ["Crisium Grid"]}
+                :runner {:deck [(qty "John Masanori" 3)
+                                (qty "Sure Gamble" 3)
+                                "Fall Guy"]}})
+     (play-from-hand state :corp "Crisium Grid" "HQ")
+     (core/rez state :corp (get-content state :hq 0))
+     (take-credits state :corp)
+     (core/gain state :runner :click 2 :credit 2)
+     (play-from-hand state :runner "John Masanori")
+     (is (= 4 (count (:hand (get-runner)))))
+     (run-empty-server state "HQ")
+     (click-prompt state :runner "Pay 5 [Credits] to trash") ; trash crisium #2433
+     (run-empty-server state "Archives")
+     (is (= 5 (count (:hand (get-runner)))) "1 card drawn from first successful run")
+     (run-empty-server state "Archives")
+     (is (= 5 (count (:hand (get-runner)))) "No card drawn from second successful run")
+     (run-on state "HQ")
+     (run-jack-out state)
+     (is (= 1 (count-tags state)) "1 tag taken from first unsuccessful run")
+     (run-on state "HQ")
+     (run-jack-out state)
+     (is (= 1 (count-tags state)) "No tag taken from second unsuccessful run")))
+  (testing "Masanori+Paragon interaction - should get order of choice"
+    (do-game
+     (new-game {:runner {:deck ["Paragon" "John Masanori" "Sure Gamble" "Easy Mark"]}})
+     (take-credits state :corp)
+     (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck)
+     (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+     (is (= "Easy Mark" (:title (first (:deck (get-runner)))))
+         "Easy Mark on top of stack")
+     (is (= "Sure Gamble" (:title  (second (:deck (get-runner)))))
+         "Sure Gamble on bottom of stack")
+     (core/gain state :runner :credit 10)
+     (play-from-hand state :runner "Paragon")
+     (play-from-hand state :runner "John Masanori")
+     (run-empty-server state :rd)
+     (click-prompt state :runner "Paragon") ; runner should be prompted for which to trigger first
+     (is (= "Use Paragon?"
+            (-> @state :runner :prompt first :msg)) "Paragon prompt 1")
+     (click-prompt state :runner "Yes")
+     (is (= "Add Easy Mark to bottom of Stack?"
+            (-> @state :runner :prompt first :msg)) "Paragon prompt")
+     (changes-val-macro 1 (count (:hand (get-runner)))
+                        "Clicking prompt causes Masanori to resolve"
+                        (click-prompt state :runner "Yes"))
+     (is (= "Easy Mark" (:title (last (:deck (get-runner)))))
+         "Easy Mark on bottom of stack"))))
 
 (deftest joshua-b
   ;; Joshua B. - Take 1 tag at turn end if you choose to gain the extra click
@@ -1592,14 +1618,14 @@
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Tollbooth" "Ice Wall"]}
-                 :runner {:deck [(qty "Hedge Fund" 3) "Muertos Gang Member"]}})
+                 :runner {:deck [(qty "Sure Gamble" 3) "Muertos Gang Member"]}})
       (play-from-hand state :corp "Tollbooth" "HQ")
       (play-from-hand state :corp "Ice Wall" "Archives")
       (take-credits state :corp)
       (let [toll (get-ice state :hq 0)
             iw (get-ice state :archives 0)]
         (core/rez state :corp iw)
-        (core/move state :runner (find-card "Hedge Fund" (:hand (get-runner))) :deck)
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
         (play-from-hand state :runner "Muertos Gang Member")
         (click-card state :corp (refresh iw))
         (is (not (:rezzed (refresh iw))) "Ice Wall derezzed")

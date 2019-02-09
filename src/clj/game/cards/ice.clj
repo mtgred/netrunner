@@ -413,8 +413,8 @@
                                   (system-msg state :corp
                                               (str "uses Blockchain to gain " c (pluralize " additional subroutine" c)
                                                    " (" (+ 2 c) " in total)"))))}]
-      :subroutines [{:label "Gain 1 [credits], Runner loses 1 [credits]"
-                     :msg "gain 1 [credits] and force the Runner to lose 1 [credits]"
+      :subroutines [{:label "Gain 1 [Credits], Runner loses 1 [Credits]"
+                     :msg "gain 1 [Credits] and force the Runner to lose 1 [Credits]"
                      :effect (effect (gain-credits 1)
                                      (lose-credits :runner 1))}
                     end-the-run]})
@@ -473,10 +473,10 @@
                  :msg (msg "end the run")
                  :effect (effect (trash card {:cause :ability-cost})
                                  (end-run))}]
-    :subroutines [{:label "Gain 1 [credits] for each ice protecting this server"
+    :subroutines [{:label "Gain 1 [Credits] for each ice protecting this server"
                    :msg (msg "gain "
                              (count (:ices (card->server state card)))
-                             " [credits]")
+                             " [Credits]")
                    :effect (req (let [num-ice (count (:ices (card->server state card)))]
                                   (gain-credits state :corp num-ice)))}
                   end-the-run]}
@@ -2268,7 +2268,8 @@
                  :prompt "Choose a piece of ice to swap Thimblerig with"
                  :choices {:req ice?
                            :not-self true}
-                 :effect (effect (swap-ice card target))}]
+                 :effect (effect (swap-ice card target))
+                 :msg (msg "swap " (card-str state card) " with " (card-str state target))}]
     :subroutines [end-the-run]}
 
    "Tithonium"
