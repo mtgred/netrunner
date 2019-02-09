@@ -98,13 +98,13 @@
                                        (not= (first (:zone target)) :discard)))
                         :effect (req (let [non-trashed-card target]
                                        (continue-ability state side
-                                                         (togglable-ab
-                                                          :auto-reveal-and-gain
-                                                          "Use Aeneas Informant?"
-                                                          {:msg (msg (str "gain 1 [Credits]"
-                                                                          (when-not (installed? non-trashed-card)
-                                                                            (str " and reveal " (:title non-trashed-card)))))
-                                                           :effect (effect (gain-credits 1))})
+                                                         {:effect (togglable-ab
+                                                                   :auto-reveal-and-gain
+                                                                   "Use Aeneas Informant?"
+                                                                   {:msg (msg (str "gain 1 [Credits]"
+                                                                                   (when-not (installed? non-trashed-card)
+                                                                                     (str " and reveal " (:title non-trashed-card)))))
+                                                                    :effect (effect (gain-credits 1))})}
                                                          card nil)))}}
     :abilities [(ability-toggler :auto-reveal-and-gain "reveal ability")]}
    
@@ -858,13 +858,15 @@
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
                                           (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
-             :successful-run {:interactive (req true)
-                              :optional {:req (req (and (first-event? state side :successful-run)
-                                                        (-> @state :corp :deck count pos?)))
-                                         :prompt "Use Find the Truth to look at the top card of R&D?"
-                                         :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
-                                                       :msg "look at the top card of R&D"
-                                                       :choices ["OK"]}}}}}
+             :successful-run {:req (req (and (first-event? state side :successful-run)
+                                             (-> @state :corp :deck count pos?)))
+                              :async true
+                              :interactive (req (not= :never (get-in card [:special :auto-look]))) 
+                              :effect (togglable-ab :auto-look "Use Find the Truth to look at the top card of R&D?"
+                                                    {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
+                                                     :msg "look at the top card of R&D"
+                                                     :choices ["OK"]})}}
+    :abilities [(ability-toggler :auto-look "look ability")]}
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
