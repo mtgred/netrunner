@@ -353,3 +353,31 @@
     (:rec-counter card 0)
     :else
     (get-in card [:counter counter] 0)))
+
+(defn togglable-ab
+  "If toggle-kw is :always, return ability.
+  If it is :never, return nil ability which marks its eid as completed.
+  If it is :ask, return ability which makes a Yes/No prompt about whether it should resolve."
+  [toggle-kw prompt-msg ability]
+  (cond
+    (= toggle-kw :always)
+    ability
+
+    (= toggle-kw :never)
+    {:effect (effect (effect-completed eid))}
+
+    true
+    {:optional {:prompt prompt-msg
+                :yes-ability ability}}))
+
+(defn ability-toggler [toggle-kw ability-name]
+  "Makes a card ability which lets the user toggle auto-resolve on an ability. Setting is stored under [:special toggle-kw]."
+  {:label (str "Toggle auto-resolve on " ability-name)
+   :prompt (str "Set auto-resolve on " ability-name " to:")
+   :choices ["Always" "Never" "Ask"]
+   :effect (effect (update! (update-in card [:special toggle-kw] (fn [x] (keyword (clojure.string/lower-case target)))))
+                   (toast
+                    (str "From now on, " ability-name " will "
+                         ({:always "always" :never "never" :ask "ask whether it should"}
+                          (get-in (get-card state card) [:special toggle-kw]))
+                         " resolve.") "info"))})

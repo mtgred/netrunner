@@ -93,52 +93,20 @@
                            :msg "gain [Click]"
                            :effect (effect (gain :runner :click 1))}}}
 
-   ;; "Aeneas Informant"
-   ;; {:events {:no-trash {:req (req (and (:trash target)
-   ;;                                     (not= (first (:zone target)) :discard)))
-   ;;                      :optional {:prompt (msg "Use Aeneas Informant?")
-   ;;                                 :yes-ability {:msg (msg (str "gain 1 [Credits]"
-   ;;                                                              (when-not (installed? target)
-   ;;                                                                (str " and reveal "  (:title target)))))
-   ;;                                               :effect (effect (gain-credits 1))}}}}}
-
    "Aeneas Informant"
-   (letfn [(reveal-and-gain [target]
-             {:msg (msg (str "gain 1 [Credits]"
-                             (when-not (installed? target)
-                               (str " and reveal "  (:title target)))))
-              :effect (effect (gain-credits 1))})]
-     
-     {:events {:no-trash {:req (req (and (:trash target)
-                                         (not= (first (:zone target)) :discard)))
-                          :effect (req ;; (togglable-ab
-                                       ;;  (get-in card [:special :auto-reveal-and-gain])
-                                       ;;  "Use Aeneas Informant?"
-                                       ;;  (reveal-and-gain target))
-                                   (continue-ability state side  ; TODO: probably needs to be continue-ability
-                                                     
-                                                     (let [toggle-cond (get-in card [:special :auto-reveal-and-gain])]
-                                                          (cond
-                                                            (= toggle-cond :always)
-                                                            (reveal-and-gain target)
-                                                            
-                                                            (= toggle-cond :never)
-                                                            {}
-                                                            
-                                                            true ; ask nicely
-                                                            {:optional {:prompt "Use Aeneas Informant?"
-                                                                        :yes-ability (reveal-and-gain target)}}))
-                                                     card nil))}}
-      :abilities [{:label "Toggle auto-resolve on Aeneas' Informant's reveal ability"
-                   :prompt "Set auto-resolve on Aeneas' Informant's reveal ability to:"
-                   :choices ["Always" "Never" "Ask"]
-                   :effect (effect (update! (update-in card [:special :auto-reveal-and-gain] (fn [x] (keyword (clojure.string/lower-case target)))))
-                                   (toast 
-                                          (str "Aeneas' Informant's reveal ability will now "
-                                               ({:always "automatically" :never "never" :ask "ask whether it should"}
-                                                (get-in (get-card state card) [:special :auto-reveal-and-gain]))                                               
-                                               " resolve.") "info"))}]
-      })
+   {:events {:no-trash {:req (req (and (:trash target)
+                                       (not= (first (:zone target)) :discard)))
+                        :effect (req (let [non-trashed-card target]
+                                       (continue-ability state side
+                                                         (togglable-ab
+                                                          (get-in card [:special :auto-reveal-and-gain])
+                                                          "Use Aeneas Informant?"
+                                                          {:msg (msg (str "gain 1 [Credits]"
+                                                                          (when-not (installed? non-trashed-card)
+                                                                            (str " and reveal " (:title non-trashed-card)))))
+                                                           :effect (effect (gain-credits 1))})
+                                                         card nil)))}}
+    :abilities [(ability-toggler :auto-reveal-and-gain "reveal ability")]}
 
    
    "Aesops Pawnshop"
