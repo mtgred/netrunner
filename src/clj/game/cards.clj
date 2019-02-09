@@ -207,27 +207,7 @@
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
 
-(defn togglable-ab
-  "Return the :effect of an ability which, depending on the value of card's :special toggle-kw,
-  either resolves ability without asking (if it is :always),
-  does nothing (if it is :never), or prompts user (if it is :ask or something else)
-"
-  [toggle-kw prompt-msg ability]
-  (effect (continue-ability
-           (let [toggle-kw-value (get-in card [:special toggle-kw])]
-             (cond
-               (= toggle-kw-value :always)
-               ability
-
-               (= toggle-kw-value :never)
-               {:effect (effect (effect-completed eid))}
-
-               true
-               {:optional {:prompt prompt-msg
-                           :yes-ability ability}}))
-           card nil)))
-
-(defn ability-toggler [toggle-kw ability-name]
+(defn autoresolve-toggler [toggle-kw ability-name]
   "Makes a card ability which lets the user toggle auto-resolve on an ability. Setting is stored under [:special toggle-kw]."
   {:label (str "Toggle auto-resolve on " ability-name)
    :prompt (str "Set auto-resolve on " ability-name " to:")
@@ -238,6 +218,13 @@
                          ({:always "always" :never "never" :ask "ask whether it should"}
                           (get-in (get-card state card) [:special toggle-kw]))
                          " resolve.") "info"))})
+
+(defn autoresolve-lookup [toggle-kw]
+  "Returns a 5-fn intended for use in the :autoresolve of an optional ability.
+  Function checks whether its card has [:special toggle-kw] set, and returns
+  'Yes', 'No' or nil depending on whether it's :always, :never or something else."
+  (req ({:always "Yes"
+         :never "No"} (get-in card [:special toggle-kw]))))
 
 ;; Load all card data and definitions into the current namespace.
 (defn reset-card-data

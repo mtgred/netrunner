@@ -93,7 +93,7 @@
              handler's :silent function returns true, then no menu entry will be shown for the handler. In that case,
              the ability will only be resolved once all non-silent abilities are resolved. Example: AstroScript has no
              important interactions with other 'agenda scored' effects, and doesn't care when an agenda token is placed.
-             Example: Hayley Kaplan will not show a prompt if there are no valid targets in the grip.
+             Example: Haley Kaplan will not show a prompt if there are no valid targets in the grip.
 
   OTHER KEYS
   :counter-cost / :advance-counter-cost -- number of counters to remove to resolve the ability
@@ -278,19 +278,36 @@
 
 ;;; Optional Ability
 (defn optional-ability
-  "Shows a 'Yes/No' prompt and resolves the given ability if Yes is chosen."
+  "Shows a 'Yes/No' prompt and resolves the given ability's :yes-ability if Yes is chosen, and :no-ability otherwise.
+  If ability has an :autoresolve entry, first call it as a 5-function, and if it returns 'Yes' or 'No'
+  resolve the ability as if prompt was displayed and Yes/No was chosen."
   ([state side card message ability targets] (optional-ability state side (make-eid state) card message ability targets))
   ([state side eid card message ability targets]
-   (show-prompt state side eid card message ["Yes" "No"]
-                #(let [yes-ability (:yes-ability ability)]
-                  (if (and (= % "Yes")
-                           yes-ability
-                           (can-pay? state side (:title card) (:cost yes-ability)))
-                    (resolve-ability state side (assoc yes-ability :eid eid) card targets)
-                    (if-let [no-ability (:no-ability ability)]
-                      (resolve-ability state side (assoc no-ability :eid eid) card targets)
-                      (effect-completed state side eid))))
-                ability)))
+   (letfn [(prompt-fn [prompt-choice]
+             (let [yes-ability (:yes-ability ability)]
+               (if (and (= prompt-choice "Yes")
+                        yes-ability
+                        (can-pay? state side (:title card) (:cost yes-ability)))
+                 (resolve-ability state side (assoc yes-ability :eid eid) card targets)
+                 (if-let [no-ability (:no-ability ability)]
+                   (resolve-ability state side (assoc no-ability :eid eid) card targets)
+                   (effect-completed state side eid)))))]
+     (if-let [autoresolve-fn (:autoresolve ability)]
+       (let [autoresolve-output (autoresolve-fn state side eid card targets)]
+         (cond
+           (= autoresolve-output "Yes")
+           (prompt-fn "Yes")
+
+           (= autoresolve-output "No")
+           (prompt-fn "No")
+
+           true
+           (show-prompt state side eid card message ["Yes" "No"]
+                    prompt-fn
+                    ability)))
+       (show-prompt state side eid card message ["Yes" "No"]
+                    prompt-fn
+                    ability)))))
 
 
 ;;; Prompts
