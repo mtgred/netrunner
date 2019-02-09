@@ -405,6 +405,24 @@
     (click-prompt state :runner (find-card "Bank Job" (:hosted (:identity (get-runner)))))
     (is (= 3 (count (get-in @state [:runner :hand]))) "There are 3 cards in the runner's Grip")))
 
+(deftest az-mccaffrey-mechanical-prodigy
+  (do-game
+    (new-game {:runner {:id "Az McCaffrey: Mechanical Prodigy"
+                        :deck ["Bank Job","Drug Dealer","HQ Interface"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bank Job")
+    (is (= 1 (count (get-resource state))) "One installed resource")
+    (is (= 5 (:credit (get-runner))) "Az discount was applied")
+    (play-from-hand state :runner "Drug Dealer")
+    (is (= 2 (count (get-resource state))) "Two installed resources")
+    (is (= 4 (:credit (get-runner))) "Az discount not applied on 2nd install")    
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [creds (:credit (get-runner))]
+      (play-from-hand state :runner "HQ Interface")
+      (is (= 1 (count (get-hardware state))) "One installed hardware")
+      (is (= (- creds 3) (:credit (get-runner))) "Az discount was applied"))))
+
 (deftest cerebral-imaging-infinite-frontiers
   ;; Cerebral Imaging - Maximum hand size equal to credits
   (do-game
