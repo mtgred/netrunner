@@ -1370,6 +1370,34 @@
                                                                          (clear-wait-prompt :corp))}}}
                                          card nil))))}]}
 
+   "Loot Box"
+   (letfn [(name-builder [card] (:title card))
+           (top-3 [state] (take 3 (get-in @state [:runner :deck])))
+           (top-3-names [state] (map name-builder (top-3 state)))]
+   {:subroutines [{:label "End the run unless the Runner pays 2 [Credits]"
+                   :msg "force the Runner to pay 2 [Credits] or end the run"
+                   :player :runner
+                   :prompt "Choose one"
+                   :choices ["Pay 2 [Credits]" "End the run"]
+                   :effect (req (if (= target "Pay 2 [Credits]")
+                                  (do (pay state :runner card :credit 2)
+                                      (system-msg state side "pays 2 [Credits]"))
+                                  (end-run state side)))}
+                  {:label "Reveal the top 3 cards of the Stack"
+                   :effect (effect (system-msg (str "uses Loot Box to reveal the top 3 cards of the stack: "
+                                                    (join ", " (top-3-names state))))
+                                   (show-wait-prompt :runner "Corp to choose a card to add to the Grip")
+                                   (continue-ability
+                                     {:prompt "Choose a card to add to the Grip"
+                                      :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
+                                                " [Credits] and shuffle the Stack. Loot Box is trashed")
+                                      :choices (req (top-3 state))
+                                      :effect (effect (move :runner target :hand)
+                                                      (gain-credits :corp (:cost target))
+                                                      (shuffle! :runner :deck)
+                                                      (trash card)
+                                                      (clear-wait-prompt :runner))} card nil))}]})
+
    "Lotus Field"
    {:subroutines [end-the-run]
     :flags {:cannot-lower-strength true}}
@@ -2128,7 +2156,7 @@
      :abilities [{:label "Roll them bones"
                   :effect (effect (move :runner (first (:deck runner)) :deck)
                                   (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
-                                                   " then reveal the top 3 cards in the stack: "
+                                                   " then reveal the top 3 cards of the stack: "
                                                    (join ", " (top-3-names state)))))}]
      :subroutines [{:label "Runner loses 3 [Credits]"
                     :msg "force the Runner to lose 3 [Credits]"
