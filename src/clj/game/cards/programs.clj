@@ -895,10 +895,12 @@
              :successful-run {:req (req (and (#{:hq :rd} target)
                                              (first-event? state :runner :successful-run #{[:hq] [:rd]})))
                               :optional {:prompt "Fire RNG Key?"
+                                         :autoresolve (autoresolve-lookup :auto-fire)
                                          :yes-ability {:prompt "Guess a number"
                                                        :choices {:number (req 20)}
                                                        :msg (msg "guess " target)
-                                                       :effect (effect (update! (assoc-in card [:special :rng-guess] target)))}}}}}
+                                                       :effect (effect (update! (assoc-in card [:special :rng-guess] target)))}}}}
+    :abilities (autoresolve-toggler :auto-fire "RNG Key")}
 
    "Rook"
    {:abilities [{:cost [:click 1]

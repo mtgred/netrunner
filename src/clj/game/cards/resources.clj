@@ -102,7 +102,7 @@
                                                                 (when-not (installed? target)
                                                                   (str " and reveal " (:title target)))))
                                                  :effect (effect (gain-credits 1))}}}}
-    :abilities [(autoresolve-toggler :auto-reveal-and-gain "reveal ability")]}
+    :abilities [(autoresolve-toggler :auto-reveal-and-gain "Aeneas Informant")]}
    
    "Aesops Pawnshop"
    {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
@@ -862,7 +862,7 @@
                                          :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                                        :msg "look at the top card of R&D"
                                                        :choices ["OK"]}}}}
-    :abilities [(autoresolve-toggler :auto-peek "peek at R&D ability")]}
+    :abilities [(autoresolve-toggler :auto-peek "Find the Truth's peek at R&D ability")]}
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
