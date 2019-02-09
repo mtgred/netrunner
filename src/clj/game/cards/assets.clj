@@ -254,6 +254,24 @@
                                          :successful {:msg "prevents all bad publicity"
                                                       :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}}
 
+   "Calvin B4L3Y"
+   {:abilities [{:cost [:click 1]
+                 :msg "draw 2 cards"
+                 :once :per-turn
+                 :effect (effect (draw 2))}]
+    :trash-effect {:req (req (= :servers (first (:previous-zone card))))
+                   :async true
+                   :effect (effect (show-wait-prompt :runner "Corp to use Calvin B4L3Y")
+                                   (continue-ability :corp
+                                     {:optional
+                                      {:prompt "Draw 2 cards?"
+                                       :priority 1
+                                       :player :corp
+                                       :yes-ability {:msg "draw 2 cards"
+                                                     :effect (effect (draw :eid 2 nil))}
+                                       :end-effect (effect (clear-wait-prompt :runner))}}
+                                    card nil))}}
+
    "Capital Investors"
    {:abilities [{:cost [:click 1]
                  :msg "gain 2 [Credits]"

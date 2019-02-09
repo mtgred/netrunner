@@ -372,6 +372,29 @@
         (is (= 8 (- (:credit (get-corp)) credits)))
         (is (zero? (get-counters (refresh ci) :credit)))))))
 
+(deftest calvin-b4l3y
+  ;; Calvin B4L3Y
+  (do-game
+    (new-game {:corp {:hand ["Calvin B4L3Y"]
+                      :deck [(qty "Hedge Fund" 3) (qty "IPO" 2)]}})
+    (play-from-hand state :corp "Calvin B4L3Y" "New remote")
+    (let [cal (get-content state :remote1 0)]
+      (let [hand (count (:hand (get-corp)))
+            click (:click (get-corp))]
+        (core/rez state :corp cal)
+        (card-ability state :corp cal 0)
+        (is (= (+ hand 2) (count (:hand (get-corp)))) "Drew 2 cards")
+        (card-ability state :corp cal 0)
+        (is (= (dec click) (:click (get-corp))) "Second use of Calvin in same turn not allowed"))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (let [hand (count (:hand (get-corp)))]
+        (click-prompt state :corp "Yes")
+        (is (= (+ hand 2) (count (:hand (get-corp)))) "Drew two cards")
+        (is (find-card "Calvin B4L3Y" (:discard (get-corp))) "Calvin is in the discard")))))
+
 (deftest capital-investors
   ;; Capital Investors - Click for 2 credits
   (do-game
