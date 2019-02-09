@@ -208,20 +208,24 @@
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
 
 (defn togglable-ab
-  "If toggle-kw is :always, return ability.
-  If it is :never, return nil ability which marks its eid as completed.
-  If it is :ask, return ability which makes a Yes/No prompt about whether it should resolve."
+  "Return an ability which, depending on the value of card's :special toggle-kw,
+  either resolves ability without asking (if it is :always),
+  does nothing (if it is :never), or prompts user (if it is :ask or something else)
+"
   [toggle-kw prompt-msg ability]
-  (cond
-    (= toggle-kw :always)
-    ability
+  {:effect (effect (continue-ability
+                    (let [toggle-kw-value (get-in card [:special toggle-kw])]
+                      (cond
+                        (= toggle-kw-value :always)
+                        ability
 
-    (= toggle-kw :never)
-    {:effect (effect (effect-completed eid))}
+                        (= toggle-kw-value :never)
+                        {}
 
-    true
-    {:optional {:prompt prompt-msg
-                :yes-ability ability}}))
+                        true
+                        {:optional {:prompt prompt-msg
+                                    :yes-ability ability}}))
+                    card nil))})
 
 (defn ability-toggler [toggle-kw ability-name]
   "Makes a card ability which lets the user toggle auto-resolve on an ability. Setting is stored under [:special toggle-kw]."

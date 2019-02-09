@@ -99,7 +99,7 @@
                         :effect (req (let [non-trashed-card target]
                                        (continue-ability state side
                                                          (togglable-ab
-                                                          (get-in card [:special :auto-reveal-and-gain])
+                                                          :auto-reveal-and-gain
                                                           "Use Aeneas Informant?"
                                                           {:msg (msg (str "gain 1 [Credits]"
                                                                           (when-not (installed? non-trashed-card)
@@ -107,7 +107,6 @@
                                                            :effect (effect (gain-credits 1))})
                                                          card nil)))}}
     :abilities [(ability-toggler :auto-reveal-and-gain "reveal ability")]}
-
    
    "Aesops Pawnshop"
    {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
