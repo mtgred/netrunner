@@ -2268,7 +2268,8 @@
                  :prompt "Choose a piece of ice to swap Thimblerig with"
                  :choices {:req ice?
                            :not-self true}
-                 :effect (effect (swap-ice card target))}]
+                 :effect (effect (swap-ice card target))
+                 :msg (msg "swap " (card-str state card) " with " (card-str state target))}]
     :subroutines [end-the-run]}
 
    "Tithonium"
