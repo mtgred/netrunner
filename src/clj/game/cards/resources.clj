@@ -1060,12 +1060,12 @@
 
    "John Masanori"
    {:events {:successful-run {:req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
-                              :interacive (req true)
-                              :msg "draw 1 card" :once-key :john-masanori-draw
+                              :interactive (req true)
+                              :msg "draw 1 card"
                               :effect (effect (draw))}
              :unsuccessful-run {:req (req (= 1 (count (get-in @state [:runner :register :unsuccessful-run]))))
                                 :async true
-                                :msg "take 1 tag" :once-key :john-masanori-tag
+                                :msg "take 1 tag"
                                 :effect (effect (gain-tags :runner eid 1))}}}
 
    "Joshua B."
