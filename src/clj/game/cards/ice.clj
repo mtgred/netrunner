@@ -1371,9 +1371,8 @@
                                          card nil))))}]}
 
    "Loot Box"
-   (letfn [(name-builder [card] (:title card))
-           (top-3 [state] (take 3 (get-in @state [:runner :deck])))
-           (top-3-names [state] (map name-builder (top-3 state)))]
+   (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))
+           (top-3-names [state] (map :title (top-3 state)))]
    {:subroutines [{:label "End the run unless the Runner pays 2 [Credits]"
                    :msg "force the Runner to pay 2 [Credits] or end the run"
                    :player :runner
