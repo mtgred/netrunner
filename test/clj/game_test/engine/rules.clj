@@ -709,7 +709,7 @@
        (is (changes-credits (get-runner) 1
                             (run-jackson)))
        (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying"))))
-  (testing "Fisk + FTT with and without "
+  (testing "Fisk + FTT with and without autoresolve"
     (do-game
      (new-game {:corp {:deck [(qty "Archer" 30)]}
                 :runner {:id "Laramy Fisk: Savvy Investor"
@@ -764,4 +764,32 @@
        (changes-val-macro 1 (count (get-in @state [:corp :hand]))
                           "Fisk triggers after closing FTT prompt"
                           (click-prompt state :runner "OK"))
-       (is (empty? (:prompt (get-runner))) "No prompts displaying")))))
+       (is (empty? (:prompt (get-runner))) "No prompts displaying"))))
+  (testing "Ensure autoresolve does not break prompts with a :req"
+    (do-game
+     (new-game {:corp {:id "SSO Industries: Fueling Innovation"
+                       :deck ["Underway Renovation" (qty "Ice Wall" 3)]}})
+     (letfn [(toggle-sso [setting]
+               (card-ability state :corp (get-in @state [:corp :identity]) 0)
+               (click-prompt state :corp setting))]
+       (toggle-sso "Always")
+       (play-from-hand state :corp "Underway Renovation" "New remote")
+       (take-credits state :corp)
+       (is (empty? (:prompt (get-corp))) "No prompts displaying, as conditions are not satisfied")
+       (take-credits state :runner)
+       (play-from-hand state :corp "Ice Wall" "New remote")
+       (toggle-sso "Never")
+       (take-credits state :corp)
+       (is (empty? (:prompt (get-corp))) "No prompts displaying, as conditions are not satisfied")
+       (take-credits state :runner)
+       (toggle-sso "Always")
+       (take-credits state :corp)
+       (is (= "Select ICE with no advancement tokens to place 1 advancement token on"
+              (-> @state :corp :prompt first :msg))
+           "SSO autoresolved first prompt")
+       (click-card state :corp (get-ice state :remote2 0))
+       (is (= 1 (get-counters (get-ice state :remote2 0) :advancement)) "A token was added")
+       (is (empty? (:prompt (get-corp))) "No prompt displaying")
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (is (empty? (:prompt (get-corp))) "No prompt displaying, as conditions are not met")))))
