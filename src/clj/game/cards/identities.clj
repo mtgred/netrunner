@@ -772,9 +772,13 @@
                  :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
                  :choices {:req #(and (ice? %)
                                       (in-hand? %))}
-                 :effect (req (corp-install state side target (:server run) {:ignore-all-cost true
-                                                                             :front true})
-                              (swap! state assoc-in [:run :position] 1))}]}
+                 :effect (req (corp-install state side target (zone->name (first (:server run)))
+                                            {:ignore-all-cost true
+                                             :front true})
+                              (swap! state assoc-in [:run :position] 1))}]
+    :events {:approach-server {:req (req true)
+                               :effect (req (toast state :corp "You may use Mti Mwekundu: Life Improved now."))
+                               :msg "test message 3"}}}
 
    "Nasir Meidan: Cyber Explorer"
    {:events {:rez {:req (req (and (:run @state)
