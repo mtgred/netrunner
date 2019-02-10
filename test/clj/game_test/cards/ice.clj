@@ -210,6 +210,23 @@
       (take-credits state :corp)
       (is (not (has-subtype? (refresh ch) "Barrier")) "Chimera does not have Barrier"))))
 
+(deftest congratulations!
+  ;; Congratulations!
+  (do-game
+    (new-game {:corp {:deck ["Congratulations!"]}})
+    (play-from-hand state :corp "Congratulations!" "HQ")
+    (take-credits state :corp)
+    (let [congrats (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp congrats)
+      (is (= 6 (:credit (get-corp))))
+      (is (= 5 (:credit (get-runner))))
+      (card-subroutine state :corp congrats 0)
+      (is (= 8 (:credit (get-corp))))
+      (is (= 6 (:credit (get-runner))))
+      (run-continue state)
+      (is (= 9 (:credit (get-corp))) "+1 Credit for passing Congratulations!"))))
+
 (deftest cortex-lock
   ;; Cortex Lock - Do net damage equal to Runner's unused memory
   (do-game

@@ -658,6 +658,15 @@
                                             (effect-completed state side eid))))}]
     :strength-bonus advance-counters}
 
+   "Congratulations!"
+   {:events {:pass-ice {:req (req (same-card? target card))
+                        :msg "gain 1 [Credits]"
+                        :effect (effect (gain-credits :corp 1))}}
+    :subroutines [{:label "Gain 2 [Credits]. The Runner gains 1 [Credits]"
+                   :msg "gain 2 [Credits]. The Runner gains 1 [Credits]"
+                   :effect (effect (gain-credits :corp 2)
+                                   (gain-credits :runner 1))}]}
+
    "Conundrum"
    {:subroutines [(assoc trash-program :player :runner
                                        :msg "force the Runner to trash 1 program"
