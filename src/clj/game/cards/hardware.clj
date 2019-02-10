@@ -471,22 +471,14 @@
                   :choices {:req is-virus-program?}
                   :effect (req (add-counter state :runner card :virus -1)
                                (add-counter state :runner target :virus 1))}]
-     {:abilities [{:effect (effect (update! (update-in card [:special :auto-accept] #(not %)))
-                                   (toast (str "Friday Chip will now "
-                                               (if (get-in card [:special :auto-accept]) "no longer " "")
-                                               "automatically add counters.") "info"))
-                   :label "Toggle auomatically adding virus counters"}]
+     {:abilities [(autoresolve-toggler :auto-accept "Friday Chip")]
       :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))
       :events {:runner-turn-begins ability
                :runner-trash {:async true
                               :req (req (some #(card-is? % :side :corp) targets))
                               :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
-                                                 auto-ab {:effect (effect (system-msg :runner
-                                                                                      (str "places "
-                                                                                           (quantify amt-trashed "virus counter")
-                                                                                           " on Friday Chip"))
-                                                                    (add-counter :runner card :virus amt-trashed))}
                                                  sing-ab {:optional {:prompt "Place a virus counter on Friday Chip?"
+                                                                     :autoresolve (autoresolve-lookup :auto-accept)
                                                                      :yes-ability {:effect (effect (system-msg
                                                                                                      :runner
                                                                                                      "places 1 virus counter on Friday Chip")
@@ -499,8 +491,7 @@
                                                                                            (quantify target "virus counter")
                                                                                            " on Friday Chip"))
                                                                           (add-counter :runner card :virus target))}
-                                                 ab (if (> amt-trashed 1) mult-ab sing-ab)
-                                                 ab (if (get-in card [:special :auto-accept]) auto-ab ab)]
+                                                 ab (if (> amt-trashed 1) mult-ab sing-ab)]
                                              (continue-ability state side ab card targets)))}}})
 
    "Gebrselassie"
@@ -578,14 +569,15 @@
     :events {:successful-run
              {:req (req (and (first-event? state :runner :successful-run)
                              (pos? (count-virus-programs state))))
-              :optional
-                   {:prompt "Place a virus counter?"
-                    :yes-ability {:prompt "Select an installed virus program"
-                                  :choices {:req #(and (installed? %)
-                                                       (has-subtype? % "Virus")
-                                                       (is-type? % "Program"))}
-                                  :msg (msg "place 1 virus counter on " (:title target))
-                                  :effect (effect (add-counter target :virus 1))}}}}}
+              :optional {:prompt "Place a virus counter?"
+                         :autoresolve (autoresolve-lookup :auto-add)
+                         :yes-ability {:prompt "Select an installed virus program for Knobkierie to add a virus counter to"
+                                       :choices {:req #(and (installed? %)
+                                                            (has-subtype? % "Virus")
+                                                            (is-type? % "Program"))}
+                                       :msg (msg "place 1 virus counter on " (:title target))
+                                       :effect (effect (add-counter target :virus 1))}}}}
+    :abilities [(autoresolve-toggler :auto-add "Knobkierie")]}
 
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1]
@@ -835,7 +827,8 @@
     :events {:successful-run
              {:req (req (first-event? state side :successful-run))
               :async true
-              :interactive (req true)
+              :interactive (autoresolve-lookup :autofire #(not= % :never))
+              :silent (autoresolve-lookup :autofire #(= % :never))
               :effect (effect
                         (show-wait-prompt :corp "Runner to decide if they will use Paragon")
                         (continue-ability
@@ -851,6 +844,7 @@
                                          {:player :runner
                                           :optional
                                           {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
+                                           :autoresolve (autoresolve-lookup :auto-fire)
                                            :yes-ability
                                            {:msg "add the top card of Stack to the bottom"
                                             :effect (effect (move :runner (first (:deck runner)) :deck)
@@ -859,7 +853,8 @@
                                          card nil))}
                             :no-ability {:effect (effect (clear-wait-prompt :corp)
                                                          (system-msg "does not add the top card of the Stack to the bottom"))}}}
-                          card nil))}}}
+                          card nil))}}
+    :abilities [(autoresolve-toggler :auto-fire "Paragon")]}
 
    "Patchwork"
    (letfn [(patchwork-discount [cost-type bonus-fn]

@@ -48,6 +48,7 @@
                          {:optional
                           {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
                            :player :runner
+                           :autoresolve (autoresolve-lookup :auto-419)
                            :no-ability {:effect (req (clear-wait-prompt state :corp))}
                            :yes-ability
                            {:async true
@@ -73,7 +74,8 @@
                                                                                             " card from being exposed"))
                                                                (clear-wait-prompt state :runner))}}}
                                                card nil))))}}}
-                         card nil)))}}}
+                         card nil)))}}
+    :abilities [(autoresolve-toggler :auto-419 "419")]}
 
    "Acme Consulting: The Truth You Need"
    (letfn [(activate [state card active]
@@ -824,13 +826,15 @@
                              state :corp
                              {:optional
                               {:prompt "Trace the Runner with NBN: Controlling the Message?"
+                               :autoresolve (autoresolve-lookup :auto-ctm)
                                :yes-ability {:trace {:base 4
                                                      :successful
                                                      {:msg "give the Runner 1 tag"
                                                       :async true
                                                       :effect (effect (gain-tags :corp eid 1 {:unpreventable true}))}}}
                                :end-effect (effect (clear-wait-prompt :runner))}}
-                             card nil))}}})
+                             card nil))}}
+    :abilities [(autoresolve-toggler :auto-ctm "CtM")]})
 
    "NBN: Making News"
    {:recurring 2}
@@ -1090,6 +1094,7 @@
                  :req (req (and
                              (not-empty (installed-faceup-agendas state))
                              (not-empty (ice-with-no-advancement-tokens state))))
+                 :autoresolve (autoresolve-lookup :auto-sso)
                  :yes-ability
                  {:async true
                   :effect (req (show-wait-prompt state :runner "Corp to use SSO Industries' ability")
@@ -1108,7 +1113,8 @@
                                  :effect (req (add-prop state :corp target :advance-counter agenda-points {:placed true})
                                               (clear-wait-prompt state :runner))
                                  :cancel-effect (req (clear-wait-prompt state :runner))}
-                                card nil)))}}}}})
+                                card nil)))}}}}
+      :abilities [(autoresolve-toggler :auto-sso "SSO")]})
 
    "Steve Cambridge: Master Grifter"
    {:events {:successful-run

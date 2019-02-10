@@ -195,9 +195,8 @@
    {:events {:runner-trash {:async true
                             :req (req (some #(card-is? % :side :corp) targets))
                             :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
-                                               auto-ab {:effect (effect (add-counter :runner card :virus amt-trashed))
-                                                        :msg (str "place " (quantify amt-trashed "virus counter") " on Consume")}
                                                sing-ab {:optional {:prompt "Place a virus counter on Consume?"
+                                                                   :autoresolve (autoresolve-lookup :auto-accept)
                                                                    :yes-ability {:effect (effect (add-counter :runner card :virus 1))
                                                                                  :msg "place 1 virus counter on Consume"}}}
                                                mult-ab {:prompt "Place virus counters on Consume?"
@@ -205,8 +204,7 @@
                                                                   :default (req amt-trashed)}
                                                         :msg (msg "place " (quantify target "virus counter") " on Consume")
                                                         :effect (effect (add-counter :runner card :virus target))}
-                                               ab (if (> amt-trashed 1) mult-ab sing-ab)
-                                               ab (if (get-in card [:special :auto-accept]) auto-ab ab)]
+                                               ab (if (= 1 amt-trashed) sing-ab mult-ab)]
                                            (continue-ability state side ab card targets)))}}
     :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Consume."))
     :abilities [{:req (req (pos? (get-virus-counters state card)))
@@ -223,11 +221,7 @@
                              (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
                              (when (pos? hivemind-virus)
                                    (str " (and " hivemind-virus " from Hivemind)")))))}
-                {:effect (effect (update! (update-in card [:special :auto-accept] #(not %)))
-                                 (toast (str "Consume will now "
-                                             (if (get-in card [:special :auto-accept]) "no longer " "")
-                                             "automatically add counters.") "info"))
-                 :label "Toggle automatically adding virus counters"}]}
+                {:effect (autoresolve-toggler :auto-accept "adding virus counters")}]}
 
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
@@ -707,12 +701,14 @@
                                           (continue-ability
                                             {:optional
                                              {:prompt "Spend a power counter on Nyashia to access 1 additional card?"
+                                              :autoresolve (autoresolve-lookup :auto-nyashia)
                                               :yes-ability {:msg "access 1 additional card from R&D"
                                                             :effect (effect (access-bonus :rd 1)
                                                                             (add-counter card :power -1)
                                                                             (clear-wait-prompt :corp))}
                                               :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
-                                            card nil))}}}
+                                            card nil))}}
+    :abilities [(autoresolve-lookup :auto-nyashia "Nyashia")]}
 
    "Origami"
    {:effect (effect (gain :hand-size
@@ -1106,8 +1102,10 @@
                              (effect-completed state side eid))))]
        {:hosting {:req #(and (ice? %) (can-host? %))}
         :effect trash-if-5
+        :abilities [(autoresolve-toggler :auto-accept "add virus counter to Trypano")]
         :events {:runner-turn-begins
                  {:optional {:prompt (msg "Place a virus counter on Trypano?")
+                             :autoresolve (autoresolve-lookup :auto-accept)
                              :yes-ability {:effect (req (system-msg state :runner "places a virus counter on Trypano")
                                                         (add-counter state side card :virus 1))}}}
                  :counter-added {:async true

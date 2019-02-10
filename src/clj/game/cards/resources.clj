@@ -536,6 +536,7 @@
              {:silent (req true)
               :req (req (= :archives target))
               :optional {:prompt "Place a virus counter on Crypt?"
+                         :autoresolve (autoresolve-lookup :auto-add)
                          :yes-ability {:effect (effect (add-counter card :virus 1)
                                                        (system-msg "places a virus counter on Crypt"))}}}}
     :abilities [{:label "[Click][Trash]: install a virus program from the stack"
@@ -549,7 +550,8 @@
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (runner-install target)
-                                 (trash card {:cause :ability-cost}))}]}
+                                 (trash card {:cause :ability-cost}))}
+                (autoresolve-toggler :auto-add "adding virus counters to Crypt")]}
 
    "Dadiana Chacon"
    (let [trashme {:effect (effect (system-msg "trashes Dadiana Chacon and suffers 3 meat damage")
