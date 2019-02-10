@@ -2126,6 +2126,11 @@
       (play-and-score state "Research Grant")
       (click-card state :corp (get-content state :remote1 0))
       (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")))
+  (testing "Single test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Research Grant" 1)]}})
+      (play-and-score state "Research Grant")
+      (is (= 1 (count (:scored (get-corp)))) "1 copy of Research Grant scored")))
   (testing "vs Leela"
     ;; Issue #3069
     (do-game
