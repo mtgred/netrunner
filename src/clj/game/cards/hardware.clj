@@ -834,6 +834,7 @@
                         (continue-ability
                           {:optional
                            {:player :runner
+                            :autoresolve (autoresolve-lookup :auto-fire)
                             :prompt "Use Paragon?"
                             :yes-ability
                             {:msg "gain 1 [Credit] and look at the top card of Stack"
@@ -844,7 +845,6 @@
                                          {:player :runner
                                           :optional
                                           {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
-                                           :autoresolve (autoresolve-lookup :auto-fire)
                                            :yes-ability
                                            {:msg "add the top card of Stack to the bottom"
                                             :effect (effect (move :runner (first (:deck runner)) :deck)
