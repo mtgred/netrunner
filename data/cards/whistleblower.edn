@@ -1,6 +1,7 @@
 {:code "26065",
  :cost 2,
  :cycle_code "ashes",
+ :faction "Neutral",
  :factioncost 1,
  :format {:core-experience :rotated,
           :eternal :legal,

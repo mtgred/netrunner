@@ -2,6 +2,7 @@
  :agendapoints 2,
  :code "26094",
  :cycle_code "ashes",
+ :faction "Neutral",
  :format {:core-experience :rotated,
           :eternal :legal,
           :snapshot :rotated,
