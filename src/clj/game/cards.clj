@@ -218,11 +218,12 @@
                                 (get-in (get-card state card) [:special toggle-kw]))
                                " resolve.") "info"))})
 
-(defn autoresolve-lookup [toggle-kw]
-  "Returns a 5-fn intended for use in the :autoresolve of an optional ability.
-  Function checks whether its card has [:special toggle-kw] set, and returns
-  'Yes', 'No' or nil depending on whether it's :always, :never or something else."
-  (req ({:always "Yes" :never "No"} (get-in card [:special toggle-kw]))))
+(defn autoresolve-lookup
+  "Returns a 5-fn intended for use in the :autoresolve of an optional ability. Function returns 'Yes', 'No' or nil 
+  depending on whether card has [:special toggle-kw] set to :always, :never or something else.
+  If a function is passed in, instead call that on [:special toggle-kw] and return the result."
+  ([toggle-kw] (autoresolve-lookup toggle-kw {:always "Yes" :never "No"}))
+  ([toggle-kw pred] (req (pred (get-in (get-card state card) [:special toggle-kw])))))
 
 ;; Load all card data and definitions into the current namespace.
 (defn reset-card-data

@@ -709,7 +709,8 @@
    {:events
     {:successful-run
      {:async true
-      :interactive (req (not= :never (get-in card [:special :auto-fisk])))
+      :interactive (autoresolve-lookup :auto-fisk #(not= % :never))
+      :silent (autoresolve-lookup :auto-fisk #(= % :never))
       :req (req (and (is-central? (:server run))
                      (first-event? state side :successful-run is-central?)))
       :effect (effect (continue-ability
