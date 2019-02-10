@@ -299,8 +299,7 @@
          "Yes" (prompt-fn "Yes")
          "No"  (prompt-fn "No")
                (show-prompt state side eid card message ["Yes" "No"]
-                            prompt-fn
-                            ability))))))
+                            prompt-fn ability))))))
 
 ;;; Prompts
 (defn prompt!
