@@ -176,21 +176,23 @@
   according to substitution"
   (reduce concat (map #(replace-in-element % substitution) fragment)))
 
-(defn set-key [n elem]
+(defn set-react-key [n elem]
   (let [head (first elem)
         attr (if (map? (second elem)) (second elem) {})
         tail (if (map? (second elem)) (drop 2 elem) (drop 1 elem))]
   (into [] (concat [head (merge attr {:key n})] tail))))
 
-(defn render-fragment [fragment replacement-smap]
+(defn render-fragment-impl [fragment replacement-smap]
   "Given a fragment, shallowly replaces text in the fragment with icon and,
   optionally, card preview HTML"
   (let [counter (atom 0)
-        set-next-key (fn [elem] (set-key (do (swap! counter inc) @counter) elem))]
+        set-next-key (fn [elem] (set-react-key (do (swap! counter inc) @counter) elem))]
     (->> (reduce replace-in-fragment fragment (ordered-keys replacement-smap))
          (replace replacement-smap)
          (map-if vector? set-next-key)
          (into []))))
+
+(def render-fragment (memoize render-fragment-impl))
 
 (defn render-icons [input]
     (render-fragment
