@@ -93,36 +93,41 @@
    "SOCR8" "socr8"
    "Casual" "casual"})
 
-(defn map-vals [function smap]
-  (into {} (map (fn [[k v]] [k (function v)]) smap)))
-
 (defn map-if [condition f s]
   (map #(if (condition %) (f %) %) s))
 
+(defn regex-escape [string]
+  (let [regex-escape-smap (zipmap ".*+?[](){}^$"
+                                  (map #(str "\\" %) esc-chars))]
+    (->> string
+         (replace regex-escape-smap)
+         (reduce str))))
+
 (def icon-smap
   (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon)}])]
-  (map-vals span-of {"[credit]" "credit"
-                     "[credits]" "credit"
-                     "[c]" "credit"
-                     "[recurring credit]" "recurring-credit"
-                     "[recurring credits]" "recurring-credit"
-                     "[recurring-credit]" "recurring-credit"
-                     "[recurring-credits]" "recurring-credit"
-                     "[click]" "click"
-                     "[clicks]" "click"
-                     "1[memory unit]" "mu1"
-                     "1[mu]" "mu1"
-                     "2[memory unit]" "mu2"
-                     "2[mu]" "mu2"
-                     "3[memory unit]" "mu3"
-                     "3[mu]" "mu3"
-                     "[memory unit]" "mu"
-                     "[mu]" "mu"
-                     "[link]" "link"
-                     "[l]" "link"
-                     "[subroutine]" "subroutine"
-                     "[trash]" "trash"
-                     "[t]" "trash"})))
+    (->> {"[credit]" "credit"
+          "[credits]" "credit"
+          "[c]" "credit"
+          "[recurring credit]" "recurring-credit"
+          "[recurring credits]" "recurring-credit"
+          "[recurring-credit]" "recurring-credit"
+          "[recurring-credits]" "recurring-credit"
+          "[click]" "click"
+          "[clicks]" "click"
+          "1[memory unit]" "mu1"
+          "1[mu]" "mu1"
+          "2[memory unit]" "mu2"
+          "2[mu]" "mu2"
+          "3[memory unit]" "mu3"
+          "3[mu]" "mu3"
+          "[memory unit]" "mu"
+          "[mu]" "mu"
+          "[link]" "link"
+          "[l]" "link"
+          "[subroutine]" "subroutine"
+          "[trash]" "trash"
+          "[t]" "trash"}
+      (map (fn [[k v]] [(regex-escape k) (span-of v)])))))
 
 (defn card-smap-impl []
   (letfn [(unpack-card [[title cards]] [title (:code (first cards))])
@@ -144,16 +149,6 @@
 (defn into-fragment [text]
   [:<> text])
 
-(def regex-escape-smap
-  (let [esc-chars ".*+?[](){}^$"]
-    (zipmap esc-chars
-            (map #(str "\\" %) esc-chars))))
-
-(defn regex-escape [string]
-  (->> string
-       (replace regex-escape-smap)
-       (reduce str)))
-
 (defn padded-zip [pad s1 & sn]
   "Zip together any number of sequences of uneven lengths by padding out the
   shorter ones"
@@ -166,7 +161,7 @@
   "If element is a string, split that string on pattern boundaries and replace
   all patterns with the replacement"
   (if (string? element)
-    (let [pattern-regex (re-pattern (str "(?i)" (regex-escape pattern)))
+    (let [pattern-regex (re-pattern (str "(?i)" pattern))
           pop-if-nil #(if (nil? (last %)) (pop %) %)
           context (split element pattern-regex)
           match-count (count (re-seq pattern-regex element))
