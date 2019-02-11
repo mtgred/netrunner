@@ -97,8 +97,9 @@
   (map #(if (condition %) (f %) %) s))
 
 (defn regex-escape [string]
-  (let [regex-escape-smap (zipmap ".*+?[](){}^$"
-                                  (map #(str "\\" %) esc-chars))]
+  (let [special-chars ".*+?[](){}^$"
+        escaped-chars (map #(str "\\" %) special-chars)
+        regex-escape-smap (zipmap special-chars escaped-chars)]
     (->> string
          (replace regex-escape-smap)
          (reduce str))))
