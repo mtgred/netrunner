@@ -125,13 +125,13 @@
                      "[t]" "trash"})))
 
 (defn card-smap-impl []
-  (letfn [(unpack-non-alt-code [[title cards]] [title (:code (first cards))])
+  (letfn [(unpack-card [[title cards]] [title (:code (first cards))])
           (span-of [title code] [:span {:class "fake-link" :id code} title])]
     (->> @all-cards
          (filter #(not (:replaced_by %)))
          (group-by :title)
-         (map unpack-non-alt-code)
-         (map (fn [[k v]] [(lower-case k) (span-of k v)]))
+         (map unpack-card)
+         (map (fn [[k v]] [(regex-escape k) (span-of k v)]))
          (into {}))))
 
 (def card-smap (memoize card-smap-impl))
