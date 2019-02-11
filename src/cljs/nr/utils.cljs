@@ -127,7 +127,19 @@
           "[l]" "link"
           "[subroutine]" "subroutine"
           "[trash]" "trash"
-          "[t]" "trash"}
+          "[t]" "trash"
+          "[adam]" "adam"
+          "[anarch]" "anarch"
+          "[apex]" "apex"
+          "[criminal]" "criminal"
+          "[hb]" "haas-bioroid"
+          "[haas-bioroid]" "haas-bioroid"
+          "[jinteki]" "jinteki"
+          "[nbn]" "nbn"
+          "[shaper]" "shaper"
+          "[sunny]" "sunny"
+          "[weyland]" "weyland-consortium"
+          "[weyland-consortium]" "weyland-consortium"}
       (map (fn [[k v]] [(regex-escape k) (span-of v)])))))
 
 (defn card-smap-impl []
