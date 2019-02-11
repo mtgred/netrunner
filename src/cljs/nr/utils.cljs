@@ -210,4 +210,4 @@
       (card-smap)))
 
 (defn render-icons-and-cards [input]
-  (render-cards (render-icons input)))
+  (render-icons (render-cards input)))
