@@ -2,7 +2,7 @@
  :cost 7,
  :cycle_code "ashes",
  :faction "Weyland Consortium",
- :factioncost 4,
+ :factioncost 3,
  :format {:core-experience :rotated,
           :eternal :legal,
           :snapshot :rotated,
@@ -19,7 +19,7 @@
  :side "Corp",
  :strength 6,
  :subtype "Sentry - Tracer - Destroyer - Illicit",
- :text "When you rez Trebuchet, take 1 bad publicity.\n[subroutine]<trace>trace 5</trace>: If successful, trash 1 installed Runner card.\n[subroutine]<trace>trace 5</trace>: If successful, the Runner cannot steal or trash Corp cards for the remainder of this run.",
+ :text "When you rez Trebuchet, take 1 bad publicity.\n[subroutine] Trash 1 installed Runner card.\n[subroutine]<trace>trace 6</trace>: If successful, the Runner cannot steal or trash Corp cards for the remainder of this run.",
  :title "Trebuchet",
  :type "ICE",
  :uniqueness false}

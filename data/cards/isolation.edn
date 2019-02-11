@@ -1,5 +1,5 @@
 {:code "26036",
- :cost 3,
+ :cost 2,
  :cycle_code "ashes",
  :faction "Anarch",
  :factioncost 1,
@@ -17,7 +17,7 @@
  :set_code "ash-1",
  :setname "Ashes: Set 1",
  :side "Runner",
- :text "Trash an installed resource. If you do, gain 8[credit].",
+ :text "As an additional cost to play this event, trash an installed resource. Gain 7[credit].",
  :title "Isolation",
  :type "Event",
  :uniqueness false}

@@ -1,5 +1,5 @@
 {:code "26035",
- :cost 1,
+ :cost 0,
  :cycle_code "ashes",
  :faction "Neutral",
  :format {:core-experience :rotated,

@@ -18,7 +18,7 @@
  :setname "Ashes: Set 1",
  :side "Corp",
  :subtype "Double",
- :text "As an additional cost to play this operation, spend [click].\nSearch R&D for a piece of ice, reveal it, and install it protecting a central server, lowering its install cost by 2. (Shuffle R&D after finding a piece of ice.)",
+ :text "As an additional cost to play this operation, spend [click].\nSearch R&D for a piece of ice, reveal it, and install it protecting a central server, lowering its install cost by 3. (Shuffle R&D after searching it.)",
  :title "Secure and Protect",
  :type "Operation",
  :uniqueness false}

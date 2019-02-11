@@ -2,7 +2,7 @@
  :cost 1,
  :cycle_code "ashes",
  :faction "Haas-Bioroid",
- :factioncost 1,
+ :factioncost 2,
  :format {:core-experience :rotated,
           :eternal :legal,
           :snapshot :rotated,
