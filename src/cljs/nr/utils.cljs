@@ -149,13 +149,12 @@
 (defn into-fragment [text]
   [:<> text])
 
-(defn padded-zip [pad s1 & sn]
-  "Zip together any number of sequences of uneven lengths by padding out the
-  shorter ones"
-  (let [seqs (concat [s1] sn)
-        lazy-padded-seqs (map #(concat % (repeat pad)) seqs)
+(defn padded-interleave [pad & seqs]
+  "Interleave sequences of uneven lengths by padding out the shorter ones"
+  (let [lazy-padded-seqs (map #(concat % (repeat pad)) seqs)
+        num-seqs (count lazy-padded-seqs)
         max-len (reduce max (map count seqs))]
-    (apply map vector (map (partial take max-len) lazy-padded-seqs))))
+    (take (* max-len num-seqs) (apply interleave lazy-padded-seqs))))
 
 (defn replace-in-element [element [pattern replacement]]
   "If element is a string, split that string on pattern boundaries and replace
@@ -168,8 +167,7 @@
           replacements (repeat match-count replacement)]
       (->> (if (empty? context)
              [replacements]
-             (padded-zip "" context replacements))
-           (reduce concat)
+             (padded-interleave "" context replacements))
            (filter not-empty)))
     [element]))
 
