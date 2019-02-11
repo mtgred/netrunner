@@ -346,6 +346,31 @@
         (run-jack-out state)
         (run-on state "Archives")))))
 
+(deftest blueberry-diesel
+  ;; Blueberry Diesel
+  (testing "Selecting a card"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:hand ["Blueberry Diesel" "Sure Gamble" "Easy Mark" "Daily Casts"]}})
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Daily Casts" (:hand (get-runner))) :deck)
+      (play-from-hand state :runner "Blueberry Diesel")
+      (is (= "Daily Casts" (-> (get-runner) :deck last :title)))
+      (click-prompt state :runner "Sure Gamble")
+      (is (find-card "Daily Casts" (:hand (get-runner))))))
+  (testing "Selecting no card"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:hand ["Blueberry Diesel" "Sure Gamble" "Easy Mark" "Daily Casts"]}})
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Daily Casts" (:hand (get-runner))) :deck)
+      (play-from-hand state :runner "Blueberry Diesel")
+      (is (= "Daily Casts" (-> (get-runner) :deck last :title)))
+      (click-prompt state :runner "Cancel")
+      (is (not (find-card "Daily Casts" (:hand (get-runner))))))))
+
 (deftest by-any-means
   ;; By Any Means
   (testing "Full test"
