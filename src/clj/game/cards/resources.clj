@@ -550,11 +550,10 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Dadiana Chacon"
-   (let [trashme {:effect (effect (system-msg "trashes Dadiana Chacon and suffers 3 meat damage")
-                                  (register-events {:play {:req (req (= "Runner" (:side target)))
-                                                           :effect (effect (unregister-events card)
-                                                                           (damage eid :meat 3 {:unboostable true :card card})
-                                                                           (trash card {:cause :ability-cost}))}} card))}
+   (let [trashme {:effect (effect (unregister-events card)
+                                  (damage eid :meat 3 {:unboostable true :card card})
+                                  (trash card {:cause :ability-cost}))
+                  :msg (msg "trashes Dadiana Chacon and suffers 3 meat damage")}
          ability {:once :per-turn
                   :msg "gain 1 [Credits]"
                   :req (req (< (get-in @state [:runner :credit]) 6))
