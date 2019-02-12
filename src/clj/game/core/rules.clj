@@ -71,13 +71,14 @@
                           (not (and (has-subtype? card "Priority")
                                     (get-in @state [side :register :spent-click]))))
                    ;; Wait on pay-sync to finish before triggering instant-effect
-                   (let [moved-card (move state side (assoc card :seen true) :play-area)]
+                   (let [original-zone (:zone card)
+                         moved-card (move state side (assoc card :seen true) :play-area)]
                      (wait-for (pay-sync state side moved-card (if ignore-cost 0 total-cost) {:action :play-instant})
                                (if-let [cost-str async-result]
                                  (complete-play-instant state side eid moved-card cost-str ignore-cost)
                                 ;; could not pay the card's price; put it back and mark the effect as being over.
                                  (do
-                                   (move state side moved-card :hand)
+                                   (move state side moved-card original-zone)
                                    (effect-completed state side eid)))))
                    ;; card's req was not satisfied; mark the effect as being over.
                    (effect-completed state side eid)))))))
