@@ -11,13 +11,12 @@
 (defn- complete-play-instant
   "Completes the play of the event / operation that the player can play for"
   [state side eid {:keys [title] :as card} cost-str ignore-cost]
-  (let [c (move state side (assoc card :seen true) :play-area)
-        play-msg (if ignore-cost
+  (let [play-msg (if ignore-cost
                    "play "
                    (build-spend-msg cost-str "play"))]
     (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
     (play-sfx state side "play-instant")
-    (if (has-subtype? c "Current")
+    (if (has-subtype? card "Current")
       (do (doseq [s [:corp :runner]]
             (remove-old-current state side s))
           (let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))
@@ -32,7 +31,7 @@
           (when (has-subtype? card "Terminal")
             (lose state side :click (-> @state side :click))
             (swap! state assoc-in [:corp :register :terminal] true))))
-    (trigger-event state side (if (= side :corp) :play-operation :play-event) c)))
+    (trigger-event state side (if (= side :corp) :play-operation :play-event) card)))
 
 (defn play-instant
   "Plays an Event or Operation."
@@ -72,11 +71,14 @@
                           (not (and (has-subtype? card "Priority")
                                     (get-in @state [side :register :spent-click]))))
                    ;; Wait on pay-sync to finish before triggering instant-effect
-                   (wait-for (pay-sync state side card (if ignore-cost 0 total-cost) {:action :play-instant})
-                             (if-let [cost-str async-result]
-                               (complete-play-instant state side eid card cost-str ignore-cost)
-                               ;; could not pay the card's price; mark the effect as being over.
-                               (effect-completed state side eid)))
+                   (let [moved-card (move state side (assoc card :seen true) :play-area)]
+                     (wait-for (pay-sync state side moved-card (if ignore-cost 0 total-cost) {:action :play-instant})
+                               (if-let [cost-str async-result]
+                                 (complete-play-instant state side eid moved-card cost-str ignore-cost)
+                                ;; could not pay the card's price; put it back and mark the effect as being over.
+                                 (do
+                                   (move state side moved-card :hand)
+                                   (effect-completed state side eid)))))
                    ;; card's req was not satisfied; mark the effect as being over.
                    (effect-completed state side eid)))))))
 
