@@ -1277,6 +1277,42 @@
     :msg (msg "search for " target " Sysops")
     :effect (effect (continue-ability (rthelp target target []) card nil))})
 
+   "Red Level Clearance"
+   (let [all [{:msg "gain 2 [Credits]"
+               :effect (effect (gain-credits 2))}
+              {:msg "draw 2 cards"
+               :effect (effect (draw 2))}
+              {:msg "gain [Click]"
+               :effect (effect (gain :click 1))}
+              {:prompt "Choose a non-agenda to install"
+               :msg "install a non-agenda from hand"
+               :choices {:req #(and (not (is-type? % "Agenda"))
+                                    (not (is-type? % "Operation"))
+                                    (in-hand? %))}
+               :async true
+               :effect (effect (corp-install eid target nil nil))}]
+         can-install? (fn [hand]
+                        (seq (filter #(and (not (is-type? % "Agenda"))
+                                           (not (is-type? % "Operation")))
+                                     hand)))
+         choice (fn choice [abis chose-once]
+                  {:prompt "Choose an ability to resolve"
+                   :choices (map #(capitalize (:msg %)) abis)
+                   :async true
+                   :effect (req (let [chosen (some #(when (= target (capitalize (:msg %))) %) abis)]
+                                  (if (or (not= target "Install a non-agenda from hand")
+                                          (and (= target "Install a non-agenda from hand")
+                                               (can-install? (:hand corp))))
+                                    (wait-for (resolve-ability state side chosen card nil)
+                                              (if (false? chose-once)
+                                                (continue-ability state side (choice abis true) card nil)
+                                                (effect-completed state side eid)))
+                                    (continue-ability state side (choice abis chose-once) card nil))))})]
+     {:async true
+      :effect (effect (continue-ability (choice all false) card nil))})
+
+
+
    "Red Planet Couriers"
    {:async true
     :req (req (some #(can-be-advanced? %) (all-installed state :corp)))
