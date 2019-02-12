@@ -178,9 +178,7 @@
           context (split element pattern-regex)
           match-count (count (re-seq pattern-regex element))
           replacements (repeat match-count replacement)]
-      (->> (if (empty? context)
-             [replacements]
-             (padded-interleave "" context replacements))
+      (->> (padded-interleave "" context replacements)
            (filter not-empty)))
     [element]))
 
