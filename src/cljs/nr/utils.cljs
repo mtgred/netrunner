@@ -94,9 +94,11 @@
    "Casual" "casual"})
 
 (defn map-if [condition f s]
+  "Map a function over elements of a sequence for which condition is true"
   (map #(if (condition %) (f %) %) s))
 
 (defn regex-escape [string]
+  "Escape characters in a string which have special meanings in regexes"
   (let [special-chars ".*+?[](){}^$"
         escaped-chars (map #(str "\\" %) special-chars)
         regex-escape-smap (zipmap special-chars escaped-chars)]
@@ -105,6 +107,7 @@
          (reduce str))))
 
 (def icon-smap
+  "A map of case insensitive icon regexes to icon span fragments"
   (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon)}])
           (regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
     (->> {"[credit]" "credit"
@@ -144,6 +147,7 @@
       (map (fn [[k v]] [(regex-of k) (span-of v)])))))
 
 (defn card-smap-impl []
+  "A map of case sensitive card regexes to card span fragments"
   (letfn [(unpack-card [[title cards]] [title (:code (first cards))])
           (span-of [title code] [:span {:class "fake-link" :id code} title])
           (regex-of [card-title] (re-pattern (regex-escape card-title)))]
@@ -157,12 +161,10 @@
 (def card-smap (memoize card-smap-impl))
 
 (defn ordered-keys-impl [smap]
+  "List the keys of a hashmap by length after stringifying them"
   (sort-by (comp count str first) > smap))
 
 (def ordered-keys (memoize ordered-keys-impl))
-
-(defn into-fragment [text]
-  [:<> text])
 
 (defn padded-interleave [pad & seqs]
   "Interleave sequences of uneven lengths by padding out the shorter ones"
@@ -172,8 +174,9 @@
     (take (* max-len num-seqs) (apply interleave lazy-padded-seqs))))
 
 (defn replace-in-element [element [pattern replacement]]
-  "If element is a string, split that string on pattern boundaries and replace
-  all patterns with the replacement"
+  "Given a string element, split that string on pattern boundaries and replace
+  all patterns with a provided replacement. If element is not a string, return
+  it unmodified."
   (if (string? element)
     (let [context (split element pattern)
           match-count (count (re-seq pattern element))
@@ -188,6 +191,7 @@
   (reduce concat (map #(replace-in-element % substitution) fragment)))
 
 (defn set-react-key [n elem]
+  "Given a reagent-style HTML element, set the :key attribute of the element"
   (let [head (first elem)
         attr (if (map? (second elem)) (second elem) {})
         tail (if (map? (second elem)) (drop 2 elem) (drop 1 elem))]
@@ -213,10 +217,13 @@
       (render-fragment fragment replacement-smap))))
 
 (defn render-icons [input]
+  "Render all icons in a given text or HTML fragment input"
   (render-input input icon-smap))
 
 (defn render-cards [input]
+  "Render all cards in a given text or HTML fragment input"
   (render-input input (card-smap)))
 
 (defn render-icons-and-cards [input]
+  "Render all icons and cards in a given text or HTML fragment input"
   (render-icons (render-cards input)))
