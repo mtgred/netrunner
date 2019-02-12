@@ -304,72 +304,6 @@
   (and (get-in @game-state [:options :spectatorhands])
        (not (not-spectator?))))
 
-(def ci-open "\u2664")
-(def ci-seperator "\u2665")
-(def ci-close "\u2666")
-
-(defn is-card-item [item]
-  (and (> (.indexOf item ci-seperator) -1)
-       (= 0 (.indexOf item ci-open))))
-
-(defn extract-card-info [item]
-  (if (is-card-item item)
-    [(.substring item 1 (.indexOf item ci-seperator))
-     (.substring item (inc (.indexOf item ci-seperator)) (dec (count item)))]))
-
-(defn create-span-impl [item]
-  (if (= "[hr]" item)
-    [:hr]
-    (if (= "[!]" item)
-      [:div.smallwarning "!"]
-      (if-let [class (anr-icons item)]
-        [:span {:class (str "anr-icon " class) :key class}]
-        (if-let [[title code cid] (extract-card-info item)]
-          [:span {:class "fake-link" :id code :key title} title]
-          [:span {:key item} item])))))
-
-(defn get-non-alt-art [[title cards]]
-  {:title title :code (:code (first cards))})
-
-(defn prepare-cards []
-  (->> @all-cards
-       (filter #(not (:replaced_by %)))
-       (group-by :title)
-       (map get-non-alt-art)
-       (sort-by #(count (:title %1)))
-       (reverse)))
-
-(def prepared-cards (memoize prepare-cards))
-
-(def create-span (memoize create-span-impl))
-
-(defn find-card-regex-impl [title]
-  (str "(^|[^" ci-open "\\S])" title "(?![" ci-seperator "\\w]|([^" ci-open "]+" ci-close "))"))
-
-(def find-card-regex (memoize find-card-regex-impl))
-
-(defn card-image-token-impl [title code]
-  (str "$1" ci-open title ci-seperator code ci-close))
-
-(def card-image-token (memoize card-image-token-impl))
-
-(defn card-image-reducer [text card]
-  (.replace text (js/RegExp. (find-card-regex (:title card)) "g") (card-image-token (:title card) (:code card))))
-
-(defn add-image-codes-impl [text]
-  (reduce card-image-reducer text (prepared-cards)))
-
-(def add-image-codes (memoize add-image-codes-impl))
-
-(defn get-message-parts-impl [text]
-  (let [with-image-codes (add-image-codes (if (nil? text) "" text))
-        splitted (.split with-image-codes (js/RegExp. (str "(" ci-open "[^" ci-close "]*" ci-close ")") "g"))
-        oldstyle (for [i splitted]
-                   (seq (.split i (js/RegExp. (str "([1-3]\\[mu\\]|\\[[^\\]]*\\])") "g"))))]
-    (flatten oldstyle)))
-
-(def get-message-parts (memoize get-message-parts-impl))
-
 (defn get-card-code [e]
   (let [code (str (.. e -target -id))]
     (when (pos? (count code))
@@ -1386,7 +1320,7 @@
                          :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
        (if-let [prompt (first (:prompt @me))]
          [:div.panel.blue-shade
-          [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
+          [:h4 (render-icons-and-cards (:msg prompt))]
           (if-let [n (get-in prompt [:choices :number])]
             [:div
              [:div.credit-select
@@ -1461,12 +1395,10 @@
                                (if (string? c)
                                  [:button {:key i
                                            :on-click #(send-command "choice" {:choice c})}
-                                  (for [item (get-message-parts c)]
-                                    (create-span item))]
-                                 (let [[title code] (extract-card-info (add-image-codes (:title c)))]
-                                   [:button {:key (:cid c)
-                                             :class (when (:rotated c) :rotated)
-                                             :on-click #(send-command "choice" {:card c}) :id code} (:title c)]))))
+                                  (render-icons-and-cards c)]
+                                 [:button {:key (:cid c)
+                                           :class (when (:rotated c) :rotated)
+                                           :on-click #(send-command "choice" {:card c}) :id {:code c}} (:title c)])))
                            (:choices prompt))))]
          (if @run
            (let [rs (:server @run)
