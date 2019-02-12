@@ -207,15 +207,18 @@
 
 (def render-fragment (memoize render-fragment-impl))
 
+(defn render-input [input replacement-smap]
+  "Sanitize inputs into fragments before processing them with render-fragment"
+  (if (not (or (string? input) (vector? input)))
+    [:<>]
+    (let [fragment (if (string? input) [:<> input] input)]
+      (render-fragment fragment replacement-smap))))
+
 (defn render-icons [input]
-    (render-fragment
-      (if (string? input) [:<> input] input)
-      icon-smap))
+  (render-input input icon-smap))
 
 (defn render-cards [input]
-    (render-fragment
-      (if (string? input) [:<> input] input)
-      (card-smap)))
+  (render-input input (card-smap)))
 
 (defn render-icons-and-cards [input]
   (render-icons (render-cards input)))
