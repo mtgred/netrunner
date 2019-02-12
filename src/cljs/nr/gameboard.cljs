@@ -7,7 +7,6 @@
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar] :as auth]
-            [nr.cardbrowser :refer [add-symbols] :as cb]
             [nr.utils :refer [influence-dot map-longest toastr-options render-icons render-icons-and-cards]]
             [nr.ws :as ws]
             [reagent.core :as r]))
@@ -630,7 +629,7 @@
      [:div.text
       [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
                                             "" (str ": " (:subtype card)))]
-      [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
+      [:pre (render-icons (:text (first (filter #(= (:title %) (:title card)) @all-cards))))]]
      (when-let [url (image-url card)]
        [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])]))
 
@@ -640,8 +639,8 @@
      (fn [i ab]
        [:div {:key i
               :on-click #(do (send-command "runner-ability" {:card card
-                                                             :ability i}))
-              :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
+                                                             :ability i}))}
+        (render-icons (str (ability-costs ab) (:label ab)))])
      runner-abilities)
    (when (> (count subroutines) 1)
      [:div {:on-click #(send-command "system-msg"
@@ -652,8 +651,8 @@
        [:div {:key i
               :on-click #(send-command "system-msg"
                                        {:msg (str "indicates to fire the \"" (:label sub)
-                                                  "\" subroutine on " title)})
-              :dangerouslySetInnerHTML #js {:__html (add-symbols (str "Let fire: \"" (:label sub) "\""))}}])
+                                                  "\" subroutine on " title)})}
+        (render-icons (str "Let fire: \"" (:label sub) "\""))])
      subroutines)])
 
 (defn corp-abs [card c-state corp-abilities]
@@ -662,7 +661,8 @@
        (fn [i ab]
          [:div {:on-click #(do (send-command "corp-ability" {:card card
                                                              :ability i}))
-                :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
+                }
+          (render-icons (str (ability-costs ab) (:label ab)))])
        corp-abilities)])
 
 (defn server-menu [card c-state remotes type zone]
@@ -697,18 +697,18 @@
            (if (:dynamic ab)
              [:div {:key i
                     :on-click #(do (send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
-                                                                     :card card)))
-                    :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
+                                                                     :card card)))}
+              (render-icons (str (ability-costs ab) (:label ab)))]
              [:div {:key i
                     :on-click #(do (send-command "ability" {:card card
-                                                            :ability (- i dynabi-count)}))
-                    :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
+                                                            :ability (- i dynabi-count)}))}
+              (render-icons (str (ability-costs ab) (:label ab)))]))
          abilities)
        (map-indexed
          (fn [i sub]
            [:div {:key i
-                  :on-click #(do (send-command "subroutine" {:card card :subroutine i}))
-                  :dangerouslySetInnerHTML #js {:__html (add-symbols (str "[Subroutine]" (:label sub)))}}])
+                  :on-click #(do (send-command "subroutine" {:card card :subroutine i}))}
+            (render-icons (str "[Subroutine]" (:label sub)))])
          subroutines)])))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
