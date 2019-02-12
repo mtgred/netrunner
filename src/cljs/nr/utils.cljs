@@ -105,7 +105,8 @@
          (reduce str))))
 
 (def icon-smap
-  (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon)}])]
+  (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon)}])
+          (regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
     (->> {"[credit]" "credit"
           "[credits]" "credit"
           "[c]" "credit"
@@ -140,22 +141,23 @@
           "[sunny]" "sunny"
           "[weyland]" "weyland-consortium"
           "[weyland-consortium]" "weyland-consortium"}
-      (map (fn [[k v]] [(regex-escape k) (span-of v)])))))
+      (map (fn [[k v]] [(regex-of k) (span-of v)])))))
 
 (defn card-smap-impl []
   (letfn [(unpack-card [[title cards]] [title (:code (first cards))])
-          (span-of [title code] [:span {:class "fake-link" :id code} title])]
+          (span-of [title code] [:span {:class "fake-link" :id code} title])
+          (regex-of [card-title] (re-pattern (regex-escape card-title)))]
     (->> @all-cards
          (filter #(not (:replaced_by %)))
          (group-by :title)
          (map unpack-card)
-         (map (fn [[k v]] [(regex-escape k) (span-of k v)]))
+         (map (fn [[k v]] [(regex-of k) (span-of k v)]))
          (into {}))))
 
 (def card-smap (memoize card-smap-impl))
 
 (defn ordered-keys-impl [smap]
-  (sort-by (comp count first) > smap))
+  (sort-by (comp count str first) > smap))
 
 (def ordered-keys (memoize ordered-keys-impl))
 
@@ -173,10 +175,8 @@
   "If element is a string, split that string on pattern boundaries and replace
   all patterns with the replacement"
   (if (string? element)
-    (let [pattern-regex (re-pattern (str "(?i)" pattern))
-          pop-if-nil #(if (nil? (last %)) (pop %) %)
-          context (split element pattern-regex)
-          match-count (count (re-seq pattern-regex element))
+    (let [context (split element pattern)
+          match-count (count (re-seq pattern element))
           replacements (repeat match-count replacement)]
       (->> (padded-interleave "" context replacements)
            (filter not-empty)))
