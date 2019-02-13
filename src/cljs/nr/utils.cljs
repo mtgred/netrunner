@@ -148,13 +148,12 @@
 
 (defn card-smap-impl []
   "A map of case sensitive card regexes to card span fragments"
-  (letfn [(unpack-card [[title cards]] [title (:code (first cards))])
+  (letfn [(unpack-codes [card] [:title card :code card])
           (span-of [title code] [:span {:class "fake-link" :id code} title])
           (regex-of [card-title] (re-pattern (regex-escape card-title)))]
     (->> @all-cards
          (filter #(not (:replaced_by %)))
-         (group-by :title)
-         (map unpack-card)
+         (map unpack-codes)
          (map (fn [[k v]] [(regex-of k) (span-of k v)]))
          (into {}))))
 
