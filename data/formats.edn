@@ -1,10 +1,10 @@
 [{:code "standard",
   :cycles ["lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "ashes" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "reign-and-reverie" "magnum-opus" "system-core-2019"],
-  :mwl "standard-mwl-3-0",
+  :mwl "standard-mwl-3-1",
   :name "Standard"}
  {:code "eternal",
   :cycles ["core" "genesis" "spin" "lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "ashes" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "terminal-directive" "revised-core" "reign-and-reverie" "magnum-opus" "system-core-2019"],
-  :mwl "eternal-mwl-1-0",
+  :mwl "eternal-mwl-1-1",
   :name "Eternal"}
  {:code "core-experience",
   :cycles ["system-core-2019"],
@@ -21,4 +21,8 @@
  {:code "socr8",
   :cycles ["kitara" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "terminal-directive" "revised-core" "reign-and-reverie" "magnum-opus"],
   :mwl "socr8-mwl",
-  :name "Stimhack Online Cache Refresh 8"}]
+  :name "Stimhack Online Cache Refresh 8"}
+ {:code "classic",
+  :cycles ["core" "genesis" "spin" "lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "terminal-directive" "revised-core" "reign-and-reverie" "magnum-opus" "system-core-2019"],
+  :mwl "classic-mwl-1-0",
+  :name "Classic"}]
