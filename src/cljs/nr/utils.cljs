@@ -172,9 +172,12 @@
     (take (* max-len num-seqs) (apply interleave lazy-padded-seqs))))
 
 (defn replace-in-element [element [regex replacement]]
-  "Given a string element, split that string on pattern boundaries and replace
-  all regex matches with a provided replacement. If element is not a string,
-  return it unmodified."
+  "Given a string element, split that string on `regex`, then replace the
+  matches removed by split with `replacement`. The replacement is performed by
+  first counting the number of matches, then interleaving that many
+  `replacement`s into the context. `padded-interleave` allows us to interleave
+  sequences of varying lengths by padding out the shorter of the two sequences,
+  in this case with empty strings."
   (if (string? element)
     (let [context (split element regex)
           match-count (count (re-seq regex element))
@@ -184,8 +187,8 @@
     [element]))
 
 (defn replace-in-fragment [fragment substitution]
-  "Split all string elements in a fragment and replace the splitting element
-  according to substitution"
+  "Map `replace-in-element` over each element of a fragment, and concatenate
+  each returned fragment to flatten the sequence"
   (reduce concat (map #(replace-in-element % substitution) fragment)))
 
 (defn set-react-key [n elem]
@@ -196,8 +199,9 @@
   (into [] (concat [head (merge attr {:key n})] tail))))
 
 (defn render-fragment-impl [fragment patterns]
-  "Given a fragment, shallowly replaces text in the fragment with icon and,
-  optionally, card preview HTML"
+  "Run replacements for each [regex replacement] pair in patterns over a
+  fragment, and index each HTML element in the return fragment with the :key
+  attribute as required by React"
   (let [counter (atom 0)
         set-next-key (fn [elem] (set-react-key (do (swap! counter inc) @counter) elem))]
     (->> (reduce replace-in-fragment fragment patterns)
