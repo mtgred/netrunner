@@ -202,7 +202,6 @@
   (let [counter (atom 0)
         set-next-key (fn [elem] (set-react-key (do (swap! counter inc) @counter) elem))]
     (->> (reduce replace-in-fragment fragment (ordered-keys replacement-smap))
-         (replace replacement-smap)
          (map-if vector? set-next-key)
          (into []))))
 
