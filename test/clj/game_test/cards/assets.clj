@@ -2822,7 +2822,31 @@
         (click-prompt state :corp "Yes")
         (is (= (+ 3 credits) (:credit (get-corp))))
         (is (= (+ 2 cards) (count (:hand (get-corp)))))
-        (is (= :runner (:winner @state)) "Runner wins")))))
+        (is (= :runner (:winner @state)) "Runner wins"))))
+  (testing "when other start-of-turn cards like Marilyn Campaign fire. Issue #3855"
+    (do-game
+      (new-game {:corp {:deck ["Rashida Jaheem" "Marilyn Campaign" (qty "Hedge Fund" 4)]}})
+      (starting-hand state :corp ["Rashida Jaheem" "Marilyn Campaign"])
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (play-from-hand state :corp "Marilyn Campaign" "New remote")
+      (let [rj (get-content state :remote1 0)
+            mc (get-content state :remote2 0)]
+        (core/rez state :corp mc)
+        (core/command-counter state :corp '("2"))
+        (click-card state :corp mc)
+        (take-credits state :corp)
+        (core/rez state :corp rj)
+        (take-credits state :runner)
+        (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+        (core/end-phase-12 state :corp nil)
+        (is (= 2 (-> (prompt-map :corp) :choices count)) "Corp should have two abilities to trigger")
+        (click-prompt state :corp "Marilyn Campaign")
+        (click-prompt state :corp "Yes")
+        (is (find-card "Marilyn Campaign" (:deck (get-corp))))
+        (is (zero? (-> (get-corp) :hand count)) "Corp should have 3 cards in hand")
+        (click-prompt state :corp "Yes")
+        (is (= 4 (-> (get-corp) :hand count)) "Corp should draw 3 cards from Rashida plus 1 from Mandatory Draw")
+        (is (nil? (:corp-phase-12 @state)) "Corp is not in Step 1.2")))))
 
 (deftest reality-threedee
   ;; Reality Threedee - Take 1 bad pub on rez; gain 1c at turn start (2c if Runner tagged)
