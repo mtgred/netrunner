@@ -145,7 +145,8 @@
           "[sunny]" "sunny"
           "[weyland]" "weyland-consortium"
           "[weyland-consortium]" "weyland-consortium"}
-      (map (fn [[k v]] [(regex-of k) (span-of v)])))))
+      (map (fn [[k v]] [(regex-of k) (span-of v)]))
+      (sort-by (comp count str first) >))))
 
 (defn card-patterns-impl []
   "A sequence of card pattern pairs consisting of a regex, used to match a card
@@ -155,15 +156,10 @@
     (->> @all-cards
          (filter #(not (:replaced_by %)))
          (map (juxt :title :code))
-         (map (fn [[k v]] [(regex-of k) (span-of k v)])))))
+         (map (fn [[k v]] [(regex-of k) (span-of k v)]))
+         (sort-by (comp count str first) >))))
 
 (def card-patterns (memoize card-patterns-impl))
-
-(defn ordered-keys-impl [smap]
-  "List the keys of a hashmap by length after stringifying them"
-  (sort-by (comp count str first) > smap))
-
-(def ordered-keys (memoize ordered-keys-impl))
 
 (defn padded-interleave [pad & seqs]
   "Interleave sequences of uneven lengths by padding out the shorter ones"
@@ -201,7 +197,7 @@
   optionally, card preview HTML"
   (let [counter (atom 0)
         set-next-key (fn [elem] (set-react-key (do (swap! counter inc) @counter) elem))]
-    (->> (reduce replace-in-fragment fragment (ordered-keys patterns))
+    (->> (reduce replace-in-fragment fragment patterns)
          (map-if vector? set-next-key)
          (into []))))
 
