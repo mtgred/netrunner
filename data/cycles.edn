@@ -101,4 +101,5 @@
  {:code "ashes",
   :name "Ashes",
   :position 26,
+  :rotated false,
   :size 2}]

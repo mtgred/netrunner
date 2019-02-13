@@ -16,9 +16,15 @@
 (defn decks-create-handler [{{username :username} :user
                              deck                 :body}]
   (if (and username deck)
-    (let [deck (-> deck
+    (let [update-card (fn [c] (update-in c [:card] @all-cards))
+          check-deck (-> deck
+                         (update-in [:cards] #(map update-card %))
+                         (update-in [:identity] #(@all-cards (:title %))))
+          status (decks/calculate-deck-status check-deck)
+          deck (-> deck
                    (update-in [:cards] (fn [cards] (mapv #(select-keys % [:qty :card :id :art]) cards)))
-                   (assoc :username username))]
+                   (assoc :username username
+                          :status status))]
       (response 200 (mc/insert-and-return db "decks" deck)))
     (response 401 {:message "Unauthorized"})))
 

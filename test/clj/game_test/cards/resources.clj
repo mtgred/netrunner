@@ -448,6 +448,31 @@
           (take-credits state :runner)
           (is (empty? (:prompt (get-runner))) "Crowdfunding shouldn't prompt for install")))))
 
+(deftest dadiana-chacon
+  ;; gain 1 cr at start of turn if you have less than 6,
+  ;; take 3 meat and trash if you have 0
+  (testing "Can fire mid-trace"
+    (do-game
+     (new-game {:runner {:deck ["Dadiana Chacon"
+                                "Corroder"
+                                (qty "Sure Gamble" 3)]}
+                :corp {:deck ["SEA Source"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Dadiana Chacon")
+     (play-from-hand state :runner "Corroder") ;to get money
+     (take-credits state :runner)
+     (is (< (:credit (get-runner)) 6)
+         "Chacon can trigger because runner has < 6 creds")
+     (is (changes-credits (get-runner) 1
+                          (take-credits state :corp)))
+     (run-empty-server state :hq)
+     (take-credits state :runner)
+     (play-from-hand state :corp "SEA Source")
+     (click-prompt state :corp "0")
+     (changes-val-macro -3 (count (:hand (get-runner)))
+                        "Spending all their money on trace causes Chacon to resolve"
+                        (click-prompt state :runner (str (:credit (get-runner))))))))
+
 (deftest daily-casts
   ;; Play and tick through all turns of daily casts
   (do-game

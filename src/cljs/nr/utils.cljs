@@ -81,6 +81,7 @@
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
    "socr8" "SOCR8"
+   "classic" "Classic"
    "casual" "Casual"})
 
 (def format->slug
@@ -90,4 +91,5 @@
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
    "SOCR8" "socr8"
+   "Classic" "classic"
    "Casual" "casual"})
