@@ -93,10 +93,6 @@
    "SOCR8" "socr8"
    "Casual" "casual"})
 
-(defn map-if [condition f s]
-  "Map a function over elements of a sequence for which condition is true"
-  (map #(if (condition %) (f %) %) s))
-
 (defn regex-escape [string]
   "Escape characters in a string which have special meanings in regexes"
   (let [special-chars ".*+?[](){}^$"
@@ -198,7 +194,9 @@
   (let [counter (atom 0)
         set-next-key (fn [elem] (set-react-key (do (swap! counter inc) @counter) elem))]
     (->> (reduce replace-in-fragment fragment patterns)
-         (map-if vector? set-next-key)
+         (map #(if (vector? %)
+                 (set-next-key %)
+                 %))
          (into []))))
 
 (def render-fragment (memoize render-fragment-impl))
