@@ -6,7 +6,7 @@
  :factioncost 3,
  :format {:classic :banned,
           :core-experience :rotated,
-          :eternal :legal,
+          :eternal :banned,
           :snapshot :banned,
           :snapshot-plus :banned,
           :socr8 :legal,
