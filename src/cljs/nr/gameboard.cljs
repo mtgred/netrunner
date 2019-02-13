@@ -7,7 +7,7 @@
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar] :as auth]
-            [nr.utils :refer [influence-dot map-longest toastr-options render-icons render-icons-and-cards]]
+            [nr.utils :refer [influence-dot map-longest toastr-options render-icons render-message]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -354,12 +354,12 @@
                    (fn [i msg]
                      (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
                        (if (= (:user msg) "__system__")
-                         [:div.system {:key i} (render-icons-and-cards (:text msg))]
+                         [:div.system {:key i} (render-message (:text msg))]
                          [:div.message {:key i}
                           [avatar (:user msg) {:opts {:size 38}}]
                           [:div.content
                            [:div.username (get-in msg [:user :username])]
-                           [:div (render-icons-and-cards (:text msg))]]])))
+                           [:div (render-message (:text msg))]]])))
                    @log))]
          (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} @typing)))
            [:div [:p.typing (for [i (range 10)] ^{:key i} [:span " " influence-dot " "])]])
@@ -1319,7 +1319,7 @@
                          :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
        (if-let [prompt (first (:prompt @me))]
          [:div.panel.blue-shade
-          [:h4 (render-icons-and-cards (:msg prompt))]
+          [:h4 (render-message (:msg prompt))]
           (if-let [n (get-in prompt [:choices :number])]
             [:div
              [:div.credit-select
@@ -1394,7 +1394,7 @@
                                (if (string? c)
                                  [:button {:key i
                                            :on-click #(send-command "choice" {:choice c})}
-                                  (render-icons-and-cards c)]
+                                  (render-message c)]
                                  [:button {:key (:cid c)
                                            :class (when (:rotated c) :rotated)
                                            :on-click #(send-command "choice" {:card c}) :id {:code c}} (:title c)])))

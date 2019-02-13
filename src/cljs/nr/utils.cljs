@@ -157,6 +157,13 @@
 
 (def card-patterns (memoize card-patterns-impl))
 
+(def special-patterns
+  (letfn [(regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
+    (->> {"[hr]" [:hr]
+          "[!]" [:div.smallwarning "!"]}
+      (map (fn [[k v]] [(regex-of k) v]))
+      (sort-by (comp count str first) >))))
+
 (defn padded-interleave [pad & seqs]
   "Interleave sequences of uneven lengths by padding out the shorter ones"
   (let [lazy-padded-seqs (map #(concat % (repeat pad)) seqs)
@@ -216,6 +223,10 @@
   "Render all cards in a given text or HTML fragment input"
   (render-input input (card-patterns)))
 
-(defn render-icons-and-cards [input]
-  "Render all icons and cards in a given text or HTML fragment input"
-  (render-icons (render-cards input)))
+(defn render-specials [input]
+  "Render all special codes in a given text or HTML fragment input"
+  (render-input input (special-patterns)))
+
+(defn render-message [input]
+  "Render icons, cards and special codes in a message"
+  (render-specials (render-icons (render-cards input))))
