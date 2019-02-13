@@ -4,7 +4,7 @@
  :deck-limit 3,
  :faction "NBN",
  :factioncost 2,
- :format {:classic :banned,
+ :format {:classic :legal,
           :core-experience :rotated,
           :eternal :legal,
           :snapshot :banned,

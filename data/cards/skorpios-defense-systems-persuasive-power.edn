@@ -2,7 +2,7 @@
  :cycle_code "terminal-directive",
  :deck-limit 1,
  :faction "Weyland Consortium",
- :format {:classic :legal,
+ :format {:classic :banned,
           :core-experience :rotated,
           :eternal :legal,
           :snapshot :restricted,

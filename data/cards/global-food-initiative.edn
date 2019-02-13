@@ -5,7 +5,7 @@
  :deck-limit 3,
  :faction "Neutral",
  :factioncost 1,
- :format {:classic :restricted,
+ :format {:classic :banned,
           :core-experience :rotated,
           :eternal :legal,
           :snapshot :restricted,

@@ -4,7 +4,7 @@
  :cycle_code "red-sand",
  :deck-limit 3,
  :faction "Jinteki",
- :format {:classic :restricted,
+ :format {:classic :legal,
           :core-experience :rotated,
           :eternal :legal,
           :snapshot :restricted,

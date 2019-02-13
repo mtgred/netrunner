@@ -4,7 +4,7 @@
  :cycle_code "core",
  :deck-limit 3,
  :faction "NBN",
- :format {:classic :legal,
+ :format {:classic :banned,
           :core-experience :rotated,
           :eternal :legal,
           :snapshot :rotated,

@@ -4,7 +4,7 @@
  :deck-limit 3,
  :faction "Weyland Consortium",
  :factioncost 2,
- :format {:classic :restricted,
+ :format {:classic :legal,
           :core-experience :rotated,
           :eternal :legal,
           :snapshot :legal,

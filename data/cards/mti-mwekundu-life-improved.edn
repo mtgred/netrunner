@@ -2,7 +2,7 @@
  :cycle_code "kitara",
  :deck-limit 1,
  :faction "Jinteki",
- :format {:classic :restricted,
+ :format {:classic :banned,
           :core-experience :rotated,
           :eternal :legal,
           :snapshot :legal,

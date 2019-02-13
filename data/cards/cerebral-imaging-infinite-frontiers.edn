@@ -2,7 +2,7 @@
  :cycle_code "creation-and-control",
  :deck-limit 1,
  :faction "Haas-Bioroid",
- :format {:classic :banned,
+ :format {:classic :legal,
           :core-experience :rotated,
           :eternal :legal,
           :snapshot :banned,

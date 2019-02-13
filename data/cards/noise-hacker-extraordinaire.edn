@@ -3,7 +3,7 @@
  :cycle_code "core",
  :deck-limit 1,
  :faction "Anarch",
- :format {:classic :legal,
+ :format {:classic :banned,
           :core-experience :rotated,
           :eternal :legal,
           :snapshot :rotated,

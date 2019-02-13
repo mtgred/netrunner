@@ -4,7 +4,7 @@
  :deck-limit 3,
  :faction "Criminal",
  :factioncost 4,
- :format {:classic :legal,
+ :format {:classic :banned,
           :core-experience :rotated,
           :eternal :legal,
           :snapshot :rotated,
