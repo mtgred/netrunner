@@ -106,8 +106,9 @@
          (replace regex-escape-smap)
          (reduce str))))
 
-(def icon-smap
-  "A map of case insensitive icon regexes to icon span fragments"
+(def icon-patterns
+  "A sequence of icon pattern pairs consisting of an regex, used to match icon
+  codes, and the span fragment that should replace it"
   (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon)}])
           (regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
     (->> {"[credit]" "credit"
@@ -146,18 +147,17 @@
           "[weyland-consortium]" "weyland-consortium"}
       (map (fn [[k v]] [(regex-of k) (span-of v)])))))
 
-(defn card-smap-impl []
-  "A map of case sensitive card regexes to card span fragments"
-  (letfn [(unpack-codes [card] [:title card :code card])
-          (span-of [title code] [:span {:class "fake-link" :id code} title])
+(defn card-patterns-impl []
+  "A sequence of card pattern pairs consisting of a regex, used to match a card
+  name in text, and the span fragment that should replace it"
+  (letfn [(span-of [title code] [:span {:class "fake-link" :id code} title])
           (regex-of [card-title] (re-pattern (regex-escape card-title)))]
     (->> @all-cards
          (filter #(not (:replaced_by %)))
-         (map unpack-codes)
-         (map (fn [[k v]] [(regex-of k) (span-of k v)]))
-         (into {}))))
+         (map (juxt :title :code))
+         (map (fn [[k v]] [(regex-of k) (span-of k v)])))))
 
-(def card-smap (memoize card-smap-impl))
+(def card-patterns (memoize card-patterns-impl))
 
 (defn ordered-keys-impl [smap]
   "List the keys of a hashmap by length after stringifying them"
@@ -172,13 +172,13 @@
         max-len (reduce max (map count seqs))]
     (take (* max-len num-seqs) (apply interleave lazy-padded-seqs))))
 
-(defn replace-in-element [element [pattern replacement]]
+(defn replace-in-element [element [regex replacement]]
   "Given a string element, split that string on pattern boundaries and replace
-  all patterns with a provided replacement. If element is not a string, return
-  it unmodified."
+  all regex matches with a provided replacement. If element is not a string,
+  return it unmodified."
   (if (string? element)
-    (let [context (split element pattern)
-          match-count (count (re-seq pattern element))
+    (let [context (split element regex)
+          match-count (count (re-seq regex element))
           replacements (repeat match-count replacement)]
       (->> (padded-interleave "" context replacements)
            (filter not-empty)))
@@ -196,31 +196,31 @@
         tail (if (map? (second elem)) (drop 2 elem) (drop 1 elem))]
   (into [] (concat [head (merge attr {:key n})] tail))))
 
-(defn render-fragment-impl [fragment replacement-smap]
+(defn render-fragment-impl [fragment patterns]
   "Given a fragment, shallowly replaces text in the fragment with icon and,
   optionally, card preview HTML"
   (let [counter (atom 0)
         set-next-key (fn [elem] (set-react-key (do (swap! counter inc) @counter) elem))]
-    (->> (reduce replace-in-fragment fragment (ordered-keys replacement-smap))
+    (->> (reduce replace-in-fragment fragment (ordered-keys patterns))
          (map-if vector? set-next-key)
          (into []))))
 
 (def render-fragment (memoize render-fragment-impl))
 
-(defn render-input [input replacement-smap]
+(defn render-input [input patterns]
   "Sanitize inputs into fragments before processing them with render-fragment"
   (if (not (or (string? input) (vector? input)))
     [:<>]
     (let [fragment (if (string? input) [:<> input] input)]
-      (render-fragment fragment replacement-smap))))
+      (render-fragment fragment patterns))))
 
 (defn render-icons [input]
   "Render all icons in a given text or HTML fragment input"
-  (render-input input icon-smap))
+  (render-input input icon-patterns))
 
 (defn render-cards [input]
   "Render all cards in a given text or HTML fragment input"
-  (render-input input (card-smap)))
+  (render-input input (card-patterns)))
 
 (defn render-icons-and-cards [input]
   "Render all icons and cards in a given text or HTML fragment input"
