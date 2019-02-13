@@ -1,5 +1,5 @@
 (ns nr.utils
-  (:require [clojure.string :refer [join, lower-case, split] :as s]
+  (:require [clojure.string :refer [join lower-case split] :as s]
             [jinteki.cards :refer [all-cards]]))
 
 ;; Dot definitions

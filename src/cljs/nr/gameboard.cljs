@@ -594,8 +594,7 @@
      (map-indexed
        (fn [i ab]
          [:div {:on-click #(do (send-command "corp-ability" {:card card
-                                                             :ability i}))
-                }
+                                                             :ability i}))}
           (render-icons (str (ability-costs ab) (:label ab)))])
        corp-abilities)])
 
