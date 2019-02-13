@@ -57,7 +57,9 @@
                                                         (swap! state update-in [:run :run-effect]
                                                                #(assoc % :replace-access
                                                                        {:mandatory true
-                                                                        :effect (effect (access-card ash))
+                                                                        :async true
+                                                                        :effect (req (wait-for (access-card state :runner ash)
+                                                                                               (effect-completed state side eid)))
                                                                         :card ash})))))}}}}}
 
    "Awakening Center"

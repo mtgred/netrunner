@@ -550,11 +550,10 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Dadiana Chacon"
-   (let [trashme {:effect (effect (system-msg "trashes Dadiana Chacon and suffers 3 meat damage")
-                                  (register-events {:play {:req (req (= "Runner" (:side target)))
-                                                           :effect (effect (unregister-events card)
-                                                                           (damage eid :meat 3 {:unboostable true :card card})
-                                                                           (trash card {:cause :ability-cost}))}} card))}
+   (let [trashme {:effect (effect (unregister-events card)
+                                  (damage eid :meat 3 {:unboostable true :card card})
+                                  (trash card {:cause :ability-cost}))
+                  :msg (msg "trashes Dadiana Chacon and suffers 3 meat damage")}
          ability {:once :per-turn
                   :msg "gain 1 [Credits]"
                   :req (req (< (get-in @state [:runner :credit]) 6))
@@ -1060,11 +1059,12 @@
 
    "John Masanori"
    {:events {:successful-run {:req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
-                              :msg "draw 1 card" :once-key :john-masanori-draw
+                              :interactive (req true)
+                              :msg "draw 1 card"
                               :effect (effect (draw))}
              :unsuccessful-run {:req (req (= 1 (count (get-in @state [:runner :register :unsuccessful-run]))))
                                 :async true
-                                :msg "take 1 tag" :once-key :john-masanori-tag
+                                :msg "take 1 tag"
                                 :effect (effect (gain-tags :runner eid 1))}}}
 
    "Joshua B."
