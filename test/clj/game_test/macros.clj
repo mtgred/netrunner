@@ -22,6 +22,7 @@
          ~'prompt-titles (fn [side#] (map #(:title %) (:choices (~'prompt-map side#))))
          ~'prompt-fmt (fn [side#]
                         (let [prompt# (~'prompt-map side#)
+                              choices# (:choices prompt#)
                               choices# (if (keyword? choices#)
                                          [choices#]
                                          (seq choices#))
