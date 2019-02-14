@@ -10,8 +10,7 @@
          ~'get-corp (fn [] (:corp @~'state))
          ~'get-runner (fn [] (:runner @~'state))
          ~'get-run (fn [] (:run @~'state))
-         ~'get-hand-size (fn [~'side] (+ (get-in @~'state [~'side :hand-size :base])
-                                         (get-in @~'state [~'side :hand-size :mod])))
+         ~'hand-size (fn [side#] (core/hand-size ~'state side#))
          ~'refresh (fn [~'card]
                      ;; ;; uncommenting the below two assertions causes a looot of tests to fail
                      ;; (is ~'card "card passed to refresh should not be nil")
@@ -19,7 +18,7 @@
                        ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
          ~'prompt-map (fn [side#] (-> @~'state side# :prompt first))
-         ~'prompt-titles (fn [side#] (map #(:title %) (:choices (~'prompt-map side#))))
+         ~'prompt-titles (fn [side#] (map :title (:choices (~'prompt-map side#))))
          ~'prompt-fmt (fn [side#]
                         (let [prompt# (~'prompt-map side#)
                               choices# (:choices prompt#)
