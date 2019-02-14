@@ -563,7 +563,9 @@
      [:div.text
       [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
                                             "" (str ": " (:subtype card)))]
-      [:pre (render-icons (:text (first (filter #(= (:title %) (:title card)) @all-cards))))]]
+      [:pre (letfn [(card-by-title [title]
+                      (some #(when (= (:title %) title) %) @all-cards))]
+             (render-icons (:text (card-by-title (:title card)))))]]
      (when-let [url (image-url card)]
        [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])]))
 
