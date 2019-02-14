@@ -896,7 +896,7 @@
 
    "Liquidation"
    {:async true
-    :req (req (some #(rezzed? %) (all-installed state :corp)))
+    :req (req (some #(and (rezzed? %) (not (is-type? % "Agenda"))) (all-installed state :corp)))
     :effect (req (let [n (count (filter #(not (is-type? % "Agenda")) (all-active-installed state :corp)))]
                    (continue-ability state side
                      {:prompt "Select any number of rezzed cards to trash"
