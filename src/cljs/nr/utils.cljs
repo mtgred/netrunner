@@ -229,7 +229,7 @@
 
 (defn render-specials [input]
   "Render all special codes in a given text or HTML fragment input"
-  (render-input input (special-patterns)))
+  (render-input input special-patterns))
 
 (defn render-message [input]
   "Render icons, cards and special codes in a message"
