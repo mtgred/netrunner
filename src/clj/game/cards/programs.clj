@@ -440,12 +440,12 @@
                                                       (join ", " (map :title (:hand corp))))}} card))}]}
 
    "False Echo"
-   {:abilities [{:req (req (and run
-                                (< (:position run) (count run-ices))
+   {:abilities [{:req (req (and current-run
+                                (< (:position current-run) (count run-ices))
                                 (not (rezzed? current-ice))))
                  :msg "make the Corp rez the passed ICE or add it to HQ"
-                 :effect (req (let [s (:server run)
-                                    ice (nth (get-in @state (vec (concat [:corp :servers] s [:ices]))) (:position run))
+                 :effect (req (let [s (:server current-run)
+                                    ice (nth (get-in @state (vec (concat [:corp :servers] s [:ices]))) (:position current-run))
                                     icename (:title ice)
                                     icecost (rez-cost state side ice)]
                                 (continue-ability

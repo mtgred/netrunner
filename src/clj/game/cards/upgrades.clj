@@ -208,11 +208,11 @@
 
    "Caprice Nisei"
    {:events {:pass-ice {:req (req (and this-server
-                                       (= (:position run) 1))) ; trigger when last ice passed
+                                       (= (:position current-run) 1))) ; trigger when last ice passed
                         :msg "start a Psi game"
                         :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}
              :run {:req (req (and this-server
-                                  (zero? (:position run)))) ; trigger on unprotected server
+                                  (zero? (:position current-run)))) ; trigger on unprotected server
                    :msg "start a Psi game"
                    :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}}
     :abilities [{:msg "start a Psi game"
@@ -227,11 +227,11 @@
    "Code Replicator"
    {:abilities [{:label "[Trash]: Force the runner to approach the passed piece of ice again"
                  :req (req (and this-server
-                                (> (count (get-run-ices state)) (:position run))
-                                (:rezzed (get-in (:ices (card->server state card)) [(:position run)]))))
-                 :effect (req (let [icename (:title (get-in (:ices (card->server state card)) [(:position run)]))]
+                                (> (count (get-run-ices state)) (:position current-run))
+                                (:rezzed (get-in (:ices (card->server state card)) [(:position current-run)]))))
+                 :effect (req (let [icename (:title (get-in (:ices (card->server state card)) [(:position current-run)]))]
                                 (trash state :corp (get-card state card))
-                                (swap! state update-in [:run] #(assoc % :position (inc (:position run))))
+                                (swap! state update-in [:run] #(assoc % :position (inc (:position current-run))))
                                  (system-msg state :corp (str "trashes Code Replicator to make the runner approach "
                                                               icename " again"))))}]}
 
@@ -321,7 +321,8 @@
    "Defense Construct"
    {:advanceable :always
     :abilities [{:label "[Trash]: Add 1 facedown card from Archives to HQ for each advancement token"
-                 :req (req (and run (= (:server run) [:archives])
+                 :req (req (and current-run
+                                (= (:server current-run) [:archives])
                                 (pos? (get-counters card :advancement))))
                  :effect (effect (resolve-ability
                                    {:show-discard true
@@ -660,11 +661,11 @@
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to take 1 tag")))
                              (do (end-run state side)
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run")))))}]
-     {:events {:pass-ice {:req (req (and this-server (= (:position run) 1))) ; trigger when last ice passed
+     {:events {:pass-ice {:req (req (and this-server (= (:position current-run) 1))) ; trigger when last ice passed
                           :async true
                           :effect (req (continue-ability state :runner abi card nil))}
                :run {:req (req (and this-server
-                                    (zero? (:position run)))) ; trigger on unprotected server
+                                    (zero? (:position current-run)))) ; trigger on unprotected server
                      :async true
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
@@ -718,10 +719,10 @@
    {:abilities [{:req (req (let [num-ice (count run-ices)]
                              (and this-server
                                   (>= num-ice 2)
-                                  (< (:position run 0) num-ice))))
+                                  (< (:position current-run 0) num-ice))))
                  :label "Swap the ICE just passed with another piece of ICE protecting this server"
-                 :effect (req (let [passed-ice (nth (get-in @state (vec (concat [:corp :servers] (:server run) [:ices])))
-                                                                                (:position run))
+                 :effect (req (let [passed-ice (nth (get-in @state (vec (concat [:corp :servers] (:server current-run) [:ices])))
+                                                                                (:position current-run))
                                     ice-zone (:zone passed-ice)]
                                  (resolve-ability state :corp
                                    {:prompt (msg "Select a piece of ICE to swap with " (:title passed-ice))
@@ -916,7 +917,7 @@
    {:init {:root "HQ"}
     :install-req (req (filter #{"HQ"} targets))
     :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
-                 :req (req (and run (= (first (:server run)) :hq)))}]}
+                 :req (req (and current-run (= (first (:server current-run)) :hq)))}]}
 
    "Port Anson Grid"
    {:msg "prevent the Runner from jacking out unless they trash an installed program"
@@ -1121,9 +1122,9 @@
    "The Twins"
    {:abilities [{:label "Reveal and trash a copy of the ICE just passed from HQ"
                  :req (req (and this-server
-                                (> (count (get-run-ices state)) (:position run))
-                                (:rezzed (get-in (:ices (card->server state card)) [(:position run)]))))
-                 :effect (req (let [icename (:title (get-in (:ices (card->server state card)) [(:position run)]))]
+                                (> (count (get-run-ices state)) (:position current-run))
+                                (:rezzed (get-in (:ices (card->server state card)) [(:position current-run)]))))
+                 :effect (req (let [icename (:title (get-in (:ices (card->server state card)) [(:position current-run)]))]
                                 (resolve-ability
                                   state side
                                   {:prompt "Select a copy of the ICE just passed"
@@ -1132,7 +1133,7 @@
                                                         (= (:title %) icename))}
                                    :effect (req (trash state side (assoc target :seen true))
                                                 (swap! state update-in [:run]
-                                                       #(assoc % :position (inc (:position run)))))
+                                                       #(assoc % :position (inc (:position current-run)))))
                                    :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")}
                                  card nil)))}]}
 

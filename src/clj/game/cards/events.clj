@@ -323,7 +323,7 @@
                                      :choices {:req #(and (not (:rezzed %))
                                                           (= (last (:zone %)) :ices))}
                                      :effect (req (rez state :corp target nil))}
-                       :no-ability {:effect (effect (game.core/run eid serv nil card))
+                       :no-ability {:effect (effect (run eid serv nil card))
                                     :msg (msg "make a run on " serv " during which no ICE can be rezzed")}}}
                     card nil)))}
 
@@ -498,7 +498,7 @@
 
    "Dirty Laundry"
    (run-event
-    {:end-run {:req (req (:successful run))
+    {:end-run {:req (req (:successful current-run))
                :msg "gain 5 [Credits]"
                :effect (effect (gain-credits :runner 5))}})
 
@@ -693,7 +693,7 @@
                                       (show-wait-prompt state :corp "Runner to remove advancements")
                                       (continue-ability state side
                                         {:choices {:req #(and (contains? % :advance-counter)
-                                                              (= (first (:server run)) (second (:zone %))))}
+                                                              (= (first (:server current-run)) (second (:zone %))))}
                                          :msg (msg "remove " (quantify c "advancement token")
                                                    " from " (card-str state target))
                                          :effect (req (let [to-remove (min c (get-counters target :advancement))]
@@ -917,7 +917,7 @@
     {:choices (req (let [unrezzed-ice #(seq (filter (complement rezzed?) (:ices (second %))))
                          bad-zones (keys (filter (complement unrezzed-ice) (get-in @state [:corp :servers])))]
                      (zones->sorted-names (remove (set bad-zones) (get-runnable-zones state)))))}
-    {:end-run {:req (req (:successful run))
+    {:end-run {:req (req (:successful current-run))
                :msg "gain 12 [Credits]"
                :effect (effect (gain-credits :runner 12))}})
 
@@ -1294,8 +1294,8 @@
    "Marathon"
    (run-event
      {:choices (req (filter #(can-run-server? state %) remotes))}
-     {:end-run {:effect (req (prevent-run-on-server state card (:server run))
-                             (when (:successful run)
+     {:end-run {:effect (req (prevent-run-on-server state card (:server current-run))
+                             (when (:successful current-run)
                                (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
                                (gain state :runner :click 1)
                                (move state :runner (assoc card :zone [:discard]) :hand)))}})
@@ -1728,13 +1728,13 @@
                                                           (in-discard? %))}
                                      :effect (req (doseq [c targets]
                                                     (move state side c :hand))
-                                                  (do-access state side eid (:server run) {:hq-root-only true}))}
+                                                  (do-access state side eid (:server current-run) {:hq-root-only true}))}
                                     card nil)
                                   (continue-ability
                                     state side
                                     {:async true
                                      :msg (msg "take no cards from their Heap to their Grip")
-                                     :effect (req (do-access state side eid (:server run) {:hq-root-only true}))}
+                                     :effect (req (do-access state side eid (:server current-run) {:hq-root-only true}))}
                                     card nil))))}}
                    card))}
 
@@ -1815,7 +1815,7 @@
                                                              {:effect (effect (register-events (:events (card-def card))
                                                                                                (assoc card :zone '(:discard))))}
                                                              card nil)
-                                            (do-access state side eid (:server run))))}} card))
+                                            (do-access state side eid (:server current-run))))}} card))
     :events {:pre-access {:silent (req true)
                           :effect (req (swap! state assoc-in [:corp :deck]
                                               (rseq (into [] (get-in @state [:corp :deck])))))}

@@ -601,7 +601,7 @@
     {:runner-phase-12 {:effect (req (apply prevent-run-on-server
                                            state card (map first (get-remotes state))))}
      :run {:once :per-turn
-           :req (req (is-central? (:server run)))
+           :req (req (is-central? (:server current-run)))
            :effect (req (apply enable-run-on-server
                                state card (map first (get-remotes state))))}}
     :req (req (empty? (let [successes (turn-events state side :successful-run)]
@@ -710,7 +710,7 @@
     {:successful-run
      {:async true
       :interactive (req true)
-      :req (req (and (is-central? (:server run))
+      :req (req (and (is-central? (:server current-run))
                      (first-event? state side :successful-run is-central?)))
       :effect (effect (continue-ability
                         {:optional
@@ -737,7 +737,7 @@
      {:async true
       :interactive (req true)
       :msg "draw 2 cards and take 1 tag"
-      :req (req (and (is-central? (:server run))
+      :req (req (and (is-central? (:server current-run))
                      (first-event? state side :successful-run is-central?)))
       :effect (req (wait-for (gain-tags state :runner 1)
                              (draw state :runner eid 2 nil)))}}}
@@ -765,14 +765,14 @@
    {:abilities [{:once :per-turn
                  :label "Install a piece of ice from HQ at the innermost position"
                  :req (req (and (:run @state)
-                                (zero? (:position run))
-                                (not (contains? run :corp-phase-43))
-                                (not (contains? run :successful))))
+                                (zero? (:position current-run))
+                                (not (contains? current-run :corp-phase-43))
+                                (not (contains? current-run :successful))))
                  :prompt "Choose ICE to install from HQ"
                  :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
                  :choices {:req #(and (ice? %)
                                       (in-hand? %))}
-                 :effect (req (corp-install state side target (:server run) {:ignore-all-cost true
+                 :effect (req (corp-install state side target (:server current-run) {:ignore-all-cost true
                                                                              :front true})
                               (swap! state assoc-in [:run :position] 1))}]}
 
@@ -916,7 +916,7 @@
                                  (run :archives nil (get-card state card)))}]
     :events {:pre-successful-run {:interactive (req true)
                                   :req (req (and (:omar-run-activated card)
-                                                 (= :archives (-> run :server first))))
+                                                 (= :archives (-> current-run :server first))))
                                   :prompt "Treat as a successful run on which server?"
                                   :choices ["HQ" "R&D"]
                                   :effect (req (let [target-server (if (= target "HQ") :hq :rd)]

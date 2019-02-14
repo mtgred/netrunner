@@ -18,19 +18,19 @@
   "Function for constructing a Shard card"
   ([target-server message effect-fn] (shard-constructor target-server message nil effect-fn))
   ([target-server message ability-options effect-fn]
-   (letfn [(can-install-shard? [state run] (and run
-                                                (= (:server run) [target-server])
-                                                (zero? (:position run))
+   (letfn [(can-install-shard? [state current-run] (and current-run
+                                                (= (:server current-run) [target-server])
+                                                (zero? (:position current-run))
                                                 (not (:access @state))))]
      {:implementation "Click Shard to install when last ICE is passed, but before hitting Successful Run button"
       :abilities [(merge {:effect (effect (trash card {:cause :ability-cost}) (effect-fn eid card target))
                           :msg message}
                          ability-options)]
-      :install-cost-bonus (req (when (can-install-shard? state run)
+      :install-cost-bonus (req (when (can-install-shard? state current-run)
                                  [:credit (- INFINITY)
                                   :click -1]))
-      :effect (req (when (can-install-shard? state run)
-                     (wait-for (register-successful-run state side (:server run))
+      :effect (req (when (can-install-shard? state current-run)
+                     (wait-for (register-successful-run state side (:server current-run))
                                (do (clear-wait-prompt state :corp)
                                    (swap! state update-in [:runner :prompt] rest)
                                    (handle-end-run state side)))))})))
@@ -209,7 +209,7 @@
    {:data {:counter {:credit 8}}
     :events {:successful-run
              {:silent (req true)
-              :req (req (is-remote? (:server run)))
+              :req (req (is-remote? (:server current-run)))
               :effect (req (let [bj (get-card state card)]
                              (when-not (:replace-access (get-in @state [:run :run-effect]))
                                (swap! state assoc-in [:run :run-effect :replace-access]
@@ -1098,7 +1098,7 @@
  {:events {:run-ends {:req (req (and (first-event? state :runner :run-ends is-remote?)
                                      (not (get-in @state [:run :did-steal]))
                                      (get-in @state [:run :did-access])
-                                     (is-remote? (:server run))))
+                                     (is-remote? (:server current-run))))
                       :effect (effect (add-counter card :power 1))
                       :msg "add a power counter to itself"}
            :counter-added {:req (req (>= (get-counters (get-card state card) :power) 4))

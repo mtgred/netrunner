@@ -51,7 +51,7 @@
      {:async true
       :interactive (req true)
       :req (req (and (= target :archives)
-                     (not= (:max-access run) 0)
+                     (not= (:max-access current-run) 0)
                      (not-empty (:discard corp))))
       :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                    (continue-ability state side
@@ -685,7 +685,7 @@
                                                  (gain-tags state :runner eid 1)
                                                  (swap! state update-in [side :prompt] rest)
                                                  (when-let [run (:run @state)]
-                                                   (when (and (:ended run)
+                                                   (when (and (:ended current-run)
                                                               (empty? (get-in @state [:runner :prompt])))
                                                      (handle-end-run state :runner))))}
                                    card nil))}]}
@@ -912,14 +912,14 @@
                :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                          (effect-completed state side eid))}}}]
      {:in-play [:link 1 :memory 1]
-      :events {:pass-ice {:req (req (and (= (:server run) [:hq])
-                                         (= (:position run) 1) ; trigger when last ICE passed
+      :events {:pass-ice {:req (req (and (= (:server current-run) [:hq])
+                                         (= (:position current-run) 1) ; trigger when last ICE passed
                                          (pos? (count (:deck runner)))))
                           :async true
                           :once :per-turn
                           :effect (req (continue-ability state :runner abi card nil))}
-               :run {:req (req (and (= (:server run) [:hq])
-                                    (zero? (:position run)) ; trigger on unprotected HQ
+               :run {:req (req (and (= (:server current-run) [:hq])
+                                    (zero? (:position current-run)) ; trigger on unprotected HQ
                                     (pos? (count (:deck runner)))))
                      :async true
                      :once :per-turn
