@@ -764,7 +764,7 @@
    (let [gain-creds-and-clear {:req (req (= (:from-server target)
                                             (second (:zone card))))
                                :silent (req true)
-                               :effect (req (let [cnt (total-cards-accessed run)
+                               :effect (req (let [cnt (total-cards-accessed current-run)
                                                   total (* 2 cnt)]
                                               (when cnt
                                                 (gain-credits state :corp total)

@@ -340,7 +340,7 @@
    {:data {:counter {:power 4}}
     :abilities [{:counter-cost [:power 1]
                  :cost [:click 1]
-                 :req (req (not run))
+                 :req (req (not current-run))
                  :prompt "Choose a server"
                  :choices (req runnable-servers)
                  :msg "make a run and avoid all tags for the remainder of the run"

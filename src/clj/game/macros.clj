@@ -2,29 +2,16 @@
   (:require [clojure.tools.analyzer.jvm :as a.j]
             [clojure.tools.analyzer.ast :as ast]))
 
-(defn run-server
-  [state]
-  (when (:run @state)
-    (get-in @state (concat [:corp :servers] (:server (:run @state))))))
-
-(defn run-ices
-  [state]
-  (:ices (run-server state)))
-
-(defn run-position
-  [state]
-  (get-in @state [:run :position]))
-
 (def forms
   (->>
     '[runner (:runner @state)
       corp (:corp @state)
       current-run (:run @state)
-      run-server (game.macros/run-server state)
-      run-ices (game.macros/run-ices state)
-      run-position (game.macros/run-position state)
-      current-ice (let [position (game.macros/run-position state)
-                        ices (game.macros/run-ices state)]
+      run-server (get-in @state (concat [:corp :servers] (:server (:run @state))))
+      run-ices (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices]))
+      run-position (get-in @state [:run :position])
+      current-ice (let [position (get-in @state [:run :position])
+                        ices (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices]))]
                     (when (and position
                                (pos? position)
                                (<= position (count ices)))
@@ -63,7 +50,7 @@
             (get forms x))))
 
 ;; Taken from https://github.com/Bronsa/tools.analyzer.jvm.deps/commit/8c7c3936e6f73e85f9e7cc122a2142c43d459c12
-;; TODO: Switch from inlined function to require'd package when new version drops.
+;; TODO: Switch from this inlined function to requiring the right package when the new version drops.
 (defn find-undefined-locals
   "Takes a form and returns a set of all the free locals in it"
   [expr]
@@ -75,13 +62,6 @@
        (remove (fn [x] (-> x str (.contains "."))))
        (into #{})))
 
-(defmacro req [& expr]
-  (let [needed-locals (find-undefined-locals expr)
-        nls (emit-only needed-locals)]
-    `(fn ~['state 'side 'eid 'card 'targets]
-       (let [~@nls]
-         ~@expr))))
-
 (defn effect-state-handler
   [expr]
   (for [body expr]
@@ -89,11 +69,28 @@
       (concat [(first body) 'state (second body)] (drop 2 body))
       (concat [(first body) 'state 'side] (rest body)))))
 
+(defmacro req [& expr]
+  (let [needed-locals (find-undefined-locals expr)
+        nls (emit-only needed-locals)]
+    `(fn ~['state 'side 'eid 'card 'targets]
+       (let [~@nls]
+         ~@expr))))
+
 (defmacro effect [& expr]
-  `(req ~@(effect-state-handler expr)))
+  (let [actions (effect-state-handler expr)
+        needed-locals (find-undefined-locals actions)
+        nls (emit-only needed-locals)]
+    `(fn ~['state 'side 'eid 'card 'targets]
+       (let [~@nls]
+         ~@actions))))
 
 (defmacro msg [& expr]
-  `(str (req ~@expr)))
+  (let [needed-locals (find-undefined-locals expr)
+        nls (emit-only needed-locals)]
+    `(fn ~['state 'side 'eid 'card 'targets]
+       (let [~@nls]
+         (str ~@expr)))))
+
 
 (defmacro wait-for
   ([action & expr]
