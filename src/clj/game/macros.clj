@@ -42,16 +42,9 @@
     (map (juxt first identity))
     (into {})))
 
-(defn emit-only
-  [needed-locals]
-  (mapcat identity
-          (for [x needed-locals
-                :when (contains? forms x)]
-            (get forms x))))
-
 ;; Taken from https://github.com/Bronsa/tools.analyzer.jvm.deps/commit/8c7c3936e6f73e85f9e7cc122a2142c43d459c12
 ;; TODO: Switch from this inlined function to requiring the right package when the new version drops.
-(defn find-undefined-locals
+(defn- find-undefined-locals
   "Takes a form and returns a set of all the free locals in it"
   [expr]
   (->> (binding [a.j/run-passes identity]
@@ -62,7 +55,14 @@
        (remove (fn [x] (-> x str (.contains "."))))
        (into #{})))
 
-(defn effect-state-handler
+(defn- emit-only
+  [needed-locals]
+  (mapcat identity
+          (for [x needed-locals
+                :when (contains? forms x)]
+            (get forms x))))
+
+(defn- effect-state-handler
   [expr]
   (for [body expr]
     (if (#{:runner :corp} (second body))
