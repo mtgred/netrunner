@@ -537,7 +537,7 @@
 
    "Cell Portal"
    {:subroutines [{:msg "make the Runner approach the outermost ICE"
-                   :effect (req (let [srv (first (:server current-run))
+                   :effect (req (let [srv (first (:server run))
                                       n (count (get-in @state [:corp :servers srv :ices]))]
                                   (swap! state assoc-in [:run :position] n)
                                   (derez state side card)))}]}
@@ -1562,17 +1562,17 @@
                    :choices {:req #(and (ice? %)
                                         (in-hand? %))}
                    :prompt "Choose an ICE to install from HQ"
-                   :effect (req (corp-install state side target (zone->name (first (:server current-run))) {:ignore-all-cost true}))}]}
+                   :effect (req (corp-install state side target (zone->name (first (:server run))) {:ignore-all-cost true}))}]}
 
    "Formicary"
    {:optional {:prompt "Move Formicary?"
                :req (req (and (:run @state)
-                   (zero? (:position current-run))
-                   (not (contains? current-run :corp-phase-43))
-                   (not (contains? current-run :successful))))
+                   (zero? (:position run))
+                   (not (contains? run :corp-phase-43))
+                   (not (contains? run :successful))))
                :yes-ability {:msg "rez and move Formicary. The Runner is now approaching Formicary."
                              :effect (req (move state side card
-                                                [:servers (first (:server current-run)) :ices]
+                                                [:servers (first (:server run)) :ices]
                                                 {:front true})
                                           (swap! state assoc-in [:run :position] 1))}
                :no-ability {:msg "rez Formicary without moving it"}}
@@ -1887,7 +1887,7 @@
 
    "Quicksand"
    {:implementation "Encounter effect is manual"
-    :abilities [{:req (req (and this-server (= (dec (:position current-run)) (ice-index state card))))
+    :abilities [{:req (req (and this-server (= (dec (:position run)) (ice-index state card))))
                  :label "Add 1 power counter"
                  :effect (effect (add-counter card :power 1)
                                  (update-all-ice))}]
@@ -2199,7 +2199,7 @@
                :corp-install recalc-event}})
 
    "Susanoo-no-Mikoto"
-   {:subroutines [{:req (req (not= (:server current-run) [:discard]))
+   {:subroutines [{:req (req (not= (:server run) [:discard]))
                    :msg "make the Runner continue the run on Archives"
                    :effect (req (swap! state update-in [:run]
                                        #(assoc % :position (count (get-in corp [:servers :archives :ices]))

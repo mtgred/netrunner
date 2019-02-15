@@ -229,7 +229,7 @@
 (defn- central-breaker
   "'Cannot be used on a remote server' breakers"
   [ice-type break pump]
-  (let [central-req (req (or (not (:central-breaker card)) (#{:hq :rd :archives} (first (:server current-run)))))]
+  (let [central-req (req (or (not (:central-breaker card)) (#{:hq :rd :archives} (first (:server run)))))]
     (auto-icebreaker [ice-type]
                      {:abilities [(assoc break :req central-req)
                                   (assoc pump :req central-req)]
@@ -314,7 +314,7 @@
    "Alpha"
    (auto-icebreaker ["All"]
                     {:abilities [{:cost [:credit 1]
-                                  :req (req (= (:position current-run) (count run-ices)))
+                                  :req (req (= (:position run) (count run-ices)))
                                   :msg "break 1 subroutine on the outermost ICE protecting this server"}
                                  (strength-pump 1 1)]})
 
@@ -870,7 +870,7 @@
 
    "Omega"
    (auto-icebreaker ["All"]
-                    {:abilities [{:cost [:credit 1] :req (req (= 1 (:position current-run)))
+                    {:abilities [{:cost [:credit 1] :req (req (= 1 (:position run)))
                                   :msg "break 1 subroutine on the innermost ICE protecting this server"}
                                  (strength-pump 1 1)]})
 

@@ -6,7 +6,7 @@
   (->>
     '[runner (:runner @state)
       corp (:corp @state)
-      current-run (:run @state)
+      run (:run @state)
       run-server (get-in @state (concat [:corp :servers] (:server (:run @state))))
       run-ices (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices]))
       run-position (get-in @state [:run :position])

@@ -85,7 +85,7 @@
                       {:prompt (msg "Make a run on " serv "?") :player :runner
                        :yes-ability {:msg (msg "let the Runner make a run on " serv)
                                      :effect (effect (clear-wait-prompt :corp)
-                                                     (game.core/run eid serv nil card))}
+                                                     (make-run eid serv nil card))}
                        :no-ability {:async true
                                     :effect (req (clear-wait-prompt state :corp)
                                                  (as-agenda state :corp eid (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))

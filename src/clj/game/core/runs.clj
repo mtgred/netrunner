@@ -7,11 +7,11 @@
          prevent-jack-out card-flag? can-run?)
 
 ;;; Steps in the run sequence
-(defn run
+(defn make-run
   "Starts a run on the given server, with the given card as the cause."
-  ([state side server] (run state side (make-eid state) server nil nil))
-  ([state side eid server] (run state side eid server nil nil))
-  ([state side server run-effect card] (run state side (make-eid state) server run-effect card))
+  ([state side server] (make-run state side (make-eid state) server nil nil))
+  ([state side eid server] (make-run state side eid server nil nil))
+  ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card))
   ([state side eid server run-effect card]
    (when (can-run? state :runner)
      (let [s [(if (keyword? server) server (last (server->zone state server)))]
