@@ -77,19 +77,10 @@
          ~@expr))))
 
 (defmacro effect [& expr]
-  (let [actions (effect-state-handler expr)
-        needed-locals (find-undefined-locals actions)
-        nls (emit-only needed-locals)]
-    `(fn ~['state 'side 'eid 'card 'targets]
-       (let [~@nls]
-         ~@actions))))
+  `(req ~@(effect-state-handler expr)))
 
 (defmacro msg [& expr]
-  (let [needed-locals (find-undefined-locals expr)
-        nls (emit-only needed-locals)]
-    `(fn ~['state 'side 'eid 'card 'targets]
-       (let [~@nls]
-         (str ~@expr)))))
+  `(req (str ~@expr)))
 
 
 (defmacro wait-for
