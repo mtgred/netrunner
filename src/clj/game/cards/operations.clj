@@ -1187,16 +1187,19 @@
 
    "Psychographics"
    {:req (req tagged)
-    :choices :credit
-    :prompt "How many credits?"
     :async true
-    :effect (req (let [c (min target (count-tags state))]
-                   (continue-ability state side
-                                     {:msg (msg "place " c " advancement tokens on "
-                                                (card-str state target))
-                                      :choices {:req can-be-advanced?}
-                                      :effect (effect (add-prop target :advance-counter c {:placed true}))}
-                                     card nil)))}
+    :prompt "Pay how many credits?"
+    :choices {:number (req (count-tags state))}
+    :effect (req (let [c target]
+                   (when (can-pay? state side (:title card) :credit c)
+                     (pay state :corp card :credit c)
+                     (continue-ability
+                       state side
+                       {:msg (msg "place " c " advancement token" (when-not (= c 1) "s") " on "
+                                  (card-str state target))
+                        :choices {:req can-be-advanced?}
+                        :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                       card nil))))}
 
     "Psychokinesis"
     (letfn [(choose-card [state cards]
