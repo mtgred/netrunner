@@ -676,6 +676,50 @@
    {:effect (req (gain state side :click (count (:scored runner)))
                  (move state side (first (:play-area corp)) :rfg))}
 
+   "Game Over"
+   (letfn [(num-installed [state type]
+             (count (filter #(and (is-type? % type)
+                                  (not (has? % :subtype "Icebreaker")))
+                            (all-active-installed state :runner))))
+           (string-builder [type]
+             (str (when (= type "Program") "non-Icebreaker ") type (when-not (= type "Hardware") "s")))]
+   {:req (req (last-turn? state :runner :stole-agenda))
+    :async true
+    :prompt "Choose a card type"
+    :choices ["Hardware" "Program" "Resource"]
+    :effect (req (let [type target
+                       n (num-installed state type)]
+                   (system-msg state :corp (str "chooses to trash all " (string-builder type)))
+                   (show-wait-prompt state :corp "Runner to prevent trashes")
+                   (wait-for
+                     (resolve-ability
+                       state :runner
+                       {:async true
+                        :prompt (msg "Prevent any " (string-builder type)
+                                     " from being trashed? Pay 3 [Credits] per card.")
+                        :choices {:max (req (min n (quot (:credit runner) 3)))
+                                  :req #(and (installed? %)
+                                             (is-type? % type)
+                                             (not (has? % :subtype "Icebreaker")))}
+                        :effect (req (dotimes [_ (count targets)]
+                                       (pay state :runner card :credit 3))
+                                     (system-msg
+                                       state :runner
+                                       (str "pays " (* 3 (count targets)) " [Credits] to prevent the trashes of "
+                                            (join ", " (map :title (sort-by :title targets)))))
+                                     (trash-cards state side (clojure.set/difference
+                                                                 (set (filter #(and (is-type? % type)
+                                                                                    (not (has? % :subtype "Icebreaker")))
+                                                                              (all-active-installed state :runner)))
+                                                                 (set targets)))
+                                     (system-msg state :corp (str "trashes all other " (string-builder type)))
+                                     (effect-completed state side eid))}
+                       card targets)
+                     (clear-wait-prompt state :corp)
+                     (gain-bad-publicity state :corp 1)
+                     (system-msg state :corp "take 1 bad publicity")
+                     (effect-completed state side eid))))})
+
    "Genotyping"
    {:async true
     :effect (effect (mill :corp 2)
