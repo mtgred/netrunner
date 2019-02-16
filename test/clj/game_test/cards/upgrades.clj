@@ -885,6 +885,26 @@
     (run-empty-server state :hq)
     (is (= 1 (count (:discard (get-runner)))) "1 net damage done for successful run on HQ")))
 
+(deftest increased-drop-rates
+  ;; Increased Drop Rates
+  (do-game
+    (new-game {:corp {:deck [(qty "Increased Drop Rates" 2)]}})
+    (core/gain state :corp :bad-publicity 1)
+    (starting-hand state :corp ["Increased Drop Rates"])
+    (play-from-hand state :corp "Increased Drop Rates" "New remote")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (run-successful state)
+    (is (= 0 (count-tags state)))
+    (click-prompt state :runner "Yes")
+    (is (= 1 (count-tags state)) "Runner takes 1 tag to prevent Corp from removing 1 BP")
+    (click-prompt state :runner "Pay 2 [Credits] to trash") ; trash
+    (run-on state "Archives")
+    (run-successful state)
+    (is (= 1 (:bad-publicity (get-corp))))
+    (click-prompt state :runner "No")
+    (is (= 0 (:bad-publicity (get-corp))) "Runner declines to take tag, Corp removes 1 BP")))
+
 (deftest intake
   ;; Intake - Trace4, add an installed program or virtual resource to the grip
   (do-game
