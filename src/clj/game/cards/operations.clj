@@ -639,25 +639,29 @@
    {:req (req (last-turn? state :runner :successful-run))
     :async true
     :prompt "Choose a card type"
-    :choices ["Resource" "Hardware" "Program"]
-    :effect (req (let [type target]
+    :choices ["Event" "Hardware" "Program" "Resource"]
+    :effect (req (let [type target
+                       numtargets (count (filter #(= type (:type %)) (:hand runner)))]
                    (system-msg
                      state :corp
-                     (str "uses Focus Group to reveal the Runner's Grip ( "
+                     (str "uses Focus Group to choose " target " and reveal the Runner's Grip ( "
                           (join ", " (map :title (sort-by :title (:hand runner)))) " )"))
-                   (continue-ability
-                     state :corp
-                     {:async true
-                      :prompt "How many credits?"
-                      :choices {:number (req (count (filter #(= type (:type %)) (:hand runner))))}
-                      :effect (req (let [c target]
-                                     (continue-ability
-                                       state :corp
-                                       {:msg (msg "place " c " advancement token" (when-not (= c 1) "s") " on "
-                                                  (card-str state target))
-                                        :choices {:req installed?}
-                                        :effect (effect (add-prop target :advance-counter c {:placed true}))}
-                                       card nil)))} card nil)))}
+                   (when (pos? numtargets)
+                     (continue-ability
+                       state :corp
+                       {:async true
+                        :prompt "Pay how many credits?"
+                        :choices {:number (req numtargets)}
+                        :effect (req (let [c target]
+                                       (when (can-pay? state side (:title card) :credit c)
+                                         (pay state :corp card :credit c)
+                                         (continue-ability
+                                           state :corp
+                                           {:msg (msg "place " c " advancement token" (when-not (= c 1) "s") " on "
+                                                      (card-str state target))
+                                            :choices {:req installed?}
+                                            :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                           card nil))))} card nil))))}
 
    "Foxfire"
    {:trace {:base 7
