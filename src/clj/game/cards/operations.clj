@@ -218,7 +218,7 @@
      {:async true
       :req (req (not-empty (all-active-installed state :runner)))
       :prompt "Choose a card type"
-      :choices ["Hardware" "Resource" "Program"]
+      :choices ["Hardware" "Program" "Resource"]
       :effect (req (let [t target
                          n (num-installed state t)]
                      (show-wait-prompt state :corp "Runner to choose cards to trash")
