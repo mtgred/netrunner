@@ -635,6 +635,30 @@
                        {:effect (effect (lose-credits :runner (* rcount 2)))
                         :msg (msg "make the Runner lose " (* rcount 2) " [Credits]")} card nil))))}
 
+   "Focus Group"
+   {:req (req (last-turn? state :runner :successful-run))
+    :async true
+    :prompt "Choose a card type"
+    :choices ["Resource" "Hardware" "Program"]
+    :effect (req (let [type target]
+                   (system-msg
+                     state :corp
+                     (str "uses Focus Group to reveal the Runner's Grip ( "
+                          (join ", " (map :title (sort-by :title (:hand runner)))) " )"))
+                   (continue-ability
+                     state :corp
+                     {:async true
+                      :prompt "How many credits?"
+                      :choices {:number (req (count (filter #(= type (:type %)) (:hand runner))))}
+                      :effect (req (let [c target]
+                                     (continue-ability
+                                       state :corp
+                                       {:msg (msg "place " c " advancement token" (when-not (= c 1) "s") " on "
+                                                  (card-str state target))
+                                        :choices {:req installed?}
+                                        :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                       card nil)))} card nil)))}
+
    "Foxfire"
    {:trace {:base 7
             :successful {:prompt "Select 1 card to trash"
