@@ -265,7 +265,9 @@
           :effect (req (system-msg state side
                                    (str "trashes " (quantify (count targets) "card")
                                         " from " (if (= :runner side) "grip" "HQ")
-                                        " at end of turn"))
+                                        " at end of turn"
+                                        (if (= :runner side) 
+                                          (str ": " (join ", " (map :title targets))) ) ))
                        (doseq [t targets]
                          (trash state side t))
                        (effect-completed state side eid))}
