@@ -676,6 +676,44 @@
    {:effect (req (gain state side :click (count (:scored runner)))
                  (move state side (first (:play-area corp)) :rfg))}
 
+   "Game Over"
+   {:req (req (last-turn? state :runner :stole-agenda))
+    :async true
+    :prompt "Choose a card type"
+    :choices ["Hardware" "Program" "Resource"]
+    :effect (req (let [type target
+                       trashtargets (filter #(and (is-type? % type)
+                                                  (not (has? % :subtype "Icebreaker")))
+                                            (all-active-installed state :runner))
+                       numtargets (count trashtargets)
+                       typemsg (str (when (= type "Program") "non-Icebreaker ") type
+                                     (when-not (= type "Hardware") "s"))]
+                   (system-msg state :corp (str "chooses to trash all " typemsg))
+                   (show-wait-prompt state :corp "Runner to prevent trashes")
+                   (wait-for
+                     (resolve-ability
+                       state :runner
+                       {:async true
+                        :req (req (<= 3 (:credit runner)))
+                        :prompt (msg "Prevent any " typemsg " from being trashed? Pay 3 [Credits] per card.")
+                        :choices {:max (req (min numtargets (quot (:credit runner) 3)))
+                                  :req #(and (installed? %)
+                                             (is-type? % type)
+                                             (not (has? % :subtype "Icebreaker")))}
+                        :effect (req (pay state :runner card :credit (* 3 (count targets)))
+                                     (system-msg
+                                       state :runner
+                                       (str "pays " (* 3 (count targets)) " [Credits] to prevent the trashing of "
+                                            (join ", " (map :title (sort-by :title targets)))))
+                                     (system-msg state :corp (str "trashes all other " typemsg))
+                                     (effect-completed state side (make-result eid targets)))}
+                       card nil)
+                     (trash-cards state side (clojure.set/difference (set trashtargets) (set async-result)))
+                     (clear-wait-prompt state :corp)
+                     (gain-bad-publicity state :corp 1)
+                     (system-msg state :corp "take 1 bad publicity")
+                     (effect-completed state side eid))))}
+
    "Genotyping"
    {:async true
     :effect (effect (mill :corp 2)
