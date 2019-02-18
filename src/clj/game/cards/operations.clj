@@ -1195,8 +1195,7 @@
                      (pay state :corp card :credit c)
                      (continue-ability
                        state side
-                       {:msg (msg "place " c " advancement token" (when-not (= c 1) "s") " on "
-                                  (card-str state target))
+                       {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
                         :choices {:req can-be-advanced?}
                         :effect (effect (add-prop target :advance-counter c {:placed true}))}
                        card nil))))}
