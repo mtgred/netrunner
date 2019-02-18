@@ -1660,6 +1660,29 @@
    "Recon"
    (run-event)
 
+   "Rejig"
+   (let [valid-target? (fn [card] (and (card-is? card :side :runner)
+                                       (or (card-is? card :type :program)
+                                           (card-is? card :type :hardware))))
+         pick-up {:async true
+                  :prompt "select a program or piece of hardware to put in hand"
+                  :choices {:req #(and (valid-target? %)
+                                       (installed? %))}
+                  :effect (req (move state side target :hand)
+                               (effect-completed state side (make-result eid (:cost target))))}
+         put-down (fn [st si bonus]
+                    {:async true
+                     :prompt "Select a program or piece of hardware to install"
+                     :choices {:req #(and (valid-target? %)
+                                          (can-pay? st si nil (modified-install-cost st si % [:credit (- bonus)])))}
+                     :effect (effect (install-cost-bonus [:credit (- bonus)])
+                                     (runner-install eid target nil))})]
+     {:req (req (some valid-target? (all-installed state :runner)))
+      :effect (req (wait-for (resolve-ability state side pick-up card nil)
+                             (continue-ability state side
+                                               (put-down state side (quot async-result 2))
+                                               card nil)))})
+
    "Reshape"
    {:prompt "Select two non-rezzed ICE to swap positions"
     :choices {:req #(and (installed? %) (not (rezzed? %)) (ice? %)) :max 2}

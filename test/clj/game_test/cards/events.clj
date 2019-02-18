@@ -2361,6 +2361,23 @@
     (is (empty? (:discard (get-runner))) "Runner has empty trash")
     (is (= 1 (count (:rfg (get-runner)))) "Runner has 1 card in RFG")))
 
+(deftest rejig
+  ;; Rejig
+  (do-game
+    (new-game {:options {:start-as :runner}
+               :runner {:credits 10
+                        :hand ["Rejig" "Corroder" "Adept"]}})
+    (play-from-hand state :runner "Adept")
+    (play-from-hand state :runner "Rejig")
+    (click-card state :runner "Corroder")
+    (is (find-card "Corroder" (:hand (get-runner))) "Corroder shouldn't be installed")
+    (click-card state :runner "Adept")
+    (is (= 2 (count (:hand (get-runner)))))
+    (let [credits (:credit (get-runner))
+          cost (:cost (find-card "Adept" (:hand (get-runner))))]
+      (click-card state :runner "Adept")
+      (is (= (- credits (- cost (quot cost 2))) (:credit (get-runner))) "Runner should only pay half for Adept"))))
+
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ICE
   (do-game
