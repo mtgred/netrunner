@@ -706,7 +706,8 @@
                                        (str "pays " (* 3 (count targets)) " [Credits] to prevent the trashing of "
                                             (join ", " (map :title (sort-by :title targets)))))
                                      (system-msg state :corp (str "trashes all other " typemsg))
-                                     (effect-completed state side (make-result eid targets)))} card nil)
+                                     (effect-completed state side (make-result eid targets)))}
+                       card nil)
                      (trash-cards state side (clojure.set/difference (set trashtargets) (set async-result)))
                      (clear-wait-prompt state :corp)
                      (gain-bad-publicity state :corp 1)
