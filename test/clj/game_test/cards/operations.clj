@@ -936,8 +936,8 @@
       (click-card state :runner (find-card "Misdirection" (:program (:rig (get-runner))))) ;; Misdirection
       (is (= 2 (:credit (get-runner))) "Prevent the trash of Misdirection by paying 3 credits")
       (is (= 2 (-> (get-runner) :discard count)) "2 programs trashed")
-      (is (not (nil? (find-card "Nyashia" (:discard (get-runner))))) "Nyashia trashed")
-      (is (not (nil? (find-card "Takobi" (:discard (get-runner))))) "Takobi trashed")
+      (is (some? (find-card "Nyashia" (:discard (get-runner)))) "Nyashia trashed")
+      (is (some? (find-card "Takobi" (:discard (get-runner)))) "Takobi trashed")
       (is (= "Misdirection" (-> (get-runner) :rig :program first :title)) "Misdirection not trashed")
       (is (= "Gordian Blade" (-> (get-runner) :rig :program second :title)) "Gordian Blade not trashed")
       (is (= "Astrolabe" (-> (get-runner) :rig :hardware first :title)) "Astrolabe not trashed")
@@ -959,8 +959,8 @@
       (is (empty? (:prompt (get-runner))) "No prevention prompt for the Runner")
       (is (= 2 (:credit (get-runner))))
       (is (= 2 (-> (get-runner) :discard count)) "2 programs trashed")
-      (is (not (nil? (find-card "Nyashia" (:discard (get-runner))))) "Nyashia trashed")
-      (is (not (nil? (find-card "Takobi" (:discard (get-runner))))) "Takobi trashed")
+      (is (some? (find-card "Nyashia" (:discard (get-runner)))) "Nyashia trashed")
+      (is (some? (find-card "Takobi" (:discard (get-runner)))) "Takobi trashed")
       (is (= 1 (:bad-publicity (get-corp)))))))
 
 (deftest hangeki
