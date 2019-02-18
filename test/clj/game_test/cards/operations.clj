@@ -902,6 +902,67 @@
                 (is (= 1 (-> (get-corp) :rfg count)) "Game Changer should be in rfg zone now"))))]
     (doall (map game-changer-test (range 5)))))
 
+(deftest game-over
+  ;; Game Over
+  (testing "Can't play unless Runner stole an agenda last turn"
+    (do-game
+      (new-game {:corp {:deck ["Project Beale" "Game Over"]}})
+      (play-from-hand state :corp "Game Over")
+      (is (not (= "Loot Box" (-> (get-corp) :discard first :title))) "Runner didn't steal an agenda last turn")))
+  (testing "Trash all non-Icebreaker programs, hardware and resources not trashed"
+    (do-game
+      (new-game {:corp {:deck ["Project Beale" "Game Over"]}
+                 :runner {:deck ["Nyashia" "Takobi" "Misdirection" "Gordian Blade" "Astrolabe" "Daily Casts"]}})
+      (starting-hand state :runner ["Nyashia" "Takobi" "Misdirection" "Gordian Blade" "Astrolabe" "Daily Casts"])
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Steal")
+      (core/gain state :runner :click 3)
+      (core/gain state :runner :credit 12)
+      (play-from-hand state :runner "Nyashia")
+      (play-from-hand state :runner "Takobi")
+      (play-from-hand state :runner "Misdirection")
+      (play-from-hand state :runner "Gordian Blade")
+      (play-from-hand state :runner "Astrolabe")
+      (play-from-hand state :runner "Daily Casts")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Game Over")
+      (click-prompt state :corp "Program")
+      (click-card state :runner (find-card "Gordian Blade" (:program (:rig (get-runner))))) ;; should do nothing
+      (click-card state :runner (find-card "Astrolabe" (:hardware (:rig (get-runner))))) ;; should do nothing
+      (click-card state :runner (find-card "Daily Casts" (:resource (:rig (get-runner))))) ;; should do nothing
+      (is (= 5 (:credit (get-runner))))
+      (click-card state :runner (find-card "Misdirection" (:program (:rig (get-runner))))) ;; Misdirection
+      (is (= 2 (:credit (get-runner))) "Prevent the trash of Misdirection by paying 3 credits")
+      (is (= 2 (-> (get-runner) :discard count)) "2 programs trashed")
+      (is (= "Takobi" (-> (get-runner) :discard first :title)) "Takobi trashed")
+      (is (= "Nyashia" (-> (get-runner) :discard second :title)) "Nyashia trashed")
+      (is (= "Misdirection" (-> (get-runner) :rig :program first :title)) "Misdirection not trashed")
+      (is (= "Gordian Blade" (-> (get-runner) :rig :program second :title)) "Gordian Blade not trashed")
+      (is (= "Astrolabe" (-> (get-runner) :rig :hardware first :title)) "Astrolabe not trashed")
+      (is (= "Daily Casts" (-> (get-runner) :rig :resource first :title)) "Daily Casts not trashed")
+      (is (= 1 (:bad-publicity (get-corp))))))
+  (testing "Can't afford to prevent any trashes"
+    (do-game
+      (new-game {:corp {:deck ["Project Beale" "Game Over"]}
+                 :runner {:deck ["Nyashia" "Takobi"]}})
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Steal")
+      (play-from-hand state :runner "Nyashia")
+      (play-from-hand state :runner "Takobi")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Game Over")
+      (click-prompt state :corp "Program")
+      (is (empty? (:prompt (get-runner))) "No prevention prompt for the Runner")
+      (is (= 2 (:credit (get-runner))))
+      (is (= 2 (-> (get-runner) :discard count)) "2 programs trashed")
+      (is (= "Takobi" (-> (get-runner) :discard first :title)) "Takobi trashed")
+      (is (= "Nyashia" (-> (get-runner) :discard second :title)) "Nyashia trashed")
+      (is (= 1 (:bad-publicity (get-corp)))))))
+
 (deftest hangeki
   ;; Hangeki
   (doseq [choice ["Yes" "No"]]
