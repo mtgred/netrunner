@@ -657,11 +657,14 @@
                                          (pay state :corp card :credit c)
                                          (continue-ability
                                            state :corp
-                                           {:msg (msg "place " c " advancement token" (when-not (= c 1) "s") " on "
+                                           {:msg (msg "place " (quantify c " advancement token") " on "
                                                       (card-str state target))
                                             :choices {:req installed?}
-                                            :effect (effect (add-prop target :advance-counter c {:placed true}))}
-                                           card nil))))} card nil))))}
+                                            :effect (effect (add-prop target :advance-counter c {:placed true})
+                                                            (effect-completed eid))}
+                                           card nil))))}
+                       card nil))
+                   (effect-completed state side eid)))}
 
    "Foxfire"
    {:trace {:base 7
