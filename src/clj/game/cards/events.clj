@@ -129,7 +129,7 @@
                  (system-msg state side
                              (str "looks at the top 2 cards of the stack"
                                   (when-not (string? target)
-                                    " and adds one to the bototm of the stack")))
+                                    " and adds one to the bottom of the stack")))
                  (system-msg state side "uses Blueberry Diesel to draw 2 cards")
                  (draw state :runner eid 2 nil))}
 
