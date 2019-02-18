@@ -120,6 +120,19 @@
                           :effect (effect (access-bonus target 2))}
              :runner-turn-ends {:effect (effect (unregister-events card))}}}
 
+   "Blueberry Diesel"
+   {:async true
+    :prompt "Move a card to the bottom of the stack?"
+    :choices (req (cancellable (take 2 (:deck runner))))
+    :effect (req (when-not (string? target)
+                   (move state side target :deck))
+                 (system-msg state side
+                             (str "looks at the top 2 cards of the stack"
+                                  (when-not (string? target)
+                                    " and adds one to the bottom of the stack")))
+                 (system-msg state side "uses Blueberry Diesel to draw 2 cards")
+                 (draw state :runner eid 2 nil))}
+
    "Bribery"
    {:prompt "How many credits?"
     :choices :credit
