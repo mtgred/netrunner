@@ -1645,6 +1645,31 @@
     (click-prompt state :runner "0")
     (is (empty? (:hand (get-runner))) "Runner took 3 meat damage")))
 
+(deftest red-level-clearance
+  ;; Red Level Clearance
+  (do-game
+    (new-game {:corp {:hand [(qty "Red Level Clearance" 2) "Hedge Fund" "Merger" "Plan B"]
+                      :deck [(qty "Beanstalk Royalties" 5)]}})
+    (play-from-hand state :corp "Red Level Clearance")
+    (let [credits (:credit (get-corp))]
+      (click-prompt state :corp "Gain 2 [Credits]")
+      (is (= (+ credits 2) (:credit (get-corp)))))
+    (let [hand (count (:hand (get-corp)))]
+      (click-prompt state :corp "Draw 2 cards")
+      (is (= (+ hand 2) (count (:hand (get-corp))))))
+    (play-from-hand state :corp "Red Level Clearance")
+    (let [clicks (:click (get-corp))]
+      (click-prompt state :corp "Gain [Click]")
+      (is (= (inc clicks) (:click (get-corp)))))
+    (click-prompt state :corp "Install a non-agenda from hand")
+    (click-card state :corp "Merger")
+    (is (find-card "Merger" (:hand (get-corp))))
+    (click-card state :corp "Hedge Fund")
+    (is (find-card "Merger" (:hand (get-corp))))
+    (click-card state :corp "Plan B")
+    (click-prompt state :corp "New remote")
+    (is (not (find-card "Plan B" (:hand (get-corp)))))))
+
 (deftest red-planet-couriers
   ;; Red Planet Couriers - Move all advancements on cards to 1 advanceable card
   (do-game
