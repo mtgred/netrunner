@@ -686,28 +686,26 @@
                                                   (not (has? % :subtype "Icebreaker")))
                                             (all-active-installed state :runner))
                        numtargets (count trashtargets)
-                       type-msg (str (when (= type "Program") "non-Icebreaker ") type
+                       typemsg (str (when (= type "Program") "non-Icebreaker ") type
                                      (when-not (= type "Hardware") "s"))]
-                   (system-msg state :corp (str "chooses to trash all " type-msg))
+                   (system-msg state :corp (str "chooses to trash all " typemsg))
                    (show-wait-prompt state :corp "Runner to prevent trashes")
                    (wait-for
                      (resolve-ability
                        state :runner
                        {:async true
                         :req (req (<= 3 (:credit runner)))
-                        :prompt (msg "Prevent any " type-msg " from being trashed? Pay 3 [Credits] per card.")
+                        :prompt (msg "Prevent any " typemsg " from being trashed? Pay 3 [Credits] per card.")
                         :choices {:max (req (min numtargets (quot (:credit runner) 3)))
                                   :req #(and (installed? %)
                                              (is-type? % type)
                                              (not (has? % :subtype "Icebreaker")))}
-                        :effect (req (dotimes [_ (count targets)]
-                                       (pay state :runner card :credit 3))
+                        :effect (req (pay state :runner card :credit (* 3 (count targets)))
                                      (system-msg
                                        state :runner
-                                       (str "pays " (* 3 (count targets)) " [Credits] to prevent the trash"
-                                            (when (< 1 (count targets)) "es") " of "
+                                       (str "pays " (* 3 (count targets)) " [Credits] to prevent the trashing of "
                                             (join ", " (map :title (sort-by :title targets)))))
-                                     (system-msg state :corp (str "trashes all other " type-msg))
+                                     (system-msg state :corp (str "trashes all other " typemsg))
                                      (effect-completed state side (make-result eid targets)))} card nil)
                      (trash-cards state side (clojure.set/difference (set trashtargets) (set async-result)))
                      (clear-wait-prompt state :corp)
