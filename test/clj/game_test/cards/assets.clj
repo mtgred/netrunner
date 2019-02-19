@@ -721,6 +721,29 @@
       (core/click-credit state :runner nil)
       (is (zero? (- (:credit (get-corp)) credits)) "Shouldn't gain another credit from CPC Generator"))))
 
+(deftest csr-campaign
+  ;; CSR Campaign
+  (do-game
+    (new-game {:corp {:deck [(qty "CSR Campaign" 10)]}})
+    (play-from-hand state :corp "CSR Campaign" "New remote")
+    (play-from-hand state :corp "CSR Campaign" "New remote")
+    (take-credits state :corp)
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/rez state :corp (get-content state :remote2 0))
+    (take-credits state :runner)
+    (let [cards (count (:hand (get-corp)))
+          csr1 (get-content state :remote1 0)
+          csr2 (get-content state :remote2 0)]
+      (is (:corp-phase-12 @state) "Corp is in Phase 1.2")
+      (card-ability state :corp csr1 0)
+      (click-prompt state :corp "Yes")                ;; Corp fires first CSR
+      (is (= (+ 1 cards) (count (:hand (get-corp)))) "Should draw a card from CSR Campaign")
+      (card-ability state :corp csr2 0)
+      (click-prompt state :corp "No")                 ;; Corp declines to fire second CSR
+      (is (= (+ 1 cards) (count (:hand (get-corp)))) "Should not draw another card" )
+      (core/end-phase-12 state :corp nil)
+      (is (= (+ 2 cards) (count (:hand (get-corp)))) "Should draw from mandatory draw"))))
+
 (deftest cybernetics-court
   ;; Cybernetics Court
   (do-game
