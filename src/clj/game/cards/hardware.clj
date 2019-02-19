@@ -334,7 +334,7 @@
                              :makes-run true
                              :effect (effect (update! (dissoc card :dopp-active))
                                              (clear-wait-prompt :corp)
-                                             (run eid target))}}}}}
+                                             (make-run eid target))}}}}}
 
    "Dorm Computer"
    {:data {:counter {:power 4}}
@@ -346,7 +346,7 @@
                  :msg "make a run and avoid all tags for the remainder of the run"
                  :makes-run true
                  :effect (effect (update! (assoc card :dorm-active true))
-                                 (run target))}]
+                                 (make-run target))}]
     :events {:pre-tag {:req (req (:dorm-active card))
                        :effect (effect (tag-prevent :runner Integer/MAX_VALUE))
                        :msg "avoid all tags during the run"}
@@ -1128,7 +1128,7 @@
                                                    (trash-cards state side (make-eid state) targets
                                                                 {:unpreventable true
                                                                  :suppress-event true})
-                                                   (game.core/run state side srv nil card)
+                                                   (make-run state side srv nil card)
                                                    (register-events state side
                                                      {:pre-access
                                                       {:silent (req true)

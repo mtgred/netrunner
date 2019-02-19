@@ -396,7 +396,7 @@
       (card-subroutine state :corp fen 0)
       (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
       (is (= 1 (count (:discard (get-runner)))))
-      (is (= 4 (core/hand-size state :runner))))))
+      (is (= 4 (hand-size :runner))))))
 
 (deftest flare
   ;; Flare - Trash 1 program, do 2 unpreventable meat damage, and end the run

@@ -230,11 +230,11 @@
       (play-from-hand state :runner "Feedback Filter")
       (take-credits state :runner)
       (let [filter (get-hardware state 0)]
-        (is (= 1 (count (:prompt (get-runner)))) "Runner has a single damage prevention prompt")
+        (is (= 2 (count (:prompt (get-runner)))) "Runner has a single damage prevention prompt")
         (card-ability state :runner filter 0)
         (click-prompt state :runner "Done")
         (is (zero? (count (:discard (get-runner)))) "Runner prevented damage")
-        (is (= 1 (count (:prompt (get-runner)))) "Runner has a next damage prevention prompt")
+        (is (= 2 (count (:prompt (get-runner)))) "Runner has a next damage prevention prompt")
         (click-prompt state :runner "Done")
         (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))))
 
@@ -409,13 +409,13 @@
     (is (zero? (:agenda-point (get-runner))) "No points for Runner if trashed by Corp")
     (let [hiro (get-content state :remote1 0)]
       (core/rez state :corp hiro)
-      (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
+      (is (= 3 (hand-size :runner)) "Runner max hand size reduced by 2")
       (take-credits state :corp)
       (take-credits state :runner 3)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 6 [Credits] to trash")
       (is (= 2 (:credit (get-runner))) "Runner paid 6 credits to trash")
-      (is (= 5 (core/hand-size state :runner)) "Runner max hand size restored to 5")
+      (is (= 5 (hand-size :runner)) "Runner max hand size restored to 5")
       (is (= 1 (count (get-scored state :runner)))
           "Chairman Hiro added to Runner score area")
       (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points"))))
@@ -704,7 +704,7 @@
     (new-game {:corp {:deck ["Cybernetics Court"]}})
     (play-from-hand state :corp "Cybernetics Court" "New remote")
     (core/rez state :corp (get-content state :remote1 0))
-    (is (= 9 (get-hand-size :corp)) "Corp should have hand size of 9")))
+    (is (= 9 (hand-size :corp)) "Corp should have hand size of 9")))
 
 (deftest daily-business-show
   ;; Daily Business Show
@@ -1893,7 +1893,7 @@
         (card-ability state :corp (refresh ll) 0)
         (click-card state :corp (find-card "Self-Destruct Chips" (:hand (get-corp))))
         (is (= 1 (:agenda-point (get-corp))) "Gained 1 agenda points")
-        (is (= 4 (core/hand-size state :runner)) "Runner hand size reduced by 1"))))
+        (is (= 4 (hand-size :runner)) "Runner hand size reduced by 1"))))
   (testing "Agenda events"
     (do-game
       (new-game {:corp {:deck ["Lady Liberty" "Puppet Master"]}})
@@ -2186,7 +2186,7 @@
     (play-from-hand state :corp "Mental Health Clinic" "New remote")
     (let [mhc (get-content state :remote1 0)]
       (core/rez state :corp mhc)
-      (is (= 6 (core/hand-size state :runner)) "Runner max hand size increased by 1")
+      (is (= 6 (hand-size :runner)) "Runner max hand size increased by 1")
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
@@ -2855,7 +2855,31 @@
         (click-prompt state :corp "Yes")
         (is (= (+ 3 credits) (:credit (get-corp))))
         (is (= (+ 2 cards) (count (:hand (get-corp)))))
-        (is (= :runner (:winner @state)) "Runner wins")))))
+        (is (= :runner (:winner @state)) "Runner wins"))))
+  (testing "when other start-of-turn cards like Marilyn Campaign fire. Issue #3855"
+    (do-game
+      (new-game {:corp {:deck ["Rashida Jaheem" "Marilyn Campaign" (qty "Hedge Fund" 4)]}})
+      (starting-hand state :corp ["Rashida Jaheem" "Marilyn Campaign"])
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (play-from-hand state :corp "Marilyn Campaign" "New remote")
+      (let [rj (get-content state :remote1 0)
+            mc (get-content state :remote2 0)]
+        (core/rez state :corp mc)
+        (core/command-counter state :corp '("2"))
+        (click-card state :corp mc)
+        (take-credits state :corp)
+        (core/rez state :corp rj)
+        (take-credits state :runner)
+        (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+        (core/end-phase-12 state :corp nil)
+        (is (= 2 (-> (prompt-map :corp) :choices count)) "Corp should have two abilities to trigger")
+        (click-prompt state :corp "Marilyn Campaign")
+        (click-prompt state :corp "Yes")
+        (is (find-card "Marilyn Campaign" (:deck (get-corp))))
+        (is (zero? (-> (get-corp) :hand count)) "Corp should have 3 cards in hand")
+        (click-prompt state :corp "Yes")
+        (is (= 4 (-> (get-corp) :hand count)) "Corp should draw 3 cards from Rashida plus 1 from Mandatory Draw")
+        (is (nil? (:corp-phase-12 @state)) "Corp is not in Step 1.2")))))
 
 (deftest reality-threedee
   ;; Reality Threedee - Take 1 bad pub on rez; gain 1c at turn start (2c if Runner tagged)

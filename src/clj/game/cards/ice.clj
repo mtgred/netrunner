@@ -111,12 +111,7 @@
 
 (def runner-loses-click
   "Runner loses a click effect"
-  (req (if (:runner-phase-12 @state)
-    ; this handles Jak Sinclair losing clicks before they are given
-    (do (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
-        (toast state :runner "Runner loses a click at start of turn" "warning")
-        (toast state :corp "Runner loses a click at start of turn" "warning"))
-    (lose state :runner :click 1))))
+  (effect (lose :runner :click 1)))
 
 ;;; For Advanceable ICE
 (defn get-advance-counters

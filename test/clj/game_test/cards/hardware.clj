@@ -117,7 +117,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Box-E")
     (is (= 6 (core/available-mu state)))
-    (is (= 7 (core/hand-size state :runner)))))
+    (is (= 7 (hand-size :runner)))))
 
 (deftest brain-chip
   ;; Brain Chip handsize and memory limit
@@ -126,13 +126,13 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Brain Chip")
     (swap! state assoc-in [:runner :agenda-point] -2) ; hard set ap
-    (is (= 5 (core/hand-size state :runner)) "Hand size unaffected")
+    (is (= 5 (hand-size :runner)) "Hand size unaffected")
     (is (= 4 (core/available-mu state)) "Memory limit unaffected")
     (swap! state assoc-in [:runner :agenda-point] 2)
-    (is (= 7 (core/hand-size state :runner)) "Hand size increased by 2")
+    (is (= 7 (hand-size :runner)) "Hand size increased by 2")
     (is (= 6 (core/available-mu state)) "Memory limit increased by 2")
     (core/move state :runner (get-hardware state 0) :discard)
-    (is (= 5 (core/hand-size state :runner)) "Hand size reset")
+    (is (= 5 (hand-size :runner)) "Hand size reset")
     (is (= 4 (core/available-mu state)) "Memory limit reset")))
 
 (deftest clone-chip
@@ -851,9 +851,9 @@
         (click-prompt state :runner "No action")
         (play-from-hand state :runner "Obelus")
         (core/gain-tags state :runner 1)
-        (is (= 6 (core/hand-size state :runner)) "Max hand size is 6")
+        (is (= 6 (hand-size :runner)) "Max hand size is 6")
         (core/lose-tags state :runner 1)
-        (is (= 5 (core/hand-size state :runner)) "Max hand size is 5")
+        (is (= 5 (hand-size :runner)) "Max hand size is 5")
         (run-empty-server state :hq)
         (is (= 2 (get-counters (refresh nerve) :virus)) "2 virus counters on Nerve Agent")
         (click-prompt state :runner "1")
@@ -1344,7 +1344,7 @@
       (click-prompt state :runner "0")
       (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
       (is (= 1 (count (:discard (get-runner)))))
-      (is (= 4 (core/hand-size state :runner)) "Reduced hand size"))))
+      (is (= 4 (hand-size :runner)) "Reduced hand size"))))
 
 (deftest sports-hopper
   ;; Sports Hopper
@@ -1531,13 +1531,13 @@
     (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
     (is (empty? (:hand (get-runner))))
     (take-credits state :runner)
-    (is (= (count (:hand (get-corp))) (core/hand-size state :corp)) "Corp hand filled to max")
+    (is (= (count (:hand (get-corp))) (hand-size :corp)) "Corp hand filled to max")
     (take-credits state :corp)
     (is (= 1 (count (:hand (get-runner)))) "Drew 1 card")
     (take-credits state :runner)
     (play-from-hand state :corp "Hedge Fund")
     (take-credits state :corp)
-    (is (not= (count (:hand (get-corp))) (core/hand-size state :corp)) "Corp hand below max")
+    (is (not= (count (:hand (get-corp))) (hand-size :corp)) "Corp hand below max")
     (is (= 1 (count (:hand (get-runner)))) "No card drawn")))
 
 (deftest zamba
