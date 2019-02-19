@@ -409,13 +409,13 @@
     (is (zero? (:agenda-point (get-runner))) "No points for Runner if trashed by Corp")
     (let [hiro (get-content state :remote1 0)]
       (core/rez state :corp hiro)
-      (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
+      (is (= 3 (hand-size :runner)) "Runner max hand size reduced by 2")
       (take-credits state :corp)
       (take-credits state :runner 3)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 6 [Credits] to trash")
       (is (= 2 (:credit (get-runner))) "Runner paid 6 credits to trash")
-      (is (= 5 (core/hand-size state :runner)) "Runner max hand size restored to 5")
+      (is (= 5 (hand-size :runner)) "Runner max hand size restored to 5")
       (is (= 1 (count (get-scored state :runner)))
           "Chairman Hiro added to Runner score area")
       (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points"))))
@@ -704,7 +704,7 @@
     (new-game {:corp {:deck ["Cybernetics Court"]}})
     (play-from-hand state :corp "Cybernetics Court" "New remote")
     (core/rez state :corp (get-content state :remote1 0))
-    (is (= 9 (get-hand-size :corp)) "Corp should have hand size of 9")))
+    (is (= 9 (hand-size :corp)) "Corp should have hand size of 9")))
 
 (deftest daily-business-show
   ;; Daily Business Show
@@ -1893,7 +1893,7 @@
         (card-ability state :corp (refresh ll) 0)
         (click-card state :corp (find-card "Self-Destruct Chips" (:hand (get-corp))))
         (is (= 1 (:agenda-point (get-corp))) "Gained 1 agenda points")
-        (is (= 4 (core/hand-size state :runner)) "Runner hand size reduced by 1"))))
+        (is (= 4 (hand-size :runner)) "Runner hand size reduced by 1"))))
   (testing "Agenda events"
     (do-game
       (new-game {:corp {:deck ["Lady Liberty" "Puppet Master"]}})
@@ -2186,7 +2186,7 @@
     (play-from-hand state :corp "Mental Health Clinic" "New remote")
     (let [mhc (get-content state :remote1 0)]
       (core/rez state :corp mhc)
-      (is (= 6 (core/hand-size state :runner)) "Runner max hand size increased by 1")
+      (is (= 6 (hand-size :runner)) "Runner max hand size increased by 1")
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))

@@ -70,7 +70,7 @@
         "Feedback Filter brain damage prevention opportunity not given")
     (is (= 5 (:click (get-runner))) "Runner gained 2 clicks from Amped Up")
     (is (= 2 (count (:discard (get-runner)))) "Runner discarded 1 card from damage")
-    (is (= 4 (core/hand-size state :runner)) "Runner handsize decreased by 1")
+    (is (= 4 (hand-size :runner)) "Runner handsize decreased by 1")
     (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
 
 (deftest another-day-another-paycheck
@@ -1387,7 +1387,7 @@
     (core/move state :runner (find-card "Game Day" (:deck (get-runner))) :hand)
     (core/move state :runner (find-card "Public Sympathy" (:deck (get-runner))) :hand)
     (play-from-hand state :runner "Public Sympathy")
-    (is (= 7 (core/hand-size state :runner)) "Runner hand size is 7")
+    (is (= 7 (hand-size :runner)) "Runner hand size is 7")
     (play-from-hand state :runner "Game Day")
     (is (= 7 (count (:hand (get-runner)))) "Drew up to 7 cards")))
 
@@ -2598,7 +2598,7 @@
         "Corp hand empty and Eve in Archives")
     (is (= 5 (:credit (get-runner))))
     (is (zero? (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
-    (is (= 4 (core/hand-size state :runner)))
+    (is (= 4 (hand-size :runner)))
     (is (= 1 (:brain-damage (get-runner))))))
 
 (deftest sure-gamble
