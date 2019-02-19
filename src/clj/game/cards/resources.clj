@@ -2028,12 +2028,11 @@
                                                        :effect (effect (breaker-strength-bonus 2))}}) card))}}
 
    "The Nihilist"
-   (let [has-2-virus-tokens? (req (> 2 (reduce + (map #(get-counters % :virus) (get-all-installed state)))))
+   (let [has-2-virus-tokens? (req (<= 2 (reduce + (map #(get-counters % :virus) (get-all-installed state)))))
          corp-choice {:optional {:player :corp
                                  :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
                                  :async true
-                                 :yes-ability {:msg 
-                                               :effect (effect (clear-wait-prompt :runner)
+                                 :yes-ability {:effect (effect (clear-wait-prompt :runner)
                                                                (system-msg :corp "trashes the top card of R&D to prevent the Runner drawing 2 cards")
                                                                (mill :corp)
                                                                (effect-completed eid))}
@@ -2050,7 +2049,7 @@
                                                                    (continue-ability state side corp-choice card nil))
                                                                (effect-completed state side eid))))}}]
      {:events {:runner-turn-begins {:interactive (req true)
-                                    :silent has-2-virus-tokens?
+                                    :req has-2-virus-tokens?
                                     :optional maybe-spend-2}
                :runner-install {:msg "add 2 virus tokens to The Nihilist"
                                 :effect (effect (add-counter card :virus 2))
