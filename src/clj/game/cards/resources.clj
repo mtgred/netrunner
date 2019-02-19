@@ -316,13 +316,13 @@
                  :msg "draw 3 cards and shuffle 1 card from their Grip back into their Stack"
                  :async true
                  :effect (req (wait-for (draw state side 3 nil)
-                                           (resolve-ability state side
-                                            {:prompt "Choose a card in your Grip to shuffle back into your Stack"
-                                             :choices {:req #(and (in-hand? %)
-                                                                  (= (:side %) "Runner"))}
-                                             :effect (effect (move target :deck)
-                                                             (shuffle! :deck))}
-                                            card nil)))}]}
+                                        (resolve-ability state side
+                                                         {:prompt "Choose a card in your Grip to shuffle back into your Stack"
+                                                          :choices {:req #(and (in-hand? %)
+                                                                               (= (:side %) "Runner"))}
+                                                          :effect (effect (move target :deck)
+                                                                          (shuffle! :deck))}
+                                                         card nil)))}]}
 
    "Bloo Moose"
    {:flags {:runner-phase-12 (req true)}
@@ -508,7 +508,8 @@
                                      (system-msg state :runner (str "trashes Crowdfunding"
                                                                     (when (not (empty? (:deck runner)))
                                                                       " and draws 1 card")))
-                                     (draw state :runner eid 1 nil))))}
+                                     (draw state :runner eid 1 nil))
+                                 (effect-completed state side eid)))}
          install-prompt {:req (req (and (= (:zone card) [:discard])
                                         (not (install-locked? state :runner))))
                          :async true
@@ -1134,7 +1135,6 @@
                                                   (:title current-ice))))}]}
 
    "Laguna Velasco District"
-   ;; {:events {:runner-click-draw {:msg "draw 1 card" :effect (effect (draw))}}}
    {:events {:runner-pre-click-draw {:msg "draw 1 additional card" :effect (effect (draw-bonus 1))}}}
 
    "Lewi Guilherme"
@@ -1288,16 +1288,16 @@
                  :msg (msg "draw 2 cards")
                  :async true
                  :effect (req (wait-for (draw state side 2 nil)
-                                        (let [drawn (get-in @state [:runner :register :most-recent-drawn])]
-                                          (if drawn
-                                            (continue-ability
-                                             state side
-                                             {:prompt "Select 1 card to add to the bottom of the Stack"
-                                              :choices {:req #(and (in-hand? %)
-                                                                   (some (fn [c] (= (:cid c) (:cid %))) drawn))}
-                                              :msg (msg "add 1 card to the bottom of the Stack")
-                                              :effect (req (move state side target :deck))} card nil)
-                                            (effect-completed state side eid)))))}]}
+                                        (if-let [drawn (get-in @state [:runner :register :most-recent-drawn])]
+                                          (continue-ability
+                                           state side
+                                           {:prompt "Select 1 card to add to the bottom of the Stack"
+                                            :choices {:req #(and (in-hand? %)
+                                                                 (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                                            :msg (msg "add 1 card to the bottom of the Stack")
+                                            :effect (req (move state side target :deck))}
+                                           card nil)
+                                          (effect-completed state side eid))))}]}
 
    "Muertos Gang Member"
    {:effect (req (resolve-ability
@@ -2047,12 +2047,12 @@
               ;; The req catches draw events that happened before The Class Act was installed
               :req (req (first-event? state :runner :pre-runner-draw))
               :once :per-turn
-              :once-key :class-act-extra-draw ; TODO: is this even needed? i think it is because both abilities must be :once but check
+              :once-key :class-act-extra-draw
               :effect (effect (draw-bonus 1))}
              :post-runner-draw
              {:req (req (first-event? state :runner :post-runner-draw))
               :once :per-turn
-              :once-key :class-act-bottom-draw ; TODO: is this even needed? i think it is because both abilities must be :once but check
+              :once-key :class-act-bottom-draw
               :async true
               :effect (req (let [drawn (get-in @state [:runner :register :most-recent-drawn])]
                              (show-wait-prompt state :corp "Runner to use The Class Act")

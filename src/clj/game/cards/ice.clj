@@ -995,10 +995,11 @@
    "Harvester"
    {:subroutines [{:label "Runner draws 3 cards and discards down to maximum hand size"
                    :msg "make the Runner draw 3 cards and discard down to their maximum hand size"
+                   :async true
                    :effect (req (wait-for (draw state :runner 3 nil)
                                           (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
-                                            (when (pos? delta)
-                                              (resolve-ability
+                                            (if (pos? delta)
+                                              (continue-ability
                                                state :runner
                                                {:prompt (msg "Select " delta " cards to discard")
                                                 :player :runner
@@ -1008,7 +1009,8 @@
                                                                (trash state :runner c))
                                                              (system-msg state :runner
                                                                          (str "trashes " (join ", " (map :title targets)))))}
-                                               card nil)))))}]}
+                                               card nil)
+                                              (effect-completed state side eid)))))}]}
 
    "Himitsu-Bako"
    {:abilities [{:msg "add it to HQ"

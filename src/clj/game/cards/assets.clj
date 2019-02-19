@@ -1302,10 +1302,8 @@
                   :label "Make each player draw 1 card (start of turn)"
                   :once :per-turn
                   :async true
-                  :effect (effect (draw eid 1 nil)
-                                  (continue-ability {:async true
-                                                     :effect (effect (draw :runner eid 1 nil))}
-                                                    card nil))}]
+                  :effect (req (wait-for (draw state :corp 1 nil)
+                                         (draw state :runner eid 1 nil)))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :flags {:corp-phase-12 (req true)}
       :events {:corp-turn-begins ability}

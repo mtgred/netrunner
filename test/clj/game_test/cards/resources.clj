@@ -2780,8 +2780,8 @@
   ;; The Class Act
   (testing "Vanilla test"
     (do-game
-     (new-game {:runner {:deck ["The Class Act" (qty "Sure Gamble" 5) "Easy Mark" "Corporate Defector"]}})
-     (starting-hand state :runner ["The Class Act" "Corporate Defector" "Easy Mark"])
+     (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
+                         :hand ["The Class Act" "Easy Mark" "Corporate Defector"]}})
      (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck {:front true}) ;ensure easy mark is on the top
      (is (= "Easy Mark" (-> (get-runner) :deck first :title)) "Easy Mark is on top of deck")
      (take-credits state :corp)
@@ -2825,8 +2825,8 @@
      (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits")))
   (testing "Interaction with other sources of draw"
     (do-game
-     (new-game {:runner {:deck ["The Class Act" (qty "Sure Gamble" 3) "Laguna Velasco District"]}})
-     (starting-hand state :runner ["The Class Act" "Laguna Velasco District"])
+     (new-game {:runner {:deck [(qty "Sure Gamble" 3)]
+                         :hand ["The Class Act" "Laguna Velasco District"]}})
      (take-credits state :corp)
      (core/gain state :runner :credit 10)
      (play-from-hand state :runner "The Class Act")
@@ -2842,8 +2842,8 @@
      (is (= 1 (count (:deck (get-runner)))) "1 card put back")))
   (testing "Ensure draw filtering is properly awaited"
     (do-game
-     (new-game {:runner {:deck ["The Class Act" "Paragon" "John Masanori" (qty "Sure Gamble" 3)]}})
-     (starting-hand state :runner ["The Class Act" "Paragon" "John Masanori"])
+     (new-game {:runner {:deck [(qty "Sure Gamble" 3)]
+                         :hand ["The Class Act" "Paragon" "John Masanori"]}})
      (take-credits state :corp)
      (core/gain state :runner :credit 10)
      (play-from-hand state :runner "The Class Act")
