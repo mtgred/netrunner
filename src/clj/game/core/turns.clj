@@ -257,8 +257,11 @@
                     :max (- cur-hand-size max-hand-size)
                     :all true}
           :effect (req (system-msg state side
-                                   (str "trashes " (quantify (count targets) "card")
-                                        " from " (if (= :runner side) "grip" "HQ")
+                                   (str "discards " 
+                                        (if (= :runner side)
+                                          (join ", " (map :title targets))
+                                          (quantify (count targets) "card"))
+                                        " from " (if (= :runner side) "their Grip" "HQ")
                                         " at end of turn"))
                        (doseq [t targets]
                          (trash state side t))
