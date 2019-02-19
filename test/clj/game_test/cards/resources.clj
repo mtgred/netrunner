@@ -2776,6 +2776,54 @@
     (is (= 2 (count (get-program state))) "2 Programs installed")
     (is (= 6 (:credit (get-runner))) "Artist discount applied new turn")))
 
+(deftest the-class-act
+  ;; The Class Act
+  (testing "Vanilla test"
+    (do-game
+     (new-game {:runner {:deck ["The Class Act" (qty "Sure Gamble" 5) "Easy Mark" "Corporate Defector"]}})
+     (starting-hand state :runner ["The Class Act" "Corporate Defector" "Easy Mark"])
+     (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck {:front true}) ;ensure easy mark is on the top
+     (is (= "Easy Mark" (-> (get-runner) :deck first :title)) "Easy Mark is on top of deck")
+     (take-credits state :corp)
+     (play-from-hand state :runner "The Class Act")
+     (is (empty? (get-program state)) "No programs installed")
+     (is (= 1 (:credit (get-runner))))
+     (is (empty? (:prompt (get-runner))) "The Class Act has done nothing yet, so there is no Runner prompt")
+     (is (empty? (:prompt (get-corp))) "The Class Act has done nothing yet, so there is no Corp prompt")
+     (is (= 6 (count (:deck (get-runner)))) "5 cards in deck to be drawn")
+     (take-credits state :runner)
+     (is (= 1 (count (:deck (get-runner)))) "5 cards were drawn at end of turn")
+     (is (not (empty? (:prompt (get-runner)))) "The Class Act triggered its draw ability, so Runner needs to choose")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act triggered its draw ability, so Corp must wait while Runner chooses")
+     (click-card state :runner (find-card "Corporate Defector" (:hand (get-runner))))
+     (is (not (empty? (:prompt (get-corp)))) "Clicking an invalid card should do nothing, so Corp prompt is still open")
+     (is (not (empty? (:prompt (get-runner)))) "Clicking an invalid card should do nothing, so Runner prompt is still open")
+     (is (not= "Easy Mark" (-> (get-runner) :deck last :title)) "Easy Mark is not on the bottom of the deck yet")
+     (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
+     (is (empty? (:prompt (get-corp))) "The Class Act has bottomed a card, so there is no Corp prompt")
+     (is (empty? (:prompt (get-runner))) "The Class Act has has bottomed a card, so there is no Runner prompt")
+     (is (= "Easy Mark" (-> (get-runner) :deck last :title)) "Easy Mark was put on bottom of deck")
+     (is (= 2 (count (:deck (get-runner)))) "2 cards in deck")
+     (take-credits state :corp)
+     (take-credits state :runner)
+     (is (= 2 (count (:deck (get-runner)))) "The Class Act does not trigger at the end of a turn it wasn't installed, so no cards were drawn")
+     (is (empty? (:prompt (get-runner))) "The Class Act does not trigger at the end of a turn it wasn't installed, so there is no prompt")
+     (take-credits state :corp)
+     (core/click-draw state :runner nil)
+     (is (= 0 (count (:deck (get-runner)))) "The Class Act triggered to give an extra draw")
+     (is (not (empty? (:prompt (get-runner)))) "The Class Act is prompting the runner to choose")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
+     (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
+     (is (empty? (:prompt (get-runner))) "The Class Act is no longer prompting the runner to choose")
+     (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits")
+     (is (= "Easy Mark" (-> (get-runner) :deck last :title)) "Easy Mark was bottomed again")
+     (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck) ;put a card back to ensure the class act could trigger if it hadn't already
+     (is (= 2 (count (:deck (get-runner)))) "2 cards in deck")
+     (core/click-draw state :runner nil)
+     (is (= 1 (count (:deck (get-runner)))) "Runner only drew one")
+     (is (empty? (:prompt (get-runner))) "The Class Act did not trigger")
+     (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits"))))
+
 (deftest the-black-file
   ;; The Black File - Prevent Corp from winning by agenda points
   (testing "Basic test"
