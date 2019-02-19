@@ -2511,26 +2511,59 @@
 (deftest personalized-portal
   ;; Personalized Portal - on corp turn start, force the runner to draw 1 card
   ;; and then gain 1 credit for every 2 cards in the runners hand
-  (do-game
-    (new-game {:corp {:deck ["Personalized Portal"]}
-               :runner {:deck [(qty "Daily Casts" 3) (qty "Dyson Mem Chip" 3)]}})
-    (play-from-hand state :corp "Personalized Portal" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (take-credits state :corp)
-    (starting-hand state :runner [])
-    (is (empty? (:hand (get-runner))) "Runner's grip is empty to start")
-    (is (= 4 (:credit (get-corp))) "Corp starts with 4 credits")
-    (take-credits state :runner)
-    (is (= 1 (count (:hand (get-runner)))) "Runner drew 1 card")
-    (is (= 4 (:credit (get-corp))) "Corp gained 0 credits")
-    (take-credits state :corp)
-    (take-credits state :runner)
-    (is (= 2 (count (:hand (get-runner)))) "Runner drew 1 card")
-    (is (= 8 (:credit (get-corp))) "Corp gained 1 credit")
-    (take-credits state :corp)
-    (take-credits state :runner)
-    (is (= 3 (count (:hand (get-runner)))) "Runner drew 1 card")
-    (is (= 12 (:credit (get-corp))) "Corp gained 1 credit")))
+  (testing "Vanilla test"
+    (do-game
+     (new-game {:corp {:deck ["Personalized Portal"]}
+                :runner {:deck [(qty "Daily Casts" 3) (qty "Dyson Mem Chip" 3)]}})
+     (play-from-hand state :corp "Personalized Portal" "New remote")
+     (core/rez state :corp (get-content state :remote1 0))
+     (take-credits state :corp)
+     (starting-hand state :runner [])
+     (is (empty? (:hand (get-runner))) "Runner's grip is empty to start")
+     (is (= 4 (:credit (get-corp))) "Corp starts with 4 credits")
+     (take-credits state :runner)
+     (is (= 1 (count (:hand (get-runner)))) "Runner drew 1 card")
+     (is (= 4 (:credit (get-corp))) "Corp gained 0 credits")
+     (take-credits state :corp)
+     (take-credits state :runner)
+     (is (= 2 (count (:hand (get-runner)))) "Runner drew 1 card")
+     (is (= 8 (:credit (get-corp))) "Corp gained 1 credit")
+     (take-credits state :corp)
+     (take-credits state :runner)
+     (is (= 3 (count (:hand (get-runner)))) "Runner drew 1 card")
+     (is (= 12 (:credit (get-corp))) "Corp gained 1 credit"))
+    (do-game
+     (new-game {:corp {:deck ["Personalized Portal"]}
+                :runner {:deck [(qty "Daily Casts" 5) "The Class Act" "Motivation"]}})
+     (starting-hand state :runner ["The Class Act" "Motivation"])
+     (play-from-hand state :corp "Personalized Portal" "New remote")
+     (core/rez state :corp (get-content state :remote1 0))
+     (take-credits state :corp)
+     (play-from-hand state :runner "The Class Act")
+     (core/move state :runner (find-card "Motivation" (:hand (get-runner))) :deck {:front true}) ;ensure easy mark is on the top
+     (is (= "Motivation" (-> (get-runner) :deck first :title)) "Motivation is on top of deck")
+     (is (empty? (:hand (get-runner))) "Runner's grip is empty to start")
+     (is (= 4 (:credit (get-corp))) "Corp starts with 4 credits")
+     (core/lose state :runner :click 3)
+     (is (empty? (:hand (get-runner))) "Runner's grip is still empty")
+     (core/end-turn state :runner nil)
+     (is (= 5 (count (:hand (get-runner)))) "Runner is sitting on 5 cards in hand before they bottom a card")
+     (is (= 1 (count (:deck (get-runner)))) "1 card in deck before card hits bottom")
+     (is (not (empty? (:prompt (get-runner)))) "Runner prompted to be classy")
+     (is (not (empty? (:prompt (get-corp)))) "Corp waiting for Runner to be classy")
+     (click-card state :runner (find-card "Motivation" (:hand (get-runner))))
+     (is (empty? (:prompt (get-runner))) "Runner done being classy")
+     (is (empty? (:prompt (get-corp))) "Corp not waiting for Runner to be classy")
+     (core/start-turn state :corp nil) ;; this causes portals to trigger
+     (is (= 6 (count (:hand (get-runner)))) "Runner is sitting on 6 cards in hand before they bottom a card")
+     (is (= 0 (count (:deck (get-runner)))) "0 cards in deck")
+     (is (not (empty? (:prompt (get-corp)))) "Corp waiting for Runner to be classy")
+     (is (= 4 (:credit (get-corp))) "Corp has not gained credits yet")
+     (click-card state :runner (find-card "Motivation" (:hand (get-runner))))
+     (is (= 5 (count (:hand (get-runner)))) "Runner is sitting on 5 cards after bottoming a card")
+     (is (= 6 (:credit (get-corp))) "Corp only gained 5/2 = 2 credits, not 3")
+     (is (empty? (:prompt (get-runner))) "Runner not prompted")
+     (is (empty? (:prompt (get-corp))) "Corp not waiting for Runner to be classy"))))
 
 (deftest plan-b
   ;; Plan B - score agenda with adv cost <= # of adv counters

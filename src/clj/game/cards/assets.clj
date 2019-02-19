@@ -1300,7 +1300,11 @@
    (let [ability {:msg "make each player draw 1 card"
                   :label "Make each player draw 1 card (start of turn)"
                   :once :per-turn
-                  :effect (effect (draw 1) (draw :runner))}]
+                  :async true
+                  :effect (effect (draw eid 1 nil)
+                                  (continue-ability {:async true
+                                                     :effect (effect (draw :runner eid 1 nil))}
+                                                    card nil))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :flags {:corp-phase-12 (req true)}
       :events {:corp-turn-begins ability}
@@ -1308,13 +1312,15 @@
 
    "Personalized Portal"
    {:events {:corp-turn-begins
-             {:effect (req (draw state :runner 1)
-                           (let [cnt (count (get-in @state [:runner :hand]))
-                                 credits (quot cnt 2)]
-                             (gain-credits state :corp credits)
-                             (system-msg state :corp
-                                         (str "uses Personalized Portal to force the runner to draw "
-                                              "1 card and gains " credits " [Credits]"))))}}}
+             {:async true
+              :effect (req (wait-for (draw state :runner 1 nil)
+                                     (let [cnt (count (get-in @state [:runner :hand]))
+                                           credits (quot cnt 2)]
+                                       (gain-credits state :corp credits)
+                                       (system-msg state :corp
+                                                   (str "uses Personalized Portal to force the runner to draw "
+                                                        "1 card and gain " credits " [Credits]"))
+                                       (effect-completed state side eid))))}}}
 
    "Plan B"
    (advance-ambush

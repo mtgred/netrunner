@@ -2014,8 +2014,8 @@
    {:effect (req true)
     :end-turn {:async true
                :msg "draw 4 cards"
-               :effect (effect (draw 4))}
-    :events {:pre-runner-draw
+               :effect (effect (draw eid 4 nil))}
+    :events {:pre-runner-draw ; TODO: ensure this doesnt trigger if runner draws, uh, 0
              {:msg "draw 1 additional card"
               ;; The req catches draw events that happened before The Class Act was installed
               :req (req (first-event? state :runner :pre-runner-draw))
