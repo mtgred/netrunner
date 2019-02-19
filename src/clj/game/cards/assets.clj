@@ -481,13 +481,13 @@
    (let [ability {:once :per-turn
                   :async true
                   :label "Draw 1 card (start of turn)"
+                  :interactive (req true)
                   :effect (effect (continue-ability
                                     {:optional
                                      {:prompt "Use CSR Campaign to draw 1 card?"
                                       :yes-ability {:async true
                                                     :msg "draw 1 card"
-                                                    :effect (req (do (draw state side 1)
-                                                                     (effect-completed state side eid)))}}}
+                                                    :effect (effect (draw eid 1 nil))}}}
                                     card nil))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :flags {:corp-phase-12 (req true)}
