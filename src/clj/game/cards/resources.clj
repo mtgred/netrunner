@@ -360,7 +360,7 @@
                  :prompt "Choose a server"
                  :choices (req runnable-servers)
                  :msg (msg "make a run on " target)
-                 :effect (effect (run target nil card))}
+                 :effect (effect (make-run target nil card))}
                 {:label "Pay credits equal to strength of approached rezzed ICE to bypass it"
                  :once :per-run
                  :req (req (and (:run @state) (rezzed? current-ice)))
@@ -461,7 +461,7 @@
                  :msg (msg "run " target " and trashes Counter Surveillance")
                  :choices (req (cancellable runnable-servers))
                  :effect (req (trash state side card {:cause :ability-cost})
-                              (game.core/run state side target nil card)
+                              (make-run state side target nil card)
                               (register-events state side
                                                {:successful-run
                                                 {:silent (req true)
@@ -1035,7 +1035,7 @@
                   :choices (req runnable-servers)
                   :msg (msg "make a run on " target " during which no programs can be used")
                   :makes-run true
-                  :effect (effect (run target))}]
+                  :effect (effect (make-run target))}]
    {:implementation "Doesn't prevent program use"
     :flags {:runner-phase-12 (req true)}
     :install-cost-bonus (req [:credit (- (:link runner))])

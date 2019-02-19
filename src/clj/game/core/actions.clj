@@ -4,7 +4,7 @@
 
 (declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler
          enforce-msg gain-agenda-point get-remote-names get-run-ices jack-out move
-         name-zone play-instant purge resolve-select run runner-install trash
+         name-zone play-instant purge resolve-select make-run runner-install trash
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu)
 
@@ -558,7 +558,7 @@
       (swap! state assoc-in [:runner :register :click-type] :run)
       (swap! state assoc-in [:runner :register :made-click-run] true)
       (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
-        (run state side server)
+        (make-run state side server)
         (system-msg state :runner
                     (str (build-spend-msg cost-str "make a run on") server))
         (play-sfx state side "click-run")))))

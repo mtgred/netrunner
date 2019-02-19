@@ -913,7 +913,7 @@
                  :once :per-turn
                  :makes-run true
                  :effect (effect (update! (assoc card :omar-run-activated true))
-                                 (run :archives nil (get-card state card)))}]
+                                 (make-run :archives nil (get-card state card)))}]
     :events {:pre-successful-run {:interactive (req true)
                                   :req (req (and (:omar-run-activated card)
                                                  (= :archives (-> run :server first))))
