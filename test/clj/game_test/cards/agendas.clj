@@ -316,8 +316,11 @@
     (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
     (play-and-score state "Brain Rewiring")
     (click-prompt state :corp "Yes")
+    (is (not (empty? (:prompt (get-runner)))) "Runner waiting for Corp resolve Brain Rewiring")
     (click-prompt state :corp "2")
-    (is (= 1 (count (:hand (get-runner)))))))
+    (is (= 1 (count (:hand (get-runner)))))
+    (is (empty? (:prompt (get-runner))) "Runner not waiting for Corp resolve Brain Rewiring")
+    (is (empty? (:prompt (get-corp))) "Corp done resolving Brain Rewiring")))
 
 (deftest braintrust
   ;; Braintrust
