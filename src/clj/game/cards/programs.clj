@@ -872,7 +872,7 @@
    "RNG Key"
    {:events {:pre-access-card {:req (req (get-in card [:special :rng-guess]))
                                :async true
-                               :msg (msg "to reveal " (:title target))
+                               :msg (msg "reveal " (:title target))
                                :effect (req (if-let [guess (get-in card [:special :rng-guess])]
                                               (if (installed? target)
                                                 ;; Do not trigger on installed cards (can't "reveal" an installed card per UFAQ)
