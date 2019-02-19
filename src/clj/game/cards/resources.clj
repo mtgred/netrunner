@@ -2009,6 +2009,33 @@
     :leave-play (req (swap! state update-in [:corp] dissoc :cannot-win-on-points)
                      (gain-agenda-point state :corp 0))}
 
+   "The Class Act"
+   {:end-turn {:async true
+               :effect (effect (draw 4))}
+    :events {:pre-runner-draw
+             {:msg "draw additional cards"
+              ;; The req catches draw events that happened before The Class Act was installed
+              :req (req (first-event? state :runner :pre-runner-draw))
+              :once :per-turn
+              :once-key :class-act-extra-draw ; TODO: is this even needed? i think it is because both abilities must be :once but check
+              :effect (effect (draw-bonus 1))}
+             :post-runner-draw
+             {:req (req (first-event? state :runner :post-runner-draw))
+              :once :per-turn
+              :once-key :class-act-bottom-draw ; TODO: is this even needed? i think it is because both abilities must be :once but check
+              :async true
+              :effect (req (let [drawn (get-in @state [:runner :register :most-recent-drawn])]
+                             (show-wait-prompt state :corp "Runner to use The Class Act")
+                             (wait-for (resolve-ability
+                                        state :runner
+                                        {:prompt (str "Select 1 card to add to the bottom of the stack")
+                                         :msg (msg "add 1 card to the bottom of the Stack")
+                                         :choices {:req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
+                                         :effect (effect (move target :deck))}
+                                        card targets)
+                                       (do (clear-wait-prompt state :corp)
+                                           (effect-completed state side eid)))))}}}
+
    "The Helpful AI"
    {:in-play [:link 1]
     :abilities [{:msg (msg "give +2 strength to " (:title target))
