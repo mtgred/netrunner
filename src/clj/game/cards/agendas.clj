@@ -275,8 +275,8 @@
                                                                                    " to the bottom of their Stack."
                                                                                    " The Runner draws 1 card"))
                                                        (wait-for (draw state :runner 1 nil)
-                                                                 (do (clear-wait-prompt state :runner)
-                                                                     (effect-completed state side eid))))))}
+                                                                 (clear-wait-prompt state :runner)
+                                                                 (effect-completed state side eid)))))}
                         :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                      card nil))}
 

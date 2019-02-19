@@ -1193,9 +1193,9 @@
                                                                     " from their Heap into their Stack, and draws 1 card"))
                                      (shuffle! state :runner :deck)
                                      (wait-for (draw state :runner 1 nil)
-                                               (do (move state side (find-latest state card) :rfg)
-                                                   (system-msg state :runner "removes Labor Rights from the game")
-                                                   (effect-completed state side eid))))}
+                                               (move state side (find-latest state card) :rfg)
+                                               (system-msg state :runner "removes Labor Rights from the game")
+                                               (effect-completed state side eid)))}
                        card nil))))}
 
    "Lawyer Up"
@@ -1271,8 +1271,8 @@
     :async true
     :effect (req (shuffle-into-deck state :runner :hand :discard)
                  (wait-for (draw state :runner 5)
-                           (do (move (first (:play-area runner)) :rfg)
-                               (effect-completed state side eid))))}
+                           (move (first (:play-area runner)) :rfg)
+                           (effect-completed state side eid)))}
 
    "Lucky Find"
    {:msg "gain 9 [Credits]"
@@ -1333,8 +1333,8 @@
      {:msg (msg "draw " (count-clan state) " cards and gain " (count-tags state) " [Credits]")
       :async true
       :effect (req (wait-for (draw state side (count-clan state) nil)
-                             (do (gain-credits state side (count-tags state))
-                                 (effect-completed state side eid))))})
+                             (gain-credits state side (count-tags state))
+                             (effect-completed state side eid)))})
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
