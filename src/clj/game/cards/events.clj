@@ -1199,7 +1199,7 @@
    "Lawyer Up"
    {:msg "remove 2 tags and draw 3 cards"
     :async true
-    :effect (req (wait-for (draw state side 3 nil)) (lose-tags state side eid 2))}
+    :effect (req (wait-for (draw state side 3 nil) (lose-tags state side eid 2)))}
 
    "Lean and Mean"
    {:prompt "Choose a server"
