@@ -1011,6 +1011,7 @@
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]
                   :once :per-turn
+                  :interactive (req true)
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain 2 [Credits] (start of turn)")
                   :async true
@@ -1030,9 +1031,9 @@
                                          :priority 1
                                          :player :corp
                                          :yes-ability {:msg "shuffle it back into R&D"
-                                                       :effect (req (move state :corp card :deck)
-                                                                    (shuffle! state :corp :deck)
-                                                                    (effect-completed state side eid))}
+                                                       :effect (effect (move :corp card :deck)
+                                                                       (shuffle! :corp :deck)
+                                                                       (effect-completed eid))}
                                          :end-effect (effect (clear-wait-prompt :runner))}}
                                       card nil))}})
 

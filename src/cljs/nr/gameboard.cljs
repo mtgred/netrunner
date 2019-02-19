@@ -1423,7 +1423,9 @@
                  #(send-command "no-action")]]))
            [:div.panel.blue-shade
             (if (= (keyword @active-player) side)
-              (when (and (zero? (:click @me)) (not @end-turn) (not @runner-phase-12) (not @corp-phase-12))
+              (when (and (not (or @runner-phase-12 @corp-phase-12))
+                         (zero? (:click @me))
+                         (not @end-turn))
                 [:button {:on-click #(send-command "end-turn")} "End Turn"])
               (when @end-turn
                 [:button {:on-click #(send-command "start-turn")} "Start Turn"]))
@@ -1434,12 +1436,14 @@
             (when (= side :runner)
               [:div
                [cond-button "Remove Tag"
-                (and (pos? (:click @me))
+                (and (not (or @runner-phase-12 @corp-phase-12))
+                     (pos? (:click @me))
                      (>= (:credit @me) (- 2 (or (:tag-remove-bonus @me) 0)))
                      (pos? (get-in @me [:tag :base])))
                 #(send-command "remove-tag")]
                [:div.run-button
-                [cond-button "Run" (and (pos? (:click @me))
+                [cond-button "Run" (and (not (or @runner-phase-12 @corp-phase-12))
+                                        (pos? (:click @me))
                                         (not (get-in @me [:register :cannot-run])))
                  #(-> (:servers @s) js/$ .toggle)]
                 [:div.panel.blue-shade.servers-menu {:ref #(swap! s assoc :servers %)}
@@ -1450,14 +1454,26 @@
                                  label])
                               (zones->sorted-names (runnable-servers @corp @runner)))]]])
             (when (= side :corp)
-              [cond-button "Purge" (>= (:click @me) 3) #(send-command "purge")])
+              [cond-button "Purge"
+               (and (not (or @runner-phase-12 @corp-phase-12))
+                    (>= (:click @me) 3))
+               #(send-command "purge")])
             (when (= side :corp)
-              [cond-button "Trash Resource" (and (pos? (:click @me))
-                                                 (>= (:credit @me) (- 2 (or (:trash-cost-bonus @me) 0)))
-                                                 (is-tagged? game-state))
+              [cond-button "Trash Resource"
+               (and (not (or @runner-phase-12 @corp-phase-12))
+                    (pos? (:click @me))
+                    (>= (:credit @me) (- 2 (or (:trash-cost-bonus @me) 0)))
+                    (is-tagged? game-state))
                #(send-command "trash-resource")])
-            [cond-button "Draw" (and (pos? (:click @me)) (not-empty (:deck @me))) #(send-command "draw")]
-            [cond-button "Gain Credit" (pos? (:click @me)) #(send-command "credit")]]))])})))
+            [cond-button "Draw"
+             (and (not (or @runner-phase-12 @corp-phase-12))
+                  (pos? (:click @me))
+                  (not-empty (:deck @me)))
+             #(send-command "draw")]
+            [cond-button "Gain Credit"
+             (and (not (or @runner-phase-12 @corp-phase-12))
+                  (pos? (:click @me)))
+             #(send-command "credit")]]))])})))
 
 (defn gameboard []
   (let [run (r/cursor game-state [:run])
