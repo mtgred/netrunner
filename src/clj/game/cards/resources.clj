@@ -2010,10 +2010,12 @@
                      (gain-agenda-point state :corp 0))}
 
    "The Class Act"
-   {:end-turn {:async true
+   {:effect (req true)
+    :end-turn {:async true
+               :msg "draw 4 cards"
                :effect (effect (draw 4))}
     :events {:pre-runner-draw
-             {:msg "draw additional cards"
+             {:msg "draw 1 additional card"
               ;; The req catches draw events that happened before The Class Act was installed
               :req (req (first-event? state :runner :pre-runner-draw))
               :once :per-turn
