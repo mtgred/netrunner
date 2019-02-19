@@ -1464,19 +1464,19 @@
         ; use Mr. Li with 0 draws allowed
         (card-ability state :runner mrli 0)
         (is (= 1 (count (:hand (get-runner)))))
-        (click-card state :runner (first (:hand (get-runner)))) ; will fail because not a valid target
-        (click-prompt state :runner "Done") ; cancel out
+        (is (empty? (:prompt (get-runner))) "No runner prompt open")
         (take-credits state :runner)
         (take-credits state :corp)
         (core/draw state :runner)
         (is (= 2 (count (:hand (get-runner)))))
-        ; use Mr. Li with 1 draw allowed
+        ; use Mr. Li with 1 draw allowed - should draw 1, then insist it's put back
         (card-ability state :runner mrli 0)
         (is (= 3 (count (:hand (get-runner)))))
         (click-card state :runner (first (:hand (get-runner)))) ; will fail
         (click-card state :runner (second (:hand (get-runner)))) ; will fail
+        (is (= 3 (count (:hand (get-runner)))) "Clicking invalid cards caused no discards")
         (click-card state :runner (second (rest (:hand (get-runner)))))
-        (is (= 2 (count (:hand (get-runner)))))))))
+        (is (= 2 (count (:hand (get-runner)))) "Clicking the single valid card did")))))
 
 (deftest ghost-branch
   ;; Ghost Branch - Advanceable; give the Runner tags equal to advancements when accessed
