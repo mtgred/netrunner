@@ -292,16 +292,16 @@
                  (if-let [no-ability (:no-ability ability)]
                    (resolve-ability state side (assoc no-ability :eid eid) card targets)
                    (effect-completed state side eid)))))]
-     (let [autoresolve-as (when-let [autoresolve-fn (:autoresolve ability)]
-                            (autoresolve-fn state side eid card targets))]
-       (case (when-let [autoresolve-fn (:autoresolve ability)]
-               (autoresolve-fn state side eid card targets))
+     (let [autoresolve-fn     (:autoresolve ability)
+           autoresolve-answer (when autoresolve-fn
+                                (autoresolve-fn state side eid card targets))]
+       (case autoresolve-answer
          "Yes" (prompt-fn "Yes")
          "No"  (prompt-fn "No")
-               (do
-                 (toast state side (str "This prompt can be skipped by clicking " (:title card) " and toggling autoresolve"))
-                 (show-prompt state side eid card message ["Yes" "No"]
-                              prompt-fn ability)))))))
+               (do (toast state side (str "This prompt can be skipped by clicking "
+                                          (:title card) " and toggling autoresolve"))
+                   (show-prompt state side eid card message ["Yes" "No"]
+                                prompt-fn ability)))))))
 
 ;;; Prompts
 (defn prompt!
