@@ -1061,7 +1061,8 @@
    {:events {:successful-run {:req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
                               :interactive (req true)
                               :msg "draw 1 card"
-                              :effect (effect (draw))}
+                              :async true
+                              :effect (effect (draw eid 1 nil))}
              :unsuccessful-run {:req (req (= 1 (count (get-in @state [:runner :register :unsuccessful-run]))))
                                 :async true
                                 :msg "take 1 tag"
