@@ -138,7 +138,8 @@
 
    "Build Script"
    {:msg "gain 1 [Credits] and draw 2 cards"
-    :effect (effect (gain-credits 1) (draw 2))}
+    :async true
+    :effect (effect (gain-credits 1) (draw eid 2 nil))}
 
    "By Any Means"
    {:effect (effect (register-events (:events (card-def card))
@@ -393,7 +394,8 @@
    "Deuces Wild"
    (let [all [{:effect (effect (gain-credits 3))
                :msg "gain 3 [Credits]"}
-              {:effect (effect (draw 2))
+              {:async true
+               :effect (effect (draw eid 2 nil))
                :msg "draw 2 cards"}
               {:effect (effect (lose-tags 1))
                :msg "remove 1 tag"}
@@ -495,7 +497,7 @@
     :events {:run-ends nil}}
 
    "Diesel"
-   {:msg "draw 3 cards" :effect (effect (draw 3))}
+   {:msg "draw 3 cards" :async true :effect (effect (draw eid 3 nil))}
 
    "Dirty Laundry"
    (run-event
@@ -670,7 +672,10 @@
    {:msg (msg "draw 1 card and gain "
               (count (filter #(= (:title %) "Exclusive Party") (:discard runner)))
               " [Credits]")
-    :effect (effect (draw) (gain-credits (count (filter #(= (:title %) "Exclusive Party") (:discard runner)))))}
+    :async true
+    :effect (req (wait-for (draw state side 1 nil)
+                           (gain-credits (count (filter #(= (:title %) "Exclusive Party") (:discard runner))))
+                           (effect-completed state side eid)))}
 
    "Executive Wiretaps"
    {:msg (msg "reveal cards in HQ: " (join ", " (map :title (:hand corp))))}
@@ -773,7 +778,9 @@
 
    "Fisk Investment Seminar"
    {:msg "make each player draw 3 cards"
-    :effect (effect (draw 3) (draw :corp 3))}
+    :async true
+    :effect (req (wait-for (draw state :runner 3 nil)
+                           (draw state :corp eid 3 nil)))}
 
    "Forged Activation Orders"
    {:choices {:req #(and (ice? %)
@@ -854,7 +861,8 @@
 
    "Game Day"
    {:msg (msg "draw " (- (hand-size state :runner) (count (:hand runner))) " cards")
-    :effect (effect (draw (- (hand-size state :runner) (count (:hand runner)))))}
+    :async true
+    :effect (effect (draw eid (- (hand-size state :runner) (count (:hand runner))) nil))}
 
   "Glut Cipher"
   (let [corp-choose {:show-discard true
@@ -956,10 +964,12 @@
                                                                            (effect-completed state side eid)))}} card))}
 
    "Ive Had Worse"
-   {:effect (effect (draw 3))
+   {:async true
+    :effect (effect (draw eid 3 nil))
     :trash-effect {:when-inactive true
+                   :async true
                    :req (req (#{:meat :net} target))
-                   :effect (effect (draw :runner 3)) :msg "draw 3 cards"}}
+                   :effect (effect (draw :runner eid 3 nil)) :msg "draw 3 cards"}}
 
    "Immolation Script"
    {:req (req archives-runnable)
@@ -1170,6 +1180,7 @@
                        state side
                        {:prompt (str "Choose " (quantify heap-count "card") " to shuffle into the stack")
                         :show-discard true
+                        :async true
                         :choices {:max heap-count
                                   :all true
                                   :not-self true
@@ -1179,14 +1190,16 @@
                                      (system-msg state :runner (str "shuffles " (join ", " (map :title targets))
                                                                     " from their Heap into their Stack, and draws 1 card"))
                                      (shuffle! state :runner :deck)
-                                     (draw state :runner 1)
-                                     (move state side (find-latest state card) :rfg)
-                                     (system-msg state :runner "removes Labor Rights from the game"))}
+                                     (wait-for (draw state :runner 1 nil)
+                                               (do (move state side (find-latest state card) :rfg)
+                                                   (system-msg state :runner "removes Labor Rights from the game")
+                                                   (effect-completed state side eid))))}
                        card nil))))}
 
    "Lawyer Up"
    {:msg "remove 2 tags and draw 3 cards"
-    :effect (effect (draw 3) (lose-tags 2))}
+    :async true
+    :effect (req (wait-for (draw state side 3 nil)) (lose-tags state side eid 2))}
 
    "Lean and Mean"
    {:prompt "Choose a server"
@@ -1253,8 +1266,11 @@
 
    "Levy AR Lab Access"
    {:msg "shuffle their Grip and Heap into their Stack and draw 5 cards"
-    :effect (effect (shuffle-into-deck :hand :discard) (draw 5)
-                    (move (first (:play-area runner)) :rfg))}
+    :async true
+    :effect (req (shuffle-into-deck state :runner :hand :discard)
+                    (wait-for (draw state :runner 5)
+                              (do (move (first (:play-area runner)) :rfg)
+                                  (effect-completed state side eid))))}
 
    "Lucky Find"
    {:msg "gain 9 [Credits]"
@@ -1313,9 +1329,11 @@
    {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
                                      (all-active-installed state :runner)))
               " cards and gain " (count-tags state) " [Credits]")
-    :effect (effect (draw (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
-                                         (all-active-installed state :runner))))
-                    (gain-credits (count-tags state)))}
+    :async true
+    :effect (req (wait-for (draw state side (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
+                                                           (all-active-installed state :runner))) nil)
+                           (do (gain-credits state side (count-tags state))
+                               (effect-completed state side eid))))}
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
@@ -1414,15 +1432,17 @@
     :effect (effect (continue-ability
                       {:prompt "Gain 4 [Credits] or draw 4 cards?"
                        :choices ["Gain 4 [Credits]" "Draw 4 cards"]
+                       :async true
                        :effect (req (cond
                                       (= target "Gain 4 [Credits]")
                                       (do
                                         (system-msg state :runner (str "uses Office Supplies to gain 4 [Credits]"))
-                                        (gain-credits state :runner 4))
+                                        (gain-credits state :runner 4)
+                                        (effect-completed state side eid))
                                       (= target "Draw 4 cards")
                                       (do
                                         (system-msg state :runner (str "uses Office Supplies to draw 4 cards"))
-                                        (draw state :runner 4))))}
+                                        (draw state :runner eid 4 nil))))}
                       card nil))}
 
    "On the Lam"
@@ -1548,7 +1568,8 @@
 
    "Process Automation"
    {:msg "gain 2 [Credits] and draw 1 card"
-    :effect (effect (gain-credits 2) (draw 1))}
+    :async true
+    :effect (effect (gain-credits 2) (draw eid 1 nil))}
 
    "Push Your Luck"
    {:effect (effect (show-wait-prompt :runner "Corp to guess Odd or Even")
@@ -1582,7 +1603,7 @@
                  (make-run state side (make-eid state) target))})
 
    "Quality Time"
-   {:msg "draw 5 cards" :effect (effect (draw 5))}
+   {:msg "draw 5 cards" :async true :effect (effect (draw eid 5 nil))}
 
    "Queens Gambit"
    {:choices ["0", "1", "2", "3"] :prompt "How many advancement tokens?"
@@ -1911,24 +1932,25 @@
     :effect (req (add-counter state :runner target :virus 2))}
 
    "SYN Attack"
-   {:effect (req (if (< (count (:hand corp)) 2)
-                   (draw state :corp 4)
-                   (do (show-wait-prompt state :runner "Corp to choose an option for SYN Attack")
-                       (resolve-ability state :corp
-                         {:prompt "Discard 2 cards or draw 4 cards?"
-                          :choices ["Discard 2" "Draw 4"]
-                          :effect (req (if (= target "Draw 4")
-                                         (do (draw state :corp 4)
-                                             (system-msg state :corp (str "draws 4 cards from SYN Attack"))
-                                             (clear-wait-prompt state :runner))
-                                         (resolve-ability state :corp
-                                           {:prompt "Choose 2 cards to discard"
-                                            :choices {:max 2 :req #(and (in-hand? %) (= (:side %) "Corp"))}
-                                            :effect (effect (trash-cards :corp targets)
-                                                            (system-msg :corp (str "discards 2 cards from SYN Attack"))
-                                                            (clear-wait-prompt :runner))}
-                                          card nil)))}
-                        card nil))))}
+   {:async true
+    :effect (req (if (< (count (:hand corp)) 2)
+                   (wait-for (draw state :corp 4 nil)
+                             (do (show-wait-prompt state :runner "Corp to choose an option for SYN Attack")
+                                 (continue-ability state :corp
+                                                   {:prompt "Discard 2 cards or draw 4 cards?"
+                                                    :choices ["Discard 2" "Draw 4"]
+                                                    :effect (req (if (= target "Draw 4")
+                                                                   (do (draw state :corp 4)
+                                                                       (system-msg state :corp (str "draws 4 cards from SYN Attack"))
+                                                                       (clear-wait-prompt state :runner))
+                                                                   (resolve-ability state :corp
+                                                                                    {:prompt "Choose 2 cards to discard"
+                                                                                     :choices {:max 2 :req #(and (in-hand? %) (= (:side %) "Corp"))}
+                                                                                     :effect (effect (trash-cards :corp targets)
+                                                                                                     (system-msg :corp (str "discards 2 cards from SYN Attack"))
+                                                                                                     (clear-wait-prompt :runner))}
+                                                                                    card nil)))}
+                                                   card nil)))))}
 
    "System Outage"
    {:events {:corp-draw {:req (req (not (first-event? state side :corp-draw)))
