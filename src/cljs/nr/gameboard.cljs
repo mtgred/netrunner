@@ -7,8 +7,7 @@
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar] :as auth]
-            [nr.cardbrowser :refer [add-symbols] :as cb]
-            [nr.utils :refer [influence-dot map-longest toastr-options]]
+            [nr.utils :refer [influence-dot map-longest toastr-options render-icons render-message]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -305,72 +304,6 @@
   (and (get-in @game-state [:options :spectatorhands])
        (not (not-spectator?))))
 
-(def ci-open "\u2664")
-(def ci-seperator "\u2665")
-(def ci-close "\u2666")
-
-(defn is-card-item [item]
-  (and (> (.indexOf item ci-seperator) -1)
-       (= 0 (.indexOf item ci-open))))
-
-(defn extract-card-info [item]
-  (if (is-card-item item)
-    [(.substring item 1 (.indexOf item ci-seperator))
-     (.substring item (inc (.indexOf item ci-seperator)) (dec (count item)))]))
-
-(defn create-span-impl [item]
-  (if (= "[hr]" item)
-    [:hr]
-    (if (= "[!]" item)
-      [:div.smallwarning "!"]
-      (if-let [class (anr-icons item)]
-        [:span {:class (str "anr-icon " class) :key class}]
-        (if-let [[title code cid] (extract-card-info item)]
-          [:span {:class "fake-link" :id code :key title} title]
-          [:span {:key item} item])))))
-
-(defn get-non-alt-art [[title cards]]
-  {:title title :code (:code (first cards))})
-
-(defn prepare-cards []
-  (->> @all-cards
-       (filter #(not (:replaced_by %)))
-       (group-by :title)
-       (map get-non-alt-art)
-       (sort-by #(count (:title %1)))
-       (reverse)))
-
-(def prepared-cards (memoize prepare-cards))
-
-(def create-span (memoize create-span-impl))
-
-(defn find-card-regex-impl [title]
-  (str "(^|[^" ci-open "\\S])" title "(?![" ci-seperator "\\w]|([^" ci-open "]+" ci-close "))"))
-
-(def find-card-regex (memoize find-card-regex-impl))
-
-(defn card-image-token-impl [title code]
-  (str "$1" ci-open title ci-seperator code ci-close))
-
-(def card-image-token (memoize card-image-token-impl))
-
-(defn card-image-reducer [text card]
-  (.replace text (js/RegExp. (find-card-regex (:title card)) "g") (card-image-token (:title card) (:code card))))
-
-(defn add-image-codes-impl [text]
-  (reduce card-image-reducer text (prepared-cards)))
-
-(def add-image-codes (memoize add-image-codes-impl))
-
-(defn get-message-parts-impl [text]
-  (let [with-image-codes (add-image-codes (if (nil? text) "" text))
-        splitted (.split with-image-codes (js/RegExp. (str "(" ci-open "[^" ci-close "]*" ci-close ")") "g"))
-        oldstyle (for [i splitted]
-                   (seq (.split i (js/RegExp. (str "([1-3]\\[mu\\]|\\[[^\\]]*\\])") "g"))))]
-    (flatten oldstyle)))
-
-(def get-message-parts (memoize get-message-parts-impl))
-
 (defn get-card-code [e]
   (let [code (str (.. e -target -id))]
     (when (pos? (count code))
@@ -421,15 +354,12 @@
                    (fn [i msg]
                      (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
                        (if (= (:user msg) "__system__")
-                         [:div.system {:key i} (map-indexed (fn [i item] [:<> {:key i} (create-span item)])
-                                                            (get-message-parts (:text msg)))]
+                         [:div.system {:key i} (render-message (:text msg))]
                          [:div.message {:key i}
                           [avatar (:user msg) {:opts {:size 38}}]
                           [:div.content
                            [:div.username (get-in msg [:user :username])]
-                           [:div (doall
-                                   (map-indexed (fn [i item] [:<> {:key i} (create-span item)])
-                                                (get-message-parts (:text msg))))]]])))
+                           [:div (render-message (:text msg))]]])))
                    @log))]
          (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} @typing)))
            [:div [:p.typing (for [i (range 10)] ^{:key i} [:span " " influence-dot " "])]])
@@ -633,7 +563,9 @@
      [:div.text
       [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
                                             "" (str ": " (:subtype card)))]
-      [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
+      [:pre (letfn [(card-by-title [title]
+                      (some #(when (= (:title %) title) %) @all-cards))]
+             (render-icons (:text (card-by-title (:title card)))))]]
      (when-let [url (image-url card)]
        [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])]))
 
@@ -643,8 +575,8 @@
      (fn [i ab]
        [:div {:key i
               :on-click #(do (send-command "runner-ability" {:card card
-                                                             :ability i}))
-              :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
+                                                             :ability i}))}
+        (render-icons (str (ability-costs ab) (:label ab)))])
      runner-abilities)
    (when (> (count subroutines) 1)
      [:div {:on-click #(send-command "system-msg"
@@ -655,8 +587,8 @@
        [:div {:key i
               :on-click #(send-command "system-msg"
                                        {:msg (str "indicates to fire the \"" (:label sub)
-                                                  "\" subroutine on " title)})
-              :dangerouslySetInnerHTML #js {:__html (add-symbols (str "Let fire: \"" (:label sub) "\""))}}])
+                                                  "\" subroutine on " title)})}
+        (render-icons (str "Let fire: \"" (:label sub) "\""))])
      subroutines)])
 
 (defn corp-abs [card c-state corp-abilities]
@@ -664,8 +596,8 @@
      (map-indexed
        (fn [i ab]
          [:div {:on-click #(do (send-command "corp-ability" {:card card
-                                                             :ability i}))
-                :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
+                                                             :ability i}))}
+          (render-icons (str (ability-costs ab) (:label ab)))])
        corp-abilities)])
 
 (defn server-menu [card c-state remotes type zone]
@@ -700,18 +632,18 @@
            (if (:dynamic ab)
              [:div {:key i
                     :on-click #(do (send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
-                                                                     :card card)))
-                    :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
+                                                                     :card card)))}
+              (render-icons (str (ability-costs ab) (:label ab)))]
              [:div {:key i
                     :on-click #(do (send-command "ability" {:card card
-                                                            :ability (- i dynabi-count)}))
-                    :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
+                                                            :ability (- i dynabi-count)}))}
+              (render-icons (str (ability-costs ab) (:label ab)))]))
          abilities)
        (map-indexed
          (fn [i sub]
            [:div {:key i
-                  :on-click #(do (send-command "subroutine" {:card card :subroutine i}))
-                  :dangerouslySetInnerHTML #js {:__html (add-symbols (str "[Subroutine]" (:label sub)))}}])
+                  :on-click #(do (send-command "subroutine" {:card card :subroutine i}))}
+            (render-icons (str "[Subroutine]" (:label sub)))])
          subroutines)])))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
@@ -1361,7 +1293,7 @@
              :reagent-render
              (fn [{:keys [sfx] :as cursor}]
               (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
-             
+
 
 (defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
   (let [s (r/atom {})
@@ -1389,7 +1321,7 @@
                          :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
        (if-let [prompt (first (:prompt @me))]
          [:div.panel.blue-shade
-          [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
+          [:h4 (render-message (:msg prompt))]
           (if-let [n (get-in prompt [:choices :number])]
             [:div
              [:div.credit-select
@@ -1464,12 +1396,10 @@
                                (if (string? c)
                                  [:button {:key i
                                            :on-click #(send-command "choice" {:choice c})}
-                                  (for [item (get-message-parts c)]
-                                    (create-span item))]
-                                 (let [[title code] (extract-card-info (add-image-codes (:title c)))]
-                                   [:button {:key (:cid c)
-                                             :class (when (:rotated c) :rotated)
-                                             :on-click #(send-command "choice" {:card c}) :id code} (:title c)]))))
+                                  (render-message c)]
+                                 [:button {:key (:cid c)
+                                           :class (when (:rotated c) :rotated)
+                                           :on-click #(send-command "choice" {:card c}) :id {:code c}} (:title c)])))
                            (:choices prompt))))]
          (if @run
            (let [rs (:server @run)
