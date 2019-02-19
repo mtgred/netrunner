@@ -231,6 +231,21 @@
     (run-on state "Archives")
     (is (= 2 (count (:hand (get-runner)))) "No cards drawn")))
 
+(deftest demolisher
+  ;; Demolisher
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["PAD Campaign"]}
+                 :runner {:deck ["Demolisher"]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 2)
+      (play-from-hand state :runner "Demolisher")
+      (let [demolisher (get-hardware state 0)]
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (is (= 1 (:credit (get-runner))) "Trashed for 3c and gained 1c")))))
+
 (deftest desperado
   ;; Desperado - Gain 1 MU and gain 1 credit on successful run
   (do-game

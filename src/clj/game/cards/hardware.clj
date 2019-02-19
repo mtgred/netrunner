@@ -280,6 +280,15 @@
                                                             (effect-completed state side eid))}
                                              card nil)))}}}}}
 
+   "Demolisher"
+   {:in-play [:memory 1]
+    :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}
+             :runner-trash {:once :per-turn
+                            :req (req (and (card-is? target :side :corp)
+                                           (:trash target)))
+                            :msg "gain 1 [Credits]"
+                            :effect (effect (gain-credits 1))}}}
+
    "Desperado"
    {:in-play [:memory 1]
     :events {:successful-run {:silent (req true)
