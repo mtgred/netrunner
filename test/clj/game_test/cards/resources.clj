@@ -2822,7 +2822,47 @@
      (core/click-draw state :runner nil)
      (is (= 1 (count (:deck (get-runner)))) "Runner only drew one")
      (is (empty? (:prompt (get-runner))) "The Class Act did not trigger")
-     (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits"))))
+     (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits")))
+  (testing "Interaction with other sources of draw"
+    (do-game
+     (new-game {:runner {:deck ["The Class Act" (qty "Sure Gamble" 3) "Laguna Velasco District"]}})
+     (starting-hand state :runner ["The Class Act" "Laguna Velasco District"])
+     (take-credits state :corp)
+     (core/gain state :runner :credit 10)
+     (play-from-hand state :runner "The Class Act")
+     (play-from-hand state :runner "Laguna Velasco District")
+     (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+     (core/click-draw state :runner nil)
+     (is (= 0 (count (:deck (get-runner)))) "Runner drew 3")
+     (is (not (empty? (:prompt (get-runner)))) "The Class Act is prompting the runner to choose")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
+     (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+     (is (empty? (:prompt (get-runner))) "The Class Act is done prompting the runner to choose")
+     (is (empty? (:prompt (get-corp))) "The Class Act is not insisting the corp waits")
+     (is (= 1 (count (:deck (get-runner)))) "1 card put back")))
+  (testing "Ensure draw filtering is properly awaited"
+    (do-game
+     (new-game {:runner {:deck ["The Class Act" "Paragon" "John Masanori" (qty "Sure Gamble" 3)]}})
+     (starting-hand state :runner ["The Class Act" "Paragon" "John Masanori"])
+     (take-credits state :corp)
+     (core/gain state :runner :credit 10)
+     (play-from-hand state :runner "The Class Act")
+     (play-from-hand state :runner "Paragon")
+     (play-from-hand state :runner "John Masanori")
+     (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+     (run-empty-server state "Archives")
+     (click-prompt state :runner "John Masanori") ; runner should be prompted for which to trigger first
+     (is (= 1 (count (:deck (get-runner)))) "Masanori draw got boosted by The Class Act")
+     (is (= 1 (count (:prompt (get-runner)))) "The Class Act is prompting the runner to choose, but Paragon prompt is not open yet")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
+     (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+     (is (= 2 (count (:deck (get-runner)))) "The Class Act put a card back")
+     (is (changes-credits (get-runner) 1
+                          (do (click-prompt state :runner "Yes") ; runner prompted to trigger Paragon
+                              (click-prompt state :runner "Yes"))))
+     (is (empty? (:prompt (get-runner))) "The Class Act is done prompting the runner to choose")
+     (is (empty? (:prompt (get-corp))) "The Class Act is not insisting the corp waits")
+     (is (= 2 (count (:deck (get-runner)))) "Deck still has 2 cards"))))
 
 (deftest the-black-file
   ;; The Black File - Prevent Corp from winning by agenda points
