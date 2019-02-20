@@ -10,7 +10,7 @@
           :snapshot :rotated,
           :snapshot-plus :legal,
           :socr8 :legal,
-          :standard :legal},
+          :standard :restricted},
  :image_url "https://netrunnerdb.com/card_image/23013.png",
  :normalizedtitle "crowdfunding",
  :number 2,

@@ -10,7 +10,7 @@
           :snapshot :legal,
           :snapshot-plus :legal,
           :socr8 :rotated,
-          :standard :legal},
+          :standard :restricted},
  :image_url "http://www.cardgamedb.com/forums/uploads/an/med_ADN24_24.png",
  :normalizedtitle "dorm-computer",
  :number 24,
