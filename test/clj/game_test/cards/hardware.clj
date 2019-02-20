@@ -244,7 +244,19 @@
       (let [demolisher (get-hardware state 0)]
         (run-empty-server state :remote1)
         (click-prompt state :runner "Pay 3 [Credits] to trash")
-        (is (= 1 (:credit (get-runner))) "Trashed for 3c and gained 1c")))))
+        (is (= 1 (:credit (get-runner))) "Trashed for 3c and gained 1c"))))
+  (testing "Trash with Imp"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Imp" "Demolisher"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 2)
+      (play-from-hand state :runner "Imp")
+      (play-from-hand state :runner "Demolisher")
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state :hq)
+        (click-prompt state :runner "[Imp]: Trash card")
+        (is (= (:credit (get-runner)) (+ 1 credits)) "Demolisher earns a credit when trashing with Imp")))))
 
 (deftest desperado
   ;; Desperado - Gain 1 MU and gain 1 credit on successful run

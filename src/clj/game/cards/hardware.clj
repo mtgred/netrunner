@@ -284,8 +284,7 @@
    {:in-play [:memory 1]
     :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}
              :runner-trash {:once :per-turn
-                            :req (req (and (card-is? target :side :corp)
-                                           (:trash target)))
+                            :req (req (card-is? target :side :corp))
                             :msg "gain 1 [Credits]"
                             :effect (effect (gain-credits 1))}}}
 
