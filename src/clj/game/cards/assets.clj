@@ -477,6 +477,23 @@
                                    :msg "gain 1 [Credits]"
                                    :effect (effect (gain-credits :corp 1))}}}
 
+   "CSR Campaign"
+   (let [ability {:once :per-turn
+                  :async true
+                  :label "Draw 1 card (start of turn)"
+                  :interactive (req true)
+                  :effect (effect (continue-ability
+                                    {:optional
+                                     {:prompt "Use CSR Campaign to draw 1 card?"
+                                      :yes-ability {:async true
+                                                    :msg "draw 1 card"
+                                                    :effect (effect (draw eid 1 nil))}}}
+                                    card nil))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :flags {:corp-phase-12 (req true)}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
+
    "Cybernetics Court"
    {:in-play [:hand-size 4]}
 
