@@ -1441,9 +1441,9 @@
    (let [ability {:once :per-turn
                   :label "Reveal top card of R&D and gain 2 [Credits] (start of turn)"
                   :interactive (req true)
-                  :msg (msg (str "reveal " (-> @state :corp :deck first :title)
-                                 " from the top of R&D"
-                                 " and gain 2 [Credits]"))
+                  :msg (msg " reveal " (-> @state :corp :deck first :title)
+                            " from the top of R&D"
+                            " and gain 2 [Credits]")
                   :effect (effect (gain-credits 2))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
