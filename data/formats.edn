@@ -1,5 +1,5 @@
 [{:code "standard",
-  :cycles ["lunar" "sansan" "mumbad" "flashpoint" "red-sand" "kitara" "ashes" "creation-and-control" "honor-and-profit" "order-and-chaos" "data-and-destiny" "reign-and-reverie" "magnum-opus" "system-core-2019"],
+  :cycles ["sansan" "mumbad" "flashpoint" "red-sand" "kitara" "ashes" "honor-and-profit" "order-and-chaos" "data-and-destiny" "reign-and-reverie" "magnum-opus" "system-core-2019"],
   :mwl "standard-mwl-3-1",
   :name "Standard"}
  {:code "eternal",
