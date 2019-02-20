@@ -962,6 +962,11 @@
                                                                       (gain-credits state :runner 9)
                                                                       (effect-completed state side eid)))}} card))}
 
+   "Isolation"
+   {:additional-cost [:resource 1]
+    :msg "gain 7 [Credits]"
+    :effect (effect (gain-credits 7))}
+
    "Ive Had Worse"
    {:effect (effect (draw 3))
     :trash-effect {:when-inactive true
