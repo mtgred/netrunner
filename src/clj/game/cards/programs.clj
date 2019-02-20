@@ -869,6 +869,10 @@
                             :effect (effect (draw :runner 1))
                             :msg "draw 1 card"}}}
 
+   "Rezeki"
+   {:events {:runner-turn-begins {:msg "gain 1 [Credits]"
+                                  :effect (effect (gain-credits 1))}}}
+
    "RNG Key"
    {:events {:pre-access-card {:req (req (get-in card [:special :rng-guess]))
                                :async true

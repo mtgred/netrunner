@@ -978,6 +978,17 @@
       (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
       (is (zero? (count (:hand (get-runner)))) "No cards in hand"))))
 
+(deftest rezeki
+  ;; Rezeki - gain 1c when turn begins
+  (do-game
+    (new-game {:runner {:deck ["Rezeki"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rezeki")
+    (take-credits state :runner)
+    (let [credits (:credit (get-runner))]
+      (take-credits state :corp)
+      (is (= (:credit (get-runner)) (+ credits 1)) "Gain 1 from Rezeki"))))
+
 (deftest rng-key
   ;; RNG Key - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
   (testing "Basic behaviour - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost"
