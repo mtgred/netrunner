@@ -59,6 +59,7 @@
                (and (= cost-type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
                (and (= cost-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
                (and (= cost-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
+               (and (= cost-type :resource) (>= (- (count (get-in @state [:runner :rig :resource])) amount) 0))
                (and (= cost-type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
                                                                     (all-active-installed state :runner))) amount) 0))
                (and (= cost-type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
@@ -173,6 +174,7 @@
      :forfeit (pay-forfeit state side eid card (second cost))
      :hardware (pay-trash state side eid card "piece of hardware" (second cost) (every-pred installed? #(is-type? % :hardware) (complement facedown?)))
      :program (pay-trash state side eid card "program" (second cost) (every-pred installed? #(is-type? % :program) (complement facedown?)))
+     :resource (pay-trash state side eid card "resource" (second cost) (every-pred installed? #(is-type? % :resource) (complement facedown?)))
 
      ;; Connection
      :connection (pay-trash state side eid card "connection" (second cost) (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))

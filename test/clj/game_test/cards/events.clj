@@ -1508,6 +1508,23 @@
     (is (= 1 (count-tags state)) "Took 1 tag on successful run")
     (is (prompt-map :runner) "Still have access prompt")))
 
+(deftest isolation
+  ;; Isolation - A resource must be trashed, gain 7c
+  (do-game
+    (new-game {:runner {:deck ["Kati Jones" "Isolation"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Isolation")
+    (is (= 2 (count (get-in @state [:runner :hand]))) "Isolation could not be played because no resource is installed")
+    (is (zero? (count (get-in (get-runner) [:rig :resource]))) "Kati Jones is not installed")
+    (play-from-hand state :runner "Kati Jones")
+    (is (= 1 (count (get-resource state))) "Kati Jones was installed")
+    (let [kj (get-resource state 0)]
+      (play-from-hand state :runner "Isolation")
+        (click-card state :runner kj)
+        (is (zero? (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed")
+        (is (= 8 (:credit (get-runner))) "Gained 7 credits")
+        (is (= 2 (count (:discard (get-runner)))) "Kati Jones and Isolation are in the discard"))))
+
 (deftest i-ve-had-worse
   ;; I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined
   (testing "Basic test"
