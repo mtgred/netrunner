@@ -3084,6 +3084,30 @@
         (is (zero? (get-counters (refresh ron) :advancement)) "Ronin didn't gain counters")
         (is (= 3 (count (:hand (get-runner)))) "Ronin ability didn't fire with 0 advancements")))))
 
+(deftest roughneck-repair-squad
+  ;; Roughneck Repair Squad - gain 6c, may remove 1 bad publicity
+  (do-game
+    (new-game {:corp {:deck ["Roughneck Repair Squad"]}})
+    (core/gain state :corp :click 7)
+    (play-from-hand state :corp "Roughneck Repair Squad" "New remote")
+    (let [rrs (get-content state :remote1 0)
+          start-credits (:credit (get-corp))]
+      (core/rez state :corp rrs)
+      (is (zero? (:bad-publicity (get-corp))) "Start with no bad pub")
+      (card-ability state :corp rrs 0)
+      (is (= (:credit (get-corp)) (+ 6 start-credits)) "Gained 6 credits")
+      (is (empty? (:prompt (get-corp))) "No prompt if no bad pub")
+      (core/gain state :corp :bad-publicity 1)
+      (is (= 1 (:bad-publicity (get-corp))) "Start with 1 bad pub")
+      (card-ability state :corp rrs 0)
+      (is (= (:credit (get-corp)) (+ 12 start-credits)) "Gained 6 credits")
+      (click-prompt state :corp "No")
+      (is (= 1 (:bad-publicity (get-corp))) "Kept 1 bad pub")
+      (card-ability state :corp rrs 0)
+      (is (= (:credit (get-corp)) (+ 18 start-credits)) "Gained 6 credits")
+      (click-prompt state :corp "Yes")
+      (is (zero? (:bad-publicity (get-corp))) "Removed 1 bad pub"))))
+
 (deftest sandburg
   ;; Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c
   (do-game
