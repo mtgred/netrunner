@@ -21,7 +21,7 @@
  :side "Corp",
  :strength 6,
  :subtype "Barrier",
- :text "When the Runner encounters Sandstone, place 1 virus counter on it.\nSandstone has -1 strength for each virus counter on it.\n[subroutine]End the run.",
+ :text "When the Runner encounters this ice, place 1 virus counter on it.\nThis ice has -1 strength for each hosted virus counter.\n[subroutine]End the run.",
  :title "Sandstone",
  :type "ICE",
  :uniqueness false}

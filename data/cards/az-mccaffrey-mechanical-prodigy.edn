@@ -19,8 +19,8 @@
  :set_code "df",
  :setname "Downfall",
  :side "Runner",
- :subtype "G-mod - Cyborg",
- :text "The install cost of the first job resource, connection resource, or piece of hardware you install each turn is lowered by 1.",
+ :subtype "Cyborg",
+ :text "The first <strong>job</strong> resource, <strong>connection</strong> resource, or piece of hardware you install each turn costs 1[credit] less to install.",
  :title "Az McCaffrey: Mechanical Prodigy",
  :type "Identity",
  :uniqueness false}

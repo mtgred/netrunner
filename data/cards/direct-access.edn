@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Runner",
  :subtype "Run",
- :text "While Direct Access is resolving, each player's identity text box is blank.\nMake a run. When that run ends, you may shuffle Direct Access into the stack.",
+ :text "While you are resolving this event, each player’s identity loses all abilities.\nRun any server. When that run ends, you may shuffle this event into your stack.",
  :title "Direct Access",
  :type "Event",
  :uniqueness false}

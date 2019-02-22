@@ -21,7 +21,7 @@
  :side "Corp",
  :strength 3,
  :subtype "Trap",
- :text "[subroutine]End the run unless the Runner pays 2[credit].\n[subroutine]Reveal the top 3 cards of the stack. Add one of those cards to the grip and gain credits equal to its install or play cost. Shuffle the rest of the revealed cards into the stack. Trash Loot Box.",
+ :text "[subroutine]End the run unless the Runner pays 2[credit].\n[subroutine]Reveal the top 3 cards of the stack. Add one of those cards to the grip and gain credits equal to its install or play cost. The Runner shuffles the stack. Trash this ice.",
  :title "Loot Box",
  :type "ICE",
  :uniqueness false}

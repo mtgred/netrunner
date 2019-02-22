@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Runner",
  :subtype "Virtual - Companion",
- :text "When your turn begins or you steal an agenda, place 1[credit] on Fencer Fueno.\nSpend hosted credits during successful runs.\nWhen your turn ends, if there are 3[credit] or more on Fencer Fueno, pay 1[credit] (from your credit pool) or trash Fencer Fueno.",
+ :text "When your turn begins or you steal an agenda, place 1[credit] on this resource.\nWhenever you make a successful run, you may spend hosted credits for the remainder of that run.\nWhen your turn ends, if there are 3 or more hosted credits, you must pay 1[credit] or trash this resource.",
  :title "Fencer Fueno",
  :type "Resource",
  :uniqueness true}

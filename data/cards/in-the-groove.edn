@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Runner",
  :subtype "Priority",
- :text "Play only as your first [click].\nWhenever you install a card this turn, draw 1 card or gain 1[credit].",
+ :text "Play only as your first [click].\nWhenever you install a card with a printed install cost of 1 or greater this turn, draw 1 card or gain 1[credit].",
  :title "In the Groove",
  :type "Event",
  :uniqueness false}

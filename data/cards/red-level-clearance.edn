@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Corp",
  :subtype "Transaction",
- :text "Resolve two of the following in any order:\nGain 2[credit].\nDraw 2 cards.\nGain [click].\nInstall a non-agenda card.",
+ :text "Resolve two of the following in any order:<ul><li>Draw 2 cards.</li><li>Gain 2[credit].</li><li>Install up to 1 non-agenda card.</li><li>Gain [click].</li></ul>",
  :title "Red Level Clearance",
  :type "Operation",
  :uniqueness false}

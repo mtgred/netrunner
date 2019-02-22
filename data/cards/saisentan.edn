@@ -21,7 +21,7 @@
  :side "Corp",
  :strength 2,
  :subtype "Sentry - AP - Observer",
- :text "When the Runner encounters Saisentan, choose a card type. Until the end of the encounter, whenever a card of that type is trashed due to net damage from a subroutine on Saisentan, do 1 net damage.\n[subroutine]Do 1 net damage.\n[subroutine]Do 1 net damage.\n[subroutine]Do 1 net damage.",
+ :text "When the Runner encounters this ice, choose a card type.\n[subroutine] Do 1 net damage. If you trash a card of the chosen type, do 1 net damage.\n[subroutine] Do 1 net damage. If you trash a card of the chosen type, do 1 net damage.\n[subroutine] Do 1 net damage. If you trash a card of the chosen type, do 1 net damage.",
  :title "Saisentan",
  :type "ICE",
  :uniqueness false}

@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Corp",
  :subtype "Advertisement",
- :text "The first time each turn a run is initiated, gain 1[credit].",
+ :text "The first time each turn a run begins, gain 1[credit].",
  :title "Tiered Subscription",
  :trash 3,
  :type "Asset",

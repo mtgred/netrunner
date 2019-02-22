@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Corp",
  :subtype "Bioroid",
- :text "[click]: Draw 2 cards. Use this ability only once per turn.\nWhen the Runner trashes Calvin B4L3Y, you may draw 2 cards.",
+ :text "[click]: Draw 2 cards. Use this ability only once per turn.\nWhen the Runner trashes this asset, you may draw 2 cards.",
  :title "Calvin B4L3Y",
  :trash 3,
  :type "Asset",

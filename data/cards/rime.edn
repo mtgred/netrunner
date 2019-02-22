@@ -20,7 +20,7 @@
  :side "Corp",
  :strength 0,
  :subtype "Mythic",
- :text "Rime can be rezzed any time you could rez a non-ice card during a run on this server.\nEach piece of ice protecting this server has +1 strength.\n[click]: Move this piece of ice to the outermost position protecting any server.\n[subroutine] The Runner loses 1[credit].",
+ :text "During runs on this server, you can rez this ice any time you could rez non-ice cards.\nEach piece of ice protecting this server has +1 strength.\n[subroutine] The Runner loses 1[credit].",
  :title "Rime",
  :type "ICE",
  :uniqueness false}

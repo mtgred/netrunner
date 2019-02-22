@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Runner",
  :subtype "Console",
- :text "+1[mu]\nThe trash cost of each Corp card is lowered by 1.\nThe first time each turn you trash a Corp card, gain 1[credit].\nLimit 1 console per player.",
+ :text "+1[mu]\nThe trash cost of each Corp card is lowered by 1.\nThe first time each turn you trash a Corp card, gain 1[credit].\nLimit 1 <strong>console</strong> per player.",
  :title "Demolisher",
  :type "Hardware",
  :uniqueness true}
