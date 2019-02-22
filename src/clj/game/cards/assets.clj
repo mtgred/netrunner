@@ -1212,6 +1212,22 @@
                                 (move state side c :deck))
                               (shuffle! state side :deck))}]}
 
+   "Nanoetching Matrix"
+   {:events {:runner-trash {:req (req (= (:cid card) (:cid target)))
+                            :effect (effect (show-wait-prompt :runner "Corp to use Nanoetching Matrix")
+                                            (continue-ability
+                                              :corp
+                                              {:optional
+                                               {:prompt "Gain 2 [credits]?"
+                                                :yes-ability {:msg (msg "gain 2 [Credits]")
+                                                              :effect (effect (gain-credits :corp 2))}
+                                                :end-effect (effect (clear-wait-prompt :runner))}}
+                                              card nil))}}
+    :abilities [{:cost [:click 1]
+                 :once :per-turn
+                 :msg "gain 2 [Credits]"
+                 :effect (effect (gain-credits 2))}]}
+
    "NASX"
    (let [ability {:msg "gain 1 [Credits]"
                   :label "Gain 1 [Credits] (start of turn)"

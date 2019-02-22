@@ -2364,6 +2364,27 @@
       (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Corp should shuffle deck")
       (is (zero? (-> (get-corp) :discard count)) "Archives should be empty after shuffling Beanstalk into R&D"))))
 
+(deftest nanoetching-matrix
+  ;; Nanoetching Matrix - click for 2c once per turn. Gain 2c when Runner trashes it.
+  (do-game
+    (new-game {:corp {:deck ["Nanoetching Matrix"]}})
+    (play-from-hand state :corp "Nanoetching Matrix" "New remote")
+    (let [nm (get-content state :remote1 0)]
+      (core/rez state :corp (refresh nm))
+      (let [credits (:credit (get-corp))]
+        (card-ability state :corp (refresh nm) 0)
+        (is (= (:credit (get-corp)) (+ 2 credits)) "Gain 2c from ability")
+        (card-ability state :corp (refresh nm) 0)
+        (is (= (:credit (get-corp)) (+ 2 credits)) "Can only use once per turn")
+        (take-credits state :corp)
+        (run-empty-server state :remote1)
+        (let [new-credits (:credit (get-corp))]
+          (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
+          (click-prompt state :runner "Pay 3 [Credits] to trash")
+          (click-prompt state :corp "Yes")
+          (is (= 1 (count (:discard (get-corp)))) "Nanoetching Matrix trashed")
+          (is (= (:credit (get-corp)) (+ 2 new-credits)) "Gain 2c when runner trashes"))))))
+
 (deftest nasx
   ;; NASX
   (do-game
