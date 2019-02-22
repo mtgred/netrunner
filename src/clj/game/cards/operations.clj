@@ -646,25 +646,25 @@
                      state :corp
                      (str "uses Focus Group to choose " target " and reveal the Runner's Grip ( "
                           (join ", " (map :title (sort-by :title (:hand runner)))) " )"))
-                   (when (pos? numtargets)
+                   (if (pos? numtargets)
                      (continue-ability
                        state :corp
                        {:async true
                         :prompt "Pay how many credits?"
                         :choices {:number (req numtargets)}
                         :effect (req (let [c target]
-                                       (when (can-pay? state side (:title card) :credit c)
-                                         (pay state :corp card :credit c)
-                                         (continue-ability
-                                           state :corp
-                                           {:msg (msg "place " (quantify c " advancement token") " on "
-                                                      (card-str state target))
-                                            :choices {:req installed?}
-                                            :effect (effect (add-prop target :advance-counter c {:placed true})
-                                                            (effect-completed eid))}
-                                           card nil))))}
-                       card nil))
-                   (effect-completed state side eid)))}
+                                       (if (can-pay? state side (:title card) :credit c)
+                                         (do (pay state :corp card :credit c)
+                                             (continue-ability
+                                               state :corp
+                                               {:msg (msg "place " (quantify c " advancement token") " on "
+                                                          (card-str state target))
+                                                :choices {:req installed?}
+                                                :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                               card nil))
+                                         (effect-completed state side eid))))}
+                       card nil)
+                     (effect-completed state side eid))))}
 
    "Foxfire"
    {:trace {:base 7
