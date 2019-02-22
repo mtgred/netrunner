@@ -1428,6 +1428,28 @@
         (is (= "The top card of R&D is Hedge Fund" topcard)))
       (is (= 1 (count (:discard (get-runner))))))))
 
+(deftest supercorridor
+  ;; Supercorridor - may gain 2c at end of turn if corp and runner have same number of credits
+  (do-game
+    (new-game {:runner {:deck ["Supercorridor"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Supercorridor")
+    (take-credits state :runner)
+    (is (= (:credit (get-runner)) 4) "Do not gain credits if differing number of credits")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 3)
+    (take-credits state :runner)
+    (is (= (:credit (get-runner)) (:credit (get-corp))) "Corp and Runner have same number of credits")
+    (click-prompt state :runner "No")
+    (is (= (:credit (get-runner)) (:credit (get-corp))) "Number of credits did not change")
+    (take-credits state :corp)
+    (core/lose state :runner :credit 1)
+    (take-credits state :runner)
+    (is (= (:credit (get-runner)) (:credit (get-corp))) "Corp and Runner have same number of credits (2nd time)")
+    (let [credits (:credit (get-runner))]
+      (click-prompt state :runner "Yes")
+      (is (= (:credit (get-runner)) (+ 2 credits)) "Runner gained 2 credits"))))
+
 (deftest the-gauntlet
   (testing "Access additional cards on run on HQ, not with Gang Sign. Issue #2749"
     (do-game

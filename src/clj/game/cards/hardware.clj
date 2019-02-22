@@ -1202,6 +1202,28 @@
                  :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {})
                                  (trash card {:cause :ability-cost}))}]}
 
+   "Supercorridor"
+   {:in-play [:memory 2 :hand-size 1]
+    :events {:runner-turn-ends
+             {:req (req (= (:credit runner) (:credit corp)))
+              :async true
+              :effect (req (show-wait-prompt
+                             state :corp
+                             "Runner to decide if they will gain credits from Supercorridor")
+                           (continue-ability
+                             state :runner
+                             {:optional
+                              {:prompt "Gain credits from Supercorridor?"
+                               :player :runner
+                               :yes-ability {:msg "gain 2 [Credits]"
+                                             :effect (req (gain-credits state :runner 2)
+                                                          (clear-wait-prompt state :corp))}
+                               :no-ability {:effect (req (system-msg
+                                                           state :runner
+                                                           "chooses not to gain 2 [Credits] from Supercorridor")
+                                                         (clear-wait-prompt state :corp))}}}
+                             card nil))}}}
+
    "The Gauntlet"
    {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
     :in-play [:memory 2]
