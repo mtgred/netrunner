@@ -2028,7 +2028,7 @@
                                                        :effect (effect (breaker-strength-bonus 2))}}) card))}}
 
    "The Nihilist"
-   (let [has-2-virus-tokens? (req (<= 2 (+ (map #(get-counters % :virus) (get-all-installed state)))))
+   (let [has-2-virus-tokens? (req (<= 2 (number-of-virus-counters state)))
          corp-choice {:optional {:player :corp
                                  :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
                                  :async true
