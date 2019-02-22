@@ -21,7 +21,7 @@
  :side "Corp",
  :strength 6,
  :subtype "Barrier - Destroyer",
- :text "Hagen has -1 strength for each installed icebreaker.\n[subroutine]Trash 1 program that is not a fracter, killer, or decoder.\n[subroutine]End the run.",
+ :text "This ice has -1 strength for each installed <strong>icebreaker</strong>.\n[subroutine] Trash 1 program that is not a <strong>decoder</strong>, <strong>fracter</strong>, or <strong>killer</strong>.\n[subroutine] End the run.",
  :title "Hagen",
  :type "ICE",
  :uniqueness false}

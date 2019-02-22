@@ -19,7 +19,7 @@
  :set_code "df",
  :setname "Downfall",
  :side "Corp",
- :text "When Reduced Service is rezzed, you may pay up to 4[credit] to place that many power counters on it.\nAs an additional cost to make a run on this server, the Runner must pay 2[credit] for each hosted power counter.\nWhenever there is a successful run on a central server, remove 1 hosted power counter.",
+ :text "When you rez this upgrade, you may pay up to 4[credit] to place that many power counters on it.\ns an additional cost to run this server, the Runner must pay 2[credit] for each hosted power counter.\nWhenever the Runner makes a successful run on a central server, remove 1 hosted power counter.",
  :title "Reduced Service",
  :trash 2,
  :type "Upgrade",

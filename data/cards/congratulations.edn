@@ -21,7 +21,7 @@
  :side "Corp",
  :strength 3,
  :subtype "Code Gate - Advertisement",
- :text "When the Runner passes Congratulations!, gain 1[credit].\n[subroutine]Gain 2[credit]. The Runner gains 1[credit].",
+ :text "When the Runner passes this ice, gain 1[credit].\n[subroutine]Gain 2[credit]. The Runner gains 1[credit].",
  :title "Congratulations!",
  :type "ICE",
  :uniqueness false}

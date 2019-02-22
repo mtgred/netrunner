@@ -22,7 +22,7 @@
  :side "Runner",
  :strength 1,
  :subtype "Icebreaker - Killer",
- :text "1[credit]: +1 strength.\n1[credit]: Break one sentry subroutine.\nThe first time each turn you use Bukhgalter to break all subroutines on a piece of ice during a single encounter, gain 2[credit].",
+ :text "1[credit]: Break <strong>sentry</strong> subroutine.\n1[credit]: +1 strength.\nThe first time each turn that you break all subroutines on a piece of ice you are encountering using only this program, gain 2[credit].",
  :title "Bukhgalter",
  :type "Program",
  :uniqueness false}

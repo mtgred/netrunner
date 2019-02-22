@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Runner",
  :subtype "Connection",
- :text "Whenever a run is successful, you may trash Whistleblower to name an agenda. Until the end of the run, the first time you access the named agenda, immediately steal it, ignoring all additional costs.",
+ :text "Whenever you make a successful run, you may trash this resource to name an agenda. The next time this run you access a copy of the named agenda, steal it, ignoring all costs. <strong>(You are no longer accessing it.)</strong>",
  :title "Whistleblower",
  :type "Resource",
  :uniqueness true}

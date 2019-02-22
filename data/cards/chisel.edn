@@ -22,7 +22,7 @@
  :side "Runner",
  :strength 0,
  :subtype "Virus",
- :text "Install only on a piece of ice.\nHost ice has -1 strength for each hosted virus counter.\nWhen you encounter host ice, if its strength is 0 or less, trash it. Otherwise, place 1 virus counter on Chisel.",
+ :text "Install only on a piece of ice.\nHost ice has -1 strength for each hosted virus counter.\nWhen you encounter host ice, if its strength is 0 or less, trash it. Otherwise, place 1 virus counter on this program.",
  :title "Chisel",
  :type "Program",
  :uniqueness false}

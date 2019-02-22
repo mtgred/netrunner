@@ -20,8 +20,8 @@
  :setname "Downfall",
  :side "Corp",
  :strength 6,
- :subtype "Sentry - Tracer - Destroyer - Illicit",
- :text "When you rez Trebuchet, take 1 bad publicity.\n[subroutine] Trash 1 installed Runner card.\n[subroutine]<trace>trace 6</trace>: If successful, the Runner cannot steal or trash Corp cards for the remainder of this run.",
+ :subtype "Sentry - Illicit - Destroyer - Tracer",
+ :text "When you rez this ice, take 1 bad publicity.\n[subroutine] Trash 1 installed Runner card.\n[subroutine]<trace>trace 6</trace>: If successful, the Runner cannot steal or trash Corp cards for the remainder of the run.",
  :title "Trebuchet",
  :type "ICE",
  :uniqueness false}

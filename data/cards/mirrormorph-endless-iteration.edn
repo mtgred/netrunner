@@ -19,7 +19,7 @@
  :setname "Downfall",
  :side "Corp",
  :subtype "Division",
- :text "When the third action you take each turn is completed, if you took three different actions, you may gain 1[credit] or take another action you have not taken this turn, reducing its cost by [click].",
+ :text "If the first, second, and third actions you take on your turn are different from each other, when the third completes, you may gain 1[c] or take another different action, paying 1[click] less.",
  :title "MirrorMorph: Endless Iteration",
  :type "Identity",
  :uniqueness false}

@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Runner",
  :subtype "Console",
- :text "+2[mu].\nYour maximum hand size is increased by 1.\nWhen your turn ends, if you and the Corp have the same number of credits, you may gain 2[credit].\nLimit 1 console per player.",
+ :text "+2[mu]\nYou have +1 maximum hand size.\nWhen your turn ends, if you and the Corp have the same number of credits, you may gain 2[credit].\nLimit 1 <strong>console</strong> per player.",
  :title "Supercorridor",
  :type "Hardware",
  :uniqueness true}

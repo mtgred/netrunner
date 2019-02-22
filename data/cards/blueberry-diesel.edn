@@ -19,7 +19,7 @@
  :set_code "df",
  :setname "Downfall",
  :side "Runner",
- :text "Look at the top 2 cards of the stack. You may add one of those cards to the bottom of your stack. Draw 2 cards.",
+ :text "Look at the top 2 cards of your stack. You may add 1 of those cards to the bottom of your stack. Draw 2 cards.",
  :title "Blueberry Diesel",
  :type "Event",
  :uniqueness false}

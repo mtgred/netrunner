@@ -21,7 +21,7 @@
  :setname "Downfall",
  :side "Runner",
  :strength 0,
- :text "[click]: Make a run on R&D. If successful, instead of accessing cards, reveal the top 3 cards of R&D. Trash one of the revealed cards. Use this ability only once per turn.",
+ :text "[click]: Run R&D. If successful, instead of accessing cards, reveal the top 3 cards of R&D. Trash 1 of the revealed cards. Use this ability only once per turn.",
  :title "Stargate",
  :type "Program",
  :uniqueness false}

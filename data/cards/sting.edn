@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Corp",
  :subtype "Ambush",
- :text "When a player scores or steals Sting!, do 1 net damage, plus an additional net damage for each copy of Sting! in their opponent's score area.",
+ :text "When a player scores or steals this agenda, do X net damage. X is equal to the number of copies of Sting! in the other player’s score area plus 1.",
  :title "Sting!",
  :type "Agenda",
  :uniqueness false}

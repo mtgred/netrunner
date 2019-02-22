@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Runner",
  :subtype "Run",
- :text "Make a run. When that run ends unsuccessfully, you may make another run on the same server. When you encounter the last ice you encountered in the first run, bypass it.",
+ :text "Run any server. When that run ends, if it was unsuccessful, you may run that server again. During the second run, when you encounter the last ice you encountered in the first run, bypass it.",
  :title "Always Have a Backup Plan",
  :type "Event",
  :uniqueness false}

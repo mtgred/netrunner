@@ -18,7 +18,7 @@
  :set_code "df",
  :setname "Downfall",
  :side "Runner",
- :text "Add an installed program or piece of hardware to your grip. If you do, install a program or piece of hardware, lowering its install cost by the printed install cost of the uninstalled card.",
+ :text "Add an installed program or piece of hardware to your grip. If you do, you may install a program or piece of hardware, paying X[credit] less. X is equal to the printed install cost of the uninstalled card.",
  :title "Rejig",
  :type "Event",
  :uniqueness false}
