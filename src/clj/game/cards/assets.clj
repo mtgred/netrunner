@@ -1214,9 +1214,16 @@
 
    "Nanoetching Matrix"
    {:events {:runner-trash {:req (req (= (:cid card) (:cid target)))
-                            :msg "gain 2 [Credits]"
-                            :effect (req (gain-credits state :corp 2))}}
-   :abilities [{:cost [:click 1]
+                            :effect (effect (show-wait-prompt :runner "Corp to use Nanoetching Matrix")
+                                            (continue-ability
+                                              :corp
+                                              {:optional
+                                               {:prompt "Gain 2 [credits]?"
+                                                :yes-ability {:msg (msg "gain 2 [Credits]")
+                                                              :effect (effect (gain-credits :corp 2))}
+                                                :end-effect (effect (clear-wait-prompt :runner))}}
+                                              card nil))}}
+    :abilities [{:cost [:click 1]
                  :once :per-turn
                  :msg "gain 2 [Credits]"
                  :effect (effect (gain-credits 2))}]}

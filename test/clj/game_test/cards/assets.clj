@@ -2380,7 +2380,8 @@
         (run-empty-server state :remote1)
         (let [new-credits (:credit (get-corp))]
           (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
-          (click-prompt state :runner "Pay 2 [Credits] to trash")
+          (click-prompt state :runner "Pay 3 [Credits] to trash")
+          (click-prompt state :corp "Yes")
           (is (= 1 (count (:discard (get-corp)))) "Nanoetching Matrix trashed")
           (is (= (:credit (get-corp)) (+ 2 new-credits)) "Gain 2c when runner trashes"))))))
 
