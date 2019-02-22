@@ -927,6 +927,42 @@
         (is (zero? (count (:scored (get-runner)))) "Fan Site successfully forfeit to Data Dealer")
         (is (= (+ credits 9) (:credit (get-runner))) "Gained 9 credits from Data Dealer")))))
 
+(deftest fencer-fueno
+  ;; Fencer Fueno - Gain 1c on start of turn or agenda steal. Pay 1c or trash if >= 3c at end of turn
+  (do-game
+    (new-game {:corp {:deck ["Hostile Takeover" "PAD Campaign"]}
+               :runner {:deck ["Fencer Fueno"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fencer Fueno")
+    (let [ff (get-resource state 0)]
+      (is (zero? (get-counters (refresh ff) :credit)) "Fencer starts with 0 credits")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (is (= 1 (get-counters (refresh ff) :credit)) "Fencer gains 1c for stealing agenda")
+      (run-empty-server state "Archives")
+      (is (= 1 (get-counters (refresh ff) :credit)) "Fencer doesn't gain 1c when no agenda stolen")
+      (core/add-counter state :runner (refresh ff) :credit 10)
+      (is (= 11 (get-counters (refresh ff) :credit)) "Fencer counters added")
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "Server 1")
+        (card-ability state :runner ff 0)
+        (card-ability state :runner ff 0)
+        (click-prompt state :runner "Pay 4 [Credits] to trash")
+        (is (= 9 (get-counters (refresh ff) :credit)) "Spent 2c from Fencer")
+        (is (= (:credit (get-runner)) (- credits 2)) "Used credits from Fencer for trash")
+        (take-credits state :runner)
+        (click-prompt state :runner "Pay 1 [Credits]")
+        (is (= (:credit (get-runner)) (- credits 3)) "Paid 1c to not trash Fencer")
+        (is (not-empty (get-resource state)) "Fencer not trashed")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (let [latest-credits (:credit (get-runner))]
+          (click-prompt state :runner "Trash")
+          (is (= (:credit (get-runner)) latest-credits) "Didn't pay to trash Fencer")
+          (is (empty (get-resource state)) "Fencer not installed")
+          (is (not-empty (:discard (get-runner))) "Fencer trashed"))))))
+
 (deftest fester
   ;; Fester - Corp loses 2c (if able) when purging viruses
   (do-game
