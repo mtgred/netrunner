@@ -1599,6 +1599,19 @@
                  :effect (effect (trash card {:cause :ability-cost})
                                  (damage eid :net 3 {:card card}))}]}
 
+   "Roughneck Repair Squad"
+   {:abilities [{:label "Gain 6 [Credits], may remove 1 bad publicity"
+                 :cost [:click 3]
+                 :msg "gain 6 [Credits]"
+                 :effect (effect (gain-credits 6)
+                                 (continue-ability
+                                   {:optional {:req (req (pos? (:bad-publicity corp)))
+                                               :player :corp
+                                               :prompt "Remove 1 bad publicity?"
+                                               :yes-ability {:msg "remove 1 bad publicity"
+                                                             :effect (effect (lose :bad-publicity 1))}}}
+                                   card nil))}]}
+
    "Sandburg"
    {:effect (req (add-watch state :sandburg
                             (fn [k ref old new]
