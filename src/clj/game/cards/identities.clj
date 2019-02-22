@@ -366,15 +366,14 @@
    "Earth Station: On the Grid"
    {:events {:pre-first-turn {:req (req (= side :corp))
                               :effect (effect (update! (assoc card :flipped false)))}}
-    :abilities [{:cost [:click 1]
-                 :msg "flip their ID"
+    :abilities [{:msg "flip their ID"
                  :effect (effect (update! (if (:flipped card)
                                             (assoc card
                                                    :flipped false
-                                                   :code "26087")
+                                                   :code (subs (:code card) 0 5))
                                             (assoc card
                                                    :flipped true
-                                                   :code "26087flip"))))}]}
+                                                   :code (str (subs (:code card) 0 5) "flip")))))}]}
 
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:once :per-turn
@@ -565,10 +564,10 @@
                  :effect (effect (update! (if (:flipped card)
                                             (assoc card
                                                    :flipped false
-                                                   :code "26096")
+                                                   :code (subs (:code card) 0 5))
                                             (assoc card
                                                    :flipped true
-                                                   :code "26096flip"))))}]}
+                                                   :code (str (subs (:code card) 0 5) "flip")))))}]}
 
    "Iain Stirling: Retired Spook"
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
