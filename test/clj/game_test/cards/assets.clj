@@ -2814,6 +2814,21 @@
       (is (not (get-content state :remote1)) "Psychic Field trashed by Neutralize All Threats")
       (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
 
+(deftest public-health-portal
+  (do-game
+    (new-game {:corp {:deck ["Public Health Portal" "Aiki" "Ben Musashi" "Celebrity Gift"]}})
+    (play-from-hand state :corp "Public Health Portal" "New remote")
+    (core/move state :corp (find-card "Aiki" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Ben Musashi" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Celebrity Gift" (:hand (get-corp))) :deck)
+    (is (-> @state :corp :hand count zero?))
+    (let [php (get-content state :remote1 0)]
+      (core/rez state :corp php)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (last-log-contains? state "Aiki") "Public Health Portal should reveal Aiki")
+      (is (= "Ben Musashi" (-> @state :corp :deck first :title)) "Top card in R&D should be Ben Musashi"))))
+
 (deftest public-support
   ;; Public support scoring and trashing
   ;; TODO could also test for NOT triggering "when scored" events
