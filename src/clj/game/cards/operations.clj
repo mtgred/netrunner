@@ -703,6 +703,27 @@
      {:async true
       :effect (effect (continue-ability (fhelper 1) card nil))})
 
+   "Fully Operational"
+   (letfn [(repeat-choice [current total]
+             ;; if current > total, this ability will auto-resolve and finish the chain of async methods.
+             (when (<= current total)
+               {:async true
+                :prompt (str "Choice " current " of " total ": Gain 2 [Credits] or draw 2 cards? ")
+                :choices ["Gain 2 [Credits]" "Draw 2 cards"]
+                :effect (req (if (= target "Gain 2 [Credits]")
+                               (do (gain state :corp :credit 2)
+                                   (continue-ability state side (repeat-choice (inc current) total)
+                                                     card nil))
+                               (wait-for (draw state :corp 2 nil) ; don't proceed with the next choice until the draw is done
+                                         (continue-ability state side (repeat-choice (inc current) total)
+                                                           card nil))))}))]
+     {:async true
+      :effect (req (let [full-servers (filter #(and (not-empty (:content %))
+                                                    (not-empty (:ices %)))
+                                              (vals (get-remotes state)))]
+                     (continue-ability state side (repeat-choice 1 (inc (count full-servers)))
+                                       card nil)))})
+
    "Game Changer"
    {:effect (req (gain state side :click (count (:scored runner)))
                  (move state side (first (:play-area corp)) :rfg))}

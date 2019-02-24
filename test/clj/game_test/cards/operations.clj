@@ -930,6 +930,39 @@
     (click-card state :corp (get-resource state 0))
     (is (= 2 (-> (get-runner) :discard count)) "Corp should trash Ice Carver from winning Foxfire trace")))
 
+(deftest fully-operational
+  ;; Fully Operational
+  (testing "Gain 2 credits"
+    (do-game
+      (new-game {:corp {:deck ["Fully Operational"]}})
+      (play-from-hand state :corp "Fully Operational")
+      (is (= 4 (:credit (get-corp))) "Cost 1 credit to play")
+      (click-prompt state :corp "Gain 2 [Credits]")
+      (is (= 6 (:credit (get-corp))) "Corp gained 2 credits")
+      (is (empty? (:prompt (get-corp))) "No lingering prompt after making single choice")))
+  (testing "Draw 2 cards"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3) "Fully Operational"]}})
+      (starting-hand state :corp ["Fully Operational"])
+      (play-from-hand state :corp "Fully Operational")
+      (click-prompt state :corp "Draw 2 cards")
+      (is (= 2 (count (:hand (get-corp)))) "Corp drew 2 cards")
+      (is (empty? (:prompt (get-corp))) "No lingering prompt after making single choice")))
+  (testing "Extra choices from remote servers"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Breaker Bay Grid" 2) "Fully Operational"]}})
+      (core/gain state :corp :click 5)
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (play-from-hand state :corp "Breaker Bay Grid" "Server 1")
+      (play-from-hand state :corp "Breaker Bay Grid" "Server 2")
+      (play-from-hand state :corp "Fully Operational")
+      (dotimes [_ 3]
+        (click-prompt state :corp "Gain 2 [Credits]"))
+      (is (= 10 (:credit (get-corp))) "Corp gained 6 credits")
+      (is (empty? (:prompt (get-corp))) "No lingering prompt after making repeated choices"))))
+
 (deftest game-changer
   (letfn [(game-changer-test [num-agenda]
             (do-game
