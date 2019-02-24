@@ -861,6 +861,54 @@
       (is (= (- credits 2) (:credit (get-corp))) "Corp should pay 2 credits to install third Ice Wall")
       (is (empty? (:prompt (get-corp))) "Corp should be able to stop installing early"))))
 
+(deftest focus-group
+  ;; Focus Group
+  (testing "Regular scenario - can afford"
+    (do-game
+      (new-game {:corp {:deck ["Focus Group" "Enigma"]}
+                 :runner {:deck ["Sure Gamble" "Dirty Laundry" "Corroder" "Datasucker" "Turntable"]}})
+      (play-from-hand state :corp "Focus Group")
+      (is (not (= "Focus Group" (-> (get-corp) :discard first :title))) "Runner didn't steal an agenda last turn")
+      (take-credits state :corp)
+      (run-empty-server state :rd)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Focus Group")
+      (click-prompt state :corp "Event")
+      (is (= 5 (:credit (get-corp))))
+      (click-prompt state :corp "2")
+      (is (= 3 (:credit (get-corp))))
+      (let [enigma (get-ice state :hq 0)]
+        (is (zero? (get-counters (refresh enigma) :advancement)))
+        (click-card state :corp enigma)
+        (is (= 2 (get-counters (refresh enigma) :advancement))))))
+  (testing "0 valid targets, gracefully end"
+    (do-game
+      (new-game {:corp {:deck ["Focus Group"]}
+                 :runner {:deck ["Sure Gamble" "Dirty Laundry" "Corroder" "Datasucker" "Black Orchestra"]}
+                 :options {:start-as :runner}})
+      (run-empty-server state :rd)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Focus Group")
+      (is (= 5 (:credit (get-corp))))
+      (click-prompt state :corp "Hardware")
+      (is (empty? (:prompt (get-corp))) "No hardware in Runner's Grip so just end the interaction")
+      (is (= 5 (:credit (get-corp))))))
+  (testing "Can't afford to pay to place advancement tokens, gracefully end"
+    (do-game
+      (new-game {:corp {:deck ["Focus Group"]}
+                 :runner {:deck ["Liberated Account" "Daily Casts" "Bhagat" "Datasucker" "Turntable"]}
+                 :options {:start-as :runner}})
+      (run-empty-server state :rd)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Focus Group")
+      (click-prompt state :corp "Resource")
+      (core/lose state :corp :credit 3)
+      (is (= 2 (:credit (get-corp))))
+      (click-prompt state :corp "3") ;; want to place 3 advancement tokens
+      (is (empty? (:prompt (get-corp))) "Corp can't afford to pay so just end the interaction")
+      (is (= 2 (:credit (get-corp))) "Didn't pay to place advancement tokens"))))
+
 (deftest foxfire
   ;; Foxfire
   (do-game

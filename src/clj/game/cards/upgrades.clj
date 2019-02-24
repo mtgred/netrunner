@@ -547,6 +547,25 @@
                               :async true
                               :effect (effect (damage eid :net 1 {:card card}))}}}
 
+   "Increased Drop Rates"
+   {:flags {:rd-reveal (req true)}
+    :access {:interactive (req true)
+             :effect (effect (show-wait-prompt :corp "Runner to decide if they will take 1 tag")
+                             (continue-ability
+                               {:optional
+                                {:player :runner
+                                 :prompt "Take 1 tag to prevent Corp from removing 1 bad publicity?"
+                                 :yes-ability {:async true
+                                               :effect (req (gain-tags state :runner eid 1 {:unpreventable true})
+                                                            (system-msg
+                                                              state :runner
+                                                              "takes 1 tag to prevent Corp from removing 1 bad publicity"))}
+                                 :no-ability {:msg "remove 1 bad publicity"
+                                              :effect (effect (lose :corp :bad-publicity 1))}
+                                 :end-effect (effect (clear-wait-prompt :corp)
+                                                     (effect-completed eid))}}
+                               card nil))}}
+
    "Intake"
    {:flags {:rd-reveal (req true)}
     :access {:req (req (not= (first (:zone card)) :discard))

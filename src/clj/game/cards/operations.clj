@@ -218,7 +218,7 @@
      {:async true
       :req (req (not-empty (all-active-installed state :runner)))
       :prompt "Choose a card type"
-      :choices ["Resource" "Hardware" "Program"]
+      :choices ["Hardware" "Program" "Resource"]
       :effect (req (let [t target
                          n (num-installed state t)]
                      (show-wait-prompt state :corp "Runner to choose cards to trash")
@@ -634,6 +634,37 @@
                        state side
                        {:effect (effect (lose-credits :runner (* rcount 2)))
                         :msg (msg "make the Runner lose " (* rcount 2) " [Credits]")} card nil))))}
+
+   "Focus Group"
+   {:req (req (last-turn? state :runner :successful-run))
+    :async true
+    :prompt "Choose a card type"
+    :choices ["Event" "Hardware" "Program" "Resource"]
+    :effect (req (let [type target
+                       numtargets (count (filter #(= type (:type %)) (:hand runner)))]
+                   (system-msg
+                     state :corp
+                     (str "uses Focus Group to choose " target " and reveal the Runner's Grip ( "
+                          (join ", " (map :title (sort-by :title (:hand runner)))) " )"))
+                   (if (pos? numtargets)
+                     (continue-ability
+                       state :corp
+                       {:async true
+                        :prompt "Pay how many credits?"
+                        :choices {:number (req numtargets)}
+                        :effect (req (let [c target]
+                                       (if (can-pay? state side (:title card) :credit c)
+                                         (do (pay state :corp card :credit c)
+                                             (continue-ability
+                                               state :corp
+                                               {:msg (msg "place " (quantify c " advancement token") " on "
+                                                          (card-str state target))
+                                                :choices {:req installed?}
+                                                :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                               card nil))
+                                         (effect-completed state side eid))))}
+                       card nil)
+                     (effect-completed state side eid))))}
 
    "Foxfire"
    {:trace {:base 7
