@@ -1829,8 +1829,7 @@
                                         state side :corp-trash
                                         #(= (:faction (:identity runner)) (:faction (first %)))))
                             :effect (effect (system-msg :corp "adds 1 power counter on Storgotic Resonator")
-                                            (add-counter card :power 1))}
-               }}
+                                            (add-counter card :power 1))}}}
 
    "Student Loans"
    {:events {:pre-play-instant
