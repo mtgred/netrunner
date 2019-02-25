@@ -203,6 +203,29 @@
     (run-empty-server state :hq)
     (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
 
+(deftest ^:skip-card-coverage companions
+  ;; Fencer Fueno, Mystic Maemi, Trickster Taka:
+  ;; Gain 1c on start of turn or agenda steal
+  (letfn [(companion-test [card]
+            (do-game
+              (new-game {:corp {:hand ["Hostile Takeover"]}
+                         :runner {:hand [card]}})
+              (play-from-hand state :corp "PAD Campaign" "New remote")
+              (take-credits state :corp)
+              (play-from-hand state :runner card)
+              (let [cc (get-resource state 0)
+                    counters (get-counters (refresh cc) :credit)] ;; cc for companion card
+                (is (zero? (get-counters (refresh cc) :credit)) "Companion starts with 0 credits")
+                (run-empty-server state "HQ")
+                (click-prompt state :runner "Steal")
+                (is (= (inc counters) (get-counters (refresh cc) :credit)) "Companion gains 1c for stealing agenda")
+                (run-empty-server state "Archives")
+                (is (= (inc counters) (get-counters (refresh cc) :credit)) "Companion doesn't gain 1c when no agenda stolen"))))]
+    (doall (map companion-test
+                ["Fencer Fueno"
+                 "Mystic Maemi"
+                 "Trickster Taka"]))))
+
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
   (do-game
@@ -928,40 +951,39 @@
         (is (= (+ credits 9) (:credit (get-runner))) "Gained 9 credits from Data Dealer")))))
 
 (deftest fencer-fueno
-  ;; Fencer Fueno - Gain 1c on start of turn or agenda steal. Pay 1c or trash if >= 3c at end of turn
+  ;; Fencer Fueno - Companion, credits usable only during successful runs (after accessing server)
   (do-game
-    (new-game {:corp {:deck ["Hostile Takeover" "PAD Campaign"]}
-               :runner {:deck ["Fencer Fueno"]}})
+    (new-game {:corp {:hand ["Hostile Takeover" "PAD Campaign"]}
+               :runner {:hand ["Fencer Fueno"]}})
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Fencer Fueno")
     (let [ff (get-resource state 0)]
-      (is (zero? (get-counters (refresh ff) :credit)) "Fencer starts with 0 credits")
-      (run-empty-server state "HQ")
-      (click-prompt state :runner "Steal")
-      (is (= 1 (get-counters (refresh ff) :credit)) "Fencer gains 1c for stealing agenda")
-      (run-empty-server state "Archives")
-      (is (= 1 (get-counters (refresh ff) :credit)) "Fencer doesn't gain 1c when no agenda stolen")
-      (core/add-counter state :runner (refresh ff) :credit 10)
-      (is (= 11 (get-counters (refresh ff) :credit)) "Fencer counters added")
+      (core/add-counter state :runner (refresh ff) :credit 4)
+      (is (= 4 (get-counters (refresh ff) :credit)) "Fencer counters added")
+      (let [credits (:credit (get-runner))
+            counters (get-counters (refresh ff) :credit)]
+        (run-on state "Server 1")
+        (card-ability state :runner ff 0)
+        (is (= credits (:credit (get-runner))) "Can't use credits on Fencer before a successul run")
+        (run-successful state)
+        (card-ability state :runner ff 0)
+        (is (= (dec counters) (get-counters (refresh ff) :credit)) "Spent 1c from Fencer")
+        (is (= (inc credits) (:credit (get-runner))) "Used credits from Fencer for trash")
+        (click-prompt state :runner "Pay 4 [Credits] to trash"))
+        (take-credits state :runner)
       (let [credits (:credit (get-runner))]
-        (run-empty-server state "Server 1")
-        (card-ability state :runner ff 0)
-        (card-ability state :runner ff 0)
-        (click-prompt state :runner "Pay 4 [Credits] to trash")
-        (is (= 9 (get-counters (refresh ff) :credit)) "Spent 2c from Fencer")
-        (is (= (:credit (get-runner)) (- credits 2)) "Used credits from Fencer for trash")
-        (take-credits state :runner)
         (click-prompt state :runner "Pay 1 [Credits]")
-        (is (= (:credit (get-runner)) (- credits 3)) "Paid 1c to not trash Fencer")
-        (is (not-empty (get-resource state)) "Fencer not trashed")
+        (is (= (dec credits) (:credit (get-runner))) "Paid 1c to not trash Fencer")
+        (is (refresh ff) "Fencer not trashed")
+        (is (not (find-card "Fencer Fueno" (:discard (get-runner)))) "Fencer not in discard yet")
         (take-credits state :corp)
-        (take-credits state :runner)
-        (let [latest-credits (:credit (get-runner))]
-          (click-prompt state :runner "Trash")
-          (is (= (:credit (get-runner)) latest-credits) "Didn't pay to trash Fencer")
-          (is (empty (get-resource state)) "Fencer not installed")
-          (is (not-empty (:discard (get-runner))) "Fencer trashed"))))))
+        (take-credits state :runner))
+      (let [credits (:credit (get-runner))]
+        (click-prompt state :runner "Trash")
+        (is (= credits (:credit (get-runner))) "Didn't pay to trash Fencer")
+        (is (nil? (refresh ff)) "Fencer not installed")
+        (is (find-card "Fencer Fueno" (:discard (get-runner))) "Fencer trashed")))))
 
 (deftest fester
   ;; Fester - Corp loses 2c (if able) when purging viruses
@@ -1719,6 +1741,41 @@
           (click-card state :corp toll)
           (is (:rezzed (refresh toll)) "Tollbooth was rezzed")
           (is (zero? (:credit (get-corp))) "Corp has 0 credits"))))))
+
+(deftest mystic-maemi
+  ;; Mystic Maemi - Companion, credits usable not during runs (technically for events)
+  (do-game
+    (new-game {:corp {:hand ["Hostile Takeover" "PAD Campaign"]}
+               :runner {:hand [(qty "Sure Gamble" 2) "Mystic Maemi"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Mystic Maemi")
+    (let [mm (get-resource state 0)]
+      (core/add-counter state :runner (refresh mm) :credit 4)
+      (is (= 4 (get-counters (refresh mm) :credit)) "Maemi counters added")
+      (let [counters (get-counters (refresh mm) :credit)
+            credits (:credit (get-runner))
+            hand (count (:hand (get-runner)))]
+        (run-empty-server state "Server 1")
+        (card-ability state :runner mm 0)
+        (is (= counters (get-counters (refresh mm) :credit)) "Can't use credits on Maemi during runs")
+        (is (= credits (:credit (get-runner))))
+        (click-prompt state :runner "No action")
+        (card-ability state :runner mm 0)
+        (is (= (dec counters) (get-counters (refresh mm) :credit)) "Can use credits on Maemi during Action Phase")
+        (is (= (inc credits) (:credit (get-runner))))
+        (take-credits state :runner)
+        (click-prompt state :runner "Suffer 1 meat damage")
+        (is (= (dec hand) (count (:hand (get-runner)))) "Suffered 1 meat damage to not trash Maemi")
+        (is (refresh mm) "Maemi not trashed")
+        (is (not (find-card "Mystic Maemi" (:discard (get-runner)))) "Maemi not in discard yet"))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (let [hand (count (:hand (get-runner)))]
+        (click-prompt state :runner "Trash")
+        (is (= hand (count (:hand (get-runner)))) "Didn't pay to trash Maemi")
+        (is (nil? (refresh mm)) "Maemi not installed")
+        (is (find-card "Mystic Maemi" (:discard (get-runner))) "Maemi trashed")))))
 
 (deftest net-mercur
   ;; Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used
@@ -3080,6 +3137,44 @@
       (click-card state :runner "Corroder")
       (is (zero? (:credit (get-runner))) "Runner paid one less to install")
       (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed"))))
+
+(deftest trickster-taka
+  ;; Trickster Taka - Companion, credits spendable on programs during runs (not during access)
+  (do-game
+    (new-game {:corp {:hand ["Hostile Takeover" "PAD Campaign"]}
+               :runner {:hand ["Trickster Taka"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Trickster Taka")
+    (let [tt (get-resource state 0)]
+      (core/add-counter state :runner (refresh tt) :credit 4)
+      (is (= 4 (get-counters (refresh tt) :credit)) "Taka counters added")
+      (let [credits (:credit (get-runner))
+            counters (get-counters (refresh tt) :credit)]
+        (run-on state "Server 1")
+        (card-ability state :runner tt 0)
+        (is (= (dec counters) (get-counters (refresh tt) :credit)) "Spent 1c from Taka during a run")
+        (is (= (inc credits) (:credit (get-runner)))))
+      (let [tags (count-tags state)
+            credits (:credit (get-runner))
+            counters (get-counters (refresh tt) :credit)]
+        (run-successful state)
+        (card-ability state :runner tt 0)
+        (is (= counters (get-counters (refresh tt) :credit)) "Can't spend credits on Taka once run is successful")
+        (is (= credits (:credit (get-runner))))
+        (click-prompt state :runner "No action")
+        (take-credits state :runner)
+        (click-prompt state :runner "Take 1 tag")
+        (is (= (inc tags) (count-tags state)) "Took 1 tag to not trash Taka")
+        (is (refresh tt) "Taka not trashed")
+        (is (not (find-card "Trickster Taka" (:discard (get-runner)))) "Taka not in discard yet"))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (let [tags (count-tags state)]
+        (click-prompt state :runner "Trash")
+        (is (= tags (count-tags state)) "Didn't pay to trash Taka")
+        (is (nil? (refresh tt)) "Taka not installed")
+        (is (find-card "Trickster Taka" (:discard (get-runner))) "Taka trashed")))))
 
 (deftest tri-maf-contact
   ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
