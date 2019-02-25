@@ -846,7 +846,7 @@
                (:successful run)))
      (effect (show-wait-prompt :corp "Runner to take decision on Fencer Fueno")
              (continue-ability
-               {:prompt (msg "Pay 1 [Credits] or trash Fencer Fueno?")
+               {:prompt "Pay 1 [Credits] or trash Fencer Fueno?"
                 :choices (req (if (can-pay? state :runner nil :credit 1)
                                 ["Pay 1 [Credits]" "Trash"]
                                 ["Trash"]))
@@ -1349,10 +1349,11 @@
 
    "Mystic Maemi"
    (companion-builder
-     (req (not run))
+     (req (and (pos? (get-counters (get-card state card) :credit))
+               (not run)))
      (effect (show-wait-prompt :corp "Runner to take decision on Mystic Maemi")
              (continue-ability
-               {:prompt (msg "Suffer 1 meat damage or trash Mystic Maemi?")
+               {:prompt "Suffer 1 meat damage or trash Mystic Maemi?"
                 :choices ["Suffer 1 meat damage" "Trash"]
                 :player :runner
                 :async true
@@ -2194,10 +2195,13 @@
 
    "Trickster Taka"
    (companion-builder
-     (req run)
+     (req (and (pos? (get-counters (get-card state card) :credit))
+               run
+               (not (:successful run))
+               (not (:unsuccessful run))))
      (effect (show-wait-prompt :corp "Runner to take decision on Trickster Taka")
              (continue-ability
-               {:prompt (msg "Take 1 tag or trash Trickster Taka?")
+               {:prompt "Take 1 tag or trash Trickster Taka?"
                 :choices ["Take 1 tag" "Trash"]
                 :player :runner
                 :async true
