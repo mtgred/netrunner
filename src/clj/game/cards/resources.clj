@@ -57,6 +57,26 @@
        (filter #(starts-with? % "[subroutine]"))
        count))
 
+(defn companion-builder
+  "Ability-req says when it can be used. turn-ends-effect defines what happens,
+  and requires `effect-completed`."
+  ([ability-req turn-ends-effect]
+   (companion-builder
+     ability-req
+     turn-ends-effect
+     {:msg "take 1 [Credits]"
+      :effect (effect (add-counter card :credit -1)
+                      (gain-credits 1))}))
+  ([ability-req turn-ends-effect ability]
+   (let [place-credit {:msg "add 1 [Credits] to itself"
+                       :effect (effect (add-counter card :credit 1))}]
+     {:events {:runner-turn-begins place-credit
+               :agenda-stolen place-credit
+               :runner-turn-ends {:req (req (<= 3 (get-counters (get-card state card) :credit)))
+                                  :async true
+                                  :effect turn-ends-effect}}
+      :abilities [(assoc ability :req ability-req)]})))
+
 ;;; Card definitions
 (def card-definitions
   {"Aaron Marrón"
@@ -821,36 +841,28 @@
                              :effect (req (as-agenda state :runner eid card 0))}}}
 
    "Fencer Fueno"
-   (let [place-credit {:msg "add 1 [Credits] to itself"
-                       :effect (effect (add-counter card :credit 1))}
-         credit-count (fn [state card] (get-counters (get-card state card) :credit))]
-     {:events {:runner-turn-begins place-credit
-               :agenda-stolen place-credit
-               :runner-turn-ends
-               {:req (req (>= (credit-count state card) 3))
-                :async true
-                :effect (req (show-wait-prompt state :corp "Runner to take decision on Fencer Fueno")
-                             (continue-ability
-                               state side
-                               {:prompt (msg "Pay 1 [Credits] or trash Fencer Fueno?")
-                                :choices (req (if (can-pay? state :runner nil :credit 1)
-                                                ["Pay 1 [Credits]" "Trash"]
-                                                ["Trash"]))
-                                :player :runner
-                                :effect (req (if (= target "Trash")
-                                               (do
-                                                 (trash state :runner card)
-                                                 (system-msg state :runner "trashes Fencer Fueno"))
-                                               (do
-                                                 (pay state :runner card :credit 1)
-                                                 (system-msg state :runner "pays 1 [Credits] to avoid trashing Fencer Fueno")))
-                                             (clear-wait-prompt state :corp))}
-                               card nil))}}
-      :abilities [{:req (req (and (pos? (credit-count state card))
-                                  (:successful run)))
-                   :msg "take 1 [Credits]"
-                   :effect (effect (add-counter card :credit -1)
-                                   (gain-run-credits 1))}]})
+   (companion-builder
+     (req (and (pos? (get-counters (get-card state card) :credit))
+               (:successful run)))
+     (effect (show-wait-prompt :corp "Runner to take decision on Fencer Fueno")
+             (continue-ability
+               {:prompt (msg "Pay 1 [Credits] or trash Fencer Fueno?")
+                :choices (req (if (can-pay? state :runner nil :credit 1)
+                                ["Pay 1 [Credits]" "Trash"]
+                                ["Trash"]))
+                :player :runner
+                :effect (req (if (= target "Trash")
+                               (do
+                                 (trash state :runner card)
+                                 (system-msg state :runner "trashes Fencer Fueno"))
+                               (do
+                                 (pay state :runner card :credit 1)
+                                 (system-msg state :runner "pays 1 [Credits] to avoid trashing Fencer Fueno")))
+                             (clear-wait-prompt state :corp))}
+               card nil))
+     {:msg "take 1 [Credits]"
+      :effect (effect (add-counter card :credit -1)
+                      (gain-run-credits 1))})
 
    "Fester"
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"
@@ -1334,6 +1346,26 @@
                       card nil))
     :abilities [{:msg "draw 1 card"
                  :effect (effect (trash card {:cause :ability-cost}) (draw))}]}
+
+   "Mystic Maemi"
+   (companion-builder
+     (req (not run))
+     (effect (show-wait-prompt :corp "Runner to take decision on Mystic Maemi")
+             (continue-ability
+               {:prompt (msg "Suffer 1 meat damage or trash Mystic Maemi?")
+                :choices ["Suffer 1 meat damage" "Trash"]
+                :player :runner
+                :async true
+                :effect (req (clear-wait-prompt state :corp)
+                             (if (= target "Trash")
+                               (do
+                                 (trash state :runner card)
+                                 (system-msg state :runner "trashes Mystic Maemi")
+                                 (effect-completed state side eid))
+                               (do
+                                 (system-msg state :runner "suffer 1 meat damage to avoid trashing Mystic Maemi")
+                                 (damage state :runner eid :meat 1 {:card card}))))}
+               card nil)))
 
    "Net Mercur"
    {:abilities [{:counter-cost [:credit 1]
@@ -2159,6 +2191,26 @@
                   :cancel-effect (effect (effect-completed eid))}]
      {:events {:runner-lose-tag (assoc ability :req (req (and (first-event-check state first-event? no-event?) (= side :runner))))
                :runner-prevent (assoc ability :req (req (and (first-event-check state no-event? first-event?) (seq (filter #(some #{:tag} %) targets)))))}})
+
+   "Trickster Taka"
+   (companion-builder
+     (req run)
+     (effect (show-wait-prompt :corp "Runner to take decision on Trickster Taka")
+             (continue-ability
+               {:prompt (msg "Take 1 tag or trash Trickster Taka?")
+                :choices ["Take 1 tag" "Trash"]
+                :player :runner
+                :async true
+                :effect (req (clear-wait-prompt state :corp)
+                             (if (= target "Trash")
+                               (do
+                                 (trash state :runner card)
+                                 (system-msg state :runner "trashes Trickster Taka")
+                                 (effect-completed state side eid))
+                               (do
+                                 (system-msg state :runner "takes 1 tag to avoid trashing Trickster Taka")
+                                 (gain-tags state :runner eid 1))))}
+               card nil)))
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
