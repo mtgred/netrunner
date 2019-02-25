@@ -98,6 +98,29 @@
       (is (= (+ 4 3) (:credit (get-runner))) "Gained 3 credits when trashing Bankroll")
       (is (= 1 (-> (get-runner) :discard count)) "Bankroll was trashed"))))
 
+(deftest chisel
+  ;; Chisel
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Chisel"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Chisel")
+    (click-card state :runner "Ice Wall")
+    (let [iw (get-ice state :hq 0)
+          chisel (first (:hosted (refresh iw)))]
+      (run-on state "HQ")
+      (core/rez state :corp iw)
+      (is (zero? (get-counters (refresh chisel) :virus)))
+      (core/no-action state :corp nil)
+      (is (= 1 (get-counters (refresh chisel) :virus)))
+      (is (refresh iw) "Ice Wall still around, just at 0 strength")
+      (core/jack-out state :runner nil)
+      (run-on state "HQ")
+      (core/no-action state :corp nil)
+      (is (nil? (refresh iw)) "Ice Wall should be trashed")
+      (is (nil? (refresh chisel)) "Chisel should likewise be trashed"))))
+
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
   (testing "Trash and cash out"

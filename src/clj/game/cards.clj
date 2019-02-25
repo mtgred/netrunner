@@ -207,6 +207,11 @@
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
 
+(defmacro get-strength
+  [card]
+  `(or (:current-strength ~card)
+       (:strength ~card)))
+
 ;; Load all card data and definitions into the current namespace.
 (defn reset-card-data
   []

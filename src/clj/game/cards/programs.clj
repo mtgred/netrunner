@@ -123,6 +123,21 @@
               :effect (effect (update-all-advancement-costs))}
              :purge {:effect (effect (update-all-advancement-costs))}}}
 
+   "Chisel"
+   {:hosting {:req (every-pred ice? can-host?)}
+    :events {:counter-added {:req (req (or (= (:cid target) (:cid card))
+                                           (= (:title target) "Hivemind")))
+                             :effect (effect (update-ice-strength (:host card)))}
+             :pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
+                                :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}
+             :encounter-ice {:req (req (= (:cid target) (:cid (:host card))))
+                             :msg (msg (if (zero? (get-strength target))
+                                         (str "trash " (card-str state target))
+                                         (str "place 1 virus counter on " (card-str state card))))
+                             :effect (req (if (zero? (get-strength target))
+                                            (trash state side target)
+                                            (add-counter state side card :virus 1)))}}}
+
    "Cloak"
    {:recurring 1}
 
