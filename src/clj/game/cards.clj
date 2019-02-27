@@ -212,7 +212,7 @@
   {:label (str "Toggle auto-resolve on " ability-name)
    :prompt (str "Set auto-resolve on " ability-name " to:")
    :choices ["Always" "Never" "Ask"]
-   :effect (effect (update! (update-in card [:special toggle-kw] (fn [x] (keyword (clojure.string/lower-case target)))))
+   :effect (effect (update! (update-in card [:special toggle-kw] (fn [x] (keyword (lower-case target)))))
                    (toast (str "From now on, " ability-name " will "
                                ({:always "always" :never "never" :ask "ask whether it should"}
                                 (get-in (get-card state card) [:special toggle-kw]))
