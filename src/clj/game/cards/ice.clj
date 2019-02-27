@@ -2354,14 +2354,14 @@
                    :effect (req (trash state side eid target {:cause :subroutine}))}
                   (trace-ability 6 {:label "The Runner cannot steal or trash Corp cards for the remainder of this run"
                                      :msg "prevent the Runner from stealing or trashing Corp cards for the remainder of the run"
-                                     :effect (req (do (register-run-flag! state side card :can-steal
-                                                                          (fn [state side card]
-                                                                            ((constantly false)
-                                                                             (toast state :runner "Cannot steal due to Trebuchet." "warning"))))
-                                                      (register-run-flag! state side card :can-trash
-                                                                          (fn [state side card]
-                                                                            ((constantly (not= (:side card) "Corp"))
-                                                                             (toast state :runner "Cannot trash due to Trebuchet." "warning"))))))})]}
+                                     :effect (req (register-run-flag! state side card :can-steal
+                                                                      (fn [state side card]
+                                                                        ((constantly false)
+                                                                         (toast state :runner "Cannot steal due to Trebuchet." "warning"))))
+                                                  (register-run-flag! state side card :can-trash
+                                                                      (fn [state side card]
+                                                                        ((constantly (not= (:side card) "Corp"))
+                                                                         (toast state :runner "Cannot trash due to Trebuchet." "warning")))))})]}
 
    "Tribunal"
    {:subroutines [{:msg "force the Runner to trash 1 installed card"
