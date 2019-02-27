@@ -195,7 +195,8 @@
    "Armand \"Geist\" Walker: Tech Lord"
    {:events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
                             :msg "draw a card"
-                            :effect (effect (draw 1))}}}
+                            :async true
+                            :effect (effect (draw eid 1 nil))}}}
 
    "Asa Group: Security Through Vigilance"
    {:events {:corp-install
@@ -555,7 +556,8 @@
                                           (first-event? state side :pre-install)))
                            :msg "draw 1 card"
                            :once :per-turn
-                           :effect (effect (draw 1))}}}
+                           :async true
+                           :effect (effect (draw eid 1 nil))}}}
 
    "Jemison Astronautics: Sacrifice. Audacity. Success."
    {:events {:corp-forfeit-agenda
@@ -754,7 +756,8 @@
                                 (str "trash " (join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
                                 "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                   :once :per-turn
-                  :effect (effect (mill :runner 2) (draw))}]
+                  :async true
+                  :effect (effect (mill :runner 2) (draw eid 1 nil))}]
      {:flags {:runner-turn-draw true
               :runner-phase-12 (req (and (not (:disabled card))
                                          (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}

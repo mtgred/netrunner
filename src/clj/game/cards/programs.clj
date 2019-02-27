@@ -138,7 +138,8 @@
 
    "Collective Consciousness"
    {:events {:rez {:req (req (ice? target)) :msg "draw 1 card"
-                   :effect (effect (draw :runner))}}}
+                   :async true
+                   :effect (effect (draw :runner eid 1 nil))}}}
 
    "Copycat"
    {:abilities [{:req (req (and (:run @state)
@@ -866,7 +867,8 @@
    "Reaver"
    {:events {:runner-trash {:req (req (and (first-installed-trash? state side)
                                            (installed? target)))
-                            :effect (effect (draw :runner 1))
+                            :async true
+                            :effect (effect (draw :runner eid 1 nil))
                             :msg "draw 1 card"}}}
 
    "RNG Key"
@@ -883,11 +885,13 @@
                                                   (continue-ability state side
                                                                     {:prompt "Choose RNG Key award"
                                                                      :choices ["Gain 3 [Credits]" "Draw 2 cards"]
+                                                                     :async true
                                                                      :effect (req (if (= target "Draw 2 cards")
-                                                                                    (do (draw state :runner 2)
-                                                                                        (system-msg state :runner "uses RNG Key to draw 2 cards"))
-                                                                                    (do (gain-credits state :runner 3)
-                                                                                        (system-msg state :runner "uses RNG Key to gain 3 [Credits]"))))}
+                                                                                    (do (system-msg state :runner "uses RNG Key to draw 2 cards")
+                                                                                        (draw state :runner eid 2 nil))
+                                                                                    (do (system-msg state :runner "uses RNG Key to gain 3 [Credits]")
+                                                                                        (gain-credits state :runner 3)
+                                                                                        (effect-completed state side eid))))}
                                                                     card nil)
                                                   (effect-completed state side eid)))
                                               (effect-completed state side eid)))}

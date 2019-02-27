@@ -2776,6 +2776,86 @@
      (is (= 2 (count (get-program state))) "2 Programs installed")
      (is (= 6 (:credit (get-runner))) "Artist discount applied new turn"))))
 
+(deftest the-class-act
+  ;; The Class Act
+  (testing "Vanilla test"
+    (do-game
+     (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
+                         :hand ["The Class Act" "Easy Mark" "Corporate Defector"]}})
+     (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck {:front true}) ;ensure easy mark is on the top
+     (is (= "Easy Mark" (-> (get-runner) :deck first :title)) "Easy Mark is on top of deck")
+     (take-credits state :corp)
+     (play-from-hand state :runner "The Class Act")
+     (is (empty? (get-program state)) "No programs installed")
+     (is (= 1 (:credit (get-runner))))
+     (is (empty? (:prompt (get-runner))) "The Class Act has done nothing yet, so there is no Runner prompt")
+     (is (empty? (:prompt (get-corp))) "The Class Act has done nothing yet, so there is no Corp prompt")
+     (is (= 6 (count (:deck (get-runner)))) "4 cards in deck to be drawn")
+     (take-credits state :runner)
+     (is (not (empty? (:prompt (get-runner)))) "The Class Act triggered its draw ability, so Runner needs to choose")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act triggered its draw ability, so Corp must wait while Runner chooses")
+     (is (not= "Easy Mark" (-> (get-runner) :deck last :title)) "Easy Mark is not on the bottom of the deck yet")
+     (click-prompt state :runner "Easy Mark")
+     (is (empty? (:prompt (get-corp))) "The Class Act has bottomed a card, so there is no Corp prompt")
+     (is (empty? (:prompt (get-runner))) "The Class Act has has bottomed a card, so there is no Runner prompt")
+     (is (= "Easy Mark" (-> (get-runner) :deck last :title)) "Easy Mark was put on bottom of deck")
+     (is (= 2 (count (:deck (get-runner)))) "2 cards in deck")
+     (take-credits state :corp)
+     (take-credits state :runner)
+     (is (= 2 (count (:deck (get-runner)))) "The Class Act does not trigger at the end of a turn it wasn't installed, so no cards were drawn")
+     (is (empty? (:prompt (get-runner))) "The Class Act does not trigger at the end of a turn it wasn't installed, so there is no prompt")
+     (take-credits state :corp)
+     (core/click-draw state :runner nil)
+     (is (not (empty? (:prompt (get-runner)))) "The Class Act is prompting the runner to choose")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
+     (click-prompt state :runner "Easy Mark")
+     (is (empty? (:prompt (get-runner))) "The Class Act is no longer prompting the runner to choose")
+     (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits")
+     (is (= "Easy Mark" (-> (get-runner) :deck last :title)) "Easy Mark was bottomed again")
+     (core/click-draw state :runner nil)
+     (is (zero? (count (:deck (get-runner)))) "Runner only drew one")
+     (is (empty? (:prompt (get-runner))) "The Class Act did not trigger")
+     (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits")))
+  (testing "Interaction with other sources of draw"
+    (do-game
+     (new-game {:runner {:deck [(qty "Sure Gamble" 3)]
+                         :hand ["The Class Act" "Laguna Velasco District"]}})
+     (take-credits state :corp)
+     (core/gain state :runner :credit 10)
+     (play-from-hand state :runner "The Class Act")
+     (play-from-hand state :runner "Laguna Velasco District")
+     (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+     (core/click-draw state :runner nil)
+     (is (not (empty? (:prompt (get-runner)))) "The Class Act is prompting the runner to choose")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
+     (click-prompt state :runner "Sure Gamble")
+     (is (empty? (:prompt (get-runner))) "The Class Act is done prompting the runner to choose")
+     (is (empty? (:prompt (get-corp))) "The Class Act is not insisting the corp waits")
+     (is (= 1 (count (:deck (get-runner)))) "1 card put back")))
+  (testing "Ensure draw filtering is properly awaited"
+    (do-game
+     (new-game {:runner {:deck [(qty "Sure Gamble" 3)]
+                         :hand ["The Class Act" "Paragon" "John Masanori"]
+                         :credits 10}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "The Class Act")
+     (play-from-hand state :runner "Paragon")
+     (play-from-hand state :runner "John Masanori")
+     (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+     (run-empty-server state "Archives")
+     (click-prompt state :runner "John Masanori") ; runner should be prompted for which to trigger first
+     (is (= 2 (->> (get-runner) :prompt first :choices count)) "The Class Act shows 2 cards")
+     (is (= 1 (count (:prompt (get-runner)))) "The Class Act is prompting the runner to choose, but Paragon prompt is not open yet")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
+     (click-prompt state :runner "Sure Gamble")
+     (is (= 2 (count (:deck (get-runner)))) "The Class Act put a card back")
+     (is (changes-credits (get-runner) 1
+                          (do (click-prompt state :runner "Yes") ; runner prompted to trigger Paragon
+                              (click-prompt state :runner "Yes"))))
+     (is (empty? (:prompt (get-runner))) "The Class Act is done prompting the runner to choose")
+     (is (empty? (:prompt (get-corp))) "The Class Act is not insisting the corp waits")
+     (is (= 2 (count (:deck (get-runner)))) "Deck still has 2 cards"))))
+
 (deftest the-black-file
   ;; The Black File - Prevent Corp from winning by agenda points
   (testing "Basic test"
