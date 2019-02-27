@@ -762,23 +762,24 @@
       :abilities [ability]})
 
    "Mti Mwekundu: Life Improved"
-   {:abilities [{:effect (req (trigger-event state :corp :mti-ability))}]
-    :events {:approach-server {:req (req (not (first-event? state side :mti-ability)))
-                               :effect (req (toast state :corp "You may use Mti Mwekundu: Life Improved to install ice from HQ." "info"))}
-             :mti-ability {:once :per-turn
-                           :label "Install a piece of ice from HQ at the innermost position"
-                           :req (req (and (:run @state)
-                                          (zero? (:position run))
-                                          (not (contains? run :corp-phase-43))
-                                          (not (contains? run :successful))))
-                           :prompt "Choose ICE to install from HQ"
-                           :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
-                           :choices {:req #(and (ice? %)
-                                                (in-hand? %))}
-                           :effect (req (corp-install state side target (zone->name (first (:server run)))
-                                                      {:ignore-all-cost true
-                                                       :front true})
-                                        (swap! state assoc-in [:run :position] 1))}}}
+   (let [ability {:once :per-turn
+                  :label "Install a piece of ice from HQ at the innermost position"
+                  :req (req (and (:run @state)
+                                 (zero? (:position run))
+                                 (not (contains? run :corp-phase-43))
+                                 (not (contains? run :successful))))
+                  :prompt "Choose ICE to install from HQ"
+                  :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
+                  :choices {:req #(and (ice? %)
+                                       (in-hand? %))}
+                  :effect (req (corp-install state side target (zone->name (first (:server run)))
+                                             {:ignore-all-cost true
+                                              :front true})
+                               (swap! state assoc-in [:run :position] 1))}]
+     {:abilities [ability]
+      :events {:approach-server {:req (req (can-trigger? state side ability card nil))
+                                 :effect (req (toast state :corp "You may use Mti Mwekundu: Life Improved to install ice from HQ." "info"))
+                                 :msg "test message 2" }}})
 
    "Nasir Meidan: Cyber Explorer"
    {:events {:rez {:req (req (and (:run @state)
