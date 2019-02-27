@@ -896,7 +896,7 @@
                                                        :choices {:number (req 20)}
                                                        :msg (msg "guess " target)
                                                        :effect (effect (update! (assoc-in card [:special :rng-guess] target)))}}}}
-    :abilities (autoresolve-toggler :auto-fire "RNG Key")}
+    :abilities [(autoresolve-toggler :auto-fire "RNG Key")]}
 
    "Rook"
    {:abilities [{:cost [:click 1]
