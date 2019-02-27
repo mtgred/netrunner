@@ -1,7 +1,7 @@
 (ns nr.news
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [nr.ajax :refer [GET]]
-            [nr.cardbrowser :refer [add-symbols] :as cb]
+            [nr.utils :refer [render-icons]]
             [nr.ws :refer [ws-send!]]
             [reagent.core :as r]))
 
@@ -18,4 +18,4 @@
           [:li.news-item
            {:key (:date d)}
            [:span.date (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
-           [:span.title {:dangerouslySetInnerHTML #js {:__html (cb/add-symbols (js/marked (:title d)))}}]]))]]))
+           [:span.title (render-icons (js/marked (:title d)))]]))]]))

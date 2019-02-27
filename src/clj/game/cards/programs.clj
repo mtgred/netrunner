@@ -36,19 +36,19 @@
                  :msg "make a run on R&D"
                  :makes-run true
                  :effect (effect
-                           (run :rd
-                                {:req (req (= target :rd))
-                                 :replace-access
-                                 {:prompt "Choose a card to shuffle into R&D"
-                                  :choices {:req #(and (not (ice? %))
-                                                       (not (rezzed? %))
-                                                       (zero? (get-counters % :advancement)))}
-                                  :effect (req (move state :corp target :deck)
-                                               (shuffle! state :corp :deck)
-                                               (swap! state update-in [:runner :prompt] rest)
-                                               (handle-end-run state side)) ; remove the replace-access prompt
-                                  :msg "shuffle a card into R&D"}}
-                                card))}]}
+                           (make-run :rd
+                                     {:req (req (= target :rd))
+                                      :replace-access
+                                      {:prompt "Choose a card to shuffle into R&D"
+                                       :choices {:req #(and (not (ice? %))
+                                                            (not (rezzed? %))
+                                                            (zero? (get-counters % :advancement)))}
+                                       :effect (req (move state :corp target :deck)
+                                                    (shuffle! state :corp :deck)
+                                                    (swap! state update-in [:runner :prompt] rest)
+                                                    (handle-end-run state side)) ; remove the replace-access prompt
+                                       :msg "shuffle a card into R&D"}}
+                                     card))}]}
 
    "Au Revoir"
    {:events {:jack-out {:effect (effect (gain-credits 1))
@@ -138,7 +138,8 @@
 
    "Collective Consciousness"
    {:events {:rez {:req (req (ice? target)) :msg "draw 1 card"
-                   :effect (effect (draw :runner))}}}
+                   :async true
+                   :effect (effect (draw :runner eid 1 nil))}}}
 
    "Copycat"
    {:abilities [{:req (req (and (:run @state)
@@ -434,10 +435,10 @@
    {:abilities [{:cost [:click 1]
                  :msg "make a run on HQ"
                  :makes-run true
-                 :effect (effect (run :hq {:req (req (= target :hq))
-                                           :replace-access
-                                           {:msg (msg "reveal cards in HQ: "
-                                                      (join ", " (map :title (:hand corp))))}} card))}]}
+                 :effect (effect (make-run :hq {:req (req (= target :hq))
+                                                :replace-access
+                                                {:msg (msg "reveal cards in HQ: "
+                                                           (join ", " (map :title (:hand corp))))}} card))}]}
 
    "False Echo"
    {:abilities [{:req (req (and run
@@ -577,16 +578,16 @@
    {:abilities [{:cost [:click 1]
                  :msg "make a run on R&D"
                  :makes-run true
-                 :effect (effect (run :rd
-                                   {:req (req (= target :rd))
-                                    :replace-access
-                                    {:prompt "Choose a card to trash"
-                                     :not-distinct true
-                                     :msg (msg "trash " (:title target))
-                                     :choices (req (take 3 (:deck corp)))
-                                     :mandatory true
-                                     :effect (effect (trash (assoc target :seen true))
-                                                     (shuffle! :corp :deck))}} card))}]}
+                 :effect (effect (make-run :rd
+                                           {:req (req (= target :rd))
+                                            :replace-access
+                                            {:prompt "Choose a card to trash"
+                                             :not-distinct true
+                                             :msg (msg "trash " (:title target))
+                                             :choices (req (take 3 (:deck corp)))
+                                             :mandatory true
+                                             :effect (effect (trash (assoc target :seen true))
+                                                             (shuffle! :corp :deck))}} card))}]}
 
    "Kyuban"
    {:hosting {:req #(and (ice? %) (can-host? %))}
@@ -866,7 +867,8 @@
    "Reaver"
    {:events {:runner-trash {:req (req (and (first-installed-trash? state side)
                                            (installed? target)))
-                            :effect (effect (draw :runner 1))
+                            :async true
+                            :effect (effect (draw :runner eid 1 nil))
                             :msg "draw 1 card"}}}
 
    "Rezeki"
@@ -876,7 +878,7 @@
    "RNG Key"
    {:events {:pre-access-card {:req (req (get-in card [:special :rng-guess]))
                                :async true
-                               :msg (msg "to reveal " (:title target))
+                               :msg (msg "reveal " (:title target))
                                :effect (req (if-let [guess (get-in card [:special :rng-guess])]
                                               (if (installed? target)
                                                 ;; Do not trigger on installed cards (can't "reveal" an installed card per UFAQ)
@@ -887,11 +889,13 @@
                                                   (continue-ability state side
                                                                     {:prompt "Choose RNG Key award"
                                                                      :choices ["Gain 3 [Credits]" "Draw 2 cards"]
+                                                                     :async true
                                                                      :effect (req (if (= target "Draw 2 cards")
-                                                                                    (do (draw state :runner 2)
-                                                                                        (system-msg state :runner "uses RNG Key to draw 2 cards"))
-                                                                                    (do (gain-credits state :runner 3)
-                                                                                        (system-msg state :runner "uses RNG Key to gain 3 [Credits]"))))}
+                                                                                    (do (system-msg state :runner "uses RNG Key to draw 2 cards")
+                                                                                        (draw state :runner eid 2 nil))
+                                                                                    (do (system-msg state :runner "uses RNG Key to gain 3 [Credits]")
+                                                                                        (gain-credits state :runner 3)
+                                                                                        (effect-completed state side eid))))}
                                                                     card nil)
                                                   (effect-completed state side eid)))
                                               (effect-completed state side eid)))}
@@ -985,18 +989,18 @@
    {:abilities [{:cost [:click 1]
                  :msg "make a run on Archives"
                  :makes-run true
-                 :effect (effect (run :archives
-                                   {:req (req (= target :archives))
-                                    :successful-run
-                                    {:silent (req true)
-                                     :effect (req (swap! state assoc-in [:run :server] [:hq])
-                                                  ; remove the :req from the run-effect, so that other cards that replace
-                                                  ; access don't use Sneakdoor's req. (Security Testing, Ash 2X).
-                                                  (swap! state dissoc-in [:run :run-effect :req])
-                                                  (trigger-event state :corp :no-action)
-                                                  (system-msg state side
-                                                              (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
-                                   card))}]}
+                 :effect (effect (make-run :archives
+                                           {:req (req (= target :archives))
+                                            :successful-run
+                                            {:silent (req true)
+                                             :effect (req (swap! state assoc-in [:run :server] [:hq])
+                                                          ; remove the :req from the run-effect, so that other cards that replace
+                                                          ; access don't use Sneakdoor's req. (Security Testing, Ash 2X).
+                                                          (swap! state dissoc-in [:run :run-effect :req])
+                                                          (trigger-event state :corp :no-action)
+                                                          (system-msg state side
+                                                                      (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
+                                           card))}]}
 
    "Snitch"
    {:abilities [{:once :per-run :req (req (and (ice? current-ice) (not (rezzed? current-ice))))
@@ -1075,7 +1079,7 @@
      {:abilities [{:label "Make a run on targeted server" :cost [:click 1 :credit 2]
                    :req (req (some #(= (:server-target card) %) runnable-servers))
                    :msg (msg "make a run on " (:server-target card) ". Prevent the first subroutine that would resolve from resolving")
-                   :effect (effect (run (:server-target card) nil card))}]
+                   :effect (effect (make-run (:server-target card) nil card))}]
       :events {:runner-turn-begins ability
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}})
 

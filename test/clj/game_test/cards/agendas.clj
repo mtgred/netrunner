@@ -316,8 +316,11 @@
     (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
     (play-and-score state "Brain Rewiring")
     (click-prompt state :corp "Yes")
+    (is (not (empty? (:prompt (get-runner)))) "Runner waiting for Corp resolve Brain Rewiring")
     (click-prompt state :corp "2")
-    (is (= 1 (count (:hand (get-runner)))))))
+    (is (= 1 (count (:hand (get-runner)))))
+    (is (empty? (:prompt (get-runner))) "Runner not waiting for Corp resolve Brain Rewiring")
+    (is (empty? (:prompt (get-corp))) "Corp done resolving Brain Rewiring")))
 
 (deftest braintrust
   ;; Braintrust
@@ -2114,9 +2117,9 @@
   ;; Remote Data Farm
   (do-game
     (new-game {:corp {:deck ["Remote Data Farm"]}})
-    (is (= 5 (get-hand-size :corp)))
+    (is (= 5 (hand-size :corp)))
     (play-and-score state "Remote Data Farm")
-    (is (= 7 (get-hand-size :corp)))))
+    (is (= 7 (hand-size :corp)))))
 
 (deftest remote-enforcement
   ;; Remote Enforcement - Search R&D for a piece of ice and install it on a remote at no rez cost
@@ -2203,9 +2206,9 @@
   ;; Self-Destruct Chips
   (do-game
     (new-game {:corp {:deck ["Self-Destruct Chips"]}})
-    (is (= 5 (get-hand-size :runner)) "Runner's hand size starts at 5")
+    (is (= 5 (hand-size :runner)) "Runner's hand size starts at 5")
     (play-and-score state "Self-Destruct Chips")
-    (is (= 4 (get-hand-size :runner)) "By scoring Self-Destruct Chips, Runner's hand size is reduced by 1")))
+    (is (= 4 (hand-size :runner)) "By scoring Self-Destruct Chips, Runner's hand size is reduced by 1")))
 
 (deftest sensor-net-activation
   ;; Sensor Net Activation
