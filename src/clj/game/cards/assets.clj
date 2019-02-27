@@ -146,7 +146,7 @@
              {:interactive (req true)
               :optional {:prompt "Trace with Amani Senai?"
                          :player :corp
-                         :autoresolve (autoresolve-lookup :auto-fire)
+                         :autoresolve (get-autoresolve :auto-fire)
                          :yes-ability {:trace {:base (req (trace-base-func state))
                                                :successful
                                                {:choices {:req #(and (installed? %)
@@ -156,7 +156,7 @@
                                                 :effect (effect (move :runner target :hand true))}}}}})]
     {:events {:agenda-scored (senai-ability get-last-scored-pts)
               :agenda-stolen (senai-ability get-last-stolen-pts)}
-     :abilities [(autoresolve-toggler :auto-fire "whether to fire Amani Senai")]})
+     :abilities [(set-autoresolve :auto-fire "whether to fire Amani Senai")]})
 
    "Anson Rose"
    (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
@@ -1023,14 +1023,14 @@
      {:effect (effect (add-counter card :credit 8))
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
-      :abilities [(autoresolve-toggler :auto-reshuffle "Marilyn reshuffle")]
+      :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
       :trash-effect {:req (req (= :servers (first (:previous-zone card))))
                      :async true
                      :effect (effect (show-wait-prompt :runner "Corp to use Marilyn Campaign")
                                      (continue-ability :corp
                                        {:optional
                                         {:prompt "Shuffle Marilyn Campaign into R&D?"
-                                         :autoresolve (autoresolve-lookup :auto-reshuffle)
+                                         :autoresolve (get-autoresolve :auto-reshuffle)
                                          :priority 1
                                          :player :corp
                                          :yes-ability {:msg "shuffle it back into R&D"

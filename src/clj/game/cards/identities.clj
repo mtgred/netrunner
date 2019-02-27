@@ -48,7 +48,7 @@
                          {:optional
                           {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
                            :player :runner
-                           :autoresolve (autoresolve-lookup :auto-419)
+                           :autoresolve (get-autoresolve :auto-419)
                            :no-ability {:effect (req (clear-wait-prompt state :corp))}
                            :yes-ability
                            {:async true
@@ -75,7 +75,7 @@
                                                                (clear-wait-prompt state :runner))}}}
                                                card nil))))}}}
                          card nil)))}}
-    :abilities [(autoresolve-toggler :auto-419 "419")]}
+    :abilities [(set-autoresolve :auto-419 "419")]}
 
    "Acme Consulting: The Truth You Need"
    (letfn [(activate [state card active]
@@ -711,20 +711,20 @@
    {:events
     {:successful-run
      {:async true
-      :interactive (autoresolve-lookup :auto-fisk #(not= % :never))
-      :silent (autoresolve-lookup :auto-fisk #(= % :never))
+      :interactive (get-autoresolve :auto-fisk #(not= % :never))
+      :silent (get-autoresolve :auto-fisk #(= % :never))
       :req (req (and (is-central? (:server run))
                      (first-event? state side :successful-run is-central?)))
       :effect (effect (continue-ability
                         {:optional
-                         {:autoresolve (autoresolve-lookup :auto-fisk)
+                         {:autoresolve (get-autoresolve :auto-fisk)
                           :prompt "Force the Corp to draw a card?"
                           :yes-ability {:msg "force the Corp to draw 1 card"
                                         :async true
                                         :effect (effect (draw :corp eid 1 nil))}
                           :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
                         card nil))}}
-    :abilities [(autoresolve-toggler :auto-fisk "force Corp draw")]}
+    :abilities [(set-autoresolve :auto-fisk "force Corp draw")]}
 
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
@@ -826,7 +826,7 @@
                              state :corp
                              {:optional
                               {:prompt "Trace the Runner with NBN: Controlling the Message?"
-                               :autoresolve (autoresolve-lookup :auto-ctm)
+                               :autoresolve (get-autoresolve :auto-ctm)
                                :yes-ability {:trace {:base 4
                                                      :successful
                                                      {:msg "give the Runner 1 tag"
@@ -834,7 +834,7 @@
                                                       :effect (effect (gain-tags :corp eid 1 {:unpreventable true}))}}}
                                :end-effect (effect (clear-wait-prompt :runner))}}
                              card nil))}}
-    :abilities [(autoresolve-toggler :auto-ctm "CtM")]})
+    :abilities [(set-autoresolve :auto-ctm "CtM")]})
 
    "NBN: Making News"
    {:recurring 2}
@@ -1094,7 +1094,7 @@
                  :req (req (and
                              (not-empty (installed-faceup-agendas state))
                              (not-empty (ice-with-no-advancement-tokens state))))
-                 :autoresolve (autoresolve-lookup :auto-sso)
+                 :autoresolve (get-autoresolve :auto-sso)
                  :yes-ability
                  {:async true
                   :effect (req (show-wait-prompt state :runner "Corp to use SSO Industries' ability")
@@ -1114,7 +1114,7 @@
                                               (clear-wait-prompt state :runner))
                                  :cancel-effect (req (clear-wait-prompt state :runner))}
                                 card nil)))}}}}
-      :abilities [(autoresolve-toggler :auto-sso "SSO")]})
+      :abilities [(set-autoresolve :auto-sso "SSO")]})
 
    "Steve Cambridge: Master Grifter"
    {:events {:successful-run

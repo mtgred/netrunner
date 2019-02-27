@@ -207,7 +207,7 @@
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
 
-(defn autoresolve-toggler [toggle-kw ability-name]
+(defn set-autoresolve [toggle-kw ability-name]
   "Makes a card ability which lets the user toggle auto-resolve on an ability. Setting is stored under [:special toggle-kw]."
   {:label (str "Toggle auto-resolve on " ability-name)
    :prompt (str "Set auto-resolve on " ability-name " to:")
@@ -218,11 +218,11 @@
                                 (get-in (get-card state card) [:special toggle-kw]))
                                " resolve.") "info"))})
 
-(defn autoresolve-lookup
+(defn get-autoresolve
   "Returns a 5-fn intended for use in the :autoresolve of an optional ability. Function returns 'Yes', 'No' or nil 
   depending on whether card has [:special toggle-kw] set to :always, :never or something else.
   If a function is passed in, instead call that on [:special toggle-kw] and return the result."
-  ([toggle-kw] (autoresolve-lookup toggle-kw {:always "Yes" :never "No"}))
+  ([toggle-kw] (get-autoresolve toggle-kw {:always "Yes" :never "No"}))
   ([toggle-kw pred] (req (pred (get-in (get-card state card) [:special toggle-kw])))))
 
 ;; Load all card data and definitions into the current namespace.

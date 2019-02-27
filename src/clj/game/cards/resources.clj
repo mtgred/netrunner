@@ -96,13 +96,13 @@
    "Aeneas Informant"
    {:events {:no-trash {:req (req (and (:trash target)
                                        (not= (first (:zone target)) :discard)))
-                        :optional {:autoresolve (autoresolve-lookup :auto-reveal-and-gain)
+                        :optional {:autoresolve (get-autoresolve :auto-reveal-and-gain)
                                    :prompt "Use Aeneas Informant?"
                                    :yes-ability {:msg (msg (str "gain 1 [Credits]"
                                                                 (when-not (installed? target)
                                                                   (str " and reveal " (:title target)))))
                                                  :effect (effect (gain-credits 1))}}}}
-    :abilities [(autoresolve-toggler :auto-reveal-and-gain "Aeneas Informant")]}
+    :abilities [(set-autoresolve :auto-reveal-and-gain "Aeneas Informant")]}
    
    "Aesops Pawnshop"
    {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
@@ -536,7 +536,7 @@
              {:silent (req true)
               :req (req (= :archives target))
               :optional {:prompt "Place a virus counter on Crypt?"
-                         :autoresolve (autoresolve-lookup :auto-add)
+                         :autoresolve (get-autoresolve :auto-add)
                          :yes-ability {:effect (effect (add-counter card :virus 1)
                                                        (system-msg "places a virus counter on Crypt"))}}}}
     :abilities [{:label "[Click][Trash]: install a virus program from the stack"
@@ -551,7 +551,7 @@
                                  (shuffle! :deck)
                                  (runner-install target)
                                  (trash card {:cause :ability-cost}))}
-                (autoresolve-toggler :auto-add "adding virus counters to Crypt")]}
+                (set-autoresolve :auto-add "adding virus counters to Crypt")]}
 
    "Dadiana Chacon"
    (let [trashme {:effect (effect (system-msg "trashes Dadiana Chacon and suffers 3 meat damage")
@@ -856,16 +856,16 @@
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
                                           (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
-             :successful-run {:interactive (autoresolve-lookup :auto-peek #(not= % :never))
-                              :silent (autoresolve-lookup :auto-peek #(= % :never))
+             :successful-run {:interactive (get-autoresolve :auto-peek #(not= % :never))
+                              :silent (get-autoresolve :auto-peek #(= % :never))
                               :optional {:req (req (and (first-event? state side :successful-run)
                                                         (-> @state :corp :deck count pos?)))
-                                         :autoresolve (autoresolve-lookup :auto-peek)
+                                         :autoresolve (get-autoresolve :auto-peek)
                                          :prompt "Use Find the Truth to look at the top card of R&D?"
                                          :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                                        :msg "look at the top card of R&D"
                                                        :choices ["OK"]}}}}
-    :abilities [(autoresolve-toggler :auto-peek "Find the Truth's peek at R&D ability")]}
+    :abilities [(set-autoresolve :auto-peek "Find the Truth's peek at R&D ability")]}
 
    "First Responders"
    {:abilities [{:cost [:credit 2]

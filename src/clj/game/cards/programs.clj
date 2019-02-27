@@ -145,7 +145,7 @@
                             :req (req (some #(card-is? % :side :corp) targets))
                             :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
                                                sing-ab {:optional {:prompt "Place a virus counter on Consume?"
-                                                                   :autoresolve (autoresolve-lookup :auto-accept)
+                                                                   :autoresolve (get-autoresolve :auto-accept)
                                                                    :yes-ability {:effect (effect (add-counter :runner card :virus 1))
                                                                                  :msg "place 1 virus counter on Consume"}}}
                                                mult-ab {:prompt "Place virus counters on Consume?"
@@ -169,7 +169,7 @@
                              (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
                              (when (pos? hivemind-virus)
                                    (str " (and " hivemind-virus " from Hivemind)")))))}
-                {:effect (autoresolve-toggler :auto-accept "adding virus counters")}]}
+                {:effect (set-autoresolve :auto-accept "adding virus counters")}]}
    
    "Copycat"
    {:abilities [{:req (req (and (:run @state)
@@ -701,14 +701,14 @@
                                           (continue-ability
                                             {:optional
                                              {:prompt "Spend a power counter on Nyashia to access 1 additional card?"
-                                              :autoresolve (autoresolve-lookup :auto-nyashia)
+                                              :autoresolve (get-autoresolve :auto-nyashia)
                                               :yes-ability {:msg "access 1 additional card from R&D"
                                                             :effect (effect (access-bonus :rd 1)
                                                                             (add-counter card :power -1)
                                                                             (clear-wait-prompt :corp))}
                                               :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                                             card nil))}}
-    :abilities [(autoresolve-lookup :auto-nyashia "Nyashia")]}
+    :abilities [(get-autoresolve :auto-nyashia "Nyashia")]}
 
    "Origami"
    {:effect (effect (gain :hand-size
@@ -891,12 +891,12 @@
              :successful-run {:req (req (and (#{:hq :rd} target)
                                              (first-event? state :runner :successful-run #{[:hq] [:rd]})))
                               :optional {:prompt "Fire RNG Key?"
-                                         :autoresolve (autoresolve-lookup :auto-fire)
+                                         :autoresolve (get-autoresolve :auto-fire)
                                          :yes-ability {:prompt "Guess a number"
                                                        :choices {:number (req 20)}
                                                        :msg (msg "guess " target)
                                                        :effect (effect (update! (assoc-in card [:special :rng-guess] target)))}}}}
-    :abilities [(autoresolve-toggler :auto-fire "RNG Key")]}
+    :abilities [(set-autoresolve :auto-fire "RNG Key")]}
 
    "Rook"
    {:abilities [{:cost [:click 1]
@@ -1102,10 +1102,10 @@
                              (effect-completed state side eid))))]
        {:hosting {:req #(and (ice? %) (can-host? %))}
         :effect trash-if-5
-        :abilities [(autoresolve-toggler :auto-accept "add virus counter to Trypano")]
+        :abilities [(set-autoresolve :auto-accept "add virus counter to Trypano")]
         :events {:runner-turn-begins
                  {:optional {:prompt (msg "Place a virus counter on Trypano?")
-                             :autoresolve (autoresolve-lookup :auto-accept)
+                             :autoresolve (get-autoresolve :auto-accept)
                              :yes-ability {:effect (req (system-msg state :runner "places a virus counter on Trypano")
                                                         (add-counter state side card :virus 1))}}}
                  :counter-added {:async true
