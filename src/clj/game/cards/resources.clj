@@ -856,8 +856,8 @@
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
                                           (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
-             :successful-run {:interactive (get-autoresolve :auto-peek #(not= % :never))
-                              :silent (get-autoresolve :auto-peek #(= % :never))
+             :successful-run {:interactive (get-autoresolve :auto-peek (complement never?))
+                              :silent (get-autoresolve :auto-peek never?)
                               :optional {:req (req (and (first-event? state side :successful-run)
                                                         (-> @state :corp :deck count pos?)))
                                          :autoresolve (get-autoresolve :auto-peek)

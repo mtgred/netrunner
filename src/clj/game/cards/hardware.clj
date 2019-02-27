@@ -827,8 +827,8 @@
     :events {:successful-run
              {:req (req (first-event? state side :successful-run))
               :async true
-              :interactive (get-autoresolve :autofire #(not= % :never))
-              :silent (get-autoresolve :autofire #(= % :never))
+              :interactive (get-autoresolve :autofire (complement never?))
+              :silent (get-autoresolve :autofire never?)
               :effect (effect
                         (show-wait-prompt :corp "Runner to decide if they will use Paragon")
                         (continue-ability

@@ -711,8 +711,8 @@
    {:events
     {:successful-run
      {:async true
-      :interactive (get-autoresolve :auto-fisk #(not= % :never))
-      :silent (get-autoresolve :auto-fisk #(= % :never))
+      :interactive (get-autoresolve :auto-fisk (complement never?))
+      :silent (get-autoresolve :auto-fisk never?)
       :req (req (and (is-central? (:server run))
                      (first-event? state side :successful-run is-central?)))
       :effect (effect (continue-ability
