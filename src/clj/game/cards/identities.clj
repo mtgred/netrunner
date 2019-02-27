@@ -764,7 +764,7 @@
    "Mti Mwekundu: Life Improved"
    (let [ability {:once :per-turn
                   :label "Install a piece of ice from HQ at the innermost position"
-                  :req (req (and (:run @state)
+                  :req (req (and run
                                  (zero? (:position run))
                                  (not (contains? run :corp-phase-43))
                                  (not (contains? run :successful))))
