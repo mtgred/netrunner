@@ -206,9 +206,14 @@
                                                   (str (quantify number "virus counter") " from " title))
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
+(defn never?
+  "Returns true if is argument is :never."
+  [x]
+  (= :never x))
 
-(defn set-autoresolve [toggle-kw ability-name]
+(defn set-autoresolve
   "Makes a card ability which lets the user toggle auto-resolve on an ability. Setting is stored under [:special toggle-kw]."
+  [toggle-kw ability-name]
   {:label (str "Toggle auto-resolve on " ability-name)
    :prompt (str "Set auto-resolve on " ability-name " to:")
    :choices ["Always" "Never" "Ask"]
