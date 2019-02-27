@@ -1873,6 +1873,54 @@
         (click-prompt state :runner "0")
         (is (not (:rezzed (refresh tmi))))))))
 
+(deftest trebuchet
+  ;; Trebuchet
+  (testing "No stealing on successful trace."
+    (do-game
+      (new-game {:corp {:deck ["Trebuchet" "Project Atlas"]}
+               :runner {:deck ["Inti"]}})
+      (play-from-hand state :corp "Trebuchet" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inti")
+      (let [treb (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (is (= 0 (:bad-publicity (get-corp))) "No BP before")
+        (core/rez state :corp treb)
+        (is (= 1 (:bad-publicity (get-corp))) "Gained 1 BP from rez")
+        (card-subroutine state :corp treb 0)
+        (click-card state :corp "Inti")
+        (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
+        (card-subroutine state :corp treb 1)
+        (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")))) ;; Runner couldn't steal
+  (testing "No trashing on successful trace."
+    (do-game
+      (new-game {:corp {:deck ["Trebuchet" "PAD Campaign"]}
+               :runner {:deck ["Inti"]}})
+      (play-from-hand state :corp "Trebuchet" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inti")
+      (let [treb (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (is (= 0 (:bad-publicity (get-corp))) "No BP before")
+        (core/rez state :corp treb)
+        (is (= 1 (:bad-publicity (get-corp))) "Gained 1 BP from rez")
+        (card-subroutine state :corp treb 0)
+        (click-card state :corp "Inti")
+        (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
+        (card-subroutine state :corp treb 1)
+        (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "Pay 4 [Credits] to trash") ;; Try to trash PAD Campaign
+        (is (= 0 (count (:discard (get-corp)))) "PAD Campaign didn't get trashed")))))
+
 (deftest troll
   ;; Troll
   (testing "Giving the runner a choice on successful trace shouldn't make runner pay trace first. #5335"
