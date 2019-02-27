@@ -35,11 +35,11 @@
   (when (and (not (get-in @state [side :register :cannot-draw]))
              (pay state side nil :click 1 {:action :corp-click-draw}))
     (system-msg state side "spends [Click] to draw a card")
-    (trigger-event-simult state side (make-eid state) (if (= side :corp) :corp-pre-click-draw :runner-pre-click-draw) nil)
-    (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw) (->> @state side :deck (take 1)))
-    (draw state side)
-    (swap! state update-in [:stats side :click :draw] (fnil inc 0))
-    (play-sfx state side "click-card")))
+    (wait-for (trigger-event-simult state side (if (= side :corp) :pre-corp-click-draw :pre-runner-click-draw) nil nil)
+              (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw) (->> @state side :deck (take 1)))
+              (draw state side)
+              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
+              (play-sfx state side "click-card"))))
 
 (defn click-credit
   "Click to gain 1 credit."
