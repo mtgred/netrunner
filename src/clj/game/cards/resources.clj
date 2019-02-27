@@ -2083,6 +2083,35 @@
                                 :pre-breaker-strength {:req (req (= (:cid target)(:cid (:hai-target card))))
                                                        :effect (effect (breaker-strength-bonus 2))}}) card))}}
 
+   "The Nihilist"
+   (let [has-2-virus-tokens? (req (<= 2 (number-of-virus-counters state)))
+         corp-choice {:optional {:player :corp
+                                 :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
+                                 :async true
+                                 :yes-ability {:effect (effect (clear-wait-prompt :runner)
+                                                               (system-msg :corp "trashes the top card of R&D to prevent the Runner drawing 2 cards")
+                                                               (mill :corp)
+                                                               (effect-completed eid))}
+                                 :no-ability {:async true
+                                              :effect (effect (clear-wait-prompt :runner)
+                                                              (system-msg :runner "draw 2 cards")
+                                                              (draw :runner eid 2 nil))}}}
+         maybe-spend-2 {:prompt "Spend 2 virus counters on The Nihilist?"
+                        :async true
+                        :yes-ability {:effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
+                                                             (if (:number async-result)
+                                                               (do (system-msg state side (str "spends " (:msg async-result) " on The Nihilist"))
+                                                                   (show-wait-prompt state :runner "Corp to decide")
+                                                                   (continue-ability state side corp-choice card nil))
+                                                               (effect-completed state side eid))))}}]
+     {:events {:runner-turn-begins {:interactive (req true)
+                                    :req has-2-virus-tokens?
+                                    :optional maybe-spend-2}
+               :runner-install {:msg "add 2 virus tokens to The Nihilist"
+                                :effect (effect (add-counter card :virus 2))
+                                :req (req (has-subtype? target "Virus"))
+                                :once :per-turn}}})
+
    "The Shadow Net"
    (letfn [(events [runner] (filter #(and (is-type? % "Event") (not (has-subtype? % "Priority"))) (:discard runner)))]
      {:abilities [{:cost [:click 1 :forfeit]
