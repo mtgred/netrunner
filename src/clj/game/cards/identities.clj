@@ -778,8 +778,7 @@
                                (swap! state assoc-in [:run :position] 1))}]
      {:abilities [ability]
       :events {:approach-server {:req (req (can-trigger? state side ability card nil))
-                                 :effect (req (toast state :corp "You may use Mti Mwekundu: Life Improved to install ice from HQ." "info"))
-                                 :msg "test message 2" }}})
+                                 :effect (req (toast state :corp "You may use Mti Mwekundu: Life Improved to install ice from HQ." "info"))}}})
 
    "Nasir Meidan: Cyber Explorer"
    {:events {:rez {:req (req (and (:run @state)
