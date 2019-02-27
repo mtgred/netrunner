@@ -3486,6 +3486,30 @@
       (is (= 2 (count-tags state)) "Runner has 2 tags")
       (is (not (:run @state)) "Run completed"))))
 
+(deftest storgotic-resonator
+  ;; Storgotic Resonator - Gains power counters on Corp trashing card with same faction as runner ID.
+  ;; Click+counter is 1 net damage
+  (testing "Basic behavior"
+    (do-game
+      (new-game {:corp {:deck ["Storgotic Resonator" "Breached Dome"]}
+                 :runner {:id "Null: Whistleblower"
+                          :deck ["Mimic" (qty "Sure Gamble" 3)]}})
+      (starting-hand state :runner ["Sure Gamble" "Sure Gamble" "Sure Gamble"])
+      (play-from-hand state :corp "Storgotic Resonator" "New remote")
+      (let [sr (get-content state :remote1 0)]
+        (core/rez state :corp (refresh sr))
+        (take-credits state :corp)
+        (is (zero? (get-counters (refresh sr) :power)) "No power counters initially")
+        (is (empty? (:discard (get-runner))) "Nothing in trash")
+        (run-empty-server state :hq)
+        (click-prompt state :runner "No Action")
+        (is (= 1 (get-counters (refresh sr) :power)) "Gained power counter when trashing Mimic")
+        (is (= 2 (count (:discard (get-runner)))) "Mimic was trashed")
+        (take-credits state :runner)
+        (card-ability state :corp (refresh sr) 0)
+        (is (zero? (get-counters (refresh sr) :power)) "Spent power counter")
+        (is (= 3 (count (:discard (get-runner)))) "Did net damage")))))
+
 (deftest student-loans
   ;; Student Loans - costs Runner 2c extra to play event if already same one in discard
   (do-game

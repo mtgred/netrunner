@@ -1822,6 +1822,20 @@
                                                            (effect-completed state side eid))}}}
                                card nil))}}
 
+   "Storgotic Resonator"
+   {:abilities [{:cost [:click 1]
+                 :counter-cost [:power 1]
+                 :label "Do 1 net damage"
+                 :msg "do 1 net damage"
+                 :async true
+                 :effect (effect (damage eid :net 1 {:card card}))}]
+      :events {:corp-trash {:once :per-turn
+                            :req (req (first-event?
+                                        state side :corp-trash
+                                        #(= (:faction (:identity runner)) (:faction (first %)))))
+                            :effect (effect (system-msg :corp "adds 1 power counter on Storgotic Resonator")
+                                            (add-counter card :power 1))}}}
+
    "Student Loans"
    {:events {:pre-play-instant
              {:req (req (and (is-type? target "Event") (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
