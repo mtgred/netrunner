@@ -107,36 +107,36 @@
   ([state side n args] (draw state side (make-eid state) n args))
   ([state side eid n {:keys [suppress-event] :as args}]
    (swap! state update-in [side :register] dissoc :most-recent-drawn) ;clear the most recent draw in case draw prevented
-   (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
-   (let [active-player (get-in @state [:active-player])
-         n (+ n (get-in @state [:bonus :draw] 0))
-         draws-wanted n
-         draws-after-prevent (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
-                                  (min n (remaining-draws state side))
-                                  n)
-         deck-count (count (get-in @state [side :deck]))]
-     (when (and (= side :corp) (> draws-after-prevent deck-count))
-       (win-decked state))
-     (when-not (and (= side active-player) (get-in @state [side :register :cannot-draw]))
-       (let [drawn (zone :hand (take draws-after-prevent (get-in @state [side :deck])))]
-         (swap! state update-in [side :hand] #(concat % drawn))
-         (swap! state update-in [side :deck] (partial drop draws-after-prevent))
-         (swap! state assoc-in [side :register :most-recent-drawn] drawn)
-         (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
-         (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
-         (swap! state update-in [:bonus] dissoc :draw)
-         (if (and (not suppress-event) (pos? deck-count))
-           (wait-for
-             (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
-             (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent))
-           (effect-completed state side eid))
-         (when (safe-zero? (remaining-draws state side))
-           (prevent-draw state side))))
-     (when (< draws-after-prevent draws-wanted)
-       (let [prevented (- draws-wanted draws-after-prevent)]
-         (system-msg state (other-side side) (str "prevents "
-                                                  (quantify prevented "card")
-                                                  " from being drawn")))))))
+   (wait-for (trigger-event-simult state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) nil n)
+             (let [active-player (get-in @state [:active-player])
+                   n (+ n (get-in @state [:bonus :draw] 0))
+                   draws-wanted n
+                   draws-after-prevent (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
+                                         (min n (remaining-draws state side))
+                                         n)
+                   deck-count (count (get-in @state [side :deck]))]
+               (when (and (= side :corp) (> draws-after-prevent deck-count))
+                 (win-decked state))
+               (when-not (and (= side active-player) (get-in @state [side :register :cannot-draw]))
+                 (let [drawn (zone :hand (take draws-after-prevent (get-in @state [side :deck])))]
+                   (swap! state update-in [side :hand] #(concat % drawn))
+                   (swap! state update-in [side :deck] (partial drop draws-after-prevent))
+                   (swap! state assoc-in [side :register :most-recent-drawn] drawn)
+                   (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
+                   (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
+                   (swap! state update-in [:bonus] dissoc :draw)
+                   (if (and (not suppress-event) (pos? deck-count))
+                     (wait-for
+                       (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
+                       (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent))
+                     (effect-completed state side eid))
+                   (when (safe-zero? (remaining-draws state side))
+                     (prevent-draw state side))))
+               (when (< draws-after-prevent draws-wanted)
+                 (let [prevented (- draws-wanted draws-after-prevent)]
+                   (system-msg state (other-side side) (str "prevents "
+                                                            (quantify prevented "card")
+                                                            " from being drawn"))))))))
 
 ;;; Damage
 (defn flatline [state]
