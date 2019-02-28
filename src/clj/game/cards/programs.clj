@@ -708,7 +708,7 @@
                                                                             (clear-wait-prompt :corp))}
                                               :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                                             card nil))}}
-    :abilities [(get-autoresolve :auto-nyashia "Nyashia")]}
+    :abilities [(set-autoresolve :auto-nyashia "Nyashia")]}
 
    "Origami"
    {:effect (effect (gain :hand-size
