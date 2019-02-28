@@ -106,6 +106,51 @@
     (is (= 4 (:click (get-runner))) "Spent 1 click; gained 2 clicks")
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
+(deftest baklan-bochkin
+  (testing "Gaining power counters each run."
+    (do-game
+      (new-game {:corp {:deck ["Vanilla" "Vanilla"]}
+                 :runner {:deck ["\"Baklan\" Bochkin"]}})
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "\"Baklan\" Bochkin")
+      (let [bak (get-resource state 0)
+            van0 (get-ice state :hq 0)
+            van1 (get-ice state :hq 1)]
+        (run-on state "HQ")
+        (run-continue state) ; No rez
+        (run-continue state) ; No rez
+        (run-successful state)
+        (is (= 0 (get-counters (refresh bak) :power)) "No encounter so counter on Baklan yet")
+        (run-on state "HQ")
+        (core/rez state :corp van0)
+        (run-continue state)
+        (run-continue state)
+        (run-successful state)
+        (is (= 1 (get-counters (refresh bak) :power)) "There was an encounter, so counter on Baklan")
+        (run-on state "HQ")
+        (core/rez state :corp van1)
+        (run-continue state)
+        (run-continue state)
+        (run-successful state)
+        (is (= 2 (get-counters (refresh bak) :power)) "Works on every run, but not every encounter"))))
+  (testing "Derezzing current ice"
+    (do-game
+      (new-game {:corp {:deck ["Vanilla"]}
+                 :runner {:deck ["\"Baklan\" Bochkin"]}})
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "\"Baklan\" Bochkin")
+      (let [bak (get-resource state 0)
+            van0 (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp van0)
+        (is (:rezzed (refresh van0)) "Rezzed Vanilla")
+        (card-ability state :runner bak 0)
+        (is (not (:rezzed (refresh van0))) "Derezzed Vanilla")
+        (is (= 1 (count-tags state)) "Got a tag")))))
+
 (deftest bank-job
   ;; Bank Job
   (testing "Manhunt trace happens first"
