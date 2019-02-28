@@ -169,7 +169,7 @@
                              (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
                              (when (pos? hivemind-virus)
                                    (str " (and " hivemind-virus " from Hivemind)")))))}
-                {:effect (set-autoresolve :auto-accept "adding virus counters")}]}
+                (set-autoresolve :auto-accept "adding virus counters")]}
    
    "Copycat"
    {:abilities [{:req (req (and (:run @state)
