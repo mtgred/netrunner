@@ -1496,6 +1496,37 @@
         (is (= 1 (count (:discard (get-runner)))) "Runner resource trashed")
         (is (= 4 (count (:discard (get-corp)))) "sadakaHQ trashed")))))
 
+(deftest saisentan
+  ;; Saisentan
+  (testing "Corp chooses correctly"
+    (do-game
+      (new-game {:corp {:hand ["Saisentan"]}
+                 :runner {:hand [(qty "Sure Gamble" 6)]}})
+      (play-from-hand state :corp "Saisentan" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [sai (get-ice state :hq 0)]
+        (core/rez state :corp sai)
+        (core/no-action state :corp nil)
+        (click-prompt state :corp "Event")
+        (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
+        (card-subroutine state :corp sai 0)
+        (is (= 2 (-> (get-runner) :discard count)) "Two cards should be trashed due to correctly guessing"))))
+  (testing "Corp chooses incorrectly"
+    (do-game
+      (new-game {:corp {:hand ["Saisentan"]}
+                 :runner {:hand [(qty "Sure Gamble" 6)]}})
+      (play-from-hand state :corp "Saisentan" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [sai (get-ice state :hq 0)]
+        (core/rez state :corp sai)
+        (core/no-action state :corp nil)
+        (click-prompt state :corp "Hardware")
+        (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
+        (card-subroutine state :corp sai 0)
+        (is (= 1 (-> (get-runner) :discard count)) "Only one card should be trashed due to incorrectly guessing")))))
+
 (deftest sand-storm
   ;; Sand Storm should not end the run if protecting an otherwise empty/naked server
   (do-game

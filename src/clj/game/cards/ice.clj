@@ -1,7 +1,7 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
@@ -2002,7 +2002,6 @@
                                                 (clear-wait-prompt state :runner)
                                                 (continue-ability state side maybe-draw-effect card nil))))}
                                       card nil)))}
-
                     {:label "Trash 1 card in HQ"
                      :async true
                      :effect
@@ -2033,6 +2032,30 @@
 
    "Sagittarius"
    (constellation-ice trash-program)
+
+   "Saisentan"
+   {:subroutines [{:label "Do 1 net damage"
+                   :async true
+                   :msg "do 1 net damage"
+                   :effect (req (wait-for (damage state side :net 1 {:card card})
+                                          (when-let* [choice (get-in card [:special :saisentan])
+                                                      cards (some #(when (= (:cid (second %)) (:cid card)) (last %))
+                                                                  (turn-events state :corp :damage))
+                                                      dmg (some #(when (= (:type %) choice) %) cards)]
+                                            (system-msg state :corp "uses Saisentan to deal a second net damage")
+                                            (damage state side eid :net 1 {:card card}))))}]
+    :events
+    {:encounter-ice
+     {:req (req (and (= (:cid target) (:cid card))
+                     (rezzed? card)))
+      :effect (effect (show-wait-prompt :runner "Corp to choose Saisentan card type")
+                      (continue-ability
+                        {:prompt "Choose a card type"
+                         :choices ["Event" "Hardware" "Program" "Resource"]
+                         :effect (effect (update! (assoc-in card [:special :saisentan] target))
+                                         (system-msg (str "chooses " target " for Saisentan"))
+                                         (clear-wait-prompt :runner))}
+                        card nil))}}}
 
    "Salvage"
    {:advanceable :while-rezzed
