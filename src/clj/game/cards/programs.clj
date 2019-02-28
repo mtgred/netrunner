@@ -1029,6 +1029,22 @@
                                                       :no-ability {:msg "continue the run"}}}
                                           card nil)))}]}
 
+   "Stargate"
+   {:abilities [{:cost [:click 1]
+                 :once :per-turn
+                 :msg "make a run on R&D"
+                 :makes-run true
+                 :effect (effect (make-run :rd
+                                           {:req (req (= target :rd))
+                                            :replace-access
+                                            {:prompt "Choose a card to trash"
+                                             :not-distinct true
+                                             :msg (msg "trash " (:title target))
+                                             :choices (req (take 3 (:deck corp)))
+                                             :mandatory true
+                                             :effect (effect (trash (assoc target :seen true))
+                                                             (shuffle! :corp :deck))}} card))}]}
+
    "Surfer"
    (letfn [(surf [state cice]
              {:prompt (msg "Choose an ICE before or after " (:title cice))
