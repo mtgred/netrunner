@@ -319,7 +319,8 @@
                    (str " from " (name-zone side zone))))]
     (system-msg state side msg)
     (when (reveal-access? state side card)
-      (system-msg state side (str "must reveal they accessed " (:title card))))))
+      (system-msg state side (str "must reveal they accessed " (:title card)))
+      (trigger-event-sync state side (make-eid state) :reveal card))))
 
 (defn- access-trigger-events
   "Trigger access effects, then move into trash/steal choice."
