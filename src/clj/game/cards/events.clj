@@ -581,6 +581,7 @@
                                             cards-to-reveal (take 2 (shuffle (:hand corp)))
                                             cards-to-trash (filter #(is-type? % chosen-type) cards-to-reveal)]
                                         (system-msg state side (str " reveals " (name-string cards-to-reveal) " from HQ"))
+                                        (reveal state side cards-to-reveal)
                                         (when-not (empty? cards-to-trash)
                                           (system-msg state side (str " trashes " (name-string cards-to-trash)
                                                                       " from HQ and gain " (* 4 (count cards-to-trash)) "[Credits]"))
@@ -673,9 +674,11 @@
                                    :yes-ability {:effect (effect (install-cost-bonus [:credit -10])
                                                                  (runner-install topcard))}
                                    :no-ability {:effect (effect (trash topcard {:unpreventable true})
+                                                                (reveal topcard)
                                                                 (system-msg (str "reveals and trashes "
                                                                                  (:title topcard))))}}} card nil)
-                     (do (trash state side topcard {:unpreventable true})
+                     (do (reveal state side topcard)
+                         (trash state side topcard {:unpreventable true})
                          (system-msg state side (str "reveals and trashes " (:title topcard)))))))}
 
    "Exclusive Party"
@@ -1124,6 +1127,7 @@
                      (wait-for
                       (resolve-ability state :corp (reorder-choice :corp from) card targets)
                       (do (clear-wait-prompt state :runner)
+                          (reveal state side (take 4 (get-in @state [:corp :deck])))
                           (system-msg state :runner (str " reveals (top:) " ; here (get-in @state ...) is needed to refresh ref. to deck after reordering
                                                          (join ", " (map :title (take 4 (get-in @state [:corp :deck])))) " from the top of R&D"))
                           (effect-completed state side eid)))))))}
@@ -2174,7 +2178,8 @@
             :unsuccessful
             {:async true
              :msg "reveal all cards in HQ"
-             :effect (effect (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
+             :effect (effect (reveal (:hand corp))
+                             (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
 
    "Windfall"
    {:effect (effect (shuffle! :deck)

@@ -196,7 +196,8 @@
      {:async true
       :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
       :msg (msg "reveal the top 5 cards of their Stack: " (join ", " (map :title (take 5 (:deck runner)))))
-      :effect (req (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
+      :effect (req (reveal state side (take 5 (:deck runner)))
+                   (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
                    (let [from (take 5 (:deck runner))]
                      (continue-ability state side (custsec-host from) card nil)))
       :abilities [{:cost [:click 1]
@@ -433,6 +434,7 @@
          reveal {:optional {:prompt "Reveal the top card of R&D?"
                             :yes-ability {:async true
                                           :effect (req (let [topcard (-> corp :deck first :title)]
+                                                         (reveal state side topcard)
                                                          (system-msg state :runner (str "reveals " topcard
                                                                                         " from the top of R&D"))
                                                          (continue-ability state side (force-draw topcard) card nil)))}}}]

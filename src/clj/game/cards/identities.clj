@@ -570,10 +570,20 @@
                                                    :code (str (subs (:code card) 0 5) "flip")))))}]}
 
    "Hyoubu Institute: Absolute Clarity"
-   {:events {:reveal {:req (req (and (= side :corp)
-                                     (not-any? #(= (:side %) "Corp") (map second (turn-events state side :reveal)))))
-                      :msg "gain 1 [Credits]"
-                      :effect (effect (gain-credits 1))}}}
+   {:events {:corp-reveal {:once :per-turn
+                           :req (req (first-event? state side :corp-reveal))
+                           :msg "gain 1 [Credits]"
+                           :effect (effect (gain-credits 1))}}
+    :abilities [{:cost [:click 1]
+                 :label "Reveal the top card of the Stack"
+                 :effect (req (when-let [revealed-card (-> runner :deck first)]
+                                (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " revealed-card))
+                                (reveal state side revealed-card)))}
+                {:cost [:click 1]
+                 :label "Reveal a random card from the Grip"
+                 :effect (req (when-let [revealed-card (-> runner :hand shuffle first)]
+                                (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " revealed-card))
+                                (reveal state side revealed-card)))}]}
 
    "Iain Stirling: Retired Spook"
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))

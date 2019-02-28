@@ -1026,9 +1026,9 @@
 
    "Reflection"
    {:in-play [:memory 1 :link 1]
-    :events {:jack-out {:msg (msg "force the Corp to reveal "
-                                  (:title (first (shuffle (:hand corp))))
-                                  " from HQ")}}}
+    :events {:jack-out {:effect (req (let [card (first (shuffle (:hand corp)))]
+                                             (reveal state :corp card)
+                                             (system-msg state :runner (str  "force the Corp to reveal " (:title card) " from HQ"))))}}}
 
    "Replicator"
    (letfn [(hardware-and-in-deck? [target runner]

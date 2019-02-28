@@ -152,6 +152,7 @@
   {:label "Reveal up to 2 Grail ICE from HQ"
    :choices {:max 2
              :req grail-in-hand}
+   :effect (effect (reveal targets))
    :msg (let [sub-label #(:label (first (:subroutines (card-def %))))]
           (msg "reveal " (join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
 
@@ -951,7 +952,8 @@
                                                       (= [:hand] (:zone %)))
                                                   (is-type? % "Agenda"))
                                        :max (req 3)}
-                             :effect (req (doseq [c targets]
+                             :effect (req (reveal state side targets)
+                                          (doseq [c targets]
                                             (move state :corp c :deck))
                                           (shuffle! state :corp :deck))
                              :cancel-effect (effect (shuffle! :deck))
@@ -1394,6 +1396,7 @@
                   {:label "Reveal the top 3 cards of the Stack"
                    :effect (effect (system-msg (str "uses Loot Box to reveal the top 3 cards of the stack: "
                                                     (join ", " (top-3-names state))))
+                                   (reveal (top-3 state))
                                    (show-wait-prompt :runner "Corp to choose a card to add to the Grip")
                                    (continue-ability
                                      {:prompt "Choose a card to add to the Grip"
@@ -1899,7 +1902,8 @@
                  :effect (req (let [n (count (filter #(is-type? % target) (:hand runner)))]
                                 (system-msg state side (str "uses Peeping Tom to name " target ", then reveals "
                                                             (join ", " (map :title (:hand runner)))
-                                                            " in the Runner's Grip. Peeping Tom gains " n " subroutines"))))}]
+                                                            " in the Runner's Grip. Peeping Tom gains " n " subroutines"))
+                                (reveal state side (:hand runner))))}]
     :runner-abilities [{:label "End the run"
                         :effect (req (end-run state :runner)
                                      (system-msg state :runner "chooses to end the run"))}
@@ -2165,7 +2169,8 @@
                   :effect (effect (move :runner (first (:deck runner)) :deck)
                                   (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
                                                    " then reveal the top 3 cards of the stack: "
-                                                   (join ", " (top-3-names state)))))}]
+                                                   (join ", " (top-3-names state))))
+                                  (reveal (top-3 state)))}]
      :subroutines [{:label "Runner loses 3 [Credits]"
                     :msg "force the Runner to lose 3 [Credits]"
                     :effect (effect (lose-credits :runner 3))}
@@ -2198,7 +2203,8 @@
                            " using 1 power counter")
                  :choices (req (cancellable (:hand runner) :sorted))
                  :prompt "Choose a card to trash"
-                 :effect (effect (trash target))}]
+                 :effect (effect (reveal (:hand runner))
+                                 (trash target))}]
     :subroutines [(trace-ability 3 add-power-counter)]}
 
    "Snowflake"
@@ -2452,7 +2458,8 @@
                                     :msg (msg "reveal all cards in the Runner's Grip: " (join ", " (map :title (:hand runner)))
                                               ". Cards with a play/install cost less than or equal to " (- target (second targets))
                                               " will be trashed")
-                                    :effect (req (let [delta (- target (second targets))]
+                                    :effect (req (reveal state side (:hand runner))
+                                                 (let [delta (- target (second targets))]
                                                    (doseq [c (:hand runner)]
                                                      (when (<= (:cost c) delta)
                                                        (resolve-ability

@@ -338,3 +338,8 @@
      (toast-check-mu state))
    (when (has-subtype? card "Icebreaker")
      (update-breaker-strength state side card))))
+
+(defn reveal
+  "Trigger the event for revealing one or more cards."
+  [state side card]
+  (trigger-event-sync state side (make-eid state) (keyword (str (name side) "-reveal")) card))
