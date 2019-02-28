@@ -320,7 +320,7 @@
     (system-msg state side msg)
     (when (reveal-access? state side card)
       (system-msg state side (str "must reveal they accessed " (:title card)))
-      (trigger-event-sync state side (make-eid state) :runner-reveal card))))
+      (reveal state :runner card))))
 
 (defn- access-trigger-events
   "Trigger access effects, then move into trash/steal choice."
