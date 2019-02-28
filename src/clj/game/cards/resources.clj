@@ -224,8 +224,7 @@
    {:implementation "Does not check for ice strength."
     :events {:encounter-ice {:once :per-run
                              :effect (effect (add-counter card :power 1)
-                                             (system-msg (str "places 1 power counter on " (:title card))))
-                             }}
+                                             (system-msg (str "places 1 power counter on " (:title card))))}}
     :abilities [{:label "[Trash]: Derez a piece of ice currently being encountered"
                  :msg "derez a piece of ice currently being encountered and take 1 tag"
                  :req (req (and current-ice (:rezzed current-ice))) ;; not checking for strength
