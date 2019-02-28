@@ -353,7 +353,8 @@
              {:async true
               :msg "do 1 net damage"
               :effect (req (wait-for (damage state side :net 1 {:card card})
-                                     (when-let* [cards (some #(when (= (:cid (second %)) (:cid card)) (last %))
+                                     (when-let* [should-continue (not (:winner @state))
+                                                 cards (some #(when (= (:cid (second %)) (:cid card)) (last %))
                                                              (turn-events state :corp :damage))
                                                  dmg (some #(when (= (:title %) target) %) cards)]
                                        (continue-ability state side (name-a-card) card nil))))})]
