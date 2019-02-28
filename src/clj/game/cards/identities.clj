@@ -569,6 +569,12 @@
                                                    :flipped true
                                                    :code (str (subs (:code card) 0 5) "flip")))))}]}
 
+   "Hyoubu Institute: Absolute Clarity"
+   {:events {:reveal {:req (req (and (= side :corp)
+                                     (not-any? #(= (:side %) "Corp") (map second (turn-events state side :reveal)))))
+                      :msg "gain 1 [Credits]"
+                      :effect (effect (gain-credits 1))}}}
+
    "Iain Stirling: Retired Spook"
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
                   :once :per-turn
