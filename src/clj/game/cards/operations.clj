@@ -1,7 +1,7 @@
 (ns game.cards.operations
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
@@ -340,6 +340,27 @@
    {:msg (msg "gain " (get-counters target :advancement) " [Credits]")
     :choices {:req ice?}
     :effect (effect (gain-credits (get-counters target :advancement)))}
+
+   "Complete Image"
+   (letfn [(name-a-card []
+             {:async true
+              :prompt "Name a Runner card"
+              :choices {:card-title (req (and (card-is? target :side "Runner")
+                                              (not (card-is? target :type "Identity"))))}
+              :effect (effect (system-msg (str "uses Complete Image to name " target))
+                              (continue-ability (damage-ability) card targets))})
+           (damage-ability []
+             {:async true
+              :msg "do 1 net damage"
+              :effect (req (wait-for (damage state side :net 1 {:card card})
+                                     (when-let* [cards (some #(when (= (:cid (second %)) (:cid card)) (last %))
+                                                             (turn-events state :corp :damage))
+                                                 dmg (some #(when (= (:title %) target) %) cards)]
+                                       (continue-ability state side (name-a-card) card nil))))})]
+     {:async true
+      :req (req (and (last-turn? state :runner :successful-run)
+                     (<= 3 (:agenda-point runner))))
+      :effect (effect (continue-ability (name-a-card) card nil))})
 
    "Consulting Visit"
    {:prompt  "Choose an Operation from R&D to play"
