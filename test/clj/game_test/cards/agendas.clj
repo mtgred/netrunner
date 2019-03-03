@@ -638,6 +638,22 @@
     (click-card state :corp (find-card "Strongbox" (:hand (get-corp))))
     (click-card state :corp (find-card "Eli 1.0" (:discard (get-corp))))))
 
+(deftest divested-trust
+  ;; Divested Trust
+  (do-game
+    (new-game {:corp {:hand ["Hostile Takeover" "Divested Trust"]}})
+    (play-and-score state "Divested Trust")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (run-successful state)
+    (click-prompt state :runner "Steal")
+    (is (-> (get-corp) :hand count zero?) "Corp has no cards in hand")
+    (is (= 1 (:agenda-point (get-corp))) "Corp should lose points from forfeit agenda")
+    (click-prompt state :corp "Yes")
+    (is (= "Hostile Takeover" (-> (get-corp) :hand first :title)) "Hostile Takeover should be in HQ")
+    (is (empty? (-> (get-corp) :scored)))
+    (is (zero? (:agenda-point (get-corp))) "Corp should lose points from forfeit agenda")))
+
 (deftest domestic-sleepers
   ;; Domestic Sleepers
   (do-game
