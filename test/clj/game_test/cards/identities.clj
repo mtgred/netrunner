@@ -932,13 +932,11 @@
          (play-from-hand state :runner "Sure Gamble"))
        (take-credits state :runner)
        (is (= 0 (count (:hand (get-runner)))) "Runner hand is empty")
-       (is (changes-credits (get-corp) 0 (card-ability state :corp hy 1)))  ; grip is empty, so revealing nothing gains nothing
-       )))
+       (is (changes-credits (get-corp) 0 (card-ability state :corp hy 1))))))  ; grip is empty, so revealing nothing gains nothing
   (testing "EStrike interaction"
     (do-game
      (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
-                       :deck ["Scarcity of Resources" "Celebrity Gift"]
-                       }
+                       :deck ["Scarcity of Resources" "Celebrity Gift"]}
                 :runner {:deck [(qty "Employee Strike" 3) "Enhanced Vision"]}})
      (take-credits state :corp)
      (play-from-hand state :runner "Enhanced Vision")
