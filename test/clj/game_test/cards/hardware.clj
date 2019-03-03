@@ -117,7 +117,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Box-E")
     (is (= 6 (core/available-mu state)))
-    (is (= 7 (core/hand-size state :runner)))))
+    (is (= 7 (hand-size :runner)))))
 
 (deftest brain-chip
   ;; Brain Chip handsize and memory limit
@@ -126,13 +126,13 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Brain Chip")
     (swap! state assoc-in [:runner :agenda-point] -2) ; hard set ap
-    (is (= 5 (core/hand-size state :runner)) "Hand size unaffected")
+    (is (= 5 (hand-size :runner)) "Hand size unaffected")
     (is (= 4 (core/available-mu state)) "Memory limit unaffected")
     (swap! state assoc-in [:runner :agenda-point] 2)
-    (is (= 7 (core/hand-size state :runner)) "Hand size increased by 2")
+    (is (= 7 (hand-size :runner)) "Hand size increased by 2")
     (is (= 6 (core/available-mu state)) "Memory limit increased by 2")
     (core/move state :runner (get-hardware state 0) :discard)
-    (is (= 5 (core/hand-size state :runner)) "Hand size reset")
+    (is (= 5 (hand-size :runner)) "Hand size reset")
     (is (= 4 (core/available-mu state)) "Memory limit reset")))
 
 (deftest clone-chip
@@ -878,9 +878,9 @@
         (click-prompt state :runner "No action")
         (play-from-hand state :runner "Obelus")
         (core/gain-tags state :runner 1)
-        (is (= 6 (core/hand-size state :runner)) "Max hand size is 6")
+        (is (= 6 (hand-size :runner)) "Max hand size is 6")
         (core/lose-tags state :runner 1)
-        (is (= 5 (core/hand-size state :runner)) "Max hand size is 5")
+        (is (= 5 (hand-size :runner)) "Max hand size is 5")
         (run-empty-server state :hq)
         (is (= 2 (get-counters (refresh nerve) :virus)) "2 virus counters on Nerve Agent")
         (click-prompt state :runner "1")
@@ -968,21 +968,45 @@
 
 (deftest paragon
   ;; Paragon - Gain 1 credit and may look at and move top card of Stack to bottom
-  (do-game
-    (new-game {:runner {:deck ["Paragon" "Easy Mark" "Sure Gamble"]}})
-    (starting-hand state :runner ["Paragon"])
-    (take-credits state :corp)
-    (play-from-hand state :runner "Paragon")
-    (run-empty-server state "HQ")
-    (is (prompt-is-card? state :runner (get-hardware state 0)) "Prompt from Paragon")
-    (click-prompt state :runner "Yes")
-    (is (= (+ 5 -3 1) (:credit (get-runner))) "Gained 1 credit from Paragon")
-    (is (prompt-is-card? state :runner (get-hardware state 0)) "Prompt from Paragon")
-    (let [top-cid (:cid (first (:deck (get-runner))))]
-      (click-prompt state :runner "Yes")
-      (is (= top-cid (:cid (last (:deck (get-runner))))) "Moved top card to bottom"))
-    (run-empty-server state "HQ")
-    (is (not (prompt-is-card? state :runner (get-hardware state 0))) "No prompt from Paragon")))
+  (testing "Vanilla test"
+    (do-game
+     (new-game {:runner {:deck ["Paragon" "Easy Mark" "Sure Gamble"]}})
+     (starting-hand state :runner ["Paragon"])
+     (take-credits state :corp)
+     (play-from-hand state :runner "Paragon")
+     (run-empty-server state "HQ")
+     (is (prompt-is-card? state :runner (get-hardware state 0)) "Prompt from Paragon")
+     (click-prompt state :runner "Yes")
+     (is (= (+ 5 -3 1) (:credit (get-runner))) "Gained 1 credit from Paragon")
+     (is (prompt-is-card? state :runner (get-hardware state 0)) "Prompt from Paragon")
+     (let [top-cid (:cid (first (:deck (get-runner))))]
+       (click-prompt state :runner "Yes")
+       (is (= top-cid (:cid (last (:deck (get-runner))))) "Moved top card to bottom"))
+     (run-empty-server state "HQ")
+     (is (not (prompt-is-card? state :runner (get-hardware state 0))) "No prompt from Paragon")))
+  (testing "Autoresolve"
+    (do-game
+     (new-game {:runner {:deck ["Paragon" (qty "Easy Mark" 3)]}})
+     (starting-hand state :runner ["Paragon"])
+     (take-credits state :corp)
+     (play-from-hand state :runner "Paragon")
+     (letfn [(toggle-paragon [setting]
+               (card-ability state :runner (get-hardware state 0) 0)
+               (click-prompt state :runner setting))]
+       (doseq [set-to ["Never" "Ask" "Always"]]
+         (is (changes-credits (get-runner) 0
+                              (do (toggle-paragon set-to)
+                                  (run-empty-server state "Archives") ; on first loop this actually triggers paragon, but we say 'no'
+                                  (is (empty? (:prompt (get-runner))) "No Paragon prompt")))
+             "Paragon does not fire"))
+       (take-credits state :runner)
+       (take-credits state :corp)
+       ;; paragon is now set to 'Always'
+       (is (changes-credits (get-runner) 1
+                              (do (run-empty-server state "Archives") ; on first loop this actually triggers paragon, but we say 'no'
+                                  (click-prompt state :runner "Yes") ; prompt to add a card to bottom
+                                  (is (empty? (:prompt (get-runner))) "No Paragon prompt")))
+             "Paragon fires automatically")))))
 
 (deftest patchwork
   ;; Patchwork
@@ -1371,7 +1395,7 @@
       (click-prompt state :runner "0")
       (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
       (is (= 1 (count (:discard (get-runner)))))
-      (is (= 4 (core/hand-size state :runner)) "Reduced hand size"))))
+      (is (= 4 (hand-size :runner)) "Reduced hand size"))))
 
 (deftest sports-hopper
   ;; Sports Hopper
@@ -1580,13 +1604,13 @@
     (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
     (is (empty? (:hand (get-runner))))
     (take-credits state :runner)
-    (is (= (count (:hand (get-corp))) (core/hand-size state :corp)) "Corp hand filled to max")
+    (is (= (count (:hand (get-corp))) (hand-size :corp)) "Corp hand filled to max")
     (take-credits state :corp)
     (is (= 1 (count (:hand (get-runner)))) "Drew 1 card")
     (take-credits state :runner)
     (play-from-hand state :corp "Hedge Fund")
     (take-credits state :corp)
-    (is (not= (count (:hand (get-corp))) (core/hand-size state :corp)) "Corp hand below max")
+    (is (not= (count (:hand (get-corp))) (hand-size :corp)) "Corp hand below max")
     (is (= 1 (count (:hand (get-runner)))) "No card drawn")))
 
 (deftest zamba

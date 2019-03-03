@@ -178,7 +178,7 @@
   (when (and (number? value)
              (pos? value))
     (case attr
-      :credit (str value " [$]")
+      :credit (str value " [credit]")
       :click (->> "[Click]" repeat (take value) (apply str))
       :forfeit (str value " Agenda" (when (> value 1) "s"))
       :net (str value " net damage")

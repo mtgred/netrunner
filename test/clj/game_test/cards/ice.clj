@@ -413,7 +413,7 @@
       (card-subroutine state :corp fen 0)
       (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
       (is (= 1 (count (:discard (get-runner)))))
-      (is (= 4 (core/hand-size state :runner))))))
+      (is (= 4 (hand-size :runner))))))
 
 (deftest flare
   ;; Flare - Trash 1 program, do 2 unpreventable meat damage, and end the run
@@ -588,6 +588,32 @@
         (click-prompt state :corp "Yes")
         (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")))))
+
+(deftest harvester
+  ;; Harvester - draw 3, then discard
+  (do-game
+    (new-game {:corp {:deck ["Harvester"]}
+               :runner {:deck ["The Class Act" (qty "Sure Gamble" 10)]}})
+    (starting-hand state :runner ["The Class Act" "Sure Gamble" "Sure Gamble" "Sure Gamble" "Sure Gamble"])
+    (play-from-hand state :corp "Harvester" "HQ")
+    (let [harv (get-ice state :hq 0)]
+      (core/rez state :corp harv)
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Class Act")
+      (run-on state "HQ")
+      (is (= 4 (count (:hand (get-runner)))) "Runner has 4 cards in hand")
+      (card-subroutine state :corp harv 0)
+      (is (= 4 (-> (get-runner) :prompt first :choices count)) "Runner has 3+1 choices")
+      (is (= "The Class Act" (-> @state :runner :prompt first :card :title)) "The Class Act prompt showing")
+      (is (= 1 (count (:prompt (get-runner)))) "Harvester prompt not open yet")
+      (click-prompt state :runner "Sure Gamble")
+      (is (= 7 (count (:hand (get-runner)))) "Runner bottomed Class Act draw")
+      (is (= "Harvester" (-> @state :runner :prompt first :card :title)) "Harvester prompt showing")
+      (click-card state :runner (last (:hand (get-runner))))
+      (click-card state :runner (first (:hand (get-runner))))
+      (is (= 5 (count (:hand (get-runner)))) "Harvester discarded some cards")
+      (is (empty? (:prompt (get-runner))) "No more prompts for the Runner")
+      (is (empty? (:prompt (get-corp))) "No more prompts for the Corp"))))
 
 (deftest holmegaard
   ;; Holmegaard - Stop Runner from accessing cards if win trace
@@ -1470,6 +1496,37 @@
         (is (= 1 (count (:discard (get-runner)))) "Runner resource trashed")
         (is (= 4 (count (:discard (get-corp)))) "sadakaHQ trashed")))))
 
+(deftest saisentan
+  ;; Saisentan
+  (testing "Corp chooses correctly"
+    (do-game
+      (new-game {:corp {:hand ["Saisentan"]}
+                 :runner {:hand [(qty "Sure Gamble" 6)]}})
+      (play-from-hand state :corp "Saisentan" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [sai (get-ice state :hq 0)]
+        (core/rez state :corp sai)
+        (core/no-action state :corp nil)
+        (click-prompt state :corp "Event")
+        (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
+        (card-subroutine state :corp sai 0)
+        (is (= 2 (-> (get-runner) :discard count)) "Two cards should be trashed due to correctly guessing"))))
+  (testing "Corp chooses incorrectly"
+    (do-game
+      (new-game {:corp {:hand ["Saisentan"]}
+                 :runner {:hand [(qty "Sure Gamble" 6)]}})
+      (play-from-hand state :corp "Saisentan" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [sai (get-ice state :hq 0)]
+        (core/rez state :corp sai)
+        (core/no-action state :corp nil)
+        (click-prompt state :corp "Hardware")
+        (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
+        (card-subroutine state :corp sai 0)
+        (is (= 1 (-> (get-runner) :discard count)) "Only one card should be trashed due to incorrectly guessing")))))
+
 (deftest sand-storm
   ;; Sand Storm should not end the run if protecting an otherwise empty/naked server
   (do-game
@@ -1872,6 +1929,54 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (not (:rezzed (refresh tmi))))))))
+
+(deftest trebuchet
+  ;; Trebuchet
+  (testing "No stealing on successful trace."
+    (do-game
+      (new-game {:corp {:deck ["Trebuchet" "Project Atlas"]}
+               :runner {:deck ["Inti"]}})
+      (play-from-hand state :corp "Trebuchet" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inti")
+      (let [treb (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (is (= 0 (:bad-publicity (get-corp))) "No BP before")
+        (core/rez state :corp treb)
+        (is (= 1 (:bad-publicity (get-corp))) "Gained 1 BP from rez")
+        (card-subroutine state :corp treb 0)
+        (click-card state :corp "Inti")
+        (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
+        (card-subroutine state :corp treb 1)
+        (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")))) ;; Runner couldn't steal
+  (testing "No trashing on successful trace."
+    (do-game
+      (new-game {:corp {:deck ["Trebuchet" "PAD Campaign"]}
+               :runner {:deck ["Inti"]}})
+      (play-from-hand state :corp "Trebuchet" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inti")
+      (let [treb (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (is (= 0 (:bad-publicity (get-corp))) "No BP before")
+        (core/rez state :corp treb)
+        (is (= 1 (:bad-publicity (get-corp))) "Gained 1 BP from rez")
+        (card-subroutine state :corp treb 0)
+        (click-card state :corp "Inti")
+        (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
+        (card-subroutine state :corp treb 1)
+        (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "Pay 4 [Credits] to trash") ;; Try to trash PAD Campaign
+        (is (= 0 (count (:discard (get-corp)))) "PAD Campaign didn't get trashed")))))
 
 (deftest troll
   ;; Troll

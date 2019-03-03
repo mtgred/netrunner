@@ -1,7 +1,7 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
@@ -111,12 +111,7 @@
 
 (def runner-loses-click
   "Runner loses a click effect"
-  (req (if (:runner-phase-12 @state)
-    ; this handles Jak Sinclair losing clicks before they are given
-    (do (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
-        (toast state :runner "Runner loses a click at start of turn" "warning")
-        (toast state :corp "Runner loses a click at start of turn" "warning"))
-    (lose state :runner :click 1))))
+  (effect (lose :runner :click 1)))
 
 ;;; For Advanceable ICE
 (defn get-advance-counters
@@ -1011,20 +1006,22 @@
    "Harvester"
    {:subroutines [{:label "Runner draws 3 cards and discards down to maximum hand size"
                    :msg "make the Runner draw 3 cards and discard down to their maximum hand size"
-                   :effect (req (draw state :runner 3)
-                                (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
-                                  (when (pos? delta)
-                                    (resolve-ability
-                                      state :runner
-                                      {:prompt (msg "Select " delta " cards to discard")
-                                       :player :runner
-                                       :choices {:max delta
-                                                 :req #(in-hand? %)}
-                                       :effect (req (doseq [c targets]
-                                                      (trash state :runner c))
-                                                    (system-msg state :runner
-                                                                (str "trashes " (join ", " (map :title targets)))))}
-                                      card nil))))}]}
+                   :async true
+                   :effect (req (wait-for (draw state :runner 3 nil)
+                                          (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
+                                            (if (pos? delta)
+                                              (continue-ability
+                                               state :runner
+                                               {:prompt (msg "Select " delta " cards to discard")
+                                                :player :runner
+                                                :choices {:max delta
+                                                          :req #(in-hand? %)}
+                                                :effect (req (doseq [c targets]
+                                                               (trash state :runner c))
+                                                             (system-msg state :runner
+                                                                         (str "trashes " (join ", " (map :title targets)))))}
+                                               card nil)
+                                              (effect-completed state side eid)))))}]}
 
    "Himitsu-Bako"
    {:abilities [{:msg "add it to HQ"
@@ -2009,7 +2006,6 @@
                                                 (clear-wait-prompt state :runner)
                                                 (continue-ability state side maybe-draw-effect card nil))))}
                                       card nil)))}
-
                     {:label "Trash 1 card in HQ"
                      :async true
                      :effect
@@ -2040,6 +2036,30 @@
 
    "Sagittarius"
    (constellation-ice trash-program)
+
+   "Saisentan"
+   {:subroutines [{:label "Do 1 net damage"
+                   :async true
+                   :msg "do 1 net damage"
+                   :effect (req (wait-for (damage state side :net 1 {:card card})
+                                          (when-let* [choice (get-in card [:special :saisentan])
+                                                      cards (some #(when (= (:cid (second %)) (:cid card)) (last %))
+                                                                  (turn-events state :corp :damage))
+                                                      dmg (some #(when (= (:type %) choice) %) cards)]
+                                            (system-msg state :corp "uses Saisentan to deal a second net damage")
+                                            (damage state side eid :net 1 {:card card}))))}]
+    :events
+    {:encounter-ice
+     {:req (req (and (= (:cid target) (:cid card))
+                     (rezzed? card)))
+      :effect (effect (show-wait-prompt :runner "Corp to choose Saisentan card type")
+                      (continue-ability
+                        {:prompt "Choose a card type"
+                         :choices ["Event" "Hardware" "Program" "Resource"]
+                         :effect (effect (update! (assoc-in card [:special :saisentan] target))
+                                         (system-msg (str "chooses " target " for Saisentan"))
+                                         (clear-wait-prompt :runner))}
+                        card nil))}}}
 
    "Salvage"
    {:advanceable :while-rezzed
@@ -2348,6 +2368,26 @@
                  :msg (msg "gain " (count (filter #(is-type? % "Asset")
                                                   (all-active-installed state :corp))) " subroutines")}]
     :subroutines [end-the-run]}
+
+   "Trebuchet"
+   {:effect take-bad-pub
+    :subroutines [{:prompt "Select a card to trash"
+                   :label "Trash 1 installed Runner card"
+                   :msg (msg "trash " (:title target))
+                   :choices {:req #(and (installed? %)
+                                        (= (:side %) "Runner"))}
+                   :async true
+                   :effect (req (trash state side eid target {:cause :subroutine}))}
+                  (trace-ability 6 {:label "The Runner cannot steal or trash Corp cards for the remainder of this run"
+                                     :msg "prevent the Runner from stealing or trashing Corp cards for the remainder of the run"
+                                     :effect (req (register-run-flag! state side card :can-steal
+                                                                      (fn [state side card]
+                                                                        ((constantly false)
+                                                                         (toast state :runner "Cannot steal due to Trebuchet." "warning"))))
+                                                  (register-run-flag! state side card :can-trash
+                                                                      (fn [state side card]
+                                                                        ((constantly (not= (:side card) "Corp"))
+                                                                         (toast state :runner "Cannot trash due to Trebuchet." "warning")))))})]}
 
    "Tribunal"
    {:subroutines [{:msg "force the Runner to trash 1 installed card"

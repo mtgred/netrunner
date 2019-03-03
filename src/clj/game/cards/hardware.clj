@@ -175,13 +175,16 @@
     :abilities [{:msg (msg "trash " (:title target))
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))
                            :not-self true}
-                 :effect (effect (trash target)
-                                 (resolve-ability
-                                   {:prompt "Draw 1 card or remove 1 tag" :msg (msg (.toLowerCase target))
-                                    :choices ["Draw 1 card" "Remove 1 tag"]
-                                    :effect (req (if (= target "Draw 1 card")
-                                                   (draw state side)
-                                                   (lose-tags state :runner 1)))} card nil))}]}
+                 :async true
+                 :effect (req (wait-for (trash state :runner target)
+                                        (continue-ability state side
+                                         {:prompt "Draw 1 card or remove 1 tag" :msg (msg (.toLowerCase target))
+                                          :choices ["Draw 1 card" "Remove 1 tag"]
+                                          :async true
+                                          :effect (req (if (= target "Draw 1 card")
+                                                         (draw state side eid 1 nil)
+                                                         (do (lose-tags state :runner 1)
+                                                             (effect-completed state side eid))))} card nil)))}]}
 
    "Clone Chip"
    {:abilities [{:prompt "Select a program to install from your Heap"
@@ -247,7 +250,8 @@
     :events {:run-big {:once :per-turn
                        :req (req (first-event? state side :run-big))
                        :msg "draw two cards"
-                       :effect (effect (draw 2))}}}
+                       :async true
+                       :effect (effect (draw eid 2 nil))}}}
 
    "Dedicated Processor"
    {:implementation "Click Dedicated Processor to use ability"
@@ -342,7 +346,7 @@
                              :makes-run true
                              :effect (effect (update! (dissoc card :dopp-active))
                                              (clear-wait-prompt :corp)
-                                             (run eid target))}}}}}
+                                             (make-run eid target))}}}}}
 
    "Dorm Computer"
    {:data {:counter {:power 4}}
@@ -354,7 +358,7 @@
                  :msg "make a run and avoid all tags for the remainder of the run"
                  :makes-run true
                  :effect (effect (update! (assoc card :dorm-active true))
-                                 (run target))}]
+                                 (make-run target))}]
     :events {:pre-tag {:req (req (:dorm-active card))
                        :effect (effect (tag-prevent :runner Integer/MAX_VALUE))
                        :msg "avoid all tags during the run"}
@@ -479,22 +483,14 @@
                   :choices {:req is-virus-program?}
                   :effect (req (add-counter state :runner card :virus -1)
                                (add-counter state :runner target :virus 1))}]
-     {:abilities [{:effect (effect (update! (update-in card [:special :auto-accept] #(not %)))
-                                   (toast (str "Friday Chip will now "
-                                               (if (get-in card [:special :auto-accept]) "no longer " "")
-                                               "automatically add counters.") "info"))
-                   :label "Toggle auomatically adding virus counters"}]
+     {:abilities [(set-autoresolve :auto-accept "Friday Chip")]
       :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))
       :events {:runner-turn-begins ability
                :runner-trash {:async true
                               :req (req (some #(card-is? % :side :corp) targets))
                               :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
-                                                 auto-ab {:effect (effect (system-msg :runner
-                                                                                      (str "places "
-                                                                                           (quantify amt-trashed "virus counter")
-                                                                                           " on Friday Chip"))
-                                                                    (add-counter :runner card :virus amt-trashed))}
                                                  sing-ab {:optional {:prompt "Place a virus counter on Friday Chip?"
+                                                                     :autoresolve (get-autoresolve :auto-accept)
                                                                      :yes-ability {:effect (effect (system-msg
                                                                                                      :runner
                                                                                                      "places 1 virus counter on Friday Chip")
@@ -507,8 +503,7 @@
                                                                                            (quantify target "virus counter")
                                                                                            " on Friday Chip"))
                                                                           (add-counter :runner card :virus target))}
-                                                 ab (if (> amt-trashed 1) mult-ab sing-ab)
-                                                 ab (if (get-in card [:special :auto-accept]) auto-ab ab)]
+                                                 ab (if (> amt-trashed 1) mult-ab sing-ab)]
                                              (continue-ability state side ab card targets)))}}})
 
    "Gebrselassie"
@@ -586,14 +581,15 @@
     :events {:successful-run
              {:req (req (and (first-event? state :runner :successful-run)
                              (pos? (count-virus-programs state))))
-              :optional
-                   {:prompt "Place a virus counter?"
-                    :yes-ability {:prompt "Select an installed virus program"
-                                  :choices {:req #(and (installed? %)
-                                                       (has-subtype? % "Virus")
-                                                       (is-type? % "Program"))}
-                                  :msg (msg "place 1 virus counter on " (:title target))
-                                  :effect (effect (add-counter target :virus 1))}}}}}
+              :optional {:prompt "Place a virus counter?"
+                         :autoresolve (get-autoresolve :auto-add)
+                         :yes-ability {:prompt "Select an installed virus program for Knobkierie to add a virus counter to"
+                                       :choices {:req #(and (installed? %)
+                                                            (has-subtype? % "Virus")
+                                                            (is-type? % "Program"))}
+                                       :msg (msg "place 1 virus counter on " (:title target))
+                                       :effect (effect (add-counter target :virus 1))}}}}
+    :abilities [(set-autoresolve :auto-add "Knobkierie")]}
 
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1]
@@ -641,7 +637,8 @@
    {:abilities [{:label "Draw 1 card"
                  :msg "draw 1 card"
                  :counter-cost [:power 3]
-                 :effect (effect (draw :runner 1))}]
+                 :async true
+                 :effect (effect (draw :runner eid 1 nil))}]
     :events {:runner-trash {:once :per-turn
                             :req (req (and (card-is? target :side :corp)
                                            (:access @state)
@@ -807,7 +804,8 @@
                                                   (first-event? state side :successful-run-ends
                                                                 #(#{:rd :hq} (first (:server (first %)))))))
                                    :msg (msg "draw " (total-cards-accessed target) " cards")
-                                   :effect (effect (draw (total-cards-accessed target)))}
+                                   :async true
+                                   :effect (effect (draw eid (total-cards-accessed target) nil))}
              ;; Events for tracking hand size
              :runner-gain-tag {:effect (req (change-hand-size state :runner target))}
              :runner-lose-tag {:effect (req (change-hand-size state :runner (- target)))}
@@ -843,12 +841,14 @@
     :events {:successful-run
              {:req (req (first-event? state side :successful-run))
               :async true
-              :interactive (req true)
+              :interactive (get-autoresolve :autofire (complement never?))
+              :silent (get-autoresolve :autofire never?)
               :effect (effect
                         (show-wait-prompt :corp "Runner to decide if they will use Paragon")
                         (continue-ability
                           {:optional
                            {:player :runner
+                            :autoresolve (get-autoresolve :auto-fire)
                             :prompt "Use Paragon?"
                             :yes-ability
                             {:msg "gain 1 [Credit] and look at the top card of Stack"
@@ -867,7 +867,8 @@
                                          card nil))}
                             :no-ability {:effect (effect (clear-wait-prompt :corp)
                                                          (system-msg "does not add the top card of the Stack to the bottom"))}}}
-                          card nil))}}}
+                          card nil))}}
+    :abilities [(set-autoresolve :auto-fire "Paragon")]}
 
    "Patchwork"
    (letfn [(patchwork-discount [cost-type bonus-fn]
@@ -915,8 +916,9 @@
    (let [abi {:optional
               {:prompt "Draw 1 card to force the Corp to draw 1 card?"
                :yes-ability {:msg "draw 1 card and force the Corp to draw 1 card"
-                             :effect (effect (draw :runner 1)
-                                             (draw :corp 1))}
+                             :async true
+                             :effect (req (wait-for (draw state :runner 1)
+                                                    (draw state :corp eid 1 nil)))}
                :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                          (effect-completed state side eid))}}}]
      {:in-play [:link 1 :memory 1]
@@ -1049,11 +1051,13 @@
    "Respirocytes"
    (let [ability {:once :per-turn
                   :msg "draw 1 card and add a power counter to itself"
-                  :effect (req (draw state :runner)
-                               (add-counter state side (get-card state card) :power 1)
-                               (when (= (get-counters (get-card state card) :power) 3)
-                                 (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
-                                 (trash state side card {:unpreventable true})))}
+                  :async true
+                  :effect (req (wait-for (draw state :runner 1 nil)
+                                         (do (add-counter state side (get-card state card) :power 1)
+                                             (if (= (get-counters (get-card state card) :power) 3)
+                                               (do (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
+                                                   (trash state side eid card {:unpreventable true}))
+                                               (effect-completed state side eid)))))}
          watch-id (fn [card] (keyword (str "respirocytes-" (:cid card))))]
      {:effect (req (add-watch state (watch-id card)
                               (fn [k ref old new]
@@ -1136,7 +1140,7 @@
                                                    (trash-cards state side (make-eid state) targets
                                                                 {:unpreventable true
                                                                  :suppress-event true})
-                                                   (game.core/run state side srv nil card)
+                                                   (make-run state side srv nil card)
                                                    (register-events state side
                                                      {:pre-access
                                                       {:silent (req true)
@@ -1181,7 +1185,8 @@
    {:in-play [:link 1]
     :abilities [{:label "Draw 3 cards"
                  :msg "draw 3 cards"
-                 :effect (effect (trash card {:cause :ability-cost}) (draw 3))}]}
+                 :async true
+                 :effect (req (wait-for (trash state :runner card {:cause :ability-cost}) (draw state :runner eid 3 nil)))}]}
 
    "Spy Camera"
    {:abilities [{:cost [:click 1]
@@ -1335,7 +1340,8 @@
                   :msg "draw 1 card"
                   :label "Draw 1 card (start of turn)"
                   :once :per-turn
-                  :effect (effect (draw 1))}]
+                  :async true
+                  :effect (effect (draw eid 1 nil))}]
      {:in-play [:memory 1]
       :flags {:runner-turn-draw true
               :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
@@ -1364,7 +1370,8 @@
                   :msg "draw 1 card"
                   :label "Draw 1 card (start of turn)"
                   :once :per-turn
-                  :effect (effect (draw 1))}]
+                  :async true
+                  :effect (effect (draw eid 1 nil))}]
    {:in-play [:memory 1]
     :events {:runner-turn-begins ability}
     :abilities [ability]})
@@ -1383,5 +1390,6 @@
    {:abilities [{:cost [:click 1 :net-damage 1]
                  :once :per-turn
                  :msg "gain 1 [Credits] and draw 2 cards"
+                 :async true
                  :effect (effect (gain-credits 1)
-                                 (draw 2))}]}})
+                                 (draw eid 2 nil))}]}})

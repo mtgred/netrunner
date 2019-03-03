@@ -660,3 +660,136 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh ank)})
         (is (= 3 (:current-strength (refresh ank))) "Ankusa is at 3 strength")
         (is (= 1 (:credit (get-runner))) "Spent 3 to pump")))))
+
+(deftest autoresolve
+  (testing "Aeneas with and without autoresolve"
+    (do-game
+     (new-game {:corp {:deck ["Jackson Howard"]}
+                :runner {:deck [(qty "Aeneas Informant" 2)]}})
+     (play-from-hand state :corp "Jackson Howard" "New remote")
+     (take-credits state :corp)
+     (core/gain state :runner :click 50)
+     (play-from-hand state :runner "Aeneas Informant")
+     (letfn [(run-jackson []
+               (run-empty-server state "Server 1")
+               (click-prompt state :runner "No action"))
+             (get-aeneas1 [] (get-resource state 0))]
+       ;; before we toggle anything, aeneas should always prompt, and after we set it to 'Ask',
+       ;; it should still do so, even if it was already set to 'Ask'
+       (dotimes [_ 3]
+         (run-jackson)
+         (is (changes-credits (get-runner) 1 ; triggering Aeneas should grant a credit
+                              (click-prompt state :runner "Yes")))
+         (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying")
+         (run-jackson)
+         (is (changes-credits (get-runner) 0 ; not triggering Aeneas should not grant a credit
+                              (click-prompt state :runner "No")))
+         (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying")
+         (card-ability state :runner (get-aeneas1) 0)
+         (click-prompt state :runner "Ask"))
+       ;; if aeneas is set to always/never fire, we should get to run without being prompted
+       (card-ability state :runner (get-aeneas1) 0)
+       (click-prompt state :runner "Never")
+       (is (changes-credits (get-runner) 0
+                            (run-jackson)))
+       (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying")
+       (card-ability state :runner (get-aeneas1) 0)
+       (click-prompt state :runner "Always")
+       (is (changes-credits (get-runner) 1
+                            (run-jackson)))
+       (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying")
+       ;; should also be able to play a new aeneas which doesn't care about the first one's autoresolve
+       (play-from-hand state :runner "Aeneas Informant")
+       (is (changes-credits (get-runner) 2
+                            (do (run-jackson)
+                                (click-prompt state :runner "Yes"))))
+       (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying")
+       (card-ability state :runner (get-resource state 1) 0)
+       (click-prompt state :runner "Never")
+       (is (changes-credits (get-runner) 1
+                            (run-jackson)))
+       (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying"))))
+  (testing "Fisk + FTT with and without autoresolve"
+    (do-game
+     (new-game {:corp {:deck [(qty "Archer" 30)]}
+                :runner {:id "Laramy Fisk: Savvy Investor"
+                         :deck ["Find the Truth"]}})
+
+     (take-credits state :corp)
+     (play-from-hand state :runner "Find the Truth")
+     (letfn [(set-ftt-autoresolve [setting]
+               (card-ability state :runner (get-resource state 0) 0)
+               (click-prompt state :runner setting))
+             (set-fisk-autoresolve [setting]
+               (card-ability state :runner (get-in @state [:runner :identity]) 0)
+               (click-prompt state :runner setting))
+             (pass-turn-runner-corp []
+               (take-credits state :runner)
+               (take-credits state :corp))]
+       ;; with nothing done, ftt and fisk will both want to prompt on a successful central run, so will need to be ordered
+       ;; this will remain the case after one of them is set to 'Ask'
+       (dotimes [_ 2]
+        (run-empty-server state "Archives")
+        (changes-val-macro 1 (count (get-in @state [:corp :hand]))
+                           "Corp drew 1 card"
+                           (click-prompt state :runner "Laramy Fisk: Savvy Investor")
+                           (click-prompt state :runner "Yes"))
+        ;; resolve FTT
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "OK")
+        (set-fisk-autoresolve "Ask")
+        (pass-turn-runner-corp))
+       ;; if either is set to 'never', we should not need simult event resolution
+       (set-fisk-autoresolve "Ask")
+       (set-ftt-autoresolve "Never")
+       (is (empty? (:prompt (get-runner))) "No prompts displaying")
+       (run-empty-server state "Archives")
+       (is (= "Laramy Fisk: Savvy Investor" (-> @state :runner :prompt first :card :title)) "Fisk prompt is open")
+       (click-prompt state :runner "No")
+       (is (empty? (:prompt (get-runner))) "No prompts displaying")
+       (pass-turn-runner-corp)
+       ;; if one is 'never' and the other is 'always', still do not need simult resolution
+       (set-fisk-autoresolve "Never")
+       (set-ftt-autoresolve "Always")
+       (run-empty-server state "Archives")
+       (click-prompt state :runner "OK")
+       (is (empty? (:prompt (get-runner))) "No prompts displaying")
+       (pass-turn-runner-corp)
+       ;; if one is set to 'always', and the other to 'Ask' we do need simult event resolution
+       (set-fisk-autoresolve "Always")
+       (set-ftt-autoresolve "Ask")
+       (run-empty-server state "Archives")
+       (click-prompt state :runner "Find the Truth")
+       (click-prompt state :runner "Yes")
+       (changes-val-macro 1 (count (get-in @state [:corp :hand]))
+                          "Fisk triggers after closing FTT prompt"
+                          (click-prompt state :runner "OK"))
+       (is (empty? (:prompt (get-runner))) "No prompts displaying"))))
+  (testing "Ensure autoresolve does not break prompts with a :req"
+    (do-game
+     (new-game {:corp {:id "SSO Industries: Fueling Innovation"
+                       :deck ["Underway Renovation" (qty "Ice Wall" 3)]}})
+     (letfn [(toggle-sso [setting]
+               (card-ability state :corp (get-in @state [:corp :identity]) 0)
+               (click-prompt state :corp setting))]
+       (toggle-sso "Always")
+       (play-from-hand state :corp "Underway Renovation" "New remote")
+       (take-credits state :corp)
+       (is (empty? (:prompt (get-corp))) "No prompts displaying, as conditions are not satisfied")
+       (take-credits state :runner)
+       (play-from-hand state :corp "Ice Wall" "New remote")
+       (toggle-sso "Never")
+       (take-credits state :corp)
+       (is (empty? (:prompt (get-corp))) "No prompts displaying, as conditions are not satisfied")
+       (take-credits state :runner)
+       (toggle-sso "Always")
+       (take-credits state :corp)
+       (is (= "Select ICE with no advancement tokens to place 1 advancement token on"
+              (-> @state :corp :prompt first :msg))
+           "SSO autoresolved first prompt")
+       (click-card state :corp (get-ice state :remote2 0))
+       (is (= 1 (get-counters (get-ice state :remote2 0) :advancement)) "A token was added")
+       (is (empty? (:prompt (get-corp))) "No prompt displaying")
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (is (empty? (:prompt (get-corp))) "No prompt displaying, as conditions are not met")))))

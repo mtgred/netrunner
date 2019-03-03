@@ -182,7 +182,7 @@
     (new-game {:runner {:deck ["Beach Party"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Beach Party")
-    (is (= 10 (core/hand-size state :runner)) "Max hand size increased by 5")
+    (is (= 10 (hand-size :runner)) "Max hand size increased by 5")
     (take-credits state :runner)
     (take-credits state :corp)
     (is (= 3 (:click (get-runner))) "Lost 1 click at turn start")))
@@ -240,7 +240,7 @@
     (play-from-hand state :runner "Brain Cage")
     (is (= 2 (count (:hand (get-runner)))) "No cards lost")
     (is (zero? (:brain-damage (get-runner))))
-    (is (= 8 (core/hand-size state :runner)) "Runner hand size boosted by Brain Cage")
+    (is (= 8 (hand-size :runner)) "Runner hand size boosted by Brain Cage")
     (take-credits state :runner)
     (core/gain-tags state :runner 2)
     (core/trash state :runner (get-hardware state 0))
@@ -1537,12 +1537,12 @@
     (play-from-hand state :runner "Joshua B.")
     (take-credits state :runner)
     (take-credits state :corp)
-    (is (zero? (:click (get-runner))) "Runner has 0 clicks")
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (is (:runner-phase-12 @state) "Runner is in Step 1.2")
     (card-ability state :runner (get-resource state 0) 0)
-    (is (= 1 (:click (get-runner))) "Gained extra click from Joshua")
+    (is (= 5 (:click (get-runner))) "Gained extra click from Joshua")
     (core/end-phase-12 state :runner nil)
-    (is (= 5 (:click (get-runner))) "Gained normal clicks as well")
+    (is (zero? (count-tags state)) "Runner has no tags during turn")
     (take-credits state :runner)
     (is (= 1 (count-tags state)) "Took 1 tag")))
 
@@ -2343,7 +2343,7 @@
     (take-credits state :corp)
     (starting-hand state :runner ["Safety First" "Safety First" "Cache"])
     (play-from-hand state :runner "Safety First")
-    (is (= 3 (core/hand-size state :runner)) "Max hand size reduced by 2")
+    (is (= 3 (hand-size :runner)) "Max hand size reduced by 2")
     (take-credits state :runner)
     (is (= 3 (count (:hand (get-runner)))) "Drew 1 card at end of turn")
     (take-credits state :corp)
@@ -2869,6 +2869,86 @@
       (is (= 2 (count (get-program state))) "2 Programs installed")
       (is (= 6 (:credit (get-runner))) "Artist discount applied new turn"))))
 
+(deftest the-class-act
+  ;; The Class Act
+  (testing "Vanilla test"
+    (do-game
+     (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
+                         :hand ["The Class Act" "Easy Mark" "Corporate Defector"]}})
+     (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck {:front true}) ;ensure easy mark is on the top
+     (is (= "Easy Mark" (-> (get-runner) :deck first :title)) "Easy Mark is on top of deck")
+     (take-credits state :corp)
+     (play-from-hand state :runner "The Class Act")
+     (is (empty? (get-program state)) "No programs installed")
+     (is (= 1 (:credit (get-runner))))
+     (is (empty? (:prompt (get-runner))) "The Class Act has done nothing yet, so there is no Runner prompt")
+     (is (empty? (:prompt (get-corp))) "The Class Act has done nothing yet, so there is no Corp prompt")
+     (is (= 6 (count (:deck (get-runner)))) "4 cards in deck to be drawn")
+     (take-credits state :runner)
+     (is (not (empty? (:prompt (get-runner)))) "The Class Act triggered its draw ability, so Runner needs to choose")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act triggered its draw ability, so Corp must wait while Runner chooses")
+     (is (not= "Easy Mark" (-> (get-runner) :deck last :title)) "Easy Mark is not on the bottom of the deck yet")
+     (click-prompt state :runner "Easy Mark")
+     (is (empty? (:prompt (get-corp))) "The Class Act has bottomed a card, so there is no Corp prompt")
+     (is (empty? (:prompt (get-runner))) "The Class Act has has bottomed a card, so there is no Runner prompt")
+     (is (= "Easy Mark" (-> (get-runner) :deck last :title)) "Easy Mark was put on bottom of deck")
+     (is (= 2 (count (:deck (get-runner)))) "2 cards in deck")
+     (take-credits state :corp)
+     (take-credits state :runner)
+     (is (= 2 (count (:deck (get-runner)))) "The Class Act does not trigger at the end of a turn it wasn't installed, so no cards were drawn")
+     (is (empty? (:prompt (get-runner))) "The Class Act does not trigger at the end of a turn it wasn't installed, so there is no prompt")
+     (take-credits state :corp)
+     (core/click-draw state :runner nil)
+     (is (not (empty? (:prompt (get-runner)))) "The Class Act is prompting the runner to choose")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
+     (click-prompt state :runner "Easy Mark")
+     (is (empty? (:prompt (get-runner))) "The Class Act is no longer prompting the runner to choose")
+     (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits")
+     (is (= "Easy Mark" (-> (get-runner) :deck last :title)) "Easy Mark was bottomed again")
+     (core/click-draw state :runner nil)
+     (is (zero? (count (:deck (get-runner)))) "Runner only drew one")
+     (is (empty? (:prompt (get-runner))) "The Class Act did not trigger")
+     (is (empty? (:prompt (get-corp))) "The Class Act is no longer insisting the corp waits")))
+  (testing "Interaction with other sources of draw"
+    (do-game
+     (new-game {:runner {:deck [(qty "Sure Gamble" 3)]
+                         :hand ["The Class Act" "Laguna Velasco District"]}})
+     (take-credits state :corp)
+     (core/gain state :runner :credit 10)
+     (play-from-hand state :runner "The Class Act")
+     (play-from-hand state :runner "Laguna Velasco District")
+     (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+     (core/click-draw state :runner nil)
+     (is (not (empty? (:prompt (get-runner)))) "The Class Act is prompting the runner to choose")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
+     (click-prompt state :runner "Sure Gamble")
+     (is (empty? (:prompt (get-runner))) "The Class Act is done prompting the runner to choose")
+     (is (empty? (:prompt (get-corp))) "The Class Act is not insisting the corp waits")
+     (is (= 1 (count (:deck (get-runner)))) "1 card put back")))
+  (testing "Ensure draw filtering is properly awaited"
+    (do-game
+     (new-game {:runner {:deck [(qty "Sure Gamble" 3)]
+                         :hand ["The Class Act" "Paragon" "John Masanori"]
+                         :credits 10}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "The Class Act")
+     (play-from-hand state :runner "Paragon")
+     (play-from-hand state :runner "John Masanori")
+     (is (= 3 (count (:deck (get-runner)))) "3 cards in deck")
+     (run-empty-server state "Archives")
+     (click-prompt state :runner "John Masanori") ; runner should be prompted for which to trigger first
+     (is (= 2 (->> (get-runner) :prompt first :choices count)) "The Class Act shows 2 cards")
+     (is (= 1 (count (:prompt (get-runner)))) "The Class Act is prompting the runner to choose, but Paragon prompt is not open yet")
+     (is (not (empty? (:prompt (get-corp)))) "The Class Act is insisting the corp waits")
+     (click-prompt state :runner "Sure Gamble")
+     (is (= 2 (count (:deck (get-runner)))) "The Class Act put a card back")
+     (is (changes-credits (get-runner) 1
+                          (do (click-prompt state :runner "Yes") ; runner prompted to trigger Paragon
+                              (click-prompt state :runner "Yes"))))
+     (is (empty? (:prompt (get-runner))) "The Class Act is done prompting the runner to choose")
+     (is (empty? (:prompt (get-corp))) "The Class Act is not insisting the corp waits")
+     (is (= 2 (count (:deck (get-runner)))) "Deck still has 2 cards"))))
+
 (deftest the-black-file
   ;; The Black File - Prevent Corp from winning by agenda points
   (testing "Basic test"
@@ -2931,6 +3011,60 @@
       (is (zero? (:link (get-runner))))
       (take-credits state :runner)
       (is (= 2 (:current-strength (refresh corr))) "Corroder back to default strength"))))
+
+(deftest the-nihilist
+  ;; The Nihilist
+  (testing "Vanilla test"
+    (do-game
+     (new-game {:runner {:deck ["The Nihilist" (qty "Cache" 2) (qty "Sure Gamble" 3)]}
+                :corp {:deck [(qty "Ice Wall" 10)]}})
+     (starting-hand state :runner ["The Nihilist" "Cache" "Cache"])
+     (starting-hand state :corp [])
+     (take-credits state :corp)
+     (core/gain state :runner :credit 10)
+     (play-from-hand state :runner "The Nihilist")
+     (play-from-hand state :runner "Cache")
+     (let [nihi (get-resource state 0)
+           cache1 (get-program state 0)]
+       (is (= 2 (get-counters (refresh nihi) :virus)) "The Nihilist gained 2 counters")
+       (play-from-hand state :runner "Cache")
+       (is (= 2 (get-counters (refresh nihi) :virus)) "The Nihilist only triggered on first install")
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (click-prompt state :runner "Yes")  ; spend 2 tokens?
+       (is (= 2 (get-counters (refresh nihi) :virus)) "The Nihilist has 2 counters")
+       (is (= 3 (get-counters (refresh cache1) :virus)) "Cache 1 has 3 counters")
+       (click-card state :runner (refresh nihi))
+       (click-card state :runner (refresh cache1))
+       (is (= 1 (get-counters (refresh nihi) :virus)) "The Nihilist spent 1 counter")
+       (is (= 2 (get-counters (refresh cache1) :virus)) "Cache 1 spent 1")
+       (is (not (empty? (:prompt (get-runner)))) "Runner is waiting for Corp to pick their Nihilist poison")
+       (is (= 0 (count (:discard (get-corp)))) "No cards in Archives")
+       (click-prompt state :corp "Yes")  ; mill 1
+       (is (= 1 (count (:discard (get-corp)))) "1 card milled")
+       (is (empty? (:prompt (get-runner))) "Runner is done waiting for Corp to pick their Nihilist poison")
+       (is (empty? (:prompt (get-corp))) "No more Corp prompts")
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (click-prompt state :runner "Yes")  ; spend 2 tokens?
+       (is (= 1 (get-counters (refresh nihi) :virus)) "The Nihilist has 1 counters")
+       (is (= 2 (get-counters (refresh cache1) :virus)) "Cache 1 has 2 counters")
+       (click-card state :runner (refresh nihi))
+       (click-card state :runner (refresh cache1))
+       (is (= 0 (get-counters (refresh nihi) :virus)) "The Nihilist spent 1 counter")
+       (is (= 1 (get-counters (refresh cache1) :virus)) "Cache 1 spent 1")
+       (is (= 0 (count (:hand (get-runner)))) "Runner has no cards in hand")
+       (is (= 1 (count (:discard (get-corp)))) "1 card in discard")
+       (is (not (empty? (:prompt (get-runner)))) "Runner is waiting for Corp to pick their Nihilist poison")
+       (click-prompt state :corp "No")  ; don't mill 1
+       (is (= 2 (count (:hand (get-runner)))) "Runner drew 2 cards")
+       (is (= 1 (count (:discard (get-corp)))) "No extra cards milled")
+       (is (empty? (:prompt (get-runner))) "Runner done waiting for Corp to pick their Nihilist poison")
+       (is (empty? (:prompt (get-corp))) "Corp has no more prompts")
+       (take-credits state :runner)
+       (core/purge state :corp)
+       (take-credits state :corp)
+       (is (empty? (:prompt (get-runner))) "Runner gets no prompt when they have no virus tokens to spend")))))
 
 (deftest the-source
   ;; The Source - Increase advancement requirement of agendas by 1; 3c additional cost to steal
@@ -3106,15 +3240,15 @@
     (play-from-hand state :runner "Theophilius Bagbiter")
     (is (zero? (:credit (get-runner))) "Runner loses all credits on install")
     (is (= 1 (count (get-resource state))) "Theophilius Bagbiter installed")
-    (is (zero? (core/hand-size state :runner)) "Max hand size is 0")
+    (is (zero? (hand-size :runner)) "Max hand size is 0")
     (core/gain state :runner :credit 7)
     (is (= 7 (:credit (get-runner))) "Runner has 7c")
-    (is (= 7 (core/hand-size state :runner)) "Max hand size is 7")
+    (is (= 7 (hand-size :runner)) "Max hand size is 7")
     (core/trash-resource state :runner nil)
     (click-card state :runner (get-resource state 0))
     (is (= 1 (count (:discard (get-runner)))) "Theo is trashed")
     (is (empty? (get-resource state)) "No resources installed")
-    (is (= 5 (core/hand-size state :runner)) "Max hand size is reset to default")))
+    (is (= 5 (hand-size :runner)) "Max hand size is reset to default")))
 
 (deftest thunder-art-gallery
   ;; Thunder Art Gallery

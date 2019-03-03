@@ -146,6 +146,7 @@
              {:interactive (req true)
               :optional {:prompt "Trace with Amani Senai?"
                          :player :corp
+                         :autoresolve (get-autoresolve :auto-fire)
                          :yes-ability {:trace {:base (req (trace-base-func state))
                                                :successful
                                                {:choices {:req #(and (installed? %)
@@ -154,7 +155,8 @@
                                                 :msg (msg "add " (:title target) " to the Runner's Grip")
                                                 :effect (effect (move :runner target :hand true))}}}}})]
     {:events {:agenda-scored (senai-ability get-last-scored-pts)
-              :agenda-stolen (senai-ability get-last-stolen-pts)}})
+              :agenda-stolen (senai-ability get-last-stolen-pts)}
+     :abilities [(set-autoresolve :auto-fire "whether to fire Amani Senai")]})
 
    "Anson Rose"
    (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
@@ -1059,6 +1061,7 @@
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]
                   :once :per-turn
+                  :interactive (req true)
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain 2 [Credits] (start of turn)")
                   :async true
@@ -1069,18 +1072,20 @@
      {:effect (effect (add-counter card :credit 8))
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
+      :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
       :trash-effect {:req (req (= :servers (first (:previous-zone card))))
                      :async true
                      :effect (effect (show-wait-prompt :runner "Corp to use Marilyn Campaign")
                                      (continue-ability :corp
                                        {:optional
                                         {:prompt "Shuffle Marilyn Campaign into R&D?"
+                                         :autoresolve (get-autoresolve :auto-reshuffle)
                                          :priority 1
                                          :player :corp
                                          :yes-ability {:msg "shuffle it back into R&D"
-                                                       :effect (req (move state :corp card :deck)
-                                                                    (shuffle! state :corp :deck)
-                                                                    (effect-completed state side eid))}
+                                                       :effect (effect (move :corp card :deck)
+                                                                       (shuffle! :corp :deck)
+                                                                       (effect-completed eid))}
                                          :end-effect (effect (clear-wait-prompt :runner))}}
                                       card nil))}})
 
@@ -1366,7 +1371,9 @@
    (let [ability {:msg "make each player draw 1 card"
                   :label "Make each player draw 1 card (start of turn)"
                   :once :per-turn
-                  :effect (effect (draw 1) (draw :runner))}]
+                  :async true
+                  :effect (req (wait-for (draw state :corp 1 nil)
+                                         (draw state :runner eid 1 nil)))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :flags {:corp-phase-12 (req true)}
       :events {:corp-turn-begins ability}
@@ -1374,13 +1381,15 @@
 
    "Personalized Portal"
    {:events {:corp-turn-begins
-             {:effect (req (draw state :runner 1)
-                           (let [cnt (count (get-in @state [:runner :hand]))
-                                 credits (quot cnt 2)]
-                             (gain-credits state :corp credits)
-                             (system-msg state :corp
-                                         (str "uses Personalized Portal to force the runner to draw "
-                                              "1 card and gains " credits " [Credits]"))))}}}
+             {:async true
+              :effect (req (wait-for (draw state :runner 1 nil)
+                                     (let [cnt (count (get-in @state [:runner :hand]))
+                                           credits (quot cnt 2)]
+                                       (gain-credits state :corp credits)
+                                       (system-msg state :corp
+                                                   (str "uses Personalized Portal to force the runner to draw "
+                                                        "1 card and gain " credits " [Credits]"))
+                                       (effect-completed state side eid))))}}}
 
    "Plan B"
    (advance-ambush

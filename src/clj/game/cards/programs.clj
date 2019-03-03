@@ -36,19 +36,19 @@
                  :msg "make a run on R&D"
                  :makes-run true
                  :effect (effect
-                           (run :rd
-                                {:req (req (= target :rd))
-                                 :replace-access
-                                 {:prompt "Choose a card to shuffle into R&D"
-                                  :choices {:req #(and (not (ice? %))
-                                                       (not (rezzed? %))
-                                                       (zero? (get-counters % :advancement)))}
-                                  :effect (req (move state :corp target :deck)
-                                               (shuffle! state :corp :deck)
-                                               (swap! state update-in [:runner :prompt] rest)
-                                               (handle-end-run state side)) ; remove the replace-access prompt
-                                  :msg "shuffle a card into R&D"}}
-                                card))}]}
+                           (make-run :rd
+                                     {:req (req (= target :rd))
+                                      :replace-access
+                                      {:prompt "Choose a card to shuffle into R&D"
+                                       :choices {:req #(and (not (ice? %))
+                                                            (not (rezzed? %))
+                                                            (zero? (get-counters % :advancement)))}
+                                       :effect (req (move state :corp target :deck)
+                                                    (shuffle! state :corp :deck)
+                                                    (swap! state update-in [:runner :prompt] rest)
+                                                    (handle-end-run state side)) ; remove the replace-access prompt
+                                       :msg "shuffle a card into R&D"}}
+                                     card))}]}
 
    "Au Revoir"
    {:events {:jack-out {:effect (effect (gain-credits 1))
@@ -152,8 +152,41 @@
     :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))}
 
    "Collective Consciousness"
-   {:events {:rez {:req (req (ice? target)) :msg "draw 1 card"
-                   :effect (effect (draw :runner))}}}
+   {:events {:rez {:req (req (ice? target))
+                   :msg "draw 1 card"
+                   :async true
+                   :effect (effect (draw :runner eid 1 nil))}}}
+
+   "Consume"
+   {:events {:runner-trash {:async true
+                            :req (req (some #(card-is? % :side :corp) targets))
+                            :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
+                                               sing-ab {:optional {:prompt "Place a virus counter on Consume?"
+                                                                   :autoresolve (get-autoresolve :auto-accept)
+                                                                   :yes-ability {:effect (effect (add-counter :runner card :virus 1))
+                                                                                 :msg "place 1 virus counter on Consume"}}}
+                                               mult-ab {:prompt "Place virus counters on Consume?"
+                                                        :choices {:number (req amt-trashed)
+                                                                  :default (req amt-trashed)}
+                                                        :msg (msg "place " (quantify target "virus counter") " on Consume")
+                                                        :effect (effect (add-counter :runner card :virus target))}
+                                               ab (if (= 1 amt-trashed) sing-ab mult-ab)]
+                                           (continue-ability state side ab card targets)))}}
+    :abilities [{:req (req (pos? (get-virus-counters state card)))
+                 :cost [:click 1]
+                 :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters."
+                 :effect (req (gain-credits state side (* 2 (get-virus-counters state card)))
+                              (update! state side (assoc-in card [:counter :virus] 0))
+                              (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
+                                        (doseq [h hiveminds]
+                                               (update! state side (assoc-in h [:counter :virus] 0)))))
+                 :msg (msg (let [local-virus (get-counters card :virus)
+                                 global-virus (get-virus-counters state card)
+                                 hivemind-virus (- global-virus local-virus)]
+                             (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
+                             (when (pos? hivemind-virus)
+                                   (str " (and " hivemind-virus " from Hivemind)")))))}
+                (set-autoresolve :auto-accept "adding virus counters")]}
 
    "Copycat"
    {:abilities [{:req (req (and (:run @state)
@@ -207,43 +240,6 @@
                    :msg (msg "install " (:title target))
                    :effect (req (when (can-pay? state side nil :credit (:cost target))
                                   (runner-install state side target)))}]})
-   "Consume"
-   {:events {:runner-trash {:async true
-                            :req (req (some #(card-is? % :side :corp) targets))
-                            :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
-                                               auto-ab {:effect (effect (add-counter :runner card :virus amt-trashed))
-                                                        :msg (str "place " (quantify amt-trashed "virus counter") " on Consume")}
-                                               sing-ab {:optional {:prompt "Place a virus counter on Consume?"
-                                                                   :yes-ability {:effect (effect (add-counter :runner card :virus 1))
-                                                                                 :msg "place 1 virus counter on Consume"}}}
-                                               mult-ab {:prompt "Place virus counters on Consume?"
-                                                        :choices {:number (req amt-trashed)
-                                                                  :default (req amt-trashed)}
-                                                        :msg (msg "place " (quantify target "virus counter") " on Consume")
-                                                        :effect (effect (add-counter :runner card :virus target))}
-                                               ab (if (> amt-trashed 1) mult-ab sing-ab)
-                                               ab (if (get-in card [:special :auto-accept]) auto-ab ab)]
-                                           (continue-ability state side ab card targets)))}}
-    :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Consume."))
-    :abilities [{:req (req (pos? (get-virus-counters state card)))
-                 :cost [:click 1]
-                 :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters."
-                 :effect (req (gain-credits state side (* 2 (get-virus-counters state card)))
-                              (update! state side (assoc-in card [:counter :virus] 0))
-                              (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
-                                        (doseq [h hiveminds]
-                                               (update! state side (assoc-in h [:counter :virus] 0)))))
-                 :msg (msg (let [local-virus (get-counters card :virus)
-                                 global-virus (get-virus-counters state card)
-                                 hivemind-virus (- global-virus local-virus)]
-                             (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
-                             (when (pos? hivemind-virus)
-                                   (str " (and " hivemind-virus " from Hivemind)")))))}
-                {:effect (effect (update! (update-in card [:special :auto-accept] #(not %)))
-                                 (toast (str "Consume will now "
-                                             (if (get-in card [:special :auto-accept]) "no longer " "")
-                                             "automatically add counters.") "info"))
-                 :label "Toggle automatically adding virus counters"}]}
 
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
@@ -451,10 +447,10 @@
    {:abilities [{:cost [:click 1]
                  :msg "make a run on HQ"
                  :makes-run true
-                 :effect (effect (run :hq {:req (req (= target :hq))
-                                           :replace-access
-                                           {:msg (msg "reveal cards in HQ: "
-                                                      (join ", " (map :title (:hand corp))))}} card))}]}
+                 :effect (effect (make-run :hq {:req (req (= target :hq))
+                                                :replace-access
+                                                {:msg (msg "reveal cards in HQ: "
+                                                           (join ", " (map :title (:hand corp))))}} card))}]}
 
    "False Echo"
    {:abilities [{:req (req (and run
@@ -594,16 +590,16 @@
    {:abilities [{:cost [:click 1]
                  :msg "make a run on R&D"
                  :makes-run true
-                 :effect (effect (run :rd
-                                   {:req (req (= target :rd))
-                                    :replace-access
-                                    {:prompt "Choose a card to trash"
-                                     :not-distinct true
-                                     :msg (msg "trash " (:title target))
-                                     :choices (req (take 3 (:deck corp)))
-                                     :mandatory true
-                                     :effect (effect (trash (assoc target :seen true))
-                                                     (shuffle! :corp :deck))}} card))}]}
+                 :effect (effect (make-run :rd
+                                           {:req (req (= target :rd))
+                                            :replace-access
+                                            {:prompt "Choose a card to trash"
+                                             :not-distinct true
+                                             :msg (msg "trash " (:title target))
+                                             :choices (req (take 3 (:deck corp)))
+                                             :mandatory true
+                                             :effect (effect (trash (assoc target :seen true))
+                                                             (shuffle! :corp :deck))}} card))}]}
 
    "Kyuban"
    {:hosting {:req #(and (ice? %) (can-host? %))}
@@ -724,12 +720,14 @@
                                           (continue-ability
                                             {:optional
                                              {:prompt "Spend a power counter on Nyashia to access 1 additional card?"
+                                              :autoresolve (get-autoresolve :auto-nyashia)
                                               :yes-ability {:msg "access 1 additional card from R&D"
                                                             :effect (effect (access-bonus :rd 1)
                                                                             (add-counter card :power -1)
                                                                             (clear-wait-prompt :corp))}
                                               :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
-                                            card nil))}}}
+                                            card nil))}}
+    :abilities [(set-autoresolve :auto-nyashia "Nyashia")]}
 
    "Origami"
    {:effect (effect (gain :hand-size
@@ -883,7 +881,8 @@
    "Reaver"
    {:events {:runner-trash {:req (req (and (first-installed-trash? state side)
                                            (installed? target)))
-                            :effect (effect (draw :runner 1))
+                            :async true
+                            :effect (effect (draw :runner eid 1 nil))
                             :msg "draw 1 card"}}}
 
    "Rezeki"
@@ -893,7 +892,7 @@
    "RNG Key"
    {:events {:pre-access-card {:req (req (get-in card [:special :rng-guess]))
                                :async true
-                               :msg (msg "to reveal " (:title target))
+                               :msg (msg "reveal " (:title target))
                                :effect (req (if-let [guess (get-in card [:special :rng-guess])]
                                               (if (installed? target)
                                                 ;; Do not trigger on installed cards (can't "reveal" an installed card per UFAQ)
@@ -904,11 +903,13 @@
                                                   (continue-ability state side
                                                                     {:prompt "Choose RNG Key award"
                                                                      :choices ["Gain 3 [Credits]" "Draw 2 cards"]
+                                                                     :async true
                                                                      :effect (req (if (= target "Draw 2 cards")
-                                                                                    (do (draw state :runner 2)
-                                                                                        (system-msg state :runner "uses RNG Key to draw 2 cards"))
-                                                                                    (do (gain-credits state :runner 3)
-                                                                                        (system-msg state :runner "uses RNG Key to gain 3 [Credits]"))))}
+                                                                                    (do (system-msg state :runner "uses RNG Key to draw 2 cards")
+                                                                                        (draw state :runner eid 2 nil))
+                                                                                    (do (system-msg state :runner "uses RNG Key to gain 3 [Credits]")
+                                                                                        (gain-credits state :runner 3)
+                                                                                        (effect-completed state side eid))))}
                                                                     card nil)
                                                   (effect-completed state side eid)))
                                               (effect-completed state side eid)))}
@@ -916,10 +917,12 @@
              :successful-run {:req (req (and (#{:hq :rd} target)
                                              (first-event? state :runner :successful-run #{[:hq] [:rd]})))
                               :optional {:prompt "Fire RNG Key?"
+                                         :autoresolve (get-autoresolve :auto-fire)
                                          :yes-ability {:prompt "Guess a number"
                                                        :choices {:number (req 20)}
                                                        :msg (msg "guess " target)
-                                                       :effect (effect (update! (assoc-in card [:special :rng-guess] target)))}}}}}
+                                                       :effect (effect (update! (assoc-in card [:special :rng-guess] target)))}}}}
+    :abilities [(set-autoresolve :auto-fire "RNG Key")]}
 
    "Rook"
    {:abilities [{:cost [:click 1]
@@ -1002,18 +1005,18 @@
    {:abilities [{:cost [:click 1]
                  :msg "make a run on Archives"
                  :makes-run true
-                 :effect (effect (run :archives
-                                   {:req (req (= target :archives))
-                                    :successful-run
-                                    {:silent (req true)
-                                     :effect (req (swap! state assoc-in [:run :server] [:hq])
-                                                  ; remove the :req from the run-effect, so that other cards that replace
-                                                  ; access don't use Sneakdoor's req. (Security Testing, Ash 2X).
-                                                  (swap! state dissoc-in [:run :run-effect :req])
-                                                  (trigger-event state :corp :no-action)
-                                                  (system-msg state side
-                                                              (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
-                                   card))}]}
+                 :effect (effect (make-run :archives
+                                           {:req (req (= target :archives))
+                                            :successful-run
+                                            {:silent (req true)
+                                             :effect (req (swap! state assoc-in [:run :server] [:hq])
+                                                          ; remove the :req from the run-effect, so that other cards that replace
+                                                          ; access don't use Sneakdoor's req. (Security Testing, Ash 2X).
+                                                          (swap! state dissoc-in [:run :run-effect :req])
+                                                          (trigger-event state :corp :no-action)
+                                                          (system-msg state side
+                                                                      (str "uses Sneakdoor Beta to make a successful run on HQ")))}}
+                                           card))}]}
 
    "Snitch"
    {:abilities [{:once :per-run :req (req (and (ice? current-ice) (not (rezzed? current-ice))))
@@ -1026,6 +1029,22 @@
                                                                     :effect (effect (jack-out nil))}
                                                       :no-ability {:msg "continue the run"}}}
                                           card nil)))}]}
+
+   "Stargate"
+   {:abilities [{:cost [:click 1]
+                 :once :per-turn
+                 :msg "make a run on R&D"
+                 :makes-run true
+                 :effect (effect (make-run :rd
+                                           {:req (req (= target :rd))
+                                            :replace-access
+                                            {:prompt "Choose a card to trash"
+                                             :not-distinct true
+                                             :msg (msg "trash " (:title target))
+                                             :choices (req (take 3 (:deck corp)))
+                                             :mandatory true
+                                             :effect (effect (trash (assoc target :seen true))
+                                                             (shuffle! :corp :deck))}} card))}]}
 
    "Surfer"
    (letfn [(surf [state cice]
@@ -1092,7 +1111,7 @@
      {:abilities [{:label "Make a run on targeted server" :cost [:click 1 :credit 2]
                    :req (req (some #(= (:server-target card) %) runnable-servers))
                    :msg (msg "make a run on " (:server-target card) ". Prevent the first subroutine that would resolve from resolving")
-                   :effect (effect (run (:server-target card) nil card))}]
+                   :effect (effect (make-run (:server-target card) nil card))}]
       :events {:runner-turn-begins ability
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}})
 
@@ -1125,8 +1144,10 @@
                              (effect-completed state side eid))))]
        {:hosting {:req #(and (ice? %) (can-host? %))}
         :effect trash-if-5
+        :abilities [(set-autoresolve :auto-accept "add virus counter to Trypano")]
         :events {:runner-turn-begins
                  {:optional {:prompt (msg "Place a virus counter on Trypano?")
+                             :autoresolve (get-autoresolve :auto-accept)
                              :yes-ability {:effect (req (system-msg state :runner "places a virus counter on Trypano")
                                                         (add-counter state side card :virus 1))}}}
                  :counter-added {:async true

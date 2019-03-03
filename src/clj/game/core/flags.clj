@@ -350,6 +350,12 @@
   (and (check-flag-types? state side card :can-steal [:current-turn :current-run])
        (check-flag-types? state side card :can-steal [:current-turn :persistent])))
 
+(defn can-trash?
+  "Checks if the runner can trash cards"
+  [state side card]
+  (and (check-flag-types? state side card :can-trash [:current-turn :current-run])
+       (check-flag-types? state side card :can-trash [:current-turn :persistent])))
+
 (defn can-run?
   "Checks if the runner is allowed to run"
   [state side]

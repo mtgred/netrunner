@@ -85,7 +85,7 @@
                       {:prompt (msg "Make a run on " serv "?") :player :runner
                        :yes-ability {:msg (msg "let the Runner make a run on " serv)
                                      :effect (effect (clear-wait-prompt :corp)
-                                                     (game.core/run eid serv nil card))}
+                                                     (make-run eid serv nil card))}
                        :no-ability {:async true
                                     :effect (req (clear-wait-prompt state :corp)
                                                  (as-agenda state :corp eid (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
@@ -989,6 +989,7 @@
 
    "Liquidation"
    {:async true
+    :req (req (some #(and (rezzed? %) (not (is-type? % "Agenda"))) (all-installed state :corp)))
     :effect (req (let [n (count (filter #(not (is-type? % "Agenda")) (all-active-installed state :corp)))]
                    (continue-ability state side
                      {:prompt "Select any number of rezzed cards to trash"
@@ -1280,16 +1281,18 @@
 
    "Psychographics"
    {:req (req tagged)
-    :choices :credit
-    :prompt "How many credits?"
     :async true
-    :effect (req (let [c (min target (count-tags state))]
-                   (continue-ability state side
-                                     {:msg (msg "place " c " advancement tokens on "
-                                                (card-str state target))
-                                      :choices {:req can-be-advanced?}
-                                      :effect (effect (add-prop target :advance-counter c {:placed true}))}
-                                     card nil)))}
+    :prompt "Pay how many credits?"
+    :choices {:number (req (count-tags state))}
+    :effect (req (let [c target]
+                   (when (can-pay? state side (:title card) :credit c)
+                     (pay state :corp card :credit c)
+                     (continue-ability
+                       state side
+                       {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
+                        :choices {:req can-be-advanced?}
+                        :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                       card nil))))}
 
     "Psychokinesis"
     (letfn [(choose-card [state cards]

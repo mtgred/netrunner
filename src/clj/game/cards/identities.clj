@@ -48,6 +48,7 @@
                          {:optional
                           {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
                            :player :runner
+                           :autoresolve (get-autoresolve :auto-419)
                            :no-ability {:effect (req (clear-wait-prompt state :corp))}
                            :yes-ability
                            {:async true
@@ -73,7 +74,8 @@
                                                                                             " card from being exposed"))
                                                                (clear-wait-prompt state :runner))}}}
                                                card nil))))}}}
-                         card nil)))}}}
+                         card nil)))}}
+    :abilities [(set-autoresolve :auto-419 "419")]}
 
    "Acme Consulting: The Truth You Need"
    (letfn [(activate [state card active]
@@ -195,7 +197,8 @@
    "Armand \"Geist\" Walker: Tech Lord"
    {:events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
                             :msg "draw a card"
-                            :effect (effect (draw 1))}}}
+                            :async true
+                            :effect (effect (draw eid 1 nil))}}}
 
    "Asa Group: Security Through Vigilance"
    {:events {:corp-install
@@ -614,7 +617,8 @@
                                           (first-event? state side :pre-install)))
                            :msg "draw 1 card"
                            :once :per-turn
-                           :effect (effect (draw 1))}}}
+                           :async true
+                           :effect (effect (draw eid 1 nil))}}}
 
    "Jemison Astronautics: Sacrifice. Audacity. Success."
    {:events {:corp-forfeit-agenda
@@ -768,17 +772,20 @@
    {:events
     {:successful-run
      {:async true
-      :interactive (req true)
+      :interactive (get-autoresolve :auto-fisk (complement never?))
+      :silent (get-autoresolve :auto-fisk never?)
       :req (req (and (is-central? (:server run))
                      (first-event? state side :successful-run is-central?)))
       :effect (effect (continue-ability
                         {:optional
-                         {:prompt "Force the Corp to draw a card?"
+                         {:autoresolve (get-autoresolve :auto-fisk)
+                          :prompt "Force the Corp to draw a card?"
                           :yes-ability {:msg "force the Corp to draw 1 card"
                                         :async true
                                         :effect (effect (draw :corp eid 1 nil))}
                           :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
-                        card nil))}}}
+                        card nil))}}
+    :abilities [(set-autoresolve :auto-fisk "force Corp draw")]}
 
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
@@ -813,7 +820,8 @@
                                 (str "trash " (join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
                                 "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                   :once :per-turn
-                  :effect (effect (mill :runner 2) (draw))}]
+                  :async true
+                  :effect (effect (mill :runner 2) (draw eid 1 nil))}]
      {:flags {:runner-turn-draw true
               :runner-phase-12 (req (and (not (:disabled card))
                                          (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
@@ -821,19 +829,23 @@
       :abilities [ability]})
 
    "Mti Mwekundu: Life Improved"
-   {:abilities [{:once :per-turn
-                 :label "Install a piece of ice from HQ at the innermost position"
-                 :req (req (and (:run @state)
-                                (zero? (:position run))
-                                (not (contains? run :corp-phase-43))
-                                (not (contains? run :successful))))
-                 :prompt "Choose ICE to install from HQ"
-                 :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
-                 :choices {:req #(and (ice? %)
-                                      (in-hand? %))}
-                 :effect (req (corp-install state side target (:server run) {:ignore-all-cost true
-                                                                             :front true})
-                              (swap! state assoc-in [:run :position] 1))}]}
+   (let [ability {:once :per-turn
+                  :label "Install a piece of ice from HQ at the innermost position"
+                  :req (req (and run
+                                 (zero? (:position run))
+                                 (not (contains? run :corp-phase-43))
+                                 (not (contains? run :successful))))
+                  :prompt "Choose ICE to install from HQ"
+                  :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
+                  :choices {:req #(and (ice? %)
+                                       (in-hand? %))}
+                  :effect (req (corp-install state side target (zone->name (first (:server run)))
+                                             {:ignore-all-cost true
+                                              :front true})
+                               (swap! state assoc-in [:run :position] 1))}]
+     {:abilities [ability]
+      :events {:approach-server {:req (req (can-trigger? state side ability card nil))
+                                 :effect (req (toast state :corp "You may use Mti Mwekundu: Life Improved to install ice from HQ." "info"))}}})
 
    "Nasir Meidan: Cyber Explorer"
    {:events {:rez {:req (req (and (:run @state)
@@ -880,13 +892,15 @@
                              state :corp
                              {:optional
                               {:prompt "Trace the Runner with NBN: Controlling the Message?"
+                               :autoresolve (get-autoresolve :auto-ctm)
                                :yes-ability {:trace {:base 4
                                                      :successful
                                                      {:msg "give the Runner 1 tag"
                                                       :async true
                                                       :effect (effect (gain-tags :corp eid 1 {:unpreventable true}))}}}
                                :end-effect (effect (clear-wait-prompt :runner))}}
-                             card nil))}}})
+                             card nil))}}
+    :abilities [(set-autoresolve :auto-ctm "CtM")]})
 
    "NBN: Making News"
    {:recurring 2}
@@ -972,7 +986,7 @@
                  :once :per-turn
                  :makes-run true
                  :effect (effect (update! (assoc card :omar-run-activated true))
-                                 (run :archives nil (get-card state card)))}]
+                                 (make-run :archives nil (get-card state card)))}]
     :events {:pre-successful-run {:interactive (req true)
                                   :req (req (and (:omar-run-activated card)
                                                  (= :archives (-> run :server first))))
@@ -1146,6 +1160,7 @@
                  :req (req (and
                              (not-empty (installed-faceup-agendas state))
                              (not-empty (ice-with-no-advancement-tokens state))))
+                 :autoresolve (get-autoresolve :auto-sso)
                  :yes-ability
                  {:async true
                   :effect (req (show-wait-prompt state :runner "Corp to use SSO Industries' ability")
@@ -1164,7 +1179,8 @@
                                  :effect (req (add-prop state :corp target :advance-counter agenda-points {:placed true})
                                               (clear-wait-prompt state :runner))
                                  :cancel-effect (req (clear-wait-prompt state :runner))}
-                                card nil)))}}}}})
+                                card nil)))}}}}
+      :abilities [(set-autoresolve :auto-sso "SSO")]})
 
    "Steve Cambridge: Master Grifter"
    {:events {:successful-run
