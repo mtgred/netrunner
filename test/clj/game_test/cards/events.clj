@@ -863,6 +863,52 @@
     (click-prompt state :runner "Remove 1 tag")
     (is (zero? (count-tags state)))))
 
+(deftest direct-access
+  ;; Direct Access - Make a run where both IDs are blank
+  (testing "Direct Access/Employee Strike interaction"
+    (do-game
+    (new-game {:runner {:deck ["Direct Access" "Employee Strike"]
+                        :id "Alice Merchant: Clan Agitator"}
+               :corp {:deck [(qty "PAD Campaign" 3)]
+                      :id "Jinteki: Replicating Perfection"}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Direct Access")
+    (click-prompt state :runner "Server 1")
+    (is (= :remote1 (get-in @state [:run :server 0])) "Running on remote vs RP")
+    (run-successful state)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Yes")
+    (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access shuffled into stack")
+    (run-on state "Server 1")
+    (is (and (= 3 (:click (get-runner))) (not (:run @state))) "RP prevented running on remote")
+    (core/click-draw state :runner 1)
+    (play-from-hand state :runner "Direct Access")
+    (click-prompt state :runner "Archives")
+    (run-successful state)
+    (is (empty? (:prompt (get-corp))) "Corp not forced to discard for Alice")
+    (click-prompt state :runner "Yes")
+    (core/click-draw state :runner 1)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Employee Strike")
+    (play-from-hand state :runner "Direct Access")
+    (click-prompt state :runner "Server 1")
+    (run-successful state)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No")
+    (is (= "Direct Access" (-> (get-runner) :discard first :title)) "Direct Access discarded")
+    (run-on state "Server 1")
+    (is (:run @state) "RP blank, so did not prevent running on remote")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (run-successful state)
+    (is (changes-val-macro 1 (count (:discard (get-corp)))
+                           "Alice not permanently blanked"
+                           (run-successful state)
+                           (click-prompt state :corp (find-card "PAD Campaign" (:hand (get-corp)))))))))
+
 (deftest dirty-laundry
   ;; Dirty Laundry - Gain 5 credits at the end of the run if it was successful
   (do-game

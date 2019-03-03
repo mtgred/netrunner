@@ -514,6 +514,23 @@
     :async true
     :effect (effect (draw eid 3 nil))}
 
+   "Direct Access"
+   (let [maybe-reshuffle {:optional {:prompt "Shuffle Direct Access into the Stack?"
+                                     :yes-ability {:msg (msg "shuffles Direct Access into the Stack")
+                                                   :effect (effect (move (get-card state (assoc card :zone [:discard])) :deck)
+                                                                   (shuffle! :deck)
+                                                                   (effect-completed eid))}}}]
+     {:effect (req (doseq [s [:corp :runner]]
+                     (disable-identity state s))
+                   (continue-ability state side
+                                     {:prompt "Choose a server"
+                                      :choices (req runnable-servers)
+                                      :async true
+                                      :effect (req (wait-for (make-run state side (make-eid state) target)
+                                                             (doseq [s [:corp :runner]]
+                                                               (enable-identity state s))
+                                                             (continue-ability state side maybe-reshuffle card nil)))}
+                                     card nil))})
    "Dirty Laundry"
    (run-event
     {:end-run {:req (req (:successful run))
