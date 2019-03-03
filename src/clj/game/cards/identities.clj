@@ -791,11 +791,13 @@
    {:events
     {:runner-turn-ends
      {:req (req (= (count (:hand runner)) (count (:hand corp))))
-      :optional {:prompt "Draw 1 card?"
+      :optional {:autoresolve (get-autoresolve :auto-lat)
+                 :prompt "Draw 1 card?"
                  :yes-ability {:async true
-                               :msg "to draw 1 card"
+                               :msg "draw 1 card"
                                :effect (effect (draw :runner eid 1 nil))}
-                 :no-ability {:effect (effect (system-msg "declines to use Lat: Ethical Freelancer"))}}}}}
+                 :no-ability {:effect (effect (system-msg "declines to use Lat: Ethical Freelancer"))}}}}
+    :abilities [(set-autoresolve :auto-lat "Lat: Ethical Freelancer")]}
 
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
