@@ -338,8 +338,3 @@
      (toast-check-mu state))
    (when (has-subtype? card "Icebreaker")
      (update-breaker-strength state side card))))
-
-(defn reveal
-  "Trigger the event for revealing one or more cards."
-  [state side & targets]
-  (apply trigger-event-sync state side (make-eid state) (if (= :corp side) :corp-reveal :runner-reveal) (flatten targets)))

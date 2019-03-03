@@ -954,7 +954,7 @@
                           (do (click-card state :corp (first (:hand (get-corp))))
                               (click-prompt state :corp "Done"))))
      (play-from-hand state :corp "Scarcity of Resources")
-     (is (changes-credits (get-corp) 0 (card-ability state :corp (get-in @state [:corp :identity]) 1)))))
+     (is (changes-credits (get-corp) 0 (card-ability state :corp (get-in @state [:corp :identity]) 1))))) ; hyoubu doesn't mistake the first reveal it sees for first reveal of turn
   (testing "Slot Machine, grail, Reflection, Fast Track"
     (do-game
      (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"

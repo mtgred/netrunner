@@ -674,6 +674,11 @@
   [state side]
   (swap! state update-in [side] dissoc :openhand))
 
+(defn reveal
+  "Trigger the event for revealing one or more cards."
+  [state side & targets]
+  (apply trigger-event-sync state side (make-eid state) (if (= :corp side) :corp-reveal :runner-reveal) (flatten targets)))
+
 (defn clear-win
   "Clears the current win condition.  Requires both sides to have issued the command"
   [state side]
