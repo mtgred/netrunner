@@ -283,7 +283,7 @@
     :effect (effect (make-run target nil card)
                     (prompt! card (str "Click Compile in the Temporary Zone to install a Program") ["OK"] {})
                     (resolve-ability
-                      {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
+                     {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
                                          (card-init state side c {:resolve-effect false})))}
                       card nil))
     :events {:run-ends {:effect (req
@@ -515,22 +515,28 @@
     :effect (effect (draw eid 3 nil))}
 
    "Direct Access"
-   (let [maybe-reshuffle {:optional {:prompt "Shuffle Direct Access into the Stack?"
+   (let [maybe-reshuffle {:optional {:autoresolve (get-autoresolve :auto-reshuffle)
+                                     :prompt "Shuffle Direct Access into the Stack?"
                                      :yes-ability {:msg (msg "shuffles Direct Access into the Stack")
-                                                   :effect (effect (move (get-card state (assoc card :zone [:discard])) :deck)
+                                                   :effect (effect (move (get-card state card) :deck)
                                                                    (shuffle! :deck)
-                                                                   (effect-completed eid))}}}]
+                                                                   (effect-completed eid))}
+                                     :no-ability {:effect (effect (trash (get-card state card) {:unpreventable true :suppress-event true})
+                                                                  (effect-completed eid))}}}]
      {:effect (req (doseq [s [:corp :runner]]
                      (disable-identity state s))
                    (continue-ability state side
                                      {:prompt "Choose a server"
                                       :choices (req runnable-servers)
                                       :async true
-                                      :effect (req (wait-for (make-run state side (make-eid state) target)
-                                                             (doseq [s [:corp :runner]]
-                                                               (enable-identity state s))
-                                                             (continue-ability state side maybe-reshuffle card nil)))}
-                                     card nil))})
+                                      :effect (req (let [c (move state side (find-latest state card) :play-area)]
+                                                     (card-init state side c {:resolve-effect false})
+                                                     (wait-for (make-run state side (make-eid state) target)
+                                                               (doseq [s [:corp :runner]]
+                                                                 (enable-identity state s))
+                                                               (continue-ability state side maybe-reshuffle c nil))))}
+                                     card nil))
+      :abilities [(set-autoresolve :auto-reshuffle "reshuffle")]})
    "Dirty Laundry"
    (run-event
     {:end-run {:req (req (:successful run))
