@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
+            [jinteki.decks :as decks]
             [jinteki.utils :refer [str->int]]
             [nr.ajax :refer [GET]]
             [nr.appstate :refer [app-state]]
@@ -186,7 +187,11 @@
      (let [players (:players (some #(when (= (:gameid %) @gameid) %) @games))
            side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
            same-side? (fn [deck] (= side (get-in deck [:identity :side])))
-           legal? (fn [deck] (get-in deck [:status (keyword format) :legal]))]
+           legal? (fn [deck] (get-in deck
+                                     [:status (keyword format) :legal]
+                                     (get-in (decks/calculate-deck-status (assoc deck :format format))
+                                         [(keyword format) :legal]
+                                         false)))]
        [:div
         (doall
           (for [deck (->> @decks

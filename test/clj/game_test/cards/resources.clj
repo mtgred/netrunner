@@ -106,6 +106,51 @@
     (is (= 4 (:click (get-runner))) "Spent 1 click; gained 2 clicks")
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
+(deftest baklan-bochkin
+  (testing "Gaining power counters each run."
+    (do-game
+      (new-game {:corp {:deck ["Vanilla" "Vanilla"]}
+                 :runner {:deck ["\"Baklan\" Bochkin"]}})
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "\"Baklan\" Bochkin")
+      (let [bak (get-resource state 0)
+            van0 (get-ice state :hq 0)
+            van1 (get-ice state :hq 1)]
+        (run-on state "HQ")
+        (run-continue state) ; No rez
+        (run-continue state) ; No rez
+        (run-successful state)
+        (is (= 0 (get-counters (refresh bak) :power)) "No encounter so counter on Baklan yet")
+        (run-on state "HQ")
+        (core/rez state :corp van0)
+        (run-continue state)
+        (run-continue state)
+        (run-successful state)
+        (is (= 1 (get-counters (refresh bak) :power)) "There was an encounter, so counter on Baklan")
+        (run-on state "HQ")
+        (core/rez state :corp van1)
+        (run-continue state)
+        (run-continue state)
+        (run-successful state)
+        (is (= 2 (get-counters (refresh bak) :power)) "Works on every run, but not every encounter"))))
+  (testing "Derezzing current ice"
+    (do-game
+      (new-game {:corp {:deck ["Vanilla"]}
+                 :runner {:deck ["\"Baklan\" Bochkin"]}})
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "\"Baklan\" Bochkin")
+      (let [bak (get-resource state 0)
+            van0 (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp van0)
+        (is (:rezzed (refresh van0)) "Rezzed Vanilla")
+        (card-ability state :runner bak 0)
+        (is (not (:rezzed (refresh van0))) "Derezzed Vanilla")
+        (is (= 1 (count-tags state)) "Got a tag")))))
+
 (deftest bank-job
   ;; Bank Job
   (testing "Manhunt trace happens first"
@@ -3011,6 +3056,60 @@
       (is (zero? (:link (get-runner))))
       (take-credits state :runner)
       (is (= 2 (:current-strength (refresh corr))) "Corroder back to default strength"))))
+
+(deftest the-nihilist
+  ;; The Nihilist
+  (testing "Vanilla test"
+    (do-game
+     (new-game {:runner {:deck ["The Nihilist" (qty "Cache" 2) (qty "Sure Gamble" 3)]}
+                :corp {:deck [(qty "Ice Wall" 10)]}})
+     (starting-hand state :runner ["The Nihilist" "Cache" "Cache"])
+     (starting-hand state :corp [])
+     (take-credits state :corp)
+     (core/gain state :runner :credit 10)
+     (play-from-hand state :runner "The Nihilist")
+     (play-from-hand state :runner "Cache")
+     (let [nihi (get-resource state 0)
+           cache1 (get-program state 0)]
+       (is (= 2 (get-counters (refresh nihi) :virus)) "The Nihilist gained 2 counters")
+       (play-from-hand state :runner "Cache")
+       (is (= 2 (get-counters (refresh nihi) :virus)) "The Nihilist only triggered on first install")
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (click-prompt state :runner "Yes")  ; spend 2 tokens?
+       (is (= 2 (get-counters (refresh nihi) :virus)) "The Nihilist has 2 counters")
+       (is (= 3 (get-counters (refresh cache1) :virus)) "Cache 1 has 3 counters")
+       (click-card state :runner (refresh nihi))
+       (click-card state :runner (refresh cache1))
+       (is (= 1 (get-counters (refresh nihi) :virus)) "The Nihilist spent 1 counter")
+       (is (= 2 (get-counters (refresh cache1) :virus)) "Cache 1 spent 1")
+       (is (not (empty? (:prompt (get-runner)))) "Runner is waiting for Corp to pick their Nihilist poison")
+       (is (= 0 (count (:discard (get-corp)))) "No cards in Archives")
+       (click-prompt state :corp "Yes")  ; mill 1
+       (is (= 1 (count (:discard (get-corp)))) "1 card milled")
+       (is (empty? (:prompt (get-runner))) "Runner is done waiting for Corp to pick their Nihilist poison")
+       (is (empty? (:prompt (get-corp))) "No more Corp prompts")
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (click-prompt state :runner "Yes")  ; spend 2 tokens?
+       (is (= 1 (get-counters (refresh nihi) :virus)) "The Nihilist has 1 counters")
+       (is (= 2 (get-counters (refresh cache1) :virus)) "Cache 1 has 2 counters")
+       (click-card state :runner (refresh nihi))
+       (click-card state :runner (refresh cache1))
+       (is (= 0 (get-counters (refresh nihi) :virus)) "The Nihilist spent 1 counter")
+       (is (= 1 (get-counters (refresh cache1) :virus)) "Cache 1 spent 1")
+       (is (= 0 (count (:hand (get-runner)))) "Runner has no cards in hand")
+       (is (= 1 (count (:discard (get-corp)))) "1 card in discard")
+       (is (not (empty? (:prompt (get-runner)))) "Runner is waiting for Corp to pick their Nihilist poison")
+       (click-prompt state :corp "No")  ; don't mill 1
+       (is (= 2 (count (:hand (get-runner)))) "Runner drew 2 cards")
+       (is (= 1 (count (:discard (get-corp)))) "No extra cards milled")
+       (is (empty? (:prompt (get-runner))) "Runner done waiting for Corp to pick their Nihilist poison")
+       (is (empty? (:prompt (get-corp))) "Corp has no more prompts")
+       (take-credits state :runner)
+       (core/purge state :corp)
+       (take-credits state :corp)
+       (is (empty? (:prompt (get-runner))) "Runner gets no prompt when they have no virus tokens to spend")))))
 
 (deftest the-source
   ;; The Source - Increase advancement requirement of agendas by 1; 3c additional cost to steal

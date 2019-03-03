@@ -206,6 +206,29 @@
                                                   (str (quantify number "virus counter") " from " title))
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
+(defn never?
+  "Returns true if is argument is :never."
+  [x]
+  (= :never x))
+
+(defn set-autoresolve
+  "Makes a card ability which lets the user toggle auto-resolve on an ability. Setting is stored under [:special toggle-kw]."
+  [toggle-kw ability-name]
+  {:label (str "Toggle auto-resolve on " ability-name)
+   :prompt (str "Set auto-resolve on " ability-name " to:")
+   :choices ["Always" "Never" "Ask"]
+   :effect (effect (update! (update-in card [:special toggle-kw] (fn [x] (keyword (lower-case target)))))
+                   (toast (str "From now on, " ability-name " will "
+                               ({:always "always" :never "never" :ask "ask whether it should"}
+                                (get-in (get-card state card) [:special toggle-kw]))
+                               " resolve.") "info"))})
+
+(defn get-autoresolve
+  "Returns a 5-fn intended for use in the :autoresolve of an optional ability. Function returns 'Yes', 'No' or nil 
+  depending on whether card has [:special toggle-kw] set to :always, :never or something else.
+  If a function is passed in, instead call that on [:special toggle-kw] and return the result."
+  ([toggle-kw] (get-autoresolve toggle-kw {:always "Yes" :never "No"}))
+  ([toggle-kw pred] (req (pred (get-in (get-card state card) [:special toggle-kw])))))
 
 (defmacro get-strength
   [card]

@@ -1,7 +1,7 @@
 (ns game.cards.operations
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
@@ -310,7 +310,7 @@
               :req #(and (= (:side %) "Corp")
                          (in-hand? %))}
     :msg (msg "reveal " (join ", " (map :title (sort-by :title targets))) " and gain " (* 2 (count targets)) " [Credits]")
-    :effect (effect (gain-credits (* 2 (count targets))))}
+    :effect (effect (reveal targets) (gain-credits (* 2 (count targets))))}
 
    "Cerebral Cast"
    {:req (req (last-turn? state :runner :successful-run))
@@ -340,6 +340,28 @@
    {:msg (msg "gain " (get-counters target :advancement) " [Credits]")
     :choices {:req ice?}
     :effect (effect (gain-credits (get-counters target :advancement)))}
+
+   "Complete Image"
+   (letfn [(name-a-card []
+             {:async true
+              :prompt "Name a Runner card"
+              :choices {:card-title (req (and (card-is? target :side "Runner")
+                                              (not (card-is? target :type "Identity"))))}
+              :effect (effect (system-msg (str "uses Complete Image to name " target))
+                              (continue-ability (damage-ability) card targets))})
+           (damage-ability []
+             {:async true
+              :msg "do 1 net damage"
+              :effect (req (wait-for (damage state side :net 1 {:card card})
+                                     (when-let* [should-continue (not (:winner @state))
+                                                 cards (some #(when (= (:cid (second %)) (:cid card)) (last %))
+                                                             (turn-events state :corp :damage))
+                                                 dmg (some #(when (= (:title %) target) %) cards)]
+                                       (continue-ability state side (name-a-card) card nil))))})]
+     {:async true
+      :req (req (and (last-turn? state :runner :successful-run)
+                     (<= 3 (:agenda-point runner))))
+      :effect (effect (continue-ability (name-a-card) card nil))})
 
    "Consulting Visit"
    {:prompt  "Choose an Operation from R&D to play"
@@ -602,6 +624,7 @@
    {:prompt "Choose an Agenda"
     :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
+                    (reveal target)
                     (shuffle! :deck)
                     (move target :hand))}
 
@@ -646,6 +669,7 @@
                      state :corp
                      (str "uses Focus Group to choose " target " and reveal the Runner's Grip ( "
                           (join ", " (map :title (sort-by :title (:hand runner)))) " )"))
+                   (reveal state side (:hand runner))
                    (if (pos? numtargets)
                      (continue-ability
                        state :corp
@@ -942,7 +966,8 @@
                              (effect-completed state side eid)))})]
      {:trace {:base 2
               :successful {:msg "reveal the Runner's Grip and trash up to X resources or events"
-                           :effect (req (let [x (- target (second targets))]
+                           :effect (req (reveal state side (:hand runner))
+                                        (let [x (- target (second targets))]
                                           (system-msg
                                             state :corp
                                             (str "reveals the Runner's Grip ( "
@@ -1109,14 +1134,15 @@
                          (rezzed? %))}
     :async true
     :effect (req (let [i (ice-index state target)
-                       [reveal r] (split-with (complement ice?) (get-in @state [:corp :deck]))
-                       titles (->> (conj (vec reveal) (first r))
+                       [revealed-cards r] (split-with (complement ice?) (get-in @state [:corp :deck]))
+                       titles (->> (conj (vec revealed-cards) (first r))
                                    (filter identity)
                                    (map :title))]
                    (wait-for (trash state :corp target nil)
                              (do
                                (system-msg state side (str "uses Mutate to trash " (:title target)))
                                (when (seq titles)
+                                 (reveal state side revealed-cards)
                                  (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
                                (if-let [ice (first r)]
                                  (let [newice (assoc ice :zone (:zone target) :rezzed true)
@@ -1342,7 +1368,8 @@
                                                   (str " and add "
                                                        (if (= 1 target) "it" "them")
                                                        " to HQ")))
-                                      :effect (req (doseq [c (->> cards
+                                      :effect (req (reveal state side cards)
+                                                   (doseq [c (->> cards
                                                                   (sort-by :seen)
                                                                   reverse
                                                                   (take target))]
@@ -1576,6 +1603,7 @@
                              (str "uses Salem's Hospitality to reveal the Runner's Grip ( "
                                   (join ", " (map :title (sort-by :title (:hand runner))))
                                   " ) and trash any copies of " target))
+                 (reveal state side (filter #(= target (:title %)) (:hand runner)))
                  (doseq [c (filter #(= target (:title %)) (:hand runner))]
                    (trash state side c {:unpreventable true})))}
 
@@ -1726,6 +1754,7 @@
     :choices ["Event" "Hardware" "Program" "Resource"]
     :effect (req (let [n (* 2 (count (filter #(is-type? % target) (:hand runner))))]
                    (gain-credits state :corp n)
+                   (reveal state side (:hand runner))
                    (system-msg state side (str "uses Standard Procedure to name " target ", reveal "
                                                (join ", " (map :title (:hand runner)))
                                                " in the Runner's Grip, and gain " n " [Credits]"))))}

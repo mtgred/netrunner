@@ -112,10 +112,11 @@
                   :async true
                   :msg (msg (str "reveal " (join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
                   :label "Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order."
-                  :effect (req (doseq [c (take 3 (:deck corp))]
+                  :effect (req (reveal state side (take 3 (:deck corp)))
+                               (doseq [c (take 3 (:deck corp))]
                                  (move state side c :play-area))
-                            (show-wait-prompt state :runner "Corp to use Bamboo Dome")
-                            (continue-ability state side (dome card) card nil))}]})
+                               (show-wait-prompt state :runner "Corp to use Bamboo Dome")
+                               (continue-ability state side (dome card) card nil))}]})
 
    "Ben Musashi"
    (let [bm {:req (req (or (in-same-server? card target)
@@ -595,7 +596,8 @@
              {:async true
               :effect (req (if (= "None" server)
                              (continue-ability state side (choose-ice remaining grids) card nil)
-                             (do (system-msg state side (str "reveals that they drew " (:title ice)))
+                             (do (reveal state side ice)
+                                 (system-msg state side (str "reveals that they drew " (:title ice)))
                                  (wait-for (corp-install state side ice server {:extra-cost [:credit -4]})
                                            (if (= 1 (count ices))
                                              (effect-completed state side eid)
@@ -1150,7 +1152,8 @@
                                    :choices {:req #(and (in-hand? %)
                                                         (ice? %)
                                                         (= (:title %) icename))}
-                                   :effect (req (trash state side (assoc target :seen true))
+                                   :effect (req (reveal state side target)
+                                                (trash state side (assoc target :seen true))
                                                 (swap! state update-in [:run]
                                                        #(assoc % :position (inc (:position run)))))
                                    :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")}

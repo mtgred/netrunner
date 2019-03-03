@@ -347,6 +347,76 @@
       (click-card state :corp (refresh (get-ice state :hq 0)))
       (is (= 7 (:credit (get-corp))) "Gained 2 for double advanced ice from Commercialization"))))
 
+(deftest complete-image
+  ;; Complete Image
+  (testing "Correctly guessing"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Complete Image" "Priority Requisition"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Priority Requisition" "New remote")
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Complete Image")
+      (is (-> (get-runner) :discard count zero?) "Runner's heap should be empty")
+      (click-prompt state :corp "Sure Gamble")
+      (is (seq (:prompt (get-corp))) "Corp guessed right so should have another choice")
+      (click-prompt state :corp "Sure Gamble")
+      (click-prompt state :corp "Sure Gamble")
+      (click-prompt state :corp "Sure Gamble")
+      (click-prompt state :corp "Sure Gamble")
+      (is (seq (:prompt (get-corp))) "Even when the runner has no cards in hand, Corp must choose again")
+      (click-prompt state :corp "Sure Gamble")
+      (is (empty? (:prompt (get-corp))) "Runner is flatlined so no more choices")
+      (is (= 5 (-> (get-runner) :discard count)) "Runner's heap should have 5 cards")))
+  (testing "Incorrectly guessing"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Complete Image" "Priority Requisition"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Priority Requisition" "New remote")
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Complete Image")
+      (is (-> (get-runner) :discard count zero?) "Runner's heap should be empty")
+      (click-prompt state :corp "Easy Mark")
+      (is (empty? (:prompt (get-corp))) "Corp guessed incorrectly so shouldn't have another choice")
+      (is (= 1 (-> (get-runner) :discard count)) "Runner's heap should have 1 card")))
+  (testing "Not enough agenda points"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Complete Image" "Hostile Takeover"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Complete Image")
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't be able to play Complete Image")))
+  (testing "Didn't run last turn"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Complete Image" "Priority Requisition"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Priority Requisition" "New remote")
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Complete Image")
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't be able to play Complete Image"))))
+
 (deftest consulting-visit
   ;; Consulting Visit - Only show single copies of operations corp can afford as choices. Play chosen operation
   (testing "Basic test"

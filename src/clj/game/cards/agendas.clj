@@ -426,6 +426,27 @@
      {:optional {:prompt "Install cards in a new remote server?"
                  :yes-ability (install-ability "New remote" 0)}})
 
+   "Divested Trust"
+   {:events
+    {:agenda-stolen
+     {:interactive (req true)
+      :effect (req (let [stolen-agenda target
+                         title (:title stolen-agenda)
+                         prompt (str "Forfeit Divested Trust to add " title
+                                     " to HQ and gain 5[Credits]?")
+                         message (str "add " title " to HQ and gain 5 [Credits]")]
+                     (show-wait-prompt state :runner "Corp to use Divested Trust")
+                     (continue-ability
+                       state side
+                       {:optional
+                        {:prompt prompt
+                         :yes-ability {:msg message
+                                       :effect (effect (forfeit card)
+                                                       (move stolen-agenda :hand)
+                                                       (gain-credits 5))}
+                         :end-effect (effect (clear-wait-prompt :runner))}}
+                       card nil)))}}}
+
    "Domestic Sleepers"
    {:agendapoints-runner (req 0)
     :abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
@@ -1302,7 +1323,7 @@
                                                         (if (and run
                                                                  (= (zone->name (first (:server run)))
                                                                     chosen-server))
-                                                          (let [curr-pos (get-in @state [:run :position])] 
+                                                          (let [curr-pos (get-in @state [:run :position])]
                                                             (if (>= curr-pos (Integer/parseInt target))
                                                               (swap! state assoc-in [:run :position] (inc curr-pos))))))})
                                         card nil))})
