@@ -97,26 +97,6 @@
 (ws/register-ws-handler! :netrunner/diff #(handle-diff (parse-state %)))
 (ws/register-ws-handler! :netrunner/timeout #(handle-timeout (parse-state %)))
 
-(def anr-icons {"[Credits]" "credit"
-                "[$]" "credit"
-                "[c]" "credit"
-                "[Credit]" "credit"
-                "[Click]" "click"
-                "[Subroutine]" "subroutine"
-                "[Recurring Credits]" "recurring-credit"
-                "1[Memory Unit]" "mu1"
-                "1[mu]" "mu1"
-                "2[Memory Unit]" "mu2"
-                "2[mu]" "mu2"
-                "3[Memory Unit]" "mu3"
-                "3[mu]" "mu3"
-                "[Link]" "link"
-                "[l]" "link"
-                "[Memory Unit]" "mu"
-                "[mu]" "mu"
-                "[Trash]" "trash"
-                "[t]" "trash"})
-
 (defn send-command
   ([command] (send-command command nil))
   ([command {:keys [no-lock] :as args}]
