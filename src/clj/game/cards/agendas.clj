@@ -263,6 +263,7 @@
                         :yes-ability {:prompt "How many credits?"
                                       :choices {:number (req (min (:credit corp)
                                                                   (count (:hand runner))))}
+                                      :async true
                                       :effect (req (when (pos? target)
                                                      (pay state :corp card :credit target)
                                                      (let [from (take target (shuffle (:hand runner)))]
@@ -273,8 +274,9 @@
                                                                                    " cards from the Runner's Grip"
                                                                                    " to the bottom of their Stack."
                                                                                    " The Runner draws 1 card"))
-                                                       (draw state :runner)
-                                                       (clear-wait-prompt state :runner))))}
+                                                       (wait-for (draw state :runner 1 nil)
+                                                                 (clear-wait-prompt state :runner)
+                                                                 (effect-completed state side eid)))))}
                         :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                      card nil))}
 
@@ -1289,8 +1291,9 @@
                                            :choices (vec (reverse (map str (range (inc num-ice)))))
                                            :effect (req (corp-install state side chosen-ice chosen-server
                                                                          {:ignore-all-cost true :index (Integer/parseInt target)})
-                                                        (if (and run (= (zone->name (first (:server run)))
-                                                                        chosen-server))
+                                                        (if (and run
+                                                                 (= (zone->name (first (:server run)))
+                                                                    chosen-server))
                                                           (let [curr-pos (get-in @state [:run :position])] 
                                                             (if (>= curr-pos (Integer/parseInt target))
                                                               (swap! state assoc-in [:run :position] (inc curr-pos))))))})

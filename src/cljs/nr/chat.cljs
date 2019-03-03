@@ -5,8 +5,8 @@
             [nr.ajax :refer [GET PUT]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar authenticated] :as auth]
-            [nr.gameboard :refer [card-preview-mouse-over card-preview-mouse-out get-message-parts create-span card-zoom] :as gameboard]
-            [nr.utils :refer [toastr-options]]
+            [nr.gameboard :refer [card-preview-mouse-over card-preview-mouse-out card-zoom] :as gameboard]
+            [nr.utils :refer [toastr-options render-message]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -187,10 +187,7 @@
        [:div
         {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch @s))
          :on-mouse-out  #(card-preview-mouse-out % (:zoom-ch @s))}
-        (let [parts (get-message-parts (:msg message))]
-          (doall (map-indexed
-            (fn [i item]
-              (when (not-empty item) (create-span item))) parts)))]]])))
+        (render-message (:msg message))]]])))
 
 (defn fetch-all-messages []
   (doseq [channel (keys (:channels @app-state))]

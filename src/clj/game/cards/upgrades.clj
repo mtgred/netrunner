@@ -57,7 +57,9 @@
                                                         (swap! state update-in [:run :run-effect]
                                                                #(assoc % :replace-access
                                                                        {:mandatory true
-                                                                        :effect (effect (access-card ash))
+                                                                        :async true
+                                                                        :effect (req (wait-for (access-card state :runner ash)
+                                                                                               (effect-completed state side eid)))
                                                                         :card ash})))))}}}}}
 
    "Awakening Center"
@@ -319,7 +321,8 @@
    "Defense Construct"
    {:advanceable :always
     :abilities [{:label "[Trash]: Add 1 facedown card from Archives to HQ for each advancement token"
-                 :req (req (and run (= (:server run) [:archives])
+                 :req (req (and run
+                                (= (:server run) [:archives])
                                 (pos? (get-counters card :advancement))))
                  :effect (effect (resolve-ability
                                    {:show-discard true

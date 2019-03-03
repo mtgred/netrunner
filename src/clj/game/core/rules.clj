@@ -11,13 +11,12 @@
 (defn- complete-play-instant
   "Completes the play of the event / operation that the player can play for"
   [state side eid {:keys [title] :as card} cost-str ignore-cost]
-  (let [c (move state side (assoc card :seen true) :play-area)
-        play-msg (if ignore-cost
+  (let [play-msg (if ignore-cost
                    "play "
                    (build-spend-msg cost-str "play"))]
     (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
     (play-sfx state side "play-instant")
-    (if (has-subtype? c "Current")
+    (if (has-subtype? card "Current")
       (do (doseq [s [:corp :runner]]
             (remove-old-current state side s))
           (let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))
@@ -32,7 +31,7 @@
           (when (has-subtype? card "Terminal")
             (lose state side :click (-> @state side :click))
             (swap! state assoc-in [:corp :register :terminal] true))))
-    (trigger-event state side (if (= side :corp) :play-operation :play-event) c)))
+    (trigger-event state side (if (= side :corp) :play-operation :play-event) card)))
 
 (defn play-instant
   "Plays an Event or Operation."
@@ -72,11 +71,15 @@
                           (not (and (has-subtype? card "Priority")
                                     (get-in @state [side :register :spent-click]))))
                    ;; Wait on pay-sync to finish before triggering instant-effect
-                   (wait-for (pay-sync state side card (if ignore-cost 0 total-cost) {:action :play-instant})
-                             (if-let [cost-str async-result]
-                               (complete-play-instant state side eid card cost-str ignore-cost)
-                               ;; could not pay the card's price; mark the effect as being over.
-                               (effect-completed state side eid)))
+                   (let [original-zone (:zone card)
+                         moved-card (move state side (assoc card :seen true) :play-area)]
+                     (wait-for (pay-sync state side moved-card (if ignore-cost 0 total-cost) {:action :play-instant})
+                               (if-let [cost-str async-result]
+                                 (complete-play-instant state side eid moved-card cost-str ignore-cost)
+                                ;; could not pay the card's price; put it back and mark the effect as being over.
+                                 (do
+                                   (move state side moved-card original-zone)
+                                   (effect-completed state side eid)))))
                    ;; card's req was not satisfied; mark the effect as being over.
                    (effect-completed state side eid)))))))
 
@@ -104,36 +107,36 @@
   ([state side n args] (draw state side (make-eid state) n args))
   ([state side eid n {:keys [suppress-event] :as args}]
    (swap! state update-in [side :register] dissoc :most-recent-drawn) ;clear the most recent draw in case draw prevented
-   (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
-   (let [active-player (get-in @state [:active-player])
-         n (+ n (get-in @state [:bonus :draw] 0))
-         draws-wanted n
-         draws-after-prevent (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
-                                  (min n (remaining-draws state side))
-                                  n)
-         deck-count (count (get-in @state [side :deck]))]
-     (when (and (= side :corp) (> draws-after-prevent deck-count))
-       (win-decked state))
-     (when-not (and (= side active-player) (get-in @state [side :register :cannot-draw]))
-       (let [drawn (zone :hand (take draws-after-prevent (get-in @state [side :deck])))]
-         (swap! state update-in [side :hand] #(concat % drawn))
-         (swap! state update-in [side :deck] (partial drop draws-after-prevent))
-         (swap! state assoc-in [side :register :most-recent-drawn] drawn)
-         (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
-         (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
-         (swap! state update-in [:bonus] dissoc :draw)
-         (if (and (not suppress-event) (pos? deck-count))
-           (wait-for
-             (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
-             (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent))
-           (effect-completed state side eid))
-         (when (safe-zero? (remaining-draws state side))
-           (prevent-draw state side))))
-     (when (< draws-after-prevent draws-wanted)
-       (let [prevented (- draws-wanted draws-after-prevent)]
-         (system-msg state (other-side side) (str "prevents "
-                                                  (quantify prevented "card")
-                                                  " from being drawn")))))))
+   (wait-for (trigger-event-simult state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) nil n)
+             (let [active-player (get-in @state [:active-player])
+                   n (+ n (get-in @state [:bonus :draw] 0))
+                   draws-wanted n
+                   draws-after-prevent (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
+                                         (min n (remaining-draws state side))
+                                         n)
+                   deck-count (count (get-in @state [side :deck]))]
+               (when (and (= side :corp) (> draws-after-prevent deck-count))
+                 (win-decked state))
+               (when-not (and (= side active-player) (get-in @state [side :register :cannot-draw]))
+                 (let [drawn (zone :hand (take draws-after-prevent (get-in @state [side :deck])))]
+                   (swap! state update-in [side :hand] #(concat % drawn))
+                   (swap! state update-in [side :deck] (partial drop draws-after-prevent))
+                   (swap! state assoc-in [side :register :most-recent-drawn] drawn)
+                   (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
+                   (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
+                   (swap! state update-in [:bonus] dissoc :draw)
+                   (if (and (not suppress-event) (pos? deck-count))
+                     (wait-for
+                       (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
+                       (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent))
+                     (effect-completed state side eid))
+                   (when (safe-zero? (remaining-draws state side))
+                     (prevent-draw state side))))
+               (when (< draws-after-prevent draws-wanted)
+                 (let [prevented (- draws-wanted draws-after-prevent)]
+                   (system-msg state (other-side side) (str "prevents "
+                                                            (quantify prevented "card")
+                                                            " from being drawn"))))))))
 
 ;;; Damage
 (defn flatline [state]
@@ -421,7 +424,7 @@
    {:keys [cause suppress-event] :as args}]
   (if (and (not suppress-event)
            (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
-    (wait-for (trigger-event-sync state side (keyword (str (name side) "-trash")) card cause)
+    (wait-for (trigger-event-sync state side (if (= side :corp) :corp-trash :runner-trash) card cause)
               (resolve-trash-end state side eid card oid args))
     (resolve-trash-end state side eid card args))))
 

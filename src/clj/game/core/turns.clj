@@ -199,25 +199,13 @@
   ([state side args] (end-phase-12 state side (make-eid state) args))
   ([state side eid args]
    (turn-message state side true)
-   (let [extra-clicks (get-in @state [side :extra-click-temp] 0)]
-     (gain state side :click (get-in @state [side :click-per-turn]))
-     (wait-for (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-               (do (when (= side :corp)
-                     (wait-for (draw state side 1 nil)
-                               (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
-
-                   (cond
-
-                     (neg? extra-clicks)
-                     (lose state side :click (abs extra-clicks))
-
-                     (pos? extra-clicks)
-                     (gain state side :click extra-clicks))
-
-                   (swap! state dissoc-in [side :extra-click-temp])
-                   (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-                   (when (= side :corp)
-                     (update-all-advancement-costs state side)))))))
+   (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)
+             (when (= side :corp)
+               (wait-for (draw state side 1 nil)
+                         (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
+             (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
+             (when (= side :corp)
+               (update-all-advancement-costs state side)))))
 
 (defn start-turn
   "Start turn."
@@ -238,16 +226,22 @@
 
   (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
         start-cards (filter #(card-flag-fn? state side % phase true)
-                            (all-active state side))]
+                            (all-active state side))
+        extra-clicks (get-in @state [side :extra-click-temp] 0)]
+    (gain state side :click (get-in @state [side :click-per-turn]))
+    (cond
+      (neg? extra-clicks) (lose state side :click (abs extra-clicks))
+      (pos? extra-clicks) (gain state side :click extra-clicks))
+    (swap! state dissoc-in [side :extra-click-temp])
     (swap! state assoc phase true)
     (trigger-event state side phase nil)
     (if (not-empty start-cards)
       (toast state side
-                 (str "You may use " (string/join ", " (map :title start-cards))
-                      (if (= side :corp)
-                        " between the start of your turn and your mandatory draw."
-                        " before taking your first click."))
-                 "info")
+             (str "You may use " (string/join ", " (map :title start-cards))
+                  (if (= side :corp)
+                    " between the start of your turn and your mandatory draw."
+                    " before taking your first click."))
+             "info")
       (end-phase-12 state side args))))
 
 (defn handle-end-of-turn-discard
@@ -263,8 +257,11 @@
                     :max (- cur-hand-size max-hand-size)
                     :all true}
           :effect (req (system-msg state side
-                                   (str "trashes " (quantify (count targets) "card")
-                                        " from " (if (= :runner side) "grip" "HQ")
+                                   (str "discards " 
+                                        (if (= :runner side)
+                                          (join ", " (map :title targets))
+                                          (quantify (count targets) "card"))
+                                        " from " (if (= :runner side) "their Grip" "HQ")
                                         " at end of turn"))
                        (doseq [t targets]
                          (trash state side t))

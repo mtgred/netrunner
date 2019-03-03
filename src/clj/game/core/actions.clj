@@ -4,7 +4,7 @@
 
 (declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler
          enforce-msg gain-agenda-point get-remote-names get-run-ices jack-out move
-         name-zone play-instant purge resolve-select run runner-install trash
+         name-zone play-instant purge resolve-select make-run runner-install trash
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu)
 
@@ -35,10 +35,11 @@
   (when (and (not (get-in @state [side :register :cannot-draw]))
              (pay state side nil :click 1 {:action :corp-click-draw}))
     (system-msg state side "spends [Click] to draw a card")
-    (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw) (->> @state side :deck (take 1)))
-    (draw state side)
-    (swap! state update-in [:stats side :click :draw] (fnil inc 0))
-    (play-sfx state side "click-card")))
+    (wait-for (trigger-event-simult state side (if (= side :corp) :pre-corp-click-draw :pre-runner-click-draw) nil nil)
+              (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw) (->> @state side :deck (take 1)))
+              (draw state side)
+              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
+              (play-sfx state side "click-card"))))
 
 (defn click-credit
   "Click to gain 1 credit."
@@ -558,7 +559,7 @@
       (swap! state assoc-in [:runner :register :click-type] :run)
       (swap! state assoc-in [:runner :register :made-click-run] true)
       (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
-        (run state side server)
+        (make-run state side server)
         (system-msg state :runner
                     (str (build-spend-msg cost-str "make a run on") server))
         (play-sfx state side "click-run")))))

@@ -111,12 +111,7 @@
 
 (def runner-loses-click
   "Runner loses a click effect"
-  (req (if (:runner-phase-12 @state)
-    ; this handles Jak Sinclair losing clicks before they are given
-    (do (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
-        (toast state :runner "Runner loses a click at start of turn" "warning")
-        (toast state :corp "Runner loses a click at start of turn" "warning"))
-    (lose state :runner :click 1))))
+  (effect (lose :runner :click 1)))
 
 ;;; For Advanceable ICE
 (defn get-advance-counters
@@ -1000,20 +995,22 @@
    "Harvester"
    {:subroutines [{:label "Runner draws 3 cards and discards down to maximum hand size"
                    :msg "make the Runner draw 3 cards and discard down to their maximum hand size"
-                   :effect (req (draw state :runner 3)
-                                (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
-                                  (when (pos? delta)
-                                    (resolve-ability
-                                      state :runner
-                                      {:prompt (msg "Select " delta " cards to discard")
-                                       :player :runner
-                                       :choices {:max delta
-                                                 :req #(in-hand? %)}
-                                       :effect (req (doseq [c targets]
-                                                      (trash state :runner c))
-                                                    (system-msg state :runner
-                                                                (str "trashes " (join ", " (map :title targets)))))}
-                                      card nil))))}]}
+                   :async true
+                   :effect (req (wait-for (draw state :runner 3 nil)
+                                          (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
+                                            (if (pos? delta)
+                                              (continue-ability
+                                               state :runner
+                                               {:prompt (msg "Select " delta " cards to discard")
+                                                :player :runner
+                                                :choices {:max delta
+                                                          :req #(in-hand? %)}
+                                                :effect (req (doseq [c targets]
+                                                               (trash state :runner c))
+                                                             (system-msg state :runner
+                                                                         (str "trashes " (join ", " (map :title targets)))))}
+                                               card nil)
+                                              (effect-completed state side eid)))))}]}
 
    "Himitsu-Bako"
    {:abilities [{:msg "add it to HQ"

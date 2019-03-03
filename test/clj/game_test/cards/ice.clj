@@ -396,7 +396,7 @@
       (card-subroutine state :corp fen 0)
       (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
       (is (= 1 (count (:discard (get-runner)))))
-      (is (= 4 (core/hand-size state :runner))))))
+      (is (= 4 (hand-size :runner))))))
 
 (deftest flare
   ;; Flare - Trash 1 program, do 2 unpreventable meat damage, and end the run
@@ -571,6 +571,32 @@
         (click-prompt state :corp "Yes")
         (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")))))
+
+(deftest harvester
+  ;; Harvester - draw 3, then discard
+  (do-game
+    (new-game {:corp {:deck ["Harvester"]}
+               :runner {:deck ["The Class Act" (qty "Sure Gamble" 10)]}})
+    (starting-hand state :runner ["The Class Act" "Sure Gamble" "Sure Gamble" "Sure Gamble" "Sure Gamble"])
+    (play-from-hand state :corp "Harvester" "HQ")
+    (let [harv (get-ice state :hq 0)]
+      (core/rez state :corp harv)
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Class Act")
+      (run-on state "HQ")
+      (is (= 4 (count (:hand (get-runner)))) "Runner has 4 cards in hand")
+      (card-subroutine state :corp harv 0)
+      (is (= 4 (-> (get-runner) :prompt first :choices count)) "Runner has 3+1 choices")
+      (is (= "The Class Act" (-> @state :runner :prompt first :card :title)) "The Class Act prompt showing")
+      (is (= 1 (count (:prompt (get-runner)))) "Harvester prompt not open yet")
+      (click-prompt state :runner "Sure Gamble")
+      (is (= 7 (count (:hand (get-runner)))) "Runner bottomed Class Act draw")
+      (is (= "Harvester" (-> @state :runner :prompt first :card :title)) "Harvester prompt showing")
+      (click-card state :runner (last (:hand (get-runner))))
+      (click-card state :runner (first (:hand (get-runner))))
+      (is (= 5 (count (:hand (get-runner)))) "Harvester discarded some cards")
+      (is (empty? (:prompt (get-runner))) "No more prompts for the Runner")
+      (is (empty? (:prompt (get-corp))) "No more prompts for the Corp"))))
 
 (deftest holmegaard
   ;; Holmegaard - Stop Runner from accessing cards if win trace

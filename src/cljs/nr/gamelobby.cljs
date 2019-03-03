@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
+            [jinteki.decks :as decks]
             [jinteki.utils :refer [str->int]]
             [nr.ajax :refer [GET]]
             [nr.appstate :refer [app-state]]
@@ -179,28 +180,23 @@
   (-> "#gameboard" js/$ .fadeOut)
   (-> "#gamelobby" js/$ .fadeIn))
 
-(defn- deck-sorter
-  [fmt d1 d2]
-  (let [fmt (keyword fmt)
-        d1 (get-in d1 [fmt :legal])
-        d2 (get-in d2 [fmt :legal])]
-    (cond
-      (= d1 d2) 0
-      (true? d1) -1
-      (true? d2) 1
-      :else 0)))
-
 (defn deckselect-modal [user {:keys [gameid games decks format]}]
   [:div
     [:h3 "Select your deck"]
     [:div.deck-collection
      (let [players (:players (some #(when (= (:gameid %) @gameid) %) @games))
-           side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))]
+           side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
+           same-side? (fn [deck] (= side (get-in deck [:identity :side])))
+           legal? (fn [deck] (get-in deck
+                                     [:status (keyword format) :legal]
+                                     (get-in (decks/calculate-deck-status (assoc deck :format format))
+                                         [(keyword format) :legal]
+                                         false)))]
        [:div
         (doall
-          (for [deck (sort-by :status (partial deck-sorter format)
-                              (filter #(= (get-in % [:identity :side]) side)
-                                      (sort-by :date > @decks)))]
+          (for [deck (->> @decks
+                          (filter same-side?)
+                          (sort-by (juxt legal? :date) >))]
             ^{:key (:_id deck)}
             [:div.deckline {:on-click #(do (ws/ws-send! [:lobby/deck (:_id deck)])
                                            (reagent-modals/close-modal!))}

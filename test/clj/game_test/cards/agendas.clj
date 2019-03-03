@@ -316,8 +316,11 @@
     (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
     (play-and-score state "Brain Rewiring")
     (click-prompt state :corp "Yes")
+    (is (not (empty? (:prompt (get-runner)))) "Runner waiting for Corp resolve Brain Rewiring")
     (click-prompt state :corp "2")
-    (is (= 1 (count (:hand (get-runner)))))))
+    (is (= 1 (count (:hand (get-runner)))))
+    (is (empty? (:prompt (get-runner))) "Runner not waiting for Corp resolve Brain Rewiring")
+    (is (empty? (:prompt (get-corp))) "Corp done resolving Brain Rewiring")))
 
 (deftest braintrust
   ;; Braintrust
@@ -2088,9 +2091,9 @@
   ;; Remote Data Farm
   (do-game
     (new-game {:corp {:deck ["Remote Data Farm"]}})
-    (is (= 5 (get-hand-size :corp)))
+    (is (= 5 (hand-size :corp)))
     (play-and-score state "Remote Data Farm")
-    (is (= 7 (get-hand-size :corp)))))
+    (is (= 7 (hand-size :corp)))))
 
 (deftest remote-enforcement
   ;; Remote Enforcement - Search R&D for a piece of ice and install it on a remote at no rez cost
@@ -2126,6 +2129,24 @@
       (play-and-score state "Research Grant")
       (click-card state :corp (get-content state :remote1 0))
       (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")))
+  (testing "Single test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Research Grant" 1)]}})
+      (play-and-score state "Research Grant")
+      (is (= 1 (count (:scored (get-corp)))) "1 copy of Research Grant scored")))
+  (testing "with Team Sponsorship"
+    (do-game
+      (new-game {:corp {:deck [(qty "Research Grant" 3) (qty "Team Sponsorship" 1)]}})
+      (play-from-hand state :corp "Team Sponsorship" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (play-and-score state "Research Grant")
+      (click-card state :corp (find-card "Research Grant" (:hand (get-corp))))
+      (click-prompt state :corp "New remote")
+      (click-card state :corp (get-content state :remote3 0))
+      (click-card state :corp (find-card "Research Grant" (:hand (get-corp))))
+      (click-prompt state :corp "New remote")
+      (click-card state :corp (get-content state :remote4 0))
+      (is (= 3 (count (:scored (get-corp)))) "3 copies of Research Grant scored")))
   (testing "vs Leela"
     ;; Issue #3069
     (do-game
@@ -2159,9 +2180,9 @@
   ;; Self-Destruct Chips
   (do-game
     (new-game {:corp {:deck ["Self-Destruct Chips"]}})
-    (is (= 5 (get-hand-size :runner)) "Runner's hand size starts at 5")
+    (is (= 5 (hand-size :runner)) "Runner's hand size starts at 5")
     (play-and-score state "Self-Destruct Chips")
-    (is (= 4 (get-hand-size :runner)) "By scoring Self-Destruct Chips, Runner's hand size is reduced by 1")))
+    (is (= 4 (hand-size :runner)) "By scoring Self-Destruct Chips, Runner's hand size is reduced by 1")))
 
 (deftest sensor-net-activation
   ;; Sensor Net Activation
