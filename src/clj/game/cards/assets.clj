@@ -146,6 +146,7 @@
              {:interactive (req true)
               :optional {:prompt "Trace with Amani Senai?"
                          :player :corp
+                         :autoresolve (get-autoresolve :auto-fire)
                          :yes-ability {:trace {:base (req (trace-base-func state))
                                                :successful
                                                {:choices {:req #(and (installed? %)
@@ -154,7 +155,8 @@
                                                 :msg (msg "add " (:title target) " to the Runner's Grip")
                                                 :effect (effect (move :runner target :hand true))}}}}})]
     {:events {:agenda-scored (senai-ability get-last-scored-pts)
-              :agenda-stolen (senai-ability get-last-stolen-pts)}})
+              :agenda-stolen (senai-ability get-last-stolen-pts)}
+     :abilities [(set-autoresolve :auto-fire "whether to fire Amani Senai")]})
 
    "Anson Rose"
    (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
@@ -1022,12 +1024,14 @@
      {:effect (effect (add-counter card :credit 8))
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
+      :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
       :trash-effect {:req (req (= :servers (first (:previous-zone card))))
                      :async true
                      :effect (effect (show-wait-prompt :runner "Corp to use Marilyn Campaign")
                                      (continue-ability :corp
                                        {:optional
                                         {:prompt "Shuffle Marilyn Campaign into R&D?"
+                                         :autoresolve (get-autoresolve :auto-reshuffle)
                                          :priority 1
                                          :player :corp
                                          :yes-ability {:msg "shuffle it back into R&D"
