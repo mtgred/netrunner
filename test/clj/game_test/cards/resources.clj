@@ -3478,8 +3478,27 @@
       (is (empty? (:prompt (get-runner))))
       (is (not (:run @state)) "Run ended")
       (is (= 3 (count (:scored (get-runner)))) "Agenda added to runner score area without needing to pay")))
+  (testing "Autoresolve functionality"
+    (do-game
+     (new-game {:corp {:deck ["NAPD Contract"]}
+                :runner {:deck ["Whistleblower"]}})
+     (play-from-hand state :corp "NAPD Contract" "New remote")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Whistleblower")
+     (card-ability state :runner (get-resource state 0) 0)
+     (click-prompt state :runner "Never") ; auto-refuse to trash whistleblower
+     (run-empty-server state "Server 1")
+     (click-prompt state :runner "No action")
+     (is (= 0 (count (:scored (get-runner)))) "Runner could not steal NAPD Contract")
+     (card-ability state :runner (get-resource state 0) 0)
+     (click-prompt state :runner "Always") ; auto-trigger whistleblower
+     (run-empty-server state "Server 1")
+     (click-prompt state :runner "NAPD Contract")
+     (is (empty? (:prompt (get-runner))))
+     (is (not (:run @state)) "Run ended")
+     (is (= 1 (count (:scored (get-runner)))) "Stole agenda")))
   (doseq [agenda-name ["The Future Perfect" "NAPD Contract" "Degree Mill" "Ikawah Project" "Obokata Protocol"]]
-    (testing agenda-name
+    (testing (str "Whistleblower " agenda-name " interaction")
       (do-game
        (new-game {:corp {:deck [(qty agenda-name 2)]}
                   :runner {:deck ["Whistleblower"]}})
