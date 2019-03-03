@@ -222,11 +222,17 @@
                                 (flip-faceup state side target)))
                  :msg (msg "turn " (:title target) " faceup")}]}
 
-   "Bhagat"
-   {:events {:successful-run {:req (req (and (= target :hq)
-                                             (first-successful-run-on-server? state :hq)))
-                              :msg "force the Corp to trash the top card of R&D"
-                              :effect (effect (mill :corp))}}}
+   "\"Baklan\" Bochkin"
+   {:implementation "Does not check for ice strength."
+    :events {:encounter-ice {:once :per-run
+                             :effect (effect (add-counter card :power 1)
+                                             (system-msg (str "places 1 power counter on " (:title card))))}}
+    :abilities [{:label "[Trash]: Derez a piece of ice currently being encountered"
+                 :msg "derez a piece of ice currently being encountered and take 1 tag"
+                 :req (req (and current-ice (:rezzed current-ice))) ;; not checking for strength
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (derez current-ice)
+                                 (gain-tags :runner eid 1))}]}
 
    "Bank Job"
    {:data {:counter {:credit 8}}
@@ -313,6 +319,12 @@
      {:flags {:drip-economy true}
       :abilities [ability]
       :events {:runner-turn-begins ability}})
+
+   "Bhagat"
+   {:events {:successful-run {:req (req (and (= target :hq)
+                                             (first-successful-run-on-server? state :hq)))
+                              :msg "force the Corp to trash the top card of R&D"
+                              :effect (effect (mill :corp))}}}
 
    "Biometric Spoofing"
    {:interactions {:prevent [{:type #{:net :brain :meat}
