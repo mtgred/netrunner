@@ -1689,13 +1689,17 @@
                  (disable-identity state side)
 
                  ;; Manually reduce the runner's link by old link
-                 (lose state :runner :link (:baselink old-runner-identity)))
+                 (lose state :runner :link (:baselink old-runner-identity))
 
-               ;; Move the selected ID to [:runner :identity] and set the zone
-               (let [new-id (-> target :title server-card make-card (assoc :zone [:identity]))]
-                 (swap! state assoc-in [side :identity] new-id)
-                 ;; enable-identity does not do everything that init-identity does
-                 (init-identity state side new-id))
+                 ;; Move the selected ID to [:runner :identity] and set the zone
+                 (let [new-id (-> target :title server-card make-card (assoc :zone [:identity]))
+                       num-old-blanks (:num-disabled old-runner-identity)]
+                   (swap! state assoc-in [side :identity] new-id)
+                   ;; enable-identity does not do everything that init-identity does
+                   (init-identity state side new-id)
+                   (when num-old-blanks
+                     (dotimes [_ num-old-blanks]
+                       (disable-identity state side)))))
 
                ;; Handle hosted cards (Ayla) - Part 2
                (doseq [c (get-in @state [:runner :temp-hosted])]
