@@ -1033,7 +1033,7 @@
                                          :no-ability {:effect (effect (gain-credits 1)
                                                                       (effect-completed eid))
                                                       :msg (msg "gain 1 [Credits]")}}}}}
-   
+
    "Independent Thinking"
    (letfn [(cards-to-draw [targets]
              (* (count targets)
