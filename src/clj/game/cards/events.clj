@@ -1033,7 +1033,7 @@
                                              (draw state side eid 1 nil)
                                              (do (gain-credits state side 1)
                                                  (effect-completed state side eid))))
-                              :msg (msg (clojure.string/lower-case target))}}}
+                              :msg (msg (lower-case target))}}}
 
    "Independent Thinking"
    (letfn [(cards-to-draw [targets]
