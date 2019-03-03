@@ -1027,12 +1027,13 @@
              :runner-install {:req (req (<= 1 (:cost target)))
                               :interactive (req (has-subtype? target "Cybernetic"))
                               :async true
-                              :optional {:prompt "Draw 1 card from In The Groove? (If not, gain 1 [Credits])"
-                                         :yes-ability {:effect (effect (draw eid 1 nil))
-                                                       :msg (msg "gain 1 [Credits]")}
-                                         :no-ability {:effect (effect (gain-credits 1)
-                                                                      (effect-completed eid))
-                                                      :msg (msg "gain 1 [Credits]")}}}}}
+                              :prompt "What to get from In the Groove?"
+                              :choices ["Draw 1 card" "Gain 1 [Credits]"]
+                              :effect (req (if (= target "Draw 1 card")
+                                             (draw state side eid 1 nil)
+                                             (do (gain-credits state side 1)
+                                                 (effect-completed state side eid))))
+                              :msg (msg (clojure.string/lower-case target))}}}
 
    "Independent Thinking"
    (letfn [(cards-to-draw [targets]

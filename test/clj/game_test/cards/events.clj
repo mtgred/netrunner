@@ -1580,10 +1580,10 @@
        (changes-val-macro 0 (count (:hand (get-runner)))
                           "Drew card from In the Groove" ; play 1, draw 1 for net 0
                           (play-from-hand state :runner "Clone Chip")
-                          (click-prompt state :runner "Yes")))
+                          (click-prompt state :runner "Draw 1 card")))
      (play-from-hand state :runner "Clone Chip")
      (is (changes-credits (get-runner) 1
-                          (click-prompt state :runner "No")))
+                          (click-prompt state :runner "Gain 1 [Credits]")))
      (play-from-hand state :runner "Sacrificial Construct")
      (is (empty? (:prompt (get-runner))) "No prompt because Sacrificial Construct is not expensive")
      (take-credits state :runner)
@@ -1600,7 +1600,7 @@
      (click-prompt state :runner "Brain Cage")
      (is (= 1 (:brain-damage (get-runner))) "Brain damage taken")
      (is (changes-credits (get-runner) 1
-                             (click-prompt state :runner "No"))))))
+                             (click-prompt state :runner "Gain 1 [Credits]"))))))
 
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
