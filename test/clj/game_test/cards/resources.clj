@@ -3456,7 +3456,7 @@
       (is (find-card "Whistleblower" (:discard (get-runner))) "Whistleblower trashed")
       (is (empty? (:prompt (get-runner))))
       (is (not (:run @state)) "Run ended")
-      (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner scored")
+      (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner score area")
       (is (= 4 (count (:hand (get-runner)))) "No damage dealt")
       (take-credits state :runner)
       (take-credits state :corp)
@@ -3467,6 +3467,7 @@
       (core/move state :runner (find-card "Whistleblower" (:discard (get-runner))) :hand)
       (is (= 2 (count (:hand (get-runner)))) "2 cards in hand")
       (take-credits state :runner)
+      (is (= 2 (count (:scored (get-runner)))) "Agenda added to runner score area")
       (play-from-hand state :corp "An Offer You Can't Refuse")
       (click-prompt state :corp "R&D")
       (click-prompt state :runner "Yes")
@@ -3476,7 +3477,7 @@
       (is (= 0 (count (:hand (get-runner)))) "Fetal AI deals net before Whistleblower triggers on Corp turn")
       (is (empty? (:prompt (get-runner))))
       (is (not (:run @state)) "Run ended")
-      (is (= 2 (count (:scored (get-runner)))) "Agenda added to runner scored without needing to pay"))))
+      (is (= 3 (count (:scored (get-runner)))) "Agenda added to runner score area without needing to pay"))))
 
 (deftest xanadu
   ;; Xanadu - Increase all ICE rez cost by 1 credit

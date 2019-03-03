@@ -2356,7 +2356,7 @@
                             :msg "gain 1 [Credits]"}}}
 
    "Whistleblower"
-   (letfn [(steal-events [named-agenda] {:run-ends {:effect (effect (unregister-events card))}
+   (letfn [(steal-events [named-agenda] {:run-ends {:effect (effect (unregister-events card {:events {:access nil :run-ends nil}}))}
                                          :access {:req (req (= (:title target) named-agenda))
                                                   :once :per-run
                                                   :async true
@@ -2370,6 +2370,7 @@
                                                                                           (dissoc card :zone))
                                                                          (trash card {:unpreventable true :cause :ability-cost}))}}}}
       :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]})
+
    "Wireless Net Pavilion"
    {:effect (effect (trash-resource-bonus -2))
     :leave-play (effect (trash-resource-bonus 2))}
