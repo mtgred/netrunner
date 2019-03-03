@@ -588,7 +588,8 @@
                              (when (pos? target-agenda-points)
                                (str ", gain " target-agenda-points " [Credits], ")))
                            " and shuffle it into R&D")
-                 :effect (req (gain-credits state :corp (get-agenda-points state :corp target))
+                 :effect (req (reveal state side target)
+                              (gain-credits state :corp (get-agenda-points state :corp target))
                               (move state :corp target :deck)
                               (shuffle! state :corp :deck)
                               (if (zero? (get-counters card :power))
@@ -984,7 +985,8 @@
                                    :choices {:req #(and (is-type? % "Agenda")
                                                         (>= c (:agendapoints %)))}
                                    :msg (msg "reveal " (:title target) " from HQ")
-                                   :effect (req (let [title (:title target)
+                                   :effect (req (reveal state side target)
+                                                (let [title (:title target)
                                                       pts (:agendapoints target)]
                                                   (register-turn-flag! state side
                                                     card :can-steal
@@ -1168,7 +1170,8 @@
                            " from R&D and "
                            (if (= (:type target) "Operation") "play" "install")
                            " it")
-                 :effect (req (shuffle! state side :deck)
+                 :effect (req (reveal state side target)
+                              (shuffle! state side :deck)
                               (if (= (:type target) "Operation")
                                 (play-instant state side target)
                                 (corp-install state side target nil nil)))}]}
@@ -1325,7 +1328,8 @@
                           (str "reveal and draw " (-> corp :deck first :title) " from R&D")
                           "reveal and draw from R&D but it is empty"))
               :async true
-              :effect (effect (draw 1)
+              :effect (effect (reveal (-> corp :deck first))
+                              (draw 1)
                               (continue-ability
                                 {:prompt "Choose a card in HQ to put on top of R&D"
                                  :async true
@@ -1413,7 +1417,8 @@
               {:prompt (msg "Reveal and install " (:title (nth agendas n)) "?")
                :yes-ability {:async true
                              :msg (msg "reveal " (:title (nth agendas n)))
-                             :effect (req (wait-for (corp-install
+                             :effect (req (reveal state side (nth agendas n))
+                                          (wait-for (corp-install
                                                       state side (nth agendas n) nil
                                                       {:install-state
                                                        (:install-state
@@ -1469,7 +1474,8 @@
                   :msg (msg " reveal " (-> @state :corp :deck first :title)
                             " from the top of R&D"
                             " and gain 2 [Credits]")
-                  :effect (effect (gain-credits 2))}]
+                  :effect (effect (reveal (-> @state :corp :deck first))
+                                  (gain-credits 2))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
@@ -1524,6 +1530,7 @@
                                                                         archndx (ice-index state target)
                                                                         arch (get-in @state [:corp :discard])
                                                                         newarch (apply conj (subvec arch 0 archndx) swappedcard (subvec arch archndx))]
+                                                                     (reveal state side hqcard)
                                                                      (swap! state assoc-in [:corp :discard] newarch)
                                                                      (swap! state update-in [:corp :hand]
                                                                             (fn [coll] (remove-once #(= (:cid %) (:cid hqcard)) coll)))
@@ -1717,14 +1724,16 @@
                  :prompt "Choose an agenda to add to the bottom of R&D"
                  :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
                  :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
-                 :effect (effect (trash card {:cause :ability-cost})
+                 :effect (effect (reveal target)
+                                 (trash card {:cause :ability-cost})
                                  (shuffle! :deck)
                                  (move target :deck))}
                 {:label "[Trash]: Search Archives for an agenda"
                  :prompt "Choose an agenda to add to the bottom of R&D"
                  :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
                  :choices (req (cancellable (filter #(is-type? % "Agenda") (:discard corp)) :sorted))
-                 :effect (effect (trash card {:cause :ability-cost})
+                 :effect (effect (reveal target)
+                                 (trash card {:cause :ability-cost})
                                  (move target :deck))}]}
 
    "Shattered Remains"

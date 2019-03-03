@@ -451,7 +451,8 @@
                    :effect (effect (gain-credits :runner 1))}}}
 
    "Corporate Defector"
-   {:events {:corp-click-draw {:msg (msg "reveal " (-> target first :title))}}}
+   {:events {:corp-click-draw {:msg (msg "reveal " (-> target first :title))
+                               :effect (effect (reveal target))}}}
 
    "Councilman"
    {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
@@ -834,7 +835,9 @@
 
    "Enhanced Vision"
    {:events {:successful-run {:silent (req true)
-                              :msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))))
+                              :effect (req (let [card (first (shuffle (:hand corp)))]
+                                             (reveal state :corp card)
+                                             (system-msg state :runner "force the Corp to reveal " (:title card))))
                               :req (req (genetics-trigger? state side :successful-run))}}}
 
    "Fall Guy"
@@ -908,7 +911,8 @@
 
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
-                                          (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
+                                          (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))
+                                :effect (effect (reveal (get-in @state [:runner :register :most-recent-drawn])))}
              :successful-run {:interactive (get-autoresolve :auto-peek (complement never?))
                               :silent (get-autoresolve :auto-peek never?)
                               :optional {:req (req (and (first-event? state side :successful-run)
@@ -1510,6 +1514,7 @@
                  :effect (req (let [c (first (get-in @state [:runner :deck]))]
                                 (system-msg state side (str "spends [Click] to use Oracle May, names " target
                                                             " and reveals " (:title c)))
+                                (reveal state side c)
                                 (if (is-type? c target)
                                   (do (system-msg state side (str "gains 2 [Credits] and draws " (:title c)))
                                       (gain-credits state side 2)
@@ -2364,7 +2369,8 @@
                   :label "Reveal the top card of R&D (start of turn)"
                   :once :per-turn
                   :req (req (:runner-phase-12 @state))
-                  :effect (effect (show-wait-prompt :runner "Corp to decide whether or not to draw with Woman in the Red Dress")
+                  :effect (effect (reveal (:title (first (:deck corp))))
+                                  (show-wait-prompt :runner "Corp to decide whether or not to draw with Woman in the Red Dress")
                                   (resolve-ability
                                     {:optional
                                      {:player :corp
