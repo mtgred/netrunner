@@ -359,6 +359,32 @@
       (core/trash state :corp iw)
       (is (not (:icon (refresh iw))) "Ice Wall does not have an icon after itself trashed"))))
 
+(deftest gauss
+  ;; Gauss
+  (testing "Loses strength at end of Runner's turn"
+    (do-game
+      (new-game {:runner {:deck ["Gauss"]}
+                 :options {:start-as :runner}})
+      (play-from-hand state :runner "Gauss")
+      (let [gauss (get-program state 0)]
+        (is (= 4 (:current-strength (refresh gauss))) "+3 base strength")
+        (run-on state :hq)
+        (card-ability state :runner (refresh gauss) 1) ;; boost
+        (is (= 6 (:current-strength (refresh gauss))) "+3 base and boosted strength")
+        (run-jack-out state)
+        (is (= 4 (:current-strength (refresh gauss))) "Boost lost after run")
+        (take-credits state :runner)
+        (is (= 1 (:current-strength (refresh gauss))) "Back to normal strength"))))
+  (testing "Loses strength at end of Corp's turn"
+    (do-game
+      (new-game {:runner {:deck ["Gauss"]}})
+      (core/gain state :runner :click 1)
+      (play-from-hand state :runner "Gauss")
+      (let [gauss (get-program state 0)]
+        (is (= 4 (:current-strength (refresh gauss))) "+3 base strength")
+        (take-credits state :corp)
+        (is (= 1 (:current-strength (refresh gauss))) "Back to normal strength")))))
+
 (deftest god-of-war
   ;; God of War - Take 1 tag to place 2 virus counters
   (do-game
