@@ -881,7 +881,7 @@
     (is (= 3 (:credit (get-corp))) "Corp not charged for Architects of Tomorrow rez of Eli 1.0")))
 
 (deftest haas-bioroid-engineering-the-future
-  ;; Engineereing the Future
+  ;; Engineering the Future
   (testing "interaction with Employee Strike"
     (do-game
       (new-game {:corp {:id "Haas-Bioroid: Engineering the Future"
@@ -1236,6 +1236,42 @@
       (click-prompt state :runner "Yes")
       (is (not (:run @state)) "Run ended")
       (is (= 6 (count (:hand (get-corp)))) "Corp forced to draw"))))
+
+(deftest lat-ethical-freelancer
+  ;; Lat: Ethical Freelancer
+  (testing "Ability fires - draw"
+    (do-game
+      (new-game {:runner {:id "Lat: Ethical Freelancer"
+                          :deck [(qty "Sure Gamble" 6)]}
+                 :corp {:deck [(qty "Hedge Fund" 5)]}
+                 :options {:start-as :runner}})
+      (core/lose state :runner :click 4)
+      (core/end-turn state :runner nil)
+      (is (= "Draw 1 card?" (:msg (first (:prompt (get-runner))))))
+      (is (= 5 (count (:hand (get-runner)))))
+      (click-prompt state :runner "Yes")
+      (is (= 6 (count (:hand (get-runner)))))))
+  (testing "Ability fires - don't draw"
+    (do-game
+      (new-game {:runner {:id "Lat: Ethical Freelancer"
+                          :deck [(qty "Sure Gamble" 6)]}
+                 :corp {:deck [(qty "Hedge Fund" 5)]}
+                 :options {:start-as :runner}})
+      (core/lose state :runner :click 4)
+      (core/end-turn state :runner nil)
+      (is (= "Draw 1 card?" (:msg (first (:prompt (get-runner))))))
+      (is (= 5 (count (:hand (get-runner)))))
+      (click-prompt state :runner "No")
+      (is (= 5 (count (:hand (get-runner)))))))
+  (testing "Ability doesn't fire"
+    (do-game
+      (new-game {:runner {:id "Lat: Ethical Freelancer"
+                          :deck [(qty "Sure Gamble" 3)]}
+                 :corp {:deck [(qty "Hedge Fund" 4)]}
+                 :options {:start-as :runner}})
+      (core/lose state :runner :click 4)
+      (core/end-turn state :runner nil)
+      (is (empty? (:prompt (get-runner))) "No prompt"))))
 
 (deftest leela-patel-trained-pragmatist
   ;; Leela Patel

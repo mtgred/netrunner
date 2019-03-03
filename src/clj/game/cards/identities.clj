@@ -766,6 +766,16 @@
                           :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
                         card nil))}}}
 
+   "Lat: Ethical Freelancer"
+   {:events
+    {:runner-turn-ends
+     {:req (req (= (count (:hand runner)) (count (:hand corp))))
+      :optional {:prompt "Draw 1 card?"
+                 :yes-ability {:async true
+                               :msg "to draw 1 card"
+                               :effect (effect (draw :runner eid 1 nil))}
+                 :no-ability {:effect (effect (system-msg "declines to use Lat: Ethical Freelancer"))}}}}}
+
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
                 :prompt "Select an unrezzed card to return to HQ"
