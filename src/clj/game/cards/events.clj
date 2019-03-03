@@ -1018,8 +1018,22 @@
                                                              (unregister-events state side card)
                                                              (effect-completed state side eid))}
                                                card nil)))}
-                            card nil))}}}
+                             card nil))}}}
 
+   "In the Groove"
+   {:effect (req (register-events state side (:events (card-def card))
+                                  (dissoc card :zone)))
+    :events {:runner-turn-ends {:effect (effect (unregister-events card))}
+             :runner-install {:req (req (<= 1 (:cost target)))
+                              :interactive (req (has-subtype? target "Cybernetic"))
+                              :async true
+                              :optional {:prompt "Draw 1 card from In The Groove? (If not, gain 1 [Credits])"
+                                         :yes-ability {:effect (effect (draw eid 1 nil))
+                                                       :msg (msg "gain 1 [Credits]")}
+                                         :no-ability {:effect (effect (gain-credits 1)
+                                                                      (effect-completed eid))
+                                                      :msg (msg "gain 1 [Credits]")}}}}}
+   
    "Independent Thinking"
    (letfn [(cards-to-draw [targets]
              (* (count targets)

@@ -1563,6 +1563,45 @@
       (play-from-hand state :runner "Apocalypse")
       (is (not= "Flatline" (:reason @state)) "Win condition does not report flatline"))))
 
+(deftest in-the-groove
+  ;; In the Groove - whenever you install cost >0 stuff, draw or gain 1
+  (testing "Vanilla test"
+    (do-game
+     (new-game {:runner {:deck ["In the Groove" (qty "Clone Chip" 4)
+                                (qty "Sacrificial Construct" 3)]}})
+     (starting-hand state :runner ["In the Groove" "Clone Chip" "Clone Chip" "Clone Chip"])
+     (take-credits state :corp)
+     (play-from-hand state :runner "In the Groove")
+     ;; the below is just to ensure we don't get weird bugs with event registration if card is somewhere else
+     (core/gain state :runner :click 3)
+     (core/move state :runner (first (:discard (get-runner))) :deck)
+     (is (= 0 (count (:discard (get-runner)))) "Runner discard is empty")
+     (dotimes [_ 2]
+       (changes-val-macro 0 (count (:hand (get-runner)))
+                          "Drew card from In the Groove" ; play 1, draw 1 for net 0
+                          (play-from-hand state :runner "Clone Chip")
+                          (click-prompt state :runner "Yes")))
+     (play-from-hand state :runner "Clone Chip")
+     (is (changes-credits (get-runner) 1
+                          (click-prompt state :runner "No")))
+     (play-from-hand state :runner "Sacrificial Construct")
+     (is (empty? (:prompt (get-runner))) "No prompt because Sacrificial Construct is not expensive")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (play-from-hand state :runner "Clone Chip")
+     (is (empty? (:prompt (get-runner))) "No prompt because In the Groove does not last between turns")))
+  (testing "Cybernetics interaction"
+    (do-game
+     (new-game {:runner {:deck [(qty "In the Groove" 3) "Brain Cage"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "In the Groove")
+     (play-from-hand state :runner "Brain Cage")
+     (is (= 0 (:brain-damage (get-runner))) "No brain damage taken yet")
+     (click-prompt state :runner "Brain Cage")
+     (is (= 1 (:brain-damage (get-runner))) "Brain damage taken")
+     (is (changes-credits (get-runner) 1
+                             (click-prompt state :runner "No"))))))
+
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
   (do-game
