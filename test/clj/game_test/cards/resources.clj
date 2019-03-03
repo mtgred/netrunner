@@ -3446,7 +3446,7 @@
   (testing "Fetal AI + AOYCR interaction"
     (do-game
       (new-game {:corp {:deck [(qty "Fetal AI" 10) "An Offer You Can't Refuse"]}
-                 :runner {:deck [(qty "Whistleblower" 5) ]}})
+                 :runner {:deck [(qty "Whistleblower" 5)]}})
       (starting-hand state :corp ["An Offer You Can't Refuse"])
       (take-credits state :corp)
       (play-from-hand state :runner "Whistleblower")
@@ -3477,7 +3477,28 @@
       (is (= 0 (count (:hand (get-runner)))) "Fetal AI deals net before Whistleblower triggers on Corp turn")
       (is (empty? (:prompt (get-runner))))
       (is (not (:run @state)) "Run ended")
-      (is (= 3 (count (:scored (get-runner)))) "Agenda added to runner score area without needing to pay"))))
+      (is (= 3 (count (:scored (get-runner)))) "Agenda added to runner score area without needing to pay")))
+  (doseq [agenda-name ["The Future Perfect" "NAPD Contract" "Degree Mill" "Ikawah Project" "Obokata Protocol"]]
+    (testing agenda-name
+      (do-game
+       (new-game {:corp {:deck [(qty agenda-name 2)]}
+                  :runner {:deck ["Whistleblower"]}})
+       (starting-hand state :corp [agenda-name agenda-name])
+       (take-credits state :corp)
+       (play-from-hand state :runner "Whistleblower")
+       (run-empty-server state "HQ")
+       (click-prompt state :runner "Yes")
+       (click-prompt state :runner agenda-name)
+       (is (find-card "Whistleblower" (:discard (get-runner))) "Whistleblower trashed")
+       (is (empty? (:prompt (get-runner))))
+       (is (not (:run @state)) "Run ended")
+       (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner score area")
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (run-empty-server state "HQ")
+       (is (not (empty? (:prompt (get-runner)))) "Whistleblower does not persist between runs, so agenda not autostolen")
+       (is (:run @state) "Run not ended yet")
+       (is (= 1 (count (:scored (get-runner)))) "Agenda not added to runner score area yet")))))
 
 (deftest xanadu
   ;; Xanadu - Increase all ICE rez cost by 1 credit
