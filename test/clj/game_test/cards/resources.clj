@@ -3497,6 +3497,21 @@
      (is (empty? (:prompt (get-runner))))
      (is (not (:run @state)) "Run ended")
      (is (= 1 (count (:scored (get-runner)))) "Stole agenda")))
+  (testing "Steal triggers happen on Whistleblowing"
+    (do-game
+     (new-game {:corp {:deck [(qty "Project Beale" 3)]}
+                :runner {:id "Leela Patel: Trained Pragmatist"
+                         :deck ["Whistleblower"]}})
+     (dotimes [_ 3]
+       (play-from-hand state :corp "Project Beale" "New remote"))
+     (take-credits state :corp)
+     (play-from-hand state :runner "Whistleblower")
+     (run-empty-server state "Server 1")
+     (click-prompt state :runner "Yes")
+     (click-prompt state :runner "Project Beale")
+     (is (not (empty? (:prompt (get-runner)))) "There is an open prompt, as Leela triggers")
+     (is (= "Leela Patel: Trained Pragmatist" (:title (:card (first (get-in @state [:runner :prompt])))))
+         "Leela triggers, as Whistleblower does not eat steal trigger")))
   (doseq [agenda-name ["The Future Perfect" "NAPD Contract" "Degree Mill" "Ikawah Project" "Obokata Protocol"]]
     (testing (str "Whistleblower " agenda-name " interaction")
       (do-game
