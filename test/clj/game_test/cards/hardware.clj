@@ -968,21 +968,45 @@
 
 (deftest paragon
   ;; Paragon - Gain 1 credit and may look at and move top card of Stack to bottom
-  (do-game
-    (new-game {:runner {:deck ["Paragon" "Easy Mark" "Sure Gamble"]}})
-    (starting-hand state :runner ["Paragon"])
-    (take-credits state :corp)
-    (play-from-hand state :runner "Paragon")
-    (run-empty-server state "HQ")
-    (is (prompt-is-card? state :runner (get-hardware state 0)) "Prompt from Paragon")
-    (click-prompt state :runner "Yes")
-    (is (= (+ 5 -3 1) (:credit (get-runner))) "Gained 1 credit from Paragon")
-    (is (prompt-is-card? state :runner (get-hardware state 0)) "Prompt from Paragon")
-    (let [top-cid (:cid (first (:deck (get-runner))))]
-      (click-prompt state :runner "Yes")
-      (is (= top-cid (:cid (last (:deck (get-runner))))) "Moved top card to bottom"))
-    (run-empty-server state "HQ")
-    (is (not (prompt-is-card? state :runner (get-hardware state 0))) "No prompt from Paragon")))
+  (testing "Vanilla test"
+    (do-game
+     (new-game {:runner {:deck ["Paragon" "Easy Mark" "Sure Gamble"]}})
+     (starting-hand state :runner ["Paragon"])
+     (take-credits state :corp)
+     (play-from-hand state :runner "Paragon")
+     (run-empty-server state "HQ")
+     (is (prompt-is-card? state :runner (get-hardware state 0)) "Prompt from Paragon")
+     (click-prompt state :runner "Yes")
+     (is (= (+ 5 -3 1) (:credit (get-runner))) "Gained 1 credit from Paragon")
+     (is (prompt-is-card? state :runner (get-hardware state 0)) "Prompt from Paragon")
+     (let [top-cid (:cid (first (:deck (get-runner))))]
+       (click-prompt state :runner "Yes")
+       (is (= top-cid (:cid (last (:deck (get-runner))))) "Moved top card to bottom"))
+     (run-empty-server state "HQ")
+     (is (not (prompt-is-card? state :runner (get-hardware state 0))) "No prompt from Paragon")))
+  (testing "Autoresolve"
+    (do-game
+     (new-game {:runner {:deck ["Paragon" (qty "Easy Mark" 3)]}})
+     (starting-hand state :runner ["Paragon"])
+     (take-credits state :corp)
+     (play-from-hand state :runner "Paragon")
+     (letfn [(toggle-paragon [setting]
+               (card-ability state :runner (get-hardware state 0) 0)
+               (click-prompt state :runner setting))]
+       (doseq [set-to ["Never" "Ask" "Always"]]
+         (is (changes-credits (get-runner) 0
+                              (do (toggle-paragon set-to)
+                                  (run-empty-server state "Archives") ; on first loop this actually triggers paragon, but we say 'no'
+                                  (is (empty? (:prompt (get-runner))) "No Paragon prompt")))
+             "Paragon does not fire"))
+       (take-credits state :runner)
+       (take-credits state :corp)
+       ;; paragon is now set to 'Always'
+       (is (changes-credits (get-runner) 1
+                              (do (run-empty-server state "Archives") ; on first loop this actually triggers paragon, but we say 'no'
+                                  (click-prompt state :runner "Yes") ; prompt to add a card to bottom
+                                  (is (empty? (:prompt (get-runner))) "No Paragon prompt")))
+             "Paragon fires automatically")))))
 
 (deftest patchwork
   ;; Patchwork

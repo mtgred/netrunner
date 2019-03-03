@@ -117,12 +117,14 @@
    "Aeneas Informant"
    {:events {:no-trash {:req (req (and (:trash target)
                                        (not= (first (:zone target)) :discard)))
-                        :optional {:prompt (msg "Use Aeneas Informant?")
+                        :optional {:autoresolve (get-autoresolve :auto-reveal-and-gain)
+                                   :prompt "Use Aeneas Informant?"
                                    :yes-ability {:msg (msg (str "gain 1 [Credits]"
                                                                 (when-not (installed? target)
-                                                                  (str " and reveal "  (:title target)))))
-                                                 :effect (effect (gain-credits 1))}}}}}
-
+                                                                  (str " and reveal " (:title target)))))
+                                                 :effect (effect (gain-credits 1))}}}}
+    :abilities [(set-autoresolve :auto-reveal-and-gain "Aeneas Informant")]}
+   
    "Aesops Pawnshop"
    {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
     :abilities [{:effect (req (resolve-ability
@@ -562,6 +564,7 @@
              {:silent (req true)
               :req (req (= :archives target))
               :optional {:prompt "Place a virus counter on Crypt?"
+                         :autoresolve (get-autoresolve :auto-add)
                          :yes-ability {:effect (effect (add-counter card :virus 1)
                                                        (system-msg "places a virus counter on Crypt"))}}}}
     :abilities [{:label "[Click][Trash]: install a virus program from the stack"
@@ -575,7 +578,8 @@
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (runner-install target)
-                                 (trash card {:cause :ability-cost}))}]}
+                                 (trash card {:cause :ability-cost}))}
+                (set-autoresolve :auto-add "adding virus counters to Crypt")]}
 
    "Dadiana Chacon"
    (let [trashme {:effect (effect (unregister-events card)
@@ -905,13 +909,16 @@
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
                                           (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
-             :successful-run {:interactive (req true)
+             :successful-run {:interactive (get-autoresolve :auto-peek (complement never?))
+                              :silent (get-autoresolve :auto-peek never?)
                               :optional {:req (req (and (first-event? state side :successful-run)
                                                         (-> @state :corp :deck count pos?)))
+                                         :autoresolve (get-autoresolve :auto-peek)
                                          :prompt "Use Find the Truth to look at the top card of R&D?"
                                          :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                                        :msg "look at the top card of R&D"
-                                                       :choices ["OK"]}}}}}
+                                                       :choices ["OK"]}}}}
+    :abilities [(set-autoresolve :auto-peek "Find the Truth's peek at R&D ability")]}
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
@@ -2147,6 +2154,35 @@
                                {:runner-turn-ends hai :corp-turn-ends hai
                                 :pre-breaker-strength {:req (req (= (:cid target)(:cid (:hai-target card))))
                                                        :effect (effect (breaker-strength-bonus 2))}}) card))}}
+
+   "The Nihilist"
+   (let [has-2-virus-tokens? (req (<= 2 (number-of-virus-counters state)))
+         corp-choice {:optional {:player :corp
+                                 :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
+                                 :async true
+                                 :yes-ability {:effect (effect (clear-wait-prompt :runner)
+                                                               (system-msg :corp "trashes the top card of R&D to prevent the Runner drawing 2 cards")
+                                                               (mill :corp)
+                                                               (effect-completed eid))}
+                                 :no-ability {:async true
+                                              :effect (effect (clear-wait-prompt :runner)
+                                                              (system-msg :runner "draw 2 cards")
+                                                              (draw :runner eid 2 nil))}}}
+         maybe-spend-2 {:prompt "Spend 2 virus counters on The Nihilist?"
+                        :async true
+                        :yes-ability {:effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
+                                                             (if (:number async-result)
+                                                               (do (system-msg state side (str "spends " (:msg async-result) " on The Nihilist"))
+                                                                   (show-wait-prompt state :runner "Corp to decide")
+                                                                   (continue-ability state side corp-choice card nil))
+                                                               (effect-completed state side eid))))}}]
+     {:events {:runner-turn-begins {:interactive (req true)
+                                    :req has-2-virus-tokens?
+                                    :optional maybe-spend-2}
+               :runner-install {:msg "add 2 virus tokens to The Nihilist"
+                                :effect (effect (add-counter card :virus 2))
+                                :req (req (has-subtype? target "Virus"))
+                                :once :per-turn}}})
 
    "The Shadow Net"
    (letfn [(events [runner] (filter #(and (is-type? % "Event") (not (has-subtype? % "Priority"))) (:discard runner)))]
