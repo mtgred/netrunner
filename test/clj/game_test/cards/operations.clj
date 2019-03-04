@@ -2278,9 +2278,9 @@
         (run-successful state))))
   (testing "trace during run after stealing an agenda"
     (do-game
-      (new-game {:corp {:deck ["Surveillance Sweep" "Breaking News" "Forced Connection" "Data Raven"]}})
+      (new-game {:corp {:hand ["Surveillance Sweep" "Breaking News" "Forced Connection" "Data Raven"]
+                        :credits 20}})
       (core/gain state :corp :click 4)
-      (core/gain state :corp :credit 20)
       (play-from-hand state :corp "Surveillance Sweep")
       (play-from-hand state :corp "Breaking News" "New remote")
       (play-from-hand state :corp "Forced Connection" "Server 1")
@@ -2300,7 +2300,23 @@
         (click-card state :runner bn)
         (click-prompt state :runner "Steal")
         (click-card state :runner fc)
-        (is (prompt-is-type? state :runner :waiting) "After steal, Surveillance Sweep leaves play and Runner waits on Corp")))))
+        (is (prompt-is-type? state :runner :waiting) "After steal, Surveillance Sweep leaves play and Runner waits on Corp"))))
+  (testing "Interaction with Citadel Sanctuary and Sol"
+    (do-game
+      (new-game {:corp {:hand ["Hostile Takeover"]
+                        :discard ["Surveillance Sweep"]
+                        :id "New Angeles Sol: Your News"}
+                 :runner {:hand ["Citadel Sanctuary"]
+                          :tags 1}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Citadel Sanctuary")
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Steal")
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Surveillance Sweep")
+      (core/end-turn state :runner nil)
+      (is (prompt-is-type? state :runner :waiting) "Runner is waiting on Corp"))))
 
 (deftest targeted-marketing
   ;; Targeted Marketing
