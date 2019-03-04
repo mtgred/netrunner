@@ -912,7 +912,7 @@
                                card))})
 
    "Government Investigations"
-   {:flags {:psi-prevent-spend (req 2)}}
+   {:flags {:prevent-secretly-spend (req 2)}}
 
    "Guinea Pig"
    {:msg "trash all cards in the grip and gain 10 [Credits]"
@@ -1573,22 +1573,36 @@
     :effect (effect (gain-credits 2) (draw eid 1 nil))}
 
    "Push Your Luck"
-   {:effect (effect (show-wait-prompt :runner "Corp to guess Odd or Even")
-                    (resolve-ability
-                      {:player :corp :prompt "Guess whether the Runner will spend an Odd or Even number of credits with Push Your Luck"
-                       :choices ["Even" "Odd"]
-                       :msg "force the Corp to make a guess"
-                       :effect (req (let [guess target]
-                                      (clear-wait-prompt state :runner)
-                                      (resolve-ability
-                                        state :runner
-                                        {:choices :credit :prompt "How many credits?"
-                                         :msg (msg "spend " target " [Credits]. The Corp guessed " guess)
-                                         :effect (req (when (or (and (= guess "Even") (odd? target))
-                                                                (and (= guess "Odd") (even? target)))
-                                                        (system-msg state :runner (str "gains " (* 2 target) " [Credits]"))
-                                                        (gain-credits state :runner (* 2 target))))} card nil)))}
-                      card nil))}
+   (letfn [(runner-choice [choices]
+             {:prompt "Spend how many credits?"
+              :choices choices
+              :async true
+              :effect (effect (show-wait-prompt :runner "Corp to guess even or odd")
+                              (clear-wait-prompt :corp)
+                              (continue-ability :corp (corp-choice (str->int target)) card nil))})
+           (corp-choice [spent]
+             {:prompt "Guess how many credits were spent"
+              :choices ["Even" "Odd"]
+              :async true
+              :effect (req (let [correct-guess ((if (= target "Even") even? odd?) spent)]
+                             (clear-wait-prompt state :runner)
+                             (deduct state :runner [:credit spent])
+                             (system-msg state :runner (str "spends " spent " [Credit]"))
+                             (system-msg state :corp (str (if correct-guess " " " in")
+                                                          "correctly guesses " (lower-case target)))
+                             (wait-for (trigger-event-simult state side :reveal-spent-credits nil nil spent)
+                                       (when-not correct-guess
+                                         (system-msg state :runner (str "gains " (* 2 spent) " [Credits]"))
+                                         (gain-credits state :runner (* 2 spent)))
+                                       (effect-completed state side eid))))})]
+     {:async true
+      :effect (req (show-wait-prompt state :corp "Runner to spend credits")
+                (let [all-amounts (range (inc (get-in @state [:runner :credit])))
+                      valid-amounts (remove #(or (any-flag-fn? state :corp :prevent-secretly-spend %)
+                                                 (any-flag-fn? state :runner :prevent-secretly-spend %))
+                                            all-amounts)
+                      choices (map str valid-amounts)]
+                  (continue-ability state side (runner-choice choices) card nil)))})
 
    "Pushing the Envelope"
    (letfn [(hsize [s] (count (get-in s [:runner :hand])))]
@@ -1712,31 +1726,38 @@
                       card))}
 
    "Rigged Results"
-   (letfn [(choose-ice []
-             {:prompt "Select a piece of ICE to bypass"
-              :choices {:req #(ice? %)}
-              :msg (msg "bypass " (card-str state target))
-              :effect (effect (make-run (second (:zone target))))})
-           (corp-choice [spent]
-             {:prompt "Guess how many credits were spent"
-              :choices ["0" "1" "2"]
-              :async true
-              :effect (req (system-msg state :runner (str "spends " spent "[Credit]. "
-                                       (-> corp :user :username) " guesses " target "[Credit]"))
-                           (clear-wait-prompt state :runner)
-                           (lose-credits state :runner spent)
-                           (if (not= (str spent) target)
-                             (continue-ability state :runner (choose-ice) card nil)
-                             (effect-completed state side eid)))})
-           (runner-choice [cr]
+   (letfn [(runner-choice [choices]
              {:prompt "Spend how many credits?"
-              :choices (take cr ["0" "1" "2"])
+              :choices choices
               :async true
               :effect (effect (show-wait-prompt :runner "Corp to guess")
                               (clear-wait-prompt :corp)
-                              (continue-ability :corp (corp-choice (str->int target)) card nil))})]
-   {:effect (effect (show-wait-prompt :corp "Runner to spend credits")
-                    (continue-ability (runner-choice (inc (min 2 (:credit runner)))) card nil))})
+                              (continue-ability :corp (corp-choice choices (str->int target)) card nil))})
+           (corp-choice [choices spent]
+             {:prompt "Guess how many credits were spent"
+              :choices choices
+              :async true
+              :effect (req (clear-wait-prompt state :runner)
+                           (deduct state :runner [:credit spent])
+                           (system-msg state :runner (str "spends " spent " [Credit]"))
+                           (system-msg state :corp (str " guesses " target " [Credit]"))
+                           (wait-for (trigger-event-simult state side :reveal-spent-credits nil nil spent)
+                                     (if (not= spent (str->int target))
+                                       (continue-ability state :runner (choose-ice) card nil)
+                                       (effect-completed state side eid))))})
+           (choose-ice []
+             {:prompt "Select a piece of ICE to bypass"
+              :choices {:req ice?}
+              :msg (msg "bypass " (card-str state target))
+              :effect (effect (make-run (second (:zone target))))})]
+     {:async true
+      :effect (req (show-wait-prompt state :corp "Runner to spend credits")
+                (let [all-amounts (range (min 3 (inc (get-in @state [:runner :credit]))))
+                      valid-amounts (remove #(or (any-flag-fn? state :corp :prevent-secretly-spend %)
+                                                 (any-flag-fn? state :runner :prevent-secretly-spend %))
+                                            all-amounts)
+                      choices (map str valid-amounts)]
+                  (continue-ability state side (runner-choice choices) card nil)))})
 
    "Rip Deal"
    {:req (req hq-runnable)

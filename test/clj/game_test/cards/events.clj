@@ -2135,20 +2135,27 @@
   ;; Push Your Luck
   (testing "Corp guesses correctly"
     (do-game
-      (new-game {:runner {:deck ["Push Your Luck"]}})
+      (new-game {:runner {:hand ["Push Your Luck"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Push Your Luck")
-      (click-prompt state :corp "Odd")
       (click-prompt state :runner "3")
+      (click-prompt state :corp "Odd")
       (is (zero? (:credit (get-runner))) "Corp guessed correctly")))
   (testing "Corp guesses incorrectly"
     (do-game
-      (new-game {:runner {:deck ["Push Your Luck"]}})
+      (new-game {:runner {:hand ["Push Your Luck"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Push Your Luck")
-      (click-prompt state :corp "Even")
       (click-prompt state :runner "3")
-      (is (= 6 (:credit (get-runner))) "Corp guessed incorrectly"))))
+      (click-prompt state :corp "Even")
+      (is (= 6 (:credit (get-runner))) "Corp guessed incorrectly")))
+  (testing "Interaction with Government Investigations"
+    (do-game
+      (new-game {:runner {:hand ["Push Your Luck" "Government Investigations"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Government Investigations")
+      (play-from-hand state :runner "Push Your Luck")
+      (is (= '("0" "1" "3") (-> (get-runner) :prompt first :choices)) "Runner can't choose 2 because of Government Investigations"))))
 
 (deftest pushing-the-envelope
   ;; Run. Add 2 strength to each installer breaker.
@@ -2399,22 +2406,36 @@
 
 (deftest rigged-results
   ;; Rigged Results - success and failure
-  (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}
-               :runner {:deck [(qty "Rigged Results" 3)]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Rigged Results")
-    (click-prompt state :runner "0")
-    (click-prompt state :corp "0")
-    (is (empty? (:prompt (get-runner))) "Rigged Results failed for runner")
-    (is (empty? (:prompt (get-corp))) "Rigged Results failed for runner")
-    (play-from-hand state :runner "Rigged Results")
-    (click-prompt state :runner "2")
-    (click-prompt state :corp "1")
-    (click-card state :runner (get-ice state :hq 0))
-    (is (= [:hq] (:server (:run @state))) "Runner is running on HQ")
-    (is (= 3 (:credit (get-runner))) "Rigged results spends credits")))
+  (testing "Corp guesses correctly"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck [(qty "Rigged Results" 3)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Rigged Results")
+      (click-prompt state :runner "0")
+      (click-prompt state :corp "0")
+      (is (empty? (:prompt (get-runner))) "Rigged Results failed for runner")
+      (is (empty? (:prompt (get-corp))) "Rigged Results failed for runner")))
+  (testing "Corp guesses incorrectly"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck [(qty "Rigged Results" 3)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Rigged Results")
+      (click-prompt state :runner "2")
+      (click-prompt state :corp "1")
+      (click-card state :runner (get-ice state :hq 0))
+      (is (= [:hq] (:server (:run @state))) "Runner is running on HQ")
+      (is (= 3 (:credit (get-runner))) "Rigged results spends credits")))
+  (testing "Interaction with Government Investigations"
+    (do-game
+      (new-game {:runner {:hand ["Rigged Results" "Government Investigations"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Government Investigations")
+      (play-from-hand state :runner "Rigged Results")
+      (is (= '("0" "1") (-> (get-runner) :prompt first :choices)) "Runner can't choose 2 because of Government Investigations"))))
 
 (deftest rip-deal
   ;; Rip Deal - replaces number of HQ accesses with heap retrieval

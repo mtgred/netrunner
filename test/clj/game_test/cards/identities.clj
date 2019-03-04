@@ -1826,10 +1826,10 @@
   ;; Silhouette
   (testing "Expose trigger ability resolves completely before access. Issue #2173"
     (do-game
-      (new-game {:corp {:deck ["Psychic Field" (qty "Fetal AI" 10)]}
+      (new-game {:corp {:hand ["Psychic Field" "Fetal AI"]
+                        :deck [(qty "Sure Gamble" 10)]}
                  :runner {:id "Silhouette: Stealth Operative"
-                          :deck ["Feedback Filter" "Inside Job"]}})
-      (starting-hand state :corp ["Psychic Field" "Fetal AI"])
+                          :hand ["Feedback Filter" "Inside Job"]}})
       (play-from-hand state :corp "Psychic Field" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Feedback Filter")

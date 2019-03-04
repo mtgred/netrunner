@@ -466,8 +466,8 @@
    (system-msg state (:player psi :corp) (str "uses " (:title card) " to start a psi game"))
    (doseq [s [:corp :runner]]
      (let [all-amounts (range (min 3 (inc (get-in @state [s :credit]))))
-           valid-amounts (remove #(or (any-flag-fn? state :corp :psi-prevent-spend %)
-                                      (any-flag-fn? state :runner :psi-prevent-spend %))
+           valid-amounts (remove #(or (any-flag-fn? state :corp :prevent-secretly-spend %)
+                                      (any-flag-fn? state :runner :prevent-secretly-spend %))
                                  all-amounts)]
 
        (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
@@ -488,15 +488,12 @@
           (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
           (deduct state side [:credit bet])
           (system-msg state side (str "spends " bet " [Credits]"))
-          (trigger-event state side (keyword (str "psi-bet-" (name side))) bet)
-          (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
-          (wait-for (trigger-event-sync state side :psi-game bet opponent-bet)
+          (wait-for (trigger-event-simult state side :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
                     (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-                      (resolve-ability state (:side card) (assoc ability :eid eid :async true) card nil)
-                      (effect-completed state side eid)))
-          (trigger-event state side :psi-game-done bet opponent-bet))
+                      (continue-ability state (:side card) (assoc ability :async true) card nil)
+                      (effect-completed state side eid))))
       (show-wait-prompt
-        state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
+        state side (str (string/capitalize (name opponent)) " to choose psi game credits")))))
 
 
 ;;; Traces
