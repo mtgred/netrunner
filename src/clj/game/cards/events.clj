@@ -284,15 +284,15 @@
                     (prompt! card (str "Click Compile in the Temporary Zone to install a Program") ["OK"] {})
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
-                                         (card-init state side c {:resolve-effect false})))}
+                                      (card-init state side c {:resolve-effect false})))}
                       card nil))
     :events {:run-ends {:effect (req
-                                 (let [compile-installed (first (filter #(get-in % [:special :compile-installed]) (game.core/all-installed state :runner)))]
-                                   (when (not (empty? compile-installed))
-                                     (system-msg state side (str "moved " (:title compile-installed) " to the bottom of the Stack at the end of the run from Compile"))
-                                     (move state :runner compile-installed :deck)))
-                                 (unregister-events state side card)
-                                 (trash state side card))}}}
+                                  (let [compile-installed (first (filter #(get-in % [:special :compile-installed]) (game.core/all-installed state :runner)))]
+                                    (when (not (empty? compile-installed))
+                                      (system-msg state side (str "moved " (:title compile-installed) " to the bottom of the Stack at the end of the run from Compile"))
+                                      (move state :runner compile-installed :deck)))
+                                  (unregister-events state side card)
+                                  (trash state side card))}}}
 
    "Contaminate"
    {:effect (req (resolve-ability
@@ -513,6 +513,30 @@
    {:msg "draw 3 cards"
     :async true
     :effect (effect (draw eid 3 nil))}
+
+   "Direct Access"
+   (let [maybe-reshuffle {:optional {:autoresolve (get-autoresolve :auto-reshuffle)
+                                     :prompt "Shuffle Direct Access into the Stack?"
+                                     :yes-ability {:msg (msg "shuffles Direct Access into the Stack")
+                                                   :effect (effect (move (get-card state card) :deck)
+                                                                   (shuffle! :deck)
+                                                                   (effect-completed eid))}
+                                     :no-ability {:effect (effect (trash (get-card state card) {:unpreventable true :suppress-event true})
+                                                                  (effect-completed eid))}}}]
+     {:effect (req (doseq [s [:corp :runner]]
+                     (disable-identity state s))
+                   (continue-ability state side
+                                     {:prompt "Choose a server"
+                                      :choices (req runnable-servers)
+                                      :async true
+                                      :effect (req (let [c (move state side (find-latest state card) :play-area)]
+                                                     (card-init state side c {:resolve-effect false})
+                                                     (wait-for (make-run state side (make-eid state) target)
+                                                               (doseq [s [:corp :runner]]
+                                                                 (enable-identity state s))
+                                                               (continue-ability state side maybe-reshuffle c nil))))}
+                                     card nil))
+      :abilities [(set-autoresolve :auto-reshuffle "reshuffle")]})
 
    "Dirty Laundry"
    (run-event
@@ -1687,13 +1711,17 @@
                  (disable-identity state side)
 
                  ;; Manually reduce the runner's link by old link
-                 (lose state :runner :link (:baselink old-runner-identity)))
+                 (lose state :runner :link (:baselink old-runner-identity))
 
-               ;; Move the selected ID to [:runner :identity] and set the zone
-               (let [new-id (-> target :title server-card make-card (assoc :zone [:identity]))]
-                 (swap! state assoc-in [side :identity] new-id)
-                 ;; enable-identity does not do everything that init-identity does
-                 (init-identity state side new-id))
+                 ;; Move the selected ID to [:runner :identity] and set the zone
+                 (let [new-id (-> target :title server-card make-card (assoc :zone [:identity]))
+                       num-old-blanks (:num-disabled old-runner-identity)]
+                   (swap! state assoc-in [side :identity] new-id)
+                   ;; enable-identity does not do everything that init-identity does
+                   (init-identity state side new-id)
+                   (when num-old-blanks
+                     (dotimes [_ num-old-blanks]
+                       (disable-identity state side)))))
 
                ;; Handle hosted cards (Ayla) - Part 2
                (doseq [c (get-in @state [:runner :temp-hosted])]
