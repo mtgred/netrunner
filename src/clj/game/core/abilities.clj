@@ -284,24 +284,32 @@
   ([state side card message ability targets] (optional-ability state side (make-eid state) card message ability targets))
   ([state side eid card message ability targets]
    (letfn [(prompt-fn [prompt-choice]
-             (let [yes-ability (:yes-ability ability)]
-               (if (and (= prompt-choice "Yes")
-                        yes-ability
-                        (can-pay? state side (:title card) (:cost yes-ability)))
-                 (resolve-ability state side (assoc yes-ability :eid eid) card targets)
-                 (if-let [no-ability (:no-ability ability)]
-                   (resolve-ability state side (assoc no-ability :eid eid) card targets)
-                   (effect-completed state side eid)))))]
-     (let [autoresolve-fn     (:autoresolve ability)
+             (let [prompt-effect (when-let [prompt-effect (or (get ability (key-slug prompt-choice))
+                                                              (get ability (key-slug (str prompt-choice "-ability"))))]
+                                   (if-let [prompt-msg (or (:msg prompt-effect) (:msg ability))]
+                                     (assoc prompt-effect :msg
+                                            (if (string? prompt-msg) prompt-msg
+                                              (prompt-msg state side eid card [prompt-choice])))
+                                     prompt-effect))]
+               (cond
+                 (can-pay? state side (:title card) (:cost prompt-effect))
+                 (continue-ability state side prompt-effect card targets)
+                 (:no-ability ability)
+                 (continue-ability state side (:no-ability ability) card targets)
+                 :else
+                 (effect-completed state side eid))))]
+     (let [choices (or (:choices ability)
+                       ["Yes" "No"])
+           autoresolve-fn (:autoresolve ability)
            autoresolve-answer (when autoresolve-fn
                                 (autoresolve-fn state side eid card targets))]
        (case autoresolve-answer
          "Yes" (prompt-fn "Yes")
-         "No"  (prompt-fn "No")
-               (do (toast state side (str "This prompt can be skipped by clicking "
-                                          (:title card) " and toggling autoresolve"))
-                   (show-prompt state side eid card message ["Yes" "No"]
-                                prompt-fn ability)))))))
+         "No" (prompt-fn "No")
+         (do (when autoresolve-fn
+               (toast state side (str "This prompt can be skipped by clicking "
+                                      (:title card) " and toggling autoresolve")))
+             (show-prompt state side eid card message choices prompt-fn ability)))))))
 
 ;;; Prompts
 (defn prompt!

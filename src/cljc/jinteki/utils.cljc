@@ -57,3 +57,7 @@
        (s/split $ #"[ \t\n\x0B\f\r!\"#$%&'()*+,-./:;<=>?@\\\[\]^_`{|}~]+")
        (filter seq $)
        (s/join sep $)))))
+
+(defn key-slug
+  [v]
+  (keyword (slugify v)))
