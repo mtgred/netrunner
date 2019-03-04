@@ -206,6 +206,7 @@
                                                   (str (quantify number "virus counter") " from " title))
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
+
 (defn never?
   "Returns true if is argument is :never."
   [x]

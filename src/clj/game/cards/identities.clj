@@ -787,6 +787,18 @@
                         card nil))}}
     :abilities [(set-autoresolve :auto-fisk "force Corp draw")]}
 
+   "Lat: Ethical Freelancer"
+   {:events
+    {:runner-turn-ends
+     {:req (req (= (count (:hand runner)) (count (:hand corp))))
+      :optional {:autoresolve (get-autoresolve :auto-lat)
+                 :prompt "Draw 1 card?"
+                 :yes-ability {:async true
+                               :msg "draw 1 card"
+                               :effect (effect (draw :runner eid 1 nil))}
+                 :no-ability {:effect (effect (system-msg "declines to use Lat: Ethical Freelancer"))}}}}
+    :abilities [(set-autoresolve :auto-lat "Lat: Ethical Freelancer")]}
+
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
                 :prompt "Select an unrezzed card to return to HQ"
