@@ -1534,7 +1534,10 @@
                                  (lose-credits :runner (* 4 (get-counters card :advancement))))}]}
 
    "Rex Campaign"
-   (let [ability {:once :per-turn
+   (let [remove-1 "Remove 1 bad publicity"
+         gain-5 "Gain 5 [Credits]"
+         ability {:req (req (:corp-phase-12 @state))
+                  :once :per-turn
                   :label "Remove 1 counter (start of turn)"
                   :effect (req (add-counter state side card :power -1)
                                (when (zero? (get-counters (get-card state card) :power))
@@ -1542,14 +1545,14 @@
                                  (continue-ability
                                    state side
                                    {:optional
-                                    {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
-                                     :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
-                                     :msg (msg (lower-case target))
-                                     :remove-1-bad-publicity {:effect (effect (lose :bad-publicity 1))}
-                                     :gain-5-credits {:effect (effect (gain-credits 5))}}}
+                                    {:prompt (str remove-1 " or " (lower-case gain-5) "?")
+                                     :choices [remove-1 gain-5]
+                                     :remove-1-bad-publicity {:msg (lower-case remove-1)
+                                                              :effect (effect (lose :bad-publicity 1))}
+                                     :gain-5-credits {:msg (lower-case gain-5)
+                                                      :effect (effect (gain-credits 5))}}}
                                    card targets)))}]
      {:effect (effect (add-counter card :power 3))
-      :flags {:corp-phase-12 (req true)}
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :ability [ability]})

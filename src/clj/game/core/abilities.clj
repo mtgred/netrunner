@@ -284,13 +284,8 @@
   ([state side card message ability targets] (optional-ability state side (make-eid state) card message ability targets))
   ([state side eid card message ability targets]
    (letfn [(prompt-fn [prompt-choice]
-             (let [prompt-effect (when-let [prompt-effect (or (get ability (key-slug prompt-choice))
-                                                              (get ability (key-slug (str prompt-choice "-ability"))))]
-                                   (if-let [prompt-msg (or (:msg prompt-effect) (:msg ability))]
-                                     (assoc prompt-effect :msg
-                                            (if (string? prompt-msg) prompt-msg
-                                              (prompt-msg state side eid card [prompt-choice])))
-                                     prompt-effect))]
+             (let [prompt-effect (or (get ability (key-slug prompt-choice))
+                                     (get ability (key-slug (str prompt-choice "-ability"))))]
                (cond
                  (can-pay? state side (:title card) (:cost prompt-effect))
                  (continue-ability state side prompt-effect card targets)
