@@ -426,7 +426,7 @@
                                  (host state side host-card card)
                                  (move state side card
                                        [:rig (if facedown :facedown (to-keyword (:type card)))]))
-                             c (assoc c :installed true :new true)
+                             c (assoc c :installed :this-turn :new true)
                              installed-card (if facedown
                                               (update! state side c)
                                               (card-init state side c {:resolve-effect false

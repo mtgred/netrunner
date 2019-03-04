@@ -132,7 +132,7 @@
             (deactivate state side c to-facedown)
             c)
         c (if to-installed
-            (assoc c :installed true)
+            (assoc c :installed :this-turn)
             (dissoc c :installed))
         c (if to-facedown
             (assoc c :facedown true)

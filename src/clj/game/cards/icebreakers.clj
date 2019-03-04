@@ -648,6 +648,15 @@
                     {:abilities [(break-sub 1 1 "Sentry")
                                  (strength-pump 1 1)]})
 
+   "Gauss"
+   (auto-icebreaker ["Barrier"]
+                    {:strength-bonus (req (if (= :this-turn (:installed card)) 3 0))
+                     :events (let [losestr {:effect (effect (update-breaker-strength card))}]
+                               {:runner-turn-ends losestr
+                                :corp-turn-ends losestr})
+                     :abilities [(break-sub 1 1 "Barrier")
+                                 (strength-pump 2 2)]})
+
    "God of War"
    (auto-icebreaker ["All"]
                     {:flags {:runner-phase-12 (req true)}
