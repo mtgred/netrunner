@@ -1044,7 +1044,7 @@
                                              :mandatory true
                                              :effect (effect (reveal (take 3 (:deck corp)))
                                                              (system-msg (str "uses Stargate to reveal " (join ", " (take 3 (:deck corp)))
-                                                                              "from the top of R&D and trash " (:title target)))
+                                                                              " from the top of R&D and trash " (:title target)))
                                                              (trash (assoc target :seen true)))}}
                                            card))}]}
 
