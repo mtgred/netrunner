@@ -3487,6 +3487,98 @@
     (is (= 4 (count (:discard (get-runner)))) "Fall Guy trashed")
     (is (= 8 (:credit (get-runner))) "Gained 2c from Fall Guy but no credits from Wasteland")))
 
+(deftest whistleblower
+  (testing "Fetal AI + AOYCR interaction"
+    (do-game
+      (new-game {:corp {:deck [(qty "Fetal AI" 10) "An Offer You Can't Refuse"]}
+                 :runner {:deck [(qty "Whistleblower" 5)]}})
+      (starting-hand state :corp ["An Offer You Can't Refuse"])
+      (take-credits state :corp)
+      (play-from-hand state :runner "Whistleblower")
+      (run-empty-server state "R&D")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Fetal AI")
+      (is (find-card "Whistleblower" (:discard (get-runner))) "Whistleblower trashed")
+      (is (empty? (:prompt (get-runner))))
+      (is (not (:run @state)) "Run ended")
+      (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner score area")
+      (is (= 4 (count (:hand (get-runner)))) "No damage dealt")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state "R&D")
+      (is (= 2 (count (:hand (get-runner)))) "Whistleblower does not persist between turns, so Fetal AI fires")
+      (click-prompt state :runner "Pay 2 [Credits] to steal")
+      (play-from-hand state :runner "Whistleblower")
+      (core/move state :runner (find-card "Whistleblower" (:discard (get-runner))) :hand)
+      (is (= 2 (count (:hand (get-runner)))) "2 cards in hand")
+      (take-credits state :runner)
+      (is (= 2 (count (:scored (get-runner)))) "Agenda added to runner score area")
+      (play-from-hand state :corp "An Offer You Can't Refuse")
+      (click-prompt state :corp "R&D")
+      (click-prompt state :runner "Yes")
+      (run-successful state)
+      (click-prompt state :runner "Yes") ; trigger Whistleblower
+      (click-prompt state :runner "Fetal AI")
+      (is (= 0 (count (:hand (get-runner)))) "Fetal AI deals net before Whistleblower triggers on Corp turn")
+      (is (empty? (:prompt (get-runner))))
+      (is (not (:run @state)) "Run ended")
+      (is (= 3 (count (:scored (get-runner)))) "Agenda added to runner score area without needing to pay")))
+  (testing "Autoresolve functionality"
+    (do-game
+     (new-game {:corp {:deck ["NAPD Contract"]}
+                :runner {:deck ["Whistleblower"]}})
+     (play-from-hand state :corp "NAPD Contract" "New remote")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Whistleblower")
+     (card-ability state :runner (get-resource state 0) 0)
+     (click-prompt state :runner "Never") ; auto-refuse to trash whistleblower
+     (run-empty-server state "Server 1")
+     (click-prompt state :runner "No action")
+     (is (= 0 (count (:scored (get-runner)))) "Runner could not steal NAPD Contract")
+     (card-ability state :runner (get-resource state 0) 0)
+     (click-prompt state :runner "Always") ; auto-trigger whistleblower
+     (run-empty-server state "Server 1")
+     (click-prompt state :runner "NAPD Contract")
+     (is (empty? (:prompt (get-runner))))
+     (is (not (:run @state)) "Run ended")
+     (is (= 1 (count (:scored (get-runner)))) "Stole agenda")))
+  (testing "Steal triggers happen on Whistleblowing"
+    (do-game
+     (new-game {:corp {:deck [(qty "Project Beale" 3)]}
+                :runner {:id "Leela Patel: Trained Pragmatist"
+                         :deck ["Whistleblower"]}})
+     (dotimes [_ 3]
+       (play-from-hand state :corp "Project Beale" "New remote"))
+     (take-credits state :corp)
+     (play-from-hand state :runner "Whistleblower")
+     (run-empty-server state "Server 1")
+     (click-prompt state :runner "Yes")
+     (click-prompt state :runner "Project Beale")
+     (is (not (empty? (:prompt (get-runner)))) "There is an open prompt, as Leela triggers")
+     (is (= "Leela Patel: Trained Pragmatist" (:title (:card (first (get-in @state [:runner :prompt])))))
+         "Leela triggers, as Whistleblower does not eat steal trigger")))
+  (doseq [agenda-name ["The Future Perfect" "NAPD Contract" "Degree Mill" "Ikawah Project" "Obokata Protocol"]]
+    (testing (str "Whistleblower " agenda-name " interaction")
+      (do-game
+       (new-game {:corp {:deck [(qty agenda-name 2)]}
+                  :runner {:deck ["Whistleblower"]}})
+       (starting-hand state :corp [agenda-name agenda-name])
+       (take-credits state :corp)
+       (play-from-hand state :runner "Whistleblower")
+       (run-empty-server state "HQ")
+       (click-prompt state :runner "Yes")
+       (click-prompt state :runner agenda-name)
+       (is (find-card "Whistleblower" (:discard (get-runner))) "Whistleblower trashed")
+       (is (empty? (:prompt (get-runner))))
+       (is (not (:run @state)) "Run ended")
+       (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner score area")
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (run-empty-server state "HQ")
+       (is (not (empty? (:prompt (get-runner)))) "Whistleblower does not persist between runs, so agenda not autostolen")
+       (is (:run @state) "Run not ended yet")
+       (is (= 1 (count (:scored (get-runner)))) "Agenda not added to runner score area yet")))))
+
 (deftest xanadu
   ;; Xanadu - Increase all ICE rez cost by 1 credit
   (do-game
