@@ -1040,11 +1040,13 @@
                                             :replace-access
                                             {:prompt "Choose a card to trash"
                                              :not-distinct true
-                                             :msg (msg "trash " (:title target))
                                              :choices (req (take 3 (:deck corp)))
                                              :mandatory true
-                                             :effect (effect (trash (assoc target :seen true))
-                                                             (shuffle! :corp :deck))}} card))}]}
+                                             :effect (effect (reveal (take 3 (:deck corp)))
+                                                             (system-msg (str "uses Stargate to reveal " (join ", " (take 3 (:deck corp)))
+                                                                              " from the top of R&D and trash " (:title target)))
+                                                             (trash (assoc target :seen true)))}}
+                                           card))}]}
 
    "Surfer"
    (letfn [(surf [state cice]

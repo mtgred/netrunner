@@ -1221,6 +1221,30 @@
       (card-ability state :runner snitch 0)
       (is (empty? (get-in @state [:runner :prompt])) "No option to jack out"))))
 
+(deftest stargate
+  ;; Stargate - once per turn Keyhole which doesn't shuffle
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:deck ["Herald" "Troll" (qty "Ice Wall" 10)]}
+                :runner {:deck ["Stargate"]}})
+     (starting-hand state :corp ["Herald" "Troll"])
+     (core/move state :corp (find-card "Herald" (:hand (get-corp))) :deck {:front true})
+     (core/move state :corp (find-card "Troll" (:hand (get-corp))) :deck {:front true})
+     (is (= "Troll" (-> (get-corp) :deck first :title)) "Troll on top of deck")
+     (is (= "Herald" (-> (get-corp) :deck second :title)) "Herald 2nd")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Stargate")
+     (card-ability state :runner (get-program state 0) 0)
+     (is (:run @state) "Run initiated")
+     (run-successful state)
+     (click-prompt state :runner "Troll")
+     (is (empty? (:prompt (get-runner))) "Prompt closed")
+     (is (not (:run @state)) "Run ended")
+     (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
+     (is (= "Herald" (-> (get-corp) :deck first :title)) "Herald now on top of R&D")
+     (card-ability state :runner (get-program state 0) 0)
+     (is (not (:run @state)) "No run ended, as Stargate is once per turn"))))
+
 (deftest surfer
   ;; Surfer - Swap position with ice before or after when encountering a Barrier ICE
   (do-game
