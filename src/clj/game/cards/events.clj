@@ -537,6 +537,7 @@
                                                                (continue-ability state side maybe-reshuffle c nil))))}
                                      card nil))
       :abilities [(set-autoresolve :auto-reshuffle "reshuffle")]})
+
    "Dirty Laundry"
    (run-event
     {:end-run {:req (req (:successful run))
