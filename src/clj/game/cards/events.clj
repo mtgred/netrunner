@@ -1221,7 +1221,8 @@
                             :mandatory true
                             :prompt "Which of the revealed cards would you like to access (first card is on top)?"
                             :choices revealed
-                            :effect (effect (access-card eid target))})
+                            :effect (effect (access-card eid target)
+                                            (effect-completed eid))})
          select-install-cost (fn [state]
                                {:async true
                                 :prompt "Select an install cost among your installed cards."
@@ -1232,8 +1233,8 @@
                                            (frequencies)
                                            (into (sorted-map))
                                            (seq)
-                                           (map (fn [x] {:title (str (first x) " [Credit]: " (second x) " times") :value (second x)})))
-                                :effect (effect (effect-completed (make-result eid (:value target))))})
+                                           (map (fn [x] (str (first x) " [Credit]: " (second x) " times"))))
+                                :effect (effect (effect-completed (make-result eid (str->int (nth (clojure.string/split target #" ") 2)))))})
          ]
      {:req (req rd-runnable)
       :async true
@@ -1254,7 +1255,9 @@
                                                                  " [Credit] and reveals (top:) "
                                                                  (join ", " (map :title revealed))
                                                                  " from the top of R&D"))
-                                  (resolve-ability state side (access-revealed revealed) card nil))))}}
+                                  (resolve-ability state side (access-revealed revealed) card nil)
+                                  (effect-completed state side eid)
+                                  )))}}
                   card))})
 
    "Knifed"
