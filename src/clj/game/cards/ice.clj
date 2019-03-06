@@ -996,7 +996,7 @@
     :strength-bonus advance-counters}
 
    "Hagen"
-   {:subroutines [{:label "Trash 1 program that is not a decoder, fracter or killer"
+   {:subroutines [{:label "Trash 1 program"
                    :prompt "Choose a program that is not a decoder, fracter or killer"
                    :msg (msg "trash " (:title target))
                    :choices {:req #(and (installed? %)
