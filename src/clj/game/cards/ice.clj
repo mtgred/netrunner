@@ -995,6 +995,21 @@
     :subroutines [end-the-run]
     :strength-bonus advance-counters}
 
+   "Hagen"
+   {:subroutines [{:label "Trash 1 program"
+                   :prompt "Choose a program that is not a decoder, fracter or killer"
+                   :msg (msg "trash " (:title target))
+                   :choices {:req #(and (installed? %)
+                                        (is-type? % "Program")
+                                        (not (has-subtype? % "Decoder"))
+                                        (not (has-subtype? % "Fracter"))
+                                        (not (has-subtype? % "Killer")))}
+                   :effect (effect (trash target {:cause :subroutine})
+                                   (clear-wait-prompt :runner))}
+                  end-the-run]
+    :strength-bonus (req (- (count (filter #(has-subtype? % "Icebreaker")
+                                            (all-active-installed state :runner)))))}
+
    "Hailstorm"
    {:subroutines [{:label "Remove a card in the Heap from the game"
                    :prompt "Choose a card in the Runner's Heap"

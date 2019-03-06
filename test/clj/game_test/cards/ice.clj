@@ -589,6 +589,60 @@
         (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")))))
 
+(deftest hagen
+  ;; Hagen
+  (testing "Trashing only non-fracter non-decoder non-killer cards."
+    (do-game
+      (new-game {:corp {:deck ["Hagen"]}
+                 :runner {:deck ["Inti" "Gordian Blade" "Pipeline" "Misdirection"]}})
+      (play-from-hand state :corp "Hagen" "HQ")
+      (take-credits state :corp)
+      (let [hag (get-ice state :hq 0)]
+        (core/gain state :corp :click 100)
+        (play-from-hand state :runner "Inti")
+        (play-from-hand state :runner "Gordian Blade")
+        (play-from-hand state :runner "Pipeline")
+        (play-from-hand state :runner "Misdirection")
+        (run-on state "HQ")
+        (core/rez state :corp hag)
+        (card-subroutine state :corp hag 0)
+        (click-card state :corp "Inti")          ;shouldn't trash
+        (is (empty? (:discard (get-runner))) "Can't target fracter")
+        (click-card state :corp "Gordian Blade") ;shouldn't trash
+        (is (empty? (:discard (get-runner))) "Can't target decoder")
+        (click-card state :corp "Pipeline")      ;shouldn't trash
+        (is (empty? (:discard (get-runner))) "Can't target killer")
+        (click-card state :corp "Misdirection")  ;should trash
+        (is (= 1 (count (:discard (get-runner)))) "Misdirection trashed"))))
+  (testing "Strength decrease with installed icebreakers"
+    (do-game
+      (new-game {:corp {:deck ["Hagen"]}
+                 :runner {:deck ["Inti" "Gordian Blade" "Pipeline" "Misdirection"]}})
+      (play-from-hand state :corp "Hagen" "HQ")
+      (take-credits state :corp)
+      (let [hag (get-ice state :hq 0)]
+        (core/gain state :runner :click 100)
+        (core/gain state :runner :credit 100)
+        (run-on state "HQ")
+        (core/rez state :corp hag)
+        (is (= 6 (:current-strength (refresh hag))) "Hagen is at base strength of 6.")
+        (run-jack-out state)
+        (play-from-hand state :runner "Inti")
+        (run-on state "HQ")
+        (is (= 5 (:current-strength (refresh hag))) "Inti lowered strength to 5.")
+        (run-jack-out state)
+        (play-from-hand state :runner "Gordian Blade")
+        (run-on state "HQ")
+        (is (= 4 (:current-strength (refresh hag))) "Gordian Blade lowered strength to 4.")
+        (run-jack-out state)
+        (play-from-hand state :runner "Pipeline")
+        (run-on state "HQ")
+        (is (= 3 (:current-strength (refresh hag))) "Pipeline lowered strength to 3.")
+        (run-jack-out state)
+        (play-from-hand state :runner "Misdirection")
+        (run-on state "HQ")
+        (is (= 3 (:current-strength (refresh hag))) "Misdirection didn't lower strength.")))))
+
 (deftest harvester
   ;; Harvester - draw 3, then discard
   (do-game
