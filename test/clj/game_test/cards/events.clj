@@ -368,7 +368,9 @@
       (core/move state :runner (find-card "Daily Casts" (:hand (get-runner))) :deck)
       (play-from-hand state :runner "Blueberry Diesel")
       (is (= "Daily Casts" (-> (get-runner) :deck last :title)))
-      (click-prompt state :runner "Cancel")
+      (is (nil? (seq (:hand (get-runner)))))
+      (click-prompt state :runner "No")
+      (is (= ["Sure Gamble" "Easy Mark"] (mapv :title (:hand (get-runner)))))
       (is (not (find-card "Daily Casts" (:hand (get-runner))))))))
 
 (deftest by-any-means
