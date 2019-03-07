@@ -646,6 +646,24 @@
                             :effect (effect (system-msg (str "places " (:trash target) " power counters on Mâché"))
                                             (add-counter card :power (:trash target)))}}}
 
+   "Masterwork (v37)"
+   {:events {:run {:optional
+                   {:async true
+                    :interactive (req true)
+                    :req (req (and (<= 1 (:credit runner))
+                                   (some hardware? (:hand runner))))
+                    :prompt "Pay 1 [Credit] to install a hardware?"
+                    :yes-ability {:async true
+                                  :cost [:credit 1]
+                                  :prompt "Select a piece of hardware"
+                                  :choices {:req #(and (in-hand? %)
+                                                       (hardware? %))}
+                                  :msg (msg "pay 1 [Credit] and install " (:title target) " from the grip")
+                                  :effect (effect (runner-install eid target {:no-msg true}))}}}
+             :runner-install {:async true
+                              :req (effect (first-event? :runner-install #(is-type? (first %) "Hardware")))
+                              :effect (effect (draw eid 1 nil))}}}
+
    "Maw"
    (let [ability {:label "Trash a card from HQ"
                   :req (req (and (= 1 (get-in @state [:runner :register :no-trash-or-steal]))
