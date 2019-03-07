@@ -1246,6 +1246,16 @@
       :effect (effect (show-wait-prompt (str (side-str (other-side side)) " to trash a card for Standoff"))
                       (continue-ability :runner (stand :runner) card nil))})
 
+   "Sting!"
+   (letfn [(count-opp-stings [state side] (count (filter #(= (:title %) "Sting!")
+                                                         (get-in @state [(other-side side) :scored]))))] 
+           {:effect {:msg (msg "deal " (inc (count-opp-stings state :corp)) " net damage")
+                     :async true
+                     :effect (effect (damage eid :net (inc (count-opp-stings state :corp)) {:card card}))}
+            :stolen {:msg (msg "deal " (inc (count-opp-stings state :corp)) " net damage")
+                     :async true
+                     :effect (effect (damage eid :net (inc (count-opp-stings state :runner)) {:card card}))}})
+
    "Successful Field Test"
    (letfn [(sft [n max] {:prompt "Select a card in HQ to install with Successful Field Test"
                          :priority -1
