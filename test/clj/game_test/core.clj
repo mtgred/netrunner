@@ -96,7 +96,8 @@
           :identity (@all-cards
                       (or (:id corp)
                           "Custom Biotics: Engineered for Success"))
-          :credits (:credits corp)}
+          :credits (:credits corp)
+          :bad-pub (:bad-pub corp)}
    :runner {:deck (or (transform (conj (:deck runner)
                                        (:hand runner)
                                        (:discard runner)))
@@ -106,7 +107,8 @@
             :identity (@all-cards
                         (or (:id runner)
                             "The Professor: Keeper of Knowledge"))
-            :credits (:credits runner)}
+            :credits (:credits runner)
+            :tags (:tags runner)}
    :mulligan (:mulligan options)
    :start-as (:start-as options)
    :dont-start-turn (:dont-start-turn options)
@@ -141,15 +143,15 @@
         (when (seq (:discard side-map))
           (doseq [card (:discard side-map)]
             (core/move state side
-                       (find-card (:card card) (get-in @state [side :deck])) :discard)))
+                       (find-card card (get-in @state [side :deck])) :discard)))
         (when (:credits side-map)
           (swap! state assoc-in [side :credit] (:credits side-map)))))
     (when (= start-as :runner) (take-credits state :corp))
     ;; These are side independent so they happen ouside the loop
-    (when (:bad-pub corp)
-      (swap! state assoc-in [:corp :bad-publicity] (:bad-pub corp)))
-    (when (:tags runner)
-      (swap! state assoc-in [:runner :tag] (:tags runner)))
+    (when-let [bad-pub (:bad-pub corp)]
+      (swap! state assoc-in [:corp :bad-publicity] bad-pub))
+    (when-let [tags (:tags runner)]
+      (swap! state assoc-in [:runner :tag :base] tags))
     state))
 
 (defn new-game

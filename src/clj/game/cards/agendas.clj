@@ -1262,10 +1262,10 @@
    {:flags {:rd-reveal (req true)}
     :access
     {:psi {:req (req (not installed))
-           :not-equal {:msg (msg "prevent it from being stolen")
-                       :effect (effect (register-run-flag! card :can-steal
-                                                           (fn [_ _ c] (not= (:cid c) (:cid card))))
-                                       ;; TODO: investigate why this is needed??
+           :not-equal {:msg "prevent it from being stolen"
+                       :effect (effect (register-run-flag!
+                                         card :can-steal
+                                         (fn [_ _ c] (not= (:cid c) (:cid card))))
                                        (effect-completed eid))}}}}
 
    "Timely Public Release"
@@ -1294,7 +1294,7 @@
                                                         (if (and run
                                                                  (= (zone->name (first (:server run)))
                                                                     chosen-server))
-                                                          (let [curr-pos (get-in @state [:run :position])] 
+                                                          (let [curr-pos (get-in @state [:run :position])]
                                                             (if (>= curr-pos (Integer/parseInt target))
                                                               (swap! state assoc-in [:run :position] (inc curr-pos))))))})
                                         card nil))})
