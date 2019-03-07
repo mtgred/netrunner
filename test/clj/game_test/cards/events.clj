@@ -351,22 +351,22 @@
   (testing "Selecting a card"
     (do-game
       (new-game {:options {:start-as :runner}
-                 :runner {:hand ["Blueberry Diesel" "Sure Gamble" "Easy Mark" "Daily Casts"]}})
+                 :runner {:hand ["Blueberry!™ Diesel" "Sure Gamble" "Easy Mark" "Daily Casts"]}})
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck)
       (core/move state :runner (find-card "Daily Casts" (:hand (get-runner))) :deck)
-      (play-from-hand state :runner "Blueberry Diesel")
+      (play-from-hand state :runner "Blueberry!™ Diesel")
       (is (= "Daily Casts" (-> (get-runner) :deck last :title)))
       (click-prompt state :runner "Sure Gamble")
       (is (find-card "Daily Casts" (:hand (get-runner))))))
   (testing "Selecting no card"
     (do-game
       (new-game {:options {:start-as :runner}
-                 :runner {:hand ["Blueberry Diesel" "Sure Gamble" "Easy Mark" "Daily Casts"]}})
+                 :runner {:hand ["Blueberry!™ Diesel" "Sure Gamble" "Easy Mark" "Daily Casts"]}})
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
       (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck)
       (core/move state :runner (find-card "Daily Casts" (:hand (get-runner))) :deck)
-      (play-from-hand state :runner "Blueberry Diesel")
+      (play-from-hand state :runner "Blueberry!™ Diesel")
       (is (= "Daily Casts" (-> (get-runner) :deck last :title)))
       (is (nil? (seq (:hand (get-runner)))))
       (click-prompt state :runner "No")
@@ -916,7 +916,6 @@
                          :id "Valencia Estevez: The Angel of Cayambe"}
                 :corp {:deck [(qty "Rashida Jaheem" 3) "Hedge Fund"]
                        :id "Industrial Genomics: Growing Solutions"}})
-     
      (dotimes [_ 3]
        (play-from-hand state :corp "Rashida Jaheem" "New remote"))
      (trash-from-hand state :corp "Hedge Fund")
