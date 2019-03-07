@@ -824,6 +824,45 @@
                                   card nil)
                                 (trash state side card)))}]}
 
+   "Pelangi"
+   {:data {:counter {:virus 2}}
+    ; :events {:pass-ice nil
+    ;          :run-ends nil}
+    :abilities [{:once :per-turn
+                 :req (req (and current-ice
+                                (rezzed? current-ice)))
+                 :counter-cost [:virus 1]
+                 :label "Make currently encountered ice gain a subtype"
+                 :prompt "Choose an ICE subtype"
+                 :choices (req (->> @all-cards
+                                    vals
+                                    (filter ice?)
+                                    (map :subtype)
+                                    (mapcat #(split % #" - "))
+                                    distinct
+                                    sort
+                                    (remove (->> current-ice :subtype (#(split % #" - ")) set))))
+                 :msg (msg "make " (card-str state current-ice) " gain " target)
+                 :effect (req (let [ice current-ice
+                                    chosen-type target
+                                    stypes (:subtype ice)
+                                    remove-subtype
+                                    {:effect (effect (update! (assoc (get-card state ice) :subtype stypes))
+                                                     (system-say (str (card-str state ice) " loses " chosen-type))
+                                                     (unregister-events card)
+                                                     (register-events (:events (card-def card)) card))}]
+                                (update! state side (assoc ice :subtype (combine-subtypes false stypes chosen-type)))
+                                (update-ice-strength state side (get-card state ice))
+                                (register-events state side {:pass-ice remove-subtype
+                                                             :run-ends remove-subtype} card)))}]}
+
+   "Pheromones"
+   {:recurring (req (when (< (get-counters card :recurring) (get-counters card :virus))
+                      (set-prop state side card :rec-counter (get-counters card :virus))))
+    :events {:successful-run {:silent (req true)
+                              :req (req (= target :hq))
+                              :effect (effect (add-counter card :virus 1))}}}
+
    "Plague"
    {:prompt "Choose a server for Plague"
     :choices (req servers)
@@ -835,13 +874,6 @@
                            (get-in (get-card state card) [:special :server-target])))
               :msg "gain 2 virus counters"
               :effect (effect (add-counter :runner card :virus 2))}}}
-
-   "Pheromones"
-   {:recurring (req (when (< (get-counters card :recurring) (get-counters card :virus))
-                      (set-prop state side card :rec-counter (get-counters card :virus))))
-    :events {:successful-run {:silent (req true)
-                              :req (req (= target :hq))
-                              :effect (effect (add-counter card :virus 1))}}}
 
    "Progenitor"
    {:abilities [{:label "Install a virus program on Progenitor"

@@ -890,6 +890,26 @@
           (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
           (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed"))))))
 
+(deftest pelangi
+  ;; Pelangi
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Ice Wall"]}
+               :runner {:hand ["Pelangi"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Pelangi")
+    (let [iw (get-ice state :hq 0)
+          pelangi (get-program state 0)]
+      (run-on state "HQ")
+      (card-ability state :runner pelangi 0)
+      (core/rez state :corp iw)
+      (card-ability state :runner pelangi 0)
+      (click-prompt state :runner "Code Gate")
+      (is (utils/has? (refresh iw) :subtype "Code Gate") "Ice Wall gained Code Gate")
+      (run-continue state)
+      (is (not (utils/has? (refresh iw) :subtype "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+
 (deftest pheromones
   ;; Pheromones ability shouldn't have a NullPointerException when fired with 0 virus counter
   (do-game

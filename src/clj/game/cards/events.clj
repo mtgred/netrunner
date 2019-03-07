@@ -120,7 +120,7 @@
                           :effect (effect (access-bonus target 2))}
              :runner-turn-ends {:effect (effect (unregister-events card))}}}
 
-   "Blueberry Diesel"
+   "Blueberry!™ Diesel"
    {:async true
     :prompt "Move a card to the bottom of the stack?"
     :choices (req (conj (vec (take 2 (:deck runner))) "No"))
@@ -130,7 +130,7 @@
                              (str "looks at the top 2 cards of the stack"
                                   (when-not (string? target)
                                     " and adds one to the bottom of the stack")))
-                 (system-msg state side "uses Blueberry Diesel to draw 2 cards")
+                 (system-msg state side "uses Blueberry!™ Diesel to draw 2 cards")
                  (draw state :runner eid 2 nil))}
 
    "Bribery"
