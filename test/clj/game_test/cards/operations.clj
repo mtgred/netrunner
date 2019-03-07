@@ -165,6 +165,27 @@
       (is (= (dec discard) (-> (get-corp) :discard count)) "One card from Archives should be shuffled into R&D")
       (is (= (+ 2 deck) (-> (get-corp) :deck count)) "Corp should draw two cards and shuffle two cards into R&D"))))
 
+(deftest archival-recovery
+  ;; Archival Recovery
+  (letfn [(archival-recovery-test [[card card-type card-select-fn]]
+            (testing (str "Can install " card-type)
+              (do-game
+                (new-game {:corp {:hand ["Archival Recovery" "Biased Reporting" "Data Raven"]
+                                  :discard ["Nanoetching Matrix" "Domestic Sleepers"]
+                                  :deck [(qty "Hedge Fund" 10)]}})
+                (play-from-hand state :corp "Archival Recovery")
+                (is (= 3 (count (:discard (get-corp)))))
+                (click-card state :corp "Data Raven")
+                (click-card state :corp "Biased Reporting")
+                (is (= 5 (count (:discard (get-corp)))))
+                (is (zero? (count (:rfg (get-corp)))))
+                (click-card state :corp card)
+                (click-prompt state :corp "New remote")
+                (is (= 2 (get-counters (card-select-fn state :remote1 0) :advancement))))))]
+    (doall (map archival-recovery-test [["Nanoetching Matrix" "asset" get-content]
+                                        ["Domestic Sleepers" "agenda" get-content]
+                                        ["Data Raven" "ice" get-ice]]))))
+
 (deftest biased-reporting
   ;; Biased Reporting
   (do-game

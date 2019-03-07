@@ -141,7 +141,7 @@
         (when (seq (:discard side-map))
           (doseq [card (:discard side-map)]
             (core/move state side
-                       (find-card (:card card) (get-in @state [side :deck])) :discard)))
+                       (find-card card (get-in @state [side :deck])) :discard)))
         (when (:credits side-map)
           (swap! state assoc-in [side :credit] (:credits side-map)))))
     (when (= start-as :runner) (take-credits state :corp))

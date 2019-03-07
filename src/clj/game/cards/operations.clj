@@ -97,6 +97,42 @@
     :async true
     :effect (effect (draw eid 3 nil))}
 
+   "Archival Recovery"
+   (letfn [(discard-ability [state]
+             {:async true
+              :prompt "Discard any number of cards"
+              :choices {:req in-hand?
+                        :max (count (get-in @state [:corp :hand]))}
+              :msg (msg "discards " (quantify (count targets) "card") "HQ")
+              :effect (req (doseq [t targets]
+                             (trash state side t))
+                           (doseq [t (:discard (:corp @state))]
+                             (update! state :corp (assoc t :seen false)))
+                           (continue-ability state side (choose-card) card nil))})
+           (choose-card []
+             {:async true
+              :prompt "Select an agenda, asset, or upgrade to install"
+              :show-discard true
+              :choices {:all true
+                        :max 1
+                        :req #(and (not (is-type? % "Operation"))
+                                   (= "Corp" (:side %))
+                                   (in-discard? %))}
+              :effect (effect (continue-ability (install-card target) card nil))})
+           (install-card [chosen]
+             {:async true
+              :prompt "Select a remote server"
+              :choices (req (conj (vec (get-remote-names state)) "New remote"))
+              :effect (req (wait-for (corp-install state side chosen target nil)
+                                     (add-prop state side (find-latest state chosen) :advance-counter 2 {:placed true})
+                                     (move state state (find-latest state card) :rfg)
+                                     (clear-wait-prompt state :runner)
+                                     (effect-completed state side eid)))})]
+     {:async true
+      :req (req (some #(not (is-type? % "Operation")) (:discard corp)))
+      :effect (effect (show-wait-prompt :runner "Corp to use Archival Recovery")
+                      (continue-ability (discard-ability state) card nil))})
+
    "Archived Memories"
    {:async true
     :effect (req (let [cid (:cid card)]
