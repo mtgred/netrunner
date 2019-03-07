@@ -29,7 +29,7 @@
        (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
        (update-all-ice state :corp)
        (swap! state update-in [:stats side :runs :started] (fnil inc 0))
-       (wait-for (trigger-event-sync state :runner :run s)
+       (wait-for (trigger-event-simult state :runner :run nil s)
                  (when (>= n 2) (trigger-event state :runner :run-big s n))
                  (when (zero? n)
                    (trigger-event-sync state :runner (make-eid state) :approach-server nil)))))))
