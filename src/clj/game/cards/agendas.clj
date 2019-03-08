@@ -1251,7 +1251,7 @@
      {:msg (msg "deal " (inc (count-opp-stings state :corp)) " net damage")
       :async true
       :effect (effect (damage eid :net (inc (count-opp-stings state :corp)) {:card card}))
-      :stolen {:msg (msg "deal " (inc (count-opp-stings state :corp)) " net damage")
+      :stolen {:msg (msg "deal " (inc (count-opp-stings state :runner)) " net damage")
                :async true
                :effect (effect (damage eid :net (inc (count-opp-stings state :runner)) {:card card}))}})
 
