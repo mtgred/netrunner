@@ -151,7 +151,7 @@
                 :msg "end the run. Bio Vault is trashed"
                 :async true
                 :effect (effect
-                          (end-run)
+                          (end-run (make-eid state) card)
                           (trash eid card {:cause :ability-cost}))}]}
 
    "Black Level Clearance"
@@ -211,13 +211,13 @@
    {:events {:pass-ice {:req (req (and this-server
                                        (= (:position run) 1))) ; trigger when last ice passed
                         :msg "start a Psi game"
-                        :psi {:not-equal {:msg "end the run" :effect (effect (end-run eid))}}}
+                        :psi {:not-equal {:msg "end the run" :effect (effect (end-run eid card))}}}
              :run {:req (req (and this-server
                                   (zero? (:position run)))) ; trigger on unprotected server
                    :msg "start a Psi game"
-                   :psi {:not-equal {:msg "end the run" :effect (effect (end-run eid))}}}}
+                   :psi {:not-equal {:msg "end the run" :effect (effect (end-run eid card))}}}}
     :abilities [{:msg "start a Psi game"
-                 :psi {:not-equal {:msg "end the run" :effect (effect (end-run eid))}}}]}
+                 :psi {:not-equal {:msg "end the run" :effect (effect (end-run eid card))}}}]}
 
    "ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
@@ -395,7 +395,7 @@
          etr {:req (req this-server)
               :counter-cost [:power 1]
               :msg "end the run"
-              :effect (effect (end-run))}]
+              :effect (effect (end-run (make-eid state) card))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins maybe-gain-counter
                :successful-run {:req (req (pos? (get-counters card :power)))
@@ -476,7 +476,7 @@
                                      (if (= c-pay-str target)
                                        (do (pay state :runner card :credit cost)
                                            (system-msg state :runner (str "pays " cost " [Credits]")))
-                                       (do (end-run state side)
+                                       (do (end-run state side (make-eid state) card)
                                            (system-msg state :corp "ends the run")))
                                      (effect-completed state side eid))}
                        card nil)))}}}
@@ -525,7 +525,7 @@
           :choices ["Trash 1 scored agenda" "End the run"]
           :effect (req (if (= target "End the run")
                          (do (system-msg state :runner (str "declines to pay the additional cost from Hired Help"))
-                             (end-run state side))
+                             (end-run state side (make-eid state) card))
                          (if (seq (:scored runner))
                            (continue-ability state :runner
                                              {:prompt "Choose an Agenda to trash"
@@ -538,7 +538,7 @@
                                                                      (effect-completed state side eid)))}
                                              card nil)
                            (do (system-msg state :runner (str "wants to pay the additional cost from Hired Help but has no scored agenda to trash"))
-                               (end-run state side)))))}]
+                               (end-run state side (make-eid state) card)))))}]
      {:events {:run {:req (req (and this-server
                                     (empty? (filter #(= :hq %) (:successful-run runner-reg)))))
                      :effect (req (continue-ability state :runner prompt-to-trash-agenda-or-etr card nil))}}})
@@ -680,7 +680,7 @@
               :effect (req (if (= target "Take 1 tag")
                              (do (gain-tags state :runner 1)
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to take 1 tag")))
-                             (do (end-run state side)
+                             (do (end-run state side (make-eid state) card)
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run")))))}]
      {:events {:pass-ice {:req (req (and this-server (= (:position run) 1))) ; trigger when last ice passed
                           :async true

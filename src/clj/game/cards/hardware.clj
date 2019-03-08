@@ -628,6 +628,15 @@
                               (shuffle! :deck)
                               (move target :hand))}}}
 
+   "Lucky Charm"
+   {:interactions {:prevent [{:type #{:end-run}
+                              :req (req (and (some #{:hq} (:successful-run runner-reg))
+                                             (card-is? (:card-cause target) :side :corp)))}]}
+    :abilities [{:msg "prevent the run from ending"
+                 :req (req (some #{:hq} (:successful-run runner-reg)))
+                 :effect (effect (end-run-prevent)
+                                 (trash card {:cause :ability-cost}))}]}
+
    "Māui"
    {:in-play [:memory 2]
     :recurring (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))

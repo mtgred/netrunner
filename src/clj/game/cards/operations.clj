@@ -1803,7 +1803,7 @@
    (let [new-sub {:label "[Sub Boost]: End the run"}]
      {:sub-effect {:label "End the run"
                    :msg "end the run"
-                   :effect (effect (end-run))}
+                   :effect (effect (end-run (make-eid state) card))}
       :choices {:req #(and (ice? %) (rezzed? %))}
       :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
       :effect (req (update! state side (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))
