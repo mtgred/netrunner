@@ -210,16 +210,16 @@
                                        (= (:position run) 1))) ; trigger when last ice passed
                         :msg "start a Psi game"
                         :psi {:not-equal {:msg "end the run"
-                                          :effect (effect (end-run eid))}}}
+                                          :effect (effect (end-run eid card))}}}
              :run {:req (req (and this-server
                                   (zero? (:position run)))) ; trigger on unprotected server
                    :msg "start a Psi game"
                    :psi {:not-equal {:msg "end the run"
-                                     :effect (effect (end-run eid))}}}}
+                                     :effect (effect (end-run eid card))}}}}
     :abilities [{:req (req this-server)
                  :msg "start a Psi game"
                  :psi {:not-equal {:msg "end the run"
-                                   :effect (effect (end-run eid))}}}]}
+                                   :effect (effect (end-run eid card))}}}]}
 
    "ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
