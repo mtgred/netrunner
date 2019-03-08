@@ -540,7 +540,7 @@
                                                                      (effect-completed state side eid)))}
                                              card nil)
                            (do (system-msg state :runner (str "wants to pay the additional cost from Hired Help but has no scored agenda to trash"))
-                               (end-run state side (make-eid state) card)))))}]
+                               (end-run state side eid card)))))}]
      {:events {:run {:req (req (and this-server
                                     (empty? (filter #(= :hq %) (:successful-run runner-reg)))))
                      :effect (req (continue-ability state :runner prompt-to-trash-agenda-or-etr card nil))}}})
