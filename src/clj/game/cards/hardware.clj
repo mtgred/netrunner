@@ -654,12 +654,12 @@
                                    (some hardware? (:hand runner))))
                     :prompt "Pay 1 [Credit] to install a hardware?"
                     :yes-ability {:async true
-                                  :cost [:credit 1]
                                   :prompt "Select a piece of hardware"
                                   :choices {:req #(and (in-hand? %)
                                                        (hardware? %))}
-                                  :msg (msg "pay 1 [Credit] and install " (:title target) " from the grip")
-                                  :effect (effect (runner-install eid target {:no-msg true}))}}}
+                                  :msg (msg "install " (:title target) " from the grip, paying 1 [Credit] more")
+                                  :effect (effect (install-cost-bonus [:credit 1])
+                                                  (runner-install eid target {:no-msg true}))}}}
              :runner-install {:async true
                               :req (effect (first-event? :runner-install #(is-type? (first %) "Hardware")))
                               :effect (effect (draw eid 1 nil))}}}
