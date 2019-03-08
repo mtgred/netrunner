@@ -476,8 +476,8 @@
    (system-msg state (:player psi :corp) (str "uses " (:title card) " to start a psi game"))
    (doseq [s [:corp :runner]]
      (let [all-amounts (range (min 3 (inc (get-in @state [s :credit]))))
-           valid-amounts (remove #(or (any-flag-fn? state :corp :psi-prevent-spend %)
-                                      (any-flag-fn? state :runner :psi-prevent-spend %))
+           valid-amounts (remove #(or (any-flag-fn? state :corp :prevent-secretly-spend %)
+                                      (any-flag-fn? state :runner :prevent-secretly-spend %))
                                  all-amounts)]
 
        (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
@@ -498,15 +498,12 @@
           (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
           (deduct state side [:credit bet])
           (system-msg state side (str "spends " bet " [Credits]"))
-          (trigger-event state side (keyword (str "psi-bet-" (name side))) bet)
-          (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
-          (wait-for (trigger-event-sync state side :psi-game bet opponent-bet)
+          (wait-for (trigger-event-simult state side :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
                     (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-                      (resolve-ability state (:side card) (assoc ability :eid eid :async true) card nil)
-                      (effect-completed state side eid)))
-          (trigger-event state side :psi-game-done bet opponent-bet))
+                      (continue-ability state (:side card) (assoc ability :async true) card nil)
+                      (effect-completed state side eid))))
       (show-wait-prompt
-        state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
+        state side (str (string/capitalize (name opponent)) " to choose psi game credits")))))
 
 
 ;;; Traces
@@ -532,14 +529,14 @@
   [state side card {:keys [eid player other base bonus link priority ability strength] :as trace} boost]
   (clear-wait-prompt state :corp)
   (let [corp-strength (if (corp-start? trace)
-                         strength
-                         ((fnil + 0 0 0) base bonus boost))
+                        strength
+                        ((fnil + 0 0 0) base bonus boost))
         runner-strength (if (corp-start? trace)
-                         ((fnil + 0 0) link boost)
-                         strength)
+                          ((fnil + 0 0) link boost)
+                          strength)
         trigger-trace (select-keys trace [:player :other :base :bonus :link :priority :ability :strength])]
     (system-msg state other (str " spends " boost
-                                 "[Credits] to increase " (if (corp-start? trace) "link" "trace")
+                                 " [Credits] to increase " (if (corp-start? trace) "link" "trace")
                                  " strength to " (if (corp-start? trace)
                                                    runner-strength
                                                    corp-strength)))
@@ -549,24 +546,26 @@
                                  (:successful trace)
                                  (:unsuccessful trace))
                                :eid (make-eid state))]
-      (system-say state side (str "The trace was " (when-not successful "un") "successful."))
-      (wait-for (trigger-event-sync state :corp (if successful :successful-trace :unsuccessful-trace)
-                                    (assoc trigger-trace
-                                           :corp-strength corp-strength
-                                           :runner-strength runner-strength
-                                           :successful successful
-                                           :corp-spent (if (corp-start? trace)
-                                                         (- strength (+ base bonus))
-                                                         boost)
-                                           :runner-spent (if (corp-start? trace)
-                                                           boost
-                                                           (- strength link))))
+      (system-say state player (str "The trace was " (when-not successful "un") "successful."))
+      (wait-for (trigger-event-simult state :corp (if successful :successful-trace :unsuccessful-trace)
+                                      nil ;; No special functions
+                                      (assoc trigger-trace
+                                             :corp-strength corp-strength
+                                             :runner-strength runner-strength
+                                             :successful successful
+                                             :corp-spent (if (corp-start? trace)
+                                                           (- strength base bonus)
+                                                           boost)
+                                             :runner-spent (if (corp-start? trace)
+                                                             boost
+                                                             (- strength link))))
                 (wait-for (resolve-ability state :corp (:eid which-ability) which-ability
                                            card [corp-strength runner-strength])
-                          (do (when-let [kicker (:kicker trace)]
-                                (when (>= corp-strength (:min kicker))
-                                  (resolve-ability state :corp kicker card [corp-strength runner-strength])))
-                              (effect-completed state side eid)))))))
+                          (if-let [kicker (:kicker trace)]
+                            (if (>= corp-strength (:min kicker))
+                              (continue-ability state :corp kicker card [corp-strength runner-strength])
+                              (effect-completed state side eid))
+                            (effect-completed state side eid)))))))
 
 (defn trace-reply
   "Shows a trace prompt to the second player, after the first has already spent credits to boost."
@@ -591,27 +590,25 @@
 (defn trace-start
   "Starts the trace process by showing the boost prompt to the first player (normally corp)."
   [state side card {:keys [player other base bonus priority label] :as trace}]
-  (system-msg state :corp (str "uses " (:title card)
-                               " to initiate a trace with strength " ((fnil + 0 0) base bonus)
-                               (when (pos? bonus)
-                                 (str " (" base " + " bonus ")"))
-                               (when label
-                                 (str " (" label ")"))))
-  (show-wait-prompt state other
-                    (str (if (corp-start? trace) "Corp" "Runner")
-                         " to boost "
-                         (if (corp-start? trace) "trace" "link")
-                         " strength")
-                    {:priority priority})
-  (show-trace-prompt state player card
-                     (str "Boost " (if (corp-start? trace) "trace" "link") " strength?")
-                     #(trace-reply state side card trace %)
-                     trace))
+  (let [this-type (if (corp-start? trace) "trace" "link")]
+    (system-msg state player (str "uses " (:title card)
+                                  " to initiate a trace with strength " ((fnil + 0 0) base bonus)
+                                  (when (pos? bonus)
+                                    (str " (" base " + " bonus ")"))
+                                  (when label
+                                    (str " (" label ")"))))
+    (show-wait-prompt state other
+                      (str (if (corp-start? trace) "Corp" "Runner")
+                           " to boost " this-type " strength")
+                      {:priority priority})
+    (show-trace-prompt state player card
+                       (str "Boost " this-type " strength?")
+                       #(trace-reply state side card trace %)
+                       trace)))
 
 (defn reset-trace-modifications
   [state]
-  (swap! state dissoc-in [:trace :force-base])
-  (swap! state dissoc-in [:trace :force-link])
+  (swap! state dissoc :trace)
   (swap! state dissoc-in [:bonus :trace]))
 
 (defn init-trace
@@ -625,8 +622,9 @@
                              :else base)
                   link (or force-link
                            (get-in @state [:runner :link] 0))
-                  trace (merge trace {:player (determine-initiator state trace)
-                                      :other (if (= :corp (determine-initiator state trace)) :runner :corp)
+                  initiator (determine-initiator state trace)
+                  trace (merge trace {:player initiator
+                                      :other (if (= :corp initiator) :runner :corp)
                                       :base base
                                       :bonus (get-in @state [:bonus :trace] 0)
                                       :link link

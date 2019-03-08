@@ -840,7 +840,7 @@
        (run-empty-server state :hq)
        (run-on state :remote1)
        (is (empty? (:prompt (get-runner))) "No Hired Help prompt")
-       (is (empty? (:discard (get-runner))) "No net damage done for successful run on R&D")))) 
+       (is (empty? (:discard (get-runner))) "No net damage done for successful run on R&D"))))
   (testing "Crisium Grid, fake agenda interactions"
     (do-game
      (new-game {:corp {:deck ["Hired Help" "Crisium Grid"]}
