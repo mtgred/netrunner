@@ -527,7 +527,7 @@
           :choices ["Trash 1 scored agenda" "End the run"]
           :effect (req (if (= target "End the run")
                          (do (system-msg state :runner (str "declines to pay the additional cost from Hired Help"))
-                             (end-run state side (make-eid state) card))
+                             (end-run state side eid card))
                          (if (seq (:scored runner))
                            (continue-ability state :runner
                                              {:prompt "Choose an Agenda to trash"
