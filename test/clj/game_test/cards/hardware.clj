@@ -678,7 +678,7 @@
        (is (:prompt (get-runner)) "Runner prompted to ETR")
        (card-ability state :runner (get-hardware state 0) 0)
        (click-prompt state :runner "Done")
-       (is (= 1 (count (:discard (get-runner)))) "Lucky Charm trashed")
+       (is (= 1 (count (:rfg (get-runner)))) "Lucky Charm RFGed")
        (is (:run @state) "Run prevented from ending")
        (is (empty? (:prompt (get-runner))) "Prevent prompt gone")
        ;; trigger border control
@@ -689,7 +689,7 @@
        (is (:prompt (get-runner)) "Runner prompted to ETR")
        (card-ability state :runner (get-hardware state 0) 0)
        (click-prompt state :runner "Done")
-       (is (= 2 (count (:discard (get-runner)))) "2nd Lucky Charm trashed")
+       (is (= 2 (count (:rfg (get-runner)))) "2nd Lucky Charm RFGed")
        (is (:run @state) "Run prevented from ending")
        ;; win batty psi game and fire ice wall sub
        (play-from-hand state :runner "Lucky Charm")

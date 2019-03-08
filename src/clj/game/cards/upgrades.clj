@@ -150,9 +150,8 @@
                 :req (req (:run @state))
                 :msg "end the run. Bio Vault is trashed"
                 :async true
-                :effect (effect
-                          (end-run (make-eid state) card)
-                          (trash eid card {:cause :ability-cost}))}]}
+                :effect (req (wait-for (trash state :corp card {:cause :ability-cost})
+                                       (end-run state :corp eid card)))}]}
 
    "Black Level Clearance"
    {:events {:successful-run
@@ -395,7 +394,7 @@
          etr {:req (req this-server)
               :counter-cost [:power 1]
               :msg "end the run"
-              :effect (effect (end-run (make-eid state) card))}]
+              :effect (effect (end-run eid card))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins maybe-gain-counter
                :successful-run {:req (req (pos? (get-counters card :power)))

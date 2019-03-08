@@ -635,7 +635,7 @@
     :abilities [{:msg "prevent the run from ending"
                  :req (req (some #{:hq} (:successful-run runner-reg)))
                  :effect (effect (end-run-prevent)
-                                 (trash card {:cause :ability-cost}))}]}
+                                 (move card :rfg))}]}
 
    "Māui"
    {:in-play [:memory 2]
