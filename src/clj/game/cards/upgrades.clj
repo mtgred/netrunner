@@ -478,7 +478,7 @@
                                      (if (= c-pay-str target)
                                        (do (pay state :runner card :credit cost)
                                            (system-msg state :runner (str "pays " cost " [Credits]")))
-                                       (do (end-run state side (make-eid state) card)
+                                       (do (end-run state side eid card)
                                            (system-msg state :corp "ends the run")))
                                      (effect-completed state side eid))}
                        card nil)))}}}
