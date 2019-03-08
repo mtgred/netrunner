@@ -350,9 +350,10 @@
 
    "Cerebral Cast"
    {:req (req (last-turn? state :runner :successful-run))
-    :psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
-                      :choices ["1 tag" "1 brain damage"] :msg (msg "give the Runner " target)
-                      :async true
+    :psi {:not-equal {:player :runner
+                      :prompt "Take 1 tag or 1 brain damage?"
+                      :choices ["1 tag" "1 brain damage"]
+                      :msg (msg "give the Runner " target)
                       :effect (req (if (= target "1 tag")
                                      (gain-tags state :runner eid 1)
                                      (damage state side eid :brain 1 {:card card})))}}}
@@ -1890,9 +1891,8 @@
                      (continue-ability state side (sun serv) card nil)))})
 
    "Surveillance Sweep"
-   {:events {:run {:effect (req (swap! state assoc-in [:trace :player] :runner))}
-             :run-end {:effect (req (swap! state dissoc-in [:trace :player]))}}
-    :leave-play (req (swap! state dissoc-in [:trace :player]))}
+   {:events {:pre-init-trace {:req (req run)
+                              :effect (req (swap! state assoc-in [:trace :player] :runner))}}}
 
    "Sweeps Week"
    {:effect (effect (gain-credits (count (:hand runner))))
@@ -2069,7 +2069,8 @@
                       :choices {:req #(and (installed? %)
                                            (is-type? % "Resource"))}
                       :msg (msg "trash " (:title target))
-                      :effect (effect (trash target))}}}
+                      :effect (effect (trash target)
+                                      (effect-completed eid))}}}
 
    "Wake Up Call"
    {:req (req (last-turn? state :runner :trashed-card))

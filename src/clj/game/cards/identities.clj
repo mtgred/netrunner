@@ -968,7 +968,11 @@
                                 (swap! state dissoc :turn-events))}]})
 
    "Nisei Division: The Next Generation"
-   {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain-credits :corp 1))}}}
+   {:events {:reveal-spent-credits
+             {:req (req (and (some? (first targets))
+                             (some? (second targets))))
+              :msg "gain 1 [Credits]"
+              :effect (effect (gain-credits :corp 1))}}}
 
    "Noise: Hacker Extraordinaire"
    {:events {:runner-install {:msg "force the Corp to trash the top card of R&D"

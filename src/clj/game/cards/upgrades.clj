@@ -206,18 +206,21 @@
                                                     (trash eid card {:cause :ability-cost}))}
                                    card nil))}]}
 
-
    "Caprice Nisei"
    {:events {:pass-ice {:req (req (and this-server
                                        (= (:position run) 1))) ; trigger when last ice passed
                         :msg "start a Psi game"
-                        :psi {:not-equal {:msg "end the run" :effect (effect (end-run eid))}}}
+                        :psi {:not-equal {:msg "end the run"
+                                          :effect (effect (end-run eid))}}}
              :run {:req (req (and this-server
                                   (zero? (:position run)))) ; trigger on unprotected server
                    :msg "start a Psi game"
-                   :psi {:not-equal {:msg "end the run" :effect (effect (end-run eid))}}}}
-    :abilities [{:msg "start a Psi game"
-                 :psi {:not-equal {:msg "end the run" :effect (effect (end-run eid))}}}]}
+                   :psi {:not-equal {:msg "end the run"
+                                     :effect (effect (end-run eid))}}}}
+    :abilities [{:req (req this-server)
+                 :msg "start a Psi game"
+                 :psi {:not-equal {:msg "end the run"
+                                   :effect (effect (end-run eid))}}}]}
 
    "ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
@@ -705,7 +708,7 @@
                                    :choices {:req #(and (ice? %)
                                                         (rezzed? %))}
                                    :msg (msg "resolve a subroutine on " (:title target))}}
-                 :effect (effect (trash card))}]}
+                 :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Mason Bellamy"
    {:implementation "Manually triggered by Corp"

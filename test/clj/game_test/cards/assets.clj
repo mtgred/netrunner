@@ -2795,8 +2795,8 @@
       (is (= 4 (-> (get-runner) :discard count)) "Project Junebug should do 4 net damage"))))
 
 (deftest psychic-field
+  ;; Psychic Field - Do 1 net damage for every card in Runner's hand when accessed/exposed
   (testing "Basic test"
-    ;; Psychic Field - Do 1 net damage for every card in Runner's hand when accessed/exposed
     (do-game
       (new-game {:corp {:deck [(qty "Psychic Field" 2)]}
                  :runner {:deck [(qty "Infiltration" 3) (qty "Sure Gamble" 3)]}})
@@ -2845,7 +2845,27 @@
       (click-prompt state :runner "1 [Credits]")
       (click-prompt state :runner "Pay 2 [Credits] to trash")
       (is (not (get-content state :remote1)) "Psychic Field trashed by Neutralize All Threats")
-      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
+      (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+  (testing "Interaction with Fumiko Yamamori"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Psychic Field" "Fumiko Yamamori"]
+                        :credit 10}
+                 :runner {:hand [(qty "Sure Gamble" 2)]
+                          :credit 10}})
+      (play-from-hand state :corp "Psychic Field" "New remote")
+      (play-from-hand state :corp "Fumiko Yamamori" "New remote")
+      (let [field (get-content state :remote1 0)
+            fumiko (get-content state :remote2 0)]
+        (core/rez state :corp fumiko)
+        (take-credits state :corp)
+        (run-empty-server state :remote1)
+        (is (= 2 (count (:hand (get-runner)))))
+        (is (not (:winner @state)) "No one has won yet")
+        (click-prompt state :corp "2 [Credits]")
+        (click-prompt state :runner "0 [Credits]")
+        (is (= 2 (count (:discard (get-runner)))) "Suffered 2 net damage on expose and psi loss")
+        (is (= :corp (:winner @state)) "Corp wins because of 3 damage")))))
 
 (deftest public-health-portal
   (do-game

@@ -751,10 +751,13 @@
                  :effect (req (host state side card target))}]}
 
    "Fumiko Yamamori"
-   {:events {:psi-game-done {:req (req (not= (first targets) (second targets)))
-                             :async true
-                             :msg "do 1 meat damage"
-                             :effect (effect (damage eid :meat 1 {:card card}))}}}
+   {:events {:reveal-spent-credits
+             {:async true
+              :req (req (and (some? (first targets))
+                             (some? (second targets))
+                             (not= (first targets) (second targets))))
+              :msg "do 1 meat damage"
+              :effect (effect (damage eid :meat 1 {:card card}))}}}
 
    "Gene Splicer"
    {:advanceable :always
@@ -822,9 +825,11 @@
                  :effect (effect (damage eid :net 1 {:card card}))}]}
 
    "Hyoubu Research Facility"
-   {:events {:psi-bet-corp {:once :per-turn
-                            :msg (msg "gain " target " [Credits]")
-                            :effect (effect (gain-credits :corp target))}}}
+   {:events {:reveal-spent-credits
+             {:req (req (some? (first targets)))
+              :once :per-turn
+              :msg (msg "gain " target " [Credits]")
+              :effect (effect (gain-credits :corp target))}}}
 
    "Ibrahim Salem"
    (let [trash-ability (fn [card-type]
@@ -1461,11 +1466,19 @@
                                               {:card card}))})
 
    "Psychic Field"
-   (let [ab {:psi {:req (req installed)
-                   :not-equal {:msg (msg "do " (count (:hand runner)) " net damage")
-                               :async true
-                               :effect (effect (damage eid :net (count (:hand runner)) {:card card}))}}}]
-     {:expose ab :access ab})
+   (let [ab {:async true
+             :req (req installed)
+             :effect (req (let [hand (count (:hand runner))
+                                message (str "do " hand " net damage")]
+                            (continue-ability
+                              state side
+                              {:psi {:not-equal
+                                     {:msg message
+                                      :async true
+                                      :effect (effect (damage eid :net hand {:card card}))}}}
+                              card nil)))}]
+     {:expose ab
+      :access ab})
 
    "Public Health Portal"
    (let [ability {:once :per-turn
