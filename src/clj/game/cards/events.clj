@@ -1233,7 +1233,7 @@
                                            (into (sorted-map))
                                            (seq)
                                            (map (fn [x] (str (first x) " [Credit]: " (second x) " times"))))
-                                :effect (effect (effect-completed (make-result eid (min 6 (str->int (nth (clojure.string/split target #" ") 2))))))})]
+                                :effect (effect (effect-completed (make-result eid (min 6 (str->int (nth (split target #" ") 2))))))})]
      {:req (req rd-runnable)
       :async true
       :effect (req
@@ -1257,8 +1257,7 @@
                                     (resolve-ability state side (access-revealed revealed) card nil)
                                     (shuffle! state :corp :deck)
                                     (system-msg state :runner " shuffles R&D")
-                                    (effect-completed state side eid))
-                                  )))}}
+                                    (effect-completed state side eid)))))}}
                   card))})
 
    "Knifed"
