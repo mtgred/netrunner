@@ -835,9 +835,12 @@
   (system-msg state side "has no further action")
   (trigger-event state side :no-action))
 
-(defn end-run
+(defn end-run-prevent
+  [state side]
+  (swap! state update-in [:end-run :end-run-prevent] (fnil inc 0)))
+
+(defn- resolve-end-run
   "End this run, and set it as UNSUCCESSFUL"
-  ([state side] (end-run state side (make-eid state)))
   ([state side eid]
    (let [run (:run @state)
          server (first (get-in @state [:run :server]))]
@@ -845,6 +848,27 @@
      (swap! state assoc-in [:run :unsuccessful] true)
      (handle-end-run state side)
      (trigger-event-sync state side eid :unsuccessful-run run))))
+
+(defn end-run
+  "After checking for prevents, end this run, and set it as UNSUCCESSFUL."
+  ([state side] (end-run state side (make-eid state)))
+  ([state side eid] (end-run state side eid nil))
+  ([state side eid card]
+   (swap! state update-in [:end-run] dissoc :end-run-prevent)
+   (let [prevent (get-prevent-list state :runner :end-run)]
+     (if (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card})
+       (do (system-msg state :runner "has the option to prevent the run from ending")
+           (show-wait-prompt state :corp "Runner to prevent the run from ending" {:priority 10})
+           (show-prompt state :runner nil
+                        (str "Prevent the run from ending?") ["Done"]
+                        (fn [_]
+                          (clear-wait-prompt state :corp)
+                          (if-let [_ (get-in @state [:end-run :end-run-prevent])]
+                            (effect-completed state side eid)
+                            (do (system-msg state :runner "will not prevent the run from ending")
+                                (resolve-end-run state side eid))))
+                        {:priority 10}))
+       (resolve-end-run state side eid)))))
 
 (defn jack-out-prevent
   [state side]

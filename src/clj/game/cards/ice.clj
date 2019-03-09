@@ -34,14 +34,16 @@
   "Basic ETR subroutine"
   {:label "End the run"
    :msg "end the run"
-   :effect (effect (end-run))})
+   :async true
+   :effect (effect (end-run eid card))})
 
 (def end-the-run-if-tagged
   "ETR subroutine if tagged"
   {:label "End the run if the Runner is tagged"
    :req (req tagged)
    :msg "end the run"
-   :effect (effect (end-run))})
+   :async true
+   :effect (effect (end-run eid card))})
 
 (defn give-tags
   "Basic give runner n tags subroutine."
@@ -468,8 +470,9 @@
   "Border Control"
    {:abilities [{:label "End the run"
                  :msg (msg "end the run")
+                 :async true
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (end-run))}]
+                                 (end-run eid card))}]
     :subroutines [{:label "Gain 1 [Credits] for each ice protecting this server"
                    :msg (msg "gain "
                              (count (:ices (card->server state card)))
@@ -520,7 +523,7 @@
                                        :label "The Runner trashes 1 program")
                   {:msg "gain 2 [Credits] and end the run"
                    :effect (effect (gain-credits 2)
-                                   (end-run))}]}
+                                   (end-run eid card))}]}
 
 
    "Burke Bugs"

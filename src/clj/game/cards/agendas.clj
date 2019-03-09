@@ -877,7 +877,8 @@
     :abilities [{:req (req (:run @state))
                  :counter-cost [:agenda 1]
                  :msg "end the run"
-                 :effect (effect (end-run))}]}
+                 :async true
+                 :effect (effect (end-run eid card))}]}
 
    "Oaktown Renovation"
    {:install-state :face-up
