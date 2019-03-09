@@ -914,7 +914,6 @@
                          :id "Valencia Estevez: The Angel of Cayambe"}
                 :corp {:deck [(qty "Rashida Jaheem" 3) "Hedge Fund"]
                        :id "Industrial Genomics: Growing Solutions"}})
-     
      (dotimes [_ 3]
        (play-from-hand state :corp "Rashida Jaheem" "New remote"))
      (trash-from-hand state :corp "Hedge Fund")
