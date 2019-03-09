@@ -322,7 +322,8 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 2 3 "Code Gate")
                                  (strength-pump 2 3)
-                                 {:label "Corp loses 1 [Credits]"
+                                 {:once :per-turn
+                                  :label "Corp loses 1 [Credits]"
                                   :req (req (and (has-subtype? current-ice "Code Gate")
                                                  (rezzed? current-ice)))
                                   :msg (msg "make the Corp lose 1 [Credits]")
@@ -447,6 +448,17 @@
    (central-breaker "Barrier"
                     (break-sub 2 3 "Barrier")
                     (strength-pump 2 4))
+
+   "Bukhgalter"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [(break-sub 1 1 "Sentry")
+                                 (strength-pump 1 1)
+                                 {:once :per-turn
+                                  :label "Gain 2 [Credits]"
+                                  :req (req (and (has-subtype? current-ice "Sentry")
+                                                 (rezzed? current-ice)))
+                                  :msg (msg "gain 2 [Credits]")
+                                  :effect (effect (gain-credits :runner 2))}]})
 
    "Cerberus \"Cuj.0\" H3"
    (cerberus "Sentry")

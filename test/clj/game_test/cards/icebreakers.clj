@@ -21,6 +21,25 @@
       (is (= 4 (core/available-mu state)))
       (is (= 6 (:current-strength (refresh ad))) "+4 strength for 4 unused MU"))))
 
+(deftest amina
+  ;; Amina ability
+  (do-game
+    (new-game {:runner {:deck ["Amina"]}
+               :corp {:deck ["Enigma"]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 2)
+    (play-from-hand state :runner "Amina")
+    (let [amina (get-program state 0)
+          enigma (get-ice state :hq 0)]
+      (run-on state :hq)
+      (core/rez state :corp (refresh enigma))
+      (is (= 4 (:credit (get-corp))))
+      (card-ability state :runner (refresh amina) 2)
+      (is (= 3 (:credit (get-corp))) "Corp lost 1 credit")
+      (card-ability state :runner (refresh amina) 2)
+      (is (= 3 (:credit (get-corp))) "Can only use ability once per turn"))))
+
 (deftest atman
   ;; Atman
   (testing "Installing with 0 power counters"
@@ -102,6 +121,24 @@
       (is (= 2 (count (:hosted (refresh baba)))) "Faerie and Sharpshooter hosted on Baba Yaga")
       (is (= 1 (core/available-mu state)) "1 MU left with 2 breakers on Baba Yaga")
       (is (= 4 (:credit (get-runner))) "-5 from Baba, -1 from Sharpshooter played into Rig, -5 from Yog"))))
+
+(deftest bukhgalter
+  ;; Bukhgalter ability
+  (do-game
+    (new-game {:runner {:deck ["Bukhgalter"]}
+               :corp {:deck ["Pup"]}})
+    (play-from-hand state :corp "Pup" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bukhgalter")
+    (let [bukhgalter (get-program state 0)
+          pup (get-ice state :hq 0)]
+      (run-on state :hq)
+      (core/rez state :corp (refresh pup))
+      (is (= 2 (:credit (get-runner))))
+      (card-ability state :runner (refresh bukhgalter) 2)
+      (is (= 4 (:credit (get-runner))) "Gained 2 credits")
+      (card-ability state :runner (refresh bukhgalter) 2)
+      (is (= 4 (:credit (get-runner))) "Can only use ability once per turn"))))
 
 (deftest cerberus-rex-h2
   ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter
