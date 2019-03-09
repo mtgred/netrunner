@@ -1215,6 +1215,51 @@
     :leave-play (req (remove-watch state :itin)
                      (change-hand-size state :corp (:bad-publicity corp)))}
 
+   "Khusyuk"
+   (let [access-revealed (fn [revealed]
+                           {:async true
+                            :mandatory true
+                            :prompt "Which of the revealed cards would you like to access (first card is on top)?"
+                            :choices revealed
+                            :effect (effect (access-card eid target))})
+         select-install-cost (fn [state]
+                               {:async true
+                                :prompt "Select an install cost from among your installed cards."
+                                :choices (->>
+                                           (all-active-installed state :runner)
+                                           (map :cost)
+                                           (remove zero?)
+                                           (frequencies)
+                                           (into (sorted-map))
+                                           (seq)
+                                           (map (fn [x] (str (first x) " [Credit]: " (second x) " times"))))
+                                :effect (effect (effect-completed (make-result eid (min 6 (str->int (nth (split target #" ") 2))))))})]
+     {:req (req rd-runnable)
+      :async true
+      :effect (req
+                (make-run
+                  state side
+                  :rd
+                  {:req (req (= target :rd))
+                   :async true
+                   :replace-access
+                   {:effect (req
+                              (wait-for
+                                (resolve-ability state side (select-install-cost state) card nil)
+                                (let [revealed (take async-result (:deck corp))]
+                                  (reveal state side revealed)
+                                  (system-msg state :runner (str " chooses an install cost of "
+                                                                 async-result
+                                                                 " [Credit] and reveals (top:) "
+                                                                 (join ", " (map :title revealed))
+                                                                 " from the top of R&D"))
+                                  (wait-for
+                                    (resolve-ability state side (access-revealed revealed) card nil)
+                                    (shuffle! state :corp :deck)
+                                    (system-msg state :runner " shuffles R&D")
+                                    (effect-completed state side eid)))))}}
+                  card))})
+
    "Knifed"
    (cutlery "Barrier")
 
