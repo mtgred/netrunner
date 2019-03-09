@@ -758,7 +758,7 @@
    "Falsified Credentials"
    {:prompt "Choose a type"
     :choices ["Agenda" "Asset" "Upgrade"]
-    :msg (msg "to guess " target)
+    :msg (msg "guess " target)
     :async true
     :effect (effect
              (continue-ability
