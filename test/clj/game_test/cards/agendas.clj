@@ -2446,6 +2446,24 @@
         (is (= credits (:credit (get-corp))) "Corp should gain no credits from declining to trash an installed card")
         (is (zero? (-> (get-corp) :hand count)) "Corp should draw no cards from declining to trash an installed card")))))
 
+(deftest sting
+  ;; Sting! - do 1 net on score/steal + 1 more net for each sting in the other player's score
+  (testing "Corp score, then Runner steal, then Corp score"
+    (do-game
+     (new-game {:corp {:deck [(qty "Sting!" 3)]}
+                :runner {:deck [(qty "Spy Camera" 5)]}})
+     (is (= 5 (count (:hand (get-runner)))) "5 cards in hand to be damaged away")
+     (play-from-hand state :corp "Sting!" "New remote")
+     (play-and-score state "Sting!")
+     (is (= 1 (-> (get-runner) :discard count)) "Runner should have taken 1 net damage")
+     (take-credits state :corp)
+     (run-empty-server state :remote1)
+     (click-prompt state :runner "Steal")
+     (is (= 3 (-> (get-runner) :discard count)) "Runner should take 2 net damage because there is a Sting! in the Corp's score area")
+     (take-credits state :runner)
+     (play-and-score state "Sting!")
+     (is (= 5 (-> (get-runner) :discard count)) "Runner should take 2 net damage because there is a Sting! in the Runner's score area"))))
+
 (deftest successful-field-test
   ;; Successful Field Test
   (do-game
