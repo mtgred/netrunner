@@ -2462,7 +2462,7 @@
      (is (= 3 (-> (get-runner) :discard count)) "Runner should take 2 net damage because there is a Sting! in the Corp's score area")
      (take-credits state :runner)
      (play-and-score state "Sting!")
-     (is (= 5 (-> (get-runner) :discard count)) "Runner should take 2 net damage because there is a Sting! in the Corp's score area"))))
+     (is (= 5 (-> (get-runner) :discard count)) "Runner should take 2 net damage because there is a Sting! in the Runner's score area"))))
 
 (deftest successful-field-test
   ;; Successful Field Test
