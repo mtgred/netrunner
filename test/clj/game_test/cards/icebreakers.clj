@@ -21,6 +21,25 @@
       (is (= 4 (core/available-mu state)))
       (is (= 6 (:current-strength (refresh ad))) "+4 strength for 4 unused MU"))))
 
+(deftest amina
+  ;; Amina ability
+  (do-game
+    (new-game {:runner {:deck ["Amina"]}
+               :corp {:deck ["Enigma"]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 2)
+    (play-from-hand state :runner "Amina")
+    (let [amina (get-program state 0)
+          enigma (get-ice state :hq 0)]
+      (run-on state :hq)
+      (core/rez state :corp (refresh enigma))
+      (is (= 4 (:credit (get-corp))))
+      (card-ability state :runner (refresh amina) 2)
+      (is (= 3 (:credit (get-corp))) "Corp lost 1 credit")
+      (card-ability state :runner (refresh amina) 2)
+      (is (= 3 (:credit (get-corp))) "Can only use ability once per turn"))))
+
 (deftest atman
   ;; Atman
   (testing "Installing with 0 power counters"
