@@ -103,6 +103,24 @@
       (is (= 1 (core/available-mu state)) "1 MU left with 2 breakers on Baba Yaga")
       (is (= 4 (:credit (get-runner))) "-5 from Baba, -1 from Sharpshooter played into Rig, -5 from Yog"))))
 
+(deftest bukhgalter
+  ;; Bukhgalter ability
+  (do-game
+    (new-game {:runner {:deck ["Bukhgalter"]}
+               :corp {:deck ["Pup"]}})
+    (play-from-hand state :corp "Pup" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bukhgalter")
+    (let [bukhgalter (get-program state 0)
+          pup (get-ice state :hq 0)]
+      (run-on state :hq)
+      (core/rez state :corp (refresh pup))
+      (is (= 2 (:credit (get-runner))))
+      (card-ability state :runner (refresh bukhgalter) 2)
+      (is (= 4 (:credit (get-runner))) "Gained 2 credits")
+      (card-ability state :runner (refresh bukhgalter) 2)
+      (is (= 4 (:credit (get-runner))) "Can only use ability once per turn"))))
+
 (deftest cerberus-rex-h2
   ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter
   (do-game
