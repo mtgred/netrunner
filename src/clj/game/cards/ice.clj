@@ -104,7 +104,7 @@
    {:label (str "Psi Game - " label-neq " / " label-eq)
     :msg (str "start a psi game (" label-neq " / " label-eq ")")
     :psi {:not-equal neq-ability
-          :equal     eq-ability}}))
+          :equal eq-ability}}))
 
 (def take-bad-pub
   "Bad pub on rez effect."
@@ -229,7 +229,8 @@
   {"Aiki"
    {:subroutines [(do-psi {:label "Runner draws 2 cards"
                            :msg "make the Runner draw 2 cards"
-                           :effect (effect (draw :runner 2))})
+                           :effect (effect (draw :runner 2)
+                                           (effect-completed eid))})
                   (do-net-damage 1)]}
 
    "Aimor"
@@ -509,7 +510,8 @@
                                                  #(assoc % :position (count (get-in corp (conj dest :ices)))
                                                            :server (rest dest))))
                                         (move state side card
-                                              (conj (server->zone state target) :ices)))})]}
+                                              (conj (server->zone state target) :ices))
+                                        (effect-completed state side eid))})]}
 
    "Bulwark"
    {:effect take-bad-pub
@@ -562,8 +564,8 @@
                    :effect (effect (gain-credits :runner 2)
                                    (gain-credits :corp 2))}
                   (do-psi {:label "Do 1 net damage for each card in the Runner's grip"
-                           :effect (effect (damage eid :net (count (get-in @state [:runner :hand])) {:card card}))
-                           :msg (msg (str "do " (count (get-in @state [:runner :hand])) " net damage"))})]}
+                           :msg (msg "do " (count (get-in @state [:runner :hand])) " net damage")
+                           :effect (effect (damage eid :net (count (get-in @state [:runner :hand])) {:card card}))})]}
 
    "Chimera"
    (let [turn-end-ability {:effect (effect (derez :corp card)
@@ -629,7 +631,7 @@
                                      (card-str state target) " and end the run")
                            :choices {:req installed?}
                            :effect (effect (add-prop target :advance-counter 1 {:placed true})
-                                           (end-run))})]}
+                                           (end-run eid))})]}
 
    "Cobra"
    {:subroutines [trash-program (do-net-damage 2)]}
@@ -1479,7 +1481,10 @@
    "Mamba"
    {:abilities [(power-counter-ability (do-net-damage 1))]
     :subroutines [(do-net-damage 1)
-                  (do-psi add-power-counter)]}
+                  (do-psi {:label "Add 1 power counter"
+                           :msg "add 1 power counter"
+                           :effect (effect (add-counter card :power 1)
+                                           (effect-completed eid))})]}
 
    "Marker"
    {:subroutines [{:label "Give the next ICE encountered \"End the run\" for the remainder of the run"
@@ -1584,12 +1589,10 @@
 
    "Mganga"
    {:subroutines [(do-psi {:label "do 2 net damage"
-                           :async true
                            :player :corp
                            :effect (req (wait-for (damage state :corp :net 2 {:card card})
                                                   (trash state :corp eid card nil)))}
                           {:label "do 1 net damage"
-                           :async true
                            :player :corp
                            :effect (req (wait-for (damage state :corp :net 1 {:card card})
                                                   (trash state :corp eid card nil)))})]}
@@ -1603,7 +1606,8 @@
                            :effect (req (let [dest (server->zone state target)]
                                           (swap! state update-in [:run]
                                                  #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                           :server (rest dest)))))})]
+                                                           :server (rest dest))))
+                                        (effect-completed state side eid))})]
     :runner-abilities [{:label "Add an installed card to the bottom of your Stack"
                         :prompt "Choose one of your installed cards"
                         :choices {:req #(and (installed? %)
@@ -2246,7 +2250,9 @@
     :subroutines [(trace-ability 3 add-power-counter)]}
 
    "Snowflake"
-   {:subroutines [(do-psi end-the-run)]}
+   {:subroutines [(do-psi {:label "End the run"
+                           :msg "end the run"
+                           :effect (effect (end-run eid))})]}
 
    "Special Offer"
    {:subroutines [{:label "Gain 5 [Credits] and trash Special Offer"
@@ -2463,14 +2469,14 @@
    {:implementation "\"Resolve a subroutine...\" subroutine is not implemented"
     :subroutines [(do-psi {:label "Make the Runner lose 2 [Credits]"
                            :msg "make the Runner lose 2 [Credits]"
-                           :effect (effect (lose-credits :runner 2))})
+                           :effect (effect (lose-credits :runner 2)
+                                           (effect-completed eid))})
                   {:msg "resolve a subroutine on a piece of rezzed psi ICE"}]}
 
    "Uroboros"
    {:subroutines [(trace-ability 4 {:label "Prevent the Runner from making another run"
                                     :msg "prevent the Runner from making another run"
                                     :effect (effect (register-turn-flag! card :can-run nil))})
-
                   (trace-ability 4 end-the-run)]}
 
    "Vanilla"
