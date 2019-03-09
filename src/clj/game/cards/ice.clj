@@ -42,6 +42,7 @@
   {:label "End the run if the Runner is tagged"
    :req (req tagged)
    :msg "end the run"
+   :async true
    :effect (effect (end-run eid card))})
 
 (defn give-tags
