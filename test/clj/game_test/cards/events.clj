@@ -2867,6 +2867,20 @@
     (is (= 1 (:credit (get-runner))) "No credits paid for trashing")
     (is (nil? (get-in @state [:corp :servers :remote1 :content])) "Server 1 no longer exists")))
 
+(deftest spec-work
+  ;; Spec Work
+  (do-game
+    (new-game {:runner {:deck ["Spec Work" (qty "Cache" 3)]}
+               :options {:start-as :runner}})
+    (starting-hand state :runner ["Spec Work" "Cache"])
+    (play-from-hand state :runner "Cache")
+    (play-from-hand state :runner "Spec Work")
+    (is (= 4 (:credit (get-runner))))
+    (is (= 0 (count (:hand (get-runner)))))
+    (click-card state :runner (get-program state 0))
+    (is (= 7 (:credit (get-runner))) "+3 credits, -1 for paying for Spec Work")
+    (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
+
 (deftest stimhack
   ;; Stimhack - Gain 9 temporary credits and take 1 brain damage after the run
   (do-game

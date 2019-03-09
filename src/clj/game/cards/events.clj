@@ -2046,6 +2046,13 @@
     :choices (req runnable-servers)
     :effect (effect (make-run target nil card))}
 
+   "Spec Work"
+   {:async true
+    :additional-cost [:program 1]
+    :msg "gain 4 [Credits] and draw 2 cards"
+    :effect (effect (gain-credits 4)
+                    (draw eid 2 nil))}
+
    "Special Order"
    {:prompt "Choose an Icebreaker"
     :effect (effect (trigger-event :searched-stack nil)
