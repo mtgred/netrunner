@@ -1221,11 +1221,10 @@
                             :mandatory true
                             :prompt "Which of the revealed cards would you like to access (first card is on top)?"
                             :choices revealed
-                            :effect (effect (access-card eid target)
-                                            (effect-completed eid))})
+                            :effect (effect (access-card eid target))})
          select-install-cost (fn [state]
                                {:async true
-                                :prompt "Select an install cost among your installed cards."
+                                :prompt "Select an install cost from among your installed cards."
                                 :choices (->>
                                            (all-active-installed state :runner)
                                            (map :cost)
@@ -1234,8 +1233,7 @@
                                            (into (sorted-map))
                                            (seq)
                                            (map (fn [x] (str (first x) " [Credit]: " (second x) " times"))))
-                                :effect (effect (effect-completed (make-result eid (str->int (nth (clojure.string/split target #" ") 2)))))})
-         ]
+                                :effect (effect (effect-completed (make-result eid (min 6 (str->int (nth (clojure.string/split target #" ") 2))))))})]
      {:req (req rd-runnable)
       :async true
       :effect (req
@@ -1255,8 +1253,11 @@
                                                                  " [Credit] and reveals (top:) "
                                                                  (join ", " (map :title revealed))
                                                                  " from the top of R&D"))
-                                  (resolve-ability state side (access-revealed revealed) card nil)
-                                  (effect-completed state side eid)
+                                  (wait-for
+                                    (resolve-ability state side (access-revealed revealed) card nil)
+                                    (shuffle! state :corp :deck)
+                                    (system-msg state :runner " shuffles R&D")
+                                    (effect-completed state side eid))
                                   )))}}
                   card))})
 
