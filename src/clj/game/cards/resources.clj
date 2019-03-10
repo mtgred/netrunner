@@ -472,8 +472,9 @@
            (no-trash-effect [chosen-server orig-eid]
              (req (clear-wait-prompt state :runner)
                   (system-msg state side (str "does not trash a piece of ice protecting " (zone->name chosen-server)))
-                  (register-events state :runner {:pre-access {:req (req (#{:hq :rd :archives} target))
+                  (register-events state :runner {:pre-access {:req (req (#{:hq :rd} target))
                                                                :once :per-turn
+							       :msg (msg "access 2 additional cards from " (zone->name target))
                                                                :effect (effect (access-bonus :runner target 2))}
                                                   :runner-turn-ends {:effect (effect (unregister-events card {:events {:pre-access nil :runner-turn-ends nil}}))}}
                                    (assoc card :zone [:rfg]))
