@@ -7,6 +7,7 @@
             [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
             [jinteki.cards :refer [all-cards]]))
 
+;; Card definitions
 (def card-definitions
   {"Acacia"
    {:events {:pre-purge {:effect (req (let [counters (number-of-virus-counters state)]
@@ -61,6 +62,7 @@
                                      :choices (req (:discard corp))
                                      :msg (msg "remove " (:title target) " from the game")
                                      :effect (effect (move :corp target :rfg))}}} card nil))}}}
+
    "Astrolabe"
    {:in-play [:memory 1]
     :events {:server-created {:msg "draw 1 card"
@@ -691,7 +693,7 @@
    {:implementation "MU usage restriction not enforced"
     :in-play [:memory 3]}
 
-   "Minds Eye"
+   "Mind's Eye"
    {:in-play [:memory 1]
     :implementation "Power counters added automatically"
     :events {:successful-run {:silent (req true)
@@ -1039,7 +1041,6 @@
                                                    (move (some #(when (= (:title %) (:title target)) %)
                                                                (:deck runner)) :hand))}}}}})
 
-
    "Respirocytes"
    (let [ability {:once :per-turn
                   :msg "draw 1 card and add a power counter to itself"
@@ -1320,7 +1321,7 @@
       :events {:runner-turn-begins ability}
       :abilities [ability]})
 
-   "Unregistered S&W 35"
+   "Unregistered S&W '35"
    {:abilities
     [{:cost [:click 2]
       :req (req (some #{:hq} (:successful-run runner-reg)))

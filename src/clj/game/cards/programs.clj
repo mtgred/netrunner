@@ -7,6 +7,7 @@
             [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
             [jinteki.cards :refer [all-cards]]))
 
+;; Card definitions
 (def card-definitions
   {"Algernon"
    {:events
@@ -662,6 +663,7 @@
                                      :msg (msg "access " target " additional cards from R&D")
                                      :effect (effect (access-bonus :rd (max 0 target)))}
                                     card nil))}}}
+
    "Misdirection"
    {:abilities [{:cost [:click 2]
                  :prompt "How many [Credits] to spend to remove that number of tags?"

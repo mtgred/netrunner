@@ -133,7 +133,6 @@
    :subroutines (vec abilities)
    :rez-cost-bonus space-ice-rez-bonus})
 
-
 ;;; For Grail ICE
 (defn grail-in-hand
   "Req that specified card is a Grail card in the Corp's hand."
@@ -164,7 +163,6 @@
   {:abilities [reveal-grail]
    :subroutines [ability resolve-grail]})
 
-
 ;;; For NEXT ICE
 (defn next-ice-count
   "Counts number of rezzed NEXT ICE - for use with NEXT Bronze and NEXT Gold"
@@ -172,7 +170,6 @@
   (let [servers (flatten (seq (:servers corp)))
         rezzed-next? #(and (rezzed? %) (has-subtype? % "NEXT"))]
     (reduce (fn [c server] (+ c (count (filter rezzed-next? (:ices server))))) 0 servers)))
-
 
 ;;; For Morph ICE
 (defn morph [state side card new old]
@@ -200,13 +197,11 @@
      :subroutines [ability]
      :events {:advance ab :advancement-placed ab}}))
 
-
 ;;; For Constellation ICE
 (defn constellation-ice
   "Generates map for Constellation ICE with specified effect."
   [ability]
   {:subroutines [(assoc-in (trace-ability 2 ability) [:trace :kicker] (assoc ability :min 5))]})
-
 
 ;; For 7 Wonders ICE
 (defn wonder-sub
@@ -220,8 +215,7 @@
   [note ice-def]
   (assoc ice-def :implementation note))
 
-
-;;;; Card definitions
+;; Card definitions
 (def card-definitions
   {"Aiki"
    {:subroutines [(do-psi {:label "Runner draws 2 cards"
@@ -464,7 +458,7 @@
                                                              :init-data true})
                                (trigger-event state side :corp-install newice)))}]})
 
-  "Border Control"
+   "Border Control"
    {:abilities [{:label "End the run"
                  :msg (msg "end the run")
                  :effect (effect (trash card {:cause :ability-cost})
@@ -520,7 +514,6 @@
                   {:msg "gain 2 [Credits] and end the run"
                    :effect (effect (gain-credits 2)
                                    (end-run))}]}
-
 
    "Burke Bugs"
    {:subroutines [(trace-ability 0 (assoc trash-program :not-distinct true
@@ -981,7 +974,7 @@
                                                                       (unregister-events card))}} card))}]
     :events {:corp-turn-begins nil}}
 
-   "Hadrians Wall"
+   "Hadrian's Wall"
    {:advanceable :always
     :subroutines [end-the-run]
     :strength-bonus advance-counters}
@@ -1220,7 +1213,7 @@
     :subroutines [{:msg "make the Runner lose 1 [Credits]"
                    :effect (effect (lose-credits :runner 1))}]}
 
-   "Its a Trap!"
+   "It's a Trap!"
    {:expose {:msg "do 2 net damage"
              :async true
              :effect (effect (damage eid :net 2 {:card card}))}
@@ -1958,46 +1951,42 @@
                                        (req (if (= target "Arrange cards")
                                               (wait-for
                                                 (resolve-ability state side (reorder-choice :corp top-cards) card nil)
-                                                (do
-                                                  (system-msg state :corp (str "rearranges the top "
-                                                                               (quantify (count top-cards) "card")
-                                                                               " of R&D"))
-                                                  (clear-wait-prompt state :runner)
-                                                  (continue-ability state side maybe-draw-effect card nil)))
+                                                (system-msg state :corp (str "rearranges the top "
+                                                                             (quantify (count top-cards) "card")
+                                                                             " of R&D"))
+                                                (clear-wait-prompt state :runner)
+                                                (continue-ability state side maybe-draw-effect card nil))
                                               (do
                                                 (shuffle! state :corp :deck)
                                                 (system-msg state :corp (str "shuffles R&D"))
                                                 (clear-wait-prompt state :runner)
                                                 (continue-ability state side maybe-draw-effect card nil))))}
                                       card nil)))}
-
                     {:label "Trash 1 card in HQ"
                      :async true
                      :effect
                      (req (show-wait-prompt state :runner "Corp to select cards to trash with Sadaka")
-                          (wait-for
-                            (resolve-ability
-                              state side
-                              {:prompt "Choose a card in HQ to trash"
-                               :choices (req (cancellable (:hand corp) :sorted))
-                               :async true
-                               :cancel-effect (effect (system-msg "chooses not to trash a card from HQ")
-                                                      (effect-completed eid))
-                               :effect (req (wait-for
-                                              (trash state :corp (make-eid state) target nil)
-                                              (do
-                                                (system-msg state :corp "trashes a card from HQ")
-                                                (wait-for
-                                                  (resolve-ability state side trash-resource-sub card nil)
-                                                  (effect-completed state side eid)))))}
-                              card nil)
-                            (do
-                              (system-msg state :corp "trashes Sadaka")
-                              (clear-wait-prompt state :runner)
-                              (when current-ice
-                                (no-action state side nil)
-                                (continue state side nil))
-                              (trash state :corp eid card nil))))}]})
+                          (wait-for (resolve-ability
+                                      state side
+                                      {:prompt "Choose a card in HQ to trash"
+                                       :choices (req (cancellable (:hand corp) :sorted))
+                                       :async true
+                                       :cancel-effect (effect (system-msg "chooses not to trash a card from HQ")
+                                                              (effect-completed eid))
+                                       :effect (req (wait-for
+                                                      (trash state :corp (make-eid state) target nil)
+                                                      (do
+                                                        (system-msg state :corp "trashes a card from HQ")
+                                                        (wait-for
+                                                          (resolve-ability state side trash-resource-sub card nil)
+                                                          (effect-completed state side eid)))))}
+                                      card nil)
+                                    (system-msg state :corp "trashes Sadaka")
+                                    (clear-wait-prompt state :runner)
+                                    (when current-ice
+                                      (no-action state side nil)
+                                      (continue state side nil))
+                                    (trash state :corp eid card nil)))}]})
 
    "Sagittarius"
    (constellation-ice trash-program)

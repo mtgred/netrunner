@@ -101,7 +101,6 @@
                                           (cond
                                             cloud-turned-on
                                             (free-mu state (:memoryunits card))
-
                                             cloud-turned-off
                                             (use-mu state (:memoryunits card)))))))
               :leave-play (req (remove-watch state (keyword (str "cloud" (:cid card))))
@@ -291,7 +290,7 @@
                                                      n (:number async-result)]
                                            (add-strength state card message n))))}]}))
 
-;;; Icebreaker definitions
+;; Card definitions
 (def card-definitions
   {"Abagnale"
    (auto-icebreaker ["Code Gate"]
@@ -585,6 +584,7 @@
                  :msg (msg "trash " (:title target)
                            " and break 1 \"[Subroutine] End the run.\" subroutine")
                  :effect (effect (trash target {:unpreventable true}))}]}
+
    "Engolo"
    (auto-icebreaker
      ["Code Gate"]
@@ -835,7 +835,7 @@
    "Musaazi"
    (khumalo-breaker "sentry")
 
-   "NaNotK"
+   "Na'Not'K"
    (auto-icebreaker ["Sentry"]
                     {:effect (req (add-watch state (keyword (str "nanotk" (:cid card)))
                                               (fn [k ref old new]
@@ -880,6 +880,7 @@
                      :abilities [{:counter-cost [:power 1]
                                   :msg "break 1 subroutine"}
                                  (strength-pump 1 1)]})
+
    "Paperclip"
    (conspiracy "Paperclip" "Barrier"
                [{:label (str "X [Credits]: +X strength, break X subroutines")
@@ -957,6 +958,7 @@
                     {:implementation "Stealth credit restriction not enforced"
                      :abilities [(break-sub 1 1 "Code Gate")
                                  (strength-pump 1 3)]})
+
    "Sadyojata"
    (deva "Sadyojata")
 

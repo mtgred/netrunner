@@ -32,7 +32,7 @@
         best-faction (:max-faction (reduce-kv reducer {:max-count 0 :max-faction nil} faction-freq))]
     (= fc best-faction)))
 
-;;; Card definitions
+;; Card definitions
 (def card-definitions
   {"419: Amoral Scammer"
    {:events {:corp-install
@@ -347,7 +347,7 @@
     :leave-play (effect (gain :hand-size 1)
                         (gain :runner :hand-size 1))}
 
-   "Edward Kim: Humanitys Hammer"
+   "Edward Kim: Humanity's Hammer"
    {:events {:access {:once :per-turn
                       :req (req (and (is-type? target "Operation")
                                      (turn-flag? state side card :can-trash-operation)))
@@ -485,7 +485,7 @@
     :leave-play (effect (update-all-ice))
     :effect (effect (update-all-ice))}
 
-   "Harishchandra Ent.: Where Youre the Star"
+   "Harishchandra Ent.: Where You're the Star"
    {:events {:runner-gain-tag {:effect (req (when (is-tagged? state)
                                               (reveal-hand state :runner)))}
              :runner-lose-tag {:effect (req (when-not (is-tagged? state)

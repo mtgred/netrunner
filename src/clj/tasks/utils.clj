@@ -13,10 +13,7 @@
     "ICE" "ice"
     "Identity" "identities"
     "Operation" "operations"
-    "Program" (if (and (:subtype card)
-                       (> (.indexOf (:subtype card) "Icebreaker") -1))
-                "icebreakers"
-                "programs")
+    "Program" "programs"
     "Resource" "resources"
     "Upgrade" "upgrades"))
 

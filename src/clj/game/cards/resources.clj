@@ -57,7 +57,7 @@
        (filter #(starts-with? % "[subroutine]"))
        count))
 
-;;; Card definitions
+;; Card definitions
 (def card-definitions
   {"Aaron Marrón"
    (let [am {:effect (effect (add-counter card :power 2)
@@ -104,8 +104,8 @@
                                                                   (str " and reveal " (:title target)))))
                                                  :effect (effect (gain-credits 1))}}}}
     :abilities [(set-autoresolve :auto-reveal-and-gain "Aeneas Informant")]}
-   
-   "Aesops Pawnshop"
+
+   "Aesop's Pawnshop"
    {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
     :abilities [{:effect (req (resolve-ability
                                 state side
@@ -680,7 +680,6 @@
                 {:corp-trash (trash-event :corp-trash)
                  :runner-trash (trash-event :runner-trash)})})
 
-
    "DJ Fenris"
    (let [is-draft-id? #(.startsWith (:code %) "00")
          sorted-id-list (fn [runner] (sort-by :title (filter #(and (is-type? % "Identity")
@@ -765,7 +764,7 @@
                                   :once :per-turn
                                   :effect (effect (lose-credits 1))}}}
 
-   "Duggars"
+   "Duggar's"
    {:abilities [{:cost [:click 4] :async true :effect (effect (draw eid 10 nil)) :msg "draw 10 cards"}]}
 
    "Dummy Box"
@@ -1113,16 +1112,16 @@
                  :effect (req (gain-credits state side (get-counters card :credit))
                               (add-counter state side card :credit (- (get-counters card :credit))))}]}
 
- "Kasi String"
- {:events {:run-ends {:req (req (and (first-event? state :runner :run-ends is-remote?)
-                                     (not (get-in @state [:run :did-steal]))
-                                     (get-in @state [:run :did-access])
-                                     (is-remote? (:server run))))
-                      :effect (effect (add-counter card :power 1))
-                      :msg "add a power counter to itself"}
-           :counter-added {:req (req (>= (get-counters (get-card state card) :power) 4))
-                           :effect (effect (as-agenda :runner card 1))
-                           :msg "add it to their score area as an agenda worth 1 agenda point"}}}
+   "Kasi String"
+   {:events {:run-ends {:req (req (and (first-event? state :runner :run-ends is-remote?)
+                                       (not (get-in @state [:run :did-steal]))
+                                       (get-in @state [:run :did-access])
+                                       (is-remote? (:server run))))
+                        :effect (effect (add-counter card :power 1))
+                        :msg "add a power counter to itself"}
+             :counter-added {:req (req (>= (get-counters (get-card state card) :power) 4))
+                             :effect (effect (as-agenda :runner card 1))
+                             :msg "add it to their score area as an agenda worth 1 agenda point"}}}
 
    "Keros Mcintyre"
    {:events
@@ -1159,7 +1158,6 @@
    {:flags {:drip-economy true ;; for Drug Dealer
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                       (all-active-installed state :runner)))))}
-
     ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
     :effect (effect (lose :corp :hand-size 1))
     :leave-play (effect (gain :corp :hand-size 1))
@@ -1516,6 +1514,7 @@
                                                                 (filter #(has? % :title (:title target)))
                                                                 (vec)))
                                                  card nil))}}})
+
    "Patron"
    (let [ability {:prompt "Choose a server for Patron" :choices (req (conj servers "No server"))
                   :req (req (and (not (click-spent? :runner state)) (not (used-this-turn? (:cid card) state))))
@@ -2156,7 +2155,6 @@
                                       (in-hand? %))}
                  :effect (effect (host card target)) :msg (msg "host " (:title target) "")}
                 ability]
-
     ; A card installed by The Supplier is ineligible to receive the turn-begins event for this turn.
     :suppress {:runner-turn-begins {:req (req (= (:cid target) (:supplier-installed (get-card state card))))}}
     :events {:runner-turn-begins ability
@@ -2295,7 +2293,6 @@
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                       (cons (get-in @state [:runner :identity])
                                                             (all-active-installed state :runner))))))}
-
     :events {:runner-turn-begins {:async true
                                   :effect (req (lose state side :click 1)
                                                (when-not (get-in @state [:per-turn (:cid card)])
@@ -2312,7 +2309,7 @@
 
    "Zona Sul Shipping"
    (trash-when-tagged-contructor
-     "Zone Sul Shipping"
+     "Zona Sul Shipping"
      {:events {:runner-turn-begins {:effect (effect (add-counter card :credit 1))}}
       :abilities [{:cost [:click 1]
                    :msg (msg "gain " (get-counters card :credit) " [Credits]")

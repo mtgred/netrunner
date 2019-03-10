@@ -63,7 +63,7 @@
              (do (gain-agenda-point state side n)
                  (effect-completed state side eid)))))
 
-;;; Card definitions
+;; Card definitions
 (def card-definitions
   {"Adonis Campaign"
    (campaign 12 3)
@@ -321,7 +321,6 @@
                              (do (system-msg state :runner "pays 1 [Credits]")
                                  (pay state :runner card :credit 1)
                                  (effect-completed state side eid))
-
                              (do (system-msg state :runner "takes 1 tag")
                                  (gain-tags state :corp eid 1))))}}}
 
@@ -587,7 +586,7 @@
                                  (trash target)
                                  (gain-bad-publicity :corp 1))}]}
 
-   "Elizas Toybox"
+   "Eliza's Toybox"
    {:abilities [{:cost [:click 3] :choices {:req #(not (:rezzed %))}
                  :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
                  :effect (effect (rez target {:ignore-cost :all-costs}))}]}
@@ -1774,7 +1773,6 @@
                          :effect (req (if (and (= :run (get-in @state [:runner :register :click-type]))
                                                (not this-server))
                                         (gain-credits state :corp 2)))}}}
-
 
    "Synth DNA Modification"
    {:implementation "Manual fire once subroutine is broken"

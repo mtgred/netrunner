@@ -22,6 +22,7 @@
      :events {:pre-ice-strength {:req (req (has-subtype? target subtype))
                                  :effect (effect (ice-strength-bonus 1 target))}}}))
 
+;; Card definitions
 (def card-definitions
   {"15 Minutes"
    {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
@@ -407,7 +408,7 @@
    "Degree Mill"
    {:steal-cost-bonus (req [:shuffle-installed-to-stack 2])}
 
-   "Director Haas Pet Project"
+   "Director Haas' Pet Project"
    (letfn [(install-ability [server-name n]
              {:prompt "Select a card to install"
               :show-discard true

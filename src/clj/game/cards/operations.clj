@@ -7,6 +7,7 @@
             [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
             [jinteki.cards :refer [all-cards]]))
 
+;; Card definitions
 (def card-definitions
   {"24/7 News Cycle"
    {:req (req (pos? (count (:scored corp))))
@@ -74,7 +75,7 @@
                     (shuffle! :deck))
     :msg "search R&D for a card and add it to HQ"}
 
-   "An Offer You Cant Refuse"
+   "An Offer You Can't Refuse"
    {:async true
     :prompt "Choose a server" :choices ["Archives" "R&D" "HQ"]
     :effect (req (let [serv target]
@@ -1201,19 +1202,19 @@
                         :effect (effect (add-prop target :advance-counter c {:placed true}))}
                        card nil))))}
 
-    "Psychokinesis"
-    (letfn [(choose-card [state cards]
-              (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %))
-                                          cards)]
-                {:prompt "Select an agenda, asset, or upgrade to install"
-                 :choices (cons "None" allowed-cards)
-                 :async true
-                 :effect (req (if-not (or (= target "None") (ice? target) (is-type? target "Operation"))
-                                (continue-ability state side (install-card target) card nil)
-                                (system-msg state side "does not install an asset, agenda, or upgrade"))
-                              (effect-completed state side eid)
-                              (clear-wait-prompt state :runner))}))
-            (install-card [chosen]
+   "Psychokinesis"
+   (letfn [(choose-card [state cards]
+             (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %))
+                                         cards)]
+               {:prompt "Select an agenda, asset, or upgrade to install"
+                :choices (cons "None" allowed-cards)
+                :async true
+                :effect (req (if-not (or (= target "None") (ice? target) (is-type? target "Operation"))
+                               (continue-ability state side (install-card target) card nil)
+                               (system-msg state side "does not install an asset, agenda, or upgrade"))
+                             (effect-completed state side eid)
+                             (clear-wait-prompt state :runner))}))
+           (install-card [chosen]
              {:prompt "Select a remote server"
               :choices (req (conj (vec (get-remote-names state)) "New remote"))
               :async true
@@ -1222,8 +1223,8 @@
      {:msg "look at the top 5 cards of R&D"
       :async true
       :effect (req (show-wait-prompt state :runner "Corp to look at the top cards of R&D")
-                   (let [top-5 (take 5 (:deck corp))]
-                     (continue-ability state side (choose-card state top-5) card nil)))})
+                (let [top-5 (take 5 (:deck corp))]
+                  (continue-ability state side (choose-card state top-5) card nil)))})
 
    "Punitive Counterstrike"
    {:trace {:base 5
@@ -1443,7 +1444,7 @@
                      (lose state side :bad-publicity bp-lost)
                      (gain-credits state side bp-lost))))}
 
-   "Salems Hospitality"
+   "Salem's Hospitality"
    {:prompt "Name a Runner card"
     :choices {:card-title (req (and (card-is? target :side "Runner")
                                     (not (card-is? target :type "Identity"))))}

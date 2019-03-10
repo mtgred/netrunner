@@ -7,6 +7,7 @@
             [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
             [jinteki.cards :refer [all-cards]]))
 
+;; Card definitions
 (def card-definitions
   {"Akitaro Watanabe"
    {:events {:pre-rez-cost {:req (req (and (ice? target)
@@ -141,17 +142,17 @@
                                       {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
                                                        (trash card))}}}}}
 
-  "Bio Vault"
-  {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :advanceable :always
-   :abilities [{:label "[Trash]: End the run"
-                :advance-counter-cost 2
-                :req (req (:run @state))
-                :msg "end the run. Bio Vault is trashed"
-                :async true
-                :effect (effect
-                          (end-run)
-                          (trash eid card {:cause :ability-cost}))}]}
+   "Bio Vault"
+   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+    :advanceable :always
+    :abilities [{:label "[Trash]: End the run"
+                 :advance-counter-cost 2
+                 :req (req (:run @state))
+                 :msg "end the run. Bio Vault is trashed"
+                 :async true
+                 :effect (effect
+                           (end-run)
+                           (trash eid card {:cause :ability-cost}))}]}
 
    "Black Level Clearance"
    {:events {:successful-run
@@ -204,7 +205,6 @@
                                     :effect (effect (add-prop target :advance-counter 1 {:placed true})
                                                     (trash eid card {:cause :ability-cost}))}
                                    card nil))}]}
-
 
    "Caprice Nisei"
    {:events {:pass-ice {:req (req (and this-server
@@ -586,7 +586,6 @@
                                              (effect-completed state side eid)
                                              (continue-ability state side (choose-ice remaining grids)
                                                                card nil))))))}))
-
            (choose-grid [ice ices grids]
              (if (= 1 (count grids))
                (install-ice ice ices grids (-> (first grids) :zone second zone->name))
@@ -594,7 +593,6 @@
                 :prompt (str "Choose a server to install " (:title ice))
                 :choices (conj (mapv #(-> % :zone second zone->name) grids) "None")
                 :effect (effect (continue-ability (install-ice ice ices grids target) card nil))}))
-
            (choose-ice [ices grids]
              (if (empty? ices)
                nil
@@ -607,7 +605,6 @@
                                                  (choose-grid (some #(when (= target (:title %)) %) ices)
                                                               ices grids)
                                                  card nil)))}))]
-
      {:events {:corp-draw {;; THIS IS A HACK: it prevents multiple Jinja from showing the "choose a server to install into" sequence
                            :once :per-turn
                            :once-key :jinja-city-grid-draw
@@ -1183,7 +1180,7 @@
                            :successful {:msg "gain 1 [Credits]"
                                         :effect (effect (gain-credits 1))}}}}}
 
-   "Tyrs Hand"
+   "Tyr's Hand"
    {:abilities [{:label "[Trash]: Prevent a subroutine on a piece of Bioroid ICE from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
                                 (has-subtype? current-ice "Bioroid")))
@@ -1257,7 +1254,7 @@
                                                 state side
                                                 (str "uses Warroid Tracker but there are no installed cards to trash")))))}}}}})
 
-   "Will-o-the-Wisp"
+   "Will-o'-the-Wisp"
    {:events
     {:successful-run
      {:interactive (req true)
