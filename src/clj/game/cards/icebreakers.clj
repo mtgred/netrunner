@@ -257,7 +257,7 @@
     {:events {:successful-run {:silent (req true)
                                :effect (effect (system-msg (str "adds 1 virus counter to " (:title card)))
                                                (add-counter card :virus 1))}}
-     :abilities [{:label (str  "Break one or more " type-subroutine "s")
+     :abilities [{:label (str "Break one or more " type-subroutine "s")
                   :effect (req (wait-for (resolve-ability
                                            state side (pick-virus-counters-to-spend) card nil)
                                          (when-let* [message (:msg async-result)
@@ -622,7 +622,7 @@
    "Fawkes"
    {:implementation "Stealth credit restriction not enforced"
     :abilities [(break-sub 1 1 "Sentry")
-                {:label (str "X [Credits]: +X strength for the remainder of the run (using at least 1 stealth [Credits])")
+                {:label "X [Credits]: +X strength for the remainder of the run (using at least 1 stealth [Credits])"
                  :choices :credit
                  :prompt "How many credits?"
                  :effect (effect (pump card target :all-run))
@@ -898,7 +898,7 @@
                                  (strength-pump 1 1)]})
    "Paperclip"
    (conspiracy "Paperclip" "Barrier"
-               [{:label (str "X [Credits]: +X strength, break X subroutines")
+               [{:label "X [Credits]: +X strength, break X subroutines"
                  :choices {:number (req (:credit runner))
                            :default (req (if (:current-strength current-ice)
                                            (max (- (:current-strength current-ice)
