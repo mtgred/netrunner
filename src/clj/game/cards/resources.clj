@@ -459,17 +459,17 @@
    "Climactic Showdown"
    (letfn [(iced-servers [state]
              (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?) (zones->sorted-names (get-zones state))))
-           (trash-or-bonus [chosen-server orig-eid]
+           (trash-or-bonus [chosen-server]
              {:player :corp
               :prompt "Choose a piece of ice to trash or cancel"
               :choices {:req #(and (= (last (:zone %)) :ices)
                                    (= chosen-server (rest (butlast (:zone %)))))}
               :effect (req (clear-wait-prompt state :runner)
                            (trash state :corp eid target {:unpreventable true})
-                           (effect-completed state side orig-eid)
+                           (effect-completed state side eid)
                            (system-msg state side (str "trashes " (card-str state target))))
-              :cancel-effect (no-trash-effect chosen-server orig-eid)})
-           (no-trash-effect [chosen-server orig-eid]
+              :cancel-effect (no-trash-effect chosen-server)})
+           (no-trash-effect [chosen-server]
              (req (clear-wait-prompt state :runner)
                   (system-msg state side (str "does not trash a piece of ice protecting " (zone->name chosen-server)))
                   (register-events state :runner {:pre-access {:req (req (#{:hq :rd} target))
@@ -478,7 +478,7 @@
                                                                :effect (effect (access-bonus :runner target 2))}
                                                   :runner-turn-ends {:effect (effect (unregister-events card {:events {:pre-access nil :runner-turn-ends nil}}))}}
                                    (assoc card :zone [:rfg]))
-                  (effect-completed state side orig-eid)))]
+                  (effect-completed state side eid)))]
      {:events {:pre-access nil
                :runner-turn-ends nil
                :runner-turn-begins {:msg "removes Climactic Showdown from the game"
@@ -491,7 +491,7 @@
                                                      :choices (req (iced-servers state))
                                                      :effect (req (let [chosen-server (next (server->zone state target))]
                                                                     (show-wait-prompt state :runner "Corp to decide whether or not to trash a piece of ice")
-                                                                    (continue-ability state :corp (trash-or-bonus chosen-server eid) card nil)))}
+                                                                    (continue-ability state :corp (trash-or-bonus chosen-server) card nil)))}
                                                     card nil)
                                                    (effect-completed state side eid)))}}})
 
