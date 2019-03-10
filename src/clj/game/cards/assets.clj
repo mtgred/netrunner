@@ -235,6 +235,12 @@
    {:effect (effect (lock-zone (:cid card) :runner :discard))
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
 
+   "Brain-Taping Warehouse"
+   {:events {:pre-rez
+             {:req (req (and (ice? target)
+                             (has-subtype? target "Bioroid")))
+              :effect (effect (rez-cost-bonus (- (:click runner))))}}}
+
    "Breached Dome"
    {:flags {:rd-reveal (req true)}
     :access {:async true
@@ -244,17 +250,30 @@
                             (mill state :corp :runner 1)
                             (damage state side eid :meat 1 {:card card})))}}
 
-   "Brain-Taping Warehouse"
-   {:events {:pre-rez
-             {:req (req (and (ice? target)
-                             (has-subtype? target "Bioroid")))
-              :effect (effect (rez-cost-bonus (- (:click runner))))}}}
-
    "Broadcast Square"
    {:events {:pre-bad-publicity {:async true
                                  :trace {:base 3
                                          :successful {:msg "prevents all bad publicity"
                                                       :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}}
+
+   "C.I. Fund"
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req (pos? (:credit corp)))}
+    :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund"
+                 :prompt "Choose how many [Credit] to move"
+                 :once :per-turn
+                 :choices {:number (req (min (:credit corp) 3))}
+                 :effect (effect (lose-credits target)
+                                 (add-counter card :credit target))
+                 :msg (msg "move " target " [Credit] to C.I. Fund")}
+                {:label "Take all credits from C.I. Fund"
+                 :cost [:credit 2]
+                 :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (gain-credits (get-counters card :credit)))}]
+    :events {:corp-turn-begins {:req (req (>= (get-counters card :credit) 6))
+                                :effect (effect (add-counter card :credit 2)
+                                                (system-msg (str "adds 2 [Credits] to C.I. Fund")))}}}
 
    "Capital Investors"
    {:abilities [{:cost [:click 1]
@@ -285,25 +304,6 @@
                  :async true
                  :msg "do 5 meat damage"
                  :effect (effect (damage eid :meat 5 {:card card}))}]}
-
-   "C.I. Fund"
-   {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :flags {:corp-phase-12 (req (pos? (:credit corp)))}
-    :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund"
-                 :prompt "Choose how many [Credit] to move"
-                 :once :per-turn
-                 :choices {:number (req (min (:credit corp) 3))}
-                 :effect (effect (lose-credits target)
-                                 (add-counter card :credit target))
-                 :msg (msg "move " target " [Credit] to C.I. Fund")}
-                {:label "Take all credits from C.I. Fund"
-                 :cost [:credit 2]
-                 :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
-                 :effect (effect (trash card {:cause :ability-cost})
-                                 (gain-credits (get-counters card :credit)))}]
-    :events {:corp-turn-begins {:req (req (>= (get-counters card :credit) 6))
-                                :effect (effect (add-counter card :credit 2)
-                                                (system-msg (str "adds 2 [Credits] to C.I. Fund")))}}}
 
    "City Surveillance"
    {:derezzed-events {:corp-turn-ends corp-rez-toast}
@@ -577,6 +577,11 @@
                                   :effect (effect (damage eid :brain (ice-count state)
                                                           {:card card}))}))
 
+   "Eliza's Toybox"
+   {:abilities [{:cost [:click 3] :choices {:req #(not (:rezzed %))}
+                 :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
+                 :effect (effect (rez target {:ignore-cost :all-costs}))}]}
+
    "Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
     :abilities [{:cost [:click 1] :label "Trash a location"
@@ -585,11 +590,6 @@
                  :effect (effect (trash card {:cause :ability-cost})
                                  (trash target)
                                  (gain-bad-publicity :corp 1))}]}
-
-   "Eliza's Toybox"
-   {:abilities [{:cost [:click 3] :choices {:req #(not (:rezzed %))}
-                 :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
-                 :effect (effect (rez target {:ignore-cost :all-costs}))}]}
 
    "Encryption Protocol"
    {:events {:pre-trash {:req (req (installed? target))

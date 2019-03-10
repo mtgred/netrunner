@@ -547,9 +547,6 @@
                  :msg "gain 3 [Credits]"
                  :effect (effect (gain-credits 3))}]}
 
-   "Global Food Initiative"
-   {:agendapoints-runner (req 2)}
-
    "Glenn Station"
    {:implementation "Doesn't prohibit hosting multiple cards"
     :abilities [{:label "Host a card from HQ on Glenn Station"
@@ -564,6 +561,9 @@
                  :prompt "Choose a card on Glenn Station"
                  :choices (req (:hosted card))
                  :effect (effect (move target :hand))}]}
+
+   "Global Food Initiative"
+   {:agendapoints-runner (req 2)}
 
    "Government Contracts"
    {:abilities [{:cost [:click 2]
@@ -628,12 +628,6 @@
                  :msg (msg "gain " (:credit runner) " [Credits]")
                  :effect (effect (gain-credits (:credit runner)))}]}
 
-   "Hostile Takeover"
-   {:msg "gain 7 [Credits] and take 1 bad publicity"
-    :effect (effect (gain-credits 7)
-                    (gain-bad-publicity :corp 1))
-    :interactive (req true)}
-
    "Hollywood Renovation"
    {:install-state :face-up
     :events {:advance
@@ -650,6 +644,12 @@
                                          (card-str state target))
                                :effect (effect (add-prop :corp target :advance-counter n {:placed true}))}
                               card nil)))}}}
+
+   "Hostile Takeover"
+   {:msg "gain 7 [Credits] and take 1 bad publicity"
+    :effect (effect (gain-credits 7)
+                    (gain-bad-publicity :corp 1))
+    :interactive (req true)}
 
    "House of Knives"
    {:effect (effect (add-counter card :agenda 3))
@@ -809,6 +809,18 @@
     :advancement-cost-bonus (req (+ (:bad-publicity corp)
                                     (:has-bad-pub corp)))}
 
+   "Net Quarantine"
+   (let [nq {:effect (req (let [extra (int (/ (:runner-spent target) 2))]
+                            (when (pos? extra)
+                              (gain-credits state side extra)
+                              (system-msg state :corp (str "uses Net Quarantine to gain " extra "[Credits]")))))}]
+     {:events {:pre-init-trace {:once :per-turn
+                                :silent (req true)
+                                :effect (req (system-msg state :corp "uses Net Quarantine to reduce Runner's base link to zero")
+                                             (swap! state assoc-in [:trace :force-link] 0))}
+               :successful-trace nq
+               :unsuccessful-trace nq}})
+
    "New Construction"
    {:install-state :face-up
     :events {:advance
@@ -828,18 +840,6 @@
                                                               {:install-state :rezzed-no-cost})
                                                 (trigger-event state side :rez target))
                                             (corp-install state side target "New remote")))}}}}}
-
-   "Net Quarantine"
-   (let [nq {:effect (req (let [extra (int (/ (:runner-spent target) 2))]
-                            (when (pos? extra)
-                              (gain-credits state side extra)
-                              (system-msg state :corp (str "uses Net Quarantine to gain " extra "[Credits]")))))}]
-     {:events {:pre-init-trace {:once :per-turn
-                                :silent (req true)
-                                :effect (req (system-msg state :corp "uses Net Quarantine to reduce Runner's base link to zero")
-                                             (swap! state assoc-in [:trace :force-link] 0))}
-               :successful-trace nq
-               :unsuccessful-trace nq}})
 
    "NEXT Wave 2"
    {:not-when-scored true
@@ -1325,6 +1325,7 @@
                                              (steal-cost-bonus state side [:credit (* 2 counter)])))}}}
 
    "Vanity Project"
+   ;; No special implementation
    {}
 
    "Veterans Program"

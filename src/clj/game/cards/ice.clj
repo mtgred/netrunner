@@ -736,11 +736,6 @@
                                   (continue state side nil))
                                 (trash state side card))}]}
 
-   "Datapike"
-   {:subroutines [{:msg "force the Runner to pay 2 [Credits] if able"
-                   :effect (effect (pay :runner card :credit 2))}
-                  end-the-run]}
-
    "Data Raven"
    {:implementation "Encounter effect is manual"
     :abilities [(give-tags 1)
@@ -763,6 +758,11 @@
                         :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Ward")
                                      (gain-tags state :runner eid 1))}]
     :subroutines [end-the-run-if-tagged]}
+
+   "Datapike"
+   {:subroutines [{:msg "force the Runner to pay 2 [Credits] if able"
+                   :effect (effect (pay :runner card :credit 2))}
+                  end-the-run]}
 
    "DNA Tracker"
    {:subroutines [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
@@ -810,13 +810,13 @@
                                   (trash state side c)))}]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
-   "Envelope"
-   {:subroutines [(do-net-damage 1)
-                  end-the-run]}
-
    "Enigma"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
                    :effect runner-loses-click}
+                  end-the-run]}
+
+   "Envelope"
+   {:subroutines [(do-net-damage 1)
                   end-the-run]}
 
    "Errand Boy"
@@ -907,6 +907,30 @@
                                                       :cancel-effect (effect (damage eid :meat 2 {:unpreventable true :card card})
                                                                              (end-run))}
                                                      card nil))})]}
+
+   "Formicary"
+   {:optional {:prompt "Move Formicary?"
+               :req (req (and (:run @state)
+                   (zero? (:position run))
+                   (not (contains? run :corp-phase-43))
+                   (not (contains? run :successful))))
+               :yes-ability {:msg "rez and move Formicary. The Runner is now approaching Formicary."
+                             :effect (req (move state side card
+                                                [:servers (first (:server run)) :ices]
+                                                {:front true})
+                                          (swap! state assoc-in [:run :position] 1))}
+               :no-ability {:msg "rez Formicary without moving it"}}
+    :subroutines [{:label "End the run unless the Runner suffers 2 net damage"
+                   :async true
+                   :effect (req (wait-for (resolve-ability
+                                           state :runner
+                                           {:optional
+                                            {:prompt "Suffer 2 net damage? (If not, end the run)"
+                                             :yes-ability {:async true
+                                                           :msg "let the Runner suffer 2 net damage"
+                                                           :effect (effect (damage eid :net 2 {:card card :unpreventable true}))}
+                                             :no-ability end-the-run}}
+                                           card nil)))}]}
 
    "Free Lunch"
    {:abilities [(power-counter-ability {:label "Runner loses 1 [Credits]"
@@ -1007,17 +1031,6 @@
                                                card nil)
                                               (effect-completed state side eid)))))}]}
 
-   "Himitsu-Bako"
-   {:abilities [{:msg "add it to HQ"
-                :cost [:credit 1]
-                :effect (effect (move card :hand))}]
-    :subroutines [end-the-run]}
-
-   "Hive"
-   {:abilities [{:label "Gain subroutines"
-                 :msg   (msg "gain " (min 5 (max 0 (- 5 (:agenda-point corp 0)))) " subroutines")}]
-    :subroutines [end-the-run]}
-
    "Heimdall 1.0"
    {:subroutines [(do-brain-damage 1)
                   end-the-run]
@@ -1050,6 +1063,17 @@
                                          :no-ability {:effect (effect (clear-wait-prompt :corp)
                                                                       (effect-completed eid))}}}
                               card nil))}}
+
+   "Himitsu-Bako"
+   {:abilities [{:msg "add it to HQ"
+                :cost [:credit 1]
+                :effect (effect (move card :hand))}]
+    :subroutines [end-the-run]}
+
+   "Hive"
+   {:abilities [{:label "Gain subroutines"
+                 :msg   (msg "gain " (min 5 (max 0 (- 5 (:agenda-point corp 0)))) " subroutines")}]
+    :subroutines [end-the-run]}
 
    "Holmegaard"
    {:subroutines [(trace-ability 4 {:label "Runner cannot access any cards this run"
@@ -1430,6 +1454,14 @@
    {:subroutines [trash-installed end-the-run]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
+   "Masvingo"
+   {:implementation "Number of subs is manual"
+    :advanceable :always
+    :abilities [{:label "Gain subroutines"
+                 :msg (msg "gain " (get-counters card :advancement) " subroutines")}]
+    :effect (effect (add-prop card :advance-counter 1))
+    :subroutines [end-the-run]}
+
    "Matrix Analyzer"
    {:implementation "Encounter effect is manual"
     :abilities [{:label "Place 1 advancement token on a card that can be advanced"
@@ -1456,17 +1488,6 @@
                                 (when (wonder-sub card 3)
                                   (end-run state side)))}]}
 
-   "Masvingo"
-   {:implementation "Number of subs is manual"
-    :advanceable :always
-    :abilities [{:label "Gain subroutines"
-                 :msg (msg "gain " (get-counters card :advancement) " subroutines")}]
-    :effect (effect (add-prop card :advance-counter 1))
-    :subroutines [end-the-run]}
-
-   "Merlin"
-   (grail-ice (do-net-damage 2))
-
    "Meridian"
    {:subroutines [{:label "Gain 4 [Credits] and end the run, unless the runner adds Meridian to their score area as an agenda worth -1 agenda points"
                    :async true
@@ -1490,6 +1511,9 @@
                                                                   (continue state side nil))
                                                                 (effect-completed state side eid)))))}
                                   card nil))}]}
+
+   "Merlin"
+   (grail-ice (do-net-damage 2))
 
    "Meru Mati"
    {:subroutines [end-the-run]
@@ -1557,30 +1581,6 @@
                                         (in-hand? %))}
                    :prompt "Choose an ICE to install from HQ"
                    :effect (req (corp-install state side target (zone->name (first (:server run))) {:ignore-all-cost true}))}]}
-
-   "Formicary"
-   {:optional {:prompt "Move Formicary?"
-               :req (req (and (:run @state)
-                   (zero? (:position run))
-                   (not (contains? run :corp-phase-43))
-                   (not (contains? run :successful))))
-               :yes-ability {:msg "rez and move Formicary. The Runner is now approaching Formicary."
-                             :effect (req (move state side card
-                                                [:servers (first (:server run)) :ices]
-                                                {:front true})
-                                          (swap! state assoc-in [:run :position] 1))}
-               :no-ability {:msg "rez Formicary without moving it"}}
-    :subroutines [{:label "End the run unless the Runner suffers 2 net damage"
-                   :async true
-                   :effect (req (wait-for (resolve-ability
-                                           state :runner
-                                           {:optional
-                                            {:prompt "Suffer 2 net damage? (If not, end the run)"
-                                             :yes-ability {:async true
-                                                           :msg "let the Runner suffer 2 net damage"
-                                                           :effect (effect (damage eid :net 2 {:card card :unpreventable true}))}
-                                             :no-ability end-the-run}}
-                                           card nil)))}]}
 
    "Mirāju"
    {:abilities [{:label "Runner broke subroutine: Redirect run to Archives"
@@ -1951,11 +1951,12 @@
                                        (req (if (= target "Arrange cards")
                                               (wait-for
                                                 (resolve-ability state side (reorder-choice :corp top-cards) card nil)
-                                                (system-msg state :corp (str "rearranges the top "
-                                                                             (quantify (count top-cards) "card")
-                                                                             " of R&D"))
-                                                (clear-wait-prompt state :runner)
-                                                (continue-ability state side maybe-draw-effect card nil))
+                                                (do
+                                                  (system-msg state :corp (str "rearranges the top "
+                                                                               (quantify (count top-cards) "card")
+                                                                               " of R&D"))
+                                                  (clear-wait-prompt state :runner)
+                                                  (continue-ability state side maybe-draw-effect card nil)))
                                               (do
                                                 (shuffle! state :corp :deck)
                                                 (system-msg state :corp (str "shuffles R&D"))
@@ -1966,27 +1967,29 @@
                      :async true
                      :effect
                      (req (show-wait-prompt state :runner "Corp to select cards to trash with Sadaka")
-                          (wait-for (resolve-ability
-                                      state side
-                                      {:prompt "Choose a card in HQ to trash"
-                                       :choices (req (cancellable (:hand corp) :sorted))
-                                       :async true
-                                       :cancel-effect (effect (system-msg "chooses not to trash a card from HQ")
-                                                              (effect-completed eid))
-                                       :effect (req (wait-for
-                                                      (trash state :corp (make-eid state) target nil)
-                                                      (do
-                                                        (system-msg state :corp "trashes a card from HQ")
-                                                        (wait-for
-                                                          (resolve-ability state side trash-resource-sub card nil)
-                                                          (effect-completed state side eid)))))}
-                                      card nil)
-                                    (system-msg state :corp "trashes Sadaka")
-                                    (clear-wait-prompt state :runner)
-                                    (when current-ice
-                                      (no-action state side nil)
-                                      (continue state side nil))
-                                    (trash state :corp eid card nil)))}]})
+                          (wait-for
+                            (resolve-ability
+                              state side
+                              {:prompt "Choose a card in HQ to trash"
+                               :choices (req (cancellable (:hand corp) :sorted))
+                               :async true
+                               :cancel-effect (effect (system-msg "chooses not to trash a card from HQ")
+                                                      (effect-completed eid))
+                               :effect (req (wait-for
+                                              (trash state :corp (make-eid state) target nil)
+                                              (do
+                                                (system-msg state :corp "trashes a card from HQ")
+                                                (wait-for
+                                                  (resolve-ability state side trash-resource-sub card nil)
+                                                  (effect-completed state side eid)))))}
+                              card nil)
+                            (do
+                              (system-msg state :corp "trashes Sadaka")
+                              (clear-wait-prompt state :runner)
+                              (when current-ice
+                                (no-action state side nil)
+                                (continue state side nil))
+                              (trash state :corp eid card nil))))}]})
 
    "Sagittarius"
    (constellation-ice trash-program)
@@ -2238,6 +2241,17 @@
    "Taurus"
    (constellation-ice trash-hardware)
 
+   "Thimblerig"
+   {:flags {:corp-phase-12 (req (>= (count (filter ice? (all-installed state :corp))) 2))}
+    :implementation "Does not restrict usage of swap ability to start of turn or after pass"
+    :abilities [{:label "Swap Thimblerig with a piece of ice"
+                 :prompt "Choose a piece of ice to swap Thimblerig with"
+                 :choices {:req ice?
+                           :not-self true}
+                 :effect (effect (swap-ice card target))
+                 :msg (msg "swap " (card-str state card) " with " (card-str state target))}]
+    :subroutines [end-the-run]}
+
    "Thoth"
    {:implementation "Encounter effect is manual"
     :runner-abilities [{:label "Take 1 tag"
@@ -2252,17 +2266,6 @@
                                     :async true
                                     :msg (msg "force the Runner to lose " (count-tags state) " [Credits]")
                                     :effect (effect (lose-credits :runner (count-tags state)))})]}
-
-   "Thimblerig"
-   {:flags {:corp-phase-12 (req (>= (count (filter ice? (all-installed state :corp))) 2))}
-    :implementation "Does not restrict usage of swap ability to start of turn or after pass"
-    :abilities [{:label "Swap Thimblerig with a piece of ice"
-                 :prompt "Choose a piece of ice to swap Thimblerig with"
-                 :choices {:req ice?
-                           :not-self true}
-                 :effect (effect (swap-ice card target))
-                 :msg (msg "swap " (card-str state card) " with " (card-str state target))}]
-    :subroutines [end-the-run]}
 
    "Tithonium"
    {:alternative-cost [:forfeit]

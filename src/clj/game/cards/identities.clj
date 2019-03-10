@@ -581,38 +581,6 @@
                        :msg "avoid the first tag during this run"
                        :effect (effect (tag-prevent :runner 1))}}}
 
-   "Jinteki: Personal Evolution"
-   {:events {:agenda-scored {:interactive (req true)
-                             :async true
-                             :req (req (not (:winner @state)))
-                             :msg "do 1 net damage"
-                             :effect (effect (damage eid :net 1 {:card card}))}
-             :agenda-stolen {:msg "do 1 net damage"
-                             :async true
-                             :req (req (not (:winner @state)))
-                             :effect (effect (damage eid :net 1 {:card card}))}}}
-
-   "Jinteki: Potential Unleashed"
-   {:events {:pre-resolve-damage
-             {:req (req (and (-> @state :corp :disable-id not) (= target :net) (pos? (last targets))))
-              :effect (req (let [c (first (get-in @state [:runner :deck]))]
-                             (system-msg state :corp (str "uses Jinteki: Potential Unleashed to trash " (:title c)
-                                                          " from the top of the Runner's Stack"))
-                             (mill state :corp :runner 1)))}}}
-
-   "Jinteki: Replicating Perfection"
-   {:events
-    {:runner-phase-12 {:effect (req (apply prevent-run-on-server
-                                           state card (map first (get-remotes state))))}
-     :run {:once :per-turn
-           :req (req (is-central? (:server run)))
-           :effect (req (apply enable-run-on-server
-                               state card (map first (get-remotes state))))}}
-    :req (req (empty? (let [successes (turn-events state side :successful-run)]
-                        (filter #(is-central? %) successes))))
-    :effect (req (apply prevent-run-on-server state card (map first (get-remotes state))))
-    :leave-play (req (apply enable-run-on-server state card (map first (get-remotes state))))}
-
    "Jinteki Biotech: Life Imagined"
    {:events {:pre-first-turn {:req (req (= side :corp))
                               :prompt "Choose a copy of Jinteki Biotech to use this game"
@@ -651,6 +619,38 @@
                                          :choices {:req can-be-advanced?}
                                          :effect (effect (add-prop target :advance-counter 4 {:placed true}))} card nil)))
                                 (update! state side (assoc (get-card state card) :biotech-used true))))}]}
+
+   "Jinteki: Personal Evolution"
+   {:events {:agenda-scored {:interactive (req true)
+                             :async true
+                             :req (req (not (:winner @state)))
+                             :msg "do 1 net damage"
+                             :effect (effect (damage eid :net 1 {:card card}))}
+             :agenda-stolen {:msg "do 1 net damage"
+                             :async true
+                             :req (req (not (:winner @state)))
+                             :effect (effect (damage eid :net 1 {:card card}))}}}
+
+   "Jinteki: Potential Unleashed"
+   {:events {:pre-resolve-damage
+             {:req (req (and (-> @state :corp :disable-id not) (= target :net) (pos? (last targets))))
+              :effect (req (let [c (first (get-in @state [:runner :deck]))]
+                             (system-msg state :corp (str "uses Jinteki: Potential Unleashed to trash " (:title c)
+                                                          " from the top of the Runner's Stack"))
+                             (mill state :corp :runner 1)))}}}
+
+   "Jinteki: Replicating Perfection"
+   {:events
+    {:runner-phase-12 {:effect (req (apply prevent-run-on-server
+                                           state card (map first (get-remotes state))))}
+     :run {:once :per-turn
+           :req (req (is-central? (:server run)))
+           :effect (req (apply enable-run-on-server
+                               state card (map first (get-remotes state))))}}
+    :req (req (empty? (let [successes (turn-events state side :successful-run)]
+                        (filter #(is-central? %) successes))))
+    :effect (req (apply prevent-run-on-server state card (map first (get-remotes state))))
+    :leave-play (req (apply enable-run-on-server state card (map first (get-remotes state))))}
 
    "Kabonesa Wu: Netspace Thrillseeker"
    {:abilities [{:label "[:click] Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
@@ -1062,6 +1062,13 @@
                                                                        (effect-completed state side eid))}
                                                   card nil)))}]}
 
+   "Spark Agency: Worldswide Reach"
+   {:events
+    {:rez {:req (req (and (has-subtype? target "Advertisement")
+                          (first-event? state :corp :rez #(has-subtype? (first %) "Advertisement"))))
+           :effect (effect (lose-credits :runner 1))
+           :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}}}
+
    "Sportsmetal: Go Big or Go Home"
    (let [ab {:prompt "Gain 2 credits or draw 2 cards?"
              :player :corp
@@ -1077,13 +1084,6 @@
                                 (draw state :corp eid 2 nil))))}]
      {:events {:agenda-scored ab
                :agenda-stolen ab}})
-
-   "Spark Agency: Worldswide Reach"
-   {:events
-    {:rez {:req (req (and (has-subtype? target "Advertisement")
-                          (first-event? state :corp :rez #(has-subtype? (first %) "Advertisement"))))
-           :effect (effect (lose-credits :runner 1))
-           :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}}}
 
    "SSO Industries: Fueling Innovation"
    (letfn [(installed-faceup-agendas [state]
@@ -1181,8 +1181,8 @@
               :effect (effect (move :corp target :deck)
                               (shuffle! :corp :deck))}}}
 
-   ;; No special implementation
    "Sunny Lebeau: Security Specialist"
+   ;; No special implementation
    {}
 
    "SYNC: Everything, Everywhere"
@@ -1248,8 +1248,8 @@
    {:events {:corp-gain-bad-publicity {:msg "gain 3 [Credit]"
                                        :effect (effect (gain-credits 3))}}}
 
-   ;; No special implementation
    "The Professor: Keeper of Knowledge"
+   ;; No special implementation
    {}
 
    "The Shadow: Pulling the Strings"

@@ -377,13 +377,6 @@
                             :effect (effect (damage eid :meat 1 {:card card
                                                                  :unpreventable true}))}}}}}
 
-   "Experiential Data"
-   {:effect (req (update-ice-in-server state side (card->server state card)))
-    :events {:pre-ice-strength {:req (req (protecting-same-server? card target))
-                                :effect (effect (ice-strength-bonus 1 target))}}
-    :derez-effect {:effect (req (update-ice-in-server state side (card->server state card)))}
-    :trash-effect {:effect (req (update-all-ice state side))}}
-
    "Embolus"
    (let [maybe-gain-counter {:once :per-turn
                              :label "Place a power counter on Embolus"
@@ -405,6 +398,13 @@
                                 :msg "remove 1 power counter from Embolus"
                                 :effect (effect (add-counter card :power -1))}}
       :abilities [maybe-gain-counter etr]})
+
+   "Experiential Data"
+   {:effect (req (update-ice-in-server state side (card->server state card)))
+    :events {:pre-ice-strength {:req (req (protecting-same-server? card target))
+                                :effect (effect (ice-strength-bonus 1 target))}}
+    :derez-effect {:effect (req (update-ice-in-server state side (card->server state card)))}
+    :trash-effect {:effect (req (update-all-ice state side))}}
 
    "Expo Grid"
    (let [ability {:req (req (some #(and (is-type? % "Asset")
@@ -638,21 +638,6 @@
                                              (when (= :runner (:active-player @state))
                                                (clear-wait-prompt state :runner)))}}})
 
-   "Keegan Lane"
-   {:abilities [{:label "[Trash], remove a tag: Trash a program"
-                 :req (req (and this-server
-                                (pos? (get-in @state [:runner :tag :base]))
-                                (not (empty? (filter #(is-type? % "Program")
-                                                     (all-active-installed state :runner))))))
-                 :msg (msg "remove 1 tag")
-                 :effect (req (resolve-ability state side trash-program card nil)
-                              (trash state side card {:cause :ability-cost})
-                              (lose-tags state :corp 1))}]}
-
-   "Khondi Plaza"
-   {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
-    :effect (effect (set-prop card :rec-counter (count (get-remotes state))))}
-
    "K. P. Lynn"
    (let [abi {:prompt "Choose one"
               :player :runner
@@ -669,6 +654,21 @@
                                     (zero? (:position run)))) ; trigger on unprotected server
                      :async true
                      :effect (req (continue-ability state :runner abi card nil))}}})
+
+   "Keegan Lane"
+   {:abilities [{:label "[Trash], remove a tag: Trash a program"
+                 :req (req (and this-server
+                                (pos? (get-in @state [:runner :tag :base]))
+                                (not (empty? (filter #(is-type? % "Program")
+                                                     (all-active-installed state :runner))))))
+                 :msg (msg "remove 1 tag")
+                 :effect (req (resolve-ability state side trash-program card nil)
+                              (trash state side card {:cause :ability-cost})
+                              (lose-tags state :corp 1))}]}
+
+   "Khondi Plaza"
+   {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
+    :effect (effect (set-prop card :rec-counter (count (get-remotes state))))}
 
    "Manta Grid"
    {:events {:successful-run-ends

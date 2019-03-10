@@ -99,6 +99,14 @@
                                      (move state :corp c :deck))
                                    (shuffle! state :corp :deck))}})
 
+   "Black Hat"
+   {:trace {:base 4
+            :unsuccessful {:effect (effect (register-events (:events (card-def card))
+                                                            (assoc card :zone '(:discard))))}}
+    :events {:pre-access {:req (req (#{:hq :rd} target))
+                          :effect (effect (access-bonus target 2))}
+             :runner-turn-ends {:effect (effect (unregister-events card))}}}
+
    "Blackmail"
    (run-event
     {:req (req has-bad-pub)
@@ -112,14 +120,6 @@
                   ((constantly false)
                     (toast state :corp "Cannot rez ICE on this run due to Blackmail"))
                   true)))))
-
-   "Black Hat"
-   {:trace {:base 4
-            :unsuccessful {:effect (effect (register-events (:events (card-def card))
-                                                            (assoc card :zone '(:discard))))}}
-    :events {:pre-access {:req (req (#{:hq :rd} target))
-                          :effect (effect (access-bonus target 2))}
-             :runner-turn-ends {:effect (effect (unregister-events card))}}}
 
    "Bribery"
    {:prompt "How many credits?"
@@ -246,6 +246,42 @@
                                                                (continue-ability end-effect card nil))}}
                                     c)))})
 
+   "Compile"
+   {:implementation "Trigger only on first encounter not enforced"
+    :prompt "Choose a server"
+    :msg "make a run and install a program on encounter with the first piece of ICE"
+    :choices (req runnable-servers)
+    :async true
+    :abilities [{:label "Install a program using Compile"
+                 :async true
+                 :effect (effect (resolve-ability
+                                   {:prompt "Install a program from Stack or Heap?"
+                                    :choices ["Stack" "Heap"]
+                                    :msg (msg "install " (:title target))
+                                    :effect (effect (resolve-ability
+                                                      (let [chosen-source target]
+                                                        {:prompt (str "Choose a program in your " chosen-source " to install")
+                                                         :choices (req (cancellable (filter #(is-type? % "Program")
+                                                                                            ((if (= chosen-source "Heap") :discard :deck) runner))))
+                                                         :effect (req (runner-install state side (assoc-in target [:special :compile-installed] true) {:ignore-all-cost true})
+                                                                      (when (= chosen-source "Stack")
+                                                                        (shuffle! state :runner :deck)))})
+                                                      card nil))}
+                                   card nil))}]
+    :effect (effect (make-run target nil card)
+                    (prompt! card (str "Click Compile in the Temporary Zone to install a Program") ["OK"] {})
+                    (resolve-ability
+                      {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
+                                         (card-init state side c {:resolve-effect false})))}
+                      card nil))
+    :events {:run-ends {:effect (req
+                                 (let [compile-installed (first (filter #(get-in % [:special :compile-installed]) (game.core/all-installed state :runner)))]
+                                   (when (not (empty? compile-installed))
+                                     (system-msg state side (str "moved " (:title compile-installed) " to the bottom of the Stack at the end of the run from Compile"))
+                                     (move state :runner compile-installed :deck)))
+                                 (unregister-events state side card)
+                                 (trash state side card))}}}
+
    "Contaminate"
    {:effect (req (resolve-ability
                    state side
@@ -355,6 +391,14 @@
    {:additional-cost [:click 3]
     :msg "gain 10 [Credits]" :effect (effect (gain-credits 10))}
 
+   "Deep Data Mining"
+   {:req (req rd-runnable)
+    :effect (effect (make-run :rd nil card)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+    :events {:successful-run {:silent (req true)
+                              :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}
+             :run-ends {:effect (effect (unregister-events card))}}}
+
    "Déjà Vu"
    {:prompt "Choose a card to add to Grip" :choices (req (cancellable (:discard runner) :sorted))
     :msg (msg "add " (:title target) " to their Grip")
@@ -366,14 +410,6 @@
                                      :choices (req (cancellable
                                                      (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
                                      :effect (effect (move target :hand))} card nil)))}
-
-   "Deep Data Mining"
-   {:req (req rd-runnable)
-    :effect (effect (make-run :rd nil card)
-                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
-    :events {:successful-run {:silent (req true)
-                              :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}
-             :run-ends {:effect (effect (unregister-events card))}}}
 
    "Demolition Run"
    {:req (req (or rd-runnable hq-runnable))
@@ -425,42 +461,6 @@
                                       (effect-completed state side eid)))))})]
      {:async true
       :effect (effect (continue-ability (choice all) card nil))})
-
-   "Compile"
-   {:implementation "Trigger only on first encounter not enforced"
-    :prompt "Choose a server"
-    :msg "make a run and install a program on encounter with the first piece of ICE"
-    :choices (req runnable-servers)
-    :async true
-    :abilities [{:label "Install a program using Compile"
-                 :async true
-                 :effect (effect (resolve-ability
-                                   {:prompt "Install a program from Stack or Heap?"
-                                    :choices ["Stack" "Heap"]
-                                    :msg (msg "install " (:title target))
-                                    :effect (effect (resolve-ability
-                                                      (let [chosen-source target]
-                                                        {:prompt (str "Choose a program in your " chosen-source " to install")
-                                                         :choices (req (cancellable (filter #(is-type? % "Program")
-                                                                                            ((if (= chosen-source "Heap") :discard :deck) runner))))
-                                                         :effect (req (runner-install state side (assoc-in target [:special :compile-installed] true) {:ignore-all-cost true})
-                                                                      (when (= chosen-source "Stack")
-                                                                        (shuffle! state :runner :deck)))})
-                                                      card nil))}
-                                   card nil))}]
-    :effect (effect (make-run target nil card)
-                    (prompt! card (str "Click Compile in the Temporary Zone to install a Program") ["OK"] {})
-                    (resolve-ability
-                      {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
-                                         (card-init state side c {:resolve-effect false})))}
-                      card nil))
-    :events {:run-ends {:effect (req
-                                 (let [compile-installed (first (filter #(get-in % [:special :compile-installed]) (game.core/all-installed state :runner)))]
-                                   (when (not (empty? compile-installed))
-                                     (system-msg state side (str "moved " (:title compile-installed) " to the bottom of the Stack at the end of the run from Compile"))
-                                     (move state :runner compile-installed :deck)))
-                                 (unregister-events state side card)
-                                 (trash state side card))}}}
 
    "Diana's Hunt"
    {:implementation "One program per encounter not enforced"
@@ -622,14 +622,6 @@
     :effect (effect (disable-identity :corp))
     :leave-play (effect (enable-identity :corp))}
 
-   "Encore"
-   {:req (req (and (some #{:hq} (:successful-run runner-reg))
-                   (some #{:rd} (:successful-run runner-reg))
-                   (some #{:archives} (:successful-run runner-reg))))
-    :effect (req (swap! state update-in [:runner :extra-turns] (fnil inc 0))
-                 (move state side (first (:play-area runner)) :rfg))
-    :msg "take an additional turn after this one"}
-
    "En Passant"
    {:req (req (:successful-run runner-reg))
     :effect (req (let [runtgt (first (flatten (turn-events state side :run)))
@@ -642,6 +634,14 @@
                       :effect (req (trash state side target)
                                    (swap! state assoc-in [:runner :register :trashed-card] true))}
                     card nil)))}
+
+   "Encore"
+   {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                   (some #{:rd} (:successful-run runner-reg))
+                   (some #{:archives} (:successful-run runner-reg))))
+    :effect (req (swap! state update-in [:runner :extra-turns] (fnil inc 0))
+                 (move state side (first (:play-area runner)) :rfg))
+    :msg "take an additional turn after this one"}
 
    "Escher"
    (letfn [(es [] {:prompt "Select two pieces of ICE to swap positions"
