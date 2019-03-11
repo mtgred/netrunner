@@ -1978,8 +1978,23 @@
       :strength-bonus (req (count-tags state))
       :subroutines [(trace-ability 4 end-the-run)]})
 
+   "Rime"
+   {:implementation "Can be rezzed anytime already"
+    :effect (effect (update-all-ice))
+    :subroutines [{:label "Runner loses 1 [Credit]"
+                   :msg "force the Runner to lose 1 [Credit]"
+                   :effect (effect (lose-credits :runner 1))}]
+    :events {:corp-moved {:req (req (ice? target))
+                          :effect (effect (update-ice-strength target))}
+             :corp-install {:req (req (ice? target))
+                            :effect (effect (update-ice-strength target))}
+             :pre-ice-strength {:req (req (and (ice? target)
+                                               (protecting-same-server? card target)))
+                                :effect (effect (ice-strength-bonus 1 target))}}}
+
    "Rototurret"
-   {:subroutines [trash-program end-the-run]}
+   {:subroutines [trash-program
+                  end-the-run]}
 
    "Sadaka"
    (let [maybe-draw-effect
