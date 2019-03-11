@@ -413,6 +413,57 @@
         (take-credits state :corp)
         (is (empty? (:hosted (refresh fo))) "Mimic trashed")))))
 
+(deftest flip-switch
+  ;; Flip Switch
+  (testing "Trace reaction ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "SEA Source" 2)]}
+                 :runner {:hand ["Flip Switch"]}})
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (play-from-hand state :runner "Flip Switch")
+      (take-credits state :runner)
+      (play-from-hand state :corp "SEA Source")
+      (click-prompt state :runner "Yes")
+      (is (zero? (-> (get-corp) :prompt first :base)) "Base trace should now be 0")
+      (is (find-card "Flip Switch" (:discard (get-runner))) "Flip Switch should be in Heap")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (zero? (count-tags state)) "Runner should gain no tag from beating trace")
+      (play-from-hand state :corp "SEA Source")
+      (is (= 3 (-> (get-corp) :prompt first :base)) "Base trace should be reset to 3")))
+  (testing "Jack out ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Flip Switch"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Flip Switch")
+      (let [flip (get-hardware state 0)]
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (refresh flip) "Flip Switch hasn't been trashed")
+        (run-on state "HQ")
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (= "Runner jacks out." (-> @state :log last :text)))
+        (is (nil? (refresh flip)) "Flip Switch has been trashed")
+        (is (find-card "Flip Switch" (:discard (get-runner)))))))
+  (testing "Tag losing ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Flip Switch"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Flip Switch")
+      (is (zero? (count-tags state)) "Runner starts with 0 tags")
+      (let [flip (get-hardware state 0)]
+        (card-ability state :runner flip 1)
+        (is (refresh flip) "Flip Switch hasn't been trashed")
+        (core/gain-tags state :runner 1)
+        (is (= 1 (count-tags state)) "Runner starts with 0 tags")
+        (card-ability state :runner flip 1)
+        (is (zero? (count-tags state)) "Runner has lost 1 tag")
+        (is (nil? (refresh flip)) "Flip Switch has been trashed")
+        (is (find-card "Flip Switch" (:discard (get-runner))))))))
+
 (deftest friday-chip
   ;; Friday Chip - gain counters for trashing cards, move a counter on turn start
   (do-game

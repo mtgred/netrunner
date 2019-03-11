@@ -467,6 +467,30 @@
              :runner-turn-ends nil
              :corp-turn-ends nil}})
 
+   "Flip Switch"
+   {:events
+    {:pre-init-trace
+     {:async true
+      :effect (effect (show-wait-prompt :corp "Runner to use Flip Switch")
+                      (continue-ability
+                        :runner
+                        {:optional
+                         {:prompt "Use Flip Switch to reduce base trace strength to 0?"
+                          :yes-ability {:msg "reduce the base trace strength to 0"
+                                        :effect (req (wait-for (trash state side card {:cause :ability-cost})
+                                                               (swap! state assoc-in [:trace :force-base] 0)
+                                                               (effect-completed state side eid)))}
+                          :end-effect (effect (clear-wait-prompt :corp))}}
+                        card nil))}}
+    :abilities [{:req (req (and run
+                                (= :runner (:active-player @state))))
+                 :effect (req (wait-for (trash state side card {:cause :ability-cost})
+                                        (jack-out state side eid)))}
+                {:req (req (and (pos? (count-tags state))
+                                (= :runner (:active-player @state))))
+                 :effect (req (wait-for (trash state side card {:cause :ability-cost})
+                                        (lose-tags state side eid 1)))}]}
+
    "Forger"
    {:interactions {:prevent [{:type #{:tag}
                               :req (req true)}]}
