@@ -477,8 +477,9 @@
                         {:optional
                          {:prompt "Use Flip Switch to reduce base trace strength to 0?"
                           :yes-ability {:msg "reduce the base trace strength to 0"
-                                        :effect (req (swap! state assoc-in [:trace :force-base] 0)
-                                                     (trash state side eid card {:cause :ability-cost}))}
+                                        :effect (req (wait-for (trash state side card {:cause :ability-cost})
+                                                               (swap! state assoc-in [:trace :force-base] 0)
+                                                               (effect-completed state side eid)))}
                           :end-effect (effect (clear-wait-prompt :corp))}}
                         card nil))}}
     :abilities [{:req (req (and run
