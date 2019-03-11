@@ -32,7 +32,7 @@
   [state side n ice]
   ;; apply the strength bonus if the bonus is positive, or if the ice doesn't have the "can't lower strength" flag
   (when (or (pos? n) (not (card-flag? ice :cannot-lower-strength true)))
-    (swap! state update-in [:bonus :ice-strength] (fnil #(+ % n) 0))))
+    (swap! state update-in [:bonus :ice-strength] (fnil + 0) n)))
 
 (defn ice-strength
   "Gets the modified strength of the given ice."
@@ -50,9 +50,10 @@
         oldstren (or (:current-strength ice) (:strength ice))]
     (when (:rezzed ice)
       (swap! state update-in [:bonus] dissoc :ice-strength)
-      (trigger-event state side :pre-ice-strength ice)
-      (update! state side (assoc ice :current-strength (ice-strength state side ice)))
-      (trigger-event state side :ice-strength-changed (get-card state ice) oldstren))))
+      (wait-for (trigger-event-simult state side :pre-ice-strength nil ice)
+                (update! state side (assoc ice :current-strength (ice-strength state side ice)))
+                (trigger-event state side :ice-strength-changed (get-card state ice) oldstren)
+                (swap! state update-in [:bonus] dissoc :ice-strength)))))
 
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."

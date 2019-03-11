@@ -1496,6 +1496,30 @@
       (core/remove-tag state :runner 1)
       (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
 
+(deftest rime
+  ;; Rime
+  (do-game
+    (new-game {:corp {:deck [(qty "Sure Gamble" 10)]
+                      :hand [(qty "Rime" 2) (qty "Ice Wall" 2)]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (let [iw1 (get-ice state :hq 0)
+          iw2 (get-ice state :rd 0)]
+      (core/rez state :corp iw1)
+      (core/rez state :corp iw2)
+      (is (= 1 (core/get-strength (refresh iw1))) "Ice Wall starts with 1 strength")
+      (play-from-hand state :corp "Rime" "HQ")
+      (is (= 1 (core/get-strength (refresh iw1))) "Rime does nothing until rezzed")
+      (core/rez state :corp (get-ice state :hq 1))
+      (is (= 2 (core/get-strength (refresh iw1))) "Rime gives Ice Wall on the same server bonus strength")
+      (is (= 1 (core/get-strength (refresh iw2))) "Rime doesn't give ice on other servers bonus strength")
+      (core/move state :corp (get-ice state :hq 1) :hand)
+      (play-from-hand state :corp "Rime" "R&D")
+      (core/rez state :corp (get-ice state :rd 1))
+      (is (= 1 (core/get-strength (refresh iw1))) "Rime no longer gives bonus strength to ice on previous server")
+      (is (= 2 (core/get-strength (refresh iw2))) "Rime only gives ice on current server bonus strength"))))
+
 (deftest sadaka
   ;; Sadaka
   (testing "Sub 1 - Look at the top 3 cards of R&D, arrange those or shuffle R&D. You may draw 1 card"
