@@ -57,6 +57,20 @@
         (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
         (is (= (get-in @state [:corp :discard 1 :title]) "Architect"))))))
 
+(deftest afshar
+  ;; Afshar
+  (do-game
+    (new-game {:corp {:hand ["Afshar"]}})
+    (play-from-hand state :corp "Afshar" "HQ")
+    (let [afshar (get-ice state :hq 0)]
+      (core/rez state :corp afshar)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (card-subroutine state :corp afshar 0)
+      (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits")
+      (card-subroutine state :corp afshar 1)
+      (is (not (:run @state)) "Run is ended"))))
+
 (deftest asteroid-belt
   ;; Asteroid Belt - Space ICE rez cost reduced by 3 credits per advancement
   (do-game
