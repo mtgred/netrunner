@@ -804,6 +804,32 @@
       (run-continue state)
       (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used"))))
 
+(deftest utae
+  ;; Utae
+  (do-game
+    (new-game {:corp {:deck ["Enigma"]}
+               :runner {:deck ["Utae" (qty "Logic Bomb" 3)]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Utae")
+    (let [utae (get-program state 0)]
+      (run-on state "HQ")
+      (core/rez state state :corp (get-ice state :hq 0))
+      (card-ability state :runner utae 0)
+      (click-prompt state :runner "2")
+      (card-ability state :runner utae 0)
+      (is (empty? (:prompt (get-runner))) "Can only use ability once per run")
+      (is (= 1 (:credit (get-runner))))
+      (card-ability state :runner utae 1)
+      (is (= 1 (:credit (get-runner))) "Cannot use this ability without 3 installed virtual resources")
+      (run-jack-out state)
+      (core/gain state :runner :click 2)
+      (dotimes [_ 3]
+        (play-from-hand state :runner "Logic Bomb"))
+      (run-on state "HQ")
+      (card-ability state :runner utae 1)
+      (is (= 0 (:credit (get-runner))) "Able to use ability now"))))
+
 (deftest wyrm
   ;; Wyrm reduces strength of ice
   (do-game
