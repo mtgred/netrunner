@@ -177,7 +177,7 @@
                                          (fn [state side card]
                                            (if (= (:cid card) (:cid target))
                                              ((constantly false)
-                                              (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
+                                               (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
                                              true))))}
 
    "CBI Raid"

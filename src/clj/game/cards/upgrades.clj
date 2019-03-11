@@ -601,8 +601,7 @@
                 :choices (conj (mapv #(-> % :zone second zone->name) grids) "None")
                 :effect (effect (continue-ability (install-ice ice ices grids target) card nil))}))
            (choose-ice [ices grids]
-             (if (empty? ices)
-               nil
+             (when (seq ices)
                {:async true
                 :prompt "Choose an ice to reveal and install, or None to decline"
                 :choices (conj (mapv :title ices) "None")
@@ -642,8 +641,8 @@
                                           :else
                                           (effect-completed state side eid)))}
                :post-corp-draw {:effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw])
-                                          (when (= :runner (:active-player @state))
-                                            (clear-wait-prompt state :runner)))}}})
+                                             (when (= :runner (:active-player @state))
+                                               (clear-wait-prompt state :runner)))}}})
 
    "K. P. Lynn"
    (let [abi {:prompt "Choose one"

@@ -299,8 +299,10 @@
                                                                  (all-installed state :corp))]
                                                 ; the operation ends up in :discard when it is played; to host it,
                                                 ; we need (host) to look for it in discard.
-                                                (host state side agenda (assoc card :zone [:discard]
-                                                                               :seen true :installed true))
+                                                (host state side agenda (assoc card
+                                                                               :zone [:discard]
+                                                                               :seen true
+                                                                               :installed true))
                                                 (system-msg state side (str "hosts Casting Call on " (:title agenda)))))}
                      card nil)))
     :events {:access {:req (req (= (:cid target) (:cid (:host card))))

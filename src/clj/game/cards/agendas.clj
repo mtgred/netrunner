@@ -17,7 +17,7 @@
     {:msg (msg "gain " (count-ice corp) " [Credits]")
      :interactive (req true)
      :effect (effect (gain-credits (count-ice corp))
-               (update-all-ice))
+                     (update-all-ice))
      :swapped {:effect (req (update-all-ice state side))}
      :events {:pre-ice-strength {:req (req (has-subtype? target subtype))
                                  :effect (effect (ice-strength-bonus 1 target))}}}))
@@ -457,7 +457,7 @@
                                    card :can-advance
                                    (fn [state side card]
                                      ((constantly false)
-                                      (toast state :corp "Cannot advance cards this turn due to Efficiency Committee." "warning")))))
+                                       (toast state :corp "Cannot advance cards this turn due to Efficiency Committee." "warning")))))
                  :msg "gain [Click][Click]"}]}
 
    "Elective Upgrade"

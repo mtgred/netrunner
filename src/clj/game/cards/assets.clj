@@ -1436,7 +1436,8 @@
                                               ap (:agendapoints agenda 0)]
                                           (rez-cost-bonus state side (* ap -2))
                                           (rez state side target {:no-warning true})
-                                          (if (< cnt 3) (continue-ability state side (rez-ice (inc cnt)) card nil)
+                                          (if (< cnt 3)
+                                            (continue-ability state side (rez-ice (inc cnt)) card nil)
                                             (effect-completed state side eid))))})]
      {:abilities [{:label "Forfeit agenda to rez up to 3 ICE with a 2 [Credit] discount per agenda point"
                    :req (req (pos? (count (:scored corp))))

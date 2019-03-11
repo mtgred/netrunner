@@ -525,7 +525,8 @@
                                    (end-run))}]}
 
    "Burke Bugs"
-   {:subroutines [(trace-ability 0 (assoc trash-program :not-distinct true
+   {:subroutines [(trace-ability 0 (assoc trash-program
+                                          :not-distinct true
                                           :player :runner
                                           :msg "force the Runner to trash a program"
                                           :label "Force the Runner to trash a program"))]}
@@ -1660,7 +1661,8 @@
                                                 (cons "Mythic")
                                                 distinct
                                                 (join " - "))]
-                               (assoc card :subtype-target (remove-subtypes subtype "Mythic")
+                               (assoc card
+                                      :subtype-target (remove-subtypes subtype "Mythic")
                                       :subtype subtype))))
          mg {:req (req (ice? target))
              :effect ab}]
@@ -2216,7 +2218,8 @@
    {:subroutines [{:req (req (not= (:server run) [:discard]))
                    :msg "make the Runner continue the run on Archives"
                    :effect (req (swap! state update-in [:run]
-                                       #(assoc % :position (count (get-in corp [:servers :archives :ices]))
+                                       #(assoc %
+                                               :position (count (get-in corp [:servers :archives :ices]))
                                                :server [:archives])))}]}
 
    "Swarm"
