@@ -354,6 +354,12 @@
                    :effect (effect (corp-install target nil))
                    :msg (msg (corp-install-msg target))}]}
 
+   "Afshar"
+   {:implementation "Breaking both subs not restricted"
+    :subroutines [{:msg "make the Runner lose 2 [Credits]"
+                   :effect (effect (lose-credits :runner 2))}
+                  end-the-run]}
+
    "Ashigaru"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (:hand corp)) " subroutines")}]
