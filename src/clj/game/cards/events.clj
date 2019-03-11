@@ -758,7 +758,7 @@
    "Falsified Credentials"
    {:prompt "Choose a type"
     :choices ["Agenda" "Asset" "Upgrade"]
-    :msg (msg "to guess " target)
+    :msg (msg "guess " target)
     :async true
     :effect (effect
              (continue-ability
@@ -2045,6 +2045,13 @@
     :prompt "Choose a server"
     :choices (req runnable-servers)
     :effect (effect (make-run target nil card))}
+
+   "Spec Work"
+   {:async true
+    :additional-cost [:program 1]
+    :msg "gain 4 [Credits] and draw 2 cards"
+    :effect (effect (gain-credits 4)
+                    (draw eid 2 nil))}
 
    "Special Order"
    {:prompt "Choose an Icebreaker"
