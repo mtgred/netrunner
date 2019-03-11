@@ -206,20 +206,12 @@
                                    card nil))}]}
 
    "Caprice Nisei"
-   {:events {:pass-ice {:req (req (and this-server
-                                       (= (:position run) 1))) ; trigger when last ice passed
-                        :msg "start a Psi game"
-                        :psi {:not-equal {:msg "end the run"
-                                          :effect (effect (end-run eid card))}}}
-             :run {:req (req (and this-server
-                                  (zero? (:position run)))) ; trigger on unprotected server
-                   :msg "start a Psi game"
-                   :psi {:not-equal {:msg "end the run"
-                                     :effect (effect (end-run eid card))}}}}
-    :abilities [{:req (req this-server)
-                 :msg "start a Psi game"
-                 :psi {:not-equal {:msg "end the run"
-                                   :effect (effect (end-run eid card))}}}]}
+   (let [ability {:req (req (and this-server
+                                 (zero? (:position run))))
+                  :psi {:not-equal {:msg "end the run"
+                                    :effect (effect (end-run eid card))}}}]
+     {:events {:approach-server ability}
+      :abilities [ability]})
 
    "ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
@@ -693,29 +685,26 @@
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
    "Letheia Nisei"
-   (let [ability
-         {:effect (effect
-                    (show-wait-prompt :runner "Corp to use Letheia Nisei")
-                    (continue-ability
-                      :corp
-                      {:optional
-                       {:prompt "Trash to force re-approach outer ice?"
-                        :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability
-                        {:msg "force the Runner to approach outermost piece of ice"
-                         :effect (req (swap! state assoc-in [:run :position] (count run-ices))
-                                      (trash state side eid card {:cause :ability-cost}))}
-                        :end-effect (effect (clear-wait-prompt :runner))}}
-                      card nil))}]
-     {:events {:approach-server {:req (req (println "approach-server")
-                                           (and this-server
-                                                (zero? (:position run))))
-                                 :msg "start a Psi game"
-                                 :psi {:not-equal ability}}}
-      :abilities [{:req (req (and this-server
-                                  (zero? (:position run))))
-                   :psi {:not-equal ability}}
-                  (set-autoresolve :auto-fire "whether to fire Letheia Nisei")]})
+   (let [ability {:req (req (and this-server
+                                 (zero? (:position run))))
+                  :psi {:not-equal
+                        {:effect
+                         (effect
+                           (show-wait-prompt :runner "Corp to use Letheia Nisei")
+                           (continue-ability
+                             :corp
+                             {:optional
+                              {:prompt "Trash to force re-approach outer ice?"
+                               :autoresolve (get-autoresolve :auto-fire)
+                               :yes-ability
+                               {:msg "force the Runner to approach outermost piece of ice"
+                                :effect (req (swap! state assoc-in [:run :position] (count run-ices))
+                                             (trash state side eid card {:cause :ability-cost}))}
+                               :end-effect (effect (clear-wait-prompt :runner))}}
+                             card nil))}}}]
+     {:events {:approach-server ability}
+      :abilities [ability
+                  (set-autoresolve :auto-fire "Fire Letheia Nisei?")]})
 
    "Manta Grid"
    {:events {:successful-run-ends
@@ -727,7 +716,6 @@
    "Marcus Batty"
    {:abilities [{:req (req this-server)
                  :label "[Trash]: Start a Psi game"
-                 :msg "start a Psi game"
                  :psi {:not-equal {:prompt "Select a rezzed piece of ICE to resolve one of its subroutines"
                                    :choices {:req #(and (ice? %)
                                                         (rezzed? %))}
