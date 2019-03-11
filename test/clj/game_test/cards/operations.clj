@@ -2040,6 +2040,39 @@
     (click-prompt state :runner "0")
     (is (= 1 (count-tags state)) "Runner should get 1 tag from losing SEA Source trace")))
 
+(deftest secure-and-protect
+  ;; Secure and Protect
+  (testing "With ice in deck"
+    (do-game
+      (new-game {:corp {:hand ["Secure and Protect"]
+                        :deck [(qty "Hedge Fund" 10) "Ice Wall" "Afshar"]}})
+      (play-from-hand state :corp "Secure and Protect")
+      (is (= ["Afshar" "Ice Wall"] (vec (sort (prompt-titles :corp)))))
+      (click-prompt state :corp "Ice Wall")
+      (is (nil? (get-ice state :hq 0)) "No ice installed on HQ")
+      (click-prompt state :corp "HQ")
+      (is (get-ice state :hq 0) "Ice Wall is installed on HQ")))
+  (testing "With no ice in deck"
+    (do-game
+      (new-game {:corp {:hand ["Secure and Protect"]
+                        :deck [(qty "Hedge Fund" 10)]}})
+      (play-from-hand state :corp "Secure and Protect")
+      (is (nil? (seq (:prompt (get-corp)))) "Corp should have no prompts")))
+  (testing "With varying install costs"
+    (letfn [(sp-test [amt]
+              (do-game
+                (new-game {:corp {:hand ["Secure and Protect" (qty "Ice Wall" amt)]
+                                  :deck [(qty "Hedge Fund" 10) "Ice Wall" "Afshar"]}})
+                (core/gain state :corp :click amt :credit amt)
+                (doseq [_ (range amt)]
+                  (play-from-hand state :corp "Ice Wall" "HQ"))
+                (play-from-hand state :corp "Secure and Protect")
+                (let [credits (:credit (get-corp))]
+                  (click-prompt state :corp "Ice Wall")
+                  (click-prompt state :corp "HQ")
+                  (is (= credits (:credit (get-corp))) "Corp should get 3 credit install discount"))))]
+      (doall (map sp-test (range 4))))))
+
 (deftest self-growth-program
   ;; Self-Growth Program - Add 2 installed cards to grip if runner is tagged
   (do-game
