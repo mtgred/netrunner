@@ -1004,6 +1004,31 @@
       (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
 
+(deftest letheia-nisei
+  ;; Letheia Nisei
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Letheia Nisei" (qty "Ice Wall" 2)]
+                      :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Letheia Nisei" "R&D")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (let [letheia (get-content state :rd 0)]
+      (core/rez state :corp letheia)
+      (core/rez state :corp (get-ice state :rd 0))
+      (core/rez state :corp (get-ice state :rd 1))
+      (run-continue state)
+      (run-continue state)
+      (click-prompt state :corp "0 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
+      (is (zero? (:position (:run @state))) "Runner should be approaching the server")
+      (click-prompt state :corp "Yes")
+      (is (= 2 (:position (:run @state))) "Runner should be approaching outermost ice")
+      (is (nil? (refresh letheia)) "Letheia is trashed")
+      (is (find-card "Letheia Nisei" (:discard (get-corp))) "Letheia is in Archives"))))
+
 (deftest manta-grid
   ;; If the Runner has fewer than 6 or no unspent clicks on successful run, corp gains a click next turn.
   (do-game
