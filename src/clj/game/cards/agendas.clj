@@ -1169,6 +1169,22 @@
                                       :async true
                                       :effect (effect (gain-tags eid 1))}}}]}
 
+   "SDS Drone Deployment"
+   {:steal-cost-bonus (req [:program 1])
+    :effect (req (show-wait-prompt state :runner "Corp to use SDS Drone Deployment")
+                 (if (seq (get-in @state [:runner :rig :program]))
+                   (continue-ability
+                     state side
+                     {:prompt "Select a program to trash"
+                      :label "Trash a program"
+                      :msg (msg "trash " (:title target))
+                      :choices {:req #(and (installed? %)
+                                           (is-type? % "Program"))}
+                      :effect (effect (trash target))
+                      :end-effect (effect (clear-wait-prompt :runner))}
+                     card nil)
+                   (clear-wait-prompt state :runner)))}
+
    "Self-Destruct Chips"
    {:silent (req true)
     :msg "decrease the Runner's maximum hand size by 1"

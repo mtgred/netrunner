@@ -2218,6 +2218,49 @@
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))))
 
+(deftest sds-drone-deployment
+  ;; SDS Drone Deployment
+  (testing "Corp score, a program is installed"
+    (do-game
+      (new-game {:corp {:hand ["SDS Drone Deployment"]}
+                 :runner {:hand ["Cache"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (take-credits state :runner)
+      (play-and-score state "SDS Drone Deployment")
+      (let [cache (get-program state 0)]
+        (is (prompt-is-type? state :corp :select) "Corp must choose an installed program")
+        (click-card state :corp "Cache")
+        (is (nil? (refresh cache)) "Cache is trashed")
+        (is (find-card "Cache" (:discard (get-runner))) "Cache is trashed"))))
+  (testing "Corp score, no program is installed"
+    (do-game
+      (new-game {:corp {:hand ["SDS Drone Deployment"]}})
+      (play-and-score state "SDS Drone Deployment")
+      (is (nil? (seq (:prompt (get-corp)))) "Corp doesn't get any choices when runner has no installed programs")))
+  (testing "Runner steal, a program is installed"
+    (do-game
+      (new-game {:corp {:hand ["SDS Drone Deployment"]}
+                 :runner {:hand ["Cache"]}})
+      (play-from-hand state :corp "SDS Drone Deployment" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (run-empty-server state "Remote 1")
+      (let [cache (get-program state 0)]
+        (is (= ["Pay 1:program to steal" "No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal")
+        (click-prompt state :runner "Pay 1:program to steal")
+        (click-card state :runner "Cache")
+        (is (nil? (refresh cache)) "Cache is trashed")
+        (is (find-card "Cache" (:discard (get-runner))) "Cache is trashed")
+        (is (find-card "SDS Drone Deployment" (:scored (get-runner)))))))
+  (testing "Runner steal, no program is installed"
+    (do-game
+      (new-game {:corp {:hand ["SDS Drone Deployment"]}})
+      (play-from-hand state :corp "SDS Drone Deployment" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Remote 1")
+      (is (= ["No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal"))))
+
 (deftest self-destruct-chips
   ;; Self-Destruct Chips
   (do-game
