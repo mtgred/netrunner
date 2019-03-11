@@ -692,6 +692,31 @@
                      :async true
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
+   "Letheia Nisei"
+   (let [ability
+         {:effect (effect
+                    (show-wait-prompt :runner "Corp to use Letheia Nisei")
+                    (continue-ability
+                      :corp
+                      {:optional
+                       {:prompt "Trash to force re-approach outer ice?"
+                        :autoresolve (get-autoresolve :auto-fire)
+                        :yes-ability
+                        {:msg "force the Runner to approach outermost piece of ice"
+                         :effect (req (swap! state assoc-in [:run :position] (count run-ices))
+                                      (trash state side eid card {:cause :ability-cost}))}
+                        :end-effect (effect (clear-wait-prompt :runner))}}
+                      card nil))}]
+     {:events {:approach-server {:req (req (println "approach-server")
+                                           (and this-server
+                                                (zero? (:position run))))
+                                 :msg "start a Psi game"
+                                 :psi {:not-equal ability}}}
+      :abilities [{:req (req (and this-server
+                                  (zero? (:position run))))
+                   :psi {:not-equal ability}}
+                  (set-autoresolve :auto-fire "whether to fire Letheia Nisei")]})
+
    "Manta Grid"
    {:events {:successful-run-ends
              {:msg "gain a [Click] next turn"

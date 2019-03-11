@@ -32,7 +32,7 @@
        (wait-for (trigger-event-simult state :runner :run nil s)
                  (when (>= n 2) (trigger-event state :runner :run-big s n))
                  (when (zero? n)
-                   (trigger-event-sync state :runner (make-eid state) :approach-server nil)))))))
+                   (trigger-event-simult state :runner (make-eid state) :approach-server nil)))))))
 
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."
