@@ -3,7 +3,8 @@
             [game.utils :refer [side-str]]
             [clojure.test :refer :all]
             [clojure.string :refer [join]]
-            [game-test.utils :refer :all]))
+            [game-test.utils :refer :all]
+            [jinteki.utils :as jutils]))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s
@@ -11,10 +12,10 @@
          ~'get-runner (fn [] (:runner @~'state))
          ~'get-run (fn [] (:run @~'state))
          ~'hand-size (fn [side#] (core/hand-size ~'state side#))
-         ~'refresh (fn [~'card]
+         ~'refresh (fn [card#]
                      ;; ;; uncommenting the below two assertions causes a looot of tests to fail
                      ;; (is ~'card "card passed to refresh should not be nil")
-                     (let [~'ret (core/get-card ~'state ~'card)]
+                     (let [~'ret (core/get-card ~'state card#)]
                        ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
          ~'prompt-map (fn [side#] (-> @~'state side# :prompt first))
