@@ -1149,13 +1149,15 @@
   (testing "not forced to trash when credits below 5"
     (do-game
       (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}
-                 :runner {:deck ["Cache"]}})
+                 :runner {:deck ["Daily Casts"]}})
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
-      (play-from-hand state :runner "Cache")
-      (is (= 4 (:credit (get-runner))) "Runner paid install costs")
+      (play-from-hand state :runner "Daily Casts")
+      (is (= 2 (:credit (get-runner))) "Runner paid install costs")
       (run-empty-server state "Server 1")
-      (is (= ["No action"] (-> (get-runner) :prompt first :choices)) "Can't trash"))))
+      (is (= ["Pay 5 [Credits] to trash" "No action"]
+             (-> (get-runner) :prompt first :choices))
+          "Runner is given the choice, as we don't know if they can afford it or not"))))
 
 (deftest mwanza-city-grid
   ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
