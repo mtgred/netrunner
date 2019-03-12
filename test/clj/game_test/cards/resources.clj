@@ -3136,7 +3136,31 @@
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (= 1 (core/access-bonus-count (:run @state) :rd)) "Runner should access 1 additional card")
         (run-successful state)
-        (is (zero? (-> (get-runner) :register :last-run (core/access-bonus-count :hq))) "Access bonuses are zeroed out when attacked server isn't R&D or HQ")))))
+        (is (zero? (-> (get-runner) :register :last-run (core/access-bonus-count :rd))) "Access bonuses are zeroed out when attacked server isn't R&D or HQ"))))
+  (testing "A given ability shouldn't give accesses when running the other server"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand [(qty "Fire Wall" 5)]}
+                 :runner {:hand ["The Turning Wheel"]
+                          :credits 10}})
+      (trash-from-hand state :corp "Hostile Takeover")
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (run-empty-server state "R&D")
+        (click-prompt state :runner "No action")
+        (is (= 1 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
+        (run-empty-server state "R&D")
+        (click-prompt state :runner "No action")
+        (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
+        (run-on state "HQ")
+        (card-ability state :runner ttw 0)
+        (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
+        (is (zero? (core/access-bonus-count (:run @state) :hq)) "Runner should access 1 additional card")
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available")))))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool
