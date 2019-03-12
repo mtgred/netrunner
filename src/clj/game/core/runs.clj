@@ -13,7 +13,7 @@
   ([state side eid server] (make-run state side eid server nil nil))
   ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card))
   ([state side eid server run-effect card]
-   (when (can-run? state :runner)
+   (if (can-run? state :runner)
      (let [s [(if (keyword? server) server (last (server->zone state server)))]
            ices (get-in @state (concat [:corp :servers] s [:ices]))
            n (count ices)]
@@ -32,7 +32,8 @@
        (wait-for (trigger-event-simult state :runner :run nil s)
                  (when (>= n 2) (trigger-event state :runner :run-big s n))
                  (when (zero? n)
-                   (trigger-event-simult state :runner (make-eid state) :approach-server nil)))))))
+                   (trigger-event-simult state :runner (make-eid state) :approach-server nil))))
+     (effect-completed state side eid))))
 
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."
