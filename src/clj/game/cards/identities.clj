@@ -4,8 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target
@@ -108,7 +107,7 @@
               :async true
               :effect (req (show-wait-prompt state :corp "Runner to choose starting directives")
                            (let [is-directive? #(has-subtype? % "Directive")
-                                 directives (filter is-directive? (vals @all-cards))
+                                 directives (filter is-directive? (server-cards))
                                  directives (map make-card directives)
                                  directives (zone :play-area directives)]
                              ;; Add directives to :play-area - assumed to be empty
@@ -472,7 +471,7 @@
                                                         (effect-completed eid))
                                  :effect (effect (rez-cost-bonus -4)
                                                  (clear-wait-prompt :runner)
-                                                 (rez eid target))}
+                                                 (rez eid target nil))}
                                 card nil))}}}
 
    "Haas-Bioroid: Engineering the Future"

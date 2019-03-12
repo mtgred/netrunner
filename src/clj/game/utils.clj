@@ -1,5 +1,6 @@
 (ns game.utils
-  (:require [clojure.string :refer [split-lines split join]]))
+  (:require [clojure.string :refer [split-lines split join]]
+            [jinteki.cards :refer [all-cards]]))
 
 (declare pluralize)
 
@@ -7,6 +8,17 @@
 
 (defn make-cid []
   (swap! cid inc))
+
+(defn server-card
+  [title]
+  (let [card (get @all-cards title)]
+    (if (and title card)
+      card
+      (.println *err* (str "Tried to select server-card for " title)))))
+
+(defn server-cards
+  []
+  (vals @jinteki.cards/all-cards))
 
 (defn abs [n] (max n (- n)))
 

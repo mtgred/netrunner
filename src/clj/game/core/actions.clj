@@ -181,7 +181,7 @@
   [state side {:keys [choice card] :as args}]
   (let [servercard (get-card state card)
         card (if (not= (:title card) (:title servercard))
-               (@all-cards (:title card))
+               (server-card (:title card))
                servercard)
         prompt (first (get-in @state [side :prompt]))
         choices (:choices prompt)]
@@ -214,7 +214,7 @@
       (:card-title choices)
       (if (string? choice)
         (let [title-fn (:card-title choices)
-              found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (vals @all-cards))]
+              found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (server-cards))]
           (if found
             (if (title-fn state side (make-eid state) (:card prompt) [found])
               (do (when-let [effect-prompt (:effect prompt)]
@@ -405,10 +405,10 @@
    (let [card (if no-get-card
                 card
                 (get-card state card))
-         altcost (when-not no-get-card
+         altcost (when (and card (not no-get-card))
                    (:alternative-cost (card-def card)))]
      (when cached-bonus (rez-cost-bonus state side cached-bonus))
-     (if (or force (can-rez? state side card))
+     (if (and card (or force (can-rez? state side card)))
        (do
          (trigger-event state side :pre-rez card)
          (if (or (#{"Asset" "ICE" "Upgrade"} (:type card))

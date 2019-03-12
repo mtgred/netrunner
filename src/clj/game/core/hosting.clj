@@ -21,7 +21,7 @@
 (defn remove-from-host
   "Removes a card from its host."
   [state side {:keys [cid] :as card}]
-  (let [host-card (get-card state (:host card))]
+  (when-let [host-card (get-card state (:host card))]
     (update-hosted! state side (update-in host-card [:hosted] (fn [coll] (remove-once #(= (:cid %) cid) coll))))
     (when-let [hosted-lost (:hosted-lost (card-def host-card))]
       (hosted-lost state side (make-eid state) (get-card state host-card) (dissoc card :host)))))

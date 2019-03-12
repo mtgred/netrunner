@@ -4,8 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags INFINITY has-subtype?]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags INFINITY has-subtype?]]))
 
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
@@ -684,8 +683,8 @@
                  :runner-trash (trash-event :runner-trash)})})
 
    "DJ Fenris"
-   (let [is-draft-id? #(.startsWith (:code %) "00")
-         sorted-id-list (fn [runner] (->> (vals @all-cards)
+   (let [is-draft-id? #(starts-with? (:code %) "00")
+         sorted-id-list (fn [runner] (->> (server-cards)
                                           (filter #(and (is-type? % "Identity")
                                                         (has-subtype? % "g-mod")
                                                         (not= (-> runner :identity :faction)
