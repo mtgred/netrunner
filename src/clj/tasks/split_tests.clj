@@ -14,17 +14,17 @@
 
 (defn extract-tests []
   (let [header (string/join
-                 "\r\n"
+                 "\n"
                  ["(ns game-test.cards.%s.%s"
                   "  (:require [game.core :as core]"
                   "            [game-test.core :refer :all]"
                   "            [game-test.utils :refer :all]"
                   "            [game-test.macros :refer :all]"
                   "            [clojure.test :refer :all]))"
-                  "\r\n"])
-        footer "\r\n"
+                  "\n"])
+        footer "\n"
         base-tests (->> (open-base-tests)
-                        (map #(string/split % #"\r\n\r\n")))
+                        (map #(string/split % #"\n\n")))
         tests (->> base-tests
                    (map rest)
                    flatten
@@ -42,7 +42,7 @@
       (io/make-parents filename)
       (spit filename
             (str (format header card-type title)
-                 (string/join "\r\n" card)
+                 (string/join "\n" card)
                  footer)))))
 
 (defn- open-individual-tests []
@@ -55,7 +55,7 @@
 
 (defn merge-tests []
   (let [header (string/join
-                 "\r\n"
+                 "\n"
                  ["(ns game-test.cards.%s"
                   "  (:require [game.core :as core]"
                   "            [game.utils :as utils]"
@@ -63,15 +63,15 @@
                   "            [game-test.utils :refer :all]"
                   "            [game-test.macros :refer :all]"
                   "            [clojure.test :refer :all]))"
-                  "\r\n"])
-        footer "\r\n"
+                  "\n"])
+        footer "\n"
         normalized->title (->> @all-cards
                                (map #(select-keys (second %) [:normalizedtitle :title]))
                                (map vals)
                                (map vec)
                                (into {}))
         tests (for [card (->> (open-individual-tests)
-                              (map #(string/split % #"\r\n\r\n"))
+                              (map #(string/split % #"\n\n"))
                               (mapcat rest)
                               (map string/split-lines))
                     :let [title (-> card first
@@ -80,7 +80,7 @@
                                     (string/split #" ") last)
                           card (->> card
                                     (remove string/blank?)
-                                    (string/join "\r\n"))
+                                    (string/join "\n"))
                           all-card (@all-cards (normalized->title title))
                           card-type (type->dir all-card)]]
                 {card-type {title card}})
@@ -88,5 +88,5 @@
     (doseq [[card-type cards] (sort-by key card-tests)]
       (spit (str "test/clj/game_test/cards/" card-type ".clj")
             (str (format header card-type)
-                 (string/join "\r\n\r\n" (vals (sort-by #(string/lower-case (key %)) cards)))
+                 (string/join "\n\n" (vals (sort-by #(slugify (key %)) cards)))
                  footer)))))
