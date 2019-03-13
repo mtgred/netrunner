@@ -180,8 +180,8 @@
                        ;; prepare the list of the given player's handlers for this event.
                        ;; Gather all registered handlers from the state, then append the card-ability if appropriate,
                        ;; then filter to remove suppressed handlers and those whose req is false.
-                       ;; This is essentially "step 1" as described here:
-                       ;; http://ancur.wikia.com/wiki/User_blog:Jakodrako/Ability_Types_and_Resolution_Primer#Conditional_Abilities
+                       ;; This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
+                       ;; http://nisei.net/files/Comprehensive_Rules_1.1.pdf
                        (let [abis (filter (partial is-player player-side) (get-in @state [:events event]))
                              abis (if (= player-side (get-side card-ability))
                                     (cons card-ability abis)
