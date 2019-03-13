@@ -531,7 +531,7 @@
                                       :async true
                                       :effect (req (let [c (move state side (find-latest state card) :play-area)]
                                                      (card-init state side c {:resolve-effect false})
-                                                     (wait-for (make-run state side (make-eid state) target)
+                                                     (wait-for (make-run state side (make-eid state) target nil card)
                                                                (doseq [s [:corp :runner]]
                                                                  (enable-identity state s))
                                                                (continue-ability state side maybe-reshuffle c nil))))}
@@ -2083,7 +2083,7 @@
     nil
     {:end-run {:msg "take 1 brain damage"
                :effect (effect (damage eid :brain 1 {:unpreventable true :card card}))}}
-    (effect (gain-run-credits 9)))
+    (effect (gain-next-run-credits 9)))
 
    "Sure Gamble"
    {:msg "gain 9 [Credits]" :effect (effect (gain-credits 9))}

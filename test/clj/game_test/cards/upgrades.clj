@@ -1675,7 +1675,6 @@
         (is (= 2 (:click (get-runner))))
         (take-credits state :runner 1)
         (is (= 1 (:click (get-runner))))
-        (is (not (core/can-run-server? state "HQ")) "Runner can't run - no additional clicks")
         (take-credits state :runner)
         (take-credits state :corp)
         (is (= 4 (:click (get-runner))))

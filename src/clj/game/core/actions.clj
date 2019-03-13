@@ -551,18 +551,7 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (let [cost-bonus (get-in @state [:bonus :run-cost])
-        click-cost-bonus (get-in @state [:bonus :click-run-cost])]
-    (when (and (can-run? state side)
-               (can-run-server? state server)
-               (can-pay? state :runner "a run" :click 1 cost-bonus click-cost-bonus))
-      (swap! state assoc-in [:runner :register :click-type] :run)
-      (swap! state assoc-in [:runner :register :made-click-run] true)
-      (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
-        (make-run state side server)
-        (system-msg state :runner
-                    (str (build-spend-msg cost-str "make a run on") server))
-        (play-sfx state side "click-run")))))
+  (make-run state side server))
 
 (defn remove-tag
   "Click to remove a tag."

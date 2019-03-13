@@ -1004,14 +1004,12 @@
     :in-play [:hand-size 2]}
 
    "Ruhr Valley"
-   {:events {:run {:req (req this-server)
-                   :effect (effect (lose :runner :click 1))
-                   :msg "force the Runner to spend an additional [Click]"}
-             :runner-turn-begins {:req (req (> (:click-per-turn runner) 1))
-                                  :effect (req (enable-run-on-server state card (second (:zone card))))}
-             :runner-spent-click {:req (req (<= 1 (:click runner)))
-                                  :effect (req (prevent-run-on-server state card (second (:zone card))))}
-             :leave-play (req (enable-run-on-server state card (second (:zone card))))}}
+   (letfn [(change-click-cost [n]
+             (req (let [server (second (:zone card))]
+                    (swap! state update-in [:corp :servers server :additional-cost]
+                           #(merge-costs (concat % [:click n]))))))]
+     {:effect (change-click-cost 1)
+      :leave-play (change-click-cost -1)})
 
    "Rutherford Grid"
    {:events {:pre-init-trace {:req (req this-server)

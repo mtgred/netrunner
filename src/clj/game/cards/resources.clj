@@ -1152,7 +1152,7 @@
                   :choices (req runnable-servers)
                   :msg (msg "make a run on " target " during which no programs can be used")
                   :makes-run true
-                  :effect (effect (make-run target))}]
+                  :effect (effect (make-run target nil card))}]
    {:implementation "Doesn't prevent program use"
     :flags {:runner-phase-12 (req true)}
     :install-cost-bonus (req [:credit (- (:link runner))])

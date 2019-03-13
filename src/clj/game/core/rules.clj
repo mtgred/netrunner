@@ -53,10 +53,6 @@
                                               (not (get-in @state [side :register :double-ignore-additional])))
                                        (concat additional-cost [:click 1])
                                        additional-cost)
-                     additional-cost (if-let [run-cost (and (has-subtype? card "Run")
-                                                            (get-in @state [:bonus :run-cost]))]
-                                       (concat additional-cost run-cost)
-                                       additional-cost)
                      total-cost (play-cost state side card
                                            (concat (when-not no-additional-cost additional-cost) extra-cost
                                                    [:credit (:cost card)]))
