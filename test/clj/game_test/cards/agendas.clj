@@ -1662,8 +1662,7 @@
     (click-prompt state :runner "Pay 4 net damage to steal")
     (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")
     (is (= :runner (:winner @state)) "Runner wins")
-    (is (= "Agenda" (:reason @state)) "Win condition reports agenda points")
-    (is (last-log-contains? state "wins the game") "PE did not fire")))
+    (is (= "Agenda" (:reason @state)) "Win condition reports agenda points")))
 
 (deftest paper-trail
   ;; Paper Trail
