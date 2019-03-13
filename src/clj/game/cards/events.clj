@@ -4,8 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
 
 (defn- run-event
   ([] (run-event nil))
@@ -1658,7 +1657,7 @@
                                            (= (:faction runner-identity) (:faction %))
                                            (not (is-draft-id? %))
                                            (not= (:title runner-identity) (:title %)))
-                        swappable-ids (filter is-swappable (vals @all-cards))]
+                        swappable-ids (filter is-swappable (server-cards))]
                     (cancellable swappable-ids :sorted)))
     :effect (req
               (let [old-runner-identity (:identity runner)]

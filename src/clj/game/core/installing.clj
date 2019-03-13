@@ -428,7 +428,8 @@
                                        [:rig (if facedown :facedown (to-keyword (:type card)))]))
                              c (assoc c :installed true :new true)
                              installed-card (if facedown
-                                              (update! state side c)
+                                              (do (update! state side c)
+                                                  (find-latest state c))
                                               (card-init state side c {:resolve-effect false
                                                                        :init-data true}))]
                          (when-not no-msg

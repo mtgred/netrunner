@@ -4,8 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
 
 ;;; Asset-specific helpers
 (defn installed-access-trigger
@@ -1830,7 +1829,8 @@
                  :prompt "Select two pieces of ICE to swap positions"
                  :choices {:req #(and (installed? %)
                                       (ice? %))
-                           :max 2}
+                           :max 2
+                           :all true}
                  :effect (req (when (= (count targets) 2)
                                 (swap-ice state side (first targets) (second targets))))
                  :msg (msg "swap the positions of "

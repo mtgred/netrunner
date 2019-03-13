@@ -2,8 +2,7 @@
   (:require [game.core :as core]
             [game.utils :as utils :refer [side-str]]
             [clojure.test :refer :all]
-            [clojure.string :refer [lower-case split]]
-            [jinteki.cards :refer [all-cards]]))
+            [clojure.string :refer [lower-case split]]))
 
 ;;; helper functions for prompt interaction
 (defn assert-prompt [state side]
