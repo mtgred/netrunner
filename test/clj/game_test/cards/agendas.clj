@@ -1,10 +1,9 @@
- (ns game-test.cards.agendas
+(ns game-test.cards.agendas
   (:require [game.core :as core]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
-            [jinteki.utils :refer [count-tags has-subtype?]]
             [clojure.test :refer :all]))
 
 (deftest ^{:card-title "15-minutes"}

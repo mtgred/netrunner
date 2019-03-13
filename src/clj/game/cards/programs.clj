@@ -7,11 +7,6 @@
             [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
             [jinteki.cards :refer [all-cards]]))
 
-(defn get-strength
-  [card]
-  (or (:current-strength card)
-      (:strength card)))
-
 (def breaker-auto-pump
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
   auto-pump routine in core, IF we are encountering a rezzed ice with a subtype
