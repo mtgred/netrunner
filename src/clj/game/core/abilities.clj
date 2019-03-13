@@ -427,7 +427,7 @@
         curprompt (first (get-in @state [side :prompt]))]
     (swap! state update-in [side :selected] #(vec (rest %)))
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % curprompt) pr)))
-    (if-not (empty? cards)
+    (if (seq cards)
       (do (doseq [card cards]
             (update! state side card))
           (resolve-ability state side (:ability selected) (:card curprompt) cards))

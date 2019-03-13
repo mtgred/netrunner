@@ -182,14 +182,20 @@
                            :not-self true}
                  :async true
                  :effect (req (wait-for (trash state :runner target)
-                                        (continue-ability state side
-                                                          {:prompt "Draw 1 card or remove 1 tag" :msg (msg (.toLowerCase target))
-                                                           :choices ["Draw 1 card" "Remove 1 tag"]
-                                                           :async true
-                                                           :effect (req (if (= target "Draw 1 card")
-                                                                          (draw state side eid 1 nil)
-                                                                          (do (lose-tags state :runner 1)
-                                                                              (effect-completed state side eid))))} card nil)))}]}
+                                        (continue-ability
+                                          state side
+                                          (let [deck (pos? (count (:deck runner)))
+                                                tags (pos? (count-tags state))]
+                                            {:req (req (or deck tags))
+                                             :prompt "Draw 1 card or remove 1 tag"
+                                             :choices (concat (when deck ["Draw 1 card"])
+                                                              (when tags ["Remove 1 tag"]))
+                                             :async true
+                                             :draw-1-card {:msg "draw 1 card"
+                                                           :effect (effect (draw eid 1 nil))}
+                                             :remove-1-tag {:msg "lose 1 tag"
+                                                            :effect (effect (lose-tags 1))}})
+                                          card nil)))}]}
 
    "Clone Chip"
    {:abilities [{:prompt "Select a program to install from your Heap"
@@ -1123,34 +1129,34 @@
                          :unsuccessful {:msg "bypass the current ICE"}}}]}
 
    "Severnius Stim Implant"
-   {:abilities [{:cost [:click 1]
-                 :prompt "Choose a server to run with Severnius Stim Implant"
-                 :choices ["HQ" "R&D"]
-                 :effect (req (let [n (count (:hand runner))
-                                    srv target
-                                    kw (if (= "R&D" target) :rd :hq)]
-                                (resolve-ability
-                                  state side
-                                  {:prompt "Choose at least 2 cards in your Grip to trash with Severnius Stim Implant"
-                                   :choices {:max n
-                                             :req #(and (= (:side %) "Runner")
-                                                        (in-hand? %))}
-                                   :msg (msg "trash " (pluralize "card" (count targets))
-                                             " and access " (pluralize "additional card" (quot (count targets) 2)))
-                                   :effect (req (let [bonus (quot (count targets) 2)]
-                                                  (trash-cards state side (make-eid state) targets
-                                                               {:unpreventable true
-                                                                :suppress-event true})
-                                                  (make-run state side srv nil card)
-                                                  (register-events state side
-                                                                   {:pre-access
-                                                                    {:silent (req true)
-                                                                     :effect (effect (access-bonus kw bonus))}
-                                                                    :run-ends {:effect (effect (unregister-events card))}}
-                                                                   card)))}
-                                  card nil)))}]
-    :events {:pre-access nil
-             :run-ends nil}}
+   (letfn [(implant-fn [srv kw]
+             {:prompt "Choose at least 2 cards in your Grip to trash with Severnius Stim Implant"
+              :choices {:max (req (count (:hand runner)))
+                        :req (every-pred runner? in-hand?)}
+              :msg (msg (println "hello")
+                        "trash " (pluralize "card" (count targets))
+                        " and access " (pluralize "additional card" (quot (count targets) 2)))
+              :effect (req (println "hey")
+                           (let [bonus (quot (count targets) 2)]
+                             (trash-cards state side (make-eid state) targets
+                                          {:unpreventable true
+                                           :suppress-event true})
+                             (make-run state side srv nil card)
+                             (register-events state side
+                                              {:pre-access
+                                               {:silent (req true)
+                                                :effect (effect (access-bonus kw bonus))}
+                                               :run-ends {:effect (effect (unregister-events card))}}
+                                              card)))})]
+     {:abilities [{:optional
+                   {:req (req (<= 2 (count (:hand runner))))
+                    :cost [:click 1]
+                    :prompt "Choose a server to run with Severnius Stim Implant"
+                    :choices ["HQ" "R&D"]
+                    :hq (implant-fn "HQ" :hq)
+                    :r-d (implant-fn "R&D" :rd)}}]
+      :events {:pre-access nil
+               :run-ends nil}})
 
    "Şifr"
    {:in-play [:memory 2]

@@ -1296,6 +1296,24 @@
       (is (:run @state) "Run should still be going on from winning Security Nexus trace")
       (is (= 1 (count-tags state)) "Runner should still only have 1 tag"))))
 
+(deftest severnius-stim-implant
+  ;; Severnius Stim Implant
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
+               :runner {:hand ["Severnius Stim Implant" (qty "Sure Gamble" 4)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Severnius Stim Implant")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-prompt state :runner "R&D")
+    (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+    (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+    ; (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+    ; (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+    (click-prompt state :runner "Done")
+    (println (count (:discard (get-runner))))
+    (println (prompt-fmt :runner))
+  ))
+
 (deftest sifr
   ;; Sifr - Once per turn drop encountered ICE to zero strenght
   ;; Also handle archangel then re-install sifr should not break the game #2576

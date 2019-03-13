@@ -558,10 +558,10 @@
   (testing "with Self-modifying Code, neither SMC nor other card should be shuffled back in"
     (do-game
       (new-game {:runner {:deck ["Compile" "Clone Chip"
-                                 (qty "Self-modifying Code" 3)]}})
+                                 (qty "Self-modifying Code" 3)]
+                          :credits 10}})
       (starting-hand state :runner ["Compile" "Clone Chip"])
       (take-credits state :corp)
-      (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Clone Chip")
       (play-from-hand state :runner "Compile")
       (click-prompt state :runner "Archives")
@@ -2750,15 +2750,12 @@
   (testing "Programs hosted after install get returned to Stack. Issue #1081"
     (do-game
       (new-game {:corp {:deck ["Wraparound"]}
-                 :runner {:deck [(qty "Test Run" 2) "Morning Star"
-                                 "Knight" "Leprechaun"]}})
+                 :runner {:hand [(qty "Test Run" 2) "Leprechaun"]
+                          :discard ["Morning Star" "Knight"]
+                          :credits 10}})
       (play-from-hand state :corp "Wraparound" "HQ")
-      (let [wrap (get-ice state :hq 0)]
-        (core/rez state :corp wrap))
+      (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
-      (core/gain state :runner :credit 5)
-      (trash-from-hand state :runner "Morning Star")
-      (trash-from-hand state :runner "Knight")
       (let [ms (find-card "Morning Star" (:discard (get-runner)))]
         (play-from-hand state :runner "Leprechaun")
         (play-from-hand state :runner "Test Run")

@@ -263,6 +263,12 @@
 (defn resource? [card]
   (is-type? card "Resource"))
 
+(defn runner? [card]
+  (card-is? card :side "Runner"))
+
+(defn corp? [card]
+  (card-is? card :side "Corp"))
+
 (defn rezzed? [card]
   (:rezzed card))
 

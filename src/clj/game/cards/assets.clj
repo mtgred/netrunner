@@ -1239,18 +1239,22 @@
    {:flags {:rd-reveal (req true)}
     :access {:msg (msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point")
              :async true
-             :effect (effect (continue-ability
-                               {:player :runner
-                                :async true
-                                :prompt "Take 2 tags or add News Team to your score area as an agenda worth -1 agenda point?"
-                                :choices ["Take 2 tags" "Add News Team to score area"]
-                                :effect (req (if (= target "Add News Team to score area")
-                                               (do (system-msg state :runner (str "adds News Team to their score area as an agenda worth -1 agenda point"))
-                                                   (trigger-event state side :no-trash card)
-                                                   (as-trashed-agenda state :runner eid card -1 {:force true}))
-                                               (do (system-msg state :runner (str "takes 2 tags from News Team"))
-                                                   (gain-tags state :runner eid 2))))}
-                               card targets))}}
+             :effect
+             (effect
+               (continue-ability
+                 {:optional
+                  {:player :runner
+                   :async true
+                   :prompt "Take 2 tags or add News Team to your score area as an agenda worth -1 agenda point?"
+                   :choices ["Take 2 tags" "Add News Team to score area"]
+                   :take-2-tags
+                   {:msg "takes 2 tags from News Team"
+                    :effect (effect (gain-tags :runner eid 2))}
+                   :add-news-team-to-score-area
+                   {:msg "adds News Team to their score area as an agenda worth -1 agenda point"
+                    :effect (effect (trigger-event :no-trash card)
+                                    (as-trashed-agenda :runner eid card -1 {:force true}))}}}
+                 card nil))}}
 
    "NGO Front"
    (letfn [(builder [cost cred]
@@ -1679,32 +1683,36 @@
    {:access
     {:async true
      :req (req (not= (first (:zone card)) :deck))
-     :effect (effect (show-wait-prompt :runner "Corp to use Shi.Kyū")
-                     (continue-ability
-                       {:optional
-                        {:prompt "Pay [Credits] to use Shi.Kyū?"
-                         :yes-ability
-                         {:prompt "How many [Credits] for Shi.Kyū?"
-                          :choices :credit
-                          :msg (msg "attempt to do " target " net damage")
-                          :async true
-                          :effect (req (let [dmg target]
-                                         (clear-wait-prompt state :runner)
-                                         (continue-ability
-                                           state :corp
-                                           {:player :runner
-                                            :prompt (str "Take " dmg " net damage or add Shi.Kyū to your score area as an agenda worth -1 agenda point?")
-                                            :choices [(str "Take " dmg " net damage") "Add Shi.Kyū to score area"]
-                                            :async true
-                                            :effect (req (if (= target "Add Shi.Kyū to score area")
-                                                           (do (system-msg state :runner (str "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"))
-                                                               (trigger-event state side :no-trash card)
-                                                               (as-trashed-agenda state :runner eid card -1 {:force true}))
-                                                           (do (damage state :corp eid :net dmg {:card card})
-                                                               (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū")))))}
-                                           card targets)))}
-                         :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
-                       card targets))}}
+     :effect
+     (effect (show-wait-prompt :runner "Corp to use Shi.Kyū")
+             (continue-ability
+               {:optional
+                {:prompt "Pay [Credits] to use Shi.Kyū?"
+                 :yes-ability
+                 {:prompt "How many [Credits] for Shi.Kyū?"
+                  :choices :credit
+                  :msg (msg "attempt to do " target " net damage")
+                  :async true
+                  :effect
+                  (req (let [dmg target]
+                         (clear-wait-prompt state :runner)
+                         (continue-ability
+                           state :corp
+                           {:optional
+                            {:player :runner
+                             :prompt (str "Take " dmg " net damage or add Shi.Kyū to your score area as an agenda worth -1 agenda point?")
+                             :choices ["Take net damage" "Add Shi.Kyū to score area"]
+                             :async true
+                             :take-net-damage {:msg (msg "takes " dmg " net damage from Shi.Kyū")
+                                               :effect (effect (damage :corp eid :net dmg {:card card}))}
+                             :add-shi-kyu-to-score-area
+                             {:msg "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"
+                              :effect (effect (trigger-event :no-trash card)
+                                              (as-trashed-agenda :runner eid card -1 {:force true}))}
+                             :end-effect (effect (clear-wait-prompt :runner))}}
+                           card nil)))}
+                 :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+               card targets))}}
 
    "Shock!"
    {:flags {:rd-reveal (req true)}

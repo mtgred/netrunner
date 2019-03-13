@@ -2686,13 +2686,13 @@
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck [(qty "Psychic Field" 2)]}
-                 :runner {:deck [(qty "Infiltration" 3) (qty "Sure Gamble" 3)]}})
+                 :runner {:deck [(qty "Infiltration" 2) "Sure Gamble"]
+                          :hand ["Infiltration" "Sure Gamble" "Sure Gamble"]}})
       (play-from-hand state :corp "Psychic Field" "New remote")
       (play-from-hand state :corp "Psychic Field" "New remote")
       (let [psyf1 (get-content state :remote1 0)
             psyf2 (get-content state :remote2 0)]
         (take-credits state :corp)
-        (starting-hand state :runner ["Infiltration" "Sure Gamble" "Sure Gamble"])
         (play-from-hand state :runner "Infiltration")
         (click-prompt state :runner "Expose a card")
         (click-card state :runner psyf1)
@@ -3231,14 +3231,14 @@
     (run-empty-server state "Server 1")
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "5")
-    (is (= "Take 5 net damage" (-> (prompt-map :runner) :choices first)))
-    (click-prompt state :runner "Take 5 net damage")
+    (is (= "Take net damage" (-> (prompt-map :runner) :choices first)))
+    (click-prompt state :runner "Take net damage")
     (click-prompt state :runner "No action")
     (is (zero? (count (:hand (get-runner)))) "Runner took 5 net damage from Shi.Kyū")
     (run-empty-server state "Server 1")
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "2")
-    (is (= "Take 2 net damage" (-> (prompt-map :runner) :choices first)))
+    (is (= "Take net damage" (-> (prompt-map :runner) :choices first)))
     (click-prompt state :runner "Add Shi.Kyū to score area")
     (is (empty? (prompt-map :runner)) "Runner shouldn't get the option to trash Shi.Kyū as it was added to agenda area")
     (is (= -1 (:agenda-point (get-runner))) "Runner should be at -1 agenda points after adding Shi.Kyū to agenda area")))
