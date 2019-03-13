@@ -1056,19 +1056,18 @@
 
    "Utae"
    (auto-icebreaker ["Code Gate"]
-                    {:abilities [{:label "X [Credits]: +X strength, break X subroutines"
+                    {:abilities [{:label "X [Credits]: +X strength"
                                   :once :per-run
+                                  :req (req (pos? (:credit runner)))
                                   :choices {:number (req (:credit runner))
-                                            :default (req (if (:current-strength current-ice)
-                                                            (max (- (:current-strength current-ice)
-                                                                    (:current-strength card))
-                                                                 1)
-                                                            1))}
+                                            :default (req (max 1
+                                                               (:credit runner)
+                                                               (- (get-strength current-ice)
+                                                                    (get-strength card))))}
                                   :prompt "How many credits?"
                                   :effect (effect (lose-credits target)
                                                   (pump card target))
-                                  :msg (msg "spend " target " [Credits], increase strength by " target ", and break "
-                                            (quantify target "Code Gate subroutine"))}
+                                  :msg (msg "spend " target " [Credits], increase strength by " target)}
                                  {:label "Break 1 Code Gate subroutine (Virtual restriction)"
                                   :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
                                                                  (all-active-installed state :runner)))))

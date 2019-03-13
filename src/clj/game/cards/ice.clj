@@ -2081,7 +2081,8 @@
    (constellation-ice trash-program)
 
    "Saisentan"
-   {:subroutines [{:label "Do 1 net damage"
+   {:effect (effect (system-say "Corp, please press No Action to trigger Saisentan"))
+    :subroutines [{:label "Do 1 net damage"
                    :async true
                    :msg "do 1 net damage"
                    :effect (req (wait-for (damage state side :net 1 {:card card})
