@@ -173,7 +173,6 @@
          active-player (:active-player @state)
          opponent (other-side active-player)
          is-player (fn [player ability] (or (= player (get-side ability)) (= player (get-ability-side ability))))]
-     ; let active player activate their events first
      (wait-for (resolve-ability state side first-ability nil nil)
                (let [get-handlers
                      (fn [player-side]
@@ -195,6 +194,7 @@
                  (show-wait-prompt state opponent
                                    (str (side-str active-player) " to resolve " (event-title event) " triggers")
                                    {:priority -1})
+                 ; let active player activate their events first
                  (wait-for (trigger-event-simult-player state side event active-player-events cancel-fn targets)
                            (when after-active-player
                              (resolve-ability state side after-active-player nil nil))

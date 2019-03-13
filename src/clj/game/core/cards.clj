@@ -13,7 +13,7 @@
   [card]
   (if-let [title (:title card)]
     (get cards title)
-    (throw (Exception. "Tried to select card def for non-existent card"))))
+    (.println *err* "Tried to select card def for non-existent card")))
 
 (defn find-cid
   "Return a card with specific :cid from given sequence"
