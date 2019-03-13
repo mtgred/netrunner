@@ -124,7 +124,8 @@
              :purge {:effect (effect (update-all-advancement-costs))}}}
 
    "Chisel"
-   {:hosting {:req (every-pred ice? can-host?)}
+   {:effect (effect (system-say "Corp, please press No Action to trigger Chisel"))
+    :hosting {:req (every-pred ice? can-host?)}
     :events {:counter-added {:req (req (or (= (:cid target) (:cid card))
                                            (= (:title target) "Hivemind")))
                              :effect (effect (update-ice-strength (:host card)))}
@@ -826,8 +827,8 @@
 
    "Pelangi"
    {:data {:counter {:virus 2}}
-    ; :events {:pass-ice nil
-    ;          :run-ends nil}
+    :events {:pass-ice nil
+             :run-ends nil}
     :abilities [{:once :per-turn
                  :req (req (and current-ice
                                 (rezzed? current-ice)))
