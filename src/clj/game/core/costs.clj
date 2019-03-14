@@ -71,7 +71,7 @@
   [costs]
   (->> costs
        flatten
-       ;; Padding is needed when `:forfeit` is the final cost in the list
+       ;; Padding is needed when :default is the final cost in the list or all items are :default
        (partition 2 1 '(1))
        (reduce
          (fn [acc [cost-type qty]]
