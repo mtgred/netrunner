@@ -9,26 +9,28 @@
 
 (defn- counter-based-extra-cost
   "Cold Site Server and Reduced Service. Modify cost to run current server whenever counters are added or removed.
-  Unit-Costs is a map like {:credit 1 :click 1} saying how much extra cost 1 counter adds. NOTE: Cannot have a leave-play effect."
+  Unit-Costs is a map like {:credit 1 :click 1} saying how much extra cost 1 counter adds.
+  NOTE: If card has an :effect or :leave-play, see function source for the things they need to do to ensure tracking works."
   [unit-costs cdef]
-  (letfn [(reset-cost [state card amt]
-            (swap! state update-in [:corp :servers (second (:zone card)) :additional-cost]
-                   #(merge-costs (concat % (vec (flatten (map (fn [x] [(first x) (* amt (second x))]) unit-costs)))))))
-          (recompute-cost [state card]
-            (let [change ((fnil - 0 0) (get-counters card :power) (:current-added-cost card))]
-              (reset-cost state card change)
-              (update! state :corp (assoc card :current-added-cost (get-counters card :power)))))
-          (clear-cost [state card]
-            (reset-cost state card (- (:current-added-cost card)))
-            (update! state :corp (assoc card :current-added-cost 0)))]
-    (merge cdef
-           {:events (merge {:counter-added {:req (req (= (:cid target) (:cid card)))
-                                            :effect (req (recompute-cost state card))}}
-                           (:events cdef))
-            :effect (if (:effect cdef) (:effect cdef)
-                        (req (update! state :corp (assoc card :current-added-cost 0))
-                             (add-counter state side (get-card state card) :power 0)))
-            :leave-play (req (clear-cost state card))})))
+  (let [store-key [:special :current-added-cost]]
+       (letfn [(reset-cost [state card amt]
+                 (swap! state update-in [:corp :servers (second (:zone card)) :additional-cost]
+                        #(merge-costs (concat % (vec (flatten (map (fn [x] [(first x) (* amt (second x))]) unit-costs)))))))
+               (recompute-cost [state card]
+                 (let [change ((fnil - 0 0) (get-counters card :power) (get-in card store-key))]
+                   (reset-cost state card change)
+                   (update! state :corp (assoc-in card store-key (get-counters card :power)))))
+               (clear-cost [state card]
+                 (reset-cost state card (- (get-in card store-key)))
+                 (update! state :corp (assoc-in card store-key 0)))]
+         (merge cdef
+                {:events (merge {:counter-added {:req (req (= (:cid target) (:cid card)))
+                                                 :effect (req (recompute-cost state card))}}
+                                (:events cdef))
+                 :effect (if (:effect cdef) (:effect cdef)
+                             (req (add-counter state side (get-card state card) :power 0)))
+                 :leave-play (if (:leave-play cdef) (:leave-play cdef)
+                                 (req (clear-cost state card)))}))))
 
 (def card-definitions
   {"Akitaro Watanabe"
@@ -259,7 +261,6 @@
     {:events {:corp-turn-begins {:req (req (pos? (get-counters card :power)))
                                  :msg " uses Cold Site Server to remove all hosted power counters"
                                  :effect (effect (add-counter card :power (- (get-counters card :power))))}}
-     :effect (req (add-counter state :corp card :power 0)) ; triggers updating of costs in case card had counters on when rezzed
      :abilities [{:cost [:click 1]
                   :msg "place 1 power counter on Cold Site Server"
                   :effect (effect (add-counter card :power 1))}]})

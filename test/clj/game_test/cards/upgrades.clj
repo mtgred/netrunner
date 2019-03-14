@@ -542,8 +542,6 @@
        (card-ability state :corp (refresh tg) 0)
        (click-card state :corp (refresh css))
        (is (not (:rezzed (refresh css))) "CSS derezzed")
-       ;; at this point
-       (prn "Should be 0: " (:current-added-cost (refresh css)))
        (core/gain state :runner :click 2)
        (run-on state :hq)
        (is (= 3 (:credit (get-runner))) "0 creds spent to run HQ")
@@ -566,7 +564,7 @@
        (run-on state :hq)
        (is (:run @state) "Run initiated")
        (is (= 3 (:click (get-runner))) "No extra cost to run HQ")
-       (is (= 1 (:credit (get-runner))) "No extra cost to run HQ")))))
+       (is (= 2 (:credit (get-runner))) "No extra cost to run HQ")))))
 
 (deftest corporate-troubleshooter
   ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ICE
