@@ -1011,7 +1011,8 @@
              (update! state :corp (dissoc card :current-added-cost)))]
      {:events {:counter-added {:req (req (= (:cid target) (:cid card)))
                                :effect (req (recompute-cred-cost state card))}
-               :successful-run {:req (req (pos? (get-counters card :power)))
+               :successful-run {:req (req (pos? (get-counters card :power))
+                                          (is-central? (:server run)))
                                 :effect (effect (add-counter card :power -1))}}
       :effect (req (update! state :corp (assoc card :current-added-cost 0))
                    (show-wait-prompt state :runner "Corp to place credits on Reduced Service")
