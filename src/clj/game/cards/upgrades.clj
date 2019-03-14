@@ -998,6 +998,34 @@
                                         (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ab :run-ends nil}})
 
+   "Reduced Service"
+   (letfn [(recompute-cred-cost [state card]
+             (let [cost-change ((fnil - 0 0) (* 2 (get-counters card :power))
+                                (:current-added-cost card))]
+               (swap! state update-in [:corp :servers (second (:zone card)) :additional-cost]
+                      #(merge-costs (concat % [:credit cost-change])))
+               (update! state :corp (assoc card :current-added-cost (* 2 (get-counters card :power))))))
+           (clear-cred-cost [state card]
+             (swap! state update-in [:corp :servers (second (:zone card)) :additional-cost]
+                    #(merge-costs (concat % [:credit (- (:current-added-cost card))])))
+             (update! state :corp (dissoc card :current-added-cost)))]
+     {:events {:counter-added {:req (req (= (:cid target) (:cid card)))
+                               :effect (req (recompute-cred-cost state card))}
+               :successful-run {:req (req (pos? (get-counters card :power)))
+                                :effect (effect (add-counter card :power -1))}}
+      :effect (req (update! state :corp (assoc card :current-added-cost 0))
+                   (show-wait-prompt state :runner "Corp to place credits on Reduced Service")
+                   (continue-ability state side {:choices (req (range (inc (min 4 (get-in @state [:corp :credit])))))
+                                                 :prompt "How many credits to spend?"
+                                                 :effect (req (let [spent target]
+                                                                (clear-wait-prompt state :runner)
+                                                                (deduct state :corp [:credit spent])
+                                                                (add-counter state :corp card :power spent)
+                                                                (system-msg state :corp (str "place " spent " power counters on Reduced Service"))
+                                                                (effect-completed state side eid)))}
+                                        card nil))
+      :leave-play (req (clear-cred-cost state card))})
+
    "Research Station"
    {:init {:root "HQ"}
     :install-req (req (filter #{"HQ"} targets))

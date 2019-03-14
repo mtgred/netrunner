@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare set-prop get-nested-host get-nested-zone all-active-installed)
+(declare set-prop get-nested-host get-nested-zone all-active-installed run-costs)
 
 (defn get-zones [state]
   (keys (get-in @state [:corp :servers])))
@@ -8,9 +8,16 @@
 (defn get-remote-zones [state]
   (filter is-remote? (get-zones state)))
 
-(defn get-runnable-zones [state]
-  (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))]
-    (remove (set restricted-zones) (get-zones state))))
+(defn get-runnable-zones
+  ([state] (get-runnable-zones state (get-zones state) {:ignore-costs nil}))
+  ([state zones] (get-runnable-zones state zones {:ignore-costs nil}))
+  ([state zones {:keys [ignore-costs]}]
+   (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))
+         permitted-zones (remove (set restricted-zones) zones)]
+     (if ignore-costs
+       permitted-zones
+       (filter #(can-pay? state :runner nil (run-costs state % true))
+               permitted-zones)))))
 
 (defn get-remotes [state]
   (select-keys (get-in @state [:corp :servers]) (get-remote-zones state)))
