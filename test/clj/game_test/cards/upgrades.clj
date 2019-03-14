@@ -515,6 +515,59 @@
       (is (empty? (get-content state :hq))
           "Code Replicatior trashed from root of HQ"))))
 
+(deftest cold-site-server
+  ;; Cold Site Server - Increase run cost by 1 cred, 1 click per power counters
+  (testing "Cost modification plays nice with derez"
+    (do-game
+     (new-game {:corp {:deck ["Cold Site Server" "Test Ground"]}
+                :runner {:deck ["Dirty Laundry"]}})
+     (core/gain state :corp :credit 10 :click 10)
+     (play-from-hand state :corp "Cold Site Server" "HQ")
+     (play-from-hand state :corp "Test Ground" "New remote")
+
+     (let [css (get-content state :hq 0)
+           tg (get-content state :remote1 0)]
+       (core/rez state :corp (refresh css))
+       (advance state (refresh tg) 1)
+       (card-ability state :corp (refresh css) 0)
+       (card-ability state :corp (refresh css) 0)
+       (is (= 2 (get-counters (refresh css) :power)) "2 counters placed on Cold Site Server")
+       (take-credits state :corp)
+       (is (= 5 (:credit (get-runner))))
+       (run-on state :hq)
+       (is (:run @state) "Run initiated")
+       (is (= 3 (:credit (get-runner))) "2 creds spent to run HQ")
+       (is (= 1 (:click (get-runner))) "2 extra clicks spent to run HQ")
+       (run-jack-out state)
+       (card-ability state :corp (refresh tg) 0)
+       (click-card state :corp (refresh css))
+       (is (not (:rezzed (refresh css))) "CSS derezzed")
+       ;; at this point
+       (prn "Should be 0: " (:current-added-cost (refresh css)))
+       (core/gain state :runner :click 2)
+       (run-on state :hq)
+       (is (= 3 (:credit (get-runner))) "0 creds spent to run HQ")
+       (is (= 2 (:click (get-runner))) "Only 1 click spent to run HQ")
+       (is (:run @state) "Run initiated")
+       (run-jack-out state)
+       (core/rez state :corp (refresh css))
+       (is (= 2 (get-counters (refresh css) :power)) "Still 2 counters on Cold Site Server")
+       (play-from-hand state :runner "Dirty Laundry")
+       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
+           "Runner should not get to choose HQ due to increased cost")
+       (click-prompt state :runner "R&D")
+       (run-jack-out state)
+       (take-credits state :runner)
+       (is (= 2 (:credit (get-runner))))
+       (is (= 0 (get-counters (refresh css) :power)) "Counters cleared at start of corp turn")
+       (take-credits state :corp)
+       (is (= 2 (:credit (get-runner))))
+       (is (= 4 (:click (get-runner))))
+       (run-on state :hq)
+       (is (:run @state) "Run initiated")
+       (is (= 3 (:click (get-runner))) "No extra cost to run HQ")
+       (is (= 1 (:credit (get-runner))) "No extra cost to run HQ")))))
+
 (deftest corporate-troubleshooter
   ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ICE
   (do-game
@@ -1661,7 +1714,7 @@
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda")))))
 
 (deftest reduced-service
-  ;; Reuced Service - Increase run cost by 2x number of power counters
+  ;; Reduced Service - Increase run cost by 2x number of power counters
   (testing "Basic test"
     (do-game
      (new-game {:corp {:deck ["Reduced Service"]}
@@ -1747,19 +1800,7 @@
        (play-from-hand state :runner "Dirty Laundry")
        (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner should only get choice of Archives or R&D")
        (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
-           "Runner should only get choice of Archives or R&D")
-       ;; (click-prompt state :runner "R&D")
-       ;; (run-jack-out state)
-       ;; (take-credits :runner)
-       ;; (take-credits :corp)
-       ;; (core/gain state :runner :click -3)
-       ;; (is (= 1 (:click (get-runner))))
-       ;; TODO: click the make-run button here
-       ;; (prn (-> (get-runner) :prompt first :choices))
-       ;; (is (= 3 (-> (get-runner) :prompt first :choices count)) "Runner should only get choice of Archives or R&D (and cancel)")
-       ;; (is (not (contains? (-> (get-runner) :prompt first :choices) "HQ"))
-       ;;     "Runner should only get choice of Archives or R&D")
-       ))))
+           "Runner should only get choice of Archives or R&D")))))
 
 (deftest ryon-knight
   ;; Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining

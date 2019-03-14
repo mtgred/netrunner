@@ -3891,8 +3891,8 @@
       (card-ability state :corp ground 0)
       (click-card state :corp iw)
       (click-card state :corp news)
-      (is (not (:rezzed (refresh iw))) "Ice Wall should be rezzed")
-      (is (not (:rezzed (refresh news))) "News Team should be rezzed")
+      (is (not (:rezzed (refresh iw))) "Ice Wall should not be rezzed")
+      (is (not (:rezzed (refresh news))) "News Team should not be rezzed")
       (is (= 1 (-> (get-corp) :discard count)) "Corp should now have 1 card in discard"))))
 
 (deftest the-board

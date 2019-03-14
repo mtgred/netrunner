@@ -7,6 +7,29 @@
             [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
             [jinteki.cards :refer [all-cards]]))
 
+(defn- counter-based-extra-cost
+  "Cold Site Server and Reduced Service. Modify cost to run current server whenever counters are added or removed.
+  Unit-Costs is a map like {:credit 1 :click 1} saying how much extra cost 1 counter adds. NOTE: Cannot have a leave-play effect."
+  [unit-costs cdef]
+  (letfn [(reset-cost [state card amt]
+            (swap! state update-in [:corp :servers (second (:zone card)) :additional-cost]
+                   #(merge-costs (concat % (vec (flatten (map (fn [x] [(first x) (* amt (second x))]) unit-costs)))))))
+          (recompute-cost [state card]
+            (let [change ((fnil - 0 0) (get-counters card :power) (:current-added-cost card))]
+              (reset-cost state card change)
+              (update! state :corp (assoc card :current-added-cost (get-counters card :power)))))
+          (clear-cost [state card]
+            (reset-cost state card (- (:current-added-cost card)))
+            (update! state :corp (assoc card :current-added-cost 0)))]
+    (merge cdef
+           {:events (merge {:counter-added {:req (req (= (:cid target) (:cid card)))
+                                            :effect (req (recompute-cost state card))}}
+                           (:events cdef))
+            :effect (if (:effect cdef) (:effect cdef)
+                        (req (update! state :corp (assoc card :current-added-cost 0))
+                             (add-counter state side (get-card state card) :power 0)))
+            :leave-play (req (clear-cost state card))})))
+
 (def card-definitions
   {"Akitaro Watanabe"
    {:events {:pre-rez-cost {:req (req (and (ice? target)
@@ -229,6 +252,17 @@
                                 (swap! state update-in [:run] #(assoc % :position (inc (:position run))))
                                  (system-msg state :corp (str "trashes Code Replicator to make the runner approach "
                                                               icename " again"))))}]}
+
+   "Cold Site Server"
+   (counter-based-extra-cost
+    {:credit 1 :click 1}
+    {:events {:corp-turn-begins {:req (req (pos? (get-counters card :power)))
+                                 :msg " uses Cold Site Server to remove all hosted power counters"
+                                 :effect (effect (add-counter card :power (- (get-counters card :power))))}}
+     :effect (req (add-counter state :corp card :power 0)) ; triggers updating of costs in case card had counters on when rezzed
+     :abilities [{:cost [:click 1]
+                  :msg "place 1 power counter on Cold Site Server"
+                  :effect (effect (add-counter card :power 1))}]})
 
    "Corporate Troubleshooter"
    {:abilities [{:label "[Trash]: Add strength to a rezzed ICE protecting this server" :choices :credit
@@ -999,33 +1033,22 @@
       :events {:pre-steal-cost ab :run-ends nil}})
 
    "Reduced Service"
-   (letfn [(recompute-cred-cost [state card]
-             (let [cost-change ((fnil - 0 0) (* 2 (get-counters card :power))
-                                (:current-added-cost card))]
-               (swap! state update-in [:corp :servers (second (:zone card)) :additional-cost]
-                      #(merge-costs (concat % [:credit cost-change])))
-               (update! state :corp (assoc card :current-added-cost (* 2 (get-counters card :power))))))
-           (clear-cred-cost [state card]
-             (swap! state update-in [:corp :servers (second (:zone card)) :additional-cost]
-                    #(merge-costs (concat % [:credit (- (:current-added-cost card))])))
-             (update! state :corp (dissoc card :current-added-cost)))]
-     {:events {:counter-added {:req (req (= (:cid target) (:cid card)))
-                               :effect (req (recompute-cred-cost state card))}
-               :successful-run {:req (req (pos? (get-counters card :power))
-                                          (is-central? (:server run)))
-                                :effect (effect (add-counter card :power -1))}}
-      :effect (req (update! state :corp (assoc card :current-added-cost 0))
-                   (show-wait-prompt state :runner "Corp to place credits on Reduced Service")
-                   (continue-ability state side {:choices (req (range (inc (min 4 (get-in @state [:corp :credit])))))
-                                                 :prompt "How many credits to spend?"
-                                                 :effect (req (let [spent target]
-                                                                (clear-wait-prompt state :runner)
-                                                                (deduct state :corp [:credit spent])
-                                                                (add-counter state :corp card :power spent)
-                                                                (system-msg state :corp (str "place " spent " power counters on Reduced Service"))
-                                                                (effect-completed state side eid)))}
-                                        card nil))
-      :leave-play (req (clear-cred-cost state card))})
+   (counter-based-extra-cost
+    {:credit 2}
+    {:events {:successful-run {:req (req (pos? (get-counters card :power))
+                                         (is-central? (:server run)))
+                               :msg "remove a hosted power counter"
+                               :effect (effect (add-counter card :power -1))}}
+    :effect (req (show-wait-prompt state :runner "Corp to place credits on Reduced Service")
+                 (continue-ability state side {:choices (req (range (inc (min 4 (get-in @state [:corp :credit])))))
+                                               :prompt "How many credits to spend?"
+                                               :effect (req (let [spent target]
+                                                              (clear-wait-prompt state :runner)
+                                                              (deduct state :corp [:credit spent])
+                                                              (add-counter state :corp card :power spent)
+                                                              (system-msg state :corp (str "place " spent " power counters on Reduced Service"))
+                                                              (effect-completed state side eid)))}
+                                   card nil))})
 
    "Research Station"
    {:init {:root "HQ"}
