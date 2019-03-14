@@ -1035,8 +1035,8 @@
    "Reduced Service"
    (counter-based-extra-cost
     {:credit 2}
-    {:events {:successful-run {:req (req (pos? (get-counters card :power))
-                                         (is-central? (:server run)))
+    {:events {:successful-run {:req (req (and (pos? (get-counters card :power))
+                                              (is-central? (:server run))))
                                :msg "remove a hosted power counter"
                                :effect (effect (add-counter card :power -1))}}
     :effect (req (show-wait-prompt state :runner "Corp to place credits on Reduced Service")
