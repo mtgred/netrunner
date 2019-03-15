@@ -430,10 +430,14 @@
                                                                   :cached-bonus curr-bonus})))))}))
                  (let [cdef (card-def card)
                        cost (rez-cost state side card)
-                       costs (concat (when-not ignore-cost [:credit cost])
+                       additional-costs (concat (:additional-cost cdef)
+                                                (:additional-cost card)
+                                                (get-rez-additional-cost-bonus state side))
+                       costs (concat (when-not ignore-cost
+                                       [:credit cost])
                                      (when (and (not= ignore-cost :all-costs)
                                                 (not (:disabled card)))
-                                       (:additional-cost cdef)))]
+                                       additional-costs))]
                    (when-let [cost-str (apply pay state side card costs)]
                      ;; Deregister the derezzed-events before rezzing card
                      (when (:derezzed-events cdef)
@@ -464,7 +468,7 @@
                      (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
                      (trigger-event-sync state side eid :rez card)))))
            (effect-completed state side eid))
-         (swap! state update-in [:bonus] dissoc :cost))
+         (swap! state update-in [:bonus] dissoc :cost :rez))
        (effect-completed state side eid)))))
 
 (defn derez

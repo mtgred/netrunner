@@ -335,6 +335,14 @@
 (defn get-rez-cost-bonus [state side]
   (get-in @state [:bonus :cost] 0))
 
+(defn rez-additional-cost-bonus
+  [state side n]
+  (swap! state update-in [:bonus :rez :additional-cost] #(merge-costs (concat % n))))
+
+(defn get-rez-additional-cost-bonus
+  [state side]
+  (get-in @state [:bonus :rez :additional-cost]))
+
 (defn rez-cost [state side {:keys [cost] :as card}]
   (when-not (nil? cost)
     (-> (if-let [rezfun (:rez-cost-bonus (card-def card))]

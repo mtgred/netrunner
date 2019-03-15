@@ -982,7 +982,8 @@
 
    "Hernando Cortez"
    {:events {:pre-rez-cost {:req (req (and (>= (:credit corp) 10) (ice? target)))
-                            :effect (effect (rez-cost-bonus (count-num-subroutines target)))
+                            :effect (effect (rez-additional-cost-bonus
+                                              [:credit (count-num-subroutines target)]))
                             :msg (msg "increase the rez cost by " (count-num-subroutines target) " [Credit]")}}}
 
    "Human First"
