@@ -511,9 +511,9 @@
                                   {:prompt "Choose a card in HQ to trash"
                                    :choices {:req #(and (in-hand? %)
                                                         (= (:side %) "Corp"))}
-                                   :msg "trash a card from HQ and give all ice in the server +2 strength this run"
+                                   :msg "trash a card from HQ and give all ice protecting this server +2 strength until the end of the run"
                                    :effect (effect (clear-wait-prompt :runner)
-                                                   (trash eid target))}
+                                                   (trash eid target nil))}
                                   card nil)
                                 (register-events
                                   state side
