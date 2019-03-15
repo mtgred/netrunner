@@ -2278,8 +2278,7 @@
                                   :req (req (pos? (:credit runner)))
                                   :prompt "How many credits?"
                                   :choices :credit
-                                  :msg (msg "spend " target " [Credits] to break " target " Code Gate subroutines")
-                                  :effect nil}
+                                  :msg (msg "spend " target " [Credits] to break " (quantify target "Code Gate subroutine"))}
                                  {:label "Break 1 Code Gate subroutine (Virtual restriction)"
                                   :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
                                                                  (all-active-installed state :runner)))))
