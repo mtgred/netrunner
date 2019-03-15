@@ -9,12 +9,13 @@
 ;;; Steps in the run sequence
 (defn make-run
   "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
-  ([state side server] (make-run state side (make-eid state) server nil nil))
-  ([state side eid server] (make-run state side eid server nil nil))
-  ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card))
-  ([state side eid server run-effect card]
+  ([state side server] (make-run state side (make-eid state) server nil nil nil))
+  ([state side eid server] (make-run state side eid server nil nil nil))
+  ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
+  ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
+  ([state side eid server run-effect card {:keys [ignore-costs] :as args}]
    (wait-for (trigger-event-simult state :runner (make-eid state) :pre-init-run nil server)
-             (let [all-run-costs (run-costs state server card)]
+             (let [all-run-costs (if ignore-costs [] (run-costs state server card))]
                (if (and (can-run? state :runner)
                         (can-run-server? state server)
                         (can-pay? state :runner "a run" all-run-costs))
@@ -23,8 +24,7 @@
                        (swap! state assoc-in [:runner :register :made-click-run] true)
                        (play-sfx state side "click-run"))
                      (if-let [cost-str (pay state :runner nil all-run-costs)]
-                       (do (system-msg state :runner (str (build-spend-msg cost-str "make a run on") server))
-                                        ; (prn cost-str)
+                       (do (system-msg state :runner (str (build-spend-msg cost-str "make a run on") server (when ignore-costs ", ignoring all costs")))
                            (let [s [(if (keyword? server) server (last (server->zone state server)))]
                                  ices (get-in @state (concat [:corp :servers] s [:ices]))
                                  n (count ices)]
@@ -930,15 +930,18 @@
     (:successful run)
     (do
       (play-sfx state side "run-successful")
-      (trigger-event-simult state side eid :successful-run-ends nil run))
+      (wait-for (trigger-event-simult state side :successful-run-ends nil run)
+                (effect-completed state side (make-result eid {:successful true}))))
     ;; Unsuccessful
     (:unsuccessful run)
     (do
       (play-sfx state side "run-unsuccessful")
-      (trigger-event-sync state side eid :unsuccessful-run-ends run))
+       (wait-for (trigger-event-sync state side :unsuccessful-run-ends run)
+                (effect-completed state side (make-result eid {:unsuccessful true}))))
+
     ;; Neither
     :else
-    (effect-completed state side eid)))
+    (effect-completed state side (make-result eid nil))))
 
 (defn run-cleanup-2
   [state side]
