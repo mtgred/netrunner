@@ -345,6 +345,26 @@
         (run-jack-out state)
         (run-on state "Archives")))))
 
+(deftest bribery
+  ;; Bribery
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand [(qty "Ice Wall" 2)]}
+               :runner {:hand ["Bribery"]
+                        :credits 100}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bribery")
+    (click-prompt state :runner "100")
+    (click-prompt state :runner "HQ")
+    (let [iw1 (get-ice state :hq 1)
+          iw2 (get-ice state :hq 0)]
+      (core/rez state :corp iw1)
+      (is (not (core/rezzed? (refresh iw1))) "Foremost Ice Wall is not rezzed")
+      (core/rez state :corp iw2)
+      (is (core/rezzed? (refresh iw2)) "Final Ice Wall is rezzed"))))
+
 (deftest by-any-means
   ;; By Any Means
   (testing "Full test"
@@ -2557,6 +2577,34 @@
         (core/rez state :corp jeeves)
         (card-ability state :corp jeeves 0)
         (is (= 3 (:click (get-corp))) "Corp has 3 clicks - Jeeves working ok")))))
+
+(deftest running-interference
+  ;; Running Interference
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall" "Archer" "Hostile Takeover"]
+                      :credits 100}
+               :runner {:hand ["Running Interference"]}})
+    (play-and-score state "Hostile Takeover")
+    (play-from-hand state :corp "Archer" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Running Interference")
+    (click-prompt state :runner "HQ")
+    (let [archer (get-ice state :hq 0)
+          credits (:credit (get-corp))]
+      (core/rez state :corp archer)
+      (click-card state :corp (get-scored state :corp 0))
+      (is (empty? (:prompt (get-corp))) "Only 1 agenda required to rez")
+      (is (= (- credits (* 2 (:cost archer))) (:credit (get-corp))) "Rezzing Archer costs double")
+      (is (core/rezzed? (refresh archer)) "Archer is rezzed"))
+      (run-successful state)
+    (let [iw (get-ice state :hq 1)
+          credits (:credit (get-corp))]
+      (run-on state "HQ")
+      (core/rez state :corp iw)
+      (is (empty? (:prompt (get-corp))))
+      (is (= (- credits (:cost iw)) (:credit (get-corp))) "Rezzing Ice Wall costs normal"))))
 
 (deftest scrubbed
   ;; First piece of ice encountered each turn has -2 Strength for remainder of the run

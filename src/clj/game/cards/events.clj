@@ -121,10 +121,27 @@
                    true)))))
 
    "Bribery"
-   {:prompt "How many credits?"
+   {:implementation "ICE chosen for cost increase is specified at start of run, not on approach"
+    :prompt "How many credits?"
     :choices :credit
     :msg (msg "increase the rez cost of the first unrezzed ICE approached by " target " [Credits]")
-    :effect (effect (resolve-ability (run-event) card nil))}
+    :effect (effect (continue-ability
+                      (let [bribery-x target]
+                        {:prompt "Choose a server"
+                         :choices (req runnable-servers)
+                         :effect (req (make-run state side target nil card)
+                                      (let [run-ices (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices]))
+                                            foremost-ice (last (remove rezzed? run-ices))]
+                                        (update! state side (assoc foremost-ice :bribery true))
+                                        (register-events
+                                          state side
+                                          {:pre-rez {:req (req (:bribery target))
+                                                     :once :per-turn
+                                                     :effect (effect (rez-additional-cost-bonus [:credit bribery-x]))}
+                                           :run-ends {:effect (effect (unregister-events card)
+                                                                      (update! (dissoc (find-latest state foremost-ice) :bribery)))}}
+                                          (assoc card :zone '(:discard)))))})
+                      card nil))}
 
    "Brute-Force-Hack"
    {:implementation "Runner must calculate the right number of credits including other game effects for the planned target ICE"
@@ -1822,7 +1839,7 @@
      nil
      nil
      (effect (register-events {:pre-rez {:req (req (ice? target))
-                                         :effect (effect (rez-cost-bonus (:cost target)))}
+                                         :effect (effect (rez-additional-cost-bonus [:credit (:cost target)]))}
                                :run-ends {:effect (effect (unregister-events card))}}
                               (assoc card :zone '(:discard)))))
 

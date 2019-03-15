@@ -255,7 +255,7 @@
               (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
 
 (defn pay-sync
-  "Same as pay, but awaitable. "
+  "Same as pay, but awaitable."
   [state side eid card & args]
   (let [raw-costs (not-empty (remove map? args))
         action (not-empty (filter map? args))]
