@@ -2822,15 +2822,20 @@
 
 (deftest vulnerability-audit
   ;; Vulnerability Audit - cannot be scored while installed
-  (new-game {:corp {:deck ["Vulnerability Audit"]}})
-  (play-from-hand state :corp "Vulnerability Audit" "New remote")
-  (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 4)
-  (core/score state :corp {:card (get-content state :remote1 0)})
-  (is (= 0 (count (:scored (get-corp)))) "Cannot be scored on installed turn")
-  (take-credits state :corp)
-  (take-credits state :runner)
-  (core/score state :corp {:card (get-content state :remote1 0)})
-  (is (= 1 (count (:scored (get-corp)))) "Can be scored turn after install"))
+  (do-game
+   (new-game {:corp {:deck ["Vulnerability Audit" "Project Atlas"]}})
+   (play-from-hand state :corp "Vulnerability Audit" "New remote")
+   (play-from-hand state :corp "Project Atlas" "New remote")
+   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 4)
+   (core/score state :corp {:card (get-content state :remote1 0)})
+   (is (= 0 (count (:scored (get-corp)))) "Cannot be scored on installed turn")
+   (core/add-prop state :corp (get-content state :remote2 0) :advance-counter 3)
+   (core/score state :corp {:card (get-content state :remote2 0)})
+   (is (= 1 (count (:scored (get-corp)))) "Can score other agendas just fine")
+   (take-credits state :corp)
+   (take-credits state :runner)
+   (core/score state :corp {:card (get-content state :remote1 0)})
+   (is (= 2 (count (:scored (get-corp)))) "Can be scored turn after install")))
 
 (deftest water-monopoly
   ;; Water Monopoly
