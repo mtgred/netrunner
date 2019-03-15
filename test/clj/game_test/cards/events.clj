@@ -365,6 +365,33 @@
       (core/rez state :corp iw2)
       (is (core/rezzed? (refresh iw2)) "Final Ice Wall is rezzed"))))
 
+(deftest brute-force-hack
+  ;; Brute-Force-Hack
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Ice Wall" "Tollbooth"]
+                      :credits 10}
+               :runner {:hand [(qty "Brute-Force-Hack" 2) "Xanadu"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Tollbooth" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (let [iw (get-ice state :hq 0)
+          tb (get-ice state :hq 1)]
+      (core/rez state :corp iw)
+      (core/rez state :corp tb)
+      (play-from-hand state :runner "Brute-Force-Hack")
+      (click-prompt state :runner "1")
+      (click-card state :runner "Tollbooth")
+      (is (core/rezzed? (refresh tb)) "Runner doesn't have enough money to derez Tollbooth")
+      (click-card state :runner iw)
+      (is (not (core/rezzed? (refresh iw))) "Runner can derez Ice Wall")
+      (play-from-hand state :runner "Xanadu")
+      (core/gain state :runner :credit 7)
+      (is (= (:cost tb) (:credit (get-runner))) "Gain enough credits to derez Tollbooth normally")
+      (play-from-hand state :runner "Brute-Force-Hack")
+      (is (empty? (:prompt (get-runner))) "Runner can't play Brute-Force-Hack when only available ice is too expensive"))))
+
 (deftest by-any-means
   ;; By Any Means
   (testing "Full test"

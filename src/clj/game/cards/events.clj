@@ -144,14 +144,44 @@
                       card nil))}
 
    "Brute-Force-Hack"
-   {:implementation "Runner must calculate the right number of credits including other game effects for the planned target ICE"
-    :prompt "How many [Credits]?" :choices :credit
-    :effect (effect (system-msg (str "spends " target " [Credit] on Brute-Force-Hack"))
-                    (resolve-ability {:choices {:req #(and (ice? %)
-                                                           (rezzed? %)
-                                                           (<= (:cost %) target))}
-                                      :effect (effect (derez target))
-                                      :msg (msg "derez " (:title target))} card nil))}
+   {:req (req (seq (filter
+                     some?
+                     (for [ice (all-installed state :corp)
+                           :when (and (ice? ice)
+                                      (rezzed? ice))]
+                       (let [_ (trigger-event state side :pre-rez-cost ice)
+                             cost (rez-cost state side ice)
+                             _ (swap! state update-in [:bonus] dissoc :cost :rez)]
+                         (when (<= cost (:credit runner))
+                           true))))))
+    :effect
+    (req (let [credits (:credit runner)
+               affordable-ice
+               (seq (filter
+                      some?
+                      (for [ice (all-installed state :corp)
+                            :when (and (ice? ice)
+                                       (rezzed? ice))]
+                        (let [_ (trigger-event state side :pre-rez-cost ice)
+                              cost (rez-cost state side ice)
+                              _ (swap! state update-in [:bonus] dissoc :cost :rez)]
+                          (when (<= cost credits)
+                            [(:cid ice) cost])))))]
+           (continue-ability
+             state side
+             {:prompt "How many [Credits]?"
+              :choices :credit
+              :msg (msg "spends " target " [Credit] on Brute-Force-Hack")
+              :effect (effect (continue-ability
+                                {:choices {:req #(and (rezzed? %)
+                                                      (some (fn [c] (and (= (first c)
+                                                                            (:cid %))
+                                                                         (<= (second c) target)))
+                                                            affordable-ice))}
+                                 :msg (msg "derez " (card-str state target))
+                                 :effect (effect (derez target))}
+                                card nil))}
+             card nil)))}
 
    "Build Script"
    {:msg "gain 1 [Credits] and draw 2 cards"
