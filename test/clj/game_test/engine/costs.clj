@@ -23,11 +23,14 @@
       (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:click :credit]]))))
     (testing "Non-damage costs are combined"
       (is (= [[:click 4] [:credit 2]]
-             (core/merge-costs [[:click 1] [:click 3] [:credit 1] [:credit 1]])))))
-
+             (core/merge-costs [[:click 1] [:click 3] [:credit 1] [:credit 1]]))))
+    (testing "Deeply nested costs are flattened"
+      (is (= [[:click 3]] (core/merge-costs [[[[[:click 1]]] [[[[[:click 1]]]]]] :click 1])))))
   (testing "Damage costs"
     (testing "Damage costs are moved to the end"
       (is (= [[:credit 1] [:net-damage 1]] (core/merge-costs [[:net-damage 1 :credit 1]]))))
     (testing "Damage isn't combined"
-      (is (= [[:net-damage 1] [:net-damage 1]] (core/merge-costs [[:net-damage 1 :net-damage 1]])))))
-  )
+      (is (= [[:net-damage 1] [:net-damage 1]] (core/merge-costs [[:net-damage 1 :net-damage 1]]))))
+    (testing "Net, meat, and brain damage are recognized"
+      (is (= [[:net-damage 1] [:meat-damage 1] [:brain-damage 1]]
+             (core/merge-costs [[:net-damage 1] [:meat-damage 1] [:brain-damage 1]]))))))
