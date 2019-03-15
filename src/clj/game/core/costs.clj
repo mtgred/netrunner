@@ -65,6 +65,47 @@
                (>= (- (get-in @state [side cost-type] -1) amount) 0)))
       computer-says-no)))
 
+(defn add-default-to-costs
+  "Take a sequence of costs (nested or otherwise) and add a default value of 1
+  to any that don't include a value (normally with :forfeit)."
+  [costs]
+  (->> costs
+       flatten
+       ;; Padding is needed when :default is the final cost in the list or all items are :default
+       (partition 2 1 '(1))
+       (reduce
+         (fn [acc [cost-type qty]]
+           ;; the possibilities are:
+           ;; Usable:
+           ;; * (:type qty) -> a normal cost (or :default is in final postion, so is padded)
+           ;; * (:type :type) -> :default isn't the final cost
+           ;; Unusable:
+           ;; * (qty :type) -> normal part of moving one at a time
+           ;; * (qty qty) -> a quantity-less cost was used earlier, so this can be ignored
+           (cond
+             (and (keyword? cost-type)
+                  (number? qty))
+             (conj acc [cost-type qty])
+             (and (keyword? cost-type)
+                  (keyword? qty))
+             (conj acc [cost-type 1])
+             :else
+             acc))
+         [])))
+
+(defn merge-costs
+  "Combines disparate costs into a single cost per type, except for damage.
+  Damage is not merged as it needs to be individual."
+  [costs]
+  (let [clean-costs (add-default-to-costs costs)
+        partition-fn (juxt remove filter)
+        [plain-costs damage-costs] (partition-fn
+                                     #(#{:net-damage :meat-damage :brain-damage} (first %))
+                                     clean-costs)
+        reduce-fn (fn [cost-map [cost-type value]]
+                    (update cost-map cost-type (fnil + 0 0) value))]
+    (mapv vec (concat (reduce reduce-fn {} plain-costs) damage-costs))))
+
 (defn can-pay?
   "Returns false if the player cannot pay the cost args, or a truthy map otherwise.
   If title is specified a toast will be generated if the player is unable to pay
@@ -285,7 +326,8 @@
             (-> (concat all-cost (get-in @state [:bonus :play-cost])
                         (when-let [playfun (:play-cost-bonus (card-def card))]
                           (playfun state side (make-eid state) card nil)))
-                merge-costs flatten))))
+                merge-costs
+                flatten))))
 
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
