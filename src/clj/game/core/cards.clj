@@ -11,8 +11,9 @@
 (defn card-def
   "Retrieves a card's abilities definition map."
   [card]
-  (when-let [title (:title card)]
-    (cards (.replace title "'" ""))))
+  (if-let [title (:title card)]
+    (get cards title)
+    (.println *err* "Tried to select card def for non-existent card")))
 
 (defn find-cid
   "Return a card with specific :cid from given sequence"

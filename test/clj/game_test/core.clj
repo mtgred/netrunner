@@ -5,8 +5,9 @@
             [clojure.test :refer :all]
             [hawk.core :as hawk]
             [game.core :as core]
-            [game.utils :as utils :refer [make-cid]]
-            [jinteki.cards :refer [all-cards]]))
+            [game.utils :as utils]
+            [jinteki.cards :refer [all-cards]]
+            [jinteki.utils :as jutils]))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -21,7 +22,7 @@
 (defn load-all-cards []
   (when (empty? @all-cards)
     (->> (load-cards)
-         (map #(assoc % :cid (make-cid)))
+         (map #(assoc % :cid (utils/make-cid)))
          (map (juxt :title identity))
          (into {})
          (reset! all-cards))
@@ -146,12 +147,12 @@
                        (find-card card (get-in @state [side :deck])) :discard)))
         (when (:credits side-map)
           (swap! state assoc-in [side :credit] (:credits side-map)))))
-    (when (= start-as :runner) (take-credits state :corp))
     ;; These are side independent so they happen ouside the loop
     (when-let [bad-pub (:bad-pub corp)]
       (swap! state assoc-in [:corp :bad-publicity] bad-pub))
     (when-let [tags (:tags runner)]
       (swap! state assoc-in [:runner :tag :base] tags))
+    (when (= start-as :runner) (take-credits state :corp))
     state))
 
 (defn new-game
@@ -187,6 +188,11 @@
      (if (= :corp side)
        (core/play-corp-ability state side ab)
        (core/play-runner-ability state side ab)))))
+
+(def get-counters utils/get-counters)
+(def count-tags jutils/count-tags)
+(def has-subtype? jutils/has-subtype?)
+(def is-tagged? jutils/is-tagged?)
 
 (defn get-ice
   "Get installed ice protecting server by position. If no pos, get all ice on the server."
@@ -243,8 +249,6 @@
      ;; Find by name
      (when (string? x)
        (find-card x (get-in @state [side :scored]))))))
-
-(def get-counters utils/get-counters)
 
 (defn play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate

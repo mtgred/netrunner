@@ -4,7 +4,6 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
-            [jinteki.utils :refer [count-tags has-subtype?]]
             [clojure.test :refer :all]))
 
 (deftest account-siphon

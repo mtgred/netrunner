@@ -231,10 +231,10 @@
   ([toggle-kw] (get-autoresolve toggle-kw {:always "Yes" :never "No"}))
   ([toggle-kw pred] (req (pred (get-in (get-card state card) [:special toggle-kw])))))
 
-(defmacro get-strength
+(defn get-strength
   [card]
-  `(or (:current-strength ~card)
-       (:strength ~card)))
+  (or (:current-strength card)
+      (:strength card)))
 
 ;; Load all card data and definitions into the current namespace.
 (defn reset-card-data

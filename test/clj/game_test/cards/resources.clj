@@ -4,7 +4,6 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
-            [jinteki.utils :refer [count-tags]]
             [clojure.test :refer :all]))
 
 (deftest activist-support
@@ -293,6 +292,7 @@
     (is (= 3 (count (:discard (get-runner)))) "Conventional meat damage not prevented by Parlor")))
 
 (deftest citadel-sanctuary
+  ;; Citadel Sanctuary
   (testing "Interaction with Corporate Grant and Thunder Art Gallery"
     (do-game
       (new-game {:runner {:deck ["Citadel Sanctuary" "Thunder Art Gallery" "Corroder" "Corporate \"Grant\""]}})
@@ -315,101 +315,102 @@
       (is (= 10 (:credit (get-corp))) "Corp lost 1 credit to Corporate Grant"))))
 
 (deftest climactic-showdown
+  ;; Climactic Showdown
   (testing "No eligible servers"
     (do-game
-     (new-game {:runner {:deck ["Climactic Showdown"]}})
-     (take-credits state :corp)
-     (play-from-hand state :runner "Climactic Showdown")
-     (take-credits state :corp)
-     (take-credits state :runner)
-     (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
-     (is (empty? (:prompt (get-runner))) "No Runner prompt because no eligible servers")
-     (is (empty? (:prompt (get-corp))) "No Corp prompt because no eligible servers")))
+      (new-game {:runner {:deck ["Climactic Showdown"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Climactic Showdown")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
+      (is (empty? (:prompt (get-runner))) "No Runner prompt because no eligible servers")
+      (is (empty? (:prompt (get-corp))) "No Corp prompt because no eligible servers")))
   (testing "Corp trashes ice"
     (do-game
-     (new-game {:runner {:deck ["Climactic Showdown"]}
-                :corp {:deck [(qty "Kitsune" 5)]}})
-     (play-from-hand state :corp "Kitsune" "HQ")
-     (take-credits state :corp)
-     (play-from-hand state :runner "Climactic Showdown")
-     (take-credits state :runner)
-     (take-credits state :corp)
-     (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
-     (click-prompt state :runner "HQ")
-     (click-card state :corp (get-ice state :hq 0))
-     (is (empty? (:prompt (get-corp))) "Corp trashed their ice and corp prompt is gone")
-     (is (empty? (:prompt (get-runner))) "Corp trashed their ice and runner prompt is gone")
-     (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune trashed")
-     (run-on state "HQ")
-     (run-successful state)
-     (click-prompt state :runner "No action")
-     (is (empty? (:prompt (get-runner))) "Runner done with run after 1 access")
-     (is (not (:run @state)) "Run over")))
+      (new-game {:runner {:deck ["Climactic Showdown"]}
+                 :corp {:deck [(qty "Kitsune" 5)]}})
+      (play-from-hand state :corp "Kitsune" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Climactic Showdown")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
+      (click-prompt state :runner "HQ")
+      (click-card state :corp (get-ice state :hq 0))
+      (is (empty? (:prompt (get-corp))) "Corp trashed their ice and corp prompt is gone")
+      (is (empty? (:prompt (get-runner))) "Corp trashed their ice and runner prompt is gone")
+      (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune trashed")
+      (run-on state "HQ")
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "Runner done with run after 1 access")
+      (is (not (:run @state)) "Run over")))
   (testing "Corp doesn't trash, access HQ"
     (do-game
-     (new-game {:runner {:deck ["Climactic Showdown"]}
-                :corp {:deck [(qty "Kitsune" 10)]}})
-     (play-from-hand state :corp "Kitsune" "Archives")
-     (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
-     (take-credits state :corp)
-     (play-from-hand state :runner "Climactic Showdown")
-     (take-credits state :runner)
-     (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
-     (take-credits state :corp)
-     (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
-     (click-prompt state :runner "Archives")
-     (click-prompt state :corp "Done")
-     (is (empty? (:prompt (get-corp))) "Corp refused trash and corp prompt is gone")
-     (is (empty? (:prompt (get-runner))) "Corp refused trash and runner prompt is gone")
-     (is (empty? (:discard (get-corp))) "Nothing trashed")
-     (run-on state "HQ")
-     (run-successful state)
-     (click-prompt state :runner "Card from hand")
-     (click-prompt state :runner "No action")
-     (click-prompt state :runner "Card from hand")
-     (click-prompt state :runner "No action")
-     (click-prompt state :runner "Card from hand")
-     (click-prompt state :runner "No action")
-     (is (empty? (:prompt (get-runner))) "Runner done with run after 3 accesses")
-     (is (not (:run @state)) "3 access run over")
-     (run-on state "R&D")
-     (run-successful state)
-     (click-prompt state :runner "No action")
-     (is (empty? (:prompt (get-runner))) "Runner done with 2nd run after 1 accesses")
-     (is (not (:run @state)) "Single access run over")
-     (take-credits state :runner)
-     (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
-     (take-credits state :corp)
-     (run-empty-server state "R&D")
-     (click-prompt state :runner "No action")
-     (is (empty? (:prompt (get-runner))) "Runner done with second turns run after 1 access")
-     (is (not (:run @state)) "2nd turn run over"))
+      (new-game {:runner {:deck ["Climactic Showdown"]}
+                 :corp {:deck [(qty "Kitsune" 10)]}})
+      (play-from-hand state :corp "Kitsune" "Archives")
+      (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Climactic Showdown")
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
+      (take-credits state :corp)
+      (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
+      (click-prompt state :runner "Archives")
+      (click-prompt state :corp "Done")
+      (is (empty? (:prompt (get-corp))) "Corp refused trash and corp prompt is gone")
+      (is (empty? (:prompt (get-runner))) "Corp refused trash and runner prompt is gone")
+      (is (empty? (:discard (get-corp))) "Nothing trashed")
+      (run-on state "HQ")
+      (run-successful state)
+      (click-prompt state :runner "Card from hand")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Card from hand")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Card from hand")
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "Runner done with run after 3 accesses")
+      (is (not (:run @state)) "3 access run over")
+      (run-on state "R&D")
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "Runner done with 2nd run after 1 accesses")
+      (is (not (:run @state)) "Single access run over")
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
+      (take-credits state :corp)
+      (run-empty-server state "R&D")
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "Runner done with second turns run after 1 access")
+      (is (not (:run @state)) "2nd turn run over"))
     (testing "Corp doesn't trash, mid-run access"
       (do-game
-       (new-game {:runner {:deck ["Climactic Showdown"]}
-                  :corp {:deck [(qty "Kitsune" 10)]}})
-       (play-from-hand state :corp "Kitsune" "R&D")
-       (take-credits state :corp)
-       (play-from-hand state :runner "Climactic Showdown")
-       (take-credits state :runner)
-       (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
-       (take-credits state :corp)
-       (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
-       (click-prompt state :runner "R&D")
-       (click-prompt state :corp "Done")
-       (run-on state "R&D")
-       (core/rez state :corp (get-ice state :rd 0))
-       (card-subroutine state :corp (get-ice state :rd 0) 0)
-       (click-card state :corp (find-card "Kitsune" (:hand (get-corp))))
-       (click-prompt state :runner "No action")
-       (click-prompt state :runner "Card from hand")
-       (click-prompt state :runner "No action")
-       (click-prompt state :runner "Card from hand")
-       (click-prompt state :runner "No action")
-       (run-successful state)
-       (click-prompt state :runner "No action")
-       (is (empty? (:prompt (get-runner))) "Runner done with run after 3 accesses")
-       (is (not (:run @state)) "Run over")))))
+        (new-game {:runner {:deck ["Climactic Showdown"]}
+                   :corp {:deck [(qty "Kitsune" 10)]}})
+        (play-from-hand state :corp "Kitsune" "R&D")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Climactic Showdown")
+        (take-credits state :runner)
+        (core/move state :corp (find-card "Kitsune" (:hand (get-corp))) :deck)
+        (take-credits state :corp)
+        (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
+        (click-prompt state :runner "R&D")
+        (click-prompt state :corp "Done")
+        (run-on state "R&D")
+        (core/rez state :corp (get-ice state :rd 0))
+        (card-subroutine state :corp (get-ice state :rd 0) 0)
+        (click-card state :corp (find-card "Kitsune" (:hand (get-corp))))
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Card from hand")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Card from hand")
+        (click-prompt state :runner "No action")
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "Runner done with run after 3 accesses")
+        (is (not (:run @state)) "Run over")))))
 
 (deftest compromised-employee
   ;; Compromised Employee - Gain 1c every time Corp rezzes ICE
@@ -3011,6 +3012,52 @@
       (is (= 2 (count (get-program state))) "2 Programs installed")
       (is (= 6 (:credit (get-runner))) "Artist discount applied new turn"))))
 
+(deftest the-black-file
+  ;; The Black File - Prevent Corp from winning by agenda points
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Sure Gamble" 3)]}
+                 :runner {:deck ["The Black File"]}})
+      (starting-hand state :corp ["Vanity Project"])
+      (core/gain state :corp :agenda-point 3)
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Black File")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Vanity Project" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 7 (:agenda-point (get-corp))))
+      (is (not (:winner @state)) "No registered Corp win")
+      (take-credits state :corp)
+      (let [bf (get-resource state 0)]
+        (is (= 1 (get-counters (refresh bf) :power)) "1 power counter on The Black File")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 2 (get-counters (refresh bf) :power)) "2 power counters on The Black File")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 1 (count (:rfg (get-runner)))) "The Black File removed from the game")
+        (is (= :corp (:winner @state)) "Corp wins")
+        (is (= "Agenda" (:reason @state)) "Win condition reports agendas"))))
+  (testing "Corp can still win by flatlining Runner"
+    (do-game
+      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Scorched Earth" 3)]}
+                 :runner {:deck ["The Black File"]}})
+      (starting-hand state :corp ["Vanity Project" "Scorched Earth"])
+      (core/gain state :corp :agenda-point 3)
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Black File")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Vanity Project" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 7 (:agenda-point (get-corp))))
+      (is (not (:winner @state)) "No registered Corp win")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/gain state :runner :tag 1)
+      (play-from-hand state :corp "Scorched Earth")
+      (is (= :corp (:winner @state)) "Corp wins")
+      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
+
 (deftest the-class-act
   ;; The Class Act
   (testing "Vanilla test"
@@ -3090,52 +3137,6 @@
      (is (empty? (:prompt (get-runner))) "The Class Act is done prompting the runner to choose")
      (is (empty? (:prompt (get-corp))) "The Class Act is not insisting the corp waits")
      (is (= 2 (count (:deck (get-runner)))) "Deck still has 2 cards"))))
-
-(deftest the-black-file
-  ;; The Black File - Prevent Corp from winning by agenda points
-  (testing "Basic test"
-    (do-game
-      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Sure Gamble" 3)]}
-                 :runner {:deck ["The Black File"]}})
-      (starting-hand state :corp ["Vanity Project"])
-      (core/gain state :corp :agenda-point 3)
-      (take-credits state :corp)
-      (play-from-hand state :runner "The Black File")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Vanity Project" "New remote")
-      (score-agenda state :corp (get-content state :remote1 0))
-      (is (= 7 (:agenda-point (get-corp))))
-      (is (not (:winner @state)) "No registered Corp win")
-      (take-credits state :corp)
-      (let [bf (get-resource state 0)]
-        (is (= 1 (get-counters (refresh bf) :power)) "1 power counter on The Black File")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 2 (get-counters (refresh bf) :power)) "2 power counters on The Black File")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 1 (count (:rfg (get-runner)))) "The Black File removed from the game")
-        (is (= :corp (:winner @state)) "Corp wins")
-        (is (= "Agenda" (:reason @state)) "Win condition reports agendas"))))
-  (testing "Corp can still win by flatlining Runner"
-    (do-game
-      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Scorched Earth" 3)]}
-                 :runner {:deck ["The Black File"]}})
-      (starting-hand state :corp ["Vanity Project" "Scorched Earth"])
-      (core/gain state :corp :agenda-point 3)
-      (take-credits state :corp)
-      (play-from-hand state :runner "The Black File")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Vanity Project" "New remote")
-      (score-agenda state :corp (get-content state :remote1 0))
-      (is (= 7 (:agenda-point (get-corp))))
-      (is (not (:winner @state)) "No registered Corp win")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (core/gain state :runner :tag 1)
-      (play-from-hand state :corp "Scorched Earth")
-      (is (= :corp (:winner @state)) "Corp wins")
-      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
 
 (deftest the-helpful-ai
   ;; The Helpful AI - +1 link; trash to give an icebreaker +2 str until end of turn

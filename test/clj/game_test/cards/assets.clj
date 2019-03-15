@@ -4,7 +4,6 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
-            [jinteki.utils :refer [count-tags]]
             [clojure.test :refer :all]))
 
 (deftest adonis-campaign
@@ -3859,7 +3858,7 @@
     (play-from-hand state :corp "Harvester" "HQ")
     (play-from-hand state :corp "Aimor" "HQ")
     (play-from-hand state :corp "Lockdown" "R&D")
-    (core/rez state :corp (get-content state :rd 0))
+    (core/rez state :corp (get-ice state :rd 0))
     (core/rez state :corp (get-content state :remote1 0))
     (is (= 1 (:click (get-corp))))
     (card-ability state :corp (get-content state :remote1 0) 0)
