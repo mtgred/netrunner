@@ -1460,23 +1460,29 @@
   ;; Make sure it is not active when hosted on Peddler
   (do-game
     (new-game {:corp {:deck [(qty "Jeeves Model Bioroids" 2)
-                             (qty "Jackson Howard" 2)]}
-               :runner {:deck ["Street Peddler"
-                               (qty "Hacktivist Meeting" 3)]}})
+                             (qty "Jackson Howard" 2)]
+                      :hand ["Jeeves Model Bioroids" "Jackson Howard" "Sundew"]
+                      :credits 10}
+               :runner {:hand ["Hacktivist Meeting"]}})
     (take-credits state :corp)
     (starting-hand state :runner ["Street Peddler" "Hacktivist Meeting"])
     (play-from-hand state :runner "Street Peddler")
     (take-credits state :runner)
     (play-from-hand state :corp "Jeeves Model Bioroids" "New remote")
     (play-from-hand state :corp "Jackson Howard" "New remote")
+    (play-from-hand state :corp "Sundew" "New remote")
     (let [jeeves (get-content state :remote1 0)
-          jackson (get-content state :remote2 0)]
+          jackson (get-content state :remote2 0)
+          sundew (get-content state :remote3 0)]
       (core/rez state :corp jeeves)
       (is (zero? (count (:discard (get-corp)))) "Nothing discarded to rez Jeeves - Hacktivist not active")
       (take-credits state :corp)
       (play-from-hand state :runner "Hacktivist Meeting")
       (core/rez state :corp jackson)
-      (is (= 1 (count (:discard (get-corp)))) "Card discarded to rez Jackson - Hacktivist active"))))
+      (is (= 1 (count (:discard (get-corp)))) "Card discarded to rez Jackson - Hacktivist active")
+      (core/rez state :corp sundew)
+      (is (not (core/rezzed? (refresh sundew))) "Sundew is not rezzed as corp has no cards in hand")
+      (is (= "Unable to pay for Sundew." (-> @state :corp :toast first :msg)) "Corp gets the correct toast"))))
 
 (deftest high-stakes-job
   ;; High Stakes Job - run on server with at least 1 piece of unrezzed ice, gains 12 credits if successful

@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
-         facedown? make-result)
+         facedown? make-result discard-from-hand)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -52,17 +52,19 @@
       (flag-stops-pay? state side cost-type)
       computer-says-no
 
-      (not (or (#{:memory :net-damage} cost-type)
-               (and (= cost-type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
-               (and (= cost-type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
-               (and (= cost-type :tag) (>= (- (get-in @state [:runner :tag :base]) amount) 0))
-               (and (= cost-type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
-               (and (= cost-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
-               (and (= cost-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
-               (and (= cost-type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
-                                                                    (all-active-installed state :runner))) amount) 0))
-               (and (= cost-type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
-               (>= (- (get-in @state [side cost-type] -1) amount) 0)))
+      (not (or (#{:memory :net-damage :meat-damage :brain-damage} cost-type)
+               (and (= cost-type :forfeit) (<= 0 (- (count (get-in @state [side :scored])) amount)))
+               (and (= cost-type :mill) (<= 0 (- (count (get-in @state [side :deck])) amount)))
+               (and (= cost-type :discard) (<= 0 (- (count (get-in @state [side :hand])) amount)))
+               (and (= cost-type :tag) (<= 0 (- (get-in @state [:runner :tag :base]) amount)))
+               (and (= cost-type :ice) (<= 0 (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount)))
+               (and (= cost-type :hardware) (<= 0 (- (count (get-in @state [:runner :rig :hardware])) amount)))
+               (and (= cost-type :program) (<= 0 (- (count (get-in @state [:runner :rig :program])) amount)))
+               (and (= cost-type :connection)
+                    (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) amount)))
+               (and (= cost-type :shuffle-installed-to-stack) (<= 0 (- (count (all-installed state :runner)) amount)))
+               (and (#{:credit :click} cost-type)
+                    (<= 0 (- (get-in @state [side cost-type] -1) amount)))))
       computer-says-no)))
 
 (defn add-default-to-costs
@@ -224,6 +226,7 @@
      :tag (complete-with-result state side eid (deduct state :runner cost))
      :net-damage (pay-damage state side eid :net (second cost))
      :mill (complete-with-result state side eid (mill state side (second cost)))
+     :discard (complete-with-result state side eid (discard-from-hand state side (second cost)))
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card (second cost))

@@ -135,9 +135,9 @@
                                         (update! state side (assoc foremost-ice :bribery true))
                                         (register-events
                                           state side
-                                          {:pre-rez {:req (req (:bribery target))
-                                                     :once :per-turn
-                                                     :effect (effect (rez-additional-cost-bonus [:credit bribery-x]))}
+                                          {:pre-rez-cost {:req (req (:bribery target))
+                                                          :once :per-turn
+                                                          :effect (effect (rez-additional-cost-bonus [:credit bribery-x]))}
                                            :run-ends {:effect (effect (unregister-events card)
                                                                       (update! (dissoc (find-latest state foremost-ice) :bribery)))}}
                                           (assoc card :zone '(:discard)))))})
@@ -941,12 +941,9 @@
                  (gain-credits state :runner 10))}
 
    "Hacktivist Meeting"
-   {:implementation "Does not prevent rez if HQ is empty"
-    :events {:rez {:req (req (and (not (ice? target))
-                                  (pos? (count (:hand corp)))))
-                   ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
-                   :msg "force the Corp to trash 1 card from HQ at random"
-                   :effect (effect (trash (first (shuffle (:hand corp)))))}}}
+   {:events {:pre-rez-cost {:req (req (not (ice? target)))
+                            :msg "force the Corp to trash 1 card from HQ at random"
+                            :effect (effect (rez-additional-cost-bonus [:discard 1]))}}}
 
    "High-Stakes Job"
    (run-event
@@ -1834,12 +1831,14 @@
 
    "Running Interference"
    (run-event
-     {:events {:pre-rez nil
+     {:events {:pre-rez-cost nil
                :run-ends nil}}
      nil
      nil
-     (effect (register-events {:pre-rez {:req (req (ice? target))
-                                         :effect (effect (rez-additional-cost-bonus [:credit (:cost target)]))}
+     (effect (register-events {:pre-rez-cost {:req (req (ice? target))
+                                              :msg (msg "add an additional cost of " (:cost target)
+                                                        " [Credits] to rez " (card-str state target))
+                                              :effect (effect (rez-additional-cost-bonus [:credit (:cost target)]))}
                                :run-ends {:effect (effect (unregister-events card))}}
                               (assoc card :zone '(:discard)))))
 
