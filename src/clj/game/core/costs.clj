@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
-         facedown? make-result)
+         facedown? make-result server->zone)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -312,7 +312,10 @@
 (defn run-costs
   "Get a list of all costs required to run a server, including additional costs. If card is nil, assume run is made by spending a click, and include the assumed click in the cost list."
   [state server card]
-  (let [click-run-cost (when (not card) (concat (get-in @state [:bonus :click-run-cost]) [:click 1]))
+  (let [server (if (get-in @state [:corp :servers server]) ; hack to make passing on both "Archives" and :archives work
+                 server
+                 (second (server->zone state server)))
+        click-run-cost (when (not card) (concat (get-in @state [:bonus :click-run-cost]) [:click 1]))
         global-costs (get-in @state [:bonus :run-cost])
         server-costs (get-in @state [:corp :servers server :additional-cost])]
     ;; (prn click-run-cost global-costs server-costs (merge-costs (concat click-run-cost global-costs server-costs)))

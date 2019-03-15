@@ -50,14 +50,14 @@
    "Always Have a Backup Plan"
    (letfn [(run-again [server]
              {:optional {:prompt "Run again?"
-                         :msg (str "to make a run on " (zone->name server) ", ignoring additional costs")
+                         :msg (msg "to make a run on " (zone->name server) ", ignoring additional costs")
                          :yes-ability {:effect (effect (make-run eid server nil card {:ignore-costs true}))}}})]
      {:prompt "Choose a server"
       :choices (req runnable-servers)
       :async true
-      :msg (req "make a run on " (zone->name target))
-      :effect (req (let [run-server target]
-                     (wait-for (make-run state side (make-eid state) target nil card)
+      :msg (req "make a run on " target)
+      :effect (req (let [run-server (server->zone state target)]
+                     (wait-for (make-run state side (make-eid state) target nil card nil)
                                (continue-ability state side (run-again run-server) card nil))))})
 
    "Amped Up"
