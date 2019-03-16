@@ -55,7 +55,7 @@
                                        (if (not (can-pay? state :corp nil :credit 1))
                                          (do
                                            (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
-                                           (expose state side eid itarget))
+                                           (expose state :runner eid itarget))
                                          (do
                                            (show-wait-prompt state :runner "Corp decision")
                                            (continue-ability
@@ -65,7 +65,7 @@
                                                :player :corp
                                                :no-ability
                                                {:async true
-                                                :effect (req (expose state side eid itarget)
+                                                :effect (req (expose state :runner eid itarget)
                                                              (clear-wait-prompt state :runner))}
                                                :yes-ability
                                                {:effect (req (pay state :corp card [:credit 1])
@@ -865,9 +865,9 @@
 
    "New Angeles Sol: Your News"
    (let [nasol {:optional
-                {:prompt "Play a Current?" :player :corp
-                 :req (req (not (empty? (filter #(has-subtype? % "Current")
-                                                (concat (:hand corp) (:discard corp))))))
+                {:prompt "Play a Current?"
+                 :player :corp
+                 :req (req (some #(has-subtype? % "Current") (concat (:hand corp) (:discard corp))))
                  :yes-ability {:prompt "Select a Current to play from HQ or Archives"
                                :show-discard true
                                :async true
@@ -876,7 +876,8 @@
                                                     (#{[:hand] [:discard]} (:zone %)))}
                                :msg (msg "play a current from " (name-zone "Corp" (:zone target)))
                                :effect (effect (play-instant eid target))}}}]
-     {:events {:agenda-scored nasol :agenda-stolen nasol}})
+     {:events {:agenda-scored nasol
+               :agenda-stolen nasol}})
 
    "NEXT Design: Guarding the Net"
    (let [ndhelper (fn nd [n] {:prompt (msg "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "

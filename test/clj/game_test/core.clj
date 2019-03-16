@@ -121,11 +121,11 @@
   (let [state (core/init-game
                 {:gameid 1
                  :players [{:side "Corp"
-                            :user "player1"
+                            :user {:username "Corp"}
                             :deck {:identity (:identity corp)
                                    :cards (:deck corp)}}
                            {:side "Runner"
-                            :user "player2"
+                            :user {:username "Runner"}
                             :deck {:identity (:identity runner)
                                    :cards (:deck runner)}}]})]
     (when-not dont-start-game
