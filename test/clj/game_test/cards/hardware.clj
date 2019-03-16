@@ -93,21 +93,45 @@
 
 (deftest blackguard
   ;; Blackguard - +2 MU, forced rez of exposed ice
-  (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}
-               :runner {:deck ["Blackguard"
-                               "Snitch"]}})
-    (play-from-hand state :corp "Ice Wall" "Archives")
-    (take-credits state :corp)
-    (core/gain state :runner :credit 100)
-    (play-from-hand state :runner "Blackguard")
-    (is (= 6 (core/available-mu state)) "Runner has 6 MU")
-    (play-from-hand state :runner "Snitch")
-    (let [snitch (get-program state 0)
-          iwall (get-ice state :archives 0)]
-      (run-on state :archives)
-      (card-ability state :runner snitch 0)
-      (is (:rezzed (refresh iwall)) "Ice Wall was rezzed"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Blackguard"
+                                 "Snitch"]}})
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Blackguard")
+      (is (= 6 (core/available-mu state)) "Runner has 6 MU")
+      (play-from-hand state :runner "Snitch")
+      (let [snitch (get-program state 0)
+            iwall (get-ice state :archives 0)]
+        (run-on state :archives)
+        (card-ability state :runner snitch 0)
+        (is (:rezzed (refresh iwall)) "Ice Wall was rezzed"))))
+  (testing "Additional cost handling, issue #1244"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Archer" "Hostile Takeover"]
+                        :credits 15}
+                 :runner {:hand ["Blackguard" (qty "Infiltration" 2) "Hernando Cortez"]
+                          :credits 100}})
+      (play-and-score state "Hostile Takeover")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Archer" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Blackguard")
+      (testing "Forfeiting"
+        (play-from-hand state :runner "Infiltration")
+        (click-prompt state :runner "Expose a card")
+        (click-card state :runner "Archer")
+        (click-prompt state :corp "No"))
+      (testing "Additional credits"
+        (play-from-hand state :runner "Hernando Cortez")
+        (play-from-hand state :runner "Infiltration")
+        (click-prompt state :runner "Expose a card")
+        (click-card state :runner "Ice Wall")
+        (click-prompt state :corp "No")))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size

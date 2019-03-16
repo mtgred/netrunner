@@ -91,21 +91,28 @@
     :events {:expose
              {:msg (msg "attempt to force the rez of " (:title target))
               :async true
-              :effect (req (let [c target
+              :effect (req (trigger-event state side :pre-rez-cost target)
+                           (let [c target
                                  cdef (card-def c)
-                                 cname (:title c)]
-                             (if (:additional-cost cdef)
+                                 cname (:title c)
+                                 cost (rez-cost state side target)
+                                 additional-costs (concat (:additional-cost cdef)
+                                                          (:additional-cost card)
+                                                          (get-rez-additional-cost-bonus state side))]
+                             (swap! state update-in [:bonus] dissoc :cost :rez)
+                             (if (seq additional-costs)
                                (do (show-wait-prompt state :runner (str "Corp to decide if they will rez " cname))
                                    (continue-ability
                                      state side
                                      {:optional
-                                      {:prompt (msg "Pay additional cost to rez " cname "?")
+                                      {:prompt (msg "Pay " (build-cost-str (merge-costs [:credit cost]))
+                                                    ", plus " (build-cost-str (merge-costs additional-costs))
+                                                    " as an additional cost to rez " cname "?")
                                        :player :corp
-                                       :yes-ability {:effect (effect (rez :corp c)
-                                                                     (clear-wait-prompt :runner))}
-                                       :no-ability {:effect (effect (system-msg :corp (str "declines to pay additional costs"
-                                                                                           " and is not forced to rez " cname))
-                                                                    (clear-wait-prompt :runner))}}}
+                                       :yes-ability {:effect (effect (rez :corp c))}
+                                       :no-ability {:msg (msg "declines to pay additional costs"
+                                                              " and is not forced to rez " cname)}
+                                       :end-effect (effect (clear-wait-prompt :runner))}}
                                      card nil))
                                (do (rez state :corp target)
                                    (effect-completed state side eid)))))}}}
