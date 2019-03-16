@@ -130,6 +130,32 @@
       (is (= 3 (count (:discard (get-corp)))) "trashed")
       (is (= 1 (count-tags state)) "Runner took 0 tags"))))
 
+(deftest architect-deployment-test
+  ;; Accelerated Beta Test
+  (do-game
+   (new-game {:corp {:deck [(qty "Architect Deployment Test" 4) (qty "Enigma" 2)]}})
+   (starting-hand state :corp (repeat 4 "Architect Deployment Test"))
+   (core/gain state :corp :click 4)
+   (play-and-score state "Architect Deployment Test") ;makes a remote 1
+   (click-prompt state :corp "OK")
+   (click-prompt state :corp "Enigma")
+   (is (changes-credits (get-corp) 0
+                        (click-prompt state :corp "New remote")))
+   (is (:rezzed (get-ice state :remote2 0)) "Enigma was installed and rezzed, both at no cost")
+   (play-and-score state "Architect Deployment Test")
+   (click-prompt state :corp "OK")
+   (click-prompt state :corp "Cancel")
+   (is (empty (:prompt (get-corp))) "No more prompts if cancel is clicked")
+   (play-and-score state "Architect Deployment Test")
+   (click-prompt state :corp "OK")
+   (click-prompt state :corp "Enigma")
+   (is (changes-credits (get-corp) 0
+                        (click-prompt state :corp "Server 2")))
+   (is (:rezzed (get-ice state :remote2 1)) "Enigma 2 was installed and rezzed, both at no cost")
+   (play-and-score state "Architect Deployment Test")
+   (click-prompt state :corp "OK")
+   (is (empty (:prompt (get-corp))) "No prompts if there is no ice")))
+
 (deftest armed-intimidation
   ;; Armed Intimidation
   (do-game

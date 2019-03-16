@@ -126,7 +126,6 @@
                       {:prompt "Install a piece of ice?"
                        :choices (filter ice? (take 5 (get-in @state [:corp :deck])))
                        :effect (effect (continue-ability
-                                        state side
                                         (let [chosen-ice target]
                                           {:async true
                                            :prompt (str "Select a server to install " (:title chosen-ice) " on")
