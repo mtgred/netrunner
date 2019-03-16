@@ -2128,6 +2128,7 @@
     :events {:encounter-ice {:req (req (= (:cid target) (:cid card)))
                              :msg (msg (str "place 1 virus counter on Sandstone"))
                              :effect (req (add-counter state side card :virus 1))}}}
+
    "Sandman"
    {:subroutines [{:label "Add an installed Runner card to the grip"
                    :req (req (not-empty (all-installed state :runner)))
