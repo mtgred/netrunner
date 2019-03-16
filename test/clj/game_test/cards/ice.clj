@@ -1632,6 +1632,30 @@
       (click-prompt state :corp "Server 2")
       (is (= (first (get-in @state [:run :server])) :remote2) "Is running on server 2"))))
 
+(deftest sandstone
+  ;; Sandstone - gain virus counter on run reducing strength by 1
+  (do-game
+   (new-game {:corp {:deck ["Sandstone"]}
+              :runner {:deck ["Parasite"]}})
+   (play-from-hand state :corp "Sandstone" "HQ")
+   (take-credits state :corp)
+   (core/gain state :runner :click 6)
+   (let [snd (get-ice state :hq 0)]
+     (core/rez state :corp snd)
+     (dotimes [i 6]
+       (run-on state "HQ")
+       (is (= i (get-counters (refresh snd) :virus)) (str "Counter " i "not placed yet"))
+       (is (= (- 6 i) (core/get-strength (refresh snd))) "Strength not reduced yet")
+       (core/no-action state :corp nil)
+       (is (= (inc i) (get-counters (refresh snd) :virus)) (str "Counter " i "placed"))
+       (is (= (- 5 i) (core/get-strength (refresh snd))) "Strength reduced")
+       (card-subroutine state :corp (refresh snd) 0)
+       (is (not (:run @state)) "Run ended"))
+     (is (= 0 (core/get-strength (refresh snd))) "Sandstone strength at 0")
+     (play-from-hand state :runner "Parasite")
+     (click-card state :runner (refresh snd))
+     (is (= "Sandstone" (-> (get-corp) :discard first :title)) "Sandstone instantly trashed by Parasite"))))
+
 (deftest sandman
   ;; Sandman - add an installed runner card to the grip
   (do-game
