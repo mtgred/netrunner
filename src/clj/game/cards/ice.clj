@@ -120,10 +120,6 @@
   [card]
   (+ (get-counters card :advancement) (:extra-advance-counter card 0)))
 
-(def virus-counters
-  "Number of virus counters - for Sandstone."
-  (req (get-advance-counters card)))
-
 (def advance-counters
   "Number of advancement counters - for advanceable ICE."
   (req (get-advance-counters card)))
@@ -2128,8 +2124,8 @@
 
    "Sandstone"
    {:subroutines [end-the-run]
-    :strength-bonus virus-counters
-    :events {:encounter-ice {:req (req (= (:cid target) (:cid :card)))
+    :strength-bonus (req (- (get-counters card :virus)))
+    :events {:encounter-ice {:req (req (= (:cid target) (:cid card)))
                              :msg (msg (str "place 1 virus counter on Sandstone"))
                              :effect (req (add-counter state side card :virus 1))}}}
    "Sandman"
