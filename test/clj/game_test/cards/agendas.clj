@@ -1985,6 +1985,79 @@
       (card-ability state :corp wot-scored 0)
       (is (= 2 (get-counters (refresh wot-scored) :agenda))) "Wotan should only have 2 agenda counters")))
 
+(deftest project-yagi-uda
+  (testing "Swap ICE from HQ"
+    (do-game
+      (new-game {:corp {:deck [(qty "Project Yagi-Uda" 2)
+                               "Eli 1.0"
+                               "Eli 2.0"
+                               "Jackson Howard"
+                               "Prisec"
+                               "Hedge Fund"]}})
+      (core/gain state :corp :click 10 :credit 10)
+      (core/click-draw state :corp 2)
+      (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+      (play-from-hand state :corp "Eli 1.0" "New remote")
+      (let [pyu (get-content state :remote1 0)]
+        (advance state pyu 4)
+        (core/score state :corp {:card (refresh pyu)}))
+      (take-credits state :corp)
+      (let [pyu-scored (get-scored state :corp 0)
+            eli1 (get-ice state :remote2 0)]
+        (run-on state :remote2)
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp eli1)
+        (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Operation")
+        (click-card state :corp (find-card "Jackson Howard" (:hand (get-corp))))
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Asset")
+        (click-card state :corp (find-card "Prisec" (:hand (get-corp))))
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Upgrade")
+        (click-card state :corp (find-card "Project Yagi-Uda" (:hand (get-corp))))
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Agenda")
+        (click-card state :corp (find-card "Eli 2.0" (:hand (get-corp))))
+        (is (= (:title (get-ice state :remote2 0)) "Eli 2.0") "Swapped Eli 1.0 for 2.0"))))
+  (testing "Swap cards in server with cards in HQ"
+    (do-game
+      (new-game {:corp {:deck [(qty "Project Yagi-Uda" 2)
+                               "Eli 1.0"
+                               "Eli 2.0"
+                               "Jackson Howard"
+                               "Prisec"
+                               "Hedge Fund"]}})
+      (core/gain state :corp :click 10 :credit 10)
+      (core/click-draw state :corp 2)
+      (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+      (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+      (let [pyu (get-content state :remote1 0)]
+        (advance state pyu 6)
+        (core/score state :corp {:card (refresh pyu)}))
+      (take-credits state :corp)
+      (let [pyu-scored (get-scored state :corp 0)
+            pyu2 (get-content state :remote2 0)]
+        (run-on state :remote2)
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp pyu2)
+        (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+        (is (= (:title (get-content state :remote2 0)) "Project Yagi-Uda")
+            "Couldn't swap Agenda for Operation")
+        (click-card state :corp (find-card "Eli 2.0" (:hand (get-corp))))
+        (is (= (:title (get-content state :remote2 0)) "Project Yagi-Uda")
+            "Couldn't swap Agenda for ICE")
+        (click-card state :corp (find-card "Jackson Howard" (:hand (get-corp))))
+        (is (= (:title (get-content state :remote2 0)) "Jackson Howard")
+            "Swapped Agenda for Asset")
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp (get-content state :remote2 0))
+        (click-card state :corp (find-card "Prisec" (:hand (get-corp))))
+        (is (= (:title (get-content state :remote2 0)) "Prisec")
+            "Swapped Asset for Upgrade")
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp (get-content state :remote2 0))
+        (click-card state :corp (find-card "Project Yagi-Uda" (:hand (get-corp))))
+        (is (= (:title (get-content state :remote2 0)) "Project Yagi-Uda")
+            "Swapped Upgrade for Agenda")))))
+
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.
   (do-game

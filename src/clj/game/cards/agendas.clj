@@ -1021,6 +1021,37 @@
                  :msg (str "make the approached piece of Bioroid ICE gain \"[Subroutine] End the run\""
                            "after all its other subroutines for the remainder of this run")}]}
 
+   "Project Yagi-Uda"
+   (letfn [(choose-swap [to-swap]
+             {:prompt (str "Select a card in HQ to swap with " (:title to-swap))
+              :choices {:not-self true
+                        :req #(and (= "Corp" (:side %))
+                                   (in-hand? %)
+                                   (if (ice? to-swap)
+                                     (ice? %)
+                                     (or (is-type? % "Agenda")
+                                         (is-type? % "Asset")
+                                         (is-type? % "Upgrade"))))}
+              :effect (req (move state :corp to-swap (:zone target) {:keep-server-alive true})
+                           (move state :corp target (:zone to-swap) {:keep-server-alive true})
+                           (system-msg state :corp
+                                       (str "uses Project Yagi-Uda to swap "
+                                            (card-str state to-swap)
+                                            " with a card from HQ"))
+                           (clear-wait-prompt state :runner))
+              :cancel-effect (effect (clear-wait-prompt :runner))})
+           (choose-card [run-server]
+             {:prompt "Choose a card in or protecting the attacked server."
+              :choices {:req #(= (first run-server) (second (:zone %)))}
+              :effect (effect (continue-ability (choose-swap target) card nil))
+              :cancel-effect (effect (clear-wait-prompt :runner))})]
+     {:silent (req true)
+      :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))
+      :abilities [{:counter-cost [:agenda 1]
+                   :req (req (:run @state))
+                   :effect (effect (show-wait-prompt :runner "Corp to use Project Yagi-Uda")
+                             (continue-ability (choose-card (:server run))
+                                               card nil))}]})
    "Puppet Master"
    {:events {:successful-run
              {:interactive (req true)
