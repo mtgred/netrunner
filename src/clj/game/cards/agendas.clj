@@ -113,6 +113,34 @@
                             :msg "give the Runner a tag for trashing a Corp card"
                             :effect (effect (gain-tags eid 1))}}}
 
+   "Architect Deployment Test"
+   {:interactive (req true)
+    :async true
+    :msg "look at the top 5 cards of R&D"
+    :prompt (req (str "The top cards of R&D are (top->bottom) " (join ", " (map :title (take 5 (get-in @state [:corp :deck]))))))
+    :choices ["OK"]
+    :effect (req (let [decline-msg "does not install any of the top 5 cards"]
+                   (if (some ice? (take 5 (get-in @state [:corp :deck])))
+                     (continue-ability
+                      state :corp
+                      {:prompt "Install a piece of ice?"
+                       :choices (filter ice? (take 5 (get-in @state [:corp :deck])))
+                       :effect (effect (continue-ability
+                                        state side
+                                        (let [chosen-ice target]
+                                          {:async true
+                                           :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                           :choices (corp-install-list state chosen-ice)
+                                           :effect (effect (corp-install eid chosen-ice target
+                                                                         {:ignore-all-cost true
+                                                                          :install-state :rezzed-no-rez-cost}))})
+                                        card nil))
+                       :cancel-effect (effect (system-msg decline-msg)
+                                              (effect-completed eid))}
+                      card nil)
+                     (do (system-msg state :corp decline-msg)
+                         (effect-completed state side eid)))))}
+
    "Armed Intimidation"
    {:async true
     :effect (effect (show-wait-prompt :corp "Runner to suffer 5 meat damage or take 2 tags")
