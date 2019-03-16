@@ -9,13 +9,13 @@
 
 (defn- counter-based-extra-cost
   "Cold Site Server and Reduced Service. Modify cost to run current server whenever counters are added or removed.
-  Unit-Costs is a map like {:credit 1 :click 1} saying how much extra cost 1 counter adds.
+  Unit-Costs is a vec like [:credit 1 :click 1] saying how much extra cost 1 counter adds.
   NOTE: If card has an :effect or :leave-play, see function source for the things they need to do to ensure tracking works."
   [unit-costs cdef]
   (let [store-key [:special :current-added-cost]]
        (letfn [(reset-cost [state card amt]
                  (swap! state update-in [:corp :servers (second (:zone card)) :additional-cost]
-                        #(merge-costs (concat % (vec (flatten (map (fn [x] [(first x) (* amt (second x))]) unit-costs)))))))
+                        #(merge-costs (concat % (vec (flatten (map (fn [x] [(first x) (* amt (second x))]) (partition 2 unit-costs))))))))
                (recompute-cost [state card]
                  (let [change ((fnil - 0 0) (get-counters card :power) (get-in card store-key))]
                    (reset-cost state card change)
@@ -258,7 +258,7 @@
 
    "Cold Site Server"
    (counter-based-extra-cost
-    {:credit 1 :click 1}
+    [:credit 1 :click 1]
     {:events {:corp-turn-begins {:req (req (pos? (get-counters card :power)))
                                  :msg " uses Cold Site Server to remove all hosted power counters"
                                  :effect (effect (add-counter card :power (- (get-counters card :power))))}}
@@ -1043,7 +1043,7 @@
 
    "Reduced Service"
    (counter-based-extra-cost
-    {:credit 2}
+    [:credit 2]
     {:events {:successful-run {:req (req (and (pos? (get-counters card :power))
                                               (is-central? (:server run))))
                                :msg "remove a hosted power counter"
@@ -1051,12 +1051,11 @@
     :effect (req (show-wait-prompt state :runner "Corp to place credits on Reduced Service")
                  (continue-ability state side {:choices (req (range (inc (min 4 (get-in @state [:corp :credit])))))
                                                :prompt "How many credits to spend?"
-                                               :effect (req (let [spent target]
-                                                              (clear-wait-prompt state :runner)
-                                                              (deduct state :corp [:credit spent])
-                                                              (add-counter state :corp card :power spent)
-                                                              (system-msg state :corp (str "place " spent " power counters on Reduced Service"))
-                                                              (effect-completed state side eid)))}
+                                               :effect (req (clear-wait-prompt state :runner)
+                                                            (deduct state :corp [:credit target])
+                                                            (add-counter state :corp card :power target)
+                                                            (system-msg state :corp (str "place " target " power counters on Reduced Service"))
+                                                            (effect-completed state side eid))}
                                    card nil))})
 
    "Research Station"

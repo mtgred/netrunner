@@ -1817,6 +1817,7 @@
                   {:req (req (= target :archives))
                    :replace-access
                    {:prompt "Choose up to five cards to install"
+                    :show-discard true
                     :choices {:max 5
                               :req #(and (in-discard? %) (= (:side %) "Runner") (not= (:cid %) (:cid card)))}
                     :mandatory true

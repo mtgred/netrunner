@@ -551,7 +551,7 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (make-run state side server))
+  (make-run state side server {} :click-run))
 
 (defn remove-tag
   "Click to remove a tag."

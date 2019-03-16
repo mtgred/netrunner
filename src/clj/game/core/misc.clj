@@ -9,8 +9,8 @@
   (filter is-remote? (get-zones state)))
 
 (defn get-runnable-zones
-  ([state] (get-runnable-zones state (get-zones state) {:ignore-costs nil}))
-  ([state zones] (get-runnable-zones state zones {:ignore-costs nil}))
+  ([state] (get-runnable-zones state (get-zones state) nil))
+  ([state zones] (get-runnable-zones state zones nil))
   ([state zones {:keys [ignore-costs]}]
    (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))
          permitted-zones (remove (set restricted-zones) zones)]
@@ -53,6 +53,26 @@
       "Archives" [:servers :archives]
       "New remote" [:servers (keyword (str "remote" (make-rid state)))]
       [:servers (->> (split server #" ") last (str "remote") keyword)])))
+
+(defn unknown->kw
+  "Given a string ('Archives'), a keyword corresponding to a server (:archives)
+  or a zone ([:servers :archives]), return the keyword.
+  NOTE: return keyword even if server does not exist."
+  [name-or-kw-or-zone]
+  (cond
+    (keyword? name-or-kw-or-zone)
+    name-or-kw-or-zone
+
+    (string? name-or-kw-or-zone)
+    (case name-or-kw-or-zone
+      "HQ" :hq
+      "R&D" :rd
+      "Archives" :archives
+      ;; assume "Server N"
+      (->> (split name-or-kw-or-zone #" ") last (str "remote") keyword))
+
+    :else
+    (last name-or-kw-or-zone)))
 
 (defn same-server?
   "True if the two cards are IN or PROTECTING the same server."

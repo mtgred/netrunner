@@ -14,12 +14,12 @@
   ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
   ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
   ([state side eid server run-effect card {:keys [ignore-costs] :as args}]
-   (wait-for (trigger-event-simult state :runner (make-eid state) :pre-init-run nil server)
+   (wait-for (trigger-event-simult state :runner :pre-init-run nil server)
              (let [all-run-costs (when-not ignore-costs (run-costs state server card))]
                (if (and (can-run? state :runner)
                         (can-run-server? state server)
                         (can-pay? state :runner "a run" all-run-costs))
-                 (do (when (not card)
+                 (do (when (= card :click-run)
                        (swap! state assoc-in [:runner :register :click-type] :run)
                        (swap! state assoc-in [:runner :register :made-click-run] true)
                        (play-sfx state side "click-run"))
