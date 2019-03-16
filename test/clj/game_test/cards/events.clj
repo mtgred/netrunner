@@ -345,6 +345,53 @@
         (run-jack-out state)
         (run-on state "Archives")))))
 
+(deftest bribery
+  ;; Bribery
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand [(qty "Ice Wall" 2)]}
+               :runner {:hand ["Bribery"]
+                        :credits 100}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bribery")
+    (click-prompt state :runner "100")
+    (click-prompt state :runner "HQ")
+    (let [iw1 (get-ice state :hq 1)
+          iw2 (get-ice state :hq 0)]
+      (core/rez state :corp iw1)
+      (is (not (core/rezzed? (refresh iw1))) "Foremost Ice Wall is not rezzed")
+      (core/rez state :corp iw2)
+      (is (core/rezzed? (refresh iw2)) "Final Ice Wall is rezzed"))))
+
+(deftest brute-force-hack
+  ;; Brute-Force-Hack
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Ice Wall" "Tollbooth"]
+                      :credits 10}
+               :runner {:hand [(qty "Brute-Force-Hack" 2) "Xanadu"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Tollbooth" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (let [iw (get-ice state :hq 0)
+          tb (get-ice state :hq 1)]
+      (core/rez state :corp iw)
+      (core/rez state :corp tb)
+      (play-from-hand state :runner "Brute-Force-Hack")
+      (click-prompt state :runner "1")
+      (click-card state :runner "Tollbooth")
+      (is (core/rezzed? (refresh tb)) "Runner doesn't have enough money to derez Tollbooth")
+      (click-card state :runner iw)
+      (is (not (core/rezzed? (refresh iw))) "Runner can derez Ice Wall")
+      (play-from-hand state :runner "Xanadu")
+      (core/gain state :runner :credit 7)
+      (is (= (:cost tb) (:credit (get-runner))) "Gain enough credits to derez Tollbooth normally")
+      (play-from-hand state :runner "Brute-Force-Hack")
+      (is (empty? (:prompt (get-runner))) "Runner can't play Brute-Force-Hack when only available ice is too expensive"))))
+
 (deftest by-any-means
   ;; By Any Means
   (testing "Full test"
@@ -1440,23 +1487,29 @@
   ;; Make sure it is not active when hosted on Peddler
   (do-game
     (new-game {:corp {:deck [(qty "Jeeves Model Bioroids" 2)
-                             (qty "Jackson Howard" 2)]}
-               :runner {:deck ["Street Peddler"
-                               (qty "Hacktivist Meeting" 3)]}})
+                             (qty "Jackson Howard" 2)]
+                      :hand ["Jeeves Model Bioroids" "Jackson Howard" "Sundew"]
+                      :credits 10}
+               :runner {:hand ["Hacktivist Meeting"]}})
     (take-credits state :corp)
     (starting-hand state :runner ["Street Peddler" "Hacktivist Meeting"])
     (play-from-hand state :runner "Street Peddler")
     (take-credits state :runner)
     (play-from-hand state :corp "Jeeves Model Bioroids" "New remote")
     (play-from-hand state :corp "Jackson Howard" "New remote")
+    (play-from-hand state :corp "Sundew" "New remote")
     (let [jeeves (get-content state :remote1 0)
-          jackson (get-content state :remote2 0)]
+          jackson (get-content state :remote2 0)
+          sundew (get-content state :remote3 0)]
       (core/rez state :corp jeeves)
       (is (zero? (count (:discard (get-corp)))) "Nothing discarded to rez Jeeves - Hacktivist not active")
       (take-credits state :corp)
       (play-from-hand state :runner "Hacktivist Meeting")
       (core/rez state :corp jackson)
-      (is (= 1 (count (:discard (get-corp)))) "Card discarded to rez Jackson - Hacktivist active"))))
+      (is (= 1 (count (:discard (get-corp)))) "Card discarded to rez Jackson - Hacktivist active")
+      (core/rez state :corp sundew)
+      (is (not (core/rezzed? (refresh sundew))) "Sundew is not rezzed as corp has no cards in hand")
+      (is (= "Unable to pay for Sundew." (-> @state :corp :toast first :msg)) "Corp gets the correct toast"))))
 
 (deftest high-stakes-job
   ;; High Stakes Job - run on server with at least 1 piece of unrezzed ice, gains 12 credits if successful
@@ -2557,6 +2610,34 @@
         (core/rez state :corp jeeves)
         (card-ability state :corp jeeves 0)
         (is (= 3 (:click (get-corp))) "Corp has 3 clicks - Jeeves working ok")))))
+
+(deftest running-interference
+  ;; Running Interference
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall" "Archer" "Hostile Takeover"]
+                      :credits 100}
+               :runner {:hand ["Running Interference"]}})
+    (play-and-score state "Hostile Takeover")
+    (play-from-hand state :corp "Archer" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Running Interference")
+    (click-prompt state :runner "HQ")
+    (let [archer (get-ice state :hq 0)
+          credits (:credit (get-corp))]
+      (core/rez state :corp archer)
+      (click-card state :corp (get-scored state :corp 0))
+      (is (empty? (:prompt (get-corp))) "Only 1 agenda required to rez")
+      (is (= (- credits (* 2 (:cost archer))) (:credit (get-corp))) "Rezzing Archer costs double")
+      (is (core/rezzed? (refresh archer)) "Archer is rezzed"))
+      (run-successful state)
+    (let [iw (get-ice state :hq 1)
+          credits (:credit (get-corp))]
+      (run-on state "HQ")
+      (core/rez state :corp iw)
+      (is (empty? (:prompt (get-corp))))
+      (is (= (- credits (:cost iw)) (:credit (get-corp))) "Rezzing Ice Wall costs normal"))))
 
 (deftest scrubbed
   ;; First piece of ice encountered each turn has -2 Strength for remainder of the run

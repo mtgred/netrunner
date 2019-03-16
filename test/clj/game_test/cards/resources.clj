@@ -1299,7 +1299,25 @@
         (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged")
         (core/rez state :corp next-silver)
         (is (= 7 (:credit (get-corp))) "Paid 3 to rez NEXT Silver")
-        (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged")))))
+        (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged"))))
+  (testing "interactions with non-rez abilities, such as Blue Sun. Issue #4000"
+    (do-game
+      (new-game {:corp {:id "Blue Sun: Powering the Future"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]
+                        :credits 15}
+                 :runner {:hand ["Hernando Cortez"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hernando Cortez")
+      (let [iw (get-ice state :hq 0)
+            credits (:credit (get-corp))]
+        (core/rez state :corp iw)
+        (is (= (- credits 2) (:credit (get-corp))) "Corp should pay an addition 1 to rez Ice Wall")
+        (take-credits state :runner)
+        (card-ability state :corp (:identity (get-corp)) 0)
+        (click-card state :corp iw)
+        (is (= (dec credits) (:credit (get-corp))) "Corp should only gain 1 back when using Blue Sun's ability")))))
 
 (deftest ice-carver
   ;; Ice Carver - lower ice strength on encounter

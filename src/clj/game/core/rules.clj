@@ -614,11 +614,20 @@
   (trigger-event state side :purge))
 
 (defn mill
-  "Force the discard of n cards by trashing them."
+  "Force the discard of n cards from the deck by trashing them"
   ([state side] (mill state side side 1))
   ([state side n] (mill state side side n))
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :deck]))]
+     (doseq [card milltargets]
+       (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
+
+(defn discard-from-hand
+  "Force the discard of n cards from the hand by trashing them"
+  ([state side] (discard-from-hand state side side 1))
+  ([state side n] (discard-from-hand state side side 1))
+  ([state from-side to-side n]
+   (let [milltargets (take n (get-in @state [to-side :hand]))]
      (doseq [card milltargets]
        (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
 
