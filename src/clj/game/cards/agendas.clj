@@ -1023,7 +1023,10 @@
 
    "Project Yagi-Uda"
    (letfn [(put-back-counter [state side card]
-             (set-prop state side card :counter {:agenda (+ 1 (get-counters card :agenda))}))
+             (set-prop state side card :counter
+                       (merge
+                         (:counter card)
+                         {:agenda (+ 1 (get-counters card :agenda))})))
            (choose-swap [to-swap]
              {:prompt (str "Select a card in HQ to swap with " (:title to-swap))
               :choices {:not-self true
@@ -1034,12 +1037,11 @@
                                      (or (is-type? % "Agenda")
                                          (is-type? % "Asset")
                                          (is-type? % "Upgrade"))))}
+              :msg (msg (str "swap "
+                             (card-str state to-swap)
+                             " with a card from HQ"))
               :effect (req (move state :corp to-swap (:zone target) {:keep-server-alive true})
                            (move state :corp target (:zone to-swap) {:keep-server-alive true})
-                           (system-msg state :corp
-                                       (str "uses Project Yagi-Uda to swap "
-                                            (card-str state to-swap)
-                                            " with a card from HQ"))
                            (clear-wait-prompt state :runner))
               :cancel-effect (effect (put-back-counter card)
                                      (clear-wait-prompt :runner))})
@@ -1052,7 +1054,7 @@
      {:silent (req true)
       :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))
       :abilities [{:counter-cost [:agenda 1]
-                   :req (req (:run @state))
+                   :req (req run)
                    :effect (effect (show-wait-prompt :runner "Corp to use Project Yagi-Uda")
                              (continue-ability (choose-card (:server run))
                                                card nil))}]})
