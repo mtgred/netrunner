@@ -1022,7 +1022,9 @@
                            "after all its other subroutines for the remainder of this run")}]}
 
    "Project Yagi-Uda"
-   (letfn [(choose-swap [to-swap]
+   (letfn [(put-back-counter [state side card]
+             (set-prop state side card :counter {:agenda (+ 1 (get-counters card :agenda))}))
+           (choose-swap [to-swap]
              {:prompt (str "Select a card in HQ to swap with " (:title to-swap))
               :choices {:not-self true
                         :req #(and (= "Corp" (:side %))
@@ -1039,12 +1041,14 @@
                                             (card-str state to-swap)
                                             " with a card from HQ"))
                            (clear-wait-prompt state :runner))
-              :cancel-effect (effect (clear-wait-prompt :runner))})
+              :cancel-effect (effect (put-back-counter card)
+                                     (clear-wait-prompt :runner))})
            (choose-card [run-server]
              {:prompt "Choose a card in or protecting the attacked server."
               :choices {:req #(= (first run-server) (second (:zone %)))}
               :effect (effect (continue-ability (choose-swap target) card nil))
-              :cancel-effect (effect (clear-wait-prompt :runner))})]
+              :cancel-effect (effect (put-back-counter card)
+                                     (clear-wait-prompt :runner))})]
      {:silent (req true)
       :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))
       :abilities [{:counter-cost [:agenda 1]

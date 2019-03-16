@@ -2056,7 +2056,31 @@
         (click-card state :corp (get-content state :remote2 0))
         (click-card state :corp (find-card "Project Yagi-Uda" (:hand (get-corp))))
         (is (= (:title (get-content state :remote2 0)) "Project Yagi-Uda")
-            "Swapped Upgrade for Agenda")))))
+            "Swapped Upgrade for Agenda"))))
+  (testing "Cancel swapping at different stages"
+    (do-game
+      (new-game {:corp {:deck ["Project Yagi-Uda"
+                               "Eli 1.0"
+                               "Eli 2.0" ]}})
+      (core/gain state :corp :click 10 :credit 10)
+      (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+      (play-from-hand state :corp "Eli 1.0" "New remote")
+      (let [pyu (get-content state :remote1 0)]
+        (advance state pyu 4)
+        (core/score state :corp {:card (refresh pyu)}))
+      (take-credits state :corp)
+      (let [pyu-scored (get-scored state :corp 0)
+            eli1 (get-ice state :remote2 0)]
+        (run-on state :remote2)
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Yagi-Uda should have a counter to start with")
+        (card-ability state :corp pyu-scored 0)
+        (is (= 0 (get-counters (refresh pyu-scored) :agenda)) "Using Yagi-Uda should remove counter")
+        (click-prompt state :corp "Done")
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during first selection should bring back counter")
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp eli1)
+        (click-prompt state :corp "Done")
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during second selection should bring back counter")))))
 
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.
