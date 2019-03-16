@@ -15,7 +15,7 @@
   ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
   ([state side eid server run-effect card {:keys [ignore-costs] :as args}]
    (wait-for (trigger-event-simult state :runner (make-eid state) :pre-init-run nil server)
-             (let [all-run-costs (if ignore-costs [] (run-costs state server card))]
+             (let [all-run-costs (when-not ignore-costs (run-costs state server card))]
                (if (and (can-run? state :runner)
                         (can-run-server? state server)
                         (can-pay? state :runner "a run" all-run-costs))

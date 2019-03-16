@@ -56,7 +56,7 @@
      {:prompt "Choose a server"
       :choices (req runnable-servers)
       :async true
-      :msg (req "make a run on " target)
+      :msg (msg "make a run on " target)
       :effect (req (let [run-server (server->zone state target)]
                      (wait-for (make-run state side (make-eid state) target nil card nil)
                                (continue-ability state side (run-again run-server) card nil))))})
