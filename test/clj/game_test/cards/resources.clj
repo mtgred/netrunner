@@ -3143,7 +3143,6 @@
                         :hand [(qty "Fire Wall" 5)]}
                  :runner {:hand ["The Turning Wheel"]
                           :credits 10}})
-      (trash-from-hand state :corp "Hostile Takeover")
       (take-credits state :corp)
       (core/gain state :runner :click 10)
       (play-from-hand state :runner "The Turning Wheel")
@@ -3155,10 +3154,11 @@
         (click-prompt state :runner "No action")
         (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
         (run-on state "HQ")
-        (card-ability state :runner ttw 0)
+        (card-ability state :runner ttw 0) ;; The R&D access ability
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (zero? (core/access-bonus-count (:run @state) :hq)) "Runner should access 1 additional card")
         (run-successful state)
+        (is (= "You accessed Fire Wall." (-> (get-runner) :prompt first :msg)))
         (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available")))))
 
