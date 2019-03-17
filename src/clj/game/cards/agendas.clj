@@ -117,7 +117,7 @@
    {:interactive (req true)
     :async true
     :msg "look at the top 5 cards of R&D"
-    :prompt (req (str "The top cards of R&D are (top->bottom) " (join ", " (map :title (take 5 (get-in @state [:corp :deck]))))))
+    :prompt (msg "The top cards of R&D are (top->bottom) " (join ", " (map :title (take 5 (get-in @state [:corp :deck])))))
     :choices ["OK"]
     :effect (req (let [decline-msg "does not install any of the top 5 cards"]
                    (if (some ice? (take 5 (get-in @state [:corp :deck])))
