@@ -1037,9 +1037,7 @@
                                      (or (is-type? % "Agenda")
                                          (is-type? % "Asset")
                                          (is-type? % "Upgrade"))))}
-              :msg (msg (str "swap "
-                             (card-str state to-swap)
-                             " with a card from HQ"))
+              :msg (msg "swap " (card-str state to-swap) " with a card from HQ")
               :effect (req (move state :corp to-swap (:zone target) {:keep-server-alive true})
                            (move state :corp target (:zone to-swap) {:keep-server-alive true})
                            (clear-wait-prompt state :runner))
