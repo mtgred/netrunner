@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
-         facedown? make-result)
+         facedown? make-result unknown->kw)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -308,6 +308,15 @@
 
 (defn click-run-cost-bonus [state side & n]
   (swap! state update-in [:bonus :click-run-cost] #(merge-costs (concat % n))))
+
+(defn run-costs
+  "Get a list of all costs required to run a server, including additional costs. If card is :click-run, assume run is made by spending a click, and include the assumed click in the cost list."
+  [state server card]
+  (let [server (unknown->kw server)
+        click-run-cost (when (= card :click-run) (concat (get-in @state [:bonus :click-run-cost]) [:click 1]))
+        global-costs (get-in @state [:bonus :run-cost])
+        server-costs (get-in @state [:corp :servers server :additional-cost])]
+    (merge-costs (concat click-run-cost global-costs server-costs))))
 
 (defn trash-cost-bonus [state side n]
   (swap! state update-in [:bonus :trash] (fnil #(+ % n) 0)))

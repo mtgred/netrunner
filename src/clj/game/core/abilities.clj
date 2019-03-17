@@ -116,10 +116,7 @@
      (effect-completed state side eid)
      (if (and ability (not eid))
        (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
-       (when-let [ability (if (and (:makes-run ability)
-                                   (get-in @state [:bonus :run-cost]))
-                            (update-in ability [:cost] concat (get-in @state [:bonus :run-cost]))
-                            ability)]
+       (when ability
          ;; Is this an optional ability?
          (check-optional state side ability card targets)
          ;; Is this a psi game?

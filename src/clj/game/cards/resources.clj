@@ -1151,14 +1151,14 @@
                   :choices (req runnable-servers)
                   :msg (msg "make a run on " target " during which no programs can be used")
                   :makes-run true
-                  :effect (effect (make-run target))}]
+                  :effect (effect (make-run target nil card))}]
      {:implementation "Doesn't prevent program use"
       :flags {:runner-phase-12 (req true)}
       :install-cost-bonus (req [:credit (- (:link runner))])
       :events {:runner-turn-begins
-               {:optional {:req (req (not (get-in @state [:per-turn (:cid card)])))
-                           :prompt "Use Jak Sinclair to make a run?"
-                           :yes-ability ability}}}
+                {:optional {:req (req (not (get-in @state [:per-turn (:cid card)])))
+                            :prompt "Use Jak Sinclair to make a run?"
+                            :yes-ability ability}}}
       :abilities [ability]})
 
    "Jarogniew Mercs"

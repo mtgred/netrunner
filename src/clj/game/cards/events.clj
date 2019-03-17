@@ -48,6 +48,19 @@
                                                                (effect-completed state side eid))))}}
                               card))}
 
+   "Always Have a Backup Plan"
+   (letfn [(run-again [server]
+             {:optional {:prompt "Run again?"
+                         :msg (msg "to make a run on " (zone->name server) ", ignoring additional costs")
+                         :yes-ability {:effect (effect (make-run eid server nil card {:ignore-costs true}))}}})]
+     {:prompt "Choose a server"
+      :choices (req runnable-servers)
+      :async true
+      :msg (msg "make a run on " target)
+      :effect (req (let [run-server (server->zone state target)]
+                     (wait-for (make-run state side (make-eid state) target nil card nil)
+                               (continue-ability state side (run-again run-server) card nil))))})
+
    "Amped Up"
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
     :effect (effect (gain :click 3) (damage eid :brain 1 {:unpreventable true :card card}))}
@@ -533,7 +546,7 @@
                                       :async true
                                       :effect (req (let [c (move state side (find-latest state card) :play-area)]
                                                      (card-init state side c {:resolve-effect false})
-                                                     (wait-for (make-run state side (make-eid state) target)
+                                                     (wait-for (make-run state side (make-eid state) target nil card)
                                                                (doseq [s [:corp :runner]]
                                                                  (enable-identity state s))
                                                                (continue-ability state side maybe-reshuffle c nil))))}
@@ -1804,6 +1817,7 @@
                   {:req (req (= target :archives))
                    :replace-access
                    {:prompt "Choose up to five cards to install"
+                    :show-discard true
                     :choices {:max 5
                               :req #(and (in-discard? %) (= (:side %) "Runner") (not= (:cid %) (:cid card)))}
                     :mandatory true
@@ -2084,7 +2098,7 @@
      nil
      {:end-run {:msg "take 1 brain damage"
                 :effect (effect (damage eid :brain 1 {:unpreventable true :card card}))}}
-     (effect (gain-run-credits 9)))
+     (effect (gain-next-run-credits 9)))
 
    "Sure Gamble"
    {:msg "gain 9 [Credits]" :effect (effect (gain-credits 9))}
