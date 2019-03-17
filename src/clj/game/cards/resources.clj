@@ -2180,8 +2180,8 @@
    (let [ttw-ab (fn [m s]
                   {:label (str "Access an additional card in " m)
                    :counter-cost [:power 2]
-                   :req (req (:run @state))
-                   :msg "access 1 additional card from " m " for the remainder of the run"
+                   :req (req run)
+                   :msg (msg "access 1 additional card from " m " for the remainder of the run")
                    :effect (req (access-bonus state side s 1))})]
      {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
                                :silent (req true)}
