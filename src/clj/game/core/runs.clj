@@ -936,7 +936,7 @@
     (:unsuccessful run)
     (do
       (play-sfx state side "run-unsuccessful")
-       (wait-for (trigger-event-sync state side :unsuccessful-run-ends run)
+      (wait-for (trigger-event-sync state side :unsuccessful-run-ends run)
                 (effect-completed state side (make-result eid {:unsuccessful true}))))
 
     ;; Neither
