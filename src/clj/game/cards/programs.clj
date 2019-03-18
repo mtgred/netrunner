@@ -1787,7 +1787,6 @@
                  :label "Make currently encountered ice gain a subtype"
                  :prompt "Choose an ICE subtype"
                  :choices (req (->> (server-cards)
-                                    vals
                                     (filter ice?)
                                     (map :subtype)
                                     (mapcat #(split % #" - "))
