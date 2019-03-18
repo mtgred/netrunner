@@ -158,6 +158,27 @@
     (is (= 5 (hand-size :runner)) "Hand size reset")
     (is (= 4 (core/available-mu state)) "Memory limit reset")))
 
+(deftest chop-bot-3000
+  ;; Chop Bot 3000 - when your turn beings trash 1 card, then draw or remove tag
+  (do-game
+    (new-game {:runner {:deck ["Chop Bot 3000", "Spy Camera"]}})
+    (take-credits state :corp)
+    (core/gain state :runner :tag 2)
+    (play-from-hand state :runner "Chop Bot 3000")
+    (play-from-hand state :runner "Spy Camera")
+    (is (= 2 (count-tags state)) "Runner has 2 tags")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [cb (get-hardware state 0)]
+      (is (empty? (:discard (get-runner))) "No cards in trash")
+      (card-ability state :runner cb 0)
+      (click-card state :runner (find-card "Spy Camera" (get-hardware state)))
+      (click-prompt state :runner "Remove 1 tag")
+      (is (= 1 (count (:discard (get-runner)))) "Spy Camera trashed")
+      (is (= 1 (count-tags state)) "Runner lost 1 tag")
+      (core/end-phase-12 state :runner nil))))
+
 (deftest clone-chip
   ;; Test clone chip usage- outside and during run
   (testing "Basic test"

@@ -187,9 +187,10 @@
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))
                            :not-self true}
                  :async true
-                 :effect (req (wait-for (trash state :runner target)
+                 :effect (req (wait-for (trash state :runner target nil)
                                         (continue-ability state side
-                                                          {:prompt "Draw 1 card or remove 1 tag" :msg (msg (.toLowerCase target))
+                                                          {:prompt "Draw 1 card or remove 1 tag"
+                                                           :msg (msg (.toLowerCase target))
                                                            :choices ["Draw 1 card" "Remove 1 tag"]
                                                            :async true
                                                            :effect (req (if (= target "Draw 1 card")
