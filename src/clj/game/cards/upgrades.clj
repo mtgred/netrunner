@@ -1059,10 +1059,11 @@
                  (continue-ability state side {:choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
                                                :prompt "How many credits to spend?"
                                                :effect (req (clear-wait-prompt state :runner)
-                                                            (deduct state :corp [:credit target])
-                                                            (add-counter state :corp card :power target)
-                                                            (system-msg state :corp (str "place " target " power counters on Reduced Service"))
-                                                            (effect-completed state side eid))}
+                                                            (let [spent (str->int target)]
+                                                              (deduct state :corp [:credit spent])
+                                                              (add-counter state :corp card :power spent)
+                                                              (system-msg state :corp (str "place " spent " power counters on Reduced Service"))
+                                                              (effect-completed state side eid)))}
                                    card nil))})
 
    "Research Station"
