@@ -286,7 +286,6 @@
                 (is (= (inc counters) (get-counters (refresh cc) :credit)) "Companion doesn't gain 1c when no agenda stolen"))))]
     (doall (map companion-test
                 ["Fencer Fueno"
-                 "Mystic Maemi"
                  "Trickster Taka"]))))
 
 (deftest chrome-parlor
@@ -1921,41 +1920,6 @@
           (click-card state :corp toll)
           (is (:rezzed (refresh toll)) "Tollbooth was rezzed")
           (is (zero? (:credit (get-corp))) "Corp has 0 credits"))))))
-
-(deftest mystic-maemi
-  ;; Mystic Maemi - Companion, credits usable not during runs (technically for events)
-  (do-game
-    (new-game {:corp {:hand ["Hostile Takeover" "PAD Campaign"]}
-               :runner {:hand [(qty "Sure Gamble" 2) "Mystic Maemi"]}})
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Mystic Maemi")
-    (let [mm (get-resource state 0)]
-      (core/add-counter state :runner (refresh mm) :credit 4)
-      (is (= 4 (get-counters (refresh mm) :credit)) "Maemi counters added")
-      (let [counters (get-counters (refresh mm) :credit)
-            credits (:credit (get-runner))
-            hand (count (:hand (get-runner)))]
-        (run-empty-server state "Server 1")
-        (card-ability state :runner mm 0)
-        (is (= counters (get-counters (refresh mm) :credit)) "Can't use credits on Maemi during runs")
-        (is (= credits (:credit (get-runner))))
-        (click-prompt state :runner "No action")
-        (card-ability state :runner mm 0)
-        (is (= (dec counters) (get-counters (refresh mm) :credit)) "Can use credits on Maemi during Action Phase")
-        (is (= (inc credits) (:credit (get-runner))))
-        (take-credits state :runner)
-        (click-prompt state :runner "Suffer 1 meat damage")
-        (is (= (dec hand) (count (:hand (get-runner)))) "Suffered 1 meat damage to not trash Maemi")
-        (is (refresh mm) "Maemi not trashed")
-        (is (not (find-card "Mystic Maemi" (:discard (get-runner)))) "Maemi not in discard yet"))
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (let [hand (count (:hand (get-runner)))]
-        (click-prompt state :runner "Trash")
-        (is (= hand (count (:hand (get-runner)))) "Didn't pay to trash Maemi")
-        (is (nil? (refresh mm)) "Maemi not installed")
-        (is (find-card "Mystic Maemi" (:discard (get-runner))) "Maemi trashed")))))
 
 (deftest net-mercur
   ;; Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used

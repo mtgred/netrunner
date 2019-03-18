@@ -3,7 +3,6 @@
   (:require [web.db :refer [db] :as webdb]
             [clojure.string :as string]
             [clojure.java.io :as io]
-            [zprint.core :as zp]
             [tasks.nrdb :refer :all]
             [tasks.altart :refer [add-art]]))
 

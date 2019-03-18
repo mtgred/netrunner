@@ -580,12 +580,12 @@
     :abilities [{:cost [:click 1]
                  :label "Reveal the top card of the Stack"
                  :effect (req (when-let [revealed-card (-> runner :deck first)]
-                                (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " revealed-card))
+                                (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " (:title revealed-card)))
                                 (reveal state side revealed-card)))}
                 {:cost [:click 1]
                  :label "Reveal a random card from the Grip"
                  :effect (req (when-let [revealed-card (-> runner :hand shuffle first)]
-                                (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " revealed-card))
+                                (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " (:title revealed-card)))
                                 (reveal state side revealed-card)))}]}
 
    "Iain Stirling: Retired Spook"
