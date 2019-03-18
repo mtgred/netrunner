@@ -294,11 +294,12 @@
                                 (autoresolve-fn state side eid card targets))]
        (case autoresolve-answer
          "Yes" (prompt-fn "Yes")
-         "No"  (prompt-fn "No")
-               (do (toast state side (str "This prompt can be skipped by clicking "
-                                          (:title card) " and toggling autoresolve"))
-                   (show-prompt state side eid card message ["Yes" "No"]
-                                prompt-fn ability)))))))
+         "No" (prompt-fn "No")
+         (do (when autoresolve-fn
+               (toast state side (str "This prompt can be skipped by clicking "
+                                      (:title card) " and toggling autoresolve")))
+             (show-prompt state side eid card message ["Yes" "No"]
+-                                prompt-fn ability)))))))
 
 ;;; Prompts
 (defn prompt!
