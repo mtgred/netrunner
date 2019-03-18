@@ -514,6 +514,57 @@
       (is (empty? (get-content state :hq))
           "Code Replicatior trashed from root of HQ"))))
 
+(deftest cold-site-server
+  ;; Cold Site Server - Increase run cost by 1 cred, 1 click per power counters
+  (testing "Cost modification plays nice with derez"
+    (do-game
+     (new-game {:corp {:deck ["Cold Site Server" "Test Ground"]}
+                :runner {:deck ["Dirty Laundry"]}})
+     (core/gain state :corp :credit 10 :click 10)
+     (play-from-hand state :corp "Cold Site Server" "HQ")
+     (play-from-hand state :corp "Test Ground" "New remote")
+
+     (let [css (get-content state :hq 0)
+           tg (get-content state :remote1 0)]
+       (core/rez state :corp (refresh css))
+       (advance state (refresh tg) 1)
+       (card-ability state :corp (refresh css) 0)
+       (card-ability state :corp (refresh css) 0)
+       (is (= 2 (get-counters (refresh css) :power)) "2 counters placed on Cold Site Server")
+       (take-credits state :corp)
+       (is (= 5 (:credit (get-runner))))
+       (run-on state :hq)
+       (is (:run @state) "Run initiated")
+       (is (= 3 (:credit (get-runner))) "2 creds spent to run HQ")
+       (is (= 1 (:click (get-runner))) "2 extra clicks spent to run HQ")
+       (run-jack-out state)
+       (card-ability state :corp (refresh tg) 0)
+       (click-card state :corp (refresh css))
+       (is (not (:rezzed (refresh css))) "CSS derezzed")
+       (core/gain state :runner :click 2)
+       (run-on state :hq)
+       (is (= 3 (:credit (get-runner))) "0 creds spent to run HQ")
+       (is (= 2 (:click (get-runner))) "Only 1 click spent to run HQ")
+       (is (:run @state) "Run initiated")
+       (run-jack-out state)
+       (core/rez state :corp (refresh css))
+       (is (= 2 (get-counters (refresh css) :power)) "Still 2 counters on Cold Site Server")
+       (play-from-hand state :runner "Dirty Laundry")
+       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
+           "Runner should not get to choose HQ due to increased cost")
+       (click-prompt state :runner "R&D")
+       (run-jack-out state)
+       (take-credits state :runner)
+       (is (= 2 (:credit (get-runner))))
+       (is (= 0 (get-counters (refresh css) :power)) "Counters cleared at start of corp turn")
+       (take-credits state :corp)
+       (is (= 2 (:credit (get-runner))))
+       (is (= 4 (:click (get-runner))))
+       (run-on state :hq)
+       (is (:run @state) "Run initiated")
+       (is (= 3 (:click (get-runner))) "No extra cost to run HQ")
+       (is (= 2 (:credit (get-runner))) "No extra cost to run HQ")))))
+
 (deftest corporate-troubleshooter
   ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ICE
   (do-game
@@ -884,6 +935,26 @@
     (run-empty-server state :hq)
     (is (= 1 (count (:discard (get-runner)))) "1 net damage done for successful run on HQ")))
 
+(deftest increased-drop-rates
+  ;; Increased Drop Rates
+  (do-game
+    (new-game {:corp {:deck [(qty "Increased Drop Rates" 2)]}})
+    (core/gain state :corp :bad-publicity 1)
+    (starting-hand state :corp ["Increased Drop Rates"])
+    (play-from-hand state :corp "Increased Drop Rates" "New remote")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (run-successful state)
+    (is (= 0 (count-tags state)))
+    (click-prompt state :runner "Yes")
+    (is (= 1 (count-tags state)) "Runner takes 1 tag to prevent Corp from removing 1 BP")
+    (click-prompt state :runner "Pay 2 [Credits] to trash") ; trash
+    (run-on state "Archives")
+    (run-successful state)
+    (is (= 1 (:bad-publicity (get-corp))))
+    (click-prompt state :runner "No")
+    (is (= 0 (:bad-publicity (get-corp))) "Runner declines to take tag, Corp removes 1 BP")))
+
 (deftest intake
   ;; Intake - Trace4, add an installed program or virtual resource to the grip
   (do-game
@@ -982,6 +1053,31 @@
       (is (= 1 (count-tags state)) "1 tag removed")
       (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
+
+(deftest letheia-nisei
+  ;; Letheia Nisei
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Letheia Nisei" (qty "Ice Wall" 2)]
+                      :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Letheia Nisei" "R&D")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (let [letheia (get-content state :rd 0)]
+      (core/rez state :corp letheia)
+      (core/rez state :corp (get-ice state :rd 0))
+      (core/rez state :corp (get-ice state :rd 1))
+      (run-continue state)
+      (run-continue state)
+      (click-prompt state :corp "0 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
+      (is (zero? (:position (:run @state))) "Runner should be approaching the server")
+      (click-prompt state :corp "Yes")
+      (is (= 2 (:position (:run @state))) "Runner should be approaching outermost ice")
+      (is (nil? (refresh letheia)) "Letheia is trashed")
+      (is (find-card "Letheia Nisei" (:discard (get-corp))) "Letheia is in Archives"))))
 
 (deftest manta-grid
   ;; If the Runner has fewer than 6 or no unspent clicks on successful run, corp gains a click next turn.
@@ -1616,50 +1712,94 @@
         (is (= 5 (:credit (get-runner))) "Runner was not charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda")))))
 
+(deftest reduced-service
+  ;; Reduced Service - Increase run cost by 2x number of power counters
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:deck ["Reduced Service"]}
+                :runner {:deck ["Dirty Laundry"]}})
+     (play-from-hand state :corp "Reduced Service" "HQ")
+     (take-credits state :corp)
+     (let [rs (get-content state :hq 0)]
+       (core/rez state :corp rs)
+       (is (changes-credits (get-corp) -4
+                            (click-prompt state :corp "4")))
+       (is (= 4 (get-counters (refresh rs) :power)) "4 counters placed on Reduced Service")
+       (play-from-hand state :runner "Dirty Laundry")
+       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
+           "Runner should not get to choose HQ due to increased cost")
+       (click-prompt state :runner "Archives")
+       (is (= 4 (get-counters (refresh rs) :power)) "No counter removed by only making a run")
+       (run-successful state)
+       (is (= 3 (get-counters (refresh rs) :power)) "1 counters removed from Reduced Service by successful run")
+       (is (changes-credits (get-runner) -6
+                            (run-on state :hq)))
+       (run-successful state)
+       (is (= 2 (get-counters (refresh rs) :power)) "1 counters removed from Reduced Service by successful run")
+       (click-prompt state :runner "Pay 2 [Credits] to trash")
+       (is (= 1 (count (:discard (get-corp)))) "Reduced Service trashed")
+       (is (changes-credits (get-runner) 0
+                            (run-on state :hq)))
+       (is (:run @state) "Runner got to run without paying anything after trashing reduced service")))))
+
 (deftest ruhr-valley
   ;; Ruhr Valley
   (testing "Basic test - As an additional cost to make a run on this server, the Runner must spend a click."
     (do-game
-      (new-game {:corp {:deck ["Ruhr Valley"]}})
-      (play-from-hand state :corp "Ruhr Valley" "HQ")
-      (take-credits state :corp)
-      (let [ruhr (get-content state :hq 0)]
-        (core/rez state :corp ruhr)
-        (is (= 4 (:click (get-runner))))
-        (run-on state :hq)
-        (run-jack-out state)
-        (is (= 2 (:click (get-runner))))
-        (take-credits state :runner 1)
-        (is (= 1 (:click (get-runner))))
-        (is (not (core/can-run-server? state "HQ")) "Runner can't run - no additional clicks")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 4 (:click (get-runner))))
-        (is (= 7 (:credit (get-runner))))
-        (run-on state :hq)
-        (run-successful state)
-        (click-prompt state :runner "Pay 4 [Credits] to trash") ; pay to trash / 7 cr - 4 cr
-        (is (= 2 (:click (get-runner))))
-        (is (= 3 (:credit (get-runner))))
-        (run-on state :hq)
-        (run-jack-out state)
-        (is (= 1 (:click (get-runner)))))))
+     (new-game {:corp {:deck ["Ruhr Valley"]}})
+     (play-from-hand state :corp "Ruhr Valley" "HQ")
+     (take-credits state :corp)
+     (let [ruhr (get-content state :hq 0)]
+       (core/rez state :corp ruhr)
+       (is (= 4 (:click (get-runner))))
+       (run-on state :hq)
+       (run-jack-out state)
+       (is (= 2 (:click (get-runner))))
+       (take-credits state :runner 1)
+       (is (= 1 (:click (get-runner))))
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (is (= 4 (:click (get-runner))))
+       (is (= 7 (:credit (get-runner))))
+       (run-on state :hq)
+       (run-successful state)
+       (click-prompt state :runner "Pay 4 [Credits] to trash") ; pay to trash / 7 cr - 4 cr
+       (is (= 2 (:click (get-runner))))
+       (is (= 3 (:credit (get-runner))))
+       (run-on state :hq)
+       (run-jack-out state)
+       (is (= 1 (:click (get-runner)))))))
   (testing "If the runner trashes with one click left, the ability to run is enabled"
     (do-game
-      (new-game {:corp {:deck ["Ruhr Valley"]}})
-      (play-from-hand state :corp "Ruhr Valley" "HQ")
-      (take-credits state :corp)
-      (let [ruhr (get-content state :hq 0)]
-        (core/rez state :corp ruhr)
-        (is (= 4 (:click (get-runner))))
-        (run-on state :rd)
-        (run-jack-out state)
-        (is (= 3 (:click (get-runner))))
-        (run-on state :hq)
-        (run-successful state)
-        (click-prompt state :runner "Pay 4 [Credits] to trash") ; pay to trash / 6 cr - 4 cr
-        (is (= 1 (:click (get-runner))))
-        (run-on state :hq)))))
+     (new-game {:corp {:deck ["Ruhr Valley"]}})
+     (play-from-hand state :corp "Ruhr Valley" "HQ")
+     (take-credits state :corp)
+     (let [ruhr (get-content state :hq 0)]
+       (core/rez state :corp ruhr)
+       (is (= 4 (:click (get-runner))))
+       (run-on state :rd)
+       (run-jack-out state)
+       (is (= 3 (:click (get-runner))))
+       (run-on state :hq)
+       (run-successful state)
+       (click-prompt state :runner "Pay 4 [Credits] to trash") ; pay to trash / 6 cr - 4 cr
+       (is (= 1 (:click (get-runner))))
+       (run-on state :hq)
+       (is (:run @state) "Runner got to run"))))
+  (testing "If runner cannot pay additional cost, server not shown as an option for run events or click to run button"
+    (do-game
+     (new-game {:corp {:deck ["Ruhr Valley"]}
+                :runner {:deck ["Dirty Laundry"]}})
+     (play-from-hand state :corp "Ruhr Valley" "HQ")
+     (take-credits state :corp)
+     (let [ruhr (get-content state :hq 0)]
+       (core/rez state :corp ruhr)
+       (core/gain state :runner :click -3)
+       (is (= 1 (:click (get-runner))))
+       (play-from-hand state :runner "Dirty Laundry")
+       (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner should only get choice of Archives or R&D")
+       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
+           "Runner should only get choice of Archives or R&D")))))
 
 (deftest ryon-knight
   ;; Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining

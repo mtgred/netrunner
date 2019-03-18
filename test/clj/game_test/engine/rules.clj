@@ -522,6 +522,19 @@
           (play-from-hand state :corp "Cyberdex Trial")
           (is (zero? (get-counters (refresh imp) :virus)) "Imp counters purged"))))))
 
+(deftest purge-corp
+  ;; Purge virus counters on Corp cards
+  (do-game
+    (new-game {:corp {:deck ["Cyberdex Trial" "Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [iw (get-ice state :hq 0)]
+      (core/command-counter state :corp ["virus" 2])
+      (click-card state :corp iw)
+      (is (= 2 (get-counters (refresh iw) :virus)) "2 counters on Ice Wall")
+      (play-from-hand state :corp "Cyberdex Trial")
+      (take-credits state :corp)
+      (is (= 0 (get-counters (refresh iw) :virus)) "Purging removed Ice Wall counters"))))
+
 (deftest multi-access-rd
   ;; multi-access of R&D sees all cards and upgrades
   (do-game

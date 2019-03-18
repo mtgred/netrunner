@@ -56,6 +56,20 @@
         (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
         (is (= (get-in @state [:corp :discard 1 :title]) "Architect"))))))
 
+(deftest afshar
+  ;; Afshar
+  (do-game
+    (new-game {:corp {:hand ["Afshar"]}})
+    (play-from-hand state :corp "Afshar" "HQ")
+    (let [afshar (get-ice state :hq 0)]
+      (core/rez state :corp afshar)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (card-subroutine state :corp afshar 0)
+      (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits")
+      (card-subroutine state :corp afshar 1)
+      (is (not (:run @state)) "Run is ended"))))
+
 (deftest asteroid-belt
   ;; Asteroid Belt - Space ICE rez cost reduced by 3 credits per advancement
   (do-game
@@ -208,6 +222,23 @@
       (is (has-subtype? (refresh ch) "Barrier") "Chimera has Barrier")
       (take-credits state :corp)
       (is (not (has-subtype? (refresh ch) "Barrier")) "Chimera does not have Barrier"))))
+
+(deftest congratulations!
+  ;; Congratulations!
+  (do-game
+    (new-game {:corp {:deck ["Congratulations!"]}})
+    (play-from-hand state :corp "Congratulations!" "HQ")
+    (take-credits state :corp)
+    (let [congrats (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp congrats)
+      (is (= 6 (:credit (get-corp))))
+      (is (= 5 (:credit (get-runner))))
+      (card-subroutine state :corp congrats 0)
+      (is (= 8 (:credit (get-corp))))
+      (is (= 6 (:credit (get-runner))))
+      (run-continue state)
+      (is (= 9 (:credit (get-corp))) "+1 Credit for passing Congratulations!"))))
 
 (deftest cortex-lock
   ;; Cortex Lock - Do net damage equal to Runner's unused memory
@@ -571,6 +602,60 @@
         (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")))))
 
+(deftest hagen
+  ;; Hagen
+  (testing "Trashing only non-fracter non-decoder non-killer cards."
+    (do-game
+      (new-game {:corp {:deck ["Hagen"]}
+                 :runner {:deck ["Inti" "Gordian Blade" "Pipeline" "Misdirection"]}})
+      (play-from-hand state :corp "Hagen" "HQ")
+      (take-credits state :corp)
+      (let [hag (get-ice state :hq 0)]
+        (core/gain state :corp :click 100)
+        (play-from-hand state :runner "Inti")
+        (play-from-hand state :runner "Gordian Blade")
+        (play-from-hand state :runner "Pipeline")
+        (play-from-hand state :runner "Misdirection")
+        (run-on state "HQ")
+        (core/rez state :corp hag)
+        (card-subroutine state :corp hag 0)
+        (click-card state :corp "Inti")          ;shouldn't trash
+        (is (empty? (:discard (get-runner))) "Can't target fracter")
+        (click-card state :corp "Gordian Blade") ;shouldn't trash
+        (is (empty? (:discard (get-runner))) "Can't target decoder")
+        (click-card state :corp "Pipeline")      ;shouldn't trash
+        (is (empty? (:discard (get-runner))) "Can't target killer")
+        (click-card state :corp "Misdirection")  ;should trash
+        (is (= 1 (count (:discard (get-runner)))) "Misdirection trashed"))))
+  (testing "Strength decrease with installed icebreakers"
+    (do-game
+      (new-game {:corp {:deck ["Hagen"]}
+                 :runner {:deck ["Inti" "Gordian Blade" "Pipeline" "Misdirection"]}})
+      (play-from-hand state :corp "Hagen" "HQ")
+      (take-credits state :corp)
+      (let [hag (get-ice state :hq 0)]
+        (core/gain state :runner :click 100)
+        (core/gain state :runner :credit 100)
+        (run-on state "HQ")
+        (core/rez state :corp hag)
+        (is (= 6 (:current-strength (refresh hag))) "Hagen is at base strength of 6.")
+        (run-jack-out state)
+        (play-from-hand state :runner "Inti")
+        (run-on state "HQ")
+        (is (= 5 (:current-strength (refresh hag))) "Inti lowered strength to 5.")
+        (run-jack-out state)
+        (play-from-hand state :runner "Gordian Blade")
+        (run-on state "HQ")
+        (is (= 4 (:current-strength (refresh hag))) "Gordian Blade lowered strength to 4.")
+        (run-jack-out state)
+        (play-from-hand state :runner "Pipeline")
+        (run-on state "HQ")
+        (is (= 3 (:current-strength (refresh hag))) "Pipeline lowered strength to 3.")
+        (run-jack-out state)
+        (play-from-hand state :runner "Misdirection")
+        (run-on state "HQ")
+        (is (= 3 (:current-strength (refresh hag))) "Misdirection didn't lower strength.")))))
+
 (deftest harvester
   ;; Harvester - draw 3, then discard
   (do-game
@@ -875,6 +960,35 @@
       (play-from-hand state :runner "Diesel")
       (is (= 3 (count (:hand (get-runner))))
           "New turn ends prevention; remaining 3 cards drawn from Stack"))))
+
+(deftest loot-box
+  ;; Loot Box
+  (do-game
+    (new-game {:corp {:deck ["Loot Box"]}
+               :runner {:deck ["Sure Gamble" "Dirty Laundry" "Datasucker" "Liberated Account"]}})
+    (starting-hand state :runner ["Sure Gamble"])
+    (play-from-hand state :corp "Loot Box" "R&D")
+    (take-credits state :corp)
+    (let [lootbox (get-ice state :rd 0)]
+      (run-on state "R&D")
+      (core/rez state :corp lootbox)
+      (card-subroutine state :corp lootbox 0)
+      (is (= 5 (:credit (get-runner))))
+      (click-prompt state :runner "Pay 2 [Credits]")
+      (is (= 3 (:credit (get-runner))))
+      (card-subroutine state :corp lootbox 1)
+      (is (find-card "Liberated Account" (:deck (get-runner))))
+      (is (not (find-card "Liberated Account" (:hand (get-runner)))))
+      (is (= 3 (count (:deck (get-runner)))))
+      (is (= 1 (count (:hand (get-runner)))))
+      (is (= 7 (:credit (get-corp))))
+      (click-prompt state :corp "Liberated Account")
+      (is (find-card "Liberated Account" (:hand (get-runner))))
+      (is (not (find-card "Liberated Account" (:deck (get-runner)))))
+      (is (= 2 (count (:deck (get-runner)))) "One card removed from Stack")
+      (is (= 2 (count (:hand (get-runner)))) "One card added to Grip")
+      (is (= 13 (:credit (get-corp))) "Gained 6 credits from Liberated Account")
+      (is (= "Loot Box" (-> (get-corp) :discard first :title)) "Loot Box trashed"))))
 
 (deftest lotus-field
   ;; Lotus Field strength cannot be lowered
@@ -1395,6 +1509,30 @@
       (core/remove-tag state :runner 1)
       (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
 
+(deftest rime
+  ;; Rime
+  (do-game
+    (new-game {:corp {:deck [(qty "Sure Gamble" 10)]
+                      :hand [(qty "Rime" 2) (qty "Ice Wall" 2)]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (let [iw1 (get-ice state :hq 0)
+          iw2 (get-ice state :rd 0)]
+      (core/rez state :corp iw1)
+      (core/rez state :corp iw2)
+      (is (= 1 (core/get-strength (refresh iw1))) "Ice Wall starts with 1 strength")
+      (play-from-hand state :corp "Rime" "HQ")
+      (is (= 1 (core/get-strength (refresh iw1))) "Rime does nothing until rezzed")
+      (core/rez state :corp (get-ice state :hq 1))
+      (is (= 2 (core/get-strength (refresh iw1))) "Rime gives Ice Wall on the same server bonus strength")
+      (is (= 1 (core/get-strength (refresh iw2))) "Rime doesn't give ice on other servers bonus strength")
+      (core/move state :corp (get-ice state :hq 1) :hand)
+      (play-from-hand state :corp "Rime" "R&D")
+      (core/rez state :corp (get-ice state :rd 1))
+      (is (= 1 (core/get-strength (refresh iw1))) "Rime no longer gives bonus strength to ice on previous server")
+      (is (= 2 (core/get-strength (refresh iw2))) "Rime only gives ice on current server bonus strength"))))
+
 (deftest sadaka
   ;; Sadaka
   (testing "Sub 1 - Look at the top 3 cards of R&D, arrange those or shuffle R&D. You may draw 1 card"
@@ -1449,6 +1587,37 @@
         (is (= 1 (count (:discard (get-runner)))) "Runner resource trashed")
         (is (= 4 (count (:discard (get-corp)))) "sadakaHQ trashed")))))
 
+(deftest saisentan
+  ;; Saisentan
+  (testing "Corp chooses correctly"
+    (do-game
+      (new-game {:corp {:hand ["Saisentan"]}
+                 :runner {:hand [(qty "Sure Gamble" 6)]}})
+      (play-from-hand state :corp "Saisentan" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [sai (get-ice state :hq 0)]
+        (core/rez state :corp sai)
+        (card-ability state :corp sai 0)
+        (click-prompt state :corp "Event")
+        (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
+        (card-subroutine state :corp sai 0)
+        (is (= 2 (-> (get-runner) :discard count)) "Two cards should be trashed due to correctly guessing"))))
+  (testing "Corp chooses incorrectly"
+    (do-game
+      (new-game {:corp {:hand ["Saisentan"]}
+                 :runner {:hand [(qty "Sure Gamble" 6)]}})
+      (play-from-hand state :corp "Saisentan" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [sai (get-ice state :hq 0)]
+        (core/rez state :corp sai)
+        (card-ability state :corp sai 0)
+        (click-prompt state :corp "Hardware")
+        (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
+        (card-subroutine state :corp sai 0)
+        (is (= 1 (-> (get-runner) :discard count)) "Only one card should be trashed due to incorrectly guessing")))))
+
 (deftest sand-storm
   ;; Sand Storm should not end the run if protecting an otherwise empty/naked server
   (do-game
@@ -1462,6 +1631,30 @@
       (card-subroutine state :corp sand-storm 0)
       (click-prompt state :corp "Server 2")
       (is (= (first (get-in @state [:run :server])) :remote2) "Is running on server 2"))))
+
+(deftest sandstone
+  ;; Sandstone - gain virus counter on run reducing strength by 1
+  (do-game
+   (new-game {:corp {:deck ["Sandstone"]}
+              :runner {:deck ["Parasite"]}})
+   (play-from-hand state :corp "Sandstone" "HQ")
+   (take-credits state :corp)
+   (core/gain state :runner :click 10)
+   (let [snd (get-ice state :hq 0)]
+     (core/rez state :corp snd)
+     (dotimes [i 6]
+       (run-on state "HQ")
+       (is (= i (get-counters (refresh snd) :virus)) (str "Counter " i "not placed yet"))
+       (is (= (- 6 i) (core/get-strength (refresh snd))) "Strength not reduced yet")
+       (card-ability state :runner (refresh snd) 0)
+       (is (= (inc i) (get-counters (refresh snd) :virus)) (str "Counter " i "placed"))
+       (is (= (- 6 (inc i)) (core/get-strength (refresh snd))) "Strength reduced")
+       (card-subroutine state :corp (refresh snd) 0)
+       (is (not (:run @state)) "Run ended"))
+     (is (= 0 (core/get-strength (refresh snd))) "Sandstone strength at 0")
+     (play-from-hand state :runner "Parasite")
+     (click-card state :runner (refresh snd))
+     (is (= "Sandstone" (-> (get-corp) :discard first :title)) "Sandstone instantly trashed by Parasite"))))
 
 (deftest sandman
   ;; Sandman - add an installed runner card to the grip
@@ -1851,6 +2044,54 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (not (:rezzed (refresh tmi))))))))
+
+(deftest trebuchet
+  ;; Trebuchet
+  (testing "No stealing on successful trace."
+    (do-game
+      (new-game {:corp {:deck ["Trebuchet" "Project Atlas"]}
+               :runner {:deck ["Inti"]}})
+      (play-from-hand state :corp "Trebuchet" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inti")
+      (let [treb (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (is (= 0 (:bad-publicity (get-corp))) "No BP before")
+        (core/rez state :corp treb)
+        (is (= 1 (:bad-publicity (get-corp))) "Gained 1 BP from rez")
+        (card-subroutine state :corp treb 0)
+        (click-card state :corp "Inti")
+        (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
+        (card-subroutine state :corp treb 1)
+        (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")))) ;; Runner couldn't steal
+  (testing "No trashing on successful trace."
+    (do-game
+      (new-game {:corp {:deck ["Trebuchet" "PAD Campaign"]}
+               :runner {:deck ["Inti"]}})
+      (play-from-hand state :corp "Trebuchet" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inti")
+      (let [treb (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (is (= 0 (:bad-publicity (get-corp))) "No BP before")
+        (core/rez state :corp treb)
+        (is (= 1 (:bad-publicity (get-corp))) "Gained 1 BP from rez")
+        (card-subroutine state :corp treb 0)
+        (click-card state :corp "Inti")
+        (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
+        (card-subroutine state :corp treb 1)
+        (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "Pay 4 [Credits] to trash") ;; Try to trash PAD Campaign
+        (is (= 0 (count (:discard (get-corp)))) "PAD Campaign didn't get trashed")))))
 
 (deftest troll
   ;; Troll

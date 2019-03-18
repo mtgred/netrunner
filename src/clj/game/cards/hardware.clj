@@ -294,6 +294,14 @@
                                                             (effect-completed state side eid))}
                                               card nil)))}}}}}
 
+   "Demolisher"
+   {:in-play [:memory 1]
+    :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}
+             :runner-trash {:once :per-turn
+                            :req (req (card-is? target :side :corp))
+                            :msg "gain 1 [Credits]"
+                            :effect (effect (gain-credits 1))}}}
+
    "Desperado"
    {:in-play [:memory 1]
     :events {:successful-run {:silent (req true)
@@ -469,6 +477,30 @@
                :runner-turn-ends nil
                :corp-turn-ends nil}})
 
+   "Flip Switch"
+   {:events
+    {:pre-init-trace
+     {:async true
+      :effect (effect (show-wait-prompt :corp "Runner to use Flip Switch")
+                      (continue-ability
+                        :runner
+                        {:optional
+                         {:prompt "Use Flip Switch to reduce base trace strength to 0?"
+                          :yes-ability {:msg "reduce the base trace strength to 0"
+                                        :effect (req (wait-for (trash state side card {:cause :ability-cost})
+                                                               (swap! state assoc-in [:trace :force-base] 0)
+                                                               (effect-completed state side eid)))}
+                          :end-effect (effect (clear-wait-prompt :corp))}}
+                        card nil))}}
+    :abilities [{:req (req (and run
+                                (= :runner (:active-player @state))))
+                 :effect (req (wait-for (trash state side card {:cause :ability-cost})
+                                        (jack-out state side eid)))}
+                {:req (req (and (pos? (count-tags state))
+                                (= :runner (:active-player @state))))
+                 :effect (req (wait-for (trash state side card {:cause :ability-cost})
+                                        (lose-tags state side eid 1)))}]}
+
    "Forger"
    {:interactions {:prevent [{:type #{:tag}
                               :req (req true)}]}
@@ -630,6 +662,15 @@
                               (shuffle! :deck)
                               (move target :hand))}}}
 
+   "Lucky Charm"
+   {:interactions {:prevent [{:type #{:end-run}
+                              :req (req (and (some #{:hq} (:successful-run runner-reg))
+                                             (card-is? (:card-cause target) :side :corp)))}]}
+    :abilities [{:msg "prevent the run from ending"
+                 :req (req (some #{:hq} (:successful-run runner-reg)))
+                 :effect (effect (end-run-prevent)
+                                 (move card :rfg))}]}
+
    "Mâché"
    {:abilities [{:label "Draw 1 card"
                  :msg "draw 1 card"
@@ -642,6 +683,24 @@
                                            (:trash target)))
                             :effect (effect (system-msg (str "places " (:trash target) " power counters on Mâché"))
                                             (add-counter card :power (:trash target)))}}}
+
+   "Masterwork (v37)"
+   {:events {:run {:optional
+                   {:async true
+                    :interactive (req true)
+                    :req (req (and (<= 1 (:credit runner))
+                                   (some hardware? (:hand runner))))
+                    :prompt "Pay 1 [Credit] to install a hardware?"
+                    :yes-ability {:async true
+                                  :prompt "Select a piece of hardware"
+                                  :choices {:req #(and (in-hand? %)
+                                                       (hardware? %))}
+                                  :msg (msg "install " (:title target) " from the grip, paying 1 [Credit] more")
+                                  :effect (effect (install-cost-bonus [:credit 1])
+                                                  (runner-install eid target {:no-msg true}))}}}
+             :runner-install {:async true
+                              :req (effect (first-event? :runner-install #(is-type? (first %) "Hardware")))
+                              :effect (effect (draw eid 1 nil))}}}
 
    "Māui"
    {:in-play [:memory 2]
@@ -1033,9 +1092,9 @@
 
    "Reflection"
    {:in-play [:memory 1 :link 1]
-    :events {:jack-out {:msg (msg "force the Corp to reveal "
-                                  (:title (first (shuffle (:hand corp))))
-                                  " from HQ")}}}
+    :events {:jack-out {:effect (req (let [card (first (shuffle (:hand corp)))]
+                                             (reveal state :corp card)
+                                             (system-msg state :runner (str  "force the Corp to reveal " (:title card) " from HQ"))))}}}
 
    "Replicator"
    (letfn [(hardware-and-in-deck? [target runner]
@@ -1211,6 +1270,28 @@
                  :msg "trash it and look at the top card of R&D"
                  :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {})
                                  (trash card {:cause :ability-cost}))}]}
+
+   "Supercorridor"
+   {:in-play [:memory 2 :hand-size 1]
+    :events {:runner-turn-ends
+             {:req (req (= (:credit runner) (:credit corp)))
+              :async true
+              :effect (req (show-wait-prompt
+                             state :corp
+                             "Runner to decide if they will gain credits from Supercorridor")
+                           (continue-ability
+                             state :runner
+                             {:optional
+                              {:prompt "Gain credits from Supercorridor?"
+                               :player :runner
+                               :yes-ability {:msg "gain 2 [Credits]"
+                                             :effect (req (gain-credits state :runner 2)
+                                                          (clear-wait-prompt state :corp))}
+                               :no-ability {:effect (req (system-msg
+                                                           state :runner
+                                                           "chooses not to gain 2 [Credits] from Supercorridor")
+                                                         (clear-wait-prompt state :corp))}}}
+                             card nil))}}}
 
    "The Gauntlet"
    {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"

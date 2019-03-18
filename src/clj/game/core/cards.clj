@@ -133,7 +133,7 @@
             (deactivate state side c to-facedown)
             c)
         c (if to-installed
-            (assoc c :installed true)
+            (assoc c :installed :this-turn)
             (dissoc c :installed))
         c (if to-facedown
             (assoc c :facedown true)
@@ -279,14 +279,24 @@
   (let [z (:zone card)]
     (get-in @state [:corp :servers (second z)])))
 
-(defn disable-identity
-  "Disables the side's identity"
+(defn- actual-disable-identity
+  "Actually disables the side's identity"
   [state side]
   (let [id (assoc (get-in @state [side :identity]) :disabled true)]
     (update! state side id)
     (unregister-events state side id)
     (when-let [leave-play (:leave-play (card-def id))]
       (leave-play state side (make-eid state) id nil))))
+
+(defn disable-identity
+  "Disables the side's identity"
+  [state side]
+  (let [disable-count (get-in @state [side :identity :num-disables])
+        id (assoc (get-in @state [side :identity])
+                  :num-disables ((fnil inc 0) disable-count))]
+    (update! state side id)
+    (when (= 1 (:num-disables id))
+      (actual-disable-identity state side))))
 
 (defn disable-card
   "Disables a card"
@@ -297,8 +307,8 @@
   (when-let [disable-effect (:disable (card-def card))]
     (resolve-ability state side disable-effect (get-card state card) nil)))
 
-(defn enable-identity
-  "Enables the side's identity"
+(defn- actual-enable-identity
+  "Actually enables the side's identity"
   [state side]
   (let [id (assoc (get-in @state [side :identity]) :disabled false)
         {:keys [events effect]} (card-def id)]
@@ -307,6 +317,16 @@
       (effect state side (make-eid state) id nil))
     (when events
       (register-events state side events id))))
+
+(defn enable-identity
+  "Enables the side's identity"
+  [state side]
+  (let [disable-count (get-in @state [side :identity :num-disables])
+        id (assoc (get-in @state [side :identity])
+                  :num-disables ((fnil dec 1) disable-count))]
+    (update! state side id)
+    (when (= 0 (:num-disables id))
+      (actual-enable-identity state side))))
 
 (defn enable-card
   "Enables a disabled card"

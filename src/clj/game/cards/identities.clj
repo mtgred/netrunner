@@ -266,6 +266,25 @@
                :runner-install check-type
                :play-event check-type}})
 
+   "Az McCaffrey: Mechanical Prodigy"
+   ;; Effect marks Az's ability as "used" if it has already met it's trigger condition this turn
+   (letfn [(az-type? [card] (or (is-type? card "Hardware")
+                                (and (is-type? card "Resource")
+                                     (or (has-subtype? card "Job")
+                                         (has-subtype? card "Connection")))))
+           (not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
+           (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
+     {:effect (req (when (pos? (event-count state :runner :runner-install #(az-type? (first %))))
+                     (mark-triggered state card)))
+      :events {:pre-install {:req (req (and (az-type? target)
+                                            (not-triggered? state card)))
+                             :effect (effect (install-cost-bonus [:credit -1]))}
+               :runner-install {:req (req (and (az-type? target)
+                                               (not-triggered? state card)))
+                                :silent (req true)
+                                :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")
+                                :effect (req (mark-triggered state card))}}})
+
    "Blue Sun: Powering the Future"
    {:flags {:corp-phase-12 (req (and (not (:disabled card))
                                      (some rezzed? (all-installed state :corp))))}
@@ -346,6 +365,18 @@
                     (lose :runner :hand-size 1))
     :leave-play (effect (gain :hand-size 1)
                         (gain :runner :hand-size 1))}
+
+   "Earth Station: On the Grid"
+   {:events {:pre-first-turn {:req (req (= side :corp))
+                              :effect (effect (update! (assoc card :flipped false)))}}
+    :abilities [{:msg "flip their ID"
+                 :effect (effect (update! (if (:flipped card)
+                                            (assoc card
+                                                   :flipped false
+                                                   :code (subs (:code card) 0 5))
+                                            (assoc card
+                                                   :flipped true
+                                                   :code (str (subs (:code card) 0 5) "flip")))))}]}
 
    "Edward Kim: Humanity's Hammer"
    {:events {:access {:once :per-turn
@@ -528,6 +559,34 @@
                                     :msg (msg "install " (:title target))
                                     :effect (effect (runner-install eid target nil))}}}
                        card nil)))}}}
+
+   "Hoshiko Shiro"
+   {:events {:pre-first-turn {:req (req (= side :runner))
+                              :effect (effect (update! (assoc card :flipped false)))}}
+    :abilities [{:msg "flip their ID"
+                 :effect (effect (update! (if (:flipped card)
+                                            (assoc card
+                                                   :flipped false
+                                                   :code (subs (:code card) 0 5))
+                                            (assoc card
+                                                   :flipped true
+                                                   :code (str (subs (:code card) 0 5) "flip")))))}]}
+
+   "Hyoubu Institute: Absolute Clarity"
+   {:events {:corp-reveal {:once :per-turn
+                           :req (req (first-event? state side :corp-reveal))
+                           :msg "gain 1 [Credits]"
+                           :effect (effect (gain-credits 1))}}
+    :abilities [{:cost [:click 1]
+                 :label "Reveal the top card of the Stack"
+                 :effect (req (when-let [revealed-card (-> runner :deck first)]
+                                (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " revealed-card))
+                                (reveal state side revealed-card)))}
+                {:cost [:click 1]
+                 :label "Reveal a random card from the Grip"
+                 :effect (req (when-let [revealed-card (-> runner :hand shuffle first)]
+                                (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal " revealed-card))
+                                (reveal state side revealed-card)))}]}
 
    "Iain Stirling: Retired Spook"
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
@@ -728,6 +787,18 @@
                           :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
                         card nil))}}
     :abilities [(set-autoresolve :auto-fisk "force Corp draw")]}
+
+   "Lat: Ethical Freelancer"
+   {:events
+    {:runner-turn-ends
+     {:req (req (= (count (:hand runner)) (count (:hand corp))))
+      :optional {:autoresolve (get-autoresolve :auto-lat)
+                 :prompt "Draw 1 card?"
+                 :yes-ability {:async true
+                               :msg "draw 1 card"
+                               :effect (effect (draw :runner eid 1 nil))}
+                 :no-ability {:effect (effect (system-msg "declines to use Lat: Ethical Freelancer"))}}}}
+    :abilities [(set-autoresolve :auto-lat "Lat: Ethical Freelancer")]}
 
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)

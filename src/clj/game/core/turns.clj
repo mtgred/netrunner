@@ -280,6 +280,9 @@
              (resolve-ability state side (:ability a) (:card a) (:targets a)))
            (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
            (doseq [card (all-active-installed state :runner)]
+             ;; Clear :installed :this-turn as turn has ended
+             (when (= :this-turn (:installed card))
+               (update! state side (assoc card :installed true)))
              ;; Clear the added-virus-counter flag for each virus in play.
              ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
              (when (has-subtype? card "Virus")
@@ -290,7 +293,9 @@
                (update! state side (update-in (get-card state card) [:pump] dissoc :all-turn))
                (update-breaker-strength state :runner card)))
            (doseq [card (all-installed state :corp)]
-             ;; Clear :rezzed :this-turn as turn has ended
+             ;; Clear :this-turn flags as turn has ended
+             (when (= :this-turn (:installed card))
+               (update! state side (assoc card :installed true)))
              (when (= :this-turn (:rezzed card))
                (update! state side (assoc card :rezzed true))))
            ;; Update strength of all ice every turn

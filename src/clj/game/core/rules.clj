@@ -1,9 +1,9 @@
 (in-ns 'game.core)
 
-(declare can-run? card-init card-str cards-can-prevent? close-access-prompt enforce-msg gain-agenda-point
-         get-prevent-list get-agenda-points in-corp-scored? installed? is-type? play-sfx prevent-draw make-result
-         remove-old-current show-prompt system-say system-msg steal-trigger-events trash-cards
-         untrashable-while-rezzed? update-all-ice untrashable-while-resources? win win-decked)
+(declare can-run? can-trash? card-init card-str cards-can-prevent? close-access-prompt enforce-msg
+         gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? installed? is-type? play-sfx
+         prevent-draw make-result remove-old-current show-prompt system-say system-msg steal-trigger-events
+         trash-cards untrashable-while-rezzed? update-all-ice untrashable-while-resources? win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -52,10 +52,6 @@
                      additional-cost (if (and (has-subtype? card "Double")
                                               (not (get-in @state [side :register :double-ignore-additional])))
                                        (concat additional-cost [:click 1])
-                                       additional-cost)
-                     additional-cost (if-let [run-cost (and (has-subtype? card "Run")
-                                                            (get-in @state [:bonus :run-cost]))]
-                                       (concat additional-cost run-cost)
                                        additional-cost)
                      total-cost (play-cost state side card
                                            (concat (when-not no-additional-cost additional-cost) extra-cost
@@ -206,31 +202,31 @@
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (damage-choice-priority state)
   (wait-for (trigger-event-sync state side :pre-resolve-damage type card n)
-            (do (when-not (or (get-in @state [:damage :damage-replace])
-                              (runner-can-choose-damage? state))
-                  (let [n (if-let [defer (get-defer-damage state side type args)] defer n)]
-                    (when (pos? n)
-                      (let [hand (get-in @state [:runner :hand])
-                            cards-trashed (take n (shuffle hand))]
-                        (when (= type :brain)
-                          (swap! state update-in [:runner :brain-damage] #(+ % n))
-                          (swap! state update-in [:runner :hand-size :mod] #(- % n)))
-                        (when-let [trashed-msg (join ", " (map :title cards-trashed))]
-                          (system-msg state :runner (str "trashes " trashed-msg " due to " (name type) " damage")))
-                        (if (< (count hand) n)
-                          (do (flatline state)
-                              (trash-cards state side (make-eid state) cards-trashed
-                                           {:unpreventable true})
-                              (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
-                              (swap! state update-in [:stats :corp :damage type] (fnil + 0) n))
-                          (do (trash-cards state side (make-eid state) cards-trashed
-                                           {:unpreventable true :cause type})
-                              (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
-                              (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
-                              (trigger-event state side :damage type card n)))))))
-                (swap! state update-in [:damage :defer-damage] dissoc type)
-                (swap! state update-in [:damage] dissoc :damage-replace)
-                (effect-completed state side eid))))
+            (when-not (or (get-in @state [:damage :damage-replace])
+                          (runner-can-choose-damage? state))
+              (let [n (or (get-defer-damage state side type args) n)]
+                (when (pos? n)
+                  (let [hand (get-in @state [:runner :hand])
+                        cards-trashed (take n (shuffle hand))]
+                    (when (= type :brain)
+                      (swap! state update-in [:runner :brain-damage] #(+ % n))
+                      (swap! state update-in [:runner :hand-size :mod] #(- % n)))
+                    (when-let [trashed-msg (join ", " (map :title cards-trashed))]
+                      (system-msg state :runner (str "trashes " trashed-msg " due to " (name type) " damage")))
+                    (if (< (count hand) n)
+                      (do (flatline state)
+                          (trash-cards state side (make-eid state) cards-trashed
+                                       {:unpreventable true})
+                          (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
+                          (swap! state update-in [:stats :corp :damage type] (fnil + 0) n))
+                      (do (trash-cards state side (make-eid state) cards-trashed
+                                       {:unpreventable true :cause type})
+                          (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
+                          (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
+                          (trigger-event state side :damage type card n cards-trashed)))))))
+            (swap! state update-in [:damage :defer-damage] dissoc type)
+            (swap! state update-in [:damage] dissoc :damage-replace)
+            (effect-completed state side eid)))
 
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the
@@ -443,6 +439,11 @@
        (do (enforce-msg state card "cannot be trashed while installed")
            (effect-completed state side eid))
 
+       (and (= side :runner)
+            (not (can-trash? state side card)))
+       (do (enforce-msg state card "cannot be trashed")
+           (effect-completed state side eid))
+
        (and (= side :corp)
             (untrashable-while-resources? card)
             (> (count (filter #(is-type? % "Resource") (all-active-installed state :runner))) 1))
@@ -504,7 +505,7 @@
                (wait-for (prevent-trash state side (get-card state (first cs)) eid args)
                          (preventrec (rest cs)))
                (let [trashlist (get-in @state [:trash :trash-list eid])]
-                 (wait-for (apply trigger-event-sync state side (keyword (str (name side) "-trash")) trashlist)
+                 (wait-for (apply trigger-event-sync state side (if (= side :corp) :corp-trash :runner-trash) trashlist)
                            (trashrec trashlist)))))]
      (preventrec cards))))
 
@@ -604,9 +605,10 @@
   "Purges viruses."
   [state side]
   (trigger-event state side :pre-purge)
-  (let [rig-cards (all-installed state :runner)
+  (let [installed-cards (concat (all-installed state :runner)
+                                (all-installed state :corp))
         hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
-    (doseq [card (concat rig-cards hosted-on-ice)]
+    (doseq [card (concat installed-cards hosted-on-ice)]
       (when (or (has-subtype? card "Virus")
                 (contains? (:counter card) :virus))
         (add-counter state :runner card :virus (- (get-counters card :virus)))))
@@ -685,6 +687,11 @@
   "Conceals a side's revealed hand from opponent and spectators."
   [state side]
   (swap! state update-in [side] dissoc :openhand))
+
+(defn reveal
+  "Trigger the event for revealing one or more cards."
+  [state side & targets]
+  (apply trigger-event-sync state side (make-eid state) (if (= :corp side) :corp-reveal :runner-reveal) (flatten targets)))
 
 (defn clear-win
   "Clears the current win condition.  Requires both sides to have issued the command"

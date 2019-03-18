@@ -6,11 +6,6 @@
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]))
 
-(defn get-strength
-  [card]
-  (or (:current-strength card)
-      (:strength card)))
-
 (def breaker-auto-pump
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
   auto-pump routine in core, IF we are encountering a rezzed ice with a subtype
@@ -263,7 +258,7 @@
     {:events {:successful-run {:silent (req true)
                                :effect (effect (system-msg (str "adds 1 virus counter to " (:title card)))
                                                (add-counter card :virus 1))}}
-     :abilities [{:label (str  "Break one or more " type-subroutine "s")
+     :abilities [{:label (str "Break one or more " type-subroutine "s")
                   :effect (req (wait-for (resolve-ability
                                            state side (pick-virus-counters-to-spend) card nil)
                                          (when-let* [message (:msg async-result)
@@ -351,7 +346,8 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 2 3 "Code Gate")
                                  (strength-pump 2 3)
-                                 {:label "Corp loses 1 [Credits]"
+                                 {:once :per-turn
+                                  :label "Corp loses 1 [Credits]"
                                   :req (req (and (has-subtype? current-ice "Code Gate")
                                                  (rezzed? current-ice)))
                                   :msg (msg "make the Corp lose 1 [Credits]")
@@ -471,19 +467,13 @@
                                  (strength-pump 1 1 :all-run)]})
 
    "Berserker"
-   {:abilities [(break-sub 2 2 "Barrier")]
-    :implementation "Number of subroutines on encountered ICE has to be entered by runner when Corp chooses 'No More Action'"
-    :events {:encounter-ice {:req (req (and (= (:cid target) (:cid current-ice))
-                                            (has-subtype? target "Barrier")
-                                            (rezzed? target)))
-                             :async true
-                             :effect (effect (continue-ability
-                                               :runner
-                                               {:prompt "How many subroutines are on the encountered Barrier?"
-                                                :choices {:number (req 10)}
-                                                :async true
-                                                :effect (effect (system-msg (str "pumps Berserker by " target " on encounter with the current ICE"))
-                                                                (pump card target))} card nil))}}}
+   {:implementation "Encounter effect is manual. Only gains strength on printed subs"
+    :abilities [{:label "Gain strength per barrier subroutine"
+                 :req (req (and (rezzed? current-ice)
+                                (has-subtype? current-ice "Barrier")))
+                 :msg (msg "gain " (count-num-subroutines current-ice) " strength")
+                 :effect (effect (pump card (count-num-subroutines current-ice)))}
+                (break-sub 2 2 "Barrier")]}
 
    "Bishop"
    {:abilities [{:cost [:click 1]
@@ -561,6 +551,17 @@
                           :yes-ability {:msg (msg "reveal the card just drawn: " (:title (last (:hand corp))))
                                         :cost [:credit 2]}}}}}
 
+   "Bukhgalter"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [(break-sub 1 1 "Sentry")
+                                 (strength-pump 1 1)
+                                 {:once :per-turn
+                                  :label "Gain 2 [Credits]"
+                                  :req (req (and (has-subtype? current-ice "Sentry")
+                                                 (rezzed? current-ice)))
+                                  :msg (msg "gain 2 [Credits]")
+                                  :effect (effect (gain-credits :runner 2))}]})
+
    "Cache"
    {:abilities [{:counter-cost [:virus 1]
                  :effect (effect (gain-credits 1))
@@ -595,6 +596,22 @@
     :effect (effect (update! (assoc card :subtype-target target)))
     :events {:runner-turn-ends {:msg "add itself to Grip" :effect (effect (move card :hand))}}
     :abilities [{:cost [:credit 1] :msg (msg "break 1 " (:subtype-target card) " subroutine")}]}
+
+   "Chisel"
+   {:effect (effect (system-say "Corp, please press No Action to trigger Chisel"))
+    :hosting {:req (every-pred ice? can-host?)}
+    :events {:counter-added {:req (req (or (= (:cid target) (:cid card))
+                                           (= (:title target) "Hivemind")))
+                             :effect (effect (update-ice-strength (:host card)))}
+             :pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
+                                :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}
+             :encounter-ice {:req (req (= (:cid target) (:cid (:host card))))
+                             :msg (msg (if (zero? (get-strength target))
+                                         (str "trash " (card-str state target))
+                                         (str "place 1 virus counter on " (card-str state card))))
+                             :effect (req (if (zero? (get-strength target))
+                                            (trash state side target)
+                                            (add-counter state side card :virus 1)))}}}
 
    "Cloak"
    {:recurring 1}
@@ -734,7 +751,8 @@
      {:async true
       :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
       :msg (msg "reveal the top 5 cards of their Stack: " (join ", " (map :title (take 5 (:deck runner)))))
-      :effect (req (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
+      :effect (req (reveal state side (take 5 (:deck runner)))
+                   (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
                    (let [from (take 5 (:deck runner))]
                      (continue-ability state side (custsec-host from) card nil)))
       :abilities [{:cost [:click 1]
@@ -1012,6 +1030,7 @@
          reveal {:optional {:prompt "Reveal the top card of R&D?"
                             :yes-ability {:async true
                                           :effect (req (let [topcard (-> corp :deck first :title)]
+                                                         (reveal state side topcard)
                                                          (system-msg state :runner (str "reveals " topcard
                                                                                         " from the top of R&D"))
                                                          (continue-ability state side (force-draw topcard) card nil)))}}}]
@@ -1078,7 +1097,7 @@
    "Fawkes"
    {:implementation "Stealth credit restriction not enforced"
     :abilities [(break-sub 1 1 "Sentry")
-                {:label (str "X [Credits]: +X strength for the remainder of the run (using at least 1 stealth [Credits])")
+                {:label "X [Credits]: +X strength for the remainder of the run (using at least 1 stealth [Credits])"
                  :choices :credit
                  :prompt "How many credits?"
                  :effect (effect (pump card target :all-run))
@@ -1115,6 +1134,15 @@
    (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 1 1 "Sentry")
                                  (strength-pump 1 1)]})
+
+   "Gauss"
+   (auto-icebreaker ["Barrier"]
+                    {:strength-bonus (req (if (= :this-turn (:installed card)) 3 0))
+                     :events (let [losestr {:effect (effect (update-breaker-strength card))}]
+                               {:runner-turn-ends losestr
+                                :corp-turn-ends losestr})
+                     :abilities [(break-sub 1 1 "Barrier")
+                                 (strength-pump 2 2)]})
 
    "Gingerbread"
    (auto-icebreaker ["Tracer"]
@@ -1635,7 +1663,7 @@
 
    "Paperclip"
    (conspiracy "Paperclip" "Barrier"
-               [{:label (str "X [Credits]: +X strength, break X subroutines")
+               [{:label "X [Credits]: +X strength, break X subroutines"
                  :choices {:number (req (:credit runner))
                            :default (req (if (:current-strength current-ice)
                                            (max (- (:current-strength current-ice)
@@ -1748,6 +1776,37 @@
                                                                   :effect (effect (mill :runner)
                                                                                   (mill :runner :corp target))}}}}})
 
+   "Pelangi"
+   {:data {:counter {:virus 2}}
+    :events {:pass-ice nil
+             :run-ends nil}
+    :abilities [{:once :per-turn
+                 :req (req (and current-ice
+                                (rezzed? current-ice)))
+                 :counter-cost [:virus 1]
+                 :label "Make currently encountered ice gain a subtype"
+                 :prompt "Choose an ICE subtype"
+                 :choices (req (->> (server-cards)
+                                    (filter ice?)
+                                    (map :subtype)
+                                    (mapcat #(split % #" - "))
+                                    distinct
+                                    sort
+                                    (remove (->> current-ice :subtype (#(split % #" - ")) set))))
+                 :msg (msg "make " (card-str state current-ice) " gain " target)
+                 :effect (req (let [ice current-ice
+                                    chosen-type target
+                                    stypes (:subtype ice)
+                                    remove-subtype
+                                    {:effect (effect (update! (assoc (get-card state ice) :subtype stypes))
+                                                     (system-say (str (card-str state ice) " loses " chosen-type))
+                                                     (unregister-events card)
+                                                     (register-events (:events (card-def card)) card))}]
+                                (update! state side (assoc ice :subtype (combine-subtypes false stypes chosen-type)))
+                                (update-ice-strength state side (get-card state ice))
+                                (register-events state side {:pass-ice remove-subtype
+                                                             :run-ends remove-subtype} card)))}]}
+
    "Pheromones"
    {:recurring (req (when (< (get-counters card :recurring) (get-counters card :virus))
                       (set-prop state side card :rec-counter (get-counters card :virus))))
@@ -1834,6 +1893,10 @@
                     {:implementation "Stealth credit restriction not enforced"
                      :abilities [(break-sub 1 1 "Code Gate")
                                  (strength-pump 1 3)]})
+
+   "Rezeki"
+   {:events {:runner-turn-begins {:msg "gain 1 [Credits]"
+                                  :effect (effect (gain-credits 1))}}}
 
    "RNG Key"
    {:events {:pre-access-card {:req (req (get-in card [:special :rng-guess]))
@@ -2022,6 +2085,25 @@
    "Spike"
    (break-and-enter "Barrier")
 
+   "Stargate"
+   {:abilities [{:cost [:click 1]
+                 :once :per-turn
+                 :msg "make a run on R&D"
+                 :makes-run true
+                 :effect (effect (make-run
+                                   :rd
+                                   {:req (req (= target :rd))
+                                    :replace-access
+                                    {:prompt "Choose a card to trash"
+                                     :not-distinct true
+                                     :choices (req (take 3 (:deck corp)))
+                                     :mandatory true
+                                     :effect (effect (reveal (take 3 (:deck corp)))
+                                                     (system-msg (str "uses Stargate to reveal " (join ", " (map :title (take 3 (:deck corp))))
+                                                                      " from the top of R&D and trash " (:title target)))
+                                                     (trash (assoc target :seen true)))}}
+                                   card))}]}
+
    "Study Guide"
    {:abilities [(break-sub 1 1 "Code Gate")
                 {:cost [:credit 2] :msg "place 1 power counter"
@@ -2180,6 +2262,21 @@
                  :once :per-turn
                  :msg "gain [Click][Click]"
                  :effect (effect (gain :click 2))}]}
+
+   "Utae"
+   (auto-icebreaker ["Code Gate"]
+                    {:abilities [{:label "X [Credits]: Break X Code Gate subroutines"
+                                  :once :per-run
+                                  :req (req (pos? (:credit runner)))
+                                  :prompt "How many credits?"
+                                  :choices :credit
+                                  :msg (msg "spend " target " [Credits] to break " (quantify target "Code Gate subroutine"))}
+                                 {:label "Break 1 Code Gate subroutine (Virtual restriction)"
+                                  :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
+                                                                 (all-active-installed state :runner)))))
+                                  :cost [:credit 1]
+                                  :msg "break 1 Code Gate subroutine"}
+                                 (strength-pump 1 1)]})
 
    "Vamadeva"
    (deva "Vamadeva")

@@ -116,10 +116,7 @@
      (effect-completed state side eid)
      (if (and ability (not eid))
        (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
-       (when-let [ability (if (and (:makes-run ability)
-                                   (get-in @state [:bonus :run-cost]))
-                            (update-in ability [:cost] concat (get-in @state [:bonus :run-cost]))
-                            ability)]
+       (when ability
          ;; Is this an optional ability?
          (check-optional state side ability card targets)
          ;; Is this a psi game?
@@ -500,7 +497,8 @@
           (system-msg state side (str "spends " bet " [Credits]"))
           (wait-for (trigger-event-simult state side :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
                     (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-                      (continue-ability state (:side card) (assoc ability :async true) card nil)
+                      (let [card-side (if (= "Corp" (:side card)) :corp :runner)]
+                        (continue-ability state card-side (assoc ability :async true) card nil))
                       (effect-completed state side eid))))
       (show-wait-prompt
         state side (str (string/capitalize (name opponent)) " to choose psi game credits")))))

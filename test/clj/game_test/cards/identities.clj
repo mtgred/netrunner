@@ -425,6 +425,25 @@
     (click-prompt state :runner (find-card "Bank Job" (:hosted (:identity (get-runner)))))
     (is (= 3 (count (get-in @state [:runner :hand]))) "There are 3 cards in the runner's Grip")))
 
+(deftest az-mccaffrey-mechanical-prodigy
+  ;; Az McCaffrey: Mechanical Prodigy
+  (do-game
+    (new-game {:runner {:id "Az McCaffrey: Mechanical Prodigy"
+                        :deck ["Bank Job" "Drug Dealer" "HQ Interface"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bank Job")
+    (is (= 1 (count (get-resource state))) "One installed resource")
+    (is (= 5 (:credit (get-runner))) "Az discount was applied")
+    (play-from-hand state :runner "Drug Dealer")
+    (is (= 2 (count (get-resource state))) "Two installed resources")
+    (is (= 4 (:credit (get-runner))) "Az discount not applied on 2nd install")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [creds (:credit (get-runner))]
+      (play-from-hand state :runner "HQ Interface")
+      (is (= 1 (count (get-hardware state))) "One installed hardware")
+      (is (= (- creds 3) (:credit (get-runner))) "Az discount was applied"))))
+
 (deftest cerebral-imaging-infinite-frontiers
   ;; Cerebral Imaging - Maximum hand size equal to credits
   (do-game
@@ -882,7 +901,7 @@
     (is (= 3 (:credit (get-corp))) "Corp not charged for Architects of Tomorrow rez of Eli 1.0")))
 
 (deftest haas-bioroid-engineering-the-future
-  ;; Engineereing the Future
+  ;; Engineering the Future
   (testing "interaction with Employee Strike"
     (do-game
       (new-game {:corp {:id "Haas-Bioroid: Engineering the Future"
@@ -911,6 +930,88 @@
     (let [eli (get-ice state :archives 0)]
       (core/rez state :corp eli)
       (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
+
+(deftest hyoubu-institute-absolute-clarity
+  (testing "ID abilities"
+    (do-game
+     (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"}
+                :runner {:deck [(qty "Sure Gamble" 1)]
+                         :hand [(qty "Sure Gamble" 2)]}})
+     (let [hy (get-in @state [:corp :identity])]
+       (dotimes [i 2]
+         (is (changes-credits (get-corp) 1 (card-ability state :corp hy i))) ; triggering ID ability triggers a reveal so gains a cred
+         (is (changes-credits (get-corp) 0 (card-ability state :corp hy i))) ; triggering ID ability second time in a turn doesn't
+         (is (= 1 (:click (get-corp))) "Using ability twice cost 2 clicks")
+         (take-credits state :corp)
+         (take-credits state :runner))
+       (core/move state :runner (first (:deck (get-runner))) :hand)
+       (is (= 0 (count (:deck (get-runner)))) "Runner deck is empty")
+       (is (changes-credits (get-corp) 0 (card-ability state :corp hy 0)))  ; stack is empty, so revealing nothing gains nothing
+       (take-credits state :corp)
+       (dotimes [_ 3]
+         (play-from-hand state :runner "Sure Gamble"))
+       (take-credits state :runner)
+       (is (= 0 (count (:hand (get-runner)))) "Runner hand is empty")
+       (is (changes-credits (get-corp) 0 (card-ability state :corp hy 1))))))  ; grip is empty, so revealing nothing gains nothing
+  (testing "EStrike interaction"
+    (do-game
+     (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                       :deck ["Scarcity of Resources" "Celebrity Gift"]}
+                :runner {:deck [(qty "Employee Strike" 3) "Enhanced Vision"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "Enhanced Vision")
+     (is (changes-credits (get-corp) 1
+                          (run-empty-server state "Archives")))
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (play-from-hand state :runner "Employee Strike")
+     (is (changes-credits (get-corp) 0
+                          (run-empty-server state "Archives")))
+     (take-credits state :runner)
+     (core/gain state :corp :click 3)
+     (play-from-hand state :corp "Celebrity Gift")
+     (is (changes-credits (get-corp) 2 ; get 2 creds from celeb gift, but nothing from hyoubu trigger due to estrike 
+                          (do (click-card state :corp (first (:hand (get-corp))))
+                              (click-prompt state :corp "Done"))))
+     (play-from-hand state :corp "Scarcity of Resources")
+     (is (changes-credits (get-corp) 0 (card-ability state :corp (get-in @state [:corp :identity]) 1))))) ; hyoubu doesn't mistake the first reveal it sees for first reveal of turn
+  (testing "Slot Machine, grail, Reflection, Fast Track"
+    (do-game
+     (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                       :deck ["Slot Machine" (qty "Galahad" 2) "Fast Track" "House of Knives"]}
+                :runner {:deck ["Reflection"]}})
+     (core/gain state :corp :credit 20)
+     (play-from-hand state :corp "Galahad" "HQ")
+     (play-from-hand state :corp "Slot Machine" "R&D")
+     (let [gal (get-ice state :hq 0)
+           sm (get-ice state :rd 1)]
+       (take-credits state :corp)
+       (play-from-hand state :runner "Reflection")
+       (run-on state "HQ")
+       (core/rez state :corp gal)
+       (card-ability state :corp (refresh gal) 0) ;reveal grail ice
+       (click-card state :corp (find-card "Galahad" (:hand (get-corp))))
+       (is (changes-credits (get-corp) 1
+                            (click-prompt state :corp "Done")))
+       (is (changes-credits (get-corp) 0
+                            (run-jack-out state))) ; triggers reflection, but trigger already done this turn
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (run-on state "R&D")
+       (core/rez state :corp sm)
+       (is (changes-credits (get-corp) 0
+                            (card-ability state :corp (refresh sm) 0))) ;trigger slot machine
+       (run-jack-out state)
+       (take-credits state :runner)
+       (take-credits state :corp)
+       (run-on state "R&D")
+       (is (changes-credits (get-corp) 1
+                            (run-jack-out state))) ; triggers reflection
+       (take-credits state :runner)
+       (core/move state :corp (find-card "House of Knives" (:hand (get-corp))) :deck)
+       (play-from-hand state :corp "Fast Track")
+       (is (changes-credits (get-corp) 1
+                            (click-prompt state :corp "House of Knives")))))))
 
 (deftest iain-stirling-retired-spook
   ;; Iain Stirling - Gain 2 credits when behind
@@ -1237,6 +1338,42 @@
       (click-prompt state :runner "Yes")
       (is (not (:run @state)) "Run ended")
       (is (= 6 (count (:hand (get-corp)))) "Corp forced to draw"))))
+
+(deftest lat-ethical-freelancer
+  ;; Lat: Ethical Freelancer
+  (testing "Ability fires - draw"
+    (do-game
+      (new-game {:runner {:id "Lat: Ethical Freelancer"
+                          :deck [(qty "Sure Gamble" 6)]}
+                 :corp {:deck [(qty "Hedge Fund" 5)]}
+                 :options {:start-as :runner}})
+      (core/lose state :runner :click 4)
+      (core/end-turn state :runner nil)
+      (is (= "Draw 1 card?" (:msg (first (:prompt (get-runner))))))
+      (is (= 5 (count (:hand (get-runner)))))
+      (click-prompt state :runner "Yes")
+      (is (= 6 (count (:hand (get-runner)))))))
+  (testing "Ability fires - don't draw"
+    (do-game
+      (new-game {:runner {:id "Lat: Ethical Freelancer"
+                          :deck [(qty "Sure Gamble" 6)]}
+                 :corp {:deck [(qty "Hedge Fund" 5)]}
+                 :options {:start-as :runner}})
+      (core/lose state :runner :click 4)
+      (core/end-turn state :runner nil)
+      (is (= "Draw 1 card?" (:msg (first (:prompt (get-runner))))))
+      (is (= 5 (count (:hand (get-runner)))))
+      (click-prompt state :runner "No")
+      (is (= 5 (count (:hand (get-runner)))))))
+  (testing "Ability doesn't fire"
+    (do-game
+      (new-game {:runner {:id "Lat: Ethical Freelancer"
+                          :deck [(qty "Sure Gamble" 3)]}
+                 :corp {:deck [(qty "Hedge Fund" 4)]}
+                 :options {:start-as :runner}})
+      (core/lose state :runner :click 4)
+      (core/end-turn state :runner nil)
+      (is (empty? (:prompt (get-runner))) "No prompt"))))
 
 (deftest leela-patel-trained-pragmatist
   ;; Leela Patel

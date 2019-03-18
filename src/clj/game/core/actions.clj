@@ -507,36 +507,35 @@
   ([state side args] (score state side (make-eid state) args))
   ([state side eid args]
    (let [card (or (:card args) args)]
-     (when (and (can-score? state side card)
-                (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
-                (>= (get-counters card :advancement) (or (:current-cost card)
-                                                         (:advancementcost card))))
-
-       ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
-       (let [moved-card (move state :corp card :scored)
-             c (card-init state :corp moved-card {:resolve-effect false
-                                                  :init-data true})
-             points (get-agenda-points state :corp c)]
-         (trigger-event-simult
-           state :corp eid :agenda-scored
-           {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
-                                           ;; TODO: Make this use remove-old-current
-                                           (system-say state side (str (:title current) " is trashed."))
-                                           ; This is to handle Employee Strike with damage IDs #2688
-                                           (when (:disable-id (card-def current))
-                                             (swap! state assoc-in [:corp :disable-id] true))
-                                           (trash state side current)))}
-            :card-ability (card-as-handler c)
-            :after-active-player {:effect (req (let [c (get-card state c)
-                                                     points (or (get-agenda-points state :corp c) points)]
-                                                 (set-prop state :corp (get-card state moved-card) :advance-counter 0)
-                                                 (system-msg state :corp (str "scores " (:title c) " and gains "
-                                                                              (quantify points "agenda point")))
-                                                 (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-                                                 (swap! state dissoc-in [:corp :disable-id])
-                                                 (gain-agenda-point state :corp points)
-                                                 (play-sfx state side "agenda-score")))}}
-           c))))))
+     (wait-for (trigger-event-simult state :corp :pre-agenda-scored nil card)
+               (when (and (can-score? state side card)
+                          (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
+                          (>= (get-counters card :advancement) (or (:current-cost card)
+                                                                   (:advancementcost card))))
+                 ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
+                 (let [moved-card (move state :corp card :scored)
+                       c (card-init state :corp moved-card {:resolve-effect false
+                                                            :init-data true})
+                       points (get-agenda-points state :corp c)]
+                   (trigger-event-simult state :corp eid :agenda-scored
+                                         {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
+                                                                         ;; TODO: Make this use remove-old-current
+                                                                         (system-say state side (str (:title current) " is trashed."))
+                                                                         ;; This is to handle Employee Strike with damage IDs #2688
+                                                                         (when (:disable-id (card-def current))
+                                                                           (swap! state assoc-in [:corp :disable-id] true))
+                                                                         (trash state side current)))}
+                                          :card-ability (card-as-handler c)
+                                          :after-active-player {:effect (req (let [c (get-card state c)
+                                                                                   points (or (get-agenda-points state :corp c) points)]
+                                                                               (set-prop state :corp (get-card state moved-card) :advance-counter 0)
+                                                                               (system-msg state :corp (str "scores " (:title c) " and gains "
+                                                                                                            (quantify points "agenda point")))
+                                                                               (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+                                                                               (swap! state dissoc-in [:corp :disable-id])
+                                                                               (gain-agenda-point state :corp points)
+                                                                               (play-sfx state side "agenda-score")))}}
+                    c)))))))
 
 (defn no-action
   "The corp indicates they have no more actions for the encounter."
@@ -556,18 +555,7 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (let [cost-bonus (get-in @state [:bonus :run-cost])
-        click-cost-bonus (get-in @state [:bonus :click-run-cost])]
-    (when (and (can-run? state side)
-               (can-run-server? state server)
-               (can-pay? state :runner "a run" :click 1 cost-bonus click-cost-bonus))
-      (swap! state assoc-in [:runner :register :click-type] :run)
-      (swap! state assoc-in [:runner :register :made-click-run] true)
-      (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
-        (make-run state side server)
-        (system-msg state :runner
-                    (str (build-spend-msg cost-str "make a run on") server))
-        (play-sfx state side "click-run")))))
+  (make-run state side server {} :click-run))
 
 (defn remove-tag
   "Click to remove a tag."
@@ -589,19 +577,17 @@
           next-ice (when (and pos (< 1 pos) (<= (dec pos) (count run-ice)))
                      (get-card state (nth run-ice (- pos 2))))]
       (wait-for (trigger-event-sync state side :pass-ice cur-ice)
-                (do (update-ice-in-server
-                      state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
-                    (swap! state update-in [:run :position] (fnil dec 1))
-                    (swap! state assoc-in [:run :no-action] false)
-                    (system-msg state side "continues the run")
-                    (when cur-ice
-                      (update-ice-strength state side cur-ice))
-                    (if next-ice
-                      (trigger-event-sync state side (make-eid state) :approach-ice next-ice)
-                      (trigger-event-sync state side (make-eid state) :approach-server))
-                    (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-                      (update-breaker-strength state side p)))))))
+                (update-ice-in-server
+                  state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
+                (swap! state update-in [:run :position] (fnil dec 1))
+                (swap! state assoc-in [:run :no-action] false)
+                (system-msg state side "continues the run")
+                (when cur-ice
+                  (update-ice-strength state side cur-ice))
+                (wait-for (trigger-event-simult state side (if next-ice :approach-ice :approach-server) nil (when next-ice next-ice))
+                          (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
+                            (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
+                            (update-breaker-strength state side p)))))))
 
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."

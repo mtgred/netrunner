@@ -20,7 +20,7 @@
  :setname "Terminal Directive",
  :side "Corp",
  :subtype "Transaction - Triple",
- :text "As an additional cost to play this operation, spend [click][click].\nGain 10[credit] and draw 4 cards. Install 1 card (paying all costs).",
+ :text "As an additional cost to play this operation, spend [click][click].\nGain 10[credit] and draw 4 cards. You may install 1 card.\n<errata>Errata from CR 1.2</errata>",
  :title "Ultraviolet Clearance",
  :type "Operation",
  :uniqueness false}

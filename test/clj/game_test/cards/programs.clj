@@ -74,6 +74,25 @@
       (is (empty? (:discard (get-runner))) "No cards trashed")
       (is (= "Algernon" (:title (get-program state 0))) "Algernon still installed"))))
 
+(deftest amina
+  ;; Amina ability
+  (do-game
+    (new-game {:runner {:deck ["Amina"]}
+               :corp {:deck ["Enigma"]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 2)
+    (play-from-hand state :runner "Amina")
+    (let [amina (get-program state 0)
+          enigma (get-ice state :hq 0)]
+      (run-on state :hq)
+      (core/rez state :corp (refresh enigma))
+      (is (= 4 (:credit (get-corp))))
+      (card-ability state :runner (refresh amina) 2)
+      (is (= 3 (:credit (get-corp))) "Corp lost 1 credit")
+      (card-ability state :runner (refresh amina) 2)
+      (is (= 3 (:credit (get-corp))) "Can only use ability once per turn"))))
+
 (deftest atman
   ;; Atman
   (testing "Installing with 0 power counters"
@@ -193,6 +212,55 @@
       (is (= (+ 4 3) (:credit (get-runner))) "Gained 3 credits when trashing Bankroll")
       (is (= 1 (-> (get-runner) :discard count)) "Bankroll was trashed"))))
 
+(deftest berserker
+  ;; Berserker
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall" "Hive" "Enigma"]
+                      :credits 100}
+               :runner {:hand ["Berserker"]}})
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (play-from-hand state :corp "Hive" "R&D")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (core/rez state :corp (get-ice state :archives 0))
+    (core/rez state :corp (get-ice state :rd 0))
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Berserker")
+    (let [berserker (get-program state 0)]
+      (is (= 2 (core/get-strength (refresh berserker))) "Berserker strength starts at 2")
+      (run-on state :archives)
+      (card-ability state :runner berserker 0)
+      (is (= 3 (core/get-strength (refresh berserker))) "Berserker gains 1 strength from Ice Wall")
+      (core/jack-out state :runner nil)
+      (is (= 2 (core/get-strength (refresh berserker))) "Berserker strength resets at end of run")
+      (run-on state :rd)
+      (card-ability state :runner berserker 0)
+      (is (= 7 (core/get-strength (refresh berserker))) "Berserker gains 5 strength from Hive")
+      (core/jack-out state :runner nil)
+      (is (= 2 (core/get-strength (refresh berserker))) "Berserker strength resets at end of run")
+      (run-on state :hq)
+      (card-ability state :runner berserker 0)
+      (is (= 2 (core/get-strength (refresh berserker))) "Berserker gains 0 strength from Enigma (non-barrier)"))))
+
+(deftest bukhgalter
+  ;; Bukhgalter ability
+  (do-game
+    (new-game {:runner {:deck ["Bukhgalter"]}
+               :corp {:deck ["Pup"]}})
+    (play-from-hand state :corp "Pup" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bukhgalter")
+    (let [bukhgalter (get-program state 0)
+          pup (get-ice state :hq 0)]
+      (run-on state :hq)
+      (core/rez state :corp (refresh pup))
+      (is (= 2 (:credit (get-runner))))
+      (card-ability state :runner (refresh bukhgalter) 2)
+      (is (= 4 (:credit (get-runner))) "Gained 2 credits")
+      (card-ability state :runner (refresh bukhgalter) 2)
+      (is (= 4 (:credit (get-runner))) "Can only use ability once per turn"))))
+
 (deftest cerberus-rex-h2
   ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter
   (do-game
@@ -253,6 +321,29 @@
       (is (zero? (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
       (take-credits state :runner)
       (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2"))))
+
+(deftest chisel
+  ;; Chisel
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Chisel"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Chisel")
+    (click-card state :runner "Ice Wall")
+    (let [iw (get-ice state :hq 0)
+          chisel (first (:hosted (refresh iw)))]
+      (run-on state "HQ")
+      (core/rez state :corp iw)
+      (is (zero? (get-counters (refresh chisel) :virus)))
+      (core/no-action state :corp nil)
+      (is (= 1 (get-counters (refresh chisel) :virus)))
+      (is (refresh iw) "Ice Wall still around, just at 0 strength")
+      (core/jack-out state :runner nil)
+      (run-on state "HQ")
+      (core/no-action state :corp nil)
+      (is (nil? (refresh iw)) "Ice Wall should be trashed")
+      (is (nil? (refresh chisel)) "Chisel should likewise be trashed"))))
 
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
@@ -734,6 +825,32 @@
       (is (:icon (refresh iw)) "Ice Wall has an icon")
       (core/trash state :corp iw)
       (is (not (:icon (refresh iw))) "Ice Wall does not have an icon after itself trashed"))))
+
+(deftest gauss
+  ;; Gauss
+  (testing "Loses strength at end of Runner's turn"
+    (do-game
+      (new-game {:runner {:deck ["Gauss"]}
+                 :options {:start-as :runner}})
+      (play-from-hand state :runner "Gauss")
+      (let [gauss (get-program state 0)]
+        (is (= 4 (:current-strength (refresh gauss))) "+3 base strength")
+        (run-on state :hq)
+        (card-ability state :runner (refresh gauss) 1) ;; boost
+        (is (= 6 (:current-strength (refresh gauss))) "+3 base and boosted strength")
+        (run-jack-out state)
+        (is (= 4 (:current-strength (refresh gauss))) "Boost lost after run")
+        (take-credits state :runner)
+        (is (= 1 (:current-strength (refresh gauss))) "Back to normal strength"))))
+  (testing "Loses strength at end of Corp's turn"
+    (do-game
+      (new-game {:runner {:deck ["Gauss"]}})
+      (core/gain state :runner :click 1)
+      (play-from-hand state :runner "Gauss")
+      (let [gauss (get-program state 0)]
+        (is (= 4 (:current-strength (refresh gauss))) "+3 base strength")
+        (take-credits state :corp)
+        (is (= 1 (:current-strength (refresh gauss))) "Back to normal strength")))))
 
 (deftest god-of-war
   ;; God of War - Take 1 tag to place 2 virus counters
@@ -1454,6 +1571,26 @@
           (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
           (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed"))))))
 
+(deftest pelangi
+  ;; Pelangi
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Ice Wall"]}
+               :runner {:hand ["Pelangi"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Pelangi")
+    (let [iw (get-ice state :hq 0)
+          pelangi (get-program state 0)]
+      (run-on state "HQ")
+      (card-ability state :runner pelangi 0)
+      (core/rez state :corp iw)
+      (card-ability state :runner pelangi 0)
+      (click-prompt state :runner "Code Gate")
+      (is (utils/has? (refresh iw) :subtype "Code Gate") "Ice Wall gained Code Gate")
+      (run-continue state)
+      (is (not (utils/has? (refresh iw) :subtype "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+
 (deftest peregrine
   ;; Peregrine - 2c to return to grip and derez an encountered code gate
   (do-game
@@ -1622,6 +1759,17 @@
       (click-prompt state :runner "Done")
       (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
       (is (zero? (count (:hand (get-runner)))) "No cards in hand"))))
+
+(deftest rezeki
+  ;; Rezeki - gain 1c when turn begins
+  (do-game
+    (new-game {:runner {:deck ["Rezeki"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rezeki")
+    (take-credits state :runner)
+    (let [credits (:credit (get-runner))]
+      (take-credits state :corp)
+      (is (= (:credit (get-runner)) (+ credits 1)) "Gain 1 from Rezeki"))))
 
 (deftest rng-key
   ;; RNG Key - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
@@ -1886,6 +2034,30 @@
       (run-jack-out state)
       (is (= 1 (:current-strength (refresh snow))) "Back to default strength"))))
 
+(deftest stargate
+  ;; Stargate - once per turn Keyhole which doesn't shuffle
+  (testing "Basic test"
+    (do-game
+     (new-game {:corp {:deck ["Herald" "Troll" (qty "Ice Wall" 10)]}
+                :runner {:deck ["Stargate"]}})
+     (starting-hand state :corp ["Herald" "Troll"])
+     (core/move state :corp (find-card "Herald" (:hand (get-corp))) :deck {:front true})
+     (core/move state :corp (find-card "Troll" (:hand (get-corp))) :deck {:front true})
+     (is (= "Troll" (-> (get-corp) :deck first :title)) "Troll on top of deck")
+     (is (= "Herald" (-> (get-corp) :deck second :title)) "Herald 2nd")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Stargate")
+     (card-ability state :runner (get-program state 0) 0)
+     (is (:run @state) "Run initiated")
+     (run-successful state)
+     (click-prompt state :runner "Troll")
+     (is (empty? (:prompt (get-runner))) "Prompt closed")
+     (is (not (:run @state)) "Run ended")
+     (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
+     (is (= "Herald" (-> (get-corp) :deck first :title)) "Herald now on top of R&D")
+     (card-ability state :runner (get-program state 0) 0)
+     (is (not (:run @state)) "No run ended, as Stargate is once per turn"))))
+
 (deftest study-guide
   ;; Study Guide - 2c to add a power counter; +1 strength per counter
   (do-game
@@ -2065,6 +2237,32 @@
     (click-card state :runner (get-ice state :rd 0))
     (is (= 1 (count (:discard (get-runner)))) "Wari in heap")
     (is (seq (get-in @state [:runner :prompt])) "Runner is currently accessing Ice Wall")))
+
+(deftest utae
+  ;; Utae
+  (do-game
+    (new-game {:corp {:deck ["Enigma"]}
+               :runner {:deck ["Utae" (qty "Logic Bomb" 3)]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Utae")
+    (let [utae (get-program state 0)]
+      (run-on state "HQ")
+      (core/rez state state :corp (get-ice state :hq 0))
+      (card-ability state :runner utae 0)
+      (click-prompt state :runner "2")
+      (card-ability state :runner utae 0)
+      (is (empty? (:prompt (get-runner))) "Can only use ability once per run")
+      (is (= 1 (:credit (get-runner))))
+      (card-ability state :runner utae 1)
+      (is (= 1 (:credit (get-runner))) "Cannot use this ability without 3 installed virtual resources")
+      (run-jack-out state)
+      (core/gain state :runner :click 2)
+      (dotimes [_ 3]
+        (play-from-hand state :runner "Logic Bomb"))
+      (run-on state "HQ")
+      (card-ability state :runner utae 1)
+      (is (= 0 (:credit (get-runner))) "Able to use ability now"))))
 
 (deftest wyrm
   ;; Wyrm reduces strength of ice

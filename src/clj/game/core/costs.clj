@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
-         facedown? make-result discard-from-hand)
+         facedown? make-result unknown->kw discard-from-hand)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -60,6 +60,7 @@
                (and (= cost-type :ice) (<= 0 (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount)))
                (and (= cost-type :hardware) (<= 0 (- (count (get-in @state [:runner :rig :hardware])) amount)))
                (and (= cost-type :program) (<= 0 (- (count (get-in @state [:runner :rig :program])) amount)))
+               (and (= cost-type :resource) (<= 0 (- (count (get-in @state [:runner :rig :resource])) amount)))
                (and (= cost-type :connection)
                     (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) amount)))
                (and (= cost-type :shuffle-installed-to-stack) (<= 0 (- (count (all-installed state :runner)) amount)))
@@ -216,6 +217,7 @@
      :forfeit (pay-forfeit state side eid card (second cost))
      :hardware (pay-trash state side eid card "piece of hardware" (second cost) (every-pred installed? #(is-type? % :hardware) (complement facedown?)))
      :program (pay-trash state side eid card "program" (second cost) (every-pred installed? #(is-type? % :program) (complement facedown?)))
+     :resource (pay-trash state side eid card "resource" (second cost) (every-pred installed? #(is-type? % :resource) (complement facedown?)))
 
      ;; Connection
      :connection (pay-trash state side eid card "connection" (second cost) (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
@@ -359,6 +361,15 @@
 
 (defn click-run-cost-bonus [state side & n]
   (swap! state update-in [:bonus :click-run-cost] #(merge-costs (concat % n))))
+
+(defn run-costs
+  "Get a list of all costs required to run a server, including additional costs. If card is :click-run, assume run is made by spending a click, and include the assumed click in the cost list."
+  [state server card]
+  (let [server (unknown->kw server)
+        click-run-cost (when (= card :click-run) (concat (get-in @state [:bonus :click-run-cost]) [:click 1]))
+        global-costs (get-in @state [:bonus :run-cost])
+        server-costs (get-in @state [:corp :servers server :additional-cost])]
+    (merge-costs (concat click-run-cost global-costs server-costs))))
 
 (defn trash-cost-bonus [state side n]
   (swap! state update-in [:bonus :trash] (fnil #(+ % n) 0)))

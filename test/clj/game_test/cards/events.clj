@@ -56,6 +56,30 @@
       (is (= 10 (:credit (get-runner))) "Runner gained 10 credits")
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
 
+(deftest always-have-a-backup-plan
+  (do-game
+   (new-game {:runner {:deck ["Always Have a Backup Plan"]}
+              :corp {:deck ["Cold Site Server"]}})
+   (play-from-hand state :corp "Cold Site Server" "Archives")
+   (core/rez state :corp (get-content state :archives 0))
+   (card-ability state :corp (get-content state :archives 0) 0)
+   (is (= 1 (get-counters (get-content state :archives 0) :power)))
+   (take-credits state :corp)
+   (is (= 5 (:credit (get-runner))))
+   (play-from-hand state :runner "Always Have a Backup Plan")
+   (is (= 3 (:credit (get-runner))))
+   (is (= 3 (:click (get-runner))))
+   (click-prompt state :runner "Archives")
+   (is (= [:archives] (:server (:run @state))) "Running on Archives")
+   (is (= 2 (:credit (get-runner))) "Initiating run cost 1 click, 1 cred + event play cost")
+   (is (= 2 (:click (get-runner))) "Initiating run cost 1 click, 1 cred + event play cost")
+   (run-jack-out state)
+   (is (not (:run @state)) "Run ended")
+   (click-prompt state :runner "Yes")
+   (is (= [:archives] (:server (:run @state))) "Running on Archives again")
+   (is (= 2 (:click (get-runner))) "Initiating 2nd run free")
+   (is (= 2 (:credit (get-runner))) "Initiating 2nd run free")))
+
 (deftest amped-up
   ;; Amped Up - Gain 3 clicks and take 1 unpreventable brain damage
   (do-game
@@ -344,6 +368,33 @@
         (run-continue state)
         (run-jack-out state)
         (run-on state "Archives")))))
+
+(deftest blueberry-diesel
+  ;; Blueberry Diesel
+  (testing "Selecting a card"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:hand ["Blueberry!™ Diesel" "Sure Gamble" "Easy Mark" "Daily Casts"]}})
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Daily Casts" (:hand (get-runner))) :deck)
+      (play-from-hand state :runner "Blueberry!™ Diesel")
+      (is (= "Daily Casts" (-> (get-runner) :deck last :title)))
+      (click-prompt state :runner "Sure Gamble")
+      (is (find-card "Daily Casts" (:hand (get-runner))))))
+  (testing "Selecting no card"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:hand ["Blueberry!™ Diesel" "Sure Gamble" "Easy Mark" "Daily Casts"]}})
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Daily Casts" (:hand (get-runner))) :deck)
+      (play-from-hand state :runner "Blueberry!™ Diesel")
+      (is (= "Daily Casts" (-> (get-runner) :deck last :title)))
+      (is (nil? (seq (:hand (get-runner)))))
+      (click-prompt state :runner "No")
+      (is (= ["Sure Gamble" "Easy Mark"] (mapv :title (:hand (get-runner)))))
+      (is (not (find-card "Daily Casts" (:hand (get-runner))))))))
 
 (deftest bribery
   ;; Bribery
@@ -883,6 +934,82 @@
     (is (= 1 (count-tags state)) "Runner has 1 tag")
     (click-prompt state :runner "Remove 1 tag")
     (is (zero? (count-tags state)))))
+
+(deftest direct-access
+  ;; Direct Access - Make a run where both IDs are blank
+  (testing "Direct Access/Employee Strike interaction"
+    (do-game
+     (new-game {:runner {:deck ["Direct Access" "Employee Strike"]
+                         :id "Alice Merchant: Clan Agitator"}
+                :corp {:deck [(qty "PAD Campaign" 3)]
+                       :id "Jinteki: Replicating Perfection"}})
+     (play-from-hand state :corp "PAD Campaign" "New remote")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Direct Access")
+     (click-prompt state :runner "Server 1")
+     (is (= :remote1 (get-in @state [:run :server 0])) "Running on remote vs RP")
+     (run-successful state)
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "Yes")
+     (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access shuffled into stack")
+     (run-on state "Server 1")
+     (is (and (= 3 (:click (get-runner))) (not (:run @state))) "RP prevented running on remote")
+     (core/click-draw state :runner 1)
+     (play-from-hand state :runner "Direct Access")
+     (click-prompt state :runner "Archives")
+     (run-successful state)
+     (is (empty? (:prompt (get-corp))) "Corp not forced to discard for Alice")
+     (click-prompt state :runner "Yes")
+     (core/click-draw state :runner 1)
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (play-from-hand state :runner "Employee Strike")
+     (play-from-hand state :runner "Direct Access")
+     (click-prompt state :runner "Server 1")
+     (run-successful state)
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No")
+     (is (= "Direct Access" (-> (get-runner) :discard first :title)) "Direct Access discarded")
+     (run-on state "Server 1")
+     (is (:run @state) "RP blank, so did not prevent running on remote")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (run-on state "Archives")
+     (run-successful state)
+     (is (changes-val-macro 1 (count (:discard (get-corp)))
+                            "Alice not permanently blanked"
+                            (run-successful state)
+                            (click-prompt state :corp (find-card "PAD Campaign" (:hand (get-corp))))))))
+  (testing "Direct Access autoresolve"
+    (do-game
+     (new-game {:runner {:deck ["Direct Access"]
+                         :id "Valencia Estevez: The Angel of Cayambe"}
+                :corp {:deck [(qty "Rashida Jaheem" 3) "Hedge Fund"]
+                       :id "Industrial Genomics: Growing Solutions"}})
+     (dotimes [_ 3]
+       (play-from-hand state :corp "Rashida Jaheem" "New remote"))
+     (trash-from-hand state :corp "Hedge Fund")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Direct Access")
+     (click-prompt state :runner "Server 1")
+     (card-ability state :runner (first (get-in @state [:runner :play-area])) 0)
+     (click-prompt state :runner "Always") ; toggle Direct Access to always reshuffle
+     (run-successful state)
+     (click-prompt state :runner "Pay 1 [Credits] to trash")
+     (is (empty? (:prompt (get-runner))) "Direct Access prompt autoresolved")
+     (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access reshuffled into deck")
+     (is (= 4 (:credit (get-runner))) "1 BP cred spent to trash Rashida, as IG is blank") ; 1 cred spent on play cost
+     (core/click-draw state :runner 1)
+     (play-from-hand state :runner "Direct Access")
+     (click-prompt state :runner "Server 2")
+     (run-successful state)
+     (click-prompt state :runner "Pay 1 [Credits] to trash")
+     (is (empty? (:prompt (get-runner))) "Direct Access remembered its autoresolve setting and autoresolved")
+     (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access reshuffled into deck")
+     (is (= 3 (:credit (get-runner))) "1 BP cred spent to trash Rashida, as IG is blank") ; 1 cred spent on play cost
+     (run-empty-server state "Server 3")
+     (click-prompt state :runner "Pay 2 [Credits] to trash")
+     (is (= 2 (:credit (get-runner))) "1 BP cred + 1 real cred spent on trashing Rashida, as IG is active blank"))))
 
 (deftest dirty-laundry
   ;; Dirty Laundry - Gain 5 credits at the end of the run if it was successful
@@ -1535,6 +1662,23 @@
     (is (= 1 (count-tags state)) "Took 1 tag on successful run")
     (is (prompt-map :runner) "Still have access prompt")))
 
+(deftest isolation
+  ;; Isolation - A resource must be trashed, gain 7c
+  (do-game
+    (new-game {:runner {:deck ["Kati Jones" "Isolation"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Isolation")
+    (is (= 2 (count (get-in @state [:runner :hand]))) "Isolation could not be played because no resource is installed")
+    (is (zero? (count (get-in (get-runner) [:rig :resource]))) "Kati Jones is not installed")
+    (play-from-hand state :runner "Kati Jones")
+    (is (= 1 (count (get-resource state))) "Kati Jones was installed")
+    (let [kj (get-resource state 0)]
+      (play-from-hand state :runner "Isolation")
+        (click-card state :runner kj)
+        (is (zero? (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed")
+        (is (= 8 (:credit (get-runner))) "Gained 7 credits")
+        (is (= 2 (count (:discard (get-runner)))) "Kati Jones and Isolation are in the discard"))))
+
 (deftest i-ve-had-worse
   ;; I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined
   (testing "Basic test"
@@ -1572,6 +1716,45 @@
       (run-empty-server state "R&D")
       (play-from-hand state :runner "Apocalypse")
       (is (not= "Flatline" (:reason @state)) "Win condition does not report flatline"))))
+
+(deftest in-the-groove
+  ;; In the Groove - whenever you install cost >0 stuff, draw or gain 1
+  (testing "Vanilla test"
+    (do-game
+     (new-game {:runner {:deck ["In the Groove" (qty "Clone Chip" 4)
+                                (qty "Sacrificial Construct" 3)]}})
+     (starting-hand state :runner ["In the Groove" "Clone Chip" "Clone Chip" "Clone Chip"])
+     (take-credits state :corp)
+     (play-from-hand state :runner "In the Groove")
+     ;; the below is just to ensure we don't get weird bugs with event registration if card is somewhere else
+     (core/gain state :runner :click 3)
+     (core/move state :runner (first (:discard (get-runner))) :deck)
+     (is (= 0 (count (:discard (get-runner)))) "Runner discard is empty")
+     (dotimes [_ 2]
+       (changes-val-macro 0 (count (:hand (get-runner)))
+                          "Drew card from In the Groove" ; play 1, draw 1 for net 0
+                          (play-from-hand state :runner "Clone Chip")
+                          (click-prompt state :runner "Draw 1 card")))
+     (play-from-hand state :runner "Clone Chip")
+     (is (changes-credits (get-runner) 1
+                          (click-prompt state :runner "Gain 1 [Credits]")))
+     (play-from-hand state :runner "Sacrificial Construct")
+     (is (empty? (:prompt (get-runner))) "No prompt because Sacrificial Construct is not expensive")
+     (take-credits state :runner)
+     (take-credits state :corp)
+     (play-from-hand state :runner "Clone Chip")
+     (is (empty? (:prompt (get-runner))) "No prompt because In the Groove does not last between turns")))
+  (testing "Cybernetics interaction"
+    (do-game
+     (new-game {:runner {:deck [(qty "In the Groove" 3) "Brain Cage"]}})
+     (take-credits state :corp)
+     (play-from-hand state :runner "In the Groove")
+     (play-from-hand state :runner "Brain Cage")
+     (is (= 0 (:brain-damage (get-runner))) "No brain damage taken yet")
+     (click-prompt state :runner "Brain Cage")
+     (is (= 1 (:brain-damage (get-runner))) "Brain damage taken")
+     (is (changes-credits (get-runner) 1
+                             (click-prompt state :runner "Gain 1 [Credits]"))))))
 
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
@@ -1759,6 +1942,96 @@
       (play-from-hand state :runner "Interdiction")
       (core/rez state :corp jackson)
       (is (not (:rezzed (refresh jackson))) "Jackson is not rezzed"))))
+
+(deftest khusyuk
+  (testing "Basic functionality"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                               "DNA Tracker" "Excalibur" "Fire Wall"]}
+                 :runner {:deck ["Khusyuk"
+                                 (qty "Cache" 3)
+                                 (qty "Akamatsu Mem Chip" 3)
+                                 "Gordian Blade"]}})
+      (core/draw state :corp)
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Excalibur" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 3)) "DNA Tracker"))
+      (is (= (:title (nth (-> @state :corp :deck) 4)) "Excalibur"))
+      (is (= (:title (nth (-> @state :corp :deck) 5)) "Fire Wall"))
+      ;; R&D is now from top to bottom: A B C D E F
+      (take-credits state :corp)
+      (core/gain state :runner :click 100)
+      (core/gain state :runner :credit 100)
+      (dotimes [_ 4] (core/draw state :runner))
+      (dotimes [_ 3] (play-from-hand state :runner "Cache"))
+      (dotimes [_ 3] (play-from-hand state :runner "Akamatsu Mem Chip"))
+      (play-from-hand state :runner "Gordian Blade")
+      (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "1 [Credit]: 6 times")
+      (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi, DNA Tracker, Excalibur, Fire Wall") "Revealed correct 6 cards from R&D")
+      (click-prompt state :runner "Brainstorm")
+      (click-prompt state :runner "No action")
+      ))
+  (testing "Khusyuk would reveal more cards than there are in R&D"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"]}
+                 :runner {:deck ["Khusyuk"
+                                 (qty "Cache" 3)
+                                 (qty "Akamatsu Mem Chip" 3)]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      ;; R&D is now from top to bottom: A B C
+      (take-credits state :corp)
+      (core/gain state :runner :click 100)
+      (core/gain state :runner :credit 100)
+      (dotimes [_ 3] (core/draw state :runner))
+      (dotimes [_ 3] (play-from-hand state :runner "Cache"))
+      (dotimes [_ 3] (play-from-hand state :runner "Akamatsu Mem Chip"))
+      (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "1 [Credit]: 6 times")
+      (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
+      (click-prompt state :runner "Brainstorm")
+      (click-prompt state :runner "No action")
+      ))
+  (testing "No other cards in R&D are accessed"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Technician Team"]}
+                 :runner {:deck ["Khusyuk"
+                                 (qty "Cache" 3)
+                                 "R&D Interface"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      ;; R&D is now from top to bottom: A B C
+      (play-from-hand state :corp "Dedicated Technician Team" "R&D")
+      (take-credits state :corp)
+      (core/gain state :runner :click 100)
+      (core/gain state :runner :credit 100)
+      (dotimes [_ 3] (play-from-hand state :runner "Cache"))
+      (play-from-hand state :runner "R&D Interface")
+      (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "1 [Credit]: 3 times")
+      (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
+      (click-prompt state :runner "Brainstorm")
+      (click-prompt state :runner "No action")
+      (is (= () (-> @state :runner :prompt)) "No access prompt on C or D, so no other cards were accessed"))))
 
 (deftest knifed
   ;; Knifed - Make a run, trash a barrier if all subs broken
@@ -2420,6 +2693,23 @@
     (is (empty? (:discard (get-runner))) "Runner has empty trash")
     (is (= 1 (count (:rfg (get-runner)))) "Runner has 1 card in RFG")))
 
+(deftest rejig
+  ;; Rejig
+  (do-game
+    (new-game {:options {:start-as :runner}
+               :runner {:credits 10
+                        :hand ["Rejig" "Corroder" "Adept"]}})
+    (play-from-hand state :runner "Adept")
+    (play-from-hand state :runner "Rejig")
+    (click-card state :runner "Corroder")
+    (is (find-card "Corroder" (:hand (get-runner))) "Corroder shouldn't be installed")
+    (click-card state :runner "Adept")
+    (is (= 2 (count (:hand (get-runner)))))
+    (let [credits (:credit (get-runner))
+          cost (:cost (find-card "Adept" (:hand (get-runner))))]
+      (click-card state :runner "Adept")
+      (is (= (- credits (- cost (quot cost 2))) (:credit (get-runner))) "Runner should only pay half for Adept"))))
+
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ICE
   (do-game
@@ -2657,7 +2947,7 @@
       (is (= 2 (:current-strength (refresh turing))) "Scrubbed not active when on Peddler")
       (play-from-hand state :runner "Scrubbed")
       (run-on state "HQ")
-      (run-continue state)
+      (card-ability state :runner (first (get-in @state [:runner :current])) 0)
       (is (zero? (:current-strength (refresh turing))) "Scrubbed reduces strength by 2")
       (run-successful state))))
 
@@ -2680,6 +2970,20 @@
     (is (= 3 (count (:discard (get-corp)))) "All 3 cards trashed from Server 1")
     (is (= 1 (:credit (get-runner))) "No credits paid for trashing")
     (is (nil? (get-in @state [:corp :servers :remote1 :content])) "Server 1 no longer exists")))
+
+(deftest spec-work
+  ;; Spec Work
+  (do-game
+    (new-game {:runner {:deck ["Spec Work" (qty "Cache" 3)]}
+               :options {:start-as :runner}})
+    (starting-hand state :runner ["Spec Work" "Cache"])
+    (play-from-hand state :runner "Cache")
+    (play-from-hand state :runner "Spec Work")
+    (is (= 4 (:credit (get-runner))))
+    (is (= 0 (count (:hand (get-runner)))))
+    (click-card state :runner (get-program state 0))
+    (is (= 7 (:credit (get-runner))) "+3 credits, -1 for paying for Spec Work")
+    (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
 
 (deftest stimhack
   ;; Stimhack - Gain 9 temporary credits and take 1 brain damage after the run

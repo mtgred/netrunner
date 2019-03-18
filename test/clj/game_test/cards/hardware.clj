@@ -254,6 +254,33 @@
     (run-on state "Archives")
     (is (= 2 (count (:hand (get-runner)))) "No cards drawn")))
 
+(deftest demolisher
+  ;; Demolisher
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["PAD Campaign"]}
+                 :runner {:deck ["Demolisher"]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 2)
+      (play-from-hand state :runner "Demolisher")
+      (let [demolisher (get-hardware state 0)]
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (is (= 1 (:credit (get-runner))) "Trashed for 3c and gained 1c"))))
+  (testing "Trash with Imp"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Imp" "Demolisher"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 2)
+      (play-from-hand state :runner "Imp")
+      (play-from-hand state :runner "Demolisher")
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state :hq)
+        (click-prompt state :runner "[Imp]: Trash card")
+        (is (= (:credit (get-runner)) (+ 1 credits)) "Demolisher earns a credit when trashing with Imp")))))
+
 (deftest desperado
   ;; Desperado - Gain 1 MU and gain 1 credit on successful run
   (do-game
@@ -408,6 +435,57 @@
         (is (zero? (get-counters (refresh fo) :credit)) "Took all credits from Flame-out")
         (take-credits state :corp)
         (is (empty? (:hosted (refresh fo))) "Mimic trashed")))))
+
+(deftest flip-switch
+  ;; Flip Switch
+  (testing "Trace reaction ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "SEA Source" 2)]}
+                 :runner {:hand ["Flip Switch"]}})
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (play-from-hand state :runner "Flip Switch")
+      (take-credits state :runner)
+      (play-from-hand state :corp "SEA Source")
+      (click-prompt state :runner "Yes")
+      (is (zero? (-> (get-corp) :prompt first :base)) "Base trace should now be 0")
+      (is (find-card "Flip Switch" (:discard (get-runner))) "Flip Switch should be in Heap")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (zero? (count-tags state)) "Runner should gain no tag from beating trace")
+      (play-from-hand state :corp "SEA Source")
+      (is (= 3 (-> (get-corp) :prompt first :base)) "Base trace should be reset to 3")))
+  (testing "Jack out ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Flip Switch"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Flip Switch")
+      (let [flip (get-hardware state 0)]
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (refresh flip) "Flip Switch hasn't been trashed")
+        (run-on state "HQ")
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (= "Runner jacks out." (-> @state :log last :text)))
+        (is (nil? (refresh flip)) "Flip Switch has been trashed")
+        (is (find-card "Flip Switch" (:discard (get-runner)))))))
+  (testing "Tag losing ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Flip Switch"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Flip Switch")
+      (is (zero? (count-tags state)) "Runner starts with 0 tags")
+      (let [flip (get-hardware state 0)]
+        (card-ability state :runner flip 1)
+        (is (refresh flip) "Flip Switch hasn't been trashed")
+        (core/gain-tags state :runner 1)
+        (is (= 1 (count-tags state)) "Runner starts with 0 tags")
+        (card-ability state :runner flip 1)
+        (is (zero? (count-tags state)) "Runner has lost 1 tag")
+        (is (nil? (refresh flip)) "Flip Switch has been trashed")
+        (is (find-card "Flip Switch" (:discard (get-runner))))))))
 
 (deftest friday-chip
   ;; Friday Chip - gain counters for trashing cards, move a counter on turn start
@@ -618,6 +696,88 @@
       (is (= 1 (:current-strength (refresh inti))) "Strength reduced to default")
       (is (= 2 (:current-strength (refresh pass))) "Strength reduced to default"))))
 
+(deftest lucky-charm
+  (testing "No interference with runs ending successfully or by jacking out, and Batty/normal ETR/Border Control interaction"
+    (do-game
+     (new-game {:runner {:deck [(qty "Lucky Charm" 3)]}
+                :corp {:deck ["Ice Wall" "Border Control" "Marcus Batty"]}})
+     (play-from-hand state :corp "Border Control" "Server 1")
+     (play-from-hand state :corp "Ice Wall" "New remote")
+     (play-from-hand state :corp "Marcus Batty" "Server 1")
+     (core/gain state :corp :credit 20)
+     (take-credits state :corp)
+     (core/gain state :runner :click 100)
+     (play-from-hand state :runner "Lucky Charm")
+     (run-on state "HQ")
+     (run-successful state)
+     (is (empty? (:prompt (get-runner))) "No prompt messing with runner when run naturally ends successfully")
+     (doseq [serv ["Archives" "HQ" "R&D" "Server 1"]]
+       (run-on state serv)
+       (is (:run @state) "Run is ongoing")
+       (run-jack-out state)
+       (is (empty? (:prompt (get-runner))) (str "No prompt messing with runner when jacking out from run on " serv))
+       (is (not (:run @state)) "Run is finished"))
+     (doseq [serv ["Archives" "HQ"]]    ; R&D, server 1 has cards
+       (run-on state serv)
+       (is (:run @state) "Run is ongoing")
+       (run-successful state)
+       (is (not (:run @state)) "Run is ended")
+       (is (empty? (:prompt (get-runner))) (str "No prompt messing with runner on a successful run on " serv)))
+     (run-on state "Server 1")
+     (run-continue state)
+     (run-continue state)
+     (run-successful state)
+     (click-prompt state :runner "No action") ;access batty
+     (is (not (:run @state)) "Run is ended")
+     (is (empty? (:prompt (get-runner))) "No prompt messing with runner on a successful run on remote")
+     (let [bc (get-ice state :remote1 0)
+           iw (get-ice state :remote1 1)
+           mb (get-content state :remote1 0)]
+       (core/rez state :corp (refresh iw))
+       (core/rez state :corp (refresh bc))
+       (core/rez state :corp (refresh mb))
+       ;; run into ice wall, have it ETR, do not use lucky charm
+       (run-on state "Server 1")
+       (card-subroutine state :corp (refresh iw) 0)
+       (is (:run @state) "Run not ended yet")
+       (is (:prompt (get-runner)) "Runner prompted to ETR")
+       (click-prompt state :runner "Done")
+       (is (not (:run @state)) "Run ended yet")
+       (is (empty? (:prompt (get-runner))) "Prevent prompt gone")
+       ;; run into border control, have its subroutine ETR, do use lucky charm
+       (run-on state "Server 1")
+       (run-continue state)
+       (card-subroutine state :corp (refresh bc) 1)
+       (is (:run @state) "Run not ended yet")
+       (is (:prompt (get-runner)) "Runner prompted to ETR")
+       (card-ability state :runner (get-hardware state 0) 0)
+       (click-prompt state :runner "Done")
+       (is (= 1 (count (:rfg (get-runner)))) "Lucky Charm RFGed")
+       (is (:run @state) "Run prevented from ending")
+       (is (empty? (:prompt (get-runner))) "Prevent prompt gone")
+       ;; trigger border control
+       (play-from-hand state :runner "Lucky Charm")
+       (card-ability state :corp (refresh bc) 0)
+       (is (= 1 (count (:discard (get-corp)))) "Border Control trashed")
+       (is (:run @state) "Run not ended yet")
+       (is (:prompt (get-runner)) "Runner prompted to ETR")
+       (card-ability state :runner (get-hardware state 0) 0)
+       (click-prompt state :runner "Done")
+       (is (= 2 (count (:rfg (get-runner)))) "2nd Lucky Charm RFGed")
+       (is (:run @state) "Run prevented from ending")
+       ;; win batty psi game and fire ice wall sub
+       (play-from-hand state :runner "Lucky Charm")
+       (card-ability state :corp mb 0)
+       (click-prompt state :corp "1 [Credits]")
+       (click-prompt state :runner "0 [Credits]")
+       (card-subroutine state :corp (refresh iw) 0)
+       (is (:run @state) "Run not ended yet")
+       (is (:prompt (get-runner)) "Runner prompted to ETR")
+       (card-ability state :runner (get-hardware state 0) 0)
+       (click-prompt state :runner "Done")
+       (is (:run @state) "Run prevented from ending")))))
+
+
 (deftest mache
   ;; Mâché
   (testing "Basic test"
@@ -663,6 +823,30 @@
         (card-ability state :runner polop 0)
         (click-card state :runner (refresh pad))
         (is (zero? (get-counters (refresh mache) :power)) "Mache should gain no counters from a trash outside of an access")))))
+
+(deftest masterwork-v37
+  ;; Masterwork (v37)
+  (do-game
+    (new-game {:runner {:deck [(qty "Sure Gamble" 10)]
+                        :hand ["Masterwork (v37)" "Acacia" "Capstone"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Masterwork (v37)")
+    (is (= 3 (count (:hand (get-runner)))) "Runner should draw a card for playing a hardware")
+    (run-on state "HQ")
+    (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp should be waiting on Runner")
+    (let [credits (:credit (get-runner))]
+      (click-prompt state :runner "Yes")
+      (is (= credits (:credit (get-runner))) "Runner shouldn't spend any credits until hardware is actually installed")
+      (click-card state :runner "Acacia")
+      (is (= (- credits 2) (:credit (get-runner))) "Runner should spend 1 for Masterwork and 1 for Acacia"))
+    (is (empty? (:prompt (get-corp))) "Corp shouldn't be waiting anymore")
+    (is (empty? (:prompt (get-runner))))
+    (run-successful state)
+    (click-prompt state :runner "No action")
+    (run-on state "HQ")
+    (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp should be waiting on Runner")
+    (is (seq (:prompt (get-runner))) "Runner should get a prompt every run")))
 
 (deftest maw
   ;; Maw - Once per turn, first time runner declines to steal or trash, trash a HQ card at random
@@ -1447,6 +1631,28 @@
       (let [topcard (get-in (first (get-in @state [:runner :prompt])) [:msg])]
         (is (= "The top card of R&D is Hedge Fund" topcard)))
       (is (= 1 (count (:discard (get-runner))))))))
+
+(deftest supercorridor
+  ;; Supercorridor - may gain 2c at end of turn if corp and runner have same number of credits
+  (do-game
+    (new-game {:runner {:deck ["Supercorridor"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Supercorridor")
+    (take-credits state :runner)
+    (is (= (:credit (get-runner)) 4) "Do not gain credits if differing number of credits")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 3)
+    (take-credits state :runner)
+    (is (= (:credit (get-runner)) (:credit (get-corp))) "Corp and Runner have same number of credits")
+    (click-prompt state :runner "No")
+    (is (= (:credit (get-runner)) (:credit (get-corp))) "Number of credits did not change")
+    (take-credits state :corp)
+    (core/lose state :runner :credit 1)
+    (take-credits state :runner)
+    (is (= (:credit (get-runner)) (:credit (get-corp))) "Corp and Runner have same number of credits (2nd time)")
+    (let [credits (:credit (get-runner))]
+      (click-prompt state :runner "Yes")
+      (is (= (:credit (get-runner)) (+ 2 credits)) "Runner gained 2 credits"))))
 
 (deftest the-gauntlet
   (testing "Access additional cards on run on HQ, not with Gang Sign. Issue #2749"

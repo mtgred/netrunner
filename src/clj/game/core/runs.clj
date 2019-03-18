@@ -8,37 +8,57 @@
 
 ;;; Steps in the run sequence
 (defn make-run
-  "Starts a run on the given server, with the given card as the cause."
-  ([state side server] (make-run state side (make-eid state) server nil nil))
-  ([state side eid server] (make-run state side eid server nil nil))
-  ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card))
-  ([state side eid server run-effect card]
-   (when (can-run? state :runner)
-     (let [s [(if (keyword? server) server (last (server->zone state server)))]
-           ices (get-in @state (concat [:corp :servers] s [:ices]))
-           n (count ices)]
-       ;; s is a keyword for the server, like :hq or :remote1
-       (swap! state assoc :per-run nil
-              :run {:server s
-                    :position n
-                    :access-bonus []
-                    :run-effect (assoc run-effect :card card)
-                    :eid eid})
-       (trigger-event state side :begin-run :server s)
-       (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
-       (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
-       (update-all-ice state :corp)
-       (swap! state update-in [:stats side :runs :started] (fnil inc 0))
-       (wait-for (trigger-event-sync state :runner :run s)
-                 (when (>= n 2) (trigger-event state :runner :run-big s n))
-                 (when (zero? n)
-                   (trigger-event-sync state :runner (make-eid state) :approach-server nil)))))))
+  "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
+  ([state side server] (make-run state side (make-eid state) server nil nil nil))
+  ([state side eid server] (make-run state side eid server nil nil nil))
+  ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
+  ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
+  ([state side eid server run-effect card {:keys [ignore-costs] :as args}]
+   (wait-for (trigger-event-simult state :runner :pre-init-run nil server)
+             (let [all-run-costs (when-not ignore-costs (run-costs state server card))]
+               (if (and (can-run? state :runner)
+                        (can-run-server? state server)
+                        (can-pay? state :runner "a run" all-run-costs))
+                 (do (when (= card :click-run)
+                       (swap! state assoc-in [:runner :register :click-type] :run)
+                       (swap! state assoc-in [:runner :register :made-click-run] true)
+                       (play-sfx state side "click-run"))
+                     (if-let [cost-str (pay state :runner nil all-run-costs)]
+                       (do (system-msg state :runner (str (build-spend-msg cost-str "make a run on") server (when ignore-costs ", ignoring all costs")))
+                           (let [s [(if (keyword? server) server (last (server->zone state server)))]
+                                 ices (get-in @state (concat [:corp :servers] s [:ices]))
+                                 n (count ices)]
+                             ;; s is a keyword for the server, like :hq or :remote1
+                             (swap! state assoc :per-run nil
+                                    :run {:server s
+                                          :position n
+                                          :access-bonus []
+                                          :run-effect (assoc run-effect :card card)
+                                          :eid eid})
+                             (trigger-event state side :begin-run :server s)
+                             (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
+                             (swap! state assoc-in [:runner :next-run-credit] 0)
+                             (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
+                             (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
+                             (update-all-ice state :corp)
+                             (swap! state update-in [:stats side :runs :started] (fnil inc 0))
+                             (wait-for (trigger-event-simult state :runner :run nil s)
+                                       (when (>= n 2) (trigger-event state :runner :run-big s n))
+                                       (when (zero? n)
+                                         (trigger-event-simult state :runner (make-eid state) :approach-server nil)))))
+                       (effect-completed state side eid)))
+                 (effect-completed state side eid))))))
 
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."
   [state side n]
-  (swap! state update-in [:runner :run-credit] + n)
+  (swap! state update-in [:runner :run-credit] (fnil + 0 0) n)
   (gain-credits state :runner n))
+
+(defn gain-next-run-credits
+  "Add temporary credits for the next run to be initiated."
+  [state side n]
+  (swap! state update-in [:runner :next-run-credit] (fnil + 0 0) n))
 
 (defn access-end
   "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"
@@ -318,7 +338,8 @@
                    (str " from " (name-zone side zone))))]
     (system-msg state side msg)
     (when (reveal-access? state side card)
-      (system-msg state side (str "must reveal they accessed " (:title card))))))
+      (system-msg state side (str "must reveal they accessed " (:title card)))
+      (reveal state :runner card))))
 
 (defn- access-trigger-events
   "Trigger access effects, then move into trash/steal choice."
@@ -833,9 +854,12 @@
   (system-msg state side "has no further action")
   (trigger-event state side :no-action))
 
-(defn end-run
+(defn end-run-prevent
+  [state side]
+  (swap! state update-in [:end-run :end-run-prevent] (fnil inc 0)))
+
+(defn- resolve-end-run
   "End this run, and set it as UNSUCCESSFUL"
-  ([state side] (end-run state side (make-eid state)))
   ([state side eid]
    (let [run (:run @state)
          server (first (get-in @state [:run :server]))]
@@ -843,6 +867,27 @@
      (swap! state assoc-in [:run :unsuccessful] true)
      (handle-end-run state side)
      (trigger-event-sync state side eid :unsuccessful-run run))))
+
+(defn end-run
+  "After checking for prevents, end this run, and set it as UNSUCCESSFUL."
+  ([state side] (end-run state side (make-eid state)))
+  ([state side eid] (end-run state side eid nil))
+  ([state side eid card]
+   (swap! state update-in [:end-run] dissoc :end-run-prevent)
+   (let [prevent (get-prevent-list state :runner :end-run)]
+     (if (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card})
+       (do (system-msg state :runner "has the option to prevent the run from ending")
+           (show-wait-prompt state :corp "Runner to prevent the run from ending" {:priority 10})
+           (show-prompt state :runner nil
+                        (str "Prevent the run from ending?") ["Done"]
+                        (fn [_]
+                          (clear-wait-prompt state :corp)
+                          (if-let [_ (get-in @state [:end-run :end-run-prevent])]
+                            (effect-completed state side eid)
+                            (do (system-msg state :runner "will not prevent the run from ending")
+                                (resolve-end-run state side eid))))
+                        {:priority 10}))
+       (resolve-end-run state side eid)))))
 
 (defn jack-out-prevent
   [state side]
@@ -884,15 +929,18 @@
     (:successful run)
     (do
       (play-sfx state side "run-successful")
-      (trigger-event-simult state side eid :successful-run-ends nil run))
+      (wait-for (trigger-event-simult state side :successful-run-ends nil run)
+                (effect-completed state side (make-result eid {:successful true}))))
     ;; Unsuccessful
     (:unsuccessful run)
     (do
       (play-sfx state side "run-unsuccessful")
-      (trigger-event-sync state side eid :unsuccessful-run-ends run))
+      (wait-for (trigger-event-sync state side :unsuccessful-run-ends run)
+                (effect-completed state side (make-result eid {:unsuccessful true}))))
+
     ;; Neither
     :else
-    (effect-completed state side eid)))
+    (effect-completed state side (make-result eid nil))))
 
 (defn run-cleanup-2
   [state side]

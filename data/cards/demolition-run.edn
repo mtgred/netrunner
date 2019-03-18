@@ -21,7 +21,7 @@
  :setname "Revised Core Set",
  :side "Runner",
  :subtype "Run - Sabotage",
- :text "Make a run on HQ or R&D. You may trash, at no cost, any cards you access (even if the cards cannot normally be trashed).",
+ :text "Run HQ or R&D. During that run, you may pay 0[credit] to trash any card you are accessing (even if it has no trash cost).\n<errata>Errata from CR 1.2</errata>",
  :title "Demolition Run",
  :type "Event",
  :uniqueness false}

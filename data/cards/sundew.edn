@@ -20,7 +20,7 @@
  :set_code "sc19",
  :setname "System Core 2019",
  :side "Corp",
- :text "The first time the Runner spends at least 1[click] on his or her turn, gain 2[credit] unless the Runner just initiated a run on this server.",
+ :text "The first time the Runner spends 1 or more [click] during their turn, gain 2[credit]. If those [click] were spent to take an action, the first time during that action a run on this server begins, pay 2[credit].\n<errata>Errata from CR 1.2</errata>",
  :title "Sundew",
  :trash 2,
  :type "Asset",

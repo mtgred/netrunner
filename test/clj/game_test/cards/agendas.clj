@@ -130,6 +130,32 @@
       (is (= 3 (count (:discard (get-corp)))) "trashed")
       (is (= 1 (count-tags state)) "Runner took 0 tags"))))
 
+(deftest architect-deployment-test
+  ;; Accelerated Beta Test
+  (do-game
+   (new-game {:corp {:deck [(qty "Architect Deployment Test" 4) (qty "Enigma" 2)]}})
+   (starting-hand state :corp (repeat 4 "Architect Deployment Test"))
+   (core/gain state :corp :click 4)
+   (play-and-score state "Architect Deployment Test") ;makes a remote 1
+   (click-prompt state :corp "OK")
+   (click-prompt state :corp "Enigma")
+   (is (changes-credits (get-corp) 0
+                        (click-prompt state :corp "New remote")))
+   (is (:rezzed (get-ice state :remote2 0)) "Enigma was installed and rezzed, both at no cost")
+   (play-and-score state "Architect Deployment Test")
+   (click-prompt state :corp "OK")
+   (click-prompt state :corp "Cancel")
+   (is (empty (:prompt (get-corp))) "No more prompts if cancel is clicked")
+   (play-and-score state "Architect Deployment Test")
+   (click-prompt state :corp "OK")
+   (click-prompt state :corp "Enigma")
+   (is (changes-credits (get-corp) 0
+                        (click-prompt state :corp "Server 2")))
+   (is (:rezzed (get-ice state :remote2 1)) "Enigma 2 was installed and rezzed, both at no cost")
+   (play-and-score state "Architect Deployment Test")
+   (click-prompt state :corp "OK")
+   (is (empty (:prompt (get-corp))) "No prompts if there is no ice")))
+
 (deftest armed-intimidation
   ;; Armed Intimidation
   (do-game
@@ -636,6 +662,22 @@
     (click-card state :corp (find-card "Adonis Campaign" (:hand (get-corp))))
     (click-card state :corp (find-card "Strongbox" (:hand (get-corp))))
     (click-card state :corp (find-card "Eli 1.0" (:discard (get-corp))))))
+
+(deftest divested-trust
+  ;; Divested Trust
+  (do-game
+    (new-game {:corp {:hand ["Hostile Takeover" "Divested Trust"]}})
+    (play-and-score state "Divested Trust")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (run-successful state)
+    (click-prompt state :runner "Steal")
+    (is (-> (get-corp) :hand count zero?) "Corp has no cards in hand")
+    (is (= 1 (:agenda-point (get-corp))) "Corp should lose points from forfeit agenda")
+    (click-prompt state :corp "Yes")
+    (is (= "Hostile Takeover" (-> (get-corp) :hand first :title)) "Hostile Takeover should be in HQ")
+    (is (empty? (-> (get-corp) :scored)))
+    (is (zero? (:agenda-point (get-corp))) "Corp should lose points from forfeit agenda")))
 
 (deftest domestic-sleepers
   ;; Domestic Sleepers
@@ -1968,6 +2010,103 @@
       (card-ability state :corp wot-scored 0)
       (is (= 2 (get-counters (refresh wot-scored) :agenda))) "Wotan should only have 2 agenda counters")))
 
+(deftest project-yagi-uda
+  (testing "Swap ICE from HQ"
+    (do-game
+      (new-game {:corp {:deck [(qty "Project Yagi-Uda" 2)
+                               "Eli 1.0"
+                               "Eli 2.0"
+                               "Jackson Howard"
+                               "Prisec"
+                               "Hedge Fund"]}})
+      (core/gain state :corp :click 10 :credit 10)
+      (core/click-draw state :corp 2)
+      (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+      (play-from-hand state :corp "Eli 1.0" "New remote")
+      (let [pyu (get-content state :remote1 0)]
+        (advance state pyu 4)
+        (core/score state :corp {:card (refresh pyu)}))
+      (take-credits state :corp)
+      (let [pyu-scored (get-scored state :corp 0)
+            eli1 (get-ice state :remote2 0)]
+        (run-on state :remote2)
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp eli1)
+        (click-card state :corp "Hedge Fund")
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Operation")
+        (click-card state :corp "Jackson Howard")
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Asset")
+        (click-card state :corp "Prisec")
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Upgrade")
+        (click-card state :corp (find-card "Project Yagi-Uda" (:hand (get-corp))))
+        (is (= (:title (get-ice state :remote2 0)) "Eli 1.0") "Couldn't swap ICE for Agenda")
+        (click-card state :corp "Eli 2.0")
+        (is (= (:title (get-ice state :remote2 0)) "Eli 2.0") "Swapped Eli 1.0 for 2.0"))))
+  (testing "Swap cards in server with cards in HQ"
+    (do-game
+      (new-game {:corp {:deck [(qty "Project Yagi-Uda" 2)
+                               "Eli 1.0"
+                               "Eli 2.0"
+                               "Jackson Howard"
+                               "Prisec"
+                               "Hedge Fund"]}})
+      (core/gain state :corp :click 10 :credit 10)
+      (core/click-draw state :corp 2)
+      (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+      (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+      (let [pyu (get-content state :remote1 0)]
+        (advance state pyu 6)
+        (core/score state :corp {:card (refresh pyu)}))
+      (take-credits state :corp)
+      (let [pyu-scored (get-scored state :corp 0)
+            pyu2 (get-content state :remote2 0)]
+        (run-on state :remote2)
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp pyu2)
+        (click-card state :corp "Hedge Fund")
+        (is (= (:title (get-content state :remote2 0)) "Project Yagi-Uda")
+            "Couldn't swap Agenda for Operation")
+        (click-card state :corp "Eli 2.0")
+        (is (= (:title (get-content state :remote2 0)) "Project Yagi-Uda")
+            "Couldn't swap Agenda for ICE")
+        (click-card state :corp "Jackson Howard")
+        (is (= (:title (get-content state :remote2 0)) "Jackson Howard")
+            "Swapped Agenda for Asset")
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp (get-content state :remote2 0))
+        (click-card state :corp "Prisec")
+        (is (= (:title (get-content state :remote2 0)) "Prisec")
+            "Swapped Asset for Upgrade")
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp (get-content state :remote2 0))
+        (click-card state :corp (find-card "Project Yagi-Uda" (:hand (get-corp))))
+        (is (= (:title (get-content state :remote2 0)) "Project Yagi-Uda")
+            "Swapped Upgrade for Agenda"))))
+  (testing "Cancel swapping at different stages"
+    (do-game
+      (new-game {:corp {:deck ["Project Yagi-Uda"
+                               "Eli 1.0"
+                               "Eli 2.0" ]}})
+      (core/gain state :corp :click 10 :credit 10)
+      (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+      (play-from-hand state :corp "Eli 1.0" "New remote")
+      (let [pyu (get-content state :remote1 0)]
+        (advance state pyu 4)
+        (core/score state :corp {:card (refresh pyu)}))
+      (take-credits state :corp)
+      (let [pyu-scored (get-scored state :corp 0)
+            eli1 (get-ice state :remote2 0)]
+        (run-on state :remote2)
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Yagi-Uda should have a counter to start with")
+        (card-ability state :corp pyu-scored 0)
+        (is (= 0 (get-counters (refresh pyu-scored) :agenda)) "Using Yagi-Uda should remove counter")
+        (click-prompt state :corp "Done")
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during first selection should bring back counter")
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp eli1)
+        (click-prompt state :corp "Done")
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during second selection should bring back counter")))))
+
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.
   (do-game
@@ -2085,6 +2224,32 @@
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:hand (get-runner))))))))
 
+(deftest remastered-edition
+  ;; Remastered Edition
+  (do-game
+    (new-game {:corp {:deck [(qty "Remastered Edition" 2) (qty "Enigma" 1)]}})
+    (core/gain state :corp :click 3)
+    (letfn [(try-place [from to]
+              (card-ability state :corp (refresh from) 0)
+              (click-card state :corp (refresh to)))
+            (place-counter [from to]
+              (try-place from to)
+              (is (zero? (get-counters (refresh from) :agenda))
+                  (str (:title from) " token was used on " (:title to)))
+              (is (= 1 (get-counters (refresh to) :advancement))
+                  (str "Advancement token placed on " (:title to))))]
+      (play-and-score state "Remastered Edition")
+      (play-from-hand state :corp "Remastered Edition" "New remote")
+      (let [scored-agenda (get-scored state :corp 0)
+            installed-agenda (get-content state :remote2 0)]
+        (place-counter scored-agenda installed-agenda)
+        (advance state installed-agenda 3)
+        (core/score state :corp {:card (refresh installed-agenda)}))
+      (play-from-hand state :corp "Enigma" "HQ")
+      (let [strikeforce (get-scored state :corp 1)
+            enigma (get-ice state :hq 0)]
+        (place-counter strikeforce enigma)))))
+
 (deftest remote-data-farm
   ;; Remote Data Farm
   (do-game
@@ -2173,6 +2338,49 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))))
+
+(deftest sds-drone-deployment
+  ;; SDS Drone Deployment
+  (testing "Corp score, a program is installed"
+    (do-game
+      (new-game {:corp {:hand ["SDS Drone Deployment"]}
+                 :runner {:hand ["Cache"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (take-credits state :runner)
+      (play-and-score state "SDS Drone Deployment")
+      (let [cache (get-program state 0)]
+        (is (prompt-is-type? state :corp :select) "Corp must choose an installed program")
+        (click-card state :corp "Cache")
+        (is (nil? (refresh cache)) "Cache is trashed")
+        (is (find-card "Cache" (:discard (get-runner))) "Cache is trashed"))))
+  (testing "Corp score, no program is installed"
+    (do-game
+      (new-game {:corp {:hand ["SDS Drone Deployment"]}})
+      (play-and-score state "SDS Drone Deployment")
+      (is (nil? (seq (:prompt (get-corp)))) "Corp doesn't get any choices when runner has no installed programs")))
+  (testing "Runner steal, a program is installed"
+    (do-game
+      (new-game {:corp {:hand ["SDS Drone Deployment"]}
+                 :runner {:hand ["Cache"]}})
+      (play-from-hand state :corp "SDS Drone Deployment" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (run-empty-server state "Remote 1")
+      (let [cache (get-program state 0)]
+        (is (= ["Pay 1:program to steal" "No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal")
+        (click-prompt state :runner "Pay 1:program to steal")
+        (click-card state :runner "Cache")
+        (is (nil? (refresh cache)) "Cache is trashed")
+        (is (find-card "Cache" (:discard (get-runner))) "Cache is trashed")
+        (is (find-card "SDS Drone Deployment" (:scored (get-runner)))))))
+  (testing "Runner steal, no program is installed"
+    (do-game
+      (new-game {:corp {:hand ["SDS Drone Deployment"]}})
+      (play-from-hand state :corp "SDS Drone Deployment" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Remote 1")
+      (is (= ["No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal"))))
 
 (deftest self-destruct-chips
   ;; Self-Destruct Chips
@@ -2401,6 +2609,24 @@
         (click-prompt state :corp "Done")
         (is (= credits (:credit (get-corp))) "Corp should gain no credits from declining to trash an installed card")
         (is (zero? (-> (get-corp) :hand count)) "Corp should draw no cards from declining to trash an installed card")))))
+
+(deftest sting
+  ;; Sting! - do 1 net on score/steal + 1 more net for each sting in the other player's score
+  (testing "Corp score, then Runner steal, then Corp score"
+    (do-game
+     (new-game {:corp {:deck [(qty "Sting!" 3)]}
+                :runner {:deck [(qty "Spy Camera" 5)]}})
+     (is (= 5 (count (:hand (get-runner)))) "5 cards in hand to be damaged away")
+     (play-from-hand state :corp "Sting!" "New remote")
+     (play-and-score state "Sting!")
+     (is (= 1 (-> (get-runner) :discard count)) "Runner should have taken 1 net damage")
+     (take-credits state :corp)
+     (run-empty-server state :remote1)
+     (click-prompt state :runner "Steal")
+     (is (= 3 (-> (get-runner) :discard count)) "Runner should take 2 net damage because there is a Sting! in the Corp's score area")
+     (take-credits state :runner)
+     (play-and-score state "Sting!")
+     (is (= 5 (-> (get-runner) :discard count)) "Runner should take 2 net damage because there is a Sting! in the Runner's score area"))))
 
 (deftest successful-field-test
   ;; Successful Field Test
@@ -2714,6 +2940,23 @@
     (take-credits state :runner)
     (play-and-score state "Vulcan Coverup")
     (is (= 2 (count (:discard (get-runner)))) "Did 2 meat damage upon scoring")))
+
+(deftest vulnerability-audit
+  ;; Vulnerability Audit - cannot be scored while installed
+  (do-game
+   (new-game {:corp {:deck ["Vulnerability Audit" "Project Atlas"]}})
+   (play-from-hand state :corp "Vulnerability Audit" "New remote")
+   (play-from-hand state :corp "Project Atlas" "New remote")
+   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 4)
+   (core/score state :corp {:card (get-content state :remote1 0)})
+   (is (= 0 (count (:scored (get-corp)))) "Cannot be scored on installed turn")
+   (core/add-prop state :corp (get-content state :remote2 0) :advance-counter 3)
+   (core/score state :corp {:card (get-content state :remote2 0)})
+   (is (= 1 (count (:scored (get-corp)))) "Can score other agendas just fine")
+   (take-credits state :corp)
+   (take-credits state :runner)
+   (core/score state :corp {:card (get-content state :remote1 0)})
+   (is (= 2 (count (:scored (get-corp)))) "Can be scored turn after install")))
 
 (deftest water-monopoly
   ;; Water Monopoly
