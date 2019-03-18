@@ -23,7 +23,11 @@ pom.xml
 /resources/public/css/
 /resources/public/img/cards
 /data/andb-*.json
-/data/cards.json
+/data/cards.edn
+/data/cycles.edn
+/data/formats.edn
+/data/mwls.edn
+/data/sets.edn
 /data/img
 /.lein-failures
 

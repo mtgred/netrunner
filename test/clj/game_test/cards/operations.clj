@@ -164,27 +164,6 @@
       (is (= (dec discard) (-> (get-corp) :discard count)) "One card from Archives should be shuffled into R&D")
       (is (= (+ 2 deck) (-> (get-corp) :deck count)) "Corp should draw two cards and shuffle two cards into R&D"))))
 
-(deftest archival-recovery
-  ;; Archival Recovery
-  (letfn [(archival-recovery-test [[card card-type card-select-fn]]
-            (testing (str "Can install " card-type)
-              (do-game
-                (new-game {:corp {:hand ["Archival Recovery" "Biased Reporting" "Data Raven"]
-                                  :discard ["Nanoetching Matrix" "Domestic Sleepers"]
-                                  :deck [(qty "Hedge Fund" 10)]}})
-                (play-from-hand state :corp "Archival Recovery")
-                (is (= 3 (count (:discard (get-corp)))))
-                (click-card state :corp "Data Raven")
-                (click-card state :corp "Biased Reporting")
-                (is (= 5 (count (:discard (get-corp)))))
-                (is (zero? (count (:rfg (get-corp)))))
-                (click-card state :corp card)
-                (click-prompt state :corp "New remote")
-                (is (= 2 (get-counters (card-select-fn state :remote1 0) :advancement))))))]
-    (doall (map archival-recovery-test [["Nanoetching Matrix" "asset" get-content]
-                                        ["Domestic Sleepers" "agenda" get-content]
-                                        ["Data Raven" "ice" get-ice]]))))
-
 (deftest biased-reporting
   ;; Biased Reporting
   (do-game
@@ -2137,7 +2116,6 @@
      (play-from-hand state :runner "Sneakdoor Beta")
      (take-credits state :runner 1)
      (is (= 2 (:credit (get-runner))) "Runner has 2 credits")
-     
      (let [sneakdoor (get-program state 0)]
        (card-ability state :runner sneakdoor 0)
        (is (= 1 (:credit (get-runner)))
@@ -2145,18 +2123,7 @@
        (run-successful state)
        (run-on state :archives)
        (is (= 1 (:credit (get-runner)))
-           "Runner doesn't spend 1 credit to make a run")
-       ;; (run-successful state)
-       ;; (take-credits state :runner)
-       ;; (take-credits state :corp)
-       ;; (core/lose state :runner :credit 1)
-       ;; (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
-       ;; (is (zero? (:credit (get-runner))) "Runner has 0 credits")
-       ;; (card-ability state :runner sneakdoor 0)
-       ;; (is (not (:run @state)) "No run was initiated")
-       ;; (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
-       ;; (is (zero? (:credit (get-runner))) "Runner has 0 credits")
-       )))
+           "Runner doesn't spend 1 credit to make a run"))))
   (testing "First run event each turn costs an additional credit"
     (do-game
      (new-game {:corp {:deck ["Service Outage"]}
@@ -2179,12 +2146,7 @@
      (core/lose state :runner :credit 4)
      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
      (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
-     (play-from-hand state :runner "Out of the Ashes")
-     ;; (is (empty? (get-in @state [:runner :prompt]))
-     ;;     "Out of the Ashes was not played")
-     ;; (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
-     ;; (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
-     ))
+     (play-from-hand state :runner "Out of the Ashes")))
   (testing "Works when played on the runner's turn"
     (do-game
      (new-game {:corp {:id "New Angeles Sol: Your News"

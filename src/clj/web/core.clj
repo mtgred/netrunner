@@ -29,24 +29,12 @@
     (@server :timeout 100)
     (reset! server nil)))
 
-(defn load-card-data
-  [e]
-  (let [path (-> e :file str io/file)]
-    (when (and (.isFile path)
-               (string/ends-with? path ".edn"))
-      (->> (slurp path)
-           edn/read-string
-           ((juxt :title identity))
-           (swap! cards/all-cards merge))
-      (replace-collection "cards" (vals @cards/all-cards))
-      (add-art false)
-      (update-config))))
-
-
 (defn -main [& args]
   (let [port (or (-> server-config :web :port) 4141)]
     (web.db/connect)
-    (let [sets (mc/find-maps db "sets" nil)
+    (let [cards (mc/find-maps db "cards" nil)
+          all-cards (into {} (map (juxt :title identity) cards))
+          sets (mc/find-maps db "sets" nil)
           cycles (mc/find-maps db "cycles" nil)
           mwl (mc/find-maps db "mwls" nil)
           latest-mwl (->> mwl
@@ -62,11 +50,13 @@
                                        {}
                                        (:cards latest-mwl)))
           ]
-      (core/reset-card-data)
-      (core/reset-card-defs)
+      (reset! cards/all-cards all-cards)
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
       (reset! cards/mwl latest-mwl))
+
+    ;; Reset all of the card implementation definitions
+    (core/reset-card-defs)
 
     (when (#{"dev" "prod"} (first args))
       (reset! server-mode (first args)))
@@ -85,11 +75,7 @@
     (println "Frontend version " @frontend-version)
 
     ;; Set up the watch on quotes files, and load them once.
-    (hawk/watch! [{:paths ["data/cards"]
-                   :filter hawk/file?
-                   :handler (fn [ctx e]
-                              (load-card-data e))}
-                  {:paths [quotes/quotes-corp-filename
+    (hawk/watch! [{:paths [quotes/quotes-corp-filename
                            quotes/quotes-runner-filename]
                    :handler (fn [ctx e]
                               (when (= :create (:kind e))

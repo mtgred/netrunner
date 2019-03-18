@@ -11,12 +11,9 @@
 
 ;; Card information and definitions
 (defn load-cards []
-  (->> (io/file "data/cards")
-       file-seq
-       (filter #(and (.isFile %)
-                     (string/ends-with? % ".edn")))
-       (map slurp)
-       (map edn/read-string)
+  (->> (io/file "data/cards.edn")
+       slurp
+       edn/read-string
        merge))
 
 (defn load-all-cards []

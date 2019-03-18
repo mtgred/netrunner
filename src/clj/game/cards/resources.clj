@@ -1418,27 +1418,6 @@
                  :async true
                  :effect (effect (trash card {:cause :ability-cost}) (draw eid 1 nil))}]}
 
-   "Mystic Maemi"
-   (companion-builder
-     (req (and (pos? (get-counters (get-card state card) :credit))
-               (not run)))
-     (effect (show-wait-prompt :corp "Runner to take decision on Mystic Maemi")
-             (continue-ability
-               {:prompt "Suffer 1 meat damage or trash Mystic Maemi?"
-                :choices ["Suffer 1 meat damage" "Trash"]
-                :player :runner
-                :async true
-                :effect (req (clear-wait-prompt state :corp)
-                             (if (= target "Trash")
-                               (do
-                                 (trash state :runner card)
-                                 (system-msg state :runner "trashes Mystic Maemi")
-                                 (effect-completed state side eid))
-                               (do
-                                 (system-msg state :runner "suffer 1 meat damage to avoid trashing Mystic Maemi")
-                                 (damage state :runner eid :meat 1 {:card card}))))}
-               card nil)))
-
    "Net Mercur"
    {:abilities [{:counter-cost [:credit 1]
                  :msg "gain 1 [Credits]"
