@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Corp",
  :subtype "Double",
- :text "As an additional cost to play this operation, spend [click].\nSearch R&D for a piece of ice and reveal it. <em>(Shuffle R&D after searching it.)</em> Install that ice protecting a central server, paying 3[credit] less.",
+ :text "As an additional cost to play this operation, spend [click].\nSearch R&D for a piece of ice and reveal it. <i>(Shuffle R&D after searching it.)</i> Install that ice protecting a central server, paying 3[credit] less.",
  :title "Secure and Protect",
  :type "Operation",
  :uniqueness false}

@@ -21,7 +21,7 @@
  :setname "Whispers in Nalubaale",
  :side "Runner",
  :subtype "Cyborg",
- :text "Once per turn, you may remove X virus counters from your installed cards to trash a card that you access at no cost (even if it cannot normally be trashed). X is that card's rez or play cost.",
+ :text "Once per turn, you may remove any X virus counters from your installed cards to trash a non-agenda card you are accessing <i>(even if it has no trash cost)</i>.\n<errata>Errata from CR 1.2</errata>",
  :title "Freedom Khumalo: Crypto-Anarchist",
  :type "Identity",
  :uniqueness false}

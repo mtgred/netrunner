@@ -20,7 +20,7 @@
  :setname "Old Hollywood",
  :side "Corp",
  :subtype "Region",
- :text "Agendas accessed from this server cannot be stolen unless the Runner already has a copy of that agenda in his or her score area. This applies even during the run on which the Runner trashes Old Hollywood Grid.\nLimit 1 <strong>region</strong> per server.",
+ :text "The Runner cannot steal agendas accessed from this server, even during the run on which they trash Old Hollywood Grid. Ignore this ability for any agenda the Runner has a copy of in their score area.\nLimit 1 <strong>region</strong> per server.\n<errata>Errata from CR 1.2</errata>",
  :title "Old Hollywood Grid",
  :trash 4,
  :type "Upgrade",

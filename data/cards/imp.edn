@@ -23,7 +23,7 @@
  :side "Runner",
  :strength 0,
  :subtype "Virus",
- :text "Place 2 virus counters on Imp when it is installed.\nOnce per turn, you may remove 1 hosted virus counter to trash a card you access at no cost (even if it cannot normally be trashed).",
+ :text "Place 2 virus counters on Imp when it is installed.\nOnce per turn, you may remove 1 hosted virus counter to trash a card you are accessing <i>(even if it has no trash cost)</i>.\n<errata>Errata from CR 1.2</errata>",
  :title "Imp",
  :type "Program",
  :uniqueness false}

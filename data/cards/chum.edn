@@ -21,7 +21,7 @@
  :side "Corp",
  :strength 4,
  :subtype "Code Gate",
- :text "[subroutine] The next piece of ice the Runner encounters during this run has +2 strength. Do 3 net damage unless the Runner breaks all subroutines on that piece of ice.",
+ :text "[subroutine] The next piece of ice the Runner encounters during this run has +2 strength. When that encounter ends, if the Runner did not break all subroutines on that ice, do 3 net damage.\n<errata>Errata from CR 1.2</errata>",
  :title "Chum",
  :type "ICE",
  :uniqueness false}
