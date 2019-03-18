@@ -1520,7 +1520,25 @@
         (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged")
         (core/rez state :corp next-silver)
         (is (= 7 (:credit (get-corp))) "Paid 3 to rez NEXT Silver")
-        (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged")))))
+        (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged"))))
+  (testing "interactions with non-rez abilities, such as Blue Sun. Issue #4000"
+    (do-game
+      (new-game {:corp {:id "Blue Sun: Powering the Future"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]
+                        :credits 15}
+                 :runner {:hand ["Hernando Cortez"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hernando Cortez")
+      (let [iw (get-ice state :hq 0)
+            credits (:credit (get-corp))]
+        (core/rez state :corp iw)
+        (is (= (- credits 2) (:credit (get-corp))) "Corp should pay an addition 1 to rez Ice Wall")
+        (take-credits state :runner)
+        (card-ability state :corp (:identity (get-corp)) 0)
+        (click-card state :corp iw)
+        (is (= (dec credits) (:credit (get-corp))) "Corp should only gain 1 back when using Blue Sun's ability")))))
 
 (deftest ice-carver
   ;; Ice Carver - lower ice strength on encounter
@@ -3391,7 +3409,31 @@
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (= 1 (core/access-bonus-count (:run @state) :rd)) "Runner should access 1 additional card")
         (run-successful state)
-        (is (zero? (-> (get-runner) :register :last-run (core/access-bonus-count :hq))) "Access bonuses are zeroed out when attacked server isn't R&D or HQ")))))
+        (is (zero? (-> (get-runner) :register :last-run (core/access-bonus-count :rd))) "Access bonuses are zeroed out when attacked server isn't R&D or HQ"))))
+  (testing "A given ability shouldn't give accesses when running the other server"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand [(qty "Fire Wall" 5)]}
+                 :runner {:hand ["The Turning Wheel"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (run-empty-server state "R&D")
+        (click-prompt state :runner "No action")
+        (is (= 1 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
+        (run-empty-server state "R&D")
+        (click-prompt state :runner "No action")
+        (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel should gain 1 counter")
+        (run-on state "HQ")
+        (card-ability state :runner ttw 0) ;; The R&D access ability
+        (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
+        (is (zero? (core/access-bonus-count (:run @state) :hq)) "Runner should access 1 additional card")
+        (run-successful state)
+        (is (= "You accessed Fire Wall." (-> (get-runner) :prompt first :msg)))
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available")))))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool

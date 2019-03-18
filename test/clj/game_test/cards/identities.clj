@@ -73,7 +73,37 @@
         (click-prompt state :runner "Yes")
         (click-prompt state :corp "Yes")
         (is (= 1 (- corp-credits (:credit (get-corp)))) "Should lose 1 credit from 419 ability")
-        (is (zero? (- runner-credits (:credit (get-runner)))) "Should not gain any credits from Ixodidae")))))
+        (is (zero? (- runner-credits (:credit (get-runner)))) "Should not gain any credits from Ixodidae"))))
+  (testing "419 vs Asa Group double install, Corp's turn"
+    (do-game
+      (new-game {:corp {:id "Asa Group: Security Through Vigilance"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["PAD Campaign" "Ice Wall"]}
+                 :runner {:id "419: Amoral Scammer"}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (click-card state :corp "Ice Wall")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :corp "No")
+      (let [log (-> @state :log last :text)]
+        (is (= log "Runner exposes PAD Campaign in Server 1.")))))
+  (testing "419 vs Asa Group double install, Runner's turn"
+    (do-game
+      (new-game {:corp {:id "Asa Group: Security Through Vigilance"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["PAD Campaign" "Ice Wall" "Advanced Assembly Lines"]}
+                 :runner {:id "419: Amoral Scammer"}})
+      (play-from-hand state :corp "Advanced Assembly Lines" "New remote")
+      (click-prompt state :corp "Done")
+      (click-prompt state :runner "No")
+      (take-credits state :corp)
+      (card-ability state :corp (get-content state :remote1 0) 0)
+      (click-card state :corp "PAD Campaign")
+      (click-prompt state :corp "New remote")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :corp "No")
+      (let [log (-> @state :log last :text)]
+        (is (= log "Runner exposes PAD Campaign in Server 2.")))
+      (is (prompt-is-type? state :corp :select) "Corp should still have select prompt"))))
 
 (deftest acme-consulting-the-truth-you-need
   (testing "Tag gain when rezzing outermost ice"
@@ -369,16 +399,7 @@
         (click-card state :corp pup)
         (click-prompt state :corp "New remote")
         (is (empty? (:prompt (get-corp))) "No more prompts")
-        (is (= 6 (count (:servers (get-corp)))) "There are six servers, including centrals"))))
-  (testing "don't allow installation of operations"
-    (do-game
-      (new-game {:corp {:id "Asa Group: Security Through Vigilance"
-                        :deck ["Pup" "BOOM!" "Urban Renewal"]}})
-      (play-from-hand state :corp "Pup" "New remote")
-      (click-card state :corp (find-card "BOOM!" (:hand (get-corp))))
-      (is (empty? (get-content state :remote1)) "Asa Group installed an event in a server")
-      (click-card state :corp (find-card "Urban Renewal" (:hand (get-corp))))
-      (is (= "Urban Renewal" (:title (get-content state :remote1 0))) "Asa Group can install an asset in a remote"))))
+        (is (= 6 (count (:servers (get-corp)))) "There are six servers, including centrals")))))
 
 (deftest ayla-bios-rahim-simulant-specialist
   ;; Ayla - choose & use cards for NVRAM

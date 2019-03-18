@@ -5,7 +5,7 @@
             [clojure.test :refer :all]
             [hawk.core :as hawk]
             [game.core :as core]
-            [game.utils :as utils]
+            [game.utils :as utils :refer [make-cid server-card]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
 
@@ -71,7 +71,7 @@
 
 (defn card-vec->card-map
   [[card amt]]
-  (let [loaded-card (if (string? card) (@all-cards card) card)]
+  (let [loaded-card (if (string? card) (server-card card) card)]
     (when-not loaded-card
       (throw (Exception. (str card " not found in @all-cards"))))
     {:card loaded-card
@@ -94,7 +94,7 @@
                     (transform (qty "Hedge Fund" 3)))
           :hand (flatten (:hand corp))
           :discard (flatten (:discard corp))
-          :identity (@all-cards
+          :identity (server-card
                       (or (:id corp)
                           "Custom Biotics: Engineered for Success"))
           :credits (:credits corp)
@@ -105,7 +105,7 @@
                       (transform (qty "Sure Gamble" 3)))
             :hand (flatten (:hand runner))
             :discard (flatten (:discard runner))
-            :identity (@all-cards
+            :identity (server-card
                         (or (:id runner)
                             "The Professor: Keeper of Knowledge"))
             :credits (:credits runner)

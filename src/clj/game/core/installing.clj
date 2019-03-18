@@ -228,7 +228,7 @@
       ;; Check to see if a second agenda/asset was installed.
       (wait-for (corp-install-asset-agenda state side moved-card dest-zone server)
                 (letfn [(event [state side eid _]
-                          (trigger-event-sync state side eid :corp-install (get-card state moved-card)))]
+                          (trigger-event-simult state side eid :corp-install nil (get-card state moved-card)))]
                   (case install-state
                     ;; Ignore all costs. Pass eid to rez.
                     :rezzed-no-cost
@@ -279,7 +279,7 @@
       (wait-for (pay-sync state side card end-cost {:action action})
                 (if-let [cost-str async-result]
                   (if (= server "New remote")
-                    (wait-for (trigger-event-sync state side :server-created card)
+                    (wait-for (trigger-event-simult state side :server-created nil card)
                               (corp-install-continue state side eid card server args slot cost-str))
                     (corp-install-continue state side eid card server args slot cost-str))
                   (end-fn)))
@@ -317,7 +317,7 @@
            dest-zone (get-in @state (cons :corp slot))]
        ;; trigger :pre-corp-install before computing install costs so that
        ;; event handlers may adjust the cost.
-       (wait-for (trigger-event-sync state side :pre-corp-install card {:server server :dest-zone dest-zone})
+       (wait-for (trigger-event-simult state side :pre-corp-install nil card {:server server :dest-zone dest-zone})
                  (corp-install-pay state side eid card server args slot))))))
 
 
@@ -428,7 +428,8 @@
                                        [:rig (if facedown :facedown (to-keyword (:type card)))]))
                              c (assoc c :installed :this-turn :new true)
                              installed-card (if facedown
-                                              (update! state side c)
+                                              (do (update! state side c)
+                                                  (find-latest state c))
                                               (card-init state side c {:resolve-effect false
                                                                        :init-data true}))]
                          (when-not no-msg

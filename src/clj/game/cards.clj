@@ -225,7 +225,7 @@
                                " resolve.") "info"))})
 
 (defn get-autoresolve
-  "Returns a 5-fn intended for use in the :autoresolve of an optional ability. Function returns 'Yes', 'No' or nil 
+  "Returns a 5-fn intended for use in the :autoresolve of an optional ability. Function returns 'Yes', 'No' or nil
   depending on whether card has [:special toggle-kw] set to :always, :never or something else.
   If a function is passed in, instead call that on [:special toggle-kw] and return the result."
   ([toggle-kw] (get-autoresolve toggle-kw {:always "Yes" :never "No"}))

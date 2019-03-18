@@ -117,13 +117,8 @@
                             (init-hands state)))))
     state))
 
-(defn server-card
-  ([title] (@all-cards title))
-  ([title user]
-   (@all-cards title)))
-
 (defn make-card
-  "Makes or remakes (with current cid) a proper card from an @all-cards card"
+  "Makes or remakes (with current cid) a proper card from a server card"
   ([card] (make-card card (make-cid)))
   ([card cid]
   (-> card
@@ -133,15 +128,15 @@
 (defn reset-card
   "Resets a card back to its original state - retaining any data in the :persistent key"
   ([state side {:keys [title cid persistent]}]
-   (update! state side (assoc (make-card (get @all-cards title) cid) :persistent persistent))))
+   (update! state side (assoc (make-card (server-card title) cid) :persistent persistent))))
 
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
-  Loads card data from server-side @all-cards map if available."
+  Loads card data from the server-card map if available."
   ([deck] (create-deck deck nil))
   ([deck user]
    (shuffle (mapcat #(map (fn [card]
-                            (let [server-card (or (server-card (:title card) user) card)
+                            (let [server-card (or (server-card (:title card)) card)
                                   c (assoc (make-card server-card) :art (:art card))]
                               (if-let [init (:init (card-def c))] (merge c init) c)))
                           (repeat (:qty %) (assoc (:card %) :art (:art %))))
@@ -257,7 +252,7 @@
                     :max (- cur-hand-size max-hand-size)
                     :all true}
           :effect (req (system-msg state side
-                                   (str "discards " 
+                                   (str "discards "
                                         (if (= :runner side)
                                           (join ", " (map :title targets))
                                           (quantify (count targets) "card"))

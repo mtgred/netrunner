@@ -1,5 +1,6 @@
 (ns game.utils
-  (:require [clojure.string :refer [split-lines split join]]))
+  (:require [clojure.string :refer [split-lines split join]]
+            [jinteki.cards :refer [all-cards]]))
 
 (declare pluralize)
 
@@ -7,6 +8,17 @@
 
 (defn make-cid []
   (swap! cid inc))
+
+(defn server-card
+  [title]
+  (let [card (get @all-cards title)]
+    (if (and title card)
+      card
+      (.println *err* (str "Tried to select server-card for " title)))))
+
+(defn server-cards
+  []
+  (vals @jinteki.cards/all-cards))
 
 (defn abs [n] (max n (- n)))
 
@@ -24,29 +36,6 @@
   "Helper function for use in `update` or `update-in` to subtract for a value, to a minimum of 0."
   [n]
   #(max 0 (- % n)))
-
-(defn clean-forfeit
-  "Takes a flat :forfeit in costs and adds a cost of 1.
-  Ignores cost vectors with an even count as these have forfeit value included"
-  [costs]
-  (let [fcosts (flatten costs)]
-  (if (odd? (count fcosts))
-    (replace {[:forfeit] [:forfeit 1],
-              :forfeit [:forfeit 1]} fcosts)
-    costs)))
-
-(defn merge-costs
-  "This combines costs from a number of sources in the game into a single cost per type
-  Damage is not merged as it needs to be invidual.  Needs augmention more than net-damage appears"
-  [costs]
-  (let [fc (partition 2 (flatten (clean-forfeit costs)))
-        jc (filter #(not= :net-damage (first %)) fc)
-        dc (filter #(= :net-damage (first %)) fc)
-        reduce-fn (fn [cost-map cost]
-                    (let [[cost-type value] cost
-                          old-value (get cost-map cost-type 0)]
-                      (assoc cost-map cost-type (+ old-value value))))]
-    (vec (map vec (concat (reduce reduce-fn {} jc) dc)))))
 
 (defn remove-once [pred coll]
   (let [[head tail] (split-with (complement pred) coll)]

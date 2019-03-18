@@ -4,8 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]))
 
 (defn- counter-based-extra-cost
   "Cold Site Server and Reduced Service. Modify cost to run current server whenever counters are added or removed.
@@ -528,25 +527,33 @@
 
    "Helheim Servers"
    {:abilities [{:label "Trash 1 card from HQ: All ice protecting this server has +2 strength until the end of the run"
-                 :req (req (and this-server (pos? (count run-ices)) (pos? (count (:hand corp)))))
+                 :req (req (and this-server
+                                (pos? (count run-ices))
+                                (pos? (count (:hand corp)))))
                  :async true
                  :effect (req (show-wait-prompt state :runner "Corp to use Helheim Servers")
                               (wait-for
                                 (resolve-ability
                                   state side
                                   {:prompt "Choose a card in HQ to trash"
-                                   :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
-                                   :effect (effect (trash target) (clear-wait-prompt :runner))} card nil)
-                                (do (register-events
-                                      state side
-                                      {:pre-ice-strength {:req (req (= (card->server state card)
-                                                                       (card->server state target)))
-                                                          :effect (effect (ice-strength-bonus 2 target))}
-                                       :run-ends {:effect (effect (unregister-events card))}} card)
-                                    (continue-ability
-                                      state side
-                                      {:effect (req (update-ice-in-server
-                                                      state side (card->server state card)))} card nil))))}]
+                                   :choices {:req #(and (in-hand? %)
+                                                        (= (:side %) "Corp"))}
+                                   :msg "trash a card from HQ and give all ice protecting this server +2 strength until the end of the run"
+                                   :effect (effect (clear-wait-prompt :runner)
+                                                   (trash eid target nil))}
+                                  card nil)
+                                (register-events
+                                  state side
+                                  {:pre-ice-strength {:req (req (= (card->server state card)
+                                                                   (card->server state target)))
+                                                      :effect (effect (ice-strength-bonus 2 target))}
+                                   :run-ends {:effect (effect (unregister-events card))}}
+                                  card)
+                                (continue-ability
+                                  state side
+                                  {:effect (req (update-ice-in-server
+                                                  state side (card->server state card)))}
+                                  card nil)))}]
     :events {:pre-ice-strength nil}}
 
    "Henry Phillips"

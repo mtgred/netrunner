@@ -149,8 +149,8 @@
     (let [card (assoc c :seen true)
           card-name (:title card)
           trash-cost (trash-cost state side c)
-          can-pay (when trash-cost (or (can-pay? state :runner nil :credit trash-cost)
-                                       (can-pay-with-recurring? state :runner trash-cost)))]
+          can-pay (when trash-cost (can-pay? state :runner nil :credit trash-cost))
+          pay-with-recurring (when trash-cost (can-pay-with-recurring? state :runner trash-cost))]
       ;; Show the option to pay to trash the card.
       (when-not (and (is-type? card "Operation")
                      ;; Don't show the option if Edward Kim's auto-trash flag is true.
@@ -161,7 +161,7 @@
                                        (concat (all-active state :runner)
                                                (get-in @state [:runner :play-area])))
                 ability-strs (map #(get-in (card-def %) [:interactions :trash-ability :label]) trash-ab-cards)
-                trash-cost-str (when can-pay
+                trash-cost-str (when (or can-pay pay-with-recurring)
                                  [(str "Pay " trash-cost " [Credits] to trash")])
                 ;; If the runner is forced to trash this card (Neutralize All Threats)
                 forced-to-trash? (and (or can-pay
@@ -172,14 +172,13 @@
                             (str trash-cost " [Credits] to trash " card-name " from " (name-zone :corp (:zone card))))
                 pay-str (when can-pay
                           (str (if forced-to-trash? "is forced to pay " "pays ") trash-msg))
-                prompt-str (str "You accessed " card-name ".")
                 no-action-str (when-not forced-to-trash?
                                 ["No action"])
                 choices (vec (concat ability-strs trash-cost-str no-action-str))]
             (continue-ability
               state :runner
               {:async true
-               :prompt prompt-str
+               :prompt (str "You accessed " card-name ".")
                :choices choices
                :effect (req (cond
                               (= target "No action")

@@ -4,8 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
 
 (defn- run-event
   ([] (run-event nil))
@@ -148,20 +147,67 @@
                    true)))))
 
    "Bribery"
-   {:prompt "How many credits?"
+   {:implementation "ICE chosen for cost increase is specified at start of run, not on approach"
+    :prompt "How many credits?"
     :choices :credit
     :msg (msg "increase the rez cost of the first unrezzed ICE approached by " target " [Credits]")
-    :effect (effect (resolve-ability (run-event) card nil))}
+    :effect (effect (continue-ability
+                      (let [bribery-x target]
+                        {:prompt "Choose a server"
+                         :choices (req runnable-servers)
+                         :effect (req (make-run state side target nil card)
+                                      (let [run-ices (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices]))
+                                            foremost-ice (last (remove rezzed? run-ices))]
+                                        (update! state side (assoc foremost-ice :bribery true))
+                                        (register-events
+                                          state side
+                                          {:pre-rez-cost {:req (req (:bribery target))
+                                                          :once :per-turn
+                                                          :effect (effect (rez-additional-cost-bonus [:credit bribery-x]))}
+                                           :run-ends {:effect (effect (unregister-events card)
+                                                                      (update! (dissoc (find-latest state foremost-ice) :bribery)))}}
+                                          (assoc card :zone '(:discard)))))})
+                      card nil))}
 
    "Brute-Force-Hack"
-   {:implementation "Runner must calculate the right number of credits including other game effects for the planned target ICE"
-    :prompt "How many [Credits]?" :choices :credit
-    :effect (effect (system-msg (str "spends " target " [Credit] on Brute-Force-Hack"))
-                    (resolve-ability {:choices {:req #(and (ice? %)
-                                                           (rezzed? %)
-                                                           (<= (:cost %) target))}
-                                      :effect (effect (derez target))
-                                      :msg (msg "derez " (:title target))} card nil))}
+   {:req (req (seq (filter
+                     some?
+                     (for [ice (all-installed state :corp)
+                           :when (and (ice? ice)
+                                      (rezzed? ice))]
+                       (let [_ (trigger-event state side :pre-rez-cost ice)
+                             cost (rez-cost state side ice)
+                             _ (swap! state update-in [:bonus] dissoc :cost :rez)]
+                         (when (<= cost (:credit runner))
+                           true))))))
+    :effect
+    (req (let [credits (:credit runner)
+               affordable-ice
+               (seq (filter
+                      some?
+                      (for [ice (all-installed state :corp)
+                            :when (and (ice? ice)
+                                       (rezzed? ice))]
+                        (let [_ (trigger-event state side :pre-rez-cost ice)
+                              cost (rez-cost state side ice)
+                              _ (swap! state update-in [:bonus] dissoc :cost :rez)]
+                          (when (<= cost credits)
+                            [(:cid ice) cost])))))]
+           (continue-ability
+             state side
+             {:prompt "How many [Credits]?"
+              :choices :credit
+              :msg (msg "spends " target " [Credit] on Brute-Force-Hack")
+              :effect (effect (continue-ability
+                                {:choices {:req #(and (rezzed? %)
+                                                      (some (fn [c] (and (= (first c)
+                                                                            (:cid %))
+                                                                         (<= (second c) target)))
+                                                            affordable-ice))}
+                                 :msg (msg "derez " (card-str state target))
+                                 :effect (effect (derez target))}
+                                card nil))}
+             card nil)))}
 
    "Build Script"
    {:msg "gain 1 [Credits] and draw 2 cards"
@@ -978,12 +1024,9 @@
                  (gain-credits state :runner 10))}
 
    "Hacktivist Meeting"
-   {:implementation "Does not prevent rez if HQ is empty"
-    :events {:rez {:req (req (and (not (ice? target))
-                                  (pos? (count (:hand corp)))))
-                   ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
-                   :msg "force the Corp to trash 1 card from HQ at random"
-                   :effect (effect (trash (first (shuffle (:hand corp)))))}}}
+   {:events {:pre-rez-cost {:req (req (not (ice? target)))
+                            :msg "force the Corp to trash 1 card from HQ at random"
+                            :effect (effect (rez-additional-cost-bonus [:discard 1]))}}}
 
    "High-Stakes Job"
    (run-event
@@ -1776,7 +1819,7 @@
                                            (= (:faction runner-identity) (:faction %))
                                            (not (is-draft-id? %))
                                            (not= (:title runner-identity) (:title %)))
-                        swappable-ids (filter is-swappable (vals @all-cards))]
+                        swappable-ids (filter is-swappable (server-cards))]
                     (cancellable swappable-ids :sorted)))
     :effect (req (let [old-runner-identity (:identity runner)]
                    ;; Handle hosted cards (Ayla) - Part 1
@@ -1963,12 +2006,14 @@
 
    "Running Interference"
    (run-event
-     {:events {:pre-rez nil
+     {:events {:pre-rez-cost nil
                :run-ends nil}}
      nil
      nil
-     (effect (register-events {:pre-rez {:req (req (ice? target))
-                                         :effect (effect (rez-cost-bonus (:cost target)))}
+     (effect (register-events {:pre-rez-cost {:req (req (ice? target))
+                                              :msg (msg "add an additional cost of " (:cost target)
+                                                        " [Credits] to rez " (card-str state target))
+                                              :effect (effect (rez-additional-cost-bonus [:credit (:cost target)]))}
                                :run-ends {:effect (effect (unregister-events card))}}
                               (assoc card :zone '(:discard)))))
 

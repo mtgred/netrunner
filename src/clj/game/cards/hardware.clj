@@ -4,8 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
 
 ;; Card definitions
 (def card-definitions
@@ -92,21 +91,28 @@
     :events {:expose
              {:msg (msg "attempt to force the rez of " (:title target))
               :async true
-              :effect (req (let [c target
+              :effect (req (trigger-event state side :pre-rez-cost target)
+                           (let [c target
                                  cdef (card-def c)
-                                 cname (:title c)]
-                             (if (:additional-cost cdef)
+                                 cname (:title c)
+                                 cost (rez-cost state side target)
+                                 additional-costs (concat (:additional-cost cdef)
+                                                          (:additional-cost card)
+                                                          (get-rez-additional-cost-bonus state side))]
+                             (swap! state update-in [:bonus] dissoc :cost :rez)
+                             (if (seq additional-costs)
                                (do (show-wait-prompt state :runner (str "Corp to decide if they will rez " cname))
                                    (continue-ability
                                      state side
                                      {:optional
-                                      {:prompt (msg "Pay additional cost to rez " cname "?")
+                                      {:prompt (msg "Pay " (build-cost-str (merge-costs [:credit cost]))
+                                                    ", plus " (build-cost-str (merge-costs additional-costs))
+                                                    " as an additional cost to rez " cname "?")
                                        :player :corp
-                                       :yes-ability {:effect (effect (rez :corp c)
-                                                                     (clear-wait-prompt :runner))}
-                                       :no-ability {:effect (effect (system-msg :corp (str "declines to pay additional costs"
-                                                                                           " and is not forced to rez " cname))
-                                                                    (clear-wait-prompt :runner))}}}
+                                       :yes-ability {:effect (effect (rez :corp c))}
+                                       :no-ability {:msg (msg "declines to pay additional costs"
+                                                              " and is not forced to rez " cname)}
+                                       :end-effect (effect (clear-wait-prompt :runner))}}
                                      card nil))
                                (do (rez state :corp target)
                                    (effect-completed state side eid)))))}}}
@@ -221,14 +227,12 @@
    "Cortez Chip"
    {:abilities [{:prompt "Select a piece of ICE"
                  :choices {:req ice?}
-                 :effect (req (let [ice target]
-                                (update! state side (assoc card :cortez-target ice))
-                                (trash state side (get-card state card) {:cause :ability-cost})
-                                (system-msg state side
-                                            (str "trashes Cortez Chip to increase the rez cost of " (card-str state ice)
-                                                 " by 2 [Credits] until the end of the turn"))))}]
+                 :msg (msg "trashes Cortez Chip to increase the rez cost of " (card-str state target)
+                           " by 2 [Credits] until the end of the turn")
+                 :effect (effect (update! (assoc card :cortez-target target))
+                                 (trash (get-card state card) {:cause :ability-cost}))}]
     :trash-effect {:effect (effect (register-events {:pre-rez {:req (req (= (:cid target) (:cid (:cortez-target card))))
-                                                               :effect (effect (rez-cost-bonus 2))}
+                                                               :effect (effect (rez-additional-cost-bonus [:credit 2]))}
                                                      :runner-turn-ends {:effect (effect (unregister-events card))}
                                                      :corp-turn-ends {:effect (effect (unregister-events card))}}
                                                     (get-card state card)))}

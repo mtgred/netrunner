@@ -395,24 +395,27 @@
 (defn- resolve-trash-end
   ([state side eid card args] (resolve-trash-end state side eid card eid args))
   ([state side eid {:keys [disabled] :as card} oid
-   {:keys [cause keep-server-alive host-trashed] :as args}]
-  (let [cdef (card-def card)
-        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
-    (swap! state update-in [:per-turn] dissoc (:cid moved-card))
-    (swap! state update-in [:trash :trash-list] dissoc oid)
-    (if-let [trash-effect (:trash-effect cdef)]
-      (if (and (not disabled)
-               (or (and (= (:side card) "Runner")
-                        (:installed card)
-                        (not (:facedown card)))
-                   (and (:rezzed card)
-                        (not host-trashed))
-                   (and (:when-inactive trash-effect)
-                        (not host-trashed))))
-        (wait-for (resolve-ability state side trash-effect moved-card (list cause))
-                  (effect-completed state side eid))
-        (effect-completed state side eid))
-      (effect-completed state side eid)))))
+    {:keys [cause keep-server-alive host-trashed] :as args}]
+   (if card
+     (let [cdef (card-def card)
+           moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
+       (swap! state update-in [:per-turn] dissoc (:cid moved-card))
+       (swap! state update-in [:trash :trash-list] dissoc oid)
+       (if-let [trash-effect (:trash-effect cdef)]
+         (if (and (not disabled)
+                  (or (and (= (:side card) "Runner")
+                           (:installed card)
+                           (not (:facedown card)))
+                      (and (:rezzed card)
+                           (not host-trashed))
+                      (and (:when-inactive trash-effect)
+                           (not host-trashed))))
+           (wait-for (resolve-ability state side trash-effect moved-card (list cause))
+                     (effect-completed state side eid))
+           (effect-completed state side eid))
+         (effect-completed state side eid)))
+     (do (swap! state update-in [:trash :trash-list] dissoc oid)
+         (effect-completed state side eid)))))
 
 (defn- resolve-trash
   ([state side eid card args] (resolve-trash state side eid card eid args))
@@ -613,11 +616,20 @@
   (trigger-event state side :purge))
 
 (defn mill
-  "Force the discard of n cards by trashing them."
+  "Force the discard of n cards from the deck by trashing them"
   ([state side] (mill state side side 1))
   ([state side n] (mill state side side n))
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :deck]))]
+     (doseq [card milltargets]
+       (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
+
+(defn discard-from-hand
+  "Force the discard of n cards from the hand by trashing them"
+  ([state side] (discard-from-hand state side side 1))
+  ([state side n] (discard-from-hand state side side 1))
+  ([state from-side to-side n]
+   (let [milltargets (take n (get-in @state [to-side :hand]))]
      (doseq [card milltargets]
        (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
 

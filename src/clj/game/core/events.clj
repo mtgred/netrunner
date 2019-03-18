@@ -59,9 +59,10 @@
         is-active-player #(= (:active-player @state) (get-side %))]
 
     (let [handlers (sort-by (complement is-active-player) (get-in @state [:events event]))
-          handlers (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
-                                 (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
-                           handlers)]
+          handlers (doall
+                     (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
+                                   (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
+                             handlers))]
       (wait-for (apply trigger-event-sync-next state side handlers event targets)
                 (effect-completed state side eid)))))
 
@@ -75,23 +76,24 @@
   [state side eid event handlers cancel-fn event-targets]
   (if (not-empty handlers)
     (letfn [;; Allow resolution as long as there is no cancel-fn, or if the cancel-fn returns false.
-            (should-continue [state handlers] (and (< 1 (count handlers))
-                                                   (not (and cancel-fn (cancel-fn state)))))
-
+            (should-continue [state handlers]
+              (and (< 1 (count handlers))
+                   (not (and cancel-fn (cancel-fn state)))))
             (choose-handler [handlers]
-              (let [non-silent (filter #(not (and (:silent (:ability %))
-                                                  (let [ans ((:silent (:ability %)) state side (make-eid state) (:card %) event-targets)]
-                                                    ans)))
+              (let [non-silent (filter #(let [silent-fn (:silent (:ability %))]
+                                          (not (and silent-fn
+                                                    (silent-fn state side (make-eid state) (:card %) event-targets))))
                                        handlers)
-                    cards (map :card non-silent)
-                    titles (map :title cards)
+                    titles (map (comp :title :card) non-silent)
                     interactive (filter #(let [interactive-fn (:interactive (:ability %))]
-                                          (and interactive-fn (interactive-fn state side (make-eid state) (:card %) event-targets)))
+                                           (and interactive-fn
+                                                (interactive-fn state side (make-eid state) (:card %) event-targets)))
                                         handlers)]
                 ;; If there is only 1 non-silent ability, resolve that then recurse on the rest
                 (if (or (= 1 (count handlers)) (empty? interactive) (= 1 (count non-silent)))
-                  (let [to-resolve
-                        (if (= 1 (count non-silent)) (first non-silent) (first handlers))
+                  (let [to-resolve (if (= 1 (count non-silent))
+                                     (first non-silent)
+                                     (first handlers))
                         ability-to-resolve (dissoc (:ability to-resolve) :req)
                         card-to-resolve (:card to-resolve)
                         others (if (= 1 (count non-silent))
@@ -170,39 +172,39 @@
          get-ability-side #(-> % :ability :side)
          active-player (:active-player @state)
          opponent (other-side active-player)
-         is-player (fn [player ability] (or (= player (get-side ability)) (= player (get-ability-side ability))))
-
-         ;; prepare the list of the given player's handlers for this event.
-         ;; gather all registered handlers from the state, then append the card-ability if appropriate, then
-         ;; filter to remove suppressed handlers and those whose req is false.
-         ;; this is essentially "step 1" as described here:
-         ;; http://ancur.wikia.com/wiki/User_blog:Jakodrako/Ability_Types_and_Resolution_Primer#Conditional_Abilities
-         get-handlers (fn [player-side]
-                        (let [abis (filter (partial is-player player-side) (get-in @state [:events event]))
-                              abis (if (= player-side (get-side card-ability))
-                                     (cons card-ability abis)
-                                     abis)]
-                          (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
-                                        (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
-                                  abis)))
-         active-player-events (get-handlers active-player)
-         opponent-events (get-handlers opponent)]
-     ; let active player activate their events first
-     (wait-for
-       (resolve-ability state side first-ability nil nil)
-       (do (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
-                             {:priority -1})
-           (wait-for
-             (trigger-event-simult-player state side event active-player-events cancel-fn targets)
-             (do (when after-active-player
-                   (resolve-ability state side after-active-player nil nil))
-                 (clear-wait-prompt state opponent)
-                 (show-wait-prompt state active-player
-                                   (str (side-str opponent) " to resolve " (event-title event) " triggers")
+         is-player (fn [player ability] (or (= player (get-side ability)) (= player (get-ability-side ability))))]
+     (wait-for (resolve-ability state side first-ability nil nil)
+               (let [get-handlers
+                     (fn [player-side]
+                       ;; prepare the list of the given player's handlers for this event.
+                       ;; Gather all registered handlers from the state, then append the card-ability if appropriate,
+                       ;; then filter to remove suppressed handlers and those whose req is false.
+                       ;; This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
+                       ;; http://nisei.net/files/Comprehensive_Rules_1.1.pdf
+                       (let [abis (filter (partial is-player player-side) (get-in @state [:events event]))
+                             abis (if (= player-side (get-side card-ability))
+                                    (cons card-ability abis)
+                                    abis)]
+                         (doall
+                           (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
+                                         (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
+                                   abis))))
+                     active-player-events (get-handlers active-player)
+                     opponent-events (get-handlers opponent)]
+                 (show-wait-prompt state opponent
+                                   (str (side-str active-player) " to resolve " (event-title event) " triggers")
                                    {:priority -1})
-                 (wait-for (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
-                           (do (clear-wait-prompt state active-player)
-                               (effect-completed state side eid))))))))))
+                 ; let active player activate their events first
+                 (wait-for (trigger-event-simult-player state side event active-player-events cancel-fn targets)
+                           (when after-active-player
+                             (resolve-ability state side after-active-player nil nil))
+                           (clear-wait-prompt state opponent)
+                           (show-wait-prompt state active-player
+                                             (str (side-str opponent) " to resolve " (event-title event) " triggers")
+                                             {:priority -1})
+                           (wait-for (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
+                                     (clear-wait-prompt state active-player)
+                                     (effect-completed state side eid))))))))
 
 
 ; Functions for registering trigger suppression events.

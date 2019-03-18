@@ -4,8 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
 
 ;;;; Helper functions specific for ICE
 

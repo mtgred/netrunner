@@ -4,8 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target
@@ -56,7 +55,7 @@
                                        (if (not (can-pay? state :corp nil :credit 1))
                                          (do
                                            (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
-                                           (expose state side eid itarget))
+                                           (expose state :runner eid itarget))
                                          (do
                                            (show-wait-prompt state :runner "Corp decision")
                                            (continue-ability
@@ -66,7 +65,7 @@
                                                :player :corp
                                                :no-ability
                                                {:async true
-                                                :effect (req (expose state side eid itarget)
+                                                :effect (req (expose state :runner eid itarget)
                                                              (clear-wait-prompt state :runner))}
                                                :yes-ability
                                                {:effect (req (pay state :corp card [:credit 1])
@@ -108,7 +107,7 @@
               :async true
               :effect (req (show-wait-prompt state :corp "Runner to choose starting directives")
                            (let [is-directive? #(has-subtype? % "Directive")
-                                 directives (filter is-directive? (vals @all-cards))
+                                 directives (filter is-directive? (server-cards))
                                  directives (map make-card directives)
                                  directives (zone :play-area directives)]
                              ;; Add directives to :play-area - assumed to be empty
@@ -288,14 +287,14 @@
 
    "Blue Sun: Powering the Future"
    {:flags {:corp-phase-12 (req (and (not (:disabled card))
-                                     (some #(rezzed? %) (all-installed state :corp))))}
-    :abilities [{:choices {:req #(:rezzed %)}
+                                     (some rezzed? (all-installed state :corp))))}
+    :abilities [{:choices {:req rezzed?}
                  :effect (req (trigger-event state side :pre-rez-cost target)
                               (let [cost (rez-cost state side target)]
                                 (gain-credits state side cost)
                                 (move state side target :hand)
                                 (system-msg state side (str "adds " (:title target) " to HQ and gains " cost " [Credits]"))
-                                (swap! state update-in [:bonus] dissoc :cost)))}]}
+                                (swap! state update-in [:bonus] dissoc :cost :rez)))}]}
 
    "Boris \"Syfr\" Kovac: Crafty Veteran"
    {:events {:pre-start-game {:effect draft-points-target}
@@ -503,7 +502,7 @@
                                                         (effect-completed eid))
                                  :effect (effect (rez-cost-bonus -4)
                                                  (clear-wait-prompt :runner)
-                                                 (rez eid target))}
+                                                 (rez eid target nil))}
                                 card nil))}}}
 
    "Haas-Bioroid: Engineering the Future"
@@ -937,9 +936,9 @@
 
    "New Angeles Sol: Your News"
    (let [nasol {:optional
-                {:prompt "Play a Current?" :player :corp
-                 :req (req (not (empty? (filter #(has-subtype? % "Current")
-                                                (concat (:hand corp) (:discard corp))))))
+                {:prompt "Play a Current?"
+                 :player :corp
+                 :req (req (some #(has-subtype? % "Current") (concat (:hand corp) (:discard corp))))
                  :yes-ability {:prompt "Select a Current to play from HQ or Archives"
                                :show-discard true
                                :async true
@@ -948,7 +947,8 @@
                                                     (#{[:hand] [:discard]} (:zone %)))}
                                :msg (msg "play a current from " (name-zone "Corp" (:zone target)))
                                :effect (effect (play-instant eid target))}}}]
-     {:events {:agenda-scored nasol :agenda-stolen nasol}})
+     {:events {:agenda-scored nasol
+               :agenda-stolen nasol}})
 
    "NEXT Design: Guarding the Net"
    (let [ndhelper (fn nd [n] {:prompt (msg "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "

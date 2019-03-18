@@ -181,7 +181,7 @@
   [state side {:keys [choice card] :as args}]
   (let [servercard (get-card state card)
         card (if (not= (:title card) (:title servercard))
-               (@all-cards (:title card))
+               (server-card (:title card))
                servercard)
         prompt (first (get-in @state [side :prompt]))
         choices (:choices prompt)]
@@ -214,7 +214,7 @@
       (:card-title choices)
       (if (string? choice)
         (let [title-fn (:card-title choices)
-              found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (vals @all-cards))]
+              found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (server-cards))]
           (if found
             (if (title-fn state side (make-eid state) (:card prompt) [found])
               (do (when-let [effect-prompt (:effect prompt)]
@@ -405,10 +405,10 @@
    (let [card (if no-get-card
                 card
                 (get-card state card))
-         altcost (when-not no-get-card
+         altcost (when (and card (not no-get-card))
                    (:alternative-cost (card-def card)))]
      (when cached-bonus (rez-cost-bonus state side cached-bonus))
-     (if (or force (can-rez? state side card))
+     (if (and card (or force (can-rez? state side card)))
        (do
          (trigger-event state side :pre-rez card)
          (if (or (#{"Asset" "ICE" "Upgrade"} (:type card))
@@ -430,41 +430,46 @@
                                                                   :cached-bonus curr-bonus})))))}))
                  (let [cdef (card-def card)
                        cost (rez-cost state side card)
-                       costs (concat (when-not ignore-cost [:credit cost])
+                       additional-costs (concat (:additional-cost cdef)
+                                                (:additional-cost card)
+                                                (get-rez-additional-cost-bonus state side))
+                       costs (concat (when-not ignore-cost
+                                       [:credit cost])
                                      (when (and (not= ignore-cost :all-costs)
                                                 (not (:disabled card)))
-                                       (:additional-cost cdef)))]
-                   (when-let [cost-str (apply pay state side card costs)]
-                     ;; Deregister the derezzed-events before rezzing card
-                     (when (:derezzed-events cdef)
-                       (unregister-events state side card))
-                     (if-not disabled
-                       (card-init state side (assoc card :rezzed :this-turn))
-                       (update! state side (assoc card :rezzed :this-turn)))
-                     (doseq [h (:hosted card)]
-                       (update! state side (-> h
-                                               (update-in [:zone] #(map to-keyword %))
-                                               (update-in [:host :zone] #(map to-keyword %)))))
-                     (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
-                                                 (:title card)
-                                                 (cond
-                                                   paid-alt
-                                                   " by paying its alternative cost"
+                                       additional-costs))]
+                   (wait-for (apply pay-sync state side card costs)
+                             (when-let [cost-str (and (string? async-result) async-result)]
+                               ;; Deregister the derezzed-events before rezzing card
+                               (when (:derezzed-events cdef)
+                                 (unregister-events state side card))
+                               (if-not disabled
+                                 (card-init state side (assoc card :rezzed :this-turn))
+                                 (update! state side (assoc card :rezzed :this-turn)))
+                               (doseq [h (:hosted card)]
+                                 (update! state side (-> h
+                                                         (update-in [:zone] #(map to-keyword %))
+                                                         (update-in [:host :zone] #(map to-keyword %)))))
+                               (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
+                                                           (:title card)
+                                                           (cond
+                                                             paid-alt
+                                                             " by paying its alternative cost"
 
-                                                   ignore-cost
-                                                   " at no cost")))
-                     (when (and (not no-warning) (:corp-phase-12 @state))
-                       (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
-                        Please rez prior to clicking Start Turn in the future." "warning"
-                              {:time-out 0 :close-button true}))
-                     (if (ice? card)
-                       (do (update-ice-strength state side card)
-                           (play-sfx state side "rez-ice"))
-                       (play-sfx state side "rez-other"))
-                     (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
-                     (trigger-event-sync state side eid :rez card)))))
+                                                             ignore-cost
+                                                             " at no cost")))
+                               (when (and (not no-warning) (:corp-phase-12 @state))
+                                 (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
+                                                    Please rez prior to clicking Start Turn in the future." "warning"
+                                        {:time-out 0 :close-button true}))
+                               (if (ice? card)
+                                 (do (update-ice-strength state side card)
+                                     (play-sfx state side "rez-ice"))
+                                 (play-sfx state side "rez-other"))
+                               (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
+                               (trigger-event-sync state side eid :rez card))))))
            (effect-completed state side eid))
-         (swap! state update-in [:bonus] dissoc :cost))
+         (swap! state update-in [:bonus] dissoc :cost :rez))
        (effect-completed state side eid)))))
 
 (defn derez

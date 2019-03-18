@@ -4,8 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
 
 ;; Card definitions
 (def card-definitions
@@ -1945,22 +1944,22 @@
                :play-event gaincr}})
 
    "The All-Seeing I"
-   (let [trash-all-resources {:player :runner
-                              :effect (req (trash-cards state side (filter #(is-type? % "Resource") (all-active-installed state :runner))))
-                              :msg (msg "trash all resources")}]
+   (let [trash-all-resources
+         {:msg "trash all resources"
+          :effect (effect (trash-cards :corp eid (filter resource? (all-active-installed state :runner)) nil))}]
      {:req (req tagged)
       :async true
       :effect (effect
                 (continue-ability
-                  (if-not (zero? (:bad-publicity corp)) ;; If corp's bad-pub is 0
-                    {:optional {:player :runner
-                                :prompt "Remove 1 bad publicity from the corp to prevent all resources from being trashed?"
-                                :yes-ability {:effect (effect (lose :corp :bad-publicity 1))
-                                              :player :corp
-                                              :msg (msg "lose 1 bad publicity, preventing all resources from being trashed")}
-                                :no-ability trash-all-resources}}
+                  (if (pos? (:bad-publicity corp 0))
+                    {:optional
+                     {:player :runner
+                      :prompt "Remove 1 bad publicity to prevent all resources from being trashed?"
+                      :yes-ability {:msg "remove 1 bad publicity, preventing all resources from being trashed"
+                                    :effect (effect (lose :bad-publicity 1))}
+                      :no-ability trash-all-resources}}
                     trash-all-resources)
-                  card targets))})
+                  card nil))})
 
    "Threat Assessment"
    {:req (req (last-turn? state :runner :trashed-card))

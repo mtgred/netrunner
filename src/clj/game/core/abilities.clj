@@ -193,7 +193,7 @@
          (prompt! state s card prompt {:number n :default d} ab args))
        (:card-title choices)
        (let [card-titles (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
-                                                   (vals @all-cards))))
+                                                   (server-cards))))
              choices (assoc choices :autocomplete card-titles)
              args (assoc args :prompt-type :card-title)]
          (prompt! state s card prompt choices ab args))
