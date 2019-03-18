@@ -1997,14 +1997,13 @@
                       :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}
 
    "Scrubbed"
-   (let [sc {:effect (req (update! state side (dissoc card :scrubbed-target)))}]
-     {:events
-      {:encounter-ice {:once :per-turn
-                       :effect (effect (update! (assoc card :scrubbed-target target))
-                                       (update-ice-strength current-ice))}
-       :pre-ice-strength {:req (req (= (:cid target) (get-in card [:scrubbed-target :cid])))
-                          :effect (effect (ice-strength-bonus -2 target))}
-       :run-ends sc}})
+   {:implementation "Encounter effect is manual"
+    :abilities [{:label "Lower ice strength"
+                 :effect (effect (update! (assoc card :scrubbed-target current-ice))
+                                 (update-ice-strength current-ice))}]
+    :events {:pre-ice-strength {:req (req (= (:cid target) (get-in card [:scrubbed-target :cid])))
+                                :effect (effect (ice-strength-bonus -2 target))}
+             :run-ends {:effect (effect (update! (dissoc card :scrubbed-target)))}}}
 
    "Showing Off"
    {:req (req rd-runnable)

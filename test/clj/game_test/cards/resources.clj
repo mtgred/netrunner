@@ -124,12 +124,14 @@
         (is (= 0 (get-counters (refresh bak) :power)) "No encounter so counter on Baklan yet")
         (run-on state "HQ")
         (core/rez state :corp van0)
+        (card-ability state :runner bak 0)
         (run-continue state)
         (run-continue state)
         (run-successful state)
         (is (= 1 (get-counters (refresh bak) :power)) "There was an encounter, so counter on Baklan")
         (run-on state "HQ")
         (core/rez state :corp van1)
+        (card-ability state :runner bak 0)
         (run-continue state)
         (run-continue state)
         (run-successful state)
@@ -147,8 +149,25 @@
         (core/rez state :corp van0)
         (is (:rezzed (refresh van0)) "Rezzed Vanilla")
         (card-ability state :runner bak 0)
+        (card-ability state :runner bak 1)
         (is (not (:rezzed (refresh van0))) "Derezzed Vanilla")
-        (is (= 1 (count-tags state)) "Got a tag")))))
+        (is (= 1 (count-tags state)) "Got a tag"))))
+  (testing "Can't derez current ice if strength is too high"
+    (do-game
+      (new-game {:corp {:deck ["Fire Wall"]}
+                 :runner {:deck ["\"Baklan\" Bochkin"]}})
+      (play-from-hand state :corp "Fire Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "\"Baklan\" Bochkin")
+      (let [bak (get-resource state 0)
+            fw (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp fw)
+        (is (core/rezzed? (refresh fw)) "Rezzed Fire Wall")
+        (card-ability state :runner bak 0)
+        (card-ability state :runner bak 1)
+        (is (core/rezzed? (refresh fw)) "Fire Wall not derezzed as too strong")
+        (is (zero? (count-tags state)) "Got a tag")))))
 
 (deftest bank-job
   ;; Bank Job

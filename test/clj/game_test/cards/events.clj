@@ -2866,7 +2866,7 @@
       (is (= 2 (:current-strength (refresh turing))) "Scrubbed not active when on Peddler")
       (play-from-hand state :runner "Scrubbed")
       (run-on state "HQ")
-      (run-continue state)
+      (card-ability state :runner (first (get-in @state [:runner :current])) 0)
       (is (zero? (:current-strength (refresh turing))) "Scrubbed reduces strength by 2")
       (run-successful state))))
 

@@ -2095,7 +2095,7 @@
    (constellation-ice trash-program)
 
    "Saisentan"
-   {:effect (effect (system-say "Corp, please press No Action to trigger Saisentan"))
+   {:implementation "Encounter effect is manual"
     :subroutines [{:label "Do 1 net damage"
                    :async true
                    :msg "do 1 net damage"
@@ -2106,18 +2106,17 @@
                                                       dmg (some #(when (= (:type %) choice) %) cards)]
                                             (system-msg state :corp "uses Saisentan to deal a second net damage")
                                             (damage state side eid :net 1 {:card card}))))}]
-    :events
-    {:encounter-ice
-     {:req (req (and (= (:cid target) (:cid card))
-                     (rezzed? card)))
-      :effect (effect (show-wait-prompt :runner "Corp to choose Saisentan card type")
-                      (continue-ability
-                        {:prompt "Choose a card type"
-                         :choices ["Event" "Hardware" "Program" "Resource"]
-                         :effect (effect (update! (assoc-in card [:special :saisentan] target))
-                                         (system-msg (str "chooses " target " for Saisentan"))
-                                         (clear-wait-prompt :runner))}
-                        card nil))}}}
+    :abilities [{:label "Choose card type"
+                 :req (req (and (= (:cid current-ice) (:cid card))
+                                (rezzed? card)))
+                 :effect (effect (show-wait-prompt :runner "Corp to choose Saisentan card type")
+                                 (continue-ability
+                                   {:prompt "Choose a card type"
+                                    :choices ["Event" "Hardware" "Program" "Resource"]
+                                    :msg (msg "choose the card type " target)
+                                    :effect (effect (update! (assoc-in card [:special :saisentan] target))
+                                                    (clear-wait-prompt :runner))}
+                                   card nil))}]}
 
    "Salvage"
    {:advanceable :while-rezzed
@@ -2140,9 +2139,11 @@
    "Sandstone"
    {:subroutines [end-the-run]
     :strength-bonus (req (- (get-counters card :virus)))
-    :events {:encounter-ice {:req (req (= (:cid target) (:cid card)))
-                             :msg (msg (str "place 1 virus counter on Sandstone"))
-                             :effect (req (add-counter state side card :virus 1))}}}
+    :abilities [{:label "Place one virus counter"
+                 :req (req (= (:cid current-ice) (:cid card)))
+                 :msg "place 1 virus counter on Sandstone"
+                 :effect (effect (add-counter card :virus 1)
+                                 (update-ice-strength (get-card state card)))}]}
 
    "Sandman"
    {:subroutines [{:label "Add an installed Runner card to the grip"
