@@ -1055,15 +1055,16 @@
                                               (is-central? (:server run))))
                                :msg "remove a hosted power counter"
                                :effect (effect (add-counter card :power -1))}}
-    :effect (req (show-wait-prompt state :runner "Corp to place credits on Reduced Service")
-                 (continue-ability state side {:choices (req (range (inc (min 4 (get-in @state [:corp :credit])))))
-                                               :prompt "How many credits to spend?"
-                                               :effect (req (clear-wait-prompt state :runner)
-                                                            (deduct state :corp [:credit target])
-                                                            (add-counter state :corp card :power target)
-                                                            (system-msg state :corp (str "place " target " power counters on Reduced Service"))
-                                                            (effect-completed state side eid))}
-                                   card nil))})
+     :effect (effect (show-wait-prompt :runner "Corp to place credits on Reduced Service")
+                     (continue-ability
+                       {:choices (req (map str (range (inc (min 4 (:credit corp))))))
+                        :prompt "How many credits to spend?"
+                        :msg (msg "place " target " power counters on Reduced Service")
+                        :effect (effect (deduct [:credit (str->int target)])
+                                        (add-counter card :power (str->int target))
+                                        (clear-wait-prompt :runner)
+                                        (effect-completed eid))}
+                       card nil))})
 
    "Research Station"
    {:init {:root "HQ"}
