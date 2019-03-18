@@ -19,7 +19,7 @@
  :set_code "df",
  :setname "Downfall",
  :side "Runner",
- :text "When your turn begins, remove Climactic Showdown from the game and choose a server with at least one piece of ice protecting it. The Corp may trash a piece of ice protecting that server. If they do not, the first time you access cards from a central server this turn, access 2 additional cards from that server.",
+ :text "When your turn begins, remove this resource from the game. Choose a server protected by ice. The Corp may trash a piece of ice protecting that server. If they do not, the first time this turn you access cards from either R&D or HQ, access 2 additional cards from that server.",
  :title "Climactic Showdown",
  :type "Resource",
  :uniqueness true}

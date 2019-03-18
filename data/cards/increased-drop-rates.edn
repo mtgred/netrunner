@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Corp",
  :subtype "Ambush",
- :text "If Increased Drop Rates is accessed from R&D, the Runner must reveal it.\nWhen Increased Drop Rates is accessed, remove 1 bad publicity unless the Runner takes 1 tag.",
+ :text "While the Runner is accessing this card from R&D, they must reveal it.\nWhen the Runner accesses this card, remove 1 bad publicity unless they take 1 tag.",
  :title "Increased Drop Rates",
  :trash 2,
  :type "Upgrade",

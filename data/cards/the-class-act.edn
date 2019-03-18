@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Runner",
  :subtype "Connection - Ritzy",
- :text "When the turn during which you installed this resource ends, draw 4 cards.\nThe first time each turn you would draw, instead look at the top X cards of your stack. Add 1 of those cards to the bottom of your stack, then draw the rest. X equals the number of cards you would have drawn plus 1.",
+ :text "When the turn during which you installed this resource ends, draw 4 cards.\nImmediately before you draw for the first time each turn, look at the top X cards of your stack. Add 1 of those cards to the bottom of your stack. X is equal to the number of cards you will draw plus 1.",
  :title "The Class Act",
  :type "Resource",
  :uniqueness true}

@@ -21,7 +21,7 @@
  :side "Corp",
  :strength 1,
  :subtype "Code Gate",
- :text "While Afshar is protecting HQ, the Runner cannot break more than 1 of its printed subroutines during each encounter.\n[subroutine]The Runner loses 2[credit].\n[subroutine]End the run.",
+ :text "While this ice is protecting HQ, the Runner cannot break more than 1 of its printed subroutines during each encounter.\n[subroutine]The Runner loses 2[credit].\n[subroutine]End the run.",
  :title "Afshar",
  :type "ICE",
  :uniqueness false}

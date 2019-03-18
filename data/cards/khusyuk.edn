@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Runner",
  :subtype "Run",
- :text "Make a run on R&D. If successful, instead of accessing cards, choose a printed install cost of 1 or greater from among your installed cards. Reveal 1 card from the top of R&D for each card with that install cost, up to 6. Access one of the revealed cards, then shuffle R&D. You cannot access any other cards in R&D this run.",
+ :text "Run R&D. If successful, instead of accessing cards, choose a number greater than 0. For each installed card you have with a printed install cost matching that number, reveal 1 card from the top of R&D (max 6). Access one of the revealed cards, then the Corp shuffles R&D. You cannot access any other cards in R&D this run",
  :title "Khusyuk",
  :type "Event",
  :uniqueness false}

@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Corp",
  :subtype "Research",
- :text "When you score Architect Deployment Test, look at the top 5 cards of R&D. You may install and rez one of those cards, ignoring all costs.",
+ :text "When you score this agenda, look at the top 5 cards of R&D. You may install and rez 1 of those cards, ignoring all costs.",
  :title "Architect Deployment Test",
  :type "Agenda",
  :uniqueness false}

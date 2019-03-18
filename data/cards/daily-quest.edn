@@ -19,7 +19,7 @@
  :set_code "df",
  :setname "Downfall",
  :side "Corp",
- :text "Rez only during your action phase.\nWhenever there is a successful run on this server, the Runner gains 2[credit].\nWhen your turn begins, gain 3[credit] unless there was a successful run on this server during the Runner's last turn.",
+ :text "Rez only during your action phase.\nWhenever the Runner makes a successful run on this server, they gain 2[credit].\nWhen your turn begins, gain 3[credit] if the Runner did not make any successful runs on this server during their last turn.",
  :title "Daily Quest",
  :trash 3,
  :type "Asset",

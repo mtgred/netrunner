@@ -1786,7 +1786,7 @@
                  :counter-cost [:virus 1]
                  :label "Make currently encountered ice gain a subtype"
                  :prompt "Choose an ICE subtype"
-                 :choices (req (->> @all-cards
+                 :choices (req (->> (server-cards)
                                     vals
                                     (filter ice?)
                                     (map :subtype)

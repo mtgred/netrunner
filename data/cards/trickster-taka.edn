@@ -20,7 +20,7 @@
  :setname "Downfall",
  :side "Runner",
  :subtype "Stealth - Companion - Virtual",
- :text "When your turn begins or you steal an agenda, place 1[credit] on Trickster Taka.\nSpend hosted credits during runs to use programs.\nWhen your turn ends, if there are 3[credit] or more on Trickster Taka, take 1 tag or trash Trickster Taka.",
+ :text "When your turn begins or you steal an agenda, place 1[credit] on this resource.\nSpend hosted credits to use programs during runs.\nWhen your turn ends, if there are 3 or more hosted credits, you must take 1 tag or trash this resource.",
  :title "Trickster Taka",
  :type "Resource",
  :uniqueness true}

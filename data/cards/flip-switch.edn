@@ -19,7 +19,7 @@
  :set_code "df",
  :setname "Downfall",
  :side "Runner",
- :text "You cannot use this hardware during the Corp's turn.\n[trash]: Jack out.\n[trash]: Remove 1 tag.\nWhenever a trace initiates on your turn, you may [trash] to reduce the base trace strength to 0.",
+ :text "You cannot use this hardware during the Corp's turn.\n[trash]: Jack out.\n[trash]: Remove 1 tag.\nWhenever a trace initiates during your turn, you may [trash] to reduce the base trace strength to 0.",
  :title "Flip Switch",
  :type "Hardware",
  :uniqueness false}

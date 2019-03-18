@@ -19,7 +19,7 @@
  :set_code "df",
  :setname "Downfall",
  :side "Runner",
- :text "<strong>Remove this hardware from the game:</strong> Prevent a run from ending due to an effect of a Corp card. Use this ability only if you have made a successful run on HQ this turn.",
+ :text "<strong>Remove this hardware from the game:</strong> Prevent a Corp card ability from ending the run. Use this ability only if you made a successful run on HQ this turn.",
  :title "Lucky Charm",
  :type "Hardware",
  :uniqueness true}

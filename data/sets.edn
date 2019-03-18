@@ -322,18 +322,6 @@
   :name "Trace Amount",
   :position 2,
   :size 20}
- {:available "4096-01-01",
-  :bigbox true,
-  :code "ur",
-  :cycle "Ashes",
-  :cycle_code "ashes",
-  :cycle_position 26,
-  :date-release nil,
-  :ffg-id nil,
-  :id "uprising",
-  :name "Uprising",
-  :position 2,
-  :size 65}
  {:available "2014-08-15",
   :bigbox false,
   :code "tsb",
