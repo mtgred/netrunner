@@ -2248,7 +2248,7 @@
     (play-from-hand state :runner "Utae")
     (let [utae (get-program state 0)]
       (run-on state "HQ")
-      (core/rez state state :corp (get-ice state :hq 0))
+      (core/rez state :corp (get-ice state :hq 0))
       (card-ability state :runner utae 0)
       (click-prompt state :runner "2")
       (card-ability state :runner utae 0)
