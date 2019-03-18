@@ -48,15 +48,6 @@
     ;; Add an effect only if there is none in the map
     (merge trash-effect definition)))
 
-(defn count-num-subroutines
-  "Count the number of subroutines for Hernando Cortez. Note that this only
-  counts subroutines that exist as part of the card text. It does not count
-  subroutines that the card will gain once rezzed."
-  [card]
-  (->> (-> card :title server-card :text split-lines)
-       (filter #(starts-with? % "[subroutine]"))
-       count))
-
 (defn companion-builder
   "Ability-req says when it can be used. turn-ends-effect defines what happens,
   and requires `effect-completed`."
@@ -223,16 +214,19 @@
                  :msg (msg "turn " (:title target) " faceup")}]}
 
    "\"Baklan\" Bochkin"
-   {:implementation "Does not check for ice strength."
-    :events {:encounter-ice {:once :per-run
-                             :effect (effect (add-counter card :power 1)
-                                             (system-msg (str "places 1 power counter on " (:title card))))}}
-    :abilities [{:label "[Trash]: Derez a piece of ice currently being encountered"
+   {:implementation "Encounter effect is manual."
+    :abilities [{:label "Place 1 power counter"
+                 :once :per-run
+                 :msg (msg "places 1 power counter on " (:title card))
+                 :effect (effect (add-counter card :power 1))}
+                {:label "[Trash]: Derez a piece of ice currently being encountered"
                  :msg "derez a piece of ice currently being encountered and take 1 tag"
-                 :req (req (and current-ice (:rezzed current-ice))) ;; not checking for strength
+                 :req (req (and current-ice
+                                (rezzed? current-ice)
+                                (<= (get-strength current-ice) (get-counters (get-card state card) :power))))
                  :effect (effect (trash card {:cause :ability-cost})
                                  (derez current-ice)
-                                 (gain-tags :runner eid 1))}]}
+                                 (gain-tags eid 1))}]}
 
    "Bank Job"
    {:data {:counter {:credit 8}}

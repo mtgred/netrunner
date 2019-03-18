@@ -468,19 +468,13 @@
                                  (strength-pump 1 1 :all-run)]})
 
    "Berserker"
-   {:abilities [(break-sub 2 2 "Barrier")]
-    :implementation "Number of subroutines on encountered ICE has to be entered by runner when Corp chooses 'No More Action'"
-    :events {:encounter-ice {:req (req (and (= (:cid target) (:cid current-ice))
-                                            (has-subtype? target "Barrier")
-                                            (rezzed? target)))
-                             :async true
-                             :effect (effect (continue-ability
-                                               :runner
-                                               {:prompt "How many subroutines are on the encountered Barrier?"
-                                                :choices {:number (req 10)}
-                                                :async true
-                                                :effect (effect (system-msg (str "pumps Berserker by " target " on encounter with the current ICE"))
-                                                                (pump card target))} card nil))}}}
+   {:implementation "Encounter effect is manual. Only gains strength on printed subs"
+    :abilities [{:label "Gain strength per barrier subroutine"
+                 :req (req (and (rezzed? current-ice)
+                                (has-subtype? current-ice "Barrier")))
+                 :msg (msg "gain " (count-num-subroutines current-ice) " strength")
+                 :effect (effect (pump card (count-num-subroutines current-ice)))}
+                (break-sub 2 2 "Barrier")]}
 
    "Bishop"
    {:abilities [{:cost [:click 1]

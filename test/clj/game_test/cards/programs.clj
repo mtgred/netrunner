@@ -212,6 +212,37 @@
       (is (= (+ 4 3) (:credit (get-runner))) "Gained 3 credits when trashing Bankroll")
       (is (= 1 (-> (get-runner) :discard count)) "Bankroll was trashed"))))
 
+(deftest berserker
+  ;; Berserker
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall" "Hive" "Enigma"]
+                      :credits 100}
+               :runner {:hand ["Berserker"]}})
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (play-from-hand state :corp "Hive" "R&D")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (core/rez state :corp (get-ice state :archives 0))
+    (core/rez state :corp (get-ice state :rd 0))
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Berserker")
+    (let [berserker (get-program state 0)]
+      (is (= 2 (core/get-strength (refresh berserker))) "Berserker strength starts at 2")
+      (run-on state :archives)
+      (card-ability state :runner berserker 0)
+      (is (= 3 (core/get-strength (refresh berserker))) "Berserker gains 1 strength from Ice Wall")
+      (core/jack-out state :runner nil)
+      (is (= 2 (core/get-strength (refresh berserker))) "Berserker strength resets at end of run")
+      (run-on state :rd)
+      (card-ability state :runner berserker 0)
+      (is (= 7 (core/get-strength (refresh berserker))) "Berserker gains 5 strength from Hive")
+      (core/jack-out state :runner nil)
+      (is (= 2 (core/get-strength (refresh berserker))) "Berserker strength resets at end of run")
+      (run-on state :hq)
+      (card-ability state :runner berserker 0)
+      (is (= 2 (core/get-strength (refresh berserker))) "Berserker gains 0 strength from Enigma (non-barrier)"))))
+
 (deftest bukhgalter
   ;; Bukhgalter ability
   (do-game

@@ -1598,7 +1598,7 @@
       (run-on state "HQ")
       (let [sai (get-ice state :hq 0)]
         (core/rez state :corp sai)
-        (core/no-action state :corp nil)
+        (card-ability state :corp sai 0)
         (click-prompt state :corp "Event")
         (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
         (card-subroutine state :corp sai 0)
@@ -1612,7 +1612,7 @@
       (run-on state "HQ")
       (let [sai (get-ice state :hq 0)]
         (core/rez state :corp sai)
-        (core/no-action state :corp nil)
+        (card-ability state :corp sai 0)
         (click-prompt state :corp "Hardware")
         (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
         (card-subroutine state :corp sai 0)
@@ -1639,16 +1639,16 @@
               :runner {:deck ["Parasite"]}})
    (play-from-hand state :corp "Sandstone" "HQ")
    (take-credits state :corp)
-   (core/gain state :runner :click 6)
+   (core/gain state :runner :click 10)
    (let [snd (get-ice state :hq 0)]
      (core/rez state :corp snd)
      (dotimes [i 6]
        (run-on state "HQ")
        (is (= i (get-counters (refresh snd) :virus)) (str "Counter " i "not placed yet"))
        (is (= (- 6 i) (core/get-strength (refresh snd))) "Strength not reduced yet")
-       (core/no-action state :corp nil)
+       (card-ability state :runner (refresh snd) 0)
        (is (= (inc i) (get-counters (refresh snd) :virus)) (str "Counter " i "placed"))
-       (is (= (- 5 i) (core/get-strength (refresh snd))) "Strength reduced")
+       (is (= (- 6 (inc i)) (core/get-strength (refresh snd))) "Strength reduced")
        (card-subroutine state :corp (refresh snd) 0)
        (is (not (:run @state)) "Run ended"))
      (is (= 0 (core/get-strength (refresh snd))) "Sandstone strength at 0")
