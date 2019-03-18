@@ -778,7 +778,7 @@
               " [Credits]")
     :async true
     :effect (req (wait-for (draw state side 1 nil)
-                           (gain-credits (count (filter #(= (:title %) "Exclusive Party") (:discard runner))))
+                           (gain-credits state side (count (filter #(= (:title %) "Exclusive Party") (:discard runner))))
                            (effect-completed state side eid)))}
 
    "Executive Wiretaps"
