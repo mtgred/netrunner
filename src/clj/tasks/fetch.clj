@@ -9,12 +9,6 @@
 (defn fetch-with-db
   "Import data from NRDB. Assumes the database is already open. See `fetch` for arguments."
   [& args]
-  (zp/set-options!
-    {:style :community
-     :map {:comma? true
-           :force-nl? true}
-     :width 1000})
-
   (let [localpath (first (remove #(string/starts-with? % "--") args))
         download-images (not (some #{"--no-card-images"} args))
         data (fetch-data localpath download-images)]
