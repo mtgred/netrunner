@@ -24,7 +24,10 @@
                        (swap! state assoc-in [:runner :register :made-click-run] true)
                        (play-sfx state side "click-run"))
                      (if-let [cost-str (pay state :runner nil all-run-costs)]
-                       (do (system-msg state :runner (str (build-spend-msg cost-str "make a run on") server (when ignore-costs ", ignoring all costs")))
+                       (do (when (= card :click-run)
+                             (system-msg state :runner (str (build-spend-msg cost-str "make a run on" "makes a run on")
+                                                            (zone->name (unknown->kw server))
+                                                            (when ignore-costs ", ignoring all costs"))))
                            (let [s [(if (keyword? server) server (last (server->zone state server)))]
                                  ices (get-in @state (concat [:corp :servers] s [:ices]))
                                  n (count ices)]

@@ -563,7 +563,7 @@
   (let [remove-cost (max 0 (- 2 (get-in @state [:runner :tag-remove-bonus] 0)))]
     (when-let [cost-str (pay state side nil :click 1 :credit remove-cost)]
       (lose-tags state :runner 1)
-      (system-msg state side (build-spend-msg cost-str "remove 1 tag"))
+      (system-msg state side (build-spend-msg cost-str "remove 1 tag" "removes 1 tag"))
       (play-sfx state side "click-remove-tag"))))
 
 (defn continue
