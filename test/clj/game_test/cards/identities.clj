@@ -342,20 +342,30 @@
       (is (= 5 (:credit (get-corp))) "Palana does not gain credit from Andromeda's starting hand"))))
 
 (deftest apex-invasive-predator
-  ;; Apex - Allow facedown install of a second console. Issue #1326
-  (do-game
-    (new-game {:runner {:id "Apex: Invasive Predator"
-                        :deck [(qty "Heartbeat" 2)]}})
-    (take-credits state :corp)
-    (core/end-phase-12 state :runner nil)
-    (click-prompt state :runner "Done") ; no facedown install on turn 1
-    (play-from-hand state :runner "Heartbeat")
-    (is (= 1 (count (get-hardware state))))
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (core/end-phase-12 state :runner nil)
-    (click-card state :runner (find-card "Heartbeat" (:hand (get-runner))))
-    (is (= 1 (count (get-runner-facedown state))) "2nd console installed facedown")))
+  ;; Apex
+  (testing "Allow facedown install of a second console. Issue #1326"
+    (do-game
+      (new-game {:runner {:id "Apex: Invasive Predator"
+                          :deck [(qty "Heartbeat" 2)]}})
+      (take-credits state :corp)
+      (core/end-phase-12 state :runner nil)
+      (click-prompt state :runner "Done")
+      (play-from-hand state :runner "Heartbeat")
+      (is (= 1 (count (get-hardware state))))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/end-phase-12 state :runner nil)
+      (click-card state :runner (find-card "Heartbeat" (:hand (get-runner))))
+      (is (= 1 (count (get-runner-facedown state))) "2nd console installed facedown")))
+  (testing "Don't fire events when installed facedown. Issue #4085"
+    (do-game
+      (new-game {:runner {:id "Apex: Invasive Predator"
+                          :deck ["Sure Gamble"]}})
+      (take-credits state :corp)
+      (core/end-phase-12 state :runner nil)
+      (let [credits (:credit (get-runner))]
+        (click-card state :runner "Sure Gamble")
+        (is (= credits (:credit (get-runner))))))))
 
 (deftest asa-group-security-through-vigilance
   (testing "Asa Group should not allow installing operations"

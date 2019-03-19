@@ -176,7 +176,7 @@
                                        (in-hand? %))}
                   :req (req (and (pos? (count (:hand runner)))
                                  (:runner-phase-12 @state)))
-                  :effect (effect (runner-install target {:facedown true}))}]
+                  :effect (effect (runner-install eid target {:facedown true}))}]
      {:events {:runner-turn-begins ability}
       :flags {:runner-phase-12 (req true)}
       :abilities [ability]})
