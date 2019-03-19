@@ -984,7 +984,7 @@
      (play-from-hand state :corp "Galahad" "HQ")
      (play-from-hand state :corp "Slot Machine" "R&D")
      (let [gal (get-ice state :hq 0)
-           sm (get-ice state :rd 1)]
+           sm (get-ice state :rd 0)]
        (take-credits state :corp)
        (play-from-hand state :runner "Reflection")
        (run-on state "HQ")
