@@ -469,7 +469,8 @@
                                                      :once :per-turn
                                                      :msg (msg "access 2 additional cards from " (zone->name target))
                                                      :effect (effect (access-bonus :runner target 2))}
-                                        :runner-turn-ends {:effect (effect (unregister-events card {:events {:pre-access nil :runner-turn-ends nil}}))}}
+                                        :runner-turn-ends {:effect (effect (unregister-events card {:events {:pre-access nil
+                                                                                                             :runner-turn-ends nil}}))}}
                                        (assoc card :zone [:rfg]))
                                      (effect-completed eid))})]
      {:events {:pre-access nil
@@ -478,12 +479,17 @@
                {:async true
                 :effect (effect (move card :rfg)
                                 (continue-ability
-                                  (when (pos? (count (iced-servers state)))
+                                  (if (pos? (count (iced-servers state)))
                                     {:prompt (msg  "Choose a server")
                                      :choices (req (iced-servers state))
-                                     :msg (msg "choose " target " and remove Climactic Showdown from the game")
-                                     :effect (req (let [chosen-server (next (server->zone state target))]
-                                                    (continue-ability state :corp (trash-or-bonus chosen-server) card nil)))})
+                                     :msg (msg "choose " (zone->name (unknown->kw target))
+                                               " and removes Climactic Showdown from the game")
+                                     :effect (effect (continue-ability
+                                                       :corp
+                                                       (trash-or-bonus (next (server->zone state target)))
+                                                       card nil))}
+                                    {:msg (str "choose a server protected by ice but cannot"
+                                               " and removes Climactic Showdown from the game")})
                                   card nil))}}})
 
    "Compromised Employee"
