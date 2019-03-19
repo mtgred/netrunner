@@ -1033,6 +1033,43 @@
       (core/purge state :corp)
       (is (empty? (:prompt (get-runner))) "Dummy Box not prompting to prevent purge trash"))))
 
+(deftest earthrise-hotel
+  ;; Earthrise Hotel
+  (testing "Basic test"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:deck [(qty "Sure Gamble" 10)]
+                          :hand ["Earthrise Hotel"]}})
+      (play-from-hand state :runner "Earthrise Hotel")
+      (let [eh (get-resource state 0)]
+        (is (zero? (count (:hand (get-runner)))) "Runner has no cards in hand")
+        (is (= 3 (get-counters (refresh eh) :power)) "Earthrise starts with 3 power counters")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 2 (count (:hand (get-runner)))) "Runner draws 2 cards")
+        (is (= 2 (get-counters (refresh eh) :power)) "Earthrise loses 1 power counter")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 4 (count (:hand (get-runner)))) "Runner draws 2 cards")
+        (is (= 1 (get-counters (refresh eh) :power)) "Earthrise loses 1 power counter")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 6 (count (:hand (get-runner)))) "Runner draws 2 cards")
+        (is (nil? (refresh eh)) "Earthrise is no longer installed")
+        (is (= 1 (count (:discard (get-runner)))) "Earthrise is in heap"))))
+  (testing "Hanging prompts. Issue #4113"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:deck [(qty "Sure Gamble" 10)]
+                          :hand ["Earthrise Hotel"]}})
+      (play-from-hand state :runner "Earthrise Hotel")
+      (is (zero? (count (:hand (get-runner)))) "Runner has no cards in hand")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (empty? (:prompt (get-runner))) "Runner has no prompts open")
+      (is (empty? (:prompt (get-corp))) "Corp has no prompts open")
+      (is (= 2 (count (:hand (get-runner)))) "Runner draws 2 cards"))))
+
 (deftest eden-shard
   ;; Eden Shard - Install from Grip in lieu of accessing R&D; trash to make Corp draw 2
   (testing "Basic test"
