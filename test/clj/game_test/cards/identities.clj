@@ -970,7 +970,7 @@
      (take-credits state :runner)
      (core/gain state :corp :click 3)
      (play-from-hand state :corp "Celebrity Gift")
-     (is (changes-credits (get-corp) 2 ; get 2 creds from celeb gift, but nothing from hyoubu trigger due to estrike 
+     (is (changes-credits (get-corp) 2 ; get 2 creds from celeb gift, but nothing from hyoubu trigger due to estrike
                           (do (click-card state :corp (first (:hand (get-corp))))
                               (click-prompt state :corp "Done"))))
      (play-from-hand state :corp "Scarcity of Resources")
@@ -1252,6 +1252,21 @@
       (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")
       (play-from-hand state :runner "Scrubbed")
       (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals"))))
+
+(deftest kabonesa-wu-netspace-thrillseeker
+  ;; Kabonesa Wu
+  (do-game
+    (new-game {:options {:start-as :runner}
+               :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
+                        :deck ["Cache" "Gordian Blade"]
+                        :hand ["Sure Gamble"]}})
+    (card-ability state :runner (:identity (get-runner)) 0)
+    (is (= [(find-card "Gordian Blade" (:deck (get-runner))) "Cancel"] (:choices (prompt-map :runner))) "Cache shouldn't be in the prompt")
+    (click-prompt state :runner "Gordian Blade")
+    (is (= 2 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")
+    (take-credits state :runner)
+    (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
+    (is (= "Gordian Blade" (-> @state :runner :rfg first :title)) "Kabonesa Wu should rfg card installed with ability")))
 
 (deftest kate-mac-mccaffrey-digital-tinker
   ;; Kate 'Mac' McCaffrey
