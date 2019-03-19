@@ -54,8 +54,9 @@
                                        (concat additional-cost [:click 1])
                                        additional-cost)
                      total-cost (play-cost state side card
-                                           (concat (when-not no-additional-cost additional-cost) extra-cost
-                                                   [:credit (:cost card)]))
+                                           (concat extra-cost ;; Should be a click
+                                                   [:credit (:cost card)]
+                                                   (when-not no-additional-cost additional-cost)))
                      eid (if-not eid (make-eid state) eid)]
                  ;; ensure the instant can be played
                  (if (and (if req (req state side eid card targets) true) ; req is satisfied
@@ -485,16 +486,18 @@
   "Attempts to trash the given card, allowing for boosting/prevention effects."
   ([state side card] (trash state side (make-eid state) card nil))
   ([state side card args] (trash state side (make-eid state) card args))
-  ([state side eid card {:keys [unpreventable cause suppress-event] :as args}]
+  ([state side eid card args]
    (wait-for (prevent-trash state side card eid args)
              (if-let [c (first (get-in @state [:trash :trash-list eid]))]
                (resolve-trash state side eid c args)
                (effect-completed state side eid)))))
 
 (defn trash-cards
+  "Attempts to trash each given card, and then once all given cards have been either
+  added or not added to the trash list, all of those cards are trashed"
   ([state side cards] (trash-cards state side (make-eid state) cards nil))
   ([state side eid cards] (trash-cards state side eid cards nil))
-  ([state side eid cards {:keys [suppress-event] :as args}]
+  ([state side eid cards args]
    (letfn [(trashrec [cs]
              (if (not-empty cs)
                (wait-for (resolve-trash-end state side (get-card state (first cs)) eid args)

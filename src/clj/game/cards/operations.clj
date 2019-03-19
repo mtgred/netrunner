@@ -753,7 +753,7 @@
                                                            card nil))))}))]
      {:async true
       :effect (effect (system-msg (str "uses Fully Operational to make "
-                                       (count (full-servers state)) " gain/draw decisions"))
+                                       (inc (count (full-servers state))) " gain/draw decisions"))
                       (continue-ability (repeat-choice 1 (inc (count (full-servers state))))
                                         card nil))})
 

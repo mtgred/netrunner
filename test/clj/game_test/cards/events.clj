@@ -1669,15 +1669,15 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Isolation")
     (is (= 2 (count (get-in @state [:runner :hand]))) "Isolation could not be played because no resource is installed")
-    (is (zero? (count (get-in (get-runner) [:rig :resource]))) "Kati Jones is not installed")
+    (is (zero? (count (get-resource state))) "Kati Jones is not installed")
     (play-from-hand state :runner "Kati Jones")
     (is (= 1 (count (get-resource state))) "Kati Jones was installed")
     (let [kj (get-resource state 0)]
       (play-from-hand state :runner "Isolation")
-        (click-card state :runner kj)
-        (is (zero? (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed")
-        (is (= 8 (:credit (get-runner))) "Gained 7 credits")
-        (is (= 2 (count (:discard (get-runner)))) "Kati Jones and Isolation are in the discard"))))
+      (click-card state :runner kj)
+      (is (zero? (count (get-resource state))) "Kati Jones was trashed")
+      (is (= 8 (:credit (get-runner))) "Gained 7 credits")
+      (is (= 2 (count (:discard (get-runner)))) "Kati Jones and Isolation are in the discard"))))
 
 (deftest i-ve-had-worse
   ;; I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined
@@ -2974,15 +2974,15 @@
 (deftest spec-work
   ;; Spec Work
   (do-game
-    (new-game {:runner {:deck ["Spec Work" (qty "Cache" 3)]}
+    (new-game {:runner {:hand ["Spec Work" "Cache"]
+                        :deck [(qty "Cache" 2)]}
                :options {:start-as :runner}})
-    (starting-hand state :runner ["Spec Work" "Cache"])
     (play-from-hand state :runner "Cache")
     (play-from-hand state :runner "Spec Work")
-    (is (= 4 (:credit (get-runner))))
+    (is (= 3 (:credit (get-runner))) "Paid credit cost for Spec Work")
     (is (= 0 (count (:hand (get-runner)))))
     (click-card state :runner (get-program state 0))
-    (is (= 7 (:credit (get-runner))) "+3 credits, -1 for paying for Spec Work")
+    (is (= 7 (:credit (get-runner))) "+4 credits after paying for Spec Work")
     (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
 
 (deftest stimhack
