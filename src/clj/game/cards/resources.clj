@@ -2335,7 +2335,11 @@
                                (do
                                  (system-msg state :runner "takes 1 tag to avoid trashing Trickster Taka")
                                  (gain-tags state :runner eid 1))))}
-               card nil)))
+               card nil))
+     {:msg "take 1 [Credits]"
+      :effect (effect (add-counter card :credit -1)
+                      (trigger-event :spent-stealth-credit card)
+                      (gain-credits 1))})
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
