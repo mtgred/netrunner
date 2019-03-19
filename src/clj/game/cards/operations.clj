@@ -752,9 +752,8 @@
                                          (continue-ability state side (repeat-choice (inc current) total)
                                                            card nil))))}))]
      {:async true
-      :effect (effect (system-msg (str "uses Fully Operational to make "
-                                       (inc (count (full-servers state))) " gain/draw decisions"))
-                      (continue-ability (repeat-choice 1 (inc (count (full-servers state))))
+      :msg (msg "uses Fully Operational to make " (quantify (inc (count (full-servers state))) "gain/draw decision"))
+      :effect (effect (continue-ability (repeat-choice 1 (inc (count (full-servers state))))
                                         card nil))})
 
    "Game Changer"
