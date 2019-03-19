@@ -1291,11 +1291,11 @@
                                            (all-active-installed state :runner)
                                            (map :cost)
                                            (remove zero?)
-                                           (frequencies)
+                                           frequencies
                                            (into (sorted-map))
-                                           (seq)
                                            (map (fn [x] (str (first x) " [Credit]: " (second x) " times"))))
-                                :effect (effect (effect-completed (make-result eid (min 6 (str->int (nth (split target #" ") 2))))))})]
+                                :effect (effect (effect-completed (make-result eid [(str->int (first (split target #" ")))
+                                                                                    (min 6 (str->int (nth (split target #" ") 2)))])))})]
      {:req (req rd-runnable)
       :async true
       :effect (req
@@ -1308,10 +1308,10 @@
                    {:effect (req
                               (wait-for
                                 (resolve-ability state side (select-install-cost state) card nil)
-                                (let [revealed (take async-result (:deck corp))]
+                                (let [revealed (take (second async-result) (:deck corp))]
                                   (reveal state side revealed)
                                   (system-msg state :runner (str " chooses an install cost of "
-                                                                 async-result
+                                                                 (first async-result)
                                                                  " [Credit] and reveals (top:) "
                                                                  (join ", " (map :title revealed))
                                                                  " from the top of R&D"))
