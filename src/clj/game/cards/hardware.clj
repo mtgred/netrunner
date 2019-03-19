@@ -685,7 +685,8 @@
                                             (add-counter card :power (:trash target)))}}}
 
    "Masterwork (v37)"
-   {:events {:run {:optional
+   {:in-play [:memory 1]
+    :events {:run {:optional
                    {:async true
                     :interactive (req true)
                     :req (req (and (<= 1 (:credit runner))
@@ -697,9 +698,10 @@
                                                        (hardware? %))}
                                   :msg (msg "install " (:title target) " from the grip, paying 1 [Credit] more")
                                   :effect (effect (install-cost-bonus [:credit 1])
-                                                  (runner-install eid target {:no-msg true}))}}}
+                                                  (runner-install eid target nil))}}}
              :runner-install {:async true
-                              :req (effect (first-event? :runner-install #(is-type? (first %) "Hardware")))
+                              :req (req (and (hardware? target)
+                                             (first-event? state side :runner-install #(hardware? (first %)))))
                               :effect (effect (draw eid 1 nil))}}}
 
    "Māui"
