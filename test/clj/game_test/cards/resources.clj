@@ -2802,20 +2802,41 @@
         (click-card state :runner pu)
         (is (= 4 (count (:discard (get-runner)))) "3 Parasite, 1 Street Peddler in heap")
         (is (= 1 (count (:discard (get-corp)))) "Pop-up Window in archives"))))
-(testing "Tech Trader install"
-  (do-game
-    (new-game {:runner {:deck ["Street Peddler"
-                               "Tech Trader"]}})
-    (take-credits state :corp)
-    (starting-hand state :runner ["Street Peddler"])
-    (play-from-hand state :runner "Street Peddler")
-    (let [sp (get-resource state 0)]
-      (is (= 1 (count (:hosted sp))) "Street Peddler is hosting 1 card")
-      (card-ability state :runner sp 0)
-      (click-prompt state :runner (find-card "Tech Trader" (:hosted sp))) ; choose to install Tech Trader
-      (is (= "Tech Trader" (:title (get-resource state 0)))
-          "Tech Trader was installed")
-      (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability")))))
+  (testing "Tech Trader install"
+    (do-game
+      (new-game {:runner {:deck ["Street Peddler"
+                                 "Tech Trader"]}})
+      (take-credits state :corp)
+      (starting-hand state :runner ["Street Peddler"])
+      (play-from-hand state :runner "Street Peddler")
+      (let [sp (get-resource state 0)]
+        (is (= 1 (count (:hosted sp))) "Street Peddler is hosting 1 card")
+        (card-ability state :runner sp 0)
+        (click-prompt state :runner (find-card "Tech Trader" (:hosted sp))) ; choose to install Tech Trader
+        (is (= "Tech Trader" (:title (get-resource state 0)))
+            "Tech Trader was installed")
+        (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability"))))
+  (testing "The Class Act being installed on Corp's turn. Issue #4106"
+    (do-game
+      (new-game {:runner {:deck [(qty "Diesel" 10)]
+                          :hand ["Street Peddler" "The Class Act"]}})
+      (core/move state :runner (find-card "The Class Act" (:hand (get-runner))) :deck {:front true})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Street Peddler")
+      (take-credits state :runner)
+      (let [sp (get-resource state 0)]
+        (is (= 3 (count (:hosted sp))) "Street Peddler is hosting 3 card")
+        (card-ability state :runner sp 0)
+        (click-prompt state :runner "The Class Act")
+        (is (= "The Class Act" (:title (get-resource state 0))) "The Class Act was installed on Corp's turn")
+        (take-credits state :corp)
+        (is (seq (:prompt (get-runner))) "Runner should have The Class Act prompt")
+        (is (= "Select 1 card to add to the bottom of the stack" (-> (prompt-map :runner) :msg))
+            "Runner gets The Class Act's power on Corp's turn")
+        (click-prompt state :runner (find-card "Diesel" (:deck (get-runner))))
+        (play-from-hand state :runner "Diesel")
+        (is (= 4 (-> (prompt-map :runner) :choices count)) "Runner gets The Class Act's power on Runner's turn")
+        (click-prompt state :runner (find-card "Diesel" (:deck (get-runner))))))))
 (deftest-pending street-peddler-trash-while-choosing-card
   ;; Street Peddler - trashing Street Peddler while choosing which card to
   ;; discard should dismiss the choice prompt. Issue #587.
