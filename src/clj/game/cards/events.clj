@@ -1439,8 +1439,8 @@
    {:msg "shuffle their Grip and Heap into their Stack and draw 5 cards"
     :async true
     :effect (req (shuffle-into-deck state :runner :hand :discard)
-                 (wait-for (draw state :runner 5)
-                           (move (first (:play-area runner)) :rfg)
+                 (wait-for (draw state :runner 5 nil)
+                           (move state side (first (:play-area runner)) :rfg)
                            (effect-completed state side eid)))}
 
    "Lucky Find"
