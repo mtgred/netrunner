@@ -665,19 +665,41 @@
 
 (deftest divested-trust
   ;; Divested Trust
-  (do-game
-    (new-game {:corp {:hand ["Hostile Takeover" "Divested Trust"]}})
-    (play-and-score state "Divested Trust")
-    (take-credits state :corp)
-    (run-on state :hq)
-    (run-successful state)
-    (click-prompt state :runner "Steal")
-    (is (-> (get-corp) :hand count zero?) "Corp has no cards in hand")
-    (is (= 1 (:agenda-point (get-corp))) "Corp should lose points from forfeit agenda")
-    (click-prompt state :corp "Yes")
-    (is (= "Hostile Takeover" (-> (get-corp) :hand first :title)) "Hostile Takeover should be in HQ")
-    (is (empty? (-> (get-corp) :scored)))
-    (is (zero? (:agenda-point (get-corp))) "Corp should lose points from forfeit agenda")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Hostile Takeover" "Divested Trust"]}})
+      (play-and-score state "Divested Trust")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (is (-> (get-corp) :hand count zero?) "Corp has no cards in hand")
+      (is (= 1 (:agenda-point (get-corp))) "Corp should agenda points from Divested Trust")
+      (is (= 1 (:agenda-point (get-runner))) "Runner should gain agenda points for stealing Hostile Takeover")
+      (click-prompt state :corp "Yes")
+      (is (= "Hostile Takeover" (-> (get-corp) :hand first :title)) "Hostile Takeover should be in HQ")
+      (is (empty? (-> (get-corp) :scored)))
+      (is (zero? (:agenda-point (get-corp))) "Corp should lose points from forfeit agenda")
+      (is (zero? (:agenda-point (get-runner))) "Runner should lose agenda points from agenda leaving score area")))
+  (testing "Doesn't stop the runner from winning. Issue #4107"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Government Takeover" "Hostile Takeover" "Divested Trust"]}})
+      (core/gain state :corp :click 10)
+      (play-and-score state "Divested Trust")
+      (play-from-hand state :corp "Government Takeover" "New remote")
+      (take-credits state :corp)
+      (run-on state :remote2)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (click-prompt state :corp "No")
+      (run-on state :hq)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (is (empty? (:prompt (get-corp))) "Corp doesn't get opportunity to use Divested Trust")
+      (is (= :runner (:winner @state)) "Runner should win")
+      (is (= "Agenda" (:reason @state)) "Win condition reports points"))))
 
 (deftest domestic-sleepers
   ;; Domestic Sleepers
