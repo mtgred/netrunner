@@ -3442,41 +3442,61 @@
 
 (deftest trickster-taka
   ;; Trickster Taka - Companion, credits spendable on programs during runs (not during access)
-  (do-game
-    (new-game {:corp {:hand ["Hostile Takeover" "PAD Campaign"]}
-               :runner {:hand ["Trickster Taka"]}})
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Trickster Taka")
-    (let [tt (get-resource state 0)]
-      (core/add-counter state :runner (refresh tt) :credit 4)
-      (is (= 4 (get-counters (refresh tt) :credit)) "Taka counters added")
-      (let [credits (:credit (get-runner))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Hostile Takeover" "PAD Campaign"]}
+                 :runner {:hand ["Trickster Taka"]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Trickster Taka")
+      (let [tt (get-resource state 0)]
+        (core/add-counter state :runner (refresh tt) :credit 4)
+        (is (= 4 (get-counters (refresh tt) :credit)) "Taka counters added")
+        (let [credits (:credit (get-runner))
+              counters (get-counters (refresh tt) :credit)]
+          (run-on state "Server 1")
+          (card-ability state :runner tt 0)
+          (is (= (dec counters) (get-counters (refresh tt) :credit)) "Spent 1c from Taka during a run")
+          (is (= (inc credits) (:credit (get-runner)))))
+        (let [tags (count-tags state)
+              credits (:credit (get-runner))
+              counters (get-counters (refresh tt) :credit)]
+          (run-successful state)
+          (card-ability state :runner tt 0)
+          (is (= counters (get-counters (refresh tt) :credit)) "Can't spend credits on Taka once run is successful")
+          (is (= credits (:credit (get-runner))))
+          (click-prompt state :runner "No action")
+          (take-credits state :runner)
+          (click-prompt state :runner "Take 1 tag")
+          (is (= (inc tags) (count-tags state)) "Took 1 tag to not trash Taka")
+          (is (refresh tt) "Taka not trashed")
+          (is (not (find-card "Trickster Taka" (:discard (get-runner)))) "Taka not in discard yet"))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (let [tags (count-tags state)]
+          (click-prompt state :runner "Trash")
+          (is (= tags (count-tags state)) "Didn't pay to trash Taka")
+          (is (nil? (refresh tt)) "Taka not installed")
+          (is (find-card "Trickster Taka" (:discard (get-runner))) "Taka trashed")))))
+  (testing "Triggers Net Mercur. Issue #4081"
+    (do-game
+      (new-game {:corp {:hand ["Hostile Takeover" "PAD Campaign"]}
+                 :runner {:hand ["Trickster Taka" "Net Mercur"]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Net Mercur")
+      (play-from-hand state :runner "Trickster Taka")
+      (let [tt (get-resource state 0)]
+        (core/add-counter state :runner (refresh tt) :credit 4)
+        (is (= 4 (get-counters (refresh tt) :credit)) "Taka counters added"))
+      (let [tt (get-resource state 0)
+            credits (:credit (get-runner))
             counters (get-counters (refresh tt) :credit)]
         (run-on state "Server 1")
         (card-ability state :runner tt 0)
-        (is (= (dec counters) (get-counters (refresh tt) :credit)) "Spent 1c from Taka during a run")
-        (is (= (inc credits) (:credit (get-runner)))))
-      (let [tags (count-tags state)
-            credits (:credit (get-runner))
-            counters (get-counters (refresh tt) :credit)]
-        (run-successful state)
-        (card-ability state :runner tt 0)
-        (is (= counters (get-counters (refresh tt) :credit)) "Can't spend credits on Taka once run is successful")
-        (is (= credits (:credit (get-runner))))
-        (click-prompt state :runner "No action")
-        (take-credits state :runner)
-        (click-prompt state :runner "Take 1 tag")
-        (is (= (inc tags) (count-tags state)) "Took 1 tag to not trash Taka")
-        (is (refresh tt) "Taka not trashed")
-        (is (not (find-card "Trickster Taka" (:discard (get-runner)))) "Taka not in discard yet"))
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (let [tags (count-tags state)]
-        (click-prompt state :runner "Trash")
-        (is (= tags (count-tags state)) "Didn't pay to trash Taka")
-        (is (nil? (refresh tt)) "Taka not installed")
-        (is (find-card "Trickster Taka" (:discard (get-runner))) "Taka trashed")))))
+        (is (= "Place 1 [Credits] on Net Mercur or draw 1 card?" (-> (prompt-map :runner) :msg))
+            "Net Mercur fires as Taka credits are stealth")
+        (click-prompt state :runner "Place 1 [Credits]")))))
 
 (deftest tri-maf-contact
   ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
