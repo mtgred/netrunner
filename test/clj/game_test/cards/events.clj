@@ -1359,6 +1359,21 @@
     (is (zero? (:credit (get-runner))))
     (is (= 3 (count (:discard (get-runner)))))))
 
+(deftest exclusive-party
+  ;; Exclusive Party - Draw 1 card. Gain 1c for each copy in the heap.
+  (do-game
+    (new-game {:runner {:deck [(qty "Exclusive Party" 4)]}})
+    (take-credits state :corp)
+    (is (zero? (count (:discard (get-runner)))) "Heap is empty")
+    (play-from-hand state :runner "Exclusive Party")
+    (is (= 5 (:credit (get-runner))) "No credits gained")
+    (is (= 1 (count (:discard (get-runner)))) "One copy of EP in heap")
+    (play-from-hand state :runner "Exclusive Party")
+    (is (= 6 (:credit (get-runner))) "1 credit gained")
+    (is (= 2 (count (:discard (get-runner)))) "Two copies of EP in heap")
+    (play-from-hand state :runner "Exclusive Party")
+    (is (= 8 (:credit (get-runner))) "2 credits gained")))
+
 (deftest exploratory-romp
   ;; Exploratory Romp - Remove advancements from card instead of accessing
   (testing "Basic test"
