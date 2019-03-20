@@ -122,6 +122,7 @@
    "Blueberry!™ Diesel"
    {:async true
     :prompt "Move a card to the bottom of the stack?"
+    :not-distinct true
     :choices (req (conj (vec (take 2 (:deck runner))) "No"))
     :effect (req (when-not (string? target)
                    (move state side target :deck))
