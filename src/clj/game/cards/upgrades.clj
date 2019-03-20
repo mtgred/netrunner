@@ -1062,7 +1062,7 @@
                                                             (let [spent (str->int target)]
                                                               (deduct state :corp [:credit spent])
                                                               (add-counter state :corp card :power spent)
-                                                              (system-msg state :corp (str "places " (quantify spent "power counter") on Reduced Service"))
+                                                              (system-msg state :corp (str "places " (quantify spent "power counter") " on Reduced Service"))
                                                               (effect-completed state side eid)))}
                                    card nil))})
 
