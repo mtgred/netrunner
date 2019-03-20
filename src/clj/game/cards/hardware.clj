@@ -493,11 +493,13 @@
                                                                (effect-completed state side eid)))}
                           :end-effect (effect (clear-wait-prompt :corp))}}
                         card nil))}}
-    :abilities [{:req (req (and run
+    :abilities [{:label "Jack out"
+                 :req (req (and run
                                 (= :runner (:active-player @state))))
                  :effect (req (wait-for (trash state side card {:cause :ability-cost})
                                         (jack-out state side eid)))}
-                {:req (req (and (pos? (count-tags state))
+                {:label "Remove 1 tag"
+                 :req (req (and (pos? (count-tags state))
                                 (= :runner (:active-player @state))))
                  :effect (req (wait-for (trash state side card {:cause :ability-cost})
                                         (lose-tags state side eid 1)))}]}
