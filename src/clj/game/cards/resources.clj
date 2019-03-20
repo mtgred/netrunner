@@ -854,8 +854,9 @@
                   :req (req (:runner-phase-12 @state))
                   :async true
                   :effect (req (wait-for (draw state :runner 2 nil)
-                                         (when (zero? (get-counters (get-card state card) :power))
-                                           (trash state :runner eid card {:unpreventable true}))))}]
+                                         (if (zero? (get-counters (get-card state card) :power))
+                                           (trash state :runner eid card {:unpreventable true})
+                                           (effect-completed state side eid))))}]
      {:flags {:runner-turn-draw true
               :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                         (cons (get-in @state [:runner :identity])
