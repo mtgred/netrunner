@@ -338,6 +338,32 @@
   (some? (re-find (re-pattern content)
                   (-> @state :log butlast last :text))))
 
+(defmethod assert-expr 'last-log-contains?
+  [msg form]
+  `(let [state# ~(nth form 1)
+         content# ~(nth form 2)
+         log# (-> @state# :log last :text)
+         found# ~form]
+     (do-report
+       {:type (if found# :pass :fail)
+        :actual log#
+        :expected content#
+        :message ~msg})
+     found#))
+
+(defmethod assert-expr 'second-last-log-contains?
+  [msg form]
+  `(let [state# ~(nth form 1)
+         content# ~(nth form 2)
+         log# (-> @state# :log butlast last :text)
+         found# ~form]
+     (do-report
+       {:type (if found# :pass :fail)
+        :actual log#
+        :expected content#
+        :message ~msg})
+     found#))
+
 (defn trash-from-hand
   "Trash specified card from hand of specified side"
   [state side title]
