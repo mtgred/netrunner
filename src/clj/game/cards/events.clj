@@ -1295,7 +1295,8 @@
                                           (into (sorted-map)))]
                                  {:async true
                                   :prompt "Select an install cost from among your installed cards."
-                                  :choices (mapv str (for [x (range 1 (inc (last (keys current-values))))]
+                                  ;; We don't want to generate 99 prompt buttons, so only add 99 at the end
+                                  :choices (mapv str (for [x (->> current-values keys last inc (range 1) (#(concat % [99])))]
                                                        (str x " [Credit]: "
                                                             (quantify (get current-values x 0) "card"))))
                                   :effect (effect (effect-completed (make-result eid [(str->int (first (split target #" ")))
@@ -1312,23 +1313,24 @@
                    {:effect (req
                               (wait-for
                                 (resolve-ability state side (select-install-cost state) card nil)
-                                (let [revealed (take (second async-result) (:deck corp))
-                                      revealed-anything? (pos? (count revealed))]
+                                (let [revealed (seq (take (second async-result) (:deck corp)))]
                                   (system-msg state :runner (str "uses Khusyuk to choose an install cost of "
                                                                  (first async-result)
                                                                  " [Credit] and reveals "
-                                                                 (if revealed-anything?
+                                                                 (if revealed
                                                                    (str "(top:) " (join ", " (map :title revealed))
                                                                         " from the top of R&D")
                                                                    "no cards")))
-                                  (if revealed-anything?
+                                  (if revealed
                                     (do (reveal state side revealed)
                                         (wait-for
                                           (resolve-ability state side (access-revealed revealed) card nil)
                                           (shuffle! state :corp :deck)
                                           (system-msg state :runner " shuffles R&D")
                                           (effect-completed state side eid)))
-                                    (effect-completed state side eid)))))}}
+                                    (do (shuffle! state :corp :deck)
+                                        (system-msg state :runner " shuffles R&D")
+                                        (effect-completed state side eid))))))}}
                   card))})
 
    "Knifed"
