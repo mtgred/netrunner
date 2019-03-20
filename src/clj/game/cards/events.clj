@@ -1285,17 +1285,21 @@
                             :choices revealed
                             :effect (effect (access-card eid target))})
          select-install-cost (fn [state]
-                               {:async true
-                                :prompt "Select an install cost from among your installed cards."
-                                :choices (->>
-                                           (all-active-installed state :runner)
-                                           (map :cost)
-                                           (remove zero?)
-                                           frequencies
-                                           (into (sorted-map))
-                                           (map (fn [x] (str (first x) " [Credit]: " (second x) " times"))))
-                                :effect (effect (effect-completed (make-result eid [(str->int (first (split target #" ")))
-                                                                                    (min 6 (str->int (nth (split target #" ") 2)))])))})]
+                               (let [current-values
+                                     (->> (all-active-installed state :runner)
+                                          (map :cost)
+                                          (filter identity)
+                                          (remove zero?)
+                                          frequencies
+                                          (merge {1 0})
+                                          (into (sorted-map)))]
+                                 {:async true
+                                  :prompt "Select an install cost from among your installed cards."
+                                  :choices (mapv str (for [x (range 1 (inc (last (keys current-values))))]
+                                                       (str x " [Credit]: "
+                                                            (quantify (get current-values x 0) "card"))))
+                                  :effect (effect (effect-completed (make-result eid [(str->int (first (split target #" ")))
+                                                                                      (min 6 (str->int (nth (split target #" ") 2)))])))}))]
      {:req (req rd-runnable)
       :async true
       :effect (req
@@ -1308,17 +1312,22 @@
                    {:effect (req
                               (wait-for
                                 (resolve-ability state side (select-install-cost state) card nil)
-                                (let [revealed (take (second async-result) (:deck corp))]
-                                  (reveal state side revealed)
-                                  (system-msg state :runner (str " chooses an install cost of "
+                                (let [revealed (take (second async-result) (:deck corp))
+                                      revealed-anything? (pos? (count revealed))]
+                                  (system-msg state :runner (str "uses Khusyuk to choose an install cost of "
                                                                  (first async-result)
-                                                                 " [Credit] and reveals (top:) "
-                                                                 (join ", " (map :title revealed))
-                                                                 " from the top of R&D"))
-                                  (wait-for
-                                    (resolve-ability state side (access-revealed revealed) card nil)
-                                    (shuffle! state :corp :deck)
-                                    (system-msg state :runner " shuffles R&D")
+                                                                 " [Credit] and reveals "
+                                                                 (if revealed-anything?
+                                                                   (str "(top:) " (join ", " (map :title revealed))
+                                                                        " from the top of R&D")
+                                                                   "no cards")))
+                                  (if revealed-anything?
+                                    (do (reveal state side revealed)
+                                        (wait-for
+                                          (resolve-ability state side (access-revealed revealed) card nil)
+                                          (shuffle! state :corp :deck)
+                                          (system-msg state :runner " shuffles R&D")
+                                          (effect-completed state side eid)))
                                     (effect-completed state side eid)))))}}
                   card))})
 
