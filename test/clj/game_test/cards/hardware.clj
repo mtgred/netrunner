@@ -847,27 +847,41 @@
 
 (deftest masterwork-v37
   ;; Masterwork (v37)
-  (do-game
-    (new-game {:runner {:deck [(qty "Sure Gamble" 10)]
-                        :hand ["Masterwork (v37)" "Acacia" "Capstone"]
-                        :credits 10}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Masterwork (v37)")
-    (is (= 3 (count (:hand (get-runner)))) "Runner should draw a card for playing a hardware")
-    (run-on state "HQ")
-    (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp should be waiting on Runner")
-    (let [credits (:credit (get-runner))]
-      (click-prompt state :runner "Yes")
-      (is (= credits (:credit (get-runner))) "Runner shouldn't spend any credits until hardware is actually installed")
-      (click-card state :runner "Acacia")
-      (is (= (- credits 2) (:credit (get-runner))) "Runner should spend 1 for Masterwork and 1 for Acacia"))
-    (is (empty? (:prompt (get-corp))) "Corp shouldn't be waiting anymore")
-    (is (empty? (:prompt (get-runner))))
-    (run-successful state)
-    (click-prompt state :runner "No action")
-    (run-on state "HQ")
-    (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp should be waiting on Runner")
-    (is (seq (:prompt (get-runner))) "Runner should get a prompt every run")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 10)]
+                          :hand ["Masterwork (v37)" "Acacia" "Capstone"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Masterwork (v37)")
+      (is (= 3 (count (:hand (get-runner)))) "Runner should draw a card for playing a hardware")
+      (run-on state "HQ")
+      (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp should be waiting on Runner")
+      (let [credits (:credit (get-runner))]
+        (click-prompt state :runner "Yes")
+        (is (= credits (:credit (get-runner))) "Runner shouldn't spend any credits until hardware is actually installed")
+        (click-card state :runner "Acacia")
+        (is (= (- credits 2) (:credit (get-runner))) "Runner should spend 1 for Masterwork and 1 for Acacia"))
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't be waiting anymore")
+      (is (empty? (:prompt (get-runner))))
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (run-on state "HQ")
+      (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp should be waiting on Runner")
+      (is (seq (:prompt (get-runner))) "Runner should get a prompt every run")))
+  (testing "Should only grant bonus on the first Hardware install. Issue #4097"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 10)]
+                          :hand ["Masterwork (v37)" "Acacia" (qty "Daily Casts" 5)]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Masterwork (v37)")
+      (is (= 7 (count (:hand (get-runner)))) "Runner should draw a card for playing a hardware")
+      (play-from-hand state :runner "Daily Casts")
+      (is (= 6 (count (:hand (get-runner)))) "Runner shouldn't draw a card from installing a non-hardware after installing a single hardware")
+      (play-from-hand state :runner "Acacia")
+      (play-from-hand state :runner "Daily Casts")
+      (is (= 4 (count (:hand (get-runner)))) "Runner shouldn't draw any more cards from installing anything"))))
 
 (deftest maw
   ;; Maw - Once per turn, first time runner declines to steal or trash, trash a HQ card at random
