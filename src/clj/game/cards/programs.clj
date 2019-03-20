@@ -598,20 +598,20 @@
     :abilities [{:cost [:credit 1] :msg (msg "break 1 " (:subtype-target card) " subroutine")}]}
 
    "Chisel"
-   {:effect (effect (system-say "Corp, please press No Action to trigger Chisel"))
+   {:implementation "Encounter effect is manual."
     :hosting {:req (every-pred ice? can-host?)}
-    :events {:counter-added {:req (req (or (= (:cid target) (:cid card))
+    :abilities [{:req (req (and (same-card? current-ice (:host card))
+                                (rezzed? current-ice)))
+                 :effect (req (if (zero? (get-strength current-ice))
+                                (do (system-msg state side (str "uses Chisel to trash " (card-str state current-ice)))
+                                    (trash state side current-ice))
+                                (do (system-msg state side (str "places 1 virus counter on " (card-str state current-ice)))
+                                    (add-counter state side card :virus 1))))}]
+    :events {:counter-added {:req (req (or (same-card? target card)
                                            (= (:title target) "Hivemind")))
                              :effect (effect (update-ice-strength (:host card)))}
-             :pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
-                                :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}
-             :encounter-ice {:req (req (= (:cid target) (:cid (:host card))))
-                             :msg (msg (if (zero? (get-strength target))
-                                         (str "trash " (card-str state target))
-                                         (str "place 1 virus counter on " (card-str state card))))
-                             :effect (req (if (zero? (get-strength target))
-                                            (trash state side target)
-                                            (add-counter state side card :virus 1)))}}}
+             :pre-ice-strength {:req (req (same-card? target (:host card)))
+                                :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}}}
 
    "Cloak"
    {:recurring 1}
