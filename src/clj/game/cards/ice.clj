@@ -2106,7 +2106,7 @@
                                             (system-msg state :corp "uses Saisentan to deal a second net damage")
                                             (damage state side eid :net 1 {:card card}))))}]
     :abilities [{:label "Choose card type"
-                 :req (req (and (= (:cid current-ice) (:cid card))
+                 :req (req (and (same-card? current-ice card)
                                 (rezzed? card)))
                  :effect (effect (show-wait-prompt :runner "Corp to choose Saisentan card type")
                                  (continue-ability
@@ -2139,7 +2139,7 @@
    {:subroutines [end-the-run]
     :strength-bonus (req (- (get-counters card :virus)))
     :abilities [{:label "Place one virus counter"
-                 :req (req (= (:cid current-ice) (:cid card)))
+                 :req (req (same-card? current-ice card))
                  :msg "place 1 virus counter on Sandstone"
                  :effect (effect (add-counter card :virus 1)
                                  (update-ice-strength (get-card state card)))}]}

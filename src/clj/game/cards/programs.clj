@@ -600,17 +600,17 @@
    "Chisel"
    {:implementation "Encounter effect is manual."
     :hosting {:req (every-pred ice? can-host?)}
-    :abilities [{:req (req (= (:cid current-ice) (:cid (:host card))))
-                 :msg (msg (if (zero? (get-strength current-ice))
-                             (str "trash " (card-str state current-ice))
-                             (str "place 1 virus counter on " (card-str state card))))
+    :abilities [{:req (req (and (same-card? current-ice (:host card))
+                                (rezzed? current-ice)))
                  :effect (req (if (zero? (get-strength current-ice))
-                                (trash state side current-ice)
-                                (add-counter state side card :virus 1)))}]
-    :events {:counter-added {:req (req (or (= (:cid target) (:cid card))
+                                (do (system-msg state side (str "uses Chisel to trash " (card-str state current-ice)))
+                                    (trash state side current-ice))
+                                (do (system-msg state side (str "places 1 virus counter on " (card-str state current-ice)))
+                                    (add-counter state side card :virus 1))))}]
+    :events {:counter-added {:req (req (or (same-card? target card)
                                            (= (:title target) "Hivemind")))
                              :effect (effect (update-ice-strength (:host card)))}
-             :pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
+             :pre-ice-strength {:req (req (same-card? target (:host card)))
                                 :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}}}
 
    "Cloak"

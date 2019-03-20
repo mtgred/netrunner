@@ -324,26 +324,53 @@
 
 (deftest chisel
   ;; Chisel
-  (do-game
-    (new-game {:corp {:hand ["Ice Wall"]}
-               :runner {:hand ["Chisel"]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Chisel")
-    (click-card state :runner "Ice Wall")
-    (let [iw (get-ice state :hq 0)
-          chisel (first (:hosted (refresh iw)))]
-      (run-on state "HQ")
-      (core/rez state :corp iw)
-      (is (zero? (get-counters (refresh chisel) :virus)))
-      (card-ability state :runner chisel 0)
-      (is (= 1 (get-counters (refresh chisel) :virus)))
-      (is (refresh iw) "Ice Wall still around, just at 0 strength")
-      (core/jack-out state :runner nil)
-      (run-on state "HQ")
-      (card-ability state :runner chisel 0)
-      (is (nil? (refresh iw)) "Ice Wall should be trashed")
-      (is (nil? (refresh chisel)) "Chisel should likewise be trashed"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Chisel"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Chisel")
+      (click-card state :runner "Ice Wall")
+      (let [iw (get-ice state :hq 0)
+            chisel (first (:hosted (refresh iw)))]
+        (run-on state "HQ")
+        (core/rez state :corp iw)
+        (is (zero? (get-counters (refresh chisel) :virus)))
+        (card-ability state :runner chisel 0)
+        (is (= 1 (get-counters (refresh chisel) :virus)))
+        (is (refresh iw) "Ice Wall still around, just at 0 strength")
+        (core/jack-out state :runner nil)
+        (run-on state "HQ")
+        (card-ability state :runner chisel 0)
+        (is (nil? (refresh iw)) "Ice Wall should be trashed")
+        (is (nil? (refresh chisel)) "Chisel should likewise be trashed"))))
+  (testing "Doesn't work if the ice is unrezzed"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Chisel"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "Chisel")
+      (click-card state :runner "Ice Wall")
+      (let [iw (get-ice state :hq 0)
+            chisel (first (:hosted (refresh iw)))]
+        (run-on state "HQ")
+        (is (zero? (get-counters (refresh chisel) :virus)))
+        (card-ability state :runner chisel 0)
+        (is (zero? (get-counters (refresh chisel) :virus)) "Chisel gains no counters as Ice Wall is unrezzed")
+        (is (refresh iw) "Ice Wall still around, still at 1 strength")
+        (core/jack-out state :runner nil)
+        (run-on state "HQ")
+        (core/rez state :corp iw)
+        (card-ability state :runner chisel 0)
+        (is (= 1 (get-counters (refresh chisel) :virus)) "Chisel now has 1 counter")
+        (core/jack-out state :runner nil)
+        (run-on state "HQ")
+        (core/derez state :corp iw)
+        (card-ability state :runner chisel 0)
+        (is (refresh iw) "Ice Wall should still be around as it's unrezzed")))))
 
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
