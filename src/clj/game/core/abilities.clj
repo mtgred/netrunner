@@ -299,7 +299,7 @@
                (toast state side (str "This prompt can be skipped by clicking "
                                       (:title card) " and toggling autoresolve")))
              (show-prompt state side eid card message ["Yes" "No"]
--                                prompt-fn ability)))))))
+                          prompt-fn ability)))))))
 
 ;;; Prompts
 (defn prompt!
