@@ -88,3 +88,40 @@
             (str (side-str side) " expected to click [ "
                  (if (string? choice) choice (:title choice ""))
                  " ] but couldn't find it. Current prompt is: \n" prompt))))))
+
+(defn last-log-contains?
+  [state content]
+  (some? (re-find (re-pattern content)
+                  (-> @state :log last :text))))
+
+(defn second-last-log-contains?
+  [state content]
+  (some? (re-find (re-pattern content)
+                  (-> @state :log butlast last :text))))
+
+(defmethod assert-expr 'last-log-contains?
+  [msg form]
+  `(let [state# ~(nth form 1)
+         content# ~(nth form 2)
+         log# (-> @state# :log last :text)
+         found# ~form]
+     (do-report
+       {:type (if found# :pass :fail)
+        :actual log#
+        :expected content#
+        :message ~msg})
+     found#))
+
+(defmethod assert-expr 'second-last-log-contains?
+  [msg form]
+  `(let [state# ~(nth form 1)
+         content# ~(nth form 2)
+         log# (-> @state# :log butlast last :text)
+         found# ~form]
+     (do-report
+       {:type (if found# :pass :fail)
+        :actual log#
+        :expected content#
+        :message ~msg})
+     found#))
+
