@@ -459,6 +459,7 @@
    {:events
     {:agenda-stolen
      {:interactive (req true)
+      :req (req (not (:winner @state)))
       :effect (req (let [stolen-agenda target
                          title (:title stolen-agenda)
                          prompt (str "Forfeit Divested Trust to add " title
@@ -472,6 +473,7 @@
                          :yes-ability {:msg message
                                        :effect (effect (forfeit card)
                                                        (move stolen-agenda :hand)
+                                                       (gain-agenda-point :runner (- (:agendapoints stolen-agenda)))
                                                        (gain-credits 5))}
                          :end-effect (effect (clear-wait-prompt :runner))}}
                        card nil)))}}}
