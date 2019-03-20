@@ -448,7 +448,8 @@
                          (when (and (not facedown) (has-subtype? c "Icebreaker"))
                            (update-breaker-strength state side c))
                          (trigger-event-simult state side eid :runner-install
-                                               {:card-ability (card-as-handler installed-card)}
+                                               (when-not facedown
+                                                 {:card-ability (card-as-handler installed-card)})
                                                installed-card))
                        (effect-completed state side eid))
                      (effect-completed state side eid)))
