@@ -1684,15 +1684,15 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Isolation")
     (is (= 2 (count (get-in @state [:runner :hand]))) "Isolation could not be played because no resource is installed")
-    (is (zero? (count (get-in (get-runner) [:rig :resource]))) "Kati Jones is not installed")
+    (is (zero? (count (get-resource state))) "Kati Jones is not installed")
     (play-from-hand state :runner "Kati Jones")
     (is (= 1 (count (get-resource state))) "Kati Jones was installed")
     (let [kj (get-resource state 0)]
       (play-from-hand state :runner "Isolation")
-        (click-card state :runner kj)
-        (is (zero? (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed")
-        (is (= 8 (:credit (get-runner))) "Gained 7 credits")
-        (is (= 2 (count (:discard (get-runner)))) "Kati Jones and Isolation are in the discard"))))
+      (click-card state :runner kj)
+      (is (zero? (count (get-resource state))) "Kati Jones was trashed")
+      (is (= 8 (:credit (get-runner))) "Gained 7 credits")
+      (is (= 2 (count (:discard (get-runner)))) "Kati Jones and Isolation are in the discard"))))
 
 (deftest i-ve-had-worse
   ;; I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined
@@ -1990,7 +1990,7 @@
       (play-from-hand state :runner "Gordian Blade")
       (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
       (click-prompt state :runner "Replacement effect")
-      (click-prompt state :runner "1 [Credit]: 6 times")
+      (click-prompt state :runner "1 [Credit]: 6 cards")
       (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi, DNA Tracker, Excalibur, Fire Wall") "Revealed correct 6 cards from R&D")
       (click-prompt state :runner "Brainstorm")
       (click-prompt state :runner "No action")
@@ -2016,7 +2016,7 @@
       (dotimes [_ 3] (play-from-hand state :runner "Akamatsu Mem Chip"))
       (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
       (click-prompt state :runner "Replacement effect")
-      (click-prompt state :runner "1 [Credit]: 6 times")
+      (click-prompt state :runner "1 [Credit]: 6 cards")
       (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
       (click-prompt state :runner "Brainstorm")
       (click-prompt state :runner "No action")
@@ -2042,11 +2042,25 @@
       (play-from-hand state :runner "R&D Interface")
       (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
       (click-prompt state :runner "Replacement effect")
-      (click-prompt state :runner "1 [Credit]: 3 times")
+      (click-prompt state :runner "1 [Credit]: 3 cards")
       (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
       (click-prompt state :runner "Brainstorm")
       (click-prompt state :runner "No action")
-      (is (= () (-> @state :runner :prompt)) "No access prompt on C or D, so no other cards were accessed"))))
+      (is (empty? (-> @state :runner :prompt)) "No access prompt on C or D, so no other cards were accessed")))
+  (testing "When played with no installed cards"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Technician Team"]}
+                 :runner {:deck ["Khusyuk"
+                                 (qty "Cache" 3)
+                                 "R&D Interface"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (take-credits state :corp)
+      (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "1 [Credit]: 0 cards")
+      (is (empty? (:prompt (get-runner))) "Runner shouldn't get any access prompt when nothing is installed"))))
 
 (deftest knifed
   ;; Knifed - Make a run, trash a barrier if all subs broken
@@ -3009,15 +3023,15 @@
 (deftest spec-work
   ;; Spec Work
   (do-game
-    (new-game {:runner {:deck ["Spec Work" (qty "Cache" 3)]}
+    (new-game {:runner {:hand ["Spec Work" "Cache"]
+                        :deck [(qty "Cache" 2)]}
                :options {:start-as :runner}})
-    (starting-hand state :runner ["Spec Work" "Cache"])
     (play-from-hand state :runner "Cache")
     (play-from-hand state :runner "Spec Work")
-    (is (= 4 (:credit (get-runner))))
+    (is (= 3 (:credit (get-runner))) "Paid credit cost for Spec Work")
     (is (= 0 (count (:hand (get-runner)))))
     (click-card state :runner (get-program state 0))
-    (is (= 7 (:credit (get-runner))) "+3 credits, -1 for paying for Spec Work")
+    (is (= 7 (:credit (get-runner))) "+4 credits after paying for Spec Work")
     (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
 
 (deftest stimhack

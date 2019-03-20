@@ -167,11 +167,12 @@
   (when (and (number? value)
              (pos? value))
     (case attr
-      :credit (str value " [credit]")
+      :credit (str value " [Credit]")
       :click (->> "[Click]" repeat (take value) (apply str))
       :forfeit (str value " Agenda" (when (> value 1) "s"))
       :net (str value " net damage")
       :meat (str value " meat damage")
+      :brain (str value " brain damage")
       nil)))
 
 (defn build-cost-str

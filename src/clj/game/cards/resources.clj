@@ -469,7 +469,8 @@
                                                      :once :per-turn
                                                      :msg (msg "access 2 additional cards from " (zone->name target))
                                                      :effect (effect (access-bonus :runner target 2))}
-                                        :runner-turn-ends {:effect (effect (unregister-events card {:events {:pre-access nil :runner-turn-ends nil}}))}}
+                                        :runner-turn-ends {:effect (effect (unregister-events card {:events {:pre-access nil
+                                                                                                             :runner-turn-ends nil}}))}}
                                        (assoc card :zone [:rfg]))
                                      (effect-completed eid))})]
      {:events {:pre-access nil
@@ -478,12 +479,17 @@
                {:async true
                 :effect (effect (move card :rfg)
                                 (continue-ability
-                                  (when (pos? (count (iced-servers state)))
+                                  (if (pos? (count (iced-servers state)))
                                     {:prompt (msg  "Choose a server")
                                      :choices (req (iced-servers state))
-                                     :msg (msg "choose " target " and remove Climactic Showdown from the game")
-                                     :effect (req (let [chosen-server (next (server->zone state target))]
-                                                    (continue-ability state :corp (trash-or-bonus chosen-server) card nil)))})
+                                     :msg (msg "choose " (zone->name (unknown->kw target))
+                                               " and removes Climactic Showdown from the game")
+                                     :effect (effect (continue-ability
+                                                       :corp
+                                                       (trash-or-bonus (next (server->zone state target)))
+                                                       card nil))}
+                                    {:msg (str "choose a server protected by ice but cannot"
+                                               " and removes Climactic Showdown from the game")})
                                   card nil))}}})
 
    "Compromised Employee"
@@ -2390,19 +2396,24 @@
                             :msg "gain 1 [Credits]"}}}
 
    "Whistleblower"
-   (letfn [(steal-events [named-agenda] {:run-ends {:effect (effect (unregister-events card {:events {:access nil :run-ends nil}}))}
-                                         :access {:req (req (= (:title target) named-agenda))
-                                                  :once :per-run
-                                                  :async true
-                                                  :effect (effect (steal eid target))}})]
+   (letfn [(steal-events [named-agenda]
+             {:run-ends {:effect (effect (unregister-events card {:events {:access nil
+                                                                           :run-ends nil}}))}
+              :access {:req (req (= (:title target) named-agenda))
+                       :once :per-run
+                       :async true
+                       :effect (effect (steal eid target))}})]
      {:events {:successful-run {:optional {:autoresolve (get-autoresolve :auto-name-agenda)
                                            :prompt "Trash Whistleblower to name an agenda?"
                                            :yes-ability {:prompt "Name an agenda"
                                                          :choices {:card-title (req (and (card-is? target :side "Corp")
                                                                                          (card-is? target :type "Agenda")))}
-                                                         :effect (effect (register-events (steal-events target)
+                                                         :effect (effect (system-msg (str "trashes " (:title card)
+                                                                                          " to name " (:title target)))
+                                                                         (register-events (steal-events target)
                                                                                           (dissoc card :zone))
-                                                                         (trash card {:unpreventable true :cause :ability-cost}))}}}}
+                                                                         (trash eid card {:unpreventable true
+                                                                                          :cause :ability-cost}))}}}}
       :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]})
 
    "Wireless Net Pavilion"

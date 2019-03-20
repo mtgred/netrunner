@@ -1,7 +1,8 @@
 (in-ns 'game.core)
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
-         facedown? make-result unknown->kw discard-from-hand)
+         facedown? make-result unknown->kw discard-from-hand card-str trash trash-cards
+         complete-with-result)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -131,74 +132,72 @@
               (reduce +)))
       0))
 
-(defn pay-forfeit
-  "Forfeit agenda as part of paying for a card or ability
-  Amount is always 1 but can be extend if we ever need more than a single forfeit"
-  ;; If multiples needed in future likely prompt-select needs work to take a function
-  ;; instead of an ability
-  [state side eid card n]
-  (let [cost-name (cost-names n :forfeit)]
-    (continue-ability state side
-                      {:prompt "Choose an Agenda to forfeit"
-                       :async true
-                       :choices {:max n
-                                 :req #(is-scored? state side %)}
-                       :effect (req (wait-for (forfeit state side target)
-                                              (effect-completed state side (make-result eid cost-name))))}
-                      card nil)
-    cost-name))
-
-(defn pay-trash
-  "Trash a card as part of paying for a card or ability"
-  ;; If multiples needed in future likely prompt-select needs work to take a function
-  ;; instead of an ability
-  ([state side eid card type amount select-fn] (pay-trash state side eid card type amount select-fn nil))
-  ([state side eid card type amount select-fn args]
-   (let [cost-name (cost-names amount type)]
-     (continue-ability state side
-                       {:prompt (str "Choose a " type " to trash")
-                        :choices {:max amount
-                                  :req select-fn}
-                        :async true
-                        :effect (req (wait-for (trash state side target (merge args {:unpreventable true}))
-                                               (effect-completed state side (make-result eid cost-name))))}
-                       card nil)
-     cost-name)))
-
-(defn pay-damage
-  "Suffer a damage as part of paying for a card or ability"
-  [state side eid type amount]
-  (let [cost-name (cost-names amount type)]
-    (damage state side eid type amount {:unpreventable true})
-    cost-name))
-
-(defn pay-shuffle-installed-to-stack
-  "Shuffle installed runner card(s) into the stack as part of paying for a card or ability"
-  [state side eid card amount]
-  (let [cost-name (cost-names amount :shuffle-installed-to-stack)]
-    (continue-ability state :runner
-                    {:prompt (str "Choose " amount " " (pluralize "card" amount) " to shuffle into the stack")
-                     :choices {:max amount
-                               :all true
-                               :req #(and (installed? %) (= (:side %) "Runner"))}
-                     :async true
-                     :effect (req
-                               (doseq [c targets]
-                                 (move state :runner c :deck))
-                               (system-msg state :runner
-                                           (str "shuffles " (join ", " (map :title targets))
-                                                " into their stack"))
-                               (shuffle! state :runner :deck)
-                               (effect-completed state side (make-result eid cost-name)))}
-                    card nil)
-    cost-name))
-
 (defn- complete-with-result
   "Calls `effect-complete` with `make-result` and also returns the argument.
   Helper function for cost-handler"
   [state side eid result]
   (effect-completed state side (make-result eid result))
   result)
+
+(defn pay-forfeit
+  "Forfeit agenda as part of paying for a card or ability
+  Amount is always 1 but can be extend if we ever need more than a single forfeit"
+  ;; If multiples needed in future likely prompt-select needs work to take a function
+  ;; instead of an ability
+  [state side eid card amount]
+  (continue-ability state side
+                    {:prompt "Choose an Agenda to forfeit"
+                     :async true
+                     :choices {:max amount
+                               :req #(is-scored? state side %)}
+                     :effect (req (wait-for (forfeit state side target)
+                                            (complete-with-result
+                                              state side eid
+                                              (str "forfeits " (cost-names amount :forfeit)
+                                                   ": " (join ", " (map #(card-str state %) targets))))))}
+                    card nil))
+
+(defn pay-trash
+  "Trash a card as part of paying for a card or ability"
+  ([state side eid card card-type amount select-fn] (pay-trash state side eid card card-type amount select-fn nil))
+  ([state side eid card card-type amount select-fn args]
+   (continue-ability state side
+                     {:prompt (str "Choose " (quantify amount card-type) " to trash")
+                      :choices {:max amount
+                                :req select-fn}
+                      :async true
+                      :effect (req (wait-for (trash-cards state side targets (merge args {:unpreventable true}))
+                                             (complete-with-result
+                                               state side eid
+                                               (str "trashes " (quantify amount (or (:plural args) card-type))
+                                                    " (" (join ", " (map #(card-str state %) targets)) ")"))))}
+                     card nil)))
+
+(defn pay-damage
+  "Suffer a damage as part of paying for a card or ability"
+  [state side eid dmg-type amount]
+  (wait-for (damage state side dmg-type amount {:unpreventable true})
+            (complete-with-result state side eid
+                                  (str "suffers " (cost-names amount dmg-type)))))
+
+(defn pay-shuffle-installed-to-stack
+  "Shuffle installed runner cards into the stack as part of paying for a card or ability"
+  [state side eid card amount]
+  (continue-ability state :runner
+                    {:prompt (str "Choose " (quantify amount "card") " to shuffle into the stack")
+                     :choices {:max amount
+                               :all true
+                               :req #(and (installed? %)
+                                          (= (:side %) "Runner"))}
+                     :async true
+                     :effect (req (doseq [c targets]
+                                    (move state :runner c :deck))
+                                  (shuffle! state :runner :deck)
+                                  (complete-with-result
+                                    state side eid
+                                    (str "shuffles " (join ", " (map :title targets))
+                                         " into their stack")))}
+                    card nil))
 
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"
@@ -214,19 +213,32 @@
                              a (:click (into {} costs)))
               (swap! state assoc-in [side :register :spent-click] true)
               (complete-with-result state side eid (deduct state side cost)))
+
      :forfeit (pay-forfeit state side eid card (second cost))
-     :hardware (pay-trash state side eid card "piece of hardware" (second cost) (every-pred installed? #(is-type? % :hardware) (complement facedown?)))
-     :program (pay-trash state side eid card "program" (second cost) (every-pred installed? #(is-type? % :program) (complement facedown?)))
-     :resource (pay-trash state side eid card "resource" (second cost) (every-pred installed? #(is-type? % :resource) (complement facedown?)))
 
-     ;; Connection
-     :connection (pay-trash state side eid card "connection" (second cost) (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
+     ;; Trash installed cards
+     :hardware (pay-trash state side eid card "piece of hardware" (second cost)
+                          (every-pred installed? #(is-type? % :hardware) (complement facedown?))
+                          {:plural "pieces of hardware"})
+     :program (pay-trash state side eid card "program" (second cost)
+                         (every-pred installed? #(is-type? % :program) (complement facedown?)))
+     :resource (pay-trash state side eid card "resource" (second cost)
+                          (every-pred installed? #(is-type? % :resource) (complement facedown?)))
+     :connection (pay-trash state side eid card "connection" (second cost)
+                            (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
+     :ice (pay-trash state :corp eid card "rezzed ICE" (second cost)
+                     (every-pred rezzed? ice?)
+                     {:cause :ability-cost
+                      :keep-server-alive true
+                      :plural "rezzed ICE"})
 
-     ;; Rezzed ICE
-     :ice (pay-trash state :corp eid card "rezzed ICE" (second cost) (every-pred rezzed? ice?) {:cause :ability-cost :keep-server-alive true})
-
+     ;; Suffer damage
      :tag (complete-with-result state side eid (deduct state :runner cost))
      :net-damage (pay-damage state side eid :net (second cost))
+     :meat-damage (pay-damage state side eid :meat (second cost))
+     :brain-damage (pay-damage state side eid :brain (second cost))
+
+     ;; Discard cards from deck or hand
      :mill (complete-with-result state side eid (mill state side (second cost)))
      :discard (complete-with-result state side eid (discard-from-hand state side (second cost)))
 
@@ -266,10 +278,9 @@
         action (not-empty (filter map? args))]
     (if-let [costs (apply can-pay? state side (:title card) raw-costs)]
       (wait-for (pay-sync-next state side costs card action [])
-                (effect-completed state side
-                                  (make-result eid (->> async-result
-                                                        (filter some?)
-                                                        (join " and ")))))
+                (complete-with-result state side eid (->> async-result
+                                                          (filter some?)
+                                                          (join " and "))))
       (effect-completed state side (make-result eid nil)))))
 
 (defn gain [state side & args]
