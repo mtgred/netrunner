@@ -1875,8 +1875,8 @@
 
    "Rejig"
    (let [valid-target? (fn [card] (and (card-is? card :side :runner)
-                                       (or (card-is? card :type :program)
-                                           (card-is? card :type :hardware))))
+                                       (or (program? card)
+                                           (hardware? card))))
          pick-up {:async true
                   :prompt "select a program or piece of hardware to put in hand"
                   :choices {:req #(and (valid-target? %)

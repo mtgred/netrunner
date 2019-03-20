@@ -713,23 +713,22 @@
     :leave-play (req (apply enable-run-on-server state card (map first (get-remotes state))))}
 
    "Kabonesa Wu: Netspace Thrillseeker"
-   {:abilities [{:label "[:click] Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
+   {:abilities [{:label "Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
                  :cost [:click 1]
                  :prompt "Choose a program"
                  :choices (req (cancellable
                                  (filter #(and (is-type? % "Program")
                                                (not (has-subtype? % "Virus")))
                                          (:deck runner))))
-                 :msg (str "install a non-virus program from their stack, lowering the cost by 1 [Credit]")
+                 :msg (msg "install " (:title target) " from their stack, lowering the cost by 1 [Credit]")
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (install-cost-bonus [:credit -1])
-                                 (runner-install (assoc-in target [:special :kabonesa] true)))
+                                 (runner-install eid (assoc-in target [:special :kabonesa] true) nil))
                  :end-turn
                  {:req (req (get-in (find-cid (:cid target) (all-active-installed state :runner)) [:special :kabonesa]))
                   :msg (msg "remove " (:title target) " from the game")
-                  :effect (req (move state side (find-cid (:cid target) (all-active-installed state :runner))
-                                     :rfg))}}]}
+                  :effect (effect (move (find-cid (:cid target) (all-active-installed state :runner)) :rfg))}}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn

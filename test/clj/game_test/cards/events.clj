@@ -2710,20 +2710,40 @@
 
 (deftest rejig
   ;; Rejig
-  (do-game
-    (new-game {:options {:start-as :runner}
-               :runner {:credits 10
-                        :hand ["Rejig" "Corroder" "Adept"]}})
-    (play-from-hand state :runner "Adept")
-    (play-from-hand state :runner "Rejig")
-    (click-card state :runner "Corroder")
-    (is (find-card "Corroder" (:hand (get-runner))) "Corroder shouldn't be installed")
-    (click-card state :runner "Adept")
-    (is (= 2 (count (:hand (get-runner)))))
-    (let [credits (:credit (get-runner))
-          cost (:cost (find-card "Adept" (:hand (get-runner))))]
+  (testing "Basic test"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:hand ["Rejig" "Corroder" "Adept"]
+                          :credits 10}})
+      (play-from-hand state :runner "Adept")
+      (play-from-hand state :runner "Rejig")
+      (click-card state :runner "Corroder")
+      (is (find-card "Corroder" (:hand (get-runner))) "Corroder shouldn't be installed")
       (click-card state :runner "Adept")
-      (is (= (- credits (- cost (quot cost 2))) (:credit (get-runner))) "Runner should only pay half for Adept"))))
+      (is (= 2 (count (:hand (get-runner)))))
+      (let [credits (:credit (get-runner))
+            cost (:cost (find-card "Adept" (:hand (get-runner))))]
+        (click-card state :runner "Adept")
+        (is (= (- credits (- cost (quot cost 2))) (:credit (get-runner))) "Runner should only pay half for Adept"))))
+  (testing "with Kabonesa Wu. Issue #4105"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
+                          :deck ["Gordian Blade"]
+                          :hand ["Rejig"]
+                          :credits 10}})
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (click-prompt state :runner "Gordian Blade")
+      (is (= 7 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")
+      (play-from-hand state :runner "Rejig")
+      (click-card state :runner "Gordian Blade")
+      (is (find-card "Gordian Blade" (:hand (get-runner))) "Gordian Blade shouldn't be installed")
+      (let [credits (:credit (get-runner))
+            cost (:cost (find-card "Gordian Blade" (:hand (get-runner))))]
+        (click-card state :runner "Gordian Blade")
+        (is (= (- credits (- cost (quot cost 2))) (:credit (get-runner))) "Runner should only pay half for Gordian Blade"))
+      (take-credits state :runner)
+      (is (= "Gordian Blade" (:title (get-program state 0))) "Kabonesa Wu shouldn't rfg card bounced and reinstalled with Rejig"))))
 
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ICE
