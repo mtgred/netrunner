@@ -13,7 +13,7 @@
   [card]
   (if-let [title (:title card)]
     (get cards title)
-     (.println *err* (with-out-str
+    (.println *err* (with-out-str
                       (clojure.stacktrace/print-stack-trace
                         (Exception. (str "Tried to select card def for non-existent card: " card))
                         25)))))
