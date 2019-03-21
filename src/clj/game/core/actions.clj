@@ -239,7 +239,11 @@
           (do (when-let [effect-prompt (:effect prompt)]
                 (effect-prompt button))
               (finish-prompt state side prompt card))
-          (.println *err* "Error in a text prompt"))))))
+          (do
+            (.println *err* (with-out-str
+                              (clojure.stacktrace/print-stack-trace
+                                (Exception. "Error in a text prompt") 25)))
+            (.println *err* (str "Current prompt: " prompt))))))))
 
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
