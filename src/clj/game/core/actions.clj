@@ -208,7 +208,11 @@
             (when-let [effect-prompt (:effect prompt)]
               (effect-prompt (or choice card)))
             (finish-prompt state side prompt card))
-        (.println *err* "Error in an integer prompt"))
+        (do
+          (.println *err* (with-out-str
+                            (clojure.stacktrace/print-stack-trace
+                              (Exception. "Error in an integer prompt") 25)))
+          (.println *err* (str "Current prompt: " prompt))))
 
       ;; List of card titles for auto-completion
       (:card-title choices)
@@ -222,7 +226,11 @@
                   (finish-prompt state side prompt card))
               (toast state side (str "You cannot choose " choice " for this effect.") "warning"))
             (toast state side (str "Could not find a card named " choice ".") "warning")))
-        (.println *err* "Error in a card-title prompt"))
+        (do
+          (.println *err* (with-out-str
+                            (clojure.stacktrace/print-stack-trace
+                              (Exception. "Error in a card-title prompt") 25)))
+          (.println *err* (str "Current prompt: " prompt))))
 
       ;; Default text prompt
       :else
@@ -239,7 +247,11 @@
           (do (when-let [effect-prompt (:effect prompt)]
                 (effect-prompt button))
               (finish-prompt state side prompt card))
-          (.println *err* "Error in a text prompt"))))))
+          (do
+            (.println *err* (with-out-str
+                              (clojure.stacktrace/print-stack-trace
+                                (Exception. "Error in a text prompt") 25)))
+            (.println *err* (str "Current prompt: " prompt))))))))
 
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
