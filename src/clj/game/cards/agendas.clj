@@ -458,25 +458,29 @@
    "Divested Trust"
    {:events
     {:agenda-stolen
-     {:interactive (req true)
-      :req (req (not (:winner @state)))
-      :effect (req (let [stolen-agenda target
-                         title (:title stolen-agenda)
-                         prompt (str "Forfeit Divested Trust to add " title
-                                     " to HQ and gain 5[Credits]?")
-                         message (str "add " title " to HQ and gain 5 [Credits]")]
-                     (show-wait-prompt state :runner "Corp to use Divested Trust")
-                     (continue-ability
-                       state side
-                       {:optional
-                        {:prompt prompt
-                         :yes-ability {:msg message
-                                       :effect (effect (forfeit card)
-                                                       (move stolen-agenda :hand)
-                                                       (gain-agenda-point :runner (- (:agendapoints stolen-agenda)))
-                                                       (gain-credits 5))}
-                         :end-effect (effect (clear-wait-prompt :runner))}}
-                       card nil)))}}}
+     {:async true
+      :interactive (req true)
+      :effect (req (if (:winner @state)
+                     (effect-completed state side eid)
+                     (let [stolen-agenda target
+                           title (:title stolen-agenda)
+                           prompt (str "Forfeit Divested Trust to add " title
+                                       " to HQ and gain 5[Credits]?")
+                           message (str "add " title " to HQ and gain 5 [Credits]")]
+                       (show-wait-prompt state :runner "Corp to use Divested Trust")
+                       (continue-ability
+                         state side
+                         {:optional
+                          {:prompt prompt
+                           :yes-ability
+                           {:msg message
+                            :effect (effect (forfeit card)
+                                            (move stolen-agenda :hand)
+                                            (gain-agenda-point :runner (- (:agendapoints stolen-agenda)))
+                                            (gain-credits 5)
+                                            (effect-completed eid))}
+                           :end-effect (effect (clear-wait-prompt :runner))}}
+                         card nil))))}}}
 
    "Domestic Sleepers"
    {:agendapoints-runner (req 0)
