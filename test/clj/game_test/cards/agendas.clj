@@ -2925,7 +2925,50 @@
       (click-prompt state :runner "No action")
       (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
       (take-credits state :runner)
-      (is (zero? (count (:hand (get-runner)))) "Runner takes damage at end of turn"))))
+      (is (zero? (count (:hand (get-runner)))) "Runner takes damage at end of turn")))
+  (testing "interaction with The Class Act"
+    (testing "Score on corp turn"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Viral Weaponization"]}
+                   :runner {:deck ["The Class Act" (qty "Sure Gamble" 10)]
+                            :hand ["Artist Colony" "Fan Site" "Sure Gamble" "Sure Gamble"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Artist Colony")
+        (play-from-hand state :runner "Fan Site")
+        (take-credits state :runner)
+        (play-and-score state "Viral Weaponization")
+        (card-ability state :runner (get-resource state 0) 0)
+        (click-prompt state :runner "The Class Act")
+        (click-card state :runner "Fan Site")
+        (is (= "The Class Act" (:title (get-resource state 1))))
+        (is (= :this-turn (:installed (get-resource state 1))))
+        (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
+        (take-credits state :corp)
+        (is (zero? (count (:hand (get-runner)))) "Runner takes damage before resolving The Class Act")
+        (click-prompt state :runner "Sure Gamble")
+        (is (= 4 (count (:hand (get-runner)))) "Runner draws from The Class Act after taking damage")))
+    (testing "Scored on the runner's turn"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Viral Weaponization" "Plan B"]}
+                   :runner {:deck [(qty "Sure Gamble" 3)]
+                            :hand ["Sure Gamble" "Sure Gamble" "The Class Act"]}})
+        (play-from-hand state :corp "Plan B" "New remote")
+        (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 4)
+        (take-credits state :corp)
+        (play-from-hand state :runner "The Class Act")
+        (run-on state "Server 1")
+        (run-successful state)
+        (click-prompt state :corp "Yes")
+        (click-card state :corp (find-card "Viral Weaponization" (:hand (get-corp))))
+        (is (= ["Pay 1 [Credits] to trash" "No action"] (:choices (prompt-map :runner))))
+        (click-prompt state :runner "No action")
+        (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
+        (take-credits state :runner)
+        (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take the damage until after resolving The Class Act")
+        (click-prompt state :runner "Sure Gamble")
+        (is (zero? (count (:hand (get-runner)))) "Runner takes damage at end of turn")))))
 
 (deftest voting-machine-initiative
   ;; Voting Machine Initiative

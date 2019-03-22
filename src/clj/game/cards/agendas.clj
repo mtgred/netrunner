@@ -316,11 +316,19 @@
 
    "Breaking News"
    {:async true
-    :effect (effect (gain-tags :corp eid 2))
+    :effect (effect (gain-tags :corp eid 2)
+                    (register-events
+                      {:corp-turn-ends {:msg "make the Runner lose 2 tags"
+                                        :effect (effect (lose :runner :tag 2)
+                                                        (unregister-events card))}
+                       :runner-turn-ends {:msg "make the Runner lose 2 tags"
+                                          :effect (effect (lose :runner :tag 2)
+                                                          (unregister-events card))}}
+                      card))
     :silent (req true)
     :msg "give the Runner 2 tags"
-    :end-turn {:effect (effect (lose :runner :tag 2))
-               :msg "make the Runner lose 2 tags"}}
+    :events {:corp-turn-ends nil
+             :runner-turn-ends nil}}
 
    "Broad Daylight"
    (letfn [(add-counters [state side card eid]

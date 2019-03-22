@@ -240,12 +240,16 @@
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Careful Planning"
-   {:prompt  "Choose a card in or protecting a remote server"
+   {:prompt "Choose a card in or protecting a remote server"
     :choices {:req #(is-remote? (second (:zone %)))}
-    :end-turn {:effect (effect (remove-icon card target))}
     :effect (effect (add-icon card target "CP" "red")
                     (system-msg (str "prevents the rezzing of " (card-str state target)
                                      " for the rest of this turn via Careful Planning"))
+                    (register-events {:runner-turn-ends {:effect (effect (remove-icon card target)
+                                                                         (unregister-events
+                                                                           card
+                                                                           {:effects {:runner-turn-ends nil}}))}}
+                                     (assoc card :zone '(:discard)))
                     (register-turn-flag! card :can-rez
                                          (fn [state side card]
                                            (if (= (:cid card) (:cid target))
@@ -493,9 +497,12 @@
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
                                       (card-init state side c {:resolve-effect false})
                                       (register-events state side
-                                                       {:run-ends {:effect (effect (trash c))}} c)))}
+                                                       {:run-ends {:effect (effect (trash c)
+                                                                                   (unregister-events
+                                                                                     card
+                                                                                     {:events {:run-ends nil}}))}}
+                                                       c)))}
                       card nil))
-    :events {:run-ends nil}
     :interactions {:trash-ability
                    {:label "[Demolition Run]: Trash card"
                     :msg (msg "trash " (:title target) " at no cost")
@@ -558,18 +565,20 @@
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
                                       (card-init state side c {:resolve-effect false})
-                                      (register-events state side
-                                                       {:run-ends {:effect (req (let [hunt (:diana @state)]
-                                                                                  (doseq [c hunt]
-                                                                                    (let [installed (find-cid (:cid c) (all-installed state side))]
-                                                                                      (when (get-in installed [:special :diana-installed])
-                                                                                        (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
-                                                                                        (trash state side installed {:unpreventable true}))))
-                                                                                  (swap! state dissoc :diana)
-                                                                                  (unregister-events state side card)
-                                                                                  (trash state side c)))}} c)))}
-                      card nil))
-    :events {:run-ends nil}}
+                                      (register-events
+                                        state side
+                                        {:run-ends
+                                         {:effect
+                                          (req (let [hunt (:diana @state)]
+                                                 (doseq [c hunt]
+                                                   (let [installed (find-cid (:cid c) (all-installed state side))]
+                                                     (when (get-in installed [:special :diana-installed])
+                                                       (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
+                                                       (trash state side installed {:unpreventable true}))))
+                                                 (swap! state dissoc :diana)
+                                                 (unregister-events state side card {:events {:run-ends nil}})
+                                                 (trash state side c)))}} c)))}
+                      card nil))}
 
    "Diesel"
    {:msg "draw 3 cards"
@@ -919,7 +928,6 @@
 
    "Frantic Coding"
    {:async true
-    :events {:runner-shuffle-deck nil}
     :effect
     (req (let [topten (take 10 (:deck runner))]
            (prompt! state :runner card (str "The top 10 cards of the Stack are "
@@ -935,7 +943,8 @@
               :effect (req (if (not= target "No install")
                              (do (register-events state side
                                                   {:runner-shuffle-deck
-                                                   {:effect (effect (update! (assoc card :shuffle-occurred true)))}}
+                                                   {:effect (effect (update! (assoc card :shuffle-occurred true))
+                                                                    (unregister-events card {:events {:runner-shuffle-deck nil}}))}}
                                                   (assoc card :zone '(:discard)))
                                  (install-cost-bonus state side [:credit -5])
                                  (let [to-trash (remove #(= (:cid %) (:cid target)) topten)]
@@ -1430,22 +1439,23 @@
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Leverage"
-   {:req (req (some #{:hq} (:successful-run runner-reg)))
-    :player :corp
-    :prompt "Take 2 bad publicity?"
-    :choices ["Yes" "No"]
-    :effect (req (if (= target "Yes")
-                   (do (gain-bad-publicity state :corp 2)
-                       (system-msg state :corp "takes 2 bad publicity"))
-                   (do (register-events state side
-                                        {:pre-damage {:effect (effect (damage-prevent :net Integer/MAX_VALUE)
-                                                                      (damage-prevent :meat Integer/MAX_VALUE)
-                                                                      (damage-prevent :brain Integer/MAX_VALUE))}
-                                         :runner-turn-begins {:effect (effect (unregister-events card))}}
-                                        (assoc card :zone '(:discard)))
-                       (system-msg state :runner "is immune to damage until the beginning of the Runner's next turn"))))
-    ; This :events is a hack so that the unregister-events above will fire.
-    :events {:runner-turn-begins nil :pre-damage nil}}
+   {:optional
+    {:req (req (some #{:hq} (:successful-run runner-reg)))
+     :player :corp
+     :prompt "Take 2 bad publicity?"
+     :yes-ability {:effect (effect (gain-bad-publicity :corp 2)
+                                   (system-msg :corp "takes 2 bad publicity"))}
+     :no-ability
+     {:effect (effect (register-events
+                        {:pre-damage {:effect (effect (damage-prevent :net Integer/MAX_VALUE)
+                                                      (damage-prevent :meat Integer/MAX_VALUE)
+                                                      (damage-prevent :brain Integer/MAX_VALUE))}
+                         :runner-turn-begins {:effect (effect (unregister-events
+                                                                card
+                                                                {:events {:runner-turn-begins nil
+                                                                          :pre-damage nil}}))}}
+                        (assoc card :zone '(:discard)))
+                      (system-msg :runner "is immune to damage until the beginning of the Runner's next turn"))}}}
 
    "Levy AR Lab Access"
    {:msg "shuffle their Grip and Heap into their Stack and draw 5 cards"
@@ -1568,11 +1578,10 @@
                                                               {:req (req (= target :rd))
                                                                :msg "gain 4 [Credits]"
                                                                :effect (effect (gain-credits 4)
-                                                                               (unregister-events card))}}
+                                                                               (unregister-events card {:events {:successful-run nil}}))}}
                                                   (assoc card :zone '(:discard))))
                                (update! state side (dissoc card :run-again))))))
-    :events {:successful-run nil
-             :successful-run-ends {:interactive (req true)
+    :events {:successful-run-ends {:interactive (req true)
                                    :optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (clear-wait-prompt :corp)
@@ -1670,8 +1679,7 @@
      (run-event
        {:move-zone (req (if (= [:discard] (:zone card))
                           (register-events state side ashes-flag (assoc card :zone [:discard]))
-                          (unregister-events state side card)))
-        :events {:runner-phase-12 nil}}
+                          (unregister-events state side card {:events {:runner-phase-12 nil}})))}
        nil))
 
    "Paper Tripping"
@@ -1685,9 +1693,9 @@
                  (apply prevent-run-on-server
                         state card (get-zones state))
                  (register-events state side
-                                  {:runner-turn-ends {:effect (req (apply enable-run-on-server state card (get-zones state)))}}
-                                  (assoc card :zone '(:discard))))
-    :events {:runner-turn-ends nil}}
+                                  {:runner-turn-ends {:effect (req (apply enable-run-on-server state card (get-zones state))
+                                                                   (unregister-events state side card {:events {:runner-turn-ends nil}}))}}
+                                  (assoc card :zone '(:discard))))}
 
    "Planned Assault"
    {:msg (msg "play " (:title target))
@@ -1736,10 +1744,9 @@
                       {:pre-steal-cost {:once :per-turn
                                         :effect (effect (gain-credits 7))
                                         :msg "gain 7 [Credits]"}
-                       :runner-turn-ends {:effect (effect (unregister-events card))}}
-                      (assoc card :zone '(:discard))))
-    :events {:pre-steal-cost nil
-             :runner-turn-ends nil}}
+                       :runner-turn-ends {:effect (effect (unregister-events card {:events {:pre-steal-cost nil
+                                                                                            :runner-turn-ends nil}}))}}
+                      (assoc card :zone '(:discard))))}
 
    "Prey"
    (run-event {:implementation "Ice trash is manual"} nil)
@@ -2018,15 +2025,14 @@
 
    "Running Interference"
    (run-event
-     {:events {:pre-rez-cost nil
-               :run-ends nil}}
+     nil
      nil
      nil
      (effect (register-events {:pre-rez-cost {:req (req (ice? target))
                                               :msg (msg "add an additional cost of " (:cost target)
                                                         " [Credits] to rez " (card-str state target))
                                               :effect (effect (rez-additional-cost-bonus [:credit (:cost target)]))}
-                               :run-ends {:effect (effect (unregister-events card))}}
+                               :run-ends {:effect (effect (unregister-events card {:events {:pre-rez-cost nil :run-ends nil}}))}}
                               (assoc card :zone '(:discard)))))
 
    "Satellite Uplink"
@@ -2101,15 +2107,18 @@
                    (resolve-ability
                      state :runner
                      {:msg (msg "select the piece of ICE at position " (ice-index state ice) " of " serv)
-                      :effect (effect (register-events {:pre-rez-cost
+                      :effect (effect (register-events {:runner-turn-ends (effect (unregister-events
+                                                                                    card
+                                                                                    {:events {:pre-rez-cost nil
+                                                                                              :runner-turn-ends nil}}))
+                                                        :pre-rez-cost
                                                         {:req (req (= target ice))
                                                          :effect (req (let [cost (rez-cost state side (get-card state target))]
                                                                         (gain-credits state :runner cost)))
                                                          :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")}}
                                                        (assoc card :zone '(:discard))))}
                      card nil)))
-    :events {:pre-rez-cost nil}
-    :end-turn {:effect (effect (unregister-events card))}}
+    }
 
    "Spear Phishing"
    {:implementation "Bypass is manual"
@@ -2204,23 +2213,27 @@
                       (unregister-events state side card)))}
 
    "Test Run"
-   {:prompt "Install a program from your Stack or Heap?"
-    :choices (cancellable ["Stack" "Heap"])
-    :msg (msg "install a program from their " target)
-    :effect (effect (resolve-ability
-                      {:prompt "Choose a program to install"
-                       :choices (req (cancellable
-                                       (filter #(is-type? % "Program")
-                                               ((if (= target "Heap") :discard :deck) runner))))
-                       :effect (effect (trigger-event :searched-stack nil)
-                                       (shuffle! :deck)
-                                       (runner-install (assoc-in target [:special :test-run] true) {:ignore-all-cost true}))
-                       :end-turn
-                       {:req (req (get-in (find-cid (:cid target) (all-installed state :runner)) [:special :test-run]))
-                        :msg (msg "move " (:title target) " to the top of their Stack")
-                        :effect (req (move state side (find-cid (:cid target) (all-installed state :runner))
-                                           :deck {:front true}))}}
-                      card targets))}
+   (let [move-ability {:req (req (seq (filter #(get-in % [:special :test-run]) (all-active-installed state :runner))))
+                       :effect (req (doseq [program (filter #(get-in % [:special :test-run]) (all-active-installed state :runner))]
+                                      (move state side program :deck {:front true})
+                                      (system-msg state side (str "move " (:title program) " to the top of the Stack"))))}]
+     {:events {:corp-turn-ends move-ability
+               :runner-turn-ends move-ability}
+      :prompt "Install a program from your Stack or Heap?"
+      :choices (cancellable ["Stack" "Heap"])
+      :msg (msg "install a program from their " target)
+      :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard)))
+                      (continue-ability
+                        {:prompt "Choose a program to install"
+                         :choices (req (cancellable
+                                         (filter #(is-type? % "Program")
+                                                 ((if (= target "Heap") :discard :deck) runner))))
+                         :effect (effect (trigger-event :searched-stack nil)
+                                         (shuffle! :deck)
+                                         (runner-install eid
+                                                         (assoc-in target [:special :test-run] true)
+                                                         {:ignore-all-cost true}))}
+                        card targets))})
 
    "The Maker's Eye"
    {:req (req rd-runnable)
@@ -2239,7 +2252,10 @@
                    {:pre-damage {:effect (effect (damage-prevent :net Integer/MAX_VALUE)
                                                  (damage-prevent :meat Integer/MAX_VALUE)
                                                  (damage-prevent :brain Integer/MAX_VALUE))}
-                    :run-ends {:effect (effect (unregister-events card))}}
+                    :run-ends {:effect (effect (unregister-events
+                                                 card
+                                                 {:events {:pre-damage nil
+                                                           :run-ends nil}}))}}
                    (assoc card :zone '(:discard)))
                  (resolve-ability
                    state side
@@ -2256,9 +2272,7 @@
                                    (gain-run-credits state :runner (:bad-publicity corp))
                                    (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))
                                    (trigger-event state :runner :run runtgt)))}
-                   card nil))
-    :events {:pre-damage nil
-             :run-ends nil}}
+                   card nil))}
 
    "The Price of Freedom"
    {:additional-cost [:connection 1]
@@ -2274,8 +2288,12 @@
                               (unregister-events card))}}}
 
    "Three Steps Ahead"
-   {:end-turn {:effect (effect (gain-credits (* 2 (count (:successful-run runner-reg)))))
-               :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")}}
+   {:effect (effect (register-events
+                      {:runner-turn-ends
+                       {:msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")
+                        :effect (effect (gain-credits (* 2 (count (:successful-run runner-reg))))
+                                        (unregister-events card {:events {:runner-turn-ends nil}}))}}
+                      (assoc card :zone '(:discard))))}
 
    "Tinkering"
    {:prompt "Select a piece of ICE"
@@ -2291,10 +2309,10 @@
                                       (add-icon card (get-card state ice) "T" "green")
                                       (register-events {:runner-turn-ends
                                                         {:effect (effect (remove-icon card (get-card state ice))
-                                                                         (update! (assoc (get-card state ice) :subtype stypes)))}}
+                                                                         (update! (assoc (get-card state ice) :subtype stypes))
+                                                                         (unregister-events card {:events {:runner-turn-ends nil}}))}}
                                                        (assoc card :zone '(:discard))))}
-                     card nil)))
-    :events {:runner-turn-ends nil}}
+                     card nil)))}
 
    "Trade-In"
    ;; Basically a hack. Ideally the additional cost cause the cost trash to be passed in as targets

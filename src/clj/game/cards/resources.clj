@@ -1189,15 +1189,18 @@
    (let [ability {:msg "gain [Click]"
                   :once :per-turn
                   :label "Gain [Click] (start of turn)"
-                  :effect (effect (gain :click 1))
-                  :end-turn {:async true
-                             :effect (effect (gain-tags eid 1))
-                             :msg "gain 1 tag"}}]
+                  :effect (effect (gain :click 1)
+                                  (update! (assoc-in card [:special :joshua-b] true)))}]
      {:flags {:runner-phase-12 (req true)}
       :events {:runner-turn-begins
                {:optional {:prompt "Use Joshua B. to gain [Click]?"
                            :once :per-turn
-                           :yes-ability ability}}}
+                           :yes-ability ability}}
+               :runner-turn-ends {:interactive (req true)
+                                  :req (req (get-in card [:special :joshua-b]))
+                                  :async true
+                                  :effect (effect (gain-tags eid 1))
+                                  :msg "gain 1 tag"}}
       :abilities [ability]})
 
    "Kasi String"
@@ -2148,31 +2151,33 @@
                      (gain-agenda-point state :corp 0))}
 
    "The Class Act"
-   {:effect (req true)
-    :end-turn {:async true
-               :msg "draw 4 cards"
-               :effect (effect (draw eid 4 nil))}
-    :events {:pre-runner-draw
-             {:msg "draw 1 additional card"
-              ;; The req catches draw events that happened before The Class Act was installed
-              :req (req (first-event? state :runner :pre-runner-draw))
-              :async true
-              :interactive (req true)
-              :once :per-turn
-              :effect (req (if (zero? (count (get-in @state [:runner :deck])))
-                             (effect-completed state side eid)
-                             (let [n (+ target (get-in @state [:bonus :draw] 0))
-                                   to-draw (take (inc n) (:deck (:runner @state)))]
-                               (show-wait-prompt state :corp "Runner to use The Class Act")
-                               (continue-ability
-                                 state :runner
-                                 {:prompt "Select 1 card to add to the bottom of the stack"
-                                  :msg "add 1 card to the bottom of the Stack"
-                                  :choices to-draw
-                                  :effect (effect (move target :deck)
-                                                  (clear-wait-prompt :corp)
-                                                  (effect-completed eid))}
-                                 card nil))))}}}
+   (let [draw-ability {:req (req (= :this-turn (:installed card)))
+                       :async true
+                       :msg "draw 4 cards"
+                       :effect (effect (draw :runner eid 4 nil))}]
+     {:events {:corp-turn-ends draw-ability
+               :runner-turn-ends draw-ability
+               :pre-runner-draw
+               {:msg "draw 1 additional card"
+                ;; The req catches draw events that happened before The Class Act was installed
+                :req (req (first-event? state :runner :pre-runner-draw))
+                :async true
+                :interactive (req true)
+                :once :per-turn
+                :effect (req (if (zero? (count (get-in @state [:runner :deck])))
+                               (effect-completed state side eid)
+                               (let [n (+ target (get-in @state [:bonus :draw] 0))
+                                     to-draw (take (inc n) (:deck (:runner @state)))]
+                                 (show-wait-prompt state :corp "Runner to use The Class Act")
+                                 (continue-ability
+                                   state :runner
+                                   {:prompt "Select 1 card to add to the bottom of the stack"
+                                    :msg "add 1 card to the bottom of the Stack"
+                                    :choices to-draw
+                                    :effect (effect (move target :deck)
+                                                    (clear-wait-prompt :corp)
+                                                    (effect-completed eid))}
+                                   card nil))))}}})
 
    "The Helpful AI"
    {:in-play [:link 1]
