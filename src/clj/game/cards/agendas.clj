@@ -1239,7 +1239,7 @@
    "SDS Drone Deployment"
    {:steal-cost-bonus (req [:program 1])
     :effect (req (show-wait-prompt state :runner "Corp to use SDS Drone Deployment")
-                 (if (seq (get-in @state [:runner :rig :program]))
+                 (if (seq (all-installed-runner-type state :program))
                    (continue-ability
                      state side
                      {:prompt "Select a program to trash"

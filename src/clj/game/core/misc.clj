@@ -131,6 +131,11 @@
   [state]
   (concat (all-installed state :corp) (all-installed state :runner)))
 
+(defn all-installed-runner-type
+  "Returns a list of all installed, non-facedown runner cards of the requested type."
+  [state card-type]
+  (filter (every-pred #(is-type? % card-type) (complement facedown?)) (all-installed state :runner)))
+
 (defn number-of-virus-counters
   "Returns number of actual virus counters (excluding virtual counters from Hivemind)"
   [state]
