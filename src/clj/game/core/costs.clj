@@ -2,7 +2,7 @@
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
          facedown? make-result unknown->kw discard-from-hand card-str trash trash-cards
-         complete-with-result)
+         complete-with-result all-installed-runner-type)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -59,9 +59,9 @@
                (and (= cost-type :discard) (<= 0 (- (count (get-in @state [side :hand])) amount)))
                (and (= cost-type :tag) (<= 0 (- (get-in @state [:runner :tag :base]) amount)))
                (and (= cost-type :ice) (<= 0 (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount)))
-               (and (= cost-type :hardware) (<= 0 (- (count (get-in @state [:runner :rig :hardware])) amount)))
-               (and (= cost-type :program) (<= 0 (- (count (get-in @state [:runner :rig :program])) amount)))
-               (and (= cost-type :resource) (<= 0 (- (count (get-in @state [:runner :rig :resource])) amount)))
+               (and (= cost-type :hardware) (<= 0 (- (count (all-installed-runner-type state :hardware)) amount)))
+               (and (= cost-type :program) (<= 0 (- (count (all-installed-runner-type state :program)) amount)))
+               (and (= cost-type :resource) (<= 0 (- (count (all-installed-runner-type state :resource)) amount)))
                (and (= cost-type :connection)
                     (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) amount)))
                (and (= cost-type :shuffle-installed-to-stack) (<= 0 (- (count (all-installed state :runner)) amount)))
