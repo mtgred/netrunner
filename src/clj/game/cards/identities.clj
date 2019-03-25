@@ -937,7 +937,7 @@
    (let [nasol {:optional
                 {:prompt "Play a Current?"
                  :player :corp
-                 :req (req (some #(has-subtype? % "Current") (concat (:hand corp) (:discard corp))))
+                 :req (req (some #(has-subtype? % "Current") (concat (:hand corp) (:discard corp) (:current corp))))
                  :yes-ability {:prompt "Select a Current to play from HQ or Archives"
                                :show-discard true
                                :async true

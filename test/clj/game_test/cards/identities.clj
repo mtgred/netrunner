@@ -1208,16 +1208,28 @@
       (is (= 3 (count (:deck (get-corp)))) "R&D ended with 3 cards"))))
 
 (deftest jinteki-personal-evolution
-  ;; Personal Evolution - Prevent runner from running on remotes unless they first run on a central
-  (do-game
-    (new-game {:corp {:id "Jinteki: Personal Evolution"
-                      :deck [(qty "Braintrust" 6)]}
-               :runner {:deck [(qty "Sure Gamble" 3)]}})
-    (play-from-hand state :corp "Braintrust" "New remote")
-    (take-credits state :corp)
-    (run-empty-server state "Server 1")
-    (click-prompt state :runner "Steal")
-    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage from steal")))
+  ;; Personal Evolution - Take 1 net when an agenda is scored or stolen
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:id "Jinteki: Personal Evolution"
+                        :deck [(qty "Braintrust" 6)]}
+                 :runner {:hand [(qty "Sure Gamble" 3)]}})
+      (play-from-hand state :corp "Braintrust" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Steal")
+      (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage from steal")))
+  (testing "Interaction with Employee Striek. Issue #4124"
+    (do-game
+      (new-game {:corp {:id "Jinteki: Personal Evolution"
+                        :deck [(qty "Braintrust" 6)]}
+                 :runner {:hand ["Employee Strike" (qty "Sure Gamble" 3)]}})
+      (play-from-hand state :corp "Braintrust" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Employee Strike")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Steal")
+      (is (= 3 (count (:hand (get-runner)))) "Runner took 0 net damage from steal"))))
 
 (deftest jinteki-potential-unleashed
   ;; Potential Unleashed - when the runner takes at least one net damage, mill 1 from their deck
@@ -1249,7 +1261,7 @@
       (take-credits state :corp)
       (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
       (run-empty-server state "HQ")
-      (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
+      (is (core/can-run-server? state "Server 1") "Runner can run on remotes")))
   (testing "interaction with Employee Strike. Issue #1313 and #1956."
     (do-game
       (new-game {:corp {:id "Jinteki: Replicating Perfection"
@@ -1259,7 +1271,7 @@
       (take-credits state :corp)
       (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
       (play-from-hand state :runner "Employee Strike")
-      (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")
+      (is (core/can-run-server? state "Server 1") "Runner can run on remotes")
       (play-from-hand state :runner "Scrubbed")
       (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals"))))
 

@@ -277,7 +277,7 @@
   (let [cost (:cost ability)]
     (when (or (nil? cost)
               (if (has-subtype? card "Run")
-                (apply can-pay? state side (:title card) cost (get-in @state [:bonus :run-cost]))
+                (apply can-pay? state side (:title card) cost (run-costs state side card))
                 (apply can-pay? state side (:title card) cost)))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))

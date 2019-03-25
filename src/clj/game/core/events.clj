@@ -172,39 +172,37 @@
          get-ability-side #(-> % :ability :side)
          active-player (:active-player @state)
          opponent (other-side active-player)
-         is-player (fn [player ability] (or (= player (get-side ability)) (= player (get-ability-side ability))))]
+         is-player (fn [player ability] (or (= player (get-side ability)) (= player (get-ability-side ability))))
+         get-handlers (fn [player-side]
+                        ;; prepare the list of the given player's handlers for this event.
+                        ;; Gather all registered handlers from the state, then append the card-ability if appropriate,
+                        ;; then filter to remove suppressed handlers and those whose req is false.
+                        ;; This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
+                        ;; http://nisei.net/files/Comprehensive_Rules_1.1.pdf
+                        (let [abis (filter (partial is-player player-side) (get-in @state [:events event]))
+                              abis (if (= player-side (get-side card-ability))
+                                     (cons card-ability abis)
+                                     abis)]
+                          (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
+                                        (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
+                                  abis)))
+         active-player-events (doall (get-handlers active-player))
+         opponent-events (doall (get-handlers opponent))]
      (wait-for (resolve-ability state side first-ability nil nil)
-               (let [get-handlers
-                     (fn [player-side]
-                       ;; prepare the list of the given player's handlers for this event.
-                       ;; Gather all registered handlers from the state, then append the card-ability if appropriate,
-                       ;; then filter to remove suppressed handlers and those whose req is false.
-                       ;; This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
-                       ;; http://nisei.net/files/Comprehensive_Rules_1.1.pdf
-                       (let [abis (filter (partial is-player player-side) (get-in @state [:events event]))
-                             abis (if (= player-side (get-side card-ability))
-                                    (cons card-ability abis)
-                                    abis)]
-                         (doall
-                           (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
-                                         (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
-                                   abis))))
-                     active-player-events (get-handlers active-player)
-                     opponent-events (get-handlers opponent)]
-                 (show-wait-prompt state opponent
-                                   (str (side-str active-player) " to resolve " (event-title event) " triggers")
-                                   {:priority -1})
-                 ; let active player activate their events first
-                 (wait-for (trigger-event-simult-player state side event active-player-events cancel-fn targets)
-                           (when after-active-player
-                             (resolve-ability state side after-active-player nil nil))
-                           (clear-wait-prompt state opponent)
-                           (show-wait-prompt state active-player
-                                             (str (side-str opponent) " to resolve " (event-title event) " triggers")
-                                             {:priority -1})
-                           (wait-for (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
-                                     (clear-wait-prompt state active-player)
-                                     (effect-completed state side eid))))))))
+               (show-wait-prompt state opponent
+                                 (str (side-str active-player) " to resolve " (event-title event) " triggers")
+                                 {:priority -1})
+               ; let active player activate their events first
+               (wait-for (trigger-event-simult-player state side event active-player-events cancel-fn targets)
+                         (when after-active-player
+                           (resolve-ability state side after-active-player nil nil))
+                         (clear-wait-prompt state opponent)
+                         (show-wait-prompt state active-player
+                                           (str (side-str opponent) " to resolve " (event-title event) " triggers")
+                                           {:priority -1})
+                         (wait-for (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
+                                   (clear-wait-prompt state active-player)
+                                   (effect-completed state side eid)))))))
 
 
 ; Functions for registering trigger suppression events.
