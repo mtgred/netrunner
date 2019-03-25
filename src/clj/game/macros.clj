@@ -85,7 +85,7 @@
 
 (defmacro wait-for
   ([action & expr]
-   (let [reqmac `(fn [state# side# eid# card# target#]
+   (let [reqmac `(fn [state# side# eid#]
                    (let [~'async-result (:result eid#)]
                      ~@expr))
    ;; this creates a five-argument function to be resolved later,
@@ -94,7 +94,7 @@
          th (nth action totake)]
      `(let [~'use-eid# (and (map? ~th) (:eid ~th))
             ~'new-eid# (if ~'use-eid# ~th (game.core/make-eid ~'state))]
-        (~'register-effect-completed ~'state ~'side ~'new-eid# ~(when (resolve 'card) ~'card) ~reqmac)
+        (~'register-effect-completed ~'state ~'side ~'new-eid# ~reqmac)
         (if ~'use-eid#
           ~(concat (take totake action) (list 'new-eid#) (drop (inc totake) action))
           ~(concat (take totake action) (list 'new-eid#) (drop totake action)))))))
