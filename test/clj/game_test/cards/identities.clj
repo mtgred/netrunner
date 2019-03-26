@@ -454,6 +454,26 @@
       (is (= 1 (count (get-hardware state))) "One installed hardware")
       (is (= (- creds 3) (:credit (get-runner))) "Az discount was applied"))))
 
+(deftest blue-sun-powering-the-future
+  ;; Blue Sun - Pick up cards at start of turn
+  (do-game
+    (new-game {:corp {:id "Blue Sun: Powering the Future"
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["Reduced Service"]}})
+    (play-from-hand state :corp "Reduced Service" "New remote")
+    (let [rs (get-content state :remote1 0)]
+      (core/rez state :corp rs)
+      (click-prompt state :corp "3")
+      (is (= 3 (get-counters (refresh rs) :power)) "Reduced Service should have 3 counters on it")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (click-card state :corp rs)
+      (is (nil? (refresh rs)) "Reduced Service is picked up")
+      (is (find-card "Reduced Service" (:hand (get-corp))) "Reduced Service is now in HQ"))
+    (play-from-hand state :corp "Reduced Service" "New remote")
+    (is (zero? (get-counters (get-content state :remote2 0) :power)) "Reduced Service should have 0 counters on it after reinstall")))
+
 (deftest cerebral-imaging-infinite-frontiers
   ;; Cerebral Imaging - Maximum hand size equal to credits
   (do-game
