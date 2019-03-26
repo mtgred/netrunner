@@ -497,12 +497,10 @@
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
                                       (card-init state side c {:resolve-effect false})
                                       (register-events state side
-                                                       {:run-ends {:effect (effect (trash c)
-                                                                                   (unregister-events
-                                                                                     card
-                                                                                     {:events {:run-ends nil}}))}}
+                                                       {:run-ends {:effect (effect (trash c))}}
                                                        c)))}
                       card nil))
+    :events {:run-ends nil}
     :interactions {:trash-ability
                    {:label "[Demolition Run]: Trash card"
                     :msg (msg "trash " (:title target) " at no cost")
@@ -565,20 +563,19 @@
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
                                       (card-init state side c {:resolve-effect false})
-                                      (register-events
-                                        state side
-                                        {:run-ends
-                                         {:effect
-                                          (req (let [hunt (:diana @state)]
-                                                 (doseq [c hunt]
-                                                   (let [installed (find-cid (:cid c) (all-installed state side))]
-                                                     (when (get-in installed [:special :diana-installed])
-                                                       (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
-                                                       (trash state side installed {:unpreventable true}))))
-                                                 (swap! state dissoc :diana)
-                                                 (unregister-events state side card {:events {:run-ends nil}})
-                                                 (trash state side c)))}} c)))}
-                      card nil))}
+                                      (register-events state side
+                                                       {:run-ends {:effect (req (let [hunt (:diana @state)]
+                                                                                  (doseq [c hunt]
+                                                                                    (let [installed (find-cid (:cid c) (all-installed state side))]
+                                                                                      (when (get-in installed [:special :diana-installed])
+                                                                                        (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
+                                                                                        (trash state side installed {:unpreventable true}))))
+                                                                                  (swap! state dissoc :diana)
+                                                                                  (unregister-events state side card)
+                                                                                  (trash state side c)))}}
+                                                       c)))}
+                      card nil))
+    :events {:run-ends nil}}
 
    "Diesel"
    {:msg "draw 3 cards"
@@ -928,6 +925,7 @@
 
    "Frantic Coding"
    {:async true
+    :events {:runner-shuffle-deck nil}
     :effect
     (req (let [topten (take 10 (:deck runner))]
            (prompt! state :runner card (str "The top 10 cards of the Stack are "
@@ -943,8 +941,7 @@
               :effect (req (if (not= target "No install")
                              (do (register-events state side
                                                   {:runner-shuffle-deck
-                                                   {:effect (effect (update! (assoc card :shuffle-occurred true))
-                                                                    (unregister-events card {:events {:runner-shuffle-deck nil}}))}}
+                                                   {:effect (effect (update! (assoc card :shuffle-occurred true)))}}
                                                   (assoc card :zone '(:discard)))
                                  (install-cost-bonus state side [:credit -5])
                                  (let [to-trash (remove #(= (:cid %) (:cid target)) topten)]
@@ -957,7 +954,8 @@
                                                  (do (system-msg state side "does not have to trash cards because the stack was shuffled")
                                                      (effect-completed state side eid)))))))
                              (do (doseq [c topten] (trash state side c {:unpreventable true}))
-                                 (system-msg state side (str "trashes " (join ", " (map :title topten)))))))} card nil)))}
+                                 (system-msg state side (str "trashes " (join ", " (map :title topten)))))))}
+             card nil)))}
 
    "\"Freedom Through Equality\""
    {:events {:agenda-stolen {:msg "add it to their score area as an agenda worth 1 agenda point"
@@ -1577,11 +1575,11 @@
                                  (register-events state side {:successful-run
                                                               {:req (req (= target :rd))
                                                                :msg "gain 4 [Credits]"
-                                                               :effect (effect (gain-credits 4)
-                                                                               (unregister-events card {:events {:successful-run nil}}))}}
+                                                               :effect (effect (gain-credits 4))}}
                                                   (assoc card :zone '(:discard))))
                                (update! state side (dissoc card :run-again))))))
-    :events {:successful-run-ends {:interactive (req true)
+    :events {:successful-run nil
+             :successful-run-ends {:interactive (req true)
                                    :optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (clear-wait-prompt :corp)
@@ -1693,9 +1691,9 @@
                  (apply prevent-run-on-server
                         state card (get-zones state))
                  (register-events state side
-                                  {:runner-turn-ends {:effect (req (apply enable-run-on-server state card (get-zones state))
-                                                                   (unregister-events state side card {:events {:runner-turn-ends nil}}))}}
-                                  (assoc card :zone '(:discard))))}
+                                  {:runner-turn-ends {:effect (req (apply enable-run-on-server state card (get-zones state)))}}
+                                  (assoc card :zone '(:discard))))
+    :events {:runner-turn-ends nil}}
 
    "Planned Assault"
    {:msg (msg "play " (:title target))
@@ -1744,9 +1742,10 @@
                       {:pre-steal-cost {:once :per-turn
                                         :effect (effect (gain-credits 7))
                                         :msg "gain 7 [Credits]"}
-                       :runner-turn-ends {:effect (effect (unregister-events card {:events {:pre-steal-cost nil
-                                                                                            :runner-turn-ends nil}}))}}
-                      (assoc card :zone '(:discard))))}
+                       :runner-turn-ends {:effect (effect (unregister-events card))}}
+                      (assoc card :zone '(:discard))))
+    :events {:pre-steal-cost nil
+             :runner-turn-ends nil}}
 
    "Prey"
    (run-event {:implementation "Ice trash is manual"} nil)
@@ -2025,14 +2024,15 @@
 
    "Running Interference"
    (run-event
-     nil
+     {:events {:pre-rez-cost nil
+               :run-ends nil}}
      nil
      nil
      (effect (register-events {:pre-rez-cost {:req (req (ice? target))
                                               :msg (msg "add an additional cost of " (:cost target)
                                                         " [Credits] to rez " (card-str state target))
                                               :effect (effect (rez-additional-cost-bonus [:credit (:cost target)]))}
-                               :run-ends {:effect (effect (unregister-events card {:events {:pre-rez-cost nil :run-ends nil}}))}}
+                               :run-ends {:effect (effect (unregister-events card))}}
                               (assoc card :zone '(:discard)))))
 
    "Satellite Uplink"
@@ -2117,8 +2117,7 @@
                                                                         (gain-credits state :runner cost)))
                                                          :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")}}
                                                        (assoc card :zone '(:discard))))}
-                     card nil)))
-    }
+                     card nil)))}
 
    "Spear Phishing"
    {:implementation "Bypass is manual"
