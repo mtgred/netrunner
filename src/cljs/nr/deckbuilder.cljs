@@ -284,10 +284,9 @@
       (let [deck (:deck @s)]
         (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e))
         (go (let [response (<! (DELETE (str "/data/decks/" (:_id deck))))]))
-        (do
-          (swap! app-state update :decks (fn [ds] (remove #(= deck %) ds)))
-          (swap! s assoc :deck (first (sort-by :date > (:decks @app-state))))
-          (end-delete s))))))
+        (swap! app-state update :decks (fn [ds] (remove #(= deck %) ds)))
+        (swap! s assoc :deck (first (sort-by :date > (:decks @app-state))))
+        (end-delete s)))))
 
 (defn new-deck [side s]
   (let [old-deck (:deck @s)
