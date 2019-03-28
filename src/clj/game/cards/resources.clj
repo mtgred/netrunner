@@ -378,7 +378,7 @@
                                 :msg (msg "draw " (get-counters card :power) " cards. Bug Out Bag is trashed")
                                 :async true
                                 :effect (req (wait-for (draw state side (get-counters card :power) nil)
-                                                       (trash state side eid card)))}}}
+                                                       (trash state side eid card nil)))}}}
 
    "Caldera"
    {:interactions {:prevent [{:type #{:net :brain}
