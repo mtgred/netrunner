@@ -716,7 +716,9 @@
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
    "Letheia Nisei"
-   (let [ability {:req (req (and this-server
+   (let [ability {:label "Force runner to re-approach outer ice"
+                  :once :per-turn
+                  :req (req (and this-server
                                  (zero? (:position run))))
                   :psi {:not-equal
                         {:effect
