@@ -1251,7 +1251,8 @@
                       :msg (msg "trash " (:title target))
                       :choices {:req #(and (installed? %)
                                            (is-type? % "Program"))}
-                      :effect (effect (trash target))
+                      :effect (effect (trash target)
+                                      (clear-wait-prompt :runner))
                       :end-effect (effect (clear-wait-prompt :runner))}
                      card nil)
                    (clear-wait-prompt state :runner)))}
