@@ -311,7 +311,8 @@
                                    (<= 15 c)
                                    (do (system-msg state side (str "uses " b " to gain [Click]"))
                                        (gain state side :click 1)
-                                       (effect-completed state side eid)))))}]
+                                       (effect-completed state side eid))
+                                   :else (effect-completed state side eid))))}]
      {:flags {:drip-economy true}
       :abilities [ability]
       :events {:runner-turn-begins ability}})
