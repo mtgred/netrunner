@@ -1400,14 +1400,14 @@
                :effect (effect (gain :click 1))}
               {:prompt "Choose a non-agenda to install"
                :msg "install a non-agenda from hand"
-               :choices {:req #(and (not (is-type? % "Agenda"))
-                                    (not (is-type? % "Operation"))
+               :choices {:req #(and (not (agenda? %))
+                                    (not (operation? %))
                                     (in-hand? %))}
                :async true
                :effect (effect (corp-install eid target nil nil))}]
          can-install? (fn [hand]
-                        (seq (filter #(and (not (is-type? % "Agenda"))
-                                           (not (is-type? % "Operation")))
+                        (seq (remove #(or (agenda? %)
+                                          (operation? %))
                                      hand)))
          choice (fn choice [abis chose-once]
                   {:prompt "Choose an ability to resolve"
@@ -1419,11 +1419,15 @@
                                                (can-install? (:hand corp))))
                                     (wait-for (resolve-ability state side chosen card nil)
                                               (if (false? chose-once)
-                                                (continue-ability state side (choice abis true) card nil)
-                                                (effect-completed state side eid)))
+                                                (continue-ability state side
+                                                                  (choice (remove #(= % chosen) abis) true)
+                                                                  card nil)
+                                                (do (clear-wait-prompt state :runner)
+                                                    (effect-completed state side eid))))
                                     (continue-ability state side (choice abis chose-once) card nil))))})]
      {:async true
-      :effect (effect (continue-ability (choice all false) card nil))})
+      :effect (effect (show-wait-prompt :runner "Corp to use Red Level Clearance")
+                      (continue-ability (choice all false) card nil))})
 
 
 

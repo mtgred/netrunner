@@ -1797,28 +1797,43 @@
 
 (deftest red-level-clearance
   ;; Red Level Clearance
-  (do-game
-    (new-game {:corp {:hand [(qty "Red Level Clearance" 2) "Hedge Fund" "Merger" "Plan B"]
-                      :deck [(qty "Beanstalk Royalties" 5)]}})
-    (play-from-hand state :corp "Red Level Clearance")
-    (let [credits (:credit (get-corp))]
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand [(qty "Red Level Clearance" 2) "Hedge Fund" "Merger" "Plan B"]
+                        :deck [(qty "Beanstalk Royalties" 5)]}})
+      (play-from-hand state :corp "Red Level Clearance")
+      (let [credits (:credit (get-corp))]
+        (click-prompt state :corp "Gain 2 [Credits]")
+        (is (= (+ credits 2) (:credit (get-corp)))))
+      (let [hand (count (:hand (get-corp)))]
+        (click-prompt state :corp "Draw 2 cards")
+        (is (= (+ hand 2) (count (:hand (get-corp))))))
+      (play-from-hand state :corp "Red Level Clearance")
+      (let [clicks (:click (get-corp))]
+        (click-prompt state :corp "Gain [Click]")
+        (is (= (inc clicks) (:click (get-corp)))))
+      (click-prompt state :corp "Install a non-agenda from hand")
+      (click-card state :corp "Merger")
+      (is (find-card "Merger" (:hand (get-corp))))
+      (click-card state :corp "Hedge Fund")
+      (is (find-card "Merger" (:hand (get-corp))))
+      (click-card state :corp "Plan B")
+      (click-prompt state :corp "New remote")
+      (is (not (find-card "Plan B" (:hand (get-corp)))))))
+  (testing "Can't choose same option twice. Issue #4150"
+    (do-game
+      (new-game {:corp {:deck [(qty "Beanstalk Royalties" 5)]
+                        :hand ["Red Level Clearance"]}})
+      (play-from-hand state :corp "Red Level Clearance")
+      (is (prompt-is-type? state :runner :waiting))
+      (is (= 4 (count (:choices (prompt-map :corp)))))
       (click-prompt state :corp "Gain 2 [Credits]")
-      (is (= (+ credits 2) (:credit (get-corp)))))
-    (let [hand (count (:hand (get-corp)))]
-      (click-prompt state :corp "Draw 2 cards")
-      (is (= (+ hand 2) (count (:hand (get-corp))))))
-    (play-from-hand state :corp "Red Level Clearance")
-    (let [clicks (:click (get-corp))]
+      (is (= 3 (count (:choices (prompt-map :corp)))))
+      (is (= ["Draw 2 cards" "Gain [Click]" "Install a non-agenda from hand"]
+             (vec (:choices (prompt-map :corp)))))
       (click-prompt state :corp "Gain [Click]")
-      (is (= (inc clicks) (:click (get-corp)))))
-    (click-prompt state :corp "Install a non-agenda from hand")
-    (click-card state :corp "Merger")
-    (is (find-card "Merger" (:hand (get-corp))))
-    (click-card state :corp "Hedge Fund")
-    (is (find-card "Merger" (:hand (get-corp))))
-    (click-card state :corp "Plan B")
-    (click-prompt state :corp "New remote")
-    (is (not (find-card "Plan B" (:hand (get-corp)))))))
+      (is (empty? (:prompt (get-runner))) "Runner should have no more prompt"))))
+
 
 (deftest red-planet-couriers
   ;; Red Planet Couriers - Move all advancements on cards to 1 advanceable card
