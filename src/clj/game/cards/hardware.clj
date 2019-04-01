@@ -482,6 +482,7 @@
    {:events
     {:pre-init-trace
      {:async true
+      :req (req (= :runner (:active-player @state)))
       :effect (effect (show-wait-prompt :corp "Runner to use Flip Switch")
                       (continue-ability
                         :runner

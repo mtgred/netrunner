@@ -462,21 +462,31 @@
   (testing "Trace reaction ability"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand [(qty "SEA Source" 2)]}
+                        :hand ["SEA Source" "IP Block"]}
                  :runner {:hand ["Flip Switch"]}})
+      (play-from-hand state :corp "IP Block" "HQ")
       (take-credits state :corp)
       (run-empty-server state "Archives")
       (play-from-hand state :runner "Flip Switch")
       (take-credits state :runner)
       (play-from-hand state :corp "SEA Source")
+      (is (prompt-is-type? state :runner :waiting) "Runner shouldn't get to use Flip Switch on Corp's turn")
+      (is (= 3 (-> (get-corp) :prompt first :base)) "Base trace should be base 3")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (= 1 (count-tags state)) "Runner should gain a tag from not beating trace")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [ip (get-ice state :hq 0)]
+        (core/rez state :corp ip)
+        (card-subroutine state :corp ip 0))
+      (is (prompt-is-type? state :corp :waiting) "Corp should now be waiting on Runner for Flip Switch")
       (click-prompt state :runner "Yes")
       (is (zero? (-> (get-corp) :prompt first :base)) "Base trace should now be 0")
       (is (find-card "Flip Switch" (:discard (get-runner))) "Flip Switch should be in Heap")
       (click-prompt state :corp "0")
-      (click-prompt state :runner "0")
-      (is (zero? (count-tags state)) "Runner should gain no tag from beating trace")
-      (play-from-hand state :corp "SEA Source")
-      (is (= 3 (-> (get-corp) :prompt first :base)) "Base trace should be reset to 3")))
+      (click-prompt state :runner "3")
+      (is (= 1 (count-tags state)) "Runner should not gain a tag from beating trace")))
   (testing "Jack out ability"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
