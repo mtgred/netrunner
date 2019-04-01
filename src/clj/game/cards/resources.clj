@@ -2022,7 +2022,7 @@
                                                           (fn [coll]
                                                             (remove-once #(= (:cid %) (:cid target)) coll)))
                                     {:cause :ability-cost})
-                             (runner-install state side (dissoc target :facedown))))}]}
+                             (runner-install state side eid (dissoc target :facedown) nil)))}]}
 
    "Symmetrical Visage"
    {:events {:runner-click-draw {:req (req (genetics-trigger? state side :runner-click-draw))

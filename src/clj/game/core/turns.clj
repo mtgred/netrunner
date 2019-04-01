@@ -276,8 +276,10 @@
      (wait-for
        (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends))
        (do (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
-           (doseq [a (get-in @state [side :register :end-turn])]
-             (resolve-ability state side (:ability a) (:card a) (:targets a)))
+           (doseq [side [:corp :runner]]
+             (doseq [a (get-in @state [side :register :end-turn])]
+               (resolve-ability state side (:eid a) (:ability a) (:card a) (:targets a)))
+             (swap! state dissoc-in [side :register :end-turn]))
            (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
            (doseq [card (all-active-installed state :runner)]
              ;; Clear :installed :this-turn as turn has ended

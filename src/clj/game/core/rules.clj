@@ -114,7 +114,9 @@
                    deck-count (count (get-in @state [side :deck]))]
                (when (and (= side :corp) (> draws-after-prevent deck-count))
                  (win-decked state))
-               (when-not (and (= side active-player) (get-in @state [side :register :cannot-draw]))
+               (if (and (= side active-player)
+                        (get-in @state [side :register :cannot-draw]))
+                 (effect-completed state side eid)
                  (let [drawn (zone :hand (take draws-after-prevent (get-in @state [side :deck])))]
                    (swap! state update-in [side :hand] #(concat % drawn))
                    (swap! state update-in [side :deck] (partial drop draws-after-prevent))
