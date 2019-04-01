@@ -116,28 +116,17 @@
    {:interactive (req true)
     :async true
     :msg "look at the top 5 cards of R&D"
-    :prompt (msg "The top cards of R&D are (top->bottom) " (join ", " (map :title (take 5 (get-in @state [:corp :deck])))))
+    :prompt (msg "The top cards of R&D are (top->bottom) " (join ", " (map :title (take 5 (:deck corp)))))
     :choices ["OK"]
-    :effect (req (let [decline-msg "does not install any of the top 5 cards"]
-                   (if (some ice? (take 5 (get-in @state [:corp :deck])))
-                     (continue-ability
-                      state :corp
-                      {:prompt "Install a piece of ice?"
-                       :choices (filter ice? (take 5 (get-in @state [:corp :deck])))
-                       :effect (effect (continue-ability
-                                        (let [chosen-ice target]
-                                          {:async true
-                                           :prompt (str "Select a server to install " (:title chosen-ice) " on")
-                                           :choices (corp-install-list state chosen-ice)
-                                           :effect (effect (corp-install eid chosen-ice target
-                                                                         {:ignore-all-cost true
-                                                                          :install-state :rezzed-no-rez-cost}))})
-                                        card nil))
-                       :cancel-effect (effect (system-msg decline-msg)
+    :effect (effect (continue-ability
+                      {:prompt "Install a card?"
+                       :choices (remove #(or (agenda? %) (operation? %)) (take 5 (:deck corp)))
+                       :effect (effect (corp-install eid target nil
+                                                     {:ignore-all-cost true
+                                                      :install-state :rezzed-no-rez-cost}))
+                       :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
                                               (effect-completed eid))}
-                      card nil)
-                     (do (system-msg state :corp decline-msg)
-                         (effect-completed state side eid)))))}
+                      card nil))}
 
    "Armed Intimidation"
    {:async true

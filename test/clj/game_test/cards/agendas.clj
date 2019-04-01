@@ -133,7 +133,7 @@
 (deftest architect-deployment-test
   ;; Accelerated Beta Test
   (do-game
-   (new-game {:corp {:deck [(qty "Architect Deployment Test" 4) (qty "Enigma" 2)]}})
+   (new-game {:corp {:deck [(qty "Architect Deployment Test" 4) "Enigma" "Rashida Jaheem"]}})
    (starting-hand state :corp (repeat 4 "Architect Deployment Test"))
    (core/gain state :corp :click 4)
    (play-and-score state "Architect Deployment Test") ;makes a remote 1
@@ -148,10 +148,10 @@
    (is (empty (:prompt (get-corp))) "No more prompts if cancel is clicked")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
-   (click-prompt state :corp "Enigma")
+   (click-prompt state :corp "Rashida Jaheem")
    (is (changes-credits (get-corp) 0
                         (click-prompt state :corp "Server 2")))
-   (is (:rezzed (get-ice state :remote2 1)) "Enigma 2 was installed and rezzed, both at no cost")
+   (is (:rezzed (get-content state :remote2 0)) "Rashida Jaheem was installed and rezzed, both at no cost")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (is (empty (:prompt (get-corp))) "No prompts if there is no ice")))
