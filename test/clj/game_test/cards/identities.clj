@@ -1639,7 +1639,7 @@
 
 (deftest nbn-controlling-the-message
   ;; NBN: Controlling the Message
-  (testing "Trace to tag Runner when first installed Corp card is trashed"
+  (testing "Trace to tag Runner when first installed Corp card is trashed. Issue #2321"
     (do-game
       (new-game {:corp {:id "NBN: Controlling the Message"
                         :deck [(qty "Launch Campaign" 3)]}
@@ -1676,7 +1676,26 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner took 1 unpreventable tag")
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT"))))
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT")))
+  (testing "Trace shouldn't fire on second trash after trash during Direct Access run. #4168"
+    (do-game
+      (new-game {:corp {:id "NBN: Controlling the Message"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Launch Campaign" 3)]}
+                 :runner {:deck ["Direct Access"]}})
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Direct Access")
+      (click-prompt state :runner "Server 1")
+      (run-successful state)
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (click-prompt state :runner "Yes")
+      (run-empty-server state "Server 2")
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (is (empty? (:prompt (get-corp))) "CtM shouldn't fire")
+      (is (empty? (:prompt (get-runner))) "Runner shouldn't have prompt")
+      (is (zero? (count-tags state)) "Runner took 1 unpreventable tag"))))
 
 (deftest new-angeles-sol-your-news
   ;; New Angeles Sol - interaction with runner stealing agendas
