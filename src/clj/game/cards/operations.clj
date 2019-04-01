@@ -1624,7 +1624,9 @@
                          :effect (effect (gain-tags :corp eid 1))}}}
 
    "Secure and Protect"
-   {:effect (req (if (seq (filter ice? (:deck corp)))
+   {:interactive (req true)
+    :async true
+    :effect (req (if (seq (filter ice? (:deck corp)))
                    (do (show-wait-prompt state :runner "Corp to use Secure and Protect")
                        (continue-ability
                          state side
@@ -1637,13 +1639,16 @@
                                            {:async true
                                             :prompt (str "Select a server to install " (:title chosen-ice) " on")
                                             :choices ["Archives" "R&D" "HQ"]
+                                            :msg (msg "reveal " (:title chosen-ice) "and install it, paying 3[credit] less")
                                             :effect (effect (clear-wait-prompt :runner)
+                                                            (reveal state side chosen-ice)
                                                             (shuffle! :deck)
                                                             (install-cost-bonus [:credit -3])
                                                             (corp-install eid chosen-ice target nil))}
                                            card nil)))}
                          card nil))
-                   (shuffle! state side :deck)))}
+                   (do (shuffle! state side :deck)
+                       (effect-completed state side eid))))}
 
    "Self-Growth Program"
    {:req (req tagged)
