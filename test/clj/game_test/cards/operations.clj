@@ -1452,6 +1452,23 @@
     (play-from-hand state :corp "Mass Commercialization")
     (is (= 8 (:credit (get-corp))) "Gained 6 for 3 advanced ice from Mass Commercialization")))
 
+(deftest mca-informant
+  ;; MCA Informant
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["MCA Informant"]}
+               :runner {:hand ["Beth Kilrain-Chang"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Beth Kilrain-Chang")
+    (take-credits state :runner)
+    (play-from-hand state :corp "MCA Informant")
+    (click-card state :corp "Beth Kilrain-Chang")
+    (take-credits state :corp)
+    (let [credits (:credit (get-runner))]
+      (card-side-ability state :runner (-> (get-resource state 0) :hosted first) 0)
+      (is (nil? (get-resource state 0)) "Beth should now be trashed")
+      (is (= (- credits 2) (:credit (get-runner))) "Runner should pay 2 credits to trash MCA"))))
+
 (deftest medical-research-fundraiser
   ;; Medical Research Fundraiser - runner gains 8creds, runner gains 3creds
   (do-game
@@ -1833,7 +1850,6 @@
              (vec (:choices (prompt-map :corp)))))
       (click-prompt state :corp "Gain [Click]")
       (is (empty? (:prompt (get-runner))) "Runner should have no more prompt"))))
-
 
 (deftest red-planet-couriers
   ;; Red Planet Couriers - Move all advancements on cards to 1 advanceable card

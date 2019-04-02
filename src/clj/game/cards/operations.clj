@@ -1065,10 +1065,9 @@
                                                       (get-all-installed state))))))}
 
    "MCA Informant"
-   {:implementation "Runner must deduct 1 click and 2 credits, then trash host manually"
-    :req (req (not-empty (filter #(has-subtype? % "Connection")
+   {:req (req (not-empty (filter #(has-subtype? % "Connection")
                                  (all-active-installed state :runner))))
-    :prompt "Choose a connection to host MCA Informant on it"
+    :prompt "Choose a connection to host MCA Informant on"
     :choices {:req #(and (= (:side %) "Runner")
                          (has-subtype? % "Connection")
                          (installed? %))}
@@ -1078,7 +1077,12 @@
                  (trigger-event state :corp :runner-additional-tag-change 1))
     :leave-play (req (swap! state update-in [:runner :tag :additional] dec)
                      (trigger-event state :corp :runner-additional-tag-change 1)
-                     (system-msg state :corp "trashes MCA Informant"))}
+                     (system-msg state :corp "trashes MCA Informant"))
+    :runner-abilities [{:label "Trash MCA Informant host"
+                        :cost [:credit 2 :click 1]
+                        :req (req (= :runner side))
+                        :effect (effect (system-msg :runner (str "spends [Click] and 2 [Credits] to trash " (card-str state (:host card))))
+                                        (trash :runner eid (get-card state (:host card)) nil))}]}
 
    "Medical Research Fundraiser"
    {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"

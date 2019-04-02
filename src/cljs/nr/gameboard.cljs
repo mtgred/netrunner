@@ -175,20 +175,39 @@
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
 
-(defn handle-abilities [{:keys [abilities facedown side type] :as card} c-state]
+(declare face-down?)
+
+(defn handle-abilities
+  [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state]
   (let [actions (action-list card)
-        c (+ (count actions) (count abilities))]
-    (when-not (and (= side "Runner") facedown)
+        c (+ (count actions) (count abilities))
+        card-side (keyword (.toLowerCase (:side card)))]
+    (when-not (and (= card-side :runner) facedown)
       (cond
 
         ;; Toggle abilities panel
         (or (> c 1)
+            (pos? (+ (count corp-abilities)
+                     (count runner-abilities)))
             (some #{"derez" "advance"} actions)
             (and (= type "ICE")
                  (not (:run @game-state))))
-        (if (:abilities @c-state)
-          (swap! c-state dissoc :abilities)
-          (swap! c-state assoc :abilities true))
+        (do (when (= side card-side)
+              (if (:abilities @c-state)
+                (swap! c-state dissoc :abilities)
+                (swap! c-state assoc :abilities true)))
+            (when (and (= :runner card-side)
+                       (= :corp side)
+                       (:corp-abilities card))
+              (if (:corp-abilities @c-state)
+                (swap! c-state dissoc :corp-abilities)
+                (swap! c-state assoc :corp-abilities true)))
+            (when (and (= :corp card-side)
+                       (= :runner side)
+                       (:runner-abilities card))
+              (if (:runner-abilities @c-state)
+                (swap! c-state dissoc :runner-abilities)
+                (swap! c-state assoc :runner-abilities true))))
 
         ;; Trigger first (and only) ability / action
         (= c 1)
@@ -207,21 +226,17 @@
         ;; Card is an identity of player's side
         (and (= (:type card) "Identity")
              (= side (keyword (.toLowerCase (:side card)))))
-        (handle-abilities card c-state)
+        (handle-abilities side card c-state)
 
         ;; Runner side
         (= side :runner)
         (case (first zone)
           "hand" (if (:host card)
                    (when (:installed card)
-                     (handle-abilities card c-state))
+                     (handle-abilities side card c-state))
                    (send-command "play" {:card card}))
-          ("rig" "current" "onhost" "play-area") (handle-abilities card c-state)
-          ("servers") (when (and (= type "ICE") (:rezzed card))
-                        ;; ICE that should show list of abilities that send messages to fire sub
-                        (if (:runner-abilities @c-state)
-                          (swap! c-state dissoc :runner-abilities)
-                          (swap! c-state assoc :runner-abilities true)))
+          ("current" "onhost" "play-area" "scored" "servers" "rig")
+          (handle-abilities side card c-state)
           nil)
 
         ;; Corp side
@@ -239,11 +254,8 @@
                                           (swap! c-state dissoc :servers)
                                           (swap! c-state assoc :servers true)))
                    (send-command "play" {:card card}))
-          ("servers" "scored" "current" "onhost") (handle-abilities card c-state)
-          "rig" (when (:corp-abilities card)
-                  (if (:corp-abilities @c-state)
-                    (swap! c-state dissoc :corp-abilities)
-                    (swap! c-state assoc :corp-abilities true)))
+          ("current" "onhost" "play-area" "scored" "servers" "rig")
+          (handle-abilities side card c-state)
           nil)))))
 
 (defn in-play? [card]
