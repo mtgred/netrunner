@@ -251,6 +251,7 @@
             (.println *err* (with-out-str
                               (clojure.stacktrace/print-stack-trace
                                 (Exception. "Error in a text prompt") 25)))
+            (.println *err* (str "Current choice: " choice))
             (.println *err* (str "Current prompt: " prompt))))))))
 
 (defn select
