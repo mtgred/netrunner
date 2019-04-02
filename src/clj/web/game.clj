@@ -77,6 +77,7 @@
     client-id                           :client-id}]
   (when-let [{:keys [players gameid started] :as game} (lobby/game-for-client client-id)]
     (when (and (lobby/first-player? client-id gameid)
+               (= 2 (count players))
                (not started))
       (let [strip-deck (fn [player] (-> player
                                         (update-in [:deck] #(select-keys % [:_id :identity]))
