@@ -2019,8 +2019,7 @@
       (click-prompt state :runner "1 [Credit]: 6 cards")
       (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
       (click-prompt state :runner "Brainstorm")
-      (click-prompt state :runner "No action")
-      ))
+      (click-prompt state :runner "No action")))
   (testing "No other cards in R&D are accessed"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Technician Team"]}
@@ -2060,7 +2059,20 @@
       (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
       (click-prompt state :runner "Replacement effect")
       (click-prompt state :runner "1 [Credit]: 0 cards")
-      (is (empty? (:prompt (get-runner))) "Runner shouldn't get any access prompt when nothing is installed"))))
+      (is (empty? (:prompt (get-runner))) "Runner shouldn't get any access prompt when nothing is installed")))
+ (testing "Interaction with The Turning Wheel"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Technician Team"]}
+                 :runner {:deck ["Khusyuk" "The Turning Wheel"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [tww (get-resource state 0)]
+        (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+        (click-prompt state :runner "Replacement effect")
+        (is (zero? (get-counters (refresh tww) :power)) "The Turning Wheel shouldn't gain counters yet")))))
 
 (deftest knifed
   ;; Knifed - Make a run, trash a barrier if all subs broken
