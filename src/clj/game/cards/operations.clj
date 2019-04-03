@@ -1917,7 +1917,7 @@
                      state :runner
                      {:prompt (str "Add " (:title chosen) " to the top of the Stack or take 2 tags?")
                       :choices [(str "Move " (:title chosen))
-                                "2 tags"]
+                                "Take 2 tags"]
                       :async true
                       :effect (req (clear-wait-prompt state :corp)
                                    (move state :corp (last (:discard corp)) :rfg)

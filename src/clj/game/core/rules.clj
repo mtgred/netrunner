@@ -427,6 +427,7 @@
   (if (and (not suppress-event)
            (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
     (wait-for (trigger-event-sync state side (if (= side :corp) :corp-trash :runner-trash) card cause)
+              (swap! state assoc-in [side :register :trashed-card] true)
               (resolve-trash-end state side eid card oid args))
     (resolve-trash-end state side eid card args))))
 
