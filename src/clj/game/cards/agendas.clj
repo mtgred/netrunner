@@ -1286,13 +1286,16 @@
    "SSL Endorsement"
    (let [add-credits (effect (add-counter card :credit 9))
          remove-credits {:optional {:req (req (pos? (get-counters card :credit)))
+                                    :once :per-turn
                                     :prompt "Gain 3 [Credits] from SSL Endorsement?"
+                                    :autoresolve (get-autoresolve :auto-fire)
                                     :yes-ability
                                     {:effect (req (when (pos? (get-counters card :credit))
                                                     (gain-credits state :corp 3)
                                                     (system-msg state :corp (str "uses SSL Endorsement to gain 3 [Credits]"))
                                                     (add-counter state side card :credit -3)))}}}]
      {:effect add-credits
+      :abilities [(set-autoresolve :auto-fire "whether to take credits off SSL")]
       :stolen {:effect add-credits}
       :interactive (req true)
       :events {:corp-turn-begins remove-credits}
