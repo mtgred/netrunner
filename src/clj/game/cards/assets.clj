@@ -137,24 +137,22 @@
                  :msg (msg "swap " (get-counters card :advancement) " cards in HQ and Archives")}]}
 
    "Amani Senai"
-   (letfn [(get-last-stolen-pts [state]
-             (advancement-cost state :corp (last (get-in @state [:runner :scored]))))
-           (get-last-scored-pts [state]
-             (advancement-cost state :corp (last (get-in @state [:corp :scored]))))
-           (senai-ability [trace-base-func]
+   (letfn [(senai-ability [agenda]
              {:interactive (req true)
               :optional {:prompt "Trace with Amani Senai?"
                          :player :corp
                          :autoresolve (get-autoresolve :auto-fire)
-                         :yes-ability {:trace {:base (req (trace-base-func state))
+                         :yes-ability {:trace {:base (effect (advancement-cost agenda))
                                                :successful
                                                {:choices {:req #(and (installed? %)
                                                                      (card-is? % :side :runner))}
                                                 :label "add an installed card to the Grip"
                                                 :msg (msg "add " (:title target) " to the Runner's Grip")
                                                 :effect (effect (move :runner target :hand true))}}}}})]
-     {:events {:agenda-scored (senai-ability get-last-scored-pts)
-               :agenda-stolen (senai-ability get-last-stolen-pts)}
+     {:events {:agenda-scored {:interactive (req true)
+                               :effect (effect (continue-ability (senai-ability target) card nil))}
+               :agenda-stolen {:interactive (req true)
+                               :effect (effect (continue-ability (senai-ability target) card nil))}}
       :abilities [(set-autoresolve :auto-fire "whether to fire Amani Senai")]})
 
    "Anson Rose"
