@@ -2770,12 +2770,14 @@
   ;; Timely Public Release: spend agenda counter to install, ignoring all costs
   (testing "Install outside run"
     (do-game
-     (new-game {:corp {:deck ["Enigma" "Timely Public Release"]}})
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Timely Public Release" "Enigma"]}})
      (play-and-score state "Timely Public Release")
      (let [tpr (get-scored state :corp 0)]
        (is (= 1 (get-counters (refresh tpr) :agenda)) "TPR comes with 1 counter")
        (card-ability state :corp (refresh tpr) 0)
-       (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
+       (core/move state :corp (assoc (find-card "Enigma" (:hand (get-corp))) :seen true) :discard)
+       (click-card state :corp "Enigma")
        (click-prompt state :corp "HQ")
        (click-prompt state :corp "0")
        (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma was installed")

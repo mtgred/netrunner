@@ -1393,8 +1393,16 @@
                  :label "Install a piece of ice in any position, ignoring all costs"
                  :prompt "Select a piece of ice to install"
                  :show-discard true
-                 :choices {:req #(and (is-type? % "ICE")
-                                      (#{[:hand] [:discard]} (:zone %)))}
+                 :choices {:req #(and (ice? %)
+                                      (or (in-hand? %)
+                                          (in-discard? %)))}
+                 :msg (msg "install "
+                           (if (and (in-discard? target)
+                                    (or (faceup? target)
+                                        (not (facedown? target))))
+                             (:title target)
+                             "ICE")
+                           " from " (zone->name (:zone target)))
                  :effect (effect
                            (continue-ability
                              (let [chosen-ice target]
