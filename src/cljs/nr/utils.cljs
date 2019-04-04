@@ -81,7 +81,7 @@
    "core-experience" "Core Experience"
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
-   "socr8" "SOCR8"
+   "socr" "SOCR"
    "classic" "Classic"
    "casual" "Casual"})
 
@@ -91,7 +91,7 @@
    "Core Experience" "core-experience"
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
-   "SOCR8" "socr8"
+   "SOCR" "socr"
    "Classic" "classic"
    "Casual" "casual"})
 
