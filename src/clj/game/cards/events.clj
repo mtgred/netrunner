@@ -1907,7 +1907,7 @@
      {:req (req (some valid-target? (all-installed state :runner)))
       :effect (req (wait-for (resolve-ability state side pick-up card nil)
                              (continue-ability state side
-                                               (put-down state side (quot async-result 2))
+                                               (put-down state side (quot (or async-result 0) 2))
                                                card nil)))})
 
    "Reshape"

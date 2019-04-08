@@ -20,7 +20,7 @@
                    (reset-cost state card change)
                    (update! state :corp (assoc-in card store-key (get-counters card :power)))))
                (clear-cost [state card]
-                 (reset-cost state card (- (get-in card store-key)))
+                 (reset-cost state card (- (get-in card store-key 0)))
                  (update! state :corp (assoc-in card store-key 0)))]
          (merge cdef
                 {:events (merge {:counter-added {:req (req (= (:cid target) (:cid card)))
