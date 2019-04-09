@@ -146,7 +146,7 @@
    "Ben Musashi"
    (let [bm {:req (req (or (in-same-server? card target)
                            (from-same-server? card target)))
-             :effect (effect (steal-cost-bonus [:net-damage 2]))}]
+             :effect (effect (steal-cost-bonus [:net 2]))}]
      {:trash-effect
       {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
        :effect (effect (register-events {:pre-steal-cost (assoc bm :req (req (or (= (:zone target) (:previous-zone card))
