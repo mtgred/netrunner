@@ -204,7 +204,7 @@
     (wait-for (trash-cards state side cards {:unpreventable true :seen false})
               (complete-with-result
                 state side eid
-                (str (cost-names :mill amount) " trashed from "
+                (str (cost-names :mill amount) " trashed from the top of "
                      (if (= :corp side) "R&D" "the Stack"))))))
 
 (defn pay-discard
@@ -213,7 +213,7 @@
     (wait-for (trash-cards state side cards {:unpreventable true :seen false})
               (complete-with-result
                 state side eid
-                (str (cost-names :discard amount) " from "
+                (str (cost-names :discard amount) " trashed at random from "
                      (if (= :corp side) "HQ" "the Grip"))))))
 
 (defn- cost-handler

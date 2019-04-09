@@ -2022,7 +2022,7 @@
      nil
      nil
      (effect (register-events {:pre-rez-cost {:req (req (ice? target))
-                                              :msg (msg "add an additional cost (currently unknown) to rez " (card-str state target))
+                                              :msg (msg "double the cost (as an additional cost) to rez " (card-str state target))
                                               :effect (effect (rez-additional-cost-bonus [:credit (:cost target)]))}
                                :run-ends {:effect (effect (unregister-events card))}}
                               (assoc card :zone '(:discard)))))
