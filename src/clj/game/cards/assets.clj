@@ -86,13 +86,18 @@
    (advance-ambush 2 {:req (req (pos? (get-counters (get-card state card) :advancement)))
                       :async true
                       :effect (req (let [agg (get-counters (get-card state card) :advancement)
-                                         ab (-> trash-program
-                                                (assoc-in [:choices :max] agg)
-                                                (assoc :prompt (msg "Choose " (quantify agg "program") " to trash")
-                                                       :async true
-                                                       :effect (effect (trash-cards eid targets nil))
-                                                       :msg (msg "trash " (join ", " (map :title targets)))))]
-                                     (continue-ability state side ab card nil)))})
+                                         ab {:prompt (msg "Choose " (quantify agg "program") " to trash")
+                                             :async true
+                                             :cost [:credit 2]
+                                             :choices {:max agg
+                                                       :req (every-pred installed? program?)}
+                                             :effect (effect (trash-cards eid targets nil))
+                                             :msg (msg "trash " (join ", " (map :title targets)))}]
+                                     (continue-ability state side ab card nil)))}
+                   ;; This is needed because we're embedding the cost in the continued
+                   ;; ability (so it prints in the log), and thus can't use the 2 arg
+                   ;; version of installed-access-trigger
+                   "Pay 2 [Credits] to use Aggressive Secretary ability?")
 
    "Alexa Belsky"
    {:abilities [{:label "[Trash]: Shuffle all cards in HQ into R&D"
