@@ -462,21 +462,31 @@
   (testing "Trace reaction ability"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand [(qty "SEA Source" 2)]}
+                        :hand ["SEA Source" "IP Block"]}
                  :runner {:hand ["Flip Switch"]}})
+      (play-from-hand state :corp "IP Block" "HQ")
       (take-credits state :corp)
       (run-empty-server state "Archives")
       (play-from-hand state :runner "Flip Switch")
       (take-credits state :runner)
       (play-from-hand state :corp "SEA Source")
+      (is (prompt-is-type? state :runner :waiting) "Runner shouldn't get to use Flip Switch on Corp's turn")
+      (is (= 3 (-> (get-corp) :prompt first :base)) "Base trace should be base 3")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (= 1 (count-tags state)) "Runner should gain a tag from not beating trace")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [ip (get-ice state :hq 0)]
+        (core/rez state :corp ip)
+        (card-subroutine state :corp ip 0))
+      (is (prompt-is-type? state :corp :waiting) "Corp should now be waiting on Runner for Flip Switch")
       (click-prompt state :runner "Yes")
       (is (zero? (-> (get-corp) :prompt first :base)) "Base trace should now be 0")
       (is (find-card "Flip Switch" (:discard (get-runner))) "Flip Switch should be in Heap")
       (click-prompt state :corp "0")
-      (click-prompt state :runner "0")
-      (is (zero? (count-tags state)) "Runner should gain no tag from beating trace")
-      (play-from-hand state :corp "SEA Source")
-      (is (= 3 (-> (get-corp) :prompt first :base)) "Base trace should be reset to 3")))
+      (click-prompt state :runner "3")
+      (is (= 1 (count-tags state)) "Runner should not gain a tag from beating trace")))
   (testing "Jack out ability"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
@@ -644,9 +654,9 @@
       (play-from-hand state :runner "Hippo")
       (run-on state "HQ")
       (is (not-empty (get-hardware state)) "Hippo installed")
-      (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Ice Wall installed")
+      (is (= 1 (count (get-ice state :hq))) "Ice Wall installed")
       (card-ability state :runner (get-hardware state 0) 0)
-      (is (empty? (get-in @state [:corp :servers :hq :ices])) "Ice Wall removed")
+      (is (empty? (get-ice state :hq)) "Ice Wall removed")
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall trashed")
       (is (= 1 (count (:rfg (get-runner)))) "Hippo RFGed")
       (is (empty? (get-hardware state)) "Hippo removed")))
@@ -660,11 +670,11 @@
       (play-from-hand state :runner "Hippo")
       (run-on state "HQ")
       (is (not-empty (get-hardware state)) "Hippo installed")
-      (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ice installed")
+      (is (= 2 (count (get-ice state :hq))) "2 ice installed")
       (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall outermost")
       (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma innermost")
       (card-ability state :runner (get-hardware state 0) 0)
-      (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Ice removed")
+      (is (= 1 (count (get-ice state :hq))) "Ice removed")
       (is (= 1 (count (:discard (get-corp)))) "Ice trashed")
       (is (= "Ice Wall" (:title (first (:discard (get-corp))))) "Ice Wall in trash")
       (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma still innermost")

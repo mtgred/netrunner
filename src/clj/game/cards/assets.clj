@@ -86,13 +86,19 @@
    (advance-ambush 2 {:req (req (pos? (get-counters (get-card state card) :advancement)))
                       :async true
                       :effect (req (let [agg (get-counters (get-card state card) :advancement)
-                                         ab (-> trash-program
-                                                (assoc-in [:choices :max] agg)
-                                                (assoc :prompt (msg "Choose " (quantify agg "program") " to trash")
-                                                       :async true
-                                                       :effect (effect (trash-cards eid targets nil))
-                                                       :msg (msg "trash " (join ", " (map :title targets)))))]
-                                     (continue-ability state side ab card nil)))})
+                                         ab {:prompt (msg "Choose " (quantify agg "program") " to trash")
+                                             :async true
+                                             :cost [:credit 2]
+                                             :choices {:max agg
+                                                       :req #(and (installed? %)
+                                                                  (program? %))}
+                                             :effect (effect (trash-cards eid targets nil))
+                                             :msg (msg "trash " (join ", " (map :title targets)))}]
+                                     (continue-ability state side ab card nil)))}
+                   ;; This is needed because we're embedding the cost in the continued
+                   ;; ability (so it prints in the log), and thus can't use the 2 arg
+                   ;; version of installed-access-trigger
+                   "Pay 2 [Credits] to use Aggressive Secretary ability?")
 
    "Alexa Belsky"
    {:abilities [{:label "[Trash]: Shuffle all cards in HQ into R&D"
@@ -137,24 +143,22 @@
                  :msg (msg "swap " (get-counters card :advancement) " cards in HQ and Archives")}]}
 
    "Amani Senai"
-   (letfn [(get-last-stolen-pts [state]
-             (advancement-cost state :corp (last (get-in @state [:runner :scored]))))
-           (get-last-scored-pts [state]
-             (advancement-cost state :corp (last (get-in @state [:corp :scored]))))
-           (senai-ability [trace-base-func]
+   (letfn [(senai-ability [agenda]
              {:interactive (req true)
               :optional {:prompt "Trace with Amani Senai?"
                          :player :corp
                          :autoresolve (get-autoresolve :auto-fire)
-                         :yes-ability {:trace {:base (req (trace-base-func state))
+                         :yes-ability {:trace {:base (effect (advancement-cost agenda))
                                                :successful
                                                {:choices {:req #(and (installed? %)
                                                                      (card-is? % :side :runner))}
                                                 :label "add an installed card to the Grip"
                                                 :msg (msg "add " (:title target) " to the Runner's Grip")
                                                 :effect (effect (move :runner target :hand true))}}}}})]
-     {:events {:agenda-scored (senai-ability get-last-scored-pts)
-               :agenda-stolen (senai-ability get-last-stolen-pts)}
+     {:events {:agenda-scored {:interactive (req true)
+                               :effect (effect (continue-ability (senai-ability target) card nil))}
+               :agenda-stolen {:interactive (req true)
+                               :effect (effect (continue-ability (senai-ability target) card nil))}}
       :abilities [(set-autoresolve :auto-fire "whether to fire Amani Senai")]})
 
    "Anson Rose"
@@ -538,7 +542,9 @@
                                               (system-msg :runner (str "gains 2 [Credits] for a successful run "
                                                                        "on the Daily Quest server")))}
              :corp-turn-begins {:req (req (let [servers (get-in @state [:runner :register-last-turn :successful-run])]
-                                            (not (some #{(second (:zone card))} servers))))
+                                            (not (some #{(second (:zone card))
+                                                         (second (:zone (:host card)))}
+                                                       servers))))
                                 :msg "gain 3 [Credits]"
                                 :effect (effect (gain-credits :corp 3))}}}
 
@@ -1291,6 +1297,7 @@
                                        state side
                                        {:prompt (msg "Choose " (quantify cnt "installed card") " to shuffle into the stack")
                                         :player :corp
+                                        :cost [:credit 3]
                                         :choices {:req #(and (installed? %)
                                                              (= (:side %) "Runner"))
                                                   :max cnt}
@@ -1298,7 +1305,8 @@
                                         :effect (req (doseq [c targets]
                                                        (move state :runner c :deck))
                                                      (shuffle! state :runner :deck))}
-                                       card nil)))})
+                                       card nil)))}
+                   "Pay 3 [Credits] to use Neurostasis ability?")
 
    "News Team"
    {:flags {:rd-reveal (req true)}
@@ -1406,7 +1414,7 @@
       :effect (req (show-wait-prompt state :runner "Corp to select an agenda to score with Plan B")
                    (doseq [ag (filter #(is-type? % "Agenda") (:hand corp))]
                      (update-advancement-cost state side ag))
-                   (resolve-ability
+                   (continue-ability
                      state side
                      {:prompt "Select an Agenda in HQ to score"
                       :choices {:req #(and (is-type? % "Agenda")
@@ -1758,15 +1766,18 @@
    "Shattered Remains"
    (advance-ambush 1 {:async true
                       :req (req (pos? (get-counters (get-card state card) :advancement)))
-                      :effect (req (let [counters (get-counters (get-card state card) :advancement)]
-                                     (continue-ability
-                                       state side
-                                       (-> trash-hardware
-                                           (assoc-in [:choices :max] counters)
-                                           (assoc :prompt (msg "Select " (quantify counters "piece") " of hardware to trash")
-                                                  :effect (effect (trash-cards targets))
-                                                  :msg (msg "trash " (join ", " (map :title targets)))))
-                                       card nil)))})
+                      :effect (effect
+                                (continue-ability
+                                  (let [counters (get-counters (get-card state card) :advancement)]
+                                    {:prompt (msg "Select " (quantify counters "piece") " of hardware to trash")
+                                     :msg (msg "trash " (join ", " (map :title targets)))
+                                     :cost [:credit 1]
+                                     :choices {:max counters
+                                               :req #(and (installed? %)
+                                                          (hardware? %))}
+                                     :effect (effect (trash-cards targets))})
+                                  card nil))}
+                   "Pay 1 [Credits] to use Shattered Remains ability?")
 
    "Shi.Kyū"
    {:access
@@ -2011,10 +2022,10 @@
    "Toshiyuki Sakai"
    (advance-ambush
      0
-     {:effect (effect (resolve-ability
+     {:effect (effect (continue-ability
                         {:prompt "Select an asset or agenda in HQ"
-                         :choices {:req #(and (or (is-type? % "Agenda")
-                                                  (is-type? % "Asset"))
+                         :choices {:req #(and (or (agenda? %)
+                                                  (asset? %))
                                               (in-hand? %))}
                          :msg "swap it for an asset or agenda from HQ"
                          :effect (req (let [tidx (ice-index state card)

@@ -9,11 +9,11 @@
   (-> @state side :prompt seq first))
 
 (defn prompt-is-type? [state side prompt-type]
-  (when-let [prompt (get-prompt state side)]
+  (let [prompt (get-prompt state side)]
     (= prompt-type (:prompt-type prompt))))
 
 (defn prompt-is-card? [state side card]
-  (when-let [prompt (get-prompt state side)]
+  (let [prompt (get-prompt state side)]
     (and (:cid card)
          (-> prompt :card :cid)
          (= (:cid card) (-> prompt :card :cid)))))
@@ -26,7 +26,7 @@
 (defn click-card
   "Resolves a 'select prompt' by clicking a card. Takes a card map or a card name."
   [state side card]
-  (when-let [prompt (get-prompt state side)]
+  (let [prompt (get-prompt state side)]
     (cond
       ;; Card and prompt types are correct
       (and (prompt-is-type? state side :select)
@@ -63,30 +63,29 @@
   [state side choice]
   (let [prompt (get-prompt state side)
         choices (:choices prompt)]
-    (when prompt
-      (cond
-        ;; Integer prompts
-        (or (= choices :credit)
-            (:counter choices)
-            (:number choices))
-        (when-not (core/resolve-prompt state side {:choice (Integer/parseInt choice)})
-          (is (number? (Integer/parseInt choice))
-              (expect-type "number string" choice)))
+    (cond
+      ;; Integer prompts
+      (or (= choices :credit)
+          (:counter choices)
+          (:number choices))
+      (when-not (core/resolve-prompt state side {:choice (Integer/parseInt choice)})
+        (is (number? (Integer/parseInt choice))
+            (expect-type "number string" choice)))
 
-        ;; List of card titles for auto-completion
-        (:card-title choices)
-        (when-not (core/resolve-prompt state side {:choice choice})
-          (is (or (map? choice)
-                  (string? choice))
-              (expect-type "card string or map" choice)))
+      ;; List of card titles for auto-completion
+      (:card-title choices)
+      (when-not (core/resolve-prompt state side {:choice choice})
+        (is (or (map? choice)
+                (string? choice))
+            (expect-type "card string or map" choice)))
 
-        ;; Default text prompt
-        :else
-        (when-not (core/resolve-prompt state side {(if (string? choice) :choice :card) choice})
-          (is (= choice (first choices))
-              (str (side-str side) " expected to click [ "
-                   (if (string? choice) choice (:title choice ""))
-                   " ] but couldn't find it. Current prompt is: \n" prompt)))))))
+      ;; Default text prompt
+      :else
+      (when-not (core/resolve-prompt state side {(if (string? choice) :choice :card) choice})
+        (is (= choice (first choices))
+            (str (side-str side) " expected to click [ "
+                 (if (string? choice) choice (:title choice ""))
+                 " ] but couldn't find it. Current prompt is: \n" prompt))))))
 
 (defn last-log-contains?
   [state content]

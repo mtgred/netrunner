@@ -1299,8 +1299,9 @@
                                   :choices (mapv str (for [x (->> current-values keys last inc (range 1) (#(concat % [99])))]
                                                        (str x " [Credit]: "
                                                             (quantify (get current-values x 0) "card"))))
-                                  :effect (effect (effect-completed (make-result eid [(str->int (first (split target #" ")))
-                                                                                      (min 6 (str->int (nth (split target #" ") 2)))])))}))]
+                                  :effect (effect (effect-completed
+                                                    (make-result eid [(str->int (first (split target #" ")))
+                                                                      (min 6 (str->int (nth (split target #" ") 2)))])))}))]
      {:req (req rd-runnable)
       :async true
       :effect (req
@@ -1310,7 +1311,8 @@
                   {:req (req (= target :rd))
                    :async true
                    :replace-access
-                   {:effect (req
+                   {:async true
+                    :effect (req
                               (wait-for
                                 (resolve-ability state side (select-install-cost state) card nil)
                                 (let [revealed (seq (take (second async-result) (:deck corp)))]
@@ -1904,7 +1906,7 @@
      {:req (req (some valid-target? (all-installed state :runner)))
       :effect (req (wait-for (resolve-ability state side pick-up card nil)
                              (continue-ability state side
-                                               (put-down state side (quot async-result 2))
+                                               (put-down state side (quot (or async-result 0) 2))
                                                card nil)))})
 
    "Reshape"

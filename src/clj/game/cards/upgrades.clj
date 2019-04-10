@@ -20,7 +20,7 @@
                    (reset-cost state card change)
                    (update! state :corp (assoc-in card store-key (get-counters card :power)))))
                (clear-cost [state card]
-                 (reset-cost state card (- (get-in card store-key)))
+                 (reset-cost state card (- (get-in card store-key 0)))
                  (update! state :corp (assoc-in card store-key 0)))]
          (merge cdef
                 {:events (merge {:counter-added {:req (req (= (:cid target) (:cid card)))
@@ -716,7 +716,9 @@
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
    "Letheia Nisei"
-   (let [ability {:req (req (and this-server
+   (let [ability {:label "Force runner to re-approach outer ice"
+                  :once :per-turn
+                  :req (req (and this-server
                                  (zero? (:position run))))
                   :psi {:not-equal
                         {:effect

@@ -79,7 +79,10 @@
                  (and installed (card-is? target :side :corp) (:rezzed target)))
          (when-let [events (:events tdef)]
            (register-events state side events c))
-         (when (or (:recurring tdef) (:prevent tdef))
+         (when (or (:recurring tdef)
+                   (:prevent tdef)
+                   (:corp-abilities tdef)
+                   (:runner-abilities tdef))
            (card-init state side c {:resolve-effect false
                                     :init-data true})))
 

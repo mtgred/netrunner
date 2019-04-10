@@ -116,28 +116,17 @@
    {:interactive (req true)
     :async true
     :msg "look at the top 5 cards of R&D"
-    :prompt (msg "The top cards of R&D are (top->bottom) " (join ", " (map :title (take 5 (get-in @state [:corp :deck])))))
+    :prompt (msg "The top cards of R&D are (top->bottom) " (join ", " (map :title (take 5 (:deck corp)))))
     :choices ["OK"]
-    :effect (req (let [decline-msg "does not install any of the top 5 cards"]
-                   (if (some ice? (take 5 (get-in @state [:corp :deck])))
-                     (continue-ability
-                      state :corp
-                      {:prompt "Install a piece of ice?"
-                       :choices (filter ice? (take 5 (get-in @state [:corp :deck])))
-                       :effect (effect (continue-ability
-                                        (let [chosen-ice target]
-                                          {:async true
-                                           :prompt (str "Select a server to install " (:title chosen-ice) " on")
-                                           :choices (corp-install-list state chosen-ice)
-                                           :effect (effect (corp-install eid chosen-ice target
-                                                                         {:ignore-all-cost true
-                                                                          :install-state :rezzed-no-rez-cost}))})
-                                        card nil))
-                       :cancel-effect (effect (system-msg decline-msg)
+    :effect (effect (continue-ability
+                      {:prompt "Install a card?"
+                       :choices (remove #(or (agenda? %) (operation? %)) (take 5 (:deck corp)))
+                       :effect (effect (corp-install eid target nil
+                                                     {:ignore-all-cost true
+                                                      :install-state :rezzed-no-rez-cost}))
+                       :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
                                               (effect-completed eid))}
-                      card nil)
-                     (do (system-msg state :corp decline-msg)
-                         (effect-completed state side eid)))))}
+                      card nil))}
 
    "Armed Intimidation"
    {:async true
@@ -1298,13 +1287,16 @@
    "SSL Endorsement"
    (let [add-credits (effect (add-counter card :credit 9))
          remove-credits {:optional {:req (req (pos? (get-counters card :credit)))
+                                    :once :per-turn
                                     :prompt "Gain 3 [Credits] from SSL Endorsement?"
+                                    :autoresolve (get-autoresolve :auto-fire)
                                     :yes-ability
                                     {:effect (req (when (pos? (get-counters card :credit))
                                                     (gain-credits state :corp 3)
                                                     (system-msg state :corp (str "uses SSL Endorsement to gain 3 [Credits]"))
                                                     (add-counter state side card :credit -3)))}}}]
      {:effect add-credits
+      :abilities [(set-autoresolve :auto-fire "whether to take credits off SSL")]
       :stolen {:effect add-credits}
       :interactive (req true)
       :events {:corp-turn-begins remove-credits}
@@ -1405,8 +1397,16 @@
                  :label "Install a piece of ice in any position, ignoring all costs"
                  :prompt "Select a piece of ice to install"
                  :show-discard true
-                 :choices {:req #(and (is-type? % "ICE")
-                                      (#{[:hand] [:discard]} (:zone %)))}
+                 :choices {:req #(and (ice? %)
+                                      (or (in-hand? %)
+                                          (in-discard? %)))}
+                 :msg (msg "install "
+                           (if (and (in-discard? target)
+                                    (or (faceup? target)
+                                        (not (facedown? target))))
+                             (:title target)
+                             "ICE")
+                           " from " (zone->name (:zone target)))
                  :effect (effect
                            (continue-ability
                              (let [chosen-ice target]

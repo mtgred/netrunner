@@ -35,7 +35,7 @@
 (defn sub->0
   "Helper function for use in `update` or `update-in` to subtract for a value, to a minimum of 0."
   [n]
-  #(max 0 (- % n)))
+  #(max 0 ((fnil - 0 0) % n)))
 
 (defn remove-once [pred coll]
   (let [[head tail] (split-with (complement pred) coll)]
