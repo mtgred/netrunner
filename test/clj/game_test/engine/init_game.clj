@@ -16,14 +16,14 @@
     (do-game
       (new-game {:corp {:id "Jinteki: Personal Evolution"}})
       (is (= "Jinteki: Personal Evolution" (get-in @state [:corp :identity :title])))
-      (is (= "The Masque: Cyber General" (get-in @state [:runner :identity :title])))))
+      (is (= "The Professor: Keeper of Knowledge" (get-in @state [:runner :identity :title])))))
   (testing "Only the Runner ID is chosen"
     (do-game
       (new-game {:runner {:id "Khan: Savvy Skiptracer"}})
-      (is (= "The Shadow: Pulling the String" (get-in @state [:corp :identity :title])))
+      (is (= "Custom Biotics: Engineered for Success" (get-in @state [:corp :identity :title])))
       (is (= "Khan: Savvy Skiptracer" (get-in @state [:runner :identity :title])))))
   (testing "Both are not chosen"
     (do-game
       (new-game)
-      (is (= "The Shadow: Pulling the String" (get-in @state [:corp :identity :title])))
-      (is (= "The Masque: Cyber General" (get-in @state [:runner :identity :title]))))))
+      (is (= "Custom Biotics: Engineered for Success" (get-in @state [:corp :identity :title])))
+      (is (= "The Professor: Keeper of Knowledge" (get-in @state [:runner :identity :title]))))))

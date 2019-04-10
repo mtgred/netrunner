@@ -1029,7 +1029,7 @@
        (take-credits state :corp)
        (run-on state "R&D")
        (core/rez state :corp sm)
-       (is (changes-credits (get-corp) 0
+       (is (changes-credits (get-corp) 1
                             (card-ability state :corp (refresh sm) 0))) ;trigger slot machine
        (run-jack-out state)
        (take-credits state :runner)
