@@ -2390,8 +2390,8 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "Remote 1")
       (let [cache (get-program state 0)]
-        (is (= ["Pay 1:program to steal" "No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal")
-        (click-prompt state :runner "Pay 1:program to steal")
+        (is (= ["Pay 1 installed program to steal" "No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal")
+        (click-prompt state :runner "Pay 1 installed program to steal")
         (click-card state :runner "Cache")
         (is (nil? (refresh cache)) "Cache is trashed")
         (is (find-card "Cache" (:discard (get-runner))) "Cache is trashed")

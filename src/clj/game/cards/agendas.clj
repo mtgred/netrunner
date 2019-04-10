@@ -924,7 +924,7 @@
                                                   (if (>= (get-counters (get-card state card) :advancement) 5) 3 2)))}}}
 
    "Obokata Protocol"
-   {:steal-cost-bonus (req [:net-damage 4])}
+   {:steal-cost-bonus (req [:net 4])}
 
    "Paper Trail"
    {:trace {:base 6

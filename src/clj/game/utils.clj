@@ -2,7 +2,7 @@
   (:require [clojure.string :refer [split-lines split join]]
             [jinteki.cards :refer [all-cards]]))
 
-(declare pluralize)
+(declare quantify)
 
 (def cid (atom 0))
 
@@ -87,20 +87,6 @@
 (defn capitalize [string]
   (str (Character/toUpperCase (first string)) (subs string 1)))
 
-(defn costs->symbol
-  "Used during steal to print runner prompt for payment"
-  [costs]
-  (join ", " (map #(let [key (first %) value (last %)]
-                     (case key
-                       :credit (str value " [Credits]")
-                       :click (reduce str (for [i (range value)] "[Click]"))
-                       :net-damage (str value " net damage")
-                       :mill (str value " card mill")
-                       :hardware (str value " installed hardware")
-                       :shuffle-installed-to-stack (str "shuffling " value " installed "
-                                                        (pluralize "card" value) " into the stack")
-                       (str value (str key)))) (partition 2 (flatten costs)))))
-
 (defn vdissoc [v n]
   (vec (concat (subvec v 0 n) (subvec v (inc n)))))
 
@@ -163,23 +149,30 @@
 
 (defn cost-names
   "Converts a cost (value attribute pair) to a string for printing"
-  [value attr]
+  [attr value]
   (when (and (number? value)
              (pos? value))
     (case attr
-      :credit (str value " [Credit]")
+      :credit (str value " [Credits]")
       :click (->> "[Click]" repeat (take value) (apply str))
-      :forfeit (str value " Agenda" (when (> value 1) "s"))
-      :net (str value " net damage")
-      :meat (str value " meat damage")
-      :brain (str value " brain damage")
-      nil)))
+      :forfeit (quantify value "Agenda")
+      :hardware (quantify value "installed hardware" "")
+      :program (quantify value "installed program")
+      :connection (quantify value "installed connection resource")
+      :ice (quantify value "installed rezzed ICE" "")
+      :shuffle-installed-to-stack (str "shuffling " (quantify value "installed card") " into the stack")
+      :net (quantify value "net damage" "")
+      :meat (quantify value "meat damage" "")
+      :brain (quantify value "brain damage" "")
+      :mill (quantify value "card")
+      :discard (quantify value "card")
+      (quantify value (name attr)))))
 
 (defn build-cost-str
   "Gets the complete cost-str for specified costs"
   [costs]
   (->> costs
-       (map #(cost-names (second %) (first %)))
+       (map #(apply cost-names %))
        (filter some?)
        (interpose " and ")
        (apply str)))

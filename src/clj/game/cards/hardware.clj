@@ -1459,7 +1459,7 @@
                       :msg "gain 1 [Credits]"}}}
 
    "Zer0"
-   {:abilities [{:cost [:click 1 :net-damage 1]
+   {:abilities [{:cost [:click 1 :net 1]
                  :once :per-turn
                  :msg "gain 1 [Credits] and draw 2 cards"
                  :async true

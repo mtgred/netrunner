@@ -583,14 +583,16 @@
 (defn forfeit
   "Forfeits the given agenda to the :rfg zone."
   ([state side card] (forfeit state side (make-eid state) card))
-  ([state side eid card]
+  ([state side eid card] (forfeit state side eid card {:msg true}))
+  ([state side eid card args]
    ;; Remove all hosted cards first
    (doseq [h (:hosted card)]
      (trash state side
             (update-in h [:zone] #(map to-keyword %))
             {:unpreventable true :suppress-event true}))
    (let [card (get-card state card)]
-     (system-msg state side (str "forfeits " (:title card)))
+     (when (:msg args)
+       (system-msg state side (str "forfeits " (:title card))))
      (gain-agenda-point state side (- (get-agenda-points state side card)))
      (move state side card :rfg)
      (wait-for (trigger-event-sync state side (keyword (str (name side) "-forfeit-agenda")) card)
@@ -632,7 +634,7 @@
 (defn discard-from-hand
   "Force the discard of n cards from the hand by trashing them"
   ([state side] (discard-from-hand state side side 1))
-  ([state side n] (discard-from-hand state side side 1))
+  ([state side n] (discard-from-hand state side side n))
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :hand]))]
      (doseq [card milltargets]
