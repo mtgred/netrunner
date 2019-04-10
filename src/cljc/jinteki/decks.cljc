@@ -243,8 +243,7 @@
   (let [big-boxes ["creation-and-control"
                    "honor-and-profit"
                    "order-and-chaos"
-                   "data-and-destiny"
-                   "terminal-directive"]
+                   "data-and-destiny"]
         single-set? (as-> deck $
                       (combine-id-and-cards $)
                       (group-by #(get-in % [:card :cycle_code]) $)
@@ -252,8 +251,8 @@
                       (keys $)
                       (>= 1 (count $)))]
     {:legal (and single-set?
-                 (legal-format? valid :socr8 deck))
-     :description "Legal for Stimhack Online Cache Refresh 8"}))
+                 (legal-format? valid :socr deck))
+     :description "Legal for Stimhack Online Cache Refresh"}))
 
 (defn calculate-deck-status
   "Calculates all the deck's validity for the basic deckbuilding rules, as well as various official and unofficial formats.
@@ -268,7 +267,7 @@
      :snapshot (build-format-legality valid :snapshot deck)
      :snapshot-plus (build-snapshot-plus-legality valid :snapshot-plus deck)
      :core-experience (build-core-experience-legality valid deck)
-     :socr8 (build-socr-legality valid deck)}))
+     :socr (build-socr-legality valid deck)}))
 
 (defn trusted-deck-status
   [{:keys [status] :as deck}]
