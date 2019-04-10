@@ -542,7 +542,9 @@
                                               (system-msg :runner (str "gains 2 [Credits] for a successful run "
                                                                        "on the Daily Quest server")))}
              :corp-turn-begins {:req (req (let [servers (get-in @state [:runner :register-last-turn :successful-run])]
-                                            (not (some #{(second (:zone card))} servers))))
+                                            (not (some #{(second (:zone card))
+                                                         (second (:zone (:host card)))}
+                                                       servers))))
                                 :msg "gain 3 [Credits]"
                                 :effect (effect (gain-credits :corp 3))}}}
 
