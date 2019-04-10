@@ -20,8 +20,8 @@
                                          (is-scored? state :corp %))}
                     :msg (msg "trigger the \"when scored\" ability of " (:title target))
                     :async true
-                    ;dissoc :end-turn for Breaking News
-                    :effect (effect (continue-ability (dissoc (card-def target) :end-turn) target nil))}
+                    :effect (effect (continue-ability (card-def target) target nil)
+                                    (unregister-events target {:events {:corp-turn-ends nil :runner-turn-ends nil}}))}
                    card nil))}
 
    "Accelerated Diagnostics"
@@ -192,9 +192,18 @@
                  (when (neg? (available-mu state))
                    ;; Give runner a toast as well
                    (toast-check-mu state)
-                   (system-msg state :runner "must trash programs to free up [mu]")))
-    :end-turn {:effect (req (gain state :runner :memory 2)
-                            (system-msg state :runner "regains 2[mu]"))}}
+                   (system-msg state :runner "must trash programs to free up [mu]"))
+                 (register-events
+                   state side
+                   {:corp-turn-ends {:effect (effect (gain :runner :memory 2)
+                                                     (system-msg :runner "regains 2[mu]")
+                                                     (unregister-events card))}
+                    :runner-turn-ends {:effect (effect (gain :runner :memory 2)
+                                                       (system-msg :runner "regains 2[mu]")
+                                                       (unregister-events card))}}
+                   card))
+    :events {:corp-turn-ends nil
+             :runner-turn-ends nil}}
 
    "Beanstalk Royalties"
    {:msg "gain 3 [Credits]"

@@ -713,7 +713,13 @@
     :leave-play (req (apply enable-run-on-server state card (map first (get-remotes state))))}
 
    "Kabonesa Wu: Netspace Thrillseeker"
-   {:abilities [{:label "Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
+   (let [rfg-ability {:req (req (seq (filter #(get-in % [:special :kabonesa]) (all-installed state :runner))))
+                      :effect (req (doseq [program (filter #(get-in % [:special :kabonesa]) (all-installed state :runner))]
+                                     (move state side program :rfg)
+                                     (system-msg state side (str "remove " (:title program) " from the game"))))}]
+     {:events {:corp-turn-ends rfg-ability
+               :runner-turn-ends rfg-ability}
+      :abilities [{:label "Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
                  :cost [:click 1]
                  :prompt "Choose a program"
                  :choices (req (cancellable
@@ -724,11 +730,7 @@
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (install-cost-bonus [:credit -1])
-                                 (runner-install eid (assoc-in target [:special :kabonesa] true) nil))
-                 :end-turn
-                 {:req (req (get-in (find-cid (:cid target) (all-active-installed state :runner)) [:special :kabonesa]))
-                  :msg (msg "remove " (:title target) " from the game")
-                  :effect (effect (move (find-cid (:cid target) (all-active-installed state :runner)) :rfg))}}]}
+                                 (runner-install eid (assoc-in target [:special :kabonesa] true) nil))}]})
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
