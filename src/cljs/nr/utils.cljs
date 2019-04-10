@@ -35,7 +35,7 @@
   [num]
   (make-dots alliance-dot num))
 
-(defn- dots-html
+(defn dots-html
   "Make a hiccup-ready vector for the specified dot and cost-map (influence or mwl)"
   [dot cost-map]
   (for [factionkey (sort (keys cost-map))]

@@ -1922,10 +1922,10 @@
             {:label "Give the Runner X tags"
              :async true
              :effect (req (let [tags (max 1 (count-tags state))]
-                            (do (gain-tags state :corp eid tags)
-                                (system-msg
-                                  state side
-                                  (str "uses Threat Level Alpha to give the Runner " (quantify tags "tag"))))))}}}
+                            (gain-tags state :corp eid tags)
+                            (system-msg
+                              state side
+                              (str "uses Threat Level Alpha to give the Runner " (quantify tags "tag")))))}}}
 
    "Too Big to Fail"
    {:req (req (< (:credit corp) 10))

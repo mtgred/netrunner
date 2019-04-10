@@ -246,7 +246,7 @@
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
   [state side kw]
-  (wait-for (trigger-event-sync state side (keyword (str (name side) "-shuffle-deck")))
+  (wait-for (trigger-event-sync state side (if (= :corp side) :corp-shuffle-deck :runner-shuffle-deck) nil)
             (swap! state update-in [side kw] shuffle)))
 
 (defn shuffle-into-deck

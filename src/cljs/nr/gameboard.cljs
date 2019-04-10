@@ -1042,21 +1042,21 @@
                    :run (when (= server-type "archives") @run)}]]))
 
 (defn board-view-runner [player-side identity deck discard rig run]
-  (let [is-me (= player-side :runner)]
-    (let [centrals [:div.runner-centrals
+  (let [is-me (= player-side :runner)
+        centrals [:div.runner-centrals
                     [discard-view-runner player-side discard]
                     [deck-view :runner player-side identity deck]
                     [identity-view identity]]]
-      [:div.runner-board {:class (if is-me "me" "opponent")}
-       (when-not is-me centrals)
-       (doall (for [zone [:program :hardware :resource :facedown]]
-                ^{:key zone}
-                [:div
-                 (doall (for [c (zone @rig)]
-                          ^{:key (:cid c)}
-                          [:div.card-wrapper {:class (when (playable? c) "playable")}
-                           [card-view c]]))]))
-       (when is-me centrals)])))
+    [:div.runner-board {:class (if is-me "me" "opponent")}
+     (when-not is-me centrals)
+     (doall (for [zone [:program :hardware :resource :facedown]]
+              ^{:key zone}
+              [:div
+               (doall (for [c (zone @rig)]
+                        ^{:key (:cid c)}
+                        [:div.card-wrapper {:class (when (playable? c) "playable")}
+                         [card-view c]]))]))
+     (when is-me centrals)]))
 
 (defn cond-button [text cond f]
   (if cond

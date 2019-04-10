@@ -909,7 +909,7 @@
   ([state side] (jack-out state side (make-eid state)))
   ([state side eid]
    (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
-   (wait-for (trigger-event-sync state side :pre-jack-out)
+   (wait-for (trigger-event-sync state side :pre-jack-out nil)
              (let [prevent (get-prevent-list state :corp :jack-out)]
                (if (cards-can-prevent? state :corp prevent :jack-out)
                  (do (system-msg state :corp "has the option to prevent the Runner from jacking out")
