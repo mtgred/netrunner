@@ -133,7 +133,7 @@
 (deftest architect-deployment-test
   ;; Accelerated Beta Test
   (do-game
-   (new-game {:corp {:deck [(qty "Architect Deployment Test" 4) (qty "Enigma" 2)]}})
+   (new-game {:corp {:deck [(qty "Architect Deployment Test" 4) "Enigma" "Rashida Jaheem"]}})
    (starting-hand state :corp (repeat 4 "Architect Deployment Test"))
    (core/gain state :corp :click 4)
    (play-and-score state "Architect Deployment Test") ;makes a remote 1
@@ -148,10 +148,10 @@
    (is (empty (:prompt (get-corp))) "No more prompts if cancel is clicked")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
-   (click-prompt state :corp "Enigma")
+   (click-prompt state :corp "Rashida Jaheem")
    (is (changes-credits (get-corp) 0
                         (click-prompt state :corp "Server 2")))
-   (is (:rezzed (get-ice state :remote2 1)) "Enigma 2 was installed and rezzed, both at no cost")
+   (is (:rezzed (get-content state :remote2 0)) "Rashida Jaheem was installed and rezzed, both at no cost")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (is (empty (:prompt (get-corp))) "No prompts if there is no ice")))
@@ -2390,8 +2390,8 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "Remote 1")
       (let [cache (get-program state 0)]
-        (is (= ["Pay 1:program to steal" "No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal")
-        (click-prompt state :runner "Pay 1:program to steal")
+        (is (= ["Pay 1 installed program to steal" "No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal")
+        (click-prompt state :runner "Pay 1 installed program to steal")
         (click-card state :runner "Cache")
         (is (nil? (refresh cache)) "Cache is trashed")
         (is (find-card "Cache" (:discard (get-runner))) "Cache is trashed")
@@ -2770,12 +2770,14 @@
   ;; Timely Public Release: spend agenda counter to install, ignoring all costs
   (testing "Install outside run"
     (do-game
-     (new-game {:corp {:deck ["Enigma" "Timely Public Release"]}})
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Timely Public Release" "Enigma"]}})
      (play-and-score state "Timely Public Release")
      (let [tpr (get-scored state :corp 0)]
        (is (= 1 (get-counters (refresh tpr) :agenda)) "TPR comes with 1 counter")
        (card-ability state :corp (refresh tpr) 0)
-       (click-card state :corp (find-card "Enigma" (:hand (get-corp))))
+       (core/move state :corp (assoc (find-card "Enigma" (:hand (get-corp))) :seen true) :discard)
+       (click-card state :corp "Enigma")
        (click-prompt state :corp "HQ")
        (click-prompt state :corp "0")
        (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma was installed")

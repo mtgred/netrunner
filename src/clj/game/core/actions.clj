@@ -433,13 +433,13 @@
                              :effect (req (if (and (= target "Yes")
                                                    (can-pay? state side (:title card) altcost))
                                             (do (pay state side card altcost)
-                                              (rez state side eid (-> card (dissoc :alternative-cost))
-                                                   (merge args {:ignore-cost true
-                                                                :no-get-card true
-                                                                :paid-alt true})))
-                                            (do (rez state side eid (-> card (dissoc :alternative-cost))
-                                                     (merge args {:no-get-card true
-                                                                  :cached-bonus curr-bonus})))))}))
+                                                (rez state side eid (-> card (dissoc :alternative-cost))
+                                                     (merge args {:ignore-cost true
+                                                                  :no-get-card true
+                                                                  :paid-alt true})))
+                                            (rez state side eid (-> card (dissoc :alternative-cost))
+                                                 (merge args {:no-get-card true
+                                                              :cached-bonus curr-bonus}))))}))
                  (let [cdef (card-def card)
                        cost (rez-cost state side card)
                        additional-costs (concat (:additional-cost cdef)

@@ -104,7 +104,7 @@
   (when-let [replaces (:replaces card)]
     (let [replaced-card (some #(when (= replaces (:code %)) %) (:cards @app-state))]
       (when replaced-card
-        (add-card-art replaced-card art)))))
+        (add-card-art replaced-card art s)))))
 
 (defn- update-card-art
   "Set the alt art for a card and any card it replaces (recursively)"
@@ -134,26 +134,26 @@
                    :gamestats (get-in @app-state [:options :gamestats])
                    :deckstats (get-in @app-state [:options :deckstats])
                    :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
-    (go (while true 
-          (let [cards (<! alt-arts-channel) 
+    (go (while true
+          (let [cards (<! alt-arts-channel)
                 first-alt (first (sort-by :title (vals cards)))]
             (swap! s assoc-in [:alt-arts] (get-in @app-state [:options :alt-arts]))
-            (swap! s assoc-in [:alt-card] (:code first-alt)) 
-            (swap! s assoc-in [:alt-card-version] 
+            (swap! s assoc-in [:alt-card] (:code first-alt))
+            (swap! s assoc-in [:alt-card-version]
                    (get-in @app-state [:options :alt-arts (keyword (:code first-alt))]
                          "default")))))
 
     (fn [user]
       [:div.account
-       [:div#profile-form.panel.blue-shade.content-page {:ref "profile-form"} 
+       [:div#profile-form.panel.blue-shade.content-page {:ref "profile-form"}
         [:h2 "Settings"]
-        [:form {:on-submit #(handle-post % "/profile" s)} 
-         [:section 
+        [:form {:on-submit #(handle-post % "/profile" s)}
+         [:section
           [:h3 "Avatar"]
           [avatar @user {:opts {:size 38}}]
           [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]]
-         [:section 
-          [:h3 "Sounds"] 
+         [:section
+          [:h3 "Sounds"]
           [:div
            [:label [:input {:type "checkbox"
                             :value true
@@ -168,12 +168,12 @@
             "Enable game sounds"]]
           [:div "Volume"
            [:input {:type "range"
-                    :min 1 :max 100 :step 1 
-                    :on-change #(swap! s assoc-in [:volume] (.. % -target -value)) 
+                    :min 1 :max 100 :step 1
+                    :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
                     :value (or (:volume @s) 50)
                     :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
-         
-         [:section 
+
+         [:section
           [:h3  "Game board background"]
           (doall (for [option [{:name "The Root"        :ref "lobby-bg"}
                                {:name "Freelancer"      :ref "freelancer-bg"}

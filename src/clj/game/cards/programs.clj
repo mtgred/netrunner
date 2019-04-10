@@ -2094,14 +2094,23 @@
                                    :rd
                                    {:req (req (= target :rd))
                                     :replace-access
-                                    {:prompt "Choose a card to trash"
-                                     :not-distinct true
-                                     :choices (req (take 3 (:deck corp)))
+                                    {:msg (msg "reveal "
+                                               (->>
+                                                 (:deck corp)
+                                                 (take 3)
+                                                 (map :title)
+                                                 (join ", ")))
                                      :mandatory true
-                                     :effect (effect (reveal (take 3 (:deck corp)))
-                                                     (system-msg (str "uses Stargate to reveal " (join ", " (map :title (take 3 (:deck corp))))
-                                                                      " from the top of R&D and trash " (:title target)))
-                                                     (trash (assoc target :seen true)))}}
+                                     :effect
+                                     (effect
+                                       (reveal (take 3 (:deck corp)))
+                                       (resolve-ability
+                                         {:prompt "Choose a card to trash"
+                                          :msg (msg "trash " (:title target))
+                                          :not-distinct true
+                                          :choices (req (take 3 (:deck corp)))
+                                          :effect (effect (trash (assoc target :seen true)))}
+                                         card nil))}}
                                    card))}]}
 
    "Study Guide"

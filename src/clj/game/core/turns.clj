@@ -53,9 +53,13 @@
         runner-deck-id (get-in runner [:deck :_id])
         corp-options (get-in corp [:options])
         runner-options (get-in runner [:options])
-        corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
+        corp-identity (assoc (or (get-in corp [:deck :identity])
+                                 {:side "Corp" :type "Identity" :title "The Shadow: Pulling the String"})
+                             :cid (make-cid))
         corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
-        runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
+        runner-identity (assoc (or (get-in runner [:deck :identity])
+                                   {:side "Runner" :type "Identity" :title "The Masque: Cyber General"})
+                               :cid (make-cid))
         runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
         corp-quote (quotes/make-quote corp-identity runner-identity)
         runner-quote (quotes/make-quote runner-identity corp-identity)]
@@ -111,9 +115,9 @@
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
     (let [side :corp]
-      (wait-for (trigger-event-sync state side :pre-start-game)
+      (wait-for (trigger-event-sync state side :pre-start-game nil)
                 (let [side :runner]
-                  (wait-for (trigger-event-sync state side :pre-start-game)
+                  (wait-for (trigger-event-sync state side :pre-start-game nil)
                             (init-hands state)))))
     state))
 
@@ -273,7 +277,7 @@
      (when (and (= side :runner)
                 (neg? (hand-size state side)))
        (flatline state))
-     (wait-for (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends))
+     (wait-for (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil)
                (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
                (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
                (doseq [card (all-active-installed state :runner)]

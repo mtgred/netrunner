@@ -54,7 +54,6 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "Server 1")
       (click-prompt state :corp "Yes")
-      (is (= 3 (:credit (get-corp))))
       ;; Corp can trash one program
       (click-card state :corp (get-program state 1))
       ;; There should be two Caches left
@@ -851,7 +850,8 @@
   ;; Daily Quest
   (testing "Can only rez during Corp's action phase"
     (do-game
-      (new-game {:corp {:deck ["Daily Quest"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daily Quest"]}})
       (play-from-hand state :corp "Daily Quest" "New remote")
       (let [dq (get-content state :remote1 0)]
         (core/rez state :corp dq)
@@ -862,7 +862,8 @@
         (is (not (:rezzed (refresh dq))) "Cannot rez on Runner turn"))))
   (testing "Runner gains credits on successful runs"
     (do-game
-      (new-game {:corp {:deck ["Daily Quest"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daily Quest"]}})
       (play-from-hand state :corp "Daily Quest" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
@@ -879,7 +880,8 @@
       (is (= 6 (:credit (get-corp))) "Corp didn't gain credits due to successful run on Daily Quest server")))
   (testing "Corp gains credits on no successful runs last turn"
     (do-game
-      (new-game {:corp {:deck ["Daily Quest"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daily Quest"]}})
       (play-from-hand state :corp "Daily Quest" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
@@ -891,7 +893,28 @@
       (is (= 5 (:credit (get-runner))) "No successful runs on Daily Quest server")
       (is (= 6 (:credit (get-corp))))
       (take-credits state :runner)
-      (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))
+      (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server")))
+  (testing "Corp gains credits on no successful runs last turn when hosted on Rec Studio. Issue #4193"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daily Quest" "Full Immersion RecStudio"]}})
+      (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+      (let [fir (get-content state :remote1 0)]
+        (core/rez state :corp fir)
+        (card-ability state :corp fir 0)
+        (click-card state :corp "Daily Quest")
+        (let [dq (first (:hosted (refresh fir)))]
+          (core/rez state :corp dq)
+          (take-credits state :corp)
+          (run-empty-server state :hq)
+          (run-empty-server state :rd)
+          (run-empty-server state :archives)
+          (run-on state :remote1)
+          (run-jack-out state)
+          (is (= 5 (:credit (get-runner))) "No successful runs on Daily Quest server")
+          (is (= 3 (:credit (get-corp))))
+          (take-credits state :runner)
+          (is (= 6 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))))
 
 (deftest dedicated-response-team
   ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged

@@ -1074,10 +1074,9 @@
                                                       (get-all-installed state))))))}
 
    "MCA Informant"
-   {:implementation "Runner must deduct 1 click and 2 credits, then trash host manually"
-    :req (req (not-empty (filter #(has-subtype? % "Connection")
+   {:req (req (not-empty (filter #(has-subtype? % "Connection")
                                  (all-active-installed state :runner))))
-    :prompt "Choose a connection to host MCA Informant on it"
+    :prompt "Choose a connection to host MCA Informant on"
     :choices {:req #(and (= (:side %) "Runner")
                          (has-subtype? % "Connection")
                          (installed? %))}
@@ -1087,7 +1086,12 @@
                  (trigger-event state :corp :runner-additional-tag-change 1))
     :leave-play (req (swap! state update-in [:runner :tag :additional] dec)
                      (trigger-event state :corp :runner-additional-tag-change 1)
-                     (system-msg state :corp "trashes MCA Informant"))}
+                     (system-msg state :corp "trashes MCA Informant"))
+    :runner-abilities [{:label "Trash MCA Informant host"
+                        :cost [:credit 2 :click 1]
+                        :req (req (= :runner side))
+                        :effect (effect (system-msg :runner (str "spends [Click] and 2 [Credits] to trash " (card-str state (:host card))))
+                                        (trash :runner eid (get-card state (:host card)) nil))}]}
 
    "Medical Research Fundraiser"
    {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"
@@ -1409,14 +1413,14 @@
                :effect (effect (gain :click 1))}
               {:prompt "Choose a non-agenda to install"
                :msg "install a non-agenda from hand"
-               :choices {:req #(and (not (is-type? % "Agenda"))
-                                    (not (is-type? % "Operation"))
+               :choices {:req #(and (not (agenda? %))
+                                    (not (operation? %))
                                     (in-hand? %))}
                :async true
                :effect (effect (corp-install eid target nil nil))}]
          can-install? (fn [hand]
-                        (seq (filter #(and (not (is-type? % "Agenda"))
-                                           (not (is-type? % "Operation")))
+                        (seq (remove #(or (agenda? %)
+                                          (operation? %))
                                      hand)))
          choice (fn choice [abis chose-once]
                   {:prompt "Choose an ability to resolve"
@@ -1428,11 +1432,15 @@
                                                (can-install? (:hand corp))))
                                     (wait-for (resolve-ability state side chosen card nil)
                                               (if (false? chose-once)
-                                                (continue-ability state side (choice abis true) card nil)
-                                                (effect-completed state side eid)))
+                                                (continue-ability state side
+                                                                  (choice (remove #(= % chosen) abis) true)
+                                                                  card nil)
+                                                (do (clear-wait-prompt state :runner)
+                                                    (effect-completed state side eid))))
                                     (continue-ability state side (choice abis chose-once) card nil))))})]
      {:async true
-      :effect (effect (continue-ability (choice all false) card nil))})
+      :effect (effect (show-wait-prompt :runner "Corp to use Red Level Clearance")
+                      (continue-ability (choice all false) card nil))})
 
 
 
@@ -1633,7 +1641,9 @@
                          :effect (effect (gain-tags :corp eid 1))}}}
 
    "Secure and Protect"
-   {:effect (req (if (seq (filter ice? (:deck corp)))
+   {:interactive (req true)
+    :async true
+    :effect (req (if (seq (filter ice? (:deck corp)))
                    (do (show-wait-prompt state :runner "Corp to use Secure and Protect")
                        (continue-ability
                          state side
@@ -1646,13 +1656,16 @@
                                            {:async true
                                             :prompt (str "Select a server to install " (:title chosen-ice) " on")
                                             :choices ["Archives" "R&D" "HQ"]
+                                            :msg (msg "reveal " (:title chosen-ice) "and install it, paying 3[credit] less")
                                             :effect (effect (clear-wait-prompt :runner)
+                                                            (reveal state side chosen-ice)
                                                             (shuffle! :deck)
                                                             (install-cost-bonus [:credit -3])
                                                             (corp-install eid chosen-ice target nil))}
                                            card nil)))}
                          card nil))
-                   (shuffle! state side :deck)))}
+                   (do (shuffle! state side :deck)
+                       (effect-completed state side eid))))}
 
    "Self-Growth Program"
    {:req (req tagged)
@@ -1913,7 +1926,7 @@
                      state :runner
                      {:prompt (str "Add " (:title chosen) " to the top of the Stack or take 2 tags?")
                       :choices [(str "Move " (:title chosen))
-                                "2 tags"]
+                                "Take 2 tags"]
                       :async true
                       :effect (req (clear-wait-prompt state :corp)
                                    (move state :corp (last (:discard corp)) :rfg)
@@ -1931,10 +1944,10 @@
             {:label "Give the Runner X tags"
              :async true
              :effect (req (let [tags (max 1 (count-tags state))]
-                            (do (gain-tags state :corp eid tags)
-                                (system-msg
-                                  state side
-                                  (str "uses Threat Level Alpha to give the Runner " (quantify tags "tag"))))))}}}
+                            (gain-tags state :corp eid tags)
+                            (system-msg
+                              state side
+                              (str "uses Threat Level Alpha to give the Runner " (quantify tags "tag")))))}}}
 
    "Too Big to Fail"
    {:req (req (< (:credit corp) 10))

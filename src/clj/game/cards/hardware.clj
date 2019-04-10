@@ -482,6 +482,7 @@
    {:events
     {:pre-init-trace
      {:async true
+      :req (req (= :runner (:active-player @state)))
       :effect (effect (show-wait-prompt :corp "Runner to use Flip Switch")
                       (continue-ability
                         :runner
@@ -496,11 +497,13 @@
     :abilities [{:label "Jack out"
                  :req (req (and run
                                 (= :runner (:active-player @state))))
+                 :msg "jack out"
                  :effect (req (wait-for (trash state side card {:cause :ability-cost})
                                         (jack-out state side eid)))}
                 {:label "Remove 1 tag"
                  :req (req (and (pos? (count-tags state))
                                 (= :runner (:active-player @state))))
+                 :msg "remove 1 tag"
                  :effect (req (wait-for (trash state side card {:cause :ability-cost})
                                         (lose-tags state side eid 1)))}]}
 
@@ -1459,7 +1462,7 @@
                       :msg "gain 1 [Credits]"}}}
 
    "Zer0"
-   {:abilities [{:cost [:click 1 :net-damage 1]
+   {:abilities [{:cost [:click 1 :net 1]
                  :once :per-turn
                  :msg "gain 1 [Credits] and draw 2 cards"
                  :async true
