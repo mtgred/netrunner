@@ -54,7 +54,6 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "Server 1")
       (click-prompt state :corp "Yes")
-      (is (= 3 (:credit (get-corp))))
       ;; Corp can trash one program
       (click-card state :corp (get-program state 1))
       ;; There should be two Caches left

@@ -90,7 +90,8 @@
                                              :async true
                                              :cost [:credit 2]
                                              :choices {:max agg
-                                                       :req (every-pred installed? program?)}
+                                                       :req #(and (installed? %)
+                                                                  (program? %))}
                                              :effect (effect (trash-cards eid targets nil))
                                              :msg (msg "trash " (join ", " (map :title targets)))}]
                                      (continue-ability state side ab card nil)))}
@@ -1294,6 +1295,7 @@
                                        state side
                                        {:prompt (msg "Choose " (quantify cnt "installed card") " to shuffle into the stack")
                                         :player :corp
+                                        :cost [:credit 3]
                                         :choices {:req #(and (installed? %)
                                                              (= (:side %) "Runner"))
                                                   :max cnt}
@@ -1301,7 +1303,8 @@
                                         :effect (req (doseq [c targets]
                                                        (move state :runner c :deck))
                                                      (shuffle! state :runner :deck))}
-                                       card nil)))})
+                                       card nil)))}
+                   "Pay 3 [Credits] to use Neurostasis ability?")
 
    "News Team"
    {:flags {:rd-reveal (req true)}
@@ -1409,7 +1412,7 @@
       :effect (req (show-wait-prompt state :runner "Corp to select an agenda to score with Plan B")
                    (doseq [ag (filter #(is-type? % "Agenda") (:hand corp))]
                      (update-advancement-cost state side ag))
-                   (resolve-ability
+                   (continue-ability
                      state side
                      {:prompt "Select an Agenda in HQ to score"
                       :choices {:req #(and (is-type? % "Agenda")
@@ -1761,15 +1764,18 @@
    "Shattered Remains"
    (advance-ambush 1 {:async true
                       :req (req (pos? (get-counters (get-card state card) :advancement)))
-                      :effect (req (let [counters (get-counters (get-card state card) :advancement)]
-                                     (continue-ability
-                                       state side
-                                       (-> trash-hardware
-                                           (assoc-in [:choices :max] counters)
-                                           (assoc :prompt (msg "Select " (quantify counters "piece") " of hardware to trash")
-                                                  :effect (effect (trash-cards targets))
-                                                  :msg (msg "trash " (join ", " (map :title targets)))))
-                                       card nil)))})
+                      :effect (effect
+                                (continue-ability
+                                  (let [counters (get-counters (get-card state card) :advancement)]
+                                    {:prompt (msg "Select " (quantify counters "piece") " of hardware to trash")
+                                     :msg (msg "trash " (join ", " (map :title targets)))
+                                     :cost [:credit 1]
+                                     :choices {:max counters
+                                               :req #(and (installed? %)
+                                                          (hardware? %))}
+                                     :effect (effect (trash-cards targets))})
+                                  card nil))}
+                   "Pay 1 [Credits] to use Shattered Remains ability?")
 
    "Shi.Kyū"
    {:access
@@ -2014,10 +2020,10 @@
    "Toshiyuki Sakai"
    (advance-ambush
      0
-     {:effect (effect (resolve-ability
+     {:effect (effect (continue-ability
                         {:prompt "Select an asset or agenda in HQ"
-                         :choices {:req #(and (or (is-type? % "Agenda")
-                                                  (is-type? % "Asset"))
+                         :choices {:req #(and (or (agenda? %)
+                                                  (asset? %))
                                               (in-hand? %))}
                          :msg "swap it for an asset or agenda from HQ"
                          :effect (req (let [tidx (ice-index state card)
