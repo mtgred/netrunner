@@ -1624,6 +1624,7 @@
 
    "Rex Campaign"
    (let [ability {:once :per-turn
+                  :req (req (:corp-phase-12 @state))
                   :label "Remove 1 counter (start of turn)"
                   :effect (req (add-counter state side card :power -1)
                                (when (zero? (get-counters (get-card state card) :power))

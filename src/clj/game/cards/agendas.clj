@@ -324,15 +324,18 @@
              (let [bp (get-in @state [:corp :bad-publicity] 0)]
                (add-counter state :corp card :agenda bp)
                (effect-completed state side eid)))]
-     {:prompt "Take 1 bad publicity?"
-      :choices ["Yes" "No"]
-      :async true
-      :effect (req (if (= target "Yes")
-                     (wait-for (gain-bad-publicity state :corp 1)
-                               (system-msg state :corp "used Broad Daylight to take 1 bad publicity")
-                               (add-counters state side card eid))
-                     (add-counters state side card eid)))
-      :abilities [{:cost [:click 1] :counter-cost [:agenda 1]
+     {:effect (effect
+                (continue-ability
+                  {:optional
+                   {:prompt "Take 1 bad publicity?"
+                    :async true
+                    :yes-ability {:effect (req (wait-for (gain-bad-publicity state :corp 1)
+                                                         (system-msg state :corp "used Broad Daylight to take 1 bad publicity")
+                                                         (add-counters state side card eid)))}
+                    :no-ability {:effect (effect (add-counters card eid))}}}
+                  card nil))
+      :abilities [{:cost [:click 1]
+                   :counter-cost [:agenda 1]
                    :async true
                    :label "Do 2 meat damage"
                    :once :per-turn
@@ -1135,7 +1138,7 @@
 
    "Reeducation"
    (letfn [(corp-final [chosen original]
-             {:prompt (str "The bottom cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")
+             {:prompt (str "The bottom cards of R&D will be " (join  ", " (map :title chosen)) ".")
               :choices ["Done" "Start over"]
               :async true
               :msg (req (let [n (count chosen)]

@@ -282,6 +282,12 @@
 (defn upgrade? [card]
   (is-type? card "Upgrade"))
 
+(defn runner? [card]
+  (card-is? card :side "Runner"))
+
+(defn corp? [card]
+  (card-is? card :side "Corp"))
+
 (defn rezzed? [card]
   (:rezzed card))
 
