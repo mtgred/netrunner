@@ -2251,10 +2251,12 @@
            (top-3-types [state] (->> (top-3 state) (map :type) (into #{}) count))]
      {:implementation "Encounter effect is manual"
       :abilities [{:label "Roll them bones"
+                   :req (req (same-card? current-ice card))
                    :effect (effect (move :runner (first (:deck runner)) :deck)
-                             (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
-                                              " then reveal the top 3 cards in the stack: "
-                                              (join ", " (top-3-names state)))))}]
+                                   (reveal (take 3 (:deck runner)))
+                                   (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
+                                                    " then reveal the top 3 cards in the stack: "
+                                                    (join ", " (top-3-names state)))))}]
       :subroutines [{:label "Runner loses 3 [Credits]"
                      :msg "force the Runner to lose 3 [Credits]"
                      :effect (effect (lose-credits :runner 3))}
