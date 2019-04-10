@@ -1590,7 +1590,31 @@
         (click-card state :runner (second (:hand (get-runner)))) ; will fail
         (is (= 3 (count (:hand (get-runner)))) "Clicking invalid cards caused no discards")
         (click-card state :runner (second (rest (:hand (get-runner)))))
-        (is (= 2 (count (:hand (get-runner)))) "Clicking the single valid card did")))))
+        (is (= 2 (count (:hand (get-runner)))) "Clicking the single valid card did"))))
+  (testing "No cards in stack but draw effects. #4192"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Genetics Pavilion"]}
+                 :runner {:hand ["Labor Rights" (qty "Crowdfunding" 2)]
+                          :discard ["Account Siphon" "Bankroll" "Cache"]}})
+      (play-from-hand state :corp "Genetics Pavilion" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crowdfunding")
+      (play-from-hand state :runner "Crowdfunding")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 1 (count (:hand (get-runner)))) "Labor Rights is in the grip")
+      (play-from-hand state :runner "Labor Rights")
+      (is (zero? (count (:hand (get-runner)))))
+      (click-card state :runner "Account Siphon")
+      (click-card state :runner "Bankroll")
+      (click-card state :runner "Cache")
+      (is (= 1 (count (:hand (get-runner)))) "Drew a card from Labor Rights"))))
 
 (deftest ghost-branch
   ;; Ghost Branch - Advanceable; give the Runner tags equal to advancements when accessed

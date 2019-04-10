@@ -675,7 +675,7 @@
                                                    cards-to-trash (filter #(is-type? % chosen-type) cards-to-reveal)]
                                                (system-msg state side (str " reveals " (name-string cards-to-reveal) " from HQ"))
                                                (reveal state side cards-to-reveal)
-                                               (when-not (empty? cards-to-trash)
+                                               (when (seq cards-to-trash)
                                                  (system-msg state side (str " trashes " (name-string cards-to-trash)
                                                                              " from HQ and gain " (* 4 (count cards-to-trash)) "[Credits]"))
                                                  (doseq [c cards-to-trash]

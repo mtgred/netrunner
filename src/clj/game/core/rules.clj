@@ -114,8 +114,10 @@
                    deck-count (count (get-in @state [side :deck]))]
                (when (and (= side :corp) (> draws-after-prevent deck-count))
                  (win-decked state))
-               (if (and (= side active-player)
-                        (get-in @state [side :register :cannot-draw]))
+               (if (or (and (= side active-player)
+                            (get-in @state [side :register :cannot-draw]))
+                       (not (pos? draws-after-prevent))
+                       (not (pos? deck-count)))
                  (effect-completed state side eid)
                  (let [drawn (zone :hand (take draws-after-prevent (get-in @state [side :deck])))]
                    (swap! state update-in [side :hand] #(concat % drawn))
@@ -512,6 +514,7 @@
                          (preventrec (rest cs)))
                (let [trashlist (get-in @state [:trash :trash-list eid])]
                  (wait-for (apply trigger-event-sync state side (if (= side :corp) :corp-trash :runner-trash) trashlist)
+                           (swap! state assoc-in [side :register :trashed-card] true)
                            (trashrec trashlist)))))]
      (preventrec cards))))
 
