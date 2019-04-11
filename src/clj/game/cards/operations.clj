@@ -2069,23 +2069,24 @@
     :choices {:req #(or (hardware? %)
                         (and (resource? %) (not (has-subtype? % "Virtual"))))}
     :async true
-    :effect (req (let [chosen target
-                       wake card]
-                   (show-wait-prompt state side "Runner to resolve Wake Up Call")
-                   (continue-ability state :runner
-                                     {:prompt (str "Trash " (:title chosen) " or suffer 4 meat damage?")
-                                      :choices [(str "Trash " (:title chosen))
-                                                "4 meat damage"]
-                                      :async true
-                                      :effect (req (clear-wait-prompt state :corp)
-                                                   (move state :corp (last (:discard corp)) :rfg)
-                                                   (if (.startsWith target "Trash")
-                                                     (do (system-msg state side (str "chooses to trash " (:title chosen)))
-                                                         (trash state side eid chosen nil))
-                                                     (do (system-msg state side "chooses to suffer meat damage")
-                                                         (damage state side eid :meat 4 {:card wake
-                                                                                         :unboostable true}))))}
-                                     card nil)))}
+    :effect (effect (show-wait-prompt "Runner to resolve Wake Up Call")
+                    (continue-ability
+                      :runner
+                      (let [chosen target
+                            wake card]
+                        {:prompt (str "Trash " (:title chosen) " or suffer 4 meat damage?")
+                         :choices [(str "Trash " (:title chosen))
+                                   "4 meat damage"]
+                         :async true
+                         :effect (req (clear-wait-prompt state :corp)
+                                      (move state :corp (last (:discard corp)) :rfg)
+                                      (if (= target "4 meat damage")
+                                        (do (system-msg state side "chooses to suffer meat damage")
+                                            (damage state side eid :meat 4 {:card wake
+                                                                            :unboostable true}))
+                                        (do (system-msg state side (str "chooses to trash " (:title chosen)))
+                                            (trash state side eid chosen nil))))})
+                      card nil))}
 
    "Wetwork Refit"
    (let [new-sub {:label "[Wetwork Refit] Do 1 brain damage"}]

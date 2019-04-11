@@ -2873,7 +2873,42 @@
       (click-card state :corp (get-hardware state 0))
       (click-prompt state :runner "Trash Maya")
       (is (= 2 (count (:discard (get-runner)))) "Maya is trashed")
-      (is (= 1 (count (:rfg (get-corp)))) "Wake Up Call is removed from the game"))))
+      (is (= 1 (count (:rfg (get-corp)))) "Wake Up Call is removed from the game")))
+  (testing "Should fire after Embezzle. Issue #4188"
+    (do-game
+      (new-game {:corp {:deck ["Wake Up Call"]
+                        :hand [(qty "Hedge Fund" 4)]
+                        :credit 10}
+                 :runner {:hand ["Embezzle" "Desperado"]
+                          :credit 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Desperado")
+      (play-from-hand state :runner "Embezzle")
+      (run-successful state)
+      (click-prompt state :runner "Operation")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Wake Up Call")
+      (click-card state :corp "Desperado")
+      (click-prompt state :runner "Trash Desperado")
+      (is (= 2 (count (:discard (get-runner)))))))
+  (testing "Should fire after Stargate. Issue #4188"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Wake Up Call"]
+                        :credit 10}
+                 :runner {:hand ["Stargate" "Acacia"]
+                          :credit 20}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Stargate")
+      (play-from-hand state :runner "Acacia")
+      (card-ability state :runner (get-program state 0) 0)
+      (run-successful state)
+      (click-prompt state :runner "Hedge Fund")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Wake Up Call")
+      (click-card state :corp "Acacia")
+      (click-prompt state :runner "Trash Acacia")
+      (is (= 1 (count (:discard (get-runner))))))))
 
 (deftest wetwork-refit
   ;; Wetwork Refit - Only works on Bioroid ICE and adds a subroutine
