@@ -429,7 +429,8 @@
   (if (and (not suppress-event)
            (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
     (wait-for (trigger-event-sync state side (if (= side :corp) :corp-trash :runner-trash) card cause)
-              (swap! state assoc-in [side :register :trashed-card] true)
+              (when (not= side (-> card :side lower-case keyword))
+                (swap! state assoc-in [side :register :trashed-card] true))
               (resolve-trash-end state side eid card oid args))
     (resolve-trash-end state side eid card args))))
 
@@ -458,7 +459,7 @@
 
        ;; Card is not enforced untrashable
        :else
-       (let [ktype (keyword (clojure.string/lower-case type))]
+       (let [ktype (keyword (string/lower-case type))]
          (when (and (not unpreventable)
                     (not= cause :ability-cost))
            (swap! state update-in [:trash :trash-prevent] dissoc ktype))
@@ -514,14 +515,16 @@
                          (preventrec (rest cs)))
                (let [trashlist (get-in @state [:trash :trash-list eid])]
                  (wait-for (apply trigger-event-sync state side (if (= side :corp) :corp-trash :runner-trash) trashlist)
-                           (swap! state assoc-in [side :register :trashed-card] true)
+                           (when (seq (remove #{side} (map #(-> % :side lower-case keyword) trashlist)))
+                             (swap! state assoc-in [side :register :trashed-card] true))
                            (trashrec trashlist)))))]
      (preventrec cards))))
 
 (defn trash-no-cost
   [state side eid card & {:keys [seen unpreventable]
                           :or {seen true}}]
-  (swap! state assoc-in [side :register :trashed-card] true)
+  (when (not= side (-> card :side lower-case keyword))
+    (swap! state assoc-in [side :register :trashed-card] true))
   (trash state side eid (assoc card :seen seen) {:unpreventable unpreventable}))
 
 ;;; Agendas

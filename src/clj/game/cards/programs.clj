@@ -2104,12 +2104,12 @@
                                      :effect
                                      (effect
                                        (reveal (take 3 (:deck corp)))
-                                       (resolve-ability
+                                       (continue-ability
                                          {:prompt "Choose a card to trash"
                                           :msg (msg "trash " (:title target))
                                           :not-distinct true
                                           :choices (req (take 3 (:deck corp)))
-                                          :effect (effect (trash (assoc target :seen true)))}
+                                          :effect (effect (trash :runner (assoc target :seen true)))}
                                          card nil))}}
                                    card))}]}
 
