@@ -1890,26 +1890,33 @@
     (is (= 1 (:click (get-corp))) "Spent 2 clicks")))
 
 (deftest reverse-infection
-  ;; Reverse Infection - purge and trash 1 card from stack for every 3 counters purged - or gain 2 credits
+  ;; Reverse Infection
+  (testing "Gain 2 credits"
+    (do-game
+      (new-game {:corp {:deck ["Reverse Infection"]}})
+      (play-from-hand state :corp "Reverse Infection")
+      (click-prompt state :corp "Gain 2 [Credits]")
+      (is (= 7 (:credit (get-corp))) "Corp gained 2 credits")))
+  (testing "Purge virus counters, counts both Runner and Corp side (Sandstone)")
   (do-game
-    (new-game {:corp {:deck [(qty "Reverse Infection" 2)]}
-               :runner {:deck ["Virus Breeding Ground" "Datasucker" (qty "Sure Gamble" 3)]}})
+    (new-game {:corp {:deck ["Reverse Infection" "Sandstone"]}
+               :runner {:deck ["Virus Breeding Ground" "Datasucker" (qty "Sure Gamble" 4)]}})
     (starting-hand state :runner ["Virus Breeding Ground" "Datasucker"])
-    (play-from-hand state :corp "Reverse Infection")
-    (click-prompt state :corp "Gain 2 [Credits]")
-    (is (= 7 (:credit (get-corp))) "Corp gained 2 credits")
+    (play-from-hand state :corp "Sandstone" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Virus Breeding Ground")
     (play-from-hand state :runner "Datasucker")
     (take-credits state :runner)
-    (core/add-counter state :runner (get-resource state 0) :virus 4)
+    (core/add-counter state :corp (get-ice state :hq 0) :virus 3)
+    (core/add-counter state :runner (get-resource state 0) :virus 3)
     (core/add-counter state :runner (get-program state 0) :virus 3)
     (play-from-hand state :corp "Reverse Infection")
-    (click-prompt state :corp "Purge virus counters.")
-    (is (= 9 (:credit (get-corp))) "Corp did not gain credits")
+    (click-prompt state :corp "Purge virus counters")
+    (is (= 7 (:credit (get-corp))) "Corp did not gain credits")
+    (is (zero? (get-counters (get-ice state :hq 0) :virus)) "Viruses purged from Sandstone")
     (is (zero? (get-counters (get-resource state 0) :virus)) "Viruses purged from VBG")
     (is (zero? (get-counters (get-program state 0) :virus)) "Viruses purged from Datasucker")
-    (is (= 2 (count (:discard (get-runner)))) "Two cards trashed from stack")))
+    (is (= 3 (count (:discard (get-runner)))) "Three cards trashed from stack")))
 
 (deftest riot-suppression
   ;; Riot Suppression - lose 3 clicks or take 1 brain damage

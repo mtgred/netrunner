@@ -1532,7 +1532,7 @@
 
    "Reverse Infection"
    {:prompt "Choose One:"
-    :choices ["Purge virus counters."
+    :choices ["Purge virus counters"
               "Gain 2 [Credits]"]
     :effect (req (if (= target "Gain 2 [Credits]")
                    (do (gain-credits state side 2)
