@@ -75,7 +75,22 @@
         (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
         (click-prompt state :corp "HQ")
         (is (= 2 (count (get-ice state :hq))) "Two ice on hq")
-        (is (= 1 (get-counters (get-ice state :hq 1) :advancement)) "Ice Wall has 1 counter")))))
+        (is (= 1 (get-counters (get-ice state :hq 1) :advancement)) "Ice Wall has 1 counter"))))
+  (testing "Overadvanced Vitruvius"
+    (do-game
+      (new-game {:corp {:deck ["Arella Salvatore" "Project Vitruvius" (qty "Hedge Fund" 2)]}})
+      (core/gain state :corp :click 6)
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :corp "Arella Salvatore" "New remote")
+      (play-from-hand state :corp "Project Vitruvius" "Server 1")
+      (let [arella (get-content state :remote1 0)
+            vit (get-content state :remote1 1)]
+        (core/rez state :corp arella)
+        (advance state vit 4)
+        (is (= 4 (get-counters (refresh vit) :advancement)) "Vitruvius should have 4 advancement tokens")
+        (core/score state :corp {:card (refresh vit)}))
+      (let [vit-scored (get-scored state :corp 0)]
+        (is (= 1 (get-counters (refresh vit-scored) :agenda)) "Vitruvius should have 1 agenda counter")))))
 
 (deftest ash-2x3zb9cy
   ;; Ash 2X3ZB9CY
