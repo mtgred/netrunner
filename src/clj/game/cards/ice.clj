@@ -2179,7 +2179,10 @@
 
    "Searchlight"
    {:advanceable :always
-    :subroutines [(tag-trace advance-counters)]}
+    :subroutines [{:label "Trace X - Give the Runner 1 tag"
+                   :trace {:base advance-counters
+                           :label "Give the Runner 1 tag"
+                           :successful (give-tags 1)}}]}
 
    "Seidr Adaptive Barrier"
    (let [recalculate-strength (req (update-ice-strength state side (get-card state card)))
