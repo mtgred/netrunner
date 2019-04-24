@@ -1900,8 +1900,8 @@
   (testing "Purge virus counters, counts both Runner and Corp side (Sandstone)")
   (do-game
     (new-game {:corp {:deck ["Reverse Infection" "Sandstone"]}
-               :runner {:deck ["Virus Breeding Ground" "Datasucker" (qty "Sure Gamble" 4)]}})
-    (starting-hand state :runner ["Virus Breeding Ground" "Datasucker"])
+               :runner {:deck ["Virus Breeding Ground" "Datasucker" (qty "Sure Gamble" 4)]
+                        :hand ["Virus Breeding Ground" "Datasucker"]}})
     (play-from-hand state :corp "Sandstone" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Virus Breeding Ground")
