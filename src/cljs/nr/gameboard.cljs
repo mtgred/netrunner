@@ -1229,7 +1229,7 @@
                [:div.start-hand
                 [:div {:class (when squeeze "squeeze")}
                  (doall (map-indexed
-                          (fn [i {title :title :as card}]
+                          (fn [i {:keys [title] :as card}]
                             [:div.start-card-frame {:style (when squeeze {:left     (* (/ 610 (dec (count @my-hand))) i)
                                                                           :position "absolute"})
                                                     :id    (str "startcard" i)
@@ -1241,10 +1241,9 @@
                                (when-let [url (image-url card)]
                                  [:div {:on-mouse-enter #(put! zoom-channel card)
                                         :on-mouse-leave #(put! zoom-channel false)}
-                                  [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]
-                                  ])]]
-                             (js/setTimeout (fn [] (.add (.-classList (.querySelector js/document (str "#startcard" i))) "flip"))
-                                            (+ 1000 (* i 300)))])
+                                  [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]])]]
+                             (when-let [elem (.querySelector js/document (str "#startcard" i))]
+                               (js/setTimeout #(.add (.-classList elem) "flip") (+ 1000 (* i 300))))])
                           @my-hand))]])
              [:div.mulligan
               (if (or (= :spectator @my-side) (and @my-keep @op-keep))
