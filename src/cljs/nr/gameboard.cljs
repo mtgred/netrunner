@@ -1381,6 +1381,7 @@
                  [:button {:on-click #(send-command "choice"
                                                     {:choice (-> "#credit" js/$ .val str->int)})}
                   "OK"]])
+
               ;; otherwise choice of all present choices
               :else
               (map-indexed (fn [i c]
@@ -1389,7 +1390,7 @@
                                  [:button {:key i
                                            :on-click #(send-command "choice" {:choice c})}
                                   (render-message c)]
-                                 [:button {:key (:cid c)
+                                 [:button {:key (or (:cid c) i)
                                            :class (when (:rotated c) :rotated)
                                            :on-click #(send-command "choice" {:card c}) :id {:code c}} (:title c)])))
                            (:choices prompt))))]
