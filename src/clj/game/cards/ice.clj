@@ -1096,10 +1096,21 @@
    "Herald"
    {:flags {:rd-reveal (req true)}
     :subroutines [(gain-credits-sub 2)
-                  {:label "Pay 1 [Credits] to place 1 advancement token on a card that can be advanced"
-                   :msg (msg "place 1 advancement token on " (card-str state target))
-                   :choices {:req can-be-advanced?}
-                   :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
+                  {:async true
+                   :label "Pay up to 2 [Credits] to place up to 2 advancement tokens"
+                   :prompt "How many advancement tokens?"
+                   :choices ["0" "1" "2"]
+                   :effect (req (let [c (str->int target)]
+                                  (if (can-pay? state side (:title card) :credit c)
+                                    (do (pay state :corp card :credit c)
+                                        (continue-ability
+                                          state side
+                                          {:msg (msg "pay " c "[Credits] and place " (quantify c " advancement token")
+                                                     " on " (card-str state target))
+                                           :choices {:req can-be-advanced?}
+                                           :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                          card nil))
+                                    (effect-completed state side eid))))}]
     :access {:async true
              :req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Herald subroutines")
