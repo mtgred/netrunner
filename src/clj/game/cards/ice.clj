@@ -1099,7 +1099,7 @@
                   {:async true
                    :label "Pay up to 2 [Credits] to place up to 2 advancement tokens"
                    :prompt "How many advancement tokens?"
-                   :choices ["0" "1" "2"]
+                   :choices (req (map str (range (inc (min 2 (:credit corp))))))
                    :effect (req (let [c (str->int target)]
                                   (if (can-pay? state side (:title card) :credit c)
                                     (do (pay state :corp card :credit c)
