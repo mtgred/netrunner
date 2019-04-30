@@ -63,8 +63,8 @@
      {:events
       {:agenda-scored
        {:req (req (= (:previous-zone target) (:zone card)))
-        :interactive (req true)
-        :silent (req (empty? (filter corp-installable-type? (:hand corp))))
+        :interactive (req (some corp-installable-type? (:hand corp)))
+        :silent (req (not-any? corp-installable-type? (:hand corp)))
         :async true
         :effect (req (if (some corp-installable-type? (:hand corp))
                        (continue-ability state side select-ability card nil)
