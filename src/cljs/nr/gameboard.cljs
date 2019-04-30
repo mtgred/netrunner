@@ -175,20 +175,39 @@
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
 
-(defn handle-abilities [{:keys [abilities facedown side type] :as card} c-state]
+(declare face-down?)
+
+(defn handle-abilities
+  [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state]
   (let [actions (action-list card)
-        c (+ (count actions) (count abilities))]
-    (when-not (and (= side "Runner") facedown)
+        c (+ (count actions) (count abilities))
+        card-side (keyword (.toLowerCase (:side card)))]
+    (when-not (and (= card-side :runner) facedown)
       (cond
 
         ;; Toggle abilities panel
         (or (> c 1)
+            (pos? (+ (count corp-abilities)
+                     (count runner-abilities)))
             (some #{"derez" "advance"} actions)
             (and (= type "ICE")
                  (not (:run @game-state))))
-        (if (:abilities @c-state)
-          (swap! c-state dissoc :abilities)
-          (swap! c-state assoc :abilities true))
+        (do (when (= side card-side)
+              (if (:abilities @c-state)
+                (swap! c-state dissoc :abilities)
+                (swap! c-state assoc :abilities true)))
+            (when (and (= :runner card-side)
+                       (= :corp side)
+                       (:corp-abilities card))
+              (if (:corp-abilities @c-state)
+                (swap! c-state dissoc :corp-abilities)
+                (swap! c-state assoc :corp-abilities true)))
+            (when (and (= :corp card-side)
+                       (= :runner side)
+                       (:runner-abilities card))
+              (if (:runner-abilities @c-state)
+                (swap! c-state dissoc :runner-abilities)
+                (swap! c-state assoc :runner-abilities true))))
 
         ;; Trigger first (and only) ability / action
         (= c 1)
@@ -207,21 +226,17 @@
         ;; Card is an identity of player's side
         (and (= (:type card) "Identity")
              (= side (keyword (.toLowerCase (:side card)))))
-        (handle-abilities card c-state)
+        (handle-abilities side card c-state)
 
         ;; Runner side
         (= side :runner)
         (case (first zone)
           "hand" (if (:host card)
                    (when (:installed card)
-                     (handle-abilities card c-state))
+                     (handle-abilities side card c-state))
                    (send-command "play" {:card card}))
-          ("rig" "current" "onhost" "play-area") (handle-abilities card c-state)
-          ("servers") (when (and (= type "ICE") (:rezzed card))
-                        ;; ICE that should show list of abilities that send messages to fire sub
-                        (if (:runner-abilities @c-state)
-                          (swap! c-state dissoc :runner-abilities)
-                          (swap! c-state assoc :runner-abilities true)))
+          ("current" "onhost" "play-area" "scored" "servers" "rig")
+          (handle-abilities side card c-state)
           nil)
 
         ;; Corp side
@@ -239,11 +254,8 @@
                                           (swap! c-state dissoc :servers)
                                           (swap! c-state assoc :servers true)))
                    (send-command "play" {:card card}))
-          ("servers" "scored" "current" "onhost") (handle-abilities card c-state)
-          "rig" (when (:corp-abilities card)
-                  (if (:corp-abilities @c-state)
-                    (swap! c-state dissoc :corp-abilities)
-                    (swap! c-state assoc :corp-abilities true)))
+          ("current" "onhost" "play-area" "scored" "servers" "rig")
+          (handle-abilities side card c-state)
           nil)))))
 
 (defn in-play? [card]
@@ -1042,21 +1054,21 @@
                    :run (when (= server-type "archives") @run)}]]))
 
 (defn board-view-runner [player-side identity deck discard rig run]
-  (let [is-me (= player-side :runner)]
-    (let [centrals [:div.runner-centrals
+  (let [is-me (= player-side :runner)
+        centrals [:div.runner-centrals
                     [discard-view-runner player-side discard]
                     [deck-view :runner player-side identity deck]
                     [identity-view identity]]]
-      [:div.runner-board {:class (if is-me "me" "opponent")}
-       (when-not is-me centrals)
-       (doall (for [zone [:program :hardware :resource :facedown]]
-                ^{:key zone}
-                [:div
-                 (doall (for [c (zone @rig)]
-                          ^{:key (:cid c)}
-                          [:div.card-wrapper {:class (when (playable? c) "playable")}
-                           [card-view c]]))]))
-       (when is-me centrals)])))
+    [:div.runner-board {:class (if is-me "me" "opponent")}
+     (when-not is-me centrals)
+     (doall (for [zone [:program :hardware :resource :facedown]]
+              ^{:key zone}
+              [:div
+               (doall (for [c (zone @rig)]
+                        ^{:key (:cid c)}
+                        [:div.card-wrapper {:class (when (playable? c) "playable")}
+                         [card-view c]]))]))
+     (when is-me centrals)]))
 
 (defn cond-button [text cond f]
   (if cond
@@ -1217,7 +1229,7 @@
                [:div.start-hand
                 [:div {:class (when squeeze "squeeze")}
                  (doall (map-indexed
-                          (fn [i {title :title :as card}]
+                          (fn [i {:keys [title] :as card}]
                             [:div.start-card-frame {:style (when squeeze {:left     (* (/ 610 (dec (count @my-hand))) i)
                                                                           :position "absolute"})
                                                     :id    (str "startcard" i)
@@ -1229,10 +1241,9 @@
                                (when-let [url (image-url card)]
                                  [:div {:on-mouse-enter #(put! zoom-channel card)
                                         :on-mouse-leave #(put! zoom-channel false)}
-                                  [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]
-                                  ])]]
-                             (js/setTimeout (fn [] (.add (.-classList (.querySelector js/document (str "#startcard" i))) "flip"))
-                                            (+ 1000 (* i 300)))])
+                                  [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]])]]
+                             (when-let [elem (.querySelector js/document (str "#startcard" i))]
+                               (js/setTimeout #(.add (.-classList elem) "flip") (+ 1000 (* i 300))))])
                           @my-hand))]])
              [:div.mulligan
               (if (or (= :spectator @my-side) (and @my-keep @op-keep))
@@ -1369,6 +1380,7 @@
                  [:button {:on-click #(send-command "choice"
                                                     {:choice (-> "#credit" js/$ .val str->int)})}
                   "OK"]])
+
               ;; otherwise choice of all present choices
               :else
               (map-indexed (fn [i c]
@@ -1377,7 +1389,7 @@
                                  [:button {:key i
                                            :on-click #(send-command "choice" {:choice c})}
                                   (render-message c)]
-                                 [:button {:key (:cid c)
+                                 [:button {:key (or (:cid c) i)
                                            :class (when (:rotated c) :rotated)
                                            :on-click #(send-command "choice" {:card c}) :id {:code c}} (:title c)])))
                            (:choices prompt))))]

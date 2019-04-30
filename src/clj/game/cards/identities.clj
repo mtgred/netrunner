@@ -713,7 +713,13 @@
     :leave-play (req (apply enable-run-on-server state card (map first (get-remotes state))))}
 
    "Kabonesa Wu: Netspace Thrillseeker"
-   {:abilities [{:label "Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
+   (let [rfg-ability {:req (req (seq (filter #(get-in % [:special :kabonesa]) (all-installed state :runner))))
+                      :effect (req (doseq [program (filter #(get-in % [:special :kabonesa]) (all-installed state :runner))]
+                                     (move state side program :rfg)
+                                     (system-msg state side (str "remove " (:title program) " from the game"))))}]
+     {:events {:corp-turn-ends rfg-ability
+               :runner-turn-ends rfg-ability}
+      :abilities [{:label "Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
                  :cost [:click 1]
                  :prompt "Choose a program"
                  :choices (req (cancellable
@@ -724,11 +730,7 @@
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (install-cost-bonus [:credit -1])
-                                 (runner-install eid (assoc-in target [:special :kabonesa] true) nil))
-                 :end-turn
-                 {:req (req (get-in (find-cid (:cid target) (all-active-installed state :runner)) [:special :kabonesa]))
-                  :msg (msg "remove " (:title target) " from the game")
-                  :effect (effect (move (find-cid (:cid target) (all-active-installed state :runner)) :rfg))}}]}
+                                 (runner-install eid (assoc-in target [:special :kabonesa] true) nil))}]})
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
@@ -890,29 +892,25 @@
       :events {:runner-turn-begins ability}})
 
    "NBN: Controlling the Message"
-   (let [cleanup (effect (update! :corp (dissoc card :saw-trash)))]
-     {:events {:corp-turn-ends {:effect cleanup}
-               :runner-turn-ends {:effect cleanup}
-               :runner-trash
-               {:async true
-                :req (req (and (not (:saw-trash card))
-                               (card-is? target :side :corp)
-                               (installed? target)))
-                :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
-                             (update! state :corp (assoc card :saw-trash true))
-                             (continue-ability
-                               state :corp
-                               {:optional
-                                {:prompt "Trace the Runner with NBN: Controlling the Message?"
-                                 :autoresolve (get-autoresolve :auto-ctm)
-                                 :yes-ability {:trace {:base 4
-                                                       :successful
-                                                       {:msg "give the Runner 1 tag"
-                                                        :async true
-                                                        :effect (effect (gain-tags :corp eid 1 {:unpreventable true}))}}}
-                                 :end-effect (effect (clear-wait-prompt :runner))}}
-                               card nil))}}
-      :abilities [(set-autoresolve :auto-ctm "CtM")]})
+   {:events {:runner-trash
+             {:async true
+              :req (req (and (= 1 (count (filter #(-> % first installed?) (turn-events state side :runner-trash))))
+                             (card-is? target :side :corp)
+                             (installed? target)))
+              :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
+                           (continue-ability
+                             state :corp
+                             {:optional
+                              {:prompt "Trace the Runner with NBN: Controlling the Message?"
+                               :autoresolve (get-autoresolve :auto-ctm)
+                               :yes-ability {:trace {:base 4
+                                                     :successful
+                                                     {:msg "give the Runner 1 tag"
+                                                      :async true
+                                                      :effect (effect (gain-tags :corp eid 1 {:unpreventable true}))}}}
+                               :end-effect (effect (clear-wait-prompt :runner))}}
+                             card nil))}}
+    :abilities [(set-autoresolve :auto-ctm "CtM")]}
 
    "NBN: Making News"
    {:recurring 2}

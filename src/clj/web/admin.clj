@@ -29,10 +29,9 @@
 (defn fetch-handler
   [req]
   (try
-    (do
-      (fetch-with-db)
-      (reset-card-defs)
-      (response 200 {:message "ok"}))
+    (fetch-with-db)
+    (reset-card-defs)
+    (response 200 {:message "ok"})
     (catch Exception e (do
                          (println "fetch-handler failed:" (.getMessage e))
                          (.printStackTrace e)

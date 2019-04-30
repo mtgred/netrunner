@@ -91,9 +91,8 @@
                     (transform (qty "Hedge Fund" 3)))
           :hand (flatten (:hand corp))
           :discard (flatten (:discard corp))
-          :identity (server-card
-                      (or (:id corp)
-                          "Custom Biotics: Engineered for Success"))
+          :identity (when-let [id (:id corp)]
+                      (server-card id))
           :credits (:credits corp)
           :bad-pub (:bad-pub corp)}
    :runner {:deck (or (transform (conj (:deck runner)
@@ -102,9 +101,8 @@
                       (transform (qty "Sure Gamble" 3)))
             :hand (flatten (:hand runner))
             :discard (flatten (:discard runner))
-            :identity (server-card
-                        (or (:id runner)
-                            "The Professor: Keeper of Knowledge"))
+            :identity (when-let [id (:id runner)]
+                        (server-card id))
             :credits (:credits runner)
             :tags (:tags runner)}
    :mulligan (:mulligan options)

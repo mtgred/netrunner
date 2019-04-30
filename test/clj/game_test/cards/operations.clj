@@ -1452,6 +1452,23 @@
     (play-from-hand state :corp "Mass Commercialization")
     (is (= 8 (:credit (get-corp))) "Gained 6 for 3 advanced ice from Mass Commercialization")))
 
+(deftest mca-informant
+  ;; MCA Informant
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["MCA Informant"]}
+               :runner {:hand ["Beth Kilrain-Chang"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Beth Kilrain-Chang")
+    (take-credits state :runner)
+    (play-from-hand state :corp "MCA Informant")
+    (click-card state :corp "Beth Kilrain-Chang")
+    (take-credits state :corp)
+    (let [credits (:credit (get-runner))]
+      (card-side-ability state :runner (-> (get-resource state 0) :hosted first) 0)
+      (is (nil? (get-resource state 0)) "Beth should now be trashed")
+      (is (= (- credits 2) (:credit (get-runner))) "Runner should pay 2 credits to trash MCA"))))
+
 (deftest medical-research-fundraiser
   ;; Medical Research Fundraiser - runner gains 8creds, runner gains 3creds
   (do-game
@@ -1797,28 +1814,42 @@
 
 (deftest red-level-clearance
   ;; Red Level Clearance
-  (do-game
-    (new-game {:corp {:hand [(qty "Red Level Clearance" 2) "Hedge Fund" "Merger" "Plan B"]
-                      :deck [(qty "Beanstalk Royalties" 5)]}})
-    (play-from-hand state :corp "Red Level Clearance")
-    (let [credits (:credit (get-corp))]
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand [(qty "Red Level Clearance" 2) "Hedge Fund" "Merger" "Plan B"]
+                        :deck [(qty "Beanstalk Royalties" 5)]}})
+      (play-from-hand state :corp "Red Level Clearance")
+      (let [credits (:credit (get-corp))]
+        (click-prompt state :corp "Gain 2 [Credits]")
+        (is (= (+ credits 2) (:credit (get-corp)))))
+      (let [hand (count (:hand (get-corp)))]
+        (click-prompt state :corp "Draw 2 cards")
+        (is (= (+ hand 2) (count (:hand (get-corp))))))
+      (play-from-hand state :corp "Red Level Clearance")
+      (let [clicks (:click (get-corp))]
+        (click-prompt state :corp "Gain [Click]")
+        (is (= (inc clicks) (:click (get-corp)))))
+      (click-prompt state :corp "Install a non-agenda from hand")
+      (click-card state :corp "Merger")
+      (is (find-card "Merger" (:hand (get-corp))))
+      (click-card state :corp "Hedge Fund")
+      (is (find-card "Merger" (:hand (get-corp))))
+      (click-card state :corp "Plan B")
+      (click-prompt state :corp "New remote")
+      (is (not (find-card "Plan B" (:hand (get-corp)))))))
+  (testing "Can't choose same option twice. Issue #4150"
+    (do-game
+      (new-game {:corp {:deck [(qty "Beanstalk Royalties" 5)]
+                        :hand ["Red Level Clearance"]}})
+      (play-from-hand state :corp "Red Level Clearance")
+      (is (prompt-is-type? state :runner :waiting))
+      (is (= 4 (count (:choices (prompt-map :corp)))))
       (click-prompt state :corp "Gain 2 [Credits]")
-      (is (= (+ credits 2) (:credit (get-corp)))))
-    (let [hand (count (:hand (get-corp)))]
-      (click-prompt state :corp "Draw 2 cards")
-      (is (= (+ hand 2) (count (:hand (get-corp))))))
-    (play-from-hand state :corp "Red Level Clearance")
-    (let [clicks (:click (get-corp))]
+      (is (= 3 (count (:choices (prompt-map :corp)))))
+      (is (= ["Draw 2 cards" "Gain [Click]" "Install a non-agenda from hand"]
+             (vec (:choices (prompt-map :corp)))))
       (click-prompt state :corp "Gain [Click]")
-      (is (= (inc clicks) (:click (get-corp)))))
-    (click-prompt state :corp "Install a non-agenda from hand")
-    (click-card state :corp "Merger")
-    (is (find-card "Merger" (:hand (get-corp))))
-    (click-card state :corp "Hedge Fund")
-    (is (find-card "Merger" (:hand (get-corp))))
-    (click-card state :corp "Plan B")
-    (click-prompt state :corp "New remote")
-    (is (not (find-card "Plan B" (:hand (get-corp)))))))
+      (is (empty? (:prompt (get-runner))) "Runner should have no more prompt"))))
 
 (deftest red-planet-couriers
   ;; Red Planet Couriers - Move all advancements on cards to 1 advanceable card
@@ -1859,26 +1890,33 @@
     (is (= 1 (:click (get-corp))) "Spent 2 clicks")))
 
 (deftest reverse-infection
-  ;; Reverse Infection - purge and trash 1 card from stack for every 3 counters purged - or gain 2 credits
+  ;; Reverse Infection
+  (testing "Gain 2 credits"
+    (do-game
+      (new-game {:corp {:deck ["Reverse Infection"]}})
+      (play-from-hand state :corp "Reverse Infection")
+      (click-prompt state :corp "Gain 2 [Credits]")
+      (is (= 7 (:credit (get-corp))) "Corp gained 2 credits")))
+  (testing "Purge virus counters, counts both Runner and Corp side (Sandstone)")
   (do-game
-    (new-game {:corp {:deck [(qty "Reverse Infection" 2)]}
-               :runner {:deck ["Virus Breeding Ground" "Datasucker" (qty "Sure Gamble" 3)]}})
-    (starting-hand state :runner ["Virus Breeding Ground" "Datasucker"])
-    (play-from-hand state :corp "Reverse Infection")
-    (click-prompt state :corp "Gain 2 [Credits]")
-    (is (= 7 (:credit (get-corp))) "Corp gained 2 credits")
+    (new-game {:corp {:deck ["Reverse Infection" "Sandstone"]}
+               :runner {:deck ["Virus Breeding Ground" "Datasucker" (qty "Sure Gamble" 4)]
+                        :hand ["Virus Breeding Ground" "Datasucker"]}})
+    (play-from-hand state :corp "Sandstone" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Virus Breeding Ground")
     (play-from-hand state :runner "Datasucker")
     (take-credits state :runner)
-    (core/add-counter state :runner (get-resource state 0) :virus 4)
+    (core/add-counter state :corp (get-ice state :hq 0) :virus 3)
+    (core/add-counter state :runner (get-resource state 0) :virus 3)
     (core/add-counter state :runner (get-program state 0) :virus 3)
     (play-from-hand state :corp "Reverse Infection")
-    (click-prompt state :corp "Purge virus counters.")
-    (is (= 9 (:credit (get-corp))) "Corp did not gain credits")
+    (click-prompt state :corp "Purge virus counters")
+    (is (= 7 (:credit (get-corp))) "Corp did not gain credits")
+    (is (zero? (get-counters (get-ice state :hq 0) :virus)) "Viruses purged from Sandstone")
     (is (zero? (get-counters (get-resource state 0) :virus)) "Viruses purged from VBG")
     (is (zero? (get-counters (get-program state 0) :virus)) "Viruses purged from Datasucker")
-    (is (= 2 (count (:discard (get-runner)))) "Two cards trashed from stack")))
+    (is (= 3 (count (:discard (get-runner)))) "Three cards trashed from stack")))
 
 (deftest riot-suppression
   ;; Riot Suppression - lose 3 clicks or take 1 brain damage
@@ -2666,36 +2704,58 @@
 
 (deftest threat-assessment
   ;; Threat Assessment - play only if runner trashed a card last turn, move a card to the stack or take 2 tags
-  (do-game
-    (new-game {:corp {:deck [(qty "Threat Assessment" 3) "Adonis Campaign"]}
-               :runner {:deck ["Desperado" "Corroder"]}})
-    (play-from-hand state :corp "Adonis Campaign" "New remote")
-    (take-credits state :corp)
-    (run-on state :remote1)
-    (run-successful state)
-    (click-prompt state :runner "Pay 3 [Credits] to trash")
-    (core/gain state :runner :credit 5)
-    (play-from-hand state :runner "Desperado")
-    (play-from-hand state :runner "Corroder")
-    (take-credits state :runner)
-    (is (zero? (count-tags state)) "Runner starts with 0 tags")
-    (play-from-hand state :corp "Threat Assessment")
-    (click-card state :corp (find-card "Desperado" (-> (get-runner) :rig :hardware)))
-    (click-prompt state :runner "2 tags")
-    (is (= 2 (count-tags state)) "Runner took 2 tags")
-    (is (= 1 (count (-> (get-runner) :rig :hardware))) "Didn't trash Desperado")
-    (is (= "Threat Assessment" (:title (first (:rfg (get-corp))))) "Threat Assessment removed from game")
-    (play-from-hand state :corp "Threat Assessment")
-    (click-card state :corp (find-card "Corroder" (-> (get-runner) :rig :program)))
-    (click-prompt state :runner "Move Corroder")
-    (is (= 2 (count-tags state)) "Runner didn't take tags")
-    (is (= "Corroder" (:title (first (:deck (get-runner))))) "Moved Corroder to the deck")
-    (is (= 2 (count (:rfg (get-corp)))))
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (take-credits state :runner)
-    (play-from-hand state :corp "Threat Assessment")
-    (is (empty? (:prompt (get-corp))) "Threat Assessment triggered with no trash")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Threat Assessment" 3) "Adonis Campaign"]}
+                 :runner {:deck ["Desperado" "Corroder"]}})
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (core/gain state :runner :credit 5)
+      (play-from-hand state :runner "Desperado")
+      (play-from-hand state :runner "Corroder")
+      (take-credits state :runner)
+      (is (zero? (count-tags state)) "Runner starts with 0 tags")
+      (play-from-hand state :corp "Threat Assessment")
+      (click-card state :corp (find-card "Desperado" (-> (get-runner) :rig :hardware)))
+      (click-prompt state :runner "Take 2 tags")
+      (is (= 2 (count-tags state)) "Runner took 2 tags")
+      (is (= 1 (count (-> (get-runner) :rig :hardware))) "Didn't trash Desperado")
+      (is (= "Threat Assessment" (:title (first (:rfg (get-corp))))) "Threat Assessment removed from game")
+      (play-from-hand state :corp "Threat Assessment")
+      (click-card state :corp (find-card "Corroder" (-> (get-runner) :rig :program)))
+      (click-prompt state :runner "Move Corroder")
+      (is (= 2 (count-tags state)) "Runner didn't take tags")
+      (is (= "Corroder" (:title (first (:deck (get-runner))))) "Moved Corroder to the deck")
+      (is (= 2 (count (:rfg (get-corp)))))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Threat Assessment")
+      (is (empty? (:prompt (get-corp))) "Threat Assessment triggered with no trash")))
+  (testing "interaction with Hippo. Issue #4049"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Threat Assessment"]}
+                 :runner {:hand ["Hippo" "Corroder"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Hippo")
+      (run-on state :hq)
+      (let [iw (get-ice state :hq 0)]
+        (core/rez state :corp (refresh iw))
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (empty? (get-ice state :hq)) "Ice Wall is gone"))
+      (core/jack-out state :runner nil)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Threat Assessment")
+      (click-card state :corp "Corroder")
+      (click-prompt state :runner "Move Corroder")
+      (is (zero? (count-tags state)) "Runner didn't take tags")
+      (is (empty? (:prompt (get-corp)))))))
 
 (deftest threat-level-alpha
   ;; Threat Level Alpha - Win trace to give tags = Runner tags; or 1 tag if 0
@@ -2820,7 +2880,42 @@
       (click-card state :corp (get-hardware state 0))
       (click-prompt state :runner "Trash Maya")
       (is (= 2 (count (:discard (get-runner)))) "Maya is trashed")
-      (is (= 1 (count (:rfg (get-corp)))) "Wake Up Call is removed from the game"))))
+      (is (= 1 (count (:rfg (get-corp)))) "Wake Up Call is removed from the game")))
+  (testing "Should fire after Embezzle. Issue #4188"
+    (do-game
+      (new-game {:corp {:deck ["Wake Up Call"]
+                        :hand [(qty "Hedge Fund" 4)]
+                        :credit 10}
+                 :runner {:hand ["Embezzle" "Desperado"]
+                          :credit 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Desperado")
+      (play-from-hand state :runner "Embezzle")
+      (run-successful state)
+      (click-prompt state :runner "Operation")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Wake Up Call")
+      (click-card state :corp "Desperado")
+      (click-prompt state :runner "Trash Desperado")
+      (is (= 2 (count (:discard (get-runner)))))))
+  (testing "Should fire after Stargate. Issue #4188"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Wake Up Call"]
+                        :credit 10}
+                 :runner {:hand ["Stargate" "Acacia"]
+                          :credit 20}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Stargate")
+      (play-from-hand state :runner "Acacia")
+      (card-ability state :runner (get-program state 0) 0)
+      (run-successful state)
+      (click-prompt state :runner "Hedge Fund")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Wake Up Call")
+      (click-card state :corp "Acacia")
+      (click-prompt state :runner "Trash Acacia")
+      (is (= 1 (count (:discard (get-runner))))))))
 
 (deftest wetwork-refit
   ;; Wetwork Refit - Only works on Bioroid ICE and adds a subroutine

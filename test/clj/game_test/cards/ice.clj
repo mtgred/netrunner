@@ -682,6 +682,26 @@
       (is (empty? (:prompt (get-runner))) "No more prompts for the Runner")
       (is (empty? (:prompt (get-corp))) "No more prompts for the Corp"))))
 
+(deftest herald
+  ;; Herald
+  (do-game
+    (new-game {:corp {:deck ["Herald" "Project Beale"]}})
+    (play-from-hand state :corp "Herald" "HQ")
+    (play-from-hand state :corp "Project Beale" "New remote")
+    (let [herald (get-ice state :hq 0)
+          beale (get-content state :remote1 0)]
+      (core/rez state :corp herald)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (= 4 (:credit (get-corp)))
+      (card-subroutine state :corp herald 0)
+      (= 6 (:credit (get-corp)))
+      (card-subroutine state :corp herald 1)
+      (click-prompt state :corp "2")
+      (click-card state :corp beale)
+      (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
+      (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens"))))
+
 (deftest holmegaard
   ;; Holmegaard - Stop Runner from accessing cards if win trace
   (do-game

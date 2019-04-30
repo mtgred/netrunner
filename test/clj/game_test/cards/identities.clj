@@ -454,6 +454,26 @@
       (is (= 1 (count (get-hardware state))) "One installed hardware")
       (is (= (- creds 3) (:credit (get-runner))) "Az discount was applied"))))
 
+(deftest blue-sun-powering-the-future
+  ;; Blue Sun - Pick up cards at start of turn
+  (do-game
+    (new-game {:corp {:id "Blue Sun: Powering the Future"
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["Reduced Service"]}})
+    (play-from-hand state :corp "Reduced Service" "New remote")
+    (let [rs (get-content state :remote1 0)]
+      (core/rez state :corp rs)
+      (click-prompt state :corp "3")
+      (is (= 3 (get-counters (refresh rs) :power)) "Reduced Service should have 3 counters on it")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (click-card state :corp rs)
+      (is (nil? (refresh rs)) "Reduced Service is picked up")
+      (is (find-card "Reduced Service" (:hand (get-corp))) "Reduced Service is now in HQ"))
+    (play-from-hand state :corp "Reduced Service" "New remote")
+    (is (zero? (get-counters (get-content state :remote2 0) :power)) "Reduced Service should have 0 counters on it after reinstall")))
+
 (deftest cerebral-imaging-infinite-frontiers
   ;; Cerebral Imaging - Maximum hand size equal to credits
   (do-game
@@ -1009,7 +1029,7 @@
        (take-credits state :corp)
        (run-on state "R&D")
        (core/rez state :corp sm)
-       (is (changes-credits (get-corp) 0
+       (is (changes-credits (get-corp) 1
                             (card-ability state :corp (refresh sm) 0))) ;trigger slot machine
        (run-jack-out state)
        (take-credits state :runner)
@@ -1639,7 +1659,7 @@
 
 (deftest nbn-controlling-the-message
   ;; NBN: Controlling the Message
-  (testing "Trace to tag Runner when first installed Corp card is trashed"
+  (testing "Trace to tag Runner when first installed Corp card is trashed. Issue #2321"
     (do-game
       (new-game {:corp {:id "NBN: Controlling the Message"
                         :deck [(qty "Launch Campaign" 3)]}
@@ -1676,7 +1696,26 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner took 1 unpreventable tag")
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT"))))
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT")))
+  (testing "Trace shouldn't fire on second trash after trash during Direct Access run. #4168"
+    (do-game
+      (new-game {:corp {:id "NBN: Controlling the Message"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Launch Campaign" 3)]}
+                 :runner {:deck ["Direct Access"]}})
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Direct Access")
+      (click-prompt state :runner "Server 1")
+      (run-successful state)
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (click-prompt state :runner "Yes")
+      (run-empty-server state "Server 2")
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (is (empty? (:prompt (get-corp))) "CtM shouldn't fire")
+      (is (empty? (:prompt (get-runner))) "Runner shouldn't have prompt")
+      (is (zero? (count-tags state)) "Runner took 1 unpreventable tag"))))
 
 (deftest new-angeles-sol-your-news
   ;; New Angeles Sol - interaction with runner stealing agendas

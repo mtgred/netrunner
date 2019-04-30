@@ -251,17 +251,42 @@
   [card]
   (or (not (rezzed? card)) (not (:cannot-host (card-def card)))))
 
-(defn ice? [card]
-  (is-type? card "ICE"))
+(defn agenda? [card]
+  (is-type? card "Agenda"))
 
-(defn program? [card]
-  (is-type? card "Program"))
+(defn asset? [card]
+  (is-type? card "Asset"))
+
+(defn event? [card]
+  (is-type? card "Event"))
 
 (defn hardware? [card]
   (is-type? card "Hardware"))
 
+(defn ice? [card]
+  (is-type? card "ICE"))
+
+(defn identity? [card]
+  (or (is-type? card "Identity")
+      (is-type? card "Fake-Identity")))
+
+(defn operation? [card]
+  (is-type? card "Operation"))
+
+(defn program? [card]
+  (is-type? card "Program"))
+
 (defn resource? [card]
   (is-type? card "Resource"))
+
+(defn upgrade? [card]
+  (is-type? card "Upgrade"))
+
+(defn runner? [card]
+  (card-is? card :side "Runner"))
+
+(defn corp? [card]
+  (card-is? card :side "Corp"))
 
 (defn rezzed? [card]
   (:rezzed card))

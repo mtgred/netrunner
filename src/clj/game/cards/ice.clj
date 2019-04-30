@@ -746,20 +746,22 @@
                                             (effect-completed state side eid)))))})]})
 
    "Data Loop"
-   {:implementation "Encounter effect is manual"
-    :subroutines [end-the-run-if-tagged
-                  end-the-run]
-    :runner-abilities [{:label "Add 2 cards from your Grip to the top of the Stack"
-                        :req (req (pos? (count (:hand runner))))
-                        :effect (req (let [n (min 2 (count (:hand runner)))]
-                                       (resolve-ability state side
-                                                        {:prompt (msg "Choose " n " cards in your Grip to add to the top of the Stack (first card targeted will be topmost)")
-                                                         :choices {:max n :all true
-                                                                   :req #(and (in-hand? %) (= (:side %) "Runner"))}
-                                                         :effect (req (doseq [c targets]
-                                                                        (move state :runner c :deck {:front true}))
-                                                                      (system-msg state :runner (str "adds " n " cards from their Grip to the top of the Stack")))}
-                                                        card nil)))}]}
+   (let [ability {:label "Add 2 cards from your Grip to the top of the Stack"
+                  :req (req (pos? (count (:hand runner))))
+                  :effect (req (let [n (min 2 (count (:hand runner)))]
+                                 (resolve-ability state side
+                                                  {:prompt (msg "Choose " n " cards in your Grip to add to the top of the Stack (first card targeted will be topmost)")
+                                                   :choices {:max n :all true
+                                                             :req #(and (in-hand? %) (= (:side %) "Runner"))}
+                                                   :effect (req (doseq [c targets]
+                                                                  (move state :runner c :deck {:front true}))
+                                                                (system-msg state :runner (str "adds " n " cards from their Grip to the top of the Stack")))}
+                                                  card nil)))}]
+     {:implementation "Encounter effect is manual"
+      :subroutines [end-the-run-if-tagged
+                    end-the-run]
+      :abilities [ability]
+      :runner-abilities [ability]})
 
    "Data Mine"
    {:subroutines [{:msg "do 1 net damage"
@@ -1094,10 +1096,21 @@
    "Herald"
    {:flags {:rd-reveal (req true)}
     :subroutines [(gain-credits-sub 2)
-                  {:label "Pay 1 [Credits] to place 1 advancement token on a card that can be advanced"
-                   :msg (msg "place 1 advancement token on " (card-str state target))
-                   :choices {:req can-be-advanced?}
-                   :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
+                  {:async true
+                   :label "Pay up to 2 [Credits] to place up to 2 advancement tokens"
+                   :prompt "How many advancement tokens?"
+                   :choices (req (map str (range (inc (min 2 (:credit corp))))))
+                   :effect (req (let [c (str->int target)]
+                                  (if (can-pay? state side (:title card) :credit c)
+                                    (do (pay state :corp card :credit c)
+                                        (continue-ability
+                                          state side
+                                          {:msg (msg "pay " c "[Credits] and place " (quantify c " advancement token")
+                                                     " on " (card-str state target))
+                                           :choices {:req can-be-advanced?}
+                                           :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                          card nil))
+                                    (effect-completed state side eid))))}]
     :access {:async true
              :req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Herald subroutines")
@@ -2177,7 +2190,10 @@
 
    "Searchlight"
    {:advanceable :always
-    :subroutines [(tag-trace advance-counters)]}
+    :subroutines [{:label "Trace X - Give the Runner 1 tag"
+                   :trace {:base advance-counters
+                           :label "Give the Runner 1 tag"
+                           :successful (give-tags 1)}}]}
 
    "Seidr Adaptive Barrier"
    (let [recalculate-strength (req (update-ice-strength state side (get-card state card)))
@@ -2251,10 +2267,12 @@
            (top-3-types [state] (->> (top-3 state) (map :type) (into #{}) count))]
      {:implementation "Encounter effect is manual"
       :abilities [{:label "Roll them bones"
+                   :req (req (same-card? current-ice card))
                    :effect (effect (move :runner (first (:deck runner)) :deck)
-                             (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
-                                              " then reveal the top 3 cards in the stack: "
-                                              (join ", " (top-3-names state)))))}]
+                                   (reveal (take 3 (:deck runner)))
+                                   (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
+                                                    " then reveal the top 3 cards in the stack: "
+                                                    (join ", " (top-3-names state)))))}]
       :subroutines [{:label "Runner loses 3 [Credits]"
                      :msg "force the Runner to lose 3 [Credits]"
                      :effect (effect (lose-credits :runner 3))}
@@ -2652,9 +2670,9 @@
    {:subroutines [(do-net-damage 1)
                   {:msg "look at the top card of R&D"
                    :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
-                              :yes-ability {:effect (effect (move (first (:deck corp)) :deck)
-                                                            (do (system-msg state side "uses Yagura to move the top card of R&D to the bottom")))}
-                              :no-ability {:effect (req (system-msg state :corp (str "does not use Yagura to move the top card of R&D to the bottom")))}}}]}
+                              :yes-ability {:msg "move the top card of R&D to the bottom"
+                                            :effect (effect (move (first (:deck corp)) :deck))}
+                              :no-ability {:effect (effect (system-msg :corp (str "does not use Yagura to move the top card of R&D to the bottom")))}}}]}
 
    "Zed 1.0"
    {:implementation "Restriction on having spent [click] is not implemented"

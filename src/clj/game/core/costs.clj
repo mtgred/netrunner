@@ -33,7 +33,7 @@
                    (= side :runner)
                    (pos? (get-in @state [:runner :run-credit] 0)))
           (swap! state update-in [:runner :run-credit] (sub->0 value)))))
-  (when-let [cost-name (cost-names value attr)]
+  (when-let [cost-name (cost-names attr value)]
     cost-name))
 
 (defn flag-stops-pay?
@@ -53,7 +53,7 @@
       (flag-stops-pay? state side cost-type)
       computer-says-no
 
-      (not (or (#{:memory :net-damage :meat-damage :brain-damage} cost-type)
+      (not (or (#{:memory :net :meat :brain} cost-type)
                (and (= cost-type :forfeit) (<= 0 (- (count (get-in @state [side :scored])) amount)))
                (and (= cost-type :mill) (<= 0 (- (count (get-in @state [side :deck])) amount)))
                (and (= cost-type :discard) (<= 0 (- (count (get-in @state [side :hand])) amount)))
@@ -104,7 +104,7 @@
   (let [clean-costs (add-default-to-costs costs)
         partition-fn (juxt remove filter)
         [plain-costs damage-costs] (partition-fn
-                                     #(#{:net-damage :meat-damage :brain-damage} (first %))
+                                     #(#{:net :meat :brain} (first %))
                                      clean-costs)
         reduce-fn (fn [cost-map [cost-type value]]
                     (update cost-map cost-type (fnil + 0 0) value))]
@@ -150,11 +150,11 @@
                      :async true
                      :choices {:max amount
                                :req #(is-scored? state side %)}
-                     :effect (req (wait-for (forfeit state side target)
+                     :effect (req (wait-for (forfeit state side target {:msg false})
                                             (complete-with-result
                                               state side eid
-                                              (str "forfeits " (cost-names amount :forfeit)
-                                                   ": " (join ", " (map #(card-str state %) targets))))))}
+                                              (str "forfeits " (cost-names :forfeit amount)
+                                                   " (" (:title target) ")"))))}
                     card nil))
 
 (defn pay-trash
@@ -177,8 +177,7 @@
   "Suffer a damage as part of paying for a card or ability"
   [state side eid dmg-type amount]
   (wait-for (damage state side dmg-type amount {:unpreventable true})
-            (complete-with-result state side eid
-                                  (str "suffers " (cost-names amount dmg-type)))))
+            (complete-with-result state side eid (cost-names dmg-type amount))))
 
 (defn pay-shuffle-installed-to-stack
   "Shuffle installed runner cards into the stack as part of paying for a card or ability"
@@ -198,6 +197,24 @@
                                     (str "shuffles " (join ", " (map :title targets))
                                          " into their stack")))}
                     card nil))
+
+(defn pay-mill
+  [state side eid amount]
+  (let [cards (take amount (get-in @state [side :deck]))]
+    (wait-for (trash-cards state side cards {:unpreventable true :seen false})
+              (complete-with-result
+                state side eid
+                (str (cost-names :mill amount) " trashed from the top of "
+                     (if (= :corp side) "R&D" "the Stack"))))))
+
+(defn pay-discard
+  [state side eid amount]
+  (let [cards (take amount (shuffle (get-in @state [side :hand])))]
+    (wait-for (trash-cards state side cards {:unpreventable true :seen false})
+              (complete-with-result
+                state side eid
+                (str (cost-names :discard amount) " trashed at random from "
+                     (if (= :corp side) "HQ" "the Grip"))))))
 
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"
@@ -233,14 +250,13 @@
                       :plural "rezzed ICE"})
 
      ;; Suffer damage
-     :tag (complete-with-result state side eid (deduct state :runner cost))
-     :net-damage (pay-damage state side eid :net (second cost))
-     :meat-damage (pay-damage state side eid :meat (second cost))
-     :brain-damage (pay-damage state side eid :brain (second cost))
+     :net (pay-damage state side eid :net (second cost))
+     :meat (pay-damage state side eid :meat (second cost))
+     :brain (pay-damage state side eid :brain (second cost))
 
      ;; Discard cards from deck or hand
-     :mill (complete-with-result state side eid (mill state side (second cost)))
-     :discard (complete-with-result state side eid (discard-from-hand state side (second cost)))
+     :mill (pay-mill state side eid (second cost))
+     :discard (pay-discard state side eid (second cost))
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card (second cost))

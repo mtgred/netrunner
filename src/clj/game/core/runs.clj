@@ -252,12 +252,12 @@
   (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (let [cost (steal-cost state side c)
         part-cost (partition 2 cost)
-        cost-strs (map costs->symbol part-cost)
+        cost-strs (map #(apply cost-names %) part-cost)
         cost-map (zipmap cost-strs part-cost)
         n (count cost-strs)
         card-name (:title c)
         can-pay-costs? (can-pay? state side card-name cost)
-        cost-as-symbol (when (= 1 (count cost-strs)) (costs->symbol cost))
+        cost-as-symbol (when (= 1 (count cost-strs)) (apply cost-names cost))
         ;; any trash abilities
         can-steal-this? (can-steal? state side c)
         trash-ab-cards (when (not= (:zone c) [:discard])
@@ -909,7 +909,7 @@
   ([state side] (jack-out state side (make-eid state)))
   ([state side eid]
    (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
-   (wait-for (trigger-event-sync state side :pre-jack-out)
+   (wait-for (trigger-event-sync state side :pre-jack-out nil)
              (let [prevent (get-prevent-list state :corp :jack-out)]
                (if (cards-can-prevent? state :corp prevent :jack-out)
                  (do (system-msg state :corp "has the option to prevent the Runner from jacking out")

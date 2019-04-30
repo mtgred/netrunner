@@ -139,7 +139,7 @@
 (defn number-of-virus-counters
   "Returns number of actual virus counters (excluding virtual counters from Hivemind)"
   [state]
-  (reduce + (map #(get-counters % :virus) (all-installed state :runner))))
+  (reduce + (map #(get-counters % :virus) (get-all-installed state))))
 
 (defn all-active
   "Returns a vector of all active cards for the given side. Active cards are either installed, the identity,

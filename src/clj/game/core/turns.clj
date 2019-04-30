@@ -53,9 +53,13 @@
         runner-deck-id (get-in runner [:deck :_id])
         corp-options (get-in corp [:options])
         runner-options (get-in runner [:options])
-        corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
+        corp-identity (assoc (or (get-in corp [:deck :identity])
+                                 {:side "Corp" :type "Identity" :title "Custom Biotics: Engineered for Success"})
+                             :cid (make-cid))
         corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
-        runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
+        runner-identity (assoc (or (get-in runner [:deck :identity])
+                                   {:side "Runner" :type "Identity" :title "The Professor: Keeper of Knowledge"})
+                               :cid (make-cid))
         runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
         corp-quote (quotes/make-quote corp-identity runner-identity)
         runner-quote (quotes/make-quote runner-identity corp-identity)]
@@ -111,9 +115,9 @@
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
     (let [side :corp]
-      (wait-for (trigger-event-sync state side :pre-start-game)
+      (wait-for (trigger-event-sync state side :pre-start-game nil)
                 (let [side :runner]
-                  (wait-for (trigger-event-sync state side :pre-start-game)
+                  (wait-for (trigger-event-sync state side :pre-start-game nil)
                             (init-hands state)))))
     state))
 
@@ -259,7 +263,7 @@
                                         " from " (if (= :runner side) "their Grip" "HQ")
                                         " at end of turn"))
                        (doseq [t targets]
-                         (trash state side t))
+                         (trash state side t {:unpreventable true}))
                        (effect-completed state side eid))}
          nil nil)
        (effect-completed state side eid)))))
@@ -273,43 +277,38 @@
      (when (and (= side :runner)
                 (neg? (hand-size state side)))
        (flatline state))
-     (wait-for
-       (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends))
-       (do (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
-           (doseq [side [:corp :runner]]
-             (doseq [a (get-in @state [side :register :end-turn])]
-               (resolve-ability state side (:eid a) (:ability a) (:card a) (:targets a)))
-             (swap! state dissoc-in [side :register :end-turn]))
-           (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
-           (doseq [card (all-active-installed state :runner)]
-             ;; Clear :installed :this-turn as turn has ended
-             (when (= :this-turn (:installed card))
-               (update! state side (assoc card :installed true)))
-             ;; Clear the added-virus-counter flag for each virus in play.
-             ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
-             (when (has-subtype? card "Virus")
-               (set-prop state :runner card :added-virus-counter false))
-             ;; Remove all-turn strength from icebreakers.
-             ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
-             (when (has-subtype? card "Icebreaker")
-               (update! state side (update-in (get-card state card) [:pump] dissoc :all-turn))
-               (update-breaker-strength state :runner card)))
-           (doseq [card (all-installed state :corp)]
-             ;; Clear :this-turn flags as turn has ended
-             (when (= :this-turn (:installed card))
-               (update! state side (assoc card :installed true)))
-             (when (= :this-turn (:rezzed card))
-               (update! state side (assoc card :rezzed true))))
-           ;; Update strength of all ice every turn
-           (update-all-ice state side)
-           (swap! state assoc :end-turn true)
-           (swap! state update-in [side :register] dissoc :cannot-draw)
-           (swap! state update-in [side :register] dissoc :drawn-this-turn)
-           (clear-turn-register! state)
-           (swap! state dissoc :turn-events)
-           (when-let [extra-turns (get-in @state [side :extra-turns])]
-             (when (pos? extra-turns)
-               (start-turn state side nil)
-               (swap! state update-in [side :extra-turns] dec)
-               (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
-           (effect-completed state side eid))))))
+     (wait-for (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil)
+               (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
+               (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
+               (doseq [card (all-active-installed state :runner)]
+                 ;; Clear :installed :this-turn as turn has ended
+                 (when (= :this-turn (:installed card))
+                   (update! state side (assoc card :installed true)))
+                 ;; Clear the added-virus-counter flag for each virus in play.
+                 ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
+                 (when (has-subtype? card "Virus")
+                   (set-prop state :runner card :added-virus-counter false))
+                 ;; Remove all-turn strength from icebreakers.
+                 ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
+                 (when (has-subtype? card "Icebreaker")
+                   (update! state side (update-in (get-card state card) [:pump] dissoc :all-turn))
+                   (update-breaker-strength state :runner card)))
+               (doseq [card (all-installed state :corp)]
+                 ;; Clear :this-turn flags as turn has ended
+                 (when (= :this-turn (:installed card))
+                   (update! state side (assoc card :installed true)))
+                 (when (= :this-turn (:rezzed card))
+                   (update! state side (assoc card :rezzed true))))
+               ;; Update strength of all ice every turn
+               (update-all-ice state side)
+               (swap! state assoc :end-turn true)
+               (swap! state update-in [side :register] dissoc :cannot-draw)
+               (swap! state update-in [side :register] dissoc :drawn-this-turn)
+               (clear-turn-register! state)
+               (swap! state dissoc :turn-events)
+               (when-let [extra-turns (get-in @state [side :extra-turns])]
+                 (when (pos? extra-turns)
+                   (start-turn state side nil)
+                   (swap! state update-in [side :extra-turns] dec)
+                   (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
+               (effect-completed state side eid)))))

@@ -56,15 +56,14 @@
   [state side eid event & targets]
   (swap! state update-in [:turn-events] #(cons [event targets] %))
   (let [get-side #(-> % :card :side game.utils/to-keyword)
-        is-active-player #(= (:active-player @state) (get-side %))]
-
-    (let [handlers (sort-by (complement is-active-player) (get-in @state [:events event]))
-          handlers (doall
-                     (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
-                                   (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
-                             handlers))]
-      (wait-for (apply trigger-event-sync-next state side handlers event targets)
-                (effect-completed state side eid)))))
+        is-active-player #(= (:active-player @state) (get-side %))
+        handlers (->> (get-in @state [:events event])
+                      (sort-by (complement is-active-player))
+                      (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
+                                    (can-trigger? state side (:ability %) (get-card state (:card %)) targets)))
+                      doall)]
+    (wait-for (apply trigger-event-sync-next state side handlers event targets)
+              (effect-completed state side eid))))
 
 (defn- trigger-event-simult-player
   "Triggers the simultaneous event handlers for the given event trigger and player.
@@ -302,11 +301,11 @@
 
 ;;; Effect completion triggers
 (defn register-effect-completed
-  [state side eid card effect]
-  (swap! state update-in [:effect-completed (:eid eid)] #(conj % {:card card :effect effect})))
+  [state side eid effect]
+  (swap! state update-in [:effect-completed (:eid eid)] #(conj % effect)))
 
 (defn effect-completed
   [state side eid]
   (doseq [handler (get-in @state [:effect-completed (:eid eid)])]
-    ((:effect handler) state side eid nil nil))
+    (handler state side eid))
   (swap! state update-in [:effect-completed] dissoc (:eid eid)))
