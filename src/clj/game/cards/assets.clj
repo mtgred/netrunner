@@ -671,15 +671,16 @@
     :suppress {:corp-turn-begins {:req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}}
     :events {:corp-turn-ends {:req (req (:ebc-rezzed card))
                               :effect (effect (update! (dissoc card :ebc-rezzed)))}}
-    :abilities [{:choices {:req (complement rezzed?)}
+    :abilities [{:async true
+                 :once :per-turn
+                 :choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
-                 :async true
                  :effect (req (rez-cost-bonus state side -1)
                               (wait-for (rez state side target {:no-warning true})
                                         (update! state side (assoc card :ebc-rezzed (:cid target)))))}
-                {:prompt "Choose an asset to add to HQ"
-                 :msg (msg "add " (:title target) " to HQ")
+                {:prompt "Choose an asset to reveal and add to HQ"
+                 :msg (msg "reveal " (:title target) " and add it to HQ")
                  :activatemsg "searches R&D for an asset"
                  :choices (req (cancellable (filter #(is-type? % "Asset")
                                                     (:deck corp))
@@ -687,6 +688,7 @@
                  :cost [:credit 1]
                  :label "Search R&D for an asset"
                  :effect (effect (trash card {:cause :ability-cost})
+                                 (reveal target)
                                  (shuffle! :deck)
                                  (move target :hand))}]}
 
