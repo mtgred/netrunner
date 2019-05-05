@@ -2424,7 +2424,8 @@
 
    "Wireless Net Pavilion"
    {:effect (effect (trash-resource-bonus -2))
-    :leave-play (effect (trash-resource-bonus 2))}
+    :leave-play (effect (trash-resource-bonus 2))
+    :implementation "Errata from FAQ 3.0.1: should be unique"}
 
    "Woman in the Red Dress"
    (let [ability {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")

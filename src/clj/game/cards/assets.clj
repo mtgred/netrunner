@@ -1232,7 +1232,8 @@
                            " into R&D")
                  :effect (req (doseq [c targets]
                                 (move state side c :deck))
-                              (shuffle! state side :deck))}]}
+                              (shuffle! state side :deck))}]
+    :implementation "Errata from FAQ 3.1: should be unique"}
 
    "Nanoetching Matrix"
    {:events {:runner-trash {:req (req (= (:cid card) (:cid target)))
