@@ -1888,7 +1888,7 @@
                                        (or (program? card)
                                            (hardware? card))))
          pick-up {:async true
-                  :prompt "select a program or piece of hardware to put in hand"
+                  :prompt "Select a program or piece of hardware to add to your Grip"
                   :choices {:req #(and (valid-target? %)
                                        (installed? %))}
                   :effect (req (move state side target :hand)
@@ -1903,7 +1903,7 @@
      {:req (req (some valid-target? (all-installed state :runner)))
       :effect (req (wait-for (resolve-ability state side pick-up card nil)
                              (continue-ability state side
-                                               (put-down state side (quot (or async-result 0) 2))
+                                               (put-down state side async-result)
                                                card nil)))})
 
    "Reshape"
