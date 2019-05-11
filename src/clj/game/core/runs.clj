@@ -352,6 +352,7 @@
         c (assoc c :seen true)
         access-effect (when-let [acc (:access cdef)]
                         (ability-as-handler c acc))]
+    (swap! state assoc-in [:runner :register :accessed-cards] true)
     (msg-handle-access state side c title)
     (wait-for (trigger-event-simult state side :access
                                     {:card-ability access-effect
