@@ -16,6 +16,7 @@
                                                    ;; mu used is for easier implementation of the 0-mu hosting things
                                                    #(- % value)
                                                    (sub->0 value))))
+
     ;; values that expect map, if passed a number use default subattr of :mod
     (#{:hand-size :memory} attr)
     (deduct state side [attr {:mod value}])
@@ -32,9 +33,12 @@
         (when (and (= attr :credit)
                    (= side :runner)
                    (pos? (get-in @state [:runner :run-credit] 0)))
-          (swap! state update-in [:runner :run-credit] (sub->0 value)))))
-  (when-let [cost-name (cost-names attr value)]
-    cost-name))
+          (swap! state update-in [:runner :run-credit] (sub->0 value)))
+        (cond
+          (= :credit attr)
+          (str "pays " value " [Credits]")
+          (= :click attr)
+          (str "spends " (->> "[Click]" repeat (take value) (apply str)))))))
 
 (defn flag-stops-pay?
   "Checks installed cards to see if payment type is prevented by a flag"
@@ -153,7 +157,7 @@
                      :effect (req (wait-for (forfeit state side target {:msg false})
                                             (complete-with-result
                                               state side eid
-                                              (str "forfeits " (cost-names :forfeit amount)
+                                              (str "forfeits " (quantify amount "agenda")
                                                    " (" (:title target) ")"))))}
                     card nil))
 
@@ -177,7 +181,9 @@
   "Suffer a damage as part of paying for a card or ability"
   [state side eid dmg-type amount]
   (wait-for (damage state side dmg-type amount {:unpreventable true})
-            (complete-with-result state side eid (cost-names dmg-type amount))))
+            (complete-with-result
+              state side eid
+              (str "suffers " amount " " (name dmg-type) " damage"))))
 
 (defn pay-shuffle-installed-to-stack
   "Shuffle installed runner cards into the stack as part of paying for a card or ability"
@@ -194,7 +200,8 @@
                                   (shuffle! state :runner :deck)
                                   (complete-with-result
                                     state side eid
-                                    (str "shuffles " (join ", " (map :title targets))
+                                    (str "shuffles " (quantify amount "card")
+                                         " (" (join ", " (map :title targets)) ") "
                                          " into their stack")))}
                     card nil))
 
@@ -204,8 +211,8 @@
     (wait-for (trash-cards state side cards {:unpreventable true :seen false})
               (complete-with-result
                 state side eid
-                (str (cost-names :mill amount) " trashed from the top of "
-                     (if (= :corp side) "R&D" "the Stack"))))))
+                (str "trashes " (quantify amount "card") " from the top of "
+                     (if (= :corp side) "R&D" "the stack"))))))
 
 (defn pay-discard
   [state side eid amount]
@@ -213,14 +220,14 @@
     (wait-for (trash-cards state side cards {:unpreventable true :seen false})
               (complete-with-result
                 state side eid
-                (str (cost-names :discard amount) " trashed at random from "
-                     (if (= :corp side) "HQ" "the Grip"))))))
+                (str "trashes " (quantify amount "card") " randomly from "
+                     (if (= :corp side) "HQ" "the grip"))))))
 
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"
   ([state side card action costs cost] (cost-handler state side (make-eid state) card action costs cost))
-  ([state side eid card action costs cost]
-   (case (first cost)
+  ([state side eid card action costs [cost-type amount]]
+   (case cost-type
      :click (let [a (first (keep :action action))]
               (when (not= a :steal-cost)
                 ;; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
@@ -229,42 +236,42 @@
                              (if (= side :corp) :corp-spent-click :runner-spent-click)
                              a (:click (into {} costs)))
               (swap! state assoc-in [side :register :spent-click] true)
-              (complete-with-result state side eid (deduct state side cost)))
+              (complete-with-result state side eid (deduct state side [cost-type amount])))
 
-     :forfeit (pay-forfeit state side eid card (second cost))
+     :forfeit (pay-forfeit state side eid card amount)
 
      ;; Trash installed cards
-     :hardware (pay-trash state side eid card "piece of hardware" (second cost)
-                          (every-pred installed? #(is-type? % :hardware) (complement facedown?))
+     :hardware (pay-trash state side eid card "piece of hardware" amount
+                          (every-pred installed? hardware? (complement facedown?))
                           {:plural "pieces of hardware"})
-     :program (pay-trash state side eid card "program" (second cost)
-                         (every-pred installed? #(is-type? % :program) (complement facedown?)))
-     :resource (pay-trash state side eid card "resource" (second cost)
-                          (every-pred installed? #(is-type? % :resource) (complement facedown?)))
-     :connection (pay-trash state side eid card "connection" (second cost)
+     :program (pay-trash state side eid card "program" amount
+                         (every-pred installed? program? (complement facedown?)))
+     :resource (pay-trash state side eid card "resource" amount
+                          (every-pred installed? resource? (complement facedown?)))
+     :connection (pay-trash state side eid card "connection" amount
                             (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
-     :ice (pay-trash state :corp eid card "rezzed ICE" (second cost)
+     :ice (pay-trash state :corp eid card "rezzed ICE" amount
                      (every-pred rezzed? ice?)
                      {:cause :ability-cost
                       :keep-server-alive true
                       :plural "rezzed ICE"})
 
      ;; Suffer damage
-     :net (pay-damage state side eid :net (second cost))
-     :meat (pay-damage state side eid :meat (second cost))
-     :brain (pay-damage state side eid :brain (second cost))
+     :net (pay-damage state side eid :net amount)
+     :meat (pay-damage state side eid :meat amount)
+     :brain (pay-damage state side eid :brain amount)
 
      ;; Discard cards from deck or hand
-     :mill (pay-mill state side eid (second cost))
-     :discard (pay-discard state side eid (second cost))
+     :mill (pay-mill state side eid amount)
+     :discard (pay-discard state side eid amount)
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
-     :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card (second cost))
+     :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card amount)
 
      ;; Else
-     (let [[type amount] cost]
-       (swap! state update-in [:stats side :spent type] (fnil + 0) amount)
-       (complete-with-result state side eid (deduct state side cost))))))
+     (do
+       (swap! state update-in [:stats side :spent cost-type] (fnil + 0) amount)
+       (complete-with-result state side eid (deduct state side [cost-type amount]))))))
 
 (defn pay
   "Deducts each cost from the player.

@@ -153,20 +153,21 @@
   (when (and (number? value)
              (pos? value))
     (case attr
-      :credit (str value " [Credits]")
-      :click (->> "[Click]" repeat (take value) (apply str))
-      :forfeit (quantify value "Agenda")
-      :hardware (quantify value "installed hardware" "")
-      :program (quantify value "installed program")
-      :connection (quantify value "installed connection resource")
-      :ice (quantify value "installed rezzed ICE" "")
-      :shuffle-installed-to-stack (str "shuffling " (quantify value "installed card") " into the stack")
-      :net (quantify value "net damage" "")
-      :meat (quantify value "meat damage" "")
-      :brain (quantify value "brain damage" "")
-      :mill (quantify value "card")
-      :discard (quantify value "card")
-      (quantify value (name attr)))))
+      :credit (str "Pay " value " [Credits]")
+      :click (str "Spend " (->> "[Click]" repeat (take value) (apply str)))
+      :forfeit (str "Forfeit " (quantify value "Agenda"))
+      :hardware (str "Trash " (quantify value "installed hardware" ""))
+      :program (str "Trash " (quantify value "installed program"))
+      :resource (str "Trash " (quantify value "installed resource"))
+      :connection (str "Trash " (quantify value "installed connection resource"))
+      :ice (str "Trash " (quantify value "installed rezzed ICE" ""))
+      :shuffle-installed-to-stack (str "Shuffle " (quantify value "installed card") " into the stack")
+      :net (str "Suffer " (quantify value "net damage" ""))
+      :meat (str "Suffer " (quantify value "meat damage" ""))
+      :brain (str "Suffer " (quantify value "brain damage" ""))
+      :mill (str "Trash " (quantify value "card") " from the top of your deck")
+      :discard (str "Trash " (quantify value "card") " randomly from your hand")
+      (str "Pay " (quantify value (name attr))))))
 
 (defn build-cost-str
   "Gets the complete cost-str for specified costs"
@@ -184,7 +185,7 @@
    (if (or (not (instance? String cost-str))
            (= "" cost-str))
      (str (or verb2 (str verb "s")) " ")
-     (str "spends " cost-str " to " verb " "))))
+     (str cost-str " to " verb " "))))
 
 (defn side-str
   "Converts kw into str. If str is passed same str is returned."
