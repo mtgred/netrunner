@@ -736,7 +736,7 @@
                 :choices ["Gain 2 [Credits]" "Draw 2 cards"]
                 :msg (msg (lower-case target))
                 :effect (req (if (= target "Gain 2 [Credits]")
-                               (do (gain state :corp :credit 2)
+                               (do (gain-credits state :corp 2)
                                    (continue-ability state side (repeat-choice (inc current) total)
                                                      card nil))
                                (wait-for (draw state :corp 2 nil) ; don't proceed with the next choice until the draw is done
