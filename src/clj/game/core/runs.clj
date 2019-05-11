@@ -865,12 +865,15 @@
 (defn- resolve-end-run
   "End this run, and set it as UNSUCCESSFUL"
   ([state side eid]
-   (let [run (:run @state)
-         server (first (get-in @state [:run :server]))]
-     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
-     (swap! state assoc-in [:run :unsuccessful] true)
-     (handle-end-run state side)
-     (trigger-event-sync state side eid :unsuccessful-run run))))
+   (if (get-in @state [:run :successful])
+     (do (handle-end-run state side)
+         (effect-completed state side eid))
+     (let [run (:run @state)
+           server (first (get-in @state [:run :server]))]
+       (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
+       (swap! state assoc-in [:run :unsuccessful] true)
+       (handle-end-run state side)
+       (trigger-event-sync state side eid :unsuccessful-run run)))))
 
 (defn end-run
   "After checking for prevents, end this run, and set it as UNSUCCESSFUL."
