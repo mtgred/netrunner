@@ -29,8 +29,6 @@
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (run-empty-server state :remote1)
     (click-prompt state :runner "Pay to steal")
-    (click-prompt state :runner "Spend [Click]")
-    (click-prompt state :runner "Pay 2 [Credits]")
     (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
     (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits to steal")
     (is (= 1 (count (:scored (get-runner)))) "Runner should steal Ikawah Project")

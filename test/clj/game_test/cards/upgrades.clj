@@ -198,7 +198,7 @@
         (click-prompt state :runner "No action")
         (run-empty-server state "Server 1")
         (click-card state :runner hok)
-        (click-prompt state :runner "Suffer 2 net damage to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "on R&D access"
@@ -222,7 +222,7 @@
         (click-prompt state :runner "No action")
         (run-empty-server state "R&D")
         (click-prompt state :runner "Card from deck")
-        (click-prompt state :runner "Suffer 2 net damage to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "pay even when trashed"
@@ -241,7 +241,7 @@
         (click-prompt state :runner "Pay 3 [Credits] to trash") ; pay to trash
         (click-card state :runner hok)
         ;; should now have prompt to pay 2 net for HoK
-        (click-prompt state :runner "Suffer 2 net damage to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Check runner chooses order of payment"
@@ -261,10 +261,6 @@
         (is (= "Obokata Protocol" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
         (click-prompt state :runner "Pay to steal")
-        (click-prompt state :runner "Suffer 2 net damage")
-        (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
-        (is (zero? (count (:scored (get-runner)))) "No scored agendas")
-        (click-prompt state :runner "Suffer 4 net damage")
         (is (= 6 (count (:discard (get-runner)))) "Runner took 4 net damage")
         (is (= 1 (count (:scored (get-runner)))) "Scored agenda"))))
   (testing "Check Fetal AI can be stolen, #2586"
@@ -284,10 +280,7 @@
         (is (= "Fetal AI" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
         (click-prompt state :runner "Pay to steal")
-        (click-prompt state :runner "Pay 2 [Credits]")
         (is (= 3 (:credit (get-runner))) "Runner paid 2 credits")
-        (is (zero? (count (:scored (get-runner)))) "No scored agendas")
-        (click-prompt state :runner "Suffer 2 net damage")
         (is (= 4 (count (:discard (get-runner)))) "Runner took 4 net damage - 2 from Fetal, 2 from Ben")
         (is (= 1 (count (:scored (get-runner)))) "Scored agenda")))))
 
@@ -1681,7 +1674,7 @@
         (click-prompt state :runner "No action")
         (run-empty-server state "Server 1")
         (click-card state :runner hok)
-        (click-prompt state :runner "Pay 5 [Credits] to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (zero? (:credit (get-runner))) "Runner was charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Cost increase even when trashed"
@@ -1700,7 +1693,7 @@
         (click-prompt state :runner "Pay 1 [Credits] to trash") ; pay to trash
         (click-card state :runner hok)
         ;; should now have prompt to pay 5cr for HoK
-        (click-prompt state :runner "Pay 5 [Credits] to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (zero? (:credit (get-runner))) "Runner was charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Trashed from HQ"
@@ -1923,7 +1916,7 @@
         (click-prompt state :runner "No action")
         (run-empty-server state "Server 1")
         (click-card state :runner hok)
-        (click-prompt state :runner "Spend [Click] to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (= 1 (:click (get-runner))) "Runner was charged 1click")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Click cost even when trashed"
@@ -1940,7 +1933,7 @@
         (click-card state :runner sb)
         (click-prompt state :runner "Pay 1 [Credits] to trash") ; pay to trash
         (click-card state :runner hok)
-        (click-prompt state :runner "Spend [Click] to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (= 2 (:click (get-runner))) "Runner was charged 1click")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda")))))
 

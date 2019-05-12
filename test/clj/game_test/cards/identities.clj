@@ -529,7 +529,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Feedback Filter")
       (run-empty-server state "Server 1")
-      (click-prompt state :runner "Suffer 4 net damage to steal")
+      (click-prompt state :runner "Pay to steal")
       (click-prompt state :corp "Yes")
       (click-prompt state :corp (find-card "Inti" (:hand (get-runner))))
       (is (empty? (:prompt (get-runner))) "Feedback Filter net damage prevention opportunity not given")

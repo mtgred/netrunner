@@ -147,46 +147,6 @@
      (conj (vec (sort-by :title choices)) "Cancel")
      (conj (vec choices) "Cancel"))))
 
-(defn cost-names
-  "Converts a cost (value attribute pair) to a string for printing"
-  [attr value]
-  (when (and (number? value)
-             (pos? value))
-    (case attr
-      :credit (str "Pay " value " [Credits]")
-      :click (str "Spend " (->> "[Click]" repeat (take value) (apply str)))
-      :forfeit (str "Forfeit " (quantify value "Agenda"))
-      :hardware (str "Trash " (quantify value "installed hardware" ""))
-      :program (str "Trash " (quantify value "installed program"))
-      :resource (str "Trash " (quantify value "installed resource"))
-      :connection (str "Trash " (quantify value "installed connection resource"))
-      :ice (str "Trash " (quantify value "installed rezzed ICE" ""))
-      :shuffle-installed-to-stack (str "Shuffle " (quantify value "installed card") " into the stack")
-      :net (str "Suffer " (quantify value "net damage" ""))
-      :meat (str "Suffer " (quantify value "meat damage" ""))
-      :brain (str "Suffer " (quantify value "brain damage" ""))
-      :mill (str "Trash " (quantify value "card") " from the top of your deck")
-      :discard (str "Trash " (quantify value "card") " randomly from your hand")
-      (str "Pay " (quantify value (name attr))))))
-
-(defn build-cost-str
-  "Gets the complete cost-str for specified costs"
-  [costs]
-  (->> costs
-       (map #(apply cost-names %))
-       (filter some?)
-       (interpose " and ")
-       (apply str)))
-
-(defn build-spend-msg
-  "Constructs the spend message for specified cost-str and verb(s)."
-  ([cost-str verb] (build-spend-msg cost-str verb nil))
-  ([cost-str verb verb2]
-   (if (or (not (instance? String cost-str))
-           (= "" cost-str))
-     (str (or verb2 (str verb "s")) " ")
-     (str cost-str " to " verb " "))))
-
 (defn side-str
   "Converts kw into str. If str is passed same str is returned."
   [side]

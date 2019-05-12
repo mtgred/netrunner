@@ -57,7 +57,7 @@
       (flag-stops-pay? state side cost-type)
       computer-says-no
 
-      (not (or (#{:memory :net :meat :brain} cost-type)
+      (not (or (and (#{:memory :net :meat :brain} cost-type) (<= amount (count (get-in @state [:runner :hand]))))
                (and (= cost-type :forfeit) (<= 0 (- (count (get-in @state [side :scored])) amount)))
                (and (= cost-type :mill) (<= 0 (- (count (get-in @state [side :deck])) amount)))
                (and (= cost-type :discard) (<= 0 (- (count (get-in @state [side :hand])) amount)))
@@ -143,6 +143,46 @@
   (effect-completed state side (make-result eid result))
   result)
 
+(defn cost-names
+  "Converts a cost (value attribute pair) to a string for printing"
+  [attr value]
+  (when (and (number? value)
+             (pos? value))
+    (case attr
+      :credit (str "Pay " value " [Credits]")
+      :click (str "Spend " (->> "[Click]" repeat (take value) (apply str)))
+      :forfeit (str "Forfeit " (quantify value "Agenda"))
+      :hardware (str "Trash " (quantify value "installed hardware" ""))
+      :program (str "Trash " (quantify value "installed program"))
+      :resource (str "Trash " (quantify value "installed resource"))
+      :connection (str "Trash " (quantify value "installed connection resource"))
+      :ice (str "Trash " (quantify value "installed rezzed ICE" ""))
+      :shuffle-installed-to-stack (str "Shuffle " (quantify value "installed card") " into the stack")
+      :net (str "Suffer " (quantify value "net damage" ""))
+      :meat (str "Suffer " (quantify value "meat damage" ""))
+      :brain (str "Suffer " (quantify value "brain damage" ""))
+      :mill (str "Trash " (quantify value "card") " from the top of your deck")
+      :discard (str "Trash " (quantify value "card") " randomly from your hand")
+      (str "Pay " (quantify value (name attr))))))
+
+(defn build-cost-str
+  "Gets the complete cost-str for specified costs"
+  [costs]
+  (->> costs
+       (map #(apply cost-names %))
+       (filter some?)
+       (interpose " and ")
+       (apply str)))
+
+(defn build-spend-msg
+  "Constructs the spend message for specified cost-str and verb(s)."
+  ([cost-str verb] (build-spend-msg cost-str verb nil))
+  ([cost-str verb verb2]
+   (if (or (not (instance? String cost-str))
+           (= "" cost-str))
+     (str (or verb2 (str verb "s")) " ")
+     (str cost-str " to " verb " "))))
+
 (defn pay-forfeit
   "Forfeit agenda as part of paying for a card or ability
   Amount is always 1 but can be extend if we ever need more than a single forfeit"
@@ -167,7 +207,8 @@
   ([state side eid card card-type amount select-fn args]
    (continue-ability state side
                      {:prompt (str "Choose " (quantify amount card-type) " to trash")
-                      :choices {:max amount
+                      :choices {:all true
+                                :max amount
                                 :req select-fn}
                       :async true
                       :effect (req (wait-for (trash-cards state side targets (merge args {:unpreventable true}))
@@ -201,7 +242,7 @@
                                   (complete-with-result
                                     state side eid
                                     (str "shuffles " (quantify amount "card")
-                                         " (" (join ", " (map :title targets)) ") "
+                                         " (" (join ", " (map :title targets)) ")"
                                          " into their stack")))}
                     card nil))
 

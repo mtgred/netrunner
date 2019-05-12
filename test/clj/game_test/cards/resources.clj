@@ -3278,7 +3278,7 @@
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "The Source")
     (run-empty-server state :remote1)
-    (click-prompt state :runner "Pay 3 [Credits] to steal") ; pay 3c extra to steal
+    (click-prompt state :runner "Pay to steal") ; pay 3c extra to steal
     (is (= 4 (:credit (get-runner))) "Paid 3c to steal")
     (is (= 2 (count (:discard (get-runner)))) "The Source is trashed")
     (play-from-hand state :runner "The Source")
@@ -3708,7 +3708,7 @@
       (take-credits state :corp)
       (run-empty-server state "R&D")
       (is (= 2 (count (:hand (get-runner)))) "Whistleblower does not persist between turns, so Fetal AI fires")
-      (click-prompt state :runner "Pay 2 [Credits] to steal")
+      (click-prompt state :runner "Pay to steal")
       (play-from-hand state :runner "Whistleblower")
       (core/move state :runner (find-card "Whistleblower" (:discard (get-runner))) :hand)
       (is (= 2 (count (:hand (get-runner)))) "2 cards in hand")
