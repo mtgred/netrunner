@@ -151,29 +151,6 @@
   (apply + (vals (influence-map deck))))
 
 ;; Card and deck validity
-(defn legal?
-  ([status card]
-   (legal? :standard status card))
-  ([fmt status card]
-   (= status (get-in card [:format fmt]))))
-
-(defn legal-line?
-  ([status line]
-   (legal-line? :standard status (:card line)))
-  ([fmt status line]
-   (legal? fmt status (:card line))))
-
-(defn mwl-legal?
-  "Returns true if the deck does not contain banned cards or more than one type of restricted card"
-  [fmt cards]
-  (and (every? #(case (name (get-in % [:card :format fmt]))
-                  ("legal" "restricted" "banned")
-                  true
-                  false)
-               cards)
-       (>= 1 (count (filter #(legal-line? fmt "restricted" %) cards)))
-       (zero? (count (filter #(legal-line? fmt "banned" %) cards)))))
-
 (defn allowed?
   "Checks if a card is allowed in deck of a given identity - not accounting for influence"
   [card {:keys [side faction title] :as identity}]
@@ -189,14 +166,86 @@
 (defn valid-deck?
   "Checks that a given deck follows deckbuilding rules"
   [{:keys [identity cards] :as deck}]
-  (and (not (nil? identity))
-       (>= (card-count cards) (min-deck-size identity))
-       (<= (influence-count deck) (id-inf-limit identity))
-       (every? #(and (allowed? (:card %) identity)
-                     (legal-num-copies? identity %)) cards)
-       (or (= (:side identity) "Runner")
-           (let [minimum (min-agenda-points deck)]
-             (<= minimum (agenda-points deck) (inc minimum))))))
+  (let [identity? (not (nil? identity))
+        card-count (card-count cards)
+        min-deck-size (min-deck-size identity)
+        card-count? (>= card-count min-deck-size)
+        influence-count (influence-count deck)
+        id-inf-limit (id-inf-limit identity)
+        influence-limit? (<= influence-count id-inf-limit)
+        allowed-cards-fn #(allowed? (:card %) identity)
+        legal-num-copies-fn #(legal-num-copies? identity %)
+        allowed-cards? (every? allowed-cards-fn cards)
+        legal-num-copies? (every? legal-num-copies-fn cards)
+        min-agenda-points (min-agenda-points deck)
+        agenda-points (agenda-points deck)
+        agenda-points? (or (= (:side identity) "Runner")
+                           (<= min-agenda-points agenda-points (inc min-agenda-points)))]
+    {:legal (and identity? card-count? influence-limit? allowed-cards? legal-num-copies? agenda-points?)
+     :reason (cond
+               (not identity?) (str "Invalid identity: " (:title identity))
+               (not card-count?) (str "Not enough cards in the deck: " card-count ", Min: " min-deck-size)
+               (not influence-limit?) (str "Spent too much influence: " influence-count)
+               (not allowed-cards?) (str "Cards aren't legal for chosen identity: "
+                                         (get-in (some #(when ((complement allowed-cards-fn) %) %) cards) [:card :title]))
+               (not legal-num-copies?) (str "Too many copies of a card: "
+                                            (get-in (some #(when ((complement legal-num-copies-fn) %) %) cards) [:card :title]))
+               (not agenda-points?) (str "Incorrect amount of agenda points: " agenda-points
+                                         ", Between: " min-agenda-points " and " (inc min-agenda-points)))
+     :description "Basic deckbuilding rules"}))
+
+(defn legal?
+  ([status card]
+   (legal? :standard status card))
+  ([fmt status card]
+   (= status (get-in card [:format fmt]))))
+
+(defn legal-line?
+  ([status line]
+   (legal-line? :standard status (:card line)))
+  ([fmt status line]
+   (legal? fmt status (:card line))))
+
+(defn mwl-legal?
+  "Returns true if the deck does not contain banned cards or more than one type of restricted card"
+  [fmt cards]
+  (let [allowed-cards-fn #(when-let [card (get-in % [:card :format fmt])]
+                            (case (name card)
+                              ("legal" "restricted" "banned") true
+                              false))
+        allowed-cards? (every? allowed-cards-fn cards)
+        single-restricted-fn #(legal-line? fmt "restricted" %)
+        single-restricted? (>= 1 (count (filter single-restricted-fn cards)))
+        no-banned-fn #(legal-line? fmt "banned" %)
+        no-banned? (zero? (count (filter no-banned-fn cards)))]
+    {:legal (and allowed-cards? single-restricted? no-banned?)
+     :reason (cond
+               (not allowed-cards?) (str "Illegal card: "
+                                         (get-in (some #(when ((complement allowed-cards-fn) %) %) cards) [:card :title]))
+               (not single-restricted?) (str "Too many restricted cards: "
+                                             (get-in (some #(when (single-restricted-fn %) %) cards) [:card :title]))
+               (not no-banned?) (str "Includes a banned card: "
+                                     (get-in (some #(when (no-banned-fn %) %) cards) [:card :title])))}))
+
+(defn combine-id-and-cards
+  [deck]
+  (conj (:cards deck) {:qty 1 :card (:identity deck)}))
+
+(defn legal-format?
+  [fmt deck]
+  (mwl-legal? fmt (combine-id-and-cards deck)))
+
+(defn build-format-legality
+  [valid fmt deck]
+  (let [mwl (legal-format? fmt deck)]
+    {:legal (and (:legal valid) (:legal mwl))
+     :reason (or (:reason valid) (:reason mwl))
+     :description (str "Legal for " (-> fmt name s/capitalize))}))
+
+(defn build-snapshot-plus-legality
+  [valid fmt deck]
+  (merge (build-format-legality valid fmt deck)
+         {:description "Legal for Snapshot Plus"}))
 
 (defn cards-over-one-core
   "Returns cards in deck that require more than single box."
@@ -204,54 +253,45 @@
   (letfn [(one-box-num-copies? [{:keys [qty card]}] (<= qty (:quantity card 3)))]
     (remove one-box-num-copies? cards)))
 
-(defn combine-id-and-cards
-  [deck]
-  (conj (:cards deck) {:qty 1 :card (:identity deck)}))
-
-(defn legal-format?
-  [valid fmt deck]
-  (and valid
-       (mwl-legal? fmt (combine-id-and-cards deck))))
-
-(defn build-format-legality
-  [valid fmt deck]
-  {:legal (legal-format? valid fmt deck)
-   :description (str "Legal for " (-> fmt name s/capitalize))})
-
-(defn build-deck-validity
-  [valid]
-  {:legal valid
-   :description "Basic deckbuilding rules"})
-
-(defn build-snapshot-plus-legality
-  [valid fmt deck]
-  (merge (build-format-legality valid fmt deck)
-         {:description "Legal for Snapshot Plus"}))
+(defn cards-not-in-most-recent-core
+  "Returns cards in deck that aren't in latest System Core"
+  [cards]
+  (remove #(= "system-core-2019" (get-in % [:card :cycle_code])) cards))
 
 (defn build-core-experience-legality
   [valid {:keys [cards] :as deck}]
-  (let [example-card (first (cards-over-one-core cards))]
-    {:legal (and (legal-format? valid :core-experience deck)
-                 (nil? example-card))
-     :reason (when example-card
-               (str "Only one System Core 2019 permitted - check: "
-                    (get-in example-card [:card :title])))
+  (let [mwl (legal-format? :core-experience deck)
+        example-card (first (or (cards-not-in-most-recent-core cards)
+                                (cards-over-one-core cards)))]
+    {:legal (and (nil? example-card)
+                 (:legal valid)
+                 (:legal mwl))
+     :reason (or (when example-card
+                   (str "Only one System Core 2019 permitted - check: "
+                        (get-in example-card [:card :title])))
+                 (:reason valid)
+                 (:reason mwl))
      :description "Legal for Core Experience"}))
 
 (defn build-socr-legality
   [valid deck]
-  (let [big-boxes ["creation-and-control"
+  (let [mwl (legal-format? :socr deck)
+        big-boxes ["creation-and-control"
                    "honor-and-profit"
                    "order-and-chaos"
                    "data-and-destiny"]
-        single-set? (as-> deck $
-                      (combine-id-and-cards $)
-                      (group-by #(get-in % [:card :cycle_code]) $)
-                      (select-keys $ big-boxes)
-                      (keys $)
-                      (>= 1 (count $)))]
+        single-set? (as-> deck d
+                      (combine-id-and-cards d)
+                      (group-by #(get-in % [:card :cycle_code]) d)
+                      (select-keys d big-boxes)
+                      (keys d)
+                      (>= 1 (count d)))]
     {:legal (and single-set?
-                 (legal-format? valid :socr deck))
+                 (:legal valid)
+                 (:legal mwl))
+     :reason (or (when-not single-set? "Cards from too many Big Boxes")
+                 (:reason valid)
+                 (:reason mwl))
      :description "Legal for Stimhack Online Cache Refresh"}))
 
 (defn calculate-deck-status
@@ -260,7 +300,7 @@
   [deck]
   (let [valid (valid-deck? deck)]
     {:format (:format deck)
-     :casual (build-deck-validity valid)
+     :casual valid
      :standard (build-format-legality valid :standard deck)
      :eternal (build-format-legality valid :eternal deck)
      :classic (build-format-legality valid :classic deck)
