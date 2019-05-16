@@ -894,8 +894,9 @@
    "NBN: Controlling the Message"
    {:events {:runner-trash
              {:async true
-              :req (req (and (= 1 (count (filter #(-> % first installed?) (turn-events state side :runner-trash))))
-                             (card-is? target :side :corp)
+              :req (req (and (= 1 (count (filter #(and (installed? (first %)) (corp? (first %)))
+                                                 (turn-events state side :runner-trash))))
+                             (corp? target)
                              (installed? target)))
               :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
                            (continue-ability

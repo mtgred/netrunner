@@ -569,22 +569,15 @@
         (is (empty? (:discard (get-runner))) "No cards in discard")
         (take-credits state :runner)
         (take-credits state :corp)
+        (core/end-phase-12 state :runner nil)
         (is (= 19 (:credit (get-runner))))
         (is (empty? (:deck (get-runner))) "No cards in deck")
         (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
         (is (= 1 (count (:discard (get-runner)))) "1 card in discard")
-        (is (nil? (get-resource state 0)) "Crowdfunding not installed")
-        (run-empty-server state :archives)
-        (run-empty-server state :archives)
-        (run-empty-server state :archives)
-        (take-credits state :runner)
-        (click-prompt state :runner "Yes")
-        (is (empty? (:discard (get-runner))) "Crowdfunding not in discard")
-        (is (= 1 (count (get-resource state))) "Crowdfunding reinstalled"))))
+        (is (nil? (get-resource state 0)) "Crowdfunding not installed"))))
   (testing "Install from heap"
     (do-game
-      (new-game {:runner {:deck ["Crowdfunding"]}})
-      (core/move state :runner (find-card "Crowdfunding" (:hand (get-runner))) :discard)
+      (new-game {:runner {:discard ["Crowdfunding"]}})
       (take-credits state :corp)
       (take-credits state :runner)
       (is (empty? (:prompt (get-runner))) "No install prompt if no runs")
@@ -602,8 +595,7 @@
     (do-game
       (new-game {:corp {:hand ["Scarcity of Resources"]
                         :deck [(qty "Hedge Fund" 5)]}
-                 :runner {:deck ["Crowdfunding"]}})
-      (core/move state :runner (find-card "Crowdfunding" (:hand (get-runner))) :discard)
+                 :runner {:discard ["Crowdfunding"]}})
       (play-from-hand state :corp "Scarcity of Resources")
       (take-credits state :corp)
       (run-empty-server state :archives)
@@ -617,8 +609,7 @@
       (do-game
         (new-game {:corp {:hand ["Ice Wall"]
                           :deck [(qty "Hedge Fund" 5)]}
-                   :runner {:deck ["Crowdfunding"]}})
-        (core/move state :runner (find-card "Crowdfunding" (:hand (get-runner))) :discard)
+                   :runner {:discard ["Crowdfunding"]}})
         (play-from-hand state :corp "Ice Wall" "HQ")
         (take-credits state :corp)
         (let [iw (get-ice state :hq 0)]

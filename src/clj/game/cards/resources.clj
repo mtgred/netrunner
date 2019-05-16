@@ -603,7 +603,9 @@
                                             {:runner-turn-ends install-prompt}
                                             (assoc card :zone [:discard]))))]
      {:data {:counter {:credit 3}}
-      :flags {:drip-economy true}
+      :flags {:drip-economy true
+              :runner-turn-draw (req (= 1 (get-counters (get-card state card) :credit)))
+              :runner-phase-12 (req (= 1 (get-counters (get-card state card) :credit)))}
       :abilities [ability]
       :move-zone heap-event
       :events {:runner-turn-begins ability
