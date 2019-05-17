@@ -1787,12 +1787,12 @@
                  :label "Make currently encountered ice gain a subtype"
                  :prompt "Choose an ICE subtype"
                  :choices (req (->> (server-cards)
-                                    (filter ice?)
-                                    (map :subtype)
-                                    (mapcat #(split % #" - "))
-                                    distinct
-                                    sort
-                                    (remove (->> current-ice :subtype (#(split % #" - ")) set))))
+                                    (reduce (fn [acc card]
+                                              (if (ice? card)
+                                                (apply conj acc (split (:subtype card) #" - "))
+                                                acc))
+                                            #{})
+                                    sort))
                  :msg (msg "make " (card-str state current-ice) " gain " target)
                  :effect (req (let [ice current-ice
                                     chosen-type target
