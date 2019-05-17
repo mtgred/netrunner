@@ -1544,14 +1544,14 @@
                        :choices (concat (when (can-pay? state :corp "Mining Accident" :credit 5)
                                           ["Pay 5 [Credits]"])
                                         ["Take 1 Bad Publicity"])
-                       :effect (req (if (= target "Pay 5 [Credits]")
+                       :effect (req (clear-wait-prompt state :runner)
+                                    (if (= target "Pay 5 [Credits]")
                                       (do (lose-credits state :corp 5)
                                           (system-msg state side "pays 5 [Credits] from Mining Accident")
                                           (effect-completed state side eid))
                                       (do (gain-bad-publicity state :corp 1)
                                           (system-msg state side "takes 1 bad publicity from Mining Accident")
-                                          (effect-completed state side eid))))
-                       :end-effect (effect (clear-wait-prompt :runner))}
+                                          (effect-completed state side eid))))}
                       card nil))}
 
    "Möbius"
@@ -2176,16 +2176,17 @@
                                         ["Draw 4"])
                        :effect (req (if (= target "Draw 4")
                                       (do (draw state :corp 4)
-                                          (system-msg state :corp (str "draws 4 cards from SYN Attack")))
+                                          (clear-wait-prompt state :runner)
+                                          (system-msg state :corp "draws 4 cards from SYN Attack"))
                                       (continue-ability
                                         state :corp
                                         {:prompt "Choose 2 cards to discard"
                                          :choices {:max 2
                                                    :req #(and (in-hand? %) (= (:side %) "Corp"))}
                                          :effect (effect (trash-cards :corp targets)
-                                                         (system-msg :corp (str "discards 2 cards from SYN Attack")))}
-                                        card nil)))
-                       :end-effect (effect (clear-wait-prompt :runner))}
+                                                         (clear-wait-prompt state :runner)
+                                                         (system-msg :corp "discards 2 cards from SYN Attack"))}
+                                        card nil)))}
                       card nil))}
 
    "System Outage"
