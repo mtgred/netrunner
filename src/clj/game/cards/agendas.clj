@@ -449,9 +449,10 @@
                                                (install-ability (last (get-remote-names state)) (inc n))
                                                card nil)
                              (effect-completed state side eid)))
-              :msg (msg (if (pos? n)
-                          (corp-install-msg target)
-                          "create a new remote server, installing cards from HQ or Archives, ignoring all install costs"))})]
+              :msg (msg (corp-install-msg target)
+                        (when (zero? n)
+                          ", creating a new remote server")
+                        ", ignoring all install costs")})]
      {:optional {:prompt "Install cards in a new remote server?"
                  :yes-ability (install-ability "New remote" 0)}})
 

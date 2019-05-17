@@ -529,6 +529,7 @@
                        c (card-init state :corp moved-card {:resolve-effect false
                                                             :init-data true})
                        points (get-agenda-points state :corp c)]
+                   (system-msg state :corp (str "scores " (:title c) " and gains " (quantify points "agenda point")))
                    (trigger-event-simult state :corp eid :agenda-scored
                                          {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
                                                                          ;; TODO: Make this use remove-old-current
@@ -541,8 +542,6 @@
                                           :after-active-player {:effect (req (let [c (get-card state c)
                                                                                    points (or (get-agenda-points state :corp c) points)]
                                                                                (set-prop state :corp (get-card state moved-card) :advance-counter 0)
-                                                                               (system-msg state :corp (str "scores " (:title c) " and gains "
-                                                                                                            (quantify points "agenda point")))
                                                                                (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
                                                                                (swap! state dissoc-in [:corp :disable-id])
                                                                                (gain-agenda-point state :corp points)

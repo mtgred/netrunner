@@ -346,7 +346,7 @@
           nil)))))
 
 (defn corp-install-msg
-  "Gets a message describing where a card has been installed from. Example: Interns. "
+  "Gets a message describing where a card has been installed from. Example: Interns."
   [card]
   (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
