@@ -1715,7 +1715,31 @@
       (click-prompt state :runner "Pay 2 [Credits] to trash")
       (is (empty? (:prompt (get-corp))) "CtM shouldn't fire")
       (is (empty? (:prompt (get-runner))) "Runner shouldn't have prompt")
-      (is (zero? (count-tags state)) "Runner took 1 unpreventable tag"))))
+      (is (zero? (count-tags state)) "Runner took 1 unpreventable tag")))
+ (testing "Trace should fire on first trash of a Corp card after a Runner card is trashed"
+    (do-game
+      (new-game {:corp {:id "NBN: Controlling the Message"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Launch Campaign" 3)]}
+                 :runner {:deck ["Sure Gamble"]
+                          :hand ["Crowdfunding"]}})
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crowdfunding")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (zero? (count (:hand (get-runner)))))
+      (core/end-phase-12 state :runner nil)
+      (is (zero? (count (get-resource state))))
+      (is (= 1 (count (:hand (get-runner)))))
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (is (seq (:prompt (get-corp))) "Corp should have a Trace prompt")
+      (click-prompt state :corp "No"))))
 
 (deftest new-angeles-sol-your-news
   ;; New Angeles Sol - interaction with runner stealing agendas

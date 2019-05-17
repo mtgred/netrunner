@@ -137,9 +137,14 @@
         (when-let [hand (seq (:hand side-map))]
           (starting-hand state side hand))
         (when (seq (:discard side-map))
-          (doseq [card (:discard side-map)]
+          (doseq [ctitle (:discard side-map)]
             (core/move state side
-                       (find-card card (get-in @state [side :deck])) :discard)))
+                       (or (find-card ctitle (get-in @state [side :deck]))
+                           ;; This is necessary as a :discard card will only end up in
+                           ;; the hand when we're not already using (starting-hand)
+                           (when (empty? (:hand side-map))
+                             (find-card ctitle (get-in @state [side :hand]))))
+                       :discard)))
         (when (:credits side-map)
           (swap! state assoc-in [side :credit] (:credits side-map)))))
     ;; These are side independent so they happen ouside the loop
