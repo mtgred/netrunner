@@ -268,7 +268,7 @@
       (is (= 1 (count (:discard (get-corp)))))
       (take-credits state :corp)
       (run-empty-server state :archives)
-      (click-prompt state :runner "Pay 2 [Credits] to steal")
+      (click-prompt state :runner "Pay to steal")
       (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
       (is (= 1 (count (:scored (get-runner))))))))
 

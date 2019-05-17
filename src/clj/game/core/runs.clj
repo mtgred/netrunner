@@ -125,7 +125,9 @@
   (-> (when-let [costfun (:steal-cost-bonus (card-def card))]
         (costfun state side (make-eid state) card nil))
       (concat (get-in @state [:bonus :steal-cost]))
-      merge-costs flatten vec))
+      merge-costs
+      flatten
+      vec))
 
 ;;; Accessing rules.
 (defn access-cost-bonus
@@ -140,7 +142,9 @@
   (-> (when-let [costfun (:access-cost-bonus (card-def card))]
         (costfun state side (make-eid state) card nil))
       (concat (get-in @state [:bonus :access-cost]))
-      merge-costs flatten vec))
+      merge-costs
+      flatten
+      vec))
 
 (defn access-non-agenda
   "Access a non-agenda. Show a prompt to trash for trashable cards."
@@ -216,34 +220,13 @@
               card nil)))))
     (access-end state side eid c)))
 
-(defn- steal-pay-choice
-  "Enables a vector of costs to be resolved in the order of choosing"
-  [state side cost-map {:keys [title cid] :as card}]
-  {:async true
-   :prompt (str "Pay steal cost for " title "?")
-   :choices (conj (vec (keys cost-map)) "No action")
-   :effect (req
-             (if (= target "No action")
-               (continue-ability state :runner
-                                 {:async true
-                                  :effect (req (when-not (find-cid cid (:deck corp))
-                                                 (system-msg state side (str "decides not to pay to steal " title)))
-                                               (access-end state side eid card))}
-                 card nil)
-               (let [cost (cost-map target)
-                     kw (first cost)
-                     v (second cost)]
-                 (if (and cost (can-pay? state side title [kw v]))
-                   (wait-for
-                     (pay-sync state side nil [kw v] {:action :steal-cost})
-                     (do (system-msg state side (str "pays " target " to steal " title))
-                         (if (> (count cost-map) 1)
-                           (continue-ability
-                             state side
-                             (steal-pay-choice state :runner (dissoc cost-map target) card)
-                             card nil)
-                           (steal-agenda state side eid card))))
-                   (access-end state side eid card)))))})
+(defn- join-cost-strs
+  [& costs]
+  (->> costs
+       flatten
+       (filter some?)
+       (interpose " and ")
+       (apply str)))
 
 (defn- access-agenda
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
@@ -252,12 +235,9 @@
   (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (let [cost (steal-cost state side c)
         part-cost (partition 2 cost)
-        cost-strs (map #(apply cost-names %) part-cost)
-        cost-map (zipmap cost-strs part-cost)
-        n (count cost-strs)
+        cost-strs (when (seq part-cost) (map #(apply cost-names %) part-cost))
         card-name (:title c)
         can-pay-costs? (can-pay? state side card-name cost)
-        cost-as-symbol (when (= 1 (count cost-strs)) (apply cost-names cost))
         ;; any trash abilities
         can-steal-this? (can-steal? state side c)
         trash-ab-cards (when (not= (:zone c) [:discard])
@@ -268,14 +248,15 @@
         ;; strs
         steal-str (when (and can-steal-this? can-pay-costs?)
                     (if (seq cost-strs)
-                      (if (= n 1)
-                        [(str "Pay " cost-as-symbol " to steal")]
-                        ["Pay to steal"])
+                      ["Pay to steal"]
                       ["Steal"]))
         no-action-str (when (or (nil? steal-str)
                                 (not= steal-str ["Steal"]))
                         ["No action"])
-        prompt-str (str "You accessed " card-name ".")
+        prompt-str (if (seq cost-strs)
+                     (str " " (join-cost-strs (string/capitalize (first cost-strs)) (map lower-case (rest cost-strs))) " to steal?")
+                     "")
+        prompt-str (str "You accessed " card-name "." prompt-str)
         choices (vec (concat ability-strs steal-str no-action-str))]
     ;; Steal costs are additional costs and can be denied by the runner.
     (continue-ability state :runner
@@ -283,26 +264,21 @@
                        :prompt prompt-str
                        :choices choices
                        :effect (req (cond
-                                      ;; Can't steal or pay, or won't pay single additional cost to steal
+                                      ;; Can't steal or pay, or won't pay additional costs to steal
                                       (= target "No action")
-                                      (access-end state side eid c)
+                                      (do (when-not (find-cid (:cid c) (:deck corp))
+                                            (system-msg state side (str "decides to not pay to steal " card-name)))
+                                          (access-end state side eid c))
 
                                       ;; Steal normally
                                       (= target "Steal")
                                       (steal-agenda state :runner eid c)
 
-                                      ;; Pay single additiional cost to steal
-                                      (.contains target "Pay")
-                                      (if (> n 1)
-                                        ;; Use the better function for multiple costs
-                                        (continue-ability state :runner
-                                                          (steal-pay-choice state :runner cost-map c)
-                                                          c nil)
-                                        ;; Otherwise, just handle everything right friggin here
-                                        (wait-for (pay-sync state side nil cost {:action :steal-cost})
-                                                  (do (system-msg state side
-                                                                  (str "pays " cost-as-symbol " to steal " card-name))
-                                                      (steal-agenda state side eid c))))
+                                      ;; Pay additiional costs to steal
+                                      (= target "Pay to steal")
+                                      (wait-for (pay-sync state side nil cost {:action :steal-cost})
+                                                (system-msg state side (str async-result " to steal " card-name))
+                                                (steal-agenda state side eid card))
 
                                       ;; Use trash ability
                                       (some #(= % target) ability-strs)
@@ -314,8 +290,8 @@
                                         (when (:run @state)
                                           (swap! state assoc-in [:run :did-trash] true))
                                         (wait-for (resolve-ability state side cdef trash-ab-card [c])
-                                                  (do (trigger-event state side :no-steal c)
-                                                      (access-end state side eid c))))))}
+                                                  (trigger-event state side :no-steal c)
+                                                  (access-end state side eid c)))))}
                       c nil)))
 
 (defn- reveal-access?
@@ -336,24 +312,28 @@
 
 (defn msg-handle-access
   "Generate the message from the access"
-  [state side {:keys [zone] :as card} title]
-  (let [msg (str "accesses " title
-                 (when card
-                   (str " from " (name-zone side zone))))]
-    (system-msg state side msg)
-    (when (reveal-access? state side card)
-      (system-msg state side (str "must reveal they accessed " (:title card)))
-      (reveal state :runner card))))
+  [state side {:keys [zone] :as card} title cost-msg]
+  (let [cost-str (join-cost-strs cost-msg)]
+    (system-msg state side
+                (str (if (seq cost-msg)
+                       (str cost-str " to access ")
+                       "accesses ")
+                     title
+                     (when card
+                       (str " from " (name-zone side zone))))))
+  (when (reveal-access? state side card)
+    (system-msg state side (str "must reveal they accessed " (:title card)))
+    (reveal state :runner card)))
 
 (defn- access-trigger-events
   "Trigger access effects, then move into trash/steal choice."
-  [state side eid c title]
+  [state side eid c title & cost-msg]
   (let [cdef (card-def c)
         c (assoc c :seen true)
         access-effect (when-let [acc (:access cdef)]
                         (ability-as-handler c acc))]
     (swap! state assoc-in [:runner :register :accessed-cards] true)
-    (msg-handle-access state side c title)
+    (msg-handle-access state side c title cost-msg)
     (wait-for (trigger-event-simult state side :access
                                     {:card-ability access-effect
                                      ;; Cancel other access handlers if the card moves zones because of a handler
@@ -389,7 +369,7 @@
       ;; Await the payment of the costs; if payment succeeded, proceed with access.
       (wait-for (pay-sync state side anon-card acost)
                 (if async-result
-                  (access-trigger-events state side eid c title)
+                  (access-trigger-events state side eid c title async-result)
                   (resolve-ability state :runner eid cant-pay c nil)))
       :else
       ;; The runner cannot afford the cost to access the card

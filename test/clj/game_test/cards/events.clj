@@ -2490,7 +2490,7 @@
     (is (= 3 (:credit (get-runner))) "Can't afford to steal NAPD")
     (run-empty-server state "Server 1")
     (is (= 10 (:credit (get-runner))) "Gained 7c on access, can steal NAPD")
-    (click-prompt state :runner "Pay 4 [Credits] to steal")
+    (click-prompt state :runner "Pay to steal")
     (is (= 2 (:agenda-point (get-runner))) "Stole agenda")
     (is (= 6 (:credit (get-runner))))
     (run-empty-server state "HQ")
