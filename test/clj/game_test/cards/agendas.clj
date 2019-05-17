@@ -648,18 +648,16 @@
 (deftest director-haas-pet-project
   ;; Director Haas' Pet Project
   (do-game
-    (new-game {:corp {:deck ["Director Haas' Pet Project"
-                             "Adonis Campaign"
-                             "Strongbox"
-                             "Eli 1.0"
-                             (qty "Hedge Fund" 5)]}})
-    (starting-hand state :corp ["Director Haas' Pet Project" "Adonis Campaign" "Strongbox"])
-    (core/move state :corp (find-card "Eli 1.0" (:deck (get-corp))) :discard)
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Strongbox"
+                             "Director Haas' Pet Project"
+                             "Adonis Campaign"]
+                      :discard ["Eli 1.0"]}})
     (play-and-score state "Director Haas' Pet Project")
     (click-prompt state :corp "Yes")
-    (click-card state :corp (find-card "Adonis Campaign" (:hand (get-corp))))
-    (click-card state :corp (find-card "Strongbox" (:hand (get-corp))))
-    (click-card state :corp (find-card "Eli 1.0" (:discard (get-corp))))))
+    (click-card state :corp "Adonis Campaign")
+    (click-card state :corp "Strongbox")
+    (click-card state :corp "Eli 1.0")))
 
 (deftest divested-trust
   ;; Divested Trust

@@ -404,7 +404,6 @@
    (if card
      (let [cdef (card-def card)
            moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
-       (swap! state update-in [:per-turn] dissoc (:cid moved-card))
        (swap! state update-in [:trash :trash-list] dissoc oid)
        (if-let [trash-effect (:trash-effect cdef)]
          (if (and (not disabled)

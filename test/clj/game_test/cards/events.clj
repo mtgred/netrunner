@@ -2741,40 +2741,57 @@
 
 (deftest rejig
   ;; Rejig
-  (testing "Basic test"
+  (testing "Basic test with discount"
     (do-game
       (new-game {:options {:start-as :runner}
-                 :runner {:hand ["Rejig" "Corroder" "Adept"]
-                          :credits 10}})
-      (play-from-hand state :runner "Adept")
+                 :runner {:id "Az McCaffrey: Mechanical Prodigy"
+                          :hand ["Rejig" "Box-E" "Clone Chip"]}})
+      (play-from-hand state :runner "Clone Chip")
+      (take-credits state :runner)
+      (take-credits state :corp)
       (play-from-hand state :runner "Rejig")
-      (click-card state :runner "Corroder")
-      (is (find-card "Corroder" (:hand (get-runner))) "Corroder shouldn't be installed")
-      (click-card state :runner "Adept")
+      (is (= 1 (count (:hand (get-runner)))))
+      (click-card state :runner "Clone Chip")
       (is (= 2 (count (:hand (get-runner)))))
-      (let [credits (:credit (get-runner))
-            cost (:cost (find-card "Adept" (:hand (get-runner))))]
-        (click-card state :runner "Adept")
-        (is (= (- credits (- cost (quot cost 2))) (:credit (get-runner))) "Runner should only pay half for Adept"))))
+      (is (= 8 (:credit (get-runner))))
+      (click-card state :runner "Box-E")
+      (is (= 1 (count (:hand (get-runner)))))
+      (is (= 6 (:credit (get-runner))))) "Discounted install from Rejig + Az, Box-E only costs 2")
   (testing "with Kabonesa Wu. Issue #4105"
     (do-game
       (new-game {:options {:start-as :runner}
                  :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
                           :deck ["Gordian Blade"]
-                          :hand ["Rejig"]
-                          :credits 10}})
+                          :hand ["Rejig"]}})
       (card-ability state :runner (:identity (get-runner)) 0)
       (click-prompt state :runner "Gordian Blade")
-      (is (= 7 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")
+      (is (= 2 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")
       (play-from-hand state :runner "Rejig")
       (click-card state :runner "Gordian Blade")
-      (is (find-card "Gordian Blade" (:hand (get-runner))) "Gordian Blade shouldn't be installed")
-      (let [credits (:credit (get-runner))
-            cost (:cost (find-card "Gordian Blade" (:hand (get-runner))))]
-        (click-card state :runner "Gordian Blade")
-        (is (= (- credits (- cost (quot cost 2))) (:credit (get-runner))) "Runner should only pay half for Gordian Blade"))
+      (is (find-card "Gordian Blade" (:hand (get-runner))) "Gordian Blade should have returned to the Grip")
+      (click-card state :runner "Gordian Blade")
+      (is (= 2 (:credit (get-runner))))
       (take-credits state :runner)
-      (is (= "Gordian Blade" (:title (get-program state 0))) "Kabonesa Wu shouldn't rfg card bounced and reinstalled with Rejig"))))
+      (is (= "Gordian Blade" (:title (get-program state 0))) "Kabonesa Wu shouldn't rfg card bounced and reinstalled with Rejig")))
+  (testing "Uninstalling and reinstalling should allow once per turn effects again. Issue #4217"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Rejig" "Stargate"]
+                          :credits 100}})
+      (play-from-hand state :runner "Stargate")
+      (let [stargate (get-program state 0)]
+        (card-ability state :runner stargate 0)
+        (run-successful state)
+        (click-prompt state :runner "Hedge Fund")
+        (play-from-hand state :runner "Rejig")
+        (click-card state :runner "Stargate")
+        (click-card state :runner "Stargate"))
+      (let [stargate (get-program state 0)]
+        (card-ability state :runner stargate 0)
+        (run-successful state)
+        (click-prompt state :runner "Hedge Fund")))))
 
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ICE

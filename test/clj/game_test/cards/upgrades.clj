@@ -816,28 +816,48 @@
 
 (deftest giordano-memorial-field
   ;; Giordano Memorial Field
-  (do-game
-    (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
-               :runner {:deck [(qty "Fan Site" 3)]}})
-    (play-from-hand state :corp "Giordano Memorial Field" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Fan Site")
-    (play-from-hand state :runner "Fan Site")
-    (play-from-hand state :runner "Fan Site")
-    (take-credits state :runner)
-    (play-and-score state "Hostile Takeover")
-    (take-credits state :corp)
-    (run-empty-server state "Server 1")
-    (let [credits (:credit (get-runner))]
-      (click-prompt state :runner "Pay 6 [Credits]")
-      (is (= (- credits 6) (:credit (get-runner))) "Runner pays 6 credits to not end the run"))
-    (click-prompt state :runner "No action")
-    (run-empty-server state "Server 1")
-    (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner should only get 1 choice")
-    (is (= "End the run" (-> (get-runner) :prompt first :choices first)) "Only choice should be End the run")
-    (click-prompt state :runner "End the run")
-    (is (not (:run @state)) "Run should be ended from Giordano Memorial Field ability")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
+                 :runner {:deck [(qty "Fan Site" 3)]}})
+      (play-from-hand state :corp "Giordano Memorial Field" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Fan Site")
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (let [credits (:credit (get-runner))]
+        (click-prompt state :runner "Pay 6 [Credits]")
+        (is (= (- credits 6) (:credit (get-runner))) "Runner pays 6 credits to not end the run"))
+      (click-prompt state :runner "No action")
+      (run-empty-server state "Server 1")
+      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner should only get 1 choice")
+      (is (= "End the run" (-> (get-runner) :prompt first :choices first)) "Only choice should be End the run")
+      (click-prompt state :runner "End the run")
+      (is (not (:run @state)) "Run should be ended from Giordano Memorial Field ability")))
+  (testing "Ending the run doesn't mark the run as unsuccessful. Issue #4223"
+    (do-game
+      (new-game {:corp {:hand ["Giordano Memorial Field" "Hostile Takeover"]}
+                 :runner {:hand [(qty "Fan Site" 2) "John Masanori"]
+                          :credit 10}})
+      (play-from-hand state :corp "Giordano Memorial Field" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "John Masanori")
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Fan Site")
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (zero? (count-tags state)))
+      (let [credits (:credit (get-runner))]
+        (click-prompt state :runner "End the run")
+        (is (zero? (count-tags state)) "Don't gain a tag from John Masanori")))))
 
 (deftest helheim-servers
   ;; Helheim Servers - Full test

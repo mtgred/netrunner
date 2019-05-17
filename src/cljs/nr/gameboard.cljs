@@ -113,9 +113,7 @@
     (when-not (empty? text)
       (ws/ws-send! [:netrunner/say {:gameid-str (:gameid @game-state)
                                     :msg text}])
-      (let [msg-list (:message-list @board-dom)]
-        (set! (.-scrollTop msg-list) (+ (.-scrollHeight msg-list) 500)))
-      (swap! s assoc :msg "")
+      (swap! s assoc :msg "" :scroll-to-bottom true)
       ;; don't try to focus for / commands
       (when input (.focus input)))))
 
@@ -328,14 +326,21 @@
        (fn []
          (-> ".log" js/$ (.resizable #js {:handles "w"})))
 
-       :component-did-update
-       (fn []
+       :component-will-update
+       (fn [this]
          (let [div (:message-list @board-dom)
-               scrolltop (.-scrollTop div)
-               height (.-scrollHeight div)]
-           (when (or (zero? scrolltop)
-                     (< (- height scrolltop (.height (js/$ ".gameboard .log"))) 500))
-             (set! (.-scrollTop div) height))))
+               scroll-top (.-scrollTop div)
+               scroll-height (.-scrollHeight div)
+               client-height (.-clientHeight div)]
+           (when (>= (+ scroll-top client-height) scroll-height)
+             (swap! s assoc :scroll-to-bottom true))))
+
+       :component-did-update
+       (fn [this]
+         (let [div (:message-list @board-dom)]
+           (when (:scroll-to-bottom @s)
+             (set! (.-scrollTop div) (.-scrollHeight div))
+             (swap! s dissoc :scroll-to-bottom))))
 
        :reagent-render
        (fn []

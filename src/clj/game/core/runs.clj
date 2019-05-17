@@ -332,6 +332,7 @@
         c (assoc c :seen true)
         access-effect (when-let [acc (:access cdef)]
                         (ability-as-handler c acc))]
+    (swap! state assoc-in [:runner :register :accessed-cards] true)
     (msg-handle-access state side c title cost-msg)
     (wait-for (trigger-event-simult state side :access
                                     {:card-ability access-effect
@@ -845,12 +846,15 @@
 (defn- resolve-end-run
   "End this run, and set it as UNSUCCESSFUL"
   ([state side eid]
-   (let [run (:run @state)
-         server (first (get-in @state [:run :server]))]
-     (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
-     (swap! state assoc-in [:run :unsuccessful] true)
-     (handle-end-run state side)
-     (trigger-event-sync state side eid :unsuccessful-run run))))
+   (if (get-in @state [:run :successful])
+     (do (handle-end-run state side)
+         (effect-completed state side eid))
+     (let [run (:run @state)
+           server (first (get-in @state [:run :server]))]
+       (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
+       (swap! state assoc-in [:run :unsuccessful] true)
+       (handle-end-run state side)
+       (trigger-event-sync state side eid :unsuccessful-run run)))))
 
 (defn end-run
   "After checking for prevents, end this run, and set it as UNSUCCESSFUL."

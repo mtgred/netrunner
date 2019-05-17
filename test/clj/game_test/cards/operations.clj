@@ -2841,7 +2841,8 @@
 
 (deftest under-the-bus
   ;; Under the Bus
-  (do-game
+  (testing "Basic test"
+    (do-game
     (new-game {:corp {:deck ["Under the Bus"]}
                :runner {:deck ["Film Critic"]}})
     (take-credits state :corp)
@@ -2857,6 +2858,27 @@
     (is (empty? (get-resource state)) "Runner has no resource installed")
     (is (= 1 (count (:discard (get-runner)))) "Runner has 1 trashed card")
     (is (= 1 (:bad-publicity (get-corp))) "Corp takes 1 bad pub")))
+ (testing "With replacement effects"
+    (do-game
+    (new-game {:corp {:deck ["Ice Wall"]
+                      :hand ["Under the Bus"]}
+               :runner {:deck ["Film Critic" "Khusyuk"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (play-from-hand state :runner "Khusyuk")
+    (run-successful state)
+    (click-prompt state :runner "Replacement effect")
+    (click-prompt state :runner "1 [Credit]: 1 card")
+    (click-prompt state :runner "Ice Wall")
+    (click-prompt state :runner "No action")
+    (take-credits state :runner)
+    (is (= 1 (count (get-resource state))) "Runner has 1 resource installed")
+    (is (zero? (:bad-publicity (get-corp))) "Corp has no bad pub")
+    (play-from-hand state :corp "Under the Bus")
+    (click-card state :corp (get-resource state 0))
+    (is (empty? (get-resource state)) "Runner has no resource installed")
+    (is (= 2 (count (:discard (get-runner)))) "Runner has 2 trashed card")
+    (is (= 1 (:bad-publicity (get-corp))) "Corp takes 1 bad pub"))) )
 
 (deftest wake-up-call
   ;; Wake Up Call

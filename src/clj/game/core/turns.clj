@@ -129,11 +129,6 @@
       (assoc :cid cid :implementation (card-implemented card))
       (dissoc :setname :text :_id :influence :number :influencelimit :factioncost))))
 
-(defn reset-card
-  "Resets a card back to its original state - retaining any data in the :persistent key"
-  ([state side {:keys [title cid persistent]}]
-   (update! state side (assoc (make-card (server-card title) cid) :persistent persistent))))
-
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
   Loads card data from the server-card map if available."
