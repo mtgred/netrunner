@@ -2772,7 +2772,26 @@
       (click-card state :runner "Gordian Blade")
       (is (= 2 (:credit (get-runner))))
       (take-credits state :runner)
-      (is (= "Gordian Blade" (:title (get-program state 0))) "Kabonesa Wu shouldn't rfg card bounced and reinstalled with Rejig"))))
+      (is (= "Gordian Blade" (:title (get-program state 0))) "Kabonesa Wu shouldn't rfg card bounced and reinstalled with Rejig")))
+  (testing "Uninstalling and reinstalling should allow once per turn effects again. Issue #4217"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Rejig" "Stargate"]
+                          :credits 100}})
+      (play-from-hand state :runner "Stargate")
+      (let [stargate (get-program state 0)]
+        (card-ability state :runner stargate 0)
+        (run-successful state)
+        (click-prompt state :runner "Hedge Fund")
+        (play-from-hand state :runner "Rejig")
+        (click-card state :runner "Stargate")
+        (click-card state :runner "Stargate"))
+      (let [stargate (get-program state 0)]
+        (card-ability state :runner stargate 0)
+        (run-successful state)
+        (click-prompt state :runner "Hedge Fund")))))
 
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ICE
