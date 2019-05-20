@@ -209,7 +209,7 @@
   [state side eid card server {:keys [install-state host-card front index] :as args} slot cost-str]
   (let [cdef (card-def card)
         dest-zone (get-in @state (cons :corp slot))
-        install-state (or install-state (:install-state cdef))
+        install-state (or (:install-state cdef) install-state)
         c (-> card
               (assoc :advanceable (:advanceable cdef) :new true)
               (dissoc :seen :disabled))]

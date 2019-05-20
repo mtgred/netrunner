@@ -130,7 +130,7 @@
       (is (= 3 (count (:discard (get-corp)))) "trashed")
       (is (= 1 (count-tags state)) "Runner took 0 tags"))))
 
-(deftest ^:test-refresh/focus architect-deployment-test
+(deftest architect-deployment-test
   ;; Architect Deployment Test
   (do-game
    (new-game {:corp {:deck [(qty "Architect Deployment Test" 5) "Oaktown Renovation" "Enigma" "Rashida Jaheem"]}})
