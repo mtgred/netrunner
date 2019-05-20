@@ -130,10 +130,10 @@
       (is (= 3 (count (:discard (get-corp)))) "trashed")
       (is (= 1 (count-tags state)) "Runner took 0 tags"))))
 
-(deftest architect-deployment-test
+(deftest ^:test-refresh/focus architect-deployment-test
   ;; Architect Deployment Test
   (do-game
-   (new-game {:corp {:deck [(qty "Architect Deployment Test" 5) "Project Vitruvius" "Enigma" "Rashida Jaheem"]}})
+   (new-game {:corp {:deck [(qty "Architect Deployment Test" 5) "Oaktown Renovation" "Enigma" "Rashida Jaheem"]}})
    (starting-hand state :corp (repeat 5 "Architect Deployment Test"))
    (core/gain state :corp :click 4)
    (play-and-score state "Architect Deployment Test") ;makes a remote 1
@@ -154,9 +154,10 @@
    (is (:rezzed (get-content state :remote2 0)) "Rashida Jaheem was installed and rezzed, both at no cost")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
-   (click-prompt state :corp "Project Vitruvius")
+   (click-prompt state :corp "Oaktown Renovation")
    (click-prompt state :corp "New remote")
-   (is (= "Project Vitruvius" (:title (get-content state :remote6 0))) "Project Vitruvius was installed")
+   (is (= "Oaktown Renovation" (:title (get-content state :remote6 0))) "Oaktown Renovation was installed")
+   (is (:rezzed (get-content state :remote6 0)) "Oaktown Renovation is installed faceup.")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (is (empty (:prompt (get-corp))) "No prompts if there is no ice")))

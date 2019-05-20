@@ -292,7 +292,7 @@
   :extra-cost - Extra install costs
   :ignore-all-cost - true if install costs should be ignored
   :action - What type of action installed the card
-  :install-state - Can be :rezzed-no-cost, :rezzed-no-rez-cost, :rezzed, or :faceup
+  :install-state - Can be :rezzed-no-cost, :rezzed-no-rez-cost, :rezzed, or :face-up
   :display-message - Print descriptive text to the log window [default=true]"
   ([state side card server] (corp-install state side (make-eid state) card server nil))
   ([state side card server args] (corp-install state side (make-eid state) card server args))

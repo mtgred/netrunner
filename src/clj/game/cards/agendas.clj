@@ -123,7 +123,8 @@
                        :choices (filter corp-installable-type? (take 5 (:deck corp)))
                        :effect (effect (corp-install eid target nil
                                                      {:ignore-all-cost true
-                                                      :install-state :rezzed-no-rez-cost}))
+                                                      :install-state (or (:install-state (card-def target)) ;don't install public agendas facedown
+                                                                         :rezzed-no-rez-cost)})) ;install everything else rezzed without paying rez costs
                        :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
                                               (effect-completed eid))}
                       card nil))}
