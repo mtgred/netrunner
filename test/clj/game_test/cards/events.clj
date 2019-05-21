@@ -2255,6 +2255,31 @@
     (is (= 3 (count (:hand (get-runner)))) "3 clan resources, +3 cards but -1 for playing Mars for Martians")
     (is (= 7 (:credit (get-runner))) "5 tags, +5 credits")))
 
+(deftest mining-accident
+  ;; Mining Accident
+  (do-game
+    (new-game {:runner {:deck [(qty "Mining Accident" 3)]}})
+    (take-credits state :corp)
+    (changes-val-macro 0 (:click (get-runner))
+                       "Couldn't play Mining Accident without running a central first"
+                       (play-from-hand state :runner "Mining Accident"))
+    (run-on state "HQ")
+    (run-successful state)
+    (core/gain state :runner :credit 1) ; you need 6c for 3 Mining Accidents...
+    (changes-val-macro 1 (:bad-publicity (get-corp))
+                       "Corp took 1 BP"
+                       (play-from-hand state :runner "Mining Accident")
+                       (click-prompt state :corp "Take 1 Bad Publicity"))
+    (changes-val-macro -5 (:credit (get-corp))
+                       "Corp paid 5c"
+                       (play-from-hand state :runner "Mining Accident")
+                       (click-prompt state :corp "Pay 5 [Credits]"))
+    (changes-val-macro 1 (:bad-publicity (get-corp))
+                       "Corp took 1 BP without getting a prompt"
+                       (play-from-hand state :runner "Mining Accident")
+                       (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to pay credits if corp is below 5c")
+                       (click-prompt state :corp "Take 1 Bad Publicity"))))
+
 (deftest mobius
   ;; Mobius
   (do-game
