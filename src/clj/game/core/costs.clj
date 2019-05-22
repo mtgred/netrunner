@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
-         facedown? make-result unknown->kw discard-from-hand card-str trash trash-cards
-         complete-with-result all-installed-runner-type)
+         facedown? unknown->kw discard-from-hand card-str trash trash-cards
+         all-installed-runner-type)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -135,13 +135,6 @@
                        (get-counters % :credit)))
               (reduce +)))
       0))
-
-(defn- complete-with-result
-  "Calls `effect-complete` with `make-result` and also returns the argument.
-  Helper function for cost-handler"
-  [state side eid result]
-  (effect-completed state side (make-result eid result))
-  result)
 
 (defn cost-names
   "Converts a cost (value attribute pair) to a string for printing"

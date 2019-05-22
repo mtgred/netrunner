@@ -1,5 +1,6 @@
 (ns game.cards.agendas
   (:require [game.core :refer :all]
+            [game.core.eid :refer [effect-completed]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]

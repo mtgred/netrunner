@@ -1,5 +1,6 @@
 (ns game.cards.operations
   (:require [game.core :refer :all]
+            [game.core.eid :refer [make-result effect-completed]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
