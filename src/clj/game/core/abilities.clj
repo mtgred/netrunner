@@ -170,11 +170,13 @@
 
 (defn- do-choices
   "Handle a choices ability"
-  [state side {:keys [choices player priority cancel-effect not-distinct prompt eid prompt-type] :as ability}
+  [state side {:keys [cancel-effect choices eid end-effect not-distinct player priority
+                      prompt prompt-type show-discard] :as ability}
    card targets]
   (let [s (or player side)
         ab (dissoc ability :choices)
-        args {:priority priority :cancel-effect cancel-effect :prompt-type prompt-type}]
+        args {:priority priority :cancel-effect cancel-effect :prompt-type prompt-type
+              :show-discard show-discard :end-effect end-effect}]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
      (cond
@@ -319,9 +321,7 @@
    (letfn [(wrap-function [args kw]
             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
      (show-prompt state side (:eid ability) card message choices #(resolve-ability state side ability card [%])
-                  (-> args
-                      (wrap-function :cancel-effect)
-                      (wrap-function :end-effect))))))
+       (wrap-function args :cancel-effect)))))
 
 (defn- add-to-prompt-queue
   "Adds a newly created prompt to the current prompt queue"
