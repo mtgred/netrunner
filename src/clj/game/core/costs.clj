@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
-         facedown? make-result unknown->kw discard-from-hand card-str trash trash-cards
-         complete-with-result all-installed-runner-type pick-credit-providing-cards all-active
+         facedown? unknown->kw discard-from-hand card-str trash trash-cards
+         all-installed-runner-type pick-credit-providing-cards all-active
          eligible-pay-credit-cards corp? runner? in-hand?)
 
 (defn deduct
@@ -170,13 +170,6 @@
              (interpose " and ")
              (apply str))]
     (capitalize cost-string)))
-
-(defn- complete-with-result
-  "Calls `effect-complete` with `make-result` and also returns the argument.
-  Helper function for cost-handler"
-  [state side eid result]
-  (effect-completed state side (make-result eid result))
-  result)
 
 (defn pay-forfeit
   "Forfeit agenda as part of paying for a card or ability
