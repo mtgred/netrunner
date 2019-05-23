@@ -1,18 +1,8 @@
 (in-ns 'game.core)
 
-(declare active? all-installed all-active-installed cards card-init deactivate card-flag? gain lose get-card-hosted handle-end-run hardware? ice? is-type?  program? register-events remove-from-host remove-icon make-card resource? rezzed? toast-check-mu trash trigger-event update-breaker-strength update-hosted! update-ice-strength unregister-events use-mu)
+(declare active? all-installed all-active-installed card-init deactivate card-flag? gain lose get-card-hosted handle-end-run hardware? ice? is-type?  program? register-events remove-from-host remove-icon make-card resource? rezzed? toast-check-mu trash trigger-event update-breaker-strength update-hosted! update-ice-strength unregister-events use-mu)
 
 ;;; Functions for loading card information.
-(defn card-def
-  "Retrieves a card's abilities definition map."
-  [card]
-  (if-let [title (:title card)]
-    (get cards title)
-    (.println *err* (with-out-str
-                      (clojure.stacktrace/print-stack-trace
-                        (Exception. (str "Tried to select card def for non-existent card: " card))
-                        25)))))
-
 (defn find-cid
   "Return a card with specific :cid from given sequence"
   [cid from]

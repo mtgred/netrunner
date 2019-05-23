@@ -2001,8 +2001,7 @@
     (run-on state "HQ")
     (let [q (get-in @state [:runner :identity])
           iwall (get-ice state :hq 0)
-          qdef (core/card-def (get-in @state [:runner :identity]))
-          qmsg (get-in qdef [:abilities 0 :msg])]
+          qmsg "break 1 Barrier subroutine"]
       (core/rez state :corp iwall)
       (card-ability state :runner q 0)
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")

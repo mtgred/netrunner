@@ -321,7 +321,7 @@
   "Play an ability from another card's definition."
   [state side {:keys [card source index] :as args}]
   (let [card (get-card state card)
-        source-abis (:abilities (cards (.replace source "'" "")))
+        source-abis (:abilities (card-def source))
         abi (when (< -1 index (count source-abis))
               (nth source-abis index))]
     (when abi

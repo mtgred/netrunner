@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit damage mill installed? is-type? is-scored? system-msg facedown? unknown->kw discard-from-hand card-str trash trash-cards all-installed-runner-type)
+(declare card-flag? forfeit damage mill installed? is-type? is-scored? system-msg facedown? unknown->kw discard-from-hand card-str trash trash-cards all-installed-runner-type)
 
 (defn deduct
   "Deduct the value from the player's attribute."

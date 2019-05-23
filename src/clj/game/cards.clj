@@ -244,38 +244,3 @@
   (->> (-> card :title server-card :text split-lines)
        (filter #(starts-with? % "[subroutine]"))
        count))
-
-;; Load all card definitions into the current namespace
-(defn load-all-cards
-  "Load all card definitions into their own namespaces"
-  ([] (load-all-cards nil))
-  ([path]
-   (doall (pmap load-file
-                (->> (io/file (str "src/clj/game/cards" (when path (str "/" path ".clj"))))
-                     (file-seq)
-                     (filter #(and (.isFile %)
-                                   (string/ends-with? % ".clj")))
-                     (map str))))))
-
-(defn get-card-defs
-  ([] (get-card-defs nil))
-  ([path]
-   (->> (all-ns)
-        (filter #(starts-with? % (str "game.cards" (when path (str "." path)))))
-        (map #(ns-resolve % 'card-definitions))
-        (map var-get)
-        (apply merge))))
-
-(def cards {})
-
-(defn reset-card-defs
-  "Performs any once only initialization that should be performed on startup"
-  ([] (reset-card-defs nil))
-  ([path]
-   (let [cards-var #'game.core/cards]
-     (alter-var-root cards-var
-                     (constantly
-                       (merge cards
-                              (do (load-all-cards path)
-                                  (get-card-defs path))))))
-   'loaded))
