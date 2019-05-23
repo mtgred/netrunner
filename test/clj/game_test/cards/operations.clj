@@ -1,5 +1,6 @@
 (ns game-test.cards.operations
   (:require [game.core :as core]
+            [game.core.card-properties :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -556,10 +557,10 @@
         (click-prompt state :corp "Done"))
       (testing "Choose a target to rez for -6 cost"
         (click-card state :corp (refresh ec3)))
-      (is (core/rezzed? (refresh ec3)) "Eve Campaign was rezzed")
+      (is (rezzed? (refresh ec3)) "Eve Campaign was rezzed")
       (is (= 4 (:credit (get-corp))) "Rezzed Eve Campaign for 0 credits")
-      (is (not (core/rezzed? (refresh pw))) "Paper Wall was derezzed")
-      (is (not (core/rezzed? (refresh ec1))) "First Eve Campaign was derezzed")
+      (is (not (rezzed? (refresh pw))) "Paper Wall was derezzed")
+      (is (not (rezzed? (refresh ec1))) "First Eve Campaign was derezzed")
       (is (= 16 (get-counters (refresh ec3) :credit)) "Eve gained 16 credits on rez")
       (play-from-hand state :corp "Divert Power")
       (testing "Choose 1 target to derez"
@@ -567,9 +568,9 @@
         (click-prompt state :corp "Done"))
       (testing "Choose a target to rez for -3 cost"
         (click-card state :corp (refresh ec1)))
-      (is (core/rezzed? (refresh ec1)) "First Eve Campaign was rezzed")
+      (is (rezzed? (refresh ec1)) "First Eve Campaign was rezzed")
       (is (zero? (:credit (get-corp))) "Rezzed Eve Campaign for 2 credits")
-      (is (not (core/rezzed? (refresh ec2))) "Second Eve Campaign was derezzed")
+      (is (not (rezzed? (refresh ec2))) "Second Eve Campaign was derezzed")
       (is (= 32 (get-counters (refresh ec1) :credit)) "First Eve gained 16  more credits on rez"))))
 
 (deftest door-to-door

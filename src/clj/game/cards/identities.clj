@@ -1,14 +1,15 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
             [game.core.eid :refer [effect-completed]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
+            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt cancellable active-prompt?]]
             [game.core.toasts :refer [toast]]
             [game.core.card-defs :refer [card-def]]
+            [game.core.card-properties :refer :all]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]))
+            [jinteki.utils :refer [str->int other-side is-tagged?]]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target
@@ -1122,7 +1123,8 @@
    {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted.  Cannot use on in progress run event"
     :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
                  :async true
-                 :effect (req (when-not (and (used-this-turn? (:cid card) state) (active-prompt? state side card))
+                 :effect (req (when-not (and (used-this-turn? (:cid card) state)
+                                             (active-prompt? state side card))
                                 (show-wait-prompt state :runner "Corp to use Skorpios' ability" {:card card})
                                 (continue-ability state side
                                                   {:prompt "Choose a card in the Runner's Heap that was just trashed"

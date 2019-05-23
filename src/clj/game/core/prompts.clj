@@ -1,6 +1,7 @@
 (ns game.core.prompts
   (:require [game.core.eid :refer [make-eid effect-completed]]
-            [game.core.toasts :refer [toast]]))
+            [game.core.toasts :refer [toast]]
+            [jinteki.utils :refer [other-side]]))
 
 (defn- add-to-prompt-queue
   "Adds a newly created prompt to the current prompt queue"
@@ -119,8 +120,40 @@
                 {:priority priority
                  :prompt-type :waiting})))
 
+(defn show-prompt-with-dice
+  "Calls show-prompt normally, but appends a 'roll d6' button to choices.
+  If user chooses to roll d6, reveal the result to user and re-display
+  the prompt without the 'roll d6 button'."
+  ([state side card message other-choices f]
+   (show-prompt state side card message other-choices f nil))
+  ([state side card message other-choices f args]
+   (let [dice-msg "Roll a d6",
+         choices (conj other-choices dice-msg)]
+     (show-prompt state side card message choices
+                  #(if (not= % dice-msg)
+                     (f %)
+                     (show-prompt state side card
+                                  (str message " (Dice result: " (inc (rand-int 6)) ")")
+                                  other-choices f args))
+                  args))))
+
 (defn clear-wait-prompt
   "Removes the first 'Waiting for...' prompt from the given side's prompt queue."
   [state side]
   (when-let [wait (some #(when (= :waiting (:prompt-type %)) %) (-> @state side :prompt))]
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % wait) pr)))))
+
+(defn active-prompt?
+  "Checks if this card has an active prompt"
+  [state side card]
+  (some #(when (= (:cid card) (-> % :card :cid)) %)
+        (flatten (map #(-> @state % :prompt) [side (other-side side)]))))
+
+(defn cancellable
+  "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,
+  with Cancel always last."
+  ([choices] (cancellable choices false))
+  ([choices sorted]
+   (if sorted
+     (conj (vec (sort-by :title choices)) "Cancel")
+     (conj (vec choices) "Cancel"))))

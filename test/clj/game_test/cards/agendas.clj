@@ -1,5 +1,6 @@
 (ns game-test.cards.agendas
   (:require [game.core :as core]
+            [game.core.card-properties :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -2288,7 +2289,7 @@
       (click-prompt state :corp "Yes")
       (click-prompt state :corp (find-card "Chiyashi" (:deck (get-corp))))
       (click-prompt state :corp "New remote")
-      (is (core/rezzed? (get-ice state :remote2 0)) "Chiyashi was installed rezzed")
+      (is (rezzed? (get-ice state :remote2 0)) "Chiyashi was installed rezzed")
       (is (= N (:credit (get-corp))) "Rezzing Chiyashi was free"))
     (play-and-score state "Remote Enforcement")
     (let [N (:credit (get-corp))]

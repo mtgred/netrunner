@@ -1,5 +1,6 @@
 (ns game-test.cards.ice
   (:require [game.core :as core]
+            [game.core.card-properties :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -555,7 +556,7 @@
       (is (= deck (-> (get-corp) :deck count)) "R&D should have same number of cards as start")
       (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck)))
           "Corp should shuffle R&D")
-      (is (core/in-deck? (core/find-latest state hostile)) "Hostile Takeover should be in deck now")
+      (is (in-deck? (core/find-latest state hostile)) "Hostile Takeover should be in deck now")
       (card-subroutine state :corp gate 1)
       (is (not (:run @state)) "Gatekeeper subroutine should end the run")
       (take-credits state :runner)

@@ -2,7 +2,7 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.core :refer [card-is-public? game-states] :as core]
-            [game.utils :refer [private-card]]
+            [game.core.card-properties :refer [private-card]]
             [game.core.toasts :refer [toast]]
             [differ.core :as differ]))
 

@@ -1,5 +1,6 @@
 (ns game-test.cards.events
   (:require [game.core :as core]
+            [game.core.card-properties :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -412,9 +413,9 @@
     (let [iw1 (get-ice state :hq 1)
           iw2 (get-ice state :hq 0)]
       (core/rez state :corp iw1)
-      (is (not (core/rezzed? (refresh iw1))) "Foremost Ice Wall is not rezzed")
+      (is (not (rezzed? (refresh iw1))) "Foremost Ice Wall is not rezzed")
       (core/rez state :corp iw2)
-      (is (core/rezzed? (refresh iw2)) "Final Ice Wall is rezzed"))))
+      (is (rezzed? (refresh iw2)) "Final Ice Wall is rezzed"))))
 
 (deftest brute-force-hack
   ;; Brute-Force-Hack
@@ -434,9 +435,9 @@
       (play-from-hand state :runner "Brute-Force-Hack")
       (click-prompt state :runner "1")
       (click-card state :runner "Tollbooth")
-      (is (core/rezzed? (refresh tb)) "Runner doesn't have enough money to derez Tollbooth")
+      (is (rezzed? (refresh tb)) "Runner doesn't have enough money to derez Tollbooth")
       (click-card state :runner iw)
-      (is (not (core/rezzed? (refresh iw))) "Runner can derez Ice Wall")
+      (is (not (rezzed? (refresh iw))) "Runner can derez Ice Wall")
       (play-from-hand state :runner "Xanadu")
       (core/gain state :runner :credit 7)
       (is (= (:cost tb) (:credit (get-runner))) "Gain enough credits to derez Tollbooth normally")
@@ -1650,7 +1651,7 @@
       (core/rez state :corp jackson)
       (is (= 1 (count (:discard (get-corp)))) "Card discarded to rez Jackson - Hacktivist active")
       (core/rez state :corp sundew)
-      (is (not (core/rezzed? (refresh sundew))) "Sundew is not rezzed as corp has no cards in hand")
+      (is (not (rezzed? (refresh sundew))) "Sundew is not rezzed as corp has no cards in hand")
       (is (= "Unable to pay for Sundew." (-> @state :corp :toast first :msg)) "Corp gets the correct toast"))))
 
 (deftest high-stakes-job
@@ -3003,7 +3004,7 @@
       (click-card state :corp (get-scored state :corp 0))
       (is (empty? (:prompt (get-corp))) "Only 1 agenda required to rez")
       (is (= (- credits (* 2 (:cost archer))) (:credit (get-corp))) "Rezzing Archer costs double")
-      (is (core/rezzed? (refresh archer)) "Archer is rezzed"))
+      (is (rezzed? (refresh archer)) "Archer is rezzed"))
       (run-successful state)
     (let [iw (get-ice state :hq 1)
           credits (:credit (get-corp))]

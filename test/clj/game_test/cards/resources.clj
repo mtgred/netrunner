@@ -1,5 +1,6 @@
 (ns game-test.cards.resources
   (:require [game.core :as core]
+            [game.core.card-properties :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -163,10 +164,10 @@
             fw (get-ice state :hq 0)]
         (run-on state "HQ")
         (core/rez state :corp fw)
-        (is (core/rezzed? (refresh fw)) "Rezzed Fire Wall")
+        (is (rezzed? (refresh fw)) "Rezzed Fire Wall")
         (card-ability state :runner bak 0)
         (card-ability state :runner bak 1)
-        (is (core/rezzed? (refresh fw)) "Fire Wall not derezzed as too strong")
+        (is (rezzed? (refresh fw)) "Fire Wall not derezzed as too strong")
         (is (zero? (count-tags state)) "Got a tag")))))
 
 (deftest bank-job
@@ -463,13 +464,13 @@
       ;; Runner triggers Councilman
       (card-ability state :runner judas 0)
       (click-card state :runner jesus)
-      (is (not (core/rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
+      (is (not (rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
       (core/rez state :corp (refresh jesus))
-      (is (not (core/rezzed? (refresh jesus))) "Jackson Howard cannot be rezzed")
+      (is (not (rezzed? (refresh jesus))) "Jackson Howard cannot be rezzed")
       (take-credits state :runner)
       ;; Next turn
       (core/rez state :corp (refresh jesus))
-      (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
+      (is (rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
 (deftest-pending councilman-zone-change
   ;; Rezz no longer prevented when card changes zone (issues #1571)
   (do-game
@@ -485,12 +486,12 @@
       ;; Runner triggers Councilman
       (card-ability state :runner judas 0)
       (click-card state :runner jesus)
-      (is (not (core/rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
+      (is (not (rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
       (core/move state :corp (refresh jesus) :hand))
     (play-from-hand state :corp "Jackson Howard" "New remote")
     (let [jesus (get-content state :remote2 0)]
       (core/rez state :corp jesus)
-      (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed after changing zone"))))
+      (is (rezzed? (refresh jesus)) "Jackson Howard can be rezzed after changing zone"))))
 
 (deftest counter-surveillance
   ;; Counter-Surveillance

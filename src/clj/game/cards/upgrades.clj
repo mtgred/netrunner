@@ -1,14 +1,15 @@
 (ns game.cards.upgrades
   (:require [game.core :refer :all]
             [game.core.eid :refer [effect-completed]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
+            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt cancellable]]
             [game.core.toasts :refer [toast]]
             [game.core.card-defs :refer [card-def]]
+            [game.core.card-properties :refer :all]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]))
+            [jinteki.utils :refer [str->int other-side is-tagged?]]))
 
 (defn- counter-based-extra-cost
   "Cold Site Server and Reduced Service. Modify cost to run current server whenever counters are added or removed.

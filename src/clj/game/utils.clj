@@ -2,8 +2,6 @@
   (:require [clojure.string :refer [split-lines split join]]
             [jinteki.cards :refer [all-cards]]))
 
-(declare quantify)
-
 (def cid (atom 0))
 
 (defn make-cid []
@@ -46,24 +44,6 @@
   [card property value]
   (when-let [p (property card)]
     (> (.indexOf p value) -1)))
-
-(defn card-is?
-  "Checks the property of the card to see if it is equal to the given value,
-  as either a string or a keyword"
-  [card property value]
-  (let [cv (property card)]
-    (cond
-      (or (keyword? cv)
-          (and (string? value)
-               (string? cv)))
-      (= value cv)
-
-      (and (keyword? value)
-           (string? cv))
-      (= value (keyword (.toLowerCase cv)))
-
-      :else
-      (= value cv))))
 
 (defn zone
   "Associate the specified zone to each item in the collection.
@@ -137,15 +117,6 @@
   "Returns true if a card has been used this turn"
   [cid state]
   (contains? (get-in @state [:per-turn]) cid))
-
-(defn cancellable
-  "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,
-  with Cancel always last."
-  ([choices] (cancellable choices false))
-  ([choices sorted]
-   (if sorted
-     (conj (vec (sort-by :title choices)) "Cancel")
-     (conj (vec choices) "Cancel"))))
 
 (defn side-str
   "Converts kw into str. If str is passed same str is returned."
@@ -232,14 +203,6 @@
 
 (defn get-server-type [zone]
   (or (#{:hq :rd :archives} zone) :remote))
-
-(defn get-cid
-  "Gets the cid of a given card"
-  [card]
-  (get-in card [:card :cid]))
-
-(defn private-card [card]
-  (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted :icon]))
 
 (defn combine-subtypes
   "Takes an existing subtype-string, adds in the new-subtypes, and removes

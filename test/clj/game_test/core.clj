@@ -192,7 +192,6 @@
 
 (def get-counters utils/get-counters)
 (def count-tags jutils/count-tags)
-(def has-subtype? jutils/has-subtype?)
 (def is-tagged? jutils/is-tagged?)
 
 (defn get-ice

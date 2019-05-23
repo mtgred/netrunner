@@ -1,14 +1,15 @@
 (ns game.cards.operations
   (:require [game.core :refer :all]
             [game.core.eid :refer [make-result effect-completed]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
+            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt cancellable]]
             [game.core.toasts :refer [toast]]
             [game.core.card-defs :refer [card-def]]
+            [game.core.card-properties :refer :all]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags]]))
 
 ;; Card definitions
 (def card-definitions

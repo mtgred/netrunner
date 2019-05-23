@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare set-prop get-nested-host get-nested-zone all-active-installed run-costs)
+(declare set-prop all-active-installed run-costs)
 
 (defn get-zones [state]
   (keys (get-in @state [:corp :servers])))

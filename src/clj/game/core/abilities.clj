@@ -206,7 +206,25 @@
                   (if not-distinct cards (distinct-by :title cards))))]
        (prompt! state s card prompt cs ab args)))))
 
-(declare print-msg do-effect register-end-turn register-once)
+(defn- print-msg
+  "Prints the ability message"
+  [state side {:keys [eid] :as ability} card targets cost-str]
+  (when-let [message (:msg ability)]
+    (when-let [desc (if (string? message) message (message state side eid card targets))]
+      (system-msg state (to-keyword (:side card))
+                  (str (build-spend-msg cost-str "use")
+                       (:title card) (when desc (str " to " desc)))))))
+
+(defn- register-once
+  "Register ability as having happened if :once specified"
+  [state {:keys [once once-key] :as ability} {:keys [cid] :as card}]
+  (when once (swap! state assoc-in [once (or once-key cid)] true)))
+
+(defn- do-effect
+  "Trigger the effect"
+  [state side {:keys [eid] :as ability} card targets]
+  (when-let [ability-effect (:effect ability)]
+    (ability-effect state side eid card targets)))
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
@@ -231,47 +249,13 @@
             ;; Remove any counters
             (when (or counter-cost advance-counter-cost)
               (update! state side c)
-              (when (is-type? card "Agenda")
+              (when (agenda? card)
                 (trigger-event state side :agenda-counter-spent card)))
             ;; Print the message
             (print-msg state side ability card targets cost-str)
             ;; Trigger the effect
-            (register-end-turn state side ability card targets)
             (register-once state ability card)
             (do-effect state side ability c targets)))))))
-
-(defn- print-msg
-  "Prints the ability message"
-  [state side {:keys [eid] :as ability} card targets cost-str]
-  (when-let [message (:msg ability)]
-    (when-let [desc (if (string? message) message (message state side eid card targets))]
-      (system-msg state (to-keyword (:side card))
-                  (str (build-spend-msg cost-str "use")
-                       (:title card) (when desc (str " to " desc)))))))
-
-(defn- do-effect
-  "Trigger the effect"
-  [state side {:keys [eid] :as ability} card targets]
-  (when-let [ability-effect (:effect ability)]
-    (ability-effect state side eid card targets)))
-
-(defn- register-end-turn
-  "Register :end-turn effect if present"
-  [state side {:keys [eid] :as ability} card targets]
-  (when-let [end-turn (:end-turn ability)]
-    (swap! state update-in [side :register :end-turn]
-           #(conj % {:ability end-turn :card card :targets targets :eid eid}))))
-
-(defn- register-once
-  "Register ability as having happened if :once specified"
-  [state {:keys [once once-key] :as ability} {:keys [cid] :as card}]
-  (when once (swap! state assoc-in [once (or once-key cid)] true)))
-
-(defn active-prompt?
-  "Checks if this card has an active prompt"
-  [state side card]
-  (some #(when (= (:cid card) (-> % :card :cid)) %)
-        (flatten (map #(-> @state % :prompt) [side (other-side side)]))))
 
 ;;; Optional Ability
 (defn optional-ability
@@ -322,23 +306,6 @@
        (wrap-function args :cancel-effect)))))
 
 ;;; Psi games
-(defn show-prompt-with-dice
-  "Calls show-prompt normally, but appends a 'roll d6' button to choices.
-  If user chooses to roll d6, reveal the result to user and re-display
-  the prompt without the 'roll d6 button'."
-  ([state side card message other-choices f]
-   (show-prompt state side card message other-choices f nil))
-  ([state side card message other-choices f args]
-   (let [dice-msg "Roll a d6",
-         choices (conj other-choices dice-msg)]
-     (show-prompt state side card message choices
-                  #(if (not= % dice-msg)
-                     (f %)
-                     (show-prompt state side card
-                                  (str message " (Dice result: " (inc (rand-int 6)) ")")
-                                  other-choices f args))
-                  args))))
-
 (defn psi-game
   "Starts a psi game by showing the psi prompt to both players. psi is a map containing
   :equal and :not-equal abilities which will be triggered in resolve-psi accordingly."
@@ -378,7 +345,6 @@
                       (effect-completed state side eid))))
       (show-wait-prompt
         state side (str (string/capitalize (name opponent)) " to choose psi game credits")))))
-
 
 ;;; Traces
 (defn init-trace-bonus

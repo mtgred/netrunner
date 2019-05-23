@@ -1,14 +1,15 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
             [game.core.eid :refer [make-eid effect-completed]]
-            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
+            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt cancellable]]
             [game.core.toasts :refer [toast]]
             [game.core.card-defs :refer [card-def]]
+            [game.core.card-properties :refer :all]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
+            [jinteki.utils :refer [str->int other-side is-tagged? count-tags]]))
 
 ;; Card definitions
 (def card-definitions
@@ -531,7 +532,7 @@
    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
                   :req (req (and (pos? (get-counters card :virus))
                                  (pos? (count-virus-programs state))))
-                  :choices {:req is-virus-program?}
+                  :choices {:req virus-program?}
                   :effect (req (add-counter state :runner card :virus -1)
                                (add-counter state :runner target :virus 1))}]
      {:abilities [(set-autoresolve :auto-accept "Friday Chip")]
