@@ -8,16 +8,6 @@
          use-mu)
 
 ;;; Functions for loading card information.
-(defn card-def
-  "Retrieves a card's abilities definition map."
-  [card]
-  (if-let [title (:title card)]
-    (get cards title)
-    (.println *err* (with-out-str
-                      (clojure.stacktrace/print-stack-trace
-                        (Exception. (str "Tried to select card def for non-existent card: " card))
-                        25)))))
-
 (defn find-cid
   "Return a card with specific :cid from given sequence"
   [cid from]

@@ -6,6 +6,7 @@
             [hawk.core :as hawk]
             [monger.collection :as mc]
             [game.core :as core]
+            [game.core.card-defs :refer [reset-card-defs]]
             [game.quotes :as quotes]
             [jinteki.cards :as cards]
             [jinteki.nav :as nav]
@@ -56,7 +57,7 @@
       (reset! cards/mwl latest-mwl))
 
     ;; Reset all of the card implementation definitions
-    (core/reset-card-defs)
+    (reset-card-defs)
 
     (when (#{"dev" "prod"} (first args))
       (reset! server-mode (first args)))

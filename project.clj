@@ -31,7 +31,6 @@
                  [throttler "1.0.0"]
                  [clj-http "3.7.0"]
                  [reagent "0.8.1"]
-                 [eftest "0.1.4"]
                  [cljsjs/react "16.5.2-0"]
                  [cljsjs/react-dom "16.5.2-0"]
                  [org.clojure/tools.analyzer "0.7.0"]
@@ -43,7 +42,7 @@
             [lein-figwheel "0.5.16"]
             [com.gfredericks/lein-sha-version "0.1.1-p1"]
             [lein-ring "0.9.7"]
-            [lein-eftest "0.5.2"]
+            [lein-eftest "0.5.8"]
             [lein-exec "0.3.7"]]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.16"]

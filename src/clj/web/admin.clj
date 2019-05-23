@@ -2,7 +2,7 @@
   (:require [web.db :refer [db object-id]]
             [web.lobby :refer [all-games]]
             [game.main :as main]
-            [game.core :refer [reset-card-defs]]
+            [game.core.card-defs :refer [reset-card-defs]]
             [tasks.fetch :refer [fetch-with-db]]
             [web.utils :refer [response]]
             [monger.collection :as mc]
