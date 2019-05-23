@@ -1,6 +1,8 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
             [game.core.eid :refer [effect-completed]]
+            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
+            [game.core.toasts :refer [toast]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]

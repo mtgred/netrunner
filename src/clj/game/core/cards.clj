@@ -1,11 +1,6 @@
 (in-ns 'game.core)
 
-(declare active? all-installed all-active-installed cards card-init deactivate
-         card-flag? gain lose get-card-hosted handle-end-run hardware? ice? is-type?
-         program? register-events remove-from-host remove-icon make-card
-         resource? rezzed? toast toast-check-mu trash trigger-event
-         update-breaker-strength update-hosted! update-ice-strength unregister-events
-         use-mu)
+(declare active? all-installed all-active-installed cards card-init deactivate card-flag? gain lose get-card-hosted handle-end-run hardware? ice? is-type?  program? register-events remove-from-host remove-icon make-card resource? rezzed? toast-check-mu trash trigger-event update-breaker-strength update-hosted! update-ice-strength unregister-events use-mu)
 
 ;;; Functions for loading card information.
 (defn card-def

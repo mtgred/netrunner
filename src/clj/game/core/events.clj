@@ -1,9 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-trigger? card-def clear-wait-prompt event-title get-card
-         get-nested-host get-remote-names get-runnable-zones get-zones installed?
-         register-suppress resolve-ability
-         show-wait-prompt trigger-suppress unregister-suppress)
+(declare can-trigger? card-def event-title get-card get-nested-host get-remote-names get-runnable-zones get-zones installed?  register-suppress resolve-ability trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
 (defn register-events

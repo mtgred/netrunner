@@ -2,11 +2,7 @@
 
 ;; These functions are called by main.clj in response to commands sent by users.
 
-(declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler
-         enforce-msg gain-agenda-point get-remote-names get-run-ices jack-out move
-         name-zone play-instant purge resolve-select make-run runner-install trash
-         update-breaker-strength update-ice-in-server update-run-ice win can-run?
-         can-run-server? can-score? say play-sfx base-mod-size free-mu)
+(declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names get-run-ices jack-out move name-zone play-instant prompt! purge make-run runner-install trash update-breaker-strength update-ice-in-server update-run-ice win can-run?  can-run-server? can-score? say play-sfx base-mod-size free-mu)
 
 ;;; Neutral actions
 (defn play
@@ -271,7 +267,7 @@
                  (fn [coll] (remove-once #(= (:cid %) (:cid card)) coll))))
         (let [selected (get-in @state [side :selected 0])]
           (when (= (count (:cards selected)) (or (:max selected) 1))
-            (resolve-select state side)))))))
+            (resolve-select state side update! resolve-ability)))))))
 
 (defn- do-play-ability [state side card ability targets]
   (let [cost (:cost ability)]

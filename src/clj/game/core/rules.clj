@@ -1,9 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-run? can-trash? card-init card-str cards-can-prevent? close-access-prompt enforce-msg
-         gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? installed? is-type? play-sfx
-         prevent-draw remove-old-current show-prompt system-say system-msg steal-trigger-events
-         trash-cards untrashable-while-rezzed? update-all-ice untrashable-while-resources? win win-decked)
+(declare can-run? can-trash? card-init card-str cards-can-prevent? close-access-prompt enforce-msg gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? installed? is-type? play-sfx prevent-draw remove-old-current system-say system-msg steal-trigger-events trash-cards untrashable-while-rezzed? update-all-ice untrashable-while-resources? win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
 
