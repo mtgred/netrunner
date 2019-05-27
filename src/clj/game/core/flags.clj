@@ -302,10 +302,10 @@
   [{:keys [zone] :as card}]
   (or (is-type? card "Identity")
       (= zone [:current])
-      (and (card-is? card :side :corp)
+      (and (corp? card)
            (installed? card)
            (rezzed? card))
-      (and (card-is? card :side :runner)
+      (and (runner? card)
            (installed? card)
            (not (facedown? card)))))
 
@@ -432,7 +432,7 @@
     ;; public runner cards: in hand and :openhand is true;
     ;; or installed/hosted and not facedown;
     ;; or scored or current or in heap
-    (or (card-is? card :side :corp)
+    (or (corp? card)
         (and (:openhand (:runner @state)) (in-hand? card))
         (and (or (installed? card) (:host card)) (not (facedown? card)))
         (#{:scored :discard :current} (last zone)))
@@ -440,7 +440,7 @@
     ;; or installed and rezzed;
     ;; or in :discard and :seen
     ;; or scored or current
-    (or (card-is? card :side :runner)
+    (or (runner? card)
         (and (:openhand (:corp @state)) (in-hand? card))
         (and (or (installed? card) (:host card))
              (or (is-type? card "Operation") (rezzed? card)))

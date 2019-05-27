@@ -358,8 +358,8 @@
    (letfn [(name-a-card []
              {:async true
               :prompt "Name a Runner card"
-              :choices {:card-title (req (and (card-is? target :side "Runner")
-                                              (not (card-is? target :type "Identity"))))}
+              :choices {:card-title (req (and (runner? target)
+                                              (not (identity? target))))}
               :effect (effect (system-msg (str "uses Complete Image to name " target))
                               (continue-ability (damage-ability) card targets))})
            (damage-ability []
@@ -407,9 +407,9 @@
 
    "Dedication Ceremony"
    {:prompt "Select a faceup card"
-    :choices {:req #(or (and (card-is? % :side :corp)
+    :choices {:req #(or (and (corp? %)
                              (:rezzed %))
-                        (and (card-is? % :side :runner)
+                        (and (runner? %)
                              (or (installed? %)
                                  (:host %))
                              (not (facedown? %))))}
@@ -543,7 +543,7 @@
                               {:prompt "Select an installed card not matching the faction of the Runner's identity"
                                :choices {:req #(and (installed? %)
                                                     (not= f (:faction %))
-                                                    (card-is? % :side :runner))}
+                                                    (runner? %))}
                                :msg (msg "trash " (:title target))
                                :effect (effect (trash target))}
                               card nil)))}}}
@@ -864,7 +864,7 @@
    "Hatchet Job"
    {:trace {:base 5
             :successful {:choices {:req #(and (installed? %)
-                                              (card-is? % :side :runner)
+                                              (runner? %)
                                               (not (has-subtype? % "Virtual")))}
                          :msg "add an installed non-virtual card to the Runner's grip"
                          :effect (effect (move :runner target :hand true))}}}
@@ -1611,8 +1611,8 @@
 
    "Salem's Hospitality"
    {:prompt "Name a Runner card"
-    :choices {:card-title (req (and (card-is? target :side "Runner")
-                                    (not (card-is? target :type "Identity"))))}
+    :choices {:card-title (req (and (runner? target)
+                                    (not (identity? target))))}
     :effect (req (system-msg state side
                              (str "uses Salem's Hospitality to reveal the Runner's Grip ( "
                                   (join ", " (map :title (sort-by :title (:hand runner))))
@@ -1891,8 +1891,8 @@
                  :effect (effect (gain-credits :corp 10))
                  :msg (msg "gain 10 [Credits] from " (:marketing-target card))}]
      {:prompt "Name a Runner card"
-      :choices {:card-title (req (and (card-is? target :side "Runner")
-                                      (not (card-is? target :type "Identity"))))}
+      :choices {:card-title (req (and (runner? target)
+                                      (not (identity? target))))}
       :effect (effect (update! (assoc card :marketing-target target))
                       (system-msg (str "uses Targeted Marketing to name " target)))
       :events {:runner-install gaincr

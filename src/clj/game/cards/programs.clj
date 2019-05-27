@@ -637,8 +637,8 @@
 
    "Consume"
    {:events {:runner-trash {:async true
-                            :req (req (some #(card-is? % :side :corp) targets))
-                            :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
+                            :req (req (some corp? targets))
+                            :effect (req (let [amt-trashed (count (filter corp? targets))
                                                sing-ab {:optional {:prompt "Place a virus counter on Consume?"
                                                                    :autoresolve (get-autoresolve :auto-accept)
                                                                    :yes-ability {:effect (effect (add-counter :runner card :virus 1))

@@ -120,9 +120,9 @@
     :abilities [{:effect (req (resolve-ability
                                 state side
                                 {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                                 :choices {:req #(and (card-is? % :side :runner)
+                                 :choices {:req #(and (runner? %)
                                                       (installed? %)
-                                                      (not (card-is? % :cid (:cid card))))}
+                                                      (not (same-card? % card)))}
                                  :effect (effect (gain-credits 3)
                                                  (trash target {:unpreventable true}))}
                                 card nil))}]}
@@ -2445,8 +2445,8 @@
      {:events {:successful-run {:optional {:autoresolve (get-autoresolve :auto-name-agenda)
                                            :prompt "Trash Whistleblower to name an agenda?"
                                            :yes-ability {:prompt "Name an agenda"
-                                                         :choices {:card-title (req (and (card-is? target :side "Corp")
-                                                                                         (card-is? target :type "Agenda")))}
+                                                         :choices {:card-title (req (and (corp? target)
+                                                                                         (agenda? target)))}
                                                          :effect (effect (system-msg (str "trashes " (:title card)
                                                                                           " to name " (:title target)))
                                                                          (register-events (steal-events target)

@@ -312,7 +312,7 @@
                      :effect (effect (show-wait-prompt :runner "Corp to select Archangel target")
                                      (continue-ability
                                        {:choices {:req #(and (installed? %)
-                                                             (card-is? % :side :runner))}
+                                                             (runner? %))}
                                         :label "Add 1 installed card to the Runner's Grip"
                                         :msg "add 1 installed card to the Runner's Grip"
                                         :effect (effect (clear-wait-prompt :runner)
@@ -1515,11 +1515,11 @@
       :effect (req (let [magnet card]
                      (wait-for (resolve-ability
                                  state side
-                                 {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
+                                 {:req (req (some #(some program? (:hosted %))
                                                   (remove-once #(= (:cid %) (:cid magnet))
                                                                (filter ice? (all-installed state corp)))))
                                   :prompt "Select a Program to host on Magnet"
-                                  :choices {:req #(and (card-is? % :type "Program")
+                                  :choices {:req #(and (program? %)
                                                        (ice? (:host %))
                                                        (not= (:cid (:host %)) (:cid magnet)))}
                                   :effect (effect (host card target))}

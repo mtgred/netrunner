@@ -807,7 +807,7 @@
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
                 :prompt "Select an unrezzed card to return to HQ"
-                :choices {:req #(and (not (rezzed? %)) (installed? %) (card-is? % :side :corp))}
+                :choices {:req #(and (not (rezzed? %)) (installed? %) (corp? %))}
                 :msg (msg "add " (card-str state target) " to HQ")
                 :effect (effect (move :corp target :hand))}]
      {:flags {:slow-hq-access (req true)}
@@ -1255,7 +1255,7 @@
                              (has-most-faction? state :corp "Haas-Bioroid")
                              (pos? (count (:discard corp)))))
               :prompt "Select a card in Archives to shuffle into R&D"
-              :choices {:req #(and (card-is? % :side :corp) (= (:zone %) [:discard]))}
+              :choices {:req #(and (corp? %) (= (:zone %) [:discard]))}
               :player :corp :show-discard true :priority true
               :msg (msg "shuffle " (if (:seen target) (:title target) "a card")
                         " into R&D")
@@ -1381,7 +1381,7 @@
    "Wyvern: Chemically Enhanced"
    {:events {:pre-start-game {:effect draft-points-target}
              :runner-trash {:req (req (and (has-most-faction? state :runner "Anarch")
-                                           (card-is? target :side :corp)
+                                           (corp? target)
                                            (pos? (count (:discard runner)))))
                             :msg (msg "shuffle " (:title (last (:discard runner))) " into their Stack")
                             :effect (effect (move :runner (last (:discard runner)) :deck)

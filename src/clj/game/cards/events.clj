@@ -308,7 +308,7 @@
 
    "Cold Read"
    (let [end-effect {:prompt "Choose a program that was used during the run to trash "
-                     :choices {:req #(card-is? % :type "Program")}
+                     :choices {:req program?}
                      :msg (msg "trash " (:title target))
                      :effect (effect (trash target {:unpreventable true}))}]
      {:async true
@@ -1201,7 +1201,7 @@
                                  state :corp
                                  {:async true
                                   :prompt (msg "Select up to " (dec (count (:hand corp))) " cards for the first pile")
-                                  :choices {:req #(and (in-hand? %) (card-is? % :side :corp))
+                                  :choices {:req #(and (in-hand? %) (corp? %))
                                             :max (req (dec (count (:hand corp))))}
                                   :effect (effect (clear-wait-prompt :runner)
                                                   (show-wait-prompt :corp "Runner to select a pile")
@@ -1889,7 +1889,7 @@
    (run-event)
 
    "Rejig"
-   (let [valid-target? (fn [card] (and (card-is? card :side :runner)
+   (let [valid-target? (fn [card] (and (runner? card)
                                        (or (program? card)
                                            (hardware? card))))
          pick-up {:async true
@@ -2000,8 +2000,8 @@
 
    "Rumor Mill"
    (letfn [(eligible? [card] (and (:uniqueness card)
-                                  (or (card-is? card :type "Asset")
-                                      (card-is? card :type "Upgrade"))
+                                  (or (asset? card)
+                                      (upgrade? card))
                                   (not (has-subtype? card "Region"))))
            (rumor [state] (filter eligible? (concat (all-installed state :corp)
                                                     (get-in @state [:corp :hand])

@@ -151,7 +151,7 @@
                          :yes-ability {:trace {:base (effect (advancement-cost agenda))
                                                :successful
                                                {:choices {:req #(and (installed? %)
-                                                                     (card-is? % :side :runner))}
+                                                                     (runner? %))}
                                                 :label "add an installed card to the Grip"
                                                 :msg (msg "add " (:title target) " to the Runner's Grip")
                                                 :effect (effect (move :runner target :hand true))}}}}})]
@@ -820,15 +820,15 @@
 
    "Hostile Infrastructure"
    {:events {:runner-trash {:async true
-                            :req (req (some #(card-is? % :side :corp) targets))
-                            :msg (msg (str "do " (count (filter #(card-is? % :side :corp) targets))
+                            :req (req (some corp? targets))
+                            :msg (msg (str "do " (count (filter corp? targets))
                                            " net damage"))
                             :effect (req (letfn [(do-damage [t]
                                                    (if-not (empty? t)
                                                      (wait-for (damage state side :net 1 {:card card})
                                                                (do-damage (rest t)))
                                                      (effect-completed state side eid)))]
-                                           (do-damage (filter #(card-is? % :side :corp) targets))))}}
+                                           (do-damage (filter corp? targets))))}}
     :abilities [{:msg "do 1 net damage"
                  :async true
                  :effect (effect (damage eid :net 1 {:card card}))}]}
@@ -1218,7 +1218,7 @@
                                 (str "Select "
                                      (if (> mus 1) "a card " (str mus " cards "))
                                      "in Archives to shuffle into R&D")))
-                 :choices {:req #(and (card-is? % :side :corp)
+                 :choices {:req #(and (corp? %)
                                       (= (:zone %) [:discard]))
                            :max (req (count (filter #(and (= "10019" (:code %))
                                                           (rezzed? %))

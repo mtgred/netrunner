@@ -315,7 +315,7 @@
    {:in-play [:memory 1]
     :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}
              :runner-trash {:once :per-turn
-                            :req (req (card-is? target :side :corp))
+                            :req (req (corp? target))
                             :msg "gain 1 [Credits]"
                             :effect (effect (gain-credits 1))}}}
 
@@ -557,8 +557,8 @@
       :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))
       :events {:runner-turn-begins ability
                :runner-trash {:async true
-                              :req (req (some #(card-is? % :side :corp) targets))
-                              :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
+                              :req (req (some corp? targets))
+                              :effect (req (let [amt-trashed (count (filter corp? targets))
                                                  sing-ab {:optional {:prompt "Place a virus counter on Friday Chip?"
                                                                      :autoresolve (get-autoresolve :auto-accept)
                                                                      :yes-ability {:effect (effect (system-msg
@@ -705,7 +705,7 @@
    "Lucky Charm"
    {:interactions {:prevent [{:type #{:end-run}
                               :req (req (and (some #{:hq} (:successful-run runner-reg))
-                                             (card-is? (:card-cause target) :side :corp)))}]}
+                                             (corp? (:card-cause target))))}]}
     :abilities [{:msg "prevent the run from ending"
                  :req (req (some #{:hq} (:successful-run runner-reg)))
                  :effect (effect (end-run-prevent)
@@ -718,7 +718,7 @@
                  :async true
                  :effect (effect (draw :runner eid 1 nil))}]
     :events {:runner-trash {:once :per-turn
-                            :req (req (and (card-is? target :side :corp)
+                            :req (req (and (corp? target)
                                            (:access @state)
                                            (:trash target)))
                             :effect (effect (system-msg (str "places " (:trash target) " power counters on Mâché"))

@@ -108,7 +108,7 @@
    "AR-Enhanced Security"
    {:events {:runner-trash {:once :per-turn
                             :async true
-                            :req (req (some #(card-is? % :side :corp) targets))
+                            :req (req (some corp? targets))
                             :msg "give the Runner a tag for trashing a Corp card"
                             :effect (effect (gain-tags eid 1))}}}
 
@@ -411,7 +411,7 @@
                              (continue-ability
                                state :corp
                                {:prompt (msg "Select " (access-count state side :hq-access) " cards in HQ for the Runner to access")
-                                :choices {:req #(and (in-hand? %) (card-is? % :side :corp))
+                                :choices {:req #(and (in-hand? %) (corp? %))
                                           :max (req (access-count state side :hq-access))}
                                 :effect (effect (clear-wait-prompt :runner)
                                                 (continue-ability
