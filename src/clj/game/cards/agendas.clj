@@ -39,7 +39,7 @@
              (if (pos? i)
                {:async true
                 :prompt "Select a piece of ICE from the Temporary Zone to install"
-                :choices {:req #(and (= (:side %) "Corp")
+                :choices {:req #(and (corp? %)
                                      (ice? %)
                                      (= (:zone %) [:play-area]))}
                 :effect (req (wait-for (corp-install state side target nil
@@ -440,7 +440,7 @@
    (letfn [(install-ability [server-name n]
              {:prompt "Select a card to install"
               :show-discard true
-              :choices {:req #(and (= (:side %) "Corp")
+              :choices {:req #(and (corp? %)
                                    (not (operation? %))
                                    (#{[:hand] [:discard]} (:zone %)))}
               :effect (req (corp-install state side target server-name {:ignore-all-cost true})
@@ -654,7 +654,7 @@
                                      (is-scored? state :corp card)))}
     :abilities [{:prompt "Select a card to add to the bottom of R&D"
                  :show-discard true
-                 :choices {:req #(and (= (:side %) "Corp")
+                 :choices {:req #(and (corp? %)
                                       (= (:zone %) [:discard]))}
                  :effect (effect (move target :deck))
                  :msg (msg "add "
@@ -789,7 +789,7 @@
     :show-discard true
     :choices {:req #(and (#{"Asset" "Upgrade"} (:type %))
                          (#{[:hand] [:discard]} (:zone %))
-                         (= (:side %) "Corp"))}
+                         (corp? %))}
     :msg (msg "install and rez " (:title target) ", ignoring all costs")
     :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost}))}
 
@@ -887,7 +887,7 @@
                :yes-ability {:prompt "Select a card to install"
                              :choices {:req #(and (not (operation? %))
                                                   (not (ice? %))
-                                                  (= (:side %) "Corp")
+                                                  (corp? %)
                                                   (in-hand? %))}
                              :msg (msg "install a card from HQ"
                                        (when (>= (get-counters (get-card state card) :advancement) 5)
@@ -993,7 +993,7 @@
                         {:prompt (msg "Select " (trash-count-str card) " installed cards to trash")
                          :choices {:max (min (- (get-counters card :advancement) 4)
                                              (count (all-installed state :runner)))
-                                   :req #(and (= (:side %) "Runner")
+                                   :req #(and (runner? %)
                                               (:installed %))}
                          :effect (effect (trash-cards targets)
                                          (system-msg (str "trashes " (join ", " (map :title targets))))
@@ -1036,7 +1036,7 @@
                  :prompt "Choose a card in Archives to add to HQ"
                  :show-discard true
                  :choices {:req #(and (in-discard? %)
-                                      (= (:side %) "Corp"))}
+                                      (corp? %))}
                  :req (req (pos? (get-counters card :agenda)))
                  :msg (msg "add "
                            (if (:seen target)
@@ -1063,7 +1063,7 @@
            (choose-swap [to-swap]
              {:prompt (str "Select a card in HQ to swap with " (:title to-swap))
               :choices {:not-self true
-                        :req #(and (= "Corp" (:side %))
+                        :req #(and (corp? %)
                                    (in-hand? %)
                                    (if (ice? to-swap)
                                      (ice? %)
@@ -1355,7 +1355,7 @@
    (letfn [(sft [n max] {:prompt "Select a card in HQ to install with Successful Field Test"
                          :priority -1
                          :async true
-                         :choices {:req #(and (= (:side %) "Corp")
+                         :choices {:req #(and (corp? %)
                                               (not (operation? %))
                                               (in-hand? %))}
                          :effect (req (wait-for

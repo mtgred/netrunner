@@ -50,7 +50,7 @@
          {:prompt "Select a card to install with Arella Salvatore"
           :choices {:req #(and (corp-installable-type? %)
                                (in-hand? %)
-                               (= (:side %) "Corp"))}
+                               (corp? %))}
           :async true
           :cancel-effect (req (effect-completed state side eid))
           :effect (req (wait-for (corp-install state :corp target nil {:ignore-all-cost true :display-message false})
@@ -115,7 +115,7 @@
    (letfn [(dome [dcard]
              {:prompt "Select a card to add to HQ"
               :async true
-              :choices {:req #(and (= (:side %) "Corp")
+              :choices {:req #(and (corp? %)
                                    (= (:zone %) [:play-area]))}
               :msg "move a card to HQ"
               :effect (effect (move target :hand)
@@ -123,7 +123,7 @@
            (put [dcard]
              {:prompt "Select first card to put back onto R&D"
               :async true
-              :choices {:req #(and (= (:side %) "Corp")
+              :choices {:req #(and (corp? %)
                                    (= (:zone %) [:play-area]))}
               :msg "move remaining cards back to R&D"
               :effect (effect (move target :deck {:front true})
@@ -324,7 +324,7 @@
    (letfn [(choose-swap [to-swap]
              {:prompt (str "Select a card to swap with " (:title to-swap))
               :choices {:not-self true
-                        :req #(and (= "Corp" (:side %))
+                        :req #(and (corp? %)
                                    (#{"Asset" "Agenda" "Upgrade"} (:type %))
                                    (or (in-hand? %) ; agenda, asset or upgrade from HQ
                                        (and (installed? %) ; card installed in a server
@@ -367,7 +367,7 @@
                  :effect (effect (resolve-ability
                                    {:show-discard true
                                     :choices {:max (get-counters card :advancement)
-                                              :req #(and (= (:side %) "Corp")
+                                              :req #(and (corp? %)
                                                          (not (:seen %))
                                                          (= (:zone %) [:discard]))}
                                     :msg (msg "add " (count targets) " facedown cards in Archives to HQ")
@@ -380,7 +380,7 @@
    (letfn [(dhq [n i]
              {:req (req (pos? i))
               :prompt "Select a card in HQ to add to the bottom of R&D"
-              :choices {:req #(and (= (:side %) "Corp")
+              :choices {:req #(and (corp? %)
                                    (in-hand? %))}
               :async true
               :msg "add a card to the bottom of R&D"
@@ -541,7 +541,7 @@
                                   state side
                                   {:prompt "Choose a card in HQ to trash"
                                    :choices {:req #(and (in-hand? %)
-                                                        (= (:side %) "Corp"))}
+                                                        (corp? %))}
                                    :msg "trash a card from HQ and give all ice protecting this server +2 strength until the end of the run"
                                    :effect (effect (clear-wait-prompt :runner)
                                                    (trash eid target nil))}
@@ -1337,7 +1337,7 @@
               :async true
               :player :runner
               :priority 2
-              :choices {:req #(and (installed? %) (= (:side %) "Runner"))}
+              :choices {:req #(and (installed? %) (runner? %))}
               :effect (req (system-msg state side (str "trashes " (card-str state target) " due to Warroid Tracker"))
                            (trash state side target {:unpreventable true})
                            (if (> n t)

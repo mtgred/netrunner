@@ -363,7 +363,7 @@
                    state side
                    {:msg (msg "place 3 virus tokens on " (:title target))
                     :choices {:req #(and (installed? %)
-                                         (= (:side %) "Runner")
+                                         (runner? %)
                                          (zero? (get-virus-counters state %)))}
                     :effect (req (add-counter state :runner target :virus 3))}
                    card nil))}
@@ -983,7 +983,7 @@
                       :prompt (msg "Select 5 cards from Archives to add to HQ")
                       :choices {:max 5
                                 :all true
-                                :req #(and (= (:side %) "Corp")
+                                :req #(and (corp? %)
                                            (= (:zone %) [:discard]))}
                       :msg (msg "move "
                                 (let [seen (filter :seen targets)
@@ -1090,8 +1090,8 @@
               :req (req (and (= target :archives)
                              ;; don't prompt unless there's at least 1 rezzed ICE matching one in Archives
                              (not-empty (clojure.set/intersection
-                                          (into #{} (map :title (filter #(ice? %) (:discard corp))))
-                                          (into #{} (map :title (filter #(rezzed? %) (all-installed state :corp))))))))
+                                          (into #{} (map :title (filter ice? (:discard corp))))
+                                          (into #{} (map :title (filter rezzed? (all-installed state :corp))))))))
               :effect (req (continue-ability
                              state side
                              {:async true
@@ -1135,7 +1135,7 @@
       :prompt "Choose up to 5 installed cards to trash with Independent Thinking"
       :choices {:max 5
                 :req #(and (installed? %)
-                        (= (:side %) "Runner"))}
+                        (runner? %))}
       :effect (req (wait-for (trash-cards state side targets nil)
                              (draw state :runner eid (cards-to-draw targets) nil)))
       :msg (msg "trash " (join ", " (map :title targets)) " and draw " (quantify (cards-to-draw targets) "card"))})
@@ -1373,7 +1373,7 @@
                         :choices {:max heap-count
                                   :all true
                                   :not-self true
-                                  :req #(and (= (:side %) "Runner")
+                                  :req #(and (runner? %)
                                              (in-discard? %))}
                         :effect (req (doseq [c targets]
                                        (move state side c :deck))
@@ -1877,7 +1877,7 @@
                    {:prompt "Choose up to five cards to install"
                     :show-discard true
                     :choices {:max 5
-                              :req #(and (in-discard? %) (= (:side %) "Runner") (not= (:cid %) (:cid card)))}
+                              :req #(and (in-discard? %) (runner? %) (not= (:cid %) (:cid card)))}
                     :mandatory true
                     :async true
                     :cancel-effect (req (move state side (find-latest state card) :rfg)
@@ -1984,7 +1984,7 @@
                                   :msg (msg "take " (join ", " (map :title targets)) " from their Heap to their Grip")
                                   :choices {:max (min n heap)
                                             :all true
-                                            :req #(and (= (:side %) "Runner")
+                                            :req #(and (runner? %)
                                                        (in-discard? %))}
                                   :effect (req (doseq [c targets]
                                                  (move state side c :hand))
@@ -2146,7 +2146,7 @@
    "Spot the Prey"
    {:prompt "Select 1 non-ICE card to expose"
     :msg "expose 1 card and make a run"
-    :choices {:req #(and (installed? %) (not (ice? %)) (= (:side %) "Corp"))}
+    :choices {:req #(and (installed? %) (not (ice? %)) (corp? %))}
     :async true
     :effect (req (wait-for (expose state side target)
                            (continue-ability
@@ -2191,7 +2191,7 @@
                                         state :corp
                                         {:prompt "Choose 2 cards to discard"
                                          :choices {:max 2
-                                                   :req #(and (in-hand? %) (= (:side %) "Corp"))}
+                                                   :req #(and (in-hand? %) (corp? %))}
                                          :effect (effect (trash-cards :corp targets)
                                                          (clear-wait-prompt state :runner)
                                                          (system-msg :corp "discards 2 cards from SYN Attack"))}

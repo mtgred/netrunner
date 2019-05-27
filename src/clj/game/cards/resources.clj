@@ -202,7 +202,7 @@
                  :prompt "Select a facedown installed card"
                  :choices {:req #(and (facedown? %)
                                       (installed? %)
-                                      (= "Runner" (:side %)))}
+                                      (runner? %))}
                  :effect (req (if (or (event? target)
                                       (and (has-subtype? target "Console")
                                            (some #(has-subtype? % "Console") (all-active-installed state :runner))))
@@ -350,7 +350,7 @@
                                         (resolve-ability state side
                                                          {:prompt "Choose a card in your Grip to shuffle back into your Stack"
                                                           :choices {:req #(and (in-hand? %)
-                                                                               (= (:side %) "Runner"))}
+                                                                               (runner? %))}
                                                           :effect (effect (move target :deck)
                                                                           (shuffle! :deck))}
                                                          card nil)))}]}
@@ -362,7 +362,7 @@
                  :once :per-turn
                  :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
                  :show-discard true
-                 :choices {:req #(and (in-discard? %) (= (:side %) "Runner"))}
+                 :choices {:req #(and (in-discard? %) (runner? %))}
                  :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
                  :effect (effect (gain-credits 2)
                                  (move target :rfg))}]}
@@ -983,7 +983,7 @@
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
-                 :req (req (some #(= (:side %) "Corp") (map second (turn-events state :runner :damage))))
+                 :req (req (some corp? (map second (turn-events state :runner :damage))))
                  :msg "draw 1 card"
                  :async true
                  :effect (effect (draw eid 1 nil))}]}
@@ -1430,7 +1430,7 @@
    {:effect (req (resolve-ability
                    state :corp
                    {:prompt "Select a card to derez"
-                    :choices {:req #(and (= (:side %) "Corp")
+                    :choices {:req #(and (corp? %)
                                          (not (agenda? %))
                                          (:rezzed %))}
                     :effect (req (derez state side target))}
@@ -1687,7 +1687,7 @@
                    :prompt "Select a card to host on Personal Workshop"
                    :choices {:req #(and (#{"Program" "Hardware"} (:type %))
                                         (in-hand? %)
-                                        (= (:side %) "Runner"))}
+                                        (runner? %))}
                    :effect (req (if (zero? (:cost target))
                                   (runner-install state side target)
                                   (host state side card
@@ -2277,7 +2277,7 @@
                   :req (req (some #(can-pay? state side eid card nil (modified-install-cost state side % [:credit -2]))
                                   (:hosted card)))
                   :choices {:req #(and (= "The Supplier" (:title (:host %)))
-                                       (= "Runner" (:side %)))}
+                                       (runner? %))}
                   :once :per-turn
                   :effect (req
                             (runner-can-install? state side target nil)
@@ -2337,7 +2337,7 @@
    "Thunder Art Gallery"
    (let [first-event-check (fn [state fn1 fn2] (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
                                                     (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
-         ability {:choices {:req #(and (= "Runner" (:side %))
+         ability {:choices {:req #(and (runner? %)
                                        (in-hand? %)
                                        (not (event? %)))}
                   :async true

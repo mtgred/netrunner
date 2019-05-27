@@ -349,7 +349,7 @@
                    :priority true
                    :choices {:req #(and (not (operation? %))
                                         (#{[:hand] [:discard]} (:zone %))
-                                        (= (:side %) "Corp"))}
+                                        (corp? %))}
                    :effect (effect (corp-install target nil))
                    :msg (msg (corp-install-msg target))}]}
 
@@ -698,7 +698,7 @@
                    :priority true
                    :choices {:req #(and (not (operation? %))
                                         (= (:zone %) [:discard])
-                                        (= (:side %) "Corp"))}
+                                        (corp? %))}
                    :msg (msg (corp-install-msg target))
                    :effect (effect (corp-install target nil))}]
     :strength-bonus (req (if (= (second (:zone card)) :archives) 3 0))}
@@ -752,7 +752,7 @@
                                  (resolve-ability state side
                                                   {:prompt (msg "Choose " n " cards in your Grip to add to the top of the Stack (first card targeted will be topmost)")
                                                    :choices {:max n :all true
-                                                             :req #(and (in-hand? %) (= (:side %) "Runner"))}
+                                                             :req #(and (in-hand? %) (runner? %))}
                                                    :effect (req (doseq [c targets]
                                                                   (move state :runner c :deck {:front true}))
                                                                 (system-msg state :runner (str "adds " n " cards from their Grip to the top of the Stack")))}
@@ -986,7 +986,7 @@
                :effect (effect (draw eid target nil))}
          reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas"
                              :show-discard true
-                             :choices {:req #(and (= "Corp" (:side %))
+                             :choices {:req #(and (corp? %)
                                                   (or (= [:discard] (:zone %))
                                                       (= [:hand] (:zone %)))
                                                   (agenda? %))
@@ -1324,7 +1324,7 @@
                    :req (req (>= (count (all-installed state :runner)) 2))
                    :async true
                    :prompt "Select 2 installed Runner cards"
-                   :choices {:req #(and (= (:side %) "Runner")
+                   :choices {:req #(and (runner? %)
                                         (installed? %))
                              :max 2
                              :all true}
@@ -1666,7 +1666,7 @@
     :runner-abilities [{:label "Add an installed card to the bottom of your Stack"
                         :prompt "Choose one of your installed cards"
                         :choices {:req #(and (installed? %)
-                                             (= (:side %) "Runner"))}
+                                             (runner? %))}
                         :effect (effect (move target :deck)
                                         (system-msg :runner (str "adds " (:title target) " to the bottom of their Stack")))}]}
 
@@ -1696,7 +1696,7 @@
                                           (resolve-ability
                                             state side
                                             {:prompt "Choose 1 card in HQ to shuffle into R&D"
-                                             :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
+                                             :choices {:req #(and (in-hand? %) (corp? %))}
                                              :msg "shuffle 1 card in HQ into R&D"
                                              :effect (effect (move target :deck)
                                                              (shuffle! :deck))}
@@ -1810,7 +1810,7 @@
                    :label "Trash 1 installed Runner card"
                    :msg (msg "trash " (:title target))
                    :choices {:req #(and (installed? %)
-                                        (= (:side %) "Runner"))}
+                                        (runner? %))}
                    :async true
                    :effect (req (trash state side eid target {:cause :subroutine}))}]}
 
@@ -1826,7 +1826,7 @@
                    :priority true
                    :choices {:req #(and (not (operation? %))
                                         (in-hand? %)
-                                        (= (:side %) "Corp"))}
+                                        (corp? %))}
                    :effect (effect (corp-install target nil))
                    :msg (msg (corp-install-msg target))}]}
 
@@ -1841,7 +1841,7 @@
                   {:label "Add up to X cards from Archives to HQ"
                    :prompt "Select cards to add to HQ"
                    :show-discard  true
-                   :choices {:req #(and (= "Corp" (:side %))
+                   :choices {:req #(and (corp? %)
                                         (= [:discard] (:zone %)))
                              :max (req (next-ice-count corp))}
                    :effect (req (doseq [c targets]
@@ -1856,7 +1856,7 @@
                              " to HQ")}
                   {:label "Shuffle up to X cards from HQ into R&D"
                    :prompt "Select cards to shuffle into R&D"
-                   :choices {:req #(and (= "Corp" (:side %))
+                   :choices {:req #(and (corp? %)
                                         (= [:hand] (:zone %)))
                              :max (req (next-ice-count corp))}
                    :effect (req (doseq [c targets]
@@ -1903,7 +1903,7 @@
                    :label "Place 3 advancement tokens on installed card"
                    :msg "place 3 advancement tokens on installed card"
                    :prompt "Choose an installed Corp card"
-                   :choices {:req #(and (= (:side %) "Corp")
+                   :choices {:req #(and (corp? %)
                                         (installed? %))}
                    :effect (req (let [c target
                                       title (if (:rezzed c)
@@ -2162,7 +2162,7 @@
                    :req (req (not-empty (all-installed state :runner)))
                    :effect (effect (show-wait-prompt :runner "Corp to select Sandman target")
                                    (resolve-ability {:choices {:req #(and (installed? %)
-                                                                          (= (:side %) "Runner"))}
+                                                                          (runner? %))}
                                                      :msg (msg "to add " (:title target) " to the grip")
                                                      :effect (effect (clear-wait-prompt :runner)
                                                                      (move :runner target :hand true))
@@ -2386,7 +2386,7 @@
                    :effect (effect (draw))}
                   {:req (req (pos? (count (:hand corp))))
                    :prompt "Choose a card in HQ to move to the top of R&D"
-                   :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
+                   :choices {:req #(and (in-hand? %) (corp? %))}
                    :msg "add 1 card in HQ to the top of R&D"
                    :effect (effect (move target :deck {:front true}))}]}
 
@@ -2459,7 +2459,7 @@
                    :label "Trash 1 installed Runner card"
                    :msg (msg "trash " (:title target))
                    :choices {:req #(and (installed? %)
-                                        (= (:side %) "Runner"))}
+                                        (runner? %))}
                    :async true
                    :effect (req (trash state side eid target {:cause :subroutine}))}
                   (trace-ability 6 {:label "The Runner cannot steal or trash Corp cards for the remainder of this run"

@@ -1009,7 +1009,7 @@
    "Endless Hunger"
    {:abilities [{:label "Trash 1 installed card to break 1 \"End the run.\" subroutine"
                  :prompt "Select a card to trash for Endless Hunger"
-                 :choices {:req #(and (= (:side %) "Runner") (:installed %))}
+                 :choices {:req #(and (runner? %) (:installed %))}
                  :msg (msg "trash " (:title target)
                            " and break 1 \"[Subroutine] End the run.\" subroutine")
                  :effect (effect (trash target {:unpreventable true}))}]}
@@ -1231,7 +1231,7 @@
                               (resolve-ability
                                 state :corp
                                 {:prompt "Choose a card to trash"
-                                 :choices (req (filter #(= (:side %) "Corp") (:hand corp)))
+                                 :choices (req (filter corp? (:hand corp)))
                                  :effect (effect (trash target)
                                                  (clear-wait-prompt :runner))}
                                 card nil))}]}
@@ -2234,7 +2234,7 @@
                              {:show-discard true
                               :choices {:max (min (get-counters card :power) (count (:discard runner)))
                                         :all true
-                                        :req #(and (= (:side %) "Runner")
+                                        :req #(and (runner? %)
                                                    (in-discard? %))}
                               :msg (msg "shuffle " (join ", " (map :title targets))
                                         " into their Stack")

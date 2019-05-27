@@ -77,7 +77,7 @@
                  :choices {:req #(and (not (operation? %))
                                       (not (agenda? %))
                                       (= (:zone %) [:hand])
-                                      (= (:side %) "Corp"))}
+                                      (corp? %))}
                  :msg (msg (corp-install-msg target))
                  :effect (req (wait-for (trash state side card {:cause :ability-cost})
                                         (corp-install state side eid target nil nil)))}]}
@@ -229,7 +229,7 @@
                  :prompt "Select a card in HQ to install"
                  :choices {:req #(and (not (operation? %))
                                       (in-hand? %)
-                                      (= (:side %) "Corp"))}
+                                      (corp? %))}
                  :effect (effect (trash card {:cause :ability-cost})
                                  (corp-install target nil))
                  :msg (msg (corp-install-msg target))}]}
@@ -747,7 +747,7 @@
                  :prompt "Select an asset or agenda to install"
                  :choices {:req #(and (or (asset? %) (agenda? %))
                                       (in-hand? %)
-                                      (= (:side %) "Corp"))}
+                                      (corp? %))}
                  :msg "install and host an asset or agenda"
                  :effect (req (corp-install state side target card))}
                 {:label "Install a previously-installed asset or agenda on Full Immersion RecStudio (fixes only)"
@@ -755,7 +755,7 @@
                  :prompt "Select an installed asset or agenda to host on Full Immersion RecStudio"
                  :choices {:req #(and (or (asset? %) (agenda? %))
                                       (installed? %)
-                                      (= (:side %) "Corp"))}
+                                      (corp? %))}
                  :msg "install and host an asset or agenda"
                  :effect (req (host state side card target))}]}
 
@@ -1066,7 +1066,7 @@
      {:effect (effect (update! (assoc card :malia-target target))
                       (disable-card :runner target))
       :msg (msg (str "blank the text box of " (card-str state target)))
-      :choices {:req #(and (= "Runner" (:side %))
+      :choices {:req #(and (runner? %)
                            (installed? %)
                            (resource? %)
                            (not (has-subtype? % "Virtual")))}
@@ -1309,7 +1309,7 @@
                                         :player :corp
                                         :cost [:credit 3]
                                         :choices {:req #(and (installed? %)
-                                                             (= (:side %) "Runner"))
+                                                             (runner? %))
                                                   :max cnt}
                                         :msg (msg "shuffle " (join ", " (map :title targets)) " into the stack")
                                         :effect (req (doseq [c targets]
@@ -1359,7 +1359,7 @@
                                 {:prompt "Choose a card in HQ to put on top of R&D"
                                  :async true
                                  :choices {:req #(and (in-hand? %)
-                                                      (= (:side %) "Corp"))}
+                                                      (corp? %))}
                                  :msg "add 1 card from HQ to the top of R&D"
                                  :effect (effect (move target :deck {:front true})
                                                  (effect-completed eid))}
@@ -1561,7 +1561,7 @@
                                                     state side
                                                     {:show-discard true
                                                      :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hqcard))
-                                                     :choices {:req #(and (= (:side %) "Corp")
+                                                     :choices {:req #(and (corp? %)
                                                                           (= (:type %) t)
                                                                           (= (:zone %) [:discard]))}
                                                      :msg (msg "lose [Click], reveal " (:title hqcard) " from HQ, and swap it for " (:title target) " from Archives")
@@ -1736,7 +1736,7 @@
                  :effect (effect (draw 3)
                                  (resolve-ability
                                    {:prompt "Select a card in HQ to add to the bottom of R&D"
-                                    :choices {:req #(and (= (:side %) "Corp")
+                                    :choices {:req #(and (corp? %)
                                                          (in-hand? %))}
                                     :msg "add 1 card from HQ to the bottom of R&D"
                                     :effect (effect (move target :deck))}
@@ -1929,7 +1929,7 @@
                              :interactive (req true)
                              :async true
                              :choices {:req #(and (not (operation? %))
-                                                  (= (:side %) "Corp")
+                                                  (corp? %)
                                                   (#{[:hand] [:discard]} (:zone %)))}
                              :msg (msg (corp-install-msg target))
                              :effect (effect (corp-install eid target nil {:ignore-install-cost true}))}}}
@@ -2136,14 +2136,14 @@
                  :effect (req (show-wait-prompt state :runner "Corp to use Whampoa Reclamation")
                               (wait-for (resolve-ability state side
                                                          {:prompt "Choose a card in HQ to trash"
-                                                          :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
+                                                          :choices {:req #(and (in-hand? %) (corp? %))}
                                                           :effect (effect (trash target))}
                                                          card nil)
                                         (continue-ability
                                           state side
                                           {:prompt "Select a card in Archives to add to the bottom of R&D"
                                            :show-discard true
-                                           :choices {:req #(and (in-discard? %) (= (:side %) "Corp"))}
+                                           :choices {:req #(and (in-discard? %) (corp? %))}
                                            :msg (msg "trash 1 card from HQ and add "
                                                      (if (:seen target) (:title target) "a card") " from Archives to the bottom of R&D")
                                            :effect (effect (move target :deck)
@@ -2157,7 +2157,7 @@
                  :prompt "Select an asset to install on Worlds Plaza"
                  :choices {:req #(and (asset? %)
                                       (in-hand? %)
-                                      (= (:side %) "Corp"))}
+                                      (corp? %))}
                  :msg (msg "host " (:title target))
                  :effect (req (corp-install state side target card) ;; install target onto card
                               (rez-cost-bonus state side -2)

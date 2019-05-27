@@ -32,7 +32,7 @@
    {:implementation "Click Adjusted Matrix to use ability."
     :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
     :prompt "Choose Icebreaker on which to install Adjusted Matrix"
-    :choices {:req #(and (= (:side %) "Runner") (has-subtype? % "Icebreaker") (installed? %))}
+    :choices {:req #(and (runner? %) (has-subtype? % "Icebreaker") (installed? %))}
     :msg (msg "host it on " (card-str state target))
     :effect (effect (update! (assoc target :subtype (combine-subtypes false (-> target :subtype) "AI")))
                     (host (get-card state target) (get-card state card)))
@@ -121,7 +121,7 @@
    {:abilities [{:label "Host up to 3 cards from your Grip facedown"
                  :cost [:click 1] :msg "host up to 3 cards from their Grip facedown"
                  :choices {:max 3
-                           :req #(and (= (:side %) "Runner")
+                           :req #(and (runner? %)
                                       (in-hand? %))}
                  :effect (req (doseq [c targets]
                                 (host state side (get-card state card) c {:facedown true})))}
@@ -166,7 +166,7 @@
                                   state side
                                   {:prompt "Select any number of cards to trash from your Grip"
                                    :choices {:max handsize
-                                             :req #(and (= (:side %) "Runner")
+                                             :req #(and (runner? %)
                                                         (in-hand? %))}
                                    :effect (req (let [trashed (count targets)
                                                       remaining (- handsize trashed)]
@@ -611,7 +611,7 @@
     :interactions {:prevent [{:type #{:net :brain :meat}
                               :req (req true)}]}
     :abilities [{:msg (msg "prevent 1 damage, trashing a facedown " (:title target))
-                 :choices {:req #(and (= (:side %) "Runner") (:installed %))}
+                 :choices {:req #(and (runner? %) (:installed %))}
                  :priority 50
                  :effect (effect (trash target {:unpreventable true})
                                  (damage-prevent :brain 1)
@@ -994,7 +994,7 @@
                                {:prompt (str "Trash a card to lower the " cost-type " cost of " (:title playing) " by 2 [Credits].")
                                 :priority 2
                                 :choices {:req #(and (in-hand? %)
-                                                     (= "Runner" (:side %))
+                                                     (runner? %)
                                                      (not (same-card? % playing)))}
                                 :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
                                           (:title playing) " by 2 [Credits]")
@@ -1433,7 +1433,7 @@
                                   :choices {:max dmg
                                             :all true
                                             :req #(and (in-hand? %)
-                                                       (= (:side %) "Runner"))}
+                                                       (runner? %))}
                                   :msg (msg "trash " (join ", " (map :title targets)))
                                   :effect (req (clear-wait-prompt state :corp)
                                                (doseq [c targets]
