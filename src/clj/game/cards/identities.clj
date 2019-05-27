@@ -117,7 +117,7 @@
                                                 :choices {:max 3
                                                           :all true
                                                           :req #(and (runner? %)
-                                                                     (= (:zone %) [:play-area]))}
+                                                                     (in-play-area? %))}
                                                 :effect (req (doseq [c targets]
                                                                (runner-install state side c {:ignore-all-cost true
                                                                                              :custom-message (str "starts with " (:title c) " in play")}))
@@ -243,7 +243,7 @@
                               :choices {:max 4
                                         :all true
                                         :req #(and (runner? %)
-                                                   (= (:zone %) [:play-area]))}
+                                                   (in-play-area? %))}
                               :effect (req (doseq [c targets]
                                              (host state side (get-card state card) c {:facedown true}))
                                            (doseq [c (get-in @state [:runner :play-area])]
@@ -1255,7 +1255,7 @@
                              (has-most-faction? state :corp "Haas-Bioroid")
                              (pos? (count (:discard corp)))))
               :prompt "Select a card in Archives to shuffle into R&D"
-              :choices {:req #(and (corp? %) (= (:zone %) [:discard]))}
+              :choices {:req #(and (corp? %) (in-discard? %))}
               :player :corp :show-discard true :priority true
               :msg (msg "shuffle " (if (:seen target) (:title target) "a card")
                         " into R&D")

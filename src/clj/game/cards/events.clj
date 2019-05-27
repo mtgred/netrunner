@@ -984,7 +984,7 @@
                       :choices {:max 5
                                 :all true
                                 :req #(and (corp? %)
-                                           (= (:zone %) [:discard]))}
+                                           (in-discard? %))}
                       :msg (msg "move "
                                 (let [seen (filter :seen targets)
                                       m (count  (remove :seen targets))]

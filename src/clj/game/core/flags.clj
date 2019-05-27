@@ -211,6 +211,16 @@
   [card]
   (= (:zone card) [:discard]))
 
+(defn in-deck?
+  "Checks if the specified card is in the draw deck."
+  [card]
+  (= (:zone card) [:deck]))
+
+(defn in-play-area?
+  "Checks if the specified card is in the play area."
+  [card]
+  (= (:zone card) [:play-area]))
+
 (defn is-scored?
   "Checks if the specified card is in the scored area of the specified player."
   [state side card]
@@ -220,11 +230,6 @@
   "Checks if the specified card is able to be used for a when-scored text ability"
   [card]
   (not (:not-when-scored (card-def card))))
-
-(defn in-deck?
-  "Checks if the specified card is in the draw deck."
-  [card]
-  (= (:zone card) [:deck]))
 
 (defn facedown?
   "Checks if the specified card is facedown."

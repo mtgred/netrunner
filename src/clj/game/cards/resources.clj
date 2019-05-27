@@ -586,7 +586,7 @@
                                                                       " and draws 1 card")))
                                      (draw state :runner eid 1 nil))
                                  (effect-completed state side eid)))}
-         install-prompt {:req (req (and (= (:zone card) [:discard])
+         install-prompt {:req (req (and (in-discard? card)
                                         (not (install-locked? state :runner))))
                          :async true
                          :effect (req (continue-ability
@@ -601,7 +601,7 @@
                                                     ;; to prevent multiple copies from prompting multiple times.
                                                     :no-ability {:effect (req (swap! state assoc-in [:runner :register :crowdfunding-prompt] true))}}}
                                         card nil))}
-         heap-event (req (when (= (:zone card) [:discard])
+         heap-event (req (when (in-discard? card)
                            (unregister-events state side card)
                            (register-events state side
                                             {:runner-turn-ends install-prompt}
@@ -1960,7 +1960,7 @@
                  :msg (msg "play " (:title target))
                  :show-discard true
                  :choices {:req #(and (event? %)
-                                      (= (:zone %) [:discard]))}
+                                      (in-discard? %))}
                  :effect (effect (trash card {:cause :ability-cost}) (play-instant target))}]}
 
    "Scrubber"

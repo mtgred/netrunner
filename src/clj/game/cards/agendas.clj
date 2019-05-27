@@ -41,7 +41,7 @@
                 :prompt "Select a piece of ICE from the Temporary Zone to install"
                 :choices {:req #(and (corp? %)
                                      (ice? %)
-                                     (= (:zone %) [:play-area]))}
+                                     (in-play-area? %))}
                 :effect (req (wait-for (corp-install state side target nil
                                                      {:ignore-all-cost true :install-state :rezzed-no-cost})
                                        (let [card (get-card state card)]
@@ -655,7 +655,7 @@
     :abilities [{:prompt "Select a card to add to the bottom of R&D"
                  :show-discard true
                  :choices {:req #(and (corp? %)
-                                      (= (:zone %) [:discard]))}
+                                      (in-discard? %))}
                  :effect (effect (move target :deck))
                  :msg (msg "add "
                            (if (:seen target)

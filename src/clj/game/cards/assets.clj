@@ -76,7 +76,7 @@
                  :req (req (not (:run @state)))
                  :choices {:req #(and (not (operation? %))
                                       (not (agenda? %))
-                                      (= (:zone %) [:hand])
+                                      (in-hand? %)
                                       (corp? %))}
                  :msg (msg (corp-install-msg target))
                  :effect (req (wait-for (trash state side card {:cause :ability-cost})
@@ -356,7 +356,7 @@
                                     :once :per-turn
                                     :show-discard true
                                     :choices {:req #(and (operation? %)
-                                                         (= (:zone %) [:discard]))}
+                                                         (in-discard? %))}
                                     :msg (msg "add "
                                               (if (:seen target)
                                                 (:title target)
@@ -1219,7 +1219,7 @@
                                      (if (> mus 1) "a card " (str mus " cards "))
                                      "in Archives to shuffle into R&D")))
                  :choices {:req #(and (corp? %)
-                                      (= (:zone %) [:discard]))
+                                      (in-discard? %))
                            :max (req (count (filter #(and (= "10019" (:code %))
                                                           (rezzed? %))
                                                     (all-installed state :corp))))}
@@ -1563,7 +1563,7 @@
                                                      :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hqcard))
                                                      :choices {:req #(and (corp? %)
                                                                           (= (:type %) t)
-                                                                          (= (:zone %) [:discard]))}
+                                                                          (in-discard? %))}
                                                      :msg (msg "lose [Click], reveal " (:title hqcard) " from HQ, and swap it for " (:title target) " from Archives")
                                                      :effect (req (let [swappedcard (assoc hqcard :zone [:discard])
                                                                         archndx (ice-index state target)

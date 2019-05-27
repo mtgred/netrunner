@@ -697,7 +697,7 @@
                    :show-discard true
                    :priority true
                    :choices {:req #(and (not (operation? %))
-                                        (= (:zone %) [:discard])
+                                        (in-discard? %)
                                         (corp? %))}
                    :msg (msg (corp-install-msg target))
                    :effect (effect (corp-install target nil))}]

@@ -116,7 +116,7 @@
              {:prompt "Select a card to add to HQ"
               :async true
               :choices {:req #(and (corp? %)
-                                   (= (:zone %) [:play-area]))}
+                                   (in-play-area? %))}
               :msg "move a card to HQ"
               :effect (effect (move target :hand)
                               (continue-ability (put dcard) dcard nil))})
@@ -124,7 +124,7 @@
              {:prompt "Select first card to put back onto R&D"
               :async true
               :choices {:req #(and (corp? %)
-                                   (= (:zone %) [:play-area]))}
+                                   (in-play-area? %))}
               :msg "move remaining cards back to R&D"
               :effect (effect (move target :deck {:front true})
                               (move (first (get-in @state [:corp :play-area])) :deck {:front true})
@@ -369,7 +369,7 @@
                                     :choices {:max (get-counters card :advancement)
                                               :req #(and (corp? %)
                                                          (not (:seen %))
-                                                         (= (:zone %) [:discard]))}
+                                                         (in-discard? %))}
                                     :msg (msg "add " (count targets) " facedown cards in Archives to HQ")
                                     :effect (req (doseq [c targets]
                                                    (move state side c :hand)))}

@@ -29,7 +29,7 @@
              {:prompt "Select an operation to play"
               :choices {:req #(and (corp? %)
                                    (operation? %)
-                                   (= (:zone %) [:play-area]))}
+                                   (in-play-area? %))}
               :msg (msg "play " (:title target))
               :async true
               :effect (req (wait-for (play-instant state side target {:no-additional-cost true})
@@ -55,7 +55,7 @@
                    :choices {:req #(and (corp? %)
                                         (has-subtype? % "Advertisement")
                                         (or (in-hand? %)
-                                            (= (:zone %) [:discard])))}
+                                            (in-discard? %)))}
                    :effect (req (wait-for
                                   (corp-install state side target nil {:install-state :rezzed})
                                   (if (< n total)
@@ -106,7 +106,7 @@
                       :show-discard true
                       :choices {:req #(and (not= (:cid %) cid)
                                            (corp? %)
-                                           (= (:zone %) [:discard]))}
+                                           (in-discard? %))}
                       :effect (effect (move target :hand)
                                       (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
                      card nil)))}
@@ -1359,7 +1359,7 @@
     :show-discard true
     :choices {:req #(and (corp? %)
                          (not= (:title %) "Reclamation Order")
-                         (= (:zone %) [:discard]))}
+                         (in-discard? %))}
     :msg (msg "name " (:title target))
     :effect (req (let [title (:title target)
                        cards (filter #(= title (:title %)) (:discard corp))

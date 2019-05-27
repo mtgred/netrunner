@@ -193,7 +193,7 @@
 (defn- conspiracy
   "Install-from-heap breakers"
   [title ice-type abilities]
-  (let [install-prompt {:req (req (and (= (:zone card) [:discard])
+  (let [install-prompt {:req (req (and (in-discard? card)
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice ice-type)
                                        (not (install-locked? state :runner))))
@@ -209,7 +209,7 @@
                                                       ;; to prevent multiple copies from prompting multiple times.
                                                       :no-ability {:effect (req (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
                                           card targets))}
-        heap-event (req (when (= (:zone card) [:discard])
+        heap-event (req (when (in-discard? card)
                           (unregister-events state side card)
                           (register-events state side
                                            {:rez install-prompt
