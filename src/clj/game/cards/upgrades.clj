@@ -88,7 +88,7 @@
                                                                         :card ash})))))}}}}}
 
    "Awakening Center"
-   {:can-host (req (is-type? target "ICE"))
+   {:can-host (req (ice? target))
     :abilities [{:label "Host a piece of Bioroid ICE"
                  :cost [:click 1]
                  :prompt "Select a piece of Bioroid ICE to host on Awakening Center"
@@ -207,12 +207,12 @@
    "Bryan Stinson"
    {:abilities [{:cost [:click 1]
                  :req (req (and (< (:credit runner) 6)
-                                (pos? (count (filter #(and (is-type? % "Operation")
+                                (pos? (count (filter #(and (operation? %)
                                                            (has-subtype? % "Transaction")) (:discard corp))))))
                  :label "Play a transaction operation from Archives, ignoring all costs, and remove it from the game"
                  :prompt "Choose a transaction operation to play"
                  :msg (msg "play " (:title target) " from Archives, ignoring all costs, and removes it from the game")
-                 :choices (req (cancellable (filter #(and (is-type? % "Operation")
+                 :choices (req (cancellable (filter #(and (operation? %)
                                                           (has-subtype? % "Transaction")) (:discard corp)) :sorted))
                  :effect (effect (play-instant nil (assoc-in target [:special :rfg-when-trashed] true) {:ignore-cost true})
                                  (move target :rfg))}]}
@@ -444,7 +444,7 @@
     :trash-effect {:effect (req (update-all-ice state side))}}
 
    "Expo Grid"
-   (let [ability {:req (req (some #(and (is-type? % "Asset")
+   (let [ability {:req (req (some #(and (asset? %)
                                         (rezzed? %))
                                   (get-in corp (:zone card))))
                   :msg "gain 1 [Credits]"
@@ -675,8 +675,8 @@
                            :async true
                            :effect (req (cond
                                           ;; If ice were drawn, do the full routine.
-                                          (some #(is-type? % "ICE") (:most-recent-drawn corp-reg))
-                                          (let [ices (filter #(and (is-type? % "ICE")
+                                          (some ice? (:most-recent-drawn corp-reg))
+                                          (let [ices (filter #(and (ice? %)
                                                                    (get-card state %))
                                                              (:most-recent-drawn corp-reg))
                                                 grids (filterv #(= "Jinja City Grid" (:title %))
@@ -747,7 +747,7 @@
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
                  :req (req (and this-server
                                 (pos? (get-in @state [:runner :tag :base]))
-                                (not (empty? (filter #(is-type? % "Program")
+                                (not (empty? (filter program?
                                                      (all-active-installed state :runner))))))
                  :msg (msg "remove 1 tag")
                  :effect (req (resolve-ability state side trash-program card nil)
@@ -1022,7 +1022,7 @@
     :events {:run {:req (req this-server)
                    :msg "prevent the Runner from jacking out unless they trash an installed program"
                    :effect (effect (prevent-jack-out))}
-             :runner-trash {:req (req (and this-server (is-type? target "Program")))
+             :runner-trash {:req (req (and this-server (program? target)))
                             :effect (req (swap! state update-in [:run] dissoc :cannot-jack-out))}}}
 
    "Prisec"
@@ -1100,10 +1100,10 @@
                  :effect (effect (trash card) (damage eid :brain 1 {:card card}))}]}
 
    "SanSan City Grid"
-   {:effect (req (when-let [agenda (some #(when (is-type? % "Agenda") %)
+   {:effect (req (when-let [agenda (some #(when (agenda? %) %)
                                          (:content (card->server state card)))]
                    (update-advancement-cost state side agenda)))
-    :events {:corp-install {:req (req (and (is-type? target "Agenda")
+    :events {:corp-install {:req (req (and (agenda? target)
                                            (in-same-server? card target)))
                             :effect (effect (update-advancement-cost target))}
              :pre-advancement-cost {:req (req (in-same-server? card target))
@@ -1183,17 +1183,17 @@
    "Surat City Grid"
    {:events
     {:rez {:req (req (and (same-server? card target)
-                          (not (and (is-type? target "Upgrade")
+                          (not (and (upgrade? target)
                                     (is-central? (second (:zone target)))))
                           (not= (:cid target) (:cid card))
                           (seq (filter #(and (not (rezzed? %))
-                                             (not (is-type? % "Agenda"))) (all-installed state :corp)))))
+                                             (not (agenda? %))) (all-installed state :corp)))))
            :effect (effect (resolve-ability
                              {:optional
                               {:prompt (msg "Rez another card with Surat City Grid?")
                                :yes-ability {:prompt "Select a card to rez"
                                              :choices {:req #(and (not (rezzed? %))
-                                                                  (not (is-type? % "Agenda")))}
+                                                                  (not (agenda? %)))}
                                              :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
                                              :effect (effect (rez-cost-bonus -2)
                                                              (rez target))}}}

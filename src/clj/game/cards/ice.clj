@@ -336,7 +336,7 @@
                    :priority true
                    :activatemsg "uses Architect to look at the top 5 cards of R&D"
                    :req (req (and (not (string? target))
-                                  (not (is-type? target "Operation"))))
+                                  (not (operation? target))))
                    :not-distinct true
                    :choices (req (conj (take 5 (:deck corp)) "No install"))
                    :effect (effect (system-msg (str "chooses the card in position "
@@ -347,7 +347,7 @@
                    :prompt "Select a card to install from Archives or HQ"
                    :show-discard true
                    :priority true
-                   :choices {:req #(and (not (is-type? % "Operation"))
+                   :choices {:req #(and (not (operation? %))
                                         (#{[:hand] [:discard]} (:zone %))
                                         (= (:side %) "Corp"))}
                    :effect (effect (corp-install target nil))
@@ -404,7 +404,7 @@
    {:subroutines [end-the-run]}
 
    "Blockchain"
-   (letfn [(sub-count [corp] (int (/ (count (filter #(and (is-type? % "Operation")
+   (letfn [(sub-count [corp] (int (/ (count (filter #(and (operation? %)
                                                           (has-subtype? % "Transaction")
                                                           (:seen %))
                                                     (:discard corp)))
@@ -425,7 +425,7 @@
 
    "Bloodletter"
    {:subroutines [{:label "Runner trashes 1 program or top 2 cards of their Stack"
-                   :effect (req (if (empty? (filter #(is-type? % "Program") (all-active-installed state :runner)))
+                   :effect (req (if (empty? (filter program? (all-active-installed state :runner)))
                                   (do (mill state :runner 2)
                                       (system-msg state :runner (str "trashes the top 2 cards of their Stack")))
                                   (do (show-wait-prompt state :corp "Runner to choose an option for Bloodletter")
@@ -660,7 +660,7 @@
                                               {:prompt "Choose a resource to trash"
                                                :msg (msg "trash " (:title target))
                                                :choices {:req #(and (installed? %)
-                                                                    (is-type? % "Resource"))}
+                                                                    (resource? %))}
                                                :cancel-effect (req (effect-completed state side eid))
                                                :effect (effect (trash target {:cause :subroutine}))}
                                               card nil)
@@ -696,7 +696,7 @@
                    :prompt "Select a card to install from Archives"
                    :show-discard true
                    :priority true
-                   :choices {:req #(and (not (is-type? % "Operation"))
+                   :choices {:req #(and (not (operation? %))
                                         (= (:zone %) [:discard])
                                         (= (:side %) "Corp"))}
                    :msg (msg (corp-install-msg target))
@@ -932,7 +932,7 @@
                                     :effect (effect (continue-ability
                                                       {:prompt "Select a piece of hardware to trash"
                                                        :label "Trash a piece of hardware"
-                                                       :choices {:req #(is-type? % "Hardware")}
+                                                       :choices {:req hardware?}
                                                        :msg (msg "trash " (:title target))
                                                        :effect (req (wait-for
                                                                       (trash state side target {:cause :subroutine})
@@ -989,7 +989,7 @@
                              :choices {:req #(and (= "Corp" (:side %))
                                                   (or (= [:discard] (:zone %))
                                                       (= [:hand] (:zone %)))
-                                                  (is-type? % "Agenda"))
+                                                  (agenda? %))
                                        :max (req 3)}
                              :effect (req (reveal state side targets)
                                           (doseq [c targets]
@@ -1044,7 +1044,7 @@
                    :prompt "Choose a program that is not a decoder, fracter or killer"
                    :msg (msg "trash " (:title target))
                    :choices {:req #(and (installed? %)
-                                        (is-type? % "Program")
+                                        (program? %)
                                         (not (has-subtype? % "Decoder"))
                                         (not (has-subtype? % "Fracter"))
                                         (not (has-subtype? % "Killer")))}
@@ -1824,7 +1824,7 @@
    {:subroutines [{:label "Install a card from HQ, paying all costs"
                    :prompt "Choose a card in HQ to install"
                    :priority true
-                   :choices {:req #(and (not (is-type? % "Operation"))
+                   :choices {:req #(and (not (operation? %))
                                         (in-hand? %)
                                         (= (:side %) "Corp"))}
                    :effect (effect (corp-install target nil))
@@ -1868,7 +1868,7 @@
    "NEXT Silver"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain "
-                           (count (filter #(and (is-type? % "ICE")
+                           (count (filter #(and (ice? %)
                                                 (has-subtype? % "NEXT"))
                                           (all-active-installed state :corp)))
                            " subroutines")}]
@@ -1931,7 +1931,7 @@
 
    "Owl"
    {:subroutines [{:choices {:req #(and (installed? %)
-                                        (is-type? % "Program"))}
+                                        (program? %))}
                    :label "Add installed program to the top of the Runner's Stack"
                    :msg "add an installed program to the top of the Runner's Stack"
                    :effect (effect (move :runner target :deck {:front true})
@@ -2174,7 +2174,7 @@
     :subroutines [trash-program]
     :access {:async true
              :req (req (and (not= (first (:zone card)) :discard)
-                            (some #(is-type? % "Program") (all-active-installed state :runner))))
+                            (some program? (all-active-installed state :runner))))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Sapper subroutine")
                              (continue-ability
                                :runner {:optional
@@ -2221,7 +2221,7 @@
 
    "Sherlock 1.0"
    {:subroutines [(trace-ability 4 {:choices {:req #(and (installed? %)
-                                                         (is-type? % "Program"))}
+                                                         (program? %))}
                                     :label "Add an installed program to the top of the Runner's Stack"
                                     :msg (msg "add " (:title target) " to the top of the Runner's Stack")
                                     :effect (effect (move :runner target :deck {:front true}))})]
@@ -2229,7 +2229,7 @@
 
    "Sherlock 2.0"
    {:subroutines [(trace-ability 4 {:choices {:req #(and (installed? %)
-                                                         (is-type? % "Program"))}
+                                                         (program? %))}
                                     :label "Add an installed program to the bottom of the Runner's Stack"
                                     :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
                                     :effect (effect (move :runner target :deck))})
@@ -2368,7 +2368,7 @@
                    :label "Trash an AI program"
                    :effect (effect (trash target))
                    :choices {:req #(and (installed? %)
-                                        (is-type? % "Program")
+                                        (program? %)
                                         (has-subtype? % "AI"))}}]}
 
    "SYNC BRE"
@@ -2429,7 +2429,7 @@
                    :msg (msg "trash " (:title target))
                    :async true
                    :choices {:req #(and (installed? %)
-                                        (is-type? % "Resource"))}
+                                        (resource? %))}
                    :effect (effect (trash target {:reason :subroutine}))}]}
 
    "TL;DR"
@@ -2450,8 +2450,7 @@
 
    "Tour Guide"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "gain " (count (filter #(is-type? % "Asset")
-                                                  (all-active-installed state :corp))) " subroutines")}]
+                 :msg (msg "gain " (count (filter asset? (all-active-installed state :corp))) " subroutines")}]
     :subroutines [end-the-run]}
 
    "Trebuchet"

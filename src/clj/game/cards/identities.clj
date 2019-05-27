@@ -215,7 +215,7 @@
                                 :choices {:req #(and (in-hand? %)
                                                      (= (:side %) "Corp")
                                                      (corp-installable-type? %)
-                                                     (not (is-type? % "Agenda"))
+                                                     (not (agenda? %))
                                                      (or (is-remote? z)
                                                          (ice? %)))}
                                 :effect (effect (corp-install eid target (zone->name z) nil))}
@@ -268,8 +268,8 @@
 
    "Az McCaffrey: Mechanical Prodigy"
    ;; Effect marks Az's ability as "used" if it has already met it's trigger condition this turn
-   (letfn [(az-type? [card] (or (is-type? card "Hardware")
-                                (and (is-type? card "Resource")
+   (letfn [(az-type? [card] (or (hardware? card)
+                                (and (resource? card)
                                      (or (has-subtype? card "Job")
                                          (has-subtype? card "Connection")))))
            (not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
@@ -380,7 +380,7 @@
 
    "Edward Kim: Humanity's Hammer"
    {:events {:access {:once :per-turn
-                      :req (req (and (is-type? target "Operation")
+                      :req (req (and (operation? target)
                                      (turn-flag? state side card :can-trash-operation)))
                       :effect (req (trash state side target)
                                    (swap! state assoc-in [:run :did-trash] true)
@@ -390,7 +390,7 @@
              :successful-run-ends {:req (req (and (= (:server target) [:archives])
                                                   (nil? (:replace-access (:run-effect target)))
                                                   (not= (:max-access target) 0)
-                                                  (seq (filter #(is-type? % "Operation") (:discard corp)))))
+                                                  (seq (filter operation? (:discard corp)))))
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
 
    "Ele \"Smoke\" Scovak: Cynosure of the Net"
@@ -401,10 +401,10 @@
 
    "Exile: Streethawk"
    {:flags {:runner-install-draw true}
-    :events {:runner-install {:silent (req (not (and (is-type? target "Program")
+    :events {:runner-install {:silent (req (not (and (program? target)
                                                      (some #{:discard} (:previous-zone target)))))
                               :async true
-                              :req (req (and (is-type? target "Program")
+                              :req (req (and (program? target)
                                              (some #{:discard} (:previous-zone target))))
                               :msg (msg "draw a card")
                               :effect (req (draw state side eid 1 nil))}}}
@@ -418,7 +418,7 @@
       :once :per-turn
       :label "[Freedom]: Trash card"
       :req (req (and (not (:disabled card))
-                     (not (is-type? target "Agenda"))
+                     (not (agenda? target))
                      (<= (:cost target)
                          (reduce + (map #(get-counters % :virus)
                                         (all-installed state :runner))))))
@@ -478,7 +478,7 @@
 
    "Haarpsichord Studios: Entertainment Unleashed"
    (let [haarp (fn [state side card]
-                 (if (is-type? card "Agenda")
+                 (if (agenda? card)
                    ((constantly false)
                     (toast state :runner "Cannot steal due to Haarpsichord Studios." "warning"))
                    true))]
@@ -726,7 +726,7 @@
                  :cost [:click 1]
                  :prompt "Choose a program"
                  :choices (req (cancellable
-                                 (filter #(and (is-type? % "Program")
+                                 (filter #(and (program? %)
                                                (not (has-subtype? % "Virus")))
                                          (:deck runner))))
                  :msg (msg "install " (:title target) " from their stack, lowering the cost by 1 [Credit]")
@@ -737,8 +737,8 @@
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
-   (letfn [(kate-type? [card] (or (is-type? card "Hardware")
-                                  (is-type? card "Program")))
+   (letfn [(kate-type? [card] (or (hardware? card)
+                                  (program? card)))
            (not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
            (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
      {:effect (req (when (pos? (event-count state :runner :runner-install #(kate-type? (first %))))
@@ -1166,11 +1166,11 @@
    "SSO Industries: Fueling Innovation"
    (letfn [(installed-faceup-agendas [state]
              (->> (all-installed state :corp)
-                  (filter #(is-type? % "Agenda"))
+                  (filter agenda?)
                   (filter faceup?)))
            (selectable-ice? [card]
              (and
-               (is-type? card "ICE")
+               (ice? card)
                (installed? card)
                (zero? (+ (get-counters card :advancement)
                          (:extra-advance-counter card 0)))))

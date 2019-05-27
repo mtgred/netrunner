@@ -620,12 +620,12 @@
                                  :type :recurring}}}
 
    "Clot"
-   {:effect (req (let [agendas (map first (filter #(is-type? (first %) "Agenda")
+   {:effect (req (let [agendas (map first (filter #(agenda? (first %))
                                                   (turn-events state :corp :corp-install)))]
                    (swap! state assoc-in [:corp :register :cannot-score] agendas)))
     :events {:purge {:effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
                                   (trash state side card {:cause :purge}))}
-             :corp-install {:req (req (is-type? target "Agenda"))
+             :corp-install {:req (req (agenda? target))
                             :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons target %)))}}
     :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))}
 
@@ -742,7 +742,7 @@
              {:prompt "Choose a program to host on Customized Secretary"
               :choices (cons "None" cards)
               :async true
-              :effect (req (if (or (= target "None") (not (is-type? target "Program")))
+              :effect (req (if (or (= target "None") (not (program? target)))
                              (do (clear-wait-prompt state :corp)
                                  (shuffle! state side :deck)
                                  (system-msg state side (str "shuffles their Stack"))
@@ -873,7 +873,7 @@
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program in your Grip to install on Dhegdheer"
-                                    :choices {:req #(and (is-type? % "Program")
+                                    :choices {:req #(and (program? %)
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg (str "host " (:title target)
@@ -887,7 +887,7 @@
                 {:label "Host an installed program on Dhegdheer with [Credit] discount"
                  :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer with [Credit] discount"
-                 :choices {:req #(and (is-type? % "Program")
+                 :choices {:req #(and (program? %)
                                       (installed? %))}
                  :msg (msg (str "host " (:title target)
                                 (when (-> target :cost pos?)
@@ -901,7 +901,7 @@
                 {:label "Host an installed program on Dhegdheer"
                  :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer"
-                 :choices {:req #(and (is-type? % "Program")
+                 :choices {:req #(and (program? %)
                                       (installed? %))}
                  :msg (msg (str "host " (:title target)
                                 (when (-> target :cost pos?)
@@ -939,14 +939,14 @@
                               serv (:server (second targets))]
                           (and (= serv (:server-target card))
                                (not (and (is-central? serv)
-                                         (is-type? c "Upgrade"))))))
+                                         (upgrade? c))))))
               :effect (effect (install-cost-bonus [:credit 1]))}}}
 
    "Djinn"
    {:abilities [{:label "Search your Stack for a virus program and add it to your Grip"
                  :prompt "Choose a Virus"
                  :msg (msg "add " (:title target) " to their Grip")
-                 :choices (req (cancellable (filter #(and (is-type? % "Program")
+                 :choices (req (cancellable (filter #(and (program? %)
                                                           (has-subtype? % "Virus"))
                                                     (:deck runner)) :sorted))
                  :cost [:click 1 :credit 1]
@@ -957,7 +957,7 @@
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a non-Icebreaker program in your Grip to install on Djinn"
-                                    :choices {:req #(and (is-type? % "Program")
+                                    :choices {:req #(and (program? %)
                                                          (runner-can-install? state side % false)
                                                          (not (has-subtype? % "Icebreaker"))
                                                          (in-hand? %))}
@@ -969,7 +969,7 @@
                                    card nil))}
                 {:label "Host an installed non-Icebreaker program on Djinn"
                  :prompt "Choose an installed non-Icebreaker program to host on Djinn"
-                 :choices {:req #(and (is-type? % "Program")
+                 :choices {:req #(and (program? %)
                                       (not (has-subtype? % "Icebreaker"))
                                       (installed? %))}
                  :msg (msg "host " (:title target))
@@ -1410,7 +1410,7 @@
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program in your Grip to install on Leprechaun"
-                                    :choices {:req #(and (is-type? % "Program")
+                                    :choices {:req #(and (program? %)
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target))
@@ -1423,7 +1423,7 @@
                 {:label "Host an installed program on Leprechaun"
                  :req (req (< (count (get-in card [:special :hosted-programs])) 2))
                  :prompt "Choose an installed program to host on Leprechaun"
-                 :choices {:req #(and (is-type? % "Program")
+                 :choices {:req #(and (program? %)
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (free-mu (:memoryunits target))
@@ -1495,10 +1495,10 @@
    "Maven"
    {:abilities [(break-sub 2 1 "ICE")]
     :events (let [maven {:silent (req true)
-                         :req (req (is-type? target "Program"))
+                         :req (req (program? target))
                          :effect (effect (update-breaker-strength card))}]
               {:runner-install maven :trash maven :card-moved maven})
-    :strength-bonus (req (count (filter #(is-type? % "Program") (all-active-installed state :runner))))}
+    :strength-bonus (req (count (filter program? (all-active-installed state :runner))))}
 
    "Medium"
    {:events
@@ -1848,7 +1848,7 @@
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a Virus program to install on Progenitor"
-                                    :choices {:req #(and (is-type? % "Program")
+                                    :choices {:req #(and (program? %)
                                                          (has-subtype? % "Virus")
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target))
@@ -1860,7 +1860,7 @@
                 {:label "Host an installed virus on Progenitor"
                  :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed virus program to host on Progenitor"
-                 :choices {:req #(and (is-type? % "Program")
+                 :choices {:req #(and (program? %)
                                       (has-subtype? % "Virus")
                                       (installed? %))}
                  :msg (msg "host " (:title target))
@@ -2009,7 +2009,7 @@
                  :req (req (not (install-locked? state side)))
                  :msg (msg "install " (:title target))
                  :prompt "Choose a program to install from your grip"
-                 :choices {:req #(and (is-type? % "Program")
+                 :choices {:req #(and (program? %)
                                       (in-hand? %))}
                  :effect (effect (runner-install target))}]}
 
@@ -2018,7 +2018,7 @@
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program to install on Scheherazade from your grip"
-                                    :choices {:req #(and (is-type? % "Program")
+                                    :choices {:req #(and (program? %)
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) " and gain 1 [Credits]")
@@ -2026,7 +2026,7 @@
                                    card nil))}
                 {:label "Host an installed program"
                  :prompt "Choose a program to host on Scheherazade" :priority 2
-                 :choices {:req #(and (is-type? % "Program")
+                 :choices {:req #(and (program? %)
                                       (installed? %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
                  :effect (req (when (host state side card target)
@@ -2042,7 +2042,7 @@
                                                                        (str "shuffle their Stack")))
                                                            :priority true
                                                            :choices (req (cancellable
-                                                                           (conj (vec (sort-by :title (filter #(is-type? % "Program")
+                                                                           (conj (vec (sort-by :title (filter program?
                                                                                                               (:deck runner))))
                                                                                  "No install")))
                                                            :cost [:credit 2]

@@ -74,8 +74,8 @@
                  :async true
                  :prompt "Select a non-agenda card to install from HQ"
                  :req (req (not (:run @state)))
-                 :choices {:req #(and (not (is-type? % "Operation"))
-                                      (not (is-type? % "Agenda"))
+                 :choices {:req #(and (not (operation? %))
+                                      (not (agenda? %))
                                       (= (:zone %) [:hand])
                                       (= (:side %) "Corp"))}
                  :msg (msg (corp-install-msg target))
@@ -227,7 +227,7 @@
     :abilities [{:label "[Trash]: Install 1 card, paying all costs"
                  :req (req (= (:active-player @state) :corp))
                  :prompt "Select a card in HQ to install"
-                 :choices {:req #(and (not (is-type? % "Operation"))
+                 :choices {:req #(and (not (operation? %))
                                       (in-hand? %)
                                       (= (:side %) "Corp"))}
                  :effect (effect (trash card {:cause :ability-cost})
@@ -347,7 +347,7 @@
 
    "Clone Suffrage Movement"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :flags {:corp-phase-12 (req (and (some #(is-type? % "Operation") (:discard corp))
+    :flags {:corp-phase-12 (req (and (some operation? (:discard corp))
                                      unprotected))}
     :abilities [{:label "Add 1 operation from Archives to HQ"
                  :effect (effect (show-wait-prompt :runner "Corp to use Clone Suffrage Movement")
@@ -355,7 +355,7 @@
                                    {:prompt "Select an operation in Archives to add to HQ"
                                     :once :per-turn
                                     :show-discard true
-                                    :choices {:req #(and (is-type? % "Operation")
+                                    :choices {:req #(and (operation? %)
                                                          (= (:zone %) [:discard]))}
                                     :msg (msg "add "
                                               (if (:seen target)
@@ -586,7 +586,7 @@
     :abilities [{:cost [:click 1]
                  :counter-cost [:power 1]
                  :async true
-                 :choices {:req #(and (is-type? % "Agenda")
+                 :choices {:req #(and (agenda? %)
                                       (or (in-hand? %)
                                           (in-discard? %)))}
                  :label "Reveal an agenda from HQ or Archives"
@@ -685,7 +685,7 @@
                 {:prompt "Choose an asset to reveal and add to HQ"
                  :msg (msg "reveal " (:title target) " and add it to HQ")
                  :activatemsg "searches R&D for an asset"
-                 :choices (req (cancellable (filter #(is-type? % "Asset")
+                 :choices (req (cancellable (filter asset?
                                                     (:deck corp))
                                             :sorted))
                  :cost [:credit 1]
@@ -732,20 +732,20 @@
                    :effect (req (as-agenda state :corp eid card 3))}]})
 
    "Franchise City"
-   {:events {:access {:req (req (is-type? target "Agenda"))
+   {:events {:access {:req (req (agenda? target))
                       :msg "add it to their score area as an agenda worth 1 agenda point"
                       :async true
                       :effect (req (as-agenda state :corp eid card 1))}}}
 
    "Full Immersion RecStudio"
-   {:can-host (req (and (or (is-type? target "Asset") (is-type? target "Agenda"))
+   {:can-host (req (and (or (asset? target) (agenda? target))
                         (> 2 (count (:hosted card)))))
     :trash-cost-bonus (req (* 3 (count (:hosted card))))
     :abilities [{:label "Install an asset or agenda on Full Immersion RecStudio"
                  :req (req (< (count (:hosted card)) 2))
                  :cost [:click 1]
                  :prompt "Select an asset or agenda to install"
-                 :choices {:req #(and (or (is-type? % "Asset") (is-type? % "Agenda"))
+                 :choices {:req #(and (or (asset? %) (agenda? %))
                                       (in-hand? %)
                                       (= (:side %) "Corp"))}
                  :msg "install and host an asset or agenda"
@@ -753,7 +753,7 @@
                 {:label "Install a previously-installed asset or agenda on Full Immersion RecStudio (fixes only)"
                  :req (req (< (count (:hosted card)) 2))
                  :prompt "Select an installed asset or agenda to host on Full Immersion RecStudio"
-                 :choices {:req #(and (or (is-type? % "Asset") (is-type? % "Agenda"))
+                 :choices {:req #(and (or (asset? %) (agenda? %))
                                       (installed? %)
                                       (= (:side %) "Corp"))}
                  :msg "install and host an asset or agenda"
@@ -965,7 +965,7 @@
    {:abilities [{:cost [:click 3]
                  :label "Add agenda from HQ to score area"
                  :req (req (let [counters (get-counters (get-card state card) :power)]
-                             (some #(and (is-type? % "Agenda")
+                             (some #(and (agenda? %)
                                          (= counters (:agendapoints %)))
                                    (:hand corp))))
                  :async true
@@ -973,7 +973,7 @@
                               (continue-ability
                                 state side
                                 {:prompt "Select an Agenda in HQ to move to score area"
-                                 :choices {:req #(and (is-type? % "Agenda")
+                                 :choices {:req #(and (agenda? %)
                                                       (= (:agendapoints %) (get-counters (get-card state card) :power))
                                                       (in-hand? %))}
                                  :msg (msg "add " (:title target) " to score area")
@@ -987,7 +987,7 @@
 
    "Lakshmi Smartfabrics"
    {:events {:rez {:effect (effect (add-counter card :power 1))}}
-    :abilities [{:req (req (seq (filter #(and (is-type? % "Agenda")
+    :abilities [{:req (req (seq (filter #(and (agenda? %)
                                               (>= (get-counters card :power)
                                                   (:agendapoints %)))
                                         (:hand corp))))
@@ -996,7 +996,7 @@
                                 (resolve-ability
                                   state side
                                   {:prompt "Select an agenda in HQ to reveal"
-                                   :choices {:req #(and (is-type? % "Agenda")
+                                   :choices {:req #(and (agenda? %)
                                                         (>= c (:agendapoints %)))}
                                    :msg (msg "reveal " (:title target) " from HQ")
                                    :effect (req (reveal state side target)
@@ -1032,7 +1032,7 @@
     :abilities [{:label "Remove a tag to search R&D for an operation"
                  :prompt "Choose an operation to put on top of R&D"
                  :cost [:click 1]
-                 :choices (req (cancellable (filter #(is-type? % "Operation") (:deck corp)) :sorted))
+                 :choices (req (cancellable (filter operation? (:deck corp)) :sorted))
                  :req (req (pos? (get-in @state [:runner :tag :base])))
                  :effect (req (lose-tags state :corp 1)
                               (let [c (move state :corp target :play-area)]
@@ -1116,7 +1116,7 @@
                 {:label "Spend an agenda counter to gain 2 [Credits]"
                  :effect (effect (continue-ability
                                    {:prompt "Select an agenda with a counter"
-                                    :choices {:req #(and (is-type? % "Agenda")
+                                    :choices {:req #(and (agenda? %)
                                                          (pos? (get-counters % :agenda)))}
                                     :msg (msg "spend an agenda token on " (:title target) " and gain 2 [Credits]")
                                     :effect (effect (add-counter target :agenda -1)
@@ -1180,7 +1180,7 @@
                  :cost [:click 1]
                  :prompt "Choose an Alliance card to play or install"
                  :choices (req (cancellable (filter #(and (has-subtype? % "Alliance")
-                                                          (if (is-type? % "Operation")
+                                                          (if (operation? %)
                                                             (<= (:cost %) (:credit corp))
                                                             true))
                                                     (:deck corp))
@@ -1422,12 +1422,12 @@
      0
      {:req (req (pos? (get-counters (get-card state card) :advancement)))
       :effect (req (show-wait-prompt state :runner "Corp to select an agenda to score with Plan B")
-                   (doseq [ag (filter #(is-type? % "Agenda") (:hand corp))]
+                   (doseq [ag (filter agenda? (:hand corp))]
                      (update-advancement-cost state side ag))
                    (continue-ability
                      state side
                      {:prompt "Select an Agenda in HQ to score"
-                      :choices {:req #(and (is-type? % "Agenda")
+                      :choices {:req #(and (agenda? %)
                                            (<= (:current-cost %) (get-counters (get-card state card) :advancement))
                                            (in-hand? %))}
                       :msg (msg "score " (:title target))
@@ -1461,10 +1461,10 @@
       {:corp-draw
        {:async true
         :req (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])
-                        agendas (filter #(is-type? % "Agenda") drawn)]
+                        agendas (filter agenda? drawn)]
                     (seq agendas)))
         :effect (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])
-                           agendas (filter #(is-type? % "Agenda") drawn)]
+                           agendas (filter agenda? drawn)]
                        (continue-ability state side (pdhelper agendas 0) card nil)))}}})
 
    "Primary Transmission Dish"
@@ -1763,7 +1763,7 @@
                 {:label "[Trash]: Search R&D for an agenda"
                  :prompt "Choose an agenda to add to the bottom of R&D"
                  :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
-                 :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
+                 :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
                  :effect (effect (reveal target)
                                  (trash card {:cause :ability-cost})
                                  (shuffle! :deck)
@@ -1771,7 +1771,7 @@
                 {:label "[Trash]: Search Archives for an agenda"
                  :prompt "Choose an agenda to add to the bottom of R&D"
                  :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
-                 :choices (req (cancellable (filter #(is-type? % "Agenda") (:discard corp)) :sorted))
+                 :choices (req (cancellable (filter agenda? (:discard corp)) :sorted))
                  :effect (effect (reveal target)
                                  (trash card {:cause :ability-cost})
                                  (move target :deck))}]}
@@ -1894,7 +1894,7 @@
 
    "Student Loans"
    {:events {:pre-play-instant
-             {:req (req (and (is-type? target "Event") (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
+             {:req (req (and (event? target) (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
               :effect (effect (system-msg :corp (str "makes the runner pay an extra 2 [Credits] due to Student Loans"))
                               (play-cost-bonus [:credit 2]))}}}
 
@@ -1928,7 +1928,7 @@
                              :show-discard true
                              :interactive (req true)
                              :async true
-                             :choices {:req #(and (not (is-type? % "Operation"))
+                             :choices {:req #(and (not (operation? %))
                                                   (= (:side %) "Corp")
                                                   (#{[:hand] [:discard]} (:zone %)))}
                              :msg (msg (corp-install-msg target))
@@ -1940,16 +1940,16 @@
     :abilities [{:label "Install an asset from R&D"
                  :prompt "Choose an asset to install"
                  :msg (msg "install " (:title target))
-                 :choices (req (filter #(is-type? % "Asset") (:deck corp)))
+                 :choices (req (filter asset? (:deck corp)))
                  :effect (effect (trash card)
                                  (shuffle! :deck)
                                  (corp-install target nil))}]}
 
    "TechnoCo"
    (letfn [(is-techno-target [card]
-             (or (is-type? card "Program")
-                 (is-type? card "Hardware")
-                 (and (is-type? card "Resource") (has-subtype? card "Virtual"))))]
+             (or (program? card)
+                 (hardware? card)
+                 (and (resource? card) (has-subtype? card "Virtual"))))]
      {:events {:pre-install {:req (req (and (is-techno-target target)
                                             (not (second targets)))) ; not facedown
                              :effect (effect (install-cost-bonus [:credit 1]))}
@@ -2155,7 +2155,7 @@
                  :req (req (< (count (:hosted card)) 3))
                  :cost [:click 1]
                  :prompt "Select an asset to install on Worlds Plaza"
-                 :choices {:req #(and (is-type? % "Asset")
+                 :choices {:req #(and (asset? %)
                                       (in-hand? %)
                                       (= (:side %) "Corp"))}
                  :msg (msg "host " (:title target))

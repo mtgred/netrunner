@@ -15,7 +15,7 @@
     :effect (req (continue-ability
                    state side
                    {:prompt "Select an agenda in your score area to trigger its \"when scored\" ability"
-                    :choices {:req #(and (is-type? % "Agenda")
+                    :choices {:req #(and (agenda? %)
                                          (when-scored? %)
                                          (is-scored? state :corp %))}
                     :msg (msg "trigger the \"when scored\" ability of " (:title target))
@@ -28,7 +28,7 @@
    (letfn [(ad [i n adcard]
              {:prompt "Select an operation to play"
               :choices {:req #(and (= (:side %) "Corp")
-                                   (is-type? % "Operation")
+                                   (operation? %)
                                    (= (:zone %) [:play-area]))}
               :msg (msg "play " (:title target))
               :async true
@@ -38,7 +38,7 @@
                                        (effect-completed state side eid))))})]
      {:async true
       :implementation "Corp has to manually cards back to R&D to correctly play a draw operation"
-      :effect (req (let [n (count (filter #(is-type? % "Operation")
+      :effect (req (let [n (count (filter operation?
                                           (take 3 (:deck corp))))]
                      (continue-ability state side
                                        {:msg "look at the top 3 cards of R&D"
@@ -129,7 +129,7 @@
                              {:prompt "Choose up to 2 agendas in HQ or Archives"
                               :choices {:max 2
                                         :req #(and (= (:side %) "Corp")
-                                                   (is-type? % "Agenda")
+                                                   (agenda? %)
                                                    (or (in-hand? %)
                                                        (in-discard? %)))}
                               :effect (req (gain-credits state side (* 2 (count targets)))
@@ -294,7 +294,7 @@
     :effect (req (corp-install state side eid target nil {:ignore-all-cost true :install-state :rezzed-no-cost}))}
 
    "Casting Call"
-   {:choices {:req #(and (is-type? % "Agenda")
+   {:choices {:req #(and (agenda? %)
                          (in-hand? %))}
     :async true
     :effect (req (let [agenda target]
@@ -379,7 +379,7 @@
    "Consulting Visit"
    {:prompt  "Choose an Operation from R&D to play"
     :choices (req (cancellable
-                    (filter #(and (is-type? % "Operation")
+                    (filter #(and (operation? %)
                                   (<= (:cost %) (:credit corp)))
                             (:deck corp))
                     :sorted))
@@ -476,7 +476,7 @@
                       :choices {:req #(and (installed? %)
                                            (= (:side %) "Corp")
                                            (not (rezzed? %))
-                                           (not (is-type? % "Agenda")))}
+                                           (not (agenda? %)))}
                       :effect (effect (rez-cost-bonus discount)
                                       (rez eid target nil))}
                      card nil)))}
@@ -595,7 +595,7 @@
                                [server n]
                                {:prompt "Select a card to install"
                                 :choices {:req #(and (= (:side %) "Corp")
-                                                     (not (is-type? % "Operation"))
+                                                     (not (operation? %))
                                                      (in-hand? %)
                                                      (seq (filter (fn [c] (= server c)) (corp-install-list state %))))}
                                 :effect (req (wait-for
@@ -618,7 +618,7 @@
 
    "Fast Track"
    {:prompt "Choose an Agenda"
-    :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
+    :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
                     (reveal target)
                     (shuffle! :deck)
@@ -626,8 +626,8 @@
 
    "Financial Collapse"
    {:async true
-    :req (req (and (>= (:credit runner) 6) (seq (filter #(is-type? % "Resource") (all-active-installed state :runner)))))
-    :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-active-installed state :runner)))]
+    :req (req (and (>= (:credit runner) 6) (seq (filter resource? (all-active-installed state :runner)))))
+    :effect (req (let [rcount (count (filter resource? (all-active-installed state :runner)))]
                    (if (pos? rcount)
                      (do (show-wait-prompt state :corp "Runner to trash a resource to prevent Financial Collapse")
                          (continue-ability
@@ -639,7 +639,7 @@
                                               (if (= target "Yes")
                                                 {:player :runner
                                                  :prompt "Select a resource to trash"
-                                                 :choices {:req #(and (is-type? % "Resource") (installed? %))}
+                                                 :choices {:req #(and (resource? %) (installed? %))}
                                                  :effect (req (trash state side target {:unpreventable true})
                                                               (system-msg state :runner
                                                                           (str "trashes " (:title target)
@@ -702,7 +702,7 @@
     :msg (msg "trash " (join ", " (map :title (sort-by :title targets))))
     :choices {:max 2
               :req #(and (installed? %)
-                         (is-type? % "Resource"))}
+                         (resource? %))}
     :effect (effect (trash-cards :runner targets))}
 
    "Friends in High Places"
@@ -711,7 +711,7 @@
                               :async true
                               :show-discard true
                               :choices {:req #(and (= (:side %) "Corp")
-                                                   (not (is-type? % "Operation"))
+                                                   (not (operation? %))
                                                    (in-discard? %))}
                               :effect (req (wait-for
                                              (corp-install state side target nil nil)
@@ -877,7 +877,7 @@
     :trace {:base 2
             :successful {:msg "add a Resource to the top of the Stack"
                          :choices {:req #(and (installed? %)
-                                              (is-type? % "Resource"))}
+                                              (resource? %))}
                          :effect (effect (move :runner target :deck {:front true})
                                          (system-msg (str "adds " (:title target) " to the top of the Stack")))}
             :unsuccessful {:msg "take 1 bad publicity"
@@ -888,12 +888,12 @@
     :trace {:base 2
             :label "Trace 2 - Trash 2 installed non-program cards or take 1 bad publicity"
             :successful {:choices {:max (req (min 2 (count (filter #(or (:facedown %)
-                                                                        (not (is-type? % "Program")))
+                                                                        (not (program? %)))
                                                                    (concat (all-installed state :corp)
                                                                            (all-installed state :runner))))))
                                    :all true
                                    :req #(and (installed? %)
-                                              (not (is-type? % "Program")))}
+                                              (not (program? %)))}
                          :msg (msg "trash " (join ", " (map :title (sort-by :title targets))))
                          :effect (req (doseq [c targets]
                                         (trash state side c)))}
@@ -938,7 +938,7 @@
    {:prompt "Select a card to install from Archives or HQ"
     :show-discard true
     :not-distinct true
-    :choices {:req #(and (not (is-type? % "Operation"))
+    :choices {:req #(and (not (operation? %))
                          (= (:side %) "Corp")
                          (#{[:hand] [:discard]} (:zone %)))}
     :effect (effect (corp-install target nil {:ignore-install-cost true}))
@@ -948,15 +948,15 @@
    (letfn [(iop [x]
              {:async true
               :req (req (->> (:hand runner)
-                             (filter #(or (is-type? % "Resource")
-                                          (is-type? % "Event")))
+                             (filter #(or (resource? %)
+                                          (event? %)))
                              count
                              pos?))
               :prompt "Choose a resource or event to trash"
               :msg (msg "trash " (:title target))
               :choices (req (cancellable
-                              (filter #(or (is-type? % "Resource")
-                                           (is-type? % "Event"))
+                              (filter #(or (resource? %)
+                                           (event? %))
                                       (:hand runner))
                               :sorted))
               :effect (req (trash state side target)
@@ -985,8 +985,8 @@
                                          :successful {:msg "do 1 brain damage"
                                                       :async true
                                                       :effect (effect (damage :runner eid :brain 1 {:card card}))}}}]
-     {:events {:access (assoc trace-for-brain-damage :req (req (is-type? target "Agenda"))
-                              :interactive (req (is-type? target "Agenda")))
+     {:events {:access (assoc trace-for-brain-damage :req (req (agenda? target))
+                              :interactive (req (agenda? target)))
                :agenda-scored trace-for-brain-damage}})
 
    "Lag Time"
@@ -1001,7 +1001,7 @@
                     (continue-ability {:player :corp
                                        :prompt "Select a card to install"
                                        :choices {:req #(and (= (:side %) "Corp")
-                                                            (not (is-type? % "Operation"))
+                                                            (not (operation? %))
                                                             (in-hand? %))}
                                        :async true
                                        :msg (msg (corp-install-msg target))
@@ -1010,14 +1010,14 @@
 
    "Liquidation"
    {:async true
-    :req (req (some #(and (rezzed? %) (not (is-type? % "Agenda"))) (all-installed state :corp)))
-    :effect (req (let [n (count (filter #(not (is-type? % "Agenda")) (all-active-installed state :corp)))]
+    :req (req (some #(and (rezzed? %) (not (agenda? %))) (all-installed state :corp)))
+    :effect (req (let [n (count (filter #(not (agenda? %)) (all-active-installed state :corp)))]
                    (continue-ability
                      state side
                      {:prompt "Select any number of rezzed cards to trash"
                       :choices {:max n
                                 :req #(and (rezzed? %)
-                                           (not (is-type? % "Agenda")))}
+                                           (not (agenda? %)))}
                       :msg (msg "trash " (join ", " (map :title (sort-by :title targets))) " and gain " (* (count targets) 3) " [Credits]")
                       :effect (req (doseq [c targets]
                                      (trash state side c))
@@ -1237,7 +1237,7 @@
                          :effect (req (let [max-cost (- target (second targets))]
                                         (continue-ability
                                           state side
-                                          {:choices {:req #(and (is-type? % "Hardware")
+                                          {:choices {:req #(and (hardware? %)
                                                                 (<= (:cost %) max-cost))}
                                            :msg (msg "trash " (:title target))
                                            :effect (effect (trash target))}
@@ -1299,8 +1299,8 @@
    {:async true
     :prompt "Select a rezzed asset or upgrade to trash"
     :choices {:req #(and (rezzed? %)
-                         (or (is-type? % "Asset")
-                             (is-type? % "Upgrade")))}
+                         (or (asset? %)
+                             (upgrade? %)))}
     :effect (req (let [tcost (modified-trash-cost state side target)]
                    (wait-for (trash state side target {:unpreventable true})
                              (do (gain-credits state :corp tcost)
@@ -1331,7 +1331,7 @@
                {:prompt "Select an agenda, asset, or upgrade to install"
                 :choices (cons "None" allowed-cards)
                 :async true
-                :effect (req (if-not (or (= target "None") (ice? target) (is-type? target "Operation"))
+                :effect (req (if-not (or (= target "None") (ice? target) (operation? target))
                                (continue-ability state side (install-card target) card nil)
                                (system-msg state side "does not install an asset, agenda, or upgrade"))
                              (effect-completed state side eid)
@@ -1465,7 +1465,7 @@
              {:prompt "Select a card to install with Replanting"
               :async true
               :choices {:req #(and (= (:side %) "Corp")
-                                   (not (is-type? % "Operation"))
+                                   (not (operation? %))
                                    (in-hand? %))}
               :effect (req (wait-for (corp-install state side target nil {:ignore-all-cost true})
                                      (if (< n 2)
@@ -1487,7 +1487,7 @@
                        :async true
                        :show-discard true
                        :choices {:req #(and (= (:side %) "Corp")
-                                            (not (is-type? % "Operation"))
+                                            (not (operation? %))
                                             (in-discard? %))}
                        :effect (req (wait-for
                                       (corp-install state side target nil {:install-state :rezzed})
@@ -1623,7 +1623,7 @@
 
    "Scarcity of Resources"
    {:msg "increase the install cost of resources by 2"
-    :events {:pre-install {:req (req (and (is-type? target "Resource")
+    :events {:pre-install {:req (req (and (resource? target)
                                           (not (second targets)))) ; not facedown
                            :effect (effect (install-cost-bonus [:credit 2]))}}}
 
@@ -1694,7 +1694,7 @@
    (let [shelper (fn sh [n] {:prompt "Select a card to install with Shipment from MirrorMorph"
                              :async true
                              :choices {:req #(and (= (:side %) "Corp")
-                                                  (not (is-type? % "Operation"))
+                                                  (not (operation? %))
                                                   (in-hand? %))}
                              :effect (req (wait-for
                                             (corp-install state side target nil nil)
@@ -1806,7 +1806,7 @@
    (letfn [(sc [i sccard]
              {:prompt "Select an operation in HQ to play"
               :choices {:req #(and (= (:side %) "Corp")
-                                   (is-type? % "Operation")
+                                   (operation? %)
                                    (in-hand? %))}
               :async true
               :msg (msg "play " (:title target))
@@ -1963,7 +1963,7 @@
     :effect (effect (damage eid :meat 2 {:card card}))}
 
    "Transparency Initiative"
-   {:choices {:req #(and (is-type? % "Agenda")
+   {:choices {:req #(and (agenda? %)
                          (installed? %)
                          (not (faceup? %)))}
     :effect (effect (update! (assoc target
@@ -2013,7 +2013,7 @@
                                           {:async true
                                            :prompt (str "Select a program with an install cost of no more than "
                                                         exceed "[Credits]")
-                                           :choices {:req #(and (is-type? % "Program")
+                                           :choices {:req #(and (program? %)
                                                                 (installed? %)
                                                                 (>= exceed (:cost %)))}
                                            :msg (msg "trash " (card-str state target))
@@ -2026,7 +2026,7 @@
                  (wait-for (draw state side 4 nil)
                            (continue-ability state side
                                              {:prompt "Choose a card in HQ to install"
-                                              :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (not (is-type? % "Operation")))}
+                                              :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (not (operation? %)))}
                                               :msg "gain 10 [Credits], draw 4 cards, and install 1 card from HQ"
                                               :cancel-effect (req (effect-completed state side eid))
                                               :effect (effect (corp-install target nil))}
@@ -2035,12 +2035,12 @@
    "Under the Bus"
    {:req (req (and (last-turn? state :runner :accessed-cards)
                    (not-empty (filter
-                                #(and (is-type? % "Resource")
+                                #(and (resource? %)
                                       (has-subtype? % "Connection"))
                                 (all-active-installed state :runner)))))
     :prompt "Choose a connection to trash"
     :choices {:req #(and (= (:side %) "Runner")
-                         (is-type? % "Resource")
+                         (resource? %)
                          (has-subtype? % "Connection")
                          (installed? %))}
     :msg (msg "trash " (:title target) " and take 1 bad publicity")
@@ -2059,7 +2059,7 @@
     :psi {:not-equal {:player :corp
                       :prompt "Select a resource to trash"
                       :choices {:req #(and (installed? %)
-                                           (is-type? % "Resource"))}
+                                           (resource? %))}
                       :msg (msg "trash " (:title target))
                       :effect (effect (trash target)
                                       (effect-completed eid))}}}
