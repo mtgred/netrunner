@@ -887,7 +887,7 @@
    {:req (req (last-turn? state :runner :trashed-card))
     :trace {:base 2
             :label "Trace 2 - Trash 2 installed non-program cards or take 1 bad publicity"
-            :successful {:choices {:max (req (min 2 (count (filter #(or (:facedown %)
+            :successful {:choices {:max (req (min 2 (count (filter #(or (facedown? %)
                                                                         (not (program? %)))
                                                                    (concat (all-installed state :corp)
                                                                            (all-installed state :runner))))))
