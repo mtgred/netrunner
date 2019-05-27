@@ -994,7 +994,7 @@
                          :choices {:max (min (- (get-counters card :advancement) 4)
                                              (count (all-installed state :runner)))
                                    :req #(and (runner? %)
-                                              (:installed %))}
+                                              (installed? %))}
                          :effect (effect (trash-cards targets)
                                          (system-msg (str "trashes " (join ", " (map :title targets))))
                                          (gain-bad-publicity :corp 1))}

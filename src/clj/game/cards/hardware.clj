@@ -611,7 +611,7 @@
     :interactions {:prevent [{:type #{:net :brain :meat}
                               :req (req true)}]}
     :abilities [{:msg (msg "prevent 1 damage, trashing a facedown " (:title target))
-                 :choices {:req #(and (runner? %) (:installed %))}
+                 :choices {:req #(and (runner? %) (installed? %))}
                  :priority 50
                  :effect (effect (trash target {:unpreventable true})
                                  (damage-prevent :brain 1)
