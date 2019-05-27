@@ -193,7 +193,7 @@
 (defn morph-ice
   "Creates the data for morph ICE with specified types and ability."
   [base other ability]
-  (let [ab {:req (req (= (:cid card) (:cid target)))
+  (let [ab {:req (req (same-card? card target))
             :effect (morph-effect base other)}]
     {:advanceable :always
      :effect (morph-effect base other)
@@ -441,7 +441,7 @@
                                         card nil))))}]}
 
    "Bloom"
-   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
+   (let [ice-index (fn [state i] (first (keep-indexed #(when (same-card? %2 i) %1)
                                                       (get-in @state (cons :corp (:zone i))))))]
      {:subroutines
       [{:label "Install a piece of ice from HQ protecting another server, ignoring all costs"
@@ -468,7 +468,7 @@
                            newices (apply conj (subvec ices 0 bndx) newice (subvec ices bndx))]
                        (swap! state assoc-in (cons :corp (:zone card)) newices)
                        (swap! state update-in (cons :corp (:zone target))
-                              (fn [coll] (remove-once #(= (:cid %) (:cid target)) coll)))
+                              (fn [coll] (remove-once #(same-card? % target) coll)))
                        (card-init state side newice {:resolve-effect false
                                                      :init-data true})
                        (trigger-event state side :corp-install newice)))}]})
@@ -706,8 +706,8 @@
    "Curtain Wall"
    {:subroutines [end-the-run]
     :strength-bonus (req (let [ices (:ices (card->server state card))]
-                           (if (= (:cid card) (:cid (last ices))) 4 0)))
-    :events (let [cw {:req (req (and (not= (:cid card) (:cid target))
+                           (if (same-card? card (last ices)) 4 0)))
+    :events (let [cw {:req (req (and (not (same-card? card target))
                                      (= (card->server state card) (card->server state target))))
                       :effect (effect (update-ice-strength card))}]
               {:corp-install cw
@@ -1185,7 +1185,7 @@
                    :effect runner-loses-click}]}
 
    "Howler"
-   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
+   (let [ice-index (fn [state i] (first (keep-indexed #(when (same-card? %2 i) %1)
                                                       (get-in @state (cons :corp (:zone i))))))]
      {:subroutines
       [{:label "Install a piece of Bioroid ICE from HQ or Archives"
@@ -1203,7 +1203,7 @@
                                                             newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
                                                         (swap! state assoc-in (cons :corp (:zone card)) newices)
                                                         (swap! state update-in (cons :corp (:zone target))
-                                                               (fn [coll] (remove-once #(= (:cid %) (:cid target)) coll)))
+                                                               (fn [coll] (remove-once #(same-card? % target) coll)))
                                                         (update! state side (assoc card :howler-target newice))
                                                         (card-init state side newice {:resolve-effect false
                                                                                       :init-data true})
@@ -1516,19 +1516,19 @@
                      (wait-for (resolve-ability
                                  state side
                                  {:req (req (some #(some program? (:hosted %))
-                                                  (remove-once #(= (:cid %) (:cid magnet))
+                                                  (remove-once #(same-card? % magnet)
                                                                (filter ice? (all-installed state corp)))))
                                   :prompt "Select a Program to host on Magnet"
                                   :choices {:req #(and (program? %)
                                                        (ice? (:host %))
-                                                       (not= (:cid (:host %)) (:cid magnet)))}
+                                                       (not (same-card? (:host %) magnet)))}
                                   :effect (effect (host card target))}
                                  card nil)
                                (disable-hosted state side card))))
       :derez-effect {:req (req (not-empty (:hosted card)))
                      :effect (req (doseq [c (get-in card [:hosted])]
                                     (card-init state side c {:resolve-effect false})))}
-      :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
+      :events {:runner-install {:req (req (same-card? card (:host target)))
                                 :effect (req (disable-hosted state side card)
                                           (update-ice-strength state side card))}}
       :subroutines [end-the-run]})
@@ -1731,7 +1731,7 @@
    "Mother Goddess"
    (let [ab (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))
                                                 (filter #(and (rezzed? %)
-                                                              (not= (:cid card) (:cid %))))
+                                                              (not (same-card? card %))))
                                                 (mapcat #(split (:subtype %) #" - "))
                                                 (cons "Mythic")
                                                 distinct
@@ -1795,7 +1795,7 @@
    "NEXT Bronze"
    {:subroutines [end-the-run]
     :strength-bonus (req (next-ice-count corp))
-    :events (let [nb {:req (req (and (not= (:cid target) (:cid card))
+    :events (let [nb {:req (req (and (not (same-card? target card))
                                      (has-subtype? target "NEXT")))
                       :effect (effect (update-ice-strength card))}]
               {:rez nb
@@ -2113,7 +2113,7 @@
                    :msg "do 1 net damage"
                    :effect (req (wait-for (damage state side :net 1 {:card card})
                                           (when-let* [choice (get-in card [:special :saisentan])
-                                                      cards (some #(when (= (:cid (second %)) (:cid card)) (last %))
+                                                      cards (some #(when (same-card? (second %) card) (last %))
                                                                   (turn-events state :corp :damage))
                                                       dmg (some #(when (= (:type %) choice) %) cards)]
                                             (system-msg state :corp "uses Saisentan to deal a second net damage")
@@ -2660,7 +2660,7 @@
     :strength-bonus (req (if (some #(has-subtype? % "Fracter") (all-active-installed state :runner))
                            0 7))
     :events (let [wr {:silent (req true)
-                      :req (req (and (not= (:cid target) (:cid card))
+                      :req (req (and (not (same-card? target card))
                                      (has-subtype? target "Fracter")))
                       :effect (effect (update-ice-strength card))}]
               {:runner-install wr :trash wr :card-moved wr})}

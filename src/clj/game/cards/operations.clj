@@ -88,7 +88,7 @@
                                                      (make-run eid serv nil card))}
                        :no-ability {:async true
                                     :effect (req (clear-wait-prompt state :corp)
-                                                 (as-agenda state :corp eid (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
+                                                 (as-agenda state :corp eid (some #(when (same-card? card %) %) (:discard corp)) 1))
                                     :msg "add it to their score area as an agenda worth 1 agenda point"}}}
                      card nil)))}
 
@@ -166,7 +166,7 @@
       :req (req (let [h (:hand corp)
                       p (:play-area corp)]
                   ;; this is needed to pass the req check for can-play? and again when card is actually played
-                  (if (some #(= (:cid %) (:cid card)) p)
+                  (if (some #(same-card? % card) p)
                     (>= (count h) 2)
                     (>= (count h) 3))))
       :effect (req (system-msg state side "trashes all cards in HQ due to Audacity")
@@ -303,7 +303,7 @@
                                  :choices (installable-servers state agenda)
                                  :effect (req (corp-install state side agenda target {:install-state :face-up})
                                               ; find where the agenda ended up and host on it
-                                              (let [agenda (some #(when (= (:cid %) (:cid agenda)) %)
+                                              (let [agenda (some #(when (same-card? % agenda) %)
                                                                  (all-installed state :corp))]
                                                 ; the operation ends up in :discard when it is played; to host it,
                                                 ; we need (host) to look for it in discard.
@@ -313,7 +313,7 @@
                                                                                :installed true))
                                                 (system-msg state side (str "hosts Casting Call on " (:title agenda)))))}
                      card nil)))
-    :events {:access {:req (req (= (:cid target) (:cid (:host card))))
+    :events {:access {:req (req (same-card? target (:host card)))
                       :async true
                       :effect (effect (gain-tags :runner eid 2)) :msg "give the Runner 2 tags"}}}
 
@@ -367,7 +367,7 @@
               :msg "do 1 net damage"
               :effect (req (wait-for (damage state side :net 1 {:card card})
                                      (when-let* [should-continue (not (:winner @state))
-                                                 cards (some #(when (= (:cid (second %)) (:cid card)) (last %))
+                                                 cards (some #(when (same-card? (second %) card) (last %))
                                                              (turn-events state :corp :damage))
                                                  dmg (some #(when (= (:title %) target) %) cards)]
                                        (continue-ability state side (name-a-card) card nil))))})]
@@ -508,7 +508,7 @@
                    (update-ice-strength state side target)
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
       :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
-      :events {:rez {:req (req (= (:cid target) (:cid (:host card))))
+      :events {:rez {:req (req (same-card? target (:host card)))
                      :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub))}}})
 
    "Economic Warfare"
@@ -519,7 +519,7 @@
 
    "Election Day"
    {:req (req (->> (get-in @state [:corp :hand])
-                   (filter #(not (= (:cid %) (:cid card))))
+                   (filter #(not (same-card? % card)))
                    count
                    pos?))
     :async true
@@ -1155,7 +1155,7 @@
                                        ices (get-in @state (cons :corp (:zone target)) [])
                                        newices (apply conj (subvec ices 0 i) newice (subvec ices i))]
                                    (swap! state assoc-in (cons :corp (:zone target)) newices)
-                                   (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(= (:cid %) (:cid newice)) coll)))
+                                   (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(same-card? % newice) coll)))
                                    (trigger-event state side :corp-install newice)
                                    (card-init state side newice {:resolve-effect false
                                                                  :init-data true})
@@ -1213,7 +1213,7 @@
     :msg (msg "give +2 strength to " (card-str state target))
     :effect (effect (host target (assoc card :zone [:discard] :seen true :condition true))
                     (update-ice-strength (get-card state target)))
-    :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
+    :events {:pre-ice-strength {:req (req (same-card? target (:host card)))
                                 :effect (effect (ice-strength-bonus 2 target))}}}
 
    "Paywall Implementation"
@@ -1593,9 +1593,9 @@
     :msg (msg "host it as a condition counter on " (card-str state target))
     :effect (effect (host target (assoc card :zone [:discard] :seen true :condition true))
                     (update-ice-strength (get-card state target)))
-    :events {:pass-ice {:req (req (= (:cid target) (:cid (:host card))))
+    :events {:pass-ice {:req (req (same-card? target (:host card)))
                         :effect (effect (add-counter card :power 1))}
-             :pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
+             :pre-ice-strength {:req (req (same-card? target (:host card)))
                                 :effect (effect (ice-strength-bonus (get-counters card :power) target))}}}
 
    "Sacrifice"
@@ -1799,7 +1799,7 @@
                    (update-ice-strength state side target)
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
       :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
-      :events {:rez {:req (req (= (:cid target) (:cid (:host card))))
+      :events {:rez {:req (req (same-card? target (:host card)))
                      :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub))}}})
 
    "Subcontract"
@@ -1993,7 +1993,7 @@
                                      (continue-ability
                                        state side
                                        {:prompt  "Move to where?"
-                                        :choices {:req #(and (not= (:cid fr) (:cid %))
+                                        :choices {:req #(and (not (same-card? fr %))
                                                              (can-be-advanced? %))}
                                         :effect  (effect (add-prop :corp target :advance-counter c {:placed true})
                                                          (add-prop :corp fr :advance-counter (- c) {:placed true})
@@ -2099,7 +2099,7 @@
       :effect (req (add-extra-sub state :corp (:cid card) target 0 new-sub)
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
       :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
-      :events {:rez {:req (req (= (:cid target) (:cid (:host card))))
+      :events {:rez {:req (req (same-card? target (:host card)))
                      :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) 0 new-sub))}}})
 
    "Witness Tampering"

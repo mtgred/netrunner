@@ -23,7 +23,7 @@
                  (reset-cost state card (- (get-in card store-key 0)))
                  (update! state :corp (assoc-in card store-key 0)))]
          (merge cdef
-                {:events (merge {:counter-added {:req (req (= (:cid target) (:cid card)))
+                {:events (merge {:counter-added {:req (req (same-card? target card))
                                                  :effect (req (recompute-cost state card))}}
                                 (:events cdef))
                  :effect (if (:effect cdef) (:effect cdef)
@@ -289,14 +289,14 @@
                                            (update! state side (dissoc card :troubleshooter-target))
                                            (update-ice-strength state side (:troubleshooter-target card)))}]
                       {:pre-ice-strength
-                       {:req (req (= (:cid target) (:cid (:troubleshooter-target card))))
+                       {:req (req (same-card? target (:troubleshooter-target card)))
                         :effect (effect (ice-strength-bonus (:troubleshooter-amount card) target))}
                        :runner-turn-ends ct
                        :corp-turn-ends ct})
                     card))}}
 
    "Crisium Grid"
-   (let [suppress-event {:req (req (and this-server (not= (:cid target) (:cid card))))}]
+   (let [suppress-event {:req (req (and this-server (not (same-card? target card))))}]
      {:suppress {:pre-successful-run suppress-event
                  :successful-run suppress-event}
       :events {:pre-successful-run
@@ -640,7 +640,7 @@
 
    "Jinja City Grid"
    (letfn [(install-ice [ice ices grids server]
-             (let [remaining (remove-once #(= (:cid %) (:cid ice)) ices)]
+             (let [remaining (remove-once #(same-card? % ice) ices)]
                {:async true
                 :effect (req (if (= "None" server)
                                (continue-ability state side (choose-ice remaining grids) card nil)
@@ -804,7 +804,7 @@
                                            newices (apply conj (subvec ices 0 cndx) newice (subvec ices cndx))]
                                        (swap! state assoc-in (cons :corp (:zone c)) newices)
                                        (swap! state update-in [:corp :hand]
-                                              (fn [coll] (remove-once #(= (:cid %) (:cid hqice)) coll)))
+                                              (fn [coll] (remove-once #(same-card? % hqice) coll)))
                                        (trigger-event state side :corp-install newice)
                                        (move state side c :hand)))} card nil)))}]}
 
@@ -918,11 +918,11 @@
                                               :effect (req (let [hqc target
                                                                  newrdc (assoc hqc :zone [:deck])
                                                                  deck (vec (get-in @state [:corp :deck]))
-                                                                 rdcndx (first (keep-indexed #(when (= (:cid %2) (:cid rdc)) %1) deck))
+                                                                 rdcndx (first (keep-indexed #(when (same-card? %2 rdc) %1) deck))
                                                                  newdeck (seq (apply conj (subvec deck 0 rdcndx) target (subvec deck rdcndx)))]
                                                              (swap! state assoc-in [:corp :deck] newdeck)
                                                              (swap! state update-in [:corp :hand]
-                                                                    (fn [coll] (remove-once #(= (:cid %) (:cid hqc)) coll)))
+                                                                    (fn [coll] (remove-once #(same-card? % hqc) coll)))
                                                              (move state side rdc :hand)
                                                              (clear-wait-prompt state :runner)
                                                              (effect-completed state side eid)))}
@@ -1185,7 +1185,7 @@
     {:rez {:req (req (and (same-server? card target)
                           (not (and (upgrade? target)
                                     (is-central? (second (:zone target)))))
-                          (not= (:cid target) (:cid card))
+                          (not (same-card? target card))
                           (seq (filter #(and (not (rezzed? %))
                                              (not (agenda? %))) (all-installed state :corp)))))
            :effect (effect (resolve-ability

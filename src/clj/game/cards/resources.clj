@@ -526,7 +526,7 @@
                                                   (register-turn-flag!
                                                     state side card :can-rez
                                                     (fn [state side card]
-                                                      (if (= (:cid card) (:cid c))
+                                                      (if (same-card? card c)
                                                         ((constantly false)
                                                          (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
                                                         true)))
@@ -723,7 +723,7 @@
                                                          (update! (dissoc card :dean-target))
                                                          (update-breaker-strength (:dean-target card)))}]
                                {:run-ends dean
-                                :pre-breaker-strength {:req (req (= (:cid target)(:cid (:dean-target card))))
+                                :pre-breaker-strength {:req (req (same-card? target (:dean-target card)))
                                                        :effect (effect (breaker-strength-bonus (count (:hand runner))))}}) card))}}
 
    "Decoy"
@@ -1121,7 +1121,7 @@
 
    "Ice Carver"
    {:events {:pre-ice-strength
-             {:req (req (and (= (:cid target) (:cid current-ice)) (:rezzed target)))
+             {:req (req (and (same-card? target current-ice) (:rezzed target)))
               :effect (effect (ice-strength-bonus -1 target))}}}
 
    "Inside Man"
@@ -1420,7 +1420,7 @@
                                             state side
                                             {:prompt "Select 1 card to add to the bottom of the Stack"
                                              :choices {:req #(and (in-hand? %)
-                                                                  (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                                                                  (some (fn [c] (same-card? c %)) drawn))}
                                              :msg (msg "add 1 card to the bottom of the Stack")
                                              :effect (req (move state side target :deck))}
                                             card nil)
@@ -1550,7 +1550,7 @@
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :async true
                  :effect (effect (host card target) (draw eid 1 nil))}]
-    :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
+    :events {:runner-install {:req (req (same-card? card (:host target)))
                               :async true
                               :effect (effect (draw eid 1 nil))}}}
 
@@ -1927,7 +1927,7 @@
                              ((toast state :runner "Can only use a copy of Salsette Slums once per turn.") false)))
                  :effect (effect (resolve-ability
                                    {; only allow targeting cards that were trashed this turn -- not perfect, but good enough?
-                                    :choices {:req #(some (fn [c] (= (:cid %) (:cid c)))
+                                    :choices {:req #(some (fn [c] (same-card? % c))
                                                           (map first (turn-events state side :runner-trash)))}
                                     :msg (msg "remove " (:title target) " from the game")
                                     :effect (req (deactivate state side target)
@@ -2050,7 +2050,7 @@
                              (install-cost-bonus state side [:credit -1])
                              (trash state side (update-in card [:hosted]
                                                           (fn [coll]
-                                                            (remove-once #(= (:cid %) (:cid target)) coll)))
+                                                            (remove-once #(same-card? % target) coll)))
                                     {:cause :ability-cost})
                              (runner-install state side eid (dissoc target :facedown) nil)))}]}
 
@@ -2221,7 +2221,7 @@
                                                         (update! (dissoc card :hai-target))
                                                         (update-breaker-strength (:hai-target card)))}]
                                {:runner-turn-ends hai :corp-turn-ends hai
-                                :pre-breaker-strength {:req (req (= (:cid target)(:cid (:hai-target card))))
+                                :pre-breaker-strength {:req (req (same-card? target (:hai-target card)))
                                                        :effect (effect (breaker-strength-bonus 2))}}) card))}}
 
    "The Nihilist"
@@ -2290,7 +2290,7 @@
                                                       (assoc :supplier-installed (:cid target))
                                                       (update-in [:hosted]
                                                                  (fn [coll]
-                                                                   (remove-once #(= (:cid %) (:cid target)) coll)))))))}]
+                                                                   (remove-once #(same-card? % target) coll)))))))}]
      {:flags {:drip-economy true}  ; not technically drip economy, but has an interaction with Drug Dealer
       :abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
                    :prompt "Select a card to host on The Supplier"

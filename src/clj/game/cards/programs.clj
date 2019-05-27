@@ -180,12 +180,12 @@
                                                   (card-init state side hosted {:resolve-effect false
                                                                                 :init-data true}))
                                                 (let [devavec (get-in @state [:runner :rig :program])
-                                                      devaindex (first (keep-indexed #(when (= (:cid %2) (:cid card)) %1) devavec))
+                                                      devaindex (first (keep-indexed #(when (same-card? %2 card) %1) devavec))
                                                       newdeva (assoc target :zone (:zone card) :installed true)
                                                       newvec (apply conj (subvec devavec 0 devaindex) newdeva (subvec devavec devaindex))]
                                                   (lose state :runner :memory (:memoryunits card))
                                                   (swap! state assoc-in [:runner :rig :program] newvec)
-                                                  (swap! state update-in [:runner :hand] (fn [coll] (remove-once #(= (:cid %) (:cid target)) coll)))
+                                                  (swap! state update-in [:runner :hand] (fn [coll] (remove-once #(same-card? % target) coll)))
                                                   (card-init state side newdeva {:resolve-effect false
                                                                                  :init-data true})))
                                               (move state side card :hand))}]}))
@@ -391,7 +391,7 @@
     :effect (effect (add-counter card :power target))
     :abilities [(break-sub 1 1)]
     :strength-bonus (req (get-counters card :power))
-    :events {:counter-added {:req (req (= (:cid target) (:cid card)))
+    :events {:counter-added {:req (req (same-card? target card))
                              :effect (effect (update-breaker-strength card))}}}
 
    "Au Revoir"
@@ -411,7 +411,7 @@
                                        (get-in @state [:run :did-access])))
                         :effect (effect (add-counter card :virus 1))}
              :expose {:effect (effect (add-counter card :virus 1))}
-             :counter-added {:req (req (= (:cid target) (:cid card)))
+             :counter-added {:req (req (same-card? target card))
                              :effect (effect (update-breaker-strength card))}}}
 
    "Aurora"
@@ -585,7 +585,7 @@
              :pre-advancement-cost {:req (req (>= (get-virus-counters state card) 3))
                                     :effect (effect (advancement-cost-bonus 1))}
              :counter-added
-             {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
+             {:req (req (or (= (:title target) "Hivemind") (same-card? target card)))
               :effect (effect (update-all-advancement-costs))}
              :purge {:effect (effect (update-all-advancement-costs))}}}
 
@@ -813,7 +813,7 @@
               {:successful-run {:silent (req true)
                                 :effect (effect (add-counter card :virus 1))
                                 :req (req (#{:hq :rd :archives} target))}
-               :pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice))
+               :pre-ice-strength {:req (req (and (same-card? target current-ice)
                                                  (:datasucker-count card)))
                                   :effect (req (let [c (:datasucker-count (get-card state card))]
                                                  (ice-strength-bonus state side (- c) target)))}
@@ -1246,7 +1246,7 @@
      {:data {:counter {:virus 1}}
       :effect update-programs
       :trash-effect {:effect update-programs}
-      :events {:counter-added {:req (req (= (:cid target) (:cid card)))
+      :events {:counter-added {:req (req (same-card? target card))
                                :effect update-programs}}
       :abilities [{:req (req (pos? (get-counters card :virus)))
                    :priority true
@@ -1692,13 +1692,13 @@
     :events {:runner-turn-begins
              {:effect (req (add-counter state side card :virus 1))}
              :counter-added
-             {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
+             {:req (req (or (= (:title target) "Hivemind") (same-card? target card)))
               :effect (effect (update-ice-strength (:host card)))}
              :pre-ice-strength
-             {:req (req (= (:cid target) (:cid (:host card))))
+             {:req (req (same-card? target (:host card)))
               :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}
              :ice-strength-changed
-             {:req (req (and (= (:cid target) (:cid (:host card)))
+             {:req (req (and (same-card? target (:host card))
                              (not (card-flag? (:host card) :untrashable-while-rezzed true))
                              (<= (:current-strength target) 0)))
               :effect (req (unregister-events state side card)
@@ -2359,7 +2359,7 @@
                                                ((:effect breaker-auto-pump) state side eid card targets))
                                    wy {:effect (effect (update! (dissoc card :wyrm-count))
                                                        (auto-pump eid (get-card state card) targets))}]
-                               {:pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice))
+                               {:pre-ice-strength {:req (req (and (same-card? target current-ice)
                                                                   (:wyrm-count card)))
                                                    :effect (req (let [c (:wyrm-count (get-card state card))]
                                                                   (ice-strength-bonus state side (- c) target)

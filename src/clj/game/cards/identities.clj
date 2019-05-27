@@ -91,7 +91,7 @@
                                              (rezzed? current-ice))
                                     (activate state card true)))}
                :rez {:effect (req (when (and (outermost? run-position run-ices)
-                                             (= (:cid current-ice) (:cid target)))
+                                             (same-card? current-ice target))
                                     (activate state card true)))}
                :derez {:effect (req (when (outermost? run-position run-ices)
                                       (activate state card false)))}

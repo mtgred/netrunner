@@ -429,7 +429,7 @@
                                                   state side
                                                   {:prompt "Move to where?"
                                                    :choices {:req #(and (ice? %)
-                                                                        (not= (:cid from-ice) (:cid %))
+                                                                        (not (same-card? from-ice %))
                                                                         (can-be-advanced? %))}
                                                    :effect (effect (add-prop :corp target :advance-counter 1)
                                                                    (add-prop :corp from-ice :advance-counter -1)
@@ -528,7 +528,7 @@
                                          {:prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
                                           :msg (msg "add " (quantify dbs "card") " to the bottom of R&D")
                                           :choices {:max dbs
-                                                    :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
+                                                    :req #(some (fn [c] (same-card? c %)) drawn)}
                                           :effect (req (doseq [c targets]
                                                          (move state side c :deck)))}
                                          card targets)
@@ -1241,7 +1241,7 @@
     :implementation "Errata from FAQ 3.1: should be unique"}
 
    "Nanoetching Matrix"
-   {:events {:runner-trash {:req (req (= (:cid card) (:cid target)))
+   {:events {:runner-trash {:req (req (same-card? card target))
                             :effect (effect (show-wait-prompt :runner "Corp to use Nanoetching Matrix")
                                             (continue-ability
                                               :corp
@@ -1554,7 +1554,7 @@
                                 (resolve-ability
                                   state side
                                   {:prompt "Choose a card in HQ that you just drew to swap for a card of the same type in Archives"
-                                   :choices {:req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
+                                   :choices {:req #(some (fn [c] (same-card? c %)) drawn)}
                                    :effect (req (let [hqcard target
                                                       t (:type hqcard)]
                                                   (resolve-ability
@@ -1572,7 +1572,7 @@
                                                                     (reveal state side hqcard)
                                                                     (swap! state assoc-in [:corp :discard] newarch)
                                                                     (swap! state update-in [:corp :hand]
-                                                                           (fn [coll] (remove-once #(= (:cid %) (:cid hqcard)) coll)))
+                                                                           (fn [coll] (remove-once #(same-card? % hqcard) coll)))
                                                                     (move state side target :hand)))}
                                                    card nil)))}
                                  card nil)))}]}
@@ -2001,7 +2001,7 @@
 
    "The Board"
    (let [the-board {:req (req (and (= :runner (:as-agenda-side target))
-                                   (not= (:cid target) (:cid card))))
+                                   (not (same-card? target card))))
                     :effect (effect (lose :runner :agenda-point 1))}]
      {:effect (effect (lose :runner :agenda-point (count (:scored runner))))
       :leave-play (effect (gain :runner :agenda-point (count (:scored runner))))
@@ -2054,7 +2054,7 @@
                                           state side
                                           {:effect (req (swap! state assoc-in (cons :corp (:zone card)) newcont)
                                                         (swap! state update-in [:corp :hand]
-                                                               (fn [coll] (remove-once #(= (:cid %) (:cid newcard)) coll)))
+                                                               (fn [coll] (remove-once #(same-card? % newcard) coll)))
                                                         (trigger-event state side :corp-install newcard)
                                                         (move state side card :hand))} card nil)
                                         (resolve-prompt state :runner {:choice "No action"})

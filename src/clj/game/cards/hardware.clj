@@ -39,7 +39,7 @@
     :abilities [{:cost [:click 1]
                  :req (req run)
                  :msg "break ice subroutine"}]
-    :events {:pre-card-moved {:req (req (= (:cid target) (:cid card)))
+    :events {:pre-card-moved {:req (req (same-card? target card))
                               :effect (effect (update! (assoc (-> card :host) :subtype (-> card :host :subtype (remove-subtypes-once ["AI"])))))}}}
 
    "Akamatsu Mem Chip"
@@ -239,7 +239,7 @@
                            " by 2 [Credits] until the end of the turn")
                  :effect (effect (update! (assoc card :cortez-target target))
                                  (trash (get-card state card) {:cause :ability-cost}))}]
-    :trash-effect {:effect (effect (register-events {:pre-rez {:req (req (= (:cid target) (:cid (:cortez-target card))))
+    :trash-effect {:effect (effect (register-events {:pre-rez {:req (req (same-card? target (:cortez-target card)))
                                                                :effect (effect (rez-additional-cost-bonus [:credit 2]))}
                                                      :runner-turn-ends {:effect (effect (unregister-events card))}
                                                      :corp-turn-ends {:effect (effect (unregister-events card))}}
@@ -346,7 +346,7 @@
                                    (host state side card)
                                    (update-breaker-strength state side))
                               (update! state side (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}]
-    :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (first (:hosted card)))))
+    :events {:pre-breaker-strength {:req (req (same-card? target (first (:hosted card))))
                                     :effect (effect (breaker-strength-bonus 2))}
              :card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
                           :effect (effect (update! (dissoc-in card [:special :dino-breaker]))
@@ -587,7 +587,7 @@
                                 (update-breaker-strength state side host))
                               (host state side target card))}]
     :events {:pump-breaker {:silent (req true)
-                            :req (req (= (:cid (second targets)) (:cid (:host card))))
+                            :req (req (same-card? (second targets) (:host card)))
                             :effect (effect (update! (update-in (second targets) [:pump :all-turn] (fnil #(+ % (first targets)) 0)))
                                             (update-breaker-strength (second targets)))}}
     :leave-play (req (when-let [host (get-card state (:host card))]
@@ -683,7 +683,7 @@
                         :req (req (has-subtype? target "Icebreaker"))
                         :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
                                         (update-breaker-strength target))}
-       :pre-breaker-strength {:req (req (some #(= (:cid target) (:cid %)) (:llds-target card)))
+       :pre-breaker-strength {:req (req (some #(same-card? target %) (:llds-target card)))
                               :effect (effect (breaker-strength-bonus 1))}}})
 
    "Lockpick"
@@ -759,7 +759,7 @@
                   :once :per-turn
                   :msg "force the Corp to trash a random card from HQ"
                   :effect (req (let [card-to-trash (first (shuffle (:hand corp)))
-                                     card-seen? (= (:cid target) (:cid card-to-trash))
+                                     card-seen? (same-card? target card-to-trash)
                                      card-to-trash (if card-seen? (assoc card-to-trash :seen true)
                                                      card-to-trash)]
                                  ;; toggle access flag to prevent Hiro issue #2638
@@ -788,7 +788,7 @@
                                    {:async true
                                     ;; only allow targeting cards that were accessed this turn
                                     :choices {:req #(some (fn [accessed-card]
-                                                            (= (:cid %) (:cid accessed-card)))
+                                                            (same-card? % accessed-card))
                                                           (map first (turn-events state side :access)))}
                                     :msg (msg "move " (:title target) " to the bottom of R&D")
                                     :effect (req (move state :corp target :deck)
@@ -1399,7 +1399,7 @@
    {:hosting {:req #(and (has-subtype? % "Icebreaker")
                          (installed? %))}
     :effect (effect (update-breaker-strength (:host card)))
-    :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (:host card))))
+    :events {:pre-breaker-strength {:req (req (same-card? target (:host card)))
                                     :effect (effect (breaker-strength-bonus 1))}}}
 
    "The Toolbox"

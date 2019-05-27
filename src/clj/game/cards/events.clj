@@ -252,7 +252,7 @@
                                      (assoc card :zone '(:discard)))
                     (register-turn-flag! card :can-rez
                                          (fn [state side card]
-                                           (if (= (:cid card) (:cid target))
+                                           (if (same-card? card target)
                                              ((constantly false)
                                                (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
                                              true))))}
@@ -943,7 +943,7 @@
                                                    {:effect (effect (update! (assoc card :shuffle-occurred true)))}}
                                                   (assoc card :zone '(:discard)))
                                  (install-cost-bonus state side [:credit -5])
-                                 (let [to-trash (remove #(= (:cid %) (:cid target)) topten)]
+                                 (let [to-trash (remove #(same-card? % target) topten)]
                                    (wait-for (runner-install state side target nil)
                                              (let [card (get-card state (assoc card :zone '(:discard)))]
                                                (if (not (:shuffle-occurred card))
@@ -1877,7 +1877,7 @@
                    {:prompt "Choose up to five cards to install"
                     :show-discard true
                     :choices {:max 5
-                              :req #(and (in-discard? %) (runner? %) (not= (:cid %) (:cid card)))}
+                              :req #(and (in-discard? %) (runner? %) (not (same-card? % card)))}
                     :mandatory true
                     :async true
                     :cancel-effect (req (move state side (find-latest state card) :rfg)
@@ -2210,7 +2210,7 @@
                                                (run-flag? state side (second targets) :system-seizure))
                                           (not (get-in @state [:per-turn (:cid card)]))))
                             :effect (req (update! state side (update-in (second targets) [:pump :all-run] (fnil #(+ % (first targets)) 0)))
-                                         (register-run-flag! state side card :system-seizure (fn [_ _ c] (= (:cid c) (:cid (second targets)))))
+                                         (register-run-flag! state side card :system-seizure (fn [_ _ c] (same-card? c (second targets))))
                                          (update-breaker-strength state side (second targets))
                                          (swap! state assoc-in [:per-turn (:cid card)] targets))}}
     :move-zone (req (when (= [:discard] (:zone card))

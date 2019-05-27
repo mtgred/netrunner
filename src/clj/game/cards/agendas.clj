@@ -27,7 +27,7 @@
    {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
                  :label "Shuffle 15 Minutes into R&D"
                  :effect (req (let [corp-agendas (get-in corp [:scored])
-                                    agenda-owner (if (some #(= (:cid %) (:cid card)) corp-agendas) :corp :runner)]
+                                    agenda-owner (if (some #(same-card? % card) corp-agendas) :corp :runner)]
                                 (gain-agenda-point state agenda-owner (- (:agendapoints card))))
                               ; refresh agendapoints to 1 before shuffle in case it was modified by e.g. The Board
                               (move state :corp (dissoc (assoc card :agendapoints 1) :seen :rezzed) :deck {:front true})
@@ -688,13 +688,11 @@
    {:install-state :face-up
     :events {:advance
              {:async true
-              :req (req (= (:cid card)
-                           (:cid target)))
+              :req (req (same-card? card target))
               :effect (req (let [n (if (>= (get-counters (get-card state card) :advancement) 6) 2 1)]
                              (continue-ability
                                state side
-                               {:choices {:req #(and (not= (:cid %)
-                                                           (:cid card))
+                               {:choices {:req #(and (not (same-card? % card))
                                                      (can-be-advanced? %))}
                                 :msg (msg "place " n
                                           " advancement tokens on "
@@ -882,7 +880,7 @@
    {:install-state :face-up
     :events {:advance
              {:optional
-              {:req (req (= (:cid card) (:cid target)))
+              {:req (req (same-card? card target))
                :prompt "Install a card from HQ in a new remote?"
                :yes-ability {:prompt "Select a card to install"
                              :choices {:req #(and (not (operation? %))
@@ -919,7 +917,7 @@
 
    "Oaktown Renovation"
    {:install-state :face-up
-    :events {:advance {:req (req (= (:cid card) (:cid target)))
+    :events {:advance {:req (req (same-card? card target))
                        :msg (msg "gain " (if (>= (get-counters (get-card state card) :advancement) 5) "3" "2") " [Credits]")
                        :effect (req (gain-credits state side
                                                   (if (>= (get-counters (get-card state card) :advancement) 5) 3 2)))}}}
@@ -1399,7 +1397,7 @@
            :not-equal {:msg "prevent it from being stolen"
                        :effect (effect (register-run-flag!
                                          card :can-steal
-                                         (fn [_ _ c] (not= (:cid c) (:cid card))))
+                                         (fn [_ _ c] (not (same-card? c card))))
                                        (effect-completed eid))}}}}
 
    "Timely Public Release"
@@ -1445,7 +1443,7 @@
    "Underway Renovation"
    (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]
      {:install-state :face-up
-      :events {:advance {:req (req (= (:cid card) (:cid target)))
+      :events {:advance {:req (req (same-card? card target))
                          :msg (msg (if (pos? (count (:deck runner)))
                                      (str "trash "
                                           (join ", " (map :title (take (adv4? state card) (:deck runner))))
@@ -1509,10 +1507,10 @@
    (let [reg-no-score-flag
          (effect (register-turn-flag! card :can-score
                                       (fn [state side other-card]
-                                        (if (= (:cid other-card) (:cid card))
+                                        (if (same-card? other-card card)
                                           ((constantly false) (toast state :corp "Cannot score Vulnerability Audit the turn it was installed." "warning"))
                                           true))))]
-     {:derezzed-events {:pre-agenda-scored {:req (req (and (= (:cid target) (:cid card))
+     {:derezzed-events {:pre-agenda-scored {:req (req (and (same-card? target card)
                                                            (let [agenda-cids (map #(:cid (first %))
                                                                                   (filter #(agenda? (first %))
                                                                                           (turn-events state :corp :corp-install)))]
