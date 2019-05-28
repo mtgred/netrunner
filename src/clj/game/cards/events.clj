@@ -1172,6 +1172,9 @@
              {:prompt "Choose a card to access. You must access all cards."
               :choices [(str "Card from pile " pile)]
               :async true
+              :req (req (if (:max-access run)
+                          (< (total-cards-accessed run) (:max-access run))
+                          true))
               :effect (req (wait-for
                              (access-card state side (first cards))
                              (if (< 1 (count cards))

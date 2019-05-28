@@ -1825,6 +1825,7 @@
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
 (deftest information-sifting
+  (testing "Complicated test with damage prevention"
   ;; Information Sifting - complicated interactions with damage prevention
   (do-game
     (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
@@ -1879,6 +1880,23 @@
     (click-prompt state :runner "Card from pile 2")
     (click-prompt state :runner "Steal")
     (is (= 1 (count (:scored (get-runner)))) "Runner stole agenda")))
+  (testing "Hudson interaction :max-access"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                               "DNA Tracker" "Hudson 1.0"]}
+                 :runner {:deck ["Information Sifting"]}})
+      (play-from-hand state :corp "Hudson 1.0" "HQ")
+      (let [hud (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (play-run-event state (find-card "Information Sifting" (:hand (get-runner))) :hq)
+        (core/rez state :corp hud)
+        (card-subroutine state :corp hud 0) ; Runner cannot access more than 1 card
+        (click-card state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))))
+        (click-prompt state :corp "Done")
+        (click-prompt state :runner "Pile 2 (3 cards)")
+        (click-prompt state :runner "Card from pile 2")
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "No prompt to access further cards.")))))
 
 (deftest inject
   ;; Inject - Draw 4 cards from Stack and gain 1 credit per trashed program
