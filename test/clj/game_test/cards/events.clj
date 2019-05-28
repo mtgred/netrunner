@@ -2124,9 +2124,7 @@
       (click-prompt state :runner "Replacement effect")
       (click-prompt state :runner "1 [Credit]: 3 cards")
       (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
-      (is (empty? (:prompt (get-runner))) "No prompt to access cards.")
-      ))
-)
+      (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))
 
 (deftest knifed
   ;; Knifed - Make a run, trash a barrier if all subs broken
