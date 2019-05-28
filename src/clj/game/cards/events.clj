@@ -1328,11 +1328,12 @@
                                                                    "no cards")))
                                   (if revealed
                                     (do (reveal state side revealed)
-                                        (wait-for
-                                          (resolve-ability state side (access-revealed revealed) card nil)
-                                          (shuffle! state :corp :deck)
-                                          (system-msg state :runner " shuffles R&D")
-                                          (effect-completed state side eid)))
+                                        (if (not= (:max-access run) 0)
+                                          (do (wait-for
+                                                (resolve-ability state side (access-revealed revealed) card nil)
+                                                (shuffle! state :corp :deck)
+                                                (system-msg state :runner " shuffles R&D")
+                                                (effect-completed state side eid)))))
                                     (do (shuffle! state :corp :deck)
                                         (system-msg state :runner " shuffles R&D")
                                         (effect-completed state side eid))))))}}

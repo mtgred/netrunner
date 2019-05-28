@@ -2072,7 +2072,61 @@
       (let [tww (get-resource state 0)]
         (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
         (click-prompt state :runner "Replacement effect")
-        (is (zero? (get-counters (refresh tww) :power)) "The Turning Wheel shouldn't gain counters yet")))))
+        (is (zero? (get-counters (refresh tww) :power)) "The Turning Wheel shouldn't gain counters yet"))))
+  (testing "Ash interaction"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Technician Team" "Ash 2X3ZB9CY"]}
+                 :runner {:deck ["Khusyuk"
+                                 (qty "Cache" 3)]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      ;; R&D is now from top to bottom: A B C
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "R&D")
+      (let [ash (get-content state :rd 0)]
+        (core/rez state :corp ash)
+        (take-credits state :corp)
+        (core/gain state :runner :click 100)
+        (core/gain state :runner :credit 100)
+        (dotimes [_ 3] (play-from-hand state :runner "Cache"))
+        (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0") ;lose Ash trace
+        (click-prompt state :runner "Replacement effect")
+        (click-prompt state :runner "1 [Credit]: 3 cards")
+        (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
+        (is (empty? (:prompt (get-runner))) "No prompt to access cards.")
+        )
+      ))
+  (testing "Eater interaction"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"]}
+                 :runner {:deck ["Khusyuk"
+                                 (qty "Cache" 3)
+                                 "Eater"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      ;; R&D is now from top to bottom: A B C
+      (take-credits state :corp)
+      (core/gain state :runner :click 100)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Eater")
+      (dotimes [_ 3] (play-from-hand state :runner "Cache"))
+      (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+      (card-ability state :runner (get-program state 0) 0) ; use Eater
+      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "1 [Credit]: 3 cards")
+      (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
+      (is (empty? (:prompt (get-runner))) "No prompt to access cards.")
+      ))
+)
 
 (deftest knifed
   ;; Knifed - Make a run, trash a barrier if all subs broken
