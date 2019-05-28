@@ -1286,6 +1286,7 @@
                             :mandatory true
                             :prompt "Which of the revealed cards would you like to access (first card is on top)?"
                             :choices revealed
+                            :req (req (not= (:max-access run) 0))
                             :effect (effect (access-card eid target))})
          select-install-cost (fn [state]
                                (let [current-values
@@ -1328,12 +1329,11 @@
                                                                    "no cards")))
                                   (if revealed
                                     (do (reveal state side revealed)
-                                        (if (not= (:max-access run) 0)
-                                          (do (wait-for
-                                                (resolve-ability state side (access-revealed revealed) card nil)
-                                                (shuffle! state :corp :deck)
-                                                (system-msg state :runner " shuffles R&D")
-                                                (effect-completed state side eid)))))
+                                        (wait-for
+                                          (resolve-ability state side (access-revealed revealed) card nil)
+                                          (shuffle! state :corp :deck)
+                                          (system-msg state :runner " shuffles R&D")
+                                          (effect-completed state side eid)))
                                     (do (shuffle! state :corp :deck)
                                         (system-msg state :runner " shuffles R&D")
                                         (effect-completed state side eid))))))}}
