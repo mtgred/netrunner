@@ -1376,6 +1376,7 @@
    (letfn [(ability [n]
              {:async true
               :mandatory true
+              :req (req (not= (:max-access run) 0))
               :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
               :choices (take n ["1" "2" "3" "4" "5"])
               :effect (effect (system-msg (str "accesses the card at position " (str->int target) " of R&D"))
