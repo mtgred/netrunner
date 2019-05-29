@@ -470,7 +470,7 @@
   already-accessed: a set of cards already accessed from this zone or its root."
   [state chosen-zone label amount select-fn title-fn already-accessed]
   (let [get-root-content (fn [state]
-                           (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers chosen-zone :content])))
+                           (remove #(contains? already-accessed %) (get-in @state [:corp :servers chosen-zone :content])))
         server-name (central->name chosen-zone)
         unrezzed-upgrade (str "Unrezzed upgrade in " server-name)
         card-from (str "Card from " label)]
@@ -542,6 +542,11 @@
                                     card nil)
                                   (effect-completed state side eid))))))}))
 
+(defn- access-cards-from-rd
+  [state]
+  (let [f (get-in @state [:runner :rd-access-fn])]
+    (f (get-in @state [:corp :deck]))))
+
 (defmethod choose-access :rd [cards server {:keys [no-root] :as args}]
   {:async true
    :effect (req (if (pos? (count cards))
@@ -552,7 +557,7 @@
                                                      state :rd "deck" from-rd
                                                      ;; access the first card in deck that has not been accessed.
                                                      (fn [already-accessed] (first (drop-while already-accessed
-                                                                                               (-> @state :corp :deck))))
+                                                                                               (access-cards-from-rd state))))
                                                      (fn [_] "an unseen card")
                                                      (if no-root
                                                        (set (get-in @state [:corp :servers :rd :content]))
@@ -719,7 +724,7 @@
           (get-in @state [:corp :servers :hq :content])))
 
 (defmethod cards-to-access :rd [state side server]
-  (concat (take (access-count state side :rd-access) (get-in @state [:corp :deck]))
+  (concat (take (access-count state side :rd-access) (access-cards-from-rd state))
           (get-in @state [:corp :servers :rd :content])))
 
 (defmethod cards-to-access :archives [state side server]

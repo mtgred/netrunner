@@ -3070,6 +3070,27 @@
       (is (zero? (:current-strength (refresh turing))) "Scrubbed reduces strength by 2")
       (run-successful state))))
 
+(deftest showing-off
+  ;; Showing Off
+  (do-game
+    (new-game {:corp {:hand [(qty "Hedge Fund" 5)]
+                      :deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                               "DNA Tracker" "Excalibur" "Fire Wall"]}
+               :runner {:hand ["Showing Off"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:deck (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:deck (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:deck (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:deck (get-corp))) :deck)
+      (core/move state :corp (find-card "Excalibur" (:deck (get-corp))) :deck)
+      (core/move state :corp (find-card "Fire Wall" (:deck (get-corp))) :deck)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Showing Off")
+      (run-successful state)
+      (click-prompt state :runner "Replacement effect")
+      (is (= "You accessed Fire Wall." (-> (get-runner) :prompt first :msg)) "The accessed card is on the bottom of the deck")
+      (is (= "Accelerated Beta Test" (-> (get-corp) :deck first :title)) "The top of the deck is an entirely different card")
+      (click-prompt state :runner "No action")))
+
 (deftest singularity
   ;; Singularity - Run a remote; if successful, trash all contents at no cost
   (do-game

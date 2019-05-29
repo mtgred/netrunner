@@ -2084,10 +2084,8 @@
                                                              card nil)
                                             (do-access state side eid (:server run))))}} card))
     :events {:pre-access {:silent (req true)
-                          :effect (req (swap! state assoc-in [:corp :deck]
-                                              (rseq (into [] (get-in @state [:corp :deck])))))}
-             :run-ends {:effect (req (swap! state assoc-in [:corp :deck]
-                                            (rseq (into [] (get-in @state [:corp :deck]))))
+                          :effect (req (swap! state assoc-in [:runner :rd-access-fn] reverse))}
+             :run-ends {:effect (req (swap! state assoc-in [:runner :rd-access-fn] seq)
                                      (unregister-events state side card))}}}
 
    "Singularity"
