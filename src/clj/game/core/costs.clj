@@ -2,7 +2,7 @@
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
          facedown? make-result unknown->kw discard-from-hand card-str trash trash-cards
-         complete-with-result all-installed-runner-type)
+         complete-with-result all-installed-runner-type pick-credit-providing-cards)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -266,8 +266,22 @@
 
 (defn pay-credits
   [state side eid card amount]
-  (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
-  (complete-with-result state side eid (deduct state side [:credit amount])))
+  (case (:source-type eid)
+    :runner-install
+    (letfn [(provider-func []
+              (filter #((or (-> % card-def :interactions :pay-credits) (req false)) state side eid % [card]) (all-active-installed state :runner)))]
+      (if (< 0 (count (provider-func)))
+        (wait-for (resolve-ability state side (pick-credit-providing-cards amount provider-func) card nil)
+                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
+                  (complete-with-result state side eid (:msg async-result)))
+        (do
+          (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
+          (complete-with-result state side eid (deduct state side [:credit amount])))))
+
+    ;; Default
+    (do
+      (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
+      (complete-with-result state side eid (deduct state side [:credit amount])))))
 
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"
@@ -340,7 +354,7 @@
   [state side eid costs card action msgs]
   (if (empty? costs)
     (effect-completed state side (make-result eid msgs))
-    (wait-for (cost-handler state side (make-eid state {:old-eid eid}) card action costs (first costs))
+    (wait-for (cost-handler state side (make-eid state eid) card action costs (first costs))
               (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
 
 (defn pay-sync
@@ -349,7 +363,7 @@
   (let [raw-costs (not-empty (remove map? args))
         action (not-empty (filter map? args))]
     (if-let [costs (apply can-pay? state side (:title card) raw-costs)]
-      (wait-for (pay-sync-next state side (make-eid state {:old-eid eid}) costs card action [])
+      (wait-for (pay-sync-next state side (make-eid state eid) costs card action [])
                 (complete-with-result state side eid (->> async-result
                                                           (filter some?)
                                                           (join " and "))))

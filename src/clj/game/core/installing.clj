@@ -423,7 +423,7 @@
        (wait-for (trigger-event-simult state side :pre-install nil card facedown)
                  (let [cost (runner-get-cost state side card params)]
                    (if (runner-can-install? state side card facedown)
-                     (wait-for (pay-sync state side (make-eid state {:old-eid eid}) card cost)
+                     (wait-for (pay-sync state side (make-eid state eid) card cost)
                                (if-let [cost-str async-result]
                                  (let [c (if host-card
                                            (host state side host-card card)

@@ -148,14 +148,11 @@
 
 (defn make-eid
   ([state] (make-eid state nil))
-  ([state {:keys [old-eid source source-type]}]
-   (if old-eid
-     (merge {:eid (:eid (swap! state update-in [:eid] inc))}
-            (select-keys old-eid [:source :source-type]))
-     (merge {:eid (:eid (swap! state update-in [:eid] inc))}
-            (when source
-              {:source source
-               :source-type source-type})))))
+  ([state {:keys [source source-type]}]
+   (merge {:eid (:eid (swap! state update-in [:eid] inc))}
+          (when source
+            {:source source
+             :source-type source-type}))))
 
 (defn make-result
   [eid result]

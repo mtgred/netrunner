@@ -1970,7 +1970,8 @@
                                    :msg "break 1 Code Gate or Barrier subroutine"}])
 
    "Sahasrara"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits (req (and (< 0 (get-counters card :recurring)) (program? target)))}}
 
    "Saker"
    (auto-icebreaker ["Barrier"]

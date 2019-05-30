@@ -207,6 +207,42 @@
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
 
+(defn pick-credit-providing-cards
+  "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
+  ([provider-func] (pick-credit-providing-cards (hash-map) 0 nil provider-func))
+  ([target-count provider-func] (pick-credit-providing-cards (hash-map) 0 target-count provider-func))
+  ([selected-cards counter-count target-count provider-func]
+   {:async true
+    :prompt (str "Select a card with recurring credits ("
+                 counter-count (when (and target-count (pos? target-count))
+                                 (str " of " target-count))
+                 " credits)")
+    :choices {:req #(and (< 0 (get-counters % :recurring)) (.contains (provider-func) %))}
+    :effect (req (add-counter state :runner target :recurring -1)
+                 (let [selected-cards (update selected-cards (:cid target)
+                                              ;; Store card reference and number of counters picked
+                                              ;; Overwrite card reference each time
+                                              #(assoc % :card target :number (inc (:number % 0))))
+                       counter-count (inc counter-count)]
+                   (if (or (not target-count) (< counter-count target-count))
+                     (continue-ability state side
+                                       (pick-credit-providing-cards selected-cards counter-count target-count provider-func)
+                                       card nil)
+                     (let [msg (join ", " (map #(let [{:keys [card number]} %
+                                                      title (:title card)]
+                                                  (str (quantify number "recurring credit") " from " title))
+                                               (vals selected-cards)))]
+                       (effect-completed state side (make-result eid {:number counter-count :msg msg}))))))
+    :cancel-effect (if target-count
+                     (req (doseq [{:keys [card number]} (vals selected-cards)]
+                            (add-counter state :runner (get-card state card) :recurring number))
+                          (effect-completed state side (make-result eid :cancel)))
+                     (req (let [msg (join ", " (map #(let [{:keys [card number]} %
+                                                      title (:title card)]
+                                                  (str (quantify number "recurring credit") " from " title))
+                                               (vals selected-cards)))]
+                           (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
+
 (defn never?
   "Returns true if is argument is :never."
   [x]
