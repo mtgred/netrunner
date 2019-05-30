@@ -264,6 +264,11 @@
                 (str "trashes " (quantify amount "card") " randomly from "
                      (if (= :corp side) "HQ" "the grip"))))))
 
+(defn pay-credits
+  [state side eid card amount]
+  (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
+  (complete-with-result state side eid (deduct state side [:credit amount])))
+
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"
   ([state side card action costs cost] (cost-handler state side (make-eid state) card action costs cost))
@@ -309,6 +314,9 @@
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card amount)
 
+     ;; Pay credits
+     :credit (pay-credits state side eid card amount)
+
      ;; Else
      (do
        (swap! state update-in [:stats side :spent cost-type] (fnil + 0) amount)
@@ -332,7 +340,7 @@
   [state side eid costs card action msgs]
   (if (empty? costs)
     (effect-completed state side (make-result eid msgs))
-    (wait-for (cost-handler state side card action costs (first costs))
+    (wait-for (cost-handler state side (make-eid state (select-keys eid [:source :source-type])) card action costs (first costs))
               (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
 
 (defn pay-sync
@@ -341,7 +349,7 @@
   (let [raw-costs (not-empty (remove map? args))
         action (not-empty (filter map? args))]
     (if-let [costs (apply can-pay? state side (:title card) raw-costs)]
-      (wait-for (pay-sync-next state side costs card action [])
+      (wait-for (pay-sync-next state side (make-eid state (select-keys eid [:source :source-type])) costs card action [])
                 (complete-with-result state side eid (->> async-result
                                                           (filter some?)
                                                           (join " and "))))

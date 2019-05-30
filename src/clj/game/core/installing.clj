@@ -406,8 +406,10 @@
 (defn runner-install
   "Installs specified runner card if able
   Params include extra-cost, no-cost, host-card, facedown and custom-message."
-  ([state side card] (runner-install state side (make-eid state) card nil))
-  ([state side card params] (runner-install state side (make-eid state) card params))
+  ([state side card] (runner-install state side (make-eid state {:source nil
+                                                                 :source-type :runner-install}) card nil))
+  ([state side card params] (runner-install state side (make-eid state {:source nil
+                                                                        :source-type :runner-install}) card params))
   ([state side eid card {:keys [host-card facedown no-mu no-msg] :as params}]
    (if (and (empty? (get-in @state [side :locked (-> card :zone first)]))
             (not (install-locked? state :runner)))
@@ -421,7 +423,7 @@
        (wait-for (trigger-event-simult state side :pre-install nil card facedown)
                  (let [cost (runner-get-cost state side card params)]
                    (if (runner-can-install? state side card facedown)
-                     (if-let [cost-str (pay state side card cost)]
+                     (if-let [cost-str (pay-sync state side eid card cost)]
                        (let [c (if host-card
                                  (host state side host-card card)
                                  (move state side card
