@@ -423,37 +423,38 @@
        (wait-for (trigger-event-simult state side :pre-install nil card facedown)
                  (let [cost (runner-get-cost state side card params)]
                    (if (runner-can-install? state side card facedown)
-                     (if-let [cost-str (pay-sync state side eid card cost)]
-                       (let [c (if host-card
-                                 (host state side host-card card)
-                                 (move state side card
-                                       [:rig (if facedown :facedown (to-keyword (:type card)))]))
-                             c (assoc c :installed :this-turn :new true)
-                             installed-card (if facedown
-                                              (do (update! state side c)
-                                                  (find-latest state c))
-                                              (card-init state side c {:resolve-effect false
-                                                                       :init-data true}))]
-                         (when-not no-msg
-                           (runner-install-message state side (:title card) cost-str params))
+                     (wait-for (pay-sync state side (make-eid state {:old-eid eid}) card cost)
+                               (if-let [cost-str async-result]
+                                 (let [c (if host-card
+                                           (host state side host-card card)
+                                           (move state side card
+                                                 [:rig (if facedown :facedown (to-keyword (:type card)))]))
+                                       c (assoc c :installed :this-turn :new true)
+                                       installed-card (if facedown
+                                                        (do (update! state side c)
+                                                            (find-latest state c))
+                                                        (card-init state side c {:resolve-effect false
+                                                                                 :init-data true}))]
+                                   (when-not no-msg
+                                     (runner-install-message state side (:title card) cost-str params))
 
-                         (play-sfx state side "install-runner")
-                         (when (and (is-type? card "Program")
-                                    (not facedown)
-                                    (not no-mu))
-                           ;; Use up mu from program not installed facedown
-                           (use-mu state (:memoryunits card))
-                           (toast-check-mu state))
-                         (handle-virus-counter-flag state side installed-card)
-                         (when (and (not facedown) (is-type? card "Resource"))
-                           (swap! state assoc-in [:runner :register :installed-resource] true))
-                         (when (and (not facedown) (has-subtype? c "Icebreaker"))
-                           (update-breaker-strength state side c))
-                         (trigger-event-simult state side eid :runner-install
-                                               (when-not facedown
-                                                 {:card-ability (card-as-handler installed-card)})
-                                               installed-card))
-                       (effect-completed state side eid))
-                     (effect-completed state side eid)))
-                 (clear-install-cost-bonus state side)))
-     (effect-completed state side eid))))
+                                   (play-sfx state side "install-runner")
+                                   (when (and (is-type? card "Program")
+                                              (not facedown)
+                                              (not no-mu))
+                                     ;; Use up mu from program not installed facedown
+                                     (use-mu state (:memoryunits card))
+                                     (toast-check-mu state))
+                                   (handle-virus-counter-flag state side installed-card)
+                                   (when (and (not facedown) (is-type? card "Resource"))
+                                     (swap! state assoc-in [:runner :register :installed-resource] true))
+                                   (when (and (not facedown) (has-subtype? c "Icebreaker"))
+                                     (update-breaker-strength state side c))
+                                   (trigger-event-simult state side eid :runner-install
+                                                         (when-not facedown
+                                                           {:card-ability (card-as-handler installed-card)})
+                                                         installed-card))
+                                 (effect-completed state side eid)))
+                               (effect-completed state side eid)))
+                   (clear-install-cost-bonus state side)))
+       (effect-completed state side eid))))

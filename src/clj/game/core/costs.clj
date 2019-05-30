@@ -340,7 +340,7 @@
   [state side eid costs card action msgs]
   (if (empty? costs)
     (effect-completed state side (make-result eid msgs))
-    (wait-for (cost-handler state side (make-eid state (select-keys eid [:source :source-type])) card action costs (first costs))
+    (wait-for (cost-handler state side (make-eid state {:old-eid eid}) card action costs (first costs))
               (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
 
 (defn pay-sync
@@ -349,7 +349,7 @@
   (let [raw-costs (not-empty (remove map? args))
         action (not-empty (filter map? args))]
     (if-let [costs (apply can-pay? state side (:title card) raw-costs)]
-      (wait-for (pay-sync-next state side (make-eid state (select-keys eid [:source :source-type])) costs card action [])
+      (wait-for (pay-sync-next state side (make-eid state {:old-eid eid}) costs card action [])
                 (complete-with-result state side eid (->> async-result
                                                           (filter some?)
                                                           (join " and "))))
