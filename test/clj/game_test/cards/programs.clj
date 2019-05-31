@@ -813,6 +813,15 @@
       (is (= 2 (count (:discard (get-runner)))) "False Echo trashed"))))
 
 (deftest faust
+  (testing "Basic test: Break by discarding"
+    (do-game
+      (new-game {:runner {:deck ["Faust" (qty "Sure Gamble" 3)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Faust")
+      (let [faust (get-program state 0)]
+        (card-ability state :runner faust 0)
+        (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+        (is (= 1 (count (:discard (get-runner)))) "1 card trashed"))))
   (testing "Basic test: Pump by discarding"
     (do-game
       (new-game {:runner {:deck ["Faust" (qty "Sure Gamble" 3)]}})
