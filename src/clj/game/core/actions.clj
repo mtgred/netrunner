@@ -14,7 +14,8 @@
   [state side {:keys [card server]}]
   (when-let [card (get-card state card)]
     (case (:type card)
-      ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
+      ("Event" "Operation") (play-instant state side (make-eid state {:source :action
+                                                                      :source-type :play}) card {:extra-cost [:click 1]})
       ("Hardware" "Resource" "Program") (runner-install state side (make-eid state {:source :action
                                                                                     :source-type :runner-install}) card {:extra-cost [:click 1]})
       ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1] :action :corp-click-install}))

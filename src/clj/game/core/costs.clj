@@ -277,7 +277,7 @@
 
                             ; Default
                             true))
-                    (all-active-installed state :runner)))]
+                    (all-active-installed state side)))]
 
     (if (and (pos? amount) (< 0 (count (provider-func))))
       (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func amount) card nil)

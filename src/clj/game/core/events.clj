@@ -187,19 +187,19 @@
                                   abis)))
          active-player-events (doall (get-handlers active-player))
          opponent-events (doall (get-handlers opponent))]
-     (wait-for (resolve-ability state side first-ability nil nil)
+     (wait-for (resolve-ability state side (make-eid state eid) first-ability nil nil)
                (show-wait-prompt state opponent
                                  (str (side-str active-player) " to resolve " (event-title event) " triggers")
                                  {:priority -1})
                ; let active player activate their events first
-               (wait-for (trigger-event-simult-player state side event active-player-events cancel-fn targets)
+               (wait-for (trigger-event-simult-player state side (make-eid state eid) event active-player-events cancel-fn targets)
                          (when after-active-player
-                           (resolve-ability state side after-active-player nil nil))
+                           (resolve-ability state side eid after-active-player nil nil))
                          (clear-wait-prompt state opponent)
                          (show-wait-prompt state active-player
                                            (str (side-str opponent) " to resolve " (event-title event) " triggers")
                                            {:priority -1})
-                         (wait-for (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
+                         (wait-for (trigger-event-simult-player state opponent (make-eid state eid) event opponent-events cancel-fn targets)
                                    (clear-wait-prompt state active-player)
                                    (effect-completed state side eid)))))))
 

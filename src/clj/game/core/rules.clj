@@ -41,7 +41,7 @@
                              (play-instant state side (make-eid state) eid? card?)))
   ([state side eid card {:keys [targets ignore-cost extra-cost no-additional-cost]}]
    (swap! state update-in [:bonus] dissoc :play-cost)
-   (wait-for (trigger-event-simult state side :pre-play-instant nil card)
+   (wait-for (trigger-event-simult state side (make-eid state eid) :pre-play-instant nil card)
              (when (empty? (get-in @state [side :locked (-> card :zone first)]))
                (if (has-subtype? card "Run")
                  (swap! state assoc-in [:runner :register :click-type] :run))
@@ -70,12 +70,12 @@
                    ;; Wait on pay-sync to finish before triggering instant-effect
                    (let [original-zone (:zone card)
                          moved-card (move state side (assoc card :seen true) :play-area)]
-                     (wait-for (pay-sync state side moved-card (if ignore-cost 0 total-cost) {:action :play-instant})
+                     (wait-for (pay-sync state side (make-eid state eid) moved-card (if ignore-cost 0 total-cost) {:action :play-instant})
                                (if-let [cost-str async-result]
                                  (complete-play-instant state side eid moved-card cost-str ignore-cost)
                                 ;; could not pay the card's price; put it back and mark the effect as being over.
                                  (do
-                                   (move state side moved-card original-zone)
+                                   (move state side eid moved-card original-zone)
                                    (effect-completed state side eid)))))
                    ;; card's req was not satisfied; mark the effect as being over.
                    (effect-completed state side eid)))))))

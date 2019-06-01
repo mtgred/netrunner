@@ -1037,10 +1037,15 @@
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
    "Prepaid VoicePAD"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (= :play (:source-type eid)))
+                                 :type :recurring}}}
 
    "Public Terminal"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :play (:source-type eid))
+                                                (has-subtype? target "Run")))
+                                 :type :recurring}}}
 
    "Q-Coherence Chip"
    {:in-play [:memory 1]

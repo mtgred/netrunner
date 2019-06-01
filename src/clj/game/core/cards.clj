@@ -161,7 +161,7 @@
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force]}]
+  ([state side {:keys [eid zone host] :as card} to {:keys [front index keep-server-alive force]}]
    (let [zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)]
@@ -193,7 +193,7 @@
                    (handle-end-run state side)))
                (swap! state dissoc-in z)))
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
-             (move-zone-fn state side (make-eid state) moved-card card))
+             (move-zone-fn state side (make-eid state eid) moved-card card))
            (trigger-event state side :card-moved card (assoc moved-card :move-to-side side))
            ;; Default a card when moved to inactive zones (except :persistent key)
            (when (#{:discard :hand :deck :rfg :scored} to)
