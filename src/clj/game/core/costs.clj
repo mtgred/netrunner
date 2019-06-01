@@ -282,7 +282,7 @@
     (if (and (pos? amount) (< 0 (count (provider-func))))
       (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func amount) card nil)
                 (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
-                (complete-with-result state side eid (:msg async-result)))
+                (complete-with-result state side eid (str "pays " (:msg async-result))))
       (do
         (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
         (complete-with-result state side eid (deduct state side [:credit amount]))))))

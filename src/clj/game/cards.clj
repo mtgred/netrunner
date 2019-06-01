@@ -218,10 +218,10 @@
                            (swap! state update-in [:stats side :spent :credit] (fnil + 0) target-count)
                            (let [msg (str (join ", " (map #(let [{:keys [card number]} %
                                                                  title (:title card)]
-                                                             (str (quantify number "credit") " from " title))
+                                                             (str number "[Credits] from " title))
                                                           (vals selected-cards)))
                                           (let [remainder (- target-count counter-count)]
-                                            (when (pos? remainder) (str " and " (quantify remainder "credit")))))]
+                                            (when (pos? remainder) (str " and " remainder "[Credits]"))))]
                              (effect-completed state side (make-result eid {:number counter-count :msg msg}))))
                          (effect-completed state side 0)))]
      (if (or (not (pos? target-count))        ; there is a limit
