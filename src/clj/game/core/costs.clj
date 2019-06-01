@@ -269,9 +269,9 @@
   (case (:source-type eid)
     :runner-install
     (letfn [(provider-func []
-              (filter #((or (-> % card-def :interactions :pay-credits) (req false)) state side eid % [card]) (all-active-installed state :runner)))]
+              (filter #((or (-> % card-def :interactions :pay-credits :req) (req false)) state side eid % [card]) (all-active-installed state :runner)))]
       (if (< 0 (count (provider-func)))
-        (wait-for (resolve-ability state side (pick-credit-providing-cards amount provider-func) card nil)
+        (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func amount) card nil)
                   (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
                   (complete-with-result state side eid (:msg async-result)))
         (do

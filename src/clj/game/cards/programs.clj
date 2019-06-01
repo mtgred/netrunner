@@ -1971,7 +1971,8 @@
 
    "Sahasrara"
    {:recurring 2
-    :interactions {:pay-credits (req (and (< 0 (get-counters card :recurring)) (program? target)))}}
+    :interactions {:pay-credits {:req (req (program? target))
+                                 :type :recurring}}}
 
    "Saker"
    (auto-icebreaker ["Barrier"]
