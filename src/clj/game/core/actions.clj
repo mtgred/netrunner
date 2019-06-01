@@ -574,10 +574,11 @@
   "Click to remove a tag."
   [state side args]
   (let [remove-cost (max 0 (- 2 (get-in @state [:runner :tag-remove-bonus] 0)))]
-    (when-let [cost-str (pay state side nil :click 1 :credit remove-cost)]
-      (lose-tags state :runner 1)
-      (system-msg state side (build-spend-msg cost-str "remove 1 tag" "removes 1 tag"))
-      (play-sfx state side "click-remove-tag"))))
+    (wait-for (pay-sync state side (make-eid state {:source :action :source-type :remove-tag}) nil :click 1 :credit remove-cost)
+              (when-let [cost-str async-result]
+                (lose-tags state :runner 1)
+                (system-msg state side (build-spend-msg cost-str "remove 1 tag" "removes 1 tag"))
+                (play-sfx state side "click-remove-tag")))))
 
 (defn continue
   "The runner decides to approach the next ice, or the server itself."

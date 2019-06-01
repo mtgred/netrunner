@@ -561,7 +561,9 @@
 
    "Crash Space"
    {:interactions {:prevent [{:type #{:meat}
-                              :req (req true)}]}
+                              :req (req true)}]
+                   :pay-credits {:req (req (= :remove-tag (:source-type eid)))
+                                 :type :recurring}}
     :recurring 2
     :abilities [{:label "Trash to prevent up to 3 meat damage"
                  :msg "prevent up to 3 meat damage"
