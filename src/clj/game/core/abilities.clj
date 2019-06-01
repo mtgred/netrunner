@@ -106,16 +106,16 @@
   :makes-run -- indicates if the ability makes a run."
   ;; perhaps the most important function in the game logic
   ([state side {:keys [eid] :as ability} card targets]
-   (resolve-ability state side (or eid (make-eid state)) ability card targets))
+   (resolve-ability state side (or eid (make-eid state {:source card :source-type :ability})) ability card targets))
   ([state side eid ability card targets]
-   (resolve-ability-eid state side (assoc ability :eid eid) card targets)))
+   (resolve-ability-eid state side (assoc ability :eid eid :source card :source-type :ability) card targets)))
 
 (defn- resolve-ability-eid
   ([state side {:keys [eid] :as ability} card targets]
    (if (= 1 (count ability)) ;; only has the eid, in effect a nil ability
      (effect-completed state side eid)
      (if (and ability (not eid))
-       (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
+       (resolve-ability-eid state side (assoc ability :eid (make-eid state eid)) card targets)
        (when ability
          ;; Is this an optional ability?
          (check-optional state side ability card targets)
@@ -188,11 +188,11 @@
        (:number choices)
        (let [n ((:number choices) state side eid card targets)
              d (if-let [dfunc (:default choices)]
-                 (dfunc state side (make-eid state) card targets)
+                 (dfunc state side (make-eid state eid) card targets)
                  0)]
          (prompt! state s card prompt {:number n :default d} ab args))
        (:card-title choices)
-       (let [card-titles (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
+       (let [card-titles (sort (map :title (filter #((:card-title choices) state side (make-eid state eid) nil [%])
                                                    (server-cards))))
              choices (assoc choices :autocomplete card-titles)
              args (assoc args :prompt-type :card-title)]
@@ -210,7 +210,7 @@
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [cost counter-cost advance-counter-cost] :as ability} {:keys [advance-counter] :as card} targets]
+  [state side {:keys [eid cost counter-cost advance-counter-cost] :as ability} {:keys [advance-counter] :as card} targets]
   ;; Ensure counter costs can be paid
   (let [[counter-type counter-amount] counter-cost]
     (when (and (or (not counter-cost)
@@ -220,7 +220,7 @@
                    (<= advance-counter-cost (or advance-counter 0))))
       ;; Ensure that any costs can be paid
       (wait-for
-        (pay-sync state side card cost {:action (:cid card)})
+        (pay-sync state side (make-eid state eid) card cost {:action (:cid card)})
         (if-let [cost-str async-result]
           (let [c (if counter-cost
                     (update-in card [:counter counter-type] #(- (or % 0) (or counter-amount 0)))

@@ -266,22 +266,26 @@
 
 (defn pay-credits
   [state side eid card amount]
-  (case (:source-type eid)
-    :runner-install
-    (letfn [(provider-func []
-              (filter #((or (-> % card-def :interactions :pay-credits :req) (req false)) state side eid % [card]) (all-active-installed state :runner)))]
-      (if (< 0 (count (provider-func)))
-        (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func amount) card nil)
-                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
-                  (complete-with-result state side eid (:msg async-result)))
-        (do
-          (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
-          (complete-with-result state side eid (deduct state side [:credit amount])))))
+  (letfn [(provider-func []
+            (filter #(and ((or (-> % card-def :interactions :pay-credits :req) (req false)) state side eid % [card])
+                          (case (-> % card-def :interactions :pay-credits :type)
+                            :recurring
+                            (pos? (get-counters % :recurring))
 
-    ;; Default
-    (do
-      (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
-      (complete-with-result state side eid (deduct state side [:credit amount])))))
+                            :credit
+                            (pos? (get-counters % :credit))
+
+                            ; Default
+                            true))
+                    (all-active-installed state :runner)))]
+
+    (if (and (pos? amount) (< 0 (count (provider-func))))
+      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func amount) card nil)
+                (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
+                (complete-with-result state side eid (:msg async-result)))
+      (do
+        (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
+        (complete-with-result state side eid (deduct state side [:credit amount]))))))
 
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"

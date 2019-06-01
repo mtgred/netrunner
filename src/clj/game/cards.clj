@@ -231,11 +231,7 @@
           :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
                              gained-credits (case pay-credits-type
                                               :recurring
-                                              (or (do
-                                                    (add-prop state side target :rec-counter -1)
-                                                    (when (has-subtype? target "Stealth")
-                                                      (trigger-event state side :spent-stealth-credit target)))
-                                                  1)
+                                              (or (add-prop state side target :rec-counter -1) 1)
 
                                               :credit
                                               (or (add-counter state side target :credit -1) 1)
@@ -246,17 +242,21 @@
                                                     ;; Store card reference and number of counters picked
                                                     ;; Overwrite card reference each time
                                                     #(assoc % :card target :number (inc (:number % 0))))
-                             counter-count (+ counter-count gained-credits)]
-                         (if (or (not target-count) (< counter-count target-count))
-                           (continue-ability state side
-                                             (pick-credit-providing-cards provider-func selected-cards counter-count target-count)
-                                             card nil)
-                           (let [msg (join ", " (map #(let [{:keys [card number]} %
-                                                            title (:title card)]
-                                                        (str (quantify number "credit") " from " title))
-                                                     (vals selected-cards)))]
-                             (effect-completed state side (make-result eid {:number counter-count :msg msg}))))
-                         ))
+                             counter-count (+ counter-count gained-credits)
+                             next-iteration (fn []
+                                              (if (or (not target-count) (< counter-count target-count))
+                                                (continue-ability state side
+                                                                  (pick-credit-providing-cards provider-func selected-cards counter-count target-count)
+                                                                  card nil)
+                                                (let [msg (join ", " (map #(let [{:keys [card number]} %
+                                                                                 title (:title card)]
+                                                                             (str (quantify number "credit") " from " title))
+                                                                          (vals selected-cards)))]
+                                                  (effect-completed state side (make-result eid {:number counter-count :msg msg})))))]
+                         (if (has-subtype? target "Stealth")
+                           (wait-for (trigger-event-sync state side (make-eid state eid) :spent-stealth-credit target)
+                                     (next-iteration))
+                           (next-iteration))))
           :cancel-effect (req (effect-completed state side 0))}))) ; ToDo
 
 (defn never?

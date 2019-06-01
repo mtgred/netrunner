@@ -614,7 +614,10 @@
                                 :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}}}
 
    "Cloak"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Clot"
    {:effect (req (let [agendas (map first (filter #(is-type? (first %) "Agenda")
@@ -1971,7 +1974,8 @@
 
    "Sahasrara"
    {:recurring 2
-    :interactions {:pay-credits {:req (req (program? target))
+    :interactions {:pay-credits {:req (req (and (= :runner-install (:source eid))
+                                                (program? target)))
                                  :type :recurring}}}
 
    "Saker"

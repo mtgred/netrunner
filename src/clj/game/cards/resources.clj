@@ -1455,7 +1455,14 @@
                                                     (system-msg state :runner (str "places 1 [Credits] on Net Mercur"))
                                                     (add-counter state :runner card :credit 1)
                                                     (effect-completed state side eid))))}
-                                card nil))}}}
+                                card nil))}}
+    ; Normally this should be (req true), but having pay-credits prompts on
+    ; literally every interaction would get tiresome. Therefore Net Mercur will
+    ; behave like Cloak for now
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :credit}}}
+
 
    "Network Exchange"
    {:msg "increase the install cost of non-innermost ICE by 1"
