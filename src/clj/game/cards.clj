@@ -212,13 +212,13 @@
   ([provider-func] (pick-credit-providing-cards provider-func (hash-map) 0 nil))
   ([provider-func target-count] (pick-credit-providing-cards provider-func (hash-map) 0 target-count))
   ([provider-func selected-cards counter-count target-count]
-   (let [providers (provider-func)]
+   (let [providers-cid (map :cid (provider-func))]
          {:async true
           :prompt (str "Select a credit providing card ("
                        counter-count (when (and target-count (pos? target-count))
                                        (str " of " target-count))
                        " credits)")
-          :choices {:req #(and (in-coll? providers %)
+          :choices {:req #(and (in-coll? providers-cid (:cid %))
                                (case (-> % card-def :interactions :pay-credits :type)
                                  :recurring
                                  (pos? (get-counters % :recurring))
