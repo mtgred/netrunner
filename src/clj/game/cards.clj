@@ -212,51 +212,52 @@
   ([provider-func] (pick-credit-providing-cards provider-func (hash-map) 0 nil))
   ([provider-func target-count] (pick-credit-providing-cards provider-func (hash-map) 0 target-count))
   ([provider-func selected-cards counter-count target-count]
-   {:async true
-    :prompt (str "Select a credit providing card ("
-                 counter-count (when (and target-count (pos? target-count))
-                                 (str " of " target-count))
-                 " credits)")
-    :choices {:req #(and (in-coll? (provider-func) %)
-                         (case (-> % card-def :interactions :pay-credits :type)
-                           :recurring
-                           (pos? (get-counters % :recurring))
+   (let [providers (provider-func)]
+         {:async true
+          :prompt (str "Select a credit providing card ("
+                       counter-count (when (and target-count (pos? target-count))
+                                       (str " of " target-count))
+                       " credits)")
+          :choices {:req #(and (in-coll? providers %)
+                               (case (-> % card-def :interactions :pay-credits :type)
+                                 :recurring
+                                 (pos? (get-counters % :recurring))
 
-                           :credit
-                           (pos? (get-counters % :credit))
+                                 :credit
+                                 (pos? (get-counters % :credit))
 
-                           :custom
-                           true))}
-    :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
-                       gained-credits (case pay-credits-type
-                                        :recurring
-                                        (or (do
-                                              (add-prop state side target :rec-counter -1)
-                                              (when (has-subtype? target "Stealth")
-                                                (trigger-event state side :spent-stealth-credit target)))
-                                              1)
+                                 :custom
+                                 true))}
+          :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
+                             gained-credits (case pay-credits-type
+                                              :recurring
+                                              (or (do
+                                                    (add-prop state side target :rec-counter -1)
+                                                    (when (has-subtype? target "Stealth")
+                                                      (trigger-event state side :spent-stealth-credit target)))
+                                                  1)
 
-                                        :credit
-                                        (or (add-counter state side target :credit -1) 1)
+                                              :credit
+                                              (or (add-counter state side target :credit -1) 1)
 
-                                        :custom ;custom functions should return the number of credits provided
-                                        (or ((-> target card-def :interactions :pay-credits :custom) state side eid card nil) 1))
-                       selected-cards (update selected-cards (:cid target)
-                                              ;; Store card reference and number of counters picked
-                                              ;; Overwrite card reference each time
-                                              #(assoc % :card target :number (inc (:number % 0))))
-                       counter-count (+ counter-count gained-credits)]
-                   (if (or (not target-count) (< counter-count target-count))
-                     (continue-ability state side
-                                       (pick-credit-providing-cards provider-func selected-cards counter-count target-count)
-                                       card nil)
-                     (let [msg (join ", " (map #(let [{:keys [card number]} %
-                                                      title (:title card)]
-                                                  (str (quantify number "credit") " from " title))
-                                               (vals selected-cards)))]
-                       (effect-completed state side (make-result eid {:number counter-count :msg msg}))))
-                   ))
-    :cancel-effect (req (effect-completed state side 0))})) ; ToDo
+                                              :custom ;custom functions should return the number of credits provided
+                                              (or ((-> target card-def :interactions :pay-credits :custom) state side eid card nil) 1))
+                             selected-cards (update selected-cards (:cid target)
+                                                    ;; Store card reference and number of counters picked
+                                                    ;; Overwrite card reference each time
+                                                    #(assoc % :card target :number (inc (:number % 0))))
+                             counter-count (+ counter-count gained-credits)]
+                         (if (or (not target-count) (< counter-count target-count))
+                           (continue-ability state side
+                                             (pick-credit-providing-cards provider-func selected-cards counter-count target-count)
+                                             card nil)
+                           (let [msg (join ", " (map #(let [{:keys [card number]} %
+                                                            title (:title card)]
+                                                        (str (quantify number "credit") " from " title))
+                                                     (vals selected-cards)))]
+                             (effect-completed state side (make-result eid {:number counter-count :msg msg}))))
+                         ))
+          :cancel-effect (req (effect-completed state side 0))}))) ; ToDo
 
 (defn never?
   "Returns true if is argument is :never."
