@@ -1588,7 +1588,9 @@
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Net Celebrity"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (:run @state))
+                                 :type :recurring}}}
 
    "Networking"
    {:msg "remove 1 tag"

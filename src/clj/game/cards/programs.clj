@@ -1542,7 +1542,10 @@
    {:abilities [(break-sub 1 0 "Barrier")]}
 
    "Multithreader"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (program? target)))
+                                 :type :recurring}}}
 
    "Musaazi"
    (khumalo-breaker "sentry")
@@ -1815,7 +1818,9 @@
                       (set-prop state side card :rec-counter (get-counters card :virus))))
     :events {:successful-run {:silent (req true)
                               :req (req (= target :hq))
-                              :effect (effect (add-counter card :virus 1))}}}
+                              :effect (effect (add-counter card :virus 1))}}
+    :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :server 0])))
+                                 :type :recurring}}}
 
    "Pipeline"
    (auto-icebreaker ["Sentry"]

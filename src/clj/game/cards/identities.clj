@@ -394,7 +394,10 @@
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
 
    "Ele \"Smoke\" Scovak: Cynosure of the Net"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Exile: Streethawk"
    {:flags {:runner-install-draw true}

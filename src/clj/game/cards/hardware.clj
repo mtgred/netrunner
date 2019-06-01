@@ -254,13 +254,22 @@
                  :effect (effect (gain-credits 1))}]}
 
    "Cyberfeeder"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (or (and (= :runner-install (:source-type eid))
+                                                    (has-subtype? target "Virus")
+                                                    (program? target))
+                                               (and (= :ability (:source-type eid))
+                                                    (has-subtype? target "Icebreaker"))))
+                                 :type :recurring}}}
 
    "CyberSolutions Mem Chip"
    {:in-play [:memory 2]}
 
    "Cybsoft MacroDrive"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
+                                                (program? target)))
+                                 :type :recurring}}}
 
    "Daredevil"
    {:in-play [:memory 2]
@@ -383,7 +392,11 @@
              :run-ends {:effect (effect (update! (dissoc card :dorm-active)))}}}
 
    "Dyson Fractal Generator"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Fracter")
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Dyson Mem Chip"
    {:in-play [:memory 1 :link 1]}
@@ -664,7 +677,11 @@
                               :effect (effect (breaker-strength-bonus 1))}}})
 
    "Lockpick"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Decoder")
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Logos"
    {:in-play [:memory 1 :hand-size 1]
@@ -720,7 +737,9 @@
    "Māui"
    {:in-play [:memory 2]
     :recurring (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
-    :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))}
+    :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
+    :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :servers 0])))
+                                 :type :recurring}}}
 
    "Maw"
    (let [ability {:label "Trash a card from HQ"
@@ -912,7 +931,11 @@
                                  (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}]
     :events {:card-moved {:req (req (= (:cid target) (:Omnidrive-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :Omnidrive-prog))
-                                          (use-mu (:memoryunits target)))}}}
+                                          (use-mu (:memoryunits target)))}}
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (program? target)
+                                                (= (:title (:host target)) "Omni-drive")))
+                                 :type :recurring}}}
 
    "Paragon"
    {:in-play [:memory 1]
@@ -1244,7 +1267,11 @@
              :run-ends {:effect (effect (update! (dissoc card :sifr-target)))}}}
 
    "Silencer"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Killer")
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Skulljack"
    {:effect (effect (damage eid :brain 1 {:card card}))
@@ -1255,7 +1282,10 @@
     :recurring 2
     :events {:successful-trace {:req (req run)
                                 :effect (effect (system-msg (str "suffers 1 brain damage from Spinal Modem"))
-                                                (damage eid :brain 1 {:card card}))}}}
+                                                (damage eid :brain 1 {:card card}))}}
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Sports Hopper"
    {:in-play [:link 1]
@@ -1329,7 +1359,10 @@
 
    "The Toolbox"
    {:in-play [:link 2 :memory 2]
-    :recurring 2}
+    :recurring 2
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Titanium Ribs"
    {:events

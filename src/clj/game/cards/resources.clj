@@ -1021,7 +1021,12 @@
                  :effect (req (gain-credits state side 1)
                               (trigger-event state side :spent-stealth-credit card)
                               (when (zero? (get-counters (get-card state card) :credit))
-                                (trash state :runner card {:unpreventable true})))}]}
+                                (trash state :runner card {:unpreventable true})))}]
+    ; See Net Mercur for why this implementation was chosen
+    :interactions {:pay-credits {:req (req (and (:run @state)
+                                                (= :ability (:source-type eid))
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :credit}}}
 
    "Globalsec Security Clearance"
    {:req (req (> (:link runner) 1))
@@ -1107,7 +1112,10 @@
                    :effect (effect (add-counter :runner card :credit 1))}}
     :abilities [{:counter-cost [:credit 1]
                  :effect (effect (gain-credits 1))
-                 :msg "take 1 [Credits] to install programs"}]}
+                 :msg "take 1 [Credits] to install programs"}]
+    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
+                                                (program? target)))
+                                 :type :recurring}}}
 
    "Ice Carver"
    {:events {:pre-ice-strength
@@ -1115,7 +1123,10 @@
               :effect (effect (ice-strength-bonus -1 target))}}}
 
    "Inside Man"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
+                                                (hardware? target)))
+                                 :type :recurring}}}
 
    "Investigative Journalism"
    {:req (req has-bad-pub)
