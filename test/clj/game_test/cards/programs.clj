@@ -372,38 +372,6 @@
         (card-ability state :runner chisel 0)
         (is (refresh iw) "Ice Wall should still be around as it's unrezzed")))))
 
-(deftest ^:test-refresh/focus cloak
-  ;; Cloak
-  (testing "Basic test"
-    (do-game
-      (new-game {:corp {:hand ["DNA Tracker"]}
-                 :runner {:hand ["Cloak" "Houdini" "Net Mercur"]}})
-      (play-from-hand state :corp "DNA Tracker" "HQ")
-      (core/gain state :corp :credit 10)
-      (take-credits state :corp)
-      (core/gain state :runner :credit 10)
-      (core/gain state :runner :click 10)
-      (play-from-hand state :runner "Cloak")
-      (play-from-hand state :runner "Houdini")
-      (play-from-hand state :runner "Net Mercur")
-      (let [cl (get-program state 0)
-            houd (get-program state 1)
-            nm (get-resource state 0)
-            dna (get-ice state :hq 0)]
-        (run-on state "HQ")
-        (core/rez state :corp dna)
-        ;(core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh refr)})
-        (card-ability state :runner houd 1)
-        (println (prompt-fmt :runner))
-        (click-card state :runner "Cloak")
-        (println (prompt-fmt :runner))
-        (click-prompt state :runner "Place 1 [Credits]")
-        (println (prompt-fmt :runner))
-        (click-card state :runner nm)
-        (println (prompt-fmt :runner))
-        (println (last (:log @state)))
-        ))))
-
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
   (testing "Trash and cash out"

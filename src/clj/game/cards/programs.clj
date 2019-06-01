@@ -1974,7 +1974,7 @@
 
    "Sahasrara"
    {:recurring 2
-    :interactions {:pay-credits {:req (req (and (= :runner-install (:source eid))
+    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
                                                 (program? target)))
                                  :type :recurring}}}
 
