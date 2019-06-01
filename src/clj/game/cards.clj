@@ -172,9 +172,9 @@
   The ability triggered returns either {:number n :msg msg} on completed effect, or :cancel on a cancel.
   n is the number of virus counters selected, msg is the msg string of all the cards and the virus counters taken from each.
   If called with no arguments, allows user to select as many counters as they like until 'Cancel' is pressed."
-  ([] (pick-virus-counters-to-spend (hash-map) 0 nil))
-  ([target-count] (pick-virus-counters-to-spend (hash-map) 0 target-count))
-  ([selected-cards counter-count target-count]
+  ([] (pick-virus-counters-to-spend nil (hash-map) 0))
+  ([target-count] (pick-virus-counters-to-spend target-count (hash-map) 0 ))
+  ([target-count selected-cards counter-count]
    {:async true
     :prompt (str "Select a card with virus counters ("
                  counter-count (when (and target-count (pos? target-count))
@@ -190,7 +190,7 @@
                        counter-count (inc counter-count)]
                    (if (or (not target-count) (< counter-count target-count))
                      (continue-ability state side
-                                       (pick-virus-counters-to-spend selected-cards counter-count target-count)
+                                       (pick-virus-counters-to-spend target-count selected-cards counter-count)
                                        card nil)
                      (let [msg (join ", " (map #(let [{:keys [card number]} %
                                                       title (:title card)]
