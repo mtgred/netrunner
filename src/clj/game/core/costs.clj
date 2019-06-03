@@ -2,7 +2,7 @@
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
          facedown? make-result unknown->kw discard-from-hand card-str trash trash-cards
-         complete-with-result all-installed-runner-type pick-credit-providing-cards)
+         complete-with-result all-installed-runner-type pick-credit-providing-cards all-active)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -266,20 +266,24 @@
 
 (defn pay-credits
   [state side eid card amount]
-  (letfn [(provider-func []
-            (filter #(and ((or (-> % card-def :interactions :pay-credits :req) (req false)) state side eid % [card])
-                          (case (-> % card-def :interactions :pay-credits :type)
-                            :recurring
-                            (pos? (get-counters % :recurring))
-
-                            :credit
-                            (pos? (get-counters % :credit))
-
-                            ; Default
-                            true))
-                    (all-active-installed state side)))]
-
-    (if (and (pos? amount) (< 0 (count (provider-func))))
+  (let [provider-cards (filter
+                         #(when-let [pc (-> % card-def :interactions :pay-credits)]
+                            (if (:req pc)
+                              ((:req pc) state side eid % [card])
+                              true))
+                         (all-active state side))
+        provider-func (fn []
+                        (filter
+                          #(case (-> % card-def :interactions :pay-credits :type)
+                             :recurring
+                             (pos? (get-counters (get-card state %) :recurring))
+                             :credit
+                             (pos? (get-counters (get-card state %) :credit))
+                             :custom
+                             true)
+                          provider-cards))]
+    (if (and (pos? amount)
+             (pos? (count (provider-func))))
       (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func amount) card nil)
                 (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
                 (complete-with-result state side eid (str "pays " (:msg async-result))))
