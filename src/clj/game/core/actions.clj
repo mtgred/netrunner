@@ -412,9 +412,9 @@
 
 (defn rez
   "Rez a corp card."
-  ([state side card] (rez state side (make-eid state) card nil))
+  ([state side card] (rez state side (make-eid state {:source card :source-type :rez}) card nil))
   ([state side card args]
-   (rez state side (make-eid state) card args))
+   (rez state side (make-eid state {:source card :source-type :rez}) card args))
   ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force no-get-card paid-alt cached-bonus] :as args}]
    (let [card (if no-get-card
                 card
@@ -452,7 +452,7 @@
                                      (when (and (not= ignore-cost :all-costs)
                                                 (not (:disabled card)))
                                        additional-costs))]
-                   (wait-for (apply pay-sync state side card costs)
+                   (wait-for (apply pay-sync state side (make-eid state eid) card costs)
                              (when-let [cost-str (and (string? async-result) async-result)]
                                ;; Deregister the derezzed-events before rezzing card
                                (when (:derezzed-events cdef)

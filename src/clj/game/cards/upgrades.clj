@@ -752,7 +752,11 @@
 
    "Khondi Plaza"
    {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
-    :effect (effect (set-prop card :rec-counter (count (get-remotes state))))}
+    :effect (effect (set-prop card :rec-counter (count (get-remotes state))))
+    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
+                                                (ice? target)
+                                                (= (card->server state card) (card->server state target))))
+                                 :type :recurring}}}
 
    "Manta Grid"
    {:events {:successful-run-ends

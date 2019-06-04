@@ -555,7 +555,10 @@
                                    :effect (effect (damage eid :meat 2 {:card card}))}}}
 
    "Dedicated Server"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
+                                                (ice? card)))
+                                 :type :recurring}}}
 
    "Director Haas"
    {:in-play [:click-per-turn 1]
@@ -1168,7 +1171,9 @@
                                :effect (effect (damage :corp eid :meat 1 {:card card}))}}}
 
    "Mumba Temple"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (= :rez (:source-type eid)))
+                                 :type :recurring}}}
 
    "Mumbad City Hall"
    {:abilities [{:label "Search R&D for an Alliance card"
@@ -2014,7 +2019,10 @@
     :leave-play (req (swap! state assoc-in [:runner :register :cannot-play-current] false))}
 
    "The Root"
-   {:recurring 3}
+   {:recurring 3
+    :interactions {:pay-credits {:req (req (or (= :rez (:source-type eid))
+                                               (false))) ; ToDo: other cases
+                                 :type :recurring}}}
 
    "Thomas Haas"
    {:advanceable :always
