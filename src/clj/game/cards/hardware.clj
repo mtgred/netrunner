@@ -934,7 +934,7 @@
                                           (use-mu (:memoryunits target)))}}
     :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                 (program? target)
-                                                (= (:title (:host target)) "Omni-drive")))
+                                                (same-card? card (:host target))))
                                  :type :recurring}}}
 
    "Paragon"
