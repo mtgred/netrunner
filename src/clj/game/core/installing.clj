@@ -233,17 +233,17 @@
                     ;; Ignore all costs. Pass eid to rez.
                     :rezzed-no-cost
                     (wait-for (event state side nil)
-                              (rez state side eid moved-card {:ignore-cost :all-costs}))
+                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card {:ignore-cost :all-costs}))
 
                     ;; Ignore rez cost only. Pass eid to rez.
                     :rezzed-no-rez-cost
                     (wait-for (event state side nil)
-                              (rez state side eid moved-card {:ignore-cost :rez-costs}))
+                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card {:ignore-cost :rez-costs}))
 
                     ;; Pay costs. Pass eid to rez.
                     :rezzed
                     (wait-for (event state side nil)
-                              (rez state side eid moved-card nil))
+                              (rez state side (assoc eid :source moved-card :source-type :rez) moved-card nil))
 
                     ;; "Face-up" cards. Trigger effect-completed manually.
                     :face-up
@@ -276,7 +276,7 @@
                  (effect-completed state side eid))]
     (if (and (corp-can-install? state side card dest-zone)
              (not (install-locked? state :corp)))
-      (wait-for (pay-sync state side card end-cost {:action action})
+      (wait-for (pay-sync state side (make-eid state eid) card end-cost {:action action})
                 (if-let [cost-str async-result]
                   (if (= server "New remote")
                     (wait-for (trigger-event-simult state side :server-created nil card)

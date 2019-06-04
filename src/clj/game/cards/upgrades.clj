@@ -352,7 +352,11 @@
                                                  (continue-ability :corp (ability card) card nil))}}})
 
    "Dedicated Technician Team"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :corp-install (:source-type eid))
+                                                (= (second (:zone card))
+                                                   (second (server->zone state (:source eid))))))
+                                 :type :recurring}}}
 
    "Defense Construct"
    {:advanceable :always

@@ -2020,8 +2020,9 @@
 
    "The Root"
    {:recurring 3
-    :interactions {:pay-credits {:req (req (or (= :rez (:source-type eid))
-                                               (false))) ; ToDo: other cases
+    :interactions {:pay-credits {:req (req (or (= :advance (:source-type eid))
+                                               (= :corp-install (:source-type eid))
+                                               (= :rez (:source-type eid))))
                                  :type :recurring}}}
 
    "Thomas Haas"
