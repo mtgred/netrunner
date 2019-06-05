@@ -2348,31 +2348,36 @@
                :runner-prevent (assoc ability :req (req (and (first-event-check state no-event? first-event?) (seq (filter #(some #{:tag} %) targets)))))}})
 
    "Trickster Taka"
-   (companion-builder
-     (req (and (pos? (get-counters (get-card state card) :credit))
-               run
-               (not (:successful run))
-               (not (:unsuccessful run))))
-     (effect (show-wait-prompt :corp "Runner to take decision on Trickster Taka")
-             (continue-ability
-               {:prompt "Take 1 tag or trash Trickster Taka?"
-                :choices ["Take 1 tag" "Trash"]
-                :player :runner
-                :async true
-                :effect (req (clear-wait-prompt state :corp)
-                             (if (= target "Trash")
-                               (do
-                                 (trash state :runner card)
-                                 (system-msg state :runner "trashes Trickster Taka")
-                                 (effect-completed state side eid))
-                               (do
-                                 (system-msg state :runner "takes 1 tag to avoid trashing Trickster Taka")
-                                 (gain-tags state :runner eid 1))))}
-               card nil))
-     {:msg "take 1 [Credits]"
-      :effect (effect (add-counter card :credit -1)
-                      (trigger-event :spent-stealth-credit card)
-                      (gain-credits 1))})
+   (assoc
+     (companion-builder
+       (req (and (pos? (get-counters (get-card state card) :credit))
+                 run
+                 (not (:successful run))
+                 (not (:unsuccessful run))))
+       (effect (show-wait-prompt :corp "Runner to take decision on Trickster Taka")
+               (continue-ability
+                 {:prompt "Take 1 tag or trash Trickster Taka?"
+                  :choices ["Take 1 tag" "Trash"]
+                  :player :runner
+                  :async true
+                  :effect (req (clear-wait-prompt state :corp)
+                               (if (= target "Trash")
+                                 (do
+                                   (trash state :runner card)
+                                   (system-msg state :runner "trashes Trickster Taka")
+                                   (effect-completed state side eid))
+                                 (do
+                                   (system-msg state :runner "takes 1 tag to avoid trashing Trickster Taka")
+                                   (gain-tags state :runner eid 1))))}
+                 card nil))
+       {:msg "take 1 [Credits]"
+        :effect (effect (add-counter card :credit -1)
+                        (trigger-event :spent-stealth-credit card)
+                        (gain-credits 1))})
+     :interactions {:pay-credits {:req (req (or (= :ability (:source-type eid))
+                                                (program? target)
+                                                (:run @state)))
+                                  :type :credit}})
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn

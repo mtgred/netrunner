@@ -315,13 +315,17 @@
       :prompt "Choose a server"
       :recurring 4
       :choices (req runnable-servers)
+      :events {:begin-run {:effect (req (swap! state assoc :cold-read-active true))}}
       :effect (req (let [c (move state side (assoc card :zone '(:discard)) :play-area {:force true})]
                      (card-init state side c {:resolve-effect false})
                      (make-run state side (make-eid state) target
                                {:end-run {:async true
-                                          :effect (effect (trash c)
-                                                          (continue-ability end-effect card nil))}}
-                               c)))})
+                                          :effect (req (trash state side c)
+                                                       (swap! state dissoc :cold-read-active)
+                                                       (continue-ability state side end-effect card nil))}}
+                               c)))
+      :interactions {:pay-credits {:req (req (:cold-read-active @state))
+                                   :type :recurring}}})
 
    "Compile"
    (letfn [(compile-fn [where]
