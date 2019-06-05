@@ -496,7 +496,19 @@
       :events {:card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :flame-out])))
                             :effect (effect (update! (dissoc-in card [:special :flame-out])))}
                :runner-turn-ends nil
-               :corp-turn-ends nil}})
+               :corp-turn-ends nil}
+      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                  (same-card? card (:host target))
+                                                  (pos? (get-counters card :credit))))
+                                   :custom (req (do
+                                                  (add-counter state side (:host card) :credit -1)
+                                                  (register-events
+                                                    state :runner
+                                                    {:runner-turn-ends turn-end
+                                                     :corp-turn-ends turn-end}
+                                                    (get-card state (:host card)))
+                                                  1))
+                                   :type :custom}}})
 
    "Flip Switch"
    {:events
