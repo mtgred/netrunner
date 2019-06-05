@@ -500,14 +500,13 @@
       :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                   (same-card? card (:host target))
                                                   (pos? (get-counters card :credit))))
-                                   :custom (req (do
-                                                  (add-counter state side (:host card) :credit -1)
-                                                  (register-events
-                                                    state :runner
-                                                    {:runner-turn-ends turn-end
-                                                     :corp-turn-ends turn-end}
-                                                    (get-card state (:host card)))
-                                                  1))
+                                   :custom (req (add-counter state side (:host card) :credit -1)
+                                                (register-events
+                                                  state :runner
+                                                  {:runner-turn-ends turn-end
+                                                   :corp-turn-ends turn-end}
+                                                  (get-card state (:host card)))
+                                                1)
                                    :type :custom}}})
 
    "Flip Switch"
