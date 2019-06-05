@@ -1161,7 +1161,10 @@
     :events {:run-ends nil}}
 
    "Simone Diego"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :advance (:source-type eid))
+                                                (same-server? card target)))
+                                 :type :recurring}}}
 
    "Strongbox"
    (let [ab {:req (req (or (in-same-server? card target)

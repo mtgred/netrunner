@@ -1350,7 +1350,9 @@
               :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Weyland Consortium: Because We Built It"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (= :advance (:source-type eid)))
+                                 :type :recurring}}}
 
    "Weyland Consortium: Builder of Nations"
    {:implementation "Damage triggered manually"

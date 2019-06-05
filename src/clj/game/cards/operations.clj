@@ -1853,7 +1853,7 @@
                                    :msg (msg "advance " (card-str state target) " "
                                              (advancement-cost state side (last (:rfg corp))) " times")
                                    :effect (req (dotimes [_ (advancement-cost state side (last (:rfg corp)))]
-                                                  (advance state :corp target :no-cost)))} card nil))}
+                                                  (advance state :corp (make-eid state {:source card :source-type :advance}) target :no-cost)))} card nil))}
 
    "Successful Demonstration"
    {:req (req (last-turn? state :runner :unsuccessful-run))
