@@ -1328,8 +1328,8 @@
                                                 {:choice (-> "#credit" js/$ .val str->int)})}
               "OK"]]
             (cond
-              ;; choice of number of credits
-              (= (:choices prompt) "credit")
+              ;; trace prompts require their own logic
+              (= (:prompt-type prompt) "trace")
               [:div
                (when-let [base (:base prompt)]
                  ;; This is the initial trace prompt
@@ -1337,10 +1337,10 @@
                    (if (= "corp" (:player prompt))
                      ;; This is a trace prompt for the corp, show runner link + credits
                      [:div.info "Runner: " (:link prompt) [:span {:class "anr-icon link"}]
-                      " + " (:credit @runner) [:span {:class "anr-icon credit"}]]
+                      " + " (:runner-credits prompt) [:span {:class "anr-icon credit"}]]
                      ;; Trace in which the runner pays first, showing base trace strength and corp credits
                      [:div.info "Trace: " (when (:bonus prompt) (+ base (:bonus prompt)) base)
-                      " + " (:credit @corp) [:span {:class "anr-icon credit"}]])
+                      " + " (:corp-credits prompt) [:span {:class "anr-icon credit"}]])
                    ;; This is a trace prompt for the responder to the trace, show strength
                    (if (= "corp" (:player prompt))
                      [:div.info "vs Trace: " (:strength prompt)]
@@ -1357,6 +1357,16 @@
                       [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )]
                       (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
                         [:span (str strength " + ")]))))
+                [:select#credit (for [i (range (inc (:choices prompt)))]
+                                  [:option {:value i :key i} i])] " credits"]
+               [:button {:on-click #(send-command "choice"
+                                                  {:choice (-> "#credit" js/$ .val str->int)})}
+                "OK"]]
+
+              ;; choice of number of credits
+              (= (:choices prompt) "credit")
+              [:div
+               [:div.credit-select
                 [:select#credit (for [i (range (inc (:credit @me)))]
                                   [:option {:value i :key i} i])] " credits"]
                [:button {:on-click #(send-command "choice"

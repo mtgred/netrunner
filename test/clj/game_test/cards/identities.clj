@@ -1517,6 +1517,22 @@
     (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
     (is (= 1 (count-tags state)) "Took 1 tag from successful run on Archives")))
 
+(deftest nbn-making-news
+  ;; NBN: Making News
+  (do-game
+    (new-game {:corp {:id "NBN: Making News"
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["Snatch and Grab"]}})
+    (let [nbn-mn (:identity (get-corp))]
+      (play-from-hand state :corp "Snatch and Grab")
+      (is (= (+ (:credit (get-corp)) (get-counters (refresh nbn-mn) :recurring))
+             (:choices (prompt-map :corp))) "7 total available credits for the trace")
+      (click-prompt state :corp "7")
+      (dotimes [_ 2]
+        (click-card state :corp nbn-mn))
+      (is (zero? (get-counters (refresh nbn-mn) :recurring)) "Has used recurring credit")
+      (is (= 10 (:strength (prompt-map :runner))) "Current trace strength should be 10"))))
+
 (deftest maxx-maximum-punk-rock
   ;; MaxX
   (testing "Basic test"

@@ -2495,7 +2495,8 @@
 (deftest net-police
   ;; Net Police - Recurring credits equal to Runner's link
   (do-game
-    (new-game {:corp {:deck ["Net Police"]}
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Net Police" "Snatch and Grab"]}
                :runner {:id "Sunny Lebeau: Security Specialist"
                         :deck ["Dyson Mem Chip"
                                "Access to Globalsec"]}})
@@ -2511,7 +2512,15 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Access to Globalsec")
       (take-credits state :runner)
-      (is (= 4 (get-counters (refresh netpol) :recurring)) "4 recurring for Runner's 4 link"))))
+      (is (= 4 (get-counters (refresh netpol) :recurring)) "4 recurring for Runner's 4 link")
+      (play-from-hand state :corp "Snatch and Grab")
+      (is (= (+ (:credit (get-corp)) (get-counters (refresh netpol) :recurring))
+             (:choices (prompt-map :corp))) "13 total available credits for the trace")
+      (click-prompt state :corp "13")
+      (dotimes [_ 4]
+        (click-card state :corp netpol))
+      (is (zero? (get-counters (refresh netpol) :recurring)) "Has used recurring credit")
+      (is (= 16 (:strength (prompt-map :runner))) "Current trace strength should be 16"))))
 
 (deftest neurostasis
   ;; Neurostasis - ambush, shuffle cards into the stack
@@ -2816,11 +2825,30 @@
 (deftest primary-transmission-dish
   ;; Primary Transmission Dish
   (do-game
-    (new-game {:corp {:deck ["Primary Transmission Dish"]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Primary Transmission Dish" "Snatch and Grab"]}
+               :runner {:hand ["Kati Jones"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Kati Jones")
+    (take-credits state :runner)
     (play-from-hand state :corp "Primary Transmission Dish" "New remote")
-    (let [dish (get-content state :remote1 0)]
+    (let [dish (get-content state :remote1 0)
+          kati (get-resource state 0)]
       (core/rez state :corp dish)
-      (is (= 3 (get-counters (refresh dish) :recurring)) "Should have 3 recurring credits"))))
+      (is (= 3 (get-counters (refresh dish) :recurring)) "Should have 3 recurring credits")
+      (play-from-hand state :corp "Snatch and Grab")
+      (is (= (+ (:credit (get-corp)) (get-counters (refresh dish) :recurring))
+             (:choices (prompt-map :corp))) "9 total available credits for the trace")
+      (click-prompt state :corp "9")
+      (dotimes [_ 3]
+        (click-card state :corp dish))
+      (is (zero? (get-counters (refresh dish) :recurring)) "Has used recurring credit")
+      (is (= 12 (:strength (prompt-map :runner))) "Current trace strength should be 12")
+      (click-prompt state :runner "0")
+      (is (refresh kati) "Kati Jones still installed")
+      (click-card state :corp "Kati Jones")
+      (click-prompt state :runner "No")
+      (is (nil? (refresh kati)) "Kati Jones no longer installed"))))
 
 (deftest private-contracts
   ;; Private Contracts

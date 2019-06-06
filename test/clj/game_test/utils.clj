@@ -72,6 +72,14 @@
         (is (number? (Integer/parseInt choice))
             (expect-type "number string" choice)))
 
+      (= :trace (:prompt-type prompt))
+      (let [int-choice (Integer/parseInt choice)
+            under (<= int-choice (:choices prompt))]
+        (when-not (and under
+                       (when under (core/resolve-prompt state side {:choice int-choice})))
+          (is under (str (side-str side) " expected to click [ "
+                         int-choice " ] but couldn't find it. Current prompt is: \n" prompt))))
+
       ;; List of card titles for auto-completion
       (:card-title choices)
       (when-not (core/resolve-prompt state side {:choice choice})

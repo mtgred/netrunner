@@ -917,7 +917,9 @@
     :abilities [(set-autoresolve :auto-ctm "CtM")]}
 
    "NBN: Making News"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
+                                 :type :recurring}}}
 
    "NBN: The World is Yours*"
    {:effect (effect (gain :hand-size 1))

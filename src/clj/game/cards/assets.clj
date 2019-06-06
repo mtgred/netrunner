@@ -1295,7 +1295,9 @@
 
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
-    :effect (effect (set-prop card :rec-counter (:link runner)))}
+    :effect (effect (set-prop card :rec-counter (:link runner)))
+    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
+                                 :type :recurring}}}
 
    "Neurostasis"
    (advance-ambush 3 {:req (req (pos? (get-counters (get-card state card) :advancement)))
@@ -1466,7 +1468,9 @@
                        (continue-ability state side (pdhelper agendas 0) card nil)))}}})
 
    "Primary Transmission Dish"
-   {:recurring 3}
+   {:recurring 3
+    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
+                                 :type :recurring}}}
 
    "Private Contracts"
    {:effect (effect (add-counter card :credit 14))

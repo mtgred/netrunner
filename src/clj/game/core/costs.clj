@@ -47,6 +47,14 @@
   (let [flag (keyword (str "cannot-pay-" (name type)))]
     (some #(card-flag? % flag true) (all-active-installed state side))))
 
+(defn total-available-credits
+  [state side eid card]
+  (+ (get-in @state [side :credit])
+     (->> (eligible-pay-credit-cards state side eid card)
+          (map #(+ (get-counters % :recurring)
+                   (get-counters % :credit)))
+          (reduce +))))
+
 (defn toast-msg-helper
   "Creates a toast message for given cost and title if applicable"
   [state side eid card cost]
@@ -73,11 +81,7 @@
                (and (= cost-type :click) (<= 0 (- (get-in @state [side :click]) amount)))
                (and (= cost-type :credit)
                     (or (<= 0 (- (get-in @state [side :credit]) amount))
-                        (<= 0 (+ (- (get-in @state [side :credit]) amount)
-                                 (->> (eligible-pay-credit-cards state side eid card)
-                                      (map #(+ (get-counters % :recurring)
-                                               (get-counters % :credit)))
-                                      (reduce +))))))))
+                        (<= 0 (- (total-available-credits state side eid card) amount))))))
       computer-says-no)))
 
 (defn add-default-to-costs

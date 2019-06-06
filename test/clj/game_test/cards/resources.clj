@@ -433,7 +433,8 @@
 (deftest compromised-employee
   ;; Compromised Employee - Gain 1c every time Corp rezzes ICE
   (do-game
-    (new-game {:corp {:deck [(qty "Pup" 2) "Launch Campaign"]}
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Snatch and Grab" (qty "Pup" 2) "Launch Campaign"]}
                :runner {:deck ["Compromised Employee"]}})
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Pup" "R&D")
@@ -447,7 +448,16 @@
       (core/rez state :corp (get-ice state :rd 0))
       (is (= 5 (:credit (get-runner))) "Gained 1c from ICE rez")
       (core/rez state :corp (get-content state :remote1 0))
-      (is (= 5 (:credit (get-runner))) "Asset rezzed, no credit gained"))))
+      (is (= 5 (:credit (get-runner))) "Asset rezzed, no credit gained")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Snatch and Grab")
+      (click-prompt state :corp "0")
+      (is (= (+ (:credit (get-runner)) (get-counters (refresh ce) :recurring))
+             (:choices (prompt-map :runner))) "9 total available credits for the trace")
+      (click-prompt state :runner "9")
+      (dotimes [_ 1]
+        (click-card state :runner ce))
+      (is (zero? (get-counters (refresh ce) :recurring)) "Has used recurring credit"))))
 
 (deftest councilman
   ;; Councilman reverses the rezz and prevents re-rezz
