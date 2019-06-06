@@ -513,7 +513,7 @@
 
    "Economic Warfare"
    {:req (req (and (last-turn? state :runner :successful-run)
-                   (can-pay? state :runner nil :credit 4)))
+                   (can-pay? state :runner eid card nil :credit 4)))
     :msg "make the runner lose 4 [Credits]"
     :effect (effect (lose-credits :runner 4))}
 
@@ -673,7 +673,7 @@
                         :prompt "Pay how many credits?"
                         :choices {:number (req numtargets)}
                         :effect (req (let [c target]
-                                       (if (can-pay? state side (:title card) :credit c)
+                                       (if (can-pay? state side eid card (:title card) :credit c)
                                          (do (pay state :corp card :credit c)
                                              (continue-ability
                                                state :corp
@@ -1314,7 +1314,7 @@
     :prompt "Pay how many credits?"
     :choices {:number (req (count-tags state))}
     :effect (req (let [c target]
-                   (if (can-pay? state side (:title card) :credit c)
+                   (if (can-pay? state side eid card (:title card) :credit c)
                      (do (pay state :corp card :credit c)
                          (continue-ability
                            state side

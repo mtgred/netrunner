@@ -1598,6 +1598,32 @@
           (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
           (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed"))))))
 
+(deftest paricia
+  ;; Paricia
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["PAD Campaign" "Shell Corporation"]}
+               :runner {:hand ["Paricia"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Shell Corporation" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paricia")
+    (let [pad (get-content state :remote1 0)
+          shell (get-content state :remote2 0)
+          paricia (get-program state 0)]
+      (run-on state :remote2)
+      (run-successful state)
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (is (empty? (:prompt (get-runner))) "No pay-credit prompt as it's an upgrade")
+      (is (nil? (refresh shell)) "Shell Corporation successfully trashed")
+      (run-on state :remote1)
+      (run-successful state)
+      (is (= 2 (:credit (get-runner))) "Runner can't afford to trash PAD Campaign")
+      (click-prompt state :runner "Pay 4 [Credits] to trash")
+      (dotimes [_ 2]
+        (click-card state :runner "Paricia"))
+      (is (nil? (refresh pad)) "PAD Campaign successfully trashed"))))
+
 (deftest pelangi
   ;; Pelangi
   (do-game

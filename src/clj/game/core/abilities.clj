@@ -284,7 +284,7 @@
              (let [yes-ability (:yes-ability ability)]
                (if (and (= prompt-choice "Yes")
                         yes-ability
-                        (can-pay? state side (:title card) (:cost yes-ability)))
+                        (can-pay? state side eid card (:title card) (:cost yes-ability)))
                  (resolve-ability state side (assoc yes-ability :eid eid) card targets)
                  (if-let [no-ability (:no-ability ability)]
                    (resolve-ability state side (assoc no-ability :eid eid) card targets)

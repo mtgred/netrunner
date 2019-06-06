@@ -844,7 +844,7 @@
              :effect (req (let [trash-cost (trash-cost state side card)
                                 no-salsette (remove #(= (:title %) "Salsette Slums") (all-active state :runner))
                                 slow-trash (any-flag-fn? state :runner :slow-trash true no-salsette)]
-                            (if (and (can-pay? state :runner nil :credit trash-cost)
+                            (if (and (can-pay? state :runner eid card nil :credit trash-cost)
                                      (not slow-trash))
                               (do (toast state :runner "You have been forced to trash Mumbad Virtual Tour" "info")
                                   (swap! state assoc-in [:runner :register :force-trash] true))
@@ -1261,7 +1261,7 @@
       :req (req (and this-server
                      (= target :net)
                      (pos? (last targets))
-                     (can-pay? state :corp nil [:credit 2])))
+                     (can-pay? state :corp eid card nil [:credit 2])))
       :effect (req (swap! state assoc-in [:damage :damage-replace] true)
                    (damage-defer state side :net (last targets))
                    (show-wait-prompt state :runner "Corp to use Tori Hanzō")

@@ -2,7 +2,8 @@
 
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
          facedown? make-result unknown->kw discard-from-hand card-str trash trash-cards
-         complete-with-result all-installed-runner-type pick-credit-providing-cards all-active)
+         complete-with-result all-installed-runner-type pick-credit-providing-cards all-active
+         eligible-pay-credit-cards)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -48,7 +49,7 @@
 
 (defn toast-msg-helper
   "Creates a toast message for given cost and title if applicable"
-  [state side cost]
+  [state side eid card cost]
   (let [cost-type (first cost)
         amount (last cost)
         computer-says-no "Unable to pay"]
@@ -69,8 +70,14 @@
                (and (= cost-type :connection)
                     (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) amount)))
                (and (= cost-type :shuffle-installed-to-stack) (<= 0 (- (count (all-installed state :runner)) amount)))
-               (and (#{:credit :click} cost-type)
-                    (<= 0 (- (get-in @state [side cost-type] -1) amount)))))
+               (and (= cost-type :click) (<= 0 (- (get-in @state [side :click]) amount)))
+               (and (= cost-type :credit)
+                    (or (<= 0 (- (get-in @state [side :credit]) amount))
+                        (<= 0 (+ (- (get-in @state [side :credit]) amount)
+                                 (->> (eligible-pay-credit-cards state side eid card)
+                                      (map #(+ (get-counters % :recurring)
+                                               (get-counters % :credit)))
+                                      (reduce +))))))))
       computer-says-no)))
 
 (defn add-default-to-costs
@@ -118,23 +125,14 @@
   "Returns false if the player cannot pay the cost args, or a truthy map otherwise.
   If title is specified a toast will be generated if the player is unable to pay
   explaining which cost they were unable to pay."
-  [state side title & args]
-  (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))
-        cost-msg (some #(toast-msg-helper state side %) costs)]
-    ;; no cost message - hence can pay
-    (if-not cost-msg
-      costs
-      (when title (toast state side (str cost-msg " for " title ".")) false))))
-
-(defn can-pay-with-recurring?
-  "Returns true if the player can pay the cost factoring in available recurring credits"
-  [state side cost]
-  (>= (+ (- (get-in @state [side :credit] -1) cost)
-         (->> (all-installed state side)
-              (map #(+ (get-counters % :recurring)
-                       (get-counters % :credit)))
-              (reduce +)))
-      0))
+  ([state side title args] (can-pay? state side (make-eid state) nil title args))
+  ([state side eid card title & args]
+   (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))
+         cost-msg (some #(toast-msg-helper state side eid card %) costs)]
+     ;; no cost message - hence can pay
+     (if-not cost-msg
+       costs
+       (when title (toast state side (str cost-msg " for " title ".")) false)))))
 
 (defn- complete-with-result
   "Calls `effect-complete` with `make-result` and also returns the argument.
@@ -264,24 +262,29 @@
                 (str "trashes " (quantify amount "card") " randomly from "
                      (if (= :corp side) "HQ" "the grip"))))))
 
+(defn all-active-pay-credit-cards
+  [state side eid card]
+  (filter #(when-let [pc (-> % card-def :interactions :pay-credits)]
+             (if (:req pc)
+               ((:req pc) state side eid % [card])
+               true))
+          (all-active state side)))
+
+(defn eligible-pay-credit-cards
+  [state side eid card]
+  (filter
+    #(case (-> % card-def :interactions :pay-credits :type)
+       :recurring
+       (pos? (get-counters (get-card state %) :recurring))
+       :credit
+       (pos? (get-counters (get-card state %) :credit))
+       :custom
+       true)
+    (all-active-pay-credit-cards state side eid card)))
+
 (defn pay-credits
   [state side eid card amount]
-  (let [provider-cards (filter
-                         #(when-let [pc (-> % card-def :interactions :pay-credits)]
-                            (if (:req pc)
-                              ((:req pc) state side eid % [card])
-                              true))
-                         (all-active state side))
-        provider-func (fn []
-                        (filter
-                          #(case (-> % card-def :interactions :pay-credits :type)
-                             :recurring
-                             (pos? (get-counters (get-card state %) :recurring))
-                             :credit
-                             (pos? (get-counters (get-card state %) :credit))
-                             :custom
-                             true)
-                          provider-cards))]
+  (let [provider-func #(eligible-pay-credit-cards state side eid card)]
     (if (and (pos? amount)
              (pos? (count (provider-func))))
       (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func amount) card nil)
@@ -351,7 +354,7 @@
   [state side card & args]
   (let [raw-costs (not-empty (remove map? args))
         action (not-empty (filter map? args))]
-    (when-let [costs (apply can-pay? state side (:title card) raw-costs)]
+    (when-let [costs (can-pay? state side (:title card) raw-costs)]
         (->> costs
              (map (partial cost-handler state side (make-eid state) card action costs))
              (filter some?)
@@ -370,7 +373,7 @@
   [state side eid card & args]
   (let [raw-costs (not-empty (remove map? args))
         action (not-empty (filter map? args))]
-    (if-let [costs (apply can-pay? state side (:title card) raw-costs)]
+    (if-let [costs (can-pay? state side eid card (:title card) raw-costs)]
       (wait-for (pay-sync-next state side (make-eid state eid) costs card action [])
                 (complete-with-result state side eid (->> async-result
                                                           (filter some?)

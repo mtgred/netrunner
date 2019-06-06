@@ -394,7 +394,7 @@
               :effect (req (let [c target
                                  cost (:cost c)
                                  title (:title c)]
-                             (if (can-pay? state :corp nil :credit cost)
+                             (if (can-pay? state :corp eid card nil :credit cost)
                                (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent the trash")
                                    (continue-ability
                                      state :corp
@@ -934,7 +934,7 @@
              state side
              {:prompt "Install a program?"
               :choices (conj (vec (sort-by :title (filter #(and (is-type? % "Program")
-                                                                (can-pay? state side nil
+                                                                (can-pay? state side eid card nil
                                                                           (modified-install-cost state side % [:credit -5])))
                                                           topten))) "No install")
               :async true
@@ -1545,7 +1545,7 @@
                       {:player :corp
                        :async true
                        :prompt "Pay 5 [Credits] or take 1 Bad Publicity?"
-                       :choices (concat (when (can-pay? state :corp "Mining Accident" :credit 5)
+                       :choices (concat (when (can-pay? state :corp eid card "Mining Accident" :credit 5)
                                           ["Pay 5 [Credits]"])
                                         ["Take 1 Bad Publicity"])
                        :effect (req (clear-wait-prompt state :runner)
@@ -1899,17 +1899,17 @@
                                        (installed? %))}
                   :effect (req (move state side target :hand)
                                (effect-completed state side (make-result eid (:cost target))))}
-         put-down (fn [st si bonus]
+         put-down (fn [st si eid card bonus]
                     {:async true
                      :prompt "Select a program or piece of hardware to install"
                      :choices {:req #(and (valid-target? %)
-                                          (can-pay? st si nil (modified-install-cost st si % [:credit (- bonus)])))}
+                                          (can-pay? st si eid card nil (modified-install-cost st si % [:credit (- bonus)])))}
                      :effect (effect (install-cost-bonus [:credit (- bonus)])
                                      (runner-install eid target nil))})]
      {:req (req (some valid-target? (all-installed state :runner)))
       :effect (req (wait-for (resolve-ability state side pick-up card nil)
                              (continue-ability state side
-                                               (put-down state side async-result)
+                                               (put-down state side eid card async-result)
                                                card nil)))})
 
    "Reshape"
@@ -2043,7 +2043,11 @@
    {:prompt "Select an installed program to trash"
     :choices {:req #(and (is-type? % "Program")
                          (installed? %))}
-    :effect (req (let [trashed target tcost (- (:cost trashed)) st state si side]
+    :effect (req (let [trashed target tcost (- (:cost trashed))
+                       st state
+                       si side
+                       e eid
+                       c card]
                    (trash state side trashed)
                    (resolve-ability
                      state side
@@ -2051,7 +2055,7 @@
                       :show-discard true
                       :choices {:req #(and (is-type? % "Program")
                                            (#{[:hand] [:discard]} (:zone %))
-                                           (can-pay? st si nil (modified-install-cost st si % [:credit tcost])))}
+                                           (can-pay? st si e c nil (modified-install-cost st si % [:credit tcost])))}
                       :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
                                       (runner-install target))
                       :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}

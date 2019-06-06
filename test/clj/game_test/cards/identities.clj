@@ -2424,17 +2424,23 @@
           (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from BoN/Cleaners combo"))))))
 
 (deftest whizzard-master-gamer
-  ;; Whizzard - Recurring credits
+  ;; Whizzard
   (do-game
-    (new-game {:runner {:id "Whizzard: Master Gamer"
-                        :deck ["Sure Gamble"]}})
-    (let [click-whizzard (fn [n] (dotimes [i n] (card-ability state :runner (:identity (get-runner)) 0)))]
-      (is (changes-credits (get-runner) 1 (click-whizzard 1)))
-      (is (changes-credits (get-runner) 2 (click-whizzard 5)) "Can't take more than 3 Whizzard credits")
-      (take-credits state :corp)
-      (is (changes-credits (get-runner) 3 (click-whizzard 3)) "Credits reset at start of Runner's turn")
-      (take-credits state :runner)
-      (is (changes-credits (get-runner) 0 (click-whizzard 1)) "Credits don't reset at start of Corp's turn"))))
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["PAD Campaign" "Shell Corporation"]}
+               :runner {:id "Whizzard: Master Gamer"
+                        :credits 1}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (let [pad (get-content state :remote1 0)
+          whiz (:identity (get-runner))]
+      (run-on state :remote1)
+      (run-successful state)
+      (is (= 1 (:credit (get-runner))) "Runner can't afford to trash PAD Campaign")
+      (click-prompt state :runner "Pay 4 [Credits] to trash")
+      (dotimes [_ 3]
+        (click-card state :runner (refresh whiz)))
+      (is (nil? (refresh pad)) "PAD Campaign successfully trashed"))))
 
 (deftest wyvern-chemically-enhanced
   ;; Wyvern: Chemically Enhanced

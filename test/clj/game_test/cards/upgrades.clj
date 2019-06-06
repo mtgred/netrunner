@@ -1278,9 +1278,7 @@
       (play-from-hand state :runner "Daily Casts")
       (is (= 2 (:credit (get-runner))) "Runner paid install costs")
       (run-empty-server state "Server 1")
-      (is (= ["Pay 5 [Credits] to trash" "No action"]
-             (-> (get-runner) :prompt first :choices))
-          "Runner is given the choice, as we don't know if they can afford it or not"))))
+      (is (= ["No action"] (-> (get-runner) :prompt first :choices)) "Runner is not given the choice"))))
 
 (deftest mwanza-city-grid
   ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
