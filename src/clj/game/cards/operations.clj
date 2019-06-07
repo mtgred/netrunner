@@ -509,12 +509,12 @@
       :choices {:req #(and (ice? %)
                            (installed? %))}
       :msg (msg "give " (card-str state target {:visible false}) " additional text")
-      :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub)
+      :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
                    (update-ice-strength state side target)
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
-      :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
+      :leave-play (req (remove-extra-subs! state :corp (:cid card) (:host card)))
       :events {:rez {:req (req (same-card? target (:host card)))
-                     :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub))}}})
+                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}}})
 
    "Economic Warfare"
    {:req (req (and (last-turn? state :runner :successful-run)
@@ -1800,12 +1800,12 @@
       :choices {:req #(and (ice? %) (rezzed? %))}
       :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
       :effect (req (update! state side (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))
-                   (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub)
+                   (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
                    (update-ice-strength state side target)
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
-      :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
+      :leave-play (req (remove-extra-subs! state :corp (:cid card) (:host card)))
       :events {:rez {:req (req (same-card? target (:host card)))
-                     :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub))}}})
+                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}}})
 
    "Subcontract"
    (letfn [(sc [i sccard]
@@ -2101,11 +2101,11 @@
                            (rezzed? %))}
       :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 brain damage\" before all its other subroutines")
       :sub-effect (do-brain-damage 1)
-      :effect (req (add-extra-sub state :corp (:cid card) target 0 new-sub)
+      :effect (req (add-extra-sub! state :corp target new-sub (:cid card) 0)
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
-      :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
+      :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
       :events {:rez {:req (req (same-card? target (:host card)))
-                     :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) 0 new-sub))}}})
+                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card) 0))}}})
 
    "Witness Tampering"
    {:msg "remove 2 bad publicity"

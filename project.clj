@@ -73,7 +73,8 @@
 
   ;; Misc
   :test-paths ["test/clj"]
-  :eftest {:report eftest.report.pretty/report}
+  :eftest {:report eftest.report.pretty/report
+           :fast-fail? true}
 
   :ring {:handler web.api/app}
 

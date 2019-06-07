@@ -2,7 +2,7 @@
 
 (declare available-mu free-mu host install-locked? make-rid rez run-flag?
          installable-servers server->zone set-prop system-msg turn-flag? in-play?
-         update-breaker-strength update-ice-strength update-run-ice use-mu)
+         update-breaker-strength update-ice-strength update-run-ice use-mu add-sub)
 
 ;;;; Functions for the installation and deactivation of cards.
 
@@ -12,6 +12,7 @@
   [card keep-counter]
   (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :special :new
                   :added-virus-counter :subtype-target :sifr-used :sifr-target :pump :server-target)
+        c (assoc c :subroutines (subroutines-init card (card-def card)))
         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
     c))
 
@@ -70,15 +71,6 @@
   (for [ab (:runner-abilities cdef)]
     (assoc (select-keys ab [:cost]) :label (make-label ab))))
 
-(defn- subroutines-init
-  "Initialised the subroutines associated with the card, these work as abilities"
-  [cdef]
-  (map-indexed (fn [idx sub]
-                 {:label (make-label sub)
-                  :from-cid nil
-                  :data {:cdef-idx idx}})
-               (:subroutines cdef)))
-
 (defn card-init
   "Initializes the abilities and events of the given card."
   ([state side card] (card-init state side card {:resolve-effect true :init-data true}))
@@ -89,11 +81,9 @@
          abilities (ability-init cdef)
          run-abs (runner-ability-init cdef)
          corp-abs (corp-ability-init cdef)
-         subroutines (subroutines-init cdef)
          c (merge card
                   (when init-data (:data cdef))
                   {:abilities abilities
-                   :subroutines subroutines
                    :runner-abilities run-abs
                    :corp-abilities corp-abs})
          c (if (number? recurring) (assoc c :rec-counter recurring) c)

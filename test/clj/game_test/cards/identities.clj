@@ -278,14 +278,14 @@
       (is (= 1 (core/access-count state :runner :rd-access)) "Should only access 1 from missed psi game")))
   (testing "Shiro interaction: second sub should give Akiko 2 accesses"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 10) "Shiro"]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Shiro"]}
                  :runner {:id "Akiko Nisei: Head Case"
                           :deck [(qty "Sure Gamble" 3)]}})
-      (starting-hand state :corp ["Shiro"])
       (play-from-hand state :corp "Shiro" "New remote")
+      (take-credits state :corp)
       (let [shiro (get-ice state :remote1 0)]
         (core/rez state :corp shiro)
-        (take-credits state :corp)
         (run-on state :remote1)
         (card-subroutine state :corp shiro 1)
         (click-prompt state :corp "0 [Credits]")

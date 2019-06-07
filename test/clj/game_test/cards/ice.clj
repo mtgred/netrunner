@@ -27,9 +27,9 @@
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (do-game
-    (new-game {:corp {:deck ["Archangel" "Hedge Fund"]}
+    (new-game {:corp {:deck ["Archangel"]
+                      :hand ["Hedge Fund"]}
                :runner {:deck ["Bank Job"]}})
-    (starting-hand state :corp ["Hedge Fund"])
     (take-credits state :corp)
     (play-from-hand state :runner "Bank Job")
     (run-empty-server state :rd)
@@ -760,6 +760,20 @@
         (is (:run @state) "Still a run going on before resolving last subroutine")
         (card-subroutine state :corp hydra 2)
         (is (not (:run @state)) "Hydra sub 3 ended the run when Runner is tagged")))))
+
+(deftest ice-wall
+  ;; Ice Wall
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (let [iw (get-ice state :remote1 0)]
+      (core/rez state :corp iw)
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (is (:run @state))
+      (card-subroutine state :corp iw 0)
+      (is (nil? (:run @state))))))
 
 (deftest iq
   ;; IQ - Rez cost and strength equal to cards in HQ

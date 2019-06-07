@@ -16,22 +16,22 @@
 ;;; Runner abilites for breaking subs
 (defn runner-pay-or-break
   "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, etc)"
-  [cost subs label]
+  [cost qty label]
   (let [cost-str (build-cost-string cost cost->label)
-        subs-str (quantify subs "subroutine")]
+        subs-str (quantify qty "subroutine")]
     {:cost cost
      :label (str label " " subs-str)
      :effect (req (system-msg state :runner (str "spends " cost-str " to " label " " subs-str " on " (:title card))))}))
 
 (defn runner-break
   "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, etc)"
-  [cost subs]
-  (runner-pay-or-break cost subs "break"))
+  [cost qty]
+  (runner-pay-or-break cost qty "break"))
 
 (defn runner-pay
   "Ability to pay to avoid a subroutine by spending a resource (Popup Window, Turing, etc)"
-  [cost subs]
-  (runner-pay-or-break cost subs "pay for"))
+  [cost qty]
+  (runner-pay-or-break cost qty "pay for"))
 
 ;;; General subroutines
 (def end-the-run
@@ -225,7 +225,13 @@
 
 ;; Card definitions
 (def card-definitions
-  {"Aiki"
+  {"Afshar"
+   {:implementation "Breaking both subs not restricted"
+    :subroutines [{:msg "make the Runner lose 2 [Credits]"
+                   :effect (effect (lose-credits :runner 2))}
+                  end-the-run]}
+
+   "Aiki"
    {:subroutines [(do-psi {:label "Runner draws 2 cards"
                            :msg "make the Runner draw 2 cards"
                            :effect (effect (draw :runner 2)
@@ -357,12 +363,6 @@
                                         (corp? %))}
                    :effect (effect (corp-install target nil))
                    :msg (msg (corp-install-msg target))}]}
-
-   "Afshar"
-   {:implementation "Breaking both subs not restricted"
-    :subroutines [{:msg "make the Runner lose 2 [Credits]"
-                   :effect (effect (lose-credits :runner 2))}
-                  end-the-run]}
 
    "Ashigaru"
    {:abilities [{:label "Gain subroutines"

@@ -2085,9 +2085,9 @@
                              (rezzed? %))
                        (all-installed state :corp)))
              (remove-one [cid state ice]
-               (remove-extra-subs state :corp cid ice))
+               (remove-extra-subs! state :corp ice cid))
              (add-one [cid state ice]
-               (add-extra-sub state :corp cid ice 0 new-sub))
+               (add-extra-sub! state :corp ice new-sub cid 0))
              (update-all [state func]
                (doseq [i (all-rezzed-bios state)]
                  (func state i)))]
