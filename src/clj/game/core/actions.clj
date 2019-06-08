@@ -281,8 +281,8 @@
   (let [cost (:cost ability)]
     (when (or (nil? cost)
               (if (has-subtype? card "Run")
-                (can-pay? state side (make-eid state) card (:title card) cost (run-costs state side card))
-                (can-pay? state side (make-eid state) card (:title card) cost)))
+                (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost (run-costs state side card))
+                (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost)))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
       (resolve-ability state side ability card targets))))
