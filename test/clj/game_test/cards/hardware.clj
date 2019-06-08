@@ -247,6 +247,33 @@
       (core/rez state :corp quan)
       (is (= 4 (:credit (get-corp))) "Paid 3c instead of 1c to rez Quandary"))))
 
+(deftest cyberfeeder
+  ;; Cyberfeeder
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Cyberfeeder" "Clot" "Equivocation"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cyberfeeder")
+      (play-from-hand state :runner "Equivocation")
+      (is (= 1 (:credit (get-runner))) "No pay-credits prompt if non-virus program installed")
+      (is (empty? (:prompt (get-runner))) "No pay-credits prompt if non-virus program installed")
+      (play-from-hand state :runner "Clot")
+      (let [cyb (get-hardware state 0)]
+        (click-card state :runner cyb)
+        (is (= 0 (:credit (get-runner))) "Paid only 1 credit for Clot")))))
+
+(deftest cybsoft-macrodrive
+  ;; Cybsoft MacroDrive
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Cybsoft MacroDrive" "Equivocation"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cybsoft MacroDrive")
+      (play-from-hand state :runner "Equivocation")
+      (let [cyb (get-hardware state 0)]
+        (click-card state :runner cyb)
+        (is (= 2 (:credit (get-runner))) "Paid only 1 credit for Equivocation")))))
+
 (deftest cybersolutions-mem-chip
   ;; CyberSolutions Mem Chip- Gain 2 memory
   (do-game
@@ -384,6 +411,20 @@
       (click-prompt state :corp "Yes")
       (is (zero? (count-tags state)) "Runner has 0 tags")
       (is (= 3 (get-counters (refresh dorm) :power))))))
+
+(deftest dyson-fractal-generator
+  ;; Dyson Fractal Generator
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Dyson Fractal Generator" "Blackstone"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Dyson Fractal Generator")
+      (play-from-hand state :runner "Blackstone")
+      (let [dfg (get-hardware state 0)
+            bs (get-program state 0)]
+        (card-ability state :runner bs 1)
+        (is (changes-credits (get-runner) -2 (click-card state :runner dfg)))))))
 
 (deftest feedback-filter
   ;; Feedback Filter - Prevent net and brain damage
@@ -743,6 +784,19 @@
       (take-credits state :runner)
       (is (= 1 (:current-strength (refresh inti))) "Strength reduced to default")
       (is (= 2 (:current-strength (refresh pass))) "Strength reduced to default"))))
+
+(deftest lockpick
+  ;; Lockpick
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Lockpick" "Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Lockpick")
+      (play-from-hand state :runner "Refractor")
+      (let [lp (get-hardware state 0)
+            refr (get-program state 0)]
+        (card-ability state :runner refr 1)
+        (is (changes-credits (get-runner) 0 (click-card state :runner lp)))))))
 
 (deftest lucky-charm
   (testing "No interference with runs ending successfully or by jacking out, and Batty/normal ETR/Border Control interaction"
@@ -1276,7 +1330,7 @@
       (card-ability state :runner (get-hardware state 0) 0)
       (play-from-hand state :runner "Cyberfeeder")
       (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
-      (is (empty? (:discard (get-runner))) "Cyberfeeder is not in heap yet")
+      (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder")))
   (testing "Play event with pay-credits prompt"
@@ -1291,7 +1345,19 @@
       (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (not-empty (:discard (get-runner))) "Easy Mark is in heap")
-      (is (= 11 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble"))))
+      (is (= 11 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble")))
+  (testing "Install a card"
+    (do-game
+      (new-game {:runner {:deck ["Patchwork" "Easy Mark" "Cyberfeeder"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 4)
+      (play-from-hand state :runner "Patchwork")
+      (play-from-hand state :runner "Cyberfeeder")
+      (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
+      (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
+      (click-card state :runner (get-hardware state 0))
+      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
+      (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder"))))
 
 (deftest plascrete-carapace
   ;; Plascrete Carapace - Prevent meat damage
@@ -1652,6 +1718,19 @@
           (click-card state :runner ip)
           (is (zero? (count (:discard (get-corp)))) "IP Block Not Trashed")
           (is (= 1 (count (:hosted (refresh ip)))) "Parasite is hosted"))))))
+
+(deftest silencer
+  ;; Silencer
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Silencer" "Dagger"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Silencer")
+      (play-from-hand state :runner "Dagger")
+      (let [sil (get-hardware state 0)
+            dag (get-program state 0)]
+        (card-ability state :runner dag 1)
+        (is (changes-credits (get-runner) 0 (click-card state :runner sil)))))))
 
 (deftest spinal-modem
   ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run

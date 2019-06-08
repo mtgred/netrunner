@@ -372,6 +372,19 @@
         (card-ability state :runner chisel 0)
         (is (refresh iw) "Ice Wall should still be around as it's unrezzed")))))
 
+(deftest cloak
+  ;; Cloak
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Cloak" "Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Refractor")
+      (let [cl (get-program state 0)
+            refr (get-program state 1)]
+        (card-ability state :runner refr 1)
+        (is (changes-credits (get-runner) 0 (click-card state :runner cl)))))))
+
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
   (testing "Trash and cash out"
@@ -1897,6 +1910,19 @@
         (is (= "You accessed Hokusai Grid." (-> (get-runner) :prompt first :msg))
             "No RNG Key prompt, straight to access prompt")
         (is (= 5 (:credit (get-runner))) "Gained no credits")))))
+
+(deftest sahasrara
+  ;; Sahasrara
+  (testing "Pay-credits prompt"
+  (do-game
+    (new-game {:runner {:deck ["Sahasrara" "Equivocation"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sahasrara")
+    (play-from-hand state :runner "Equivocation")
+    (let [rara (get-program state 0)]
+      (click-card state :runner rara)
+      (click-card state :runner rara)
+      (is (= 3 (:credit (get-runner))) "Paid nothing for Equivocation")))))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program

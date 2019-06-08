@@ -1117,7 +1117,7 @@
                  :msg "take 1 [Credits] to install programs"}]
     :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
                                                 (program? target)))
-                                 :type :recurring}}}
+                                 :type :credit}}}
 
    "Ice Carver"
    {:events {:pre-ice-strength

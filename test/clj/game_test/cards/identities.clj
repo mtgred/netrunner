@@ -2188,6 +2188,19 @@
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
     (is (empty? (:prompt (get-corp))) "Cannot use Skorpios twice")))
 
+(deftest ele-smoke-scovak-cynosure-of-the-net
+  ;; Ele "Smoke" Scovak: Cynosure of the Net
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:id "Ele \"Smoke\" Scovak: Cynosure of the Net"
+                          :deck ["Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Refractor")
+      (let [smoke (get-in @state [:runner :identity])
+            refr (get-program state 0)]
+        (card-ability state :runner refr 1)
+        (is (changes-credits (get-runner) 0 (click-card state :runner smoke)))))))
+
 (deftest spark-agency-worldswide-reach
   ;; Spark Agency - Rezzing advertisements
   (do-game

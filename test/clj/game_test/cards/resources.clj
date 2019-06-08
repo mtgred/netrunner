@@ -1399,6 +1399,20 @@
           (core/trash state :runner gcs2)
           (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice))))))))
 
+(deftest ghost-runner
+  ;; Ghost Runner
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Ghost Runner" "Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ghost Runner")
+      (play-from-hand state :runner "Refractor")
+      (run-on state :hq)
+      (let [gr (get-resource state 0)
+            refr (get-program state 0)]
+        (card-ability state :runner refr 1)
+        (is (changes-credits (get-runner) 0 (click-card state :runner gr)))))))
+
 (deftest globalsec-security-clearance
   ;; Globalsec Security Clearance - Ability, click lost on use
   (do-game
@@ -1577,6 +1591,22 @@
         (click-card state :corp iw)
         (is (= (dec credits) (:credit (get-corp))) "Corp should only gain 1 back when using Blue Sun's ability")))))
 
+(deftest ice-analyzer
+  ;; Ice Analyzer
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Ice Analyzer" "Equivocation"]}})
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (take-credits state :corp 2)
+      (let [iwall (get-ice state :archives 0)]
+        (play-from-hand state :runner "Ice Analyzer")
+        (core/rez state :corp iwall)
+        (play-from-hand state :runner "Equivocation")
+        (let [ana (get-resource state 0)]
+          (click-card state :runner ana)
+          (is (= 4 (:credit (get-runner))) "Paid only 1 credit for Equivocation"))))))
+
 (deftest ice-carver
   ;; Ice Carver - lower ice strength on encounter
   (do-game
@@ -1591,6 +1621,19 @@
       (is (zero? (:current-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
       (run-jack-out state)
       (is (= 1 (:current-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
+
+(deftest inside-man
+  ;; Inside Man
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Inside Man" "Desperado"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inside Man")
+      (play-from-hand state :runner "Desperado")
+      (let [im (get-resource state 0)]
+        (click-card state :runner im)
+        (click-card state :runner im)
+        (is (= 1 (:credit (get-runner))) "Paid only 1 credit for Desperado")))))
 
 (deftest investigative-journalism
   ;; Investigative Journalism - 4 clicks and trash to give the Corp 1 bad pub
@@ -1979,30 +2022,46 @@
 
 (deftest net-mercur
   ;; Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used
-  (do-game
-    (new-game {:runner {:deck ["Net Mercur" "Silencer" "Ghost Runner"]}})
-    (take-credits state :corp)
-    (core/gain state :runner :click 4 :credit 10)
-    (play-from-hand state :runner "Silencer")
-    (play-from-hand state :runner "Net Mercur")
-    (play-from-hand state :runner "Ghost Runner")
-    (let [sil (get-hardware state 0)
-          nm (get-resource state 0)
-          gr (get-resource state 1)]
-      (card-ability state :runner gr 0)
-      (is (empty? (:prompt (get-runner))) "No Net Mercur prompt from stealth spent outside of run")
-      (run-on state :hq)
-      (card-ability state :runner sil 0)
-      (click-prompt state :runner "Place 1 [Credits]")
-      (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")
-      (card-ability state :runner gr 0)
-      (is (empty? (:prompt (get-runner))) "No Net Mercur prompt for 2nd stealth in run")
-      (run-jack-out state)
-      (take-credits state :runner)
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Net Mercur" "Silencer" "Ghost Runner"]}})
       (take-credits state :corp)
-      (run-on state :hq)
-      (card-ability state :runner nm 0)
-      (is (= "Net Mercur" (:title (:card (first (get-in @state [:runner :prompt]))))) "Net Mercur triggers itself"))))
+      (core/gain state :runner :click 4 :credit 10)
+      (play-from-hand state :runner "Silencer")
+      (play-from-hand state :runner "Net Mercur")
+      (play-from-hand state :runner "Ghost Runner")
+      (let [sil (get-hardware state 0)
+            nm (get-resource state 0)
+            gr (get-resource state 1)]
+        (card-ability state :runner gr 0)
+        (is (empty? (:prompt (get-runner))) "No Net Mercur prompt from stealth spent outside of run")
+        (run-on state :hq)
+        (card-ability state :runner sil 0)
+        (click-prompt state :runner "Place 1 [Credits]")
+        (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")
+        (card-ability state :runner gr 0)
+        (is (empty? (:prompt (get-runner))) "No Net Mercur prompt for 2nd stealth in run")
+        (run-jack-out state)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (run-on state :hq)
+        (card-ability state :runner nm 0)
+        (is (= "Net Mercur" (:title (:card (first (get-in @state [:runner :prompt]))))) "Net Mercur triggers itself"))))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Net Mercur" "Cloak" "Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Net Mercur")
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Refractor")
+      (let [nm (get-resource state 0)
+            cl (get-program state 0)
+            refr (get-program state 1)]
+        (run-on state :hq)
+        (card-ability state :runner refr 1)
+        (is (changes-credits (get-runner) 0 (click-card state :runner cl)))
+        (click-prompt state :runner "Place 1 [Credits]")
+        (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")))))
 
 (deftest network-exchange
   ;; ICE install costs 1 more except for inner most
@@ -3546,7 +3605,20 @@
         (card-ability state :runner tt 0)
         (is (= "Place 1 [Credits] on Net Mercur or draw 1 card?" (-> (prompt-map :runner) :msg))
             "Net Mercur fires as Taka credits are stealth")
-        (click-prompt state :runner "Place 1 [Credits]")))))
+        (click-prompt state :runner "Place 1 [Credits]"))))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:hand ["Trickster Taka" "Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Refractor")
+      (play-from-hand state :runner "Trickster Taka")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [tt (get-resource state 0)
+            refr (get-program state 0)]
+        (run-on state :hq)
+        (card-ability state :runner refr 1)
+        (is (changes-credits (get-runner) 0 (click-card state :runner refr)))))))
 
 (deftest tri-maf-contact
   ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
