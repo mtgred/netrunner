@@ -2495,7 +2495,8 @@
 (deftest net-police
   ;; Net Police - Recurring credits equal to Runner's link
   (do-game
-    (new-game {:corp {:deck ["Net Police"]}
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Net Police" "Snatch and Grab"]}
                :runner {:id "Sunny Lebeau: Security Specialist"
                         :deck ["Dyson Mem Chip"
                                "Access to Globalsec"]}})
@@ -2511,7 +2512,15 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Access to Globalsec")
       (take-credits state :runner)
-      (is (= 4 (get-counters (refresh netpol) :recurring)) "4 recurring for Runner's 4 link"))))
+      (is (= 4 (get-counters (refresh netpol) :recurring)) "4 recurring for Runner's 4 link")
+      (play-from-hand state :corp "Snatch and Grab")
+      (is (= (+ (:credit (get-corp)) (get-counters (refresh netpol) :recurring))
+             (:choices (prompt-map :corp))) "13 total available credits for the trace")
+      (click-prompt state :corp "13")
+      (dotimes [_ 4]
+        (click-card state :corp netpol))
+      (is (zero? (get-counters (refresh netpol) :recurring)) "Has used recurring credit")
+      (is (= 16 (:strength (prompt-map :runner))) "Current trace strength should be 16"))))
 
 (deftest neurostasis
   ;; Neurostasis - ambush, shuffle cards into the stack
@@ -2570,35 +2579,47 @@
 
 (deftest ngo-front
   ;; NGO Front - full test
-  (do-game
-    (new-game {:corp {:deck [(qty "NGO Front" 3)]}})
-    (core/gain state :corp :click 3)
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (let [ngo1 (get-content state :remote1 0)
-          ngo2 (get-content state :remote2 0)
-          ngo3 (get-content state :remote3 0)]
-      (core/advance state :corp {:card ngo2})
-      (core/advance state :corp {:card (refresh ngo3)})
-      (core/advance state :corp {:card (refresh ngo3)})
-      (core/rez state :corp (refresh ngo1))
-      (core/rez state :corp (refresh ngo2))
-      (core/rez state :corp (refresh ngo3))
-      (is (= 2 (:credit (get-corp))) "Corp at 2 credits")
-      (card-ability state :corp ngo1 1)
-      (card-ability state :corp ngo1 0)
-      (is (= 2 (:credit (get-corp))) "Corp still 2 credits")
-      (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
-      (card-ability state :corp ngo2 1)
-      (is (= 2 (:credit (get-corp))) "Corp still 2 credits")
-      (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
-      (card-ability state :corp ngo2 0)
-      (is (= 7 (:credit (get-corp))) "Corp gained 5 credits")
-      (is (= 1 (count (:discard (get-corp)))) "1 NGO Front Trashed")
-      (card-ability state :corp ngo3 1)
-      (is (= 15 (:credit (get-corp))) "Corp gained 8 credits")
-      (is (= 2 (count (:discard (get-corp)))) "2 NGO Front Trashed"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "NGO Front" 3)]}})
+      (core/gain state :corp :click 3)
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [ngo1 (get-content state :remote1 0)
+            ngo2 (get-content state :remote2 0)
+            ngo3 (get-content state :remote3 0)]
+        (advance state ngo2)
+        (advance state (refresh ngo3))
+        (advance state (refresh ngo3))
+        (core/rez state :corp (refresh ngo1))
+        (core/rez state :corp (refresh ngo2))
+        (core/rez state :corp (refresh ngo3))
+        (is (= 2 (:credit (get-corp))) "Corp at 2 credits")
+        (card-ability state :corp ngo1 1)
+        (card-ability state :corp ngo1 0)
+        (is (= 2 (:credit (get-corp))) "Corp still 2 credits")
+        (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
+        (card-ability state :corp ngo2 1)
+        (is (= 2 (:credit (get-corp))) "Corp still 2 credits")
+        (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
+        (card-ability state :corp ngo2 0)
+        (is (= 7 (:credit (get-corp))) "Corp gained 5 credits")
+        (is (= 1 (count (:discard (get-corp)))) "1 NGO Front Trashed")
+        (card-ability state :corp ngo3 1)
+        (is (= 15 (:credit (get-corp))) "Corp gained 8 credits")
+        (is (= 2 (count (:discard (get-corp)))) "2 NGO Front Trashed"))))
+  (testing "Run ends when used mid-run"
+    (do-game
+      (new-game {:corp {:deck ["NGO Front"]}})
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [ngo (get-content state :remote1 0)]
+        (advance state ngo)
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (card-ability state :corp ngo 0)
+        (is (nil? (refresh ngo)))
+        (is (nil? (:run @state)))))))
 
 (deftest open-forum
   ;; Open Forum
@@ -2804,11 +2825,30 @@
 (deftest primary-transmission-dish
   ;; Primary Transmission Dish
   (do-game
-    (new-game {:corp {:deck ["Primary Transmission Dish"]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Primary Transmission Dish" "Snatch and Grab"]}
+               :runner {:hand ["Kati Jones"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Kati Jones")
+    (take-credits state :runner)
     (play-from-hand state :corp "Primary Transmission Dish" "New remote")
-    (let [dish (get-content state :remote1 0)]
+    (let [dish (get-content state :remote1 0)
+          kati (get-resource state 0)]
       (core/rez state :corp dish)
-      (is (= 3 (get-counters (refresh dish) :recurring)) "Should have 3 recurring credits"))))
+      (is (= 3 (get-counters (refresh dish) :recurring)) "Should have 3 recurring credits")
+      (play-from-hand state :corp "Snatch and Grab")
+      (is (= (+ (:credit (get-corp)) (get-counters (refresh dish) :recurring))
+             (:choices (prompt-map :corp))) "9 total available credits for the trace")
+      (click-prompt state :corp "9")
+      (dotimes [_ 3]
+        (click-card state :corp dish))
+      (is (zero? (get-counters (refresh dish) :recurring)) "Has used recurring credit")
+      (is (= 12 (:strength (prompt-map :runner))) "Current trace strength should be 12")
+      (click-prompt state :runner "0")
+      (is (refresh kati) "Kati Jones still installed")
+      (click-card state :corp "Kati Jones")
+      (click-prompt state :runner "No")
+      (is (nil? (refresh kati)) "Kati Jones no longer installed"))))
 
 (deftest private-contracts
   ;; Private Contracts

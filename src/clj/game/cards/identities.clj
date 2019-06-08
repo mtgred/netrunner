@@ -52,7 +52,7 @@
                          :yes-ability
                          {:async true
                           :effect (req (clear-wait-prompt state :corp)
-                                       (if (not (can-pay? state :corp nil :credit 1))
+                                       (if (not (can-pay? state :corp eid card nil :credit 1))
                                          (do
                                            (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
                                            (expose state :runner eid itarget))
@@ -917,7 +917,9 @@
     :abilities [(set-autoresolve :auto-ctm "CtM")]}
 
    "NBN: Making News"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
+                                 :type :recurring}}}
 
    "NBN: The World is Yours*"
    {:effect (effect (gain :hand-size 1))
@@ -1371,7 +1373,10 @@
                               :req (req (has-subtype? target "Transaction"))}}}
 
    "Whizzard: Master Gamer"
-   {:recurring 3}
+   {:recurring 3
+    :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
+                                                (corp? target)))
+                                 :type :recurring}}}
 
    "Wyvern: Chemically Enhanced"
    {:events {:pre-start-game {:effect draft-points-target}

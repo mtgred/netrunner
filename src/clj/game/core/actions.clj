@@ -199,6 +199,7 @@
 
       ;; Integer prompts
       (or (= choices :credit)
+          (= :trace (:prompt-type prompt))
           (:counter choices)
           (:number choices))
       (if (number? choice)
@@ -280,8 +281,8 @@
   (let [cost (:cost ability)]
     (when (or (nil? cost)
               (if (has-subtype? card "Run")
-                (apply can-pay? state side (:title card) cost (run-costs state side card))
-                (apply can-pay? state side (:title card) cost)))
+                (can-pay? state side (make-eid state) card (:title card) cost (run-costs state side card))
+                (can-pay? state side (make-eid state) card (:title card) cost)))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
       (resolve-ability state side ability card targets))))
@@ -376,7 +377,7 @@
              cdef-sub (get-in cdef [:subroutines cdef-idx])
              cost (:cost cdef-sub)]
          (when (or (nil? cost)
-                   (apply can-pay? state side (:title card) cost))
+                   (can-pay? state side eid card (:title card) cost))
            (when-let [activatemsg (:activatemsg cdef-sub)] (system-msg state side activatemsg))
            (resolve-ability state side eid cdef-sub card targets)))
        (when-let [sub-card (find-latest state {:cid (:from-cid sub) :side side})]
@@ -429,12 +430,12 @@
          (if (or (#{"Asset" "ICE" "Upgrade"} (:type card))
                    (:install-rezzed (card-def card)))
            (do (trigger-event state side :pre-rez-cost card)
-               (if (and altcost (can-pay? state side nil altcost)(not ignore-cost))
+               (if (and altcost (can-pay? state side eid card nil altcost) (not ignore-cost))
                  (let [curr-bonus (get-rez-cost-bonus state side)]
                    (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
                             {:async true
                              :effect (req (if (and (= target "Yes")
-                                                   (can-pay? state side (:title card) altcost))
+                                                   (can-pay? state side eid card (:title card) altcost))
                                             (do (pay state side card altcost)
                                                 (rez state side eid (-> card (dissoc :alternative-cost))
                                                      (merge args {:ignore-cost true

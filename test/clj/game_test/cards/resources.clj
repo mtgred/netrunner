@@ -433,7 +433,8 @@
 (deftest compromised-employee
   ;; Compromised Employee - Gain 1c every time Corp rezzes ICE
   (do-game
-    (new-game {:corp {:deck [(qty "Pup" 2) "Launch Campaign"]}
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Snatch and Grab" (qty "Pup" 2) "Launch Campaign"]}
                :runner {:deck ["Compromised Employee"]}})
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Pup" "R&D")
@@ -447,7 +448,16 @@
       (core/rez state :corp (get-ice state :rd 0))
       (is (= 5 (:credit (get-runner))) "Gained 1c from ICE rez")
       (core/rez state :corp (get-content state :remote1 0))
-      (is (= 5 (:credit (get-runner))) "Asset rezzed, no credit gained"))))
+      (is (= 5 (:credit (get-runner))) "Asset rezzed, no credit gained")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Snatch and Grab")
+      (click-prompt state :corp "0")
+      (is (= (+ (:credit (get-runner)) (get-counters (refresh ce) :recurring))
+             (:choices (prompt-map :runner))) "9 total available credits for the trace")
+      (click-prompt state :runner "9")
+      (dotimes [_ 1]
+        (click-card state :runner ce))
+      (is (zero? (get-counters (refresh ce) :recurring)) "Has used recurring credit"))))
 
 (deftest councilman
   ;; Councilman reverses the rezz and prevents re-rezz
@@ -1887,21 +1897,39 @@
 
 (deftest miss-bones
   ;; Miss Bones - credits for trashing installed cards, trash when empty
-  (do-game
-    (new-game {:runner {:deck ["Miss Bones"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Miss Bones")
-    (let [mb (get-resource state 0)]
-      (is (= 12 (get-counters (refresh mb) :credit)) "Miss Bones starts with 12 credits")
-      (is (= 3 (:credit (get-runner))) "Runner starts with 3 credits")
-      (card-ability state :runner mb 0)
-      (is (= 11 (get-counters (refresh mb) :credit)) "Miss Bones loses a credit")
-      (is (= 4 (:credit (get-runner))) "Runner gains a credit")
-      (dotimes [_ 11]
-        (card-ability state :runner mb 0))
-      (is (= 1 (count (:discard (get-runner)))) "Miss Bones in discard pile")
-      (is (empty? (get-resource state)) "Miss Bones not installed")
-      (is (= 15 (:credit (get-runner))) "Runner gained all 12 credits from Miss Bones"))))
+  (testing "Taking credits directly works, and it self trashes when empty"
+    (do-game
+      (new-game {:runner {:deck ["Miss Bones"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Miss Bones")
+      (let [mb (get-resource state 0)]
+        (is (= 12 (get-counters (refresh mb) :credit)) "Miss Bones starts with 12 credits")
+        (is (= 3 (:credit (get-runner))) "Runner starts with 3 credits")
+        (card-ability state :runner mb 0)
+        (is (= 11 (get-counters (refresh mb) :credit)) "Miss Bones loses a credit")
+        (is (= 4 (:credit (get-runner))) "Runner gains a credit")
+        (dotimes [_ 11]
+          (card-ability state :runner mb 0))
+        (is (= 1 (count (:discard (get-runner)))) "Miss Bones in discard pile")
+        (is (empty? (get-resource state)) "Miss Bones not installed")
+        (is (= 15 (:credit (get-runner))) "Runner gained all 12 credits from Miss Bones"))))
+  (testing "Can be used mid-run in a trash-prompt"
+    (do-game
+      (new-game {:corp {:hand ["Broadcast Square"]
+                        :deck [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Miss Bones"]}})
+      (play-from-hand state :corp "Broadcast Square" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Miss Bones")
+      (let [bs (get-content state :remote1 0)
+            mb (get-resource state 0)]
+        (run-on state :remote1)
+        (run-successful state)
+        (click-prompt state :runner "Pay 5 [Credits] to trash")
+        (dotimes [_ 5]
+          (click-card state :runner "Miss Bones"))
+        (is (= 7 (get-counters (refresh mb) :credit)) "Miss Bones loses 5 credits")
+        (is (nil? (refresh bs)) "Broadcast Square has been trashed")))))
 
 (deftest muertos-gang-member
   ;; Muertos Gang Member - Install and Trash
@@ -2606,36 +2634,9 @@
       (is (= 5 (:credit (get-runner))) "Runner should only have 5 credits in pool")
       (run-empty-server state "Server 1")
       (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can use Scrubber credits to trash")
-      (let [scrubber (get-resource state 0)]
-        (card-ability state :runner scrubber 0)
-        (card-ability state :runner scrubber 0))
       (click-prompt state :runner "Pay 7 [Credits] to trash")
-      (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board and gain 2 agenda points")))
-  (testing "when under trash cost but can up with recurring credits"
-    (do-game
-      (new-game {:corp {:deck ["The Board"]}
-                 :runner {:deck ["Scrubber" "Skulljack" "Sure Gamble"]}})
-      (play-from-hand state :corp "The Board" "New remote")
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner doesn't have enough credits to trash")
-      (click-prompt state :runner "No action")
-      (play-from-hand state :runner "Scrubber")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (play-from-hand state :runner "Skulljack")
-      (core/gain state :runner :credit 1)
-      (is (= 4 (:credit (get-runner))) "Runner should only have 4 credits in pool")
-      (run-empty-server state "Server 1")
-      (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "The Board should cost 6 to trash")
-      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can use Scrubber credits to trash")
-      (click-prompt state :runner "Pay 6 [Credits] to trash") ;; Whoops, runner forgot to actually get the credits from Scrubber
-      (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "Skulljack shouldn't trigger a second time")
-      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can still use Scrubber credits the second time around")
-      (let [scrubber (get-resource state 0)]
-        (card-ability state :runner scrubber 0)
-        (card-ability state :runner scrubber 0))
-      (click-prompt state :runner "Pay 6 [Credits] to trash") ;; Now the runner has actually gained the Scrubber credits
+      (click-card state :runner "Scrubber")
+      (click-card state :runner "Scrubber")
       (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board and gain 2 agenda points"))))
 
 (deftest security-testing

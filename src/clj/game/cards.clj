@@ -212,20 +212,31 @@
   ([provider-func outereid] (pick-credit-providing-cards provider-func outereid nil (hash-map) 0))
   ([provider-func outereid target-count] (pick-credit-providing-cards provider-func outereid target-count (hash-map) 0))
   ([provider-func outereid target-count selected-cards counter-count]
-   (let [pay-rest (req (if (pos? target-count)
-                         (do
-                           (deduct state side [:credit (- target-count counter-count)])
-                           (swap! state update-in [:stats side :spent :credit] (fnil + 0) target-count)
-                           (let [msg (str (join ", " (map #(let [{:keys [card number]} %
-                                                                 title (:title card)]
-                                                             (str number " [Credits] from " title))
-                                                          (vals selected-cards)))
-                                          (let [remainder (- target-count counter-count)]
-                                            (when (pos? remainder) (str " and " remainder " [Credits]"))))]
-                             (when-let [card (some #(when (has-subtype? (:card %) "Stealth") (:card %)) (vals selected-cards))]
-                               (trigger-event state side :spent-stealth-credit card))
-                             (effect-completed state side (make-result eid {:number counter-count :msg msg}))))
-                         (effect-completed state side 0)))]
+   (let [pay-rest
+         (req (if (<= (- target-count counter-count) (get-in @state [side :credit]))
+                (let [remainder (- target-count counter-count)
+                      remainder-str (when (pos? remainder)
+                                      (str remainder " [Credits]"))
+                      card-strs (when (pos? (count selected-cards))
+                                  (str (join ", " (map #(let [{:keys [card number]} %
+                                                              title (:title card)]
+                                                          (str number " [Credits] from " title))
+                                                       (vals selected-cards)))))
+                      message (str card-strs
+                                   (when (and card-strs remainder-str)
+                                     " and ")
+                                   remainder-str
+                                   (when (and card-strs remainder-str)
+                                     " from their credit pool"))]
+                  (deduct state side [:credit remainder])
+                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) target-count)
+                  (when-let [card (some #(when (has-subtype? (:card %) "Stealth") (:card %)) (vals selected-cards))]
+                    (trigger-event state side :spent-stealth-credit card))
+                  (effect-completed state side (make-result eid {:number counter-count :msg message})))
+                (continue-ability
+                  state side
+                  (pick-credit-providing-cards provider-func selected-cards counter-count target-count)
+                  card nil)))]
      (let [provider-cards (provider-func)]
        (if (or (not (pos? target-count))        ; there is a limit
                (>= counter-count target-count)  ; paid everything

@@ -310,7 +310,7 @@
    "Algernon"
    {:events
     {:runner-turn-begins
-     {:req (req (can-pay? state :runner nil [:credit 2]))
+     {:req (req (can-pay? state :runner eid card nil [:credit 2]))
       :optional
       {:prompt (msg "Pay 2 [Credits] to gain [Click]")
        :player :runner
@@ -760,10 +760,10 @@
                      (continue-ability state side (custsec-host from) card nil)))
       :abilities [{:cost [:click 1]
                    :prompt "Choose a program hosted on Customized Secretary to install"
-                   :choices (req (cancellable (filter #(can-pay? state side nil :credit (:cost %))
+                   :choices (req (cancellable (filter #(can-pay? state side eid card nil :credit (:cost %))
                                                       (:hosted card))))
                    :msg (msg "install " (:title target))
-                   :effect (req (when (can-pay? state side nil :credit (:cost target))
+                   :effect (req (when (can-pay? state side eid card nil :credit (:cost target))
                                   (runner-install state side target)))}]})
 
    "Cyber-Cypher"
@@ -1710,7 +1710,10 @@
               :msg (msg "trash " (:title target))}}}
 
    "Paricia"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
+                                                (asset? target)))
+                                 :type :recurring}}}
 
    "Passport"
    (central-breaker "Code Gate"
