@@ -455,6 +455,23 @@
         (is (= 11 (:credit (get-runner))) "Runner gains 9 credit")
         (is (zero? (get-counters (refresh fo) :credit)) "Took all credits from Flame-out")
         (take-credits state :corp)
+        (is (empty? (:hosted (refresh fo))) "Mimic trashed"))))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Flame-out" "Mimic"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Flame-out")
+      (let [fo (get-hardware state 0)]
+        (card-ability state :runner fo 2)
+        (click-card state :runner (find-card "Mimic" (:hand (get-runner))))
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 1 (count (:hosted (refresh fo)))) "Mimic still hosted")
+        (is (= 2 (:credit (get-runner))) "Runner starts with 2 credits")
+        (card-ability state :runner (first (:hosted (refresh fo))) 0)
+        (click-card state :runner fo)
+        (is (= 2 (:credit (get-runner))) "Runner has not paid any credits from their credit pool")
+        (take-credits state :runner)
         (is (empty? (:hosted (refresh fo))) "Mimic trashed")))))
 
 (deftest flip-switch
@@ -1261,7 +1278,20 @@
       (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
       (is (empty? (:discard (get-runner))) "Cyberfeeder is not in heap yet")
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
-      (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder"))))
+      (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder")))
+  (testing "Play event with pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Patchwork" (qty "Sure Gamble" 2) "Easy Mark"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 4)
+      (play-from-hand state :runner "Patchwork")
+      (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
+      (play-from-hand state :runner "Sure Gamble")
+      (click-card state :runner (get-hardware state 0))
+      (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
+      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
+      (is (not-empty (:discard (get-runner))) "Easy Mark is in heap")
+      (is (= 11 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble"))))
 
 (deftest plascrete-carapace
   ;; Plascrete Carapace - Prevent meat damage

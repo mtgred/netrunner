@@ -280,11 +280,11 @@
                              :credit
                              (pos? (get-counters (get-card state %) :credit))
                              :custom
-                             true)
+                             ((-> % card-def :interactions :pay-credits :req) state side eid % [card]))
                           provider-cards))]
     (if (and (pos? amount)
              (pos? (count (provider-func))))
-      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func amount) card nil)
+      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid amount) card nil)
                 (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
                 (complete-with-result state side eid (str "pays " (:msg async-result))))
       (do
