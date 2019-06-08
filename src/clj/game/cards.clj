@@ -235,7 +235,7 @@
                   (effect-completed state side (make-result eid {:number counter-count :msg message})))
                 (continue-ability
                   state side
-                  (pick-credit-providing-cards provider-func selected-cards counter-count target-count)
+                  (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)
                   card nil)))]
      (let [provider-cards (provider-func)]
        (if (or (not (pos? target-count))        ; there is a limit
@@ -278,7 +278,7 @@
                                                                                       (+ counter-count async-result))
                                                          card targets)))
                            (continue-ability state side
-                                             (pick-credit-providing-cards provider-func eid selected-cards counter-count target-count)
+                                             (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)
                                              card nil))))
           :cancel-effect pay-rest})))))
 
