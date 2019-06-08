@@ -2087,7 +2087,7 @@
              (remove-one [cid state ice]
                (remove-extra-subs! state :corp ice cid))
              (add-one [cid state ice]
-               (add-extra-sub! state :corp ice new-sub cid 0))
+               (add-extra-sub! state :corp ice new-sub cid {:front true}))
              (update-all [state func]
                (doseq [i (all-rezzed-bios state)]
                  (func state i)))]

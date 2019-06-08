@@ -223,6 +223,16 @@
   [note ice-def]
   (assoc ice-def :implementation note))
 
+(defn reset-variable-subs
+  [state side card total sub]
+  (let [old-subs (remove #(= (:cid card) (:from-cid %)) (:subroutines card))
+        new-card (assoc card :subroutines old-subs)
+        new-subs (->> (range total)
+                      (reduce (fn [ice _] (add-sub ice end-the-run)) new-card)
+                      :subroutines)
+        new-card (assoc new-card :subroutines new-subs)]
+    (update! state :corp new-card)))
+
 ;; Card definitions
 (def card-definitions
   {"Afshar"
@@ -365,9 +375,11 @@
                    :msg (msg (corp-install-msg target))}]}
 
    "Ashigaru"
-   {:abilities [{:label "Gain subroutines"
-                 :msg (msg "gain " (count (:hand corp)) " subroutines")}]
-    :subroutines [end-the-run]}
+   {:events {:card-moved {:req (req (or (= :hand (first (:zone target)))
+                                        (= :hand (first (:previous-zone target)))))
+                          :effect (effect (reset-variable-subs card (count (:hand (:corp @state))) end-the-run))}
+             :rez {:req (req (same-card? card target))
+                   :effect (effect (reset-variable-subs card (count (:hand (:corp @state))) end-the-run))}}}
 
    "Assassin"
    {:subroutines [(trace-ability 5 (do-net-damage 3))

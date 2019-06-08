@@ -85,7 +85,7 @@
   "Initialised the subroutines associated with the card, these work as abilities"
   [card cdef]
   (->> (:subroutines cdef)
-       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) -1)) card)
+       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
        :subroutines))
 
 (defn make-card

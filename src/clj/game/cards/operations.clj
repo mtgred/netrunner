@@ -2101,11 +2101,11 @@
                            (rezzed? %))}
       :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 brain damage\" before all its other subroutines")
       :sub-effect (do-brain-damage 1)
-      :effect (req (add-extra-sub! state :corp target new-sub (:cid card) 0)
+      :effect (req (add-extra-sub! state :corp target new-sub (:cid card) {:front true})
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
       :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
       :events {:rez {:req (req (same-card? target (:host card)))
-                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card) 0))}}})
+                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card) {:front true}))}}})
 
    "Witness Tampering"
    {:msg "remove 2 bad publicity"

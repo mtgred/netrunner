@@ -4,41 +4,46 @@
 
 ;;; Ice subroutine functions
 (defn add-sub
-  ([ice sub] (add-sub ice sub (:cid ice) -1))
-  ([ice sub cid] (add-sub ice sub cid -1))
-  ([ice sub cid idx]
-   (let [new-sub {:label (make-label sub)
+  ([ice sub] (add-sub ice sub (:cid ice) nil))
+  ([ice sub cid] (add-sub ice sub cid nil))
+  ([ice sub cid {:keys [front back printed] :as args}]
+   (let [curr-subs (:subroutines ice [])
+         position (cond
+                    back 1
+                    front -1
+                    :else 0)
+         new-sub {:label (make-label sub)
                   :from-cid cid
-                  :sub-effect sub}
-         curr-subs (:subroutines ice [])
-         offset (if (= -1 idx) (count curr-subs) idx)
-         new-subs (apply conj (subvec curr-subs 0 offset) new-sub (subvec curr-subs offset))]
+                  :sub-effect sub
+                  :position position
+                  :printed (or printed false)}
+         new-subs (into [] (sort-by :position (conj curr-subs new-sub)))]
      (assoc ice :subroutines new-subs))))
 
 (defn add-sub!
-  ([state side ice sub] (update! state :corp (add-sub ice sub (:cid ice) -1)))
-  ([state side ice sub cid] (update! state :corp (add-sub ice sub cid -1)))
-  ([state side ice sub cid idx] (update! state :corp (add-sub ice sub cid idx))))
+  ([state side ice sub] (update! state :corp (add-sub ice sub (:cid ice) {:printed false})))
+  ([state side ice sub cid] (update! state :corp (add-sub ice sub cid {:printed false})))
+  ([state side ice sub cid args] (update! state :corp (add-sub ice sub cid args))))
 
 (defn remove-sub
   "Removes a single sub from"
-  [ice sub]
-  (let [curr-subs (:subroutines ice)
-        new-subs (if (number? sub)
-                   (apply conj (subvec curr-subs 0 sub) (subvec curr-subs (inc sub)))
-                   (remove-once #(= sub %) curr-subs))]
-    (assoc ice :subroutines new-subs)))
+  ([ice] (remove-sub ice #(= (:cid ice) (:from-cid %))))
+  ([ice pred]
+   (let [curr-subs (:subroutines ice)
+         new-subs (remove-once pred curr-subs)]
+     (assoc ice :subroutines new-subs))))
 
 (defn remove-sub!
-  [state side ice sub]
-  (update! state :corp (remove-sub ice sub)))
+  ([state side ice] (update! state :corp (remove-sub ice #(= (:cid ice) (:from-cid %)))))
+  ([state side ice pred]
+   (update! state :corp (remove-sub ice pred))))
 
 (defn add-extra-sub!
-  "Add a run time subroutine to a piece of ice (Warden, Sub Boost, etc). -1 as the idx adds to the end."
-  ([state side ice sub] (add-extra-sub! state side ice sub (:cid ice) -1))
-  ([state side ice sub cid] (add-extra-sub! state side ice sub cid -1))
-  ([state side ice sub cid idx]
-   (add-sub! state side (assoc-in ice [:special :extra-subs] true) sub cid idx)))
+  "Add a run time subroutine to a piece of ice (Warden, Sub Boost, etc)"
+  ([state side ice sub] (add-extra-sub! state side ice sub (:cid ice) {:back true}))
+  ([state side ice sub cid] (add-extra-sub! state side ice sub cid {:back true}))
+  ([state side ice sub cid args]
+   (add-sub! state side (assoc-in ice [:special :extra-subs] true) sub cid args)))
 
 (defn remove-extra-subs!
   "Remove runtime subroutines assigned from the given cid from a piece of ice."

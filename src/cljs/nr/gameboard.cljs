@@ -639,8 +639,8 @@
        (map-indexed
          (fn [i sub]
            [:div {:key i
-                  :on-click #(do (send-command "subroutine" {:card card :subroutine i}))}
-            (render-icons (str "[Subroutine]" (:label sub)))])
+                  :on-click #(send-command "subroutine" {:card card :subroutine i})}
+            (render-icons (str "[Subroutine] " (:label sub)))])
          subroutines)])))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
