@@ -209,9 +209,9 @@
 
 (defn pick-credit-providing-cards
   "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
-  ([provider-func] (pick-credit-providing-cards provider-func (hash-map) 0 nil))
-  ([provider-func target-count] (pick-credit-providing-cards provider-func (hash-map) 0 target-count))
-  ([provider-func selected-cards counter-count target-count]
+  ([provider-func outereid] (pick-credit-providing-cards provider-func outereid nil (hash-map) 0))
+  ([provider-func outereid target-count] (pick-credit-providing-cards provider-func outereid target-count (hash-map) 0))
+  ([provider-func outereid target-count selected-cards counter-count]
    (let [pay-rest
          (req (if (<= (- target-count counter-count) (get-in @state [side :credit]))
                 (let [remainder (- target-count counter-count)
@@ -240,7 +240,7 @@
      (let [provider-cards (provider-func)]
        (if (or (not (pos? target-count))        ; there is a limit
                (>= counter-count target-count)  ; paid everything
-               (zero? (count provider-cards)))  ; no more additional credit sources needed
+               (zero? (count provider-cards)))  ; no more additional credit sources found
          {:async true
           :effect pay-rest}
          {:async true
@@ -250,21 +250,36 @@
                        " credits)")
           :choices {:req #(in-coll? (map :cid provider-cards) (:cid %))}
           :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
+                             pay-credits-custom (-> target card-def :interactions :pay-credits :custom)
                              gained-credits (case pay-credits-type
                                               :recurring
                                               (do (add-prop state side target :rec-counter -1) 1)
                                               :credit
                                               (do (add-counter state side target :credit -1) 1)
-                                              :custom ; custom functions should return the number of credits provided
-                                              (or ((-> target card-def :interactions :pay-credits :custom) state side eid card nil) 1))
+                                              :custom ; Custom credits will be handled separately later
+                                              0)
                              selected-cards (update selected-cards (:cid target)
                                                     ;; Store card reference and number of counters picked
                                                     ;; Overwrite card reference each time
                                                     #(assoc % :card target :number (inc (:number % 0))))
                              counter-count (+ counter-count gained-credits)]
-                         (continue-ability state side
-                                           (pick-credit-providing-cards provider-func selected-cards counter-count target-count)
-                                           card nil)))
+                         (if (= :custom pay-credits-type)
+                           ; custom functions should be a 5-arg fn that returns an ability that provides the number of credits as async-result
+                           (let [neweid (make-eid state outereid)
+                                 providing-card target]
+                             (wait-for (resolve-ability state side neweid
+                                                        (pay-credits-custom state side neweid providing-card [card])
+                                                        providing-card [card])
+                                       (continue-ability state side
+                                                         (pick-credit-providing-cards provider-func eid target-count
+                                                                                      (update selected-cards (:cid providing-card)
+                                                                                              ;; correct credit count
+                                                                                              #(assoc % :card target :number (+ (:number % 0) (dec async-result))))
+                                                                                      (+ counter-count async-result))
+                                                         card targets)))
+                           (continue-ability state side
+                                             (pick-credit-providing-cards provider-func eid selected-cards counter-count target-count)
+                                             card nil))))
           :cancel-effect pay-rest})))))
 
 (defn never?

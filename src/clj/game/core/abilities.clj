@@ -262,7 +262,7 @@
     (swap! state update-in [side :register :end-turn]
            #(conj % {:ability end-turn :card card :targets targets :eid eid}))))
 
-(defn- register-once
+(defn register-once
   "Register ability as having happened if :once specified"
   [state {:keys [once once-key] :as ability} {:keys [cid] :as card}]
   (when once (swap! state assoc-in [once (or once-key cid)] true)))
