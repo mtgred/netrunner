@@ -554,6 +554,20 @@
         (is (= 1 (count (:discard (get-runner)))) "Counter Surveillance trashed")
         (is (zero? (:credit (get-runner))) "Runner has no credits")))))
 
+(deftest crash-space
+  ;; Crash Space
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Crash Space"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crash Space")
+      (core/gain-tags state :corp 1)
+      (let [cs (get-resource state 0)]
+        (is (changes-credits (get-runner) 0
+                             (core/remove-tag state :runner nil)
+                             (click-card state :runner cs)
+                             (click-card state :runner cs)))))))
+
 (deftest crowdfunding
   (testing "Credit gain behavior"
     (do-game

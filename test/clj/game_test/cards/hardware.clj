@@ -1424,6 +1424,28 @@
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-hardware state)) "Plascrete depleted and trashed"))))
 
+(deftest public-terminal
+  ;; Public Terminal
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Public Terminal" "Dirty Laundry"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Public Terminal")
+      (play-from-hand state :runner "Dirty Laundry")
+      (let [pt (get-hardware state 0)]
+        (is (changes-credits (get-runner) -1 (click-card state :runner pt)))))))
+
+(deftest prepaid-voicepad
+  ;; Prepaid VoicePAD
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Prepaid VoicePAD" "Dirty Laundry"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Prepaid VoicePAD")
+      (play-from-hand state :runner "Dirty Laundry")
+      (let [ppvp (get-hardware state 0)]
+        (is (changes-credits (get-runner) -1 (click-card state :runner ppvp)))))))
+
 (deftest rabbit-hole
   ;; Rabbit Hole - +1 link, optionally search Stack to install more copies
   (do-game
