@@ -500,13 +500,12 @@
       :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                   (same-card? card (:host target))
                                                   (pos? (get-counters card :credit))))
-                                   :custom (req {:effect (req
-                                                           (add-counter state side card :credit -1)
-                                                           (register-events state side
-                                                             {:runner-turn-ends turn-end
-                                                              :corp-turn-ends turn-end}
-                                                             (get-card state card))
-                                                           (effect-completed state side (make-result eid 1)))})
+                                   :custom (req (add-counter state side card :credit -1)
+                                                (register-events state side
+                                                                 {:runner-turn-ends turn-end
+                                                                  :corp-turn-ends turn-end}
+                                                                 (get-card state card))
+                                                (effect-completed state side (make-result eid 1)))
                                    :type :custom}}})
 
    "Flip Switch"
@@ -1026,19 +1025,22 @@
                                                                        (when (= :runner-install (:source-type eid)) "install"))
                                                         patchwork card
                                                         targetcard target]
-                                                    {:prompt (str "Trash a card to lower the " cost-type
-                                                                  " cost of " (:title card) " by 2 [Credits].")
-                                                     :priority 2
-                                                     :async true
-                                                     :choices {:req #(and (in-hand? %)
-                                                                          (= "Runner" (:side %))
-                                                                          (not (same-card? % card)))}
-                                                     :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
-                                                               (:title targetcard) " by 2 [Credits]")
-                                                     :effect (req (trash state side target {:unpreventable true})
-                                                                  (register-once state patchwork-ability patchwork)
-                                                                  (effect-completed state side (make-result eid 2)))    ; provide 2 credits
-                                                     :cancel-effect (effect (effect-completed (make-result eid 0)))}))  ; provide 0 credits
+                                                    (continue-ability
+                                                      state side
+                                                      {:prompt (str "Trash a card to lower the " cost-type
+                                                                    " cost of " (:title patchwork) " by 2 [Credits].")
+                                                       :priority 2
+                                                       :async true
+                                                       :choices {:req #(and (in-hand? %)
+                                                                            (runner? %)
+                                                                            (not (same-card? % patchwork)))}
+                                                       :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
+                                                                 (:title targetcard) " by 2 [Credits]")
+                                                       :effect (req (trash state side target {:unpreventable true})
+                                                                    (register-once state patchwork-ability patchwork)
+                                                                    (effect-completed state side (make-result eid 2))) ; provide 2 credits
+                                                       :cancel-effect (effect (effect-completed (make-result eid 0)))} ; provide 0 credits
+                                                      nil nil)))
                                      :type :custom}}}))
 
    "Plascrete Carapace"

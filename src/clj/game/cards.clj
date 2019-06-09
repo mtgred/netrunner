@@ -250,13 +250,16 @@
                        " credits)")
           :choices {:req #(in-coll? (map :cid provider-cards) (:cid %))}
           :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
-                             pay-credits-custom (-> target card-def :interactions :pay-credits :custom)
+                             pay-credits-custom (when (= :custom pay-credits-type)
+                                                  (-> target card-def :interactions :pay-credits :custom))
+                             custom-ability (when (= :custom pay-credits-type)
+                                              {:async true :effect pay-credits-custom})
                              gained-credits (case pay-credits-type
                                               :recurring
                                               (do (add-prop state side target :rec-counter -1) 1)
                                               :credit
                                               (do (add-counter state side target :credit -1) 1)
-                                              :custom ; Custom credits will be handled separately later
+                                              ; Custom credits will be handled separately later
                                               0)
                              selected-cards (update selected-cards (:cid target)
                                                     ;; Store card reference and number of counters picked
@@ -267,9 +270,7 @@
                            ; custom functions should be a 5-arg fn that returns an ability that provides the number of credits as async-result
                            (let [neweid (make-eid state outereid)
                                  providing-card target]
-                             (wait-for (resolve-ability state side neweid
-                                                        (pay-credits-custom state side neweid providing-card [card])
-                                                        providing-card [card])
+                             (wait-for (resolve-ability state side neweid custom-ability providing-card [card])
                                        (continue-ability state side
                                                          (pick-credit-providing-cards provider-func eid target-count
                                                                                       (update selected-cards (:cid providing-card)
