@@ -259,8 +259,9 @@
       (is (empty? (:prompt (get-runner))) "No pay-credits prompt if non-virus program installed")
       (play-from-hand state :runner "Clot")
       (let [cyb (get-hardware state 0)]
-        (click-card state :runner cyb)
-        (is (= 0 (:credit (get-runner))) "Paid only 1 credit for Clot"))))
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 1 credit from Cyberfeeder"
+                           (click-card state :runner cyb)))))
   (testing "Pay-credits prompt on using icebreaker"
     (do-game
       (new-game {:runner {:deck ["Cyberfeeder" "Corroder"]}})
@@ -269,8 +270,10 @@
       (play-from-hand state :runner "Corroder")
       (let [cyb (get-hardware state 0)
             co (get-program state 0)]
-        (card-ability state :runner co 1)
-        (is (changes-credits (get-runner) 0 (click-card state :runner cyb)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Cyberfeeder"
+                           (card-ability state :runner co 1)
+                           (click-card state :runner cyb))))))
 
 (deftest cybsoft-macrodrive
   ;; Cybsoft MacroDrive
@@ -281,8 +284,9 @@
       (play-from-hand state :runner "Cybsoft MacroDrive")
       (play-from-hand state :runner "Equivocation")
       (let [cyb (get-hardware state 0)]
-        (click-card state :runner cyb)
-        (is (= 2 (:credit (get-runner))) "Paid only 1 credit for Equivocation")))))
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 1 credit from Cybsoft MacroDrive"
+                           (click-card state :runner cyb))))))
 
 (deftest cybersolutions-mem-chip
   ;; CyberSolutions Mem Chip- Gain 2 memory
@@ -433,8 +437,10 @@
       (play-from-hand state :runner "Blackstone")
       (let [dfg (get-hardware state 0)
             bs (get-program state 0)]
-        (card-ability state :runner bs 1)
-        (is (changes-credits (get-runner) -2 (click-card state :runner dfg)))))))
+        (changes-val-macro -2 (:credit (get-runner))
+                           "Used 1 credit from Dyson Fractal Generator"
+                           (card-ability state :runner bs 1)
+                           (click-card state :runner dfg))))))
 
 (deftest feedback-filter
   ;; Feedback Filter - Prevent net and brain damage
@@ -805,8 +811,10 @@
       (play-from-hand state :runner "Refractor")
       (let [lp (get-hardware state 0)
             refr (get-program state 0)]
-        (card-ability state :runner refr 1)
-        (is (changes-credits (get-runner) 0 (click-card state :runner lp)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Lockpick"
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner lp))))))
 
 (deftest lucky-charm
   (testing "No interference with runs ending successfully or by jacking out, and Batty/normal ETR/Border Control interaction"
@@ -990,10 +998,11 @@
         (card-ability state :runner inti 1)
         (is (empty? (:prompt (get-runner))) "Not enough money to pay for Inti pump")
         (run-on state "HQ")
-        (card-ability state :runner inti 1)
-        (is (changes-credits (get-runner) 0 
-                             (click-card state :runner maui)
-                             (click-card state :runner maui)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credits from Maui"
+                           (card-ability state :runner inti 1)
+                           (click-card state :runner maui)
+                           (click-card state :runner maui))))))
 
 (deftest maw
   ;; Maw - Once per turn, first time runner declines to steal or trash, trash a HQ card at random
@@ -1304,8 +1313,10 @@
           (card-ability state :runner omni 0)
           (click-card state :runner (find-card "Inti" (:hand (get-runner))))
           (let [inti (first (:hosted (refresh omni)))]
-              (card-ability state :runner inti 1)
-              (is (changes-credits (get-runner) -1 (click-card state :runner omni))))))))
+            (changes-val-macro -1 (:credit (get-runner))
+                               "Used 1 credit from Omni-drive"
+                               (card-ability state :runner inti 1)
+                               (click-card state :runner omni)))))))
 
 (deftest paragon
   ;; Paragon - Gain 1 credit and may look at and move top card of Stack to bottom
@@ -1431,9 +1442,11 @@
       (new-game {:runner {:deck ["Public Terminal" "Dirty Laundry"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Public Terminal")
-      (play-from-hand state :runner "Dirty Laundry")
       (let [pt (get-hardware state 0)]
-        (is (changes-credits (get-runner) -1 (click-card state :runner pt)))))))
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 1 credit from Public Terminal"
+                           (play-from-hand state :runner "Dirty Laundry")
+                           (click-card state :runner pt))))))
 
 (deftest prepaid-voicepad
   ;; Prepaid VoicePAD
@@ -1442,9 +1455,11 @@
       (new-game {:runner {:deck ["Prepaid VoicePAD" "Dirty Laundry"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Prepaid VoicePAD")
-      (play-from-hand state :runner "Dirty Laundry")
       (let [ppvp (get-hardware state 0)]
-        (is (changes-credits (get-runner) -1 (click-card state :runner ppvp)))))))
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 1 credit from "
+                           (play-from-hand state :runner "Dirty Laundry")
+                           (click-card state :runner ppvp))))))
 
 (deftest rabbit-hole
   ;; Rabbit Hole - +1 link, optionally search Stack to install more copies
@@ -1796,8 +1811,10 @@
       (play-from-hand state :runner "Dagger")
       (let [sil (get-hardware state 0)
             dag (get-program state 0)]
-        (card-ability state :runner dag 1)
-        (is (changes-credits (get-runner) 0 (click-card state :runner sil)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Silencer"
+                           (card-ability state :runner dag 1)
+                           (click-card state :runner sil))))))
 
 (deftest spinal-modem
   ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run
@@ -1829,10 +1846,11 @@
       (play-from-hand state :runner "Inti")
       (let [sm (get-hardware state 0)
             inti (get-program state 0)]
-        (card-ability state :runner inti 1)
-        (is (changes-credits (get-runner) 0
-                             (click-card state :runner sm)
-                             (click-card state :runner sm)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credits from Spinal Modem"
+                           (card-ability state :runner inti 1)
+                           (click-card state :runner sm)
+                           (click-card state :runner sm))))))
 
 (deftest sports-hopper
   ;; Sports Hopper
@@ -1954,16 +1972,18 @@
   ;; The Toolbox
   (testing "Pay-credits prompt"
     (do-game
-      (new-game {:runner {:deck ["Spinal Modem" "Inti"]}})
+      (new-game {:runner {:deck ["The Toolbox" "Inti"]}})
       (take-credits state :corp)
-      (play-from-hand state :runner "Spinal Modem")
+      (core/gain state :runner :credit 9)
+      (play-from-hand state :runner "The Toolbox")
       (play-from-hand state :runner "Inti")
-      (let [sm (get-hardware state 0)
+      (let [tt (get-hardware state 0)
             inti (get-program state 0)]
-        (card-ability state :runner inti 1)
-        (is (changes-credits (get-runner) 0 
-                             (click-card state :runner sm)
-                             (click-card state :runner sm)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credits from The Toolbox"
+                           (card-ability state :runner inti 1)
+                           (click-card state :runner tt)
+                           (click-card state :runner tt))))))
 
 (deftest titanium-ribs
   ;; Titanium Ribs - Choose cards lost to damage, but not on Corp turn against Chronos Protocol

@@ -563,10 +563,11 @@
       (play-from-hand state :runner "Crash Space")
       (core/gain-tags state :corp 1)
       (let [cs (get-resource state 0)]
-        (is (changes-credits (get-runner) 0
-                             (core/remove-tag state :runner nil)
-                             (click-card state :runner cs)
-                             (click-card state :runner cs)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credit from Crash Space"
+                           (core/remove-tag state :runner nil)
+                           (click-card state :runner cs)
+                           (click-card state :runner cs))))))
 
 (deftest crowdfunding
   (testing "Credit gain behavior"
@@ -1424,8 +1425,10 @@
       (run-on state :hq)
       (let [gr (get-resource state 0)
             refr (get-program state 0)]
-        (card-ability state :runner refr 1)
-        (is (changes-credits (get-runner) 0 (click-card state :runner gr)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Ghost Runner"
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner gr))))))
 
 (deftest globalsec-security-clearance
   ;; Globalsec Security Clearance - Ability, click lost on use
@@ -1616,10 +1619,11 @@
       (let [iwall (get-ice state :archives 0)]
         (play-from-hand state :runner "Ice Analyzer")
         (core/rez state :corp iwall)
-        (play-from-hand state :runner "Equivocation")
         (let [ana (get-resource state 0)]
-          (click-card state :runner ana)
-          (is (= 4 (:credit (get-runner))) "Paid only 1 credit for Equivocation"))))))
+          (changes-val-macro -1 (:credit (get-runner))
+                             "Used 1 credit from Ice Analyzer"
+                             (play-from-hand state :runner "Equivocation")
+                             (click-card state :runner ana)))))))
 
 (deftest ice-carver
   ;; Ice Carver - lower ice strength on encounter
@@ -1643,11 +1647,12 @@
       (new-game {:runner {:deck ["Inside Man" "Desperado"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Inside Man")
-      (play-from-hand state :runner "Desperado")
       (let [im (get-resource state 0)]
-        (click-card state :runner im)
-        (click-card state :runner im)
-        (is (= 1 (:credit (get-runner))) "Paid only 1 credit for Desperado")))))
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 2 credits from Inside Man"
+                           (play-from-hand state :runner "Desperado")
+                           (click-card state :runner im)
+                           (click-card state :runner im))))))
 
 (deftest investigative-journalism
   ;; Investigative Journalism - 4 clicks and trash to give the Corp 1 bad pub
@@ -2071,9 +2076,11 @@
       (let [nm (get-resource state 0)
             cl (get-program state 0)
             refr (get-program state 1)]
-        (run-on state :hq)
-        (card-ability state :runner refr 1)
-        (is (changes-credits (get-runner) 0 (click-card state :runner cl)))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Cloak"
+                           (run-on state :hq)
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner cl))
         (click-prompt state :runner "Place 1 [Credits]")
         (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")))))
 
@@ -3630,9 +3637,11 @@
       (take-credits state :corp)
       (let [tt (get-resource state 0)
             refr (get-program state 0)]
-        (run-on state :hq)
-        (card-ability state :runner refr 1)
-        (is (changes-credits (get-runner) 0 (click-card state :runner refr)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Trickster Taka"
+                           (run-on state :hq)
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner refr))))))
 
 (deftest tri-maf-contact
   ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed

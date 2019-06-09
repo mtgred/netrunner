@@ -2198,8 +2198,10 @@
       (play-from-hand state :runner "Refractor")
       (let [smoke (get-in @state [:runner :identity])
             refr (get-program state 0)]
-        (card-ability state :runner refr 1)
-        (is (changes-credits (get-runner) 0 (click-card state :runner smoke)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Smoke"
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner smoke))))))
 
 (deftest spark-agency-worldswide-reach
   ;; Spark Agency - Rezzing advertisements

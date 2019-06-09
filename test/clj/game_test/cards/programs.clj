@@ -382,8 +382,10 @@
       (play-from-hand state :runner "Refractor")
       (let [cl (get-program state 0)
             refr (get-program state 1)]
-        (card-ability state :runner refr 1)
-        (is (changes-credits (get-runner) 0 (click-card state :runner cl)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Cloak"
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner cl))))))
 
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
@@ -1318,10 +1320,11 @@
       (play-from-hand state :runner "Abagnale")
       (let [mt (get-program state 0)
             ab (get-program state 1)]
-        (card-ability state :runner ab 1)
-        (is (changes-credits (get-runner) 0 
-                             (click-card state :runner mt)
-                             (click-card state :runner mt)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credits from Multithreader"
+                           (card-ability state :runner ab 1)
+                           (click-card state :runner mt)
+                           (click-card state :runner mt))))))
 
 
 (deftest musaazi
@@ -1763,11 +1766,12 @@
       (let [phero (get-program state 0)
             inti (get-program state 1)]
         (is (changes-credits (get-runner) -2 (card-ability state :runner inti 1)))
-        (run-on state "HQ")
-        (is (changes-credits (get-runner) 0 
-                             (card-ability state :runner inti 1)
-                             (click-card state :runner phero)
-                             (click-card state :runner phero)))))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credits from Pheromones"
+                           (run-on state "HQ")
+                           (card-ability state :runner inti 1)
+                           (click-card state :runner phero)
+                           (click-card state :runner phero))))))
 
 (deftest plague
   ;; Plague
@@ -1958,11 +1962,12 @@
     (new-game {:runner {:deck ["Sahasrara" "Equivocation"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Sahasrara")
-    (play-from-hand state :runner "Equivocation")
     (let [rara (get-program state 0)]
-      (click-card state :runner rara)
-      (click-card state :runner rara)
-      (is (= 3 (:credit (get-runner))) "Paid nothing for Equivocation")))))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credits from Sahasrara"
+                           (play-from-hand state :runner "Equivocation")
+                           (click-card state :runner rara)
+                           (click-card state :runner rara))))))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program

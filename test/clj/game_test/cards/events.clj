@@ -641,7 +641,9 @@
       (let [refr (get-program state 0)
             cr (first (get-in @state [:runner :play-area]))]
         (card-ability state :runner refr 1)
-        (is (changes-credits (get-runner) 0 (click-card state :runner cr)))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Cold Read"
+                           (click-card state :runner cr))
         (run-successful state)
         (click-card state :runner refr)
         (is (= 2 (count (:discard (get-runner)))) "Cold Read and Refractor in discard")))))
@@ -2323,10 +2325,14 @@
       (play-from-hand state :runner "Corroder")
       (let [nc (first (get-in @state [:runner :current]))
             cor (get-program state 0)]
-        (is (changes-credits (get-runner) -1 (card-ability state :runner cor 1))) ; paid credit outside of run
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Paid credit outside of run"
+                           (card-ability state :runner cor 1))
         (run-on state :hq)
         (card-ability state :runner cor 1)
-        (is (changes-credits (get-runner) 0 (click-card state :runner nc)))))))  ; paid from Net Celebrity
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Net Celebrity"
+                           (click-card state :runner nc))))))
 
 (deftest notoriety
   ;; Notoriety - Run all 3 central servers successfully and play to gain 1 agenda point
