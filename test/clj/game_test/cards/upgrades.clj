@@ -701,6 +701,22 @@
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters")))))
 
+(deftest dedicated-technician-team
+  ;; Dedicated Technician Team
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["Dedicated Technician Team" (qty "Enigma" 3)]}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Enigma" "New remote")
+      (play-from-hand state :corp "Enigma" "Server 1")
+      (play-from-hand state :corp "Dedicated Technician Team" "Server 1")
+      (let [dtt (get-content state :remote1 0)]
+        (core/rez state :corp dtt)
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 3 credits from Dedicated Technician Team"
+                           (play-from-hand state :corp "Enigma" "Server 1")
+                           (click-card state :corp dtt))))))
+
 (deftest disposable-hq
   ;; Disposable HQ
   (do-game
@@ -1930,6 +1946,28 @@
       (run-jack-out state)
       (card-ability state :runner smc2 0)
       (click-prompt state :runner "Reaver"))))
+
+(deftest simone-diego
+  ;; Simone Diego
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["Simone Diego" "Ice Wall" "Project Junebug"]}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Simone Diego" "New remote")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (play-from-hand state :corp "Project Junebug" "Server 1")
+      (let [sd (get-content state :remote1 0)
+            pj (get-content state :remote1 1)
+            iw (get-ice state :remote1 0)]
+        (core/rez state :corp sd)
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from Simone Diego to advance Ice Wall"
+                           (core/advance state :corp {:card (refresh iw)})
+                           (click-card state :corp sd))
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from Simone Diego to advance Project Junebug"
+                           (core/advance state :corp {:card (refresh pj)})
+                           (click-card state :corp sd))))))
 
 (deftest strongbox
   ;; Strongbox

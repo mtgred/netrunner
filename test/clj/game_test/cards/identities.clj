@@ -2425,6 +2425,20 @@
           (is (zero? (get-counters (refresh scored) :agenda)) "No agenda counter used by Mark Yale")
           (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale"))))))
 
+(deftest weyland-consortium-because-we-built-it
+  ;; Weyland Consortium: Because We Built It
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:id "Weyland Consortium: Because We Built It"
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (let [iw (get-ice state :remote1 0)
+            bwbi (get-in @state [:corp :identity])]
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from Weyland BWBI to advance Ice Wall"
+                           (core/advance state :corp {:card (refresh iw)})
+                           (click-card state :corp bwbi))))))
+
 (deftest weyland-consortium-builder-of-nations
   ;; Builder of Nations
   (testing "1 meat damage per turn at most"
