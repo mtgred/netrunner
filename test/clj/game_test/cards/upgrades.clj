@@ -1082,6 +1082,25 @@
       (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
 
+(deftest khondi-plaza
+  ;; Khondi Plaza
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["Khondi Plaza" "Enigma" (qty "PAD Campaign" 3)]}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Khondi Plaza" "New remote")
+      (play-from-hand state :corp "Enigma" "Server 1")
+      (dotimes [c 3] (play-from-hand state :corp "PAD Campaign" "New remote"))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [kh (get-content state :remote1 0)
+            en (get-ice state :remote1 0)]
+        (core/rez state :corp kh)
+        (is (= 4 (get-counters (refresh kh) :recurring)) "4 recurring credits on Khondi")
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 3 credits from Khondi Plaza"
+                           (core/rez state :corp en)
+                           (dotimes [c 3] (click-card state :corp kh)))))))
+
 (deftest letheia-nisei
   ;; Letheia Nisei
   (do-game

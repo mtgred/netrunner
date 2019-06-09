@@ -557,7 +557,7 @@
    "Dedicated Server"
    {:recurring 2
     :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
-                                                (ice? card)))
+                                                (ice? target)))
                                  :type :recurring}}}
 
    "Director Haas"
