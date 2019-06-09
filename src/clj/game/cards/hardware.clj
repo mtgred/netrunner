@@ -749,7 +749,7 @@
    {:in-play [:memory 2]
     :recurring (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
     :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
-    :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :servers 0])))
+    :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :server 0])))
                                  :type :recurring}}}
 
    "Maw"

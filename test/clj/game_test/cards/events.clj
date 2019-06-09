@@ -2313,6 +2313,21 @@
     (is (= 1 (count (get-program state))) "Installed Nerve Agent")
     (is (= 4 (:credit (get-runner))) "Paid 0 credits")))
 
+(deftest net-celebrity
+  ;; Net-celebrity
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Net Celebrity" "Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Net Celebrity")
+      (play-from-hand state :runner "Corroder")
+      (let [nc (first (get-in @state [:runner :current]))
+            cor (get-program state 0)]
+        (is (changes-credits (get-runner) -1 (card-ability state :runner cor 1))) ; paid credit outside of run
+        (run-on state :hq)
+        (card-ability state :runner cor 1)
+        (is (changes-credits (get-runner) 0 (click-card state :runner nc)))))))  ; paid from Net Celebrity
+
 (deftest notoriety
   ;; Notoriety - Run all 3 central servers successfully and play to gain 1 agenda point
   (do-game

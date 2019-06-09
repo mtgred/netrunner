@@ -249,7 +249,7 @@
 
 (deftest cyberfeeder
   ;; Cyberfeeder
-  (testing "Pay-credits prompt"
+  (testing "Pay-credits prompt on install"
     (do-game
       (new-game {:runner {:deck ["Cyberfeeder" "Clot" "Equivocation"]}})
       (take-credits state :corp)
@@ -260,7 +260,17 @@
       (play-from-hand state :runner "Clot")
       (let [cyb (get-hardware state 0)]
         (click-card state :runner cyb)
-        (is (= 0 (:credit (get-runner))) "Paid only 1 credit for Clot")))))
+        (is (= 0 (:credit (get-runner))) "Paid only 1 credit for Clot"))))
+  (testing "Pay-credits prompt on using icebreaker"
+    (do-game
+      (new-game {:runner {:deck ["Cyberfeeder" "Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cyberfeeder")
+      (play-from-hand state :runner "Corroder")
+      (let [cyb (get-hardware state 0)
+            co (get-program state 0)]
+        (card-ability state :runner co 1)
+        (is (changes-credits (get-runner) 0 (click-card state :runner cyb)))))))
 
 (deftest cybsoft-macrodrive
   ;; Cybsoft MacroDrive
@@ -964,6 +974,27 @@
       (play-from-hand state :runner "Daily Casts")
       (is (= 4 (count (:hand (get-runner)))) "Runner shouldn't draw any more cards from installing anything"))))
 
+(deftest maui
+  ;; Maui (Māui)
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 3)]}
+                 :runner {:deck ["Māui" "Inti"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Māui")
+      (play-from-hand state :runner "Inti")
+      (let [maui (get-hardware state 0)
+            inti (get-program state 0)]
+        (card-ability state :runner inti 1)
+        (is (empty? (:prompt (get-runner))) "Not enough money to pay for Inti pump")
+        (run-on state "HQ")
+        (card-ability state :runner inti 1)
+        (is (changes-credits (get-runner) 0 
+                             (click-card state :runner maui)
+                             (click-card state :runner maui)))))))
+
 (deftest maw
   ;; Maw - Once per turn, first time runner declines to steal or trash, trash a HQ card at random
   (testing "Basic test"
@@ -1261,6 +1292,20 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Paper Tripping")
       (is (zero? (count-tags state)) "Runner loses all tags"))))
+
+(deftest omni-drive
+    ;;Omni-drive
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:hand ["Omni-drive" "Inti"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Omni-drive")
+      (let [omni (get-hardware state 0)]
+          (card-ability state :runner omni 0)
+          (click-card state :runner (find-card "Inti" (:hand (get-runner))))
+          (let [inti (first (:hosted (refresh omni)))]
+              (card-ability state :runner inti 1)
+              (is (changes-credits (get-runner) -1 (click-card state :runner omni))))))))
 
 (deftest paragon
   ;; Paragon - Gain 1 credit and may look at and move top card of Stack to bottom
@@ -1734,24 +1779,38 @@
 
 (deftest spinal-modem
   ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run
-  (do-game
-    (new-game {:corp {:deck ["Caduceus"]}
-               :runner {:deck ["Spinal Modem" "Sure Gamble"]}})
-    (play-from-hand state :corp "Caduceus" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Spinal Modem")
-    (let [cad (get-ice state :hq 0)
-          sm (get-hardware state 0)]
-      (is (= 5 (core/available-mu state)))
-      (is (= 2 (get-counters (refresh sm) :recurring)))
-      (run-on state :hq)
-      (core/rez state :corp cad)
-      (card-subroutine state :corp cad 0)
-      (click-prompt state :corp "0")
-      (click-prompt state :runner "0")
-      (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
-      (is (= 1 (count (:discard (get-runner)))))
-      (is (= 4 (hand-size :runner)) "Reduced hand size"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Caduceus"]}
+                 :runner {:deck ["Spinal Modem" "Sure Gamble"]}})
+      (play-from-hand state :corp "Caduceus" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Spinal Modem")
+      (let [cad (get-ice state :hq 0)
+            sm (get-hardware state 0)]
+        (is (= 5 (core/available-mu state)))
+        (is (= 2 (get-counters (refresh sm) :recurring)))
+        (run-on state :hq)
+        (core/rez state :corp cad)
+        (card-subroutine state :corp cad 0)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
+        (is (= 1 (count (:discard (get-runner)))))
+        (is (= 4 (hand-size :runner)) "Reduced hand size"))))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Spinal Modem" "Inti"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Spinal Modem")
+      (play-from-hand state :runner "Inti")
+      (let [sm (get-hardware state 0)
+            inti (get-program state 0)]
+        (card-ability state :runner inti 1)
+        (is (changes-credits (get-runner) 0
+                             (click-card state :runner sm)
+                             (click-card state :runner sm)))))))
 
 (deftest sports-hopper
   ;; Sports Hopper
@@ -1868,6 +1927,21 @@
       (click-card state :runner fae)
       (is (= 1 (count (:hosted (refresh fae)))) "TPT hosted on Faerie")
       (is (= 3 (:current-strength (refresh fae))) "Faerie receiving +1 strength from TPT"))))
+
+(deftest the-toolbox
+  ;; The Toolbox
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Spinal Modem" "Inti"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Spinal Modem")
+      (play-from-hand state :runner "Inti")
+      (let [sm (get-hardware state 0)
+            inti (get-program state 0)]
+        (card-ability state :runner inti 1)
+        (is (changes-credits (get-runner) 0 
+                             (click-card state :runner sm)
+                             (click-card state :runner sm)))))))
 
 (deftest titanium-ribs
   ;; Titanium Ribs - Choose cards lost to damage, but not on Corp turn against Chronos Protocol

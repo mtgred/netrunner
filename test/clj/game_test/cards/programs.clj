@@ -1307,6 +1307,23 @@
       (take-credits state :runner)
       (is (zero? (get-counters (refresh mam) :power)) "All power counters removed"))))
 
+(deftest multithreader
+  ;; Multithreader
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Multithreader" "Abagnale"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Multithreader")
+      (play-from-hand state :runner "Abagnale")
+      (let [mt (get-program state 0)
+            ab (get-program state 1)]
+        (card-ability state :runner ab 1)
+        (is (changes-credits (get-runner) 0 
+                             (click-card state :runner mt)
+                             (click-card state :runner mt)))))))
+
+
 (deftest musaazi
   ;; Musaazi gains virus counters on successful runs and can spend virus counters from any installed card
   (do-game
@@ -1717,17 +1734,40 @@
 
 (deftest pheromones
   ;; Pheromones ability shouldn't have a NullPointerException when fired with 0 virus counter
-  (do-game
-    (new-game {:runner {:deck ["Pheromones"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Pheromones")
-    (let [ph (get-program state 0)]
-      (card-ability state :runner (refresh ph) 0)
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Pheromones"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Pheromones")
+      (let [ph (get-program state 0)]
+        (card-ability state :runner (refresh ph) 0)
+        (run-on state "HQ")
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (= 1 (get-counters (refresh ph) :virus)) "Pheromones gained 1 counter")
+        (card-ability state :runner (refresh ph) 0)))) ; this doesn't do anything, but shouldn't crash
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Pheromones" "Inti"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Pheromones")
+      (play-from-hand state :runner "Inti")
       (run-on state "HQ")
       (run-successful state)
       (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (refresh ph) :virus)) "Pheromones gained 1 counter")
-      (card-ability state :runner (refresh ph) 0)))) ; this doesn't do anything, but shouldn't crash
+      (run-on state "HQ")
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [phero (get-program state 0)
+            inti (get-program state 1)]
+        (is (changes-credits (get-runner) -2 (card-ability state :runner inti 1)))
+        (run-on state "HQ")
+        (is (changes-credits (get-runner) 0 
+                             (card-ability state :runner inti 1)
+                             (click-card state :runner phero)
+                             (click-card state :runner phero)))))))
 
 (deftest plague
   ;; Plague
