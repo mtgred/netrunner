@@ -3568,7 +3568,24 @@
       (click-prompt state :runner "Done")
       (click-card state :runner "Corroder")
       (is (zero? (:credit (get-runner))) "Runner paid one less to install")
-      (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed"))))
+      (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed")))
+  (testing "Interaction with Sahasrara and pay-credits"
+    (do-game
+      (new-game {:runner {:deck ["Thunder Art Gallery" "Sahasrara" "Darwin"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Thunder Art Gallery")
+      (play-from-hand state :runner "Sahasrara")
+      (core/gain-credits state :runner 4)
+      (core/gain-tags state :corp 1)
+      (let [thund (get-resource state 0)
+            rara (get-program state 0)]
+        (changes-val-macro -2 (:credit (get-runner))
+                           "Used TAG and Sahasrara to install Darwin for free"
+                           (core/remove-tag state :runner nil)
+                           (click-card state :runner "Darwin")
+                           (click-card state :runner rara)
+                           (click-card state :runner rara))
+        (is (= 0 (count (:hand (get-runner)))) "Installed Darwin")))))
 
 (deftest trickster-taka
   ;; Trickster Taka - Companion, credits spendable on programs during runs (not during access)

@@ -2344,11 +2344,13 @@
                   :async true
                   :prompt (msg "Select a card to install with Thunder Art Gallery")
                   :effect (req (if (and (runner-can-install? state side target)
-                                        (can-pay? state side eid card target
+                                        (can-pay? state side (merge eid {:source card
+                                                                         :source-type :runner-install}) target nil
                                                   (install-cost state side target [:credit (dec (:cost target))])))
                                  (do (install-cost-bonus state side [:credit -1])
                                      (system-msg state side "uses Thunder Art Gallery to install a card.")
-                                     (runner-install state side eid target nil))
+                                     (runner-install state side (merge eid {:source card
+                                                                            :source-type :runner-install}) target nil))
                                  (effect-completed state side eid)))
                   :cancel-effect (effect (effect-completed eid))}]
      {:events {:runner-lose-tag (assoc ability :req (req (and (first-event-check state first-event? no-event?) (= side :runner))))
