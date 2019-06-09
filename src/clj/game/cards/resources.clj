@@ -1473,11 +1473,10 @@
                                 card nil))}}
     ; Normally this should be (req true), but having pay-credits prompts on
     ; literally every interaction would get tiresome. Therefore Net Mercur will
-    ; behave like Cloak for now
-    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
-                                                (has-subtype? target "Icebreaker")))
+    ; only ask for payments during a run and on traces.
+    :interactions {:pay-credits {:req (req (or (:run @state)
+                                               (= :trace (:source-type eid))))
                                  :type :credit}}}
-
 
    "Network Exchange"
    {:msg "increase the install cost of non-innermost ICE by 1"
