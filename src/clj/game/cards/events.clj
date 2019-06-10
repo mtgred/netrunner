@@ -1032,7 +1032,7 @@
 
    "Hacktivist Meeting"
    {:events {:pre-rez-cost {:req (req (not (ice? target)))
-                            :effect (effect (rez-additional-cost-bonus [:discard 1]))}}}
+                            :effect (effect (rez-additional-cost-bonus [:randomly-trash-from-hand 1]))}}}
 
    "High-Stakes Job"
    (run-event

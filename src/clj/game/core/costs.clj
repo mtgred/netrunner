@@ -3,7 +3,7 @@
 (declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
          facedown? make-result unknown->kw discard-from-hand card-str trash trash-cards
          complete-with-result all-installed-runner-type pick-credit-providing-cards all-active
-         eligible-pay-credit-cards)
+         eligible-pay-credit-cards corp? runner? in-hand?)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -69,7 +69,8 @@
       (not (or (and (#{:memory :net :meat :brain} cost-type) (<= amount (count (get-in @state [:runner :hand]))))
                (and (= cost-type :forfeit) (<= 0 (- (count (get-in @state [side :scored])) amount)))
                (and (= cost-type :mill) (<= 0 (- (count (get-in @state [side :deck])) amount)))
-               (and (= cost-type :discard) (<= 0 (- (count (get-in @state [side :hand])) amount)))
+               (and (= cost-type :trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount)))
+               (and (= cost-type :randomly-trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount)))
                (and (= cost-type :tag) (<= 0 (- (get-in @state [:runner :tag :base]) amount)))
                (and (= cost-type :ice) (<= 0 (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount)))
                (and (= cost-type :hardware) (<= 0 (- (count (all-installed-runner-type state :hardware)) amount)))
@@ -257,7 +258,28 @@
                 (str "trashes " (quantify amount "card") " from the top of "
                      (if (= :corp side) "R&D" "the stack"))))))
 
-(defn pay-discard
+(defn pay-trash-from-hand
+  "Randomly trash a card from hand as part of a cost"
+  [state side eid amount]
+  (let [select-fn #(and ((if (= :corp side) corp? runner?) %)
+                        (in-hand? %))
+        hand (if (= :corp side) "HQ" "their grip")]
+    (continue-ability state side
+                      {:prompt (str "Choose " (quantify amount (str "card in " hand)) " to trash")
+                       :choices {:all true
+                                 :max amount
+                                 :req select-fn}
+                       :async true
+                       :effect (req (wait-for (trash-cards state side targets {:unpreventable true :seen false})
+                                              (complete-with-result
+                                                state side eid
+                                                (str "trashes " (quantify amount "card")
+                                                     " (" (join ", " (map #(card-str state %) targets)) ")"
+                                                     " from " hand))))}
+                      nil nil)))
+
+(defn pay-randomly-trash-from-hand
+  "Randomly trash a card from hand as part of a cost"
   [state side eid amount]
   (let [cards (take amount (shuffle (get-in @state [side :hand])))]
     (wait-for (trash-cards state side cards {:unpreventable true :seen false})
@@ -338,7 +360,8 @@
 
      ;; Discard cards from deck or hand
      :mill (pay-mill state side eid amount)
-     :discard (pay-discard state side eid amount)
+     :trash-from-hand (pay-trash-from-hand state side eid amount)
+     :randomly-trash-from-hand (pay-randomly-trash-from-hand state side eid amount)
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card amount)
