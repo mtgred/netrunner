@@ -211,6 +211,16 @@
   [card]
   (= (:zone card) [:discard]))
 
+(defn in-deck?
+  "Checks if the specified card is in the draw deck."
+  [card]
+  (= (:zone card) [:deck]))
+
+(defn in-play-area?
+  "Checks if the specified card is in the play area."
+  [card]
+  (= (:zone card) [:play-area]))
+
 (defn is-scored?
   "Checks if the specified card is in the scored area of the specified player."
   [state side card]
@@ -220,11 +230,6 @@
   "Checks if the specified card is able to be used for a when-scored text ability"
   [card]
   (not (:not-when-scored (card-def card))))
-
-(defn in-deck?
-  "Checks if the specified card is in the draw deck."
-  [card]
-  (= (:zone card) [:deck]))
 
 (defn facedown?
   "Checks if the specified card is facedown."
@@ -302,10 +307,10 @@
   [{:keys [zone] :as card}]
   (or (is-type? card "Identity")
       (= zone [:current])
-      (and (card-is? card :side :corp)
+      (and (corp? card)
            (installed? card)
            (rezzed? card))
-      (and (card-is? card :side :runner)
+      (and (runner? card)
            (installed? card)
            (not (facedown? card)))))
 
@@ -432,7 +437,7 @@
     ;; public runner cards: in hand and :openhand is true;
     ;; or installed/hosted and not facedown;
     ;; or scored or current or in heap
-    (or (card-is? card :side :corp)
+    (or (corp? card)
         (and (:openhand (:runner @state)) (in-hand? card))
         (and (or (installed? card) (:host card)) (not (facedown? card)))
         (#{:scored :discard :current} (last zone)))
@@ -440,7 +445,7 @@
     ;; or installed and rezzed;
     ;; or in :discard and :seen
     ;; or scored or current
-    (or (card-is? card :side :runner)
+    (or (runner? card)
         (and (:openhand (:corp @state)) (in-hand? card))
         (and (or (installed? card) (:host card))
              (or (is-type? card "Operation") (rezzed? card)))

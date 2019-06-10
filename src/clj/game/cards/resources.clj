@@ -120,9 +120,9 @@
     :abilities [{:effect (req (resolve-ability
                                 state side
                                 {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                                 :choices {:req #(and (card-is? % :side :runner)
+                                 :choices {:req #(and (runner? %)
                                                       (installed? %)
-                                                      (not (card-is? % :cid (:cid card))))}
+                                                      (not (same-card? % card)))}
                                  :effect (effect (gain-credits 3)
                                                  (trash target {:unpreventable true}))}
                                 card nil))}]}
@@ -191,7 +191,7 @@
                  :msg (msg "install " (:title target))
                  :req (req (not (install-locked? state side)))
                  :cost [:forfeit]
-                 :choices (req (cancellable (filter #(not (is-type? % "Event")) (:deck runner)) :sorted))
+                 :choices (req (cancellable (filter #(not (event? %)) (:deck runner)) :sorted))
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (runner-install target))}]}
@@ -202,8 +202,8 @@
                  :prompt "Select a facedown installed card"
                  :choices {:req #(and (facedown? %)
                                       (installed? %)
-                                      (= "Runner" (:side %)))}
-                 :effect (req (if (or (is-type? target "Event")
+                                      (runner? %))}
+                 :effect (req (if (or (event? target)
                                       (and (has-subtype? target "Console")
                                            (some #(has-subtype? % "Console") (all-active-installed state :runner))))
                                 ;; Consoles and events are immediately unpreventably trashed.
@@ -267,14 +267,14 @@
 
    "Bazaar"
    (letfn [(hardware-and-in-hand? [target runner]
-             (and (is-type? target "Hardware")
+             (and (hardware? target)
                   (some #(= (:title %) (:title target)) (:hand runner))))]
      {:events
       {:runner-install
        {:interactive (req (hardware-and-in-hand? target runner))
         :silent (req (not (hardware-and-in-hand? target runner)))
         :async true
-        :req (req (and (is-type? target "Hardware") (= [:hand] (:previous-zone target))))
+        :req (req (and (hardware? target) (= [:hand] (:previous-zone target))))
         :effect (req (let [hw (:title target)]
                        (continue-ability state side
                                          {:optional {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
@@ -350,7 +350,7 @@
                                         (resolve-ability state side
                                                          {:prompt "Choose a card in your Grip to shuffle back into your Stack"
                                                           :choices {:req #(and (in-hand? %)
-                                                                               (= (:side %) "Runner"))}
+                                                                               (runner? %))}
                                                           :effect (effect (move target :deck)
                                                                           (shuffle! :deck))}
                                                          card nil)))}]}
@@ -362,7 +362,7 @@
                  :once :per-turn
                  :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
                  :show-discard true
-                 :choices {:req #(and (in-discard? %) (= (:side %) "Runner"))}
+                 :choices {:req #(and (in-discard? %) (runner? %))}
                  :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
                  :effect (effect (gain-credits 2)
                                  (move target :rfg))}]}
@@ -412,7 +412,7 @@
                 {:cost [:click 1]
                  :label "Install a program from your Grip"
                  :prompt "Select a program to install from your Grip"
-                 :choices {:req #(and (is-type? % "Program") (in-hand? %))}
+                 :choices {:req #(and (program? %) (in-hand? %))}
                  :msg (msg "install " (:title target))
                  :effect (req (install-cost-bonus state side [:credit (- (get-counters card :power))])
                               (runner-install state side target)
@@ -514,7 +514,7 @@
                                 (toast state :corp (str "Runner has the opportunity to derez with Councilman.") "error"))}}
     :abilities [{:prompt "Select an asset or upgrade that was just rezzed"
                  :choices {:req #(and (rezzed? %)
-                                      (or (is-type? % "Asset") (is-type? % "Upgrade")))}
+                                      (or (asset? %) (upgrade? %)))}
                  :effect (req (let [c target
                                     creds (rez-cost state :corp c)]
                                 (when (can-pay? state side eid card nil [:credit creds])
@@ -526,7 +526,7 @@
                                                   (register-turn-flag!
                                                     state side card :can-rez
                                                     (fn [state side card]
-                                                      (if (= (:cid card) (:cid c))
+                                                      (if (same-card? card c)
                                                         ((constantly false)
                                                          (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
                                                         true)))
@@ -586,7 +586,7 @@
                                                                       " and draws 1 card")))
                                      (draw state :runner eid 1 nil))
                                  (effect-completed state side eid)))}
-         install-prompt {:req (req (and (= (:zone card) [:discard])
+         install-prompt {:req (req (and (in-discard? card)
                                         (not (install-locked? state :runner))))
                          :async true
                          :effect (req (continue-ability
@@ -601,7 +601,7 @@
                                                     ;; to prevent multiple copies from prompting multiple times.
                                                     :no-ability {:effect (req (swap! state assoc-in [:runner :register :crowdfunding-prompt] true))}}}
                                         card nil))}
-         heap-event (req (when (= (:zone card) [:discard])
+         heap-event (req (when (in-discard? card)
                            (unregister-events state side card)
                            (register-events state side
                                             {:runner-turn-ends install-prompt}
@@ -626,7 +626,7 @@
     :abilities [{:label "[Click][Trash]: install a virus program from the stack"
                  :prompt "Choose a virus"
                  :msg (msg "install " (:title target) " from the stack")
-                 :choices (req (cancellable (filter #(and (is-type? % "Program")
+                 :choices (req (cancellable (filter #(and (program? %)
                                                           (has-subtype? % "Virus"))
                                                     (:deck runner)) :sorted))
                  :cost [:click 1]
@@ -723,7 +723,7 @@
                                                          (update! (dissoc card :dean-target))
                                                          (update-breaker-strength (:dean-target card)))}]
                                {:run-ends dean
-                                :pre-breaker-strength {:req (req (= (:cid target)(:cid (:dean-target card))))
+                                :pre-breaker-strength {:req (req (same-card? target (:dean-target card)))
                                                        :effect (effect (breaker-strength-bonus (count (:hand runner))))}}) card))}}
 
    "Decoy"
@@ -759,7 +759,7 @@
    "DJ Fenris"
    (let [is-draft-id? #(starts-with? (:code %) "00")
          sorted-id-list (fn [runner] (->> (server-cards)
-                                          (filter #(and (is-type? % "Identity")
+                                          (filter #(and (identity? %)
                                                         (has-subtype? % "g-mod")
                                                         (not= (-> runner :identity :faction)
                                                               (:faction %))
@@ -952,7 +952,7 @@
                                                       (swap! state dissoc :access)))
                                        :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
      {:events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
-                                       (is-type? target "Agenda")))
+                                       (agenda? target)))
                         :interactive (req true)
                         :async true
                         :effect (effect (continue-ability (host-agenda? target) card nil))}}
@@ -983,7 +983,7 @@
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
-                 :req (req (some #(= (:side %) "Corp") (map second (turn-events state :runner :damage))))
+                 :req (req (some corp? (map second (turn-events state :runner :damage))))
                  :msg "draw 1 card"
                  :async true
                  :effect (effect (draw eid 1 nil))}]}
@@ -1121,7 +1121,7 @@
 
    "Ice Carver"
    {:events {:pre-ice-strength
-             {:req (req (and (= (:cid target) (:cid current-ice)) (:rezzed target)))
+             {:req (req (and (same-card? target current-ice) (:rezzed target)))
               :effect (effect (ice-strength-bonus -1 target))}}}
 
    "Inside Man"
@@ -1361,7 +1361,7 @@
    {:abilities [{:label "Install a non-virus program on London Library"
                  :cost [:click 1]
                  :prompt "Select a non-virus program to install on London Library from your grip"
-                 :choices {:req #(and (is-type? % "Program")
+                 :choices {:req #(and (program? %)
                                       (not (has-subtype? % "Virus"))
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
@@ -1373,7 +1373,7 @@
                  :msg (msg "add " (:title target) " to their Grip")
                  :effect (effect (move target :hand))}]
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
-                                               (when (is-type? c "Program")
+                                               (when (program? c)
                                                  (trash state side c))))}}}
 
    "Maxwell James"
@@ -1420,7 +1420,7 @@
                                             state side
                                             {:prompt "Select 1 card to add to the bottom of the Stack"
                                              :choices {:req #(and (in-hand? %)
-                                                                  (some (fn [c] (= (:cid c) (:cid %))) drawn))}
+                                                                  (some (fn [c] (same-card? c %)) drawn))}
                                              :msg (msg "add 1 card to the bottom of the Stack")
                                              :effect (req (move state side target :deck))}
                                             card nil)
@@ -1430,8 +1430,8 @@
    {:effect (req (resolve-ability
                    state :corp
                    {:prompt "Select a card to derez"
-                    :choices {:req #(and (= (:side %) "Corp")
-                                         (not (is-type? % "Agenda"))
+                    :choices {:req #(and (corp? %)
+                                         (not (agenda? %))
                                          (:rezzed %))}
                     :effect (req (derez state side target))}
                    card nil))
@@ -1480,7 +1480,7 @@
 
    "Network Exchange"
    {:msg "increase the install cost of non-innermost ICE by 1"
-    :events {:pre-corp-install {:req (req (is-type? target "ICE"))
+    :events {:pre-corp-install {:req (req (ice? target))
                                 :effect (req (when (pos? (count (:dest-zone (second targets))))
                                                (install-cost-bonus state :corp [:credit 1])))}}}
 
@@ -1550,7 +1550,7 @@
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :async true
                  :effect (effect (host card target) (draw eid 1 nil))}]
-    :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
+    :events {:runner-install {:req (req (same-card? card (:host target)))
                               :async true
                               :effect (effect (draw eid 1 nil))}}}
 
@@ -1687,7 +1687,7 @@
                    :prompt "Select a card to host on Personal Workshop"
                    :choices {:req #(and (#{"Program" "Hardware"} (:type %))
                                         (in-hand? %)
-                                        (= (:side %) "Runner"))}
+                                        (runner? %))}
                    :effect (req (if (zero? (:cost target))
                                   (runner-install state side target)
                                   (host state side card
@@ -1786,9 +1786,9 @@
                          state :runner
                          {:prompt "Choose a card to install"
                           :choices (req (cancellable
-                                          (filter #(and (or (is-type? % "Program")
-                                                            (is-type? % "Hardware")
-                                                            (and (is-type? % "Resource")
+                                          (filter #(and (or (program? %)
+                                                            (hardware? %)
+                                                            (and (resource? %)
                                                                  (has-subtype? % "Virtual")))
                                                         (can-pay? state :runner eid card nil (:cost %)))
                                                   (:discard runner))
@@ -1828,10 +1828,10 @@
 
    "Rosetta 2.0"
    {:abilities [{:req (req (and (not (install-locked? state side))
-                                (some #(is-type? % "Program") (all-active-installed state :runner))))
+                                (some program? (all-active-installed state :runner))))
                  :cost [:click 1]
                  :prompt "Choose an installed program to remove from the game"
-                 :choices {:req #(and (installed? %) (is-type? % "Program"))}
+                 :choices {:req #(and (installed? %) (program? %))}
                  :effect (req (let [n (:cost target)
                                     t (:title target)]
                                 (move state side target :rfg)
@@ -1845,7 +1845,7 @@
                                                (str "shuffle their Stack")))
                                    :priority true
                                    :choices (req (cancellable
-                                                   (conj (vec (sort-by :title (filter #(and (is-type? % "Program")
+                                                   (conj (vec (sort-by :title (filter #(and (program? %)
                                                                                             (not (has-subtype? % "Virus")))
                                                                                       (:deck runner))))
                                                          "No install")))
@@ -1927,7 +1927,7 @@
                              ((toast state :runner "Can only use a copy of Salsette Slums once per turn.") false)))
                  :effect (effect (resolve-ability
                                    {; only allow targeting cards that were trashed this turn -- not perfect, but good enough?
-                                    :choices {:req #(some (fn [c] (= (:cid %) (:cid c)))
+                                    :choices {:req #(some (fn [c] (same-card? % c))
                                                           (map first (turn-events state side :runner-trash)))}
                                     :msg (msg "remove " (:title target) " from the game")
                                     :effect (req (deactivate state side target)
@@ -1955,12 +1955,12 @@
    "Same Old Thing"
    {:abilities [{:cost [:click 2]
                  :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
-                                (pos? (count (filter #(is-type? % "Event") (:discard runner))))))
+                                (pos? (count (filter event? (:discard runner))))))
                  :prompt "Select an event to play"
                  :msg (msg "play " (:title target))
                  :show-discard true
-                 :choices {:req #(and (is-type? % "Event")
-                                      (= (:zone %) [:discard]))}
+                 :choices {:req #(and (event? %)
+                                      (in-discard? %))}
                  :effect (effect (trash card {:cause :ability-cost}) (play-instant target))}]}
 
    "Scrubber"
@@ -2040,7 +2040,7 @@
                    (host state side (get-card state card) c {:facedown true})))
     :abilities [{:req (req (not (install-locked? state side)))
                  :prompt "Choose a card on Street Peddler to install"
-                 :choices (req (cancellable (filter #(and (not (is-type? % "Event"))
+                 :choices (req (cancellable (filter #(and (not (event? %))
                                                           (runner-can-install? state side % nil)
                                                           (can-pay? state side eid card nil (modified-install-cost state side % [:credit -1])))
                                                     (:hosted card))))
@@ -2050,7 +2050,7 @@
                              (install-cost-bonus state side [:credit -1])
                              (trash state side (update-in card [:hosted]
                                                           (fn [coll]
-                                                            (remove-once #(= (:cid %) (:cid target)) coll)))
+                                                            (remove-once #(same-card? % target) coll)))
                                     {:cause :ability-cost})
                              (runner-install state side eid (dissoc target :facedown) nil)))}]}
 
@@ -2153,8 +2153,8 @@
                 {:cost [:click 1]
                  :label "Install a program of piece of hardware"
                  :prompt "Select a program or piece of hardware to install from your Grip"
-                 :choices {:req #(and (or (is-type? % "Hardware")
-                                          (is-type? % "Program"))
+                 :choices {:req #(and (or (hardware? %)
+                                          (program? %))
                                       (in-hand? %))}
                  :once :per-turn
                  :once-key :artist-install
@@ -2221,7 +2221,7 @@
                                                         (update! (dissoc card :hai-target))
                                                         (update-breaker-strength (:hai-target card)))}]
                                {:runner-turn-ends hai :corp-turn-ends hai
-                                :pre-breaker-strength {:req (req (= (:cid target)(:cid (:hai-target card))))
+                                :pre-breaker-strength {:req (req (same-card? target (:hai-target card)))
                                                        :effect (effect (breaker-strength-bonus 2))}}) card))}}
 
    "The Nihilist"
@@ -2254,7 +2254,7 @@
                                 :once :per-turn}}})
 
    "The Shadow Net"
-   (letfn [(events [runner] (filter #(and (is-type? % "Event") (not (has-subtype? % "Priority"))) (:discard runner)))]
+   (letfn [(events [runner] (filter #(and (event? %) (not (has-subtype? % "Priority"))) (:discard runner)))]
      {:abilities [{:cost [:click 1 :forfeit]
                    :req (req (pos? (count (events runner))))
                    :label "Play an event from your Heap, ignoring all costs"
@@ -2277,7 +2277,7 @@
                   :req (req (some #(can-pay? state side eid card nil (modified-install-cost state side % [:credit -2]))
                                   (:hosted card)))
                   :choices {:req #(and (= "The Supplier" (:title (:host %)))
-                                       (= "Runner" (:side %)))}
+                                       (runner? %))}
                   :once :per-turn
                   :effect (req
                             (runner-can-install? state side target nil)
@@ -2290,7 +2290,7 @@
                                                       (assoc :supplier-installed (:cid target))
                                                       (update-in [:hosted]
                                                                  (fn [coll]
-                                                                   (remove-once #(= (:cid %) (:cid target)) coll)))))))}]
+                                                                   (remove-once #(same-card? % target) coll)))))))}]
      {:flags {:drip-economy true}  ; not technically drip economy, but has an interaction with Drug Dealer
       :abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
                    :prompt "Select a card to host on The Supplier"
@@ -2337,9 +2337,9 @@
    "Thunder Art Gallery"
    (let [first-event-check (fn [state fn1 fn2] (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
                                                     (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
-         ability {:choices {:req #(and (= "Runner" (:side %))
+         ability {:choices {:req #(and (runner? %)
                                        (in-hand? %)
-                                       (not (is-type? % "Event")))}
+                                       (not (event? %)))}
                   :async true
                   :prompt (msg "Select a card to install with Thunder Art Gallery")
                   :effect (req (if (and (runner-can-install? state side target)
@@ -2394,7 +2394,7 @@
 
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
-                 :choices (req (cancellable (filter #(is-type? % "Hardware") (:deck runner)) :sorted))
+                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                  :cost [:click 2]
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
@@ -2445,8 +2445,8 @@
      {:events {:successful-run {:optional {:autoresolve (get-autoresolve :auto-name-agenda)
                                            :prompt "Trash Whistleblower to name an agenda?"
                                            :yes-ability {:prompt "Name an agenda"
-                                                         :choices {:card-title (req (and (card-is? target :side "Corp")
-                                                                                         (card-is? target :type "Agenda")))}
+                                                         :choices {:card-title (req (and (corp? target)
+                                                                                         (agenda? target)))}
                                                          :effect (effect (system-msg (str "trashes " (:title card)
                                                                                           " to name " (:title target)))
                                                                          (register-events (steal-events target)

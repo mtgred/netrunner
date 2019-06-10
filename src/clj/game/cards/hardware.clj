@@ -32,14 +32,14 @@
    {:implementation "Click Adjusted Matrix to use ability."
     :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
     :prompt "Choose Icebreaker on which to install Adjusted Matrix"
-    :choices {:req #(and (= (:side %) "Runner") (has-subtype? % "Icebreaker") (installed? %))}
+    :choices {:req #(and (runner? %) (has-subtype? % "Icebreaker") (installed? %))}
     :msg (msg "host it on " (card-str state target))
     :effect (effect (update! (assoc target :subtype (combine-subtypes false (-> target :subtype) "AI")))
                     (host (get-card state target) (get-card state card)))
     :abilities [{:cost [:click 1]
                  :req (req run)
                  :msg "break ice subroutine"}]
-    :events {:pre-card-moved {:req (req (= (:cid target) (:cid card)))
+    :events {:pre-card-moved {:req (req (same-card? target card))
                               :effect (effect (update! (assoc (-> card :host) :subtype (-> card :host :subtype (remove-subtypes-once ["AI"])))))}}}
 
    "Akamatsu Mem Chip"
@@ -71,7 +71,7 @@
 
    "Autoscripter"
    {:events {:runner-install {:silent (req true)
-                              :req (req (and (is-type? target "Program")
+                              :req (req (and (program? target)
                                              ;; only trigger on Runner's turn
                                              (= (:active-player @state) :runner)
                                              ;; only trigger when playing a Program from grip
@@ -80,7 +80,7 @@
                                              ;; which translates to just one case of playing a Program in turn-events
                                              (first-event? state :runner :runner-install
                                                            (fn [[card _]] (and (some #{:hand} (:previous-zone card))
-                                                                               (is-type? card "Program"))))))
+                                                                               (program? card))))))
                               :msg "gain [Click]"
                               :effect (effect (gain :click 1))}
              :unsuccessful-run {:effect (effect (trash card)
@@ -121,7 +121,7 @@
    {:abilities [{:label "Host up to 3 cards from your Grip facedown"
                  :cost [:click 1] :msg "host up to 3 cards from their Grip facedown"
                  :choices {:max 3
-                           :req #(and (= (:side %) "Runner")
+                           :req #(and (runner? %)
                                       (in-hand? %))}
                  :effect (req (doseq [c targets]
                                 (host state side (get-card state card) c {:facedown true})))}
@@ -166,7 +166,7 @@
                                   state side
                                   {:prompt "Select any number of cards to trash from your Grip"
                                    :choices {:max handsize
-                                             :req #(and (= (:side %) "Runner")
+                                             :req #(and (runner? %)
                                                         (in-hand? %))}
                                    :effect (req (let [trashed (count targets)
                                                       remaining (- handsize trashed)]
@@ -211,8 +211,8 @@
                  :show-discard true
                  :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                 (not (install-locked? state side))))
-                 :choices {:req #(and (is-type? % "Program")
-                                      (= (:zone %) [:discard]))}
+                 :choices {:req #(and (program? %)
+                                      (in-discard? %))}
                  :effect (req (when (>= (:credit runner) (:cost target))
                                 (runner-install state side target)
                                 (trash state side card {:cause :ability-cost})
@@ -226,7 +226,7 @@
                                        (update! state side (assoc card :comet-event true)))}}
     :abilities [{:req (req (:comet-event card))
                  :prompt "Select an Event in your Grip to play"
-                 :choices {:req #(and (is-type? % "Event")
+                 :choices {:req #(and (event? %)
                                       (in-hand? %))}
                  :msg (msg "play " (:title target))
                  :effect (effect (play-instant target)
@@ -239,7 +239,7 @@
                            " by 2 [Credits] until the end of the turn")
                  :effect (effect (update! (assoc card :cortez-target target))
                                  (trash (get-card state card) {:cause :ability-cost}))}]
-    :trash-effect {:effect (effect (register-events {:pre-rez {:req (req (= (:cid target) (:cid (:cortez-target card))))
+    :trash-effect {:effect (effect (register-events {:pre-rez {:req (req (same-card? target (:cortez-target card)))
                                                                :effect (effect (rez-additional-cost-bonus [:credit 2]))}
                                                      :runner-turn-ends {:effect (effect (unregister-events card))}
                                                      :corp-turn-ends {:effect (effect (unregister-events card))}}
@@ -315,7 +315,7 @@
    {:in-play [:memory 1]
     :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}
              :runner-trash {:once :per-turn
-                            :req (req (card-is? target :side :corp))
+                            :req (req (corp? target))
                             :msg "gain 1 [Credits]"
                             :effect (effect (gain-credits 1))}}}
 
@@ -346,7 +346,7 @@
                                    (host state side card)
                                    (update-breaker-strength state side))
                               (update! state side (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}]
-    :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (first (:hosted card)))))
+    :events {:pre-breaker-strength {:req (req (same-card? target (first (:hosted card))))
                                     :effect (effect (breaker-strength-bonus 2))}
              :card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
                           :effect (effect (update! (dissoc-in card [:special :dino-breaker]))
@@ -479,14 +479,14 @@
                    :req (req (empty? (:hosted card)))
                    :cost [:click 1]
                    :prompt "Select a program in your Grip to install on Flame-out"
-                   :choices {:req #(and (is-type? % "Program")
+                   :choices {:req #(and (program? %)
                                         (in-hand? %))}
                    :effect (effect (runner-install target {:host-card card})
                                    (update! (assoc-in (get-card state card) [:special :flame-out] (:cid target))))}
                   {:label "Host an installed program on Flame-out"
                    :req (req (empty? (:hosted card)))
                    :prompt "Select an installed program to host on Flame-out"
-                   :choices {:req #(and (is-type? % "Program")
+                   :choices {:req #(and (program? %)
                                         (installed? %))}
                    :msg (msg "host " (:title target))
                    :effect (req (->> target
@@ -557,8 +557,8 @@
       :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))
       :events {:runner-turn-begins ability
                :runner-trash {:async true
-                              :req (req (some #(card-is? % :side :corp) targets))
-                              :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
+                              :req (req (some corp? targets))
+                              :effect (req (let [amt-trashed (count (filter corp? targets))
                                                  sing-ab {:optional {:prompt "Place a virus counter on Friday Chip?"
                                                                      :autoresolve (get-autoresolve :auto-accept)
                                                                      :yes-ability {:effect (effect (system-msg
@@ -587,7 +587,7 @@
                                 (update-breaker-strength state side host))
                               (host state side target card))}]
     :events {:pump-breaker {:silent (req true)
-                            :req (req (= (:cid (second targets)) (:cid (:host card))))
+                            :req (req (same-card? (second targets) (:host card)))
                             :effect (effect (update! (update-in (second targets) [:pump :all-turn] (fnil #(+ % (first targets)) 0)))
                                             (update-breaker-strength (second targets)))}}
     :leave-play (req (when-let [host (get-card state (:host card))]
@@ -611,7 +611,7 @@
     :interactions {:prevent [{:type #{:net :brain :meat}
                               :req (req true)}]}
     :abilities [{:msg (msg "prevent 1 damage, trashing a facedown " (:title target))
-                 :choices {:req #(and (= (:side %) "Runner") (:installed %))}
+                 :choices {:req #(and (runner? %) (installed? %))}
                  :priority 50
                  :effect (effect (trash target {:unpreventable true})
                                  (damage-prevent :brain 1)
@@ -656,7 +656,7 @@
                          :yes-ability {:prompt "Select an installed virus program for Knobkierie to add a virus counter to"
                                        :choices {:req #(and (installed? %)
                                                             (has-subtype? % "Virus")
-                                                            (is-type? % "Program"))}
+                                                            (program? %))}
                                        :msg (msg "place 1 virus counter on " (:title target))
                                        :effect (effect (add-counter target :virus 1))}}}}
     :abilities [(set-autoresolve :auto-add "Knobkierie")]}
@@ -683,7 +683,7 @@
                         :req (req (has-subtype? target "Icebreaker"))
                         :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
                                         (update-breaker-strength target))}
-       :pre-breaker-strength {:req (req (some #(= (:cid target) (:cid %)) (:llds-target card)))
+       :pre-breaker-strength {:req (req (some #(same-card? target %) (:llds-target card)))
                               :effect (effect (breaker-strength-bonus 1))}}})
 
    "Lockpick"
@@ -705,7 +705,7 @@
    "Lucky Charm"
    {:interactions {:prevent [{:type #{:end-run}
                               :req (req (and (some #{:hq} (:successful-run runner-reg))
-                                             (card-is? (:card-cause target) :side :corp)))}]}
+                                             (corp? (:card-cause target))))}]}
     :abilities [{:msg "prevent the run from ending"
                  :req (req (some #{:hq} (:successful-run runner-reg)))
                  :effect (effect (end-run-prevent)
@@ -718,7 +718,7 @@
                  :async true
                  :effect (effect (draw :runner eid 1 nil))}]
     :events {:runner-trash {:once :per-turn
-                            :req (req (and (card-is? target :side :corp)
+                            :req (req (and (corp? target)
                                            (:access @state)
                                            (:trash target)))
                             :effect (effect (system-msg (str "places " (:trash target) " power counters on Mâché"))
@@ -759,7 +759,7 @@
                   :once :per-turn
                   :msg "force the Corp to trash a random card from HQ"
                   :effect (req (let [card-to-trash (first (shuffle (:hand corp)))
-                                     card-seen? (= (:cid target) (:cid card-to-trash))
+                                     card-seen? (same-card? target card-to-trash)
                                      card-to-trash (if card-seen? (assoc card-to-trash :seen true)
                                                      card-to-trash)]
                                  ;; toggle access flag to prevent Hiro issue #2638
@@ -788,7 +788,7 @@
                                    {:async true
                                     ;; only allow targeting cards that were accessed this turn
                                     :choices {:req #(some (fn [accessed-card]
-                                                            (= (:cid %) (:cid accessed-card)))
+                                                            (same-card? % accessed-card))
                                                           (map first (turn-events state side :access)))}
                                     :msg (msg "move " (:title target) " to the bottom of R&D")
                                     :effect (req (move state :corp target :deck)
@@ -830,7 +830,7 @@
 
    "Monolith"
    (let [mhelper (fn mh [n] {:prompt "Select a program to install"
-                             :choices {:req #(and (is-type? % "Program")
+                             :choices {:req #(and (program? %)
                                                   (in-hand? %))}
                              :effect (req (install-cost-bonus state side [:credit -4])
                                           (runner-install state side target nil)
@@ -842,7 +842,7 @@
       :effect (effect (resolve-ability (mhelper 1) card nil))
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                    :priority 50
-                   :choices {:req #(and (is-type? % "Program")
+                   :choices {:req #(and (program? %)
                                         (in-hand? %))}
                    :prompt "Choose a program to trash from your Grip"
                    :effect (effect (trash target)
@@ -870,7 +870,7 @@
                                   state side
                                   {:cost [:click 1]
                                    :prompt "Select a program in your Grip to install on NetChip"
-                                   :choices {:req #(and (is-type? % "Program")
+                                   :choices {:req #(and (program? %)
                                                         (runner-can-install? state side % false)
                                                         (<= (:memoryunits %) n)
                                                         (in-hand? %))}
@@ -886,7 +886,7 @@
                                 (resolve-ability
                                   state side
                                   {:prompt "Select an installed program to host on NetChip"
-                                   :choices {:req #(and (is-type? % "Program")
+                                   :choices {:req #(and (program? %)
                                                         (<= (:memoryunits %) n)
                                                         (installed? %))}
                                    :msg (msg "host " (:title target))
@@ -924,7 +924,7 @@
                  :req (req (empty? (:hosted card)))
                  :cost [:click 1]
                  :prompt "Select a program of 1[Memory Unit] or less to install on Omni-drive from your grip"
-                 :choices {:req #(and (is-type? % "Program")
+                 :choices {:req #(and (program? %)
                                       (<= (:memoryunits %) 1)
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
@@ -932,7 +932,7 @@
                                  (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}
                 {:label "Host an installed program of 1[Memory Unit] or less on Omni-drive"
                  :prompt "Select an installed program of 1[Memory Unit] or less to host on Omni-drive"
-                 :choices {:req #(and (is-type? % "Program")
+                 :choices {:req #(and (program? %)
                                       (<= (:memoryunits %) 1)
                                       (installed? %))}
                  :msg (msg "host " (:title target))
@@ -994,7 +994,7 @@
                                {:prompt (str "Trash a card to lower the " cost-type " cost of " (:title playing) " by 2 [Credits].")
                                 :priority 2
                                 :choices {:req #(and (in-hand? %)
-                                                     (= "Runner" (:side %))
+                                                     (runner? %)
                                                      (not (same-card? % playing)))}
                                 :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
                                           (:title playing) " by 2 [Credits]")
@@ -1181,7 +1181,7 @@
 
    "Replicator"
    (letfn [(hardware-and-in-deck? [target runner]
-             (and (is-type? target "Hardware")
+             (and (hardware? target)
                   (some #(= (:title %) (:title target)) (:deck runner))))]
      {:events {:runner-install
                {:interactive (req (hardware-and-in-deck? target runner))
@@ -1399,7 +1399,7 @@
    {:hosting {:req #(and (has-subtype? % "Icebreaker")
                          (installed? %))}
     :effect (effect (update-breaker-strength (:host card)))
-    :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (:host card))))
+    :events {:pre-breaker-strength {:req (req (same-card? target (:host card)))
                                     :effect (effect (breaker-strength-bonus 1))}}}
 
    "The Toolbox"
@@ -1433,7 +1433,7 @@
                                   :choices {:max dmg
                                             :all true
                                             :req #(and (in-hand? %)
-                                                       (= (:side %) "Runner"))}
+                                                       (runner? %))}
                                   :msg (msg "trash " (join ", " (map :title targets)))
                                   :effect (req (clear-wait-prompt state :corp)
                                                (doseq [c targets]
