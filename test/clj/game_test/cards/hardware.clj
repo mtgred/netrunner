@@ -2018,6 +2018,53 @@
         (click-prompt state :corp kati) ; Chronos Protocol takes precedence over Ribs on Corp turn
         (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage")))))
 
+(deftest top-hat
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Neural Net"]}
+                 :runner {:deck ["Top Hat"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Dedicated Neural Net" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 3)) "Dedicated Neural Net"))
+      ;; R&D is now from top to bottom: A B C D
+      (take-credits state :corp)
+      (play-from-hand state :runner "Top Hat")
+      (run-empty-server state :rd)
+      (click-prompt state :runner "Yes") ;Top Hat Prompt
+      (click-prompt state :runner "4") ;select ABT
+      (click-prompt state :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))) "Runner stole DNN")))
+  (testing "Ash interaction"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Neural Net" "Ash 2X3ZB9CY"]}
+                 :runner {:deck ["Top Hat"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Dedicated Neural Net" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 3)) "Dedicated Neural Net"))
+      ;; R&D is now from top to bottom: A B C D
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "R&D")
+      (let [ash (get-content state :rd 0)]
+        (core/rez state :corp ash)
+        (take-credits state :corp)
+        (core/gain state :runner :click 100)
+        (core/gain state :runner :credit 100)
+        (play-from-hand state :runner "Top Hat")
+        (run-empty-server state :rd)
+        (click-prompt state :runner "Yes") ;Top Hat Prompt
+        (click-prompt state :corp "0") ;init Ash trace <<< fails here
+        (click-prompt state :runner "0") ;lose Ash trace
+        (is (empty? (:prompt (get-runner))) "No prompt to access cards.")))))
+
 (deftest turntable
   ;; Turntable - Swap a stolen agenda for a scored agenda
   (testing "Basic test"

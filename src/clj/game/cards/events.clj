@@ -1175,6 +1175,9 @@
              {:prompt "Choose a card to access. You must access all cards."
               :choices [(str "Card from pile " pile)]
               :async true
+              :req (req (if (:max-access run)
+                          (< (total-cards-accessed run) (:max-access run))
+                          true))
               :effect (req (wait-for
                              (access-card state side (first cards))
                              (if (< 1 (count cards))
@@ -1289,6 +1292,7 @@
                             :mandatory true
                             :prompt "Which of the revealed cards would you like to access (first card is on top)?"
                             :choices revealed
+                            :req (req (not= (:max-access run) 0))
                             :effect (effect (access-card eid target))})
          select-install-cost (fn [state]
                                (let [current-values
