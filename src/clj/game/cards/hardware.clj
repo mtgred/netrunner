@@ -105,8 +105,8 @@
                                    (continue-ability
                                      state side
                                      {:optional
-                                      {:prompt (msg "Pay " (build-cost-str (merge-costs [:credit cost]))
-                                                    ", plus " (build-cost-str (merge-costs additional-costs))
+                                      {:prompt (msg (build-cost-str [:credit cost])
+                                                    ", plus " (build-cost-str additional-costs)
                                                     " as an additional cost to rez " cname "?")
                                        :player :corp
                                        :yes-ability {:effect (effect (rez :corp c))}

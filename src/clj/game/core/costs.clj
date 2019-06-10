@@ -41,51 +41,7 @@
           (= :click attr)
           (str "spends " (->> "[Click]" repeat (take value) (apply str)))))))
 
-(defn flag-stops-pay?
-  "Checks installed cards to see if payment type is prevented by a flag"
-  [state side type]
-  (let [flag (keyword (str "cannot-pay-" (name type)))]
-    (some #(card-flag? % flag true) (all-active-installed state side))))
-
-(defn total-available-credits
-  [state side eid card]
-  (+ (get-in @state [side :credit])
-     (->> (eligible-pay-credit-cards state side eid card)
-          (map #(+ (get-counters % :recurring)
-                   (get-counters % :credit)))
-          (reduce +))))
-
-(defn toast-msg-helper
-  "Creates a toast message for given cost and title if applicable"
-  [state side eid card cost]
-  (let [cost-type (first cost)
-        amount (last cost)
-        computer-says-no "Unable to pay"]
-    (cond
-
-      (flag-stops-pay? state side cost-type)
-      computer-says-no
-
-      (not (or (and (#{:memory :net :meat :brain} cost-type) (<= amount (count (get-in @state [:runner :hand]))))
-               (and (= cost-type :forfeit) (<= 0 (- (count (get-in @state [side :scored])) amount)))
-               (and (= cost-type :mill) (<= 0 (- (count (get-in @state [side :deck])) amount)))
-               (and (= cost-type :trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount)))
-               (and (= cost-type :randomly-trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount)))
-               (and (= cost-type :tag) (<= 0 (- (get-in @state [:runner :tag :base]) amount)))
-               (and (= cost-type :ice) (<= 0 (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount)))
-               (and (= cost-type :hardware) (<= 0 (- (count (all-installed-runner-type state :hardware)) amount)))
-               (and (= cost-type :program) (<= 0 (- (count (all-installed-runner-type state :program)) amount)))
-               (and (= cost-type :resource) (<= 0 (- (count (all-installed-runner-type state :resource)) amount)))
-               (and (= cost-type :connection)
-                    (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) amount)))
-               (and (= cost-type :shuffle-installed-to-stack) (<= 0 (- (count (all-installed state :runner)) amount)))
-               (and (= cost-type :click) (<= 0 (- (get-in @state [side :click]) amount)))
-               (and (= cost-type :credit)
-                    (or (<= 0 (- (get-in @state [side :credit]) amount))
-                        (<= 0 (- (total-available-credits state side eid card) amount))))))
-      computer-says-no)))
-
-(defn add-default-to-costs
+(defn- add-default-to-costs
   "Take a sequence of costs (nested or otherwise) and add a default value of 1
   to any that don't include a value (normally with :forfeit)."
   [costs]
@@ -118,13 +74,47 @@
   Damage is not merged as it needs to be individual."
   [costs]
   (let [clean-costs (add-default-to-costs costs)
-        partition-fn (juxt remove filter)
-        [plain-costs damage-costs] (partition-fn
-                                     #(#{:net :meat :brain} (first %))
-                                     clean-costs)
+        plain-costs (remove #(#{:net :meat :brain} (first %)) clean-costs)
+        damage-costs (filter #(#{:net :meat :brain} (first %)) clean-costs)
         reduce-fn (fn [cost-map [cost-type value]]
                     (update cost-map cost-type (fnil + 0 0) value))]
     (mapv vec (concat (reduce reduce-fn {} plain-costs) damage-costs))))
+
+(defn- flag-stops-pay?
+  "Checks installed cards to see if payment type is prevented by a flag"
+  [state side cost-type]
+  (let [flag (keyword (str "cannot-pay-" (name cost-type)))]
+    (some #(card-flag? % flag true) (all-active-installed state side))))
+
+(defn total-available-credits
+  [state side eid card]
+  (+ (get-in @state [side :credit])
+     (->> (eligible-pay-credit-cards state side eid card)
+          (map #(+ (get-counters % :recurring)
+                   (get-counters % :credit)))
+          (reduce +))))
+
+(defn- can-pay-impl
+  [state side eid card [cost-type amount]]
+  (if (flag-stops-pay? state side cost-type)
+    false
+    (case cost-type
+      :memory true
+      :credit (or (<= 0 (- (get-in @state [side :credit]) amount))
+                  (<= 0 (- (total-available-credits state side eid card) amount)))
+      :click (<= 0 (- (get-in @state [side :click]) amount))
+      :forfeit (<= 0 (- (count (get-in @state [side :scored])) amount))
+      :hardware (<= 0 (- (count (all-installed-runner-type state :hardware)) amount))
+      :program (<= 0 (- (count (all-installed-runner-type state :program)) amount))
+      :resource (<= 0 (- (count (all-installed-runner-type state :resource)) amount))
+      :connection (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) amount))
+      :ice (<= 0 (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount))
+      (:net :meat :brain) (<= amount (count (get-in @state [:runner :hand])))
+      :mill (<= 0 (- (count (get-in @state [side :deck])) amount))
+      (:trash-from-hand :randomly-trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount))
+      :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
+      ;; default to cannot afford
+      false)))
 
 (defn can-pay?
   "Returns false if the player cannot pay the cost args, or a truthy map otherwise.
@@ -132,50 +122,12 @@
   explaining which cost they were unable to pay."
   ([state side title args] (can-pay? state side (make-eid state) nil title args))
   ([state side eid card title & args]
-   (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))
-         cost-msg (some #(toast-msg-helper state side eid card %) costs)]
-     ;; no cost message - hence can pay
-     (if-not cost-msg
+   (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))]
+     (if (every? #(can-pay-impl state side eid card %) costs)
        costs
-       (when title (toast state side (str cost-msg " for " title ".")) false)))))
-
-(defn- complete-with-result
-  "Calls `effect-complete` with `make-result` and also returns the argument.
-  Helper function for cost-handler"
-  [state side eid result]
-  (effect-completed state side (make-result eid result))
-  result)
-
-(defn cost-names
-  "Converts a cost (value attribute pair) to a string for printing"
-  [attr value]
-  (when (and (number? value)
-             (pos? value))
-    (case attr
-      :credit (str "Pay " value " [Credits]")
-      :click (str "Spend " (->> "[Click]" repeat (take value) (apply str)))
-      :forfeit (str "Forfeit " (quantify value "Agenda"))
-      :hardware (str "Trash " (quantify value "installed hardware" ""))
-      :program (str "Trash " (quantify value "installed program"))
-      :resource (str "Trash " (quantify value "installed resource"))
-      :connection (str "Trash " (quantify value "installed connection resource"))
-      :ice (str "Trash " (quantify value "installed rezzed ICE" ""))
-      :shuffle-installed-to-stack (str "Shuffle " (quantify value "installed card") " into the stack")
-      :net (str "Suffer " (quantify value "net damage" ""))
-      :meat (str "Suffer " (quantify value "meat damage" ""))
-      :brain (str "Suffer " (quantify value "brain damage" ""))
-      :mill (str "Trash " (quantify value "card") " from the top of your deck")
-      :discard (str "Trash " (quantify value "card") " randomly from your hand")
-      (str "Pay " (quantify value (name attr))))))
-
-(defn build-cost-str
-  "Gets the complete cost-str for specified costs"
-  [costs]
-  (->> costs
-       (map #(apply cost-names %))
-       (filter some?)
-       (interpose " and ")
-       (apply str)))
+       (when title
+         (toast state side (str "Unable to pay for " title "."))
+         false)))))
 
 (defn build-spend-msg
   "Constructs the spend message for specified cost-str and verb(s)."
@@ -185,6 +137,46 @@
            (= "" cost-str))
      (str (or verb2 (str verb "s")) " ")
      (str cost-str " to " verb " "))))
+
+(defn- cost-names
+  "Converts a cost (amount attribute pair) to a string for printing"
+  [[cost-type amount]]
+  (when (and (number? amount)
+             (pos? amount))
+    (case cost-type
+      :credit (str "pay " amount " [Credits]")
+      :click (str "spend " (->> "[Click]" repeat (take amount) (apply str)))
+      :forfeit (str "forfeit " (quantify amount "Agenda"))
+      :hardware (str "trash " (quantify amount "installed hardware" ""))
+      :program (str "trash " (quantify amount "installed program"))
+      :resource (str "trash " (quantify amount "installed resource"))
+      :connection (str "trash " (quantify amount "installed connection resource"))
+      :ice (str "trash " (quantify amount "installed rezzed ICE" ""))
+      (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
+      :mill (str "trash " (quantify amount "card") " from the top of your deck")
+      :trash-from-hand (str "trash " (quantify amount "card") " from your hand")
+      :randomly-trash-from-hand (str "trash " (quantify amount "card") " randomly from your hand")
+      :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
+      (str "pay " (quantify amount (name cost-type))))))
+
+(defn build-cost-str
+  "Gets the complete cost-str for specified costs"
+  [costs]
+  (let [cost-string
+        (->> costs
+             merge-costs
+             (map #(cost-names %))
+             (filter some?)
+             (interpose " and ")
+             (apply str))]
+    (capitalize cost-string)))
+
+(defn- complete-with-result
+  "Calls `effect-complete` with `make-result` and also returns the argument.
+  Helper function for cost-handler"
+  [state side eid result]
+  (effect-completed state side (make-result eid result))
+  result)
 
 (defn pay-forfeit
   "Forfeit agenda as part of paying for a card or ability

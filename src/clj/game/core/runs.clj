@@ -256,7 +256,7 @@
   (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (let [cost (steal-cost state side card)
         part-cost (partition 2 cost)
-        cost-strs (seq (map #(apply cost-names %) part-cost))
+        cost-strs (seq (map build-cost-str part-cost))
         can-pay (can-pay? state side (make-eid state eid) card (:title card) cost)
         can-steal (can-steal? state side card)
         ; Access abilities are useless in the discard
