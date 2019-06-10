@@ -120,7 +120,7 @@
     :choices ["OK"]
     :effect (effect (continue-ability
                       {:prompt "Install a card?"
-                       :choices (remove #(or (agenda? %) (operation? %)) (take 5 (:deck corp)))
+                       :choices (filter corp-installable-type? (take 5 (:deck corp)))
                        :effect (effect (corp-install eid target nil
                                                      {:ignore-all-cost true
                                                       :install-state :rezzed-no-rez-cost}))
