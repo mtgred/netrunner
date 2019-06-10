@@ -352,7 +352,11 @@
                                                  (continue-ability :corp (ability card) card nil))}}})
 
    "Dedicated Technician Team"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :corp-install (:source-type eid))
+                                                (= (second (:zone card))
+                                                   (second (server->zone state (:source eid))))))
+                                 :type :recurring}}}
 
    "Defense Construct"
    {:advanceable :always
@@ -752,7 +756,11 @@
 
    "Khondi Plaza"
    {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
-    :effect (effect (set-prop card :rec-counter (count (get-remotes state))))}
+    :effect (effect (set-prop card :rec-counter (count (get-remotes state))))
+    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
+                                                (ice? target)
+                                                (= (card->server state card) (card->server state target))))
+                                 :type :recurring}}}
 
    "Manta Grid"
    {:events {:successful-run-ends
@@ -836,7 +844,7 @@
              :effect (req (let [trash-cost (trash-cost state side card)
                                 no-salsette (remove #(= (:title %) "Salsette Slums") (all-active state :runner))
                                 slow-trash (any-flag-fn? state :runner :slow-trash true no-salsette)]
-                            (if (and (can-pay? state :runner nil :credit trash-cost)
+                            (if (and (can-pay? state :runner eid card nil :credit trash-cost)
                                      (not slow-trash))
                               (do (toast state :runner "You have been forced to trash Mumbad Virtual Tour" "info")
                                   (swap! state assoc-in [:runner :register :force-trash] true))
@@ -1153,7 +1161,10 @@
     :events {:run-ends nil}}
 
    "Simone Diego"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :advance (:source-type eid))
+                                                (same-server? card target)))
+                                 :type :recurring}}}
 
    "Strongbox"
    (let [ab {:req (req (or (in-same-server? card target)
@@ -1250,7 +1261,7 @@
       :req (req (and this-server
                      (= target :net)
                      (pos? (last targets))
-                     (can-pay? state :corp nil [:credit 2])))
+                     (can-pay? state :corp eid card nil [:credit 2])))
       :effect (req (swap! state assoc-in [:damage :damage-replace] true)
                    (damage-defer state side :net (last targets))
                    (show-wait-prompt state :runner "Corp to use Tori Hanzō")

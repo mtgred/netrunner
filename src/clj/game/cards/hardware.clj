@@ -254,13 +254,22 @@
                  :effect (effect (gain-credits 1))}]}
 
    "Cyberfeeder"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (or (and (= :runner-install (:source-type eid))
+                                                    (has-subtype? target "Virus")
+                                                    (program? target))
+                                               (and (= :ability (:source-type eid))
+                                                    (has-subtype? target "Icebreaker"))))
+                                 :type :recurring}}}
 
    "CyberSolutions Mem Chip"
    {:in-play [:memory 2]}
 
    "Cybsoft MacroDrive"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
+                                                (program? target)))
+                                 :type :recurring}}}
 
    "Daredevil"
    {:in-play [:memory 2]
@@ -383,7 +392,11 @@
              :run-ends {:effect (effect (update! (dissoc card :dorm-active)))}}}
 
    "Dyson Fractal Generator"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Fracter")
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Dyson Mem Chip"
    {:in-play [:memory 1 :link 1]}
@@ -483,7 +496,17 @@
       :events {:card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :flame-out])))
                             :effect (effect (update! (dissoc-in card [:special :flame-out])))}
                :runner-turn-ends nil
-               :corp-turn-ends nil}})
+               :corp-turn-ends nil}
+      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                  (same-card? card (:host target))
+                                                  (pos? (get-counters card :credit))))
+                                   :custom (req (add-counter state side card :credit -1)
+                                                (register-events state side
+                                                                 {:runner-turn-ends turn-end
+                                                                  :corp-turn-ends turn-end}
+                                                                 (get-card state card))
+                                                (effect-completed state side (make-result eid 1)))
+                                   :type :custom}}})
 
    "Flip Switch"
    {:events
@@ -664,7 +687,11 @@
                               :effect (effect (breaker-strength-bonus 1))}}})
 
    "Lockpick"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Decoder")
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Logos"
    {:in-play [:memory 1 :hand-size 1]
@@ -720,7 +747,9 @@
    "Māui"
    {:in-play [:memory 2]
     :recurring (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
-    :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))}
+    :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
+    :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :server 0])))
+                                 :type :recurring}}}
 
    "Maw"
    (let [ability {:label "Trash a card from HQ"
@@ -912,7 +941,11 @@
                                  (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}]
     :events {:card-moved {:req (req (= (:cid target) (:Omnidrive-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :Omnidrive-prog))
-                                          (use-mu (:memoryunits target)))}}}
+                                          (use-mu (:memoryunits target)))}}
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (program? target)
+                                                (same-card? card (:host target))))
+                                 :type :recurring}}}
 
    "Paragon"
    {:in-play [:memory 1]
@@ -970,15 +1003,45 @@
                                                 (update! (dissoc-in card [:special :patchwork])))
                                 :cancel-effect (effect (effect-completed eid))}
                                card nil)))})]
-     {:in-play [:memory 1]
-      :implementation "Click Patchwork before playing/installing a card."
-      :abilities [{:once :per-turn
-                   :effect (effect (update! (assoc-in card [:special :patchwork] true))
-                             (toast "Your next card played will trigger Patchwork." "info"))}]
-      :events {:pre-play-instant (patchwork-discount "play" play-cost-bonus)
-               :pre-install (patchwork-discount "install" install-cost-bonus)
-               :runner-turn-ends {:effect (effect (update! (dissoc-in card [:special :patchwork])))}
-               :corp-turn-ends {:effect (effect (update! (dissoc-in card [:special :patchwork])))}}})
+     (let [patchwork-ability {:once :per-turn
+                              :effect (effect (update! (assoc-in card [:special :patchwork] true))
+                                              (toast "Your next card played will trigger Patchwork." "info"))}]
+       {:in-play [:memory 1]
+        :implementation "Click Patchwork before playing/installing a card."
+        :abilities [patchwork-ability]
+        :events {:pre-play-instant (patchwork-discount "play" play-cost-bonus)
+                 :pre-install (patchwork-discount "install" install-cost-bonus)
+                 :runner-turn-ends {:effect (effect (update! (dissoc-in card [:special :patchwork])))}
+                 :corp-turn-ends {:effect (effect (update! (dissoc-in card [:special :patchwork])))}}
+        :interactions {:pay-credits {:req (req (and (or (= :play (:source-type eid))
+                                                        (= :runner-install (:source-type eid)))
+                                                    ;; We need at least one card (that is not the card played) in hand
+                                                    (not-empty (remove (partial same-card? target) (:hand runner)))
+                                                    ;; Patchwork wasn't used in the traditional way
+                                                    (not (get-in card [:special :patchwork]))
+                                                    ;; Check if Patchwork can trigger
+                                                    (can-trigger? state side patchwork-ability card targets)))
+                                     :custom (req (let [cost-type (str (when (= :play (:source-type eid)) "play")
+                                                                       (when (= :runner-install (:source-type eid)) "install"))
+                                                        patchwork card
+                                                        targetcard target]
+                                                    (continue-ability
+                                                      state side
+                                                      {:prompt (str "Trash a card to lower the " cost-type
+                                                                    " cost of " (:title patchwork) " by 2 [Credits].")
+                                                       :priority 2
+                                                       :async true
+                                                       :choices {:req #(and (in-hand? %)
+                                                                            (runner? %)
+                                                                            (not (same-card? % patchwork)))}
+                                                       :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
+                                                                 (:title targetcard) " by 2 [Credits]")
+                                                       :effect (req (trash state side target {:unpreventable true})
+                                                                    (register-once state patchwork-ability patchwork)
+                                                                    (effect-completed state side (make-result eid 2))) ; provide 2 credits
+                                                       :cancel-effect (effect (effect-completed (make-result eid 0)))} ; provide 0 credits
+                                                      nil nil)))
+                                     :type :custom}}}))
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
@@ -1014,10 +1077,15 @@
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
    "Prepaid VoicePAD"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (= :play (:source-type eid)))
+                                 :type :recurring}}}
 
    "Public Terminal"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :play (:source-type eid))
+                                                (has-subtype? target "Run")))
+                                 :type :recurring}}}
 
    "Q-Coherence Chip"
    {:in-play [:memory 1]
@@ -1244,7 +1312,11 @@
              :run-ends {:effect (effect (update! (dissoc card :sifr-target)))}}}
 
    "Silencer"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Killer")
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Skulljack"
    {:effect (effect (damage eid :brain 1 {:card card}))
@@ -1255,7 +1327,10 @@
     :recurring 2
     :events {:successful-trace {:req (req run)
                                 :effect (effect (system-msg (str "suffers 1 brain damage from Spinal Modem"))
-                                                (damage eid :brain 1 {:card card}))}}}
+                                                (damage eid :brain 1 {:card card}))}}
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Sports Hopper"
    {:in-play [:link 1]
@@ -1329,7 +1404,10 @@
 
    "The Toolbox"
    {:in-play [:link 2 :memory 2]
-    :recurring 2}
+    :recurring 2
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Titanium Ribs"
    {:events

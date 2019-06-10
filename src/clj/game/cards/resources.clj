@@ -497,7 +497,9 @@
    {:recurring 1
     :events {:rez {:req (req (ice? target))
                    :msg "gain 1 [Credits]"
-                   :effect (effect (gain-credits :runner 1))}}}
+                   :effect (effect (gain-credits :runner 1))}}
+    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
+                                 :type :recurring}}}
 
    "Corporate Defector"
    {:events {:corp-click-draw {:msg (msg "reveal " (-> target first :title))
@@ -506,7 +508,7 @@
    "Councilman"
    {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
     :events {:rez {:req (req (and (#{"Asset" "Upgrade"} (:type target))
-                                  (can-pay? state :runner nil [:credit (rez-cost state :corp target)])))
+                                  (can-pay? state :runner eid card nil [:credit (rez-cost state :corp target)])))
                    :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
                                                           " that was just rezzed") "info")
                                 (toast state :corp (str "Runner has the opportunity to derez with Councilman.") "error"))}}
@@ -515,7 +517,7 @@
                                       (or (is-type? % "Asset") (is-type? % "Upgrade")))}
                  :effect (req (let [c target
                                     creds (rez-cost state :corp c)]
-                                (when (can-pay? state side nil [:credit creds])
+                                (when (can-pay? state side eid card nil [:credit creds])
                                   (resolve-ability
                                     state :runner
                                     {:msg (msg "pay " creds " [Credit] and derez " (:title c) ". Councilman is trashed")
@@ -561,7 +563,9 @@
 
    "Crash Space"
    {:interactions {:prevent [{:type #{:meat}
-                              :req (req true)}]}
+                              :req (req true)}]
+                   :pay-credits {:req (req (= :remove-tag (:source-type eid)))
+                                 :type :recurring}}
     :recurring 2
     :abilities [{:label "Trash to prevent up to 3 meat damage"
                  :msg "prevent up to 3 meat damage"
@@ -917,7 +921,7 @@
      (effect (show-wait-prompt :corp "Runner to take decision on Fencer Fueno")
              (continue-ability
                {:prompt "Pay 1 [Credits] or trash Fencer Fueno?"
-                :choices (req (if (can-pay? state :runner nil :credit 1)
+                :choices (req (if (can-pay? state :runner eid card nil :credit 1)
                                 ["Pay 1 [Credits]" "Trash"]
                                 ["Trash"]))
                 :player :runner
@@ -1021,7 +1025,10 @@
                  :effect (req (gain-credits state side 1)
                               (trigger-event state side :spent-stealth-credit card)
                               (when (zero? (get-counters (get-card state card) :credit))
-                                (trash state :runner card {:unpreventable true})))}]}
+                                (trash state :runner card {:unpreventable true})))}]
+    ; See Net Mercur for why this implementation was chosen
+    :interactions {:pay-credits {:req (req (:run @state))
+                                 :type :credit}}}
 
    "Globalsec Security Clearance"
    {:req (req (> (:link runner) 1))
@@ -1107,7 +1114,10 @@
                    :effect (effect (add-counter :runner card :credit 1))}}
     :abilities [{:counter-cost [:credit 1]
                  :effect (effect (gain-credits 1))
-                 :msg "take 1 [Credits] to install programs"}]}
+                 :msg "take 1 [Credits] to install programs"}]
+    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
+                                                (program? target)))
+                                 :type :credit}}}
 
    "Ice Carver"
    {:events {:pre-ice-strength
@@ -1115,7 +1125,10 @@
               :effect (effect (ice-strength-bonus -1 target))}}}
 
    "Inside Man"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
+                                                (hardware? target)))
+                                 :type :recurring}}}
 
    "Investigative Journalism"
    {:req (req has-bad-pub)
@@ -1374,7 +1387,9 @@
 
    "Miss Bones"
    {:data {:counter {:credit 12}}
-    :implementation "Credit use restriction not enforced"
+    :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
+                                                (installed? target)))
+                                 :type :credit}}
     :abilities [{:counter-cost [:credit 1]
                  :msg "gain 1 [Credits] for trashing installed cards"
                  :async true
@@ -1455,7 +1470,13 @@
                                                     (system-msg state :runner (str "places 1 [Credits] on Net Mercur"))
                                                     (add-counter state :runner card :credit 1)
                                                     (effect-completed state side eid))))}
-                                card nil))}}}
+                                card nil))}}
+    ; Normally this should be (req true), but having pay-credits prompts on
+    ; literally every interaction would get tiresome. Therefore Net Mercur will
+    ; only ask for payments during a run and on traces.
+    :interactions {:pay-credits {:req (req (or (:run @state)
+                                               (= :trace (:source-type eid))))
+                                 :type :credit}}}
 
    "Network Exchange"
    {:msg "increase the install cost of non-innermost ICE by 1"
@@ -1517,7 +1538,7 @@
                                    {:cost [:click 1]
                                     :prompt "Select a connection in your Grip to install on Off-Campus Apartment"
                                     :choices {:req #(and (has-subtype? % "Connection")
-                                                         (can-pay? state side nil :credit (:cost %))
+                                                         (can-pay? state side eid card nil :credit (:cost %))
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) " and draw 1 card")
                                     :effect (effect (runner-install target {:host-card card}))}
@@ -1700,7 +1721,7 @@
                  :choices {:req #(and (:trash %)
                                       (rezzed? %))}
                  :effect (req (let [cost (modified-trash-cost state :runner target)]
-                                (when (can-pay? state side nil [:credit cost])
+                                (when (can-pay? state side eid card nil [:credit cost])
                                   (resolve-ability
                                     state side
                                     {:msg (msg "pay " cost " [Credit] and trash " (:title target))
@@ -1769,7 +1790,7 @@
                                                             (is-type? % "Hardware")
                                                             (and (is-type? % "Resource")
                                                                  (has-subtype? % "Virtual")))
-                                                        (can-pay? state :runner nil (:cost %)))
+                                                        (can-pay? state :runner eid card nil (:cost %)))
                                                   (:discard runner))
                                           :sorted))
                           :msg (msg "install " (:title target) " from the Heap")
@@ -1883,7 +1904,7 @@
     :abilities [{:label "Remove the currently accessed card from the game instead of trashing it"
                  :req (req (let [c (:card (first (get-in @state [:runner :prompt])))]
                              (if-let [trash-cost (trash-cost state side c)]
-                               (if (can-pay? state :runner nil :credit trash-cost)
+                               (if (can-pay? state :runner eid card nil :credit trash-cost)
                                  (if (:slums-active card)
                                    true
                                    ((toast state :runner "Can only use a copy of Salsette Slums once per turn.") false))
@@ -1943,7 +1964,10 @@
                  :effect (effect (trash card {:cause :ability-cost}) (play-instant target))}]}
 
    "Scrubber"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
+                                                (corp? target)))
+                                 :type :recurring}}}
 
    "Security Testing"
    (let [ability {:prompt "Choose a server for Security Testing"
@@ -2018,11 +2042,11 @@
                  :prompt "Choose a card on Street Peddler to install"
                  :choices (req (cancellable (filter #(and (not (is-type? % "Event"))
                                                           (runner-can-install? state side % nil)
-                                                          (can-pay? state side nil (modified-install-cost state side % [:credit -1])))
+                                                          (can-pay? state side eid card nil (modified-install-cost state side % [:credit -1])))
                                                     (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
                  :effect (req
-                           (when (can-pay? state side nil (modified-install-cost state side target [:credit -1]))
+                           (when (can-pay? state side eid card nil (modified-install-cost state side target [:credit -1]))
                              (install-cost-bonus state side [:credit -1])
                              (trash state side (update-in card [:hosted]
                                                           (fn [coll]
@@ -2250,14 +2274,14 @@
    "The Supplier"
    (let [ability {:label "Install a hosted card (start of turn)"
                   :prompt "Choose a card hosted on The Supplier to install"
-                  :req (req (some #(can-pay? state side nil (modified-install-cost state side % [:credit -2]))
+                  :req (req (some #(can-pay? state side eid card nil (modified-install-cost state side % [:credit -2]))
                                   (:hosted card)))
                   :choices {:req #(and (= "The Supplier" (:title (:host %)))
                                        (= "Runner" (:side %)))}
                   :once :per-turn
                   :effect (req
                             (runner-can-install? state side target nil)
-                            (when (and (can-pay? state side nil (modified-install-cost state side target [:credit -2]))
+                            (when (and (can-pay? state side eid card nil (modified-install-cost state side target [:credit -2]))
                                        (not (and (:uniqueness target) (in-play? state target))))
                               (install-cost-bonus state side [:credit -2])
                               (runner-install state side target)
@@ -2319,42 +2343,49 @@
                   :async true
                   :prompt (msg "Select a card to install with Thunder Art Gallery")
                   :effect (req (if (and (runner-can-install? state side target)
-                                        (can-pay? state side target
+                                        (can-pay? state side (merge eid {:source card
+                                                                         :source-type :runner-install}) target nil
                                                   (install-cost state side target [:credit (dec (:cost target))])))
                                  (do (install-cost-bonus state side [:credit -1])
                                      (system-msg state side "uses Thunder Art Gallery to install a card.")
-                                     (runner-install state side eid target nil))
+                                     (runner-install state side (merge eid {:source card
+                                                                            :source-type :runner-install}) target nil))
                                  (effect-completed state side eid)))
                   :cancel-effect (effect (effect-completed eid))}]
      {:events {:runner-lose-tag (assoc ability :req (req (and (first-event-check state first-event? no-event?) (= side :runner))))
                :runner-prevent (assoc ability :req (req (and (first-event-check state no-event? first-event?) (seq (filter #(some #{:tag} %) targets)))))}})
 
    "Trickster Taka"
-   (companion-builder
-     (req (and (pos? (get-counters (get-card state card) :credit))
-               run
-               (not (:successful run))
-               (not (:unsuccessful run))))
-     (effect (show-wait-prompt :corp "Runner to take decision on Trickster Taka")
-             (continue-ability
-               {:prompt "Take 1 tag or trash Trickster Taka?"
-                :choices ["Take 1 tag" "Trash"]
-                :player :runner
-                :async true
-                :effect (req (clear-wait-prompt state :corp)
-                             (if (= target "Trash")
-                               (do
-                                 (trash state :runner card)
-                                 (system-msg state :runner "trashes Trickster Taka")
-                                 (effect-completed state side eid))
-                               (do
-                                 (system-msg state :runner "takes 1 tag to avoid trashing Trickster Taka")
-                                 (gain-tags state :runner eid 1))))}
-               card nil))
-     {:msg "take 1 [Credits]"
-      :effect (effect (add-counter card :credit -1)
-                      (trigger-event :spent-stealth-credit card)
-                      (gain-credits 1))})
+   (assoc
+     (companion-builder
+       (req (and (pos? (get-counters (get-card state card) :credit))
+                 run
+                 (not (:successful run))
+                 (not (:unsuccessful run))))
+       (effect (show-wait-prompt :corp "Runner to take decision on Trickster Taka")
+               (continue-ability
+                 {:prompt "Take 1 tag or trash Trickster Taka?"
+                  :choices ["Take 1 tag" "Trash"]
+                  :player :runner
+                  :async true
+                  :effect (req (clear-wait-prompt state :corp)
+                               (if (= target "Trash")
+                                 (do
+                                   (trash state :runner card)
+                                   (system-msg state :runner "trashes Trickster Taka")
+                                   (effect-completed state side eid))
+                                 (do
+                                   (system-msg state :runner "takes 1 tag to avoid trashing Trickster Taka")
+                                   (gain-tags state :runner eid 1))))}
+                 card nil))
+       {:msg "take 1 [Credits]"
+        :effect (effect (add-counter card :credit -1)
+                        (trigger-event :spent-stealth-credit card)
+                        (gain-credits 1))})
+     :interactions {:pay-credits {:req (req (or (= :ability (:source-type eid))
+                                                (program? target)
+                                                (:run @state)))
+                                  :type :credit}})
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn

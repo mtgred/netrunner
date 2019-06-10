@@ -934,13 +934,26 @@
       (is (= 2 (count (:discard (get-runner)))) "Suffered 2 damage for successful run w/ tag"))))
 
 (deftest dedicated-server
-  ;; Dedicated Servers
-  (do-game
-    (new-game {:corp {:deck ["Dedicated Server"]}})
-    (play-from-hand state :corp "Dedicated Server" "New remote")
-    (let [servers (get-content state :remote1 0)]
-      (core/rez state :corp servers)
-      (is (= 2 (get-counters (refresh servers) :recurring)) "Should have 2 recurring credits"))))
+  ;; Dedicated Server
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Dedicated Server"]}})
+      (play-from-hand state :corp "Dedicated Server" "New remote")
+      (let [server (get-content state :remote1 0)]
+        (core/rez state :corp server)
+        (is (= 2 (get-counters (refresh server) :recurring)) "Should have 2 recurring credits"))))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:deck ["Dedicated Server" "Ice Wall"]}})
+      (play-from-hand state :corp "Dedicated Server" "New remote")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [server (get-content state :remote1 0)
+            iw (get-ice state :hq 0)]
+        (core/rez state :corp server)
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from Dedicated Server"
+                           (core/rez state :corp iw)
+                           (click-card state :corp server))))))
 
 (deftest director-haas
   ;; Director Haas
@@ -2343,12 +2356,32 @@
 
 (deftest mumba-temple
   ;; Mumba Temple
-  (do-game
-    (new-game {:corp {:deck ["Mumba Temple"]}})
-    (play-from-hand state :corp "Mumba Temple" "New remote")
-    (let [mumba (get-content state :remote1 0)]
-      (core/rez state :corp mumba)
-      (is (= 2 (get-counters (refresh mumba) :recurring)) "Should have 2 recurring credits"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Mumba Temple"]}})
+      (play-from-hand state :corp "Mumba Temple" "New remote")
+      (let [mumba (get-content state :remote1 0)]
+        (core/rez state :corp mumba)
+        (is (= 2 (get-counters (refresh mumba) :recurring)) "Should have 2 recurring credits"))))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:deck ["Mumba Temple" "Ice Wall" "PAD Campaign"]}})
+      (play-from-hand state :corp "Mumba Temple" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [mumba (get-content state :remote1 0)
+            pad (get-content state :remote2 0)
+            iw (get-ice state :hq 0)]
+        (core/rez state :corp mumba)
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from Mumba"
+                           (core/rez state :corp iw)
+                           (click-card state :corp mumba))
+        (is (empty? (:prompt (get-corp))) "Rezzing done")
+        (changes-val-macro -1 (:credit (get-corp)) ; 1 credit left on Mumba
+                           "Used 1 credit from Mumba"
+                           (core/rez state :corp pad)
+                           (click-card state :corp mumba))))))
 
 (deftest mumbad-city-hall
   ;; Mumbad City Hall
@@ -2495,7 +2528,8 @@
 (deftest net-police
   ;; Net Police - Recurring credits equal to Runner's link
   (do-game
-    (new-game {:corp {:deck ["Net Police"]}
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Net Police" "Snatch and Grab"]}
                :runner {:id "Sunny Lebeau: Security Specialist"
                         :deck ["Dyson Mem Chip"
                                "Access to Globalsec"]}})
@@ -2511,7 +2545,15 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Access to Globalsec")
       (take-credits state :runner)
-      (is (= 4 (get-counters (refresh netpol) :recurring)) "4 recurring for Runner's 4 link"))))
+      (is (= 4 (get-counters (refresh netpol) :recurring)) "4 recurring for Runner's 4 link")
+      (play-from-hand state :corp "Snatch and Grab")
+      (is (= (+ (:credit (get-corp)) (get-counters (refresh netpol) :recurring))
+             (:choices (prompt-map :corp))) "13 total available credits for the trace")
+      (click-prompt state :corp "13")
+      (dotimes [_ 4]
+        (click-card state :corp netpol))
+      (is (zero? (get-counters (refresh netpol) :recurring)) "Has used recurring credit")
+      (is (= 16 (:strength (prompt-map :runner))) "Current trace strength should be 16"))))
 
 (deftest neurostasis
   ;; Neurostasis - ambush, shuffle cards into the stack
@@ -2570,35 +2612,47 @@
 
 (deftest ngo-front
   ;; NGO Front - full test
-  (do-game
-    (new-game {:corp {:deck [(qty "NGO Front" 3)]}})
-    (core/gain state :corp :click 3)
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (let [ngo1 (get-content state :remote1 0)
-          ngo2 (get-content state :remote2 0)
-          ngo3 (get-content state :remote3 0)]
-      (core/advance state :corp {:card ngo2})
-      (core/advance state :corp {:card (refresh ngo3)})
-      (core/advance state :corp {:card (refresh ngo3)})
-      (core/rez state :corp (refresh ngo1))
-      (core/rez state :corp (refresh ngo2))
-      (core/rez state :corp (refresh ngo3))
-      (is (= 2 (:credit (get-corp))) "Corp at 2 credits")
-      (card-ability state :corp ngo1 1)
-      (card-ability state :corp ngo1 0)
-      (is (= 2 (:credit (get-corp))) "Corp still 2 credits")
-      (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
-      (card-ability state :corp ngo2 1)
-      (is (= 2 (:credit (get-corp))) "Corp still 2 credits")
-      (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
-      (card-ability state :corp ngo2 0)
-      (is (= 7 (:credit (get-corp))) "Corp gained 5 credits")
-      (is (= 1 (count (:discard (get-corp)))) "1 NGO Front Trashed")
-      (card-ability state :corp ngo3 1)
-      (is (= 15 (:credit (get-corp))) "Corp gained 8 credits")
-      (is (= 2 (count (:discard (get-corp)))) "2 NGO Front Trashed"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "NGO Front" 3)]}})
+      (core/gain state :corp :click 3)
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [ngo1 (get-content state :remote1 0)
+            ngo2 (get-content state :remote2 0)
+            ngo3 (get-content state :remote3 0)]
+        (advance state ngo2)
+        (advance state (refresh ngo3))
+        (advance state (refresh ngo3))
+        (core/rez state :corp (refresh ngo1))
+        (core/rez state :corp (refresh ngo2))
+        (core/rez state :corp (refresh ngo3))
+        (is (= 2 (:credit (get-corp))) "Corp at 2 credits")
+        (card-ability state :corp ngo1 1)
+        (card-ability state :corp ngo1 0)
+        (is (= 2 (:credit (get-corp))) "Corp still 2 credits")
+        (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
+        (card-ability state :corp ngo2 1)
+        (is (= 2 (:credit (get-corp))) "Corp still 2 credits")
+        (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
+        (card-ability state :corp ngo2 0)
+        (is (= 7 (:credit (get-corp))) "Corp gained 5 credits")
+        (is (= 1 (count (:discard (get-corp)))) "1 NGO Front Trashed")
+        (card-ability state :corp ngo3 1)
+        (is (= 15 (:credit (get-corp))) "Corp gained 8 credits")
+        (is (= 2 (count (:discard (get-corp)))) "2 NGO Front Trashed"))))
+  (testing "Run ends when used mid-run"
+    (do-game
+      (new-game {:corp {:deck ["NGO Front"]}})
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [ngo (get-content state :remote1 0)]
+        (advance state ngo)
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (card-ability state :corp ngo 0)
+        (is (nil? (refresh ngo)))
+        (is (nil? (:run @state)))))))
 
 (deftest open-forum
   ;; Open Forum
@@ -2804,11 +2858,30 @@
 (deftest primary-transmission-dish
   ;; Primary Transmission Dish
   (do-game
-    (new-game {:corp {:deck ["Primary Transmission Dish"]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Primary Transmission Dish" "Snatch and Grab"]}
+               :runner {:hand ["Kati Jones"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Kati Jones")
+    (take-credits state :runner)
     (play-from-hand state :corp "Primary Transmission Dish" "New remote")
-    (let [dish (get-content state :remote1 0)]
+    (let [dish (get-content state :remote1 0)
+          kati (get-resource state 0)]
       (core/rez state :corp dish)
-      (is (= 3 (get-counters (refresh dish) :recurring)) "Should have 3 recurring credits"))))
+      (is (= 3 (get-counters (refresh dish) :recurring)) "Should have 3 recurring credits")
+      (play-from-hand state :corp "Snatch and Grab")
+      (is (= (+ (:credit (get-corp)) (get-counters (refresh dish) :recurring))
+             (:choices (prompt-map :corp))) "9 total available credits for the trace")
+      (click-prompt state :corp "9")
+      (dotimes [_ 3]
+        (click-card state :corp dish))
+      (is (zero? (get-counters (refresh dish) :recurring)) "Has used recurring credit")
+      (is (= 12 (:strength (prompt-map :runner))) "Current trace strength should be 12")
+      (click-prompt state :runner "0")
+      (is (refresh kati) "Kati Jones still installed")
+      (click-card state :corp "Kati Jones")
+      (click-prompt state :runner "No")
+      (is (nil? (refresh kati)) "Kati Jones no longer installed"))))
 
 (deftest private-contracts
   ;; Private Contracts
@@ -4050,21 +4123,46 @@
 
 (deftest the-root
   ;; The Root - recurring credits refill at Step 1.2
-  (do-game
-    (new-game {:corp {:id "Blue Sun: Powering the Future"
-                      :deck ["The Root"]}})
-    (play-from-hand state :corp "The Root" "New remote")
-    (core/gain state :corp :credit 6)
-    (let [root (get-content state :remote1 0)]
-      (core/rez state :corp root)
-      (card-ability state :corp (refresh root) 0)
-      (is (= 2 (get-counters (refresh root) :recurring)) "Took 1 credit from The Root")
-      (is (= 6 (:credit (get-corp))) "Corp took Root credit into credit pool")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      ;; we expect Step 1.2 to have triggered because of Blue Sun
-      (is (:corp-phase-12 @state) "Corp is in Step 1.2")
-      (is (= 3 (get-counters (refresh root) :recurring)) "Recurring credits were refilled before Step 1.2 window"))))
+  (testing "Blue Sun Interaction"
+    (do-game
+      (new-game {:corp {:id "Blue Sun: Powering the Future"
+                        :deck ["The Root"]}})
+      (play-from-hand state :corp "The Root" "New remote")
+      (core/gain state :corp :credit 6)
+      (let [root (get-content state :remote1 0)]
+        (core/rez state :corp root)
+        (card-ability state :corp (refresh root) 0)
+        (is (= 2 (get-counters (refresh root) :recurring)) "Took 1 credit from The Root")
+        (is (= 6 (:credit (get-corp))) "Corp took Root credit into credit pool")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        ;; we expect Step 1.2 to have triggered because of Blue Sun
+        (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+        (is (= 3 (get-counters (refresh root) :recurring)) "Recurring credits were refilled before Step 1.2 window"))))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["The Root" (qty "Ice Wall" 2)]}})
+      (core/gain state :corp :click 1 :credit 1)
+      (play-from-hand state :corp "The Root" "New remote")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [root (get-content state :remote1 0)]
+        (core/rez state :corp root)
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from The Root to install"
+                           (play-from-hand state :corp "Ice Wall" "HQ")
+                           (click-card state :corp root))
+        (is (= 2 (get-counters (refresh root) :recurring)) "Took 1 credit from The Root")
+        (let [iw (get-ice state :hq 1)]
+          (changes-val-macro 0 (:credit (get-corp))
+                             "Used 1 credit from The Root to advance"
+                             (core/advance state :corp {:card (refresh iw)})
+                             (click-card state :corp root))
+          (is (= 1 (get-counters (refresh root) :recurring)) "Took 1 credit from The Root")
+          (changes-val-macro 0 (:credit (get-corp))
+                             "Used 1 credit from The Root to rez"
+                             (core/rez state :corp (refresh iw))
+                             (click-card state :corp root))
+          (is (= 0 (get-counters (refresh root) :recurring)) "Took 1 credit from The Root"))))))
 
 (deftest thomas-haas
   ;; Thomas Haas

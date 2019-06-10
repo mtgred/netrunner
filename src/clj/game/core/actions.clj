@@ -14,9 +14,12 @@
   [state side {:keys [card server]}]
   (when-let [card (get-card state card)]
     (case (:type card)
-      ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
-      ("Hardware" "Resource" "Program") (runner-install state side (make-eid state) card {:extra-cost [:click 1]})
-      ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1] :action :corp-click-install}))
+      ("Event" "Operation") (play-instant state side (make-eid state {:source :action
+                                                                      :source-type :play}) card {:extra-cost [:click 1]})
+      ("Hardware" "Resource" "Program") (runner-install state side (make-eid state {:source :action
+                                                                                    :source-type :runner-install}) card {:extra-cost [:click 1]})
+      ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side (make-eid state {:source server
+                                                                                   :source-type :corp-install}) card server {:extra-cost [:click 1] :action :corp-click-install}))
     (trigger-event state side :play card)))
 
 (defn shuffle-deck
@@ -196,6 +199,7 @@
 
       ;; Integer prompts
       (or (= choices :credit)
+          (= :trace (:prompt-type prompt))
           (:counter choices)
           (:number choices))
       (if (number? choice)
@@ -277,8 +281,8 @@
   (let [cost (:cost ability)]
     (when (or (nil? cost)
               (if (has-subtype? card "Run")
-                (apply can-pay? state side (:title card) cost (run-costs state side card))
-                (apply can-pay? state side (:title card) cost)))
+                (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost (run-costs state side card))
+                (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost)))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
       (resolve-ability state side ability card targets))))
@@ -373,7 +377,7 @@
              cdef-sub (get-in cdef [:subroutines cdef-idx])
              cost (:cost cdef-sub)]
          (when (or (nil? cost)
-                   (apply can-pay? state side (:title card) cost))
+                   (can-pay? state side eid card (:title card) cost))
            (when-let [activatemsg (:activatemsg cdef-sub)] (system-msg state side activatemsg))
            (resolve-ability state side eid cdef-sub card targets)))
        (when-let [sub-card (find-latest state {:cid (:from-cid sub) :side side})]
@@ -410,9 +414,9 @@
 
 (defn rez
   "Rez a corp card."
-  ([state side card] (rez state side (make-eid state) card nil))
+  ([state side card] (rez state side (make-eid state {:source card :source-type :rez}) card nil))
   ([state side card args]
-   (rez state side (make-eid state) card args))
+   (rez state side (make-eid state {:source card :source-type :rez}) card args))
   ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force no-get-card paid-alt cached-bonus] :as args}]
    (let [card (if no-get-card
                 card
@@ -426,12 +430,12 @@
          (if (or (#{"Asset" "ICE" "Upgrade"} (:type card))
                    (:install-rezzed (card-def card)))
            (do (trigger-event state side :pre-rez-cost card)
-               (if (and altcost (can-pay? state side nil altcost)(not ignore-cost))
+               (if (and altcost (can-pay? state side eid card nil altcost) (not ignore-cost))
                  (let [curr-bonus (get-rez-cost-bonus state side)]
                    (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
                             {:async true
                              :effect (req (if (and (= target "Yes")
-                                                   (can-pay? state side (:title card) altcost))
+                                                   (can-pay? state side eid card (:title card) altcost))
                                             (do (pay state side card altcost)
                                                 (rez state side eid (-> card (dissoc :alternative-cost))
                                                      (merge args {:ignore-cost true
@@ -450,7 +454,7 @@
                                      (when (and (not= ignore-cost :all-costs)
                                                 (not (:disabled card)))
                                        additional-costs))]
-                   (wait-for (apply pay-sync state side card costs)
+                   (wait-for (apply pay-sync state side (make-eid state eid) card costs)
                              (when-let [cost-str (and (string? async-result) async-result)]
                                ;; Deregister the derezzed-events before rezzing card
                                (when (:derezzed-events cdef)
@@ -499,20 +503,21 @@
 
 (defn advance
   "Advance a corp card that can be advanced.
-   If you pass in a truthy value as the 4th parameter, it will advance at no cost (for the card Success)."
-  ([state side {:keys [card]}] (advance state side card nil))
-  ([state side card no-cost]
+   If you pass in a truthy value as the no-cost parameter, it will advance at no cost (for the card Success)."
+  ([state side {:keys [card]}] (advance state side (make-eid state {:source :action :source-type :advance}) card nil))
+  ([state side card no-cost] (advance state side (make-eid state {:source :action :source-type :advance}) card no-cost))
+  ([state side eid card no-cost]
    (let [card (get-card state card)]
      (when (can-advance? state side card)
-       (when-let [cost (pay state side card :click (if-not no-cost 1 0)
-                            :credit (if-not no-cost 1 0) {:action :corp-advance})]
-         (let [spent   (build-spend-msg cost "advance")
-               card    (card-str state card)
-               message (str spent card)]
-           (system-msg state side message))
-         (update-advancement-cost state side card)
-         (add-prop state side (get-card state card) :advance-counter 1)
-         (play-sfx state side "click-advance"))))))
+       (wait-for (pay-sync state side (make-eid state eid) card :click (if-not no-cost 1 0) :credit (if-not no-cost 1 0) {:action :corp-advance})
+                 (when-let [cost-str async-result]
+                   (let [spent   (build-spend-msg cost-str "advance")
+                         card    (card-str state card)
+                         message (str spent card)]
+                     (system-msg state side message))
+                   (update-advancement-cost state side card)
+                   (add-prop state side (get-card state card) :advance-counter 1)
+                   (play-sfx state side "click-advance")))))))
 
 (defn score
   "Score an agenda. It trusts the card data passed to it."
@@ -570,12 +575,15 @@
 
 (defn remove-tag
   "Click to remove a tag."
-  [state side args]
+  ([state side args] (remove-tag state side (make-eid state) args))
+  ([state side eid args]
   (let [remove-cost (max 0 (- 2 (get-in @state [:runner :tag-remove-bonus] 0)))]
-    (when-let [cost-str (pay state side nil :click 1 :credit remove-cost)]
-      (lose-tags state :runner 1)
-      (system-msg state side (build-spend-msg cost-str "remove 1 tag" "removes 1 tag"))
-      (play-sfx state side "click-remove-tag"))))
+    (wait-for (pay-sync state side (make-eid state {:source :action :source-type :remove-tag}) nil :click 1 :credit remove-cost)
+              (when-let [cost-str async-result]
+                (lose-tags state :runner 1)
+                (system-msg state side (string/trimr (build-spend-msg cost-str "remove 1 tag" "removes 1 tag")))
+                (play-sfx state side "click-remove-tag"))
+              (effect-completed state side eid)))))
 
 (defn continue
   "The runner decides to approach the next ice, or the server itself."

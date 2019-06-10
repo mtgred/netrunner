@@ -555,7 +555,10 @@
                                    :effect (effect (damage eid :meat 2 {:card card}))}}}
 
    "Dedicated Server"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
+                                                (ice? target)))
+                                 :type :recurring}}}
 
    "Director Haas"
    {:in-play [:click-per-turn 1]
@@ -1168,7 +1171,9 @@
                                :effect (effect (damage :corp eid :meat 1 {:card card}))}}}
 
    "Mumba Temple"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (= :rez (:source-type eid)))
+                                 :type :recurring}}}
 
    "Mumbad City Hall"
    {:abilities [{:label "Search R&D for an Alliance card"
@@ -1290,7 +1295,9 @@
 
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
-    :effect (effect (set-prop card :rec-counter (:link runner)))}
+    :effect (effect (set-prop card :rec-counter (:link runner)))
+    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
+                                 :type :recurring}}}
 
    "Neurostasis"
    (advance-ambush 3 {:req (req (pos? (get-counters (get-card state card) :advancement)))
@@ -1461,7 +1468,9 @@
                        (continue-ability state side (pdhelper agendas 0) card nil)))}}})
 
    "Primary Transmission Dish"
-   {:recurring 3}
+   {:recurring 3
+    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
+                                 :type :recurring}}}
 
    "Private Contracts"
    {:effect (effect (add-counter card :credit 14))
@@ -2014,7 +2023,11 @@
     :leave-play (req (swap! state assoc-in [:runner :register :cannot-play-current] false))}
 
    "The Root"
-   {:recurring 3}
+   {:recurring 3
+    :interactions {:pay-credits {:req (req (or (= :advance (:source-type eid))
+                                               (= :corp-install (:source-type eid))
+                                               (= :rez (:source-type eid))))
+                                 :type :recurring}}}
 
    "Thomas Haas"
    {:advanceable :always

@@ -23,9 +23,9 @@
          ~'prompt-fmt (fn [side#]
                         (let [prompt# (~'prompt-map side#)
                               choices# (:choices prompt#)
-                              choices# (if (keyword? choices#)
-                                         [choices#]
-                                         (seq choices#))
+                              choices# (if (sequential? choices#)
+                                         choices#
+                                         [choices#])
                               prompt-type# (:prompt-type prompt#)]
                           (str (side-str side#) ": " (:msg prompt# "") "\n"
                                "Type: " (if (some? prompt-type#) prompt-type# "nil") "\n"

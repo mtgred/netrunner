@@ -52,7 +52,7 @@
                          :yes-ability
                          {:async true
                           :effect (req (clear-wait-prompt state :corp)
-                                       (if (not (can-pay? state :corp nil :credit 1))
+                                       (if (not (can-pay? state :corp eid card nil :credit 1))
                                          (do
                                            (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
                                            (expose state :runner eid itarget))
@@ -394,7 +394,10 @@
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
 
    "Ele \"Smoke\" Scovak: Cynosure of the Net"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Exile: Streethawk"
    {:flags {:runner-install-draw true}
@@ -914,7 +917,9 @@
     :abilities [(set-autoresolve :auto-ctm "CtM")]}
 
    "NBN: Making News"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
+                                 :type :recurring}}}
 
    "NBN: The World is Yours*"
    {:effect (effect (gain :hand-size 1))
@@ -1347,7 +1352,9 @@
               :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Weyland Consortium: Because We Built It"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (= :advance (:source-type eid)))
+                                 :type :recurring}}}
 
    "Weyland Consortium: Builder of Nations"
    {:implementation "Damage triggered manually"
@@ -1366,7 +1373,10 @@
                               :req (req (has-subtype? target "Transaction"))}}}
 
    "Whizzard: Master Gamer"
-   {:recurring 3}
+   {:recurring 3
+    :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
+                                                (corp? target)))
+                                 :type :recurring}}}
 
    "Wyvern: Chemically Enhanced"
    {:events {:pre-start-game {:effect draft-points-target}

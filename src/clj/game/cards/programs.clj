@@ -310,7 +310,7 @@
    "Algernon"
    {:events
     {:runner-turn-begins
-     {:req (req (can-pay? state :runner nil [:credit 2]))
+     {:req (req (can-pay? state :runner eid card nil [:credit 2]))
       :optional
       {:prompt (msg "Pay 2 [Credits] to gain [Click]")
        :player :runner
@@ -614,7 +614,10 @@
                                 :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}}}
 
    "Cloak"
-   {:recurring 1}
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (has-subtype? target "Icebreaker")))
+                                 :type :recurring}}}
 
    "Clot"
    {:effect (req (let [agendas (map first (filter #(is-type? (first %) "Agenda")
@@ -757,10 +760,10 @@
                      (continue-ability state side (custsec-host from) card nil)))
       :abilities [{:cost [:click 1]
                    :prompt "Choose a program hosted on Customized Secretary to install"
-                   :choices (req (cancellable (filter #(can-pay? state side nil :credit (:cost %))
+                   :choices (req (cancellable (filter #(can-pay? state side eid card nil :credit (:cost %))
                                                       (:hosted card))))
                    :msg (msg "install " (:title target))
-                   :effect (req (when (can-pay? state side nil :credit (:cost target))
+                   :effect (req (when (can-pay? state side eid card nil :credit (:cost target))
                                   (runner-install state side target)))}]})
 
    "Cyber-Cypher"
@@ -1539,7 +1542,10 @@
    {:abilities [(break-sub 1 0 "Barrier")]}
 
    "Multithreader"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (program? target)))
+                                 :type :recurring}}}
 
    "Musaazi"
    (khumalo-breaker "sentry")
@@ -1704,7 +1710,10 @@
               :msg (msg "trash " (:title target))}}}
 
    "Paricia"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
+                                                (asset? target)))
+                                 :type :recurring}}}
 
    "Passport"
    (central-breaker "Code Gate"
@@ -1812,7 +1821,9 @@
                       (set-prop state side card :rec-counter (get-counters card :virus))))
     :events {:successful-run {:silent (req true)
                               :req (req (= target :hq))
-                              :effect (effect (add-counter card :virus 1))}}}
+                              :effect (effect (add-counter card :virus 1))}}
+    :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :server 0])))
+                                 :type :recurring}}}
 
    "Pipeline"
    (auto-icebreaker ["Sentry"]
@@ -1970,7 +1981,10 @@
                                    :msg "break 1 Code Gate or Barrier subroutine"}])
 
    "Sahasrara"
-   {:recurring 2}
+   {:recurring 2
+    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
+                                                (program? target)))
+                                 :type :recurring}}}
 
    "Saker"
    (auto-icebreaker ["Barrier"]

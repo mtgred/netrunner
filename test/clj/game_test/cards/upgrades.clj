@@ -353,15 +353,15 @@
 (deftest breaker-bay-grid
   ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
   (do-game
-    (new-game {:corp {:deck [(qty "Breaker Bay Grid" 2) "The Root" "Strongbox"]}})
+    (new-game {:corp {:deck [(qty "Breaker Bay Grid" 2) "Off the Grid" "Strongbox"]}})
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Breaker Bay Grid" "New remote")
-    (play-from-hand state :corp "The Root" "Server 1")
+    (play-from-hand state :corp "Off the Grid" "Server 1")
     (let [bbg1 (get-content state :remote1 0)
-          root (get-content state :remote1 1)]
+          otg (get-content state :remote1 1)]
       (core/rez state :corp bbg1)
-      (core/rez state :corp root)
-      (is (= 4 (:credit (get-corp))) "Paid only 1 to rez The Root")
+      (core/rez state :corp otg)
+      (is (= 4 (:credit (get-corp))) "Paid only 1 to rez Off the Grid")
       (play-from-hand state :corp "Breaker Bay Grid" "R&D")
       (play-from-hand state :corp "Strongbox" "R&D")
       (let [bbg2 (get-content state :rd 0)
@@ -700,6 +700,22 @@
         ;; purged counters
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters")))))
+
+(deftest dedicated-technician-team
+  ;; Dedicated Technician Team
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["Dedicated Technician Team" (qty "Enigma" 3)]}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Enigma" "New remote")
+      (play-from-hand state :corp "Enigma" "Server 1")
+      (play-from-hand state :corp "Dedicated Technician Team" "Server 1")
+      (let [dtt (get-content state :remote1 0)]
+        (core/rez state :corp dtt)
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 3 credits from Dedicated Technician Team"
+                           (play-from-hand state :corp "Enigma" "Server 1")
+                           (click-card state :corp dtt))))))
 
 (deftest disposable-hq
   ;; Disposable HQ
@@ -1082,6 +1098,25 @@
       (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
 
+(deftest khondi-plaza
+  ;; Khondi Plaza
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["Khondi Plaza" "Enigma" (qty "PAD Campaign" 3)]}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Khondi Plaza" "New remote")
+      (play-from-hand state :corp "Enigma" "Server 1")
+      (dotimes [c 3] (play-from-hand state :corp "PAD Campaign" "New remote"))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [kh (get-content state :remote1 0)
+            en (get-ice state :remote1 0)]
+        (core/rez state :corp kh)
+        (is (= 4 (get-counters (refresh kh) :recurring)) "4 recurring credits on Khondi")
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 3 credits from Khondi Plaza"
+                           (core/rez state :corp en)
+                           (dotimes [c 3] (click-card state :corp kh)))))))
+
 (deftest letheia-nisei
   ;; Letheia Nisei
   (do-game
@@ -1278,9 +1313,7 @@
       (play-from-hand state :runner "Daily Casts")
       (is (= 2 (:credit (get-runner))) "Runner paid install costs")
       (run-empty-server state "Server 1")
-      (is (= ["Pay 5 [Credits] to trash" "No action"]
-             (-> (get-runner) :prompt first :choices))
-          "Runner is given the choice, as we don't know if they can afford it or not"))))
+      (is (= ["No action"] (-> (get-runner) :prompt first :choices)) "Runner is not given the choice"))))
 
 (deftest mwanza-city-grid
   ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
@@ -1913,6 +1946,28 @@
       (run-jack-out state)
       (card-ability state :runner smc2 0)
       (click-prompt state :runner "Reaver"))))
+
+(deftest simone-diego
+  ;; Simone Diego
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["Simone Diego" "Ice Wall" "Project Junebug"]}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Simone Diego" "New remote")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (play-from-hand state :corp "Project Junebug" "Server 1")
+      (let [sd (get-content state :remote1 0)
+            pj (get-content state :remote1 1)
+            iw (get-ice state :remote1 0)]
+        (core/rez state :corp sd)
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from Simone Diego to advance Ice Wall"
+                           (core/advance state :corp {:card (refresh iw)})
+                           (click-card state :corp sd))
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from Simone Diego to advance Project Junebug"
+                           (core/advance state :corp {:card (refresh pj)})
+                           (click-card state :corp sd))))))
 
 (deftest strongbox
   ;; Strongbox

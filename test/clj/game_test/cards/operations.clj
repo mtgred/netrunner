@@ -2246,19 +2246,18 @@
      (is (= 7 (:credit (get-runner))) "Runner has 7 credits")
      (run-on state :archives)
      (is (= 6 (:credit (get-runner))) "Runner spends 1 credit to make a run")))
-  (doseq [c ["Stimhack" "Cold Read"]]
-    (testing "Interaction with temp credits"
-      (do-game
-       (new-game {:corp {:deck ["Service Outage"]}
-                  :runner {:deck [(qty c 3)]}})
-       (play-from-hand state :corp "Service Outage")
-       (take-credits state :corp)
-       (play-from-hand state :runner c)
-       (click-prompt state :runner "HQ")
-       (core/jack-out state :runner nil)
-       (is (= 4 (:credit (get-runner))) (str "An additional real cred spent, not " c " money"))
-       (run-on state "R&D")
-       (is (= 4 (:credit (get-runner))) "Second run fine")))))
+  (testing "Interaction with temp credits"
+    (do-game
+      (new-game {:corp {:deck ["Service Outage"]}
+                 :runner {:deck [(qty "Stimhack" 3)]}})
+      (play-from-hand state :corp "Service Outage")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Stimhack")
+      (click-prompt state :runner "HQ")
+      (run-jack-out state)
+      (is (= 4 (:credit (get-runner))) (str "An additional real cred spent, not Stimhack money"))
+      (run-on state "R&D")
+      (is (= 4 (:credit (get-runner))) "Second run fine"))))
 
 (deftest shipment-from-sansan
   ;; Shipment from SanSan - placing advancements

@@ -146,11 +146,14 @@
   currents, or the corp's scored area."
   [state side]
   (if (= side :runner)
-    (cons (get-in @state [:runner :identity]) (concat (get-in @state [:runner :current]) (all-active-installed state side)))
+    (cons (get-in @state [:runner :identity]) (concat (get-in @state [:runner :current])
+                                                      (all-active-installed state side)
+                                                      (get-in @state [:runner :play-area])))
     (cons (get-in @state [:corp :identity]) (remove :disabled
                                                     (concat (all-active-installed state side)
                                                             (get-in @state [:corp :current])
-                                                            (get-in @state [:corp :scored]))))))
+                                                            (get-in @state [:corp :scored])
+                                                            (get-in @state [:corp :play-area]))))))
 
 (defn all-active-installed
   "Returns a vector of active AND installed cards for the given side. This is all face-up installed cards."

@@ -372,6 +372,21 @@
         (card-ability state :runner chisel 0)
         (is (refresh iw) "Ice Wall should still be around as it's unrezzed")))))
 
+(deftest cloak
+  ;; Cloak
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Cloak" "Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Refractor")
+      (let [cl (get-program state 0)
+            refr (get-program state 1)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Cloak"
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner cl))))))
+
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
   (testing "Trash and cash out"
@@ -1294,6 +1309,24 @@
       (take-credits state :runner)
       (is (zero? (get-counters (refresh mam) :power)) "All power counters removed"))))
 
+(deftest multithreader
+  ;; Multithreader
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Multithreader" "Abagnale"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Multithreader")
+      (play-from-hand state :runner "Abagnale")
+      (let [mt (get-program state 0)
+            ab (get-program state 1)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credits from Multithreader"
+                           (card-ability state :runner ab 1)
+                           (click-card state :runner mt)
+                           (click-card state :runner mt))))))
+
+
 (deftest musaazi
   ;; Musaazi gains virus counters on successful runs and can spend virus counters from any installed card
   (do-game
@@ -1598,6 +1631,32 @@
           (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
           (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed"))))))
 
+(deftest paricia
+  ;; Paricia
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["PAD Campaign" "Shell Corporation"]}
+               :runner {:hand ["Paricia"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Shell Corporation" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paricia")
+    (let [pad (get-content state :remote1 0)
+          shell (get-content state :remote2 0)
+          paricia (get-program state 0)]
+      (run-on state :remote2)
+      (run-successful state)
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (is (empty? (:prompt (get-runner))) "No pay-credit prompt as it's an upgrade")
+      (is (nil? (refresh shell)) "Shell Corporation successfully trashed")
+      (run-on state :remote1)
+      (run-successful state)
+      (is (= 2 (:credit (get-runner))) "Runner can't afford to trash PAD Campaign")
+      (click-prompt state :runner "Pay 4 [Credits] to trash")
+      (dotimes [_ 2]
+        (click-card state :runner "Paricia"))
+      (is (nil? (refresh pad)) "PAD Campaign successfully trashed"))))
+
 (deftest pelangi
   ;; Pelangi
   (do-game
@@ -1678,17 +1737,41 @@
 
 (deftest pheromones
   ;; Pheromones ability shouldn't have a NullPointerException when fired with 0 virus counter
-  (do-game
-    (new-game {:runner {:deck ["Pheromones"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Pheromones")
-    (let [ph (get-program state 0)]
-      (card-ability state :runner (refresh ph) 0)
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Pheromones"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Pheromones")
+      (let [ph (get-program state 0)]
+        (card-ability state :runner (refresh ph) 0)
+        (run-on state "HQ")
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (= 1 (get-counters (refresh ph) :virus)) "Pheromones gained 1 counter")
+        (card-ability state :runner (refresh ph) 0)))) ; this doesn't do anything, but shouldn't crash
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Pheromones" "Inti"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Pheromones")
+      (play-from-hand state :runner "Inti")
       (run-on state "HQ")
       (run-successful state)
       (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (refresh ph) :virus)) "Pheromones gained 1 counter")
-      (card-ability state :runner (refresh ph) 0)))) ; this doesn't do anything, but shouldn't crash
+      (run-on state "HQ")
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [phero (get-program state 0)
+            inti (get-program state 1)]
+        (is (changes-credits (get-runner) -2 (card-ability state :runner inti 1)))
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credits from Pheromones"
+                           (run-on state "HQ")
+                           (card-ability state :runner inti 1)
+                           (click-card state :runner phero)
+                           (click-card state :runner phero))))))
 
 (deftest plague
   ;; Plague
@@ -1871,6 +1954,20 @@
         (is (= "You accessed Hokusai Grid." (-> (get-runner) :prompt first :msg))
             "No RNG Key prompt, straight to access prompt")
         (is (= 5 (:credit (get-runner))) "Gained no credits")))))
+
+(deftest sahasrara
+  ;; Sahasrara
+  (testing "Pay-credits prompt"
+  (do-game
+    (new-game {:runner {:deck ["Sahasrara" "Equivocation"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sahasrara")
+    (let [rara (get-program state 0)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credits from Sahasrara"
+                           (play-from-hand state :runner "Equivocation")
+                           (click-card state :runner rara)
+                           (click-card state :runner rara))))))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program

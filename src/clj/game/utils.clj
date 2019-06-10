@@ -297,3 +297,8 @@
     (:rec-counter card 0)
     :else
     (get-in card [:counter counter] 0)))
+
+(defn in-coll?
+  "true if coll contains elm"
+  [coll elm]
+  (some #(= elm %) coll))
