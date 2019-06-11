@@ -1891,6 +1891,7 @@
     {:access-ability
      {:label "[Salsette Slums]: Remove card from game"
       :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                     (:trash target)
                      (can-pay? state :runner {:source card :source-type :ability}
                                card (:title target) [:credit (trash-cost state side target)])))
       :once :per-turn
