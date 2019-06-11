@@ -1332,7 +1332,7 @@
       (click-prompt state :runner "0")
       (is (= 2 (count-tags state)))
       (run-on state "R&D")
-      (card-ability state :corp io 1)
+      (card-ability state :corp io 0)
       (is (zero? (-> (get-corp) :prompt first :bonus)) "Should gain 0 bonus trace strength, as it's an encounter ability"))))
 
 (deftest jumon
@@ -1385,7 +1385,7 @@
         (card-ability state :corp ls1 0)
         (click-prompt state :corp "Done")
         (is (:run @state) "Jack out prevented, run is still ongoing")
-        (is (true? (get-in @state [:run :cannot-jack-out])) "Cannot jack out flag is in effect")
+        (is (get-in @state [:run :cannot-jack-out]) "Cannot jack out flag is in effect")
         (run-successful state)
         (is (not (:run @state))))
       (testing "one Labyrinthine is empty but the other still has one token, ensure prompt still occurs"
@@ -1396,7 +1396,7 @@
         (is (:run @state))
         (card-ability state :corp ls2 0)
         (click-prompt state :corp "Done")
-        (is (true? (get-in @state [:run :cannot-jack-out])))
+        (is (get-in @state [:run :cannot-jack-out]))
         (run-successful state)
         (is (not (:run @state))))
       (testing "No more tokens"
@@ -1986,23 +1986,23 @@
   (do-game
     (new-game {:corp {:deck [(qty "Project Kusanagi" 2) "Ice Wall"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
     (core/gain state :corp :click 10 :credit 10)
-    (testing "Should gain 0 counters"
-      (play-and-score state "Project Kusanagi")
-      (let [pk-scored (get-scored state :corp 0)]
-        (is (zero? (get-counters (refresh pk-scored) :agenda)) "Kusanagi should start with 0 agenda counters")))
-    (testing "Should gain 1 counter"
-      (play-from-hand state :corp "Project Kusanagi" "New remote")
-      (let [pk (get-content state :remote2 0)]
-        (advance state pk 3)
-        (is (= 3 (get-counters (refresh pk) :advancement)) "Kusanagi should have 3 advancement tokens")
-        (core/score state :corp {:card (refresh pk)}))
-      (let [pk-scored (get-scored state :corp 1)]
-        (is (= 1 (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 1 agenda counter")
-        (run-empty-server state :hq)
-        (card-ability state :corp pk-scored 0)
-        (is (last-log-contains? state "Do 1 net damage"))
-        (is (zero? (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 0 agenda counters")))))
+    (play-and-score state "Project Kusanagi")
+    (let [pk-scored (get-scored state :corp 0)]
+      (is (zero? (get-counters (refresh pk-scored) :agenda)) "Kusanagi should start with 0 agenda counters"))
+    (play-from-hand state :corp "Project Kusanagi" "New remote")
+    (let [pk (get-content state :remote2 0)]
+      (advance state pk 3)
+      (is (= 3 (get-counters (refresh pk) :advancement)) "Kusanagi should have 3 advancement tokens")
+      (core/score state :corp {:card (refresh pk)}))
+    (let [pk-scored (get-scored state :corp 1)]
+      (is (= 1 (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 1 agenda counter")
+      (run-empty-server state :hq)
+      (card-ability state :corp pk-scored 0)
+      (click-card state :corp (get-ice state :hq 0))
+      (is (last-log-contains? state "Do 1 net damage"))
+      (is (zero? (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 0 agenda counters"))))
 
 (deftest project-vitruvius
   ;; Project Vitruvius

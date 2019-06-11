@@ -777,11 +777,8 @@
     :effect (effect (add-counter card :power 2))
     :abilities [{:req (req (:run @state))
                  :cost [:power 1]
-                 :effect (req (let [ls (filter #(= "Labyrinthine Servers" (:title %)) (:scored corp))]
-                                (jack-out-prevent state side)
-                                (when (zero? (reduce + (for [c ls] (get-counters c :power))))
-                                  (swap! state update-in [:prevent] dissoc :jack-out))))
-                 :msg "prevent the Runner from jacking out"}]}
+                 :msg "prevent the Runner from jacking out"
+                 :effect (effect (jack-out-prevent))}]}
 
    "License Acquisition"
    {:interactive (req true)
@@ -1030,8 +1027,29 @@
    "Project Kusanagi"
    {:silent (req true)
     :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 2)))
+<<<<<<< HEAD
     :abilities [{:cost [:agenda 1]
                  :msg "make a piece of ICE gain \"[Subroutine] Do 1 net damage\" after all its other subroutines for the remainder of the run"}]}
+=======
+    :events {:run-ends
+             {:effect (req (let [cid (:cid card)
+                                 ices (get-in card [:special :kusanagi])]
+                             (doseq [i ices]
+                               (when-let [ice (get-card state i)]
+                                 (remove-sub! state side ice #(= cid (:from-cid %))))))
+                           (update! state side (dissoc-in card [:special :kusanagi])))}}
+    :abilities [{:label "Give a piece of ICE \"[Subroutine] Do 1 net damage\""
+                 :prompt "Choose a piece of ICE"
+                 :choices {:req #(and (ice? %)
+                                      (rezzed? %))}
+                 :counter-cost [:agenda 1]
+                 :msg (str "make a piece of ICE gain \"[Subroutine] Do 1 net damage\" "
+                           "after all its other subroutines for the remainder of the run")
+                 :effect  (effect (add-extra-sub! (get-card state target)
+                                                  (do-net-damage 1)
+                                                  (:cid card) {:back true})
+                                  (update! (update-in card [:special :kusanagi] #(conj % target))))}]}
+>>>>>>> Mid implementation
 
    "Project Vitruvius"
    {:silent (req true)
@@ -1051,12 +1069,26 @@
    "Project Wotan"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))
+    :events {:run-ends
+             {:effect (req (let [cid (:cid card)
+                                 ices (get-in card [:special :wotan])]
+                             (doseq [i ices]
+                               (when-let [ice (get-card state i)]
+                                 (remove-sub! state side ice #(= cid (:from-cid %))))))
+                           (update! state side (dissoc-in card [:special :wotan])))}}
     :abilities [{:req (req (and (ice? current-ice)
                                 (rezzed? current-ice)
                                 (has-subtype? current-ice "Bioroid")))
                  :cost [:agenda 1]
                  :msg (str "make the approached piece of Bioroid ICE gain \"[Subroutine] End the run\""
-                           "after all its other subroutines for the remainder of this run")}]}
+                           "after all its other subroutines for the remainder of this run")
+                 :effect  (effect (add-extra-sub! (get-card state current-ice)
+                                                  {:label "End the run"
+                                                   :msg "end the run"
+                                                   :async true
+                                                   :effect (effect (end-run eid card))}
+                                                  (:cid card) {:back true})
+                                  (update! (update-in card [:special :wotan] #(conj % current-ice))))}]}
 
    "Project Yagi-Uda"
    (letfn [(put-back-counter [state side card]

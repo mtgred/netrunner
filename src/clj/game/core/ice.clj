@@ -6,7 +6,7 @@
 (defn add-sub
   ([ice sub] (add-sub ice sub (:cid ice) nil))
   ([ice sub cid] (add-sub ice sub cid nil))
-  ([ice sub cid {:keys [front back printed] :as args}]
+  ([ice sub cid {:keys [front back printed variable] :as args}]
    (let [curr-subs (:subroutines ice [])
          position (cond
                     back 1
@@ -16,17 +16,19 @@
                   :from-cid cid
                   :sub-effect sub
                   :position position
+                  :variable (or variable false)
                   :printed (or printed false)}
          new-subs (into [] (sort-by :position (conj curr-subs new-sub)))]
      (assoc ice :subroutines new-subs))))
 
 (defn add-sub!
-  ([state side ice sub] (update! state :corp (add-sub ice sub (:cid ice) {:printed false})))
-  ([state side ice sub cid] (update! state :corp (add-sub ice sub cid {:printed false})))
+  ([state side ice sub] (update! state :corp (add-sub ice sub (:cid ice) nil)))
+  ([state side ice sub cid] (update! state :corp (add-sub ice sub cid nil)))
   ([state side ice sub cid args] (update! state :corp (add-sub ice sub cid args))))
 
 (defn remove-sub
-  "Removes a single sub from"
+  "Removes a single sub from a piece of ice. By default removes the first subroutine
+  with the same cid as the given ice."
   ([ice] (remove-sub ice #(= (:cid ice) (:from-cid %))))
   ([ice pred]
    (let [curr-subs (:subroutines ice)
