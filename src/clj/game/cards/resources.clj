@@ -1487,14 +1487,15 @@
    "Neutralize All Threats"
    {:in-play [:hq-access 1]
     :events {:pre-access {:req (req (and (= target :archives)
-                                         (seq (filter #(:trash %) (:discard corp)))))
+                                         (seq (filter :trash (:discard corp)))))
                           :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
-             :access {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}
              :pre-trash {:req (req (let [cards (map first (turn-events state side :pre-trash))]
-                                     (and (empty? (filter #(:trash %) cards))
+                                     (and (empty? (filter :trash cards))
                                           (number? (:trash target)))))
                          :once :per-turn
-                         :effect (req (swap! state assoc-in [:runner :register :force-trash] true))}}}
+                         :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] true))}
+             :post-access-card {:req (req (get-in @state [:runner :register :must-trash-with-credits]))
+                                :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] false))}}}
 
    "New Angeles City Hall"
    {:interactions {:prevent [{:type #{:tag}
@@ -1886,55 +1887,23 @@
                              (effect-completed state :runner eid)))}}}
 
    "Salsette Slums"
-   {:flags {:slow-trash (req true)}
-    :implementation "Will not trigger Maw when used on card already trashed (2nd ability)"
-    :events {:runner-install
-             {:req (req (= card target))
-              :silent (req true)
-              :effect (effect (update! (assoc card :slums-active true)))}
-             :runner-turn-begins
-             {:effect (effect (update! (assoc card :slums-active true)))}
-             :pre-trash
-             {:req (req (and (:slums-active card)
-                             (-> target card-def :flags :must-trash not)
-                             (:trash target)
-                             (= (:side target) "Corp")))
-              :effect (req (toast state :runner (str "Click Salsette Slums to remove " (:title target)
-                                                     " from the game") "info" {:prevent-duplicates true}))}}
-    :abilities [{:label "Remove the currently accessed card from the game instead of trashing it"
-                 :req (req (let [c (:card (first (get-in @state [:runner :prompt])))]
-                             (if-let [trash-cost (trash-cost state side c)]
-                               (if (can-pay? state :runner eid card nil :credit trash-cost)
-                                 (if (:slums-active card)
-                                   true
-                                   ((toast state :runner "Can only use a copy of Salsette Slums once per turn.") false))
-                                 ((toast state :runner (str "Unable to pay for " (:title c) ".")) false))
-                               ((toast state :runner "Not currently accessing a card with a trash cost.") false))))
-                 :msg (msg (let [c (:card (first (get-in @state [:runner :prompt])))]
-                             (str "pay " (trash-cost state side c) " [Credits] and remove " (:title c) " from the game")))
-                 :effect (req (let [c (:card (first (get-in @state [:runner :prompt])))]
-                                (deactivate state side c)
-                                (move state :corp c :rfg)
-                                (pay state :runner card :credit (trash-cost state side c))
-                                (trigger-event state side :no-trash c)
-                                (update! state side (dissoc card :slums-active))
-                                (close-access-prompt state side)
-                                (when-not (:run @state)
-                                  (swap! state dissoc :access))))}
-                {:label "Remove a card trashed this turn from the game"
-                 :req (req (if (:slums-active card)
-                             true
-                             ((toast state :runner "Can only use a copy of Salsette Slums once per turn.") false)))
-                 :effect (effect (resolve-ability
-                                   {; only allow targeting cards that were trashed this turn -- not perfect, but good enough?
-                                    :choices {:req #(some (fn [c] (same-card? % c))
-                                                          (map first (turn-events state side :runner-trash)))}
-                                    :msg (msg "remove " (:title target) " from the game")
-                                    :effect (req (deactivate state side target)
-                                                 (trigger-event state side :no-trash target)
-                                                 (move state :corp target :rfg)
-                                                 (update! state side (dissoc card :slums-active)))}
-                                   card nil))}]}
+   {:interactions
+    {:access-ability
+     {:label "[Salsette Slums]: Remove card from game"
+      :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                     (can-pay? state :runner {:source card :source-type :ability}
+                               card (:title target) [:credit (trash-cost state side target)])))
+      :once :per-turn
+      :async true
+      :trash? false
+      :effect (req (let [trash-cost (trash-cost state side target)]
+                     (wait-for (pay-sync state side (make-eid state eid) card [:credit trash-cost])
+                               (move state :corp target :rfg)
+                               (system-msg state side
+                                           (str "pay " trash-cost
+                                                " [Credits] and remove " (:title target)
+                                                " from the game"))
+                               (effect-completed state side eid))))}}}
 
    "Salvaged Vanadis Armory"
    {:events {:damage

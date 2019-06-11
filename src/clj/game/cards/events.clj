@@ -500,7 +500,7 @@
                                                        c)))}
                       card nil))
     :events {:run-ends nil}
-    :interactions {:trash-ability
+    :interactions {:access-ability
                    {:label "[Demolition Run]: Trash card"
                     :msg (msg "trash " (:title target) " at no cost")
                     :async true
