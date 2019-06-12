@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
-(declare can-trigger? card-def clear-wait-prompt effect-completed event-title get-card
+(declare can-trigger? card-def clear-wait-prompt event-title get-card
          get-nested-host get-remote-names get-runnable-zones get-zones installed?
-         make-eid register-effect-completed register-suppress resolve-ability
+         register-suppress resolve-ability
          show-wait-prompt trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
@@ -298,14 +298,3 @@
   "Returns true if this is the first trash of an owned installed card this turn by this side"
   [state side]
   (= 1 (count (filter #(= (:side (first %)) (side-str side)) (get-installed-trashed state side)))))
-
-;;; Effect completion triggers
-(defn register-effect-completed
-  [state side eid effect]
-  (swap! state update-in [:effect-completed (:eid eid)] #(conj % effect)))
-
-(defn effect-completed
-  [state side eid]
-  (doseq [handler (get-in @state [:effect-completed (:eid eid)])]
-    (handler state side eid))
-  (swap! state update-in [:effect-completed] dissoc (:eid eid)))
