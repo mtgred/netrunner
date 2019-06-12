@@ -909,32 +909,38 @@
   (prevent-jack-out state side))
 
 (defn- resolve-jack-out
-  [state side eid]
-  (end-run state side)
-  (system-msg state side "jacks out")
-  (trigger-event-sync state side (make-result eid true) :jack-out))
+  [state side eid prevented?]
+  (if prevented?
+    (effect-completed state side eid)
+    (do (end-run state side)
+        (system-msg state side "jacks out")
+        (trigger-event-sync state side eid :jack-out))))
 
 (defn jack-out
   "The runner decides to jack out."
-  ([state side] (jack-out state side (make-eid state)))
-  ([state side eid]
+  ([state side] (jack-out state side (make-eid state) nil))
+  ([state side eid] (jack-out state side eid nil))
+  ([state side eid {:keys [unpreventable]}]
    (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
    (wait-for (trigger-event-sync state side :pre-jack-out nil)
              (let [prevent (get-prevent-list state :corp :jack-out)]
-               (if (cards-can-prevent? state :corp prevent :jack-out)
+               (if (and (not unpreventable)
+                        (cards-can-prevent? state :corp prevent :jack-out))
                  (do (system-msg state :corp "has the option to prevent the Runner from jacking out")
                      (show-wait-prompt state :runner "Corp to prevent the jack out" {:priority 10})
-                     (show-prompt state :corp nil
-                                  (str "Prevent the Runner from jacking out?") ["Done"]
-                                  (fn [_]
-                                    (clear-wait-prompt state :runner)
-                                    (if-let [_ (get-in @state [:jack-out :jack-out-prevent])]
-                                      (effect-completed state side (make-result eid false))
-                                      (do (system-msg state :corp "will not prevent the Runner from jacking out")
-                                          (resolve-jack-out state side eid))))
-                                  {:priority 10}))
-                 (do (resolve-jack-out state side eid)
-                     (effect-completed state side (make-result eid false))))))))
+                     (show-prompt
+                       state :corp nil
+                       (str "Prevent the Runner from jacking out?")
+                       ["Done"]
+                       (fn [_]
+                         (let [prevented? (pos? (get-in @state [:jack-out :jack-out-prevent] 0))
+                               prevent-msg (str (if prevented? "will" "will not")
+                                                " prevent the Runner from jacking out")]
+                           (clear-wait-prompt state :runner)
+                           (system-msg state :corp prevent-msg)
+                           (resolve-jack-out state side eid prevented?)))
+                       {:priority 10}))
+                 (resolve-jack-out state side eid false))))))
 
 (defn- trigger-run-end-events
   [state side eid run]

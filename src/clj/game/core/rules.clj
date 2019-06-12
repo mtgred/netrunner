@@ -251,14 +251,21 @@
            (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
            (swap! state assoc-in [:prevent :current] type)
            (show-prompt
-             state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
-             (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])]
-                       (when prevent (trigger-event state side :prevented-damage type prevent))
-                       (system-msg state :runner
-                                   (if prevent (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                                    " " (name type) " damage") "will not prevent damage"))
-                       (clear-wait-prompt state :corp)
-                       (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
+             state :runner nil
+             (str "Prevent " (when (< 1 n) "any of the ") n " " (name type) " damage?")
+             ["Done"]
+             (fn [_]
+               (let [prevent (get-in @state [:damage :damage-prevent type])
+                     prevent-msg (if prevent
+                                   (str "prevents "
+                                        (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                        " " (name type) " damage")
+                                   "will not prevent damage")]
+                 (when prevent
+                   (trigger-event state side :prevented-damage type prevent))
+                 (system-msg state :runner prevent-msg)
+                 (clear-wait-prompt state :corp)
+                 (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
              {:priority 10}))
        (resolve-damage state side eid type n args)))))
 
@@ -283,10 +290,9 @@
   [state side n]
   (swap! state update-in [:runner :tag-remove-bonus] (fnil #(+ % n) 0)))
 
-(defn resolve-tag
+(defn- resolve-gain-tags
   "Resolve runner gain tags. Always gives `:base` tags."
-  [state side eid n _]
-  (trigger-event state side :pre-resolve-tag n)
+  [state side eid n]
   (if (pos? n)
     (do (gain state :runner :tag {:base n})
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
@@ -310,7 +316,8 @@
            (swap! state assoc-in [:prevent :current] :tag)
            (show-prompt
              state :runner nil
-             (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
+             (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?")
+             ["Done"]
              (fn [_]
                (let [prevent (get-in @state [:tag :tag-prevent])
                      prevent-msg (if prevent
@@ -320,9 +327,9 @@
                                    "will not avoid tags")]
                  (system-msg state :runner prevent-msg)
                  (clear-wait-prompt state :corp)
-                 (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
+                 (resolve-gain-tags state side eid (max 0 (- n (or prevent 0))))))
              {:priority 10}))
-       (resolve-tag state side eid n args)))))
+       (resolve-gain-tags state side eid n)))))
 
 (defn lose-tags
   "Always removes `:base` tags"
@@ -344,17 +351,18 @@
       (- (or (when-not unpreventable (get-in @state [:bad-publicity :bad-publicity-prevent])) 0))
       (max 0)))
 
-(defn bad-publicity-prevent [state side n]
+(defn bad-publicity-prevent
+  [state side n]
   (swap! state update-in [:bad-publicity :bad-publicity-prevent] (fnil #(+ % n) 0))
   (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) `(:bad-publicity ~n)))
 
-(defn resolve-bad-publicity [state side eid n args]
-  (trigger-event state side :pre-resolve-bad-publicity n)
+(defn- resolve-gain-bad-publicity
+  [state side eid n]
   (if (pos? n)
     (do (gain state :corp :bad-publicity n)
         (toast state :corp (str "Took " n " bad publicity!") "info")
-        (trigger-event-sync state side eid :corp-gain-bad-publicity n))
-    (effect-completed state side eid)))
+        (trigger-event-sync state side (make-result eid true) :corp-gain-bad-publicity n))
+    (effect-completed state side (make-result eid false))))
 
 (defn gain-bad-publicity
   "Attempts to give the corp n bad publicity, allowing for boosting/prevention effects."
@@ -373,19 +381,20 @@
                      (swap! state assoc-in [:prevent :current] :bad-publicity)
                      (show-prompt
                        state :corp nil
-                       (str "Avoid " (when (< 1 n) "any of the ") n " bad publicity?") ["Done"]
+                       (str "Avoid " (when (< 1 n) "any of the ") n " bad publicity?")
+                       ["Done"]
                        (fn [_]
-                         (let [prevent (get-in @state [:bad-publicity :bad-publicity-prevent])]
-                           (system-msg state :corp
-                                       (if prevent
-                                         (str "avoids "
-                                              (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                              " bad publicity")
-                                         "will not avoid bad publicity"))
+                         (let [prevent (get-in @state [:bad-publicity :bad-publicity-prevent])
+                               prevent-msg (if prevent
+                                             (str "avoids "
+                                                  (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                                  " bad publicity")
+                                             "will not avoid bad publicity")]
+                           (system-msg state :corp prevent-msg)
                            (clear-wait-prompt state :runner)
-                           (resolve-bad-publicity state side eid (max 0 (- n (or prevent 0))) args)))
+                           (resolve-gain-bad-publicity state side eid (max 0 (- n (or prevent 0))))))
                        {:priority 10}))
-                 (resolve-bad-publicity state side eid n args))))))
+                 (resolve-gain-bad-publicity state side eid n))))))
 
 
 ;;; Trashing
@@ -470,18 +479,22 @@
                     (cards-can-prevent? state :runner prevent type card args))
              (do (system-msg state :runner "has the option to prevent trash effects")
                  (show-wait-prompt state :corp "Runner to prevent trash effects" {:priority 10})
-                 (show-prompt state :runner nil
-                              (str "Prevent the trashing of " (:title card) "?") ["Done"]
-                              (fn [_]
-                                (clear-wait-prompt state :corp)
-                                (if-let [_ (get-in @state [:trash :trash-prevent ktype])]
-                                  (do (system-msg state :runner (str "prevents the trashing of " (:title card)))
-                                      (swap! state update-in [:trash :trash-prevent] dissoc ktype)
-                                      (effect-completed state side eid))
-                                  (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                                      (swap! state update-in [:trash :trash-list oid] concat [card])
-                                      (effect-completed state side eid))))
-                              {:priority 10}))
+                 (show-prompt
+                   state :runner nil
+                   (str "Prevent the trashing of " (:title card) "?")
+                   ["Done"]
+                   (fn [_]
+                     (clear-wait-prompt state :corp)
+                     (let [prevented? (pos? (get-in @state [:trash :trash-prevent ktype] 0))
+                           prevent-msg (str (if prevented?
+                                              "prevents"
+                                              "will not prevent")
+                                            " the trashing of " (:title card))]
+                       (if prevented?
+                         (swap! state update-in [:trash :trash-prevent] dissoc ktype)
+                         (swap! state update-in [:trash :trash-list oid] concat [card]))
+                       (effect-completed state side eid)))
+                   {:priority 10}))
              ;; No prevention effects: add the card to the trash-list
              (do (swap! state update-in [:trash :trash-list oid] concat [card])
                  (effect-completed state side eid))))))
@@ -657,12 +670,15 @@
   (swap! state update-in [:expose :expose-prevent] #(+ (or % 0) n)))
 
 (defn- resolve-expose
-  [state side eid target args]
-  (system-msg state side (str "exposes " (card-str state target {:visible true})))
-  (if-let [ability (:expose (card-def target))]
-    (wait-for (resolve-ability state side ability target nil)
-              (trigger-event-sync state side (make-result eid true) :expose target))
-    (trigger-event-sync state side (make-result eid true) :expose target)))
+  [state side eid target prevented?]
+  ; If it's prevented, result is false
+  (let [eid (make-result eid (not prevented?))]
+    (if prevented?
+      (effect-completed state side eid)
+      (do (system-msg state side (str "exposes " (card-str state target {:visible true})))
+          ; No need to check for :expose ability, cuz resolve-ability short-circuits
+          (wait-for (resolve-ability state side (:expose (card-def target)) target nil)
+                    (trigger-event-sync state side eid :expose target))))))
 
 (defn expose
   "Exposes the given card."
@@ -678,18 +694,22 @@
                            (cards-can-prevent? state :corp prevent :expose))
                     (do (system-msg state :corp "has the option to prevent a card from being exposed")
                         (show-wait-prompt state :runner "Corp to prevent the expose" {:priority 10})
-                        (show-prompt state :corp nil
-                                     (str "Prevent " (:title target) " from being exposed?") ["Done"]
-                                     (fn [_]
-                                       (clear-wait-prompt state :runner)
-                                       (if-let [_ (get-in @state [:expose :expose-prevent])]
-                                         (effect-completed state side (make-result eid false)) ;; ??
-                                         (do (system-msg state :corp "will not prevent a card from being exposed")
-                                             (resolve-expose state side eid target args))))
-                                     {:priority 10}))
-                    (if-not (get-in @state [:expose :expose-prevent])
-                      (resolve-expose state side eid target args)
-                      (effect-completed state side (make-result eid false)))))))))
+                        (show-prompt
+                          state :corp nil
+                          (str "Prevent " (:title target) " from being exposed?")
+                          ["Done"]
+                          (fn [_]
+                            (clear-wait-prompt state :runner)
+                            (let [prevented? (pos? (get-in @state [:expose :expose-prevent] 0))
+                                  prevent-msg (str (if prevented?
+                                                     "prevents"
+                                                     "will not prevent")
+                                                   " a card from being exposed")]
+                              (system-msg state :corp prevent-msg)
+                              (resolve-expose state side eid target prevented?)))
+                          {:priority 10}))
+                    (resolve-expose state side eid target
+                                    (pos? (get-in @state [:expose :expose-prevent] 0)))))))))
 
 (defn reveal-hand
   "Reveals a side's hand to opponent and spectators."
