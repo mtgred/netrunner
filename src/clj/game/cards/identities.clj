@@ -410,11 +410,9 @@
                               :effect (req (draw state side eid 1 nil))}}}
 
    "Freedom Khumalo: Crypto-Anarchist"
-   {:flags {:slow-trash (req true)}
-    :interactions
-    {:trash-ability
-     {:interactive (req true)
-      :async true
+   {:interactions
+    {:access-ability
+     {:async true
       :once :per-turn
       :label "[Freedom]: Trash card"
       :req (req (and (not (:disabled card))

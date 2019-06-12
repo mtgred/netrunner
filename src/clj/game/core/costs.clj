@@ -259,7 +259,7 @@
                      (if (= :corp side) "R&D" "the stack"))))))
 
 (defn pay-trash-from-hand
-  "Randomly trash a card from hand as part of a cost"
+  "Trash a card from hand as part of a cost"
   [state side eid amount]
   (let [select-fn #(and ((if (= :corp side) corp? runner?) %)
                         (in-hand? %))
