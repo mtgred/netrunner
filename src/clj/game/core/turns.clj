@@ -102,6 +102,7 @@
                 :hand-size {:base 5 :mod 0}
                 :agenda-point 0 :agenda-point-req 7
                 :hq-access 1 :rd-access 1
+                :rd-access-fn seq
                 :brain-damage 0
                 :keep false
                 :quote runner-quote}})))
@@ -129,11 +130,6 @@
       (assoc :cid cid :implementation (card-implemented card))
       (dissoc :setname :text :_id :influence :number :influencelimit :factioncost))))
 
-(defn reset-card
-  "Resets a card back to its original state - retaining any data in the :persistent key"
-  ([state side {:keys [title cid persistent]}]
-   (update! state side (assoc (make-card (server-card title) cid) :persistent persistent))))
-
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
   Loads card data from the server-card map if available."
@@ -150,18 +146,6 @@
   "Returns a progressively-increasing integer to identify a new remote server."
   [state]
   (get-in (swap! state update-in [:rid] inc) [:rid]))
-
-(defn make-eid
-  ([state] (make-eid state nil))
-  ([state {:keys [source source-type]}]
-   (merge {:eid (:eid (swap! state update-in [:eid] inc))}
-          (when source
-            {:source source
-             :source-type source-type}))))
-
-(defn make-result
-  [eid result]
-  (assoc eid :result result))
 
 (defn mulligan
   "Mulligan starting hand."

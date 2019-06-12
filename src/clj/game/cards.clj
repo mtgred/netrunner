@@ -172,9 +172,9 @@
   The ability triggered returns either {:number n :msg msg} on completed effect, or :cancel on a cancel.
   n is the number of virus counters selected, msg is the msg string of all the cards and the virus counters taken from each.
   If called with no arguments, allows user to select as many counters as they like until 'Cancel' is pressed."
-  ([] (pick-virus-counters-to-spend (hash-map) 0 nil))
-  ([target-count] (pick-virus-counters-to-spend (hash-map) 0 target-count))
-  ([selected-cards counter-count target-count]
+  ([] (pick-virus-counters-to-spend nil (hash-map) 0))
+  ([target-count] (pick-virus-counters-to-spend target-count (hash-map) 0 ))
+  ([target-count selected-cards counter-count]
    {:async true
     :prompt (str "Select a card with virus counters ("
                  counter-count (when (and target-count (pos? target-count))
@@ -190,7 +190,7 @@
                        counter-count (inc counter-count)]
                    (if (or (not target-count) (< counter-count target-count))
                      (continue-ability state side
-                                       (pick-virus-counters-to-spend selected-cards counter-count target-count)
+                                       (pick-virus-counters-to-spend target-count selected-cards counter-count)
                                        card nil)
                      (let [msg (join ", " (map #(let [{:keys [card number]} %
                                                       title (:title card)]
@@ -206,6 +206,82 @@
                                                   (str (quantify number "virus counter") " from " title))
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
+
+(defn pick-credit-providing-cards
+  "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
+  ([provider-func outereid] (pick-credit-providing-cards provider-func outereid nil (hash-map) 0))
+  ([provider-func outereid target-count] (pick-credit-providing-cards provider-func outereid target-count (hash-map) 0))
+  ([provider-func outereid target-count selected-cards counter-count]
+   (let [pay-rest
+         (req (if (<= (- target-count counter-count) (get-in @state [side :credit]))
+                (let [remainder (- target-count counter-count)
+                      remainder-str (when (pos? remainder)
+                                      (str remainder " [Credits]"))
+                      card-strs (when (pos? (count selected-cards))
+                                  (str (join ", " (map #(let [{:keys [card number]} %
+                                                              title (:title card)]
+                                                          (str number " [Credits] from " title))
+                                                       (vals selected-cards)))))
+                      message (str card-strs
+                                   (when (and card-strs remainder-str)
+                                     " and ")
+                                   remainder-str
+                                   (when (and card-strs remainder-str)
+                                     " from their credit pool"))]
+                  (deduct state side [:credit remainder])
+                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) target-count)
+                  (when-let [card (some #(when (has-subtype? (:card %) "Stealth") (:card %)) (vals selected-cards))]
+                    (trigger-event state side :spent-stealth-credit card))
+                  (effect-completed state side (make-result eid {:number counter-count :msg message})))
+                (continue-ability
+                  state side
+                  (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)
+                  card nil)))]
+     (let [provider-cards (provider-func)]
+       (if (or (not (pos? target-count))        ; there is a limit
+               (>= counter-count target-count)  ; paid everything
+               (zero? (count provider-cards)))  ; no more additional credit sources found
+         {:async true
+          :effect pay-rest}
+         {:async true
+          :prompt (str "Select a credit providing card ("
+                       counter-count (when (and target-count (pos? target-count))
+                                       (str " of " target-count))
+                       " credits)")
+          :choices {:req #(in-coll? (map :cid provider-cards) (:cid %))}
+          :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
+                             pay-credits-custom (when (= :custom pay-credits-type)
+                                                  (-> target card-def :interactions :pay-credits :custom))
+                             custom-ability (when (= :custom pay-credits-type)
+                                              {:async true :effect pay-credits-custom})
+                             gained-credits (case pay-credits-type
+                                              :recurring
+                                              (do (add-prop state side target :rec-counter -1) 1)
+                                              :credit
+                                              (do (add-counter state side target :credit -1) 1)
+                                              ; Custom credits will be handled separately later
+                                              0)
+                             selected-cards (update selected-cards (:cid target)
+                                                    ;; Store card reference and number of counters picked
+                                                    ;; Overwrite card reference each time
+                                                    #(assoc % :card target :number (inc (:number % 0))))
+                             counter-count (+ counter-count gained-credits)]
+                         (if (= :custom pay-credits-type)
+                           ; custom functions should be a 5-arg fn that returns an ability that provides the number of credits as async-result
+                           (let [neweid (make-eid state outereid)
+                                 providing-card target]
+                             (wait-for (resolve-ability state side neweid custom-ability providing-card [card])
+                                       (continue-ability state side
+                                                         (pick-credit-providing-cards provider-func eid target-count
+                                                                                      (update selected-cards (:cid providing-card)
+                                                                                              ;; correct credit count
+                                                                                              #(assoc % :card target :number (+ (:number % 0) (dec async-result))))
+                                                                                      (+ counter-count async-result))
+                                                         card targets)))
+                           (continue-ability state side
+                                             (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)
+                                             card nil))))
+          :cancel-effect pay-rest})))))
 
 (defn never?
   "Returns true if is argument is :never."

@@ -85,7 +85,7 @@
   in/protecting a server, facedown, or hosted."
   ([state card] (card-str state card nil))
   ([state {:keys [zone host title facedown] :as card} {:keys [visible] :as args}]
-  (str (if (card-is? card :side :corp)
+  (str (if (corp? card)
          ; Corp card messages
          (str (if (or (rezzed? card) visible) title (if (ice? card) "ICE" "a card"))
               ; Hosted cards do not need "in server 1" messages, host has them
@@ -140,7 +140,7 @@
                         counter-type (cond (= 1 (count existing)) (first (keys existing))
                                      (can-be-advanced? target) :advance-counter
                                      (and (is-type? target "Agenda") (is-scored? state side target)) :agenda
-                                     (and (card-is? target :side :runner) (has-subtype? target "Virus")) :virus)
+                                     (and (runner? target) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter counter-type)]
                     (cond
                       advance
@@ -346,7 +346,7 @@
           nil)))))
 
 (defn corp-install-msg
-  "Gets a message describing where a card has been installed from. Example: Interns. "
+  "Gets a message describing where a card has been installed from. Example: Interns."
   [card]
   (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 

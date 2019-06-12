@@ -2,7 +2,7 @@
 
 (declare can-run? can-trash? card-init card-str cards-can-prevent? close-access-prompt enforce-msg
          gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? installed? is-type? play-sfx
-         prevent-draw make-result remove-old-current show-prompt system-say system-msg steal-trigger-events
+         prevent-draw remove-old-current show-prompt system-say system-msg steal-trigger-events
          trash-cards untrashable-while-rezzed? update-all-ice untrashable-while-resources? win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
@@ -41,7 +41,7 @@
                              (play-instant state side (make-eid state) eid? card?)))
   ([state side eid card {:keys [targets ignore-cost extra-cost no-additional-cost]}]
    (swap! state update-in [:bonus] dissoc :play-cost)
-   (wait-for (trigger-event-simult state side :pre-play-instant nil card)
+   (wait-for (trigger-event-simult state side (make-eid state eid) :pre-play-instant nil card)
              (when (empty? (get-in @state [side :locked (-> card :zone first)]))
                (if (has-subtype? card "Run")
                  (swap! state assoc-in [:runner :register :click-type] :run))
@@ -70,7 +70,7 @@
                    ;; Wait on pay-sync to finish before triggering instant-effect
                    (let [original-zone (:zone card)
                          moved-card (move state side (assoc card :seen true) :play-area)]
-                     (wait-for (pay-sync state side moved-card (if ignore-cost 0 total-cost) {:action :play-instant})
+                     (wait-for (pay-sync state side (make-eid state eid) moved-card (if ignore-cost 0 total-cost) {:action :play-instant})
                                (if-let [cost-str async-result]
                                  (complete-play-instant state side eid moved-card cost-str ignore-cost)
                                 ;; could not pay the card's price; put it back and mark the effect as being over.
@@ -404,7 +404,6 @@
    (if card
      (let [cdef (card-def card)
            moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
-       (swap! state update-in [:per-turn] dissoc (:cid moved-card))
        (swap! state update-in [:trash :trash-list] dissoc oid)
        (if-let [trash-effect (:trash-effect cdef)]
          (if (and (not disabled)

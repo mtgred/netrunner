@@ -131,10 +131,10 @@
       (is (= 1 (count-tags state)) "Runner took 0 tags"))))
 
 (deftest architect-deployment-test
-  ;; Accelerated Beta Test
+  ;; Architect Deployment Test
   (do-game
-   (new-game {:corp {:deck [(qty "Architect Deployment Test" 4) "Enigma" "Rashida Jaheem"]}})
-   (starting-hand state :corp (repeat 4 "Architect Deployment Test"))
+   (new-game {:corp {:deck [(qty "Architect Deployment Test" 5) "Oaktown Renovation" "Enigma" "Rashida Jaheem"]}})
+   (starting-hand state :corp (repeat 5 "Architect Deployment Test"))
    (core/gain state :corp :click 4)
    (play-and-score state "Architect Deployment Test") ;makes a remote 1
    (click-prompt state :corp "OK")
@@ -152,6 +152,12 @@
    (is (changes-credits (get-corp) 0
                         (click-prompt state :corp "Server 2")))
    (is (:rezzed (get-content state :remote2 0)) "Rashida Jaheem was installed and rezzed, both at no cost")
+   (play-and-score state "Architect Deployment Test")
+   (click-prompt state :corp "OK")
+   (click-prompt state :corp "Oaktown Renovation")
+   (click-prompt state :corp "New remote")
+   (is (= "Oaktown Renovation" (:title (get-content state :remote6 0))) "Oaktown Renovation was installed")
+   (is (:rezzed (get-content state :remote6 0)) "Oaktown Renovation is installed faceup.")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (is (empty (:prompt (get-corp))) "No prompts if there is no ice")))
@@ -593,7 +599,7 @@
             an (get-resource state 1)]
         (run-on state "Server 1")
         (run-successful state)
-        (click-prompt state :runner "Pay shuffling 2 installed cards into the stack to steal")
+        (click-prompt state :runner "Pay to steal")
         (click-card state :runner ia)
         (click-card state :runner an)
         (is (= 3 (:agenda-point (get-runner))) "Runner failed to steal Degree Mill")
@@ -616,7 +622,7 @@
               fd2 (get-runner-facedown state 1)]
           (run-on state "Server 2")
           (run-successful state)
-          (click-prompt state :runner "Pay shuffling 2 installed cards into the stack to steal")
+          (click-prompt state :runner "Pay to steal")
           (click-card state :runner fd1)
           (click-card state :runner fd2)
           (is (= 6 (:agenda-point (get-runner))) "Runner failed to steal Degree Mill with facedown cards")
@@ -638,30 +644,26 @@
         (click-card state :runner (refresh dm))
         (click-prompt state :runner "Pay to steal")
         (is (= 1 (:click (get-runner))) "Runner should start with 1 remaining click")
-        (click-prompt state :runner "[Click]")
-        (is (zero? (:click (get-runner))) "Runner should have spent a click")
         (is (= 2 (count (get-in @state [:runner :rig :resource]))) "Runner starts with 2 resources")
-        (click-prompt state :runner "shuffling 2 installed cards into the stack")
         (click-card state :runner (get-resource state 1))
         (click-card state :runner (get-resource state 0))
+        (is (zero? (:click (get-runner))) "Runner should have spent a click")
         (is (empty? (get-resource state)) "Degree Mill removed installed cards")
         (is (not-empty (get-scored state :runner)) "Runner stole an agenda")))))
 
 (deftest director-haas-pet-project
   ;; Director Haas' Pet Project
   (do-game
-    (new-game {:corp {:deck ["Director Haas' Pet Project"
-                             "Adonis Campaign"
-                             "Strongbox"
-                             "Eli 1.0"
-                             (qty "Hedge Fund" 5)]}})
-    (starting-hand state :corp ["Director Haas' Pet Project" "Adonis Campaign" "Strongbox"])
-    (core/move state :corp (find-card "Eli 1.0" (:deck (get-corp))) :discard)
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Strongbox"
+                             "Director Haas' Pet Project"
+                             "Adonis Campaign"]
+                      :discard ["Eli 1.0"]}})
     (play-and-score state "Director Haas' Pet Project")
     (click-prompt state :corp "Yes")
-    (click-card state :corp (find-card "Adonis Campaign" (:hand (get-corp))))
-    (click-card state :corp (find-card "Strongbox" (:hand (get-corp))))
-    (click-card state :corp (find-card "Eli 1.0" (:discard (get-corp))))))
+    (click-card state :corp "Adonis Campaign")
+    (click-card state :corp "Strongbox")
+    (click-card state :corp "Eli 1.0")))
 
 (deftest divested-trust
   ;; Divested Trust
@@ -903,7 +905,7 @@
       (play-from-hand state :corp "Fetal AI" "New remote")
       (take-credits state :corp 2)
       (run-empty-server state "Server 1")
-      (click-prompt state :runner "Pay 2 [Credits] to steal")
+      (click-prompt state :runner "Pay to steal")
       (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
       (is (= 3 (:credit (get-runner))) "Runner paid 2cr to steal Fetal AI")
       (is (= 1 (count (:scored (get-runner)))) "Runner stole Fetal AI"))
@@ -1234,8 +1236,6 @@
         (is (= 4 (:click (get-runner))) "Runner should be reset to 4 clicks")
         (run-empty-server state :remote1)
         (click-prompt state :runner "Pay to steal")
-        (click-prompt state :runner "[Click]")
-        (click-prompt state :runner "2 [Credits]")
         (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
         (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits to steal")
         (is (= 3 (:agenda-point (get-runner))))
@@ -1723,7 +1723,7 @@
     (take-credits state :corp)
     (core/gain state :runner :agenda-point 6)
     (run-empty-server state "Server 1")
-    (click-prompt state :runner "Pay 4 net damage to steal")
+    (click-prompt state :runner "Pay to steal")
     (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")
     (is (= :runner (:winner @state)) "Runner wins")
     (is (= "Agenda" (:reason @state)) "Win condition reports agenda points")))
@@ -2390,8 +2390,8 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "Remote 1")
       (let [cache (get-program state 0)]
-        (is (= ["Pay 1 installed program to steal" "No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal")
-        (click-prompt state :runner "Pay 1 installed program to steal")
+        (is (= ["Pay to steal" "No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal")
+        (click-prompt state :runner "Pay to steal")
         (click-card state :runner "Cache")
         (is (nil? (refresh cache)) "Cache is trashed")
         (is (find-card "Cache" (:discard (get-runner))) "Cache is trashed")
@@ -2858,8 +2858,8 @@
     (take-credits state :corp)
     (run-on state :remote2)
     (run-successful state)
-    (is (= ["Pay 2 [Credits] to steal" "No action"] (:choices (prompt-map :runner))))
-    (click-prompt state :runner "Pay 2 [Credits] to steal")
+    (is (= ["Pay to steal" "No action"] (:choices (prompt-map :runner))))
+    (click-prompt state :runner "Pay to steal")
     (is (= 1 (:agenda-point (get-runner))))
     (is (= 3 (:credit (get-runner))))))
 

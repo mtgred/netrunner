@@ -610,26 +610,43 @@
 (deftest cold-read
   ;; Make a run, and place 4 on this card, which you may use only during this run.
   ;; When this run ends, trash 1 program (cannot be prevented) used during this run.
-  (do-game
-    (new-game {:corp {:deck [(qty "Blacklist" 3)]}
-               :runner {:deck ["Imp" (qty "Cold Read" 2)]}})
-    (play-from-hand state :corp "Blacklist" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Imp")
-    (let [bl (get-content state :remote1 0)]
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Blacklist" 3)]}
+                 :runner {:deck ["Imp" (qty "Cold Read" 2)]}})
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Imp")
+      (let [bl (get-content state :remote1 0)]
+        (play-from-hand state :runner "Cold Read")
+        (click-prompt state :runner "HQ")
+        (is (= 4 (get-counters (find-card "Cold Read" (get-in @state [:runner :play-area])) :recurring)) "Cold Read has 4 counters")
+        (run-successful state)
+        (click-prompt state :runner "[Imp]: Trash card")
+        (click-card state :runner (get-program state 0))
+        (is (= 2 (count (:discard (get-runner)))) "Imp and Cold Read in discard")
+        ; Cold Read works when Blacklist rezzed - #2378
+        (core/rez state :corp bl)
+        (play-from-hand state :runner "Cold Read")
+        (click-prompt state :runner "HQ")
+        (is (= 4 (get-counters (find-card "Cold Read" (get-in @state [:runner :play-area])) :recurring)) "Cold Read has 4 counters")
+        (run-successful state))))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Cold Read" "Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Refractor")
       (play-from-hand state :runner "Cold Read")
-      (click-prompt state :runner "HQ")
-      (is (= 4 (get-counters (find-card "Cold Read" (get-in @state [:runner :play-area])) :recurring)) "Cold Read has 4 counters")
-      (run-successful state)
-      (click-prompt state :runner "[Imp]: Trash card")
-      (click-card state :runner (get-program state 0))
-      (is (= 2 (count (:discard (get-runner)))) "Imp and Cold Read in discard")
-      ; Cold Read works when Blacklist rezzed - #2378
-      (core/rez state :corp bl)
-      (play-from-hand state :runner "Cold Read")
-      (click-prompt state :runner "HQ")
-      (is (= 4 (get-counters (find-card "Cold Read" (get-in @state [:runner :play-area])) :recurring)) "Cold Read has 4 counters")
-      (run-successful state))))
+      (click-prompt state :runner "Archives")
+      (let [refr (get-program state 0)
+            cr (first (get-in @state [:runner :play-area]))]
+        (card-ability state :runner refr 1)
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Cold Read"
+                           (click-card state :runner cr))
+        (run-successful state)
+        (click-card state :runner refr)
+        (is (= 2 (count (:discard (get-runner)))) "Cold Read and Refractor in discard")))))
 
 (deftest ^{:card-title "compile"}
   compile-test
@@ -1825,60 +1842,78 @@
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
 (deftest information-sifting
-  ;; Information Sifting - complicated interactions with damage prevention
-  (do-game
-    (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
-                      :deck ["Snare!" "PAD Campaign" "Hostile Infrastructure"
-                             "Braintrust" "Hedge Fund" "Power Shutdown"]}
-               :runner {:deck [(qty "Information Sifting" 2) (qty "Deus X" 2) "Sure Gamble"]}})
-    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
-    (core/gain state :corp :credit 10)
-    (core/rez state :corp (get-content state :remote1 0))
-    (core/gain state :runner :credit 10)
-    (take-credits state :corp)
-    (play-from-hand state :runner "Deus X")
-    (play-from-hand state :runner "Deus X")
-    (play-run-event state (find-card "Information Sifting" (:hand (get-runner))) :hq)
-    (click-card state :corp (find-card "Snare!" (:hand (get-corp))))
-    (click-card state :corp (find-card "PAD Campaign" (:hand (get-corp))))
-    (click-prompt state :corp "Done")
-    (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp is waiting for Runner selection")
-    (click-prompt state :runner "Pile 1 (2 cards)")
-    (click-prompt state :runner "Card from pile 1")
-    ;; the cards are selected randomly :(
-    (letfn [(prevent-snare [existing-dmg]
-              (click-prompt state :corp "Yes")
-              (card-ability state :runner (get-program state 0) 1)
-              (click-prompt state :runner "Done")
-              (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Damage from Snare! prevented")
-              (click-prompt state :runner (-> (prompt-map :runner) :choices first))
-              (when (-> (prompt-map :runner) :choices first)
-                (click-prompt state :runner "Done")) ; don't prevent Hostile dmg
-              ;; chronos prompt
-              (click-prompt state :corp "Yes")
-              (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
-              (is (= (+ 2 existing-dmg) (count (:discard (get-runner)))) "Damage from Hostile Inf not prevented"))
-            (allow-pad [existing-dmg]
-              (click-prompt state :runner (-> (prompt-map :runner) :choices first))
-              (card-ability state :runner (get-program state 0) 1)
-              (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf")
-              (click-prompt state :runner "Done"))]
-      (if (= :waiting (-> (get-runner) :prompt first :prompt-type)) ; hit the snare
-        ;; prevent the damage
-        (do (prevent-snare (count (:discard (get-runner))))
-            (click-prompt state :runner "Card from pile 1")
-            (allow-pad (count (:discard (get-runner)))))
-        (do (allow-pad (count (:discard (get-runner))))
-            (click-prompt state :runner "Card from pile 1")
-            (prevent-snare (count (:discard (get-runner)))))))
-    (play-run-event state (find-card "Information Sifting" (:hand (get-runner))) :hq)
-    (click-card state :corp (find-card "Power Shutdown" (:hand (get-corp))))
-    (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
-    (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Selecting max cards closed the selection prompt")
-    (click-prompt state :runner "Pile 2 (1 card)")
-    (click-prompt state :runner "Card from pile 2")
-    (click-prompt state :runner "Steal")
-    (is (= 1 (count (:scored (get-runner)))) "Runner stole agenda")))
+  (testing "Complicated test with damage prevention"
+    ;; Information Sifting - complicated interactions with damage prevention
+    (do-game
+      (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
+                        :deck ["Snare!" "PAD Campaign" "Hostile Infrastructure"
+                               "Braintrust" "Hedge Fund" "Power Shutdown"]}
+                 :runner {:deck [(qty "Information Sifting" 2) (qty "Deus X" 2) "Sure Gamble"]}})
+      (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+      (core/gain state :corp :credit 10)
+      (core/rez state :corp (get-content state :remote1 0))
+      (core/gain state :runner :credit 10)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Deus X")
+      (play-from-hand state :runner "Deus X")
+      (play-run-event state (find-card "Information Sifting" (:hand (get-runner))) :hq)
+      (click-card state :corp (find-card "Snare!" (:hand (get-corp))))
+      (click-card state :corp (find-card "PAD Campaign" (:hand (get-corp))))
+      (click-prompt state :corp "Done")
+      (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp is waiting for Runner selection")
+      (click-prompt state :runner "Pile 1 (2 cards)")
+      (click-prompt state :runner "Card from pile 1")
+      ;; the cards are selected randomly :(
+      (letfn [(prevent-snare [existing-dmg]
+                (click-prompt state :corp "Yes")
+                (card-ability state :runner (get-program state 0) 1)
+                (click-prompt state :runner "Done")
+                (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Damage from Snare! prevented")
+                (click-prompt state :runner (-> (prompt-map :runner) :choices first))
+                (when (-> (prompt-map :runner) :choices first)
+                  (click-prompt state :runner "Done")) ; don't prevent Hostile dmg
+                ;; chronos prompt
+                (click-prompt state :corp "Yes")
+                (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
+                (is (= (+ 2 existing-dmg) (count (:discard (get-runner)))) "Damage from Hostile Inf not prevented"))
+              (allow-pad [existing-dmg]
+                (click-prompt state :runner (-> (prompt-map :runner) :choices first))
+                (card-ability state :runner (get-program state 0) 1)
+                (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf")
+                (click-prompt state :runner "Done"))]
+        (if (= :waiting (-> (get-runner) :prompt first :prompt-type)) ; hit the snare
+          ;; prevent the damage
+          (do (prevent-snare (count (:discard (get-runner))))
+              (click-prompt state :runner "Card from pile 1")
+              (allow-pad (count (:discard (get-runner)))))
+          (do (allow-pad (count (:discard (get-runner))))
+              (click-prompt state :runner "Card from pile 1")
+              (prevent-snare (count (:discard (get-runner)))))))
+      (play-run-event state (find-card "Information Sifting" (:hand (get-runner))) :hq)
+      (click-card state :corp (find-card "Power Shutdown" (:hand (get-corp))))
+      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Selecting max cards closed the selection prompt")
+      (click-prompt state :runner "Pile 2 (1 card)")
+      (click-prompt state :runner "Card from pile 2")
+      (click-prompt state :runner "Steal")
+      (is (= 1 (count (:scored (get-runner)))) "Runner stole agenda")))
+  (testing "Hudson interaction :max-access"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                               "DNA Tracker" "Hudson 1.0"]}
+                 :runner {:deck ["Information Sifting"]}})
+      (play-from-hand state :corp "Hudson 1.0" "HQ")
+      (let [hud (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (play-run-event state (find-card "Information Sifting" (:hand (get-runner))) :hq)
+        (core/rez state :corp hud)
+        (card-subroutine state :corp hud 0) ; Runner cannot access more than 1 card
+        (click-card state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))))
+        (click-prompt state :corp "Done")
+        (click-prompt state :runner "Pile 2 (3 cards)")
+        (click-prompt state :runner "Card from pile 2")
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "No prompt to access further cards.")))))
 
 (deftest inject
   ;; Inject - Draw 4 cards from Stack and gain 1 credit per trashed program
@@ -2072,7 +2107,57 @@
       (let [tww (get-resource state 0)]
         (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
         (click-prompt state :runner "Replacement effect")
-        (is (zero? (get-counters (refresh tww) :power)) "The Turning Wheel shouldn't gain counters yet")))))
+        (is (zero? (get-counters (refresh tww) :power)) "The Turning Wheel shouldn't gain counters yet"))))
+  (testing "Ash interaction"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Technician Team" "Ash 2X3ZB9CY"]}
+                 :runner {:deck ["Khusyuk"
+                                 (qty "Cache" 3)]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      ;; R&D is now from top to bottom: A B C
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "R&D")
+      (let [ash (get-content state :rd 0)]
+        (core/rez state :corp ash)
+        (take-credits state :corp)
+        (core/gain state :runner :click 100)
+        (core/gain state :runner :credit 100)
+        (dotimes [_ 3] (play-from-hand state :runner "Cache"))
+        (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0") ;lose Ash trace
+        (click-prompt state :runner "Replacement effect")
+        (click-prompt state :runner "1 [Credit]: 3 cards")
+        (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
+        (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))
+  (testing "Eater interaction"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"]}
+                 :runner {:deck ["Khusyuk"
+                                 (qty "Cache" 3)
+                                 "Eater"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      ;; R&D is now from top to bottom: A B C
+      (take-credits state :corp)
+      (core/gain state :runner :click 100)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Eater")
+      (dotimes [_ 3] (play-from-hand state :runner "Cache"))
+      (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+      (card-ability state :runner (get-program state 0) 0) ; use Eater
+      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "1 [Credit]: 3 cards")
+      (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
+      (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))
 
 (deftest knifed
   ;; Knifed - Make a run, trash a barrier if all subs broken
@@ -2255,6 +2340,31 @@
     (is (= 3 (count (:hand (get-runner)))) "3 clan resources, +3 cards but -1 for playing Mars for Martians")
     (is (= 7 (:credit (get-runner))) "5 tags, +5 credits")))
 
+(deftest mining-accident
+  ;; Mining Accident
+  (do-game
+    (new-game {:runner {:deck [(qty "Mining Accident" 3)]}})
+    (take-credits state :corp)
+    (changes-val-macro 0 (:click (get-runner))
+                       "Couldn't play Mining Accident without running a central first"
+                       (play-from-hand state :runner "Mining Accident"))
+    (run-on state "HQ")
+    (run-successful state)
+    (core/gain state :runner :credit 1) ; you need 6c for 3 Mining Accidents...
+    (changes-val-macro 1 (:bad-publicity (get-corp))
+                       "Corp took 1 BP"
+                       (play-from-hand state :runner "Mining Accident")
+                       (click-prompt state :corp "Take 1 Bad Publicity"))
+    (changes-val-macro -5 (:credit (get-corp))
+                       "Corp paid 5c"
+                       (play-from-hand state :runner "Mining Accident")
+                       (click-prompt state :corp "Pay 5 [Credits]"))
+    (changes-val-macro 1 (:bad-publicity (get-corp))
+                       "Corp took 1 BP without getting a prompt"
+                       (play-from-hand state :runner "Mining Accident")
+                       (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to pay credits if corp is below 5c")
+                       (click-prompt state :corp "Take 1 Bad Publicity"))))
+
 (deftest mobius
   ;; Mobius
   (do-game
@@ -2297,6 +2407,25 @@
     (click-card state :runner (find-card "Nerve Agent" (:hand (get-runner))))
     (is (= 1 (count (get-program state))) "Installed Nerve Agent")
     (is (= 4 (:credit (get-runner))) "Paid 0 credits")))
+
+(deftest net-celebrity
+  ;; Net-celebrity
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Net Celebrity" "Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Net Celebrity")
+      (play-from-hand state :runner "Corroder")
+      (let [nc (first (get-in @state [:runner :current]))
+            cor (get-program state 0)]
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Paid credit outside of run"
+                           (card-ability state :runner cor 1))
+        (run-on state :hq)
+        (card-ability state :runner cor 1)
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Net Celebrity"
+                           (click-card state :runner nc))))))
 
 (deftest notoriety
   ;; Notoriety - Run all 3 central servers successfully and play to gain 1 agenda point
@@ -2490,7 +2619,7 @@
     (is (= 3 (:credit (get-runner))) "Can't afford to steal NAPD")
     (run-empty-server state "Server 1")
     (is (= 10 (:credit (get-runner))) "Gained 7c on access, can steal NAPD")
-    (click-prompt state :runner "Pay 4 [Credits] to steal")
+    (click-prompt state :runner "Pay to steal")
     (is (= 2 (:agenda-point (get-runner))) "Stole agenda")
     (is (= 6 (:credit (get-runner))))
     (run-empty-server state "HQ")
@@ -2741,40 +2870,57 @@
 
 (deftest rejig
   ;; Rejig
-  (testing "Basic test"
+  (testing "Basic test with discount"
     (do-game
       (new-game {:options {:start-as :runner}
-                 :runner {:hand ["Rejig" "Corroder" "Adept"]
-                          :credits 10}})
-      (play-from-hand state :runner "Adept")
+                 :runner {:id "Az McCaffrey: Mechanical Prodigy"
+                          :hand ["Rejig" "Box-E" "Clone Chip"]}})
+      (play-from-hand state :runner "Clone Chip")
+      (take-credits state :runner)
+      (take-credits state :corp)
       (play-from-hand state :runner "Rejig")
-      (click-card state :runner "Corroder")
-      (is (find-card "Corroder" (:hand (get-runner))) "Corroder shouldn't be installed")
-      (click-card state :runner "Adept")
+      (is (= 1 (count (:hand (get-runner)))))
+      (click-card state :runner "Clone Chip")
       (is (= 2 (count (:hand (get-runner)))))
-      (let [credits (:credit (get-runner))
-            cost (:cost (find-card "Adept" (:hand (get-runner))))]
-        (click-card state :runner "Adept")
-        (is (= (- credits (- cost (quot cost 2))) (:credit (get-runner))) "Runner should only pay half for Adept"))))
+      (is (= 8 (:credit (get-runner))))
+      (click-card state :runner "Box-E")
+      (is (= 1 (count (:hand (get-runner)))))
+      (is (= 6 (:credit (get-runner))))) "Discounted install from Rejig + Az, Box-E only costs 2")
   (testing "with Kabonesa Wu. Issue #4105"
     (do-game
       (new-game {:options {:start-as :runner}
                  :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
                           :deck ["Gordian Blade"]
-                          :hand ["Rejig"]
-                          :credits 10}})
+                          :hand ["Rejig"]}})
       (card-ability state :runner (:identity (get-runner)) 0)
       (click-prompt state :runner "Gordian Blade")
-      (is (= 7 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")
+      (is (= 2 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")
       (play-from-hand state :runner "Rejig")
       (click-card state :runner "Gordian Blade")
-      (is (find-card "Gordian Blade" (:hand (get-runner))) "Gordian Blade shouldn't be installed")
-      (let [credits (:credit (get-runner))
-            cost (:cost (find-card "Gordian Blade" (:hand (get-runner))))]
-        (click-card state :runner "Gordian Blade")
-        (is (= (- credits (- cost (quot cost 2))) (:credit (get-runner))) "Runner should only pay half for Gordian Blade"))
+      (is (find-card "Gordian Blade" (:hand (get-runner))) "Gordian Blade should have returned to the Grip")
+      (click-card state :runner "Gordian Blade")
+      (is (= 2 (:credit (get-runner))))
       (take-credits state :runner)
-      (is (= "Gordian Blade" (:title (get-program state 0))) "Kabonesa Wu shouldn't rfg card bounced and reinstalled with Rejig"))))
+      (is (= "Gordian Blade" (:title (get-program state 0))) "Kabonesa Wu shouldn't rfg card bounced and reinstalled with Rejig")))
+  (testing "Uninstalling and reinstalling should allow once per turn effects again. Issue #4217"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Rejig" "Stargate"]
+                          :credits 100}})
+      (play-from-hand state :runner "Stargate")
+      (let [stargate (get-program state 0)]
+        (card-ability state :runner stargate 0)
+        (run-successful state)
+        (click-prompt state :runner "Hedge Fund")
+        (play-from-hand state :runner "Rejig")
+        (click-card state :runner "Stargate")
+        (click-card state :runner "Stargate"))
+      (let [stargate (get-program state 0)]
+        (card-ability state :runner stargate 0)
+        (run-successful state)
+        (click-prompt state :runner "Hedge Fund")))))
 
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ICE
@@ -3016,6 +3162,27 @@
       (card-ability state :runner (first (get-in @state [:runner :current])) 0)
       (is (zero? (:current-strength (refresh turing))) "Scrubbed reduces strength by 2")
       (run-successful state))))
+
+(deftest showing-off
+  ;; Showing Off
+  (do-game
+    (new-game {:corp {:hand [(qty "Hedge Fund" 5)]
+                      :deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                               "DNA Tracker" "Excalibur" "Fire Wall"]}
+               :runner {:hand ["Showing Off"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:deck (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:deck (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:deck (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:deck (get-corp))) :deck)
+      (core/move state :corp (find-card "Excalibur" (:deck (get-corp))) :deck)
+      (core/move state :corp (find-card "Fire Wall" (:deck (get-corp))) :deck)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Showing Off")
+      (run-successful state)
+      (click-prompt state :runner "Replacement effect")
+      (is (= "You accessed Fire Wall." (-> (get-runner) :prompt first :msg)) "The accessed card is on the bottom of the deck")
+      (is (= "Accelerated Beta Test" (-> (get-corp) :deck first :title)) "The top of the deck is an entirely different card")
+      (click-prompt state :runner "No action")))
 
 (deftest singularity
   ;; Singularity - Run a remote; if successful, trash all contents at no cost

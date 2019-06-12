@@ -2,7 +2,7 @@
 
 (declare active? all-installed all-active-installed cards card-init deactivate
          card-flag? gain lose get-card-hosted handle-end-run hardware? ice? is-type?
-         make-eid program? register-events remove-from-host remove-icon reset-card
+         program? register-events remove-from-host remove-icon make-card
          resource? rezzed? toast toast-check-mu trash trigger-event
          update-breaker-strength update-hosted! update-ice-strength unregister-events
          use-mu)
@@ -152,6 +152,12 @@
                      moved-card)]
     moved-card))
 
+(defn reset-card
+  "Resets a card back to its original state - retaining any data in the :persistent key"
+  ([state side {:keys [title cid persistent]}]
+   (swap! state update-in [:per-turn] dissoc cid)
+   (update! state side (assoc (make-card (server-card title) cid) :persistent persistent))))
+
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
@@ -190,7 +196,7 @@
              (move-zone-fn state side (make-eid state) moved-card card))
            (trigger-event state side :card-moved card (assoc moved-card :move-to-side side))
            ;; Default a card when moved to inactive zones (except :persistent key)
-           (when (#{:discard :hand :deck :rfg} to)
+           (when (#{:discard :hand :deck :rfg :scored} to)
              (reset-card state side moved-card)
              (when-let [icon-card (get-in moved-card [:icon :card])]
                ;; Remove icon and icon-card keys

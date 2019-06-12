@@ -433,7 +433,8 @@
 (deftest compromised-employee
   ;; Compromised Employee - Gain 1c every time Corp rezzes ICE
   (do-game
-    (new-game {:corp {:deck [(qty "Pup" 2) "Launch Campaign"]}
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Snatch and Grab" (qty "Pup" 2) "Launch Campaign"]}
                :runner {:deck ["Compromised Employee"]}})
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Pup" "R&D")
@@ -447,7 +448,16 @@
       (core/rez state :corp (get-ice state :rd 0))
       (is (= 5 (:credit (get-runner))) "Gained 1c from ICE rez")
       (core/rez state :corp (get-content state :remote1 0))
-      (is (= 5 (:credit (get-runner))) "Asset rezzed, no credit gained"))))
+      (is (= 5 (:credit (get-runner))) "Asset rezzed, no credit gained")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Snatch and Grab")
+      (click-prompt state :corp "0")
+      (is (= (+ (:credit (get-runner)) (get-counters (refresh ce) :recurring))
+             (:choices (prompt-map :runner))) "9 total available credits for the trace")
+      (click-prompt state :runner "9")
+      (dotimes [_ 1]
+        (click-card state :runner ce))
+      (is (zero? (get-counters (refresh ce) :recurring)) "Has used recurring credit"))))
 
 (deftest councilman
   ;; Councilman reverses the rezz and prevents re-rezz
@@ -544,6 +554,21 @@
         (is (= 1 (count (:discard (get-runner)))) "Counter Surveillance trashed")
         (is (zero? (:credit (get-runner))) "Runner has no credits")))))
 
+(deftest crash-space
+  ;; Crash Space
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Crash Space"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crash Space")
+      (core/gain-tags state :corp 1)
+      (let [cs (get-resource state 0)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credit from Crash Space"
+                           (core/remove-tag state :runner nil)
+                           (click-card state :runner cs)
+                           (click-card state :runner cs))))))
+
 (deftest crowdfunding
   (testing "Credit gain behavior"
     (do-game
@@ -569,22 +594,15 @@
         (is (empty? (:discard (get-runner))) "No cards in discard")
         (take-credits state :runner)
         (take-credits state :corp)
+        (core/end-phase-12 state :runner nil)
         (is (= 19 (:credit (get-runner))))
         (is (empty? (:deck (get-runner))) "No cards in deck")
         (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
         (is (= 1 (count (:discard (get-runner)))) "1 card in discard")
-        (is (nil? (get-resource state 0)) "Crowdfunding not installed")
-        (run-empty-server state :archives)
-        (run-empty-server state :archives)
-        (run-empty-server state :archives)
-        (take-credits state :runner)
-        (click-prompt state :runner "Yes")
-        (is (empty? (:discard (get-runner))) "Crowdfunding not in discard")
-        (is (= 1 (count (get-resource state))) "Crowdfunding reinstalled"))))
+        (is (nil? (get-resource state 0)) "Crowdfunding not installed"))))
   (testing "Install from heap"
     (do-game
-      (new-game {:runner {:deck ["Crowdfunding"]}})
-      (core/move state :runner (find-card "Crowdfunding" (:hand (get-runner))) :discard)
+      (new-game {:runner {:discard ["Crowdfunding"]}})
       (take-credits state :corp)
       (take-credits state :runner)
       (is (empty? (:prompt (get-runner))) "No install prompt if no runs")
@@ -602,8 +620,7 @@
     (do-game
       (new-game {:corp {:hand ["Scarcity of Resources"]
                         :deck [(qty "Hedge Fund" 5)]}
-                 :runner {:deck ["Crowdfunding"]}})
-      (core/move state :runner (find-card "Crowdfunding" (:hand (get-runner))) :discard)
+                 :runner {:discard ["Crowdfunding"]}})
       (play-from-hand state :corp "Scarcity of Resources")
       (take-credits state :corp)
       (run-empty-server state :archives)
@@ -617,8 +634,7 @@
       (do-game
         (new-game {:corp {:hand ["Ice Wall"]
                           :deck [(qty "Hedge Fund" 5)]}
-                   :runner {:deck ["Crowdfunding"]}})
-        (core/move state :runner (find-card "Crowdfunding" (:hand (get-runner))) :discard)
+                   :runner {:discard ["Crowdfunding"]}})
         (play-from-hand state :corp "Ice Wall" "HQ")
         (take-credits state :corp)
         (let [iw (get-ice state :hq 0)]
@@ -1398,6 +1414,22 @@
           (core/trash state :runner gcs2)
           (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice))))))))
 
+(deftest ghost-runner
+  ;; Ghost Runner
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Ghost Runner" "Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ghost Runner")
+      (play-from-hand state :runner "Refractor")
+      (run-on state :hq)
+      (let [gr (get-resource state 0)
+            refr (get-program state 0)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Ghost Runner"
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner gr))))))
+
 (deftest globalsec-security-clearance
   ;; Globalsec Security Clearance - Ability, click lost on use
   (do-game
@@ -1576,6 +1608,23 @@
         (click-card state :corp iw)
         (is (= (dec credits) (:credit (get-corp))) "Corp should only gain 1 back when using Blue Sun's ability")))))
 
+(deftest ice-analyzer
+  ;; Ice Analyzer
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Ice Analyzer" "Equivocation"]}})
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (take-credits state :corp 2)
+      (let [iwall (get-ice state :archives 0)]
+        (play-from-hand state :runner "Ice Analyzer")
+        (core/rez state :corp iwall)
+        (let [ana (get-resource state 0)]
+          (changes-val-macro -1 (:credit (get-runner))
+                             "Used 1 credit from Ice Analyzer"
+                             (play-from-hand state :runner "Equivocation")
+                             (click-card state :runner ana)))))))
+
 (deftest ice-carver
   ;; Ice Carver - lower ice strength on encounter
   (do-game
@@ -1590,6 +1639,20 @@
       (is (zero? (:current-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
       (run-jack-out state)
       (is (= 1 (:current-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
+
+(deftest inside-man
+  ;; Inside Man
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Inside Man" "Desperado"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inside Man")
+      (let [im (get-resource state 0)]
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 2 credits from Inside Man"
+                           (play-from-hand state :runner "Desperado")
+                           (click-card state :runner im)
+                           (click-card state :runner im))))))
 
 (deftest investigative-journalism
   ;; Investigative Journalism - 4 clicks and trash to give the Corp 1 bad pub
@@ -1896,21 +1959,39 @@
 
 (deftest miss-bones
   ;; Miss Bones - credits for trashing installed cards, trash when empty
-  (do-game
-    (new-game {:runner {:deck ["Miss Bones"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Miss Bones")
-    (let [mb (get-resource state 0)]
-      (is (= 12 (get-counters (refresh mb) :credit)) "Miss Bones starts with 12 credits")
-      (is (= 3 (:credit (get-runner))) "Runner starts with 3 credits")
-      (card-ability state :runner mb 0)
-      (is (= 11 (get-counters (refresh mb) :credit)) "Miss Bones loses a credit")
-      (is (= 4 (:credit (get-runner))) "Runner gains a credit")
-      (dotimes [_ 11]
-        (card-ability state :runner mb 0))
-      (is (= 1 (count (:discard (get-runner)))) "Miss Bones in discard pile")
-      (is (empty? (get-resource state)) "Miss Bones not installed")
-      (is (= 15 (:credit (get-runner))) "Runner gained all 12 credits from Miss Bones"))))
+  (testing "Taking credits directly works, and it self trashes when empty"
+    (do-game
+      (new-game {:runner {:deck ["Miss Bones"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Miss Bones")
+      (let [mb (get-resource state 0)]
+        (is (= 12 (get-counters (refresh mb) :credit)) "Miss Bones starts with 12 credits")
+        (is (= 3 (:credit (get-runner))) "Runner starts with 3 credits")
+        (card-ability state :runner mb 0)
+        (is (= 11 (get-counters (refresh mb) :credit)) "Miss Bones loses a credit")
+        (is (= 4 (:credit (get-runner))) "Runner gains a credit")
+        (dotimes [_ 11]
+          (card-ability state :runner mb 0))
+        (is (= 1 (count (:discard (get-runner)))) "Miss Bones in discard pile")
+        (is (empty? (get-resource state)) "Miss Bones not installed")
+        (is (= 15 (:credit (get-runner))) "Runner gained all 12 credits from Miss Bones"))))
+  (testing "Can be used mid-run in a trash-prompt"
+    (do-game
+      (new-game {:corp {:hand ["Broadcast Square"]
+                        :deck [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Miss Bones"]}})
+      (play-from-hand state :corp "Broadcast Square" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Miss Bones")
+      (let [bs (get-content state :remote1 0)
+            mb (get-resource state 0)]
+        (run-on state :remote1)
+        (run-successful state)
+        (click-prompt state :runner "Pay 5 [Credits] to trash")
+        (dotimes [_ 5]
+          (click-card state :runner "Miss Bones"))
+        (is (= 7 (get-counters (refresh mb) :credit)) "Miss Bones loses 5 credits")
+        (is (nil? (refresh bs)) "Broadcast Square has been trashed")))))
 
 (deftest muertos-gang-member
   ;; Muertos Gang Member - Install and Trash
@@ -1960,30 +2041,48 @@
 
 (deftest net-mercur
   ;; Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used
-  (do-game
-    (new-game {:runner {:deck ["Net Mercur" "Silencer" "Ghost Runner"]}})
-    (take-credits state :corp)
-    (core/gain state :runner :click 4 :credit 10)
-    (play-from-hand state :runner "Silencer")
-    (play-from-hand state :runner "Net Mercur")
-    (play-from-hand state :runner "Ghost Runner")
-    (let [sil (get-hardware state 0)
-          nm (get-resource state 0)
-          gr (get-resource state 1)]
-      (card-ability state :runner gr 0)
-      (is (empty? (:prompt (get-runner))) "No Net Mercur prompt from stealth spent outside of run")
-      (run-on state :hq)
-      (card-ability state :runner sil 0)
-      (click-prompt state :runner "Place 1 [Credits]")
-      (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")
-      (card-ability state :runner gr 0)
-      (is (empty? (:prompt (get-runner))) "No Net Mercur prompt for 2nd stealth in run")
-      (run-jack-out state)
-      (take-credits state :runner)
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Net Mercur" "Silencer" "Ghost Runner"]}})
       (take-credits state :corp)
-      (run-on state :hq)
-      (card-ability state :runner nm 0)
-      (is (= "Net Mercur" (:title (:card (first (get-in @state [:runner :prompt]))))) "Net Mercur triggers itself"))))
+      (core/gain state :runner :click 4 :credit 10)
+      (play-from-hand state :runner "Silencer")
+      (play-from-hand state :runner "Net Mercur")
+      (play-from-hand state :runner "Ghost Runner")
+      (let [sil (get-hardware state 0)
+            nm (get-resource state 0)
+            gr (get-resource state 1)]
+        (card-ability state :runner gr 0)
+        (is (empty? (:prompt (get-runner))) "No Net Mercur prompt from stealth spent outside of run")
+        (run-on state :hq)
+        (card-ability state :runner sil 0)
+        (click-prompt state :runner "Place 1 [Credits]")
+        (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")
+        (card-ability state :runner gr 0)
+        (is (empty? (:prompt (get-runner))) "No Net Mercur prompt for 2nd stealth in run")
+        (run-jack-out state)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (run-on state :hq)
+        (card-ability state :runner nm 0)
+        (is (= "Net Mercur" (:title (:card (first (get-in @state [:runner :prompt]))))) "Net Mercur triggers itself"))))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Net Mercur" "Cloak" "Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Net Mercur")
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Refractor")
+      (let [nm (get-resource state 0)
+            cl (get-program state 0)
+            refr (get-program state 1)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Cloak"
+                           (run-on state :hq)
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner cl))
+        (click-prompt state :runner "Place 1 [Credits]")
+        (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")))))
 
 (deftest network-exchange
   ;; ICE install costs 1 more except for inner most
@@ -2534,13 +2633,10 @@
 (deftest salsette-slums
   ;; Salsette Slums - Once per turn, when the trash cost of a card is paid, optionally remove from the game
   (do-game
-    (new-game {:corp {:deck ["Hostile Infrastructure" "Tech Startup" "Thomas Haas"
-                             (qty "Hedge Fund" 3)]}
+    (new-game {:corp {:hand ["Hostile Infrastructure" "Tech Startup" "Thomas Haas"]
+                      :deck [(qty "Hedge Fund" 3)]}
                :runner {:deck [(qty "Salsette Slums" 2) (qty "Sure Gamble" 3)]}})
     ;; Use Hostile Infrastructure to ensure on-trash effects don't fire.
-    (core/move state :corp (find-card "Hostile Infrastructure" (:deck (get-corp))) :hand)
-    (core/move state :corp (find-card "Tech Startup" (:deck (get-corp))) :hand)
-    (core/move state :corp (find-card "Thomas Haas" (:deck (get-corp))) :hand)
     (play-from-hand state :corp "Tech Startup" "New remote")
     (play-from-hand state :corp "Hostile Infrastructure" "New remote")
     (play-from-hand state :corp "Thomas Haas" "New remote")
@@ -2549,54 +2645,29 @@
     (play-from-hand state :runner "Salsette Slums")
     (core/gain state :runner :credit 2)
     (core/gain state :runner :click 4)
-    (let [ts1 (get-content state :remote1 0)
-          hostile2 (get-content state :remote2 0)
-          th3 (get-content state :remote3 0)
-          salsette1 (get-resource state 0)
-          salsette2 (get-resource state 1)]
+    (let [ts (get-content state :remote1 0)
+          hostile (get-content state :remote2 0)]
       (is (= 3 (count (:hand (get-runner)))) "Runner started this part with three cards in hand")
-      (core/rez state :corp hostile2)
+      (core/rez state :corp hostile)
       (run-empty-server state "Server 1")
       (is (seq (:prompt (get-runner))) "Prompting to trash.")
-      (card-ability state :runner salsette1 0)
+      (click-prompt state :runner "[Salsette Slums]: Remove card from game")
       (is (empty? (:prompt (get-runner))) "All prompts done")
       (is (= 3 (count (:hand (get-runner)))) "On-trash ability of other Hostile didn't fire")
-      (is (= (:cid ts1) (:cid (last (:rfg (get-corp))))) "Tech Startup was removed from game")
+      (is (= (:cid ts) (:cid (last (:rfg (get-corp))))) "Tech Startup was removed from game")
       (is (= 2 (:credit (get-runner))) "Runner paid the trash cost.")
       (is (not (:run @state)) "Run is over")
       (run-empty-server state :remote2)
       (is (seq (:prompt (get-runner))) "Prompting to trash")
-      ;; Only able to use the ability once per turn
-      (card-ability state :runner salsette1 0)
-      (is (seq (:prompt (get-runner))) "Still prompting to trash")
-      (is (:run @state) "Run is still occurring")
-      ;; Can't use the ability if you can't afford to trash
-      (card-ability state :runner salsette2 0)
-      (is (seq (:prompt (get-runner))) "Still prompting to trash")
+      (is (= ["No action"] (->> (get-runner) :prompt first :choices)) "Can't prompt to trash as can't afford trash cost")
       (is (:run @state) "Run is still occurring")
       (click-prompt state :runner "No action")
-      ;; Test the "oops I forgot" ability (runner feels bad that they forgot to use Slums when a Hostile is out)
       (run-empty-server state :remote3)
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
-      ;; Can only use that first Slums once
-      (card-ability state :runner salsette1 1)
-      (is (empty? (:prompt (get-runner))) "Not prompting the runner")
-      (is (not= (:cid th3) (:cid (last (:rfg (get-corp))))) "Card was not removed from the game")
-      (card-ability state :runner salsette2 1)
-      (is (seq (:prompt (get-runner))) "Prompting the runner to choose a card")
-      (click-card state :runner (find-card "Thomas Haas" (:discard (get-corp))))
-      (is (= (:cid th3) (:cid (last (:rfg (get-corp))))) "Card was removed from the game"))
-    ;; Set things up so we can trash the Hostile and then make sure we can't "oops I forgot on a later turn"
-    (core/gain state :runner :credit 5)
-    (run-empty-server state :remote2)
-    (click-prompt state :runner "Pay 5 [Credits] to trash")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (let [salsette1 (get-resource state 0)
-          hostile2 (get-content state :remote2 0)]
-      (card-ability state :runner salsette1 1)
-      (click-card state :runner (find-card "Hostile Infrastructure" (:discard (get-corp))))
-      (is (not= (:cid hostile2) (:cid (last (:rfg (get-corp))))) "Did not remove card from game"))))
+      (is (seq (:prompt (get-runner))) "Prompting to trash")
+      (is (= ["[Salsette Slums]: Remove card from game" "Pay 1 [Credits] to trash" "No action"]
+             (->> (get-runner) :prompt first :choices)) "Second Salsette Slums can be used")
+      (click-prompt state :runner "[Salsette Slums]: Remove card from game")
+      (is (= 2 (count (:rfg (get-corp)))) "Two cards should be RFG now"))))
 
 (deftest scrubber
   ;; Scrubber
@@ -2615,36 +2686,9 @@
       (is (= 5 (:credit (get-runner))) "Runner should only have 5 credits in pool")
       (run-empty-server state "Server 1")
       (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can use Scrubber credits to trash")
-      (let [scrubber (get-resource state 0)]
-        (card-ability state :runner scrubber 0)
-        (card-ability state :runner scrubber 0))
       (click-prompt state :runner "Pay 7 [Credits] to trash")
-      (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board and gain 2 agenda points")))
-  (testing "when under trash cost but can up with recurring credits"
-    (do-game
-      (new-game {:corp {:deck ["The Board"]}
-                 :runner {:deck ["Scrubber" "Skulljack" "Sure Gamble"]}})
-      (play-from-hand state :corp "The Board" "New remote")
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner doesn't have enough credits to trash")
-      (click-prompt state :runner "No action")
-      (play-from-hand state :runner "Scrubber")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (play-from-hand state :runner "Skulljack")
-      (core/gain state :runner :credit 1)
-      (is (= 4 (:credit (get-runner))) "Runner should only have 4 credits in pool")
-      (run-empty-server state "Server 1")
-      (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "The Board should cost 6 to trash")
-      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can use Scrubber credits to trash")
-      (click-prompt state :runner "Pay 6 [Credits] to trash") ;; Whoops, runner forgot to actually get the credits from Scrubber
-      (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "Skulljack shouldn't trigger a second time")
-      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can still use Scrubber credits the second time around")
-      (let [scrubber (get-resource state 0)]
-        (card-ability state :runner scrubber 0)
-        (card-ability state :runner scrubber 0))
-      (click-prompt state :runner "Pay 6 [Credits] to trash") ;; Now the runner has actually gained the Scrubber credits
+      (click-card state :runner "Scrubber")
+      (click-card state :runner "Scrubber")
       (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board and gain 2 agenda points"))))
 
 (deftest security-testing
@@ -3278,7 +3322,7 @@
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "The Source")
     (run-empty-server state :remote1)
-    (click-prompt state :runner "Pay 3 [Credits] to steal") ; pay 3c extra to steal
+    (click-prompt state :runner "Pay to steal") ; pay 3c extra to steal
     (is (= 4 (:credit (get-runner))) "Paid 3c to steal")
     (is (= 2 (count (:discard (get-runner)))) "The Source is trashed")
     (play-from-hand state :runner "The Source")
@@ -3496,7 +3540,24 @@
       (click-prompt state :runner "Done")
       (click-card state :runner "Corroder")
       (is (zero? (:credit (get-runner))) "Runner paid one less to install")
-      (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed"))))
+      (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed")))
+  (testing "Interaction with Sahasrara and pay-credits"
+    (do-game
+      (new-game {:runner {:deck ["Thunder Art Gallery" "Sahasrara" "Darwin"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Thunder Art Gallery")
+      (play-from-hand state :runner "Sahasrara")
+      (core/gain-credits state :runner 4)
+      (core/gain-tags state :corp 1)
+      (let [thund (get-resource state 0)
+            rara (get-program state 0)]
+        (changes-val-macro -2 (:credit (get-runner))
+                           "Used TAG and Sahasrara to install Darwin for free"
+                           (core/remove-tag state :runner nil)
+                           (click-card state :runner "Darwin")
+                           (click-card state :runner rara)
+                           (click-card state :runner rara))
+        (is (= 0 (count (:hand (get-runner)))) "Installed Darwin")))))
 
 (deftest trickster-taka
   ;; Trickster Taka - Companion, credits spendable on programs during runs (not during access)
@@ -3554,7 +3615,22 @@
         (card-ability state :runner tt 0)
         (is (= "Place 1 [Credits] on Net Mercur or draw 1 card?" (-> (prompt-map :runner) :msg))
             "Net Mercur fires as Taka credits are stealth")
-        (click-prompt state :runner "Place 1 [Credits]")))))
+        (click-prompt state :runner "Place 1 [Credits]"))))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:hand ["Trickster Taka" "Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Refractor")
+      (play-from-hand state :runner "Trickster Taka")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [tt (get-resource state 0)
+            refr (get-program state 0)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Trickster Taka"
+                           (run-on state :hq)
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner refr))))))
 
 (deftest tri-maf-contact
   ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
@@ -3708,7 +3784,7 @@
       (take-credits state :corp)
       (run-empty-server state "R&D")
       (is (= 2 (count (:hand (get-runner)))) "Whistleblower does not persist between turns, so Fetal AI fires")
-      (click-prompt state :runner "Pay 2 [Credits] to steal")
+      (click-prompt state :runner "Pay to steal")
       (play-from-hand state :runner "Whistleblower")
       (core/move state :runner (find-card "Whistleblower" (:discard (get-runner))) :hand)
       (is (= 2 (count (:hand (get-runner)))) "2 cards in hand")

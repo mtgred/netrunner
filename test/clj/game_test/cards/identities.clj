@@ -529,7 +529,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Feedback Filter")
       (run-empty-server state "Server 1")
-      (click-prompt state :runner "Pay 4 net damage to steal")
+      (click-prompt state :runner "Pay to steal")
       (click-prompt state :corp "Yes")
       (click-prompt state :corp (find-card "Inti" (:hand (get-runner))))
       (is (empty? (:prompt (get-runner))) "Feedback Filter net damage prevention opportunity not given")
@@ -1517,6 +1517,22 @@
     (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
     (is (= 1 (count-tags state)) "Took 1 tag from successful run on Archives")))
 
+(deftest nbn-making-news
+  ;; NBN: Making News
+  (do-game
+    (new-game {:corp {:id "NBN: Making News"
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["Snatch and Grab"]}})
+    (let [nbn-mn (:identity (get-corp))]
+      (play-from-hand state :corp "Snatch and Grab")
+      (is (= (+ (:credit (get-corp)) (get-counters (refresh nbn-mn) :recurring))
+             (:choices (prompt-map :corp))) "7 total available credits for the trace")
+      (click-prompt state :corp "7")
+      (dotimes [_ 2]
+        (click-card state :corp nbn-mn))
+      (is (zero? (get-counters (refresh nbn-mn) :recurring)) "Has used recurring credit")
+      (is (= 10 (:strength (prompt-map :runner))) "Current trace strength should be 10"))))
+
 (deftest maxx-maximum-punk-rock
   ;; MaxX
   (testing "Basic test"
@@ -1715,7 +1731,31 @@
       (click-prompt state :runner "Pay 2 [Credits] to trash")
       (is (empty? (:prompt (get-corp))) "CtM shouldn't fire")
       (is (empty? (:prompt (get-runner))) "Runner shouldn't have prompt")
-      (is (zero? (count-tags state)) "Runner took 1 unpreventable tag"))))
+      (is (zero? (count-tags state)) "Runner took 1 unpreventable tag")))
+ (testing "Trace should fire on first trash of a Corp card after a Runner card is trashed"
+    (do-game
+      (new-game {:corp {:id "NBN: Controlling the Message"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Launch Campaign" 3)]}
+                 :runner {:deck ["Sure Gamble"]
+                          :hand ["Crowdfunding"]}})
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crowdfunding")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (zero? (count (:hand (get-runner)))))
+      (core/end-phase-12 state :runner nil)
+      (is (zero? (count (get-resource state))))
+      (is (= 1 (count (:hand (get-runner)))))
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (is (seq (:prompt (get-corp))) "Corp should have a Trace prompt")
+      (click-prompt state :corp "No"))))
 
 (deftest new-angeles-sol-your-news
   ;; New Angeles Sol - interaction with runner stealing agendas
@@ -2148,6 +2188,21 @@
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
     (is (empty? (:prompt (get-corp))) "Cannot use Skorpios twice")))
 
+(deftest ele-smoke-scovak-cynosure-of-the-net
+  ;; Ele "Smoke" Scovak: Cynosure of the Net
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:id "Ele \"Smoke\" Scovak: Cynosure of the Net"
+                          :deck ["Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Refractor")
+      (let [smoke (get-in @state [:runner :identity])
+            refr (get-program state 0)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Smoke"
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner smoke))))))
+
 (deftest spark-agency-worldswide-reach
   ;; Spark Agency - Rezzing advertisements
   (do-game
@@ -2370,6 +2425,20 @@
           (is (zero? (get-counters (refresh scored) :agenda)) "No agenda counter used by Mark Yale")
           (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale"))))))
 
+(deftest weyland-consortium-because-we-built-it
+  ;; Weyland Consortium: Because We Built It
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:id "Weyland Consortium: Because We Built It"
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (let [iw (get-ice state :remote1 0)
+            bwbi (get-in @state [:corp :identity])]
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from Weyland BWBI to advance Ice Wall"
+                           (core/advance state :corp {:card (refresh iw)})
+                           (click-card state :corp bwbi))))))
+
 (deftest weyland-consortium-builder-of-nations
   ;; Builder of Nations
   (testing "1 meat damage per turn at most"
@@ -2400,17 +2469,23 @@
           (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from BoN/Cleaners combo"))))))
 
 (deftest whizzard-master-gamer
-  ;; Whizzard - Recurring credits
+  ;; Whizzard
   (do-game
-    (new-game {:runner {:id "Whizzard: Master Gamer"
-                        :deck ["Sure Gamble"]}})
-    (let [click-whizzard (fn [n] (dotimes [i n] (card-ability state :runner (:identity (get-runner)) 0)))]
-      (is (changes-credits (get-runner) 1 (click-whizzard 1)))
-      (is (changes-credits (get-runner) 2 (click-whizzard 5)) "Can't take more than 3 Whizzard credits")
-      (take-credits state :corp)
-      (is (changes-credits (get-runner) 3 (click-whizzard 3)) "Credits reset at start of Runner's turn")
-      (take-credits state :runner)
-      (is (changes-credits (get-runner) 0 (click-whizzard 1)) "Credits don't reset at start of Corp's turn"))))
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["PAD Campaign" "Shell Corporation"]}
+               :runner {:id "Whizzard: Master Gamer"
+                        :credits 1}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (let [pad (get-content state :remote1 0)
+          whiz (:identity (get-runner))]
+      (run-on state :remote1)
+      (run-successful state)
+      (is (= 1 (:credit (get-runner))) "Runner can't afford to trash PAD Campaign")
+      (click-prompt state :runner "Pay 4 [Credits] to trash")
+      (dotimes [_ 3]
+        (click-card state :runner (refresh whiz)))
+      (is (nil? (refresh pad)) "PAD Campaign successfully trashed"))))
 
 (deftest wyvern-chemically-enhanced
   ;; Wyvern: Chemically Enhanced

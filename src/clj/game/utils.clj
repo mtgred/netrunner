@@ -147,45 +147,6 @@
      (conj (vec (sort-by :title choices)) "Cancel")
      (conj (vec choices) "Cancel"))))
 
-(defn cost-names
-  "Converts a cost (value attribute pair) to a string for printing"
-  [attr value]
-  (when (and (number? value)
-             (pos? value))
-    (case attr
-      :credit (str value " [Credits]")
-      :click (->> "[Click]" repeat (take value) (apply str))
-      :forfeit (quantify value "Agenda")
-      :hardware (quantify value "installed hardware" "")
-      :program (quantify value "installed program")
-      :connection (quantify value "installed connection resource")
-      :ice (quantify value "installed rezzed ICE" "")
-      :shuffle-installed-to-stack (str "shuffling " (quantify value "installed card") " into the stack")
-      :net (quantify value "net damage" "")
-      :meat (quantify value "meat damage" "")
-      :brain (quantify value "brain damage" "")
-      :mill (quantify value "card")
-      :discard (quantify value "card")
-      (quantify value (name attr)))))
-
-(defn build-cost-str
-  "Gets the complete cost-str for specified costs"
-  [costs]
-  (->> costs
-       (map #(apply cost-names %))
-       (filter some?)
-       (interpose " and ")
-       (apply str)))
-
-(defn build-spend-msg
-  "Constructs the spend message for specified cost-str and verb(s)."
-  ([cost-str verb] (build-spend-msg cost-str verb nil))
-  ([cost-str verb verb2]
-   (if (or (not (instance? String cost-str))
-           (= "" cost-str))
-     (str (or verb2 (str verb "s")) " ")
-     (str "spends " cost-str " to " verb " "))))
-
 (defn side-str
   "Converts kw into str. If str is passed same str is returned."
   [side]
@@ -336,3 +297,8 @@
     (:rec-counter card 0)
     :else
     (get-in card [:counter counter] 0)))
+
+(defn in-coll?
+  "true if coll contains elm"
+  [coll elm]
+  (some #(= elm %) coll))

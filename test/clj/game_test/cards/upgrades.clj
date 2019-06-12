@@ -198,7 +198,7 @@
         (click-prompt state :runner "No action")
         (run-empty-server state "Server 1")
         (click-card state :runner hok)
-        (click-prompt state :runner "Pay 2 net damage to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "on R&D access"
@@ -222,7 +222,7 @@
         (click-prompt state :runner "No action")
         (run-empty-server state "R&D")
         (click-prompt state :runner "Card from deck")
-        (click-prompt state :runner "Pay 2 net damage to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "pay even when trashed"
@@ -241,13 +241,13 @@
         (click-prompt state :runner "Pay 3 [Credits] to trash") ; pay to trash
         (click-card state :runner hok)
         ;; should now have prompt to pay 2 net for HoK
-        (click-prompt state :runner "Pay 2 net damage to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Check runner chooses order of payment"
     (do-game
       (new-game {:corp {:deck ["Ben Musashi" "Obokata Protocol"]}
-                 :runner {:deck [(qty "Sure Gamble" 6)]}})
+                 :runner {:hand [(qty "Sure Gamble" 6)]}})
       (play-from-hand state :corp "Ben Musashi" "New remote")
       (play-from-hand state :corp "Obokata Protocol" "Server 1")
       (take-credits state :corp)
@@ -261,11 +261,7 @@
         (is (= "Obokata Protocol" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
         (click-prompt state :runner "Pay to steal")
-        (click-prompt state :runner "2 net damage")
-        (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
-        (is (zero? (count (:scored (get-runner)))) "No scored agendas")
-        (click-prompt state :runner "4 net damage")
-        (is (= 5 (count (:discard (get-runner)))) "Runner took 4 net damage")
+        (is (= 6 (count (:discard (get-runner)))) "Runner took 4 net damage")
         (is (= 1 (count (:scored (get-runner)))) "Scored agenda"))))
   (testing "Check Fetal AI can be stolen, #2586"
     (do-game
@@ -284,10 +280,7 @@
         (is (= "Fetal AI" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
         (click-prompt state :runner "Pay to steal")
-        (click-prompt state :runner "2 [Credits]")
         (is (= 3 (:credit (get-runner))) "Runner paid 2 credits")
-        (is (zero? (count (:scored (get-runner)))) "No scored agendas")
-        (click-prompt state :runner "2 net damage")
         (is (= 4 (count (:discard (get-runner)))) "Runner took 4 net damage - 2 from Fetal, 2 from Ben")
         (is (= 1 (count (:scored (get-runner)))) "Scored agenda")))))
 
@@ -360,15 +353,15 @@
 (deftest breaker-bay-grid
   ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
   (do-game
-    (new-game {:corp {:deck [(qty "Breaker Bay Grid" 2) "The Root" "Strongbox"]}})
+    (new-game {:corp {:deck [(qty "Breaker Bay Grid" 2) "Off the Grid" "Strongbox"]}})
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Breaker Bay Grid" "New remote")
-    (play-from-hand state :corp "The Root" "Server 1")
+    (play-from-hand state :corp "Off the Grid" "Server 1")
     (let [bbg1 (get-content state :remote1 0)
-          root (get-content state :remote1 1)]
+          otg (get-content state :remote1 1)]
       (core/rez state :corp bbg1)
-      (core/rez state :corp root)
-      (is (= 4 (:credit (get-corp))) "Paid only 1 to rez The Root")
+      (core/rez state :corp otg)
+      (is (= 4 (:credit (get-corp))) "Paid only 1 to rez Off the Grid")
       (play-from-hand state :corp "Breaker Bay Grid" "R&D")
       (play-from-hand state :corp "Strongbox" "R&D")
       (let [bbg2 (get-content state :rd 0)
@@ -708,6 +701,22 @@
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters")))))
 
+(deftest dedicated-technician-team
+  ;; Dedicated Technician Team
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["Dedicated Technician Team" (qty "Enigma" 3)]}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Enigma" "New remote")
+      (play-from-hand state :corp "Enigma" "Server 1")
+      (play-from-hand state :corp "Dedicated Technician Team" "Server 1")
+      (let [dtt (get-content state :remote1 0)]
+        (core/rez state :corp dtt)
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 3 credits from Dedicated Technician Team"
+                           (play-from-hand state :corp "Enigma" "Server 1")
+                           (click-card state :corp dtt))))))
+
 (deftest disposable-hq
   ;; Disposable HQ
   (do-game
@@ -823,28 +832,48 @@
 
 (deftest giordano-memorial-field
   ;; Giordano Memorial Field
-  (do-game
-    (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
-               :runner {:deck [(qty "Fan Site" 3)]}})
-    (play-from-hand state :corp "Giordano Memorial Field" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Fan Site")
-    (play-from-hand state :runner "Fan Site")
-    (play-from-hand state :runner "Fan Site")
-    (take-credits state :runner)
-    (play-and-score state "Hostile Takeover")
-    (take-credits state :corp)
-    (run-empty-server state "Server 1")
-    (let [credits (:credit (get-runner))]
-      (click-prompt state :runner "Pay 6 [Credits]")
-      (is (= (- credits 6) (:credit (get-runner))) "Runner pays 6 credits to not end the run"))
-    (click-prompt state :runner "No action")
-    (run-empty-server state "Server 1")
-    (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner should only get 1 choice")
-    (is (= "End the run" (-> (get-runner) :prompt first :choices first)) "Only choice should be End the run")
-    (click-prompt state :runner "End the run")
-    (is (not (:run @state)) "Run should be ended from Giordano Memorial Field ability")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
+                 :runner {:deck [(qty "Fan Site" 3)]}})
+      (play-from-hand state :corp "Giordano Memorial Field" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Fan Site")
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (let [credits (:credit (get-runner))]
+        (click-prompt state :runner "Pay 6 [Credits]")
+        (is (= (- credits 6) (:credit (get-runner))) "Runner pays 6 credits to not end the run"))
+      (click-prompt state :runner "No action")
+      (run-empty-server state "Server 1")
+      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner should only get 1 choice")
+      (is (= "End the run" (-> (get-runner) :prompt first :choices first)) "Only choice should be End the run")
+      (click-prompt state :runner "End the run")
+      (is (not (:run @state)) "Run should be ended from Giordano Memorial Field ability")))
+  (testing "Ending the run doesn't mark the run as unsuccessful. Issue #4223"
+    (do-game
+      (new-game {:corp {:hand ["Giordano Memorial Field" "Hostile Takeover"]}
+                 :runner {:hand [(qty "Fan Site" 2) "John Masanori"]
+                          :credit 10}})
+      (play-from-hand state :corp "Giordano Memorial Field" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "John Masanori")
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Fan Site")
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (zero? (count-tags state)))
+      (let [credits (:credit (get-runner))]
+        (click-prompt state :runner "End the run")
+        (is (zero? (count-tags state)) "Don't gain a tag from John Masanori")))))
 
 (deftest helheim-servers
   ;; Helheim Servers - Full test
@@ -1069,6 +1098,25 @@
       (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
 
+(deftest khondi-plaza
+  ;; Khondi Plaza
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["Khondi Plaza" "Enigma" (qty "PAD Campaign" 3)]}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Khondi Plaza" "New remote")
+      (play-from-hand state :corp "Enigma" "Server 1")
+      (dotimes [c 3] (play-from-hand state :corp "PAD Campaign" "New remote"))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [kh (get-content state :remote1 0)
+            en (get-ice state :remote1 0)]
+        (core/rez state :corp kh)
+        (is (= 4 (get-counters (refresh kh) :recurring)) "4 recurring credits on Khondi")
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 3 credits from Khondi Plaza"
+                           (core/rez state :corp en)
+                           (dotimes [c 3] (click-card state :corp kh)))))))
+
 (deftest letheia-nisei
   ;; Letheia Nisei
   (do-game
@@ -1192,82 +1240,114 @@
         (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 2 ice on server")))))
 
 (deftest mumbad-virtual-tour
-  ;; Tests that Mumbad Virtual Tour forces trash when no :slow-trash
-  (do-game
-    (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 2)]}})
-    (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
-    (take-credits state :corp)
-    (run-empty-server state "HQ")
-    ;; MVT does not force trash when not installed
-    (click-prompt state :runner "No action")
-    (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT in HQ")
-    (is (empty? (:discard (get-corp))) "MVT in HQ is not trashed")
-    (run-empty-server state "Server 1")
-    (is (= 1 (-> @state :runner :prompt first :choices count)) "Should only have a single option")
-    (click-prompt state :runner "Pay 5 [Credits] to trash")
-    (is (zero? (:credit (get-runner))) "Runner forced to trash MVT")
-    (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed"))
-  (testing "interaction with Imp"
+  ;; Tests that Mumbad Virtual Tour forces trash
+  ; (do-game
+  ;   (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 2)]}})
+  ;   (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+  ;   (take-credits state :corp)
+  ;   (run-empty-server state "HQ")
+  ;   ;; MVT does not force trash when not installed
+  ;   (click-prompt state :runner "No action")
+  ;   (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT in HQ")
+  ;   (is (empty? (:discard (get-corp))) "MVT in HQ is not trashed")
+  ;   (run-empty-server state "Server 1")
+  ;   (is (= 1 (-> @state :runner :prompt first :choices count)) "Should only have a single option")
+  ;   (click-prompt state :runner "Pay 5 [Credits] to trash")
+  ;   (is (zero? (:credit (get-runner))) "Runner forced to trash MVT")
+  ;   (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed"))
+  ; (testing "interaction with Imp"
+  ;   (do-game
+  ;     (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 2)]}
+  ;                :runner {:deck ["Imp"]}})
+  ;     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+  ;     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+  ;     (take-credits state :corp)
+  ;     (play-from-hand state :runner "Imp")
+  ;     ;; Reset credits to 5
+  ;     (core/gain state :runner :credit 2)
+  ;     (run-empty-server state "Server 1")
+  ;     ;; Runner not force to trash since Imp is installed
+  ;     (is (= 2 (-> @state :runner :prompt first :choices count)) "Runner has 2 choices when Imp is installed")
+  ;     (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT when Imp installed")
+  ;     (is (empty? (:discard (get-corp))) "MVT is not force-trashed when Imp installed")
+  ;     (let [imp (get-program state 0)]
+  ;       (click-prompt state :runner "[Imp]: Trash card")
+  ;       (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed with Imp"))))
+  ; (testing "interactions with Imp and various amounts of money"
+  ;   (do-game
+  ;     (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}
+  ;                :runner {:deck ["Imp"]}})
+  ;     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+  ;     (take-credits state :corp)
+  ;     (play-from-hand state :runner "Imp")
+  ;     (is (= 3 (:credit (get-runner))) "Runner paid install costs")
+  ;     (core/gain state :runner :credit 2)
+  ;     (run-empty-server state "Server 1")
+  ;     (is (= #{"[Imp]: Trash card" "Pay 5 [Credits] to trash"}
+  ;            (->> (get-runner) :prompt first :choices (into #{}))) "Should have Imp and MVT options")
+  ;     (click-prompt state :runner "[Imp]: Trash card")
+  ;     (take-credits state :runner)
+  ;     (core/lose state :runner :credit (:credit (get-runner)))
+  ;     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+  ;     (take-credits state :corp)
+  ;     (run-empty-server state "Server 2")
+  ;     (is (= ["[Imp]: Trash card"] (-> (get-runner) :prompt first :choices)) "Should only have Imp option")
+  ;     (click-prompt state :runner "[Imp]: Trash card")
+  ;     (take-credits state :runner)
+  ;     (core/lose state :runner :credit (:credit (get-runner)))
+  ;     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+  ;     (take-credits state :corp)
+  ;     (run-empty-server state "Server 3")
+  ;     (is (= ["No action"] (-> (get-runner) :prompt first :choices)) "Should only have no action option")
+  ;     (click-prompt state :runner "No action")
+  ;     (is (= 2 (->> (get-corp) :discard count)) "Runner was not forced to trash MVT")))
+  ; (testing "not forced to trash when credits below 5"
+  ;   (do-game
+  ;     (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}
+  ;                :runner {:deck ["Daily Casts"]}})
+  ;     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+  ;     (take-credits state :corp)
+  ;     (play-from-hand state :runner "Daily Casts")
+  ;     (is (= 2 (:credit (get-runner))) "Runner paid install costs")
+  ;     (run-empty-server state "Server 1")
+  ;     (is (= ["No action"] (-> (get-runner) :prompt first :choices)) "Runner is not given the choice")))
+  ; (testing "forced to trash when playing as Khumalo"
+  ;   (do-game
+  ;     (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}
+  ;                :runner {:id "Freedom Khumalo: Crypto-Anarchist"
+  ;                         :deck ["Daily Casts"]}})
+  ;     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+  ;     (take-credits state :corp)
+  ;     (play-from-hand state :runner "Daily Casts")
+  ;     (is (= 2 (:credit (get-runner))) "Runner paid install costs")
+  ;     (run-empty-server state "Server 1")
+  ;     (is (= ["[Freedom]: Trash card"] (-> (get-runner) :prompt first :choices)) "Runner is not given the choice")))
+  ; (testing "forced to trash after playing Demolition Run"
+  ;   (do-game
+  ;     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+  ;                       :hand ["Mumbad Virtual Tour"]}
+  ;                :runner {:hand ["Demolition Run"]}})
+  ;     (play-from-hand state :corp "Mumbad Virtual Tour" "R&D")
+  ;     (take-credits state :corp)
+  ;     (play-from-hand state :runner "Demolition Run")
+  ;     (is (= 3 (:credit (get-runner))) "Runner paid play costs")
+  ;     (click-prompt state :runner "R&D")
+  ;     (run-successful state)
+  ;     (click-prompt state :runner "Unrezzed upgrade in R&D")
+  ;     (is (= ["[Demolition Run]: Trash card"] (-> (get-runner) :prompt first :choices)) "Runner is not given the choice")))
+  (testing "not to trash after installing Salsette Slums"
     (do-game
-      (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 2)]}
-                 :runner {:deck ["Imp"]}})
-      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
-      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Mumbad Virtual Tour"]}
+                 :runner {:hand ["Salsette Slums"]
+                          :credits 10}})
+      (play-from-hand state :corp "Mumbad Virtual Tour" "R&D")
       (take-credits state :corp)
-      (play-from-hand state :runner "Imp")
-      ;; Reset credits to 5
-      (core/gain state :runner :credit 2)
-      (run-empty-server state "Server 1")
-      ;; Runner not force to trash since Imp is installed
-      (is (= 2 (-> @state :runner :prompt first :choices count)) "Runner has 2 choices when Imp is installed")
-      (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT when Imp installed")
-      (is (empty? (:discard (get-corp))) "MVT is not force-trashed when Imp installed")
-      (let [imp (get-program state 0)]
-        (click-prompt state :runner "[Imp]: Trash card")
-        (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed with Imp")
-        ;; Trash Imp to reset :slow-trash flag
-        (core/move state :runner (refresh imp) :discard)
-        (is (not (core/any-flag-fn? state :runner :slow-trash true))))))
-  (testing "interactions with Imp and various amounts of money"
-    (do-game
-      (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}
-                 :runner {:deck ["Imp"]}})
-      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Imp")
-      (is (= 3 (:credit (get-runner))) "Runner paid install costs")
-      (core/gain state :runner :credit 2)
-      (run-empty-server state "Server 1")
-      (is (= #{"[Imp]: Trash card" "Pay 5 [Credits] to trash"}
-             (->> (get-runner) :prompt first :choices (into #{}))) "Should have Imp and MVT options")
-      (click-prompt state :runner "[Imp]: Trash card")
-      (take-credits state :runner)
-      (core/lose state :runner :credit (:credit (get-runner)))
-      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
-      (take-credits state :corp)
-      (run-empty-server state "Server 2")
-      (is (= ["[Imp]: Trash card"] (-> (get-runner) :prompt first :choices)) "Should only have Imp option")
-      (click-prompt state :runner "[Imp]: Trash card")
-      (take-credits state :runner)
-      (core/lose state :runner :credit (:credit (get-runner)))
-      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
-      (take-credits state :corp)
-      (run-empty-server state "Server 3")
-      (is (= ["No action"] (-> (get-runner) :prompt first :choices)) "Should only have no action option")
-      (click-prompt state :runner "No action")
-      (is (= 2 (->> (get-corp) :discard count)) "Runner was not forced to trash MVT")))
-  (testing "not forced to trash when credits below 5"
-    (do-game
-      (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}
-                 :runner {:deck ["Daily Casts"]}})
-      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Daily Casts")
-      (is (= 2 (:credit (get-runner))) "Runner paid install costs")
-      (run-empty-server state "Server 1")
-      (is (= ["Pay 5 [Credits] to trash" "No action"]
-             (-> (get-runner) :prompt first :choices))
-          "Runner is given the choice, as we don't know if they can afford it or not"))))
+      (play-from-hand state :runner "Salsette Slums")
+      (is (= 8 (:credit (get-runner))) "Runner paid install costs")
+      (run-empty-server state "R&D")
+      (click-prompt state :runner "Unrezzed upgrade in R&D")
+      (is (= ["Pay 5 [Credits] to trash"] (-> (get-runner) :prompt first :choices)) "Runner is not given the choice"))))
 
 (deftest mwanza-city-grid
   ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
@@ -1681,7 +1761,7 @@
         (click-prompt state :runner "No action")
         (run-empty-server state "Server 1")
         (click-card state :runner hok)
-        (click-prompt state :runner "Pay 5 [Credits] to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (zero? (:credit (get-runner))) "Runner was charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Cost increase even when trashed"
@@ -1700,7 +1780,7 @@
         (click-prompt state :runner "Pay 1 [Credits] to trash") ; pay to trash
         (click-card state :runner hok)
         ;; should now have prompt to pay 5cr for HoK
-        (click-prompt state :runner "Pay 5 [Credits] to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (zero? (:credit (get-runner))) "Runner was charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Trashed from HQ"
@@ -1901,6 +1981,28 @@
       (card-ability state :runner smc2 0)
       (click-prompt state :runner "Reaver"))))
 
+(deftest simone-diego
+  ;; Simone Diego
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["Simone Diego" "Ice Wall" "Project Junebug"]}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Simone Diego" "New remote")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (play-from-hand state :corp "Project Junebug" "Server 1")
+      (let [sd (get-content state :remote1 0)
+            pj (get-content state :remote1 1)
+            iw (get-ice state :remote1 0)]
+        (core/rez state :corp sd)
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from Simone Diego to advance Ice Wall"
+                           (core/advance state :corp {:card (refresh iw)})
+                           (click-card state :corp sd))
+        (changes-val-macro 0 (:credit (get-corp))
+                           "Used 1 credit from Simone Diego to advance Project Junebug"
+                           (core/advance state :corp {:card (refresh pj)})
+                           (click-card state :corp sd))))))
+
 (deftest strongbox
   ;; Strongbox
   (testing "Basic test"
@@ -1923,7 +2025,7 @@
         (click-prompt state :runner "No action")
         (run-empty-server state "Server 1")
         (click-card state :runner hok)
-        (click-prompt state :runner "Pay [Click] to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (= 1 (:click (get-runner))) "Runner was charged 1click")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Click cost even when trashed"
@@ -1940,7 +2042,7 @@
         (click-card state :runner sb)
         (click-prompt state :runner "Pay 1 [Credits] to trash") ; pay to trash
         (click-card state :runner hok)
-        (click-prompt state :runner "Pay [Click] to steal")
+        (click-prompt state :runner "Pay to steal")
         (is (= 2 (:click (get-runner))) "Runner was charged 1click")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda")))))
 

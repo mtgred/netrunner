@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
-(declare can-trigger? card-def clear-wait-prompt effect-completed event-title get-card
+(declare can-trigger? card-def clear-wait-prompt event-title get-card
          get-nested-host get-remote-names get-runnable-zones get-zones installed?
-         make-eid register-effect-completed register-suppress resolve-ability
+         register-suppress resolve-ability
          show-wait-prompt trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
@@ -187,19 +187,19 @@
                                   abis)))
          active-player-events (doall (get-handlers active-player))
          opponent-events (doall (get-handlers opponent))]
-     (wait-for (resolve-ability state side first-ability nil nil)
+     (wait-for (resolve-ability state side (make-eid state eid) first-ability nil nil)
                (show-wait-prompt state opponent
                                  (str (side-str active-player) " to resolve " (event-title event) " triggers")
                                  {:priority -1})
                ; let active player activate their events first
-               (wait-for (trigger-event-simult-player state side event active-player-events cancel-fn targets)
+               (wait-for (trigger-event-simult-player state side (make-eid state eid) event active-player-events cancel-fn targets)
                          (when after-active-player
-                           (resolve-ability state side after-active-player nil nil))
+                           (resolve-ability state side eid after-active-player nil nil))
                          (clear-wait-prompt state opponent)
                          (show-wait-prompt state active-player
                                            (str (side-str opponent) " to resolve " (event-title event) " triggers")
                                            {:priority -1})
-                         (wait-for (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
+                         (wait-for (trigger-event-simult-player state opponent (make-eid state eid) event opponent-events cancel-fn targets)
                                    (clear-wait-prompt state active-player)
                                    (effect-completed state side eid)))))))
 
@@ -298,14 +298,3 @@
   "Returns true if this is the first trash of an owned installed card this turn by this side"
   [state side]
   (= 1 (count (filter #(= (:side (first %)) (side-str side)) (get-installed-trashed state side)))))
-
-;;; Effect completion triggers
-(defn register-effect-completed
-  [state side eid effect]
-  (swap! state update-in [:effect-completed (:eid eid)] #(conj % effect)))
-
-(defn effect-completed
-  [state side eid]
-  (doseq [handler (get-in @state [:effect-completed (:eid eid)])]
-    (handler state side eid))
-  (swap! state update-in [:effect-completed] dissoc (:eid eid)))
