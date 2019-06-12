@@ -1510,7 +1510,7 @@
                          (or (has-subtype? % "Clone")
                              (has-subtype? % "Executive")
                              (has-subtype? % "Sysop")))}
-    :effect (effect (lose :bad-publicity 2)
+    :effect (effect (lose-bad-publicity 2)
                     (trash eid target nil))}
 
    "Restructure"
@@ -1607,7 +1607,7 @@
                                            (:bad-publicity corp)))]
                    (system-msg state side (str "uses Sacrifice to lose " bp-lost " bad publicity and gain " bp-lost " [Credits]"))
                    (when (pos? bp-lost)
-                     (lose state side :bad-publicity bp-lost)
+                     (lose-bad-publicity state side bp-lost)
                      (gain-credits state side bp-lost))))}
 
    "Salem's Hospitality"
@@ -1912,7 +1912,7 @@
                      {:player :runner
                       :prompt "Remove 1 bad publicity to prevent all resources from being trashed?"
                       :yes-ability {:msg "remove 1 bad publicity, preventing all resources from being trashed"
-                                    :effect (effect (lose :bad-publicity 1))}
+                                    :effect (effect (lose-bad-publicity 1))}
                       :no-ability trash-all-resources}}
                     trash-all-resources)
                   card nil))})
@@ -2105,4 +2105,4 @@
 
    "Witness Tampering"
    {:msg "remove 2 bad publicity"
-    :effect (effect (lose :bad-publicity 2))}})
+    :effect (effect (lose-bad-publicity 2))}})

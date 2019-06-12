@@ -639,7 +639,8 @@
                  :effect (effect (rez target {:ignore-cost :all-costs}))}]}
 
    "Elizabeth Mills"
-   {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
+   {:effect (effect (lose-bad-publicity 1))
+    :msg "remove 1 bad publicity"
     :abilities [{:cost [:click 1] :label "Trash a location"
                  :msg (msg "trash " (:title target) " and take 1 bad publicity")
                  :choices {:req #(has-subtype? % "Location")}
@@ -715,7 +716,7 @@
     :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
                  :msg (msg "remove " (get-counters card :advancement) " bad publicity")
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (lose :bad-publicity (get-counters card :advancement)))}]}
+                                 (lose-bad-publicity (get-counters card :advancement)))}]}
 
    "False Flag"
    (letfn [(tag-count [false-flag]
@@ -1649,7 +1650,7 @@
                                     :msg (msg (if (= target "Remove 1 bad publicity")
                                                 "remove 1 bad publicity" "gain 5 [Credits]"))
                                     :effect (req (if (= target "Remove 1 bad publicity")
-                                                   (lose state side :bad-publicity 1)
+                                                   (lose-bad-publicity state side 1)
                                                    (gain-credits state side 5)))}
                                    card targets)))}]
      {:effect (effect (add-counter card :power 3))
@@ -1682,7 +1683,7 @@
                                                :player :corp
                                                :prompt "Remove 1 bad publicity?"
                                                :yes-ability {:msg "remove 1 bad publicity"
-                                                             :effect (effect (lose :bad-publicity 1))}}}
+                                                             :effect (effect (lose-bad-publicity 1))}}}
                                    card nil))}]}
 
    "Sandburg"
