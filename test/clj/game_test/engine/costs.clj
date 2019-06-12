@@ -11,6 +11,8 @@
       (is (= [[:credit 1]] (core/merge-costs [[:credit 1]]))))
     (testing "Costs are already flattened"
       (is (= [[:credit 1] [:click 1]] (core/merge-costs [[:credit 1 :click 1]]))))
+    (testing "Passed as a flattened vec"
+      (is (= [[:credit 1]] (core/merge-costs [:credit 1]))))
     (testing "Default type is only element"
       (is (= [[:credit 1]] (core/merge-costs [[:credit]]))))
     (testing "Default plus explicit"
