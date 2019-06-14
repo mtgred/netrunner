@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare ice-index parse-command show-error-toast)
+(declare ice-index parse-command show-error-toast swap-ice swap-installed)
 
 (defn say
   "Prints a message to the log as coming from the given username. The special user string
@@ -290,6 +290,7 @@
           "/draw"       #(draw %1 %2 (max 0 value))
           "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
           "/error"      show-error-toast
+          "/facedown"   #(when (= %2 :runner) (command-facedown %1 %2))
           "/handsize"   #(swap! %1 assoc-in [%2 :hand-size :mod] (- value (get-in @%1 [%2 :hand-size :base])))
           "/install-ice" command-install-ice
           "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
@@ -330,9 +331,28 @@
                                                           (move %1 %2 c :rfg)))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/rfg command"} nil)
-          "/facedown"   #(when (= %2 :runner)
-                           (command-facedown %1 %2))
           "/roll"       #(command-roll %1 %2 value)
+          "/swap-ice"   #(when (= %2 :corp)
+                           (resolve-ability
+                             %1 %2
+                             {:prompt "Select two installed ice to swap"
+                              :choices {:max 2
+                                        :all true
+                                        :req (fn [c] (and (installed? c)
+                                                          (ice? c)))}
+                              :effect (effect (swap-ice (first targets) (second targets)))}
+                             {:title "/swap-ice command"} nil))
+          "/swap-installed" #(when (= %2 :corp)
+                               (resolve-ability
+                                 %1 %2
+                                 {:prompt "Select two installed non-ice to swap"
+                                  :choices {:max 2
+                                            :all true
+                                            :req (fn [c] (and (installed? c)
+                                                              (corp? c)
+                                                              (not (ice? c))))}
+                                  :effect (effect (swap-installed (first targets) (second targets)))}
+                                 {:title "/swap-installed command"} nil))
           "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (max 0 value))
           "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
           "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
