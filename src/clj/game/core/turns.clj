@@ -130,16 +130,20 @@
       (assoc :cid cid :implementation (card-implemented card))
       (dissoc :setname :text :_id :influence :number :influencelimit :factioncost))))
 
+(defn build-card
+  [card]
+  (let [server-card (or (server-card (:title card)) card)
+        c (assoc (make-card server-card) :art (:art card))]
+    (if-let [init (:init (card-def c))]
+      (merge c init)
+      c)))
+
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
   Loads card data from the server-card map if available."
   ([deck] (create-deck deck nil))
   ([deck user]
-   (shuffle (mapcat #(map (fn [card]
-                            (let [server-card (or (server-card (:title card)) card)
-                                  c (assoc (make-card server-card) :art (:art card))]
-                              (if-let [init (:init (card-def c))] (merge c init) c)))
-                          (repeat (:qty %) (assoc (:card %) :art (:art %))))
+   (shuffle (mapcat #(map build-card (repeat (:qty %) (assoc (:card %) :art (:art %))))
                     (shuffle (vec (:cards deck)))))))
 
 (defn make-rid
