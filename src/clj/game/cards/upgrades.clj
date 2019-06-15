@@ -612,7 +612,7 @@
                                                               state :runner
                                                               "takes 1 tag to prevent Corp from removing 1 bad publicity"))}
                                  :no-ability {:msg "remove 1 bad publicity"
-                                              :effect (effect (lose :corp :bad-publicity 1))}
+                                              :effect (effect (lose-bad-publicity :corp 1))}
                                  :end-effect (effect (clear-wait-prompt :corp)
                                                      (effect-completed eid))}}
                                card nil))}}

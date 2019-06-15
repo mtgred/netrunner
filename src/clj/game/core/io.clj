@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare ice-index parse-command show-error-toast)
+(declare ice-index parse-command show-error-toast swap-ice swap-installed)
 
 (defn say
   "Prints a message to the log as coming from the given username. The special user string
@@ -260,8 +260,31 @@
                    card nil))}
       {:title "/install-ice command"} nil)))
 
+(defn command-peek
+  [state side n]
+  (show-prompt
+    state side
+    nil
+    (str "The top " (quantify n "card")
+         " of your deck " (if (< 1 n) "are" "is") " (top first): "
+         (->> (get-in @state [side :deck])
+              (take n)
+              (map :title)
+              (string/join ", ")))
+    ["Done"]
+    identity
+    {:priority 10}))
+
+(defn command-summon
+  [state side args]
+  (let [s-card (server-card (string/join " " args))
+        card (when (and s-card (card-is? s-card :side side))
+               (build-card s-card))]
+    (when card
+      (swap! state update-in [side :hand] #(concat % (zone :hand [card]))))))
+
 (defn parse-command [text]
-  (let [[command & args] (split text #" ");"
+  (let [[command & args] (split text #" ")
         value (if-let [n (string->num (first args))] n 1)
         num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
     (when (<= (count args) 2)
@@ -290,6 +313,7 @@
           "/draw"       #(draw %1 %2 (max 0 value))
           "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
           "/error"      show-error-toast
+          "/facedown"   #(when (= %2 :runner) (command-facedown %1 %2))
           "/handsize"   #(swap! %1 assoc-in [%2 :hand-size :mod] (- value (get-in @%1 [%2 :hand-size :base])))
           "/install-ice" command-install-ice
           "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
@@ -314,6 +338,7 @@
                                                           (move %1 %2 c :hand)))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/move-hand command"} nil)
+          "/peek"       #(command-peek %1 %2 value)
           "/psi"        #(when (= %2 :corp) (psi-game %1 %2
                                                       {:title "/psi command" :side %2}
                                                       {:equal  {:msg "resolve equal bets effect"}
@@ -330,9 +355,29 @@
                                                           (move %1 %2 c :rfg)))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/rfg command"} nil)
-          "/facedown"   #(when (= %2 :runner)
-                           (command-facedown %1 %2))
           "/roll"       #(command-roll %1 %2 value)
+          "/summon"     #(command-summon %1 %2 args)
+          "/swap-ice"   #(when (= %2 :corp)
+                           (resolve-ability
+                             %1 %2
+                             {:prompt "Select two installed ice to swap"
+                              :choices {:max 2
+                                        :all true
+                                        :req (fn [c] (and (installed? c)
+                                                          (ice? c)))}
+                              :effect (effect (swap-ice (first targets) (second targets)))}
+                             {:title "/swap-ice command"} nil))
+          "/swap-installed" #(when (= %2 :corp)
+                               (resolve-ability
+                                 %1 %2
+                                 {:prompt "Select two installed non-ice to swap"
+                                  :choices {:max 2
+                                            :all true
+                                            :req (fn [c] (and (installed? c)
+                                                              (corp? c)
+                                                              (not (ice? c))))}
+                                  :effect (effect (swap-installed (first targets) (second targets)))}
+                                 {:title "/swap-installed command"} nil))
           "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (max 0 value))
           "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
           "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
@@ -376,4 +421,3 @@
                 "to our GitHub issues page.<br/><br/>Use /error to see this message again.")
            "exception"
            {:time-out 0 :close-button true})))
-

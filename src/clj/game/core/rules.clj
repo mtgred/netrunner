@@ -119,9 +119,8 @@
                        (not (pos? draws-after-prevent))
                        (not (pos? deck-count)))
                  (effect-completed state side eid)
-                 (let [drawn (zone :hand (take draws-after-prevent (get-in @state [side :deck])))]
-                   (swap! state update-in [side :hand] #(concat % drawn))
-                   (swap! state update-in [side :deck] (partial drop draws-after-prevent))
+                 (let [to-draw (take draws-after-prevent (get-in @state [side :deck]))
+                       drawn (doall (for [card to-draw] (move state side card :hand)))]
                    (swap! state assoc-in [side :register :most-recent-drawn] drawn)
                    (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
                    (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
@@ -387,6 +386,13 @@
                        {:priority 10}))
                  (resolve-bad-publicity state side eid n args))))))
 
+(defn lose-bad-publicity
+  ([state side n] (lose-bad-publicity state side (make-eid state) n))
+  ([state side eid n]
+   (if (= n :all)
+     (lose-bad-publicity state side eid (get-in @state [:corp :bad-publicity]))
+     (do (lose state :corp :bad-publicity n)
+         (trigger-event-sync state side eid :corp-lose-bad-publicity n side)))))
 
 ;;; Trashing
 (defn trash-resource-bonus
