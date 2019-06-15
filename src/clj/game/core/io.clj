@@ -275,8 +275,16 @@
     identity
     {:priority 10}))
 
+(defn command-summon
+  [state side args]
+  (let [s-card (server-card (string/join " " args))
+        card (when (and s-card (card-is? s-card :side side))
+               (build-card s-card))]
+    (when card
+      (swap! state update-in [side :hand] #(concat % (zone :hand [card]))))))
+
 (defn parse-command [text]
-  (let [[command & args] (split text #" ");"
+  (let [[command & args] (split text #" ")
         value (if-let [n (string->num (first args))] n 1)
         num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
     (when (<= (count args) 2)
@@ -348,6 +356,7 @@
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/rfg command"} nil)
           "/roll"       #(command-roll %1 %2 value)
+          "/summon"     #(command-summon %1 %2 args)
           "/swap-ice"   #(when (= %2 :corp)
                            (resolve-ability
                              %1 %2
