@@ -387,6 +387,13 @@
                        {:priority 10}))
                  (resolve-bad-publicity state side eid n args))))))
 
+(defn lose-bad-publicity
+  ([state side n] (lose-bad-publicity state side (make-eid state) n))
+  ([state side eid n]
+   (if (= n :all)
+     (lose-bad-publicity state side eid (get-in @state [:corp :bad-publicity]))
+     (do (lose state :corp :bad-publicity n)
+         (trigger-event-sync state side eid :corp-lose-bad-publicity n side)))))
 
 ;;; Trashing
 (defn trash-resource-bonus
