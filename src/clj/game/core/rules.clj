@@ -119,9 +119,8 @@
                        (not (pos? draws-after-prevent))
                        (not (pos? deck-count)))
                  (effect-completed state side eid)
-                 (let [drawn (zone :hand (take draws-after-prevent (get-in @state [side :deck])))]
-                   (swap! state update-in [side :hand] #(concat % drawn))
-                   (swap! state update-in [side :deck] (partial drop draws-after-prevent))
+                 (let [to-draw (take draws-after-prevent (get-in @state [side :deck]))
+                       drawn (doall (for [card to-draw] (move state side card :hand)))]
                    (swap! state assoc-in [side :register :most-recent-drawn] drawn)
                    (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
                    (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
