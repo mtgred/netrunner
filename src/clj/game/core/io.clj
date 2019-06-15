@@ -260,6 +260,21 @@
                    card nil))}
       {:title "/install-ice command"} nil)))
 
+(defn command-peek
+  [state side n]
+  (show-prompt
+    state side
+    nil
+    (str "The top " (quantify n "card")
+         " of your deck " (if (< 1 n) "are" "is") " (top first): "
+         (->> (get-in @state [side :deck])
+              (take n)
+              (map :title)
+              (string/join ", ")))
+    ["Done"]
+    identity
+    {:priority 10}))
+
 (defn parse-command [text]
   (let [[command & args] (split text #" ");"
         value (if-let [n (string->num (first args))] n 1)
@@ -315,6 +330,7 @@
                                                           (move %1 %2 c :hand)))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/move-hand command"} nil)
+          "/peek"       #(command-peek %1 %2 value)
           "/psi"        #(when (= %2 :corp) (psi-game %1 %2
                                                       {:title "/psi command" :side %2}
                                                       {:equal  {:msg "resolve equal bets effect"}
@@ -396,4 +412,3 @@
                 "to our GitHub issues page.<br/><br/>Use /error to see this message again.")
            "exception"
            {:time-out 0 :close-button true})))
-
