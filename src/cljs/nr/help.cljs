@@ -60,19 +60,24 @@
                           [:li [:code "/discard-random"] " - Discard a random card from your hand"]
                           [:li [:code "/draw n"] " - Draw n cards"]
                           [:li [:code "/end-run"] " - End the run (Corp only)"]
+                          [:li [:code "/facedown"] " - Install a card facedown (Runner only)"]
                           [:li [:code "/handsize n"] " - Set your handsize to n"]
+                          [:li [:code "/install-ice"] " - Install a piece of ICE at any position in a server (Corp only)"]
                           [:li [:code "/jack-out"] " - Jack out (Runner only)"]
                           [:li [:code "/link n"] " - Set your link to n"]
                           [:li [:code "/memory n"] " - Set your memory to n"]
                           [:li [:code "/move-bottom"] " - Pick a card in your hand to put on the bottom of your deck"]
                           [:li [:code "/move-deck"] " - Pick a card from your play-area to put on top of your deck"]
                           [:li [:code "/move-hand"] " - Pick a card from your play-area to put into your hand"]
+                          [:li [:code "/peek n"] " - See n top cards of your deck"]
                           [:li [:code "/psi"] " - Start a Psi game (Corp only)"]
                           [:li [:code "/rez"] " - Select a card to rez, ignoring all costs (Corp only)"]
                           [:li [:code "/rez-all"] " - Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."]
                           [:li [:code "/rfg"] " - Select a card to remove from the game"]
-                          [:li [:code "/facedown"] " - Select a card to install facedown in your rig (Runner only)"]
                           [:li [:code "/roll n"] " - Roll an n-sided die"]
+                          [:li [:code "/summon n"] " - Add card \"n\" to your hand (from outside the game)"]
+                          [:li [:code "/swap-ice"] " - Swap the position of two installed ICE (Corp only)"]
+                          [:li [:code "/swap-installed"] " - Swap the position of two installed non-ICE (Corp only)"]
                           [:li [:code "/tag n"] " - Set your tags to n"]
                           [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
                           [:li [:code "/take-meat n"] " - Take n meat damage (Runner only)"]
@@ -84,9 +89,8 @@
              :title "Is there more documentation on how to use Jinteki.net?"
              :content [:ul
                         [:p "Read the "
-                         [:a {:href "https://github.com/mtgred/netrunner/wiki/Jinteki.net-Guide" :target "_blank"}
-                        "Jinteki.net Guide"] " on the GitHub wiki."]]}
-            )}
+                         [:a {:href "https://github.com/mtgred/netrunner/wiki/Jinteki.net-Guide" :target "_blank"} "Jinteki.net Guide"]
+                         " on the GitHub wiki."]]})}
     {:id "beginners"
      :title "Beginners"
      :sub (list
@@ -121,8 +125,63 @@
                           [:li [:a {:href "http://forum.stimhack.com/"} "Stimhack forums"]]
                           [:li [:a {:href "http://reddit.com/r/netrunner/"} "/r/netrunner subreddit"]]
                           [:li "multiple Facebook groups, such as "
-                           [:a {:href "https://www.facebook.com/groups/netrunnergeeks/"} "Netrunner Geeks"]]]]]}
-            )}
+                           [:a {:href "https://www.facebook.com/groups/netrunnergeeks/"} "Netrunner Geeks"]]]]]})}
+    {:id "formats"
+     :title "Formats"
+     :sub (list
+            {:id "standard"
+             :title "What is the Standard format?"
+             :content [:ul
+                        [:p "The flagship format of NISEI Organized Play, Standard is "
+                         "frequently changing to keep the meta exciting and engaging for "
+                         "players of all levels. Most official Organised Play events will "
+                         "follow the Standard format. "
+                         "Refer to " [:a {:href "nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+            {:id "eternal"
+             :title "What is Eternal format?"
+             :content [:ul
+                        [:p "Eternal is not affected by rotation and has a much less "
+                         "stringent Most Wanted List. The largest and most complex format, "
+                         "it encompasses nearly the entirety of the printed card pool and "
+                         "only grows larger with time. "
+                         "Refer to " [:a {:href "nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+            {:id "core-experience"
+             :title "What is the Core Experience format?"
+             :content [:ul
+                        [:p "The \"core\" of the game experience, and an excellent "
+                         "starting point for new or returning players. A single copy of "
+                         "System Core 2019 is the only legal product; there is no MWL. "
+                         "Refer to " [:a {:href "nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+           {:id "snapshot"
+             :title "What is the Snapshot format?"
+             :content [:ul
+                        [:p "This format is a \"snapshot\" of the meta at Magnum Opus; "
+                         "the culmination of FFG Organized Play. It will see minimal "
+                         "changes unless strictly necessary. "
+                         "Refer to " [:a {:href "nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+           {:id "snapshot-plus"
+             :title "What is the Snapshot Plus format?"
+             :content [:ul
+                        [:p "This is the Snapshot format but with the cards that were "
+                         "released at Worlds 2018 (Magnum Opus) included as well. The "
+                         "included cards are Labor Rights, Embolus, Slot Machine, Border "
+                         "Control, Timely Public Release, Hired Help, and Watch The "
+                         "World Burn. "
+                         "Refer to " [:a {:href "nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+           {:id "socr"
+             :title "What is the SOCR format?"
+             :content [:ul
+                        [:p "SOCR stands for Stimhack Online Cache Refresh. It's a limited "
+                         "cardpool tournament originally based on FFG's Cache Refresh "
+                         "format but with an updated MWL and cardpool. It is currently "
+                         "in it's 9th iteration. "
+                         "Refer to the " [:a {:href "https://forum.stimhack.com/t/stimhack-online-cache-refresh-9-information-thread/10419"} "Stimhack Thread"]]]}
+           {:id "classic"
+             :title "What is the Classic format?"
+             :content [:ul
+                        [:p "An alternate Eternal format created by thebigboy. The entire "
+                         "ANR cardpool is legal, except for a Ban-list of (currently) 49 cards. "
+                         "Refer to the " [:a {:href "https://runthenet.wordpress.com/2019/01/01/the-classic-format-netrunners-final-form/"} "announcement article"]]]})}
     {:id "site"
      :title "Website"
      :sub (list
@@ -185,8 +244,7 @@
                               [:li "Games Won - games won.  The percentage is compared to those games lost."]
                               [:li "Games Lost - games lost.  The percentage is compared to those games won."]]]
                             [:p "Your game completion rate is visible in the player lobby so people can determine if they should play against you."
-                             " Don't quit during games - please concede if you have to leave."]]}
-            )}
+                             " Don't quit during games - please concede if you have to leave."]]})}
     {:id "cards"
      :title "Cards and Specific Interactions"
      :sub (list
@@ -228,8 +286,7 @@
              :content [:ul
                         [:p "Alternative art cards are enabled for the " [:a {:href "#donations"} "donators"] " and "
                          [:a {:href "#devs"} "developers"] " of the site. If you belong to one of the aforementioned groups and you feel like you should have them enabled, "
-                         "but you don't, " [:a {:href "/about"} "contact us"] "."]]}
-            )}
+                         "but you don't, " [:a {:href "/about"} "contact us"] "."]]})}
     {:id "troubleshooting"
      :title "Troubleshooting"
      :sub (list
@@ -255,31 +312,7 @@
              :title "Whenever I connect to the site, I see there are 0 games in the lobby."
              :content [:ul
                         [:p "This is most likely a websocket issue. Check if your network filters let through traffic from ws.jinteki.net. "
-                         "Whitelisting *.jinteki.net should solve the problem."]]}
-            )}
-    {:id "alternativeformats"
-     :title "Alternative Formats"
-     :sub (list
-            {:id "modded"
-             :title "What is the Modded format?"
-             :content [:ul
-                        [:p "This is a format designed to make it easy for new players with a limited card pool. "
-                         "Deck building rules are up to 3 Revised Core Sets and data packs from the newest cycle only. "
-                         "There is no use of the MWL/Most Wanted List. The name originated from Modern but sounds more Netrunner. "
-                         "Refer to " [:a {:href "https://forum.stimhack.com/t/modded-format-online-league-starts-april-14/9791"} "Modded"]]]}
-            {:id "onesies"
-             :title "What is Onesies or 1.1.1.1 format?"
-             :content [:ul
-                        [:p "This is a community designed format designed to vary the card choice options. "
-                         "Deck building rules are that cards must be taken from 1 Revised Core Set, 1 Deluxe expansion, 1 data pack, and 1 other card from anywhere. "
-                         "There is no use of the MWL/Most Wanted List. Refer to " [:a {:href "https://www.reddit.com/r/Netrunner/comments/5238a4/1111_onesies/"} "Onesies"]]]}
-            {:id "cache"
-             :title "What is the Cache Refresh format?"
-             :content [:ul
-                        [:p "This is a format created in 2017 by Fantasy Flight Games. "
-                         "Deck building rules are that cards must be taken from 1 Revised Core Set, Terminal Directive, and the latest two cycles of data packs. "
-                         "Refer to " [:a {:href "http://www.cache-refresh.info/"} "Cache Refresh"]]]}
-            )}
+                         "Whitelisting *.jinteki.net should solve the problem."]]})}
     {:id "getinvolved"
      :title "Getting Involved"
      :sub (list
