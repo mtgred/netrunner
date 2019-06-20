@@ -2275,6 +2275,10 @@
     (is (= 9 (:credit (get-runner))))
     (is (empty? (:prompt (get-runner))) "No prompt to run a third time")
     (is (not (:run @state)) "Run is over")
+    (changes-val-macro 0 (:credit (get-runner))
+                       "Normal run on R&D didn't give any credits"
+                       (run-empty-server state :rd)
+                       (click-prompt state :runner "No action"))
     (play-from-hand state :runner "Möbius")
     (run-jack-out state)
     (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
