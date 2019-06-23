@@ -133,7 +133,7 @@
                                  (= last-zone :hand)
                                  (= server "Grip")))
                        (or (and (runner? c)
-                                (not (:facedown c)))
+                                (not (facedown? c)))
                            (rezzed? c)
                            (:seen c)
                            (= last-zone :deck)))

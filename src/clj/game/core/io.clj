@@ -182,7 +182,7 @@
                 :yes-ability {:effect (req
                                         (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                                         (doseq [c (all-installed state side)]
-                                          (when-not (:rezzed c)
+                                          (when-not (rezzed? c)
                                             (rez state side c {:ignore-cost :all-costs :force true}))))}}}
     {:title "/rez-all command"} nil))
 

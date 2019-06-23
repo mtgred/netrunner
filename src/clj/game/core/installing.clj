@@ -180,7 +180,7 @@
   (when (:display-message args true)
     (let [card-name (if (or (= :rezzed-no-cost install-state)
                             (= :face-up install-state)
-                            (:rezzed card))
+                            (rezzed? card))
                       (:title card)
                       (if (ice? card) "ICE" "a card"))
           server-name (if (= server "New remote")

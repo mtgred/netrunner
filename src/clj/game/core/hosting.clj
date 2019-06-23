@@ -60,7 +60,7 @@
        (when (or (operation? target)
                  (and (event? target) (not facedown))
                  (and installed (runner? target))
-                 (and installed (corp? target) (:rezzed target)))
+                 (and installed (corp? target) (rezzed? target)))
          (when-let [events (:events tdef)]
            (register-events state side events c))
          (when (or (:recurring tdef)

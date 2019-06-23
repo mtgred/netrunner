@@ -227,7 +227,7 @@
       (not (run-flag? state side card :can-rez)) :run-flag
       (not (turn-flag? state side card :can-rez)) :turn-flag
       ;; Uniqueness check
-      (and uniqueness (some #(and (:rezzed %) (= (:code card) (:code %))) (all-installed state :corp))) :unique
+      (and uniqueness (some #(and (rezzed? %) (= (:code card) (:code %))) (all-installed state :corp))) :unique
       ;; Rez req check
       (and rez-req (not (rez-req state side (make-eid state) card nil))) :req
       ;; No problems - return true

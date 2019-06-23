@@ -504,7 +504,7 @@
                     (= target unrezzed-upgrade)
                     ;; accessing an unrezzed upgrade
                     (let [from-root (get-root-content state)
-                          unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %)))
+                          unrezzed (filter #(and (= (last (:zone %)) :content) (not (rezzed? %)))
                                            from-root)]
                       (if (= 1 (count unrezzed))
                         ;; only one unrezzed upgrade; access it and continue
@@ -678,7 +678,7 @@
 
                     (= target "Unrezzed upgrade in Archives")
                     ;; accessing an unrezzed upgrade
-                    (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %)))
+                    (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (rezzed? %)))
                                            (root-content already-accessed))]
                       (if (= 1 (count unrezzed))
                         ;; only one unrezzed upgrade; access it and continue

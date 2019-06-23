@@ -122,7 +122,7 @@
                        (#{:servers :scored :current} src-zone))
                    (or (#{:hand :deck :discard :rfg} target-zone)
                        to-facedown)
-                   (not (:facedown c)))
+                   (not (facedown? c)))
             (deactivate state side c to-facedown)
             c)
         c (if to-installed

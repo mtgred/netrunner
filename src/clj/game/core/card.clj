@@ -172,7 +172,7 @@
 (defn faceup?
   [card]
   (or (:seen card)
-      (:rezzed card)))
+      (rezzed? card)))
 
 (defn installed?
   [card]

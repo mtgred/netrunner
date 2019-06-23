@@ -160,8 +160,8 @@
   [state side]
   (let [installed (all-installed state side)]
    (if (= side :runner)
-     (remove :facedown installed)
-     (filter :rezzed installed))))
+     (remove facedown? installed)
+     (filter rezzed? installed))))
 
 (defn installed-byname
   "Returns a truthy card map if a card matching title is installed"
