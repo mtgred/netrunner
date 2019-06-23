@@ -6,6 +6,8 @@
             [game.core.toasts :refer [toast show-error-toast]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
+            [game.core.state :refer :all]
+            [game.core.player :refer :all]
             [clj-time.core :as t]
             [clojure.string :as string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.java.io :as io]
@@ -17,7 +19,9 @@
             [tasks.nrdb :refer [replace-collection update-config]]
             [tasks.altart :refer [add-art]]
             [game.quotes :as quotes])
-  (:import [game.core.card Card]))
+  (:import [game.core.state State]
+           [game.core.player HandSize Corp Servers Runner Rig Tags Memory]
+           [game.core.card Card]))
 
 (load "core/events")    ; triggering of events
 (load "core/cards")     ; retrieving and updating cards
