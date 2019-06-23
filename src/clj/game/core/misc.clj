@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare set-prop get-nested-host get-nested-zone all-active-installed run-costs)
+(declare set-prop all-active-installed run-costs)
 
 (defn get-zones [state]
   (keys (get-in @state [:corp :servers])))
@@ -38,8 +38,8 @@
       ;; Install req function overrides normal list of install locations
       (install-req state :corp card (make-eid state) base-list)
       ;; Standard list
-      (if (or (is-type? card "Agenda")
-              (is-type? card "Asset"))
+      (if (or (agenda? card)
+              (asset? card))
         (remove #{"HQ" "R&D" "Archives"} base-list)
         base-list))))
 

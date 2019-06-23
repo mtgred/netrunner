@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan turn-message in-hand?)
+(declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan turn-message)
 
 (def game-states (atom {}))
 
@@ -127,7 +127,8 @@
   ([card cid]
   (-> card
       (assoc :cid cid :implementation (card-implemented card))
-      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost))))
+      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)
+      (map->Card))))
 
 (defn build-card
   [card]

@@ -1,15 +1,5 @@
 (in-ns 'game.core)
 
-(declare runner? corp?)
-
-(defn get-nested-host
-  "Recursively searches upward to find the 'root' card of a hosting chain."
-  [card]
-  (if (:host card) (recur (:host card)) card))
-
-(defn get-nested-zone [card]
-  (:zone (get-nested-host card)))
-
 (defn update-hosted!
   "Updates a card that is hosted on another, by recursively updating the host card's
   :hosted vector."
@@ -39,14 +29,6 @@
                      (some #(when-let [s (search % target)] s) (:hosted card)))))]
     (helper root-host card)))
 
-(defn assoc-host-zones
-  "Associates a new zone onto a card and its host(s)."
-  [card]
-  (let [card (update-in card [:zone] #(map to-keyword %))]
-    (if (:host card)
-      (update-in card [:host] assoc-host-zones)
-      card)))
-
 (defn host
   "Host the target onto the card."
   ([state side card target] (host state side card target nil))
@@ -75,8 +57,8 @@
        (update! state side (update-in card [:hosted] #(conj % c)))
 
        ;; events should be registered for: runner cards that are installed; corp cards that are Operations, or are installed and rezzed
-       (when (or (is-type? target "Operation")
-                 (and (is-type? target "Event") (not facedown))
+       (when (or (operation? target)
+                 (and (event? target) (not facedown))
                  (and installed (runner? target))
                  (and installed (corp? target) (:rezzed target)))
          (when-let [events (:events tdef)]

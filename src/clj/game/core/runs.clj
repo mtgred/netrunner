@@ -4,7 +4,7 @@
          gain-run-credits update-ice-in-server update-all-ice
          get-agenda-points gain-agenda-point optional-ability
          get-remote-names card-name can-access-loud can-steal?
-         prevent-jack-out card-flag? can-run? in-discard? operation?)
+         prevent-jack-out card-flag? can-run?)
 
 ;;; Steps in the run sequence
 (defn make-run
@@ -72,7 +72,7 @@
   (when-not (find-cid (:cid c) (get-in @state [:corp :discard]))
     ;; Do not trigger :no-trash if card has already been trashed
     (trigger-event state side :no-trash c))
-  (when (and (is-type? c "Agenda")
+  (when (and (agenda? c)
              (not (find-cid (:cid c) (get-in @state [:runner :scored]))))
     (trigger-event state side :no-steal c))
   (when (and (get-card state c)
@@ -361,7 +361,7 @@
                                      :cancel-fn (fn [state] (not (get-card state c)))}
                                     c)
               (if (get-card state c) ; make sure the card has not been moved by a handler
-                (if (is-type? c "Agenda")
+                (if (agenda? c)
                   (access-agenda state side eid c)
                   ;; Accessing a non-agenda
                   (access-non-agenda state side eid c))
@@ -624,7 +624,7 @@
   (filter #(let [cdef (card-def %)]
              ;; must also be :seen
              (and (:seen %)
-                  (or (is-type? % "Agenda")
+                  (or (agenda? %)
                       (should-trigger? state :corp % nil (:access cdef)))))
           (get-in @state [:corp :discard])))
 
@@ -632,7 +632,7 @@
   ;; get faceup cards with no access interaction
   (filter #(let [cdef (card-def %)]
              (and (:seen %)
-                  (not (or (is-type? % "Agenda")
+                  (not (or (agenda? %)
                            (should-trigger? state :corp % nil (:access cdef))))))
           (get-in @state [:corp :discard])))
 

@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare can-run? can-trash? card-init card-str cards-can-prevent? close-access-prompt enforce-msg
-         gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? installed? is-type? play-sfx
+         gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? play-sfx
          prevent-draw remove-old-current system-say system-msg steal-trigger-events
          trash-cards untrashable-while-rezzed? update-all-ice untrashable-while-resources? win win-decked)
 
@@ -478,7 +478,7 @@
 
        (and (= side :corp)
             (untrashable-while-resources? card)
-            (> (count (filter #(is-type? % "Resource") (all-active-installed state :runner))) 1))
+            (> (count (filter resource? (all-active-installed state :runner))) 1))
        (do (enforce-msg state card "cannot be trashed while there are other resources installed")
            (effect-completed state side eid))
 
@@ -596,7 +596,7 @@
        seq
        flatten
        (mapcat :content)
-       (filter #(is-type? % "Agenda"))
+       (filter agenda?)
        (mapv #(update-advancement-cost state side %))))
 
 (defn as-agenda

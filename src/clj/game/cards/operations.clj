@@ -1,5 +1,6 @@
 (ns game.cards.operations
   (:require [game.core :refer :all]
+            [game.core.card :refer :all]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]

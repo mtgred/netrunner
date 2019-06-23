@@ -110,7 +110,7 @@
 (defn command-adv-counter [state side value]
   (resolve-ability state side
                    {:effect (effect (set-adv-counter target value))
-                    :choices {:req (fn [t] (card-is? t :side side))}}
+                    :choices {:req (fn [t] (same-side? (:side t) side))}}
                    {:title "/adv-counter command"} nil))
 
 (defn command-counter-smart [state side args]
@@ -120,7 +120,7 @@
                         value (if-let [n (string->num (first args))] n 0)
                         counter-type (cond (= 1 (count existing)) (first (keys existing))
                                      (can-be-advanced? target) :advance-counter
-                                     (and (is-type? target "Agenda") (is-scored? state side target)) :agenda
+                                     (and (agenda? target) (is-scored? state side target)) :agenda
                                      (and (runner? target) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter counter-type)]
                     (cond
@@ -137,7 +137,7 @@
                       (do (set-prop state side target :counter (merge (:counter target) {counter-type value}))
                           (system-msg state side (str "sets " (name counter-type) " counters to " value " on "
                                                       (card-str state target)))))))
-     :choices {:req (fn [t] (card-is? t :side side))}}
+     :choices {:req (fn [t] (same-side? (:side t) side))}}
     {:title "/counter command"} nil))
 
 (defn command-facedown [state side]
@@ -173,7 +173,7 @@
                        {:effect (effect (set-prop target :counter (merge (:counter target) {counter-type value}))
                                         (system-msg (str "sets " (name counter-type) " counters to " value " on "
                                                          (card-str state target))))
-                        :choices {:req (fn [t] (card-is? t :side side))}}
+                        :choices {:req (fn [t] (same-side? (:side t) side))}}
                        {:title "/counter command"} nil)))))
 
 (defn command-rezall [state side value]
@@ -220,7 +220,7 @@
     (resolve-ability
       state side
       {:prompt "Select a piece of ice to install"
-       :choices {:req #(and (is-type? % "ICE")
+       :choices {:req #(and (ice? %)
                             (#{[:hand]} (:zone %)))}
        :effect (effect
                  (continue-ability
@@ -259,7 +259,7 @@
 (defn command-summon
   [state side args]
   (let [s-card (server-card (string/join " " args))
-        card (when (and s-card (card-is? s-card :side side))
+        card (when (and s-card (same-side? (:side s-card) side))
                (build-card s-card))]
     (when card
       (swap! state update-in [side :hand] #(concat % (zone :hand [card]))))))
@@ -281,7 +281,7 @@
                                           {:effect (effect (system-msg (str "shows card-info of "
                                                                             (card-str state target)
                                                                             ": " (get-card state target))))
-                                           :choices {:req (fn [t] (card-is? t :side %2))}}
+                                           :choices {:req (fn [t] (same-side? (:side t) %2))}}
                                           {:title "/card-info command"} nil)
           "/clear-win"  clear-win
           "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
@@ -305,19 +305,20 @@
           "/move-bottom"  #(resolve-ability %1 %2
                                             {:prompt "Select a card in hand to put on the bottom of your deck"
                                              :effect (effect (move target :deck))
-                                             :choices {:req (fn [t] (and (card-is? t :side %2) (in-hand? t)))}}
+                                             :choices {:req (fn [t] (and (same-side? (:side t) %2)
+                                                                         (in-hand? t)))}}
                                             {:title "/move-bottom command"} nil)
           "/move-deck"   #(resolve-ability %1 %2
                                            {:prompt "Select a card to move to the top of your deck"
                                             :effect (req (let [c (deactivate %1 %2 target)]
                                                            (move %1 %2 c :deck {:front true})))
-                                            :choices {:req (fn [t] (card-is? t :side %2))}}
+                                            :choices {:req (fn [t] (same-side? (:side t) %2))}}
                                            {:title "/move-deck command"} nil)
           "/move-hand"  #(resolve-ability %1 %2
                                           {:prompt "Select a card to move to your hand"
                                            :effect (req (let [c (deactivate %1 %2 target)]
                                                           (move %1 %2 c :hand)))
-                                           :choices {:req (fn [t] (card-is? t :side %2))}}
+                                           :choices {:req (fn [t] (same-side? (:side t) %2))}}
                                           {:title "/move-hand command"} nil)
           "/peek"       #(command-peek %1 %2 value)
           "/psi"        #(when (= %2 :corp) (psi-game %1 %2
@@ -327,14 +328,14 @@
           "/rez"        #(when (= %2 :corp)
                            (resolve-ability %1 %2
                                             {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
-                                             :choices {:req (fn [t] (card-is? t :side %2))}}
+                                             :choices {:req (fn [t] (same-side? (:side t) %2))}}
                                             {:title "/rez command"} nil))
           "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
           "/rfg"        #(resolve-ability %1 %2
                                           {:prompt "Select a card to remove from the game"
                                            :effect (req (let [c (deactivate %1 %2 target)]
                                                           (move %1 %2 c :rfg)))
-                                           :choices {:req (fn [t] (card-is? t :side %2))}}
+                                           :choices {:req (fn [t] (same-side? (:side t) %2))}}
                                           {:title "/rfg command"} nil)
           "/roll"       #(command-roll %1 %2 value)
           "/summon"     #(command-summon %1 %2 args)

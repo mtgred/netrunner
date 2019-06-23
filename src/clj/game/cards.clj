@@ -4,7 +4,7 @@
                     :label "Trash a program"
                     :msg (msg "trash " (:title target))
                     :choices {:req #(and (installed? %)
-                                         (is-type? % "Program"))}
+                                         (program? %))}
                     :effect (effect (trash target {:cause :subroutine})
                                     (clear-wait-prompt :runner))})
 
@@ -12,14 +12,14 @@
                      :label "Trash a piece of hardware"
                      :msg (msg "trash " (:title target))
                      :choices {:req #(and (installed? %)
-                                          (is-type? % "Hardware"))}
+                                          (hardware? %))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-resource-sub {:prompt "Select a resource to trash"
                          :label "Trash a resource"
                          :msg (msg "trash " (:title target))
                          :choices {:req #(and (installed? %)
-                                              (is-type? % "Resource"))}
+                                              (resource? %))}
                          :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-installed {:prompt "Select an installed card to trash"

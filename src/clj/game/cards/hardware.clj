@@ -1,5 +1,6 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
+            [game.core.card :refer :all]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -554,7 +555,7 @@
    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
                   :req (req (and (pos? (get-counters card :virus))
                                  (pos? (count-virus-programs state))))
-                  :choices {:req is-virus-program?}
+                  :choices {:req virus-program?}
                   :effect (req (add-counter state :runner card :virus -1)
                                (add-counter state :runner target :virus 1))}]
      {:abilities [(set-autoresolve :auto-accept "Friday Chip")]

@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
-(declare available-mu free-mu host in-play? install-locked? make-rid rez run-flag?
-         installable-servers server->zone set-prop system-msg turn-flag?
+(declare available-mu free-mu host install-locked? make-rid rez run-flag?
+         installable-servers server->zone set-prop system-msg turn-flag? in-play?
          update-breaker-strength update-ice-strength update-run-ice use-mu)
 
 ;;;; Functions for the installation and deactivation of cards.
@@ -157,11 +157,6 @@
       :ice
       (reason-toast (str "Unable to install " title ": can only install 1 piece of ICE per turn")))))
 
-(defn corp-installable-type?
-  "Is the card of an acceptable type to be installed in a server"
-  [card]
-  (some? (#{"Asset" "Agenda" "ICE" "Upgrade"} (:type card))))
-
 (defn- corp-install-asset-agenda
   "Forces the corp to trash an existing asset or agenda if a second was just installed."
   [state side eid card dest-zone server]
@@ -222,7 +217,7 @@
                        (host state side host-card (assoc c :installed true))
                        (move state side c slot {:front front
                                                 :index index}))]
-      (when (is-type? c "Agenda")
+      (when (agenda? c)
         (update-advancement-cost state side moved-card))
 
       ;; Check to see if a second agenda/asset was installed.
@@ -272,8 +267,8 @@
                    (count dest-zone) 0)
         all-cost (concat extra-cost [:credit ice-cost])
         end-cost (if ignore-all-cost 0 (install-cost state side card all-cost))
-        end-fn #((clear-install-cost-bonus state side)
-                 (effect-completed state side eid))]
+        end-fn #(do (clear-install-cost-bonus state side)
+                    (effect-completed state side eid))]
     (if (and (corp-can-install? state side card dest-zone)
              (not (install-locked? state :corp)))
       (wait-for (pay-sync state side (make-eid state eid) card end-cost {:action action})
@@ -439,14 +434,14 @@
                                      (runner-install-message state side (:title card) cost-str params))
 
                                    (play-sfx state side "install-runner")
-                                   (when (and (is-type? card "Program")
+                                   (when (and (program? card)
                                               (not facedown)
                                               (not no-mu))
                                      ;; Use up mu from program not installed facedown
                                      (use-mu state (:memoryunits card))
                                      (toast-check-mu state))
                                    (handle-virus-counter-flag state side installed-card)
-                                   (when (and (not facedown) (is-type? card "Resource"))
+                                   (when (and (not facedown) (resource? card))
                                      (swap! state assoc-in [:runner :register :installed-resource] true))
                                    (when (and (not facedown) (has-subtype? c "Icebreaker"))
                                      (update-breaker-strength state side c))

@@ -404,9 +404,9 @@
                        {:prompt  "Choose a resource to trash"
                         :choices {:req (fn [card]
                                          (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
-                                                  (> (count (filter #(is-type? % "Resource") (all-active-installed state :runner))) 1))
-                                           (and (is-type? card "Resource") (not (untrashable-while-resources? card)))
-                                           (is-type? card "Resource")))}
+                                                  (> (count (filter resource? (all-active-installed state :runner))) 1))
+                                           (and (resource? card) (not (untrashable-while-resources? card)))
+                                           (resource? card)))}
                         :cancel-effect (effect (gain :credit trash-cost :click 1))
                         :effect  (effect (trash target)
                                          (system-msg (str (build-spend-msg cost-str "trash")

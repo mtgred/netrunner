@@ -1,7 +1,6 @@
 (in-ns 'game.core)
 
 (declare can-trigger? event-title get-card
-         get-nested-host get-remote-names get-runnable-zones get-zones installed?
          register-suppress resolve-ability
          trigger-suppress unregister-suppress)
 
