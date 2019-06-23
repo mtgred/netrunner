@@ -24,7 +24,7 @@
   (let [root-host (get-card state (get-nested-host card))
         helper (fn search [card target]
                  (when-not (nil? card)
-                   (if-let [c (some #(when (= (:cid %) (:cid target)) %) (:hosted card))]
+                   (if-let [c (some #(when (same-card? % target) %) (:hosted card))]
                      c
                      (some #(when-let [s (search % target)] s) (:hosted card)))))]
     (helper root-host card)))

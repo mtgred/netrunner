@@ -279,7 +279,7 @@
         (if (:selected c)
           (swap! state update-in [side :selected 0 :cards] #(conj % c))
           (swap! state update-in [side :selected 0 :cards]
-                 (fn [coll] (remove-once #(= (:cid %) (:cid card)) coll))))
+                 (fn [coll] (remove-once #(same-card? % card) coll))))
         (let [selected (get-in @state [side :selected 0])]
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side update! resolve-ability)))))))
@@ -536,7 +536,7 @@
    (let [card (or (:card args) args)]
      (wait-for (trigger-event-simult state :corp :pre-agenda-scored nil card)
                (when (and (can-score? state side card)
-                          (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
+                          (empty? (filter #(same-card? card %) (get-in @state [:corp :register :cannot-score])))
                           (>= (get-counters card :advancement) (or (:current-cost card)
                                                                    (:advancementcost card))))
                  ;; do not card-init necessarily. if card-def has :effect, wrap a fake event

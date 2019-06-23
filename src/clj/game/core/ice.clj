@@ -112,4 +112,4 @@
   "Get the zero-based index of the given ice in its server's list of ice, where index 0
   is the innermost ice."
   [state ice]
-  (first (keep-indexed #(when (= (:cid %2) (:cid ice)) %1) (get-in @state (cons :corp (:zone ice))))))
+  (first (keep-indexed #(when (same-card? %2 ice) %1) (get-in @state (cons :corp (:zone ice))))))

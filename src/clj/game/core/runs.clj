@@ -463,11 +463,11 @@
 
 (defn access-helper-remote [cards]
   {:prompt "Click a card to access it. You must access all cards in this server."
-   :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) cards)}
+   :choices {:req #(some (fn [c] (same-card? % c)) cards)}
    :async true
    :effect (req (wait-for (access-card state side target)
                           (if (< 1 (count cards))
-                            (continue-ability state side (access-helper-remote (filter #(not= (:cid %) (:cid target)) cards))
+                            (continue-ability state side (access-helper-remote (remove #(same-card? % target) cards))
                                               card nil)
                             (effect-completed state side eid))))})
 

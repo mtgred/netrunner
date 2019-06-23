@@ -224,12 +224,12 @@
         runner-ap-change (- runner-ap-scored runner-ap-stolen)]
     ;; Remove end of turn events for swapped out agenda
     (swap! state update-in [:corp :register :end-turn]
-           (fn [events] (filter #(not= (:cid scored) (get-in % [:card :cid])) events)))
+           (fn [events] (remove #(same-card? scored (:card %)) events)))
     ;; Move agendas
     (swap! state update-in [:corp :scored]
-           (fn [coll] (conj (remove-once #(= (:cid %) (:cid scored)) coll) stolen)))
+           (fn [coll] (conj (remove-once #(same-card? % scored) coll) stolen)))
     (swap! state update-in [:runner :scored]
-           (fn [coll] (conj (remove-once #(= (:cid %) (:cid stolen)) coll)
+           (fn [coll] (conj (remove-once #(same-card? % stolen) coll)
                             (if-not (card-flag? scored :has-abilities-when-stolen true)
                               (dissoc scored :abilities :events) scored))))
     ;; Update agenda points

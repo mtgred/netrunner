@@ -272,7 +272,7 @@
 (defn active-prompt?
   "Checks if this card has an active prompt"
   [state side card]
-  (some #(when (= (:cid card) (-> % :card :cid)) %)
+  (some #(when (same-card? card (:card %)) %)
         (flatten (map #(-> @state % :prompt) [side (other-side side)]))))
 
 ;;; Optional Ability

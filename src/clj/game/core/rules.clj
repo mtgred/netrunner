@@ -19,7 +19,7 @@
     (if (has-subtype? card "Current")
       (do (doseq [s [:corp :runner]]
             (remove-old-current state side s))
-          (let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))
+          (let [c (some #(when (same-card? % card) %) (get-in @state [side :play-area]))
                 moved-card (move state side c :current)]
             (card-init state side eid moved-card {:resolve-effect true
                                                   :init-data true})))

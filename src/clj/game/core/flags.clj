@@ -303,7 +303,7 @@
 (defn is-scored?
   "Checks if the specified card is in the scored area of the specified player."
   [state side card]
-  (some #(= (:cid %) (:cid card)) (get-in @state [side :scored])))
+  (some #(same-card? % card) (get-in @state [side :scored])))
 
 (defn in-corp-scored?
   "Checks if the specified card is in the Corp score area."
