@@ -270,7 +270,7 @@
                (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended
-                 (when (= :this-turn (:installed card))
+                 (when (= :this-turn (installed? card))
                    (update! state side (assoc card :installed true)))
                  ;; Clear the added-virus-counter flag for each virus in play.
                  ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
@@ -283,7 +283,7 @@
                    (update-breaker-strength state :runner card)))
                (doseq [card (all-installed state :corp)]
                  ;; Clear :this-turn flags as turn has ended
-                 (when (= :this-turn (:installed card))
+                 (when (= :this-turn (installed? card))
                    (update! state side (assoc card :installed true)))
                  (when (= :this-turn (:rezzed card))
                    (update! state side (assoc card :rezzed true))))

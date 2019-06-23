@@ -1152,7 +1152,7 @@
 
    "Gauss"
    (auto-icebreaker ["Barrier"]
-                    {:strength-bonus (req (if (= :this-turn (:installed card)) 3 0))
+                    {:strength-bonus (req (if (= :this-turn (installed? card)) 3 0))
                      :events (let [losestr {:effect (effect (update-breaker-strength card))}]
                                {:runner-turn-ends losestr
                                 :corp-turn-ends losestr})

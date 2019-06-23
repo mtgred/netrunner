@@ -2154,7 +2154,7 @@
                      (gain-agenda-point state :corp 0))}
 
    "The Class Act"
-   (let [draw-ability {:req (req (= :this-turn (:installed card)))
+   (let [draw-ability {:req (req (= :this-turn (installed? card)))
                        :async true
                        :msg "draw 4 cards"
                        :effect (effect (draw :runner eid 4 nil))}]

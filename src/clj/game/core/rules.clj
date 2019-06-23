@@ -434,7 +434,7 @@
        (if-let [trash-effect (:trash-effect cdef)]
          (if (and (not disabled)
                   (or (and (runner? card)
-                           (:installed card)
+                           (installed? card)
                            (not (:facedown card)))
                       (and (:rezzed card)
                            (not host-trashed))

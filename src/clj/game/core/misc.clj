@@ -113,7 +113,7 @@
           hosted-on-ice (->> (:corp @state) :servers seq flatten (mapcat :ices) (mapcat :hosted))]
       (loop [unchecked (concat top-level-cards (filter runner? hosted-on-ice)) installed ()]
         (if (empty? unchecked)
-          (filter :installed installed)
+          (filter installed? installed)
           (let [[card & remaining] unchecked]
             (recur (filter identity (into remaining (:hosted card))) (into installed [card]))))))
     (let [servers (->> (:corp @state) :servers seq flatten)
