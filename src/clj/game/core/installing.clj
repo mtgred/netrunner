@@ -20,8 +20,8 @@
   [state side {:keys [disabled installed rezzed facedown zone host] :as card}]
   (when-let [leave-effect (:leave-play (card-def card))]
     (when (and (not disabled)
-               (not (and (= (:side card) "Runner") host (not installed) (not facedown)))
-               (or (and (= (:side card) "Runner") installed (not facedown))
+               (not (and (runner? card) host (not installed) (not facedown)))
+               (or (and (runner? card) installed (not facedown))
                    rezzed
                    (and host (not facedown))
                    (= (first zone) :current)

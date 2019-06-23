@@ -358,7 +358,7 @@
           (system-msg state side (str "spends " bet " [Credits]"))
           (wait-for (trigger-event-simult state side :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
                     (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-                      (let [card-side (if (= "Corp" (:side card)) :corp :runner)]
+                      (let [card-side (if (corp? card) :corp :runner)]
                         (continue-ability state card-side (assoc ability :async true) card nil))
                       (effect-completed state side eid))))
       (show-wait-prompt
@@ -508,7 +508,7 @@
    (continue-ability state side
                     {:show-discard  true
                      :choices {:max n
-                               :req #(and (= (:side %) "Corp")
+                               :req #(and (corp? %)
                                           (= (:zone %) [:discard]))
                                :all all?}
                      :msg (msg "shuffle "

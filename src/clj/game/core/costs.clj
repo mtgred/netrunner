@@ -229,7 +229,7 @@
                      :choices {:max amount
                                :all true
                                :req #(and (installed? %)
-                                          (= (:side %) "Runner"))}
+                                          (runner? %))}
                      :async true
                      :effect (req (doseq [c targets]
                                     (move state :runner c :deck))

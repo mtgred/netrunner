@@ -44,8 +44,8 @@
 (defn- init-game-state
   "Initialises the game state"
   [{:keys [players gameid spectatorhands room] :as game}]
-  (let [corp (some #(when (= (:side %) "Corp") %) players)
-        runner (some #(when (= (:side %) "Runner") %) players)
+  (let [corp (some #(when (corp? %) %) players)
+        runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp) (:user corp))
         runner-deck (create-deck (:deck runner) (:user runner))
         corp-deck-id (get-in corp [:deck :_id])

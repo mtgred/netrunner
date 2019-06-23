@@ -143,7 +143,7 @@
 (defn command-facedown [state side]
   (resolve-ability state side
                    {:prompt "Select a card to install facedown"
-                    :choices {:req #(and (= (:side %) "Runner")
+                    :choices {:req #(and (runner? %)
                                          (in-hand? %))}
                     :effect (effect (runner-install target {:facedown true}))}
                    {:title "/faceup command"} nil))

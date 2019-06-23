@@ -27,7 +27,7 @@
                       :label "Force the Runner to trash an installed card"
                       :msg (msg "force the Runner to trash " (:title target))
                       :choices {:req #(and (installed? %)
-                                           (= (:side %) "Runner"))}
+                                           (runner? %))}
                       :effect (effect (trash target {:cause :subroutine}))})
 
 (def corp-rez-toast
