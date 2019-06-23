@@ -509,7 +509,7 @@
                     {:show-discard  true
                      :choices {:max n
                                :req #(and (corp? %)
-                                          (= (:zone %) [:discard]))
+                                          (in-discard? %))
                                :all all?}
                      :msg (msg "shuffle "
                                (let [seen (filter :seen targets)
