@@ -1574,13 +1574,14 @@
                              (let [card (get-card state (assoc card :zone '(:discard)))]
                                (unregister-events state side card)
                                (when (:run-again card)
-                                 (make-run state side mob-eid :rd nil card)
+                                 (update! state side (dissoc card :run-again))
                                  (register-events state side {:successful-run
                                                               {:req (req (= target :rd))
                                                                :msg "gain 4 [Credits]"
                                                                :effect (effect (gain-credits 4))}}
-                                                  (assoc card :zone '(:discard))))
-                               (update! state side (dissoc card :run-again))))))
+                                                  card)
+                                 (wait-for (make-run state side (make-eid state mob-eid) :rd nil card)
+                                           (unregister-events state side card)))))))
     :events {:successful-run nil
              :successful-run-ends {:interactive (req true)
                                    :optional {:req (req (= [:rd] (:server target)))

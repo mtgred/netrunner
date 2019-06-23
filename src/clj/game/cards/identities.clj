@@ -814,7 +814,8 @@
                :agenda-stolen leela}})
 
    "Liza Talking Thunder: Prominent Legislator"
-   {:events
+   {:implementation "Needs to be resolved manually with Crisium Grid"
+    :events
     {:successful-run
      {:async true
       :interactive (req true)

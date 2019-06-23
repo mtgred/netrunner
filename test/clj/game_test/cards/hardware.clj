@@ -8,20 +8,42 @@
 
 (deftest acacia
   ;; Acacia - Optionally gain credits for number of virus tokens then trash
-  (do-game
-    (new-game {:runner {:deck ["Acacia" "Virus Breeding Ground" "Datasucker"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Acacia")
-    (play-from-hand state :runner "Virus Breeding Ground")
-    (play-from-hand state :runner "Datasucker")
-    (core/add-counter state :runner (get-resource state 0) :virus 4)
-    (core/add-counter state :runner (get-program state 0) :virus 3)
-    (take-credits state :runner)
-    (is (= 2 (:credit (get-runner))) "Runner initial credits")
-    (core/purge state :corp)
-    (click-prompt state :runner "Yes")
-    (is (= 9 (:credit (get-runner))) "Runner gained 9 credits")
-    (is (= 1 (count (:discard (get-runner)))) "Acacia has trashed")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Acacia" "Virus Breeding Ground" "Datasucker"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Acacia")
+      (play-from-hand state :runner "Virus Breeding Ground")
+      (play-from-hand state :runner "Datasucker")
+      (core/add-counter state :runner (get-resource state 0) :virus 4)
+      (core/add-counter state :runner (get-program state 0) :virus 3)
+      (take-credits state :runner)
+      (is (= 2 (:credit (get-runner))) "Runner initial credits")
+      (core/purge state :corp)
+      (click-prompt state :runner "Yes")
+      (is (= 9 (:credit (get-runner))) "Runner gained 9 credits")
+      (is (= 1 (count (:discard (get-runner)))) "Acacia has trashed")))
+  (testing "Issue #4280: Interaction with LLDS Energy Regulator"
+    (do-game
+      (new-game {:runner {:deck ["Acacia" "LLDS Energy Regulator" "Datasucker"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Acacia")
+      (play-from-hand state :runner "Datasucker")
+      (play-from-hand state :runner "LLDS Energy Regulator")
+      (core/add-counter state :runner (get-program state 0) :virus 3)
+      (take-credits state :runner)
+      (let [llds (get-program state 1)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Runner didn't get credits before deciding on LLDS"
+                           (core/purge state :corp)
+                           (click-prompt state :runner "Yes"))
+        (changes-val-macro -3 (:credit (get-runner))
+                           "Runner pays 3 for LLDS"
+                           (card-ability state :runner (refresh llds) 0))
+        (changes-val-macro 3 (:credit (get-runner))
+                           "Runner got Acacia credits"
+                           (click-prompt state :runner "Done"))
+        (is (= 0 (count (:discard (get-runner)))) "Acacia has not been trashed")))))
 
 (deftest akamatsu-mem-chip
   ;; Akamatsu Mem Chip - Gain 1 memory
