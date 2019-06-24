@@ -45,7 +45,7 @@
         (click-card state :corp (find-card "Posted Bounty" (:scored (get-corp))))
         (click-prompt state :corp "Yes") ; "Forfeit Posted Bounty to give 1 tag?"
         (is (= 1 (count-tags state)) "Runner given 1 tag")
-        (is (= 1 (:bad-publicity (get-corp))) "Corp has 1 bad publicity")
+        (is (= 1 (count-bad-pub state)) "Corp has 1 bad publicity")
         (is (zero? (:agenda-point (get-corp))) "Forfeited Posted Bounty to 24/7 News Cycle"))))
   (testing "Swapped agendas are able to be used. #1555"
     (do-game
@@ -74,7 +74,7 @@
       (click-card state :corp (find-card "Profiteering" (:scored (get-corp))))
       (click-prompt state :corp "3")
       (is (= 1 (:agenda-point (get-corp))))
-      (is (= 3 (:bad-publicity (get-corp))))
+      (is (= 3 (count-bad-pub state)))
       (is (= 23 (:credit (get-corp))) "Gained 15 credits"))))
 
 (deftest accelerated-diagnostics
@@ -1092,7 +1092,7 @@
       (is (= "Gordian Blade" (-> (get-runner) :rig :program second :title)) "Gordian Blade not trashed")
       (is (= "Astrolabe" (-> (get-runner) :rig :hardware first :title)) "Astrolabe not trashed")
       (is (= "Daily Casts" (-> (get-runner) :rig :resource first :title)) "Daily Casts not trashed")
-      (is (= 1 (:bad-publicity (get-corp))))))
+      (is (= 1 (count-bad-pub state)))))
   (testing "Can't afford to prevent any trashes"
     (do-game
       (new-game {:corp {:deck ["Project Beale" "Game Over"]}
@@ -1111,7 +1111,7 @@
       (is (= 2 (-> (get-runner) :discard count)) "2 programs trashed")
       (is (some? (find-card "Nyashia" (:discard (get-runner)))) "Nyashia trashed")
       (is (some? (find-card "Takobi" (:discard (get-runner)))) "Takobi trashed")
-      (is (= 1 (:bad-publicity (get-corp)))))))
+      (is (= 1 (count-bad-pub state))))))
 
 (deftest hangeki
   ;; Hangeki
@@ -1198,10 +1198,10 @@
     (play-from-hand state :runner "Daily Casts")
     (take-credits state :runner)
     (play-from-hand state :corp "Hellion Alpha Test")
-    (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+    (is (zero? (count-bad-pub state)) "Corp should start with 0 bad publicity")
     (click-prompt state :corp "0")
     (click-prompt state :runner "2")
-    (is (= 1 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity from losing Hellion Alpha Test trace")))
+    (is (= 1 (count-bad-pub state)) "Corp should gain 1 bad publicity from losing Hellion Alpha Test trace")))
 
 (deftest hellion-beta-test
   ;; Hellion Beta Test
@@ -1236,11 +1236,11 @@
       (run-empty-server state :remote1)
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (take-credits state :runner)
-      (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+      (is (zero? (count-bad-pub state)) "Corp should start with 0 bad publicity")
       (play-from-hand state :corp "Hellion Beta Test")
       (click-prompt state :corp "0")
       (click-prompt state :runner "2")
-      (is (= 1 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity from losing Hellion Beta Test trace"))))
+      (is (= 1 (count-bad-pub state)) "Corp should gain 1 bad publicity from losing Hellion Beta Test trace"))))
 
 (deftest high-profile-target
   (testing "when the runner has no tags"
@@ -1322,7 +1322,7 @@
     (play-from-hand state :corp "Invasion of Privacy")
     (click-prompt state :corp "0") ; default trace
     (click-prompt state :runner "2") ; Runner matches
-    (is (= 1 (:bad-publicity (get-corp))))))
+    (is (= 1 (count-bad-pub state)))))
 
 (deftest ipo
   ;; IPO - credits with Terminal operations
@@ -1984,12 +1984,12 @@
     (do-game
       (new-game {:corp {:deck ["Hostile Takeover" "Sacrifice"]}})
       (play-and-score state "Hostile Takeover")
-      (is (= 1 (:bad-publicity (get-corp))) "Hostile Takeover gives one bad publicity")
+      (is (= 1 (count-bad-pub state)) "Hostile Takeover gives one bad publicity")
       (let [ht (get-scored state :corp 0)
             credits (:credit (get-corp))]
         (play-from-hand state :corp "Sacrifice")
         (click-card state :corp ht)
-        (is (zero? (:bad-publicity (get-corp))) "Sacrifice removes one bad publicity for forfeiting Hostile Takeover")
+        (is (zero? (count-bad-pub state)) "Sacrifice removes one bad publicity for forfeiting Hostile Takeover")
         (is (= (inc credits) (:credit (get-corp))) "Corp gained one credit from removing one bad pub with Sacrifice"))))
   (testing "Play restrictions"
     (do-game
@@ -2851,12 +2851,12 @@
     (play-from-hand state :runner "Film Critic")
     (take-credits state :runner)
     (is (= 1 (count (get-resource state))) "Runner has 1 resource installed")
-    (is (zero? (:bad-publicity (get-corp))) "Corp has no bad pub")
+    (is (zero? (count-bad-pub state)) "Corp has no bad pub")
     (play-from-hand state :corp "Under the Bus")
     (click-card state :corp (get-resource state 0))
     (is (empty? (get-resource state)) "Runner has no resource installed")
     (is (= 1 (count (:discard (get-runner)))) "Runner has 1 trashed card")
-    (is (= 1 (:bad-publicity (get-corp))) "Corp takes 1 bad pub")))
+    (is (= 1 (count-bad-pub state)) "Corp takes 1 bad pub")))
  (testing "With replacement effects"
     (do-game
     (new-game {:corp {:deck ["Ice Wall"]
@@ -2872,12 +2872,12 @@
     (click-prompt state :runner "No action")
     (take-credits state :runner)
     (is (= 1 (count (get-resource state))) "Runner has 1 resource installed")
-    (is (zero? (:bad-publicity (get-corp))) "Corp has no bad pub")
+    (is (zero? (count-bad-pub state)) "Corp has no bad pub")
     (play-from-hand state :corp "Under the Bus")
     (click-card state :corp (get-resource state 0))
     (is (empty? (get-resource state)) "Runner has no resource installed")
     (is (= 2 (count (:discard (get-runner)))) "Runner has 2 trashed card")
-    (is (= 1 (:bad-publicity (get-corp))) "Corp takes 1 bad pub"))) )
+    (is (= 1 (count-bad-pub state)) "Corp takes 1 bad pub"))) )
 
 (deftest wake-up-call
   ;; Wake Up Call

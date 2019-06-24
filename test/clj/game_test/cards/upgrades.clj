@@ -995,9 +995,9 @@
     (click-prompt state :runner "Pay 2 [Credits] to trash") ; trash
     (run-on state "Archives")
     (run-successful state)
-    (is (= 1 (:bad-publicity (get-corp))))
+    (is (= 1 (count-bad-pub state)))
     (click-prompt state :runner "No")
-    (is (= 0 (:bad-publicity (get-corp))) "Runner declines to take tag, Corp removes 1 BP")))
+    (is (= 0 (count-bad-pub state)) "Runner declines to take tag, Corp removes 1 BP")))
 
 (deftest intake
   ;; Intake - Trace4, add an installed program or virtual resource to the grip

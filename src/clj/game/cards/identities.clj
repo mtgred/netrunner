@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target
@@ -472,7 +472,7 @@
    "GRNDL: Power Unleashed"
    {:events {:pre-start-game {:req (req (= :corp side))
                               :effect (req (gain-credits state :corp 5)
-                                           (when (zero? (:bad-publicity corp))
+                                           (when (zero? (count-bad-pub state))
                                              (gain-bad-publicity state :corp 1)))}}}
 
    "Haarpsichord Studios: Entertainment Unleashed"
@@ -1348,7 +1348,8 @@
    "Valencia Estevez: The Angel of Cayambe"
    {:events {:pre-start-game
              {:req (req (and (= side :runner)
-                             (zero? (get-in @state [:corp :bad-publicity]))))
+                             (zero? (count-bad-pub state))))
+              ;; This doesn't use `gain-bad-publicity` to avoid the event
               :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Weyland Consortium: Because We Built It"

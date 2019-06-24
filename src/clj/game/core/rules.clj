@@ -390,7 +390,7 @@
   ([state side n] (lose-bad-publicity state side (make-eid state) n))
   ([state side eid n]
    (if (= n :all)
-     (lose-bad-publicity state side eid (get-in @state [:corp :bad-publicity]))
+     (lose-bad-publicity state side eid (get-in @state [:corp :bad-publicity :base]))
      (do (lose state :corp :bad-publicity n)
          (trigger-event-sync state side eid :corp-lose-bad-publicity n side)))))
 

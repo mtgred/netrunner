@@ -44,7 +44,7 @@
                                      (trigger-event state side :begin-run :server s)
                                      (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
                                      (swap! state assoc-in [:runner :next-run-credit] 0)
-                                     (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
+                                     (gain-run-credits state side (+ (count-bad-pub state)))
                                      (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
                                      (update-all-ice state :corp)
                                      (swap! state update-in [:stats side :runs :started] (fnil inc 0))

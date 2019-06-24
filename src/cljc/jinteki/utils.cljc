@@ -22,6 +22,17 @@
   (cond (= side :corp) :runner
         (= side :runner) :corp))
 
+(defn count-bad-pub
+  "Counts number of bad pub corp has (real + additional)"
+  [state]
+  (+ (get-in @state [:corp :bad-publicity :base] 0)
+     (get-in @state [:corp :bad-publicity :additional] 0)))
+
+(defn has-bad-pub?
+  "Returns truthy if corp has any bad publicity"
+  [state]
+  (pos? (count-bad-pub state)))
+
 (defn count-tags
   "Counts number of tags runner has (real + additional)"
   [state]

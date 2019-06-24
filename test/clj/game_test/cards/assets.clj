@@ -330,14 +330,14 @@
     (click-prompt state :corp "0")  ;; Corp doesn't pump trace, base 3
     (click-prompt state :runner "0")  ;; Runner doesn't pump trace; loses trace
     (is (= 1 (:agenda-point (get-corp))) "Corp should score a 1-point agenda")
-    (is (zero? (:bad-publicity (get-corp))) "Corp should gain 0 bad publicity")
+    (is (zero? (count-bad-pub state)) "Corp should gain 0 bad publicity")
     (is (= 3 (:credit (get-corp))) "Corp should gain 0 credits")
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (score-agenda state :corp (get-content state :remote3 0))
     (click-prompt state :corp "0")  ;; Corp doesn't pump trace, base 3
     (click-prompt state :runner "3")  ;; Runner pumps trace; wins trace
     (is (= 2 (:agenda-point (get-corp))) "Corp should score a 1-point agenda")
-    (is (= 1 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity from failed trace")
+    (is (= 1 (count-bad-pub state)) "Corp should gain 1 bad publicity from failed trace")
     (is (= 10 (:credit (get-corp))) "Corp should gain 7 credits")))
 
 (deftest c-i-fund
@@ -1148,12 +1148,12 @@
     (let [liz (get-content state :remote1 0)
           hotel (get-resource state 0)]
       (core/rez state :corp liz)
-      (is (zero? (:bad-publicity (get-corp))) "1 bad publicity removed")
+      (is (zero? (count-bad-pub state)) "1 bad publicity removed")
       (card-ability state :corp liz 0)
       (click-card state :corp hotel)
       (is (= 1 (count (:discard (get-runner)))) "Earthrise trashed")
       (is (= 1 (count (:discard (get-corp)))) "Elizabeth Mills trashed")
-      (is (= 1 (:bad-publicity (get-corp))) "1 bad publicity taken from trashing a location"))))
+      (is (= 1 (count-bad-pub state)) "1 bad publicity taken from trashing a location"))))
 
 (deftest encryption-protocol
   ;; Encryption Protocol - Trash cost of installed cards increased by 1
@@ -1282,13 +1282,13 @@
       (play-from-hand state :corp "Exposé" "New remote")
       (let [expose (get-content state (keyword (str "remote" (inc i))) 0)]
         (core/rez state :corp (refresh expose))
-        (is (zero? (:bad-publicity (get-corp))) "Corp should have 0 bad publicity to start with")
+        (is (zero? (count-bad-pub state)) "Corp should have 0 bad publicity to start with")
         (when (pos? i)
           (core/gain-bad-publicity state :corp i)
-          (is (= i (:bad-publicity (get-corp))) (str "Corp should gain " i " bad publicity"))
+          (is (= i (count-bad-pub state)) (str "Corp should gain " i " bad publicity"))
           (advance state (refresh expose) i))
         (card-ability state :corp (refresh expose) 0)
-        (is (zero? (:bad-publicity (get-corp))) "Corp should have 0 bad publicity after using Exposé's ability")
+        (is (zero? (count-bad-pub state)) "Corp should have 0 bad publicity after using Exposé's ability")
         (is (= 1 (-> (get-corp) :discard count)) "Archives should have 1 card in it")
         (is (= "Exposé" (-> (get-corp) :discard first :title)) "Only card in Archives should be Exposé")
         (core/move state :corp (find-card "Exposé" (:discard (get-corp))) :hand)))))
@@ -1793,14 +1793,14 @@
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :runner "Pay 6 [Credits] to trash")
-      (is (zero? (:bad-publicity (get-corp))) "Took no bad pub on unrezzed trash")
+      (is (zero? (count-bad-pub state)) "Took no bad pub on unrezzed trash")
       (take-credits state :runner)
       (is (= 3 (count (:hand (get-corp)))) "Drew a card from IAF + mandatory")
       (is (= 4 (:credit (get-corp))) "Gained 1 credit from IAF")
       (take-credits state :corp)
       (run-empty-server state :remote2)
       (click-prompt state :runner "Pay 6 [Credits] to trash")
-      (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash"))))
+      (is (= 1 (count-bad-pub state)) "Took a bad pub on rezzed trash"))))
 
 (deftest indian-union-stock-exchange
   ;; Indian Union Stock Exchange
@@ -3155,7 +3155,7 @@
     (play-from-hand state :corp "Reality Threedee" "New remote")
     (let [r3d (get-content state :remote1 0)]
       (core/rez state :corp r3d)
-      (is (= 1 (:bad-publicity (get-corp))) "Took 1 bad pub on rez")
+      (is (= 1 (count-bad-pub state)) "Took 1 bad pub on rez")
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit")
@@ -3247,7 +3247,7 @@
         (take-credits state :runner)
         (is (zero? (get-counters (refresh rex) :power)))
         (click-prompt state :corp "Remove 1 bad publicity")
-        (is (zero? (:bad-publicity (get-corp))) "Should not have the same amount of bad publicity")
+        (is (zero? (count-bad-pub state)) "Should not have the same amount of bad publicity")
         (is (= "Rex Campaign" (-> (get-corp) :discard first :title)))))))
 
 (deftest ronald-five
@@ -3304,20 +3304,20 @@
     (let [rrs (get-content state :remote1 0)
           start-credits (:credit (get-corp))]
       (core/rez state :corp rrs)
-      (is (zero? (:bad-publicity (get-corp))) "Start with no bad pub")
+      (is (zero? (count-bad-pub state)) "Start with no bad pub")
       (card-ability state :corp rrs 0)
       (is (= (:credit (get-corp)) (+ 6 start-credits)) "Gained 6 credits")
       (is (empty? (:prompt (get-corp))) "No prompt if no bad pub")
       (core/gain state :corp :bad-publicity 1)
-      (is (= 1 (:bad-publicity (get-corp))) "Start with 1 bad pub")
+      (is (= 1 (count-bad-pub state)) "Start with 1 bad pub")
       (card-ability state :corp rrs 0)
       (is (= (:credit (get-corp)) (+ 12 start-credits)) "Gained 6 credits")
       (click-prompt state :corp "No")
-      (is (= 1 (:bad-publicity (get-corp))) "Kept 1 bad pub")
+      (is (= 1 (count-bad-pub state)) "Kept 1 bad pub")
       (card-ability state :corp rrs 0)
       (is (= (:credit (get-corp)) (+ 18 start-credits)) "Gained 6 credits")
       (click-prompt state :corp "Yes")
-      (is (zero? (:bad-publicity (get-corp))) "Removed 1 bad pub"))))
+      (is (zero? (count-bad-pub state)) "Removed 1 bad pub"))))
 
 (deftest sandburg
   ;; Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c
