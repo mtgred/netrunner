@@ -1464,9 +1464,9 @@
       (click-card state :runner iwall)
       (click-prompt state :runner "Code Gate")
       (is (= 2 (:click (get-runner))) "Click charged")
-      (is (true? (utils/has? (refresh iwall) :subtype "Code Gate")) "Ice Wall gained Code Gate")
+      (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall gained Code Gate")
       (run-empty-server state "Archives")
-      (is (false? (utils/has? (refresh iwall) :subtype "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+      (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
 
 (deftest paperclip
   ;; Paperclip - prompt to install on encounter, but not if another is installed
@@ -1682,9 +1682,9 @@
       (core/rez state :corp iw)
       (card-ability state :runner pelangi 0)
       (click-prompt state :runner "Code Gate")
-      (is (utils/has? (refresh iw) :subtype "Code Gate") "Ice Wall gained Code Gate")
+      (is (has-subtype? (refresh iw) "Code Gate") "Ice Wall gained Code Gate")
       (run-continue state)
-      (is (not (utils/has? (refresh iw) :subtype "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+      (is (not (has-subtype? (refresh iw) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
 
 (deftest peregrine
   ;; Peregrine - 2c to return to grip and derez an encountered code gate

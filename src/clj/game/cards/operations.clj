@@ -759,7 +759,7 @@
     :choices ["Hardware" "Program" "Resource"]
     :effect (req (let [type target
                        trashtargets (filter #(and (is-type? % type)
-                                                  (not (has? % :subtype "Icebreaker")))
+                                                  (not (has-subtype? % "Icebreaker")))
                                             (all-active-installed state :runner))
                        numtargets (count trashtargets)
                        typemsg (str (when (= type "Program") "non-Icebreaker ") type
@@ -775,7 +775,7 @@
                         :choices {:max (req (min numtargets (quot (:credit runner) 3)))
                                   :req #(and (installed? %)
                                              (is-type? % type)
-                                             (not (has? % :subtype "Icebreaker")))}
+                                             (not (has-subtype? % "Icebreaker")))}
                         :effect (req (pay state :runner card :credit (* 3 (count targets)))
                                      (system-msg
                                        state :runner
