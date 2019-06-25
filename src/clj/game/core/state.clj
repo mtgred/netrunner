@@ -39,3 +39,15 @@
    winner
    winning-deck-id
    winning-user])
+
+(defn new-state
+  [gameid room now spectatorhands corp runner]
+  (map->State
+    {:gameid gameid :log [] :active-player :runner :end-turn true
+     :room room
+     :rid 0 :turn 0 :eid 0
+     :sfx [] :sfx-current-id 0
+     :stats {:time {:started now}}
+     :options {:spectatorhands spectatorhands}
+     :corp corp
+     :runner runner}))

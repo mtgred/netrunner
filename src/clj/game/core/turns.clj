@@ -58,52 +58,13 @@
         corp-quote (quotes/make-quote corp-identity runner-identity)
         runner-quote (quotes/make-quote runner-identity corp-identity)]
     (atom
-      (map->State
-        {:gameid gameid :log [] :active-player :runner :end-turn true
-         :room room
-         :rid 0 :turn 0 :eid 0
-         :sfx [] :sfx-current-id 0
-         :stats {:time {:started (t/now)}}
-         :options {:spectatorhands spectatorhands}
-         :corp (map->Corp
-                 {:user (:user corp)
-                  :identity corp-identity
-                  :options corp-options
-                  :deck (zone :deck corp-deck)
-                  :deck-id corp-deck-id
-                  :hand []
-                  :discard [] :scored [] :rfg [] :play-area []
-                  :servers (map->Servers {:hq {} :rd {} :archives {}})
-                  :click 0 :click-per-turn 3
-                  :credit 5
-                  :bad-publicity (map->BadPublicity {:base 0 :additional 0})
-                  :toast []
-                  :hand-size (map->HandSize {:base 5 :mod 0})
-                  :agenda-point 0 :agenda-point-req 7
-                  :keep false
-                  :quote corp-quote})
-         :runner (map->Runner
-                   {:user (:user runner)
-                    :identity runner-identity
-                    :options runner-options
-                    :deck (zone :deck runner-deck)
-                    :deck-id runner-deck-id
-                    :hand []
-                    :discard [] :scored [] :rfg [] :play-area []
-                    :rig (map->Rig {:program [] :resource [] :hardware []})
-                    :toast []
-                    :click 0 :click-per-turn 4
-                    :credit 5 :run-credit 0
-                    :link 0
-                    :tag (map->Tags {:base 0 :additional 0 :is-tagged 0})
-                    :memory (map->Memory {:base 4 :mod 0 :used 0})
-                    :hand-size (map->HandSize {:base 5 :mod 0})
-                    :agenda-point 0 :agenda-point-req 7
-                    :hq-access 1 :rd-access 1
-                    :rd-access-fn seq
-                    :brain-damage 0
-                    :keep false
-                    :quote runner-quote})}))))
+      (new-state
+        gameid
+        room
+        (t/now)
+        spectatorhands
+        (new-corp (:user corp) corp-identity corp-options (zone :deck corp-deck) corp-deck-id corp-quote)
+        (new-runner (:user runner) runner-identity runner-options (zone :deck runner-deck) runner-deck-id runner-quote)))))
 
 (defn init-game
   "Initializes a new game with the given players vector."

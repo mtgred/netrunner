@@ -20,7 +20,7 @@
             [tasks.altart :refer [add-art]]
             [game.quotes :as quotes])
   (:import [game.core.state State]
-           [game.core.player HandSize Corp Servers Runner Rig Tags Memory]
+           [game.core.player Corp Runner]
            [game.core.card Card]))
 
 (load "core/events")    ; triggering of events
