@@ -1,6 +1,7 @@
 (ns jinteki.decks
   (:require [clojure.string :refer [split split-lines join escape] :as s]
-            [jinteki.utils :refer [faction-label INFINITY has-subtype?]]
+            [game.core.card :refer [has-subtype?]]
+            [jinteki.utils :refer [faction-label INFINITY]]
             [jinteki.cards :refer [all-cards] :as cards]
             #?@(:clj [[clj-time.core :as t] [clj-time.format :as f]])))
 

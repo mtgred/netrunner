@@ -1,6 +1,5 @@
 (ns game.core.card
-  (:require [clojure.string :refer [lower-case]]
-            [jinteki.utils :as jutils]))
+  (:require [clojure.string :refer [lower-case includes?]]))
 
 (defrecord Card
   [advancementcost
@@ -74,6 +73,11 @@
   "Checks if the specified card is in the play area."
   [card]
   (= (:zone card) [:play-area]))
+
+(defn in-current?
+  "Checks if the specified card is in the 'current' zone."
+  [card]
+  (= (:zone card) [:current]))
 
 (defn- card-is?
   "Checks the property of the card to see if it is equal to the given value,
@@ -149,8 +153,14 @@
   [card]
   (is-type? card "Upgrade"))
 
-; Instead of repeating ourselves, just bring that function into this namespace
-(def has-subtype? jutils/has-subtype?)
+(defn has-subtype?
+  "Checks if the specified subtype is present in the card, ignoring case."
+  [card subtype]
+  (letfn [(contains-sub? [card]
+            (when-let [sub (:subtype card)]
+              (includes? (lower-case sub) (lower-case subtype))))]
+    (or (contains-sub? card)
+        (contains-sub? (:persistent card)))))
 
 (defn virus-program?
   [card]
@@ -187,9 +197,9 @@
 
 (defn active?
   "Checks if the card is active and should receive game events/triggers."
-  [{:keys [zone] :as card}]
-  (or (is-type? card "Identity")
-      (= zone [:current])
+  [card]
+  (or (identity? card)
+      (in-current? card)
       (and (corp? card)
            (installed? card)
            (rezzed? card))

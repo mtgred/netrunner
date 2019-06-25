@@ -45,15 +45,6 @@
   (or (pos? (get-in @state [:runner :tag :is-tagged] 0))
       (pos? (count-tags state))))
 
-(defn has-subtype?
-  "Checks if the specified subtype is present in the card, ignoring case."
-  [card subtype]
-  (letfn [(contains-sub? [card]
-            (when-let [subs (:subtype card)]
-              (s/includes? (s/lower-case subs) (s/lower-case subtype))))]
-    (or (contains-sub? card)
-        (contains-sub? (:persistent card)))))
-
 (defn slugify
   "As defined here: https://you.tools/slugify/"
   ([string] (slugify string "-"))

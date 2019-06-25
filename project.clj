@@ -80,7 +80,7 @@
   :cljsbuild {
     :builds [
       {:id "dev"
-       :source-paths ["src/cljs/nr" "src/cljs/dev" "src/cljc"]
+       :source-paths ["src/clj/game/core" "src/cljs/nr" "src/cljs/dev" "src/cljc"]
        :figwheel true
        :compiler {:output-to "resources/public/cljs/app10.js"
                   :output-dir "resources/public/cljs"
@@ -91,7 +91,7 @@
                   :npm-deps false
                   :external-config {:devtools/config {:features-to-install :all}}}}
       {:id "prod"
-       :source-paths ["src/cljs/nr" "src/cljs/prod" "src/cljc"]
+       :source-paths ["src/clj/game/core" "src/cljs/nr" "src/cljs/prod" "src/cljc"]
        :compiler {:output-to "resources/public/js/app10.js"
                   :output-dir "out"
                   :optimizations :advanced
