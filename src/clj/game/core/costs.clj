@@ -22,8 +22,8 @@
     (#{:hand-size :memory} attr)
     (deduct state side [attr {:mod value}])
 
-    ;; default case for `:tag` is `:base`
-    (#{:tag} attr)
+    ;; default case for tags and bad-publicity is `:base`
+    (#{:tag :bad-publicity} attr)
     (deduct state side [attr {:base value}])
 
     :else
@@ -405,8 +405,8 @@
       (#{:hand-size :memory} type)
       (gain state side type {:mod amount})
 
-      ;; Default case for tag is `:base`
-      (#{:tag} type)
+      ;; Default case for tags and bad publicity is `:base`
+      (#{:tag :bad-publicity} type)
       (gain state side type {:base amount})
 
       ;; Else assume amount is a number and try to increment type by it.
@@ -520,8 +520,7 @@
   (get-in @state [:bonus :ignore-install-cost]))
 
 (defn clear-install-cost-bonus [state side]
-  (swap! state update-in [:bonus] dissoc :install-cost)
-  (swap! state update-in [:bonus] dissoc :ignore-install-cost))
+  (swap! state update-in [:bonus] dissoc :install-cost :ignore-install-cost))
 
 (defn install-cost
   [state side card all-cost]

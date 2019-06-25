@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags INFINITY has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
@@ -90,7 +90,7 @@
                                            (system-msg state :runner (str "uses " (:title card) " to take 1 tag")))
                                        (effect-completed state :runner eid)))}
      :runner-turn-begins {:async true
-                          :effect (req (if (not has-bad-pub)
+                          :effect (req (if (not (has-bad-pub? state))
                                          (do (gain-bad-publicity state :corp eid 1)
                                              (system-msg state :runner
                                                          (str "uses " (:title card) " to give the corp 1 bad publicity")))
@@ -1132,7 +1132,7 @@
                                  :type :recurring}}}
 
    "Investigative Journalism"
-   {:req (req has-bad-pub)
+   {:req (req (has-bad-pub? state))
     :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
                  :effect (effect (gain-bad-publicity :corp 1)
                                  (trash card {:cause :ability-cost}))}]}
@@ -2040,8 +2040,8 @@
    {:abilities [{:label "Draw 1 card for each Corp bad publicity"
                  :async true
                  :effect (req (wait-for (trash state side card {:cause :ability-cost})
-                                        (draw state side eid (+ (:bad-publicity corp) (:has-bad-pub corp)) nil)))
-                 :msg (msg "draw " (:bad-publicity corp) " cards")}]
+                                        (draw state side eid (count-bad-pub state) nil)))
+                 :msg (msg "draw " (count-bad-pub state) " cards")}]
     :events {:play-operation
              {:req (req (or (has-subtype? target "Black Ops")
                             (has-subtype? target "Gray Ops")))

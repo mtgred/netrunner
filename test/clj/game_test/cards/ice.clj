@@ -422,7 +422,7 @@
     (let [fen (get-ice state :hq 0)]
       (run-on state "HQ")
       (core/rez state :corp fen)
-      (is (= 1 (:bad-publicity (get-corp))) "Gained 1 bad pub")
+      (is (= 1 (count-bad-pub state)) "Gained 1 bad pub")
       (card-subroutine state :corp fen 0)
       (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
       (is (= 1 (count (:discard (get-runner)))))
@@ -2076,9 +2076,9 @@
       (play-from-hand state :runner "Inti")
       (let [treb (get-ice state :hq 0)]
         (run-on state "HQ")
-        (is (= 0 (:bad-publicity (get-corp))) "No BP before")
+        (is (= 0 (count-bad-pub state)) "No BP before")
         (core/rez state :corp treb)
-        (is (= 1 (:bad-publicity (get-corp))) "Gained 1 BP from rez")
+        (is (= 1 (count-bad-pub state)) "Gained 1 BP from rez")
         (card-subroutine state :corp treb 0)
         (click-card state :corp "Inti")
         (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
@@ -2098,9 +2098,9 @@
       (play-from-hand state :runner "Inti")
       (let [treb (get-ice state :hq 0)]
         (run-on state "HQ")
-        (is (= 0 (:bad-publicity (get-corp))) "No BP before")
+        (is (= 0 (count-bad-pub state)) "No BP before")
         (core/rez state :corp treb)
-        (is (= 1 (:bad-publicity (get-corp))) "Gained 1 BP from rez")
+        (is (= 1 (count-bad-pub state)) "Gained 1 BP from rez")
         (card-subroutine state :corp treb 0)
         (click-card state :corp "Inti")
         (is (= 1 (count (:discard (get-runner)))) "Inti trashed")

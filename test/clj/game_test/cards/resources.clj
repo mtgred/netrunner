@@ -15,13 +15,13 @@
     (is (zero? (count-tags state)))
     (take-credits state :runner)
     (is (= 1 (count-tags state)) "Runner took 1 tag; had none")
-    (is (zero? (:bad-publicity (get-corp))))
+    (is (zero? (count-bad-pub state)))
     (take-credits state :corp)
-    (is (= 1 (:bad-publicity (get-corp))) "Corp took 1 bad pub; had none")
+    (is (= 1 (count-bad-pub state)) "Corp took 1 bad pub; had none")
     (take-credits state :runner)
     (is (= 1 (count-tags state)) "Runner had 1 tag; didn't take another")
     (take-credits state :corp)
-    (is (= 1 (:bad-publicity (get-corp))) "Corp had 1 bad pub; didn't take another")))
+    (is (= 1 (count-bad-pub state)) "Corp had 1 bad pub; didn't take another")))
 
 (deftest adjusted-chronotype
   ;; Ensure adjusted chronotype gains only 1 click when 2 clicks are lost
@@ -1668,7 +1668,7 @@
     (card-ability state :runner (get-resource state 0) 0)
     (is (zero? (:click (get-runner))) "Spent 4 clicks")
     (is (= 1 (count (:discard (get-runner)))) "IJ is trashed")
-    (is (= 2 (:bad-publicity (get-corp))) "Corp took 1 bad publicity")))
+    (is (= 2 (count-bad-pub state)) "Corp took 1 bad publicity")))
 
 (deftest jackpot
   ;; Jackpot! - whenever a card enters your score area, trash Jackpot to pull off credits
@@ -3071,16 +3071,16 @@
                :runner {:deck ["The Archivist"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "The Archivist")
-    (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+    (is (zero? (count-bad-pub state)) "Corp should start with 0 bad publicity")
     (take-credits state :runner)
     (play-and-score state "Global Food Initiative")
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
-    (is (= 1 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")
+    (is (= 1 (count-bad-pub state)) "Corp should get 1 bad publicity from The Archivist")
     (play-and-score state "Private Security Force")
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
-    (is (= 2 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")))
+    (is (= 2 (count-bad-pub state)) "Corp should get 1 bad publicity from The Archivist")))
 
 (deftest the-artist
   ;; The Artist

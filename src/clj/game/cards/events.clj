@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 (defn- run-event
   ([] (run-event nil))
@@ -136,7 +136,7 @@
 
    "Blackmail"
    (run-event
-     {:req (req has-bad-pub)
+     {:req (req (has-bad-pub? state))
       :msg "prevent ICE from being rezzed during this run"}
      nil
      (effect (register-run-flag!
@@ -379,8 +379,8 @@
    "Corporate Scandal"
    {:msg "give the Corp 1 additional bad publicity"
     :implementation "No enforcement that this Bad Pub cannot be removed"
-    :effect (req (swap! state update-in [:corp :has-bad-pub] inc))
-    :leave-play (req (swap! state update-in [:corp :has-bad-pub] dec))}
+    :effect (req (swap! state update-in [:corp :bad-publicity :additional] inc))
+    :leave-play (req (swap! state update-in [:corp :bad-publicity :additional] dec))}
 
    "Credit Crash"
    {:prompt "Choose a server" :choices (req runnable-servers)
@@ -1276,16 +1276,16 @@
 
    "Itinerant Protesters"
    {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
-    :effect (req (change-hand-size state :corp (- (:bad-publicity corp)))
+    :effect (req (change-hand-size state :corp (- (count-bad-pub state)))
                  (add-watch state :itin
                             (fn [k ref old new]
-                              (let [bpnew (get-in new [:corp :bad-publicity])
-                                    bpold (get-in old [:corp :bad-publicity])
+                              (let [bpnew (count-bad-pub new)
+                                    bpold (count-bad-pub old)
                                     bpchange (- bpnew bpold)]
                                 (when-not (zero? bpchange)
                                   (change-hand-size state :corp (- bpchange)))))))
     :leave-play (req (remove-watch state :itin)
-                     (change-hand-size state :corp (:bad-publicity corp)))}
+                     (change-hand-size state :corp (count-bad-pub state)))}
 
    "Khusyuk"
    (let [access-revealed (fn [revealed]
@@ -2277,7 +2277,7 @@
                                                 :position (count ices)
                                                 :access-bonus []
                                                 :run-effect nil})
-                                   (gain-run-credits state :runner (:bad-publicity corp))
+                                   (gain-run-credits state :runner (count-bad-pub state))
                                    (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))
                                    (trigger-event state :runner :run runtgt)))}
                    card nil))}

@@ -332,13 +332,13 @@
     (new-game {:corp {:deck ["Bifrost Array" "Hostile Takeover"]}})
     (play-and-score state "Hostile Takeover")
     (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
-    (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity")
+    (is (= 1 (count-bad-pub state)) "Should gain 1 bad publicity")
     (let [ht-scored (get-scored state :corp 0)]
       (play-and-score state "Bifrost Array")
       (click-prompt state :corp "Yes")
       (click-card state :corp "Hostile Takeover")
       (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
-      (is (= 2 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
+      (is (= 2 (count-bad-pub state)) "Should gain 1 bad publicity"))))
 
 (deftest brain-rewiring
   ;; Brain Rewiring
@@ -382,18 +382,18 @@
   (testing "take bad pub"
     (do-game
       (new-game {:corp {:deck [(qty "Broad Daylight" 3)]}})
-      (is (zero? (:bad-publicity (get-corp))) "Corp start with no bad pub")
+      (is (zero? (count-bad-pub state)) "Corp start with no bad pub")
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "Yes")
-      (is (= 1 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 1 (count-bad-pub state)) "Corp gains 1 bad pub")
       (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "No")
-      (is (= 1 (:bad-publicity (get-corp))) "Corp doesn't gain bad pub")
+      (is (= 1 (count-bad-pub state)) "Corp doesn't gain bad pub")
       (is (= 1 (get-counters (get-scored state :corp 1) :agenda)) "Should gain 1 agenda counter")
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "Yes")
-      (is (= 2 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 2 (count-bad-pub state)) "Corp gains 1 bad pub")
       (is (= 2 (get-counters (get-scored state :corp 2) :agenda)) "Should gain 2 agenda counters")))
   (testing "deal damage"
     (do-game
@@ -401,7 +401,7 @@
       (core/gain state :corp :bad-publicity 3)
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "Yes")
-      (is (= 4 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 4 (count-bad-pub state)) "Corp gains 1 bad pub")
       (is (= 4 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")
       (is (empty? (:discard (get-runner))) "Runner has no discarded cards")
       (card-ability state :corp (get-scored state :corp 0) 0)
@@ -414,13 +414,13 @@
       (core/gain state :corp :bad-publicity 1)
       (play-from-hand state :corp "Broadcast Square" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
-      (is (= 1 (:bad-publicity (get-corp))) "Corp start with one bad pub")
+      (is (= 1 (count-bad-pub state)) "Corp start with one bad pub")
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "Yes")
-      (is (= 1 (:bad-publicity (get-corp))) "Doesn't gain additional bad pub yet")
+      (is (= 1 (count-bad-pub state)) "Doesn't gain additional bad pub yet")
       (click-prompt state :corp "0")  ;; Corp doesn't pump trace, base 3
       (click-prompt state :runner "0")  ;; Runner doesn't pump trace; loses trace
-      (is (= 1 (:bad-publicity (get-corp))) "Blocks gaining additional bad pub")
+      (is (= 1 (count-bad-pub state)) "Blocks gaining additional bad pub")
       (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")))
   (testing "bad pub triggers - more cases"
     (do-game
@@ -428,13 +428,13 @@
       (core/gain state :corp :bad-publicity 1)
       (play-from-hand state :corp "Broadcast Square" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
-      (is (= 1 (:bad-publicity (get-corp))) "Corp start with one bad pub")
+      (is (= 1 (count-bad-pub state)) "Corp start with one bad pub")
       (play-and-score state "Broad Daylight")
       (click-prompt state :corp "Yes")
-      (is (= 1 (:bad-publicity (get-corp))) "Doesn't gain additional bad pub yet")
+      (is (= 1 (count-bad-pub state)) "Doesn't gain additional bad pub yet")
       (click-prompt state :corp "0")  ;; Corp doesn't pump trace, base 3
       (click-prompt state :runner "5")  ;; Runner pumps trace; wins trace
-      (is (= 2 (:bad-publicity (get-corp))) "Gains additional bad pub")
+      (is (= 2 (count-bad-pub state)) "Gains additional bad pub")
       (is (= 2 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 2 agenda counter"))))
 
 (deftest cfc-excavation-contract
@@ -497,15 +497,15 @@
     (new-game {:corp {:deck [(qty "Clone Retirement" 2) "Hostile Takeover"]}})
     (play-and-score state "Hostile Takeover")
     (is (= 12 (:credit (get-corp))))
-    (is (= 1 (:bad-publicity (get-corp))))
+    (is (= 1 (count-bad-pub state)))
     (play-and-score state "Clone Retirement")
-    (is (zero? (:bad-publicity (get-corp))))
+    (is (zero? (count-bad-pub state)))
     (play-from-hand state :corp "Clone Retirement" "New remote")
     (take-credits state :corp)
     (run-on state "Server 3")
     (run-successful state)
     (click-prompt state :runner "Steal")
-    (is (= 1 (:bad-publicity (get-corp))))))
+    (is (= 1 (count-bad-pub state)))))
 
 (deftest corporate-sales-team
   ;; Corporate Sales Team
@@ -974,20 +974,20 @@
       (play-and-score state "Geothermal Fracking")
       (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
       (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
-      (is (zero? (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
+      (is (zero? (count-bad-pub state)) "Should start with 0 bad publicity")
       (let [gf-scored (get-scored state :corp 0)]
         (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
         (card-ability state :corp gf-scored 0)
         (is (= 1 (:click (get-corp))) "Should have 1 click left")
         (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
-        (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
+        (is (= 1 (count-bad-pub state)) "Should gain 1 bad publicity"))))
   (testing "prevented bad publicity shouldn't block credit gain"
     (do-game
       (new-game {:corp {:deck ["Geothermal Fracking" "Broadcast Square"]}})
       (play-and-score state "Geothermal Fracking")
       (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
       (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
-      (is (zero? (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
+      (is (zero? (count-bad-pub state)) "Should start with 0 bad publicity")
       (play-from-hand state :corp "Broadcast Square" "New remote")
       (let [gf-scored (get-scored state :corp 0)
             bs (get-content state :remote2 0)]
@@ -998,7 +998,7 @@
         (click-prompt state :runner "0")
         (is (zero? (:click (get-corp))) "Should have 0 click left")
         (is (= 10 (:credit (get-corp))) "Should gain 7 credits from 3 to 10")
-        (is (zero? (:bad-publicity (get-corp))) "Should gain 0 bad publicity from prevention")))))
+        (is (zero? (count-bad-pub state)) "Should gain 0 bad publicity from prevention")))))
 
 (deftest gila-hands-arcology
   ;; Gila Hands Arcology
@@ -1167,7 +1167,7 @@
     (new-game {:corp {:deck ["Hostile Takeover"]}})
     (play-and-score state "Hostile Takeover")
     (is (= 12 (:credit (get-corp))) "Gain 7 credits")
-    (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity")))
+    (is (= 1 (count-bad-pub state)) "Take 1 bad publicity")))
 
 (deftest house-of-knives
   ;; House of Knives
@@ -1828,7 +1828,7 @@
       (play-and-score state "Posted Bounty")
       (click-prompt state :corp "Yes")
       (is (zero? (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
-      (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity")
+      (is (= 1 (count-bad-pub state)) "Forfeiting takes 1 bad publicity")
       (is (= 1 (count-tags state)) "Runner receives 1 tag forfeiting Posted Bounty")))
   (testing "Choosing not to forfeit scores normally"
     (do-game
@@ -1836,7 +1836,7 @@
       (play-and-score state "Posted Bounty")
       (click-prompt state :corp "No")
       (is (= 1 (:agenda-point (get-corp))))
-      (is (zero? (:bad-publicity (get-corp))))
+      (is (zero? (count-bad-pub state)))
       (is (zero? (count-tags state))))))
 
 (deftest priority-requisition
@@ -1872,7 +1872,7 @@
     (play-and-score state "Profiteering")
     (click-prompt state :corp "3")
     (is (= 1 (:agenda-point (get-corp))))
-    (is (= 3 (:bad-publicity (get-corp))) "Took 3 bad publicity")
+    (is (= 3 (count-bad-pub state)) "Took 3 bad publicity")
     (is (= 20 (:credit (get-corp))) "Gained 15 credits")))
 
 (deftest project-ares
@@ -1895,7 +1895,7 @@
     (click-card state :runner (find-card "Clone Chip" (:hardware (:rig (get-runner)))))
     (is (empty? (get-in @state [:runner :prompt])) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
     (is (= 1 (count (:discard (get-runner)))))
-    (is (= 1 (:bad-publicity (get-corp))))))
+    (is (= 1 (count-bad-pub state)))))
 
 (deftest project-atlas
   ;; Project Atlas
@@ -2878,17 +2878,17 @@
       (play-and-score state "Hostile Takeover")
       (play-and-score state "Hostile Takeover")
       (is (= 19 (:credit (get-corp))) "Should gain 14 credits from 5 to 19")
-      (is (= 2 (:bad-publicity (get-corp))) "Should gain 2 bad publicity")
+      (is (= 2 (count-bad-pub state)) "Should gain 2 bad publicity")
       (play-and-score state "Veterans Program")
-      (is (zero? (:bad-publicity (get-corp))) "Should lose 2 bad publicity")))
+      (is (zero? (count-bad-pub state)) "Should lose 2 bad publicity")))
   (testing "Removes _up to 2_ bad publicity"
     (do-game
       (new-game {:corp {:deck ["Hostile Takeover" "Veterans Program"]}})
       (play-and-score state "Hostile Takeover")
       (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
-      (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity")
+      (is (= 1 (count-bad-pub state)) "Should gain 1 bad publicity")
       (play-and-score state "Veterans Program")
-      (is (zero? (:bad-publicity (get-corp))) "Should lose 1 bad publicity"))))
+      (is (zero? (count-bad-pub state)) "Should lose 1 bad publicity"))))
 
 (deftest viral-weaponization
   ;; Viral Weaponization - at the end of turn scored, do 1 net damage for each card in grip
@@ -3003,7 +3003,7 @@
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (click-prompt state :runner "Steal")
-    (is (= 1 (:bad-publicity (get-corp))) "Took 1 bad pub from stolen agenda")
+    (is (= 1 (count-bad-pub state)) "Took 1 bad pub from stolen agenda")
     (take-credits state :runner)
     (play-and-score state "Vulcan Coverup")
     (is (= 2 (count (:discard (get-runner)))) "Did 2 meat damage upon scoring")))

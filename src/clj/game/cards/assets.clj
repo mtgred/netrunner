@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 ;;; Asset-specific helpers
 (defn installed-access-trigger
@@ -1679,7 +1679,7 @@
                  :msg "gain 6 [Credits]"
                  :effect (effect (gain-credits 6)
                                  (continue-ability
-                                   {:optional {:req (req (pos? (:bad-publicity corp)))
+                                   {:optional {:req (req (pos? (count-bad-pub state)))
                                                :player :corp
                                                :prompt "Remove 1 bad publicity?"
                                                :yes-ability {:msg "remove 1 bad publicity"

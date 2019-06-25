@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 (defn ice-boost-agenda [subtype]
   (letfn [(count-ice [corp]
@@ -322,9 +322,8 @@
 
    "Broad Daylight"
    (letfn [(add-counters [state side card eid]
-             (let [bp (get-in @state [:corp :bad-publicity] 0)]
-               (add-counter state :corp card :agenda bp)
-               (effect-completed state side eid)))]
+             (add-counter state :corp card :agenda (count-bad-pub state))
+             (effect-completed state side eid))]
      {:effect (effect
                 (continue-ability
                   {:optional
@@ -735,7 +734,7 @@
                                :yes-ability {:msg "take 1 bad publicity"
                                              :effect (effect (gain-bad-publicity :corp 1))}}}
                              card nil)
-                           (let [n (* 3 (+ (get-in @state [:corp :bad-publicity]) (:has-bad-pub corp)))]
+                           (let [n (* 3 (count-bad-pub state))]
                              (gain-credits state side n)
                              (system-msg state side (str "gains " n " [Credits] from Illicit Sales"))
                              (effect-completed state side eid))))}
@@ -863,8 +862,7 @@
 
    "NAPD Contract"
    {:steal-cost-bonus (req [:credit 4])
-    :advancement-cost-bonus (req (+ (:bad-publicity corp)
-                                    (:has-bad-pub corp)))}
+    :advancement-cost-bonus (req (count-bad-pub state))}
 
    "Net Quarantine"
    (let [nq {:effect (req (let [extra (int (/ (:runner-spent target) 2))]
@@ -972,11 +970,12 @@
 
    "Profiteering"
    {:interactive (req true)
-    :choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
+    :choices ["0" "1" "2" "3"]
+    :prompt "How many bad publicity?"
     :msg (msg "take " target " bad publicity and gain " (* 5 (str->int target)) " [Credits]")
-    :effect (req (let [bp (:bad-publicity (:corp @state))]
+    :effect (req (let [bp (count-bad-pub state)]
                    (gain-bad-publicity state :corp eid (str->int target))
-                   (if (< bp (:bad-publicity (:corp @state)))
+                   (if (< bp (count-bad-pub state))
                      (gain-credits state :corp (* 5 (str->int target))))))}
 
    "Project Ares"

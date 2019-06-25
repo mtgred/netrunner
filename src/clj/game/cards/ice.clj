@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 ;;;; Helper functions specific for ICE
 
@@ -1299,7 +1299,7 @@
 
    "Ireress"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "gain " (:bad-publicity corp 0) " subroutines")}]
+                 :msg (msg "gain " (count-bad-pub corp) " subroutines")}]
     :subroutines [{:msg "make the Runner lose 1 [Credits]"
                    :effect (effect (lose-credits :runner 1))}]}
 
