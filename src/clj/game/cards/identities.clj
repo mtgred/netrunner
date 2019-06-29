@@ -974,7 +974,7 @@
                    :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
                    :effect (req (draw state side (- 5 (count (:hand corp))))
                                 (update! state side (dissoc card :fill-hq))
-                                (swap! state dissoc :turn-events))}]})
+                                (swap! state assoc :turn-events nil))}]})
 
    "Nisei Division: The Next Generation"
    {:events {:reveal-spent-credits
