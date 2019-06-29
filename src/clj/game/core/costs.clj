@@ -127,8 +127,8 @@
   explaining which cost they were unable to pay."
   ([state side title args] (can-pay? state side (make-eid state) nil title args))
   ([state side eid card title & args]
-   (let [remove-zero-credit-cost (or (and (= (:source-type eid) :corp-install)
-                                          (not (ice? card))))
+   (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
+                                      (not (ice? card)))
          costs (merge-costs (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost)]
      (if (every? #(can-pay-impl state side eid card %) costs)
        costs
