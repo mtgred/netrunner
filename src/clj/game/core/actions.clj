@@ -86,27 +86,34 @@
               (str "sets Tags to " (get-in @state [:runner :tag :base])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
+(defn- change-bad-pub
+  "Change a player's base bad pub count"
+  [state delta]
+  (if (neg? delta)
+    (deduct state :corp [:bad-publicity (Math/abs delta)])
+    (gain state :corp :bad-publicity delta))
+  (system-msg state :corp
+              (str "sets Bad Publicity to " (get-in @state [:corp :bad-publicity :base])
+                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+
+(defn- change-generic
+  "Change a player's base generic property."
+  [state side key delta]
+  (if (neg? delta)
+    (deduct state side [key (- delta)])
+    (swap! state update-in [side key] (partial + delta)))
+  (change-msg state side key (get-in @state [side key]) delta))
+
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
-  (cond
-    ;; Memory needs special treatment and message
-    (= :memory key)
-    (change-mu state side delta)
-
-    ;; Hand size needs special treatment as it expects a map
-    (= :hand-size key)
-    (change-map state side key delta)
-
-    ;; Tags need special treatment since they are a more complex map
-    (= :tag key)
-    (change-tags state delta)
-
-    :else
-    (do (if (neg? delta)
-          (deduct state side [key (- delta)])
-          (swap! state update-in [side key] (partial + delta)))
-        (change-msg state side key (get-in @state [side key]) delta))))
+  (case key
+    :memory (change-mu state side delta)
+    :hand-size (change-map state side key delta)
+    :tag (change-tags state delta)
+    :bad-publicity (change-bad-pub state delta)
+    ; else
+    (change-generic state side key delta)))
 
 (defn move-card
   "Called when the user drags a card from one zone to another."
