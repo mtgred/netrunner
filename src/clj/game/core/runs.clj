@@ -13,21 +13,21 @@
   ([state side eid server] (make-run state side eid server nil nil nil))
   ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
   ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
-  ([state side eid server run-effect card {:keys [ignore-costs] :as args}]
-   (wait-for (trigger-event-simult state :runner :pre-init-run nil server card)
-             (let [all-run-costs (when-not ignore-costs (run-costs state server card))]
+  ([state side eid server run-effect card {:keys [click-run ignore-costs] :as args}]
+   (wait-for (trigger-event-simult state :runner :pre-init-run nil server card args)
+             (let [all-run-costs (when-not ignore-costs (run-costs state server args))]
                (swap! state update-in [:bonus] dissoc :run-cost)
                (if (and (can-run? state :runner)
                         (can-run-server? state server)
                         (can-pay? state :runner (make-eid state eid) card "a run" all-run-costs))
-                 (do (when (= card :click-run)
+                 (do (when click-run
                        (swap! state assoc-in [:runner :register :click-type] :run)
                        (swap! state assoc-in [:runner :register :made-click-run] true)
                        (play-sfx state side "click-run"))
                      (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :make-run}) nil all-run-costs)
                                (if-let [cost-str async-result]
                                  (do
-                                   (when (= card :click-run)
+                                   (when click-run
                                      (system-msg state :runner (str (build-spend-msg cost-str "make a run on" "makes a run on")
                                                                     (zone->name (unknown->kw server))
                                                                     (when ignore-costs ", ignoring all costs"))))

@@ -24,7 +24,6 @@
    rotated
    set_code
    side
-   special
    strength
    subtype
    title

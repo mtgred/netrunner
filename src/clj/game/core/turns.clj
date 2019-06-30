@@ -1,6 +1,7 @@
 (in-ns 'game.core)
 
-(declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan turn-message)
+(declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan
+         make-card turn-message)
 
 (def game-states (atom {}))
 
@@ -52,14 +53,10 @@
         runner-deck-id (get-in runner [:deck :_id])
         corp-options (get-in corp [:options])
         runner-options (get-in runner [:options])
-        corp-identity (assoc (or (get-in corp [:deck :identity])
-                                 {:side "Corp" :type "Identity" :title "Custom Biotics: Engineered for Success"})
-                             :cid (make-cid))
-        corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
-        runner-identity (assoc (or (get-in runner [:deck :identity])
-                                   {:side "Runner" :type "Identity" :title "The Professor: Keeper of Knowledge"})
-                               :cid (make-cid))
-        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
+        corp-identity (make-card (or (get-in corp [:deck :identity])
+                                 {:side "Corp" :type "Identity" :title "Custom Biotics: Engineered for Success"}))
+        runner-identity (make-card (or (get-in runner [:deck :identity])
+                                   {:side "Runner" :type "Identity" :title "The Professor: Keeper of Knowledge"}))
         corp-quote (quotes/make-quote corp-identity runner-identity)
         runner-quote (quotes/make-quote runner-identity corp-identity)]
     (atom

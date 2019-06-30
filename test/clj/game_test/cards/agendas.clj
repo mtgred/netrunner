@@ -1640,13 +1640,13 @@
     (let [credits (:credit (get-corp))]
       (is (= credits (:credit (get-corp))) (str "Corp has " credits " credits"))
       (is (= 1 (:link (get-runner))) "Runner has 1 link")
-      (core/init-trace state :corp {:title "/trace command" :side :corp} {:base 1})
+      (core/init-trace state :corp (map->Card {:title "/trace command" :side :corp}) {:base 1})
       (click-prompt state :corp "0")
       (is (zero? (-> (get-runner) :prompt first :link)) "Runner has 0 link during first trace")
       (click-prompt state :runner "3")
       (is (= (inc credits) (:credit (get-corp))) "Corp gained a credit from NQ")
       ; second trace of turn - no link reduction
-      (core/init-trace state :corp {:title "/trace command" :side :corp} {:base 1})
+      (core/init-trace state :corp (map->Card {:title "/trace command" :side :corp}) {:base 1})
       (click-prompt state :corp "0")
       (is (= 1 (-> (get-runner) :prompt first :link)) "Runner has 1 link during later traces")
       (click-prompt state :runner "2")

@@ -555,8 +555,8 @@
 
    "Enhanced Login Protocol"
    {:msg "uses Enhanced Login Protocol to add an additional cost of [Click] to make the first run not through a card ability this turn"
-    :events {:pre-init-run {:req (req (and (first-event? state side :pre-init-run #(= :click-run (second %)))
-                                           (= :click-run (second targets))))
+    :events {:pre-init-run {:req (req (and (first-event? state side :pre-init-run #(:click-run (nth % 2)))
+                                           (:click-run (nth targets 2))))
                             :effect (effect (run-additional-cost-bonus [:click 1]))}}}
 
    "Exchange of Information"

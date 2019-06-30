@@ -488,10 +488,10 @@
   (swap! state update-in [:bonus :run-cost :additional-cost] #(merge-costs (concat % n))))
 
 (defn run-costs
-  "Get a list of all costs required to run a server, including additional costs. If card is :click-run, assume run is made by spending a click, and include the assumed click in the cost list."
-  [state server card]
+  "Get a list of all costs required to run a server, including additional costs. If click-run, run is made by spending a click, and include the assumed click in the cost list."
+  [state server {:keys [click-run]}]
   (let [server (unknown->kw server)
-        click-run-cost (when (= card :click-run) [:click 1])
+        click-run-cost (when click-run [:click 1])
         global-costs (get-in @state [:bonus :run-cost :additional-cost])
         server-costs (get-in @state [:corp :servers server :additional-cost])]
     (merge-costs (concat click-run-cost global-costs server-costs))))
