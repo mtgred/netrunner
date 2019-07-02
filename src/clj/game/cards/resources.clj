@@ -2353,9 +2353,9 @@
         :effect (effect (add-counter card :credit -1)
                         (trigger-event :spent-stealth-credit card)
                         (gain-credits 1))})
-     :interactions {:pay-credits {:req (req (or (= :ability (:source-type eid))
-                                                (program? target)
-                                                (:run @state)))
+     :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                 (program? target)
+                                                 run))
                                   :type :credit}})
 
    "Tri-maf Contact"
