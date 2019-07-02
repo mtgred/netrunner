@@ -603,7 +603,7 @@
     :hosting {:req (every-pred ice? can-host?)}
     :abilities [{:req (req (and (same-card? current-ice (:host card))
                                 (rezzed? current-ice)))
-                 :effect (req (if (zero? (get-strength current-ice))
+                 :effect (req (if (not (pos? (get-strength current-ice)))
                                 (do (system-msg state side (str "uses Chisel to trash " (card-str state current-ice)))
                                     (trash state side current-ice))
                                 (do (system-msg state side (str "places 1 virus counter on " (card-str state current-ice)))
