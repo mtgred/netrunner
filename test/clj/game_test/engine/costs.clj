@@ -74,5 +74,25 @@
       (play-from-hand state :runner "Daily Casts")
       (is (last-log-contains? state #"Runner spends \[Click\] and pays 3 \[Credits\] to install Daily Casts.") "Install resource, three cost")
       (run-on state :archives)
-      (is (last-log-contains? state #"Runner spends \[Click\] to make a run on Archives.") "Initiate run, zero cost"))))
-
+      (is (last-log-contains? state #"Runner spends \[Click\] to make a run on Archives.") "Initiate run, zero cost")))
+  (testing "Issue #4295: Auto-pumping Icebreaker with pay-credits prompt"
+    (do-game
+      (new-game {:runner {:hand ["Corroder" "Net Mercur" "Cloak"]}
+                 :corp {:hand ["Fire Wall"]}})
+      (play-from-hand state :corp "Fire Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Net Mercur")
+      (run-on state :hq)
+      (let [cre (:credit (get-runner))
+            cor (get-program state 0)
+            clo (get-program state 1)
+            nm (get-resource state 0)]
+        (is (= 2 (:current-strength (refresh cor))) "Corroder starts at 2 strength")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+        (click-card state :runner clo)
+        (click-prompt state :runner "Place 1 [Credits]")
+        (is (= 5 (:current-strength (refresh cor))) "Corroder is at 5 strength")
+        (is (= (- cre 2) (:credit (get-runner))) "Spent 2 (+1 from Cloak) to pump")))))
