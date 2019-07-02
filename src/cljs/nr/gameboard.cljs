@@ -331,8 +331,9 @@
          (let [div (:message-list @board-dom)
                scroll-top (.-scrollTop div)
                scroll-height (.-scrollHeight div)
-               client-height (.-clientHeight div)]
-           (when (>= (+ scroll-top client-height) scroll-height)
+               client-height (.-clientHeight div)
+               combo (+ scroll-top client-height)]
+           (when (<= (- combo 5) scroll-height (+ combo 5))
              (swap! s assoc :scroll-to-bottom true))))
 
        :component-did-update
