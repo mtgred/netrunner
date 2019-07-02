@@ -324,7 +324,8 @@
    (letfn [(add-counters [state side card eid]
              (add-counter state :corp card :agenda (count-bad-pub state))
              (effect-completed state side eid))]
-     {:effect (effect
+     {:async true
+      :effect (effect
                 (continue-ability
                   {:optional
                    {:prompt "Take 1 bad publicity?"
