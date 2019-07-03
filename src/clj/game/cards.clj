@@ -230,8 +230,12 @@
                                      " from their credit pool"))]
                   (deduct state side [:credit remainder])
                   (swap! state update-in [:stats side :spent :credit] (fnil + 0) target-count)
-                  (when-let [card (some #(when (has-subtype? (:card %) "Stealth") (:card %)) (vals selected-cards))]
+                  ; Only one card watches this right now (Net Mercur) so I'm okay with not iterating
+                  (when-let [{:keys [card]} (some #(when (has-subtype? (:card %) "Stealth") %) (vals selected-cards))]
                     (trigger-event state side :spent-stealth-credit card))
+                  ; Now we trigger all of the :counter-added events we'd neglected previously
+                  (doseq [{:keys [card number]} (vals selected-cards)]
+                    (trigger-event state side :counter-added (get-card state card) number))
                   (effect-completed state side (make-result eid {:number counter-count :msg message})))
                 (continue-ability
                   state side
@@ -254,11 +258,14 @@
                                                   (-> target card-def :interactions :pay-credits :custom))
                              custom-ability (when (= :custom pay-credits-type)
                                               {:async true :effect pay-credits-custom})
+                             current-counters (get-counters target pay-credits-type)
+                             ; In this next bit, we don't want to trigger any events yet
+                             ; so we use `set-prop` to directly change the number of credits
                              gained-credits (case pay-credits-type
                                               :recurring
-                                              (do (add-prop state side target :rec-counter -1) 1)
+                                              (do (set-prop state side target :rec-counter (dec current-counters)) 1)
                                               :credit
-                                              (do (add-counter state side target :credit -1) 1)
+                                              (do (set-prop state side target :counter {:credit (dec current-counters)}) 1)
                                               ; Custom credits will be handled separately later
                                               0)
                              selected-cards (update selected-cards (:cid target)
