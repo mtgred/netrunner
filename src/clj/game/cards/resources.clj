@@ -1393,13 +1393,11 @@
     :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
                                                 (installed? target)))
                                  :type :credit}}
-    :abilities [{:counter-cost [:credit 1]
-                 :msg "gain 1 [Credits] for trashing installed cards"
-                 :async true
-                 :effect (req (gain-credits state :runner 1)
-                              (if (zero? (get-counters (get-card state card) :credit))
-                                (trash state :runner eid card {:unpreventable true})
-                                (effect-completed state :runner eid)))}]}
+    :events {:counter-added {:req (req (same-card? target card)
+                                       (not (pos? (get-counters card :credit))))
+                             :async true
+                             :effect (effect (system-msg (str "trashes " (:title card)))
+                                             (trash eid card {:unpreventable true}))}}}
 
    "Motivation"
    (let [ability {:msg "look at the top card of their Stack"
