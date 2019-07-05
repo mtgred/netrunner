@@ -157,10 +157,9 @@
   [state side dtype n]
   (swap! state update-in [:damage :damage-bonus dtype] (fnil #(+ % n) 0)))
 
-(defn damage-prevent
-  "Registers a prevention of n damage to the next damage application of the given type."
+(defn- damage-prevent-update-prompt
+  "Look at the current runner prompt and (if a damage prevention prompt), update message."
   [state side dtype n]
-  (swap! state update-in [:damage :damage-prevent dtype] (fnil #(+ % n) 0))
   (if-let [oldprompt (first (get-in @state [side :prompt]))]
     (if-let [match (re-matches #"^Prevent any of the (\d+) (\w+) damage\?.*" (:msg oldprompt))]
       (let [dnumber (str->int (second match))
@@ -176,6 +175,12 @@
           (do ((:effect oldprompt) nil)
               (swap! state update-in [side :prompt] done-update-fn))
           (swap! state update-in [side :prompt] update-fn))))))
+
+(defn damage-prevent
+  "Registers a prevention of n damage to the next damage application of the given type. Afterwards update current prevention prompt, if found."
+  [state side dtype n]
+  (swap! state update-in [:damage :damage-prevent dtype] (fnil #(+ % n) 0))
+  (damage-prevent-update-prompt state side dtype n))
 
 (defn damage-defer
   "Registers n damage of the given type to be deferred until later. (Chronos Protocol.)"
