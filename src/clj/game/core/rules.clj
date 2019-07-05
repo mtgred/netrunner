@@ -161,18 +161,18 @@
   "Registers a prevention of n damage to the next damage application of the given type."
   [state side dtype n]
   (swap! state update-in [:damage :damage-prevent dtype] (fnil #(+ % n) 0))
-  (let [oldprompt (first (get-in @state [side :prompt]))
-        newprompt (assoc oldprompt :msg (if-let [match (re-matches #"^Prevent any of the (\d+) (\w+) damage\?.*" (:msg oldprompt))]
-                                          (let [dnumber (second match)
-                                                promptdtype (case (nth match 2)
-                                                        "net" :net
-                                                        "brain" :brain
-                                                        "meat" :meat)
-                                                prevented (get-in @state [:damage :damage-prevent promptdtype])]
-                                            (str "Prevent any of the " dnumber " " (name promptdtype) " damage? (" prevented "/" dnumber " prevented)"))
-                                          (:msg oldprompt)))
-        update-fn #(cons newprompt (rest %))]
-    (swap! state update-in [side :prompt] update-fn)))
+  (if-let [oldprompt (first (get-in @state [side :prompt]))]
+    (let [newprompt (assoc oldprompt :msg (if-let [match (re-matches #"^Prevent any of the (\d+) (\w+) damage\?.*" (:msg oldprompt))]
+                                            (let [dnumber (second match)
+                                                  promptdtype (case (nth match 2)
+                                                                "net" :net
+                                                                "brain" :brain
+                                                                "meat" :meat)
+                                                  prevented (get-in @state [:damage :damage-prevent promptdtype] 0)]
+                                              (str "Prevent any of the " dnumber " " (name promptdtype) " damage? (" prevented "/" dnumber " prevented)"))
+                                            (:msg oldprompt)))
+          update-fn #(cons newprompt (rest %))]
+    (swap! state update-in [side :prompt] update-fn))))
 
 (defn damage-defer
   "Registers n damage of the given type to be deferred until later. (Chronos Protocol.)"
