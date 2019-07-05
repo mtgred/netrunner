@@ -162,17 +162,20 @@
   [state side dtype n]
   (swap! state update-in [:damage :damage-prevent dtype] (fnil #(+ % n) 0))
   (if-let [oldprompt (first (get-in @state [side :prompt]))]
-    (let [newprompt (assoc oldprompt :msg (if-let [match (re-matches #"^Prevent any of the (\d+) (\w+) damage\?.*" (:msg oldprompt))]
-                                            (let [dnumber (second match)
-                                                  promptdtype (case (nth match 2)
-                                                                "net" :net
-                                                                "brain" :brain
-                                                                "meat" :meat)
-                                                  prevented (get-in @state [:damage :damage-prevent promptdtype] 0)]
-                                              (str "Prevent any of the " dnumber " " (name promptdtype) " damage? (" prevented "/" dnumber " prevented)"))
-                                            (:msg oldprompt)))
-          update-fn #(cons newprompt (rest %))]
-    (swap! state update-in [side :prompt] update-fn))))
+    (if-let [match (re-matches #"^Prevent any of the (\d+) (\w+) damage\?.*" (:msg oldprompt))]
+      (let [dnumber (str->int (second match))
+            promptdtype (case (nth match 2)
+                          "net" :net
+                          "brain" :brain
+                          "meat" :meat)
+            prevented (get-in @state [:damage :damage-prevent promptdtype] 0)
+            newprompt (assoc oldprompt :msg (str "Prevent any of the " dnumber " " (name promptdtype) " damage? (" prevented "/" dnumber " prevented)"))
+            update-fn #(cons newprompt (rest %))
+            done-update-fn #(rest %)]
+        (if (>= prevented dnumber)
+          (do ((:effect oldprompt) nil)
+              (swap! state update-in [side :prompt] done-update-fn))
+          (swap! state update-in [side :prompt] update-fn))))))
 
 (defn damage-defer
   "Registers n damage of the given type to be deferred until later. (Chronos Protocol.)"
