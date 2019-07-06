@@ -1867,7 +1867,6 @@
       (letfn [(prevent-snare [existing-dmg]
                 (click-prompt state :corp "Yes")
                 (card-ability state :runner (get-program state 0) 1)
-                (click-prompt state :runner "Done")
                 (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Damage from Snare! prevented")
                 (click-prompt state :runner (-> (prompt-map :runner) :choices first))
                 (when (-> (prompt-map :runner) :choices first)
@@ -1879,8 +1878,7 @@
               (allow-pad [existing-dmg]
                 (click-prompt state :runner (-> (prompt-map :runner) :choices first))
                 (card-ability state :runner (get-program state 0) 1)
-                (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf")
-                (click-prompt state :runner "Done"))]
+                (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf"))]
         (if (= :waiting (-> (get-runner) :prompt first :prompt-type)) ; hit the snare
           ;; prevent the damage
           (do (prevent-snare (count (:discard (get-runner))))
@@ -2501,7 +2499,6 @@
       (take-credits state :runner)
       (play-and-score state "Show of Force")
       (card-ability state :runner (-> (get-resource state 0) :hosted first) 1)
-      (click-prompt state :runner "Done")
       (is (zero? (count-tags state)) "Runner should avoid all meat damage")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap"))))
 

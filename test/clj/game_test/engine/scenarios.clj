@@ -31,7 +31,6 @@
               fg (first (:hosted (refresh apt)))]
           (card-ability state :runner ns 0)
           (is (= 5 (:credit (get-runner))) "Runner paid 1c to survive Neural EMP")
-          (click-prompt state :runner "Done")
           (play-from-hand state :corp "SEA Source")
           (click-prompt state :corp "3") ; boost trace to 6
           (click-prompt state :runner "0")

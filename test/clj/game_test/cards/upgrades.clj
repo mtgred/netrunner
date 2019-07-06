@@ -2164,7 +2164,6 @@
         (core/rez state :corp tori)
         (card-subroutine state :corp pup 0)
         (card-ability state :runner nshld 0)
-        (click-prompt state :runner "Done")
         (is (empty? (:discard (get-runner))) "1 net damage prevented")
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Done") ; decline to prevent

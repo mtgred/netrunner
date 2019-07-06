@@ -2116,7 +2116,6 @@
         (click-prompt state :corp "2 [Credits]")
         (click-prompt state :runner "0 [Credits]")
         (card-ability state :runner ff 0)
-        (click-prompt state :runner "Done")
         (is (zero? (:credit (get-runner))) "Runner has no more credits left")
         (is (= 1 (count (:hand (get-runner)))) "Prevented 1 net damage")
         (is (empty? (:discard (get-runner))) "No cards discarded")

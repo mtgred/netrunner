@@ -486,7 +486,6 @@
         (core/rez state :corp dm)
         (card-subroutine state :corp dm 0)
         (card-ability state :runner ff 0)
-        (click-prompt state :runner "Done")
         (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
         (is (= 4 (:credit (get-runner))))
         (run-successful state)
@@ -1463,7 +1462,6 @@
       (card-ability state :runner plas 0)
       (card-ability state :runner plas 0)
       (card-ability state :runner plas 0)
-      (click-prompt state :runner "Done")
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-hardware state)) "Plascrete depleted and trashed"))))
 

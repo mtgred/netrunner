@@ -230,7 +230,6 @@
       (let [filter (get-hardware state 0)]
         (is (= 2 (count (:prompt (get-runner)))) "Runner has a single damage prevention prompt")
         (card-ability state :runner filter 0)
-        (click-prompt state :runner "Done")
         (is (zero? (count (:discard (get-runner)))) "Runner prevented damage")
         (is (= 2 (count (:prompt (get-runner)))) "Runner has a next damage prevention prompt")
         (click-prompt state :runner "Done")
