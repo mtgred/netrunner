@@ -1,6 +1,6 @@
 (ns game.cards.programs
   (:require [game.core :refer :all]
-            [game.core.eid :refer [effect-completed]]
+            [game.core.eid :refer [effect-completed make-eid]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
@@ -765,7 +765,7 @@
                                                       (:hosted card))))
                    :msg (msg "install " (:title target))
                    :effect (req (when (can-pay? state side eid card nil :credit (:cost target))
-                                  (runner-install state side target)))}]})
+                                  (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))}]})
 
    "Cyber-Cypher"
    (auto-icebreaker ["Code Gate"]
@@ -838,7 +838,7 @@
                                           :req (req (not (install-locked? state side)))
                                           :msg (msg "install " (:title target) " at no cost")
                                           :effect (effect (trash card {:cause :ability-cost})
-                                                          (runner-install target {:ignore-install-cost true}))}
+                                                          (runner-install (assoc eid :source card :source-type :runner-install) target {:ignore-install-cost true}))}
                                          card nil)))}]}
 
    "Deep Thought"
@@ -882,7 +882,7 @@
                                                      ", lowering its cost by 1 [Credit]")))
                                     :effect (effect (when (-> target :cost pos?)
                                                       (install-cost-bonus state side [:credit -1]))
-                                                    (runner-install target {:host-card card :no-mu true})
+                                                    (runner-install (assoc eid :source card :source-type :runner-install) target {:host-card card :no-mu true})
                                                     (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
                                    card nil))}
                 {:label "Host an installed program on Dhegdheer with [Credit] discount"
@@ -1214,7 +1214,7 @@
     {:req (req (not-any? #{:facedown :hand} (:previous-zone card)))
      :effect (req (let [lock (get-in @state [:runner :locked :discard])]
                     (swap! state assoc-in [:runner :locked] nil)
-                    (runner-install state :runner card {:facedown true})
+                    (runner-install state :runner (assoc eid :source card :source-type :runner-install) card {:facedown true})
                     (swap! state assoc-in [:runner :locked] lock)))}}
 
    "Hemorrhage"
@@ -2006,7 +2006,7 @@
                  :prompt "Choose a program to install from your grip"
                  :choices {:req #(and (program? %)
                                       (in-hand? %))}
-                 :effect (effect (runner-install target))}]}
+                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]}
 
    "Scheherazade"
    {:abilities [{:label "Install and host a program from Grip"
@@ -2017,7 +2017,7 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) " and gain 1 [Credits]")
-                                    :effect (effect (runner-install target {:host-card card}) (gain-credits 1))}
+                                    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:host-card card}) (gain-credits 1))}
                                    card nil))}
                 {:label "Host an installed program"
                  :prompt "Choose a program to host on Scheherazade" :priority 2
@@ -2044,7 +2044,7 @@
                                                            :effect (req (trigger-event state side :searched-stack nil)
                                                                         (shuffle! state side :deck)
                                                                         (when (not= target "No install")
-                                                                          (runner-install state side target)))} card nil)))}]}
+                                                                          (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))} card nil)))}]}
 
    "Sharpshooter"
    (auto-icebreaker ["Destroyer"]

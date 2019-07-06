@@ -1,6 +1,6 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
-            [game.core.eid :refer [effect-completed]]
+            [game.core.eid :refer [effect-completed make-eid]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
@@ -177,7 +177,7 @@
                                        (in-hand? %))}
                   :req (req (and (pos? (count (:hand runner)))
                                  (:runner-phase-12 @state)))
-                  :effect (effect (runner-install eid target {:facedown true}))}]
+                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:facedown true}))}]
      {:events {:runner-turn-begins ability}
       :flags {:runner-phase-12 (req true)}
       :abilities [ability]})
@@ -559,7 +559,7 @@
                                     :choices {:req #(and (is-type? % type)
                                                          (in-hand? %))}
                                     :msg (msg "install " (:title target))
-                                    :effect (effect (runner-install eid target nil))}}}
+                                    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}}}
                        card nil)))}}}
 
    "Hoshiko Shiro"
@@ -732,7 +732,7 @@
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (install-cost-bonus [:credit -1])
-                                 (runner-install eid (assoc-in target [:special :kabonesa] true) nil))}]})
+                                 (runner-install (assoc eid :source card :source-type :runner-install) (assoc-in target [:special :kabonesa] true) nil))}]})
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
