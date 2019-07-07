@@ -972,16 +972,16 @@
   [state side]
   (let [server (-> @state :run :server first)]
     (swap! state assoc-in [:run :ending] true)
-    (trigger-event state side :run-ends server)
-    (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-      (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
-      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-      (update-breaker-strength state side p))
-    (let [run-effect (get-in @state [:run :run-effect])]
-      (if-let [end-run-effect (:end-run run-effect)]
-        (wait-for (resolve-ability state side end-run-effect (:card run-effect) [server])
-                  (run-cleanup-2 state side))
-        (run-cleanup-2 state side)))))
+    (wait-for (trigger-event-sync state side :run-ends server)
+              (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
+                (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
+                (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
+                (update-breaker-strength state side p))
+              (let [run-effect (get-in @state [:run :run-effect])]
+                (if-let [end-run-effect (:end-run run-effect)]
+                  (wait-for (resolve-ability state side end-run-effect (:card run-effect) [server])
+                            (run-cleanup-2 state side))
+                  (run-cleanup-2 state side))))))
 
 (defn handle-end-run
   "Initiate run resolution."

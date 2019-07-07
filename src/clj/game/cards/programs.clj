@@ -537,13 +537,15 @@
                     {:abilities [(break-sub 1 2 "ICE" (effect (update! (assoc-in card [:special :brahman-used] true))))
                                  (strength-pump 2 1)]
                      :events (let [put-back {:req (req (get-in card [:special :brahman-used]))
+                                             :player :runner ; Needed for when the run is ended by the Corp
                                              :prompt "Choose a non-virus program to put on top of your stack."
                                              :choices {:req #(and (installed? %)
                                                                   (program? %)
                                                                   (not (facedown? %))
                                                                   (not (has-subtype? % "Virus")))}
                                              :msg (msg "add " (:title target) " to the top of the Stack")
-                                             :effect (effect (update! (dissoc-in card [:special :brahman-used]))
+                                             :effect (effect (resolve-ability eid breaker-auto-pump card nil)
+                                                             (update! (dissoc-in card [:special :brahman-used]))
                                                              (move target :deck {:front true}))}]
                                {:pass-ice put-back
                                 :run-ends put-back})})
@@ -2277,7 +2279,8 @@
                                  (strength-pump 2 3)]
                      :events (let [give-credits {:req (req (get-in card [:special :tycoon-used]))
                                                  :msg "give the Corp 2 [Credits]"
-                                                 :effect (effect (update! (dissoc-in card [:special :tycoon-used]))
+                                                 :effect (effect (resolve-ability eid breaker-auto-pump card nil)
+                                                                 (update! (dissoc-in card [:special :tycoon-used]))
                                                                  (gain-credits :corp 2))}]
                                {:pass-ice give-credits
                                 :run-ends give-credits})})

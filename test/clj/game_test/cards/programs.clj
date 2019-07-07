@@ -282,12 +282,30 @@
         (run-on state :hq)
         (core/rez state :corp spi)
         (card-ability state :runner brah 0) ;break sub
-        (println (prompt-fmt :runner))
         (card-subroutine state :corp spi 0) ;ETR
-        (println (prompt-fmt :runner))
         (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
         (click-card state :runner par)
-        (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now.")))))
+        (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now."))))
+  (testing "Brahman works with Nisei tokens"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "Nisei MK II"]}
+                 :runner {:deck ["Brahman"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (play-and-score state "Nisei MK II")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Brahman")
+      (let [brah (get-program state 0)
+            iw (get-ice state :hq 0)
+            nisei (get-scored state :corp 0)]
+        (run-on state "HQ")
+        (core/rez state :corp iw)
+        (card-ability state :runner brah 0) ;break sub
+        (card-ability state :corp (refresh nisei) 0) ; Nisei Token
+        (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
+        (click-card state :runner brah)
+        (is (= 1 (count (:deck (get-runner)))) "Brahman on top of Stack now.")))))
+
 (deftest bukhgalter
   ;; Bukhgalter ability
   (do-game
