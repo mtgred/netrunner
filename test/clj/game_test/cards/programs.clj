@@ -2373,9 +2373,12 @@
             credits (:credit (get-corp))]
         (run-on state "HQ")
         (card-ability state :runner tycoon 0)
+        (card-ability state :runner tycoon 1)
+        (is (= 4 (:current-strength (refresh tycoon))) "Tycoon strength pumped to 4.")
         (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
         (run-continue state)
-        (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used"))))
+        (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used")
+        (is (= 1 (:current-strength (refresh tycoon))) "Tycoon strength back down to 1."))))
   ;; Issue #4220: Tycoon doesn't fire if Corp ends run before ice is passed
   (testing "Tycoon gives 2c even if ICE wasn't passed"
     (do-game
@@ -2391,9 +2394,12 @@
             nisei (get-scored state :corp 0)]
         (run-on state "HQ")
         (card-ability state :runner tycoon 0)
+        (card-ability state :runner tycoon 1)
+        (is (= 4 (:current-strength (refresh tycoon))) "Tycoon strength pumped to 4.")
         (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
         (card-ability state :corp (refresh nisei) 0)
-        (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used after Nisei MK II fires")))))
+        (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used after Nisei MK II fires")
+        (is (= 1 (:current-strength (refresh tycoon))) "Tycoon strength back down to 1.")))))
 
 (deftest upya
   (do-game
