@@ -243,6 +243,51 @@
       (card-ability state :runner berserker 0)
       (is (= 2 (core/get-strength (refresh berserker))) "Berserker gains 0 strength from Enigma (non-barrier)"))))
 
+(deftest brahman
+  ;; Brahman
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Brahman" "Paricia" "Cache"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Brahman")
+      (play-from-hand state :runner "Paricia")
+      (play-from-hand state :runner "Cache")
+      (core/gain state :runner :credit 1)
+      (let [brah (get-program state 0)
+            par (get-program state 1)
+            cache (get-program state 2)
+            iw (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp iw)
+        (card-ability state :runner brah 0) ;break sub
+        (run-continue state)
+        (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
+        (click-card state :runner cache)
+        (is (= 0 (count (:deck (get-runner)))) "Did not put Cache on top.")
+        (click-card state :runner par)
+        (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now."))))
+  (testing "Prompt on ETR"
+    (do-game
+      (new-game {:runner {:deck ["Brahman" "Paricia"]}
+                 :corp {:deck ["Spiderweb"]}})
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Brahman")
+      (play-from-hand state :runner "Paricia")
+      (let [brah (get-program state 0)
+            par (get-program state 1)
+            spi (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp spi)
+        (card-ability state :runner brah 0) ;break sub
+        (println (prompt-fmt :runner))
+        (card-subroutine state :corp spi 0) ;ETR
+        (println (prompt-fmt :runner))
+        (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
+        (click-card state :runner par)
+        (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now.")))))
 (deftest bukhgalter
   ;; Bukhgalter ability
   (do-game
