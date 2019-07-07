@@ -544,8 +544,7 @@
                                                                   (not (facedown? %))
                                                                   (not (has-subtype? % "Virus")))}
                                              :msg (msg "add " (:title target) " to the top of the Stack")
-                                             :effect (effect (resolve-ability eid breaker-auto-pump card nil)
-                                                             (update! (dissoc-in card [:special :brahman-used]))
+                                             :effect (effect (update! (dissoc-in card [:special :brahman-used]))
                                                              (move target :deck {:front true}))}]
                                {:pass-ice put-back
                                 :run-ends put-back})})
@@ -2279,8 +2278,7 @@
                                  (strength-pump 2 3)]
                      :events (let [give-credits {:req (req (get-in card [:special :tycoon-used]))
                                                  :msg "give the Corp 2 [Credits]"
-                                                 :effect (effect (resolve-ability eid breaker-auto-pump card nil)
-                                                                 (update! (dissoc-in card [:special :tycoon-used]))
+                                                 :effect (effect (update! (dissoc-in card [:special :tycoon-used]))
                                                                  (gain-credits :corp 2))}]
                                {:pass-ice give-credits
                                 :run-ends give-credits})})
