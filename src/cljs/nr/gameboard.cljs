@@ -1483,6 +1483,11 @@
                   (pos? (:click @me)))
              #(send-command "credit")]]))])})))
 
+(defn starting-timestamp []
+  [:div
+   {:class ["panel" "blue-shade"]}
+   (str "Game start: " (.toLocaleTimeString (js/Date.)))])
+
 (defn gameboard []
   (let [run (r/cursor game-state [:run])
         side (r/cursor game-state [:side])
@@ -1586,7 +1591,8 @@
                     [play-area-view op-user "Temporary Zone" op-play-area]
                     [play-area-view me-user "Temporary Zone" me-play-area]
                     [rfg-view op-current "Current" false]
-                    [rfg-view me-current "Current" false]])
+                    [rfg-view me-current "Current" false]
+                    [starting-timestamp]])
                  (when-not (= @side :spectator)
                    [button-pane {:side me-side :active-player active-player :run run :end-turn end-turn
                                  :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12
