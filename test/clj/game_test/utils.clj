@@ -105,6 +105,11 @@
   (some? (re-find (re-pattern content)
                   (-> @state :log butlast last :text))))
 
+(defn last-n-log-contains?
+  [state n content]
+  (some? (re-find (re-pattern content)
+                  (:text (nth (-> @state :log reverse) n)))))
+
 (defmethod assert-expr 'last-log-contains?
   [msg form]
   `(let [state# ~(nth form 1)
@@ -123,6 +128,20 @@
   `(let [state# ~(nth form 1)
          content# ~(nth form 2)
          log# (-> @state# :log butlast last :text)
+         found# ~form]
+     (do-report
+       {:type (if found# :pass :fail)
+        :actual log#
+        :expected content#
+        :message ~msg})
+     found#))
+
+(defmethod assert-expr 'last-n-log-contains?
+  [msg form]
+  `(let [state# ~(nth form 1)
+         n# ~(nth form 2)
+         content# ~(nth form 3)
+         log# (:text (nth (-> @state# :log reverse) n#))
          found# ~form]
      (do-report
        {:type (if found# :pass :fail)
