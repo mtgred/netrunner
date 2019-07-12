@@ -975,10 +975,11 @@
                                            {:msg "add the top card of Stack to the bottom"
                                             :effect (effect (move :runner (first (:deck runner)) :deck)
                                                             (clear-wait-prompt :corp))}
-                                           :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                                           :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                        (system-msg "does not add the top card of the Stack to the bottom"))}}}
                                          card nil))}
                             :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                         (system-msg "does not add the top card of the Stack to the bottom"))}}}
+                                                         (system-msg "does not gain 1 [Credit] and look at the top card of the Stack"))}}}
                           card nil))}}
     :abilities [(set-autoresolve :auto-fire "Paragon")]}
 
