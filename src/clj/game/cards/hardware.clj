@@ -860,7 +860,10 @@
 
    "Net-Ready Eyes"
    {:effect (effect (damage eid :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
-    :events {:run {:choices {:req #(and (installed? %)
+    :events {:run {:req (req (some #(and (program? %)
+                                         (has-subtype? % "Icebreaker"))
+                                   (all-active-installed state :runner)))
+                   :choices {:req #(and (installed? %)
                                         (has-subtype? % "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
                    :effect (effect (pump target 1 :all-run))}}}

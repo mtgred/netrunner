@@ -243,6 +243,69 @@
       (card-ability state :runner berserker 0)
       (is (= 2 (core/get-strength (refresh berserker))) "Berserker gains 0 strength from Enigma (non-barrier)"))))
 
+(deftest brahman
+  ;; Brahman
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Brahman" "Paricia" "Cache"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Brahman")
+      (play-from-hand state :runner "Paricia")
+      (play-from-hand state :runner "Cache")
+      (core/gain state :runner :credit 1)
+      (let [brah (get-program state 0)
+            par (get-program state 1)
+            cache (get-program state 2)
+            iw (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp iw)
+        (card-ability state :runner brah 0) ;break sub
+        (run-continue state)
+        (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
+        (click-card state :runner cache)
+        (is (= 0 (count (:deck (get-runner)))) "Did not put Cache on top.")
+        (click-card state :runner par)
+        (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now."))))
+  (testing "Prompt on ETR"
+    (do-game
+      (new-game {:runner {:deck ["Brahman" "Paricia"]}
+                 :corp {:deck ["Spiderweb"]}})
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Brahman")
+      (play-from-hand state :runner "Paricia")
+      (let [brah (get-program state 0)
+            par (get-program state 1)
+            spi (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp spi)
+        (card-ability state :runner brah 0) ;break sub
+        (card-subroutine state :corp spi 0) ;ETR
+        (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
+        (click-card state :runner par)
+        (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now."))))
+  (testing "Brahman works with Nisei tokens"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "Nisei MK II"]}
+                 :runner {:deck ["Brahman"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (play-and-score state "Nisei MK II")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Brahman")
+      (let [brah (get-program state 0)
+            iw (get-ice state :hq 0)
+            nisei (get-scored state :corp 0)]
+        (run-on state "HQ")
+        (core/rez state :corp iw)
+        (card-ability state :runner brah 0) ;break sub
+        (card-ability state :corp (refresh nisei) 0) ; Nisei Token
+        (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
+        (click-card state :runner brah)
+        (is (= 1 (count (:deck (get-runner)))) "Brahman on top of Stack now.")))))
+
 (deftest bukhgalter
   ;; Bukhgalter ability
   (do-game
@@ -2326,9 +2389,12 @@
             credits (:credit (get-corp))]
         (run-on state "HQ")
         (card-ability state :runner tycoon 0)
+        (card-ability state :runner tycoon 1)
+        (is (= 4 (:current-strength (refresh tycoon))) "Tycoon strength pumped to 4.")
         (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
         (run-continue state)
-        (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used"))))
+        (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used")
+        (is (= 1 (:current-strength (refresh tycoon))) "Tycoon strength back down to 1."))))
   ;; Issue #4220: Tycoon doesn't fire if Corp ends run before ice is passed
   (testing "Tycoon gives 2c even if ICE wasn't passed"
     (do-game
@@ -2344,9 +2410,12 @@
             nisei (get-scored state :corp 0)]
         (run-on state "HQ")
         (card-ability state :runner tycoon 0)
+        (card-ability state :runner tycoon 1)
+        (is (= 4 (:current-strength (refresh tycoon))) "Tycoon strength pumped to 4.")
         (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
         (card-ability state :corp (refresh nisei) 0)
-        (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used after Nisei MK II fires")))))
+        (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used after Nisei MK II fires")
+        (is (= 1 (:current-strength (refresh tycoon))) "Tycoon strength back down to 1.")))))
 
 (deftest upya
   (do-game

@@ -1213,21 +1213,31 @@
 
 (deftest net-ready-eyes
   ;; Net-Ready Eyes
-  (do-game
-    (new-game {:runner {:deck [(qty "Sure Gamble" 3) "Net-Ready Eyes" "Peacock"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Sure Gamble")
-    (play-from-hand state :runner "Peacock")
-    (play-from-hand state :runner "Net-Ready Eyes")
-    (is (= 3 (count (:discard (get-runner)))) "Took 2 damage on NRE install")
-    (run-on state "HQ")
-    (let [pea (get-program state 0)]
-      (click-card state :runner pea)
-      (is (= 3 (:current-strength (refresh pea))) "Peacock strength boosted")
-      (run-continue state)
-      (run-successful state)
-      (click-prompt state :runner "No action")
-      (is (= 2 (:current-strength (refresh pea))) "Peacock strength back to default"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 3) "Net-Ready Eyes" "Peacock"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Peacock")
+      (play-from-hand state :runner "Net-Ready Eyes")
+      (is (= 3 (count (:discard (get-runner)))) "Took 2 damage on NRE install")
+      (run-on state "HQ")
+      (let [pea (get-program state 0)]
+        (click-card state :runner pea)
+        (is (= 3 (:current-strength (refresh pea))) "Peacock strength boosted")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (= 2 (:current-strength (refresh pea))) "Peacock strength back to default"))))
+  (testing "Do not display prompt without an installed icebreaker"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 3) (qty "Net-Ready Eyes" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Net-Ready Eyes")
+      (is (= 3 (count (:discard (get-runner)))) "Took 2 damage on NRE install")
+      (run-on state :hq)
+      (is (empty? (:prompt (get-runner))) "No NRE prompt"))))
 
 (deftest obelus
   ;; Obelus - Increase max hand size with tags, draw cards on first successful HQ/R&D run

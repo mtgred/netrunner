@@ -534,9 +534,20 @@
 
    "Brahman"
    (auto-icebreaker ["All"]
-                    {:implementation "Adding non-virus program to top of Stack is manual"
-                     :abilities [(break-sub 1 2 "ICE")
-                                 (strength-pump 2 1)]})
+                    {:abilities [(break-sub 1 2 "ICE" (effect (update! (assoc-in card [:special :brahman-used] true))))
+                                 (strength-pump 2 1)]
+                     :events (let [put-back {:req (req (get-in card [:special :brahman-used]))
+                                             :player :runner ; Needed for when the run is ended by the Corp
+                                             :prompt "Choose a non-virus program to put on top of your stack."
+                                             :choices {:req #(and (installed? %)
+                                                                  (program? %)
+                                                                  (not (facedown? %))
+                                                                  (not (has-subtype? % "Virus")))}
+                                             :msg (msg "add " (:title target) " to the top of the Stack")
+                                             :effect (effect (update! (dissoc-in card [:special :brahman-used]))
+                                                             (move target :deck {:front true}))}]
+                               {:pass-ice put-back
+                                :run-ends put-back})})
 
    "Breach"
    (central-breaker "Barrier"
