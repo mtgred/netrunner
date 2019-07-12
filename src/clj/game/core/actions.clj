@@ -317,20 +317,23 @@
   [state side args]
   (let [run (:run @state)
         card (get-card state (:card args))
+        eid (make-eid state {:source card :source-type :ability})
         run-ice (get-run-ices state)
         ice-cnt (count run-ice)
         ice-idx (dec (:position run 0))
         in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
         current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
         pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
-        pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
         strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
                                            (or (:current-strength card) (:strength card)))))
-        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))]
-    (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
-      (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
-      (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
-                                  (:title card) " to " (:current-strength (get-card state card)))))))
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))
+        total-pump-cost (merge-costs (repeat pumpnum (:cost pumpabi)))]
+    (when (can-pay? state side eid card total-pump-cost)
+      (wait-for (pay-sync state side (make-eid state eid) card total-pump-cost)
+                (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :cost :msg) (get-card state card) nil))
+                (system-msg state side (str (build-spend-msg async-result "increase")
+                                            "the strength of " (:title card) " to "
+                                            (:current-strength (get-card state card))))))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."

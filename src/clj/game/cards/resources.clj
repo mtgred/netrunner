@@ -195,7 +195,7 @@
                  :choices (req (cancellable (filter #(not (event? %)) (:deck runner)) :sorted))
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
-                                 (runner-install target))}]}
+                                 (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]}
 
    "Assimilator"
    {:abilities [{:label "Turn a facedown card faceup"
@@ -284,7 +284,7 @@
                                                      :yes-ability {:async true
                                                                    :effect (req (if-let [c (some #(when (= (:title %) hw) %)
                                                                                                  (:hand runner))]
-                                                                                  (runner-install state side eid c nil)))}}} card nil)))}}})
+                                                                                  (runner-install state side (make-eid state {:source card :source-type :runner-install}) c nil)))}}} card nil)))}}})
 
    "Beach Party"
    {:in-play [:hand-size 5]
@@ -416,7 +416,7 @@
                  :choices {:req #(and (program? %) (in-hand? %))}
                  :msg (msg "install " (:title target))
                  :effect (req (install-cost-bonus state side [:credit (- (get-counters card :power))])
-                              (runner-install state side target)
+                              (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)
                               (when (pos? (get-counters card :power))
                                 (add-counter state side card :power -1)))}]}
 
@@ -597,7 +597,7 @@
                                                     :player :runner
                                                     :prompt "Install Crowdfunding?"
                                                     :yes-ability {:effect (effect (unregister-events card)
-                                                                                  (runner-install :runner card {:ignore-all-cost true}))}
+                                                                                  (runner-install :runner (assoc eid :source card :source-type :runner-install) card {:ignore-all-cost true}))}
                                                     ;; Add a register to note that the player was already asked about installing,
                                                     ;; to prevent multiple copies from prompting multiple times.
                                                     :no-ability {:effect (req (swap! state assoc-in [:runner :register :crowdfunding-prompt] true))}}}
@@ -1106,7 +1106,7 @@
                  :msg "install the top 3 cards of their Stack facedown"
                  :effect (req (trash state side card {:cause :ability-cost})
                               (doseq [c (take 3 (get-in @state [:runner :deck]))]
-                                (runner-install state side c {:facedown true})))}]}
+                                (runner-install state side (make-eid state {:source card :source-type :runner-install}) c {:facedown true})))}]}
 
    "Ice Analyzer"
    {:implementation "Credit use restriction is not enforced"
@@ -1366,8 +1366,9 @@
                                       (not (has-subtype? % "Virus"))
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (runner-install target {:host-card card
-                                                         :ignore-install-cost true}))}
+                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target 
+                                                 {:host-card card
+                                                  :ignore-install-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip"
                  :cost [:click 1]
                  :choices {:req #(:host %)} ;TODO: this seems to allow all hosted cards to be bounced
@@ -1691,7 +1692,7 @@
                                         (in-hand? %)
                                         (runner? %))}
                    :effect (req (if (zero? (:cost target))
-                                  (runner-install state side target)
+                                  (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
                                   (host state side card
                                         (assoc target :counter {:power (:cost target)}))))
                    :msg (msg "host " (:title target) "")}
@@ -1712,7 +1713,7 @@
                                      :effect (req (do
                                                     (lose-credits state side target)
                                                     (if (= num-counters target)
-                                                      (runner-install state side (dissoc paydowntarget :counter) {:ignore-all-cost true})
+                                                      (runner-install state side (assoc eid :source card :source-type :runner-install) (dissoc paydowntarget :counter) {:ignore-all-cost true})
                                                       (add-counter state side paydowntarget :power (- target)))))}
                                     card nil)))}]
       :events {:runner-turn-begins remove-counter}})
@@ -1797,7 +1798,7 @@
                                           :sorted))
                           :msg (msg "install " (:title target) " from the Heap")
                           :async true
-                          :effect (req (runner-install state :runner eid target nil))}
+                          :effect (req (runner-install state :runner (assoc eid :source card :source-type :runner-install) target nil))}
                          card nil))))}]}
 
    "Rogue Trading"
@@ -1855,7 +1856,7 @@
                                                 (shuffle! state side :deck)
                                                 (when (not= target "No install")
                                                   (install-cost-bonus state side [:credit (- n)])
-                                                  (runner-install state side target)))} card nil)))}]}
+                                                  (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))} card nil)))}]}
 
    "Sacrificial Clone"
    {:interactions {:prevent [{:type #{:net :brain :meat}
@@ -2023,7 +2024,7 @@
                                                           (fn [coll]
                                                             (remove-once #(same-card? % target) coll)))
                                     {:cause :ability-cost})
-                             (runner-install state side eid (dissoc target :facedown) nil)))}]}
+                             (runner-install state side (assoc eid :source card :source-type :runner-install) (dissoc target :facedown) nil)))}]}
 
    "Symmetrical Visage"
    {:events {:runner-click-draw {:req (req (genetics-trigger? state side :runner-click-draw))
@@ -2130,7 +2131,7 @@
                  :once :per-turn
                  :once-key :artist-install
                  :effect (effect (install-cost-bonus [:credit -1])
-                                 (runner-install target {:no-msg true}))
+                                 (runner-install (assoc eid :source card :source-type :runner-install) target {:no-msg true}))
                  :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]}
 
    "The Black File"
@@ -2255,7 +2256,7 @@
                             (when (and (can-pay? state side eid card nil (modified-install-cost state side target [:credit -2]))
                                        (not (and (:uniqueness target) (in-play? state target))))
                               (install-cost-bonus state side [:credit -2])
-                              (runner-install state side target)
+                              (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
                               (system-msg state side (str "uses The Supplier to install " (:title target) " lowering its install cost by 2"))
                               (update! state side (-> card
                                                       (assoc :supplier-installed (:cid target))

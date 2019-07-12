@@ -961,6 +961,33 @@
       (core/rez state :corp eli)
       (is (= 5 (:current-strength (refresh eli))) "Eli 1.0 at 5 strength"))))
 
+(deftest hayley-kaplan-universal-scholar
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:id "Hayley Kaplan: Universal Scholar"
+                          :hand ["Corroder" "Cache" (qty "Fan Site" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (find-card "Cache" (:hand (get-runner))))
+      (is (= 2 (count (:hand (get-runner)))) "Installed Corroder and Cache.")
+      (play-from-hand state :runner "Fan Site")
+      (is (empty? (:prompt (get-runner))) "No Hayley prompt if not first install this turn.")))
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:id "Hayley Kaplan: Universal Scholar"
+                          :hand ["Corroder" "Sahasrara"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sahasrara")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
+      (let [rara (get-program state 0)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 2 credits from Sahasrara to install Corroder"
+                           (click-card state :runner rara)
+                           (click-card state :runner rara)))
+      (is (empty? (:hand (get-runner))) "Installed Sahasrara and Corroder."))))
+
 (deftest hyoubu-institute-absolute-clarity
   (testing "ID abilities"
     (do-game
