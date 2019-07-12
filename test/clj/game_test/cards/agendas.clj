@@ -435,7 +435,20 @@
       (click-prompt state :corp "0")  ;; Corp doesn't pump trace, base 3
       (click-prompt state :runner "5")  ;; Runner pumps trace; wins trace
       (is (= 2 (count-bad-pub state)) "Gains additional bad pub")
-      (is (= 2 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 2 agenda counter"))))
+      (is (= 2 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 2 agenda counter")))
+  (testing "Interaction with Titan"
+    (do-game
+      (new-game {:corp {:id "Titan Transnational: Investing In Your Future"
+                        :deck [(qty "Broad Daylight" 3)]}})
+      (is (zero? (count-bad-pub state)) "Corp start with no bad pub")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "No")
+      (is (= 0 (count-bad-pub state)) "Corp gains no bad pub")
+      (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counters")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 1 (count-bad-pub state)) "Corp gains 1 bad pub")
+      (is (= 2 (get-counters (get-scored state :corp 1) :agenda)) "Should gain 2 agenda counters"))))
 
 (deftest cfc-excavation-contract
   ;; CFC Excavation Contract
