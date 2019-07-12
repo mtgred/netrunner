@@ -1642,7 +1642,7 @@
                                 :effect (effect (continue-ability
                                                   (pphelper (:title target)
                                                             (->> (:deck runner)
-                                                                 (filter #(has? % :title (:title target)))
+                                                                 (filter #(= (:title %) (:title target)))
                                                                  (vec)))
                                                   card nil))}}})
 

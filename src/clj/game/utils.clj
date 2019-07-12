@@ -41,12 +41,6 @@
   (let [[head tail] (split-with (complement pred) coll)]
     (vec (concat head (rest tail)))))
 
-(defn has?
-  "Checks the string property of the card to see if it contains the given value"
-  [card property value]
-  (when-let [p (property card)]
-    (> (.indexOf p value) -1)))
-
 (defn card-is?
   "Checks the property of the card to see if it is equal to the given value,
   as either a string or a keyword"

@@ -1369,11 +1369,11 @@
                                                           (ice? %)
                                                           (can-host? %)
                                                           (installed? %)
-                                                          (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))
+                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
                                                      (and (ice? %)
                                                           (installed? %)
                                                           (can-host? %)
-                                                          (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
                                    :msg (msg "host it on " (card-str state target))
                                    :effect (effect (host target card))} card nil)))}
                 {:cost [:credit 2]
@@ -1956,11 +1956,11 @@
                                                           (= (last (:zone %)) :ices)
                                                           (ice? %)
                                                           (can-host? %)
-                                                          (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))
+                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
                                                      (and (ice? %)
                                                           (can-host? %)
                                                           (= (last (:zone %)) :ices)
-                                                          (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
                                    :msg (msg "host it on " (card-str state target))
                                    :effect (effect (host target card))} card nil)))}]
     :events {:pre-rez-cost {:req (req (= (:zone (:host card)) (:zone target)))
