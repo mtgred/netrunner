@@ -1279,8 +1279,8 @@
     :effect (req (change-hand-size state :corp (- (count-bad-pub state)))
                  (add-watch state :itin
                             (fn [k ref old new]
-                              (let [bpnew (count-bad-pub new)
-                                    bpold (count-bad-pub old)
+                              (let [bpnew (count-bad-pub (atom new))
+                                    bpold (count-bad-pub (atom old))
                                     bpchange (- bpnew bpold)]
                                 (when-not (zero? bpchange)
                                   (change-hand-size state :corp (- bpchange)))))))
