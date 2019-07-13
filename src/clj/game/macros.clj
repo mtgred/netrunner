@@ -32,8 +32,6 @@
       rd-runnable (not (:rd (get-in (:runner @state) [:register :cannot-run-on-server])))
       archives-runnable (not (:archives (get-in (:runner @state) [:register :cannot-run-on-server])))
       tagged (is-tagged? state)
-      has-bad-pub (or (pos? (:bad-publicity (:corp @state)))
-                      (pos? (:has-bad-pub (:corp @state))))
       this-server (let [s (-> card :zone rest butlast)
                         r (:server (:run @state))]
                     (and (= (first r) (first s))

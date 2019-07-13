@@ -36,7 +36,7 @@
       (new-game {:runner {:deck ["Account Siphon"
                                  "New Angeles City Hall"]}})
       (core/gain state :corp :bad-publicity 1)
-      (is (= 1 (:bad-publicity (get-corp))) "Corp has 1 bad publicity")
+      (is (= 1 (count-bad-pub state)) "Corp has 1 bad publicity")
       (core/lose state :runner :credit 1)
       (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
       (take-credits state :corp) ; pass to runner's turn by taking credits
@@ -332,7 +332,7 @@
       (new-game {:corp {:deck [(qty "Ice Wall" 3)]}
                  :runner {:id "Valencia Estevez: The Angel of Cayambe"
                           :deck [(qty "Blackmail" 3)]}})
-      (is (= 1 (get-in @state [:corp :bad-publicity])) "Corp has 1 bad-publicity")
+      (is (= 1 (count-bad-pub state)) "Corp has 1 bad-publicity")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
@@ -355,7 +355,7 @@
       (new-game {:corp {:deck [(qty "TMI" 3)]}
                  :runner {:id "Valencia Estevez: The Angel of Cayambe"
                           :deck [(qty "Blackmail" 3)]}})
-      (is (= 1 (get-in @state [:corp :bad-publicity])) "Corp has 1 bad-publicity")
+      (is (= 1 (count-bad-pub state)) "Corp has 1 bad-publicity")
       (play-from-hand state :corp "TMI" "HQ")
       (let [tmi (get-ice state :hq 0)]
         (core/rez state :corp tmi)
@@ -805,9 +805,9 @@
     (take-credits state :runner)
     (let [em (get-content state :remote1 0)]
       (core/rez state :corp em)
-      (is (= 1 (:has-bad-pub (get-corp))) "Corp still has BP")
+      (is (= 1 (count-bad-pub state)) "Corp still has BP")
       (take-credits state :corp)
-      (is (zero? (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
+      (is (zero? (get-in (get-corp) [:bad-publicity :base])) "Corp has BP, didn't take 1 from Activist Support"))))
 
 (deftest credit-kiting
   ;; Credit Kiting - After successful central run lower install cost by 8 and gain a tag
@@ -1867,7 +1867,6 @@
       (letfn [(prevent-snare [existing-dmg]
                 (click-prompt state :corp "Yes")
                 (card-ability state :runner (get-program state 0) 1)
-                (click-prompt state :runner "Done")
                 (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Damage from Snare! prevented")
                 (click-prompt state :runner (-> (prompt-map :runner) :choices first))
                 (when (-> (prompt-map :runner) :choices first)
@@ -1879,8 +1878,7 @@
               (allow-pad [existing-dmg]
                 (click-prompt state :runner (-> (prompt-map :runner) :choices first))
                 (card-ability state :runner (get-program state 0) 1)
-                (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf")
-                (click-prompt state :runner "Done"))]
+                (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf"))]
         (if (= :waiting (-> (get-runner) :prompt first :prompt-type)) ; hit the snare
           ;; prevent the damage
           (do (prevent-snare (count (:discard (get-runner))))
@@ -2351,7 +2349,7 @@
     (run-on state "HQ")
     (run-successful state)
     (core/gain state :runner :credit 1) ; you need 6c for 3 Mining Accidents...
-    (changes-val-macro 1 (:bad-publicity (get-corp))
+    (changes-val-macro 1 (count-bad-pub state)
                        "Corp took 1 BP"
                        (play-from-hand state :runner "Mining Accident")
                        (click-prompt state :corp "Take 1 Bad Publicity"))
@@ -2359,7 +2357,7 @@
                        "Corp paid 5c"
                        (play-from-hand state :runner "Mining Accident")
                        (click-prompt state :corp "Pay 5 [Credits]"))
-    (changes-val-macro 1 (:bad-publicity (get-corp))
+    (changes-val-macro 1 (count-bad-pub state)
                        "Corp took 1 BP without getting a prompt"
                        (play-from-hand state :runner "Mining Accident")
                        (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to pay credits if corp is below 5c")
@@ -2385,6 +2383,10 @@
     (is (= 9 (:credit (get-runner))))
     (is (empty? (:prompt (get-runner))) "No prompt to run a third time")
     (is (not (:run @state)) "Run is over")
+    (changes-val-macro 0 (:credit (get-runner))
+                       "Normal run on R&D didn't give any credits"
+                       (run-empty-server state :rd)
+                       (click-prompt state :runner "No action"))
     (play-from-hand state :runner "Möbius")
     (run-jack-out state)
     (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
@@ -2497,7 +2499,6 @@
       (take-credits state :runner)
       (play-and-score state "Show of Force")
       (card-ability state :runner (-> (get-resource state 0) :hosted first) 1)
-      (click-prompt state :runner "Done")
       (is (zero? (count-tags state)) "Runner should avoid all meat damage")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap"))))
 
@@ -3068,7 +3069,7 @@
       (is (zero? (get-in (get-runner) [:hand-size :mod])) "Runner has original hand size")
       ;; "When you rez" effects should not apply
       (core/rez state :corp (get-content state :remote4 0))
-      (is (= 1 (:bad-publicity (get-corp))) "Corp still has 1 bad publicity")
+      (is (= 1 (count-bad-pub state)) "Corp still has 1 bad publicity")
       ;; Run events (Caprice)
       ;; Make sure Rumor Mill applies even if card is rezzed after RM is put in play.
       (core/rez state :corp (get-content state :remote1 0))
@@ -3096,7 +3097,7 @@
       (is (zero? (count (:scored (get-corp)))) "Agenda was auto-forfeit to rez Oberth")
       (core/derez state :corp (get-content state :remote4 0))
       (core/rez state :corp (get-content state :remote4 0))
-      (is (zero? (:bad-publicity (get-corp))) "Corp has 0 bad publicity")
+      (is (zero? (count-bad-pub state)) "Corp has 0 bad publicity")
       (card-ability state :corp (get-content state :remote4 0) 0) ; Elizabeth Mills, should show a prompt
       (is (:prompt (get-corp)) "Elizabeth Mills ability allowed")))
   (testing "Make sure Rumor Mill is not active when hosted on Peddler"

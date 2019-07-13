@@ -1,11 +1,11 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
-            [game.core.eid :refer [effect-completed]]
+            [game.core.eid :refer [effect-completed make-eid]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target
@@ -177,7 +177,7 @@
                                        (in-hand? %))}
                   :req (req (and (pos? (count (:hand runner)))
                                  (:runner-phase-12 @state)))
-                  :effect (effect (runner-install eid target {:facedown true}))}]
+                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:facedown true}))}]
      {:events {:runner-turn-begins ability}
       :flags {:runner-phase-12 (req true)}
       :abilities [ability]})
@@ -472,7 +472,7 @@
    "GRNDL: Power Unleashed"
    {:events {:pre-start-game {:req (req (= :corp side))
                               :effect (req (gain-credits state :corp 5)
-                                           (when (zero? (:bad-publicity corp))
+                                           (when (zero? (count-bad-pub state))
                                              (gain-bad-publicity state :corp 1)))}}}
 
    "Haarpsichord Studios: Entertainment Unleashed"
@@ -559,7 +559,7 @@
                                     :choices {:req #(and (is-type? % type)
                                                          (in-hand? %))}
                                     :msg (msg "install " (:title target))
-                                    :effect (effect (runner-install eid target nil))}}}
+                                    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}}}
                        card nil)))}}}
 
    "Hoshiko Shiro"
@@ -732,7 +732,7 @@
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (install-cost-bonus [:credit -1])
-                                 (runner-install eid (assoc-in target [:special :kabonesa] true) nil))}]})
+                                 (runner-install (assoc eid :source card :source-type :runner-install) (assoc-in target [:special :kabonesa] true) nil))}]})
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
@@ -814,7 +814,8 @@
                :agenda-stolen leela}})
 
    "Liza Talking Thunder: Prominent Legislator"
-   {:events
+   {:implementation "Needs to be resolved manually with Crisium Grid"
+    :events
     {:successful-run
      {:async true
       :interactive (req true)
@@ -1347,7 +1348,8 @@
    "Valencia Estevez: The Angel of Cayambe"
    {:events {:pre-start-game
              {:req (req (and (= side :runner)
-                             (zero? (get-in @state [:corp :bad-publicity]))))
+                             (zero? (count-bad-pub state))))
+              ;; This doesn't use `gain-bad-publicity` to avoid the event
               :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Weyland Consortium: Because We Built It"

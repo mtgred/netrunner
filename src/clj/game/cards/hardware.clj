@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 ;; Card definitions
 (def card-definitions
@@ -20,11 +20,11 @@
                                          :prompt "Use Acacia?"
                                          :yes-ability {:effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
                                                                                       (number-of-virus-counters state))]
-                                                                      (gain-credits state side counters)
-                                                                      (system-msg state side (str "uses Acacia and gains " counters "[Credit]"))
-                                                                      (trash state side card)
-                                                                      (clear-wait-prompt state :corp)
-                                                                      (effect-completed state side eid)))}
+                                                                      (wait-for (trash state side card nil)
+                                                                                (gain-credits state side counters)
+                                                                                (system-msg state side (str "uses Acacia and gains " counters "[Credit]"))
+                                                                                (clear-wait-prompt state :corp)
+                                                                                (effect-completed state side eid))))}
                                          :no-ability {:effect (effect (clear-wait-prompt :corp)
                                                                       (effect-completed eid))}}}
                                        card nil))}}}
@@ -611,7 +611,9 @@
    {:in-play [:memory 1]
     :interactions {:prevent [{:type #{:net :brain :meat}
                               :req (req true)}]}
-    :abilities [{:msg (msg "prevent 1 damage, trashing a facedown " (:title target))
+    :abilities [{:msg (msg "prevent 1 damage, trashing "
+                           (when (facedown? target) "a facedown ")
+                           (:title target))
                  :choices {:req #(and (runner? %) (installed? %))}
                  :priority 50
                  :effect (effect (trash target {:unpreventable true})
@@ -858,7 +860,10 @@
 
    "Net-Ready Eyes"
    {:effect (effect (damage eid :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
-    :events {:run {:choices {:req #(and (installed? %)
+    :events {:run {:req (req (some #(and (program? %)
+                                         (has-subtype? % "Icebreaker"))
+                                   (all-active-installed state :runner)))
+                   :choices {:req #(and (installed? %)
                                         (has-subtype? % "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
                    :effect (effect (pump target 1 :all-run))}}}
@@ -975,10 +980,11 @@
                                            {:msg "add the top card of Stack to the bottom"
                                             :effect (effect (move :runner (first (:deck runner)) :deck)
                                                             (clear-wait-prompt :corp))}
-                                           :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                                           :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                        (system-msg "does not add the top card of the Stack to the bottom"))}}}
                                          card nil))}
                             :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                         (system-msg "does not add the top card of the Stack to the bottom"))}}}
+                                                         (system-msg "does not gain 1 [Credit] and look at the top card of the Stack"))}}}
                           card nil))}}
     :abilities [(set-autoresolve :auto-fire "Paragon")]}
 

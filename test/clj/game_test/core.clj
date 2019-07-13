@@ -149,7 +149,7 @@
           (swap! state assoc-in [side :credit] (:credits side-map)))))
     ;; These are side independent so they happen ouside the loop
     (when-let [bad-pub (:bad-pub corp)]
-      (swap! state assoc-in [:corp :bad-publicity] bad-pub))
+      (swap! state assoc-in [:corp :bad-publicity :base] bad-pub))
     (when-let [tags (:tags runner)]
       (swap! state assoc-in [:runner :tag :base] tags))
     (when (= start-as :runner) (take-credits state :corp))
@@ -193,6 +193,7 @@
 (def count-tags jutils/count-tags)
 (def has-subtype? jutils/has-subtype?)
 (def is-tagged? jutils/is-tagged?)
+(def count-bad-pub jutils/count-bad-pub)
 
 (defn get-ice
   "Get installed ice protecting server by position. If no pos, get all ice on the server."

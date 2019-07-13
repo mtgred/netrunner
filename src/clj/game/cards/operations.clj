@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 ;; Card definitions
 (def card-definitions
@@ -759,7 +759,7 @@
     :choices ["Hardware" "Program" "Resource"]
     :effect (req (let [type target
                        trashtargets (filter #(and (is-type? % type)
-                                                  (not (has? % :subtype "Icebreaker")))
+                                                  (not (has-subtype? % "Icebreaker")))
                                             (all-active-installed state :runner))
                        numtargets (count trashtargets)
                        typemsg (str (when (= type "Program") "non-Icebreaker ") type
@@ -775,7 +775,7 @@
                         :choices {:max (req (min numtargets (quot (:credit runner) 3)))
                                   :req #(and (installed? %)
                                              (is-type? % type)
-                                             (not (has? % :subtype "Icebreaker")))}
+                                             (not (has-subtype? % "Icebreaker")))}
                         :effect (req (pay state :runner card :credit (* 3 (count targets)))
                                      (system-msg
                                        state :runner
@@ -1600,11 +1600,11 @@
                                 :effect (effect (ice-strength-bonus (get-counters card :power) target))}}}
 
    "Sacrifice"
-   {:req (req (and (pos? (:bad-publicity corp))
+   {:req (req (and (pos? (count-bad-pub state))
                    (some #(pos? (:agendapoints %)) (:scored corp))))
     :additional-cost [:forfeit]
     :effect (req (let [bp-lost (max 0 (min (:agendapoints (last (:rfg corp)))
-                                           (:bad-publicity corp)))]
+                                           (count-bad-pub state)))]
                    (system-msg state side (str "uses Sacrifice to lose " bp-lost " bad publicity and gain " bp-lost " [Credits]"))
                    (when (pos? bp-lost)
                      (lose-bad-publicity state side bp-lost)
@@ -1907,7 +1907,7 @@
       :async true
       :effect (effect
                 (continue-ability
-                  (if (pos? (:bad-publicity corp 0))
+                  (if (pos? (count-bad-pub state))
                     {:optional
                      {:player :runner
                       :prompt "Remove 1 bad publicity to prevent all resources from being trashed?"

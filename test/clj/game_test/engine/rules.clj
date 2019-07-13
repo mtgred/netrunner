@@ -463,7 +463,7 @@
     (new-game {:corp {:deck [(qty "Cyberdex Virus Suite" 3)]}
                :runner {:id "Valencia Estevez: The Angel of Cayambe"
                         :deck [(qty "Sure Gamble" 3)]}})
-    (is (= 1 (:bad-publicity (get-corp))) "Corp starts with 1 BP")
+    (is (= 1 (count-bad-pub state)) "Corp starts with 1 BP")
     (play-from-hand state :corp "Cyberdex Virus Suite" "New remote")
     (play-from-hand state :corp "Cyberdex Virus Suite" "R&D")
     (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
@@ -487,7 +487,7 @@
     (new-game {:corp {:deck [(qty "Caprice Nisei" 3)]}
                :runner {:id "Valencia Estevez: The Angel of Cayambe"
                         :deck [(qty "Sure Gamble" 3)]}})
-    (is (= 1 (:bad-publicity (get-corp))) "Corp starts with 1 BP")
+    (is (= 1 (count-bad-pub state)) "Corp starts with 1 BP")
     (play-from-hand state :corp "Caprice Nisei" "New remote")
     (take-credits state :corp)
     (let [caprice (get-content state :remote1 0)]

@@ -295,7 +295,7 @@
           nil)
         (case command
           "/adv-counter" #(command-adv-counter %1 %2 value)
-          "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity] (max 0 value))
+          "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity :base] (max 0 value))
           "/card-info"  #(resolve-ability %1 %2
                                           {:effect (effect (system-msg (str "shows card-info of "
                                                                             (card-str state target)
