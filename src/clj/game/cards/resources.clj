@@ -647,6 +647,13 @@
                                  (runner-install target))}
                 (set-autoresolve :auto-add "adding virus counters to Crypt")]}
 
+   "Cybertrooper Talut"
+   {:in-play [:link 1]
+    :events {:runner-install {:silent (req true)
+                              :req (req (and (has-subtype? target "Icebreaker")
+                                             (not (has-subtype? target "AI"))))
+                              :effect (effect (pump target 2 :all-turn))}}}
+
    "Dadiana Chacon"
    (let [trashme {:effect (effect (unregister-events card)
                                   (damage eid :meat 3 {:unboostable true :card card}))

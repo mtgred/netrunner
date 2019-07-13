@@ -662,6 +662,32 @@
           (take-credits state :runner)
           (is (empty? (:prompt (get-runner))) "Crowdfunding shouldn't prompt for install")))))
 
+(deftest cybertrooper-talut
+  ;; Cybertrooper Talut
+  (testing "Basic test"
+    (do-game
+     (new-game {:runner {:deck ["Cybertrooper Talut"
+                                "Corroder"
+                                "Aumakua"]}})
+     (take-credits state :corp)
+     (core/gain state :runner :credit 10)
+     (is (= 0 (:link (get-runner))) "Start with 0 link")
+     (play-from-hand state :runner "Cybertrooper Talut")
+     (is (= 1 (:link (get-runner))) "Gained 1 link")
+     (play-from-hand state :runner "Corroder")
+     (play-from-hand state :runner "Aumakua")
+     (let [cor (get-program state 0)
+           aum (get-program state 1)]
+       (is (= 4 (:current-strength (refresh cor))) "+2 strength by Talut")
+       (is (= 0 (:current-strength (refresh aum))) "No strength boost for AI")
+       (run-on state :hq)
+       (card-ability state :runner cor 1)
+       (is (= 5 (:current-strength (refresh cor))) "+1 strength by hand")
+       (run-jack-out state)
+       (is (= 4 (:current-strength (refresh cor))) "Strength back down to 4")
+       (take-credits state :runner)
+       (is (= 2 (:current-strength (refresh cor))) "Corroder strength back down to normal")))))
+
 (deftest dadiana-chacon
   ;; gain 1 cr at start of turn if you have less than 6,
   ;; take 3 meat and trash if you have 0
