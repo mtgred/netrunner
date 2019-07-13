@@ -407,6 +407,16 @@
      {:events {:corp-turn-begins ability}
       :abilities [ability]})
 
+   "Cyberdex Sandbox"
+   {:effect (effect (continue-ability
+                      {:optional {:prompt "Purge virus counters with Cyberdex Sandbox?"
+                                  :yes-ability {:msg (msg "purge virus counters")
+                                                :effect (effect (purge))}}}
+                      card nil))
+    :events {:purge {:once :per-turn
+                     :msg "gain 4 [Credits]"
+                     :effect (req (gain-credits state :corp 4))}}}
+
    "Dedicated Neural Net"
    (let [psi-effect
          {:async true

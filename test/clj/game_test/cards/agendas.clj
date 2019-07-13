@@ -561,6 +561,29 @@
     (take-credits state :runner)
     (is (= 2 (count (:hand (get-runner)))) "Crisis Management dealt 1 meat damage")))
 
+(deftest cyberdex-sandbox
+  ;; Cyberdex Sandbox
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" "Cyberdex Trial"]}})
+      (play-and-score state "Cyberdex Sandbox")
+      (core/gain state :corp :click 10)
+      (is (changes-credits (get-corp) 4
+                           (click-prompt state :corp "Yes")))
+      (is (changes-credits (get-corp) 0
+                           (core/purge state :corp)))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (changes-credits (get-corp) 4
+                           (play-from-hand state :corp "Cyberdex Trial")))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
+      (let [cvs (get-content state :hq 0)]
+        (core/rez state :corp cvs)
+        (is (changes-credits (get-corp) 4
+                             (card-ability state :corp cvs 0)))))))
+
 (deftest dedicated-neural-net
   ;; Dedicated Neural Net
   (do-game
