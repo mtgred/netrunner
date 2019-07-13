@@ -370,13 +370,16 @@
                                        [:credit cost])))))
 
 (defn- runner-install-message
-  "Prints the correct msg for the card install"
+  "Prints the correct msg for the card install.
+  The parameter custom-message can be either a String or a function taking a cost-str and returning a String."
   [state side card-title cost-str
    {:keys [no-cost host-card facedown custom-message] :as params}]
   (if facedown
     (system-msg state side "installs a card facedown")
     (if custom-message
-      (system-msg state side custom-message)
+      (if (not (instance? String custom-message))
+        (system-msg state side (custom-message cost-str))
+        (system-msg state side custom-message))
       (system-msg state side
                   (str (build-spend-msg cost-str "install") card-title
                        (when host-card (str " on " (card-str state host-card)))
@@ -391,9 +394,12 @@
 
 (defn runner-install
   "Installs specified runner card if able
-  Params include extra-cost, no-cost, host-card, facedown and custom-message."
-  ([state side card] (runner-install state side (make-eid state) card nil))
-  ([state side card params] (runner-install state side (make-eid state) card params))
+  Params include extra-cost, no-cost, host-card, facedown and custom-message.
+  The parameter custom-message can be either a String or a function taking a cost-str and returning a String."
+  ([state side card] (runner-install state side (make-eid state {:source nil
+                                                                 :source-type :runner-install}) card nil))
+  ([state side card params] (runner-install state side (make-eid state {:source nil
+                                                                        :source-type :runner-install}) card params))
   ([state side eid card {:keys [host-card facedown no-mu no-msg] :as params}]
    (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)]
      (if (and (empty? (get-in @state [side :locked (-> card :zone first)]))
