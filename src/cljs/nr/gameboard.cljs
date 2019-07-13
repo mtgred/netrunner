@@ -331,8 +331,9 @@
          (let [div (:message-list @board-dom)
                scroll-top (.-scrollTop div)
                scroll-height (.-scrollHeight div)
-               client-height (.-clientHeight div)]
-           (when (>= (+ scroll-top client-height) scroll-height)
+               client-height (.-clientHeight div)
+               combo (+ scroll-top client-height)]
+           (when (<= (- combo 5) scroll-height (+ combo 5))
              (swap! s assoc :scroll-to-bottom true))))
 
        :component-did-update
@@ -979,7 +980,7 @@
 (defmethod stats-view "Corp" [corp]
   (let [me? (= (:side @game-state) :corp)]
     (fn [corp]
-      (let [{:keys [user click credit agenda-point bad-publicity has-bad-pub hand-size active]} @corp]
+      (let [{:keys [user click credit agenda-point bad-publicity hand-size active]} @corp]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
          [:h4.ellipsis [avatar user {:opts {:size 22}}] (:username user)]
          [:div (str click " Click" (if (not= click 1) "s" ""))
@@ -988,8 +989,9 @@
           (when me? (controls :credit))]
          [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
           (when me? (controls :agenda-point))]
-         [:div (str (+ bad-publicity has-bad-pub) " Bad Publicity")
-          (when me? (controls :bad-publicity))]
+         (let [{:keys [base additional]} bad-publicity]
+           [:div (str (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
+            (when me? (controls :bad-publicity))])
          (let [{:keys [base mod]} hand-size]
            [:div (str (+ base mod) " Max hand size")
             (when me? (controls :hand-size))])]))))

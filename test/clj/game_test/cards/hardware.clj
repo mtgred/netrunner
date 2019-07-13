@@ -8,20 +8,42 @@
 
 (deftest acacia
   ;; Acacia - Optionally gain credits for number of virus tokens then trash
-  (do-game
-    (new-game {:runner {:deck ["Acacia" "Virus Breeding Ground" "Datasucker"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Acacia")
-    (play-from-hand state :runner "Virus Breeding Ground")
-    (play-from-hand state :runner "Datasucker")
-    (core/add-counter state :runner (get-resource state 0) :virus 4)
-    (core/add-counter state :runner (get-program state 0) :virus 3)
-    (take-credits state :runner)
-    (is (= 2 (:credit (get-runner))) "Runner initial credits")
-    (core/purge state :corp)
-    (click-prompt state :runner "Yes")
-    (is (= 9 (:credit (get-runner))) "Runner gained 9 credits")
-    (is (= 1 (count (:discard (get-runner)))) "Acacia has trashed")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Acacia" "Virus Breeding Ground" "Datasucker"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Acacia")
+      (play-from-hand state :runner "Virus Breeding Ground")
+      (play-from-hand state :runner "Datasucker")
+      (core/add-counter state :runner (get-resource state 0) :virus 4)
+      (core/add-counter state :runner (get-program state 0) :virus 3)
+      (take-credits state :runner)
+      (is (= 2 (:credit (get-runner))) "Runner initial credits")
+      (core/purge state :corp)
+      (click-prompt state :runner "Yes")
+      (is (= 9 (:credit (get-runner))) "Runner gained 9 credits")
+      (is (= 1 (count (:discard (get-runner)))) "Acacia has trashed")))
+  (testing "Issue #4280: Interaction with LLDS Energy Regulator"
+    (do-game
+      (new-game {:runner {:deck ["Acacia" "LLDS Energy Regulator" "Datasucker"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Acacia")
+      (play-from-hand state :runner "Datasucker")
+      (play-from-hand state :runner "LLDS Energy Regulator")
+      (core/add-counter state :runner (get-program state 0) :virus 3)
+      (take-credits state :runner)
+      (let [llds (get-program state 1)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Runner didn't get credits before deciding on LLDS"
+                           (core/purge state :corp)
+                           (click-prompt state :runner "Yes"))
+        (changes-val-macro -3 (:credit (get-runner))
+                           "Runner pays 3 for LLDS"
+                           (card-ability state :runner (refresh llds) 0))
+        (changes-val-macro 3 (:credit (get-runner))
+                           "Runner got Acacia credits"
+                           (click-prompt state :runner "Done"))
+        (is (= 0 (count (:discard (get-runner)))) "Acacia has not been trashed")))))
 
 (deftest akamatsu-mem-chip
   ;; Akamatsu Mem Chip - Gain 1 memory
@@ -464,7 +486,6 @@
         (core/rez state :corp dm)
         (card-subroutine state :corp dm 0)
         (card-ability state :runner ff 0)
-        (click-prompt state :runner "Done")
         (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
         (is (= 4 (:credit (get-runner))))
         (run-successful state)
@@ -656,16 +677,26 @@
       (core/rez state :corp pup)
       (core/rez state :corp nk)
       (card-subroutine state :corp (refresh pup) 0)
+      (is (= (-> (get-runner) :prompt first :msg)
+             "Prevent any of the 1 net damage?")
+          "Damage prevention message correct.")
       (card-ability state :runner hb 0)
       (click-card state :runner cache)
-      (click-prompt state :runner "Done")
       (is (= 1 (count (:discard (get-runner)))) "Prevented 1 net damage")
       (is (= 2 (count (:hand (get-runner)))))
+      (is (second-last-log-contains? state "Runner uses Heartbeat to prevent 1 damage, trashing Cache\\.") "Prompt correct")
       (card-subroutine state :corp (refresh nk) 0)
+      (is (= (-> (get-runner) :prompt first :msg)
+             "Prevent any of the 3 net damage?")
+          "Damage prevention message correct.")
       (card-ability state :runner hb 0)
       (click-card state :runner hbdown)
+      (is (= (-> (get-runner) :prompt first :msg)
+             "Prevent any of the 3 net damage? (1/3 prevented)")
+          "Damage prevention message correct.")
       (click-prompt state :runner "Done")
-      (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card"))))
+      (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card")
+      (is (last-n-log-contains? state 2 "Runner uses Heartbeat to prevent 1 damage, trashing a facedown Heartbeat\\.") "Prompt correct"))))
 
 (deftest hijacked-router
   ;; Hijacked Router
@@ -1182,21 +1213,31 @@
 
 (deftest net-ready-eyes
   ;; Net-Ready Eyes
-  (do-game
-    (new-game {:runner {:deck [(qty "Sure Gamble" 3) "Net-Ready Eyes" "Peacock"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Sure Gamble")
-    (play-from-hand state :runner "Peacock")
-    (play-from-hand state :runner "Net-Ready Eyes")
-    (is (= 3 (count (:discard (get-runner)))) "Took 2 damage on NRE install")
-    (run-on state "HQ")
-    (let [pea (get-program state 0)]
-      (click-card state :runner pea)
-      (is (= 3 (:current-strength (refresh pea))) "Peacock strength boosted")
-      (run-continue state)
-      (run-successful state)
-      (click-prompt state :runner "No action")
-      (is (= 2 (:current-strength (refresh pea))) "Peacock strength back to default"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 3) "Net-Ready Eyes" "Peacock"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Peacock")
+      (play-from-hand state :runner "Net-Ready Eyes")
+      (is (= 3 (count (:discard (get-runner)))) "Took 2 damage on NRE install")
+      (run-on state "HQ")
+      (let [pea (get-program state 0)]
+        (click-card state :runner pea)
+        (is (= 3 (:current-strength (refresh pea))) "Peacock strength boosted")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (= 2 (:current-strength (refresh pea))) "Peacock strength back to default"))))
+  (testing "Do not display prompt without an installed icebreaker"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 3) (qty "Net-Ready Eyes" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Net-Ready Eyes")
+      (is (= 3 (count (:discard (get-runner)))) "Took 2 damage on NRE install")
+      (run-on state :hq)
+      (is (empty? (:prompt (get-runner))) "No NRE prompt"))))
 
 (deftest obelus
   ;; Obelus - Increase max hand size with tags, draw cards on first successful HQ/R&D run
@@ -1431,7 +1472,6 @@
       (card-ability state :runner plas 0)
       (card-ability state :runner plas 0)
       (card-ability state :runner plas 0)
-      (click-prompt state :runner "Done")
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-hardware state)) "Plascrete depleted and trashed"))))
 

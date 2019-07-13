@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 (defn- counter-based-extra-cost
   "Cold Site Server and Reduced Service. Modify cost to run current server whenever counters are added or removed.

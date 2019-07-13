@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 (defn- run-event
   ([] (run-event nil))
@@ -136,7 +136,7 @@
 
    "Blackmail"
    (run-event
-     {:req (req has-bad-pub)
+     {:req (req (has-bad-pub? state))
       :msg "prevent ICE from being rezzed during this run"}
      nil
      (effect (register-run-flag!
@@ -238,7 +238,7 @@
    {:prompt "Select a resource to install from your Grip"
     :choices {:req #(and (resource? %)
                          (in-hand? %))}
-    :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
+    :effect (effect (install-cost-bonus [:credit -3]) (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
 
    "Careful Planning"
    {:prompt "Choose a card in or protecting a remote server"
@@ -303,7 +303,7 @@
                                 :effect (effect (trigger-event :searched-stack nil)
                                                 (shuffle! :deck)
                                                 (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
-                                                (runner-install target)
+                                                (runner-install (assoc eid :source card :source-type :runner-install) target nil)
                                                 (gain-tags eid 1))}}
                               card))}
 
@@ -334,7 +334,8 @@
               :effect (req (when (= :deck where)
                              (trigger-event state side :searched-stack nil)
                              (shuffle! state side :deck))
-                           (runner-install state side (assoc-in target [:special :compile-installed] true) {:ignore-all-cost true}))})]
+                           (runner-install state side (make-eid state {:source card :source-type :runner-install})
+                                           (assoc-in target [:special :compile-installed] true) {:ignore-all-cost true}))})]
      {:implementation "Trigger only on first encounter not enforced"
       :prompt "Choose a server"
       :msg "make a run and install a program on encounter with the first piece of ICE"
@@ -379,8 +380,8 @@
    "Corporate Scandal"
    {:msg "give the Corp 1 additional bad publicity"
     :implementation "No enforcement that this Bad Pub cannot be removed"
-    :effect (req (swap! state update-in [:corp :has-bad-pub] inc))
-    :leave-play (req (swap! state update-in [:corp :has-bad-pub] dec))}
+    :effect (req (swap! state update-in [:corp :bad-publicity :additional] inc))
+    :leave-play (req (swap! state update-in [:corp :bad-publicity :additional] dec))}
 
    "Credit Crash"
    {:prompt "Choose a server" :choices (req runnable-servers)
@@ -423,7 +424,7 @@
                          (in-hand? %))}
     :async true
     :effect (req (install-cost-bonus state :runner [:credit -8])
-                 (wait-for (runner-install state :runner target nil)
+                 (wait-for (runner-install state :runner (make-eid state {:source card :source-type :runner-install}) target nil)
                            (gain-tags state eid :runner 1)))}
 
    "Cyber Threat"
@@ -555,7 +556,7 @@
                                                          (in-hand? %))}
                                     :msg (msg "install " (:title target))
                                     :effect (req (let [diana-card (assoc-in target [:special :diana-installed] true)]
-                                                   (runner-install state side diana-card {:ignore-all-cost true})
+                                                   (runner-install state side (make-eid state {:source card :source-type :runner-install}) diana-card {:ignore-all-cost true})
                                                    (swap! state update :diana #(conj % diana-card))))}
                                    card nil))}]
     :effect (effect (make-run target nil card)
@@ -708,7 +709,7 @@
                            (doseq [c to-trash]
                              (trash state side c {:unpreventable true}))
                            (install-cost-bonus state side [:credit (- trash-cost)])
-                           (runner-install state side target)
+                           (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)
                            (effect-completed state side eid))})]
      {:prompt "Choose Hardware and Programs to trash from your Grip"
       :choices {:req #(and (or (hardware? %)
@@ -945,7 +946,7 @@
                                                   (assoc card :zone '(:discard)))
                                  (install-cost-bonus state side [:credit -5])
                                  (let [to-trash (remove #(same-card? % target) topten)]
-                                   (wait-for (runner-install state side target nil)
+                                   (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)
                                              (let [card (get-card state (assoc card :zone '(:discard)))]
                                                (if (not (:shuffle-occurred card))
                                                  (do (system-msg state side (str "trashes " (join ", " (map :title to-trash))))
@@ -1053,7 +1054,7 @@
                       (let [connection target]
                         {:optional
                          {:prompt (str "Install " (:title connection) "?")
-                          :yes-ability {:effect (effect (runner-install connection)
+                          :yes-ability {:effect (effect (runner-install (assoc eid :source card :source-type :runner-install) connection)
                                                         (shuffle! :deck))}
                           :no-ability {:effect (effect (move connection :hand)
                                                        (shuffle! :deck))}}})
@@ -1276,16 +1277,16 @@
 
    "Itinerant Protesters"
    {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
-    :effect (req (change-hand-size state :corp (- (:bad-publicity corp)))
+    :effect (req (change-hand-size state :corp (- (count-bad-pub state)))
                  (add-watch state :itin
                             (fn [k ref old new]
-                              (let [bpnew (get-in new [:corp :bad-publicity])
-                                    bpold (get-in old [:corp :bad-publicity])
+                              (let [bpnew (count-bad-pub (atom new))
+                                    bpold (count-bad-pub (atom old))
                                     bpchange (- bpnew bpold)]
                                 (when-not (zero? bpchange)
                                   (change-hand-size state :corp (- bpchange)))))))
     :leave-play (req (remove-watch state :itin)
-                     (change-hand-size state :corp (:bad-publicity corp)))}
+                     (change-hand-size state :corp (count-bad-pub state)))}
 
    "Khusyuk"
    (let [access-revealed (fn [revealed]
@@ -1534,7 +1535,7 @@
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
                              :choices {:req #(and (program? %)
                                                   (in-hand? %))}
-                             :effect (req (runner-install state side target)
+                             :effect (req (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)
                                           (when (< n 3)
                                             (resolve-ability state side (mi (inc n)) card nil)))})]
      {:effect (effect (resolve-ability (mhelper 1) card nil))})
@@ -1574,13 +1575,14 @@
                              (let [card (get-card state (assoc card :zone '(:discard)))]
                                (unregister-events state side card)
                                (when (:run-again card)
-                                 (make-run state side mob-eid :rd nil card)
+                                 (update! state side (dissoc card :run-again))
                                  (register-events state side {:successful-run
                                                               {:req (req (= target :rd))
                                                                :msg "gain 4 [Credits]"
                                                                :effect (effect (gain-credits 4))}}
-                                                  (assoc card :zone '(:discard))))
-                               (update! state side (dissoc card :run-again))))))
+                                                  card)
+                                 (wait-for (make-run state side (make-eid state mob-eid) :rd nil card)
+                                           (unregister-events state side card)))))))
     :events {:successful-run nil
              :successful-run-ends {:interactive (req true)
                                    :optional {:req (req (= [:rd] (:server target)))
@@ -1593,7 +1595,7 @@
     :choices {:req #(and (or (hardware? %)
                              (program? %))
                          (in-hand? %))}
-    :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
+    :effect (effect (install-cost-bonus [:credit -3]) (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
 
    "Net Celebrity"
    {:recurring 1
@@ -1866,7 +1868,7 @@
    "Reboot"
    (letfn [(install-cards [state side eid card to-install titles]
              (if-let [f (first to-install)]
-               (wait-for (runner-install state :runner f {:facedown true :no-msg true})
+               (wait-for (runner-install state :runner (make-eid state {:source card :source-type :runner-install}) f {:facedown true :no-msg true})
                          (install-cards state side eid card (rest to-install) titles))
                (do
                  (move state side (find-latest state card) :rfg)
@@ -1909,7 +1911,7 @@
                      :choices {:req #(and (valid-target? %)
                                           (can-pay? st si eid card nil (modified-install-cost st si % [:credit (- bonus)])))}
                      :effect (effect (install-cost-bonus [:credit (- bonus)])
-                                     (runner-install eid target nil))})]
+                                     (runner-install (assoc eid :source card :source-type :runner-install) target nil))})]
      {:req (req (some valid-target? (all-installed state :runner)))
       :effect (req (wait-for (resolve-ability state side pick-up card nil)
                              (continue-ability state side
@@ -1932,7 +1934,7 @@
                        {:prompt "Choose a program to install"
                         :msg (msg "install " (:title target))
                         :choices (req (filter program? (:discard runner)))
-                        :effect (effect (runner-install target {:ignore-all-cost true}))}}
+                        :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:ignore-all-cost true}))}}
                       card))}
 
    "Rigged Results"
@@ -2061,7 +2063,7 @@
                                            (#{[:hand] [:discard]} (:zone %))
                                            (can-pay? st si e c nil (modified-install-cost st si % [:credit tcost])))}
                       :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
-                                      (runner-install target))
+                                      (runner-install (assoc eid :source card :source-type :runner-install) target nil))
                       :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}
 
    "Scrubbed"
@@ -2237,7 +2239,7 @@
                                            (filter program? ((if (= where "Heap") :discard :deck) runner))))
                            :effect (effect (trigger-event :searched-stack nil)
                                            (shuffle! :deck)
-                                           (runner-install eid
+                                           (runner-install (assoc eid :source card :source-type :runner-install)
                                                            (assoc-in target [:special :test-run] true)
                                                            {:ignore-all-cost true}))})
                         card nil))})
@@ -2276,7 +2278,7 @@
                                                 :position (count ices)
                                                 :access-bonus []
                                                 :run-effect nil})
-                                   (gain-run-credits state :runner (:bad-publicity corp))
+                                   (gain-run-credits state :runner (count-bad-pub state))
                                    (swap! state update-in [:runner :register :made-run] #(conj % (first runtgt)))
                                    (trigger-event state :runner :run runtgt)))}
                    card nil))}

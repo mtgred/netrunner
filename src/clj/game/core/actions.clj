@@ -86,27 +86,34 @@
               (str "sets Tags to " (get-in @state [:runner :tag :base])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
+(defn- change-bad-pub
+  "Change a player's base bad pub count"
+  [state delta]
+  (if (neg? delta)
+    (deduct state :corp [:bad-publicity (Math/abs delta)])
+    (gain state :corp :bad-publicity delta))
+  (system-msg state :corp
+              (str "sets Bad Publicity to " (get-in @state [:corp :bad-publicity :base])
+                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+
+(defn- change-generic
+  "Change a player's base generic property."
+  [state side key delta]
+  (if (neg? delta)
+    (deduct state side [key (- delta)])
+    (swap! state update-in [side key] (partial + delta)))
+  (change-msg state side key (get-in @state [side key]) delta))
+
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
-  (cond
-    ;; Memory needs special treatment and message
-    (= :memory key)
-    (change-mu state side delta)
-
-    ;; Hand size needs special treatment as it expects a map
-    (= :hand-size key)
-    (change-map state side key delta)
-
-    ;; Tags need special treatment since they are a more complex map
-    (= :tag key)
-    (change-tags state delta)
-
-    :else
-    (do (if (neg? delta)
-          (deduct state side [key (- delta)])
-          (swap! state update-in [side key] (partial + delta)))
-        (change-msg state side key (get-in @state [side key]) delta))))
+  (case key
+    :memory (change-mu state side delta)
+    :hand-size (change-map state side key delta)
+    :tag (change-tags state delta)
+    :bad-publicity (change-bad-pub state delta)
+    ; else
+    (change-generic state side key delta)))
 
 (defn move-card
   "Called when the user drags a card from one zone to another."
@@ -310,20 +317,23 @@
   [state side args]
   (let [run (:run @state)
         card (get-card state (:card args))
+        eid (make-eid state {:source card :source-type :ability})
         run-ice (get-run-ices state)
         ice-cnt (count run-ice)
         ice-idx (dec (:position run 0))
         in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
         current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
         pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
-        pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
         strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
                                            (or (:current-strength card) (:strength card)))))
-        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))]
-    (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
-      (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
-      (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
-                                  (:title card) " to " (:current-strength (get-card state card)))))))
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))
+        total-pump-cost (merge-costs (repeat pumpnum (:cost pumpabi)))]
+    (when (can-pay? state side eid card total-pump-cost)
+      (wait-for (pay-sync state side (make-eid state eid) card total-pump-cost)
+                (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :cost :msg) (get-card state card) nil))
+                (system-msg state side (str (build-spend-msg async-result "increase")
+                                            "the strength of " (:title card) " to "
+                                            (:current-strength (get-card state card))))))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."

@@ -8,7 +8,7 @@
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.edn :as edn]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]
+            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype? count-bad-pub]]
             [jinteki.cards :refer [all-cards]]
             [tasks.nrdb :refer [replace-collection update-config]]
             [tasks.altart :refer [add-art]]

@@ -5,7 +5,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? count-tags has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 ;;;; Helper functions specific for ICE
 
@@ -1146,7 +1146,7 @@
                    :prompt "Choose an icebreaker to trash"
                    :msg (msg "trash " (:title target))
                    :choices {:req #(and (installed? %)
-                                        (has? % :subtype "Icebreaker"))}
+                                        (has-subtype? % "Icebreaker"))}
                    :effect (effect (trash target {:cause :subroutine})
                                    (clear-wait-prompt :runner))}]}
 
@@ -1299,7 +1299,7 @@
 
    "Ireress"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "gain " (:bad-publicity corp 0) " subroutines")}]
+                 :msg (msg "gain " (count-bad-pub corp) " subroutines")}]
     :subroutines [{:msg "make the Runner lose 1 [Credits]"
                    :effect (effect (lose-credits :runner 1))}]}
 
@@ -1497,12 +1497,12 @@
                                     :prompt "Choose a virus to trash"
                                     :msg (msg "trash " (:title target))
                                     :choices {:req #(and (installed? %)
-                                                         (has? % :subtype "Virus"))}
+                                                         (has-subtype? % "Virus"))}
                                     :effect (effect (trash target {:cause :subroutine})
                                                     (clear-wait-prompt :runner))})
                   (trace-ability 2 {:label "Remove a virus in the Heap from the game"
                                     :prompt "Choose a virus in the Heap to remove from the game"
-                                    :choices (req (cancellable (filter #(has? % :subtype "Virus") (:discard runner)) :sorted))
+                                    :choices (req (cancellable (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
                                     :msg (msg "remove " (:title target) " from the game")
                                     :effect (effect (move :runner target :rfg))})
                   (trace-ability 1 end-the-run)]}

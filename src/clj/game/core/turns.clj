@@ -79,7 +79,7 @@
               :servers {:hq {} :rd {} :archives {}}
               :click 0 :click-per-turn 3
               :credit 5
-              :bad-publicity 0 :has-bad-pub 0
+              :bad-publicity {:base 0 :additional 0}
               :toast []
               :hand-size {:base 5 :mod 0}
               :agenda-point 0 :agenda-point-req 7

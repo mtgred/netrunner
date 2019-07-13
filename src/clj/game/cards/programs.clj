@@ -1,11 +1,11 @@
 (ns game.cards.programs
   (:require [game.core :refer :all]
-            [game.core.eid :refer [effect-completed]]
+            [game.core.eid :refer [effect-completed make-eid]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype?]]))
+            [jinteki.utils :refer :all]))
 
 (def breaker-auto-pump
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
@@ -534,9 +534,20 @@
 
    "Brahman"
    (auto-icebreaker ["All"]
-                    {:implementation "Adding non-virus program to top of Stack is manual"
-                     :abilities [(break-sub 1 2 "ICE")
-                                 (strength-pump 2 1)]})
+                    {:abilities [(break-sub 1 2 "ICE" (effect (update! (assoc-in card [:special :brahman-used] true))))
+                                 (strength-pump 2 1)]
+                     :events (let [put-back {:req (req (get-in card [:special :brahman-used]))
+                                             :player :runner ; Needed for when the run is ended by the Corp
+                                             :prompt "Choose a non-virus program to put on top of your stack."
+                                             :choices {:req #(and (installed? %)
+                                                                  (program? %)
+                                                                  (not (facedown? %))
+                                                                  (not (has-subtype? % "Virus")))}
+                                             :msg (msg "add " (:title target) " to the top of the Stack")
+                                             :effect (effect (update! (dissoc-in card [:special :brahman-used]))
+                                                             (move target :deck {:front true}))}]
+                               {:pass-ice put-back
+                                :run-ends put-back})})
 
    "Breach"
    (central-breaker "Barrier"
@@ -603,7 +614,7 @@
     :hosting {:req (every-pred ice? can-host?)}
     :abilities [{:req (req (and (same-card? current-ice (:host card))
                                 (rezzed? current-ice)))
-                 :effect (req (if (zero? (get-strength current-ice))
+                 :effect (req (if (not (pos? (get-strength current-ice)))
                                 (do (system-msg state side (str "uses Chisel to trash " (card-str state current-ice)))
                                     (trash state side current-ice))
                                 (do (system-msg state side (str "places 1 virus counter on " (card-str state current-ice)))
@@ -765,7 +776,7 @@
                                                       (:hosted card))))
                    :msg (msg "install " (:title target))
                    :effect (req (when (can-pay? state side eid card nil :credit (:cost target))
-                                  (runner-install state side target)))}]})
+                                  (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))}]})
 
    "Cyber-Cypher"
    (auto-icebreaker ["Code Gate"]
@@ -838,7 +849,7 @@
                                           :req (req (not (install-locked? state side)))
                                           :msg (msg "install " (:title target) " at no cost")
                                           :effect (effect (trash card {:cause :ability-cost})
-                                                          (runner-install target {:ignore-install-cost true}))}
+                                                          (runner-install (assoc eid :source card :source-type :runner-install) target {:ignore-install-cost true}))}
                                          card nil)))}]}
 
    "Deep Thought"
@@ -882,7 +893,7 @@
                                                      ", lowering its cost by 1 [Credit]")))
                                     :effect (effect (when (-> target :cost pos?)
                                                       (install-cost-bonus state side [:credit -1]))
-                                                    (runner-install target {:host-card card :no-mu true})
+                                                    (runner-install (assoc eid :source card :source-type :runner-install) target {:host-card card :no-mu true})
                                                     (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
                                    card nil))}
                 {:label "Host an installed program on Dhegdheer with [Credit] discount"
@@ -1214,7 +1225,7 @@
     {:req (req (not-any? #{:facedown :hand} (:previous-zone card)))
      :effect (req (let [lock (get-in @state [:runner :locked :discard])]
                     (swap! state assoc-in [:runner :locked] nil)
-                    (runner-install state :runner card {:facedown true})
+                    (runner-install state :runner (assoc eid :source card :source-type :runner-install) card {:facedown true})
                     (swap! state assoc-in [:runner :locked] lock)))}}
 
    "Hemorrhage"
@@ -1369,11 +1380,11 @@
                                                           (ice? %)
                                                           (can-host? %)
                                                           (installed? %)
-                                                          (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))
+                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
                                                      (and (ice? %)
                                                           (installed? %)
                                                           (can-host? %)
-                                                          (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
                                    :msg (msg "host it on " (card-str state target))
                                    :effect (effect (host target card))} card nil)))}
                 {:cost [:credit 2]
@@ -1956,11 +1967,11 @@
                                                           (= (last (:zone %)) :ices)
                                                           (ice? %)
                                                           (can-host? %)
-                                                          (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))
+                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
                                                      (and (ice? %)
                                                           (can-host? %)
                                                           (= (last (:zone %)) :ices)
-                                                          (not-any? (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))}
+                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
                                    :msg (msg "host it on " (card-str state target))
                                    :effect (effect (host target card))} card nil)))}]
     :events {:pre-rez-cost {:req (req (= (:zone (:host card)) (:zone target)))
@@ -2006,7 +2017,7 @@
                  :prompt "Choose a program to install from your grip"
                  :choices {:req #(and (program? %)
                                       (in-hand? %))}
-                 :effect (effect (runner-install target))}]}
+                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]}
 
    "Scheherazade"
    {:abilities [{:label "Install and host a program from Grip"
@@ -2017,7 +2028,7 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) " and gain 1 [Credits]")
-                                    :effect (effect (runner-install target {:host-card card}) (gain-credits 1))}
+                                    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:host-card card}) (gain-credits 1))}
                                    card nil))}
                 {:label "Host an installed program"
                  :prompt "Choose a program to host on Scheherazade" :priority 2
@@ -2044,7 +2055,7 @@
                                                            :effect (req (trigger-event state side :searched-stack nil)
                                                                         (shuffle! state side :deck)
                                                                         (when (not= target "No install")
-                                                                          (runner-install state side target)))} card nil)))}]}
+                                                                          (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))} card nil)))}]}
 
    "Sharpshooter"
    (auto-icebreaker ["Destroyer"]

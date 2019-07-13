@@ -22,8 +22,8 @@
     (#{:hand-size :memory} attr)
     (deduct state side [attr {:mod value}])
 
-    ;; default case for `:tag` is `:base`
-    (#{:tag} attr)
+    ;; default case for tags and bad-publicity is `:base`
+    (#{:tag :bad-publicity} attr)
     (deduct state side [attr {:base value}])
 
     :else
@@ -72,13 +72,18 @@
 (defn merge-costs
   "Combines disparate costs into a single cost per type, except for damage.
   Damage is not merged as it needs to be individual."
-  [costs]
-  (let [clean-costs (add-default-to-costs costs)
-        plain-costs (remove #(#{:net :meat :brain} (first %)) clean-costs)
-        damage-costs (filter #(#{:net :meat :brain} (first %)) clean-costs)
-        reduce-fn (fn [cost-map [cost-type value]]
-                    (update cost-map cost-type (fnil + 0 0) value))]
-    (mapv vec (concat (reduce reduce-fn {} plain-costs) damage-costs))))
+  ([costs] (merge-costs costs false))
+  ([costs remove-zero-credit-cost]
+   (let [clean-costs (add-default-to-costs costs)
+         plain-costs (remove #(#{:net :meat :brain} (first %)) clean-costs)
+         damage-costs (filter #(#{:net :meat :brain} (first %)) clean-costs)
+         reduce-fn (fn [cost-map [cost-type value]]
+                     (update cost-map cost-type (fnil + 0 0) value))
+         remove-fn (if remove-zero-credit-cost
+                     #(and (= :credit (first %))
+                           (zero? (second %)))
+                     (fn [x] false))]
+     (remove remove-fn (mapv vec (concat (reduce reduce-fn {} plain-costs) damage-costs))))))
 
 (defn- flag-stops-pay?
   "Checks installed cards to see if payment type is prevented by a flag"
@@ -122,7 +127,9 @@
   explaining which cost they were unable to pay."
   ([state side title args] (can-pay? state side (make-eid state) nil title args))
   ([state side eid card title & args]
-   (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))]
+   (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
+                                      (not (ice? card)))
+         costs (merge-costs (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost)]
      (if (every? #(can-pay-impl state side eid card %) costs)
        costs
        (when title
@@ -405,8 +412,8 @@
       (#{:hand-size :memory} type)
       (gain state side type {:mod amount})
 
-      ;; Default case for tag is `:base`
-      (#{:tag} type)
+      ;; Default case for tags and bad publicity is `:base`
+      (#{:tag :bad-publicity} type)
       (gain state side type {:base amount})
 
       ;; Else assume amount is a number and try to increment type by it.
@@ -520,8 +527,7 @@
   (get-in @state [:bonus :ignore-install-cost]))
 
 (defn clear-install-cost-bonus [state side]
-  (swap! state update-in [:bonus] dissoc :install-cost)
-  (swap! state update-in [:bonus] dissoc :ignore-install-cost))
+  (swap! state update-in [:bonus] dissoc :install-cost :ignore-install-cost))
 
 (defn install-cost
   [state side card all-cost]
