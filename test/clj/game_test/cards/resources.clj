@@ -2537,6 +2537,41 @@
         (core/end-phase-12 state :runner nil)
         (is (empty? (:prompt (get-runner))) "No second prompt for Patron - used already")))))
 
+(deftest paule-s-cafe
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:hand ["Paule's Cafe" "Hernando Cortez" "Kati Jones" "Magnum Opus" "Desperado" "Fan Site" "Corroder"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10 :click 10)
+      (play-from-hand state :runner "Paule's Cafe")
+      (play-from-hand state :runner "Hernando Cortez")
+      (play-from-hand state :runner "Kati Jones")
+      (play-from-hand state :runner "Fan Site")
+      (let [pau (get-resource state 0)]
+        (card-ability state :runner pau 0)
+        (click-card state :runner (find-card "Magnum Opus" (:hand (get-runner))))
+        (card-ability state :runner pau 0)
+        (click-card state :runner (find-card "Desperado" (:hand (get-runner))))
+        (card-ability state :runner pau 0)
+        (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
+        (is (= 0 (count (:hand (get-runner)))) "Hosted Mopus, Desperado and Corroder on the Cafe")
+        (let [mo (find-card "Magnum Opus" (:hosted (refresh pau)))
+              des (find-card "Desperado" (:hosted (refresh pau)))
+              cor (find-card "Corroder" (:hosted (refresh pau)))]
+          (card-ability state :runner pau 1)
+          (changes-val-macro -4 (:credit (get-runner))
+                             "Pay 4 for MOpus install (1+5-2)"
+                             (click-card state :runner mo))
+          (card-ability state :runner pau 1)
+          (changes-val-macro -4 (:credit (get-runner))
+                             "Pay 4 for Desperado install (1+3)"
+                             (click-card state :runner des))
+          (take-credits state :runner)
+          (card-ability state :runner pau 1)
+          (changes-val-macro -3 (:credit (get-runner))
+                             "Pay 3 for Corroder install (1+2)"
+                             (click-card state :runner cor)))))))
+
 (deftest power-tap
   ;; Power Tap
   (do-game
