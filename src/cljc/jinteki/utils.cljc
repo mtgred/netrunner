@@ -39,12 +39,6 @@
   (+ (get-in @state [:runner :tag :base] 0)
      (get-in @state [:runner :tag :additional] 0)))
 
-(defn count-bad-pub
-  "Counts number of bad publicity corp has (real + additional)"
-  [state]
-  (+ (get-in @state [:corp :bad-publicity] 0)
-     (get-in @state [:corp :has-bad-pub] 0)))
-
 (defn is-tagged?
   "Returns truthy if runner is tagged"
   [state]
