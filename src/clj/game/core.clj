@@ -1,5 +1,6 @@
 (ns game.core
   (:require [game.utils :refer :all]
+            [game.core.card-defs :refer [card-def]]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [game.core.eid :refer [make-eid make-result register-effect-completed effect-completed complete-with-result]]
             [clj-time.core :as t]

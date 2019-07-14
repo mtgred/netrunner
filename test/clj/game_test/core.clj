@@ -5,6 +5,7 @@
             [clojure.test :refer :all]
             [hawk.core :as hawk]
             [game.core :as core]
+            [game.core.card-defs :refer [reset-card-defs]]
             [game.utils :as utils :refer [make-cid server-card]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
@@ -23,13 +24,13 @@
          (map (juxt :title identity))
          (into {})
          (reset! all-cards))
-    (core/reset-card-defs)))
+    (reset-card-defs)))
 (load-all-cards)
 
 (hawk/watch! [{:paths ["src/clj/game/cards"]
                :filter hawk/file?
                :handler (fn [ctx e]
-                          (core/reset-card-defs
+                          (reset-card-defs
                             (-> e :file io/file .getName (string/split #"\.") first)))}])
 
 ;; General utilities necessary for starting a new game

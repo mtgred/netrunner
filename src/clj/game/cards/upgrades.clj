@@ -1,6 +1,7 @@
 (ns game.cards.upgrades
   (:require [game.core :refer :all]
             [game.core.eid :refer [effect-completed]]
+            [game.core.card-defs :refer [card-def]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
