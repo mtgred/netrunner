@@ -337,7 +337,7 @@
              (in-hand? card))
         (and (or (installed? card)
                  (:host card))
-             (or (operation?)
+             (or (operation? card)
                  (rezzed? card)))
         (and (in-discard? card) (:seen card))
         (#{:scored :current} (last zone)))))
