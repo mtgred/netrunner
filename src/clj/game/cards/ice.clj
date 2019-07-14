@@ -25,6 +25,19 @@
          new-card (assoc new-card :subroutines new-subs)]
      (update! state :corp new-card))))
 
+(defn reset-printed-subs
+  ([state side card total sub] (reset-printed-subs state side card total sub {:printed true}))
+  ([state side card total sub args]
+   (let [old-subs (remove #(and (= (:cid card) (:from-cid %))
+                                (:printed %))
+                          (:subroutines card))
+         new-card (assoc card :subroutines old-subs)
+         new-subs (->> (range total)
+                       (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
+                       :subroutines)
+         new-card (assoc new-card :subroutines new-subs)]
+     (update! state :corp new-card))))
+
 ;;; Runner abilites for breaking subs
 (defn runner-pay-or-break
   "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, etc)"
@@ -1162,9 +1175,19 @@
     :subroutines [end-the-run]}
 
    "Hive"
-   {:abilities [{:label "Gain subroutines"
-                 :msg   (msg "gain " (min 5 (max 0 (- 5 (:agenda-point corp 0)))) " subroutines")}]
-    :subroutines [end-the-run]}
+   (let [corp-points (fn [corp] (min 5 (max 0 (- 5 (:agenda-point corp 0)))))
+         ability {:effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]
+     {:events {:rez (assoc ability :req (req (same-card? card target)))
+               :agenda-scored ability
+               :as-agenda (assoc ability :req (req (= "Corp" (:as-agenda-side target))))}
+      :abilities [{:label "Lose subroutines"
+                   :msg (msg "lose " (- 5 (corp-points corp)) " subroutines")
+                   :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]
+      :subroutines [end-the-run
+                    end-the-run
+                    end-the-run
+                    end-the-run
+                    end-the-run]})
 
    "Holmegaard"
    {:subroutines [(trace-ability 4 {:label "Runner cannot access any cards this run"
