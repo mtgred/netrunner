@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg
+(declare forfeit prompt! damage mill installed? is-type? is-scored? system-msg
          facedown? unknown->kw discard-from-hand card-str trash trash-cards
          all-installed-runner-type pick-credit-providing-cards all-active
          eligible-pay-credit-cards corp? runner? in-hand?)

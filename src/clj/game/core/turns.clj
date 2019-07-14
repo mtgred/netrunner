@@ -1,7 +1,6 @@
 (in-ns 'game.core)
 
-(declare all-active card-flag-fn? clear-turn-register! clear-wait-prompt create-deck hand-size keep-hand mulligan
-         show-wait-prompt turn-message in-hand?)
+(declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan turn-message in-hand?)
 
 (def game-states (atom {}))
 
