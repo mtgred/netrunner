@@ -1,5 +1,6 @@
 (ns game-test.cards.programs
   (:require [game.core :as core]
+            [game.core.card :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -548,10 +549,10 @@
       (card-ability state :runner cres 0)
       (is (not (nil? (get-program state 0))) "Crescentus could not be used because the ICE is not rezzed")
       (core/rez state :corp q)
-      (is (:rezzed (refresh q)) "Quandary is now rezzed")
+      (is (rezzed? (refresh q)) "Quandary is now rezzed")
       (card-ability state :runner cres 0)
       (is (nil? (get-program state 0)) "Crescentus could be used because the ICE is rezzed")
-      (is (not (:rezzed (refresh q))) "Quandary is no longer rezzed"))))
+      (is (not (rezzed? (refresh q))) "Quandary is no longer rezzed"))))
 
 (deftest crypsis
   ;; Crypsis - Loses a virus counter after encountering ice it broke
@@ -870,7 +871,7 @@
       (run-continue state)
       (card-ability state :runner echo2 0)
       (click-prompt state :corp "Rez")
-      (is (:rezzed (get-ice state :archives 0)) "Ice Wall rezzed")
+      (is (rezzed? (get-ice state :archives 0)) "Ice Wall rezzed")
       (is (= 2 (count (:discard (get-runner)))) "False Echo trashed"))))
 
 (deftest faust
@@ -1773,7 +1774,7 @@
       (card-ability state :runner per 2)
       (is (zero? (:credit (get-runner))) "Spent 2 credits")
       (is (= 1 (count (:hand (get-runner)))) "Peregrine returned to grip")
-      (is (not (:rezzed (refresh bw1))) "Bandwidth derezzed"))))
+      (is (not (rezzed? (refresh bw1))) "Bandwidth derezzed"))))
 
 (deftest persephone
   ;; Persephone's ability trashes cards from R&D, triggering AR-Enhanced Security

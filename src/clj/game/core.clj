@@ -1,18 +1,27 @@
 (ns game.core
-  (:require [game.utils :refer :all]
+  (:require [game.core.eid :refer :all]
+            [game.core.card :refer :all]
+            [game.core.card-defs :refer [card-def]]
+            [game.core.prompts :refer :all]
+            [game.core.toasts :refer [toast show-error-toast]]
+            [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
-            [game.core.eid :refer [make-eid make-result register-effect-completed effect-completed complete-with-result]]
+            [game.core.state :refer :all]
+            [game.core.player :refer :all]
             [clj-time.core :as t]
             [clojure.string :as string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.java.io :as io]
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.edn :as edn]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype? count-bad-pub]]
+            [jinteki.utils :refer :all]
             [jinteki.cards :refer [all-cards]]
             [tasks.nrdb :refer [replace-collection update-config]]
             [tasks.altart :refer [add-art]]
-            [game.quotes :as quotes]))
+            [game.quotes :as quotes])
+  (:import [game.core.state State]
+           [game.core.player Corp Runner]
+           [game.core.card Card]))
 
 (load "core/events")    ; triggering of events
 (load "core/cards")     ; retrieving and updating cards

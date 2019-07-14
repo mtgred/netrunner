@@ -1,5 +1,6 @@
 (ns game-test.cards.agendas
   (:require [game.core :as core]
+            [game.core.card :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -141,7 +142,7 @@
    (click-prompt state :corp "Enigma")
    (is (changes-credits (get-corp) 0
                         (click-prompt state :corp "New remote")))
-   (is (:rezzed (get-ice state :remote2 0)) "Enigma was installed and rezzed, both at no cost")
+   (is (rezzed? (get-ice state :remote2 0)) "Enigma was installed and rezzed, both at no cost")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Cancel")
@@ -151,13 +152,13 @@
    (click-prompt state :corp "Rashida Jaheem")
    (is (changes-credits (get-corp) 0
                         (click-prompt state :corp "Server 2")))
-   (is (:rezzed (get-content state :remote2 0)) "Rashida Jaheem was installed and rezzed, both at no cost")
+   (is (rezzed? (get-content state :remote2 0)) "Rashida Jaheem was installed and rezzed, both at no cost")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Oaktown Renovation")
    (click-prompt state :corp "New remote")
    (is (= "Oaktown Renovation" (:title (get-content state :remote6 0))) "Oaktown Renovation was installed")
-   (is (:rezzed (get-content state :remote6 0)) "Oaktown Renovation is installed faceup.")
+   (is (rezzed? (get-content state :remote6 0)) "Oaktown Renovation is installed faceup.")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (is (empty (:prompt (get-corp))) "No prompts if there is no ice")))
@@ -1639,13 +1640,13 @@
     (let [credits (:credit (get-corp))]
       (is (= credits (:credit (get-corp))) (str "Corp has " credits " credits"))
       (is (= 1 (:link (get-runner))) "Runner has 1 link")
-      (core/init-trace state :corp {:title "/trace command" :side :corp} {:base 1})
+      (core/init-trace state :corp (map->Card {:title "/trace command" :side :corp}) {:base 1})
       (click-prompt state :corp "0")
       (is (zero? (-> (get-runner) :prompt first :link)) "Runner has 0 link during first trace")
       (click-prompt state :runner "3")
       (is (= (inc credits) (:credit (get-corp))) "Corp gained a credit from NQ")
       ; second trace of turn - no link reduction
-      (core/init-trace state :corp {:title "/trace command" :side :corp} {:base 1})
+      (core/init-trace state :corp (map->Card {:title "/trace command" :side :corp}) {:base 1})
       (click-prompt state :corp "0")
       (is (= 1 (-> (get-runner) :prompt first :link)) "Runner has 1 link during later traces")
       (click-prompt state :runner "2")
@@ -1665,13 +1666,13 @@
         (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Commercial Bankers Group" (:hand (get-corp)))))
       (is (= 4 (get-counters (refresh nc) :advancement)))
-      (is (not= :this-turn (:rezzed (get-content state :remote5 0))))
+      (is (not= :this-turn (rezzed? (get-content state :remote5 0))))
       (let [credits (:credit (get-corp))]
         (advance state (refresh nc))
         (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Commercial Bankers Group" (:hand (get-corp))))
         (is (= 5 (get-counters (refresh nc) :advancement)))
-        (is (= :this-turn (:rezzed (get-content state :remote6 0))))
+        (is (= :this-turn (rezzed? (get-content state :remote6 0))))
         (is (= (dec credits) (:credit (get-corp))))))))
 
 (deftest next-wave-2
@@ -1711,7 +1712,7 @@
     (core/gain state :corp :click 3)
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (let [oak (get-content state :remote1 0)]
-      (is (:rezzed (refresh oak)) "Oaktown installed face up")
+      (is (rezzed? (refresh oak)) "Oaktown installed face up")
       (advance state oak)
       (is (= 6 (:credit (get-corp))) "Spent 1 credit to advance, gained 2 credits from Oaktown")
       (play-from-hand state :corp "Shipment from SanSan")
@@ -1860,7 +1861,7 @@
     (let [arc (get-ice state :hq 0)]
       (play-and-score state "Priority Requisition")
       (click-card state :corp arc)
-      (is (:rezzed (refresh arc))))))
+      (is (rezzed? (refresh arc))))))
 
 (deftest private-security-force
   ;; Private Security Force
@@ -2307,7 +2308,7 @@
       (click-prompt state :corp "Yes")
       (click-prompt state :corp (find-card "Chiyashi" (:deck (get-corp))))
       (click-prompt state :corp "New remote")
-      (is (core/rezzed? (get-ice state :remote2 0)) "Chiyashi was installed rezzed")
+      (is (rezzed? (get-ice state :remote2 0)) "Chiyashi was installed rezzed")
       (is (= N (:credit (get-corp))) "Rezzing Chiyashi was free"))
     (play-and-score state "Remote Enforcement")
     (let [N (:credit (get-corp))]
@@ -2434,13 +2435,13 @@
     (let [sna-scored (get-scored state :corp 0)
           enf (get-ice state :hq 0)]
       (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
-      (is (not (:rezzed (refresh enf))) "Enforcer 1.0 should start derezzed")
+      (is (not (rezzed? (refresh enf))) "Enforcer 1.0 should start derezzed")
       (card-ability state :corp (refresh sna-scored) 0)
       (click-card state :corp enf)
-      (is (:rezzed (refresh enf)) "Enforcer 1.0 should be rezzed")
+      (is (rezzed? (refresh enf)) "Enforcer 1.0 should be rezzed")
       (is (= 1 (count (:scored (get-corp)))) "Enforcer 1.0 should be rezzed without forfeiting agenda")
       (take-credits state :corp)
-      (is (not (:rezzed (refresh enf))) "Enforcer 1.0 should be derezzed"))
+      (is (not (rezzed? (refresh enf))) "Enforcer 1.0 should be derezzed"))
     (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
@@ -2448,12 +2449,12 @@
     (let [sna-scored (get-scored state :corp 1)
           ash (get-content state :remote2 0)]
       (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
-      (is (not (:rezzed (refresh ash))) "Ash should start derezzed")
+      (is (not (rezzed? (refresh ash))) "Ash should start derezzed")
       (card-ability state :corp (refresh sna-scored) 0)
       (click-card state :corp ash)
-      (is (:rezzed (refresh ash)) "Ash should be rezzed")
+      (is (rezzed? (refresh ash)) "Ash should be rezzed")
       (take-credits state :corp)
-      (is (not (:rezzed (refresh ash))) "Ash should be derezzed"))))
+      (is (not (rezzed? (refresh ash))) "Ash should be derezzed"))))
 
 (deftest sentinel-defense-program
   ;; Sentinel Defense Program - Doesn't fire if brain damage is prevented

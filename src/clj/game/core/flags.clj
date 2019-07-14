@@ -195,125 +195,6 @@
 (defn release-zone [state side cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
-;;; Small utilities for card properties.
-(defn in-server?
-  "Checks if the specified card is installed in -- and not PROTECTING -- a server"
-  [card]
-  (= (last (:zone card)) :content))
-
-(defn in-hand?
-  "Checks if the specified card is in the hand."
-  [card]
-  (= (:zone card) [:hand]))
-
-(defn in-discard?
-  "Checks if the specified card is in the discard pile."
-  [card]
-  (= (:zone card) [:discard]))
-
-(defn in-deck?
-  "Checks if the specified card is in the draw deck."
-  [card]
-  (= (:zone card) [:deck]))
-
-(defn in-play-area?
-  "Checks if the specified card is in the play area."
-  [card]
-  (= (:zone card) [:play-area]))
-
-(defn is-scored?
-  "Checks if the specified card is in the scored area of the specified player."
-  [state side card]
-  (some #(= (:cid %) (:cid card)) (get-in @state [side :scored])))
-
-(defn when-scored?
-  "Checks if the specified card is able to be used for a when-scored text ability"
-  [card]
-  (not (:not-when-scored (card-def card))))
-
-(defn facedown?
-  "Checks if the specified card is facedown."
-  [card]
-  (or (= (:zone card) [:rig :facedown]) (:facedown card)))
-
-(defn in-corp-scored?
-  "Checks if the specified card is in the Corp score area."
-  [state side card]
-  (is-scored? state :corp card))
-
-(defn in-runner-scored?
-  "Checks if the specified card is in the Runner score area."
-  [state side card]
-  (is-scored? state :runner card))
-
-(defn is-type?
-  "Checks if the card is of the specified type, where the type is a string."
-  [card type]
-  (card-is? card :type type))
-
-(defn can-host?
-  "Checks if the specified card is able to host other cards"
-  [card]
-  (or (not (rezzed? card)) (not (:cannot-host (card-def card)))))
-
-(defn agenda? [card]
-  (is-type? card "Agenda"))
-
-(defn asset? [card]
-  (is-type? card "Asset"))
-
-(defn event? [card]
-  (is-type? card "Event"))
-
-(defn hardware? [card]
-  (is-type? card "Hardware"))
-
-(defn ice? [card]
-  (is-type? card "ICE"))
-
-(defn identity? [card]
-  (or (is-type? card "Identity")
-      (is-type? card "Fake-Identity")))
-
-(defn operation? [card]
-  (is-type? card "Operation"))
-
-(defn program? [card]
-  (is-type? card "Program"))
-
-(defn resource? [card]
-  (is-type? card "Resource"))
-
-(defn upgrade? [card]
-  (is-type? card "Upgrade"))
-
-(defn runner? [card]
-  (card-is? card :side "Runner"))
-
-(defn corp? [card]
-  (card-is? card :side "Corp"))
-
-(defn rezzed? [card]
-  (:rezzed card))
-
-(defn faceup? [card]
-  (or (:seen card) (:rezzed card)))
-
-(defn installed? [card]
-  (or (:installed card) (= :servers (first (:zone card)))))
-
-(defn active?
-  "Checks if the card is active and should receive game events/triggers."
-  [{:keys [zone] :as card}]
-  (or (is-type? card "Identity")
-      (= zone [:current])
-      (and (corp? card)
-           (installed? card)
-           (rezzed? card))
-      (and (runner? card)
-           (installed? card)
-           (not (facedown? card)))))
-
 (defn untrashable-while-rezzed? [card]
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
 
@@ -346,7 +227,7 @@
       (not (run-flag? state side card :can-rez)) :run-flag
       (not (turn-flag? state side card :can-rez)) :turn-flag
       ;; Uniqueness check
-      (and uniqueness (some #(and (:rezzed %) (= (:code card) (:code %))) (all-installed state :corp))) :unique
+      (and uniqueness (some #(and (rezzed? %) (= (:code card) (:code %))) (all-installed state :corp))) :unique
       ;; Rez req check
       (and rez-req (not (rez-req state side (make-eid state) card nil))) :req
       ;; No problems - return true
@@ -419,38 +300,58 @@
   [state side card]
   (check-flag-types? state side card :can-score [:current-turn :persistent]))
 
-(defn can-be-advanced?
-  "Returns true if the card can be advanced"
-  [card]
-  (or (card-is? card :advanceable :always)
-      ;; e.g. Tyrant, Woodcutter
-      (and (card-is? card :advanceable :while-rezzed)
-           (rezzed? card))
-      ;; e.g. Haas Arcology AI
-      (and (card-is? card :advanceable :while-unrezzed)
-           (not (rezzed? card)))
-      (and (is-type? card "Agenda")
-           (installed? card))))
+(defn is-scored?
+  "Checks if the specified card is in the scored area of the specified player."
+  [state side card]
+  (some #(same-card? % card) (get-in @state [side :scored])))
 
-(defn card-is-public? [state side {:keys [zone] :as card}]
+(defn in-corp-scored?
+  "Checks if the specified card is in the Corp score area."
+  [state side card]
+  (is-scored? state :corp card))
+
+(defn in-runner-scored?
+  "Checks if the specified card is in the Runner score area."
+  [state side card]
+  (is-scored? state :runner card))
+
+(defn card-is-public?
+  [state side {:keys [zone] :as card}]
   (if (= side :runner)
     ;; public runner cards: in hand and :openhand is true;
     ;; or installed/hosted and not facedown;
     ;; or scored or current or in heap
     (or (corp? card)
-        (and (:openhand (:runner @state)) (in-hand? card))
-        (and (or (installed? card) (:host card)) (not (facedown? card)))
+        (and (:openhand (:runner @state))
+             (in-hand? card))
+        (and (or (installed? card)
+                 (:host card))
+             (not (facedown? card)))
         (#{:scored :discard :current} (last zone)))
     ;; public corp cards: in hand and :openhand;
     ;; or installed and rezzed;
     ;; or in :discard and :seen
     ;; or scored or current
     (or (runner? card)
-        (and (:openhand (:corp @state)) (in-hand? card))
-        (and (or (installed? card) (:host card))
-             (or (is-type? card "Operation") (rezzed? card)))
+        (and (:openhand (:corp @state))
+             (in-hand? card))
+        (and (or (installed? card)
+                 (:host card))
+             (or (operation?)
+                 (rezzed? card)))
         (and (in-discard? card) (:seen card))
         (#{:scored :current} (last zone)))))
+
+(defn can-host?
+  "Checks if the specified card is able to host other cards"
+  [card]
+  (or (not (rezzed? card))
+      (not (:cannot-host (card-def card)))))
+
+(defn when-scored?
+  "Checks if the specified card is able to be used for a when-scored text ability"
+  [card]
+  (not (:not-when-scored (card-def card))))
 
 (defn ab-can-prevent?
   "Checks if the specified ability definition should prevent.

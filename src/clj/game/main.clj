@@ -1,8 +1,9 @@
 (ns game.main
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
-            [game.core :refer [card-is-public? game-states show-error-toast toast] :as core]
-            [game.utils :refer [private-card]]
+            [game.core :refer [card-is-public?] :as core]
+            [game.core.toasts :refer [toast]]
+            [game.core.card :refer [private-card]]
             [differ.core :as differ]))
 
 (add-encoder java.lang.Object encode-str)
@@ -45,7 +46,7 @@
    "start-turn" core/start-turn
    "subroutine" core/play-subroutine
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
-   "toast" core/toast
+   "toast" toast
    "trash-resource" core/trash-resource
    "view-deck" core/view-deck})
 

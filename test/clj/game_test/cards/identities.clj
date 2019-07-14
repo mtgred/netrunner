@@ -1,5 +1,6 @@
 (ns game-test.cards.identities
   (:require [game.core :as core]
+            [game.core.card :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -197,7 +198,7 @@
       (core/rez state :corp (get-ice state :archives 0))
       (is (= 1 (get-in @state [:runner :tag :additional])) "Runner gains 1 additional tag when ice rezzed")
       (core/rez state :corp (get-content state :remote1 0))
-      (is (:rezzed (get-content state :remote1 0)) "NGO Front now rezzed")
+      (is (rezzed? (get-content state :remote1 0)) "NGO Front now rezzed")
       (is (= 1 (get-in @state [:runner :tag :additional])) "Runner does not gain a tag when asset rezzed")
       (run-continue state)
       (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice"))))
@@ -2044,8 +2045,7 @@
     (run-on state "HQ")
     (let [q (get-in @state [:runner :identity])
           iwall (get-ice state :hq 0)
-          qdef (core/card-def (get-in @state [:runner :identity]))
-          qmsg (get-in qdef [:abilities 0 :msg])]
+          qmsg "break 1 Barrier subroutine"]
       (core/rez state :corp iwall)
       (card-ability state :runner q 0)
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
@@ -2103,11 +2103,11 @@
     (let [splicer (get-content state :remote1 0)]
       (is (= 1 (get-counters (refresh splicer) :advancement)) "1 advancements placed on Gene Splicer")
       (core/rez state :corp (refresh splicer))
-      (is (not (:rezzed (refresh splicer))) "Gene Splicer did not rez")
+      (is (not (rezzed? (refresh splicer))) "Gene Splicer did not rez")
       (take-credits state :corp)
       (take-credits state :runner)
       (core/rez state :corp (refresh splicer))
-      (is (:rezzed (refresh splicer)) "Gene Splicer now rezzed")
+      (is (rezzed? (refresh splicer)) "Gene Splicer now rezzed")
       (card-ability state :corp (get-in @state [:corp :identity]) 0)
       (click-card state :corp (find-card "House of Knives" (:hand (get-corp))))
       (click-prompt state :corp "New remote")

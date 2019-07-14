@@ -1,9 +1,8 @@
 (in-ns 'game.core)
 
-(declare can-trigger? card-def clear-wait-prompt event-title get-card
-         get-nested-host get-remote-names get-runnable-zones get-zones installed?
+(declare can-trigger? event-title get-card
          register-suppress resolve-ability
-         show-wait-prompt trigger-suppress unregister-suppress)
+         trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
 (defn register-events
@@ -24,7 +23,7 @@
     ;; as they should cause all relevant events to be removed anyway.
     (doseq [e (merge (:events cdef) (:derezzed-events cdef))]
       (swap! state update-in [:events (first e)]
-             #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
+             #(remove (fn [effect] (same-card? (:card effect) card)) %))))
   (unregister-suppress state side card)))
 
 (defn trigger-event
@@ -33,12 +32,15 @@
   [state side event & targets]
   (swap! state update-in [:turn-events] #(cons [event targets] %))
   (let [get-side #(-> % :card :side game.utils/to-keyword)
-        is-active-player #(= (:active-player @state) (get-side %))]
-    (doseq [{:keys [ability] :as e} (sort-by (complement is-active-player) (get-in @state [:events event]))]
-      (when-let [card (get-card state (:card e))]
-        (when (and (not (apply trigger-suppress state side event (cons card targets)))
-                   (or (not (:req ability)) ((:req ability) state side (make-eid state) card targets)))
-          (resolve-ability state side ability card targets))))))
+        is-active-player #(= (:active-player @state) (get-side %))
+        handlers (->> (get-in @state [:events event])
+                      (sort-by (complement is-active-player))
+                      (filter #(and (not (apply trigger-suppress state side event (:card %) targets))
+                                    (can-trigger? state side (:ability %) (get-card state (:card %)) targets)))
+                      doall)]
+    (doseq [{:keys [ability card]} handlers]
+      (when-let [card (get-card state card)]
+        (resolve-ability state side (dissoc ability :req) card targets)))))
 
 (defn- trigger-event-sync-next
   [state side eid handlers event & targets]
@@ -215,7 +217,7 @@
 (defn unregister-suppress [state side card]
   (doseq [e (:suppress (card-def card))]
     (swap! state update-in [:suppress (first e)]
-           #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
+           #(remove (fn [effect] (same-card? (:card effect) card)) %))))
 
 (defn trigger-suppress
   "Returns true if the given event on the given targets should be suppressed, by triggering

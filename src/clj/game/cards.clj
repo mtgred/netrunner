@@ -4,7 +4,7 @@
                     :label "Trash a program"
                     :msg (msg "trash " (:title target))
                     :choices {:req #(and (installed? %)
-                                         (is-type? % "Program"))}
+                                         (program? %))}
                     :effect (effect (trash target {:cause :subroutine})
                                     (clear-wait-prompt :runner))})
 
@@ -12,14 +12,14 @@
                      :label "Trash a piece of hardware"
                      :msg (msg "trash " (:title target))
                      :choices {:req #(and (installed? %)
-                                          (is-type? % "Hardware"))}
+                                          (hardware? %))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-resource-sub {:prompt "Select a resource to trash"
                          :label "Trash a resource"
                          :msg (msg "trash " (:title target))
                          :choices {:req #(and (installed? %)
-                                              (is-type? % "Resource"))}
+                                              (resource? %))}
                          :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-installed {:prompt "Select an installed card to trash"
@@ -27,7 +27,7 @@
                       :label "Force the Runner to trash an installed card"
                       :msg (msg "force the Runner to trash " (:title target))
                       :choices {:req #(and (installed? %)
-                                           (= (:side %) "Runner"))}
+                                           (runner? %))}
                       :effect (effect (trash target {:cause :subroutine}))})
 
 (def corp-rez-toast
@@ -122,7 +122,7 @@
 (defn card-index
   "Get the zero-based index of the given card in its server's list of content. Same as ice-index"
   [state card]
-  (first (keep-indexed #(when (= (:cid %2) (:cid card)) %1) (get-in @state (cons :corp (:zone card))))))
+  (first (keep-indexed #(when (same-card? %2 card) %1) (get-in @state (cons :corp (:zone card))))))
 
 (defn swap-installed
   "Swaps two installed corp cards - like swap ICE except no strength update"
@@ -166,6 +166,15 @@
    :msg (str "do " dmg " brain damage")
    :effect (effect (damage eid :brain dmg {:card card}))})
 
+(defn trash-on-empty
+  "Used in :event maps for effects like Daily Casts"
+  [counter-type]
+  {:counter-added {:req (req (same-card? card target)
+                             (not (pos? (get-counters card counter-type))))
+                   :async true
+                   :effect (effect (system-msg (str "trashes " (:title card)))
+                                   (trash eid card {:unpreventable true}))}})
+
 (defn pick-virus-counters-to-spend
   "Pick virus counters to spend. For use with Freedom Khumalo and virus breakers, and any other relevant cards.
   This function returns a map for use with resolve-ability or continue-ability.
@@ -207,6 +216,15 @@
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
 
+(defn pick-credit-triggers
+  [state side eid selected-cards counter-count message]
+  (if-let [[cid selected] (first selected-cards)]
+    (if-let [{:keys [card number]} selected]
+      (wait-for (trigger-event-sync state side :counter-added (get-card state card) number)
+                (pick-credit-triggers state side eid (next selected-cards) counter-count message))
+      (pick-credit-triggers state side eid (next selected-cards) counter-count message))
+    (effect-completed state side (make-result eid {:number counter-count :msg message}))))
+
 (defn pick-credit-providing-cards
   "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
   ([provider-func outereid] (pick-credit-providing-cards provider-func outereid nil (hash-map) 0))
@@ -230,9 +248,11 @@
                                      " from their credit pool"))]
                   (deduct state side [:credit remainder])
                   (swap! state update-in [:stats side :spent :credit] (fnil + 0) target-count)
-                  (when-let [card (some #(when (has-subtype? (:card %) "Stealth") (:card %)) (vals selected-cards))]
+                  ; Only one card watches this right now (Net Mercur) so I'm okay with not iterating
+                  (when-let [{:keys [card]} (some #(when (has-subtype? (:card %) "Stealth") %) (vals selected-cards))]
                     (trigger-event state side :spent-stealth-credit card))
-                  (effect-completed state side (make-result eid {:number counter-count :msg message})))
+                  ; Now we trigger all of the :counter-added events we'd neglected previously
+                  (pick-credit-triggers state side eid selected-cards counter-count message))
                 (continue-ability
                   state side
                   (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)
@@ -254,11 +274,14 @@
                                                   (-> target card-def :interactions :pay-credits :custom))
                              custom-ability (when (= :custom pay-credits-type)
                                               {:async true :effect pay-credits-custom})
+                             current-counters (get-counters target pay-credits-type)
+                             ; In this next bit, we don't want to trigger any events yet
+                             ; so we use `set-prop` to directly change the number of credits
                              gained-credits (case pay-credits-type
                                               :recurring
-                                              (do (add-prop state side target :rec-counter -1) 1)
+                                              (do (set-prop state side target :rec-counter (dec current-counters)) 1)
                                               :credit
-                                              (do (add-counter state side target :credit -1) 1)
+                                              (do (set-prop state side target :counter {:credit (dec current-counters)}) 1)
                                               ; Custom credits will be handled separately later
                                               0)
                              selected-cards (update selected-cards (:cid target)
@@ -320,38 +343,3 @@
   (->> (-> card :title server-card :text split-lines)
        (filter #(starts-with? % "[subroutine]"))
        count))
-
-;; Load all card definitions into the current namespace
-(defn load-all-cards
-  "Load all card definitions into their own namespaces"
-  ([] (load-all-cards nil))
-  ([path]
-   (doall (pmap load-file
-                (->> (io/file (str "src/clj/game/cards" (when path (str "/" path ".clj"))))
-                     (file-seq)
-                     (filter #(and (.isFile %)
-                                   (string/ends-with? % ".clj")))
-                     (map str))))))
-
-(defn get-card-defs
-  ([] (get-card-defs nil))
-  ([path]
-   (->> (all-ns)
-        (filter #(starts-with? % (str "game.cards" (when path (str "." path)))))
-        (map #(ns-resolve % 'card-definitions))
-        (map var-get)
-        (apply merge))))
-
-(def cards {})
-
-(defn reset-card-defs
-  "Performs any once only initialization that should be performed on startup"
-  ([] (reset-card-defs nil))
-  ([path]
-   (let [cards-var #'game.core/cards]
-     (alter-var-root cards-var
-                     (constantly
-                       (merge cards
-                              (do (load-all-cards path)
-                                  (get-card-defs path))))))
-   'loaded))

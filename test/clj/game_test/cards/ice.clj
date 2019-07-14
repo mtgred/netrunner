@@ -1,5 +1,6 @@
 (ns game-test.cards.ice
   (:require [game.core :as core]
+            [game.core.card :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -209,7 +210,7 @@
       (core/rez state :corp cp)
       (card-subroutine state :corp cp 0)
       (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
-      (is (not (:rezzed (refresh cp))) "Cell Portal derezzed"))))
+      (is (not (rezzed? (refresh cp))) "Cell Portal derezzed"))))
 
 (deftest chimera
   ;; Chimera - Gains chosen subtype
@@ -555,7 +556,7 @@
       (is (= deck (-> (get-corp) :deck count)) "R&D should have same number of cards as start")
       (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck)))
           "Corp should shuffle R&D")
-      (is (core/in-deck? (core/find-latest state hostile)) "Hostile Takeover should be in deck now")
+      (is (in-deck? (core/find-latest state hostile)) "Hostile Takeover should be in deck now")
       (card-subroutine state :corp gate 1)
       (is (not (:run @state)) "Gatekeeper subroutine should end the run")
       (take-credits state :runner)
@@ -2038,7 +2039,7 @@
         (score-agenda state :corp ht)
         (play-from-hand state :corp "Oversight AI")
         (click-card state :corp ti)
-        (is (:rezzed (refresh ti)))
+        (is (rezzed? (refresh ti)))
         (is (= "Oversight AI" (:title (first (:hosted (refresh ti)))))
             "Tithonium hosting OAI as a condition")))))
 
@@ -2052,7 +2053,7 @@
         (core/rez state :corp tmi)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (is (:rezzed (refresh tmi))))))
+        (is (rezzed? (refresh tmi))))))
   (testing "Losing trace derezzes TMI"
     (do-game
       (new-game {:corp {:deck ["TMI"]}
@@ -2063,7 +2064,7 @@
         (core/rez state :corp tmi)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (is (not (:rezzed (refresh tmi))))))))
+        (is (not (rezzed? (refresh tmi))))))))
 
 (deftest trebuchet
   ;; Trebuchet

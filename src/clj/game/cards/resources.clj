@@ -1,6 +1,10 @@
 (ns game.cards.resources
   (:require [game.core :refer :all]
+            [game.core.card :refer :all]
             [game.core.eid :refer [make-eid effect-completed]]
+            [game.core.card-defs :refer [card-def]]
+            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
+            [game.core.toasts :refer [toast]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
@@ -1308,11 +1312,10 @@
    "Liberated Account"
    {:data {:counter {:credit 16}}
     :abilities [{:cost [:click 1]
-                 :counter-cost [:credit 4]
-                 :msg "gain 4 [Credits]"
-                 :effect (req (gain-credits state :runner 4)
-                              (when (zero? (get-counters (get-card state card) :credit))
-                                (trash state :runner card {:unpreventable true})))}]}
+                 :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
+                 :effect (effect (gain-credits (min 4 (get-counters card :credit)))
+                                 (add-counter :credit (- (min 4 (get-counters card :credit)))))}]
+    :events (trash-on-empty :credit)}
 
    "Liberated Chela"
    {:abilities [{:cost [:click 5 :forfeit]
@@ -1392,13 +1395,10 @@
     :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
                                                 (installed? target)))
                                  :type :credit}}
-    :abilities [{:counter-cost [:credit 1]
-                 :msg "gain 1 [Credits] for trashing installed cards"
-                 :async true
-                 :effect (req (gain-credits state :runner 1)
-                              (if (zero? (get-counters (get-card state card) :credit))
-                                (trash state :runner eid card {:unpreventable true})
-                                (effect-completed state :runner eid)))}]}
+    :abilities [{:msg "gain 1 [Credits] for trashing installed cards"
+                 :effect (effect (gain-credits 1)
+                                 (add-counter card :credit -1))}]
+    :events (trash-on-empty :credit)}
 
    "Motivation"
    (let [ability {:msg "look at the top card of their Stack"
@@ -2150,7 +2150,7 @@
                      (gain-agenda-point state :corp 0))}
 
    "The Class Act"
-   (let [draw-ability {:req (req (= :this-turn (:installed card)))
+   (let [draw-ability {:req (req (= :this-turn (installed? card)))
                        :async true
                        :msg "draw 4 cards"
                        :effect (effect (draw :runner eid 4 nil))}]

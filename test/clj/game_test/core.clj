@@ -5,7 +5,9 @@
             [clojure.test :refer :all]
             [hawk.core :as hawk]
             [game.core :as core]
-            [game.utils :as utils :refer [make-cid server-card]]
+            [game.core.card-defs :refer [reset-card-defs]]
+            [game.core.card :refer [make-cid]]
+            [game.utils :as utils :refer [server-card]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
 
@@ -19,17 +21,17 @@
 (defn load-all-cards []
   (when (empty? @all-cards)
     (->> (load-cards)
-         (map #(assoc % :cid (utils/make-cid)))
+         (map #(assoc % :cid (make-cid)))
          (map (juxt :title identity))
          (into {})
          (reset! all-cards))
-    (core/reset-card-defs)))
+    (reset-card-defs)))
 (load-all-cards)
 
 (hawk/watch! [{:paths ["src/clj/game/cards"]
                :filter hawk/file?
                :handler (fn [ctx e]
-                          (core/reset-card-defs
+                          (reset-card-defs
                             (-> e :file io/file .getName (string/split #"\.") first)))}])
 
 ;; General utilities necessary for starting a new game
@@ -191,7 +193,6 @@
 
 (def get-counters utils/get-counters)
 (def count-tags jutils/count-tags)
-(def has-subtype? jutils/has-subtype?)
 (def is-tagged? jutils/is-tagged?)
 (def count-bad-pub jutils/count-bad-pub)
 

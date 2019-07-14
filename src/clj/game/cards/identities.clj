@@ -1,6 +1,10 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
             [game.core.eid :refer [effect-completed make-eid]]
+            [game.core.card-defs :refer [card-def]]
+            [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
+            [game.core.toasts :refer [toast]]
+            [game.core.card :refer :all]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
@@ -970,7 +974,7 @@
                    :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
                    :effect (req (draw state side (- 5 (count (:hand corp))))
                                 (update! state side (dissoc card :fill-hq))
-                                (swap! state dissoc :turn-events))}]})
+                                (swap! state assoc :turn-events nil))}]})
 
    "Nisei Division: The Next Generation"
    {:events {:reveal-spent-credits
