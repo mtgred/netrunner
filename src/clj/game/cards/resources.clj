@@ -1446,6 +1446,37 @@
                  :cost [:trash]
                  :effect (effect (draw eid 1 nil))}]}
 
+   "Mystic Maemi"
+   (assoc
+     (companion-builder
+       ;; companion-builder: ability-req
+       (req (and (pos? (get-counters (get-card state card) :credit))
+                 (:successful run)))
+       ;; companion-builder: turn-ends-effect
+       (effect (show-wait-prompt :corp "Runner to take decision on Mystic Maemi")
+               (continue-ability
+                 {:prompt "Trash 1 card from your grip at random or trash Mystic Maemi?"
+                  :choices (req (if (can-pay? state :runner eid card nil :randomly-trash-from-hand 1)
+                                  ["Card from grip" "Trash"]
+                                  ["Trash"]))
+                  :player :runner
+                  :effect (req (if (= target "Trash")
+                                 (do
+                                   (trash state :runner card)
+                                   (system-msg state :runner "trashes Mystic Maemi"))
+                                 (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :ability})
+                                                     card [:randomly-trash-from-hand 1])
+                                           (system-msg state :runner (str (build-spend-msg async-result "avoid" "trashing Mystic Maemi")))
+                                           (clear-wait-prompt state :corp))))}
+                 card nil))
+       ;; companion-builder: ability
+       {:msg "take 1 [Credits]"
+        :effect (effect (add-counter card :credit -1)
+                        (gain-run-credits 1))})
+     ;; assoc: arguments
+     :interactions {:pay-credits {:req (req (= :play (:source-type eid)))
+                                  :type :credit}})
+
    "Net Mercur"
    {:abilities [{:msg "gain 1 [Credits]"
                  :async true
