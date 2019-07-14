@@ -489,6 +489,37 @@
       (run-on state "HQ")
       (is (:run @state) "Run initiated ok"))))
 
+(deftest f2p
+  ;; F2P
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["F2P"]}
+                 :runner {:deck ["Inti" "Scrubber"]}})
+      (play-from-hand state :corp "F2P" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inti")
+      (play-from-hand state :runner "Scrubber")
+      (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
+      (run-on state "HQ")
+      (let [f2p (get-ice state :hq 0)]
+        (core/rez state :corp (refresh f2p))
+        (changes-val-macro -2 (:credit (get-runner))
+                           "Pay 2c to break sub"
+                           (core/play-runner-ability state :runner {:card f2p
+                                                                    :ability 0
+                                                                    :targets nil}))
+        (card-subroutine state :corp (refresh f2p) 0)
+        (changes-val-macro 1 (count (:hand (get-runner)))
+                           "Bounce Inti to hand"
+                           (click-card state :corp (find-card "Inti" (get-in (get-runner) [:rig :program]))))
+        (card-subroutine state :corp (refresh f2p) 0)
+        (changes-val-macro 1 (count (:hand (get-runner)))
+                           "Bounce Scrubber to hand"
+                           (click-card state :corp (find-card "Scrubber" (get-in (get-runner) [:rig :resource]))))
+        (card-subroutine state :corp (refresh f2p) 0)
+        (println (clojure.string/join "\n" (map :text (:log @state))))
+        (is (empty? (:prompt (get-corp))) "F2P doesn't fire if no installed cards")))))
+
 (deftest fenris
   ;; Fenris - Illicit ICE give Corp 1 bad publicity when rezzed
   (do-game

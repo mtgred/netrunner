@@ -1017,6 +1017,11 @@
    "Executive Functioning"
    {:subroutines [(trace-ability 4 (do-brain-damage 1))]}
 
+   "F2P"
+   {:subroutines [add-runner-card-to-grip
+                  (give-tags 1)]
+    :runner-abilities [(runner-break [:credit 2] 1)]}
+
    "Fairchild"
    {:subroutines [(end-the-run-unless-runner-pays 4)
                   (end-the-run-unless-runner-pays 4)
