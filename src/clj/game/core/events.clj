@@ -33,12 +33,15 @@
   [state side event & targets]
   (swap! state update-in [:turn-events] #(cons [event targets] %))
   (let [get-side #(-> % :card :side game.utils/to-keyword)
-        is-active-player #(= (:active-player @state) (get-side %))]
-    (doseq [{:keys [ability] :as e} (sort-by (complement is-active-player) (get-in @state [:events event]))]
-      (when-let [card (get-card state (:card e))]
-        (when (and (not (apply trigger-suppress state side event (cons card targets)))
-                   (or (not (:req ability)) ((:req ability) state side (make-eid state) card targets)))
-          (resolve-ability state side ability card targets))))))
+        is-active-player #(= (:active-player @state) (get-side %))
+        handlers (->> (get-in @state [:events event])
+                      (sort-by (complement is-active-player))
+                      (filter #(and (not (apply trigger-suppress state side event (:card %) targets))
+                                    (can-trigger? state side (:ability %) (get-card state (:card %)) targets)))
+                      doall)]
+    (doseq [{:keys [ability card]} handlers]
+      (when-let [card (get-card state card)]
+        (resolve-ability state side (dissoc ability :req) card targets)))))
 
 (defn- trigger-event-sync-next
   [state side eid handlers event & targets]

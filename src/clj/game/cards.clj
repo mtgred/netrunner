@@ -166,6 +166,15 @@
    :msg (str "do " dmg " brain damage")
    :effect (effect (damage eid :brain dmg {:card card}))})
 
+(defn trash-on-empty
+  "Used in :event maps for effects like Daily Casts"
+  [counter-type]
+  {:counter-added {:req (req (same-card? card target)
+                             (not (pos? (get-counters card counter-type))))
+                   :async true
+                   :effect (effect (system-msg (str "trashes " (:title card)))
+                                   (trash eid card {:unpreventable true}))}})
+
 (defn pick-virus-counters-to-spend
   "Pick virus counters to spend. For use with Freedom Khumalo and virus breakers, and any other relevant cards.
   This function returns a map for use with resolve-ability or continue-ability.
@@ -207,6 +216,15 @@
                                                (vals selected-cards)))]
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
 
+(defn pick-credit-triggers
+  [state side eid selected-cards counter-count message]
+  (if-let [[cid selected] (first selected-cards)]
+    (if-let [{:keys [card number]} selected]
+      (wait-for (trigger-event-sync state side :counter-added (get-card state card) number)
+                (pick-credit-triggers state side eid (next selected-cards) counter-count message))
+      (pick-credit-triggers state side eid (next selected-cards) counter-count message))
+    (effect-completed state side (make-result eid {:number counter-count :msg message}))))
+
 (defn pick-credit-providing-cards
   "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
   ([provider-func outereid] (pick-credit-providing-cards provider-func outereid nil (hash-map) 0))
@@ -230,9 +248,11 @@
                                      " from their credit pool"))]
                   (deduct state side [:credit remainder])
                   (swap! state update-in [:stats side :spent :credit] (fnil + 0) target-count)
-                  (when-let [card (some #(when (has-subtype? (:card %) "Stealth") (:card %)) (vals selected-cards))]
+                  ; Only one card watches this right now (Net Mercur) so I'm okay with not iterating
+                  (when-let [{:keys [card]} (some #(when (has-subtype? (:card %) "Stealth") %) (vals selected-cards))]
                     (trigger-event state side :spent-stealth-credit card))
-                  (effect-completed state side (make-result eid {:number counter-count :msg message})))
+                  ; Now we trigger all of the :counter-added events we'd neglected previously
+                  (pick-credit-triggers state side eid selected-cards counter-count message))
                 (continue-ability
                   state side
                   (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)
@@ -254,11 +274,14 @@
                                                   (-> target card-def :interactions :pay-credits :custom))
                              custom-ability (when (= :custom pay-credits-type)
                                               {:async true :effect pay-credits-custom})
+                             current-counters (get-counters target pay-credits-type)
+                             ; In this next bit, we don't want to trigger any events yet
+                             ; so we use `set-prop` to directly change the number of credits
                              gained-credits (case pay-credits-type
                                               :recurring
-                                              (do (add-prop state side target :rec-counter -1) 1)
+                                              (do (set-prop state side target :rec-counter (dec current-counters)) 1)
                                               :credit
-                                              (do (add-counter state side target :credit -1) 1)
+                                              (do (set-prop state side target :counter {:credit (dec current-counters)}) 1)
                                               ; Custom credits will be handled separately later
                                               0)
                              selected-cards (update selected-cards (:cid target)

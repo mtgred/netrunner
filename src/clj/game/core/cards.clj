@@ -217,7 +217,8 @@
            (if-not placed
              (trigger-event state side :advance (get-card state updated-card))
              (trigger-event state side :advancement-placed (get-card state updated-card))))
-       (trigger-event state side :counter-added (get-card state updated-card))))))
+       (let [eid (make-eid state {:source card :source-type :add-prop})]
+         (trigger-event-sync state side eid :counter-added (get-card state updated-card)))))))
 
 (defn set-prop
   "Like add-prop, but sets multiple keys to corresponding values without triggering events.
@@ -236,7 +237,8 @@
      (if (= type :advancement)
        ;; if advancement counter use existing system
        (add-prop state side card :advance-counter n args)
-       (trigger-event state side :counter-added (get-card state updated-card))))))
+       (let [eid (make-eid state {:source card :source-type :add-prop})]
+         (trigger-event-sync state side (make-eid state) :counter-added (get-card state updated-card)))))))
 
 ;;; Deck-related functions
 (defn shuffle!
