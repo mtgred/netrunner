@@ -24,6 +24,32 @@
       (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck"))
     (is (zero? (count (get-in @state [:corp :servers :hq :ices]))) "Aimor trashed")))
 
+(deftest akhet
+  ;; Akhet
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Akhet" 2)]}})
+      (play-from-hand state :corp "Akhet" "HQ")
+      (play-from-hand state :corp "Akhet" "HQ")
+      (core/gain state :corp :credit 10 :click 1)
+      (let [ak-outer (get-ice state :hq 1)
+            ak-inner (get-ice state :hq 0)]
+        (core/advance state :corp {:card ak-inner})
+        (core/advance state :corp {:card ak-inner})
+        (is (= 2 (get-counters (refresh ak-inner) :advancement)) "Inner Akhet now has 2 adv tokens")
+        (take-credits state :corp)
+        (run-on state :hq)
+        (core/rez state :corp ak-outer)
+        (run-continue state)
+        (changes-val-macro 1 (:credit (get-corp))
+                           "Gained 1 credit from Akhet subroutine."
+                           (card-subroutine state :corp ak-outer 0)
+                           (click-card state :corp (refresh ak-inner)))
+        (is (= 3 (get-counters (refresh ak-inner) :advancement)) "Inner Akhet now has 3 adv tokens")
+        (core/rez state :corp ak-inner)
+        (run-continue state)
+        (is (= 5 (:current-strength (refresh ak-inner))) "Inner Akhet has 3 bonus strength")))))
+
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (do-game
