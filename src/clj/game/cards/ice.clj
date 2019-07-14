@@ -170,6 +170,24 @@
   "Runner loses a click effect"
   (effect (lose :runner :click 1)))
 
+(def add-runner-card-to-grip
+  "Add 1 installed Runner card to the grip"
+  {:async true
+   :label "Add an installed Runner card to the grip"
+   :req (req (not-empty (all-installed state :runner)))
+   :effect (effect (show-wait-prompt :runner (str "Corp to select " (:title card) " target"))
+                   (continue-ability
+                     {:choices {:req #(and (installed? %)
+                                           (runner? %))}
+                      :msg "add 1 installed card to the Runner's Grip"
+                      :effect (effect (clear-wait-prompt :runner)
+                                      (move :runner target :hand true)
+                                      (system-msg (str "adds " (:title target)
+                                                       " to the Runner's Grip")))
+                      :cancel-effect (effect (clear-wait-prompt :runner)
+                                             (effect-completed eid))}
+                     card nil))})
+
 ;;; For Advanceable ICE
 (defn get-advance-counters
   [card]
@@ -408,22 +426,7 @@
                          :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel")
                                                       (clear-wait-prompt :runner))}}}
                        card nil))}
-    :subroutines [(trace-ability
-                    6
-                    {:async true
-                     :effect (effect (show-wait-prompt :runner "Corp to select Archangel target")
-                                     (continue-ability
-                                       {:choices {:req #(and (installed? %)
-                                                             (runner? %))}
-                                        :label "Add 1 installed card to the Runner's Grip"
-                                        :msg "add 1 installed card to the Runner's Grip"
-                                        :effect (effect (clear-wait-prompt :runner)
-                                                        (move :runner target :hand true)
-                                                        (system-msg (str "adds " (:title target)
-                                                                         " to the Runner's Grip")))
-                                        :cancel-effect (effect (clear-wait-prompt :runner)
-                                                               (effect-completed eid))}
-                                       card nil))})]}
+    :subroutines [(trace-ability 6 add-runner-card-to-grip)]}
 
    "Archer"
    {:additional-cost [:forfeit]
@@ -2390,17 +2393,8 @@
                                  (update-ice-strength (get-card state card)))}]}
 
    "Sandman"
-   (let [sub {:label "Add an installed Runner card to the grip"
-              :req (req (not-empty (all-installed state :runner)))
-              :effect (effect (show-wait-prompt :runner "Corp to select Sandman target")
-                              (resolve-ability {:choices {:req #(and (installed? %)
-                                                                     (runner? %))}
-                                                :msg (msg "to add " (:title target) " to the grip")
-                                                :effect (effect (clear-wait-prompt :runner)
-                                                                (move :runner target :hand true))
-                                                :cancel-effect (effect (clear-wait-prompt :runner))}
-                                               card nil))}]
-     {:subroutines [sub sub]})
+   {:subroutines [add-runner-card-to-grip
+                  add-runner-card-to-grip]}
 
    "Sapper"
    {:flags {:rd-reveal (req true)}
