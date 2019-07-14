@@ -1,7 +1,7 @@
 (ns game.main
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
-            [game.core :refer [card-is-public? game-states] :as core]
+            [game.core :refer [card-is-public?] :as core]
             [game.core.toasts :refer [toast]]
             [game.core.card :refer [private-card]]
             [differ.core :as differ]))

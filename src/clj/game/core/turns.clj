@@ -3,8 +3,6 @@
 (declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan
          make-card turn-message)
 
-(def game-states (atom {}))
-
 (defn- card-implemented
   "Checks if the card is implemented. Looks for a valid return from `card-def`.
   If implemented also looks for `:implementation` key which may contain special notes.
@@ -60,48 +58,13 @@
         corp-quote (quotes/make-quote corp-identity runner-identity)
         runner-quote (quotes/make-quote runner-identity corp-identity)]
     (atom
-      {:gameid gameid :log [] :active-player :runner :end-turn true
-       :room room
-       :rid 0 :turn 0 :eid 0
-       :sfx [] :sfx-current-id 0
-       :stats {:time {:started (t/now)}}
-       :options {:spectatorhands spectatorhands}
-       :corp {:user (:user corp) :identity corp-identity
-              :options corp-options
-              :deck (zone :deck corp-deck)
-              :deck-id corp-deck-id
-              :hand []
-              :discard [] :scored [] :rfg [] :play-area []
-              :servers {:hq {} :rd {} :archives {}}
-              :click 0 :click-per-turn 3
-              :credit 5
-              :bad-publicity {:base 0 :additional 0}
-              :toast []
-              :hand-size {:base 5 :mod 0}
-              :agenda-point 0 :agenda-point-req 7
-              :keep false
-              :quote corp-quote}
-       :runner {:user (:user runner) :identity runner-identity
-                :options runner-options
-                :deck (zone :deck runner-deck)
-                :deck-id runner-deck-id
-                :hand []
-                :discard [] :scored [] :rfg [] :play-area []
-                :rig {:program [] :resource [] :hardware []}
-                :toast []
-                :click 0 :click-per-turn 4
-                :credit 5 :run-credit 0
-                :link 0
-                ;; is-tagged is a number in case there are multiple "runner is tagged" effects
-                :tag {:base 0 :additional 0 :is-tagged 0}
-                :memory {:base 4 :mod 0 :used 0}
-                :hand-size {:base 5 :mod 0}
-                :agenda-point 0 :agenda-point-req 7
-                :hq-access 1 :rd-access 1
-                :rd-access-fn seq
-                :brain-damage 0
-                :keep false
-                :quote runner-quote}})))
+      (new-state
+        gameid
+        room
+        (t/now)
+        spectatorhands
+        (new-corp (:user corp) corp-identity corp-options (zone :deck corp-deck) corp-deck-id corp-quote)
+        (new-runner (:user runner) runner-identity runner-options (zone :deck runner-deck) runner-deck-id runner-quote)))))
 
 (defn init-game
   "Initializes a new game with the given players vector."
@@ -290,7 +253,7 @@
                (swap! state update-in [side :register] dissoc :cannot-draw)
                (swap! state update-in [side :register] dissoc :drawn-this-turn)
                (clear-turn-register! state)
-               (swap! state dissoc :turn-events)
+               (swap! state assoc :turn-events nil)
                (when-let [extra-turns (get-in @state [side :extra-turns])]
                  (when (pos? extra-turns)
                    (start-turn state side nil)

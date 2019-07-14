@@ -469,7 +469,7 @@
 
 (defn reset-trace-modifications
   [state]
-  (swap! state dissoc :trace)
+  (swap! state assoc :trace nil)
   (swap! state dissoc-in [:bonus :trace]))
 
 (defn init-trace
