@@ -517,7 +517,6 @@
                            "Bounce Scrubber to hand"
                            (click-card state :corp (find-card "Scrubber" (get-in (get-runner) [:rig :resource]))))
         (card-subroutine state :corp (refresh f2p) 0)
-        (println (clojure.string/join "\n" (map :text (:log @state))))
         (is (empty? (:prompt (get-corp))) "F2P doesn't fire if no installed cards")))))
 
 (deftest fenris
