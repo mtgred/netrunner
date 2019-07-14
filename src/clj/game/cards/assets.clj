@@ -38,17 +38,17 @@
   "Creates a Campaign with X counters draining Y per-turn.
   Trashes itself when out of counters"
   [counters per-turn]
-  (let [ability {:msg (str "gain " per-turn " [Credits]")
-                 :counter-cost [:credit per-turn]
+  (let [num-credits (fn [card] (min per-turn (get-counters card :credit)))
+        ability {:msg (msg "gain " (num-credits card) " [Credits]")
                  :once :per-turn
                  :req (req (:corp-phase-12 @state))
                  :label (str "Gain " per-turn " [Credits] (start of turn)")
-                 :effect (req (gain-credits state :corp per-turn)
-                              (when (zero? (get-counters card :credit))
-                                (trash state :corp card)))}]
+                 :effect (effect (gain-credits (num-credits card))
+                                 (add-counter card :credit (- (num-credits card))))}]
     {:effect (effect (add-counter card :credit counters))
      :derezzed-events {:runner-turn-ends corp-rez-toast}
-     :events {:corp-turn-begins ability}
+     :events (merge (trash-on-empty :credit)
+                    {:corp-turn-begins ability})
      :abilities [ability]}))
 
 (defn as-trashed-agenda
@@ -1523,12 +1523,14 @@
    {:effect (effect (add-counter card :power 3))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins
-             {:async true
-              :effect (req (add-counter state side card :power -1)
-                           (if (zero? (get-counters (get-card state card) :power))
-                             (do (system-msg state :corp "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
-                                 (as-agenda state :corp eid (dissoc card :counter) 1))
-                             (effect-completed state side eid)))}}}
+             {:req (req (pos? (get-counters card :power)))
+              :effect (effect (add-counter card :power -1))}
+             :counter-added
+             {:req (req (same-card? card target)
+                        (not (pos? (get-counters card :power))))
+              :async true
+              :effect (effect (system-msg "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
+                              (as-agenda eid (dissoc card :counter) 1))}}}
 
    "Quarantine System"
    (letfn [(rez-ice [cnt] {:prompt "Select an ICE to rez"

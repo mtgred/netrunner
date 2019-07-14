@@ -19,8 +19,8 @@
       (let [credits (:credit (get-corp))
             counters (get-counters (refresh ac) :credit)]
         (take-credits state :runner)
-        (is (= (:credit (get-corp)) (+ credits 3)) "Gain 3 from Adonis")
-        (is (= (get-counters (refresh ac) :credit) (- counters 3)) "9 counter remaining on Adonis")))))
+        (is (= (+ credits 3) (:credit (get-corp))) "Gain 3 from Adonis")
+        (is (= (- counters 3) (get-counters (refresh ac) :credit)) "9 counter remaining on Adonis")))))
 
 (deftest advanced-assembly-lines
   ;; Advanced Assembly Lines
