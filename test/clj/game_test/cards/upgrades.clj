@@ -1,5 +1,6 @@
 (ns game-test.cards.upgrades
   (:require [game.core :as core]
+            [game.core.card :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -18,7 +19,7 @@
       (play-from-hand state :corp "Spiderweb" "Server 1")
       (click-prompt state :corp "Yes") ; optional ability
       (let [spid (get-ice state :remote1 0)]
-        (is (:rezzed (refresh spid)) "Spiderweb rezzed")
+        (is (rezzed? (refresh spid)) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
 (deftest arella-salvatore
@@ -139,13 +140,13 @@
         (click-card state :corp (find-card "Fairchild" (:hand (get-corp))))
         (let [fc (first (:hosted (refresh ac)))]
           (is (= "Fairchild" (:title (refresh fc))) "Fairchild hosted on Awakening Center")
-          (is (not (:rezzed (refresh fc))) "Fairchild is not rezzed")
+          (is (not (rezzed? (refresh fc))) "Fairchild is not rezzed")
           (is (empty? (:hand (get-corp))) "Fairchild removed from hand")
           (take-credits state :corp)
           (run-empty-server state "Server 1")
           (card-ability state :corp (refresh ac) 1)
           (click-prompt state :corp "Fairchild")
-          (is (:rezzed (refresh fc)) "Fairchild is rezzed")
+          (is (rezzed? (refresh fc)) "Fairchild is rezzed")
           (click-prompt state :runner "Done")
           (is (not (:run @state)) "Run has ended")
           (is (= 1 (count (:discard (get-corp)))) "Fairchild in discard")
@@ -168,7 +169,7 @@
           (run-empty-server state "Server 1")
           (card-ability state :corp (refresh ac) 1)
           (click-prompt state :corp "Fairchild")
-          (is (:rezzed (refresh fc)) "Fairchild is rezzed")
+          (is (rezzed? (refresh fc)) "Fairchild is rezzed")
           (click-prompt state :runner "Done")
           (is (not (:run @state)) "Run has ended")
           (is (= 1 (count (:discard (get-corp)))) "Fairchild in discard")
@@ -548,7 +549,7 @@
        (run-jack-out state)
        (card-ability state :corp (refresh tg) 0)
        (click-card state :corp (refresh css))
-       (is (not (:rezzed (refresh css))) "CSS derezzed")
+       (is (not (rezzed? (refresh css))) "CSS derezzed")
        (core/gain state :runner :click 2)
        (run-on state :hq)
        (is (= 3 (:credit (get-runner))) "0 creds spent to run HQ")
@@ -2064,7 +2065,7 @@
       (is (= (:cid scg1) (-> (get-corp) :prompt first :card :cid)) "Surat City Grid triggered from upgrade in same remote")
       (click-prompt state :corp "Yes")
       (click-card state :corp wrap)
-      (is (:rezzed (refresh wrap)) "Wraparound is rezzed")
+      (is (rezzed? (refresh wrap)) "Wraparound is rezzed")
       (is (= 15 (:credit (get-corp))) "Wraparound rezzed for free with 2c discount from SCG")
       (play-from-hand state :corp "Surat City Grid" "HQ")
       (play-from-hand state :corp "Enigma" "HQ")

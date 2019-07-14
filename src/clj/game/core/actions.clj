@@ -129,11 +129,11 @@
                      (str " in " src) ; this string matches the message when a card is trashed via (trash)
                      (str " from their " src)))
         label (if (and (not= last-zone :play-area)
-                       (not (and (= (:side c) "Runner")
+                       (not (and (runner? c)
                                  (= last-zone :hand)
                                  (= server "Grip")))
-                       (or (and (= (:side c) "Runner")
-                                (not (:facedown c)))
+                       (or (and (runner? c)
+                                (not (facedown? c)))
                            (rezzed? c)
                            (:seen c)
                            (= last-zone :deck)))
@@ -279,7 +279,7 @@
         (if (:selected c)
           (swap! state update-in [side :selected 0 :cards] #(conj % c))
           (swap! state update-in [side :selected 0 :cards]
-                 (fn [coll] (remove-once #(= (:cid %) (:cid card)) coll))))
+                 (fn [coll] (remove-once #(same-card? % card) coll))))
         (let [selected (get-in @state [side :selected 0])]
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side update! resolve-ability)))))))
@@ -404,9 +404,9 @@
                        {:prompt  "Choose a resource to trash"
                         :choices {:req (fn [card]
                                          (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
-                                                  (> (count (filter #(is-type? % "Resource") (all-active-installed state :runner))) 1))
-                                           (and (is-type? card "Resource") (not (untrashable-while-resources? card)))
-                                           (is-type? card "Resource")))}
+                                                  (> (count (filter resource? (all-active-installed state :runner))) 1))
+                                           (and (resource? card) (not (untrashable-while-resources? card)))
+                                           (resource? card)))}
                         :cancel-effect (effect (gain :credit trash-cost :click 1))
                         :effect  (effect (trash target)
                                          (system-msg (str (build-spend-msg cost-str "trash")
@@ -536,7 +536,7 @@
    (let [card (or (:card args) args)]
      (wait-for (trigger-event-simult state :corp :pre-agenda-scored nil card)
                (when (and (can-score? state side card)
-                          (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
+                          (empty? (filter #(same-card? card %) (get-in @state [:corp :register :cannot-score])))
                           (>= (get-counters card :advancement) (or (:current-cost card)
                                                                    (:advancementcost card))))
                  ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
@@ -581,7 +581,7 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (make-run state side server {} :click-run))
+  (make-run state side (make-eid state) server nil nil {:click-run true}))
 
 (defn remove-tag
   "Click to remove a tag."

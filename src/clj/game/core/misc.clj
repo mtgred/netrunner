@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare set-prop get-nested-host get-nested-zone all-active-installed run-costs)
+(declare set-prop all-active-installed run-costs)
 
 (defn get-zones [state]
   (keys (get-in @state [:corp :servers])))
@@ -38,8 +38,8 @@
       ;; Install req function overrides normal list of install locations
       (install-req state :corp card (make-eid state) base-list)
       ;; Standard list
-      (if (or (is-type? card "Agenda")
-              (is-type? card "Asset"))
+      (if (or (agenda? card)
+              (asset? card))
         (remove #{"HQ" "R&D" "Archives"} base-list)
         base-list))))
 
@@ -111,9 +111,9 @@
   (if (= side :runner)
     (let [top-level-cards (flatten (for [t [:program :hardware :resource :facedown]] (get-in @state [:runner :rig t])))
           hosted-on-ice (->> (:corp @state) :servers seq flatten (mapcat :ices) (mapcat :hosted))]
-      (loop [unchecked (concat top-level-cards (filter #(= (:side %) "Runner") hosted-on-ice)) installed ()]
+      (loop [unchecked (concat top-level-cards (filter runner? hosted-on-ice)) installed ()]
         (if (empty? unchecked)
-          (filter :installed installed)
+          (filter installed? installed)
           (let [[card & remaining] unchecked]
             (recur (filter identity (into remaining (:hosted card))) (into installed [card]))))))
     (let [servers (->> (:corp @state) :servers seq flatten)
@@ -122,7 +122,7 @@
           top-level-cards (concat ice content)]
       (loop [unchecked top-level-cards installed ()]
         (if (empty? unchecked)
-          (filter #(= (:side %) "Corp") installed)
+          (filter corp? installed)
           (let [[card & remaining] unchecked]
             (recur (filter identity (into remaining (:hosted card))) (into installed [card]))))))))
 
@@ -160,8 +160,8 @@
   [state side]
   (let [installed (all-installed state side)]
    (if (= side :runner)
-     (remove :facedown installed)
-     (filter :rezzed installed))))
+     (remove facedown? installed)
+     (filter rezzed? installed))))
 
 (defn installed-byname
   "Returns a truthy card map if a card matching title is installed"
@@ -224,12 +224,12 @@
         runner-ap-change (- runner-ap-scored runner-ap-stolen)]
     ;; Remove end of turn events for swapped out agenda
     (swap! state update-in [:corp :register :end-turn]
-           (fn [events] (filter #(not= (:cid scored) (get-in % [:card :cid])) events)))
+           (fn [events] (remove #(same-card? scored (:card %)) events)))
     ;; Move agendas
     (swap! state update-in [:corp :scored]
-           (fn [coll] (conj (remove-once #(= (:cid %) (:cid scored)) coll) stolen)))
+           (fn [coll] (conj (remove-once #(same-card? % scored) coll) stolen)))
     (swap! state update-in [:runner :scored]
-           (fn [coll] (conj (remove-once #(= (:cid %) (:cid stolen)) coll)
+           (fn [coll] (conj (remove-once #(same-card? % stolen) coll)
                             (if-not (card-flag? scored :has-abilities-when-stolen true)
                               (dissoc scored :abilities :events) scored))))
     ;; Update agenda points

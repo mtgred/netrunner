@@ -1,5 +1,6 @@
 (ns game-test.cards.operations
   (:require [game.core :as core]
+            [game.core.card :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -226,7 +227,7 @@
       (click-prompt state :corp "New remote")
       (let [iw (get-ice state :remote1 0)]
         (is (= 1 (:credit (get-corp))) "Corp spent no credits installing ice")
-        (is (:rezzed (refresh iw)) "Ice Wall is installed and rezzed"))))
+        (is (rezzed? (refresh iw)) "Ice Wall is installed and rezzed"))))
   (testing "Select invalid card"
     (do-game
       (new-game {:corp {:deck ["Building Blocks" "Hedge Fund" "Cortex Lock"]}})
@@ -252,7 +253,7 @@
       (click-card state :corp (find-card "Improved Tracers" (:hand (get-corp))))
       (click-prompt state :corp "New remote")
       (let [imptrac (get-content state :remote1 0)]
-        (is (:rezzed (refresh imptrac)) "Improved Tracers is faceup")
+        (is (rezzed? (refresh imptrac)) "Improved Tracers is faceup")
         (is (= 4 (:current-strength (refresh hunter))) "Hunter hasn't gained strength")
         (play-from-hand state :corp "Casting Call")
         (click-card state :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
@@ -556,10 +557,10 @@
         (click-prompt state :corp "Done"))
       (testing "Choose a target to rez for -6 cost"
         (click-card state :corp (refresh ec3)))
-      (is (core/rezzed? (refresh ec3)) "Eve Campaign was rezzed")
+      (is (rezzed? (refresh ec3)) "Eve Campaign was rezzed")
       (is (= 4 (:credit (get-corp))) "Rezzed Eve Campaign for 0 credits")
-      (is (not (core/rezzed? (refresh pw))) "Paper Wall was derezzed")
-      (is (not (core/rezzed? (refresh ec1))) "First Eve Campaign was derezzed")
+      (is (not (rezzed? (refresh pw))) "Paper Wall was derezzed")
+      (is (not (rezzed? (refresh ec1))) "First Eve Campaign was derezzed")
       (is (= 16 (get-counters (refresh ec3) :credit)) "Eve gained 16 credits on rez")
       (play-from-hand state :corp "Divert Power")
       (testing "Choose 1 target to derez"
@@ -567,9 +568,9 @@
         (click-prompt state :corp "Done"))
       (testing "Choose a target to rez for -3 cost"
         (click-card state :corp (refresh ec1)))
-      (is (core/rezzed? (refresh ec1)) "First Eve Campaign was rezzed")
+      (is (rezzed? (refresh ec1)) "First Eve Campaign was rezzed")
       (is (zero? (:credit (get-corp))) "Rezzed Eve Campaign for 2 credits")
-      (is (not (core/rezzed? (refresh ec2))) "Second Eve Campaign was derezzed")
+      (is (not (rezzed? (refresh ec2))) "Second Eve Campaign was derezzed")
       (is (= 32 (get-counters (refresh ec1) :credit)) "First Eve gained 16  more credits on rez"))))
 
 (deftest door-to-door
@@ -1507,11 +1508,11 @@
     (let [ronin (get-content state :remote1 0)]
       (is (= 3 (get-counters (refresh ronin) :advancement)) "3 advancements placed on Ronin")
       (core/rez state :corp (refresh ronin))
-      (is (not (:rezzed (refresh ronin))) "Ronin did not rez")
+      (is (not (rezzed? (refresh ronin))) "Ronin did not rez")
       (take-credits state :corp)
       (take-credits state :runner)
       (core/rez state :corp (refresh ronin))
-      (is (:rezzed (refresh ronin)) "Ronin now rezzed")
+      (is (rezzed? (refresh ronin)) "Ronin now rezzed")
       (play-from-hand state :corp "Mushin No Shin")
       (click-card state :corp (find-card "Profiteering" (:hand (get-corp))))
       (let [prof (get-content state :remote2 0)]
@@ -1539,7 +1540,7 @@
       (click-card state :corp (get-ice state :hq 0))
       (is (= 1 (count (get-ice state :hq))) "1 ice installed")
       (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma is installed")
-      (is (:rezzed (get-ice state :hq 0)) "Enigma is rezzed")
+      (is (rezzed? (get-ice state :hq 0)) "Enigma is rezzed")
       (is (second-last-log-contains? state "Hedge Fund") "Skipped card name was logged")
       (is (second-last-log-contains? state "Enigma") "Installed card name was logged")))
   (testing "No ice in R&D"
@@ -1567,7 +1568,7 @@
       (click-card state :corp (get-ice state :remote1 0))
       (is (= 1 (count (get-ice state :remote1))) "1 ice installed")
       (is (= "Enigma" (:title (get-ice state :remote1 0))) "Enigma is installed")
-      (is (:rezzed (get-ice state :remote1 0)) "Enigma is rezzed")
+      (is (rezzed? (get-ice state :remote1 0)) "Enigma is rezzed")
       (is (second-last-log-contains? state "Hedge Fund") "Skipped card name was logged")
       (is (second-last-log-contains? state "Enigma") "Installed card name was logged"))))
 
@@ -1591,7 +1592,7 @@
     (let [archer (get-ice state :rd 0)]
       (play-from-hand state :corp "Oversight AI")
       (click-card state :corp archer)
-      (is (:rezzed (refresh archer)))
+      (is (rezzed? (refresh archer)))
       (is (= 4 (:credit (get-corp))) "Archer rezzed at no credit cost")
       (is (= "Oversight AI" (:title (first (:hosted (refresh archer)))))
           "Archer hosting OAI as a condition"))))

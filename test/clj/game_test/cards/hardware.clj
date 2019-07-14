@@ -1,5 +1,6 @@
 (ns game-test.cards.hardware
   (:require [game.core :as core]
+            [game.core.card :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -130,7 +131,7 @@
             iwall (get-ice state :archives 0)]
         (run-on state :archives)
         (card-ability state :runner snitch 0)
-        (is (:rezzed (refresh iwall)) "Ice Wall was rezzed"))))
+        (is (rezzed? (refresh iwall)) "Ice Wall was rezzed"))))
   (testing "Additional cost handling, issue #1244"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1734,9 +1735,9 @@
         (card-ability state :runner rs 0)
         (click-prompt state :runner "1")
         (click-card state :runner "Ice Wall")
-        (is (:rezzed (refresh iw)) "Ice Wall rezzed last turn can't be targeted")
+        (is (rezzed? (refresh iw)) "Ice Wall rezzed last turn can't be targeted")
         (click-card state :runner "Pachinko")
-        (is (not (:rezzed (refresh pach))) "Pachinko derezzed")
+        (is (not (rezzed? (refresh pach))) "Pachinko derezzed")
         (is (= 2 (:click (get-runner))) "Spent 1 click")
         (is (= 1 (:credit (get-runner))) "Spent 1c")))))
 

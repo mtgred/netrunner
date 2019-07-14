@@ -4,6 +4,7 @@
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
             [game.core.toasts :refer [toast]]
+            [game.core.card :refer :all]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
@@ -1151,7 +1152,7 @@
 
    "Gauss"
    (auto-icebreaker ["Barrier"]
-                    {:strength-bonus (req (if (= :this-turn (:installed card)) 3 0))
+                    {:strength-bonus (req (if (= :this-turn (installed? card)) 3 0))
                      :events (let [losestr {:effect (effect (update-breaker-strength card))}]
                                {:runner-turn-ends losestr
                                 :corp-turn-ends losestr})

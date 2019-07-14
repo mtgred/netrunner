@@ -4,7 +4,7 @@
          gain-run-credits update-ice-in-server update-all-ice
          get-agenda-points gain-agenda-point optional-ability
          get-remote-names card-name can-access-loud can-steal?
-         prevent-jack-out card-flag? can-run? in-discard? operation?)
+         prevent-jack-out card-flag? can-run?)
 
 ;;; Steps in the run sequence
 (defn make-run
@@ -13,21 +13,21 @@
   ([state side eid server] (make-run state side eid server nil nil nil))
   ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
   ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
-  ([state side eid server run-effect card {:keys [ignore-costs] :as args}]
-   (wait-for (trigger-event-simult state :runner :pre-init-run nil server card)
-             (let [all-run-costs (when-not ignore-costs (run-costs state server card))]
+  ([state side eid server run-effect card {:keys [click-run ignore-costs] :as args}]
+   (wait-for (trigger-event-simult state :runner :pre-init-run nil server card args)
+             (let [all-run-costs (when-not ignore-costs (run-costs state server args))]
                (swap! state update-in [:bonus] dissoc :run-cost)
                (if (and (can-run? state :runner)
                         (can-run-server? state server)
                         (can-pay? state :runner (make-eid state eid) card "a run" all-run-costs))
-                 (do (when (= card :click-run)
+                 (do (when click-run
                        (swap! state assoc-in [:runner :register :click-type] :run)
                        (swap! state assoc-in [:runner :register :made-click-run] true)
                        (play-sfx state side "click-run"))
                      (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :make-run}) nil all-run-costs)
                                (if-let [cost-str async-result]
                                  (do
-                                   (when (= card :click-run)
+                                   (when click-run
                                      (system-msg state :runner (str (build-spend-msg cost-str "make a run on" "makes a run on")
                                                                     (zone->name (unknown->kw server))
                                                                     (when ignore-costs ", ignoring all costs"))))
@@ -72,7 +72,7 @@
   (when-not (find-cid (:cid c) (get-in @state [:corp :discard]))
     ;; Do not trigger :no-trash if card has already been trashed
     (trigger-event state side :no-trash c))
-  (when (and (is-type? c "Agenda")
+  (when (and (agenda? c)
              (not (find-cid (:cid c) (get-in @state [:runner :scored]))))
     (trigger-event state side :no-steal c))
   (when (and (get-card state c)
@@ -361,7 +361,7 @@
                                      :cancel-fn (fn [state] (not (get-card state c)))}
                                     c)
               (if (get-card state c) ; make sure the card has not been moved by a handler
-                (if (is-type? c "Agenda")
+                (if (agenda? c)
                   (access-agenda state side eid c)
                   ;; Accessing a non-agenda
                   (access-non-agenda state side eid c))
@@ -463,11 +463,11 @@
 
 (defn access-helper-remote [cards]
   {:prompt "Click a card to access it. You must access all cards in this server."
-   :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) cards)}
+   :choices {:req #(some (fn [c] (same-card? % c)) cards)}
    :async true
    :effect (req (wait-for (access-card state side target)
                           (if (< 1 (count cards))
-                            (continue-ability state side (access-helper-remote (filter #(not= (:cid %) (:cid target)) cards))
+                            (continue-ability state side (access-helper-remote (remove #(same-card? % target) cards))
                                               card nil)
                             (effect-completed state side eid))))})
 
@@ -504,7 +504,7 @@
                     (= target unrezzed-upgrade)
                     ;; accessing an unrezzed upgrade
                     (let [from-root (get-root-content state)
-                          unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %)))
+                          unrezzed (filter #(and (= (last (:zone %)) :content) (not (rezzed? %)))
                                            from-root)]
                       (if (= 1 (count unrezzed))
                         ;; only one unrezzed upgrade; access it and continue
@@ -624,7 +624,7 @@
   (filter #(let [cdef (card-def %)]
              ;; must also be :seen
              (and (:seen %)
-                  (or (is-type? % "Agenda")
+                  (or (agenda? %)
                       (should-trigger? state :corp % nil (:access cdef)))))
           (get-in @state [:corp :discard])))
 
@@ -632,7 +632,7 @@
   ;; get faceup cards with no access interaction
   (filter #(let [cdef (card-def %)]
              (and (:seen %)
-                  (not (or (is-type? % "Agenda")
+                  (not (or (agenda? %)
                            (should-trigger? state :corp % nil (:access cdef))))))
           (get-in @state [:corp :discard])))
 
@@ -678,7 +678,7 @@
 
                     (= target "Unrezzed upgrade in Archives")
                     ;; accessing an unrezzed upgrade
-                    (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %)))
+                    (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (rezzed? %)))
                                            (root-content already-accessed))]
                       (if (= 1 (count unrezzed))
                         ;; only one unrezzed upgrade; access it and continue

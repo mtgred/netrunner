@@ -1,7 +1,6 @@
 (in-ns 'game.core)
 
 (declare can-trigger? event-title get-card
-         get-nested-host get-remote-names get-runnable-zones get-zones installed?
          register-suppress resolve-ability
          trigger-suppress unregister-suppress)
 
@@ -24,7 +23,7 @@
     ;; as they should cause all relevant events to be removed anyway.
     (doseq [e (merge (:events cdef) (:derezzed-events cdef))]
       (swap! state update-in [:events (first e)]
-             #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
+             #(remove (fn [effect] (same-card? (:card effect) card)) %))))
   (unregister-suppress state side card)))
 
 (defn trigger-event
@@ -218,7 +217,7 @@
 (defn unregister-suppress [state side card]
   (doseq [e (:suppress (card-def card))]
     (swap! state update-in [:suppress (first e)]
-           #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
+           #(remove (fn [effect] (same-card? (:card effect) card)) %))))
 
 (defn trigger-suppress
   "Returns true if the given event on the given targets should be suppressed, by triggering

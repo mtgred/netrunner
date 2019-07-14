@@ -1,6 +1,7 @@
 (in-ns 'game.core)
 
-(declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan turn-message in-hand?)
+(declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan
+         make-card turn-message)
 
 (def game-states (atom {}))
 
@@ -44,22 +45,18 @@
 (defn- init-game-state
   "Initialises the game state"
   [{:keys [players gameid spectatorhands room] :as game}]
-  (let [corp (some #(when (= (:side %) "Corp") %) players)
-        runner (some #(when (= (:side %) "Runner") %) players)
+  (let [corp (some #(when (corp? %) %) players)
+        runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp) (:user corp))
         runner-deck (create-deck (:deck runner) (:user runner))
         corp-deck-id (get-in corp [:deck :_id])
         runner-deck-id (get-in runner [:deck :_id])
         corp-options (get-in corp [:options])
         runner-options (get-in runner [:options])
-        corp-identity (assoc (or (get-in corp [:deck :identity])
-                                 {:side "Corp" :type "Identity" :title "Custom Biotics: Engineered for Success"})
-                             :cid (make-cid))
-        corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
-        runner-identity (assoc (or (get-in runner [:deck :identity])
-                                   {:side "Runner" :type "Identity" :title "The Professor: Keeper of Knowledge"})
-                               :cid (make-cid))
-        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
+        corp-identity (make-card (or (get-in corp [:deck :identity])
+                                 {:side "Corp" :type "Identity" :title "Custom Biotics: Engineered for Success"}))
+        runner-identity (make-card (or (get-in runner [:deck :identity])
+                                   {:side "Runner" :type "Identity" :title "The Professor: Keeper of Knowledge"}))
         corp-quote (quotes/make-quote corp-identity runner-identity)
         runner-quote (quotes/make-quote runner-identity corp-identity)]
     (atom
@@ -127,7 +124,8 @@
   ([card cid]
   (-> card
       (assoc :cid cid :implementation (card-implemented card))
-      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost))))
+      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)
+      (map->Card))))
 
 (defn build-card
   [card]
@@ -269,7 +267,7 @@
                (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended
-                 (when (= :this-turn (:installed card))
+                 (when (= :this-turn (installed? card))
                    (update! state side (assoc card :installed true)))
                  ;; Clear the added-virus-counter flag for each virus in play.
                  ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
@@ -282,7 +280,7 @@
                    (update-breaker-strength state :runner card)))
                (doseq [card (all-installed state :corp)]
                  ;; Clear :this-turn flags as turn has ended
-                 (when (= :this-turn (:installed card))
+                 (when (= :this-turn (installed? card))
                    (update! state side (assoc card :installed true)))
                  (when (= :this-turn (:rezzed card))
                    (update! state side (assoc card :rezzed true))))

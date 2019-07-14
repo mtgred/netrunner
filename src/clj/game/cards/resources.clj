@@ -1,5 +1,6 @@
 (ns game.cards.resources
   (:require [game.core :refer :all]
+            [game.core.card :refer :all]
             [game.core.eid :refer [make-eid effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -2149,7 +2150,7 @@
                      (gain-agenda-point state :corp 0))}
 
    "The Class Act"
-   (let [draw-ability {:req (req (= :this-turn (:installed card)))
+   (let [draw-ability {:req (req (= :this-turn (installed? card)))
                        :async true
                        :msg "draw 4 cards"
                        :effect (effect (draw :runner eid 4 nil))}]

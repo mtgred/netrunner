@@ -1,5 +1,6 @@
 (ns game-test.cards.assets
   (:require [game.core :as core]
+            [game.core.card :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -854,11 +855,11 @@
       (play-from-hand state :corp "Daily Quest" "New remote")
       (let [dq (get-content state :remote1 0)]
         (core/rez state :corp dq)
-        (is (:rezzed (refresh dq)) "Can rez on Corp turn")
+        (is (rezzed? (refresh dq)) "Can rez on Corp turn")
         (core/derez state :corp dq)
         (take-credits state :corp)
         (core/rez state :corp dq)
-        (is (not (:rezzed (refresh dq))) "Cannot rez on Runner turn"))))
+        (is (not (rezzed? (refresh dq))) "Cannot rez on Runner turn"))))
   (testing "Runner gains credits on successful runs"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1125,12 +1126,12 @@
       (core/gain state :corp :click 6)
       (card-ability state :corp eliza 0)
       (click-card state :corp wotan)
-      (is (:rezzed (refresh wotan)))
+      (is (rezzed? (refresh wotan)))
       (is (= 3 (:click (get-corp))) "3 clicks spent")
       (is (= 1 (:credit (get-corp))) "No credits spent")
       (card-ability state :corp eliza 0)
       (click-card state :corp archer)
-      (is (:rezzed (refresh archer)))
+      (is (rezzed? (refresh archer)))
       (is (zero? (:click (get-corp))) "3 clicks spent")
       (is (= 1 (:credit (get-corp))) "No credits or agendas spent"))))
 
@@ -1247,12 +1248,12 @@
         (take-credits state :corp)
         (is (= 9 (:credit (get-corp))) "Corp ends turn with 9 credits")
         (take-credits state :runner)
-        (is (not (:rezzed (refresh tith))) "Tithonium not rezzed")
+        (is (not (rezzed? (refresh tith))) "Tithonium not rezzed")
         (is (:corp-phase-12 @state) "Corp in Step 1.2")
         (card-ability state :corp ebc 0)
         (click-card state :corp tith)
         (click-prompt state :corp "No")
-        (is (and (:installed (refresh tith)) (:rezzed (refresh tith))) "Rezzed Tithonium")
+        (is (and (:installed (refresh tith)) (rezzed? (refresh tith))) "Rezzed Tithonium")
         (is (= 1 (:credit (get-corp))) "EBC saved 1 credit on the rez of Tithonium")))))
 
 (deftest executive-search-firm
@@ -1377,7 +1378,7 @@
         (let [lc (first (:hosted (refresh fir)))]
           (is lc "Launch Campaign hosted on Full Immersion RecStudio")
           (core/rez state :corp lc)
-          (is (and (:installed (refresh lc)) (:rezzed (refresh lc))) "Rezzed Launch Campaign")
+          (is (and (:installed (refresh lc)) (rezzed? (refresh lc))) "Rezzed Launch Campaign")
           (take-credits state :corp)
           (take-credits state :runner)
           (is (= 5 (:credit (get-corp))) "Gained 2cr from Launch Campaign")
@@ -2818,7 +2819,7 @@
       (click-prompt state :corp "New remote")
       (is (= "Oaktown Renovation" (:title (get-content state :remote3 0)))
           "Oaktown Renovation installed by Political Dealings")
-      (is (:rezzed (get-content state :remote3 0))
+      (is (rezzed? (get-content state :remote3 0))
           "Oaktown Renovation installed face up")))
   (testing "Daily Business Show interaction - Draw 2 agendas, install both of them but return 1 to bottom of R&D"
     (do-game
@@ -4003,14 +4004,14 @@
       (core/rez state :corp iw)
       (core/rez state :corp news)
       (advance state ground 2)
-      (is (:rezzed (refresh iw)) "Ice Wall should be rezzed")
-      (is (:rezzed (refresh news)) "News Team should be rezzed")
+      (is (rezzed? (refresh iw)) "Ice Wall should be rezzed")
+      (is (rezzed? (refresh news)) "News Team should be rezzed")
       (is (zero? (-> (get-corp) :discard count)) "Corp should start with 0 cards in Archives")
       (card-ability state :corp ground 0)
       (click-card state :corp iw)
       (click-card state :corp news)
-      (is (not (:rezzed (refresh iw))) "Ice Wall should not be rezzed")
-      (is (not (:rezzed (refresh news))) "News Team should not be rezzed")
+      (is (not (rezzed? (refresh iw))) "Ice Wall should not be rezzed")
+      (is (not (rezzed? (refresh news))) "News Team should not be rezzed")
       (is (= 1 (-> (get-corp) :discard count)) "Corp should now have 1 card in discard"))))
 
 (deftest the-board
@@ -4428,7 +4429,7 @@
       (click-card state :runner (refresh iw))
       (is (some? (-> (get-corp) :prompt first)) "Corp should get the option to rez Zaibatsu Loyalty before expose")
       (click-prompt state :corp "Yes")
-      (is (:rezzed (refresh zai)) "Zaibatsu Loyalty should be rezzed")
+      (is (rezzed? (refresh zai)) "Zaibatsu Loyalty should be rezzed")
       (let [credits (:credit (get-corp))]
         (card-ability state :corp zai 0)
         (is (= (dec credits) (:credit (get-corp))) "Corp should lose 1 credit for stopping the expose")
@@ -4447,9 +4448,9 @@
     (play-from-hand state :corp "Zealous Judge" "New remote")
     (let [judge (get-content state :remote1 0)]
       (core/rez state :corp judge)
-      (is (not (:rezzed (refresh judge))) "Zealous Judge can't be rezzed until Runner is tagged")
+      (is (not (rezzed? (refresh judge))) "Zealous Judge can't be rezzed until Runner is tagged")
       (core/gain-tags state :runner 1)
       (core/rez state :corp judge)
-      (is (:rezzed (refresh judge)) "Zealous Judge can be rezzed while the Runner is tagged")
+      (is (rezzed? (refresh judge)) "Zealous Judge can be rezzed while the Runner is tagged")
       (card-ability state :corp judge 0)
       (is (= 2 (count-tags state)) "Runner should gain a tag from Zealous Judge's ability"))))

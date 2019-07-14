@@ -233,7 +233,7 @@
             ;; Remove any counters
             (when (or counter-cost advance-counter-cost)
               (update! state side c)
-              (when (is-type? card "Agenda")
+              (when (agenda? card)
                 (trigger-event state side :agenda-counter-spent card)))
             ;; Print the message
             (print-msg state side ability card targets cost-str)
@@ -272,7 +272,7 @@
 (defn active-prompt?
   "Checks if this card has an active prompt"
   [state side card]
-  (some #(when (= (:cid card) (-> % :card :cid)) %)
+  (some #(when (same-card? card (:card %)) %)
         (flatten (map #(-> @state % :prompt) [side (other-side side)]))))
 
 ;;; Optional Ability
@@ -358,7 +358,7 @@
           (system-msg state side (str "spends " bet " [Credits]"))
           (wait-for (trigger-event-simult state side :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
                     (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-                      (let [card-side (if (= "Corp" (:side card)) :corp :runner)]
+                      (let [card-side (if (corp? card) :corp :runner)]
                         (continue-ability state card-side (assoc ability :async true) card nil))
                       (effect-completed state side eid))))
       (show-wait-prompt
@@ -508,8 +508,8 @@
    (continue-ability state side
                     {:show-discard  true
                      :choices {:max n
-                               :req #(and (= (:side %) "Corp")
-                                          (= (:zone %) [:discard]))
+                               :req #(and (corp? %)
+                                          (in-discard? %))
                                :all all?}
                      :msg (msg "shuffle "
                                (let [seen (filter :seen targets)

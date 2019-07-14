@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare can-run? can-trash? card-init card-str cards-can-prevent? close-access-prompt enforce-msg
-         gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? installed? is-type? play-sfx
+         gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? play-sfx
          prevent-draw remove-old-current system-say system-msg steal-trigger-events
          trash-cards untrashable-while-rezzed? update-all-ice untrashable-while-resources? win win-decked)
 
@@ -19,7 +19,7 @@
     (if (has-subtype? card "Current")
       (do (doseq [s [:corp :runner]]
             (remove-old-current state side s))
-          (let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))
+          (let [c (some #(when (same-card? % card) %) (get-in @state [side :play-area]))
                 moved-card (move state side c :current)]
             (card-init state side eid moved-card {:resolve-effect true
                                                   :init-data true})))
@@ -433,10 +433,10 @@
        (swap! state update-in [:trash :trash-list] dissoc oid)
        (if-let [trash-effect (:trash-effect cdef)]
          (if (and (not disabled)
-                  (or (and (= (:side card) "Runner")
-                           (:installed card)
-                           (not (:facedown card)))
-                      (and (:rezzed card)
+                  (or (and (runner? card)
+                           (installed? card)
+                           (not (facedown? card)))
+                      (and (rezzed? card)
                            (not host-trashed))
                       (and (:when-inactive trash-effect)
                            (not host-trashed))))
@@ -478,7 +478,7 @@
 
        (and (= side :corp)
             (untrashable-while-resources? card)
-            (> (count (filter #(is-type? % "Resource") (all-active-installed state :runner))) 1))
+            (> (count (filter resource? (all-active-installed state :runner))) 1))
        (do (enforce-msg state card "cannot be trashed while there are other resources installed")
            (effect-completed state side eid))
 
@@ -596,7 +596,7 @@
        seq
        flatten
        (mapcat :content)
-       (filter #(is-type? % "Agenda"))
+       (filter agenda?)
        (mapv #(update-advancement-cost state side %))))
 
 (defn as-agenda

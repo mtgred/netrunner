@@ -4,7 +4,7 @@
                     :label "Trash a program"
                     :msg (msg "trash " (:title target))
                     :choices {:req #(and (installed? %)
-                                         (is-type? % "Program"))}
+                                         (program? %))}
                     :effect (effect (trash target {:cause :subroutine})
                                     (clear-wait-prompt :runner))})
 
@@ -12,14 +12,14 @@
                      :label "Trash a piece of hardware"
                      :msg (msg "trash " (:title target))
                      :choices {:req #(and (installed? %)
-                                          (is-type? % "Hardware"))}
+                                          (hardware? %))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-resource-sub {:prompt "Select a resource to trash"
                          :label "Trash a resource"
                          :msg (msg "trash " (:title target))
                          :choices {:req #(and (installed? %)
-                                              (is-type? % "Resource"))}
+                                              (resource? %))}
                          :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-installed {:prompt "Select an installed card to trash"
@@ -27,7 +27,7 @@
                       :label "Force the Runner to trash an installed card"
                       :msg (msg "force the Runner to trash " (:title target))
                       :choices {:req #(and (installed? %)
-                                           (= (:side %) "Runner"))}
+                                           (runner? %))}
                       :effect (effect (trash target {:cause :subroutine}))})
 
 (def corp-rez-toast
@@ -122,7 +122,7 @@
 (defn card-index
   "Get the zero-based index of the given card in its server's list of content. Same as ice-index"
   [state card]
-  (first (keep-indexed #(when (= (:cid %2) (:cid card)) %1) (get-in @state (cons :corp (:zone card))))))
+  (first (keep-indexed #(when (same-card? %2 card) %1) (get-in @state (cons :corp (:zone card))))))
 
 (defn swap-installed
   "Swaps two installed corp cards - like swap ICE except no strength update"

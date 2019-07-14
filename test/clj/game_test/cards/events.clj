@@ -1,5 +1,6 @@
 (ns game-test.cards.events
   (:require [game.core :as core]
+            [game.core.card :refer :all]
             [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -341,15 +342,15 @@
       (let [iwall1 (get-ice state :hq 0)
             iwall2 (get-ice state :hq 1)]
         (core/rez state :corp iwall1)
-        (is (not (:rezzed (refresh iwall1))) "First Ice Wall is not rezzed")
+        (is (not (rezzed? (refresh iwall1))) "First Ice Wall is not rezzed")
         (run-continue state)
         (core/rez state :corp iwall2)
-        (is (not (:rezzed (refresh iwall2))) "Second Ice Wall is not rezzed")
+        (is (not (rezzed? (refresh iwall2))) "Second Ice Wall is not rezzed")
         (core/jack-out state :runner nil)
         ;; Do another run, where the ice should rez
         (run-on state "HQ")
         (core/rez state :corp iwall1)
-        (is (:rezzed (refresh iwall1)) "First Ice Wall is rezzed"))))
+        (is (rezzed? (refresh iwall1)) "First Ice Wall is rezzed"))))
   (testing "Regression test for a rezzed tmi breaking game state on a blackmail run"
     (do-game
       (new-game {:corp {:deck [(qty "TMI" 3)]}
@@ -361,7 +362,7 @@
         (core/rez state :corp tmi)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (is (:rezzed (refresh tmi)) "TMI is rezzed")
+        (is (rezzed? (refresh tmi)) "TMI is rezzed")
         (take-credits state :corp)
         (play-from-hand state :runner "Blackmail")
         (click-prompt state :runner "HQ")
@@ -412,9 +413,9 @@
     (let [iw1 (get-ice state :hq 1)
           iw2 (get-ice state :hq 0)]
       (core/rez state :corp iw1)
-      (is (not (core/rezzed? (refresh iw1))) "Foremost Ice Wall is not rezzed")
+      (is (not (rezzed? (refresh iw1))) "Foremost Ice Wall is not rezzed")
       (core/rez state :corp iw2)
-      (is (core/rezzed? (refresh iw2)) "Final Ice Wall is rezzed"))))
+      (is (rezzed? (refresh iw2)) "Final Ice Wall is rezzed"))))
 
 (deftest brute-force-hack
   ;; Brute-Force-Hack
@@ -434,9 +435,9 @@
       (play-from-hand state :runner "Brute-Force-Hack")
       (click-prompt state :runner "1")
       (click-card state :runner "Tollbooth")
-      (is (core/rezzed? (refresh tb)) "Runner doesn't have enough money to derez Tollbooth")
+      (is (rezzed? (refresh tb)) "Runner doesn't have enough money to derez Tollbooth")
       (click-card state :runner iw)
-      (is (not (core/rezzed? (refresh iw))) "Runner can derez Ice Wall")
+      (is (not (rezzed? (refresh iw))) "Runner can derez Ice Wall")
       (play-from-hand state :runner "Xanadu")
       (core/gain state :runner :credit 7)
       (is (= (:cost tb) (:credit (get-runner))) "Gain enough credits to derez Tollbooth normally")
@@ -562,18 +563,18 @@
       (is (:prompt (get-runner)) "Can't target card in central server")
       (click-card state :runner v2)
       (core/rez state :corp v2)
-      (is (not (:rezzed (refresh v2))) "Prevented remote ICE from rezzing")
+      (is (not (rezzed? (refresh v2))) "Prevented remote ICE from rezzing")
       (take-credits state :runner)
       (core/rez state :corp (refresh v2))
-      (is (:rezzed (refresh v2)) "Rez prevention of ICE ended")
+      (is (rezzed? (refresh v2)) "Rez prevention of ICE ended")
       (take-credits state :corp)
       (play-from-hand state :runner "Careful Planning")
       (click-card state :runner pad)
       (core/rez state :corp pad)
-      (is (not (:rezzed (refresh pad))) "Prevented remote server contents from rezzing")
+      (is (not (rezzed? (refresh pad))) "Prevented remote server contents from rezzing")
       (take-credits state :runner)
       (core/rez state :corp (refresh pad))
-      (is (:rezzed (refresh pad)) "Rez prevention of asset ended"))))
+      (is (rezzed? (refresh pad)) "Rez prevention of asset ended"))))
 
 (deftest cbi-raid
   ;; CBI Raid - Full test
@@ -1667,7 +1668,7 @@
       (core/rez state :corp jackson)
       (is (= 1 (count (:discard (get-corp)))) "Card discarded to rez Jackson - Hacktivist active")
       (core/rez state :corp sundew)
-      (is (not (core/rezzed? (refresh sundew))) "Sundew is not rezzed as corp has no cards in hand")
+      (is (not (rezzed? (refresh sundew))) "Sundew is not rezzed as corp has no cards in hand")
       (is (= "Unable to pay for Sundew." (-> @state :corp :toast first :msg)) "Corp gets the correct toast"))))
 
 (deftest high-stakes-job
@@ -1986,10 +1987,10 @@
     (let [jeeves (get-content state :remote1 0)
           jackson (get-content state :remote2 0)]
       (core/rez state :corp jeeves)
-      (is (:rezzed (refresh jeeves)) "Jeeves is rezzed.  Interdiction not active when on Peddler")
+      (is (rezzed? (refresh jeeves)) "Jeeves is rezzed.  Interdiction not active when on Peddler")
       (play-from-hand state :runner "Interdiction")
       (core/rez state :corp jackson)
-      (is (not (:rezzed (refresh jackson))) "Jackson is not rezzed"))))
+      (is (not (rezzed? (refresh jackson))) "Jackson is not rezzed"))))
 
 (deftest khusyuk
   (testing "Basic functionality"
@@ -2228,8 +2229,8 @@
       (click-prompt state :runner "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (run-successful state)
-      (is (not (:rezzed (get-ice state :hq 0))) "Inner Ice Wall should not be rezzed")
-      (is (:rezzed (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))
+      (is (not (rezzed? (get-ice state :hq 0))) "Inner Ice Wall should not be rezzed")
+      (is (rezzed? (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))
   (testing "should not derez ICE that has changed during a run"
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}
@@ -2237,13 +2238,13 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
-      (is (:rezzed (get-ice state :hq 0)) "Ice Wall should be rezzed initially")
+      (is (rezzed? (get-ice state :hq 0)) "Ice Wall should be rezzed initially")
       (play-from-hand state :runner "Leave No Trace")
       (click-prompt state :runner "Archives")
       (core/add-prop state :corp (get-ice state :hq 0) :advance-counter 1)
       (run-successful state)
       (is (= 1 (get-counters (get-ice state :hq 0) :advancement)))
-      (is (:rezzed (get-ice state :hq 0)) "Ice Wall should still be rezzed")))
+      (is (rezzed? (get-ice state :hq 0)) "Ice Wall should still be rezzed")))
   (testing "Should trigger :derez events for Runner, not Corp (#3919)"
     (do-game
       (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
@@ -2259,8 +2260,8 @@
         (core/rez state :corp (get-ice state :hq 0))
         (run-successful state)
         (is (= (+ credits 2) (:credit (get-runner))) "Keros should trigger off derez")
-        (is (not (:rezzed (get-ice state :hq 0))) "Inner Ice Wall should not be rezzed")
-        (is (:rezzed (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))))
+        (is (not (rezzed? (get-ice state :hq 0))) "Inner Ice Wall should not be rezzed")
+        (is (rezzed? (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))))
 
 (deftest mad-dash
   ;; Mad Dash - Make a run. Move to score pile as 1 point if steal agenda.  Take 1 meat if not
@@ -3133,7 +3134,7 @@
       (click-card state :corp (get-scored state :corp 0))
       (is (empty? (:prompt (get-corp))) "Only 1 agenda required to rez")
       (is (= (- credits (* 2 (:cost archer))) (:credit (get-corp))) "Rezzing Archer costs double")
-      (is (core/rezzed? (refresh archer)) "Archer is rezzed"))
+      (is (rezzed? (refresh archer)) "Archer is rezzed"))
       (run-successful state)
     (let [iw (get-ice state :hq 1)
           credits (:credit (get-corp))]

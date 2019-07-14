@@ -2,13 +2,6 @@
   (:require [clojure.string :refer [split-lines split join]]
             [jinteki.cards :refer [all-cards]]))
 
-(declare quantify)
-
-(def cid (atom 0))
-
-(defn make-cid []
-  (swap! cid inc))
-
 (defn server-card
   [title]
   (let [card (get @all-cards title)]
@@ -226,14 +219,6 @@
 
 (defn get-server-type [zone]
   (or (#{:hq :rd :archives} zone) :remote))
-
-(defn get-cid
-  "Gets the cid of a given card"
-  [card]
-  (get-in card [:card :cid]))
-
-(defn private-card [card]
-  (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted :icon]))
 
 (defn combine-subtypes
   "Takes an existing subtype-string, adds in the new-subtypes, and removes

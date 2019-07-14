@@ -1,9 +1,9 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! damage mill installed? is-type? is-scored? system-msg
-         facedown? unknown->kw discard-from-hand card-str trash trash-cards
+(declare forfeit prompt! damage mill is-scored? system-msg
+         unknown->kw discard-from-hand card-str trash trash-cards
          all-installed-runner-type pick-credit-providing-cards all-active
-         eligible-pay-credit-cards corp? runner? in-hand?)
+         eligible-pay-credit-cards)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -229,7 +229,7 @@
                      :choices {:max amount
                                :all true
                                :req #(and (installed? %)
-                                          (= (:side %) "Runner"))}
+                                          (runner? %))}
                      :async true
                      :effect (req (doseq [c targets]
                                     (move state :runner c :deck))
@@ -488,10 +488,10 @@
   (swap! state update-in [:bonus :run-cost :additional-cost] #(merge-costs (concat % n))))
 
 (defn run-costs
-  "Get a list of all costs required to run a server, including additional costs. If card is :click-run, assume run is made by spending a click, and include the assumed click in the cost list."
-  [state server card]
+  "Get a list of all costs required to run a server, including additional costs. If click-run, run is made by spending a click, and include the assumed click in the cost list."
+  [state server {:keys [click-run]}]
   (let [server (unknown->kw server)
-        click-run-cost (when (= card :click-run) [:click 1])
+        click-run-cost (when click-run [:click 1])
         global-costs (get-in @state [:bonus :run-cost :additional-cost])
         server-costs (get-in @state [:corp :servers server :additional-cost])]
     (merge-costs (concat click-run-cost global-costs server-costs))))

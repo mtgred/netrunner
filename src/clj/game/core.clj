@@ -1,5 +1,6 @@
 (ns game.core
-  (:require [game.core.eid :refer [make-eid make-result register-effect-completed effect-completed complete-with-result]]
+  (:require [game.core.eid :refer :all]
+            [game.core.card :refer :all]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer :all]
             [game.core.toasts :refer [toast show-error-toast]]
@@ -11,11 +12,12 @@
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [clojure.edn :as edn]
-            [jinteki.utils :refer [str->int other-side is-tagged? has-subtype? count-bad-pub]]
+            [jinteki.utils :refer :all]
             [jinteki.cards :refer [all-cards]]
             [tasks.nrdb :refer [replace-collection update-config]]
             [tasks.altart :refer [add-art]]
-            [game.quotes :as quotes]))
+            [game.quotes :as quotes])
+  (:import [game.core.card Card]))
 
 (load "core/events")    ; triggering of events
 (load "core/cards")     ; retrieving and updating cards

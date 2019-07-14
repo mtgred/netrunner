@@ -2,8 +2,8 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.core :refer [card-is-public? game-states] :as core]
-            [game.utils :refer [private-card]]
             [game.core.toasts :refer [toast]]
+            [game.core.card :refer [private-card]]
             [differ.core :as differ]))
 
 (add-encoder java.lang.Object encode-str)

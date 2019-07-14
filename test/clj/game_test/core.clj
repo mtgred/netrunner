@@ -6,7 +6,8 @@
             [hawk.core :as hawk]
             [game.core :as core]
             [game.core.card-defs :refer [reset-card-defs]]
-            [game.utils :as utils :refer [make-cid server-card]]
+            [game.core.card :refer [make-cid]]
+            [game.utils :as utils :refer [server-card]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
 
@@ -20,7 +21,7 @@
 (defn load-all-cards []
   (when (empty? @all-cards)
     (->> (load-cards)
-         (map #(assoc % :cid (utils/make-cid)))
+         (map #(assoc % :cid (make-cid)))
          (map (juxt :title identity))
          (into {})
          (reset! all-cards))
@@ -192,7 +193,6 @@
 
 (def get-counters utils/get-counters)
 (def count-tags jutils/count-tags)
-(def has-subtype? jutils/has-subtype?)
 (def is-tagged? jutils/is-tagged?)
 (def count-bad-pub jutils/count-bad-pub)
 
