@@ -58,6 +58,26 @@
                (assoc :subroutines (vec new-subs))
                (assoc-in [:special :extra-subs] extra-subs)))))
 
+(defn- break-subroutine
+  "Marks a given subroutine as broken"
+  [ice sub]
+  (assoc ice :subroutines (assoc (:subroutines ice) (:position sub) (assoc sub :broken true))))
+
+(defn break-subroutine!
+  "Marks a given subroutine as broken, update!s state"
+  [state side ice sub]
+  (update! state :corp (break-subroutine ice sub)))
+
+(defn reset-broken-subs
+  "Mark all broken subroutines as unbroken"
+  [ice]
+  (assoc ice :subroutines (into [] (for [sub (:subroutines ice)] (dissoc sub :broken)))))
+
+(defn reset-broken-subs!
+  "Marks all broken subroutines as unbroken, update!s state"
+  [state side ice]
+  (update! state :corp (reset-broken-subs ice)))
+
 ;;; Ice strength functions
 (defn ice-strength-bonus
   "Increase the strength of the given ice by n. Negative values cause a decrease."

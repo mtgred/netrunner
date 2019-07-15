@@ -130,14 +130,24 @@
   If n = 0 then any number of subs are broken."
   ([cost n] (break-sub cost n nil))
   ([cost n subtype] (break-sub cost n subtype nil))
-  ([cost n subtype effect]
-   {:msg (str "break "
+  ([cost n subtype ability]
+   {:req (req (and current-ice
+                   (seq (remove :broken (:subroutines current-ice)))
+                   (<= (get-strength current-ice) (get-strength card))))
+    :cost [:credit cost]
+    :msg (str "break "
               (when (> n 1) "up to ")
               (if (pos? n) n "any number of")
               (when subtype (str " " subtype))
               (pluralize " subroutine" n))
-    :cost [:credit cost]
-    :effect effect}))
+    :prompt "Break a sub"
+    :choices (req (for [sub (remove :broken (:subroutines current-ice))]
+                    {:title (make-label (:sub-effect sub))
+                     :sub sub}))
+    :effect (effect (break-subroutine! current-ice (:sub target))
+                    (system-msg (str "breaks the " (:title target) " subroutine"))
+                    (continue-ability {:effect ability} card nil))
+    }))
 
 ;;; Breaker sets
 (defn- cerberus

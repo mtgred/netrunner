@@ -511,6 +511,24 @@
         (is (zero? (get-counters (refresh c) :virus)) "Consume loses counters")
         (is (zero? (get-counters (refresh h) :virus)) "Hivemind loses counters")))))
 
+(deftest ^:test-refresh/focus corroder
+  ;; Corroder
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall"]}
+               :runner {:credits 10
+                        :hand ["Corroder"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (run-on state "HQ")
+    (let [iw (get-ice state :hq 0)
+          cor (get-program state 0)]
+      (core/rez state :corp iw)
+      (card-ability state :runner cor 0)
+      (click-prompt state :runner "End the run")
+    )))
+
 (deftest cradle
   ;; Cradle
   (do-game
