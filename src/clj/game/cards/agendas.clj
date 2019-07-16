@@ -1027,10 +1027,6 @@
    "Project Kusanagi"
    {:silent (req true)
     :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 2)))
-<<<<<<< HEAD
-    :abilities [{:cost [:agenda 1]
-                 :msg "make a piece of ICE gain \"[Subroutine] Do 1 net damage\" after all its other subroutines for the remainder of the run"}]}
-=======
     :events {:run-ends
              {:effect (req (let [cid (:cid card)
                                  ices (get-in card [:special :kusanagi])]
@@ -1042,14 +1038,13 @@
                  :prompt "Choose a piece of ICE"
                  :choices {:req #(and (ice? %)
                                       (rezzed? %))}
-                 :counter-cost [:agenda 1]
+                 :cost [:agenda 1]
                  :msg (str "make a piece of ICE gain \"[Subroutine] Do 1 net damage\" "
                            "after all its other subroutines for the remainder of the run")
                  :effect  (effect (add-extra-sub! (get-card state target)
                                                   (do-net-damage 1)
                                                   (:cid card) {:back true})
                                   (update! (update-in card [:special :kusanagi] #(conj % target))))}]}
->>>>>>> Mid implementation
 
    "Project Vitruvius"
    {:silent (req true)

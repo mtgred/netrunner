@@ -18,7 +18,10 @@
                   :position position
                   :variable (or variable false)
                   :printed (or printed false)}
-         new-subs (into [] (sort-by :position (conj curr-subs new-sub)))]
+         new-subs (->> (conj curr-subs new-sub)
+                       (sort-by :position)
+                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
+                       (into []))]
      (assoc ice :subroutines new-subs))))
 
 (defn add-sub!
@@ -58,14 +61,14 @@
                (assoc :subroutines (vec new-subs))
                (assoc-in [:special :extra-subs] extra-subs)))))
 
-(defn- break-subroutine
+(defn break-subroutine
   "Marks a given subroutine as broken"
   [ice sub]
-  (assoc ice :subroutines (assoc (:subroutines ice) (:position sub) (assoc sub :broken true))))
+  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (assoc sub :broken true))))
 
 (defn break-subroutine!
   "Marks a given subroutine as broken, update!s state"
-  [state side ice sub]
+  [state ice sub]
   (update! state :corp (break-subroutine ice sub)))
 
 (defn reset-broken-subs
@@ -75,8 +78,15 @@
 
 (defn reset-broken-subs!
   "Marks all broken subroutines as unbroken, update!s state"
-  [state side ice]
+  [state ice]
   (update! state :corp (reset-broken-subs ice)))
+
+(defn unbroken-subroutines-choice
+  "Takes an ice, returns the ubroken subroutines for a choices prompt"
+  [ice]
+  (for [sub (remove :broken (:subroutines ice))]
+    {:title (make-label (:sub-effect sub))
+     :sub sub}))
 
 ;;; Ice strength functions
 (defn ice-strength-bonus
