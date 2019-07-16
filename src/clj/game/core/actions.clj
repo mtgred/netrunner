@@ -605,6 +605,7 @@
                 (swap! state assoc-in [:run :no-action] false)
                 (system-msg state side "continues the run")
                 (when cur-ice
+                  (reset-broken-subs! state cur-ice)
                   (update-ice-strength state side cur-ice))
                 (wait-for (trigger-event-simult state side (if next-ice :approach-ice :approach-server) nil (when next-ice next-ice))
                           (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
