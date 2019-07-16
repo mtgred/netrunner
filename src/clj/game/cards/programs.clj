@@ -11,8 +11,8 @@
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer :all]))
 
-(defn break-multiple-subroutines-impl
-  ([ice target-count] (break-multiple-subroutines-impl ice target-count '()))
+(defn break-subroutines-impl
+  ([ice target-count] (break-subroutines-impl ice target-count '()))
   ([ice target-count broken-subs]
    {:async true
     :prompt "Break a subroutine"
@@ -22,65 +22,41 @@
                    (let [ice (break-subroutine ice (:sub target))
                          broken-subs (cons target broken-subs)]
                      (if (and (pos? (count (unbroken-subroutines-choice ice)))
-                              (<= (count broken-subs) (if (pos? target-count) target-count (count (:subroutines ice)))))
-                       (continue-ability state side (break-multiple-subroutines-impl ice target-count broken-subs) card nil)
+                              (< (count broken-subs) (if (pos? target-count) target-count (count (:subroutines ice)))))
+                       (continue-ability state side (break-subroutines-impl ice target-count broken-subs) card nil)
                        (complete-with-result state side eid broken-subs)))))}))
 
-(defn break-multiple-subroutines-pay
+(defn break-subroutines-pay
   [ice cost broken-subs]
-  (assoc
-    {:msg (msg "break " (quantify (count broken-subs) "subroutine")
-               " on " (:title ice)
-               (when (count broken-subs)
+  (when (seq broken-subs)
+    (assoc
+      {:msg (msg "break " (quantify (count broken-subs) "subroutine")
+                 " on " (:title ice)
                  (str " (\"[subroutine] "
                       (join "\" and \"[subroutine] "
                             (map :title (sort-by #(get-in % [:sub :index]) broken-subs)))
-                      "\")")))}
-    (if (= :credit (first cost))
-      :cost
-      :counter-cost)
-    cost))
+                      "\")"))}
+      (if (some #{:power :agenda :advance-counter :virus} cost)
+        :counter-cost
+        :cost)
+      cost)))
 
-(defn break-multiple-subroutines
-  ([ice cost n] (break-multiple-subroutines ice cost n nil true))
-  ([ice cost n ability] (break-multiple-subroutines ice cost n ability true))
+(defn break-subroutines
+  ([ice cost n] (break-subroutines ice cost n nil true))
+  ([ice cost n ability] (break-subroutines ice cost n ability true))
   ([ice cost n ability repeatable]
    {:async true
-    :effect (req (wait-for (resolve-ability state side (break-multiple-subroutines-impl ice n) card nil)
+    :effect (req (wait-for (resolve-ability state side (break-subroutines-impl ice n) card nil)
                            (let [broken-subs async-result]
-                             (wait-for (resolve-ability state side (break-multiple-subroutines-pay ice cost broken-subs) card nil)
+                             (wait-for (resolve-ability state side (break-subroutines-pay ice cost broken-subs) card nil)
                                        (doseq [sub broken-subs]
                                          (break-subroutine! state (get-card state ice) (:sub sub)))
                                        (let [ice (get-card state ice)]
                                          (if (and repeatable
                                                   (pos? (count (unbroken-subroutines-choice ice)))
                                                   (can-pay? state side eid card nil cost))
-                                           (continue-ability state side (break-multiple-subroutines ice cost n ability) card nil)
+                                           (continue-ability state side (break-subroutines ice cost n ability) card nil)
                                            (continue-ability state side ability card nil)))))))}))
-
-(defn break-single-subroutine
-  ([ice cost] (break-single-subroutine ice cost nil true))
-  ([ice cost ability] (break-single-subroutine ice cost ability true))
-  ([ice cost ability repeatable]
-   (assoc
-     {:async true
-      :prompt "Break a subroutine"
-      :choices (req (concat (unbroken-subroutines-choice ice) '({:title "Done"})))
-      :msg (msg "break \"[subroutine] " (:title target) "\" on " (:title ice))
-      :effect (req (if (= "Done" (:title target))
-                     (continue-ability state side ability card nil)
-                     (do (break-subroutine! state ice (:sub target))
-                         (let [ice (get-card state ice)]
-                           (println "pos?" (pos? (count (unbroken-subroutines-choice ice))))
-                           (if (and repeatable
-                                    (pos? (count (unbroken-subroutines-choice ice)))
-                                    (can-pay? state side eid card nil cost))
-                             (continue-ability state side (break-single-subroutine ice cost ability) card nil)
-                             (continue-ability state side ability card nil))))))}
-     (if (some #{:power :agenda :advance-counter :virus} cost)
-       :counter-cost
-       :cost)
-     cost)))
 
 (defn break-sub
   "Creates a break subroutine ability.
@@ -96,9 +72,7 @@
                      true)))
     :effect (effect (continue-ability
                       (let [cost (if (number? cost) [:credit cost] cost)]
-                        (if (= 1 n)
-                          (break-single-subroutine current-ice cost additional-ability)
-                          (break-multiple-subroutines current-ice cost n additional-ability)))
+                        (break-subroutines current-ice cost n additional-ability))
                       card nil))}))
 
 (def breaker-auto-pump
