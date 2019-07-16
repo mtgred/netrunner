@@ -1631,6 +1631,18 @@
                  (doseq [c (filter #(= target (:title %)) (:hand runner))]
                    (trash state side c {:unpreventable true})))}
 
+   "Scapenet"
+   {:req (req (last-turn? state :runner :successful-run))
+    :trace {:base 7
+            :successful
+            {:async true
+             :prompt "Choose an installed virtual or chip card to remove from game"
+             :choices {:req #(and (installed? %)
+                                  (or (has-subtype? % "Virtual")
+                                      (has-subtype? % "Chip")))}
+             :msg (msg "remove " (card-str state target) " from game")
+             :effect (req (move state :runner target :rfg))}}}
+
    "Scarcity of Resources"
    {:msg "increase the install cost of resources by 2"
     :events {:pre-install {:req (req (and (resource? target)

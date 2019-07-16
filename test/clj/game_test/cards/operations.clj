@@ -2015,6 +2015,29 @@
     (click-prompt state :corp "Plascrete Carapace")
     (is (= 2 (count (:hand (get-runner)))))))
 
+(deftest scapenet
+  (testing "Basic test"
+    (doseq [card [["Misdirection" get-program]
+                  ["Clone Chip" get-hardware]
+                  ["The Turning Wheel" get-resource]]]
+      (do-game
+        (new-game {:corp {:deck ["Scapenet"]}
+                   :runner {:deck [(first card)]}})
+        (play-from-hand state :corp "Scapenet")
+        (is (empty? (:prompt (get-corp))) "Couldn't play Scapenet without a successful run.")
+        (take-credits state :corp)
+        (play-from-hand state :runner (first card))
+        (run-empty-server state :archives)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Scapenet")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (let [c ((second card) state 0)]
+          (click-card state :corp c))
+        (if (= "Misdirection" (first card))
+          (is (not (empty? (:prompt (get-corp)))) "Scapenet doesn't work on non-virtual non-chip card.")
+          (is (= 1 (count (:rfg (get-runner)))) "Card removed from game."))))))
+
 (deftest scorched-earth
   ;; Scorched Earth
   (testing "Basic test"
