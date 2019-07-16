@@ -262,7 +262,8 @@
             (.println *err* (with-out-str
                               (clojure.stacktrace/print-stack-trace
                                 (Exception. "Error in a text prompt") 25)))
-            (.println *err* (str "Current prompt: " prompt))))))))
+            (.println *err* (str "Current prompt: " prompt))
+            (.println *err* (str "Current args: " args))))))))
 
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select

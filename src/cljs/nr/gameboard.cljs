@@ -638,8 +638,10 @@
          abilities)
        (map-indexed
          (fn [i sub]
-           [:div {:key i
-                  :on-click #(send-command "subroutine" {:card card :subroutine i})}
+           [:div {:class (when (:broken sub) :disabled)
+                  :key i
+                  :on-click #(when-not (:broken sub)
+                               (send-command "subroutine" {:card card :subroutine i}))}
             (render-icons (str "[Subroutine] " (:label sub)))])
          subroutines)])))
 

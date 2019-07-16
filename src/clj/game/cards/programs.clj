@@ -16,11 +16,12 @@
   ([ice target-count broken-subs]
    {:async true
     :prompt "Break a subroutine"
-    :choices (req (concat (unbroken-subroutines-choice ice) '({:title "Done"})))
-    :effect (req (if (= "Done" (:title target))
+    :choices (req (concat (unbroken-subroutines-choice ice) '("Done")))
+    :effect (req (if (= "Done" target)
                    (complete-with-result state side eid broken-subs)
-                   (let [ice (break-subroutine ice (:sub target))
-                         broken-subs (cons target broken-subs)]
+                   (let [sub (first (filter #(and (not (:broken %)) (= target (make-label (:sub-effect %)))) (:subroutines ice)))
+                         ice (break-subroutine ice sub)
+                         broken-subs (cons sub broken-subs)]
                      (if (and (pos? (count (unbroken-subroutines-choice ice)))
                               (< (count broken-subs) (if (pos? target-count) target-count (count (:subroutines ice)))))
                        (continue-ability state side (break-subroutines-impl ice target-count broken-subs) card nil)
@@ -34,7 +35,7 @@
                  " on " (:title ice)
                  (str " (\"[subroutine] "
                       (join "\" and \"[subroutine] "
-                            (map :title (sort-by #(get-in % [:sub :index]) broken-subs)))
+                            (map #(make-label (:sub-effect %)) (sort-by :index broken-subs)))
                       "\")"))}
       (if (some #{:power :agenda :advance-counter :virus} cost)
         :counter-cost
@@ -50,7 +51,7 @@
                            (let [broken-subs async-result]
                              (wait-for (resolve-ability state side (break-subroutines-pay ice cost broken-subs) card nil)
                                        (doseq [sub broken-subs]
-                                         (break-subroutine! state (get-card state ice) (:sub sub)))
+                                         (break-subroutine! state (get-card state ice) sub))
                                        (let [ice (get-card state ice)]
                                          (if (and repeatable
                                                   (pos? (count (unbroken-subroutines-choice ice)))

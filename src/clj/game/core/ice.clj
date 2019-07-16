@@ -85,8 +85,7 @@
   "Takes an ice, returns the ubroken subroutines for a choices prompt"
   [ice]
   (for [sub (remove :broken (:subroutines ice))]
-    {:title (make-label (:sub-effect sub))
-     :sub sub}))
+    (make-label (:sub-effect sub))))
 
 ;;; Ice strength functions
 (defn ice-strength-bonus
