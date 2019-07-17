@@ -8,7 +8,7 @@
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar] :as auth]
-            [nr.utils :refer [influence-dot map-longest toastr-options render-icons render-message]]
+            [nr.utils :refer [banned-span influence-dot map-longest toastr-options render-icons render-message]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 
@@ -638,11 +638,15 @@
          abilities)
        (map-indexed
          (fn [i sub]
-           [:div {:class (when (:broken sub) :disabled)
-                  :key i
-                  :on-click #(when-not (:broken sub)
-                               (send-command "subroutine" {:card card :subroutine i}))}
-            (render-icons (str "[Subroutine] " (:label sub)))])
+           [:div {:key i
+                  :on-click #(send-command "subroutine" {:card card :subroutine i})}
+            [:span (when (:broken sub)
+                     {:class :disabled
+                      :style {:font-style :italic}})
+             (render-icons (str " [Subroutine]" " " (:label sub)))]
+            [:span.float-right
+             (cond (:broken sub) banned-span
+                   (:fired sub) "✅")]])
          subroutines)])))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
