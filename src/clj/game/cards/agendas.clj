@@ -235,6 +235,11 @@
                  :effect arrange-rd}
         :interactive (req true)}))
 
+   "Bellona"
+   {:steal-cost-bonus (req [:credit 5])
+    :effect (req (gain-credits state :corp 5)
+                 (system-msg state side (str "uses " (:title card) " to gain 5 [Credits]")))}
+
    "Better Citizen Program"
    (letfn [(ability [kind]
              (effect (show-wait-prompt :runner "Corp to use Better Citizen Program")

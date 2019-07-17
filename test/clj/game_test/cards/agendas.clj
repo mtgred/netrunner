@@ -288,6 +288,27 @@
       (is (empty (:prompt (get-runner))) "Bacterial Programming prompts finished")
       (is (not (:run @state))))))
 
+(deftest bellona
+  ;; Bellona
+  (testing "basic test"
+    (do-game
+      (new-game {:corp {:deck ["Bellona"]}})
+      (play-from-hand state :corp "Bellona" "New remote")
+      (let [bell (get-content state :remote1 0)]
+        (advance state bell 2)
+        (take-credits state :corp)
+        (core/lose state :runner :credit 1)
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "No action")
+        (is (zero? (count (:scored (get-runner)))) "Runner could not steal Bellona")
+        (is (= 4 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
+        (take-credits state :runner)
+        (advance state bell 3)
+        (changes-val-macro 5 (:credit (get-corp))
+                           "Got 5 credits from Bellona"
+                           (core/score state :corp {:card (refresh bell)}))
+        (is (= 3 (:agenda-point (get-corp))) "Scored Bellona for 3 points")))))
+
 (deftest better-citizen-program
   ;; Better Citizen Program
   (testing "Basic test"
