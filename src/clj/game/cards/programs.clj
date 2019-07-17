@@ -54,6 +54,7 @@
                                          (break-subroutine! state (get-card state ice) sub))
                                        (let [ice (get-card state ice)]
                                          (if (and repeatable
+                                                  (seq broken-subs)
                                                   (pos? (count (unbroken-subroutines-choice ice)))
                                                   (can-pay? state side eid card nil cost))
                                            (continue-ability state side (break-subroutines ice cost n ability) card nil)
