@@ -515,19 +515,27 @@
   ;; Corroder
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Ice Wall"]}
-               :runner {:credits 10
-                        :hand ["Corroder"]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
+                      :hand ["Hive"]}
+               :runner {:credits 15
+                        :hand ["Cloak" "Net Mercur" "Corroder"]}})
+    (play-from-hand state :corp "Hive" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
+    ; (play-from-hand state :runner "Cloak")
+    ; (play-from-hand state :runner "Net Mercur")
     (run-on state "HQ")
     (let [iw (get-ice state :hq 0)
           cor (get-program state 0)]
       (core/rez state :corp iw)
+      (card-ability state :runner cor 1)
       (card-ability state :runner cor 0)
       (click-prompt state :runner "End the run")
-    )))
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Done")
+      (println (map :text (:log @state)))
+      ; (click-card state :runner (get-program state 1))
+      ; (click-prompt state :runner "Place 1 [Credits]")
+      (is (zero? (count (remove :broken (:subroutines (refresh iw))))) "All subroutines have been broken"))))
 
 (deftest cradle
   ;; Cradle
@@ -895,13 +903,20 @@
 (deftest faust
   (testing "Basic test: Break by discarding"
     (do-game
-      (new-game {:runner {:deck ["Faust" (qty "Sure Gamble" 3)]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:deck ["Faust" (qty "Sure Gamble" 3)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
       (play-from-hand state :runner "Faust")
       (let [faust (get-program state 0)]
+        (run-on state :hq)
         (card-ability state :runner faust 0)
+        (click-prompt state :runner "End the run")
         (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
-        (is (= 1 (count (:discard (get-runner)))) "1 card trashed"))))
+        (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
+        (println (map :text (:log @state))))))
   (testing "Basic test: Pump by discarding"
     (do-game
       (new-game {:runner {:deck ["Faust" (qty "Sure Gamble" 3)]}})

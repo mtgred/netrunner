@@ -73,7 +73,7 @@
 
 (defn break-all-subroutines
   [ice]
-  (reduce break-subroutine ice (:subroutines ice))
+  (reduce break-subroutine ice (:subroutines ice)))
 
 (defn break-all-subroutines!
   [state ice]
