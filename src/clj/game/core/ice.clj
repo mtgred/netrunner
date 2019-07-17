@@ -71,6 +71,14 @@
   [state ice sub]
   (update! state :corp (break-subroutine ice sub)))
 
+(defn break-all-subroutines
+  [ice]
+  (reduce break-subroutine ice (:subroutines ice))
+
+(defn break-all-subroutines!
+  [state ice]
+  (update! state :corp (break-all-subroutines ice)))
+
 (defn reset-broken-subs
   "Mark all broken subroutines as unbroken"
   [ice]
