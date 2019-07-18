@@ -1167,38 +1167,85 @@
 
 (deftest fencer-fueno
   ;; Fencer Fueno - Companion, credits usable only during successful runs (after accessing server)
-  (do-game
-    (new-game {:corp {:hand ["Hostile Takeover" "PAD Campaign"]}
-               :runner {:hand ["Fencer Fueno"]}})
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Fencer Fueno")
-    (let [ff (get-resource state 0)]
-      (core/add-counter state :runner (refresh ff) :credit 4)
-      (is (= 4 (get-counters (refresh ff) :credit)) "Fencer counters added")
-      (let [credits (:credit (get-runner))
-            counters (get-counters (refresh ff) :credit)]
-        (run-on state "Server 1")
-        (card-ability state :runner ff 0)
-        (is (= credits (:credit (get-runner))) "Can't use credits on Fencer before a successul run")
-        (run-successful state)
-        (card-ability state :runner ff 0)
-        (is (= (dec counters) (get-counters (refresh ff) :credit)) "Spent 1c from Fencer")
-        (is (= (inc credits) (:credit (get-runner))) "Used credits from Fencer for trash")
-        (click-prompt state :runner "Pay 4 [Credits] to trash"))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Hostile Takeover" "PAD Campaign"]}
+                 :runner {:hand ["Fencer Fueno"]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Fencer Fueno")
+      (let [ff (get-resource state 0)]
+        (core/add-counter state :runner (refresh ff) :credit 4)
+        (is (= 4 (get-counters (refresh ff) :credit)) "Fencer counters added")
+        (let [credits (:credit (get-runner))
+              counters (get-counters (refresh ff) :credit)]
+          (run-on state "Server 1")
+          (card-ability state :runner ff 0)
+          (is (= credits (:credit (get-runner))) "Can't use credits on Fencer before a successul run")
+          (run-successful state)
+          (card-ability state :runner ff 0)
+          (is (= (dec counters) (get-counters (refresh ff) :credit)) "Spent 1c from Fencer")
+          (is (= (inc credits) (:credit (get-runner))) "Used credits from Fencer for trash")
+          (click-prompt state :runner "Pay 4 [Credits] to trash")
+          (click-prompt state :runner "Done")) ; pay-credits prompt
         (take-credits state :runner)
-      (let [credits (:credit (get-runner))]
-        (click-prompt state :runner "Pay 1 [Credits]")
-        (is (= (dec credits) (:credit (get-runner))) "Paid 1c to not trash Fencer")
-        (is (refresh ff) "Fencer not trashed")
-        (is (not (find-card "Fencer Fueno" (:discard (get-runner)))) "Fencer not in discard yet")
-        (take-credits state :corp)
-        (take-credits state :runner))
-      (let [credits (:credit (get-runner))]
-        (click-prompt state :runner "Trash")
-        (is (= credits (:credit (get-runner))) "Didn't pay to trash Fencer")
-        (is (nil? (refresh ff)) "Fencer not installed")
-        (is (find-card "Fencer Fueno" (:discard (get-runner))) "Fencer trashed")))))
+        (let [credits (:credit (get-runner))]
+          (click-prompt state :runner "Pay 1 [Credits]")
+          (is (= (dec credits) (:credit (get-runner))) "Paid 1c to not trash Fencer")
+          (is (refresh ff) "Fencer not trashed")
+          (is (not (find-card "Fencer Fueno" (:discard (get-runner)))) "Fencer not in discard yet")
+          (take-credits state :corp)
+          (take-credits state :runner))
+        (let [credits (:credit (get-runner))]
+          (click-prompt state :runner "Trash")
+          (is (= credits (:credit (get-runner))) "Didn't pay to trash Fencer")
+          (is (nil? (refresh ff)) "Fencer not installed")
+          (is (find-card "Fencer Fueno" (:discard (get-runner))) "Fencer trashed")))))
+  (testing "pay-credits prompt"
+    (do-game
+      (new-game {:corp {:hand ["Pop-up Window" "PAD Campaign"]}
+                 :runner {:hand ["Fencer Fueno"]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "Pop-up Window" "Server 1")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Fencer Fueno")
+      (core/lose state :runner :credit 5) ;no money besides fueno
+      (let [ff (get-resource state 0)
+            popup (get-ice state :remote1 0)]
+        (core/add-counter state :runner (refresh ff) :credit 4)
+        (is (= 4 (get-counters (refresh ff) :credit)) "Fencer counters added")
+        (run-on state "Server 1")
+        (core/rez state :corp popup)
+        (core/play-runner-ability state :runner {:card popup
+                                                 :ability 0
+                                                 :targets nil})
+        (is (empty? (get-in @state [:runner :prompt])) "No prompt for Fueno")
+        (run-continue state)
+        (run-successful state)
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 4 credit from Fencer Fueno"
+                           (click-prompt state :runner "Pay 4 [Credits] to trash")
+                           (dotimes [_ 4] (click-card state :runner ff))))))
+  (testing "pay-credits + Gagarin"
+    (do-game
+      (new-game {:corp {:id "Gagarin Deep Space: Expanding the Horizon"
+                        :deck ["PAD Campaign"]}
+                 :runner {:hand ["Fencer Fueno"]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (core/lose state :runner :credit 5) ;no money besides fueno
+      (play-from-hand state :runner "Fencer Fueno")
+      (let [ff (get-resource state 0)
+            pad (get-content state :remote1 0)]
+        (core/add-counter state :runner (refresh ff) :credit 5)
+        (is (= 5 (get-counters (refresh ff) :credit)) "Fencer counters added")
+        (run-empty-server state "Server 1")
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Fencer Fueno"
+                           (click-card state :runner pad)
+                           (click-card state :runner ff) ; pay Gagarin credit
+                           (click-prompt state :runner "Pay 4 [Credits] to trash")
+                           (dotimes [_ 4] (click-card state :runner ff)))))))
 
 (deftest fester
   ;; Fester - Corp loses 2c (if able) when purging viruses
