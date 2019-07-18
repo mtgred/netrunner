@@ -920,28 +920,32 @@
                              :effect (req (as-agenda state :runner eid card 0))}}}
 
    "Fencer Fueno"
-   (companion-builder
-     (req (and (pos? (get-counters (get-card state card) :credit))
-               (:successful run)))
-     (effect (show-wait-prompt :corp "Runner to take decision on Fencer Fueno")
-             (continue-ability
-               {:prompt "Pay 1 [Credits] or trash Fencer Fueno?"
-                :choices (req (if (can-pay? state :runner eid card nil :credit 1)
-                                ["Pay 1 [Credits]" "Trash"]
-                                ["Trash"]))
-                :player :runner
-                :effect (req (if (= target "Trash")
-                               (do
-                                 (trash state :runner card)
-                                 (system-msg state :runner "trashes Fencer Fueno"))
-                               (do
-                                 (pay state :runner card :credit 1)
-                                 (system-msg state :runner "pays 1 [Credits] to avoid trashing Fencer Fueno")))
-                             (clear-wait-prompt state :corp))}
-               card nil))
-     {:msg "take 1 [Credits]"
-      :effect (effect (add-counter card :credit -1)
-                      (gain-run-credits 1))})
+   (assoc
+     (companion-builder
+       (req (and (pos? (get-counters (get-card state card) :credit))
+                 (:successful run)))
+       (effect (show-wait-prompt :corp "Runner to take decision on Fencer Fueno")
+               (continue-ability
+                 {:prompt "Pay 1 [Credits] or trash Fencer Fueno?"
+                  :choices (req (if (can-pay? state :runner eid card nil :credit 1)
+                                  ["Pay 1 [Credits]" "Trash"]
+                                  ["Trash"]))
+                  :player :runner
+                  :effect (req (if (= target "Trash")
+                                 (do
+                                   (trash state :runner card)
+                                   (system-msg state :runner "trashes Fencer Fueno"))
+                                 (do
+                                   (pay state :runner card :credit 1)
+                                   (system-msg state :runner "pays 1 [Credits] to avoid trashing Fencer Fueno")))
+                               (clear-wait-prompt state :corp))}
+                 card nil))
+       {:msg "take 1 [Credits]"
+        :effect (effect (add-counter card :credit -1)
+                        (gain-run-credits 1))})
+     :interactions {:pay-credits {:req (req (:successful run))
+                                  :type :credit}})
+
 
    "Fester"
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"
