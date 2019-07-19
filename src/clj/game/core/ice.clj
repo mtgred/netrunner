@@ -79,12 +79,19 @@
   [state ice]
   (update! state :corp (break-all-subroutines ice)))
 
-(defn reset-broken-subs
+(defn reset-broken-sub
+  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (dissoc sub :broken))))
+
+(defn reset-broken-sub!
+  [state ice sub]
+  (update! state :corp (reset-broken-sub ice sub)))
+
+(defn reset-all-broken-subs
   "Mark all broken subroutines as unbroken"
   [ice]
-  (assoc ice :subroutines (into [] (for [sub (:subroutines ice)] (dissoc sub :broken)))))
+  (reduce reset-broken-sub ice (:subroutines ice)))
 
-(defn reset-broken-subs!
+(defn reset-all-broken-subs!
   "Marks all broken subroutines as unbroken, update!s state"
   [state ice]
   (update! state :corp (reset-broken-subs ice)))

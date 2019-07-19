@@ -4,7 +4,7 @@
 
 (declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler
          enforce-msg gain-agenda-point get-remote-names get-run-ices jack-out move
-         name-zone play-instant purge make-run runner-install trash reset-broken-subs!
+         name-zone play-instant purge make-run runner-install trash reset-all-broken-subs!
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu)
 
@@ -605,7 +605,7 @@
                 (swap! state assoc-in [:run :no-action] false)
                 (system-msg state side "continues the run")
                 (when cur-ice
-                  (reset-broken-subs! state cur-ice)
+                  (reset-all-broken-subs! state cur-ice)
                   (update-ice-strength state side cur-ice))
                 (wait-for (trigger-event-simult state side (if next-ice :approach-ice :approach-server) nil (when next-ice next-ice))
                           (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
