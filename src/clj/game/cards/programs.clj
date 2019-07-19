@@ -72,6 +72,12 @@
                    (if subtype
                      (has-subtype? current-ice subtype)
                      true)))
+    :label (str (build-cost-str (if (number? cost) [:credit cost] cost))
+                ": break "
+                (when (> n 1) "up to ")
+                (if (pos? n) n "any number of")
+                (when subtype (str " " subtype))
+                (pluralize " subroutine" n))
     :effect (effect (continue-ability
                       (let [cost (if (number? cost) [:credit cost] cost)]
                         (break-subroutines current-ice cost n additional-ability))
