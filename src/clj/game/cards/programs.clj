@@ -33,10 +33,10 @@
     (assoc
       {:msg (msg "break " (quantify (count broken-subs) "subroutine")
                  " on " (:title ice)
-                 (str " (\"[subroutine] "
-                      (join "\" and \"[subroutine] "
-                            (map #(make-label (:sub-effect %)) (sort-by :index broken-subs)))
-                      "\")"))}
+                 " (\"[subroutine] "
+                 (join "\" and \"[subroutine] "
+                       (map :label (sort-by :index broken-subs)))
+                 "\")")}
       (if (some #{:power :agenda :advance-counter :virus} cost)
         :counter-cost
         :cost)

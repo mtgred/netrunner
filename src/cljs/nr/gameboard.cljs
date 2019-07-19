@@ -639,6 +639,9 @@
                                                             :ability (- i dynabi-count)}))}
               (render-icons (:label ab))]))
          abilities)
+       (when (pos? (count (remove (every-pred :broken :fired) subroutines)))
+         [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
+          "Fire unbroken subroutines"])
        (map-indexed
          (fn [i sub]
            [:div {:key i
@@ -779,7 +782,7 @@
                                   "playable" "")
                                 " "
                                 wrapper-class)
-                       :style {:left (let [n (* (/ 320 (dec size)) i)] (if (js/isNaN n) 0 n))}}
+                       :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
                  (if (or (this-user? @user)
                          (get-in @game-state [(utils/other-side (get-side @game-state)) :openhand]) ;; TODO: this rebuilds the hand UI on any state change
                          (spectator-view-hidden?))

@@ -4,9 +4,10 @@
 
 (declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler
          enforce-msg gain-agenda-point get-remote-names get-run-ices jack-out move
-         name-zone play-instant purge make-run runner-install trash reset-all-broken-subs!
+         name-zone play-instant purge make-run runner-install trash
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
-         can-run-server? can-score? say play-sfx base-mod-size free-mu)
+         can-run-server? can-score? say play-sfx base-mod-size free-mu
+         reset-all-subs! resolve-subroutine! resolve-unbroken-subs!)
 
 ;;; Neutral actions
 (defn play
@@ -374,18 +375,18 @@
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
-  ([state side args]
-   (let [eid (make-eid state {:source (-> args :card :title)
-                              :source-type :subroutine})]
-     (play-subroutine state side eid args)))
-  ([state side eid {:keys [card subroutine] :as args}]
-   (let [card (get-card state card)
-         sub (nth (:subroutines card) subroutine nil)
-         sub-effect (:sub-effect sub)]
-     (if (and card sub-effect)
-       (wait-for (pay-sync state side (make-eid state eid) card (:cost sub))
-                 (resolve-ability state side eid sub-effect card nil))
-       (effect-completed state side eid)))))
+  [state side {:keys [card subroutine] :as args}]
+  (let [card (get-card state card)
+        sub (nth (:subroutines card) subroutine nil)]
+    (when card
+      (resolve-subroutine! state side card sub))))
+
+(defn play-unbroken-subroutines
+  "Triggers each unbroken subroutine on a card in order, waiting for each to complete"
+  [state side {:keys [card] :as args}]
+  (let [card (get-card state card)]
+    (when card
+      (resolve-unbroken-subs! state side card))))
 
 ;;; Corp actions
 (defn trash-resource
@@ -605,7 +606,7 @@
                 (swap! state assoc-in [:run :no-action] false)
                 (system-msg state side "continues the run")
                 (when cur-ice
-                  (reset-all-broken-subs! state cur-ice)
+                  (reset-all-subs! state cur-ice)
                   (update-ice-strength state side cur-ice))
                 (wait-for (trigger-event-simult state side (if next-ice :approach-ice :approach-server) nil (when next-ice next-ice))
                           (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]

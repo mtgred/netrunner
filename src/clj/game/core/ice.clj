@@ -79,28 +79,77 @@
   [state ice]
   (update! state :corp (break-all-subroutines ice)))
 
-(defn reset-broken-sub
-  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (dissoc sub :broken))))
+(defn reset-sub
+  [ice sub]
+  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (dissoc sub :broken :fired))))
 
-(defn reset-broken-sub!
+(defn reset-sub!
   [state ice sub]
-  (update! state :corp (reset-broken-sub ice sub)))
+  (update! state :corp (reset-sub ice sub)))
 
-(defn reset-all-broken-subs
-  "Mark all broken subroutines as unbroken"
+(defn reset-all-subs
+  "Mark all broken/fired subroutines as unbroken/unfired"
   [ice]
-  (reduce reset-broken-sub ice (:subroutines ice)))
+  (reduce reset-sub ice (:subroutines ice)))
 
-(defn reset-all-broken-subs!
+(defn reset-all-subs!
   "Marks all broken subroutines as unbroken, update!s state"
   [state ice]
-  (update! state :corp (reset-broken-subs ice)))
+  (update! state :corp (reset-all-subs ice)))
 
 (defn unbroken-subroutines-choice
   "Takes an ice, returns the ubroken subroutines for a choices prompt"
   [ice]
   (for [sub (remove :broken (:subroutines ice))]
     (make-label (:sub-effect sub))))
+
+(defn resolve-subroutine
+  [ice sub]
+  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (assoc sub :fired true))))
+
+(defn resolve-subroutine!
+  ([state side ice sub]
+   (let [eid (make-eid state {:source (:title ice)
+                              :source-type :subroutine})]
+     (resolve-subroutine! state side eid ice sub)))
+  ([state side eid ice sub]
+   (update! state :corp (resolve-subroutine ice sub))
+   (resolve-ability state side eid (:sub-effect sub) (get-card state ice) nil)))
+
+(defn- resolve-next-unbroken-sub
+  ([state side ice subroutines]
+   (let [eid (make-eid state {:source (:title ice)
+                              :source-type :subroutine})]
+     (resolve-next-unbroken-sub state side eid ice subroutines nil)))
+  ([state side eid ice subroutines] (resolve-next-unbroken-sub state side eid ice subroutines nil))
+  ([state side eid ice subroutines msgs]
+   (if (and subroutines (:run @state))
+     (let [sub (first subroutines)]
+       (wait-for (resolve-subroutine! state side (make-eid state eid) ice sub)
+                 (resolve-next-unbroken-sub state side eid
+                                            (get-card state ice)
+                                            (next subroutines)
+                                            (cons sub msgs))))
+     (effect-completed state side (make-result eid (reverse msgs))))))
+
+(defn resolve-unbroken-subs!
+  ([state side ice]
+   (let [eid (make-eid state {:source (:title ice)
+                              :source-type :subroutine})]
+     (resolve-unbroken-subs! state side eid ice)))
+  ([state side eid ice]
+   (if-let [subroutines (->> (:subroutines ice)
+                             (remove :broken)
+                             seq)]
+     (wait-for (resolve-next-unbroken-sub state side (make-eid state eid) ice subroutines)
+               (system-msg state :corp (str "resolves " (quantify (count async-result) "subroutine")
+                                            " on " (:title ice)
+                                            " (\"[subroutine] "
+                                            (join "\" and \"[subroutine] "
+                                                  (map :label (sort-by :index async-result)))
+                                            "\")"))
+               (effect-completed state side eid))
+     (effect-completed state side eid))))
 
 ;;; Ice strength functions
 (defn ice-strength-bonus
