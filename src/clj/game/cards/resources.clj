@@ -1318,7 +1318,7 @@
     :abilities [{:cost [:click 1]
                  :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
                  :effect (effect (gain-credits (min 4 (get-counters card :credit)))
-                                 (add-counter :credit (- (min 4 (get-counters card :credit)))))}]
+                                 (add-counter card :credit (- (min 4 (get-counters card :credit)))))}]
     :events (trash-on-empty :credit)}
 
    "Liberated Chela"
