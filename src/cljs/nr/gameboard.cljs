@@ -1026,16 +1026,80 @@
         central-view)
       (when (not-empty content)
           (for [card content]
-                 (let [is-first (= card (first content))
-                       flipped (not (:rezzed card))]
-                   [:div.server-card {:key (:cid card)
-                                      :class (str (when central-view "central ")
-                                                  (when (or central-view
-                                                            (and (< 1 (count content)) (not is-first)))
-                                                    "shift"))}
-                    [card-view card flipped]
-                    (when (and (not central-view) is-first)
-                      [label content opts])])))]]))
+            (let [is-first (= card (first content))
+                  flipped (not (:rezzed card))]
+              [:div.server-card {:key (:cid card)
+                                 :class (str (when central-view "central ")
+                                             (when (or central-view
+                                                       (and (< 1 (count content)) (not is-first)))
+                                               "shift"))}
+               [card-view card flipped]
+               [label content opts]])))]]))
+               ; (when (and (not central-view) is-first)
+                 ; [label content opts])])))]]))
+
+(defn stacked-label [cursor similar-servers opts]
+  (let [similar-server-names (->> similar-servers
+                                  (map first)
+                                  (map remote->name)
+                                  (clojure.string/join "\n"))]
+    [:div.header {:class (when (> (count cursor) 0) "darkbg")}
+     (str (get-in opts [:opts :name]) "\n" similar-server-names)]))
+
+(defn stacked-view [{:keys [key server similar-servers central-view run]} opts]
+  (let [content (:content server)
+        ices (:ices server)
+        run-pos (:position run)
+        current-ice (when (and run (pos? run-pos) (<= run-pos (count ices)))
+                      (nth ices (dec run-pos)))
+        max-hosted (apply max (map #(count (:hosted %)) ices))]
+    [:div.server
+     [:div.ices {:style {:width (when (pos? max-hosted)
+                                  (+ 84 3 (* 42 (dec max-hosted))))}}
+      (when-let [run-card (:card (:run-effect run))]
+        [:div.run-card [card-img run-card]])
+      (for [ice (reverse ices)]
+        [:div.ice {:key (:cid ice)
+                   :class (when (not-empty (:hosted ice)) "host")}
+         (let [flipped (not (:rezzed ice))]
+           [card-view ice flipped])
+         (when (and current-ice (= (:cid current-ice) (:cid ice)))
+           [run-arrow])])
+      (when (and run (not current-ice))
+        [run-arrow])]
+     [:div.content
+        (let [card (first content)]
+          [:div.server-card {:key (:cid card)}
+           (let [get-asset (fn [n] (-> (nth similar-servers n) second :content first))
+                 fake-card
+                 (loop [i 0
+                        fake-card card]
+                   (if (< i (count similar-servers))
+                     (recur (inc i) (assoc (get-asset i)
+                                           :hosted [(assoc fake-card
+                                                           :zone ["oncard"]
+                                                           :host (get-asset i))]))
+                     fake-card))]
+             [card-view fake-card false]
+             ; [label content opts]
+             ; [stacked-label [fake-card] similar-servers opts]
+             )])]]))
+
+(defn compare-servers-for-stacking [s1]
+  (fn [s2]
+    (let [ss1 (second s1)
+          ss2 (second s2)]
+      (and (not= s1 s2)
+           (empty? (:ices ss1))
+           (empty? (:ices ss2))
+           (= 1 (count (:content ss1)))
+           (= 1 (count (:content ss2)))
+           (-> ss1 :content first :rezzed)
+           (-> ss2 :content first :rezzed)
+           (-> ss1 :content first :hosted empty?)
+           (-> ss2 :content first :hosted empty?)
+           (= (-> ss1 :content first :normalizedtitle)
+              (-> ss2 :content first :normalizedtitle))))))
 
 (defn board-view-corp [player-side identity deck discard servers run]
   (let [rs (:server @run)
@@ -1043,11 +1107,21 @@
     [:div.corp-board {:class (if (= player-side :runner) "opponent" "me")}
      (doall
        (for [server (reverse (get-remotes @servers))
-             :let [num (remote->num (first server))]]
-         [server-view {:key num
-                       :server (second server)
-                       :run (when (= server-type (str "remote" num)) @run)}
-          {:opts {:name (remote->name (first server))}}]))
+             :let [num (remote->num (first server))
+                   similar-servers (filter #((compare-servers-for-stacking server) %) (get-remotes @servers))]
+             :when (or (empty? similar-servers) ;it is a normal server-view
+                       ; otherwise only show one view for the stacked remote
+                       (< num (remote->num (first (first similar-servers)))))]
+         (if (empty? similar-servers)
+           [server-view {:key num
+                         :server (second server)
+                         :run (when (= server-type (str "remote" num)) @run)}
+            {:opts {:name (remote->name (first server))}}]
+           [stacked-view {:key num
+                          :server (second server)
+                          :similar-servers similar-servers
+                          :run (when (= server-type (str "remote" num)) @run)}
+            {:opts {:name (remote->name (first server))}}])))
      [server-view {:key "hq"
                    :server (:hq @servers)
                    :central-view [identity-view identity]
