@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
-            [game.core.card :refer [active? has-subtype? asset?]]
+            [game.core.card :refer [active? has-subtype? asset? rezzed?]]
             [jinteki.utils :refer [str->int is-tagged?] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
@@ -583,6 +583,8 @@
 
 (defn runner-abs [card c-state runner-abilities subroutines title]
   [:div.panel.blue-shade.runner-abilities {:style (when (:runner-abilities @c-state) {:display "inline"})}
+   (when (seq runner-abilities)
+     [:span.float-center "Abilities:"])
    (map-indexed
      (fn [i ab]
        [:div {:key i
@@ -590,24 +592,28 @@
                                                              :ability i}))}
         (render-icons (:label ab))])
      runner-abilities)
-   (when (> (count subroutines) 1)
+   (when (< 1 (count subroutines))
      [:div {:on-click #(send-command "system-msg"
-                                     {:msg (str "indicates to fire all subroutines on " title)})}
+                                     {:msg (str "indicates to fire all unbroken subroutines on " title)})}
       "Let all subroutines fire"])
+   (when (seq subroutines)
+     [:span.float-center "Subroutines:"])
    (map-indexed
-       (fn [i sub]
-         [:div {:key i}
-          [:span (when (:broken sub)
-                   {:class :disabled
-                    :style {:font-style :italic}})
-           (render-icons (str " [Subroutine]" " " (:label sub)))]
-          [:span.float-right
-           (cond (:broken sub) banned-span
-                 (:fired sub) "✅")]])
-       subroutines)])
+     (fn [i sub]
+       [:div {:key i}
+        [:span (when (:broken sub)
+                 {:class :disabled
+                  :style {:font-style :italic}})
+         (render-icons (str " [Subroutine]" " " (:label sub)))]
+        [:span.float-right
+         (cond (:broken sub) banned-span
+               (:fired sub) "✅")]])
+     subroutines)])
 
 (defn corp-abs [card c-state corp-abilities]
   [:div.panel.blue-shade.corp-abilities {:style (when (:corp-abilities @c-state) {:display "inline"})}
+   (when (seq corp-abilities)
+     [:span.float-center "Abilities:"])
    (map-indexed
      (fn [i ab]
        [:div {:on-click #(do (send-command "corp-ability" {:card card
@@ -622,11 +628,15 @@
               (some #{"derez" "rez" "advance"} actions)
               (= type "ICE"))
       [:div.panel.blue-shade.abilities {:style (when (:abilities @c-state) {:display "inline"})}
+       (when (seq actions)
+         [:span.float-center "Actions:"])
        (map-indexed
          (fn [i action]
            [:div {:key i
                   :on-click #(do (send-command action {:card card}))} (capitalize action)])
          actions)
+       (when (seq abilities)
+         [:span.float-center "Abilities:"])
        (map-indexed
          (fn [i ab]
            (if (:dynamic ab)
@@ -639,21 +649,26 @@
                                                             :ability (- i dynabi-count)}))}
               (render-icons (:label ab))]))
          abilities)
-       (when (pos? (count (remove (every-pred :broken :fired) subroutines)))
+       (when (and (rezzed? card)
+                  (seq subroutines))
+         [:span.float-center "Subroutines:"])
+       (when (and (rezzed? card)
+                  (pos? (count (remove #(or (:broken %) (:fired %)) subroutines))))
          [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
           "Fire unbroken subroutines"])
-       (map-indexed
-         (fn [i sub]
-           [:div {:key i
-                  :on-click #(send-command "subroutine" {:card card :subroutine i})}
-            [:span (when (:broken sub)
-                     {:class :disabled
-                      :style {:font-style :italic}})
-             (render-icons (str " [Subroutine]" " " (:label sub)))]
-            [:span.float-right
-             (cond (:broken sub) banned-span
-                   (:fired sub) "✅")]])
-         subroutines)])))
+       (when (rezzed? card)
+         (map-indexed
+           (fn [i sub]
+             [:div {:key i
+                    :on-click #(send-command "subroutine" {:card card :subroutine i})}
+              [:span (when (:broken sub)
+                       {:class :disabled
+                        :style {:font-style :italic}})
+               (render-icons (str " [Subroutine]" " " (:label sub)))]
+              [:span.float-right
+               (cond (:broken sub) banned-span
+                     (:fired sub) "✅")]])
+           subroutines))])))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted

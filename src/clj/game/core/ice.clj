@@ -142,7 +142,7 @@
                              (remove :broken)
                              seq)]
      (wait-for (resolve-next-unbroken-sub state side (make-eid state eid) ice subroutines)
-               (system-msg state :corp (str "resolves " (quantify (count async-result) "subroutine")
+               (system-msg state :corp (str "resolves " (quantify (count async-result) "unbroken subroutine")
                                             " on " (:title ice)
                                             " (\"[subroutine] "
                                             (join "\" and \"[subroutine] "
