@@ -102,7 +102,6 @@
                some ability once between all of them, then the card should specify a manual :once-key that can
                be any value, preferrably a unique keyword.
   :optional -- shows a 'Yes/No' prompt to let the user decide whether to resolve the ability.
-  :end-turn -- if the ability is resolved, then this ability map will be resolved at the end of the turn.
   :makes-run -- indicates if the ability makes a run."
   ;; perhaps the most important function in the game logic
   ([state side {:keys [eid] :as ability} card targets]
@@ -238,7 +237,6 @@
             ;; Print the message
             (print-msg state side ability card targets cost-str)
             ;; Trigger the effect
-            (register-end-turn state side ability card targets)
             (register-once state ability card)
             (do-effect state side ability c targets)))))))
 
@@ -256,13 +254,6 @@
   [state side {:keys [eid] :as ability} card targets]
   (when-let [ability-effect (:effect ability)]
     (ability-effect state side eid card targets)))
-
-(defn- register-end-turn
-  "Register :end-turn effect if present"
-  [state side {:keys [eid] :as ability} card targets]
-  (when-let [end-turn (:end-turn ability)]
-    (swap! state update-in [side :register :end-turn]
-           #(conj % {:ability end-turn :card card :targets targets :eid eid}))))
 
 (defn register-once
   "Register ability as having happened if :once specified"
