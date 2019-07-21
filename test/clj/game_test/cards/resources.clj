@@ -1473,10 +1473,15 @@
       (run-on state :hq)
       (let [gr (get-resource state 0)
             refr (get-program state 0)]
+        (changes-val-macro 2 (:credit (get-runner))
+                           "Took 2 credits off of Ghost runner the traditional way."
+                           (dotimes [_ 2]
+                             (card-ability state :runner gr 0)))
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 1 credit from Ghost Runner"
                            (card-ability state :runner refr 1)
-                           (click-card state :runner gr))))))
+                           (click-card state :runner gr))
+        (is (not-empty (:discard (get-runner))) "Empty Ghost Runner trashed")))))
 
 (deftest globalsec-security-clearance
   ;; Globalsec Security Clearance - Ability, click lost on use
