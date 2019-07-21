@@ -62,7 +62,10 @@
             [:a.leave-button {:on-click #(leave-game)} "Leave game"]
             (when is-player
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
-               (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])]))
+               (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])
+            (when is-player
+              [:a.stack-servers-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
+               (if (:stack-server game) "Unstack servers" "Stack servers")])]))
        (when (not (nil? @gameid))
          [:div.float-right [:a {:on-click #(leave-game)} "Leave game"]]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
