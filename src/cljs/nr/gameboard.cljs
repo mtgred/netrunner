@@ -1041,10 +1041,10 @@
 (defn stacked-label [cursor similar-servers opts]
   (let [similar-server-names (->> similar-servers
                                   (map first)
-                                  (map remote->name)
-                                  (clojure.string/join "\n"))]
-    [:div.header {:class (when (> (count cursor) 0) "darkbg")}
-     (str (get-in opts [:opts :name]) "\n" similar-server-names)]))
+                                  (map remote->name))
+        full-server-names (cons (get-in opts [:opts :name]) similar-server-names)]
+    [:div.header {:class (when (> (count full-server-names) 1) "darkbg")}
+      (interleave full-server-names (repeat (count full-server-names) [:br]))]))
 
 (defn stacked-view [{:keys [key server similar-servers central-view run]} opts]
   (let [content (:content server)
@@ -1068,22 +1068,20 @@
       (when (and run (not current-ice))
         [run-arrow])]
      [:div.content
-        (let [card (first content)]
+        (let [card (first content)
+              get-asset (fn [n] (-> (nth similar-servers n) second :content first))
+              fake-card
+              (loop [i 0
+                     fake-card card]
+                (if (< i (count similar-servers))
+                  (recur (inc i) (assoc (get-asset i)
+                                        :hosted [(assoc fake-card
+                                                        :zone ["oncard"]
+                                                        :host (get-asset i))]))
+                  fake-card))]
           [:div.server-card {:key (:cid card)}
-           (let [get-asset (fn [n] (-> (nth similar-servers n) second :content first))
-                 fake-card
-                 (loop [i 0
-                        fake-card card]
-                   (if (< i (count similar-servers))
-                     (recur (inc i) (assoc (get-asset i)
-                                           :hosted [(assoc fake-card
-                                                           :zone ["oncard"]
-                                                           :host (get-asset i))]))
-                     fake-card))]
-             [card-view fake-card false]
-             ; [label content opts]
-             ; [stacked-label [fake-card] similar-servers opts]
-             )])]]))
+           [card-view fake-card false]
+           [stacked-label [fake-card] similar-servers opts]])]]))
 
 (defn compare-servers-for-stacking [s1]
   (fn [s2]
