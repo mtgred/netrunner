@@ -749,7 +749,7 @@
 
 (defn label [cursor opts]
   (let [fn (or (get-in opts [:opts :fn]) count)
-        classes (conj (when (> (count cursor) 0) '("darkbg")) (get-in opts [:opts :classes]))]
+        classes (conj (when (pos? (count cursor)) '("darkbg")) (get-in opts [:opts :classes]))]
     [:div.header {:class (join " " classes)}
      (str (get-in opts [:opts :name])
           (when (not (get-in opts [:opts :hide-cursor])) (str " (" (fn cursor) ")")))]))
