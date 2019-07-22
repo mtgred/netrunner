@@ -752,8 +752,9 @@
 
 (defn label [cursor opts]
   (let [fn (or (get-in opts [:opts :fn]) count)
-        classes (conj (when (pos? (count cursor)) '("darkbg")) (get-in opts [:opts :classes]))]
-    [:div.header {:class (join " " classes)}
+        classes (str (when (pos? (count cursor)) "darkbg ")
+                     (get-in opts [:opts :classes]))]
+    [:div.header {:class classes}
      (str (get-in opts [:opts :name])
           (when (not (get-in opts [:opts :hide-cursor])) (str " (" (fn cursor) ")")))]))
 
@@ -1031,15 +1032,15 @@
       (when central-view
         central-view)
       (when (not-empty content)
-          (for [card content]
-            (let [is-first (= card (first content))
-                  flipped (not (:rezzed card))]
-              [:div.server-card {:key (:cid card)
-                                 :class (str (when central-view "central ")
-                                             (when (or central-view
-                                                       (and (< 1 (count content)) (not is-first)))
-                                               "shift"))}
-               [card-view card flipped]])))
+        (for [card content]
+          (let [is-first (= card (first content))
+                flipped (not (:rezzed card))]
+            [:div.server-card {:key (:cid card)
+                               :class (str (when central-view "central ")
+                                           (when (or central-view
+                                                     (and (< 1 (count content)) (not is-first)))
+                                             "shift"))}
+             [card-view card flipped]])))
       [label content (update-in opts [:opts] assoc :classes "server-label" :hide-cursor true)]]]))
 
 (defn stacked-label [cursor similar-servers opts]
@@ -1083,7 +1084,9 @@
   (fn [s2]
     (let [ss1 (second s1)
           ss2 (second s2)]
-      (and (not= s1 s2)
+      (and (= (-> ss1 :content first :normalizedtitle)
+              (-> ss2 :content first :normalizedtitle))
+           (not= s1 s2)
            (empty? (:ices ss1))
            (empty? (:ices ss2))
            (= 1 (count (:content ss1)))
@@ -1093,9 +1096,7 @@
            (-> ss1 :content first :rezzed)
            (-> ss2 :content first :rezzed)
            (-> ss1 :content first :hosted empty?)
-           (-> ss2 :content first :hosted empty?)
-           (= (-> ss1 :content first :normalizedtitle)
-              (-> ss2 :content first :normalizedtitle))))))
+           (-> ss2 :content first :hosted empty?)))))
 
 (defn board-view-corp [player-side identity deck discard servers run]
   (let [rs (:server @run)
