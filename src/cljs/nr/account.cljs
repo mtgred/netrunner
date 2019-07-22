@@ -61,6 +61,7 @@
   (swap! app-state assoc-in [:options :sounds-volume] (:volume @s))
   (swap! app-state assoc-in [:options :background] (:background @s))
   (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
+  (swap! app-state assoc-in [:options :stacked-servers] (:stacked-servers @s))
   (swap! app-state assoc-in [:options :blocked-users] (:blocked-users @s))
   (swap! app-state assoc-in [:options :alt-arts] (:alt-arts @s))
   (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
@@ -68,6 +69,7 @@
   (.setItem js/localStorage "sounds" (:sounds @s))
   (.setItem js/localStorage "lobby_sounds" (:lobby-sounds @s))
   (.setItem js/localStorage "sounds_volume" (:volume @s))
+  (.setItem js/localStorage "stacked-servers" (:stacked-servers @s))
   (post-options url (partial post-response s)))
 
 (defn add-user-to-block-list
@@ -131,6 +133,7 @@
                    :volume (get-in @app-state [:options :sounds-volume])
                    :show-alt-art (get-in @app-state [:options :show-alt-art])
                    :all-art-select ""
+                   :stacked-servers (get-in @app-state [:options :stacked-servers])
                    :gamestats (get-in @app-state [:options :gamestats])
                    :deckstats (get-in @app-state [:options :deckstats])
                    :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
@@ -172,6 +175,15 @@
                     :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
                     :value (or (:volume @s) 50)
                     :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
+
+         [:section
+          [:h3 "Server Stacking"]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:stacked-servers @s)
+                            :on-change #(swap! s assoc-in [:stacked-servers] (.. % -target -checked))}]
+            "Server stacking is on by default"]]]
 
          [:section
           [:h3  "Game board background"]
