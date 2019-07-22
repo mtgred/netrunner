@@ -133,6 +133,9 @@
   (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state)
                                             :mute-state mute-state}]))
 
+(defn stack-servers [ss-state]
+  (swap! app-state assoc-in [:options :stacked-servers] ss-state))
+
 (defn concede []
   (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}]))
 
@@ -1102,10 +1105,12 @@
        (for [server (reverse (get-remotes @servers))
              :let [num (remote->num (first server))
                    similar-servers (filter #((compare-servers-for-stacking server) %) (get-remotes @servers))]
-             :when (or (empty? similar-servers) ;it is a normal server-view
+             :when (or (empty? similar-servers)                                     ; it is a normal server-view
+                       (not (get-in @app-state [:options :stacked-servers] false))  ; we're not in stacked mode
                        ; otherwise only show one view for the stacked remote
                        (< num (remote->num (first (first similar-servers)))))]
-         (if (empty? similar-servers)
+         (if (or (empty? similar-servers)
+                 (not (get-in @app-state [:options :stacked-servers] false)))
            [server-view {:key num
                          :server (second server)
                          :run (when (= server-type (str "remote" num)) @run)}
