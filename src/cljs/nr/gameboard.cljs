@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
-            [game.core.card :refer [has-subtype?]]
+            [game.core.card :refer [has-subtype? asset?]]
             [jinteki.utils :refer [str->int is-tagged?] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
@@ -1092,6 +1092,8 @@
            (empty? (:ices ss2))
            (= 1 (count (:content ss1)))
            (= 1 (count (:content ss2)))
+           (-> ss1 :content first asset?)
+           (-> ss2 :content first asset?)
            (-> ss1 :content first :rezzed)
            (-> ss2 :content first :rezzed)
            (-> ss1 :content first :hosted empty?)
