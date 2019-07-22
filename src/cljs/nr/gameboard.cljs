@@ -748,9 +748,11 @@
   (.stopPropagation event))
 
 (defn label [cursor opts]
-  (let [fn (or (get-in opts [:opts :fn]) count)]
-    [:div.header {:class (when (> (count cursor) 0) "darkbg")}
-     (str (get-in opts [:opts :name]) " (" (fn cursor) ")")]))
+  (let [fn (or (get-in opts [:opts :fn]) count)
+        classes (conj (when (> (count cursor) 0) '("darkbg")) (get-in opts [:opts :classes]))]
+    [:div.header {:class (join " " classes)}
+     (str (get-in opts [:opts :name])
+          (when (not (get-in opts [:opts :hide-cursor])) (str " (" (fn cursor) ")")))]))
 
 (defn- this-user?
   [user]
@@ -819,7 +821,7 @@
         (drop-area name {:on-click #(-> (menu-ref @board-dom) js/$ .toggle)})
         (when (pos? (count @deck))
           [facedown-card (:side @identity) ["bg"] nil])
-        [label @deck {:opts {:name name}}]
+        [label @deck {:opts {:name name :classes "server-label"}}]
         (when (= render-side player-side)
           [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
            [:div {:on-click #(do (send-command "shuffle")
@@ -844,7 +846,7 @@
        (drop-area "Heap" {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
        (when-not (empty? @discard)
          [:<> [card-view (last @discard)]])
-       [label @discard {:opts {:name "Heap"}}]
+       [label @discard {:opts {:name "Heap" :classes "server-label"}}]
        [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                      :class (if (= player-side :runner) "me" "opponent")}
         [:div
@@ -869,6 +871,7 @@
          (when-not (empty? @discard) [:<> {:key "discard"} (draw-card (last @discard))])
 
          [label @discard {:opts {:name "Archives"
+                                 :classes "server-label"
                                  :fn (fn [cursor] (let [total (count cursor)
                                                         face-up (count (filter faceup? cursor))]
                                                     ;; use non-breaking space to keep counts on same line.
@@ -1033,55 +1036,45 @@
                                              (when (or central-view
                                                        (and (< 1 (count content)) (not is-first)))
                                                "shift"))}
-               [card-view card flipped]
-               [label content opts]])))]]))
-               ; (when (and (not central-view) is-first)
-                 ; [label content opts])])))]]))
+               [card-view card flipped]])))
+      [label content (update-in opts [:opts] assoc :classes "server-label" :hide-cursor true)]]]))
 
 (defn stacked-label [cursor similar-servers opts]
   (let [similar-server-names (->> similar-servers
                                   (map first)
                                   (map remote->name))
-        full-server-names (cons (get-in opts [:opts :name]) similar-server-names)]
-    [:div.header {:class (when (> (count full-server-names) 1) "darkbg")}
-      (interleave full-server-names (repeat (count full-server-names) [:br]))]))
+        full-server-names (cons (get-in opts [:opts :name]) similar-server-names)
+        numbers (map #(second (split % " ")) full-server-names)]
+    (label full-server-names (update-in opts [:opts] assoc
+                                        :classes "server-label"
+                                        :name (str "Servers " (join ", " numbers))
+                                        :hide-cursor true))))
 
 (defn stacked-view [{:keys [key server similar-servers central-view run]} opts]
-  (let [content (:content server)
+  (let [content (apply conj
+                       (:content server)
+                       ; this unfolds all servers and picks the first item in it
+                       ; since this creates a sequence, we need to apply it to conj
+                       (map #(-> % second :content first) similar-servers))
         ices (:ices server)
         run-pos (:position run)
         current-ice (when (and run (pos? run-pos) (<= run-pos (count ices)))
-                      (nth ices (dec run-pos)))
-        max-hosted (apply max (map #(count (:hosted %)) ices))]
+                      (nth ices (dec run-pos)))]
     [:div.server
-     [:div.ices {:style {:width (when (pos? max-hosted)
-                                  (+ 84 3 (* 42 (dec max-hosted))))}}
+     [:div.ices
       (when-let [run-card (:card (:run-effect run))]
         [:div.run-card [card-img run-card]])
-      (for [ice (reverse ices)]
-        [:div.ice {:key (:cid ice)
-                   :class (when (not-empty (:hosted ice)) "host")}
-         (let [flipped (not (:rezzed ice))]
-           [card-view ice flipped])
-         (when (and current-ice (= (:cid current-ice) (:cid ice)))
-           [run-arrow])])
       (when (and run (not current-ice))
         [run-arrow])]
      [:div.content
-        (let [card (first content)
-              get-asset (fn [n] (-> (nth similar-servers n) second :content first))
-              fake-card
-              (loop [i 0
-                     fake-card card]
-                (if (< i (count similar-servers))
-                  (recur (inc i) (assoc (get-asset i)
-                                        :hosted [(assoc fake-card
-                                                        :zone ["oncard"]
-                                                        :host (get-asset i))]))
-                  fake-card))]
-          [:div.server-card {:key (:cid card)}
-           [card-view fake-card false]
-           [stacked-label [fake-card] similar-servers opts]])]]))
+      (for [card content]
+        (let [is-first (= card (first content))
+              flipped (not (:rezzed card))]
+          [:div.server-card {:key (:cid card)
+                             :class (str (when (and (< 1 (count content)) (not is-first))
+                                           "shift"))}
+           [card-view card flipped]]))
+      [stacked-label content similar-servers opts]]]))
 
 (defn compare-servers-for-stacking [s1]
   (fn [s2]
