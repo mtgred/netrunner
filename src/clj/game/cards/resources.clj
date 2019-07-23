@@ -1035,6 +1035,7 @@
                               (trigger-event state side :spent-stealth-credit card)
                               (when (zero? (get-counters (get-card state card) :credit))
                                 (trash state :runner card {:unpreventable true})))}]
+    :events (trash-on-empty :credit)
     ; See Net Mercur for why this implementation was chosen
     :interactions {:pay-credits {:req (req (:run @state))
                                  :type :credit}}}
