@@ -1035,6 +1035,7 @@
                               (trigger-event state side :spent-stealth-credit card)
                               (when (zero? (get-counters (get-card state card) :credit))
                                 (trash state :runner card {:unpreventable true})))}]
+    :events (trash-on-empty :credit)
     ; See Net Mercur for why this implementation was chosen
     :interactions {:pay-credits {:req (req (:run @state))
                                  :type :credit}}}
@@ -1318,7 +1319,7 @@
     :abilities [{:cost [:click 1]
                  :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
                  :effect (effect (gain-credits (min 4 (get-counters card :credit)))
-                                 (add-counter :credit (- (min 4 (get-counters card :credit)))))}]
+                                 (add-counter card :credit (- (min 4 (get-counters card :credit)))))}]
     :events (trash-on-empty :credit)}
 
    "Liberated Chela"

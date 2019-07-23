@@ -1039,12 +1039,12 @@
                                                     (continue-ability
                                                       state side
                                                       {:prompt (str "Trash a card to lower the " cost-type
-                                                                    " cost of " (:title patchwork) " by 2 [Credits].")
+                                                                    " cost of " (:title targetcard) " by 2 [Credits].")
                                                        :priority 2
                                                        :async true
                                                        :choices {:req #(and (in-hand? %)
                                                                             (runner? %)
-                                                                            (not (same-card? % patchwork)))}
+                                                                            (not (same-card? % targetcard)))}
                                                        :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
                                                                  (:title targetcard) " by 2 [Credits]")
                                                        :effect (req (trash state side target {:unpreventable true})

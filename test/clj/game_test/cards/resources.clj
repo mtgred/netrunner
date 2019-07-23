@@ -1473,10 +1473,15 @@
       (run-on state :hq)
       (let [gr (get-resource state 0)
             refr (get-program state 0)]
+        (changes-val-macro 2 (:credit (get-runner))
+                           "Took 2 credits off of Ghost runner the traditional way."
+                           (dotimes [_ 2]
+                             (card-ability state :runner gr 0)))
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 1 credit from Ghost Runner"
                            (card-ability state :runner refr 1)
-                           (click-card state :runner gr))))))
+                           (click-card state :runner gr))
+        (is (not-empty (:discard (get-runner))) "Empty Ghost Runner trashed")))))
 
 (deftest globalsec-security-clearance
   ;; Globalsec Security Clearance - Ability, click lost on use
@@ -1924,6 +1929,22 @@
     (take-credits state :corp)
     (click-prompt state :runner "Yes")
     (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
+
+(deftest liberated-account
+  ;; Liberated Account
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Liberated Account"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 1)
+      (play-from-hand state :runner "Liberated Account")
+      (changes-val-macro 4 (:credit (get-runner))
+                         "Gained 4 credits"
+                         (card-ability state :runner (get-resource state 0) 0))
+      (core/gain state :runner :click 4)
+      (dotimes [_ 3]
+        (card-ability state :runner (get-resource state 0) 0))
+      (is (= 1 (count (:discard (get-runner)))) "Liberated Account trashed"))))
 
 (deftest logic-bomb
   ;; Logic Bomb

@@ -13,6 +13,7 @@
            :user (js->clj js/user :keywordize-keys true)
            :options (merge {:background "lobby-bg"
                             :show-alt-art true
+                            :stacked-servers (= (get-local-value "stacked-servers" "true") "true")
                             :deckstats "always"
                             :gamestats "always"
                             :sounds (= (get-local-value "sounds" "true") "true")
