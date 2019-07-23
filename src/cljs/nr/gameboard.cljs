@@ -156,8 +156,6 @@
           (if-not rezzed (cons "rez" %) (cons "derez" %))
           %))))
 
-(declare face-down?)
-
 (defn handle-abilities
   [side {:keys [abilities corp-abilities runner-abilities facedown type] :as card} c-state]
   (let [actions (action-list card)
@@ -581,8 +579,27 @@
           label])
        servers)]))
 
+(defn current-ice []
+  (let [run (:run @game-state)]
+    (when run
+      (let [servers (get-in @game-state [:corp :servers])
+            rs (:server run)
+            kw (keyword (first rs))
+            server (if-let [n (second rs)]
+                     (get-in servers [kw n])
+                     (get servers kw))
+            ices (:ices server)
+            position (:position run)]
+        (when (and position
+                   (pos? position)
+                   (<= position (count ices)))
+          (nth ices (dec position)))))))
+
 (defn runner-abs [card c-state runner-abilities subroutines title]
-  [:div.panel.blue-shade.runner-abilities {:style (when (:runner-abilities @c-state) {:display "inline"})}
+  [:div.panel.blue-shade.runner-abilities {:style (when (or (:runner-abilities @c-state)
+                                                            (and (= :runner (get-side @game-state))
+                                                                 (= card (current-ice))))
+                                                    {:display "inline"})}
    (when (seq runner-abilities)
      [:span.float-center "Abilities:"])
    (map-indexed
@@ -623,40 +640,49 @@
 
 (defn card-abilities [card c-state abilities subroutines]
   (let [actions (action-list card)
-        dynabi-count (count (filter :dynamic abilities))]
+        dynabi-count (count (filter :dynamic abilities))
+        cur-ice (current-ice)
+        show-abilities (:abilities @c-state)
+        show-subroutines (and (= :corp (get-side @game-state))
+                              (= card (current-ice))
+                              (rezzed? card))]
     (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
               (some #{"derez" "rez" "advance"} actions)
               (= type "ICE"))
-      [:div.panel.blue-shade.abilities {:style (when (:abilities @c-state) {:display "inline"})}
-       (when (seq actions)
+      [:div.panel.blue-shade.abilities {:style (when (or show-abilities show-subroutines)
+                                                 {:display "inline"})}
+       (when (and show-abilities (seq actions))
          [:span.float-center "Actions:"])
-       (map-indexed
-         (fn [i action]
-           [:div {:key i
-                  :on-click #(do (send-command action {:card card}))} (capitalize action)])
-         actions)
-       (when (seq abilities)
+       (when (and show-abilities (seq actions))
+         (map-indexed
+           (fn [i action]
+             [:div {:key i
+                    :on-click #(do (send-command action {:card card}))} (capitalize action)])
+           actions))
+       (when (and show-abilities (seq abilities))
          [:span.float-center "Abilities:"])
-       (map-indexed
-         (fn [i ab]
-           (if (:dynamic ab)
-             [:div {:key i
-                    :on-click #(do (send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
-                                                                          :card card)))}
-              (render-icons (:label ab))]
-             [:div {:key i
-                    :on-click #(do (send-command "ability" {:card card
-                                                            :ability (- i dynabi-count)}))}
-              (render-icons (:label ab))]))
-         abilities)
-       (when (and (rezzed? card)
-                  (seq subroutines))
-         [:span.float-center "Subroutines:"])
-       (when (and (rezzed? card)
+       (when (and show-abilities (seq abilities))
+         (map-indexed
+           (fn [i ab]
+             (if (:dynamic ab)
+               [:div {:key i
+                      :on-click #(do (send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
+                                                                            :card card)))}
+                (render-icons (:label ab))]
+               [:div {:key i
+                      :on-click #(do (send-command "ability" {:card card
+                                                              :ability (- i dynabi-count)}))}
+                (render-icons (:label ab))]))
+           abilities))
+       (when (and (or show-abilities show-subroutines)
                   (pos? (count (remove #(or (:broken %) (:fired %)) subroutines))))
          [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
           "Fire unbroken subroutines"])
-       (when (rezzed? card)
+       (when (and (or show-abilities show-subroutines)
+                  (seq subroutines))
+         [:span.float-center "Subroutines:"])
+       (when (and (or show-abilities show-subroutines)
+                  (seq subroutines))
          (map-indexed
            (fn [i sub]
              [:div {:key i
