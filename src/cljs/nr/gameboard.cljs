@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
-            [game.core.card :refer [has-subtype?]]
+            [game.core.card :refer [has-subtype? asset?]]
             [jinteki.utils :refer [str->int is-tagged?] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
@@ -111,6 +111,9 @@
 (defn mute-spectators [mute-state]
   (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state)
                                             :mute-state mute-state}]))
+
+(defn stack-servers [ss-state]
+  (swap! app-state assoc-in [:options :stacked-servers] ss-state))
 
 (defn concede []
   (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}]))
@@ -752,9 +755,12 @@
   (.stopPropagation event))
 
 (defn label [cursor opts]
-  (let [fn (or (get-in opts [:opts :fn]) count)]
-    [:div.header {:class (when (> (count cursor) 0) "darkbg")}
-     (str (get-in opts [:opts :name]) " (" (fn cursor) ")")]))
+  (let [fn (or (get-in opts [:opts :fn]) count)
+        classes (str (when (pos? (count cursor)) "darkbg ")
+                     (get-in opts [:opts :classes]))]
+    [:div.header {:class classes}
+     (str (get-in opts [:opts :name])
+          (when (not (get-in opts [:opts :hide-cursor])) (str " (" (fn cursor) ")")))]))
 
 (defn- this-user?
   [user]
@@ -823,7 +829,7 @@
         (drop-area name {:on-click #(-> (menu-ref @board-dom) js/$ .toggle)})
         (when (pos? (count @deck))
           [facedown-card (:side @identity) ["bg"] nil])
-        [label @deck {:opts {:name name}}]
+        [label @deck {:opts {:name name :classes "server-label"}}]
         (when (= render-side player-side)
           [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
            [:div {:on-click #(do (send-command "shuffle")
@@ -848,7 +854,7 @@
        (drop-area "Heap" {:on-click #(-> (:popup @s) js/$ .fadeToggle)})
        (when-not (empty? @discard)
          [:<> [card-view (last @discard)]])
-       [label @discard {:opts {:name "Heap"}}]
+       [label @discard {:opts {:name "Heap" :classes "server-label"}}]
        [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                      :class (if (= player-side :runner) "me" "opponent")}
         [:div
@@ -873,6 +879,7 @@
          (when-not (empty? @discard) [:<> {:key "discard"} (draw-card (last @discard))])
 
          [label @discard {:opts {:name "Archives"
+                                 :classes "server-label"
                                  :fn (fn [cursor] (let [total (count cursor)
                                                         face-up (count (filter faceup? cursor))]
                                                     ;; use non-breaking space to keep counts on same line.
@@ -1029,17 +1036,71 @@
       (when central-view
         central-view)
       (when (not-empty content)
-          (for [card content]
-                 (let [is-first (= card (first content))
-                       flipped (not (:rezzed card))]
-                   [:div.server-card {:key (:cid card)
-                                      :class (str (when central-view "central ")
-                                                  (when (or central-view
-                                                            (and (< 1 (count content)) (not is-first)))
-                                                    "shift"))}
-                    [card-view card flipped]
-                    (when (and (not central-view) is-first)
-                      [label content opts])])))]]))
+        (for [card content]
+          (let [is-first (= card (first content))
+                flipped (not (:rezzed card))]
+            [:div.server-card {:key (:cid card)
+                               :class (str (when central-view "central ")
+                                           (when (or central-view
+                                                     (and (< 1 (count content)) (not is-first)))
+                                             "shift"))}
+             [card-view card flipped]])))
+      [label content (update-in opts [:opts] assoc :classes "server-label" :hide-cursor true)]]]))
+
+(defn stacked-label [cursor similar-servers opts]
+  (let [similar-server-names (->> similar-servers
+                                  (map first)
+                                  (map remote->name))
+        full-server-names (cons (get-in opts [:opts :name]) similar-server-names)
+        numbers (map #(second (split % " ")) full-server-names)]
+    (label full-server-names (update-in opts [:opts] assoc
+                                        :classes "server-label"
+                                        :name (str "Servers " (join ", " numbers))
+                                        :hide-cursor true))))
+
+(defn stacked-view [{:keys [key server similar-servers central-view run]} opts]
+  (let [content (apply conj
+                       (:content server)
+                       ; this unfolds all servers and picks the first item in it
+                       ; since this creates a sequence, we need to apply it to conj
+                       (map #(-> % second :content first) similar-servers))
+        ices (:ices server)
+        run-pos (:position run)
+        current-ice (when (and run (pos? run-pos) (<= run-pos (count ices)))
+                      (nth ices (dec run-pos)))]
+    [:div.server
+     [:div.ices
+      (when-let [run-card (:card (:run-effect run))]
+        [:div.run-card [card-img run-card]])
+      (when (and run (not current-ice))
+        [run-arrow])]
+     [:div.content
+      (for [card content]
+        (let [is-first (= card (first content))
+              flipped (not (:rezzed card))]
+          [:div.server-card {:key (:cid card)
+                             :class (str (when (and (< 1 (count content)) (not is-first))
+                                           "shift"))}
+           [card-view card flipped]]))
+      [stacked-label content similar-servers opts]]]))
+
+(defn compare-servers-for-stacking [s1]
+  (fn [s2]
+    (let [ss1 (second s1)
+          ss2 (second s2)]
+      (and (= (-> ss1 :content first :normalizedtitle)
+              (-> ss2 :content first :normalizedtitle))
+           (not= s1 s2)
+           (empty? (:ices ss1))
+           (empty? (:ices ss2))
+           (= 1 (count (:content ss1)))
+           (= 1 (count (:content ss2)))
+           (-> ss1 :content first asset?)
+           (-> ss2 :content first asset?)
+           (-> ss1 :content first :rezzed)
+           (-> ss2 :content first :rezzed)
+           (-> ss1 :content first :hosted empty?)
+           (-> ss2 :content first :hosted empty?)))))
 
 (defn board-view-corp [player-side identity deck discard servers run]
   (let [rs (:server @run)
@@ -1047,11 +1108,26 @@
     [:div.corp-board {:class (if (= player-side :runner) "opponent" "me")}
      (doall
        (for [server (reverse (get-remotes @servers))
-             :let [num (remote->num (first server))]]
-         [server-view {:key num
-                       :server (second server)
-                       :run (when (= server-type (str "remote" num)) @run)}
-          {:opts {:name (remote->name (first server))}}]))
+             :let [num (remote->num (first server))
+                   similar-servers (filter #((compare-servers-for-stacking server) %) (get-remotes @servers))
+                   all-servers (conj similar-servers server)]
+             :when (or (empty? similar-servers)                                     ; it is a normal server-view
+                       (not (get-in @app-state [:options :stacked-servers] false))  ; we're not in stacked mode
+                       ; otherwise only show one view for the stacked remote
+                       (< num (remote->num (first (first similar-servers)))))]
+         (if (or (empty? similar-servers)
+                 (not (get-in @app-state [:options :stacked-servers] false)))
+           [server-view {:key num
+                         :server (second server)
+                         :run (when (= server-type (str "remote" num)) @run)}
+            {:opts {:name (remote->name (first server))}}]
+           [stacked-view {:key num
+                          :server (second server)
+                          :similar-servers similar-servers
+                          :run (when
+                                 (some #(= server-type (str "remote" %)) (map #(remote->num (first %)) all-servers))
+                                 (= server-type (str "remote" num)) @run)}
+            {:opts {:name (remote->name (first server))}}])))
      [server-view {:key "hq"
                    :server (:hq @servers)
                    :central-view [identity-view identity]
