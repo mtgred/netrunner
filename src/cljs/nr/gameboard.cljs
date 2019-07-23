@@ -108,27 +108,6 @@
                                       :command command
                                       :args args}]))))
 
-(defn send-msg [s]
-  (let [input (:msg-input @s)
-        text (:msg @s)]
-    (when-not (empty? text)
-      (ws/ws-send! [:netrunner/say {:gameid-str (:gameid @game-state)
-                                    :msg text}])
-      (swap! s assoc :msg "" :scroll-to-bottom true)
-      ;; don't try to focus for / commands
-      (when input (.focus input)))))
-
-(defn send-typing [s]
-  "Send a typing event to server for this user if it is not already set in game state"
-  (let [input (:msg-input @s)
-        text (:msg @s)]
-    (if (empty? text)
-      (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                       :typing false}])
-      (when (not-any? #{(get-in @app-state [:user :username])} (:typing @game-state))
-        (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                         :typing true}])))))
-
 (defn mute-spectators [mute-state]
   (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state)
                                             :mute-state mute-state}]))
@@ -313,42 +292,38 @@
     (put! channel false))
   nil)
 
-(defn log-pane []
-  (let [s (r/atom {})
-        log (r/cursor game-state [:log])
-        typing (r/cursor game-state [:typing])
-        gameid (r/cursor game-state [:gameid])
-        games (r/cursor app-state [:games])]
+(defn scrolled-to-end?
+  [el tolerance]
+  (> tolerance (- (.-scrollHeight el) (.-scrollTop el) (.-clientHeight el))))
 
-    (r/create-class
+(def should-scroll (r/atom {:update true :send-msg false}))
+
+(defn log-pane []
+  (r/create-class
+    (let [log (r/cursor game-state [:log])]
       {:display-name "log-pane"
 
        :component-did-mount
-       (fn []
+       (fn [this]
          (-> ".log" js/$ (.resizable #js {:handles "w"})))
 
        :component-will-update
        (fn [this]
-         (let [div (:message-list @board-dom)
-               scroll-top (.-scrollTop div)
-               scroll-height (.-scrollHeight div)
-               client-height (.-clientHeight div)
-               combo (+ scroll-top client-height)]
-           (when (<= (- combo 5) scroll-height (+ combo 5))
-             (swap! s assoc :scroll-to-bottom true))))
+         (let [n (r/dom-node this)]
+           (reset! should-scroll {:update (or (:send-msg @should-scroll)
+                                                  (scrolled-to-end? n 15))
+                                  :send-msg false})))
 
        :component-did-update
        (fn [this]
-         (let [div (:message-list @board-dom)]
-           (when (:scroll-to-bottom @s)
-             (set! (.-scrollTop div) (.-scrollHeight div))
-             (swap! s dissoc :scroll-to-bottom))))
+         (when (:update @should-scroll)
+           (let [n (r/dom-node this)]
+             (set! (.-scrollTop n) (.-scrollHeight n)))))
 
        :reagent-render
        (fn []
-        [:div.log {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                   :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
-         [:div.panel.blue-shade.messages {:ref #(swap! board-dom assoc :message-list %)}
+         [:div.panel.blue-shade.messages {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                                          :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
           (doall (map-indexed
                    (fn [i msg]
                      (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
@@ -359,19 +334,48 @@
                           [:div.content
                            [:div.username (get-in msg [:user :username])]
                            [:div (render-message (:text msg))]]])))
-                   @log))]
-         (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} @typing)))
-           [:div [:p.typing (for [i (range 10)] ^{:key i} [:span " " influence-dot " "])]])
-         (if-let [game (some #(when (= @gameid (str (:gameid %))) %) @games)]
-           (when (or (not-spectator?)
-                     (not (:mutespectators game)))
-             [:form {:on-submit #(do (.preventDefault %)
-                                     (send-msg s))
-                     :on-input #(do (.preventDefault %)
-                                    (send-typing s))}
-              [:input {:ref #(swap! board-dom assoc :msg-input %) :placeholder "Say something" :accessKey "l"
-                       :value (:msg @s)
-                       :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]))])})))
+                   @log))])})))
+
+(defn log-typing []
+  (let [typing (r/cursor game-state [:typing])
+        username (get-in @app-state [:user :username])]
+    (when (seq (remove nil? (remove #{username} @typing)))
+      [:div [:p.typing (for [i (range 10)] ^{:key i} [:span " " influence-dot " "])]])))
+
+(defn send-msg [s]
+  (let [text (:msg @s)]
+    (when-not (empty? text)
+      (reset! should-scroll {:update false :send-msg true})
+      (ws/ws-send! [:netrunner/say {:gameid-str (:gameid @game-state)
+                                    :msg text}])
+      (swap! s assoc :msg ""))))
+
+(defn send-typing [s]
+  "Send a typing event to server for this user if it is not already set in game state"
+  (let [text (:msg @s)
+        username (get-in @app-state [:user :username])]
+    (if (empty? text)
+      (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
+                                       :typing false}])
+      (when (not-any? #{username} (:typing @game-state))
+        (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
+                                         :typing true}])))))
+
+(let [s (r/atom {})]
+  (defn log-input []
+    (let [gameid (r/cursor game-state [:gameid])
+          games (r/cursor app-state [:games])
+          game (some #(when (= @gameid (str (:gameid %))) %) @games)]
+      (when (or (not-spectator?)
+                (not (:mutespectators game)))
+        [:form {:on-submit #(do (.preventDefault %)
+                                (send-msg s))
+                :on-input #(do (.preventDefault %)
+                               (send-typing s))}
+         [:input {:placeholder "Say something"
+                  :type "text"
+                  :value (:msg @s)
+                  :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]))))
 
 (defn handle-dragstart [e card]
   (-> e .-target js/$ (.addClass "dragged"))
@@ -1548,8 +1552,10 @@
                [:div.card-zoom
                 [card-zoom zoom-card]]
                [card-implementation zoom-card]
-
-               [log-pane]]
+               [:div.log
+                [log-pane]
+                [log-typing]
+                [log-input]]]
 
               [:div.centralpane
                (if (= op-side :corp)
