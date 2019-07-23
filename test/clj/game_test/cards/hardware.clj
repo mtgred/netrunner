@@ -1444,7 +1444,7 @@
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (not-empty (:discard (get-runner))) "Easy Mark is in heap")
       (is (= 11 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble")))
-  (testing "Install a card"
+  (testing "Install a card with pay-credits prompt"
     (do-game
       (new-game {:runner {:deck ["Patchwork" "Easy Mark" "Cyberfeeder"]}})
       (take-credits state :corp)
@@ -1455,7 +1455,18 @@
       (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
       (click-card state :runner (get-hardware state 0))
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
-      (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder"))))
+      (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder")))
+  (testing "Issue #4322: Trashing same card that is being installed"
+    (do-game
+      (new-game {:runner {:deck ["Patchwork" "Easy Mark" "Cyberfeeder"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 4)
+      (play-from-hand state :runner "Patchwork")
+      (play-from-hand state :runner "Cyberfeeder")
+      (click-card state :runner (get-hardware state 0))
+      (click-card state :runner (find-card "Cyberfeeder" (:hand (get-runner))))
+      (is (= 2 (count (:hand (get-runner)))) "Cyberfeeder is still in hand")
+      (is (not-empty (:prompt (get-runner))) "Prompt still open"))))
 
 (deftest plascrete-carapace
   ;; Plascrete Carapace - Prevent meat damage
