@@ -74,8 +74,11 @@
                      (or (= "ICE" subtype)
                          (has-subtype? current-ice subtype))
                      true)))
-    :label (str (build-cost-str (if (number? cost) [:credit cost] cost))
-                ": break "
+    :break n
+    :cost (if (number? cost)
+            [:credit cost]
+            cost)
+    :label (str "break "
                 (when (> n 1) "up to ")
                 (if (pos? n) n "any number of")
                 (when subtype (str " " subtype))
@@ -90,32 +93,55 @@
   auto-pump routine in core, IF we are encountering a rezzed ice with a subtype
   we can break."
   {:effect
-   (req (let [abs (filter #(not= (:dynamic %) :auto-pump) (:abilities card))
-              pumpabi (some #(when (:pump %) %) abs)
-              pumpcst (when pumpabi (second (drop-while #(and (not= % :credit)
-                                                              (not= % "credit"))
-                                                        (:cost pumpabi))))
-              current-ice (when-not (get-in @state [:run :ending]) (get-card state current-ice))
-              strdif (when (and (get-strength current-ice)
-                                (get-strength card))
-                       (max 0 (- (get-strength current-ice)
-                                 (get-strength card))))
-              pumpnum (when (and strdif
-                                 (:pump pumpabi))
-                        (int (Math/ceil (/ strdif (:pump pumpabi)))))]
-          (update! state side
-                   (assoc card :abilities
-                          (if (and pumpcst
-                                   pumpnum
-                                   (rezzed? current-ice)
-                                   (or (some #(has-subtype? current-ice %) (:breaks card))
-                                       (= (first (:breaks card)) "All"))
-                                   (pos? pumpnum))
-                            (vec (cons {:dynamic :auto-pump
-                                        :cost [:credit (* pumpcst pumpnum)]
-                                        :label (str "Match strength of " (:title current-ice))}
-                                       abs))
-                            abs)))))})
+   (req (doall (let [abs (filter #(and (not= (:dynamic %) :auto-pump)
+                                       (not= (:dynamic %) :auto-pump-and-break))
+                                 (:abilities (card-def card)))
+                     pumpabi (some #(when (:pump %) %) abs)
+                     pumpcst (when pumpabi (second (drop-while #(and (not= % :credit)
+                                                                     (not= % "credit"))
+                                                               (:cost pumpabi))))
+                     current-ice (when-not (get-in @state [:run :ending]) (get-card state current-ice))
+                     strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
+                                                        (or (:current-strength card) (:strength card)))))
+                     pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))
+                     total-pump-cost (when (and pumpnum pumpabi)
+                                       (merge-costs (repeat pumpnum (:cost pumpabi))))
+                     breakabi (some #(when (:break %) %) abs)
+                     nsubs (when (:subroutines current-ice)
+                             (count (remove :broken (:subroutines current-ice))))
+                     some-already-broken (not= (:subroutines current-ice)
+                                               (remove :broken (:subroutines current-ice)))
+                     subs-broken-at-once (when breakabi (:break breakabi))
+                     times-break (when (and nsubs subs-broken-at-once)
+                                   (if (pos? subs-broken-at-once)
+                                     (/ nsubs subs-broken-at-once)
+                                     1))
+                     total-break-cost (when (and times-break breakabi)
+                                        (repeat times-break (:cost breakabi)))
+                     total-cost (merge-costs (conj total-pump-cost total-break-cost))]
+                 (update! state side
+                          (assoc card :abilities
+                                 (if (and pumpcst
+                                          pumpnum
+                                          (rezzed? current-ice)
+                                          (or (some #(has-subtype? current-ice %) (:breaks card))
+                                              (= (first (:breaks card)) "All")))
+                                   (vec (concat (when (and (pos? nsubs)
+                                                           (can-pay? state side eid card total-cost))
+                                                  [{:dynamic :auto-pump-and-break
+                                                    :cost (first total-cost)  ; ToDo: this should be refactored at some point to take the whole total-cost seq
+                                                                              ; Since cost deduction is done in play-auto-pump-and-break, this isn't so important
+                                                    :label (str (if (pos? pumpnum)
+                                                                  "Match strength and fully break "
+                                                                  "Fully break ")
+                                                                (:title current-ice))}])
+                                                (when (and (pos? pumpnum)
+                                                           (can-pay? state side eid card total-pump-cost))
+                                                  [{:dynamic :auto-pump
+                                                    :cost (first total-pump-cost)
+                                                    :label (str "Match strength of " (:title current-ice))}])
+                                                abs))
+                                   abs))))))})
 
 ;; Takes a vector of ice subtypes that can be broken (or ["All"] for
 ;; AI breakers) and a card definition, and returns a new card definition that
@@ -195,7 +221,9 @@
                 " for the remainder of the run"
                 (= duration :all-turn)
                 " for the remainder of the turn"))
-    :cost [:credit cost]
+    :cost (if (number? cost)
+            [:credit cost]
+            cost)
     :effect (effect (pump card strength duration))
     :pump strength}))
 

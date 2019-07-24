@@ -7,7 +7,7 @@
          name-zone play-instant purge make-run runner-install trash
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu
-         reset-all-subs! resolve-subroutine! resolve-unbroken-subs!)
+         reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-all-subroutines!)
 
 ;;; Neutral actions
 (defn play
@@ -337,6 +337,54 @@
                                             "the strength of " (:title card) " to "
                                             (:current-strength (get-card state card))))))))
 
+(defn play-auto-pump-and-break
+  "Use play-auto-pump and then break all available subroutines"
+  [state side args]
+  (let [run (:run @state)
+        card (get-card state (:card args))
+        eid (make-eid state {:source card :source-type :ability})
+        run-ice (get-run-ices state)
+        ice-cnt (count run-ice)
+        ice-idx (dec (:position run 0))
+        in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
+        current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
+        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
+        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
+                                           (or (:current-strength card) (:strength card)))))
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))
+        total-pump-cost (merge-costs (repeat pumpnum (:cost pumpabi)))
+        breakabi (some #(when (:break %) %) (:abilities (card-def card)))
+        nsubs (when (:subroutines current-ice)
+                (count (remove :broken (:subroutines current-ice))))
+        some-already-broken (not= (:subroutines current-ice)
+                                  (remove :broken (:subroutines current-ice)))
+        subs-broken-at-once (when breakabi (:break breakabi))
+        times-break (when (and nsubs subs-broken-at-once)
+                      (if (pos? subs-broken-at-once)
+                        (/ nsubs subs-broken-at-once)
+                        1))
+        total-break-cost (when (and times-break breakabi)
+                           (repeat times-break (:cost breakabi)))
+        total-cost (merge-costs (conj total-pump-cost total-break-cost))]
+    (when (can-pay? state side eid card (:title card) total-cost)
+      (wait-for (pay-sync state side (make-eid state eid) card total-cost)
+                (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :cost :msg) (get-card state card) nil))
+                (break-all-subroutines! state current-ice)
+                (system-msg state side (if (pos? pumpnum)
+                                         (str (build-spend-msg async-result "increase")
+                                              "the strength of " (:title card) " to "
+                                              (:current-strength (get-card state card))
+                                              " and break all " nsubs " subroutines on "
+                                              (:title current-ice))
+                                         (str (build-spend-msg async-result "use")
+                                              (:title card)
+                                              " to break "
+                                              (if some-already-broken
+                                                "the remaining "
+                                                "all ")
+                                              nsubs " subroutines on "
+                                              (:title current-ice))))))))
+
 (defn play-copy-ability
   "Play an ability from another card's definition."
   [state side {:keys [card source index] :as args}]
@@ -349,6 +397,7 @@
 
 (def dynamic-abilities
   {"auto-pump" play-auto-pump
+   "auto-pump-and-break" play-auto-pump-and-break
    "copy" play-copy-ability})
 
 (defn play-dynamic-ability

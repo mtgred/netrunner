@@ -96,3 +96,54 @@
         (click-prompt state :runner "Place 1 [Credits]")
         (is (= 5 (:current-strength (refresh cor))) "Corroder is at 5 strength")
         (is (= (- cre 2) (:credit (get-runner))) "Spent 2 (+1 from Cloak) to pump")))))
+
+(deftest pump-and-break
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:hand ["Corroder"]}
+                 :corp {:hand ["Hive"]}})
+      (play-from-hand state :corp "Hive" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Corroder")
+      (run-on state :hq)
+      (let [cor (get-program state 0)
+            hive (get-ice state :hq 0)]
+        (is (= 2 (:current-strength (refresh cor))) "Corroder starts at 2 strength")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (is (= 3 (:current-strength (refresh cor))) "Corroder now at 3 strength")
+        (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken"))))
+  (testing "Auto-pump first"
+    (do-game
+      (new-game {:runner {:hand ["Corroder"]}
+                 :corp {:hand ["Hive"]}})
+      (play-from-hand state :corp "Hive" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Corroder")
+      (run-on state :hq)
+      (let [cor (get-program state 0)
+            hive (get-ice state :hq 0)]
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+        (is (= 3 (:current-strength (refresh cor))) "Corroder now at 3 strength")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken"))))
+  (testing "Auto-pump and break some subs manually first"
+    (do-game
+      (new-game {:runner {:hand ["Corroder"]}
+                 :corp {:hand ["Hive"]}})
+      (play-from-hand state :corp "Hive" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Corroder")
+      (run-on state :hq)
+      (let [cor (get-program state 0)
+            hive (get-ice state :hq 0)]
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+        (is (= 3 (:current-strength (refresh cor))) "Corroder is now at 3 strength")
+        (card-ability state :runner (refresh cor) 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "Done")
+        (is (= 4 (count (remove :broken (:subroutines (refresh hive))))) "Only broken 1 sub")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")))))
