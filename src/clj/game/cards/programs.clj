@@ -49,7 +49,8 @@
    {:async true
     :effect (req (wait-for (resolve-ability state side (break-subroutines-impl ice n) card nil)
                            (let [broken-subs async-result]
-                             (wait-for (resolve-ability state side (break-subroutines-pay ice cost broken-subs) card nil)
+                             (wait-for (resolve-ability state side (make-eid state {:source-type :ability})
+                                                        (break-subroutines-pay ice cost broken-subs) card nil)
                                        (doseq [sub broken-subs]
                                          (break-subroutine! state (get-card state ice) sub))
                                        (let [ice (get-card state ice)]
@@ -58,7 +59,7 @@
                                                   (pos? (count (unbroken-subroutines-choice ice)))
                                                   (can-pay? state side eid card nil cost))
                                            (continue-ability state side (break-subroutines ice cost n ability) card nil)
-                                           (continue-ability state side ability card nil)))))))}))
+                                           (continue-ability state side {:effect ability} card nil)))))))}))
 
 (defn break-sub
   "Creates a break subroutine ability.
@@ -70,7 +71,8 @@
                    (seq (remove :broken (:subroutines current-ice)))
                    (<= (get-strength current-ice) (get-strength card))
                    (if subtype
-                     (has-subtype? current-ice subtype)
+                     (or (= "ICE" subtype)
+                         (has-subtype? current-ice subtype))
                      true)))
     :label (str (build-cost-str (if (number? cost) [:credit cost] cost))
                 ": break "
@@ -1867,7 +1869,7 @@
                                     stypes (:subtype ice)
                                     remove-subtype
                                     {:effect (effect (update! (assoc (get-card state ice) :subtype stypes))
-                                                     (system-say (str (card-str state ice) " loses " chosen-type))
+                                                     (system-say (str (card-str state ice) " loses " chosen-type "."))
                                                      (unregister-events card)
                                                      (register-events (:events (card-def card)) card))}]
                                 (update! state side (assoc ice :subtype (combine-subtypes false stypes chosen-type)))

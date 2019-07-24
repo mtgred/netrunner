@@ -504,11 +504,13 @@
       (let [pup (get-ice state :hq 0)]
         (core/rez state :corp pup)
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (click-prompt state :corp "Yes")
         (let [imp (find-card "Imp" (:hand (get-runner)))]
           (click-prompt state :corp imp)
           (is (= 1 (count (:discard (get-runner)))))
           (card-subroutine state :corp pup 0)
+          (click-prompt state :runner "Suffer 1 net damage")
           (is (empty? (:prompt (get-corp))) "No choice on second net damage")
           (is (= 2 (count (:discard (get-runner)))))
           (run-jack-out state)
@@ -547,8 +549,10 @@
       (let [pup (get-ice state :hq 0)]
         (core/rez state :corp pup)
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (is (empty? (:prompt (get-corp))) "No choice because of Employee Strike")
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (is (= 2 (count (:discard (get-runner)))))
         (run-jack-out state)
         (take-credits state :runner)
@@ -556,6 +560,7 @@
         (play-from-hand state :runner "Scrubbed")
         (run-on state :hq)
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (is (seq (:prompt (get-corp))) "Employee Strike out of play - Ability turned on correctly")))))
 
 (deftest edward-kim-humanity-s-hammer

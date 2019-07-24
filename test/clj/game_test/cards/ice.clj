@@ -7,7 +7,6 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-; peeping-tom
 ; salvage
 ; sensei
 ; swarm
@@ -1733,31 +1732,32 @@
       (is (= "You accessed Otoroshi." (-> (get-runner) :prompt first :msg)) "Runner should access Otoroshi even tho it's an ice.")
       (click-prompt state :runner "No action"))))
 
-;(deftest peeping-tom
-;  ;;Peeping Tom - Counts # of chosen card type in Runner grip
-;  (do-game
-;    (new-game {:corp {:deck ["Peeping Tom"]}
-;               :runner {:deck [(qty "Sure Gamble" 5)]}})
-;    (play-from-hand state :corp "Peeping Tom" "HQ")
-;    (take-credits state :corp)
-;    (run-on state "HQ")
-;    (let [tom (get-ice state :hq 0)]
-;      (core/rez state :corp (refresh tom))
-;      (card-ability state :corp tom 0)
-;      (click-prompt state :corp "Hardware")
-;      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
-;          "Revealed Runner grip")
-;      (is (last-log-contains? state "0") "Correctly counted Hardware in Runner grip")
-;      (card-ability state :corp tom 0)
-;      (click-prompt state :corp "Event")
-;      (is (last-log-contains? state "5") "Correctly counted Events in Runner grip")
-;      (card-side-ability state :runner tom 1)
-;      (card-side-ability state :runner tom 1)
-;      (card-side-ability state :runner tom 1)
-;      (card-side-ability state :runner tom 1)
-;      (is (= 4 (count-tags state)) "Tag ability sucessful")
-;      (card-side-ability state :runner tom 0)
-;      (is (not (:run @state)) "Run ended"))))
+(deftest peeping-tom
+  ;;Peeping Tom - Counts # of chosen card type in Runner grip
+  (do-game
+    (new-game {:corp {:deck ["Peeping Tom"]}
+               :runner {:deck [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Peeping Tom" "HQ")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (let [tom (get-ice state :hq 0)]
+      (core/rez state :corp (refresh tom))
+      (card-ability state :corp tom 0)
+      (click-prompt state :corp "Hardware")
+      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
+          "Revealed Runner grip")
+      (is (last-log-contains? state "0") "Correctly counted Hardware in Runner grip")
+      (card-ability state :corp tom 0)
+      (click-prompt state :corp "Event")
+      (is (last-log-contains? state "5") "Correctly counted Events in Runner grip")
+      (core/resolve-unbroken-subs! state :corp (refresh tom))
+      (click-prompt state :runner "Take 1 tag")
+      (click-prompt state :runner "Take 1 tag")
+      (click-prompt state :runner "Take 1 tag")
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 4 (count-tags state)) "Tag ability sucessful")
+      (click-prompt state :runner "End the run")
+      (is (not (:run @state)) "Run ended"))))
 
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
@@ -2268,10 +2268,10 @@
           (core/derez state :corp (refresh ti))
           (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")
           (run-on state "HQ")
-          (card-subroutine state :corp ti 2)
+          (card-subroutine state :corp ti 3)
           (click-card state :corp (refresh wast))
           (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
-          (card-subroutine state :corp ti 1)
+          (card-subroutine state :corp ti 2)
           (is (not (:run @state)) "Run ended")))))
   (testing "Do not prompt for alt cost #2734"
     (do-game

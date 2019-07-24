@@ -373,7 +373,7 @@
                                               :prompt "You are encountering Archangel. Allow its subroutine to fire?"
                                               :priority 1
                                               :yes-ability {:async true
-                                                            :effect (effect (play-subroutine eid {:card card :subroutine 0}))}
+                                                            :effect (effect (resolve-unbroken-subs! eid card))}
                                               :no-ability {:effect (effect (effect-completed eid))}}}
                                             card nil))}
                          :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel")
@@ -2131,10 +2131,10 @@
    (let [sub {:player :runner
               :async true
               :label (str "Do 1 net damage unless the Runner pays 1 [Credits]")
-              :prompt (str "Do 1 net damage or pay 1 [Credits]?")
-              :choices ["Do 1 net damage"
+              :prompt (str "Suffer 1 net damage or pay 1 [Credits]?")
+              :choices ["Suffer 1 net damage"
                         "Pay 1 [Credits]"]
-              :effect (req (if (= "Do 1 net damage" target)
+              :effect (req (if (= "Suffer 1 net damage" target)
                              (continue-ability state side (do-net-damage 1) card nil)
                              (do (pay state :runner :credit 1)
                                  (effect-completed state side))))}]

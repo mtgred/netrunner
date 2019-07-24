@@ -263,6 +263,7 @@
         (run-on state :hq)
         (core/rez state :corp iw)
         (card-ability state :runner brah 0) ;break sub
+        (click-prompt state :runner "End the run")
         (run-continue state)
         (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
         (click-card state :runner cache)
@@ -283,6 +284,8 @@
         (run-on state :hq)
         (core/rez state :corp spi)
         (card-ability state :runner brah 0) ;break sub
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
         (card-subroutine state :corp spi 0) ;ETR
         (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
         (click-card state :runner par)
@@ -302,6 +305,7 @@
         (run-on state "HQ")
         (core/rez state :corp iw)
         (card-ability state :runner brah 0) ;break sub
+        (click-prompt state :runner "End the run")
         (card-ability state :corp (refresh nisei) 0) ; Nisei Token
         (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
         (click-card state :runner brah)
@@ -328,11 +332,17 @@
 (deftest cerberus-rex-h2
   ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter
   (do-game
-    (new-game {:runner {:deck ["Cerberus \"Rex\" H2"]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma"]}
+               :runner {:deck ["Cerberus \"Rex\" H2"]}})
+    (play-from-hand state :corp "Enigma" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Cerberus \"Rex\" H2")
     (is (= 2 (:credit (get-runner))) "2 credits left after install")
-    (let [rex (get-program state 0)]
+    (let [enigma (get-ice state :hq 0)
+          rex (get-program state 0)]
+      (core/rez state :corp enigma)
+      (run-on state "HQ")
       (is (= 4 (get-counters rex :power)) "Start with 4 counters")
       ;; boost strength
       (card-ability state :runner rex 1)
@@ -340,6 +350,8 @@
       (is (= 2 (:current-strength (refresh rex))) "At strength 2 after boost")
       ;; break
       (card-ability state :runner rex 0)
+      (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
+      (click-prompt state :runner "End the run")
       (is (= 1 (:credit (get-runner))) "No credits spent to break")
       (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
@@ -511,18 +523,16 @@
         (is (zero? (get-counters (refresh c) :virus)) "Consume loses counters")
         (is (zero? (get-counters (refresh h) :virus)) "Hivemind loses counters")))))
 
-(deftest ^:test-refresh/focus corroder
+(deftest corroder
   ;; Corroder
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Hive"]}
+                      :hand ["Ice Wall"]}
                :runner {:credits 15
-                        :hand ["Cloak" "Net Mercur" "Corroder"]}})
-    (play-from-hand state :corp "Hive" "HQ")
+                        :hand ["Corroder"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
-    ; (play-from-hand state :runner "Cloak")
-    ; (play-from-hand state :runner "Net Mercur")
     (run-on state "HQ")
     (let [iw (get-ice state :hq 0)
           cor (get-program state 0)]
@@ -530,11 +540,6 @@
       (card-ability state :runner cor 1)
       (card-ability state :runner cor 0)
       (click-prompt state :runner "End the run")
-      (click-prompt state :runner "End the run")
-      (click-prompt state :runner "Done")
-      (println (map :text (:log @state)))
-      ; (click-card state :runner (get-program state 1))
-      ; (click-prompt state :runner "Place 1 [Credits]")
       (is (zero? (count (remove :broken (:subroutines (refresh iw))))) "All subroutines have been broken"))))
 
 (deftest cradle
@@ -595,8 +600,9 @@
           "Crypsis has 1 virus counter")
       (run-on state "Archives")
       (core/rez state :corp (get-ice state :archives 0))
-      (card-ability state :runner (refresh crypsis) 0) ; Match strength
-      (card-ability state :runner (refresh crypsis) 1) ; Break
+      (card-ability state :runner (refresh crypsis) 1) ; Match strength
+      (card-ability state :runner (refresh crypsis) 0) ; Break
+      (click-prompt state :runner "End the run")
       (is (= 1 (get-counters (refresh crypsis) :virus))
           "Crypsis has 1 virus counter")
       (run-continue state)
@@ -606,8 +612,9 @@
       (is (zero? (get-counters (refresh crypsis) :virus))
           "Crypsis has 0 virus counters")
       (run-on state "Archives")
-      (card-ability state :runner (refresh crypsis) 0) ; Match strength
-      (card-ability state :runner (refresh crypsis) 1) ; Break
+      (card-ability state :runner (refresh crypsis) 1) ; Match strength
+      (card-ability state :runner (refresh crypsis) 0) ; Break
+      (click-prompt state :runner "End the run")
       (is (zero? (get-counters (refresh crypsis) :virus))
           "Crypsis has 0 virus counters")
       (run-jack-out state)
@@ -618,13 +625,13 @@
     (play-from-hand state :runner "Crypsis")
     (let [crypsis (get-program state 0)]
       (run-on state "Archives")
-      (card-ability state :runner (refresh crypsis) 0) ; Match strength
-      (card-ability state :runner (refresh crypsis) 1) ; Break
+      (card-ability state :runner (refresh crypsis) 1) ; Match strength
+      (card-ability state :runner (refresh crypsis) 0) ; Break
+      (click-prompt state :runner "End the run")
       (is (zero? (get-counters (refresh crypsis) :virus))
-          "Crypsis has nil virus counters")
+          "Crypsis has 0 virus counters")
       (run-jack-out state)
-      (is (= "Crypsis" (:title (first (:discard (get-runner)))))
-          "Crypsis was trashed"))))
+      (is (= 2 (count (:discard (get-runner)))) "Crypsis was trashed"))))
 
 (deftest darwin
   ;; Darwin - starts at 0 strength
@@ -871,7 +878,10 @@
     (let [fae (get-program state 0)]
       (run-on state :archives)
       (core/rez state :corp (get-ice state :archives 0))
+      (card-ability state :runner fae 1)
       (card-ability state :runner fae 0)
+      (click-prompt state :runner "Trace 3 - Gain 3 [Credits]")
+      (click-prompt state :runner "Trace 2 - End the run")
       (is (refresh fae) "Faerie not trashed until encounter over")
       (run-continue state)
       (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed"))))
@@ -915,8 +925,7 @@
         (card-ability state :runner faust 0)
         (click-prompt state :runner "End the run")
         (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
-        (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
-        (println (map :text (:log @state))))))
+        (is (= 1 (count (:discard (get-runner)))) "1 card trashed"))))
   (testing "Basic test: Pump by discarding"
     (do-game
       (new-game {:runner {:deck ["Faust" (qty "Sure Gamble" 3)]}})
@@ -2423,6 +2432,7 @@
             credits (:credit (get-corp))]
         (run-on state "HQ")
         (card-ability state :runner tycoon 0)
+        (click-prompt state :runner "End the run")
         (card-ability state :runner tycoon 1)
         (is (= 4 (:current-strength (refresh tycoon))) "Tycoon strength pumped to 4.")
         (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
@@ -2444,6 +2454,7 @@
             nisei (get-scored state :corp 0)]
         (run-on state "HQ")
         (card-ability state :runner tycoon 0)
+        (click-prompt state :runner "End the run")
         (card-ability state :runner tycoon 1)
         (is (= 4 (:current-strength (refresh tycoon))) "Tycoon strength pumped to 4.")
         (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
