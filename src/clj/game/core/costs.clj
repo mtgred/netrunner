@@ -165,7 +165,33 @@
       :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
       (str (quantify amount (name cost-type))))))
 
-(let [cost-types #{:click :forfeit
+(defn build-cost-label
+  "Gets the complete cost-str for specified costs"
+  [costs]
+  (let [cost-string
+        (->> costs
+             merge-costs
+             (map cost->label)
+             (filter some?)
+             (interpose ", ")
+             (apply str))]
+    (when (not (string/blank? cost-string))
+      (capitalize cost-string))))
+
+(defn make-label
+  "Looks into an ability for :label, if it doesn't find it, capitalizes :msg instead."
+  [ability]
+  (let [label (or (:label ability)
+                  (and (string? (:msg ability))
+                       (capitalize (:msg ability)))
+                  "")
+        cost (or (:cost ability)
+                 (:counter-cost ability))]
+    (if (and cost (not (string/blank? label)))
+      (str (build-cost-label cost) ": " label)
+      label)))
+
+(let [cost-types #{:forfeit
                    :hardware :program :resource :connection :ice
                    :net :meat :brain
                    :mill :trash-from-hand :randomly-trash-from-hand
@@ -176,9 +202,10 @@
     (when (and (number? amount)
                (not (neg? amount)))
       (let [cost-string (cost->label [cost-type amount])]
-        (if (some cost-types [cost-type])
-          cost-string
-          (str "pay " cost-string))))))
+        (cond
+          (some cost-types [cost-type]) cost-string
+          (= :click cost-type) (str "spend " cost-string)
+          :else (str "pay " cost-string))))))
 
 (defn build-cost-string
   "Gets the complete cost-str for specified costs"
