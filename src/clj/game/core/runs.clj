@@ -241,14 +241,6 @@
                                     (access-end state side eid c)))))}
         card nil))))
 
-(defn- join-cost-strs
-  [& costs]
-  (->> costs
-       flatten
-       (filter some?)
-       (interpose " and ")
-       (apply str)))
-
 (defn- access-agenda
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
   [state side eid card]
@@ -256,7 +248,7 @@
   (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (let [cost (steal-cost state side card)
         part-cost (partition 2 cost)
-        cost-strs (seq (map build-cost-str part-cost))
+        cost-strs (build-cost-string cost)
         can-pay (can-pay? state side (make-eid state eid) card (:title card) cost)
         can-steal (can-steal? state side card)
         ; Access abilities are useless in the discard
@@ -266,13 +258,13 @@
         ability-strs (mapv #(make-label (access-ab %)) access-ab-cards)
         ;; strs
         steal-str (when (and can-steal can-pay)
-                    (if cost-strs
+                    (if (not (string/blank? cost-strs))
                       ["Pay to steal"]
                       ["Steal"]))
         no-action-str (when-not (= steal-str ["Steal"])
                         ["No action"])
-        prompt-str (if cost-strs
-                     (str " " (join-cost-strs (string/capitalize (first cost-strs)) (map lower-case (rest cost-strs))) " to steal?")
+        prompt-str (if (not (string/blank? cost-strs))
+                     (str " " cost-strs " to steal?")
                      "")
         prompt-str (str "You accessed " (:title card) "." prompt-str)
         choices (vec (concat ability-strs steal-str no-action-str))]
@@ -330,6 +322,14 @@
     ;; Check if the zone-reveal keyword exists in the flags property of the card definition
     (when-let [reveal-fn (get-in cdef [:flags reveal-kw])]
       (reveal-fn state side (make-eid state) card nil))))
+
+(defn- join-cost-strs
+  [& costs]
+  (->> costs
+       flatten
+       (filter some?)
+       (interpose " and ")
+       (apply str)))
 
 (defn msg-handle-access
   "Generate the message from the access"

@@ -145,14 +145,13 @@
      (str (or verb2 (str verb "s")) " ")
      (str cost-str " to " verb " "))))
 
-(defn- cost-names
-  "Converts a cost (amount attribute pair) to a string for printing"
+(defn cost->label
   [[cost-type amount]]
   (when (and (number? amount)
-             (pos? amount))
+             (not (neg? amount)))
     (case cost-type
-      :credit (str "pay " amount " [Credits]")
-      :click (str "spend " (->> "[Click]" repeat (take amount) (apply str)))
+      :credit (str amount " [Credits]")
+      :click (->> "[Click]" repeat (take amount) (apply str))
       :forfeit (str "forfeit " (quantify amount "Agenda"))
       :hardware (str "trash " (quantify amount "installed hardware" ""))
       :program (str "trash " (quantify amount "installed program"))
@@ -164,19 +163,36 @@
       :trash-from-hand (str "trash " (quantify amount "card") " from your hand")
       :randomly-trash-from-hand (str "trash " (quantify amount "card") " randomly from your hand")
       :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
-      (str "pay " (quantify amount (name cost-type))))))
+      (str (quantify amount (name cost-type))))))
 
-(defn build-cost-str
+(let [cost-types #{:click :forfeit
+                   :hardware :program :resource :connection :ice
+                   :net :meat :brain
+                   :mill :trash-from-hand :randomly-trash-from-hand
+                   :shuffle-installed-to-stack}]
+  (defn cost->string
+    "Converts a cost (amount attribute pair) to a string for printing"
+    [[cost-type amount]]
+    (when (and (number? amount)
+               (not (neg? amount)))
+      (let [cost-string (cost->label [cost-type amount])]
+        (if (some cost-types [cost-type])
+          cost-string
+          (str "pay " cost-string))))))
+
+(defn build-cost-string
   "Gets the complete cost-str for specified costs"
-  [costs]
-  (let [cost-string
-        (->> costs
-             merge-costs
-             (map #(cost-names %))
-             (filter some?)
-             (interpose " and ")
-             (apply str))]
-    (capitalize cost-string)))
+  ([costs] (build-cost-string costs cost->string))
+  ([costs f]
+   (let [cost-string
+         (->> costs
+              merge-costs
+              (map f)
+              (filter some?)
+              (interpose " and ")
+              (apply str))]
+     (when (not (string/blank? cost-string))
+       (capitalize cost-string)))))
 
 (defn pay-forfeit
   "Forfeit agenda as part of paying for a card or ability

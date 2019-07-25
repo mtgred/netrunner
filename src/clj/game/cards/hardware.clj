@@ -110,8 +110,8 @@
                                    (continue-ability
                                      state side
                                      {:optional
-                                      {:prompt (msg (build-cost-str [:credit cost])
-                                                    ", plus " (build-cost-str additional-costs)
+                                      {:prompt (msg (build-cost-string [:credit cost])
+                                                    ", plus " (lower-case (build-cost-string additional-costs))
                                                     " as an additional cost to rez " cname "?")
                                        :player :corp
                                        :yes-ability {:effect (effect (rez :corp c))}

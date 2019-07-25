@@ -17,7 +17,7 @@
 (defn runner-pay-or-break
   "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, etc)"
   [cost subs label]
-  (let [cost-str (build-cost-str [cost])
+  (let [cost-str (build-cost-string cost cost->label)
         subs-str (quantify subs "subroutine")]
     {:cost cost
      :label (str label " " subs-str)
