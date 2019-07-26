@@ -1311,7 +1311,7 @@
 
    "Imp"
    {:data {:counter {:virus 2}}
-    :interactions {:access-ability {:label "[Imp]: Trash card"
+    :interactions {:access-ability {:label "Trash card"
                                     :req (req (and (not (get-in @state [:per-turn (:cid card)]))
                                                    (pos? (get-counters card :virus))))
                                     :counter-cost [:virus 1]

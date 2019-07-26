@@ -363,7 +363,7 @@
       (play-from-hand state :runner "Demolisher")
       (let [credits (:credit (get-runner))]
         (run-empty-server state :hq)
-        (click-prompt state :runner "[Imp]: Trash card")
+        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
         (is (= (:credit (get-runner)) (+ 1 credits)) "Demolisher earns a credit when trashing with Imp")))))
 
 (deftest desperado
@@ -947,7 +947,7 @@
             counters (get-counters (refresh mache) :power)
             hand (-> (get-runner) :hand count)]
         (run-empty-server state :hq)
-        (click-prompt state :runner "[Imp]: Trash card")
+        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
         (is (= counters (get-counters (refresh mache) :power)) "Mache should gain no counters from trashing a card with no trash cost")
         (run-empty-server state :remote1)
         (click-prompt state :runner "Pay 4 [Credits] to trash")

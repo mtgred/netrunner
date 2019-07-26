@@ -115,7 +115,7 @@
       :connection (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) amount))
       :ice (<= 0 (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount))
       (:net :meat :brain) (<= amount (count (get-in @state [:runner :hand])))
-      :mill (<= 0 (- (count (get-in @state [side :deck])) amount))
+      :trash-from-deck (<= 0 (- (count (get-in @state [side :deck])) amount))
       (:trash-from-hand :randomly-trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount))
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
       ;; default to cannot afford
@@ -150,18 +150,28 @@
   (when (and (number? amount)
              (not (neg? amount)))
     (case cost-type
+      ; symbols
       :credit (str amount " [Credits]")
       :click (->> "[Click]" repeat (take amount) (apply str))
-      :forfeit (str "forfeit " (quantify amount "Agenda"))
+      :trash "[Trash]"
+      ; trashing installed cards
       :hardware (str "trash " (quantify amount "installed hardware" ""))
       :program (str "trash " (quantify amount "installed program"))
       :resource (str "trash " (quantify amount "installed resource"))
       :connection (str "trash " (quantify amount "installed connection resource"))
       :ice (str "trash " (quantify amount "installed rezzed ICE" ""))
-      (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
-      :mill (str "trash " (quantify amount "card") " from the top of your deck")
+      ; trashing non-installed cards
+      :trash-from-deck (str "trash " (quantify amount "card") " from the top of your deck")
       :trash-from-hand (str "trash " (quantify amount "card") " from your hand")
       :randomly-trash-from-hand (str "trash " (quantify amount "card") " randomly from your hand")
+      ; damage
+      (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
+      ; counters
+      (:agenda :power :virus :advancement) (if (< 1 amount)
+                                             (quantify amount (str "hosted " (name cost-type) " counter"))
+                                             (str "hosted " (name cost-type) " counter"))
+      ; other
+      :forfeit (str "forfeit " (quantify amount "Agenda"))
       :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
       (str (quantify amount (name cost-type))))))
 
@@ -185,17 +195,22 @@
                   (and (string? (:msg ability))
                        (capitalize (:msg ability)))
                   "")
-        cost (or (:cost ability)
-                 (:counter-cost ability))]
-    (if (and cost (not (string/blank? label)))
+        cost (concat (:cost ability)
+                     (when-let [cost (:counter-cost ability)]
+                       (when (not= :credit (first cost))
+                         cost))
+                     (when-let [cost (:advance-counter-cost ability)]
+                       [:advancement cost]))]
+    (if (and (seq cost) (not (string/blank? label)))
       (str (build-cost-label cost) ": " label)
       label)))
 
-(let [cost-types #{:forfeit
+(let [cost-types #{:trash
                    :hardware :program :resource :connection :ice
                    :net :meat :brain
-                   :mill :trash-from-hand :randomly-trash-from-hand
-                   :shuffle-installed-to-stack}]
+                   :trash-from-deck :trash-from-hand :randomly-trash-from-hand
+                   :agenda :power :virus :advancement
+                   :forfeit :shuffle-installed-to-stack}]
   (defn cost->string
     "Converts a cost (amount attribute pair) to a string for printing"
     [[cost-type amount]]
@@ -284,7 +299,7 @@
                                          " into their stack")))}
                     card nil))
 
-(defn pay-mill
+(defn pay-trash-from-deck
   [state side eid amount]
   (let [cards (take amount (get-in @state [side :deck]))]
     (wait-for (trash-cards state side cards {:unpreventable true :seen false})
@@ -394,7 +409,7 @@
      :brain (pay-damage state side eid :brain amount)
 
      ;; Discard cards from deck or hand
-     :mill (pay-mill state side eid amount)
+     :trash-from-deck (pay-trash-from-deck state side eid amount)
      :trash-from-hand (pay-trash-from-hand state side eid amount)
      :randomly-trash-from-hand (pay-randomly-trash-from-hand state side eid amount)
 

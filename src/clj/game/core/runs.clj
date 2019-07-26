@@ -157,6 +157,12 @@
   [card]
   (interactions card :access-ability))
 
+(defn- access-ab-label
+  [card]
+  (let [title (first (string/split (:title card) #":"))
+        label (make-label (access-ab card))]
+    (str "[" title "] " label)))
+
 (defn access-non-agenda
   "Access a non-agenda. Show a prompt to trash for trashable cards."
   [state side eid c & {:keys [skip-trigger-event]}]
@@ -198,7 +204,7 @@
                              (card-flag-fn? state side card :must-trash true)))
           ; If we must trash, make the label only from the trash abilities
           ; Otherwise, make the label from all abilities
-          ability-strs (mapv #(make-label (access-ab %))
+          ability-strs (mapv access-ab-label
                              (if must-trash? trash-ab-cards access-ab-cards))
           ; Only display "No action" when we're not forced to do anything
           no-action-str (when-not (or must-trash? must-trash-with-credits?)
@@ -255,7 +261,7 @@
         access-ab-cards (when-not (in-discard? card)
                           (seq (filter #(can-trigger? state :runner (access-ab %) % [card])
                                        (all-active state :runner))))
-        ability-strs (mapv #(make-label (access-ab %)) access-ab-cards)
+        ability-strs (mapv access-ab-label access-ab-cards)
         ;; strs
         steal-str (when (and can-steal can-pay)
                     (if (not (string/blank? cost-strs))

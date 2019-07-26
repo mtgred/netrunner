@@ -2704,7 +2704,7 @@
       (core/rez state :corp hostile)
       (run-empty-server state "Server 1")
       (is (seq (:prompt (get-runner))) "Prompting to trash.")
-      (click-prompt state :runner "[Salsette Slums]: Remove card from game")
+      (click-prompt state :runner "[Salsette Slums] Remove card from game")
       (is (empty? (:prompt (get-runner))) "All prompts done")
       (is (= 3 (count (:hand (get-runner)))) "On-trash ability of other Hostile didn't fire")
       (is (= (:cid ts) (:cid (last (:rfg (get-corp))))) "Tech Startup was removed from game")
@@ -2717,9 +2717,9 @@
       (click-prompt state :runner "No action")
       (run-empty-server state :remote3)
       (is (seq (:prompt (get-runner))) "Prompting to trash")
-      (is (= ["[Salsette Slums]: Remove card from game" "Pay 1 [Credits] to trash" "No action"]
+      (is (= ["[Salsette Slums] Remove card from game" "Pay 1 [Credits] to trash" "No action"]
              (->> (get-runner) :prompt first :choices)) "Second Salsette Slums can be used")
-      (click-prompt state :runner "[Salsette Slums]: Remove card from game")
+      (click-prompt state :runner "[Salsette Slums] Remove card from game")
       (is (= 2 (count (:rfg (get-corp)))) "Two cards should be RFG now"))))
 
 (deftest scrubber

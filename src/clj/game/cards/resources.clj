@@ -1374,7 +1374,7 @@
                                       (not (has-subtype? % "Virus"))
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target 
+                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target
                                                  {:host-card card
                                                   :ignore-install-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip"
@@ -1896,7 +1896,7 @@
    "Salsette Slums"
    {:interactions
     {:access-ability
-     {:label "[Salsette Slums]: Remove card from game"
+     {:label "Remove card from game"
       :req (req (and (not (get-in @state [:per-turn (:cid card)]))
                      (:trash target)
                      (can-pay? state :runner {:source card :source-type :ability}

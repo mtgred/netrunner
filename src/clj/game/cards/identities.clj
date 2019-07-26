@@ -419,7 +419,7 @@
     {:access-ability
      {:async true
       :once :per-turn
-      :label "[Freedom]: Trash card"
+      :label "Trash card"
       :req (req (and (not (:disabled card))
                      (not (agenda? target))
                      (<= (:cost target)
