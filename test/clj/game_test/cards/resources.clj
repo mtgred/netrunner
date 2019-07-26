@@ -1961,7 +1961,7 @@
       (card-ability state :runner (get-resource state 0) 0)
       (is (zero? (:click (get-runner))) "Should now have 0 clicks")
       (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
-      (is (last-log-contains? state "uses Logic Bomb"))
+      (is (last-log-contains? state "use Logic Bomb"))
       (is (last-log-contains? state "\\[Click\\]\\[Click\\]") "Log should mention 2 clicks")))
   (testing "if the runner has no clicks left"
     (do-game
@@ -1978,7 +1978,7 @@
       (card-ability state :runner (get-resource state 0) 0)
       (is (zero? (:click (get-runner))) "Should still have 0 clicks")
       (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
-      (is (last-log-contains? state "uses Logic Bomb"))
+      (is (last-log-contains? state "use Logic Bomb"))
       (is (not (last-log-contains? state "\\[Click\\]")) "Log shouldn't mention any clicks"))))
 
 (deftest london-library

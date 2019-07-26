@@ -75,7 +75,7 @@
    "Advanced Assembly Lines"
    {:effect (effect (gain-credits 3))
     :msg (msg "gain 3 [Credits]")
-    :abilities [{:label "[Trash]: Install a non-agenda card from HQ"
+    :abilities [{:label "Install a non-agenda card from HQ"
                  :async true
                  :prompt "Select a non-agenda card to install from HQ"
                  :req (req (not (:run @state)))
@@ -84,6 +84,7 @@
                                       (in-hand? %)
                                       (corp? %))}
                  :msg (msg (corp-install-msg target))
+                 :cost [:trash]
                  :effect (req (wait-for (trash state side card {:cause :ability-cost})
                                         (corp-install state side eid target nil nil)))}]}
 
@@ -106,7 +107,8 @@
                    "Pay 2 [Credits] to use Aggressive Secretary ability?")
 
    "Alexa Belsky"
-   {:abilities [{:label "[Trash]: Shuffle all cards in HQ into R&D"
+   {:abilities [{:label "Shuffle all cards in HQ into R&D"
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (show-wait-prompt :corp "Runner to decide whether or not to prevent Alexa Belsky")
                                  (resolve-ability
@@ -135,7 +137,7 @@
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-counter card :power 1))}}
     :abilities [{:label "Gain 2 [Credits] for each counter on Alix T4LB07"
-                 :cost [:click 1]
+                 :cost [:click 1 :trash]
                  :msg (msg "gain " (* 2 (get-counters card :power)) " [Credits]")
                  :effect (effect (trash card {:cause :ability-cost})
                                  (gain-credits (* 2 (get-counters card :power))))}]}
@@ -144,6 +146,7 @@
    {:implementation "Card swapping is manual"
     :advanceable :always
     :abilities [{:label "Swap 1 card in HQ and Archives for each advancement token"
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost}))
                  :msg (msg "swap " (get-counters card :advancement) " cards in HQ and Archives")}]}
 
@@ -229,12 +232,13 @@
 
    "Bioroid Work Crew"
    {:implementation "Timing restriction of ability use not enforced"
-    :abilities [{:label "[Trash]: Install 1 card, paying all costs"
+    :abilities [{:label "Install 1 card, paying all costs"
                  :req (req (= (:active-player @state) :corp))
                  :prompt "Select a card in HQ to install"
                  :choices {:req #(and (not (operation? %))
                                       (in-hand? %)
                                       (corp? %))}
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (corp-install target nil))
                  :msg (msg (corp-install-msg target))}]}
@@ -293,7 +297,7 @@
                                  (add-counter card :credit target))
                  :msg (msg "move " target " [Credit] to C.I. Fund")}
                 {:label "Take all credits from C.I. Fund"
-                 :cost [:credit 2]
+                 :cost [:credit 2 :trash]
                  :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
                  :effect (effect (trash card {:cause :ability-cost})
                                  (gain-credits (get-counters card :credit)))}]
@@ -451,7 +455,7 @@
    {:advanceable :always
     :abilities [{:label "Trash a connection"
                  :async true
-                 :cost [:click 1]
+                 :cost [:click 1 :trash]
                  :req (req (>= (get-counters card :advancement) 2))
                  :choices {:req #(has-subtype? % "Connection")}
                  :msg (msg "trash " (:title target))
@@ -459,7 +463,7 @@
                                  (trash eid target nil))}
                 {:label "Do 2 meat damage"
                  :async true
-                 :cost [:click 1]
+                 :cost [:click 1 :trash]
                  :req (req (>= (get-counters card :advancement) 2))
                  :msg "do 2 meat damage"
                  :effect (effect (trash card {:cause :ability-cost})
@@ -645,7 +649,7 @@
    "Elizabeth Mills"
    {:effect (effect (lose-bad-publicity 1))
     :msg "remove 1 bad publicity"
-    :abilities [{:cost [:click 1] :label "Trash a location"
+    :abilities [{:cost [:click 1 :trash] :label "Trash a location"
                  :msg (msg "trash " (:title target) " and take 1 bad publicity")
                  :choices {:req #(has-subtype? % "Location")}
                  :effect (effect (trash card {:cause :ability-cost})
@@ -662,6 +666,7 @@
                             :effect (effect (add-counter card :power 1)
                                             (system-msg (str "places 1 power counter on Estelle Moon")))}}
     :abilities [{:label "Draw 1 card and gain 2 [Credits] for each power counter"
+                 :cost [:trash]
                  :effect (req (let [counters (get-counters card :power)
                                     credits (* 2 counters)]
                                 (trash state side card {:cause :ability-cost})
@@ -694,7 +699,7 @@
                  :choices (req (cancellable (filter asset?
                                                     (:deck corp))
                                             :sorted))
-                 :cost [:credit 1]
+                 :cost [:credit 1 :trash]
                  :label "Search R&D for an asset"
                  :effect (effect (trash card {:cause :ability-cost})
                                  (reveal target)
@@ -719,6 +724,7 @@
    {:advanceable :always
     :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
                  :msg (msg "remove " (get-counters card :advancement) " bad publicity")
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (lose-bad-publicity (get-counters card :advancement)))}]}
 
@@ -805,7 +811,7 @@
    "GRNDL Refinery"
    {:advanceable :always
     :abilities [{:label "Gain 4 [Credits] for each advancement token on GRNDL Refinery"
-                 :cost [:click 1]
+                 :cost [:click 1 :trash]
                  :msg (msg "gain " (* 4 (get-counters card :advancement)) " [Credits]")
                  :effect (effect (trash card {:cause :ability-cost})
                                  (gain-credits (* 4 (get-counters card :advancement))))}]}
@@ -950,8 +956,9 @@
     :abilities [{:msg "look at the top card of the Runner's Stack"
                  :effect (effect (prompt! card (str "The top card of the Runner's Stack is "
                                                     (:title (first (:deck runner)))) ["OK"] {}))}
-                {:label "[Trash]: Trash the top card of the Runner's Stack"
+                {:label "Trash the top card of the Runner's Stack"
                  :msg (msg "trash " (:title (first (:deck runner))) " from the Runner's Stack")
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (mill :runner))}]}
 
@@ -1117,6 +1124,7 @@
                                     :effect (effect (gain-credits 1))}}
     :abilities [{:label "Trash to gain 2 [Credits]"
                  :msg "gain 2 [Credits]"
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (gain-credits 2))}
                 {:label "Spend an agenda counter to gain 2 [Credits]"
@@ -1148,7 +1156,7 @@
                  :msg "to force the Runner to lose a [Click] next turn and place a power counter on itself"
                  :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
                               (add-counter state side card :power 1))}
-                {:cost [:click 1]
+                {:cost [:click 1 :trash]
                  :counter-cost [:power 3]
                  :msg "gain 4 [Click] and trash itself"
                  :effect (effect (trash card {:cause :ability-cost
@@ -1280,7 +1288,7 @@
                    :effect (effect (add-counter card :power 2)
                                    (system-msg (str "places 2 power counters on NASX")))}
                   {:label "[Trash] and gain 2 [Credits] for each power counter"
-                   :cost [:click 1]
+                   :cost [:click 1 :trash]
                    :msg (msg "gain " (* 2 (get-counters card :power)) " [Credits]")
                    :effect (effect (trash card {:cause :ability-cost})
                                    (gain-credits (* 2 (get-counters card :power))))}]})
@@ -1344,9 +1352,10 @@
    "NGO Front"
    (letfn [(builder [cost cred]
              {:advance-counter-cost cost
+              :cost [:trash]
               :effect (effect (trash card {:cause :ability-cost})
                               (gain-credits cred))
-              :label (str "[Trash]: Gain " cred " [Credits]")
+              :label (str "Gain " cred " [Credits]")
               :msg (str "gain " cred " [Credits]")})]
      {:advanceable :always
       :abilities [(builder 1 5)
@@ -1618,7 +1627,7 @@
    {:events {:damage {:req (req (and (pos? (nth targets 2)) (= :meat target)))
                       :effect (effect (add-counter card :advancement 1)
                                       (system-msg "adds 1 advancement token to Reconstruction Contract"))}}
-    :abilities [{:label "[Trash]: Move advancement tokens to another card"
+    :abilities [{:label "Move advancement tokens to another card"
                  :prompt "Select a card that can be advanced"
                  :choices {:req can-be-advanced?}
                  :effect (req (let [move-to target]
@@ -1627,6 +1636,7 @@
                                   {:prompt "Move how many tokens?"
                                    :choices {:number (req (get-counters card :advancement))
                                              :default (req (get-counters card :advancement))}
+                                   :cost [:trash]
                                    :effect (effect (trash card {:cause :ability-cost})
                                                    (add-counter move-to :advancement target {:placed true})
                                                    (system-msg (str "trashes Reconstruction Contract to move " target
@@ -1636,7 +1646,7 @@
 
    "Reversed Accounts"
    {:advanceable :always
-    :abilities [{:cost [:click 1]
+    :abilities [{:cost [:click 1 :trash]
                  :label "Force the Runner to lose 4 [Credits] per advancement"
                  :msg (msg "force the Runner to lose " (min (* 4 (get-counters card :advancement)) (:credit runner)) " [Credits]")
                  :effect (effect (trash card {:cause :ability-cost})
@@ -1672,7 +1682,7 @@
 
    "Ronin"
    {:advanceable :always
-    :abilities [{:cost [:click 1]
+    :abilities [{:cost [:click 1 :trash]
                  :req (req (>= (get-counters card :advancement) 4))
                  :msg "do 3 net damage"
                  :async true
@@ -1719,17 +1729,18 @@
                  :choices {:counter :credit}
                  :msg (msg "gain " target " [Credits]")
                  :effect (effect (gain-credits target))}
-                {:label "[Trash]: Move any number of [Credits] to your credit pool"
+                {:label "Move any number of [Credits] to your credit pool"
                  :prompt "How many [Credits]?"
                  :choices {:counter :credit}
                  :msg (msg "trash it and gain " target " [Credits]")
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (gain-credits target))}]}
 
    "Security Subcontract"
    {:abilities [{:choices {:req #(and (ice? %)
                                       (rezzed? %))}
-                 :cost [:click 1]
+                 :cost [:click 1 :trash]
                  :msg (msg "trash " (:title target) " to gain 4 [Credits]")
                  :label "Trash a rezzed ICE to gain 4 [Credits]"
                  :effect (effect (trash target {:cause :ability-cost})
@@ -1768,18 +1779,20 @@
    {:abilities [{:cost [:click 1]
                  :msg "draw 1 card from the bottom of R&D"
                  :effect (effect (move (last (:deck corp)) :hand))}
-                {:label "[Trash]: Search R&D for an agenda"
+                {:label "Search R&D for an agenda"
                  :prompt "Choose an agenda to add to the bottom of R&D"
                  :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
                  :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
+                 :cost [:trash]
                  :effect (effect (reveal target)
                                  (trash card {:cause :ability-cost})
                                  (shuffle! :deck)
                                  (move target :deck))}
-                {:label "[Trash]: Search Archives for an agenda"
+                {:label "Search Archives for an agenda"
                  :prompt "Choose an agenda to add to the bottom of R&D"
                  :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
                  :choices (req (cancellable (filter agenda? (:discard corp)) :sorted))
+                 :cost [:trash]
                  :effect (effect (reveal target)
                                  (trash card {:cause :ability-cost})
                                  (move target :deck))}]}
@@ -1843,6 +1856,7 @@
     :abilities [{:label "Trace 3 - Give the Runner 1 tag"
                  :req (req (:corp-phase-12 @state))
                  :async true
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (resolve-ability
                                    {:trace {:base 3
@@ -1995,6 +2009,7 @@
       :abilities [{:label "Derez 1 card for each advancement token"
                    :req (req (pos? (get-counters card :advancement)))
                    :msg (msg "derez " (quantify (get-counters card :advancement) "card"))
+                   :cost [:trash]
                    :effect (req (let [advancements (get-counters card :advancement)]
                                   (trash state side card {:cause :ability-cost})
                                   (show-wait-prompt state :runner (str "Corp to derez "
@@ -2041,6 +2056,7 @@
    {:advanceable :always
     :abilities [{:label "Gain credits"
                  :msg (msg "gain " (* 2 (get-counters card :advancement)) " [Credits]")
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (gain-credits (* 2 (get-counters card :advancement))))}]}
 
@@ -2189,7 +2205,8 @@
                  :cost [:credit 1]
                  :effect (effect (expose-prevent 1))}
                 {:msg "prevent 1 card from being exposed"
-                 :label "[Trash]: Prevent 1 card from being exposed"
+                 :label "Prevent 1 card from being exposed"
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (expose-prevent 1))}]}
 

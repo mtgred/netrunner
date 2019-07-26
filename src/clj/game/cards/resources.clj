@@ -28,6 +28,7 @@
                                                 (not (:access @state))))]
      {:implementation "Click Shard to install when last ICE is passed, but before hitting Successful Run button"
       :abilities [(merge {:effect (effect (trash card {:cause :ability-cost}) (effect-fn eid card target))
+                          :cost [:trash]
                           :msg message}
                     ability-options)]
       :install-cost-bonus (req (when (can-install-shard? state run)
@@ -147,7 +148,7 @@
                                  (add-counter card :credit target))
                  :msg (msg "move " target " [Credit] to Algo Trading")}
                 {:label "Take all credits from Algo Trading"
-                 :cost [:click 1]
+                 :cost [:click 1 :trash]
                  :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
                  :effect (effect (gain-credits (get-counters card :credit))
                                  (trash card {:cause :ability-cost}))}]
@@ -156,7 +157,7 @@
                                                   (system-msg (str "adds 2 [Credit] to Algo Trading")))}}}
 
    "All-nighter"
-   {:abilities [{:cost [:click 1]
+   {:abilities [{:cost [:click 1 :trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (gain :click 2))
                  :msg "gain [Click][Click]"}]}
@@ -223,11 +224,12 @@
                  :once :per-run
                  :msg (msg "places 1 power counter on " (:title card))
                  :effect (effect (add-counter card :power 1))}
-                {:label "[Trash]: Derez a piece of ice currently being encountered"
+                {:label "Derez a piece of ice currently being encountered"
                  :msg "derez a piece of ice currently being encountered and take 1 tag"
                  :req (req (and current-ice
                                 (rezzed? current-ice)
                                 (<= (get-strength current-ice) (get-counters (get-card state card) :power))))
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (derez current-ice)
                                  (gain-tags eid 1))}]}
@@ -334,14 +336,16 @@
     :events {:pre-damage {:req (req (= target :net))
                           :effect (effect (update! (assoc card :dmg-amount (nth targets 2))))}}
     :abilities [{:msg (msg "prevent " (dec (:dmg-amount card)) " net damage")
+                 :cost [:trash]
                  :effect (effect (damage-prevent :net (dec (:dmg-amount card)))
                                  (trash card {:cause :ability-cost}))}]}
 
    "Biometric Spoofing"
    {:interactions {:prevent [{:type #{:net :brain :meat}
                               :req (req true)}]}
-    :abilities [{:label "[Trash]: Prevent 2 damage"
+    :abilities [{:label "Prevent 2 damage"
                  :msg "prevent 2 damage"
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (damage-prevent :brain 2)
                                  (damage-prevent :net 2)
@@ -434,6 +438,7 @@
                               :req (req true)}]}
     :abilities [{:label "[Trash] and trash all cards in Grip to prevent all meat damage"
                  :msg "trash all cards in their Grip and prevent all meat damage"
+                 :cost [:trash]
                  :effect (req (trash state side card {:cause :ability-cost})
                               (doseq [c (:hand runner)]
                                 (trash state side c {:unpreventable true}))
@@ -451,9 +456,10 @@
    {:events {:pre-resolve-damage {:req (req (pos? (last targets)))
                                   :effect (effect (add-counter card :power 1)
                                                   (system-msg :runner (str "places 1 power counter on Clan Vengeance")))}}
-    :abilities [{:label "[Trash]: Trash 1 random card from HQ for each power counter"
+    :abilities [{:label "Trash 1 random card from HQ for each power counter"
                  :req (req (pos? (get-counters card :power)))
                  :msg (msg "trash " (min (get-counters card :power) (count (:hand corp))) " cards from HQ")
+                 :cost [:trash]
                  :effect (effect (trash-cards (take (min (get-counters card :power) (count (:hand corp)))
                                                     (shuffle (:hand corp))))
                                  (trash card {:cause :ability-cost}))}]}
@@ -540,7 +546,7 @@
 
    "Counter Surveillance"
    {:implementation "Does not prevent access of cards installed in the root of a server"
-    :abilities [{:cost [:click 1]
+    :abilities [{:cost [:click 1 :trash]
                  :makes-run true
                  :prompt "Choose a server to run with Counter Surveillance"
                  :msg (msg "run " target " and trashes Counter Surveillance")
@@ -574,6 +580,7 @@
     :recurring 2
     :abilities [{:label "Trash to prevent up to 3 meat damage"
                  :msg "prevent up to 3 meat damage"
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost}) (damage-prevent :meat 3))}]}
 
    "Crowdfunding"
@@ -628,13 +635,13 @@
                          :autoresolve (get-autoresolve :auto-add)
                          :yes-ability {:effect (effect (add-counter card :virus 1)
                                                        (system-msg "places a virus counter on Crypt"))}}}}
-    :abilities [{:label "[Click][Trash]: install a virus program from the stack"
+    :abilities [{:label "[Click]install a virus program from the stack"
                  :prompt "Choose a virus"
                  :msg (msg "install " (:title target) " from the stack")
                  :choices (req (cancellable (filter #(and (program? %)
                                                           (has-subtype? % "Virus"))
                                                     (:deck runner)) :sorted))
-                 :cost [:click 1]
+                 :cost [:click 1 :trash]
                  :counter-cost [:virus 3]
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
@@ -646,6 +653,7 @@
    (let [trashme {:effect (effect (unregister-events card)
                                   (damage eid :meat 3 {:unboostable true :card card})
                                   (trash card {:cause :ability-cost}))
+                  :cost [:trash]
                   :msg (msg "trashes Dadiana Chacon and suffers 3 meat damage")}
          ability {:once :per-turn
                   :msg "gain 1 [Credits]"
@@ -700,6 +708,7 @@
 
    "DDoS"
    {:abilities [{:msg "prevent the corp from rezzing the outermost piece of ice during a run on any server this turn"
+                 :cost [:trash]
                  :effect (effect
                            (register-turn-flag!
                              card :can-rez
@@ -718,6 +727,7 @@
                  :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (installed? %))}
+                 :cost [:trash]
                  :effect (effect (update! (assoc card :dean-target target))
                                  (trash (get-card state card) {:cause :ability-cost})
                                  (update-breaker-strength target))}]
@@ -734,7 +744,10 @@
    "Decoy"
    {:interactions {:prevent [{:type #{:tag}
                               :req (req true)}]}
-    :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent :runner 1) (trash card {:cause :ability-cost}))}]}
+    :abilities [{:cost [:trash]
+                 :msg "avoid 1 tag"
+                 :effect (effect (tag-prevent :runner 1)
+                                 (trash card {:cause :ability-cost}))}]}
 
    "District 99"
    (letfn [(eligible-cards [runner] (filter #(same-card? :faction (:identity runner) %)
@@ -905,11 +918,13 @@
    "Fall Guy"
    {:interactions {:prevent [{:type #{:trash-resource}
                               :req (req true)}]}
-    :abilities [{:label "[Trash]: Prevent another installed resource from being trashed"
+    :abilities [{:label "Prevent another installed resource from being trashed"
+                 :cost [:trash]
                  :effect (effect (trash card {:unpreventable true :cause :ability-cost})
                                  (trash-prevent :resource 1))}
-                {:label "[Trash]: Gain 2 [Credits]"
+                {:label "Gain 2 [Credits]"
                  :msg "gain 2 [Credits]"
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (gain-credits 2))}]}
 
@@ -1014,8 +1029,9 @@
                                (continue-ability state :runner ability card nil))))}}}
 
    "Gbahali"
-   {:abilities [{:label "[Trash]: Break the last subroutine on the encountered piece of ice"
+   {:abilities [{:label "Break the last subroutine on the encountered piece of ice"
                  :req (req (and (:run @state) (rezzed? current-ice)))
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (system-msg :runner
                                              (str "trashes Gbahali to break the last subroutine on "
@@ -1111,8 +1127,9 @@
    {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ICE"
                  :msg "prevent a \"when encountered\" ability on a piece of ICE"
                  :once :per-turn}
-                {:label "[Trash]: Install the top 3 cards of your Stack facedown"
+                {:label "Install the top 3 cards of your Stack facedown"
                  :msg "install the top 3 cards of their Stack facedown"
+                 :cost [:trash]
                  :effect (req (trash state side card {:cause :ability-cost})
                               (doseq [c (take 3 (get-in @state [:runner :deck]))]
                                 (runner-install state side (make-eid state {:source card :source-type :runner-install}) c {:facedown true})))}]}
@@ -1142,7 +1159,7 @@
 
    "Investigative Journalism"
    {:req (req (has-bad-pub? state))
-    :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
+    :abilities [{:cost [:click 4 :trash] :msg "give the Corp 1 bad publicity"
                  :effect (effect (gain-bad-publicity :corp 1)
                                  (trash card {:cause :ability-cost}))}]}
 
@@ -1262,8 +1279,9 @@
       :effect (effect (gain-credits 2))}}}
 
    "Kongamato"
-   {:abilities [{:label "[Trash]: Break the first subroutine on the encountered piece of ice"
+   {:abilities [{:label "Break the first subroutine on the encountered piece of ice"
                  :req (req (and (:run @state) (rezzed? current-ice)))
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (system-msg :runner
                                              (str "trashes Kongamato to break the first subroutine on "
@@ -1363,6 +1381,7 @@
                            (when (pos? (:click runner))
                              (str " and loses "
                                   (apply str (repeat (:click runner) "[Click]")))))
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost})
                                  (lose :click (:click runner)))}]}
 
@@ -1392,6 +1411,7 @@
                  :prompt "Choose a piece of ICE protecting a remote server"
                  :choices {:req #(and (ice? %) (rezzed? %) (is-remote? (second (:zone %))))}
                  :msg "derez a piece of ICE protecting a remote server"
+                 :cost [:trash]
                  :effect (effect (derez target)
                                  (trash card {:cause :ability-cost}))}]}
 
@@ -1451,6 +1471,7 @@
                        card nil))
     :abilities [{:msg "draw 1 card"
                  :async true
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost}) (draw eid 1 nil))}]}
 
    "Net Mercur"
@@ -1563,7 +1584,7 @@
                               :effect (effect (draw eid 1 nil))}}}
 
    "Officer Frank"
-   {:abilities [{:cost [:credit 1]
+   {:abilities [{:cost [:credit 1 :trash]
                  :req (req (some #(= :meat %) (map first (turn-events state :runner :damage))))
                  :msg "force the Corp to trash 2 random cards from HQ"
                  :effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))
@@ -1733,6 +1754,7 @@
                                   (resolve-ability
                                     state side
                                     {:msg (msg "pay " cost " [Credit] and trash " (:title target))
+                                     :cost [:trash]
                                      :effect (effect (lose-credits cost)
                                                      (trash card {:cause :ability-cost})
                                                      (trash target))}
@@ -1775,13 +1797,14 @@
                  :label "Expose 1 installed card"
                  :choices {:req installed?}
                  :async true
+                 :cost [:trash]
                  :effect (effect (expose eid target)
                                  (trash card {:cause :ability-cost}))}]}
 
    "Reclaim"
    {:abilities
     [{:label "Install a program, piece of hardware, or virtual resource from your Heap"
-      :cost [:click 1]
+      :cost [:click 1 :trash]
       :req (req (not-empty (:hand runner)))
       :prompt "Choose a card to trash"
       :choices (req (cancellable (:hand runner) :sorted))
@@ -1866,7 +1889,8 @@
    "Sacrificial Clone"
    {:interactions {:prevent [{:type #{:net :brain :meat}
                               :req (req true)}]}
-    :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
+    :abilities [{:cost [:trash]
+                 :effect (req (doseq [c (concat (get-in runner [:rig :hardware])
                                                 (filter #(not (has-subtype? % "Virtual"))
                                                         (get-in runner [:rig :resource]))
                                                 (:hand runner))]
@@ -1881,7 +1905,8 @@
    "Sacrificial Construct"
    {:interactions {:prevent [{:type #{:trash-program :trash-hardware}
                               :req (req true)}]}
-    :abilities [{:effect (effect (trash-prevent :program 1) (trash-prevent :hardware 1)
+    :abilities [{:cost [:trash]
+                 :effect (effect (trash-prevent :program 1) (trash-prevent :hardware 1)
                                  (trash card {:cause :ability-cost}))}]}
 
    "Safety First"
@@ -1930,7 +1955,7 @@
                              card nil))}}}
 
    "Same Old Thing"
-   {:abilities [{:cost [:click 2]
+   {:abilities [{:cost [:click 2 :trash]
                  :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                 (pos? (count (filter event? (:discard runner))))))
                  :prompt "Select an event to play"
@@ -2045,6 +2070,7 @@
    "Tallie Perrault"
    {:abilities [{:label "Draw 1 card for each Corp bad publicity"
                  :async true
+                 :cost [:trash]
                  :effect (req (wait-for (trash state side card {:cause :ability-cost})
                                         (draw state side eid (count-bad-pub state) nil)))
                  :msg (msg "draw " (count-bad-pub state) " cards")}]
@@ -2075,7 +2101,7 @@
                               :req (req (some #(= % (:type target)) '("Hardware" "Program")))
                               :effect (effect (add-counter :runner card :credit 1)
                                               (system-msg (str "places 1 [Credits] on Technical Writer")))}}
-    :abilities [{:cost [:click 1]
+    :abilities [{:cost [:click 1 :trash]
                  :msg (msg "gain " (get-counters card :credit) " [Credits]")
                  :effect (effect (trash card {:cause :ability-cost})
                                  (gain-credits (get-counters card :credit)))}]}
@@ -2188,6 +2214,7 @@
     :abilities [{:msg (msg "give +2 strength to " (:title target))
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (installed? %))}
+                 :cost [:trash]
                  :effect (effect (update! (assoc card :hai-target target))
                                  (trash (get-card state card) {:cause :ability-cost})
                                  (update-breaker-strength target))}]

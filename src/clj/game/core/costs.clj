@@ -108,6 +108,7 @@
       :credit (or (<= 0 (- (get-in @state [side :credit]) amount))
                   (<= 0 (- (total-available-credits state side eid card) amount)))
       :click (<= 0 (- (get-in @state [side :click]) amount))
+      :trash (some? (get-card state card))
       :forfeit (<= 0 (- (count (get-in @state [side :scored])) amount))
       :hardware (<= 0 (- (count (all-installed-runner-type state :hardware)) amount))
       :program (<= 0 (- (count (all-installed-runner-type state :program)) amount))
@@ -236,6 +237,11 @@
      (when (not (string/blank? cost-string))
        (capitalize cost-string)))))
 
+(defn pay-trash
+  "[Trash] cost as part of an ability"
+  [state side eid card amount]
+  (complete-with-result state side eid (str "trashes " (:title card))))
+
 (defn pay-forfeit
   "Forfeit agenda as part of paying for a card or ability
   Amount is always 1 but can be extend if we ever need more than a single forfeit"
@@ -254,9 +260,9 @@
                                                    " (" (:title target) ")"))))}
                     card nil))
 
-(defn pay-trash
+(defn pay-trash-installed
   "Trash a card as part of paying for a card or ability"
-  ([state side eid card card-type amount select-fn] (pay-trash state side eid card card-type amount select-fn nil))
+  ([state side eid card card-type amount select-fn] (pay-trash-installed state side eid card card-type amount select-fn nil))
   ([state side eid card card-type amount select-fn args]
    (continue-ability state side
                      {:prompt (str "Choose " (quantify amount card-type) " to trash")
@@ -375,6 +381,9 @@
   ([state side card action costs cost] (cost-handler state side (make-eid state) card action costs cost))
   ([state side eid card action costs [cost-type amount]]
    (case cost-type
+     ;; Pay credits
+     :credit (pay-credits state side eid card amount)
+
      :click (let [a (first (keep :action action))]
               (when (not= a :steal-cost)
                 ;; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
@@ -385,23 +394,25 @@
               (swap! state assoc-in [side :register :spent-click] true)
               (complete-with-result state side eid (deduct state side [cost-type amount])))
 
+     :trash (pay-trash state side eid card amount)
+
      :forfeit (pay-forfeit state side eid card amount)
 
      ;; Trash installed cards
-     :hardware (pay-trash state side eid card "piece of hardware" amount
-                          (every-pred installed? hardware? (complement facedown?))
-                          {:plural "pieces of hardware"})
-     :program (pay-trash state side eid card "program" amount
-                         (every-pred installed? program? (complement facedown?)))
-     :resource (pay-trash state side eid card "resource" amount
-                          (every-pred installed? resource? (complement facedown?)))
-     :connection (pay-trash state side eid card "connection" amount
-                            (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
-     :ice (pay-trash state :corp eid card "rezzed ICE" amount
-                     (every-pred rezzed? ice?)
-                     {:cause :ability-cost
-                      :keep-server-alive true
-                      :plural "rezzed ICE"})
+     :hardware (pay-trash-installed state side eid card "piece of hardware" amount
+                                    (every-pred installed? hardware? (complement facedown?))
+                                    {:plural "pieces of hardware"})
+     :program (pay-trash-installed state side eid card "program" amount
+                                   (every-pred installed? program? (complement facedown?)))
+     :resource (pay-trash-installed state side eid card "resource" amount
+                                    (every-pred installed? resource? (complement facedown?)))
+     :connection (pay-trash-installed state side eid card "connection" amount
+                                      (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
+     :ice (pay-trash-installed state :corp eid card "rezzed ICE" amount
+                               (every-pred rezzed? ice?)
+                               {:cause :ability-cost
+                                :keep-server-alive true
+                                :plural "rezzed ICE"})
 
      ;; Suffer damage
      :net (pay-damage state side eid :net amount)
@@ -415,9 +426,6 @@
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card amount)
-
-     ;; Pay credits
-     :credit (pay-credits state side eid card amount)
 
      ;; Else
      (do

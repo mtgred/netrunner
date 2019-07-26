@@ -1645,12 +1645,14 @@
                     (system-msg (str "hosts On the Lam on " (:title target))))
     :interactions {:prevent [{:type #{:net :brain :meat :tag}
                               :req (req true)}]}
-    :abilities [{:label "[Trash]: Avoid 3 tags"
+    :abilities [{:label "Avoid 3 tags"
                  :msg "avoid up to 3 tags"
+                 :cost [:trash]
                  :effect (effect (tag-prevent :runner 3)
                                  (trash card {:cause :ability-cost}))}
-                {:label "[Trash]: Prevent up to 3 damage"
+                {:label "Prevent up to 3 damage"
                  :msg "prevent up to 3 damage"
+                 :cost [:trash]
                  :effect (effect (damage-prevent :net 3)
                                  (damage-prevent :meat 3)
                                  (damage-prevent :brain 3)

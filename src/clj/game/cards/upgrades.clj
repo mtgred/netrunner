@@ -175,11 +175,12 @@
    "Bio Vault"
    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
     :advanceable :always
-    :abilities [{:label "[Trash]: End the run"
+    :abilities [{:label "End the run"
                  :advance-counter-cost 2
                  :req (req (:run @state))
                  :msg "end the run"
                  :async true
+                 :cost [:trash]
                  :effect (req (wait-for (trash state :corp card {:cause :ability-cost})
                                         (end-run state :corp eid card)))}]}
 
@@ -224,7 +225,7 @@
 
    "Calibration Testing"
    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-    :abilities [{:label "[Trash]: Place 1 advancement token on a card in this server"
+    :abilities [{:label "Place 1 advancement token on a card in this server"
                  :async true
                  :effect (effect (continue-ability
                                    {:prompt "Select a card in this server"
@@ -250,7 +251,7 @@
                                 :msg "give the Runner 1 tag"}}}
 
    "Code Replicator"
-   {:abilities [{:label "[Trash]: Force the runner to approach the passed piece of ice again"
+   {:abilities [{:label "Force the runner to approach the passed piece of ice again"
                  :req (req (and this-server
                                 (> (count (get-run-ices state)) (:position run))
                                 (:rezzed (get-in (:ices (card->server state card)) [(:position run)]))))
@@ -271,7 +272,7 @@
                   :effect (effect (add-counter card :power 1))}]})
 
    "Corporate Troubleshooter"
-   {:abilities [{:label "[Trash]: Add strength to a rezzed ICE protecting this server" :choices :credit
+   {:abilities [{:label "Add strength to a rezzed ICE protecting this server" :choices :credit
                  :prompt "How many credits?"
                  :effect (req (let [boost target]
                                 (resolve-ability
@@ -322,7 +323,7 @@
                                                                          (purge))}
                                            :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                                card nil))}
-    :abilities [{:label "[Trash]: Purge virus counters"
+    :abilities [{:label "Purge virus counters"
                  :msg "purge virus counters" :effect (effect (trash card) (purge))}]}
 
    "Daruma"
@@ -365,7 +366,7 @@
 
    "Defense Construct"
    {:advanceable :always
-    :abilities [{:label "[Trash]: Add 1 facedown card from Archives to HQ for each advancement token"
+    :abilities [{:label "Add 1 facedown card from Archives to HQ for each advancement token"
                  :req (req (and run
                                 (= (:server run) [:archives])
                                 (pos? (get-counters card :advancement))))
@@ -740,6 +741,7 @@
                                :autoresolve (get-autoresolve :auto-fire)
                                :yes-ability
                                {:msg "force the Runner to approach outermost piece of ice"
+                                :cost [:trash]
                                 :effect (req (swap! state assoc-in [:run :position] (count run-ices))
                                              (trash state side eid card {:cause :ability-cost}))}
                                :end-effect (effect (clear-wait-prompt :runner))}}
@@ -776,11 +778,12 @@
 
    "Marcus Batty"
    {:abilities [{:req (req this-server)
-                 :label "[Trash]: Start a Psi game"
+                 :label "Start a Psi game"
                  :psi {:not-equal {:prompt "Select a rezzed piece of ICE to resolve one of its subroutines"
                                    :choices {:req #(and (ice? %)
                                                         (rezzed? %))}
                                    :msg (msg "resolve a subroutine on " (:title target))}}
+                 :cost [:trash]
                  :effect (effect (trash card {:cause :ability-cost}))}]}
 
    "Mason Bellamy"
@@ -1084,7 +1087,7 @@
                               :effect (effect (init-trace-bonus 2))}}}
 
    "Ryon Knight"
-   {:abilities [{:label "[Trash]: Do 1 brain damage"
+   {:abilities [{:label "Do 1 brain damage"
                  :msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
                  :async true
                  :effect (effect (trash card) (damage eid :brain 1 {:card card}))}]}
@@ -1113,7 +1116,7 @@
    "Self-destruct"
    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
     :abilities [{:req (req this-server)
-                 :label "[Trash]: Trace X - Do 3 net damage"
+                 :label "Trace X - Do 3 net damage"
                  :effect (req (let [serv (card->server state card)
                                     cards (concat (:ices serv) (:content serv))]
                                 (trash state side card)
@@ -1140,9 +1143,10 @@
                       (set-prop card :counter {:credit 0}))}]}
 
    "Signal Jamming"
-   {:abilities [{:label "[Trash]: Cards cannot be installed until the end of the run"
+   {:abilities [{:label "Cards cannot be installed until the end of the run"
                  :msg (msg "prevent cards being installed until the end of the run")
                  :req (req this-server)
+                 :cost [:trash]
                  :effect (effect (trash (get-card state card) {:cause :ability-cost}))}]
     :trash-effect {:effect (effect (register-run-flag! card :corp-lock-install (constantly true))
                                    (register-run-flag! card :runner-lock-install (constantly true))
@@ -1287,7 +1291,7 @@
                                         :effect (effect (gain-credits 1))}}}}}
 
    "Tyr's Hand"
-   {:abilities [{:label "[Trash]: Prevent a subroutine on a piece of Bioroid ICE from being broken"
+   {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ICE from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
                                 (has-subtype? current-ice "Bioroid")))
                  :effect (effect (trash card))
