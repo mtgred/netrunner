@@ -431,12 +431,10 @@
    "Citadel Sanctuary"
    {:interactions {:prevent [{:type #{:meat}
                               :req (req true)}]}
-    :abilities [{:label "Trash all cards in Grip to prevent all meat damage"
-                 :msg "trash all cards in their Grip and prevent all meat damage"
-                 :cost [:trash]
-                 :effect (req (doseq [c (:hand runner)]
-                                (trash state side c {:unpreventable true}))
-                              (damage-prevent state side :meat Integer/MAX_VALUE))}]
+    :abilities [{:label "Prevent all meat damage"
+                 :msg "prevent all meat damage"
+                 :cost [:trash :trash-entire-hand]
+                 :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]
     :events {:runner-turn-ends
              {:req (req (pos? (count-tags state)))
               :msg "force the Corp to initiate a trace"
@@ -2320,7 +2318,7 @@
                                                                          :source-type :runner-install}) target nil
                                                   (install-cost state side target [:credit (dec (:cost target))])))
                                  (do (install-cost-bonus state side [:credit -1])
-                                     (system-msg state side "uses Thunder Art Gallery to install a card.")
+                                     (system-msg state side "uses Thunder Art Gallery to install a card")
                                      (runner-install state side (merge eid {:source card
                                                                             :source-type :runner-install}) target nil))
                                  (effect-completed state side eid)))

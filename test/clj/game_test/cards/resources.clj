@@ -312,6 +312,19 @@
 
 (deftest citadel-sanctuary
   ;; Citadel Sanctuary
+  (testing "basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Scorched Earth"]}
+                 :runner {:deck ["Citadel Sanctuary" (qty "Sure Gamble" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Citadel Sanctuary")
+      (take-credits state :runner)
+      (core/gain-tags state :runner 1)
+      (play-from-hand state :corp "Scorched Earth")
+      (is (zero? (count (:discard (get-runner)))) "No cards have been discarded or trashed yet")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 3 (count (:discard (get-runner)))) "CS and all cards in grip are trashed")))
   (testing "Interaction with Corporate Grant and Thunder Art Gallery"
     (do-game
       (new-game {:runner {:deck ["Citadel Sanctuary" "Thunder Art Gallery" "Corroder" "Corporate \"Grant\""]}})

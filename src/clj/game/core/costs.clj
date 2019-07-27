@@ -120,6 +120,7 @@
       (:net :meat :brain) (<= amount (count (get-in @state [:runner :hand])))
       :trash-from-deck (<= 0 (- (count (get-in @state [side :deck])) amount))
       (:trash-from-hand :randomly-trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount))
+      :trash-entire-hand true
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
       ;; default to cannot afford
       false)))
@@ -167,6 +168,7 @@
       :trash-from-deck (str "trash " (quantify amount "card") " from the top of your deck")
       :trash-from-hand (str "trash " (quantify amount "card") " from your hand")
       :randomly-trash-from-hand (str "trash " (quantify amount "card") " randomly from your hand")
+      :trash-entire-hand "trash all cards in your hand"
       ; damage
       (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
       ; counters
@@ -383,6 +385,18 @@
                 (str "trashes " (quantify amount "card") " randomly from "
                      (if (= :corp side) "HQ" "the grip"))))))
 
+(defn pay-trash-entire-hand
+  [state side eid]
+  (let [cards (get-in @state [side :hand])]
+    (wait-for (trash-cards state side cards {:unpreventable true})
+              (complete-with-result
+                state side eid
+                (str "trashes all (" (count cards) ") cards in "
+                    (if (= :runner side) "their grip" "HQ")
+                    (when (and (= :runner side)
+                               (pos? (count cards)))
+                      (str " (" (map :title cards) ")")))))))
+
 (defn pay-shuffle-installed-to-stack
   "Shuffle installed runner cards into the stack as part of paying for a card or ability"
   [state side eid card amount]
@@ -443,6 +457,7 @@
      :trash-from-deck (pay-trash-from-deck state side eid amount)
      :trash-from-hand (pay-trash-from-hand state side eid amount)
      :randomly-trash-from-hand (pay-randomly-trash-from-hand state side eid amount)
+     :trash-entire-hand (pay-trash-entire-hand state side eid)
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card amount)
