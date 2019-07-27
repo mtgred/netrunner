@@ -2447,8 +2447,7 @@
           (is (zero? (get-counters (refresh scored) :agenda)) "Agenda counter used by Mark Yale")
           (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")
           (card-ability state :corp my 1)
-          (click-card state :corp (refresh scored))
-          (is (zero? (get-counters (refresh scored) :agenda)) "No agenda counter used by Mark Yale")
+          (is (empty? (:prompt (get-corp))) "No prompt for the Corp as no counters exist to spend")
           (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale"))))))
 
 (deftest weyland-consortium-because-we-built-it

@@ -126,6 +126,7 @@
       (:trash-from-hand :randomly-trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount))
       :trash-entire-hand true
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
+      :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
       ;; default to cannot afford
       false)))
 
@@ -181,6 +182,7 @@
                                              (quantify amount (str "hosted " (name cost-type) " counter"))
                                              (str "hosted " (name cost-type) " counter"))
       :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
+      :any-agenda-counter "any agenda counter"
       (str (quantify amount (name cost-type))))))
 
 (defn build-cost-label
@@ -219,7 +221,8 @@
                    :net :meat :brain
                    :trash-from-deck :trash-from-hand :randomly-trash-from-hand
                    :agenda :power :virus :advancement
-                   :forfeit :forfeit-self :shuffle-installed-to-stack}]
+                   :forfeit :forfeit-self :shuffle-installed-to-stack
+                   :any-agenda-counter}]
   (defn cost->string
     "Converts a cost (amount attribute pair) to a string for printing"
     [[cost-type amount]]
@@ -444,6 +447,21 @@
                                          " into their stack")))}
                     card nil))
 
+(defn pay-any-agenda-counter
+  [state side eid]
+  (continue-ability
+    state side
+    {:prompt "Select an agenda with a counter"
+     :choices {:req #(and (agenda? %)
+                          (is-scored? state side %)
+                          (pos? (get-counters % :agenda)))}
+     :effect (effect (add-counter target :agenda -1)
+                     (trigger-event :agenda-counter-spent target)
+                     (complete-with-result
+                       eid (str "spends an agenda counter on " (:title target))))}
+    nil nil))
+
+
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"
   ([state side card action costs cost] (cost-handler state side (make-eid state) card action costs cost))
@@ -496,6 +514,9 @@
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card amount)
+
+     ;; Spend an agenda counter on another card
+     :any-agenda-counter (pay-any-agenda-counter state side eid)
 
      ;; Else
      (do
