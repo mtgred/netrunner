@@ -1029,19 +1029,19 @@
    {:async true
     :effect (effect (draw eid 3 nil))
     :msg (msg "draw 3 cards")
-    :abilities [{:label "Remove a tag to search R&D for an operation"
+    :abilities [{:label "Search R&D for an operation"
                  :prompt "Choose an operation to put on top of R&D"
-                 :cost [:click 1]
-                 :choices (req (cancellable (filter operation? (:deck corp)) :sorted))
-                 :req (req (pos? (get-in @state [:runner :tag :base])))
-                 :effect (req (lose-tags state :corp 1)
-                              (let [c (move state :corp target :play-area)]
+                 :cost [:click 1 :tag 1]
+                 :msg (msg (if (= target "No action")
+                             "search R&D, but does not find an operation"
+                             (str "put " (:title target) " on top of R&D")))
+                 :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
+                 :effect (req (if (= target "No action")
                                 (shuffle! state :corp :deck)
-                                (move state :corp c :deck {:front true})
-                                (system-msg state side (str "uses Lily Lockwell to put " (:title c) " on top of R&D"))))
-                 :cancel-effect (effect (lose-tags :corp 1)
-                                        (shuffle! :corp :deck)
-                                        (system-msg (str "uses Lily Lockwell, but did not find an Operation in R&D")))}]}
+                                (let [c (move state :corp target :play-area)]
+                                  (reveal state side c)
+                                  (shuffle! state :corp :deck)
+                                  (move state :corp c :deck {:front true}))))}]}
 
    "Long-Term Investment"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
