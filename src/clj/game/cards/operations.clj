@@ -796,8 +796,8 @@
 
    "Genotyping"
    {:async true
+    :msg "trash the top 2 cards of R&D"
     :effect (effect (mill :corp 2)
-                    (system-msg "trashes the top 2 cards of R&D")
                     (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) 4 false))}
 
    "Green Level Clearance"
