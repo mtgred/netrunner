@@ -491,11 +491,10 @@
                                        :runner-credits runner-credits})]
                (trace-start state side eid card trace)))))
 
-(defn rfg-and-shuffle-rd-effect
-  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))
-  ([state side card n all?] (rfg-and-shuffle-rd-effect state side (make-eid state) card n all?))
+(defn shuffle-into-rd-effect
+  ([state side card n] (shuffle-into-rd-effect state side (make-eid state) card n false))
+  ([state side card n all?] (shuffle-into-rd-effect state side (make-eid state) card n all?))
   ([state side eid card n all?]
-   (move state side card :rfg)
    (continue-ability state side
                     {:show-discard  true
                      :choices {:max n
@@ -514,3 +513,10 @@
                                   (shuffle! state side :deck))
                      :cancel-effect (req (shuffle! state side :deck))}
                     card nil)))
+
+(defn rfg-and-shuffle-rd-effect
+  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))
+  ([state side card n all?] (rfg-and-shuffle-rd-effect state side (make-eid state) card n all?))
+  ([state side eid card n all?]
+   (move state side card :rfg)
+   (shuffle-into-rd-effect state side eid card n all?)))

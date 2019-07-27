@@ -916,8 +916,8 @@
                  :msg "draw 2 cards"
                  :effect (effect (draw 2))}
                 {:label "Shuffle up to 3 cards from Archives into R&D"
-                 :activatemsg "removes Jackson Howard from the game"
-                 :effect (effect (rfg-and-shuffle-rd-effect card 3))}]}
+                 :cost [:remove-from-game]
+                 :effect (effect (shuffle-into-rd-effect card 3))}]}
 
    "Jeeves Model Bioroids"
    (let [jeeves (effect (gain :click 1))

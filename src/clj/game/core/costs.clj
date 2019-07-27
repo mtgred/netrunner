@@ -114,6 +114,7 @@
       ; Can't use count-tags as we can't remove additional tags
       :tag (<= 0 (- (get-in @state [:runner :tag :base] 0) amount))
       :return-to-hand (active? (get-card state card))
+      :remove-from-game (active? (get-card state card))
       :installed (<= 0 (- (count (all-installed state side)) amount))
       :hardware (<= 0 (- (count (all-installed-runner-type state :hardware)) amount))
       :program (<= 0 (- (count (all-installed-runner-type state :program)) amount))
@@ -164,6 +165,7 @@
       :forfeit-self "forfeit this Agenda"
       :tag (str "remove " (quantify amount "tag"))
       :return-to-hand "return this card to your hand"
+      :remove-from-game "remove this card from the game"
       :installed (str "trash " (quantify amount "installed card"))
       :hardware (str "trash " (quantify amount "installed hardware" ""))
       :program (str "trash " (quantify amount "installed program"))
@@ -212,7 +214,7 @@
       label)))
 
 (let [cost-types #{:trash :tag :trash-entire-hand
-                   :return-to-hand
+                   :return-to-hand :remove-from-game
                    :installed :hardware :program :resource :connection :ice
                    :net :meat :brain
                    :trash-from-deck :trash-from-hand :randomly-trash-from-hand
@@ -337,7 +339,13 @@
   (complete-with-result
     state side eid
     (str "returns " (:title card)
-         "to " (if (= :corp side) "HQ" "their grip"))))
+         " to " (if (= :corp side) "HQ" "their grip"))))
+
+(defn pay-remove-from-game
+  "Remove an installed card from the game."
+  [state side eid card]
+  (move state side card :rfg)
+  (complete-with-result state side eid (str "removes " (:title card) " from the game")))
 
 (defn pay-trash-installed
   "Trash a card as part of paying for a card or ability"
@@ -455,6 +463,9 @@
 
      ; Return installed card to hand
      :return-to-hand (pay-return-to-hand state side eid card)
+
+     ; Remove card from the game
+     :remove-from-game (pay-remove-from-game state side eid card)
 
      ;; Trash installed cards
      :installed (pay-trash-installed state side eid card "installed card" amount runner?)

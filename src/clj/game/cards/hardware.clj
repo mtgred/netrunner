@@ -730,8 +730,8 @@
                                              (corp? (:card-cause target))))}]}
     :abilities [{:msg "prevent the run from ending"
                  :req (req (some #{:hq} (:successful-run runner-reg)))
-                 :effect (effect (end-run-prevent)
-                                 (move card :rfg))}]}
+                 :cost [:remove-from-game]
+                 :effect (effect (end-run-prevent))}]}
 
    "Mâché"
    {:abilities [{:label "Draw 1 card"
