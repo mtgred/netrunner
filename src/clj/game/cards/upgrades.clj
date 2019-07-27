@@ -181,8 +181,7 @@
                  :msg "end the run"
                  :async true
                  :cost [:trash]
-                 :effect (req (wait-for (trash state :corp card {:cause :ability-cost})
-                                        (end-run state :corp eid card)))}]}
+                 :effect (effect (end-run eid card))}]}
 
    "Black Level Clearance"
    {:events {:successful-run
@@ -232,8 +231,8 @@
                                     :choices {:req #(in-same-server? % card)}
                                     :async true
                                     :msg (msg "place an advancement token on " (card-str state target))
-                                    :effect (effect (add-prop target :advance-counter 1 {:placed true})
-                                                    (trash eid card {:cause :ability-cost}))}
+                                    :cost [:trash]
+                                    :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
                                    card nil))}]}
 
    "Caprice Nisei"
@@ -742,8 +741,7 @@
                                :yes-ability
                                {:msg "force the Runner to approach outermost piece of ice"
                                 :cost [:trash]
-                                :effect (req (swap! state assoc-in [:run :position] (count run-ices))
-                                             (trash state side eid card {:cause :ability-cost}))}
+                                :effect (req (swap! state assoc-in [:run :position] (count run-ices)))}
                                :end-effect (effect (clear-wait-prompt :runner))}}
                              card nil))}}}]
      {:events {:approach-server ability}
@@ -751,14 +749,14 @@
                   (set-autoresolve :auto-fire "Fire Letheia Nisei?")]})
 
    "Keegan Lane"
-   {:abilities [{:label "[Trash], remove a tag: Trash a program"
+   {:abilities [{:label "Remove a tag: Trash a program"
                  :req (req (and this-server
                                 (pos? (get-in @state [:runner :tag :base]))
                                 (not (empty? (filter program?
                                                      (all-active-installed state :runner))))))
                  :msg (msg "remove 1 tag")
+                 :cost [:trash]
                  :effect (req (resolve-ability state side trash-program card nil)
-                              (trash state side card {:cause :ability-cost})
                               (lose-tags state :corp 1))}]}
 
    "Khondi Plaza"
@@ -783,8 +781,7 @@
                                    :choices {:req #(and (ice? %)
                                                         (rezzed? %))}
                                    :msg (msg "resolve a subroutine on " (:title target))}}
-                 :cost [:trash]
-                 :effect (effect (trash card {:cause :ability-cost}))}]}
+                 :cost [:trash]}]}
 
    "Mason Bellamy"
    {:implementation "Manually triggered by Corp"
@@ -1146,8 +1143,7 @@
    {:abilities [{:label "Cards cannot be installed until the end of the run"
                  :msg (msg "prevent cards being installed until the end of the run")
                  :req (req this-server)
-                 :cost [:trash]
-                 :effect (effect (trash (get-card state card) {:cause :ability-cost}))}]
+                 :cost [:trash]}]
     :trash-effect {:effect (effect (register-run-flag! card :corp-lock-install (constantly true))
                                    (register-run-flag! card :runner-lock-install (constantly true))
                                    (toast :runner "Cannot install until the end of the run")

@@ -940,8 +940,12 @@
 
    "Personality Profiles"
    (let [pp {:req (req (pos? (count (:hand runner))))
-             :effect (effect (trash (first (shuffle (:hand runner)))))
-             :msg (msg "force the Runner to trash " (:title (last (:discard runner))) " from their Grip at random")}]
+             :effect (effect
+                       (continue-ability
+                         (let [c (first (shuffle (:hand runner)))]
+                           {:msg (msg "force the Runner to trash " (:title c) " from their Grip at random")
+                            :effect (effect (trash eid c nil))})
+                         card nil))}]
      {:events {:searched-stack pp
                :runner-install (assoc pp :req (req (and (some #{:discard} (:previous-zone target))
                                                         (pos? (count (:hand runner))))))}})

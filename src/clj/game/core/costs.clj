@@ -240,7 +240,9 @@
 (defn pay-trash
   "[Trash] cost as part of an ability"
   [state side eid card amount]
-  (complete-with-result state side eid (str "trashes " (:title card))))
+  (wait-for (trash state side card {:cause :ability-cost
+                                    :unpreventable true})
+            (complete-with-result state side eid (str "trashes " (:title card)))))
 
 (defn pay-forfeit
   "Forfeit agenda as part of paying for a card or ability

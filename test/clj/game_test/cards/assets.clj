@@ -3385,9 +3385,9 @@
           iw (get-ice state :hq 0)]
       (core/rez state :corp ss)
       (core/rez state :corp iw)
-      (card-ability state :corp ss 0)
       (let [credits (:credit (get-corp))
             clicks (:click (get-corp))]
+        (card-ability state :corp ss 0)
         (click-card state :corp iw)
         (is (= (+ credits 4) (:credit (get-corp))) "Corp should gain 4 from Security Subcontract ability")
         (is (= "Ice Wall" (-> (get-corp) :discard first :title)) "Ice Wall should be in Archives from Security Subcontract ability")

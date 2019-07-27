@@ -483,8 +483,7 @@
                  :msg (msg "end the run")
                  :async true
                  :cost [:trash]
-                 :effect (effect (trash card {:cause :ability-cost})
-                                 (end-run eid card))}]
+                 :effect (effect (end-run eid card))}]
     :subroutines [{:label "Gain 1 [Credits] for each ice protecting this server"
                    :msg (msg "gain "
                              (count (:ices (card->server state card)))

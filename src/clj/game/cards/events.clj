@@ -1648,15 +1648,13 @@
     :abilities [{:label "Avoid 3 tags"
                  :msg "avoid up to 3 tags"
                  :cost [:trash]
-                 :effect (effect (tag-prevent :runner 3)
-                                 (trash card {:cause :ability-cost}))}
+                 :effect (effect (tag-prevent :runner 3))}
                 {:label "Prevent up to 3 damage"
                  :msg "prevent up to 3 damage"
                  :cost [:trash]
                  :effect (effect (damage-prevent :net 3)
                                  (damage-prevent :meat 3)
-                                 (damage-prevent :brain 3)
-                                 (trash card {:cause :ability-cost}))}]}
+                                 (damage-prevent :brain 3))}]}
 
    "Out of the Ashes"
    (let [ashes-run {:prompt "Choose a server"
