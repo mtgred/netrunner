@@ -110,6 +110,7 @@
       :click (<= 0 (- (get-in @state [side :click]) amount))
       :trash (some? (get-card state card))
       :forfeit (<= 0 (- (count (get-in @state [side :scored])) amount))
+      :forfeit-self (is-scored? state side (get-card state card))
       ; Can't use count-tags as we can't remove additional tags
       :tag (<= 0 (- (get-in @state [:runner :tag :base] 0) amount))
       :installed (<= 0 (- (count (all-installed state side)) amount))
@@ -155,31 +156,26 @@
   (when (and (number? amount)
              (not (neg? amount)))
     (case cost-type
-      ; symbols
       :credit (str amount " [Credits]")
       :click (->> "[Click]" repeat (take amount) (apply str))
       :trash "[Trash]"
-      ; trashing installed cards
+      :forfeit (str "forfeit " (quantify amount "Agenda"))
+      :forfeit-self "forfeit this Agenda"
+      :tag (str "remove " (quantify amount "tag"))
       :installed (str "trash " (quantify amount "installed card"))
       :hardware (str "trash " (quantify amount "installed hardware" ""))
       :program (str "trash " (quantify amount "installed program"))
       :resource (str "trash " (quantify amount "installed resource"))
       :connection (str "trash " (quantify amount "installed connection resource"))
       :ice (str "trash " (quantify amount "installed rezzed ICE" ""))
-      ; trashing non-installed cards
       :trash-from-deck (str "trash " (quantify amount "card") " from the top of your deck")
       :trash-from-hand (str "trash " (quantify amount "card") " from your hand")
       :randomly-trash-from-hand (str "trash " (quantify amount "card") " randomly from your hand")
       :trash-entire-hand "trash all cards in your hand"
-      ; damage
       (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
-      ; counters
       (:agenda :power :virus :advancement) (if (< 1 amount)
                                              (quantify amount (str "hosted " (name cost-type) " counter"))
                                              (str "hosted " (name cost-type) " counter"))
-      ; other
-      :forfeit (str "forfeit " (quantify amount "Agenda"))
-      :tag (str "remove " (quantify amount "tag"))
       :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
       (str (quantify amount (name cost-type))))))
 
@@ -218,7 +214,7 @@
                    :net :meat :brain
                    :trash-from-deck :trash-from-hand :randomly-trash-from-hand
                    :agenda :power :virus :advancement
-                   :forfeit :shuffle-installed-to-stack}]
+                   :forfeit :forfeit-self :shuffle-installed-to-stack}]
   (defn cost->string
     "Converts a cost (amount attribute pair) to a string for printing"
     [[cost-type amount]]
@@ -314,6 +310,14 @@
                                               (str "forfeits " (quantify amount "agenda")
                                                    " (" (:title target) ")"))))}
                     card nil))
+
+(defn pay-forfeit-self
+  "Forfeit an agenda as part of paying for the ability on that agenda. (False Lead)"
+  [state side eid card]
+  (wait-for (forfeit state side card {:msg false})
+            (complete-with-result
+              state side eid
+              (str "forfeits " (:title target)))))
 
 (defn pay-tags
   "Removes a tag from the runner. Only use is Keegan Lane."
@@ -432,6 +436,7 @@
 
      ; Forfeit an agenda
      :forfeit (pay-forfeit state side eid card amount)
+     :forfeit-self (pay-forfeit-self state side eid card)
 
      ; Remove a tag from the runner
      :tag (pay-tags state side eid card amount)

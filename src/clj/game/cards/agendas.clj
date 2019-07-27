@@ -561,15 +561,16 @@
                                card nil))}}
 
    "False Lead"
-   {:abilities [{:req (req (>= (:click runner) 2))
+   {:abilities [{:req (req (<= 2 (:click runner)))
                  :msg "force the Runner to lose [Click][Click]"
-                 :effect (effect (forfeit card)
-                                 (lose :runner :click 2))}]}
+                 :cost [:forfeit-self]
+                 :effect (effect (lose :runner :click 2))}]}
 
    "Fetal AI"
    {:flags {:rd-reveal (req true)}
     :access {:async true
-             :req (req (not= (first (:zone card)) :discard)) :msg "do 2 net damage"
+             :req (req (not= (first (:zone card)) :discard))
+             :msg "do 2 net damage"
              :effect (effect (damage eid :net 2 {:card card}))}
     :steal-cost-bonus (req [:credit 2])}
 
