@@ -1180,12 +1180,12 @@
    (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 2 2 "Sentry")
                                  (strength-pump 2 4)
-                                 {:label "Derez a Sentry and return Golden to your Grip"
-                                  :cost [:credit 2]
-                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Sentry")))
-                                  :msg (msg "derez " (:title current-ice) " and return Golden to their Grip")
-                                  :effect (effect (derez current-ice)
-                                                  (move card :hand))}]})
+                                 {:label "Derez a Sentry"
+                                  :cost [:credit 2 :return-to-hand]
+                                  :req (req (and (rezzed? current-ice)
+                                                 (has-subtype? current-ice "Sentry")))
+                                  :msg (msg "derez " (:title current-ice))
+                                  :effect (effect (derez current-ice))}]})
 
    "Gordian Blade"
    (auto-icebreaker ["Code Gate"]
@@ -1768,12 +1768,12 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "Code Gate")
                                  (strength-pump 3 3)
-                                 {:label "Derez a Code Gate and return Peregrine to your Grip"
-                                  :cost [:credit 2]
-                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Code Gate")))
-                                  :msg (msg "derez " (:title current-ice) " and return Peregrine to their Grip")
-                                  :effect (effect (derez current-ice)
-                                                  (move card :hand))}]})
+                                 {:label "Derez a Code Gate"
+                                  :cost [:credit 2 :return-to-hand]
+                                  :req (req (and (rezzed? current-ice)
+                                                 (has-subtype? current-ice "Code Gate")))
+                                  :msg (msg "derez " (:title current-ice))
+                                  :effect (effect (derez current-ice))}]})
 
    "Persephone"
    (auto-icebreaker ["Sentry"]
@@ -1996,12 +1996,12 @@
    (auto-icebreaker ["Barrier"]
                     {:abilities [(break-sub 1 1 "Barrier")
                                  (strength-pump 2 2)
-                                 {:label "Derez a Barrier and return Saker to your Grip"
-                                  :cost [:credit 2]
-                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Barrier")))
-                                  :msg (msg "derez " (:title current-ice) " and return Saker to their Grip")
-                                  :effect (effect (derez current-ice)
-                                                  (move card :hand))}]})
+                                 {:label "Derez a Barrier"
+                                  :cost [:credit 2 :return-to-hand]
+                                  :req (req (and (rezzed? current-ice)
+                                                 (has-subtype? current-ice "Barrier")))
+                                  :msg (msg "derez " (:title current-ice))
+                                  :effect (effect (derez current-ice))}]})
 
    "Savant"
    (ancient-greek-breaker "savant" [{:cost [:credit 2] :req (req (has-subtype? current-ice "Sentry"))

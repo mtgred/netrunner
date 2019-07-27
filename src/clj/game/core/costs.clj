@@ -108,11 +108,12 @@
       :credit (or (<= 0 (- (get-in @state [side :credit]) amount))
                   (<= 0 (- (total-available-credits state side eid card) amount)))
       :click (<= 0 (- (get-in @state [side :click]) amount))
-      :trash (some? (get-card state card))
+      :trash (installed? (get-card state card))
       :forfeit (<= 0 (- (count (get-in @state [side :scored])) amount))
       :forfeit-self (is-scored? state side (get-card state card))
       ; Can't use count-tags as we can't remove additional tags
       :tag (<= 0 (- (get-in @state [:runner :tag :base] 0) amount))
+      :return-to-hand (active? (get-card state card))
       :installed (<= 0 (- (count (all-installed state side)) amount))
       :hardware (<= 0 (- (count (all-installed-runner-type state :hardware)) amount))
       :program (<= 0 (- (count (all-installed-runner-type state :program)) amount))
@@ -162,6 +163,7 @@
       :forfeit (str "forfeit " (quantify amount "Agenda"))
       :forfeit-self "forfeit this Agenda"
       :tag (str "remove " (quantify amount "tag"))
+      :return-to-hand "return this card to your hand"
       :installed (str "trash " (quantify amount "installed card"))
       :hardware (str "trash " (quantify amount "installed hardware" ""))
       :program (str "trash " (quantify amount "installed program"))
@@ -210,6 +212,7 @@
       label)))
 
 (let [cost-types #{:trash :tag :trash-entire-hand
+                   :return-to-hand
                    :installed :hardware :program :resource :connection :ice
                    :net :meat :brain
                    :trash-from-deck :trash-from-hand :randomly-trash-from-hand
@@ -327,6 +330,15 @@
               state side eid
               (str "removes " (quantify amount "tag")))))
 
+(defn pay-return-to-hand
+  "Returns an installed card to the player's hand."
+  [state side eid card]
+  (move state side card :hand)
+  (complete-with-result
+    state side eid
+    (str "returns " (:title card)
+         "to " (if (= :corp side) "HQ" "their grip"))))
+
 (defn pay-trash-installed
   "Trash a card as part of paying for a card or ability"
   ([state side eid card card-type amount select-fn] (pay-trash-installed state side eid card card-type amount select-fn nil))
@@ -440,6 +452,9 @@
 
      ; Remove a tag from the runner
      :tag (pay-tags state side eid card amount)
+
+     ; Return installed card to hand
+     :return-to-hand (pay-return-to-hand state side eid card)
 
      ;; Trash installed cards
      :installed (pay-trash-installed state side eid card "installed card" amount runner?)
