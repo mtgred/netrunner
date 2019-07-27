@@ -1826,33 +1826,28 @@
                                    (mill :runner 3))}}
 
    "Rosetta 2.0"
-   {:abilities [{:req (req (and (not (install-locked? state side))
-                                (some program? (all-active-installed state :runner))))
-                 :cost [:click 1]
-                 :prompt "Choose an installed program to remove from the game"
-                 :choices {:req #(and (installed? %) (program? %))}
-                 :effect (req (let [n (:cost target)
-                                    t (:title target)]
-                                (move state side target :rfg)
-                                (resolve-ability
-                                  state side
-                                  {:prompt "Choose a non-virus program to install"
-                                   :msg (req (if (not= target "No install")
-                                               (str "remove " t
-                                                    " from the game and install " (:title target)
-                                                    ", lowering its cost by " n)
-                                               (str "shuffle their Stack")))
-                                   :priority true
-                                   :choices (req (cancellable
-                                                   (conj (vec (sort-by :title (filter #(and (program? %)
-                                                                                            (not (has-subtype? % "Virus")))
-                                                                                      (:deck runner))))
-                                                         "No install")))
-                                   :effect (req (trigger-event state side :searched-stack nil)
-                                                (shuffle! state side :deck)
-                                                (when (not= target "No install")
-                                                  (install-cost-bonus state side [:credit (- n)])
-                                                  (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))} card nil)))}]}
+   (let [find-rfg (fn [state card]
+                    (first (filter #(= (:cid card) (get-in % [:persistent :from-cid])) (get-in @state [:runner :rfg]))))]
+     {:abilities [{:req (req (not (install-locked? state side)))
+                   :async true
+                   :cost [:click 1 :rfg-program 1]
+                   :prompt "Choose a non-virus program to install"
+                   :msg (msg "search the stack"
+                             (if (= target "No install")
+                               ", but does not find a program to install"
+                               (str "and install " (:title target)
+                                    ", lowering its cost by " (:cost (find-rfg state card)))))
+                   :choices (req (conj (vec (sort-by :title (filter #(and (program? %)
+                                                                          (not (has-subtype? % "Virus")))
+                                                                    (:deck runner))))
+                                       "No install"))
+                   :effect (req (trigger-event state side :searched-stack nil)
+                                (shuffle! state side :deck)
+                                (when (not= target "No install")
+                                  (install-cost-bonus state side [:credit (- (:cost (find-rfg state card)))])
+                                  (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil))
+                                (when-let [c (find-rfg state card)]
+                                  (update! state side (dissoc-in card [:persistent :from-cid]))))}]})
 
    "Sacrificial Clone"
    {:interactions {:prevent [{:type #{:net :brain :meat}

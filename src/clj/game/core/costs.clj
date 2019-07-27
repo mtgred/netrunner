@@ -115,6 +115,7 @@
       :tag (<= 0 (- (get-in @state [:runner :tag :base] 0) amount))
       :return-to-hand (active? (get-card state card))
       :remove-from-game (active? (get-card state card))
+      :rfg-program (<= 0 (- (count (all-installed-runner-type state :program)) amount))
       :installed (<= 0 (- (count (all-installed state side)) amount))
       :hardware (<= 0 (- (count (all-installed-runner-type state :hardware)) amount))
       :program (<= 0 (- (count (all-installed-runner-type state :program)) amount))
@@ -168,6 +169,7 @@
       :tag (str "remove " (quantify amount "tag"))
       :return-to-hand "return this card to your hand"
       :remove-from-game "remove this card from the game"
+      :rfg-program (str "remove " (quantify amount "installed program") " from the game")
       :installed (str "trash " (quantify amount "installed card"))
       :hardware (str "trash " (quantify amount "installed hardware" ""))
       :program (str "trash " (quantify amount "installed program"))
@@ -217,25 +219,16 @@
       (str (build-cost-label cost) ": " label)
       label)))
 
-(let [cost-types #{:trash :tag :trash-entire-hand
-                   :return-to-hand :remove-from-game
-                   :installed :hardware :program :resource :connection :ice
-                   :net :meat :brain
-                   :trash-from-deck :trash-from-hand :randomly-trash-from-hand
-                   :trash-program-from-grip
-                   :agenda :power :virus :advancement
-                   :forfeit :forfeit-self :shuffle-installed-to-stack
-                   :any-agenda-counter}]
-  (defn cost->string
-    "Converts a cost (amount attribute pair) to a string for printing"
-    [[cost-type amount]]
-    (when (and (number? amount)
-               (not (neg? amount)))
-      (let [cost-string (cost->label [cost-type amount])]
-        (cond
-          (some cost-types [cost-type]) cost-string
-          (= :click cost-type) (str "spend " cost-string)
-          :else (str "pay " cost-string))))))
+(defn cost->string
+  "Converts a cost (amount attribute pair) to a string for printing"
+  [[cost-type amount]]
+  (when (and (number? amount)
+             (not (neg? amount)))
+    (let [cost-string (cost->label [cost-type amount])]
+      (cond
+        (= :click cost-type) (str "spend " cost-string)
+        (= :credit cost-type) (str "pay " cost-string)
+        :else cost-string))))
 
 (defn build-cost-string
   "Gets the complete cost-str for specified costs"
@@ -328,10 +321,10 @@
   (wait-for (forfeit state side card {:msg false})
             (complete-with-result
               state side eid
-              (str "forfeits " (:title target)))))
+              (str "forfeits " (:title card)))))
 
 (defn pay-tags
-  "Removes a tag from the runner. Only use is Keegan Lane."
+  "Removes a tag from the runner. (Keegan Lane)"
   [state side eid card amount]
   (wait-for (lose-tags state side amount)
             (complete-with-result
@@ -352,6 +345,25 @@
   [state side eid card]
   (move state side card :rfg)
   (complete-with-result state side eid (str "removes " (:title card) " from the game")))
+
+(defn pay-rfg-installed
+  "Remove a card of a given kind from the game"
+  [state side eid card card-type amount select-fn]
+  (continue-ability
+    state side
+    {:prompt (str "Choose " (quantify amount card-type) " to remove from the game")
+     :choices {:all true
+               :max amount
+               :req select-fn}
+     :async true
+     :effect (req (doseq [t targets]
+                    (move state side (assoc-in t [:persistent :from-cid] (:cid card)) :rfg))
+                  (complete-with-result
+                    state side eid
+                    (str "removes " (quantify amount card-type)
+                         " from the game"
+                         " (" (join ", " (map #(card-str state %) targets)) ")")))}
+    card nil))
 
 (defn pay-trash-installed
   "Trash a card as part of paying for a card or ability"
@@ -505,6 +517,8 @@
 
      ; Remove card from the game
      :remove-from-game (pay-remove-from-game state side eid card)
+     :rfg-program (pay-rfg-installed state side eid card "installed program" amount
+                                     (every-pred installed? program? (complement facedown?)))
 
      ;; Trash installed cards
      :installed (pay-trash-installed state side eid card "installed card" amount runner?)
