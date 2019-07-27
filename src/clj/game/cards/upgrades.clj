@@ -749,15 +749,17 @@
                   (set-autoresolve :auto-fire "Fire Letheia Nisei?")]})
 
    "Keegan Lane"
-   {:abilities [{:label "Remove a tag: Trash a program"
-                 :req (req (and this-server
-                                (pos? (get-in @state [:runner :tag :base]))
-                                (not (empty? (filter program?
-                                                     (all-active-installed state :runner))))))
-                 :msg (msg "remove 1 tag")
-                 :cost [:trash]
-                 :effect (req (resolve-ability state side trash-program card nil)
-                              (lose-tags state :corp 1))}]}
+   {:abilities [{:req (req (and this-server
+                                (some? (first (filter program? (all-active-installed state :runner))))))
+                 :prompt "Select a program to trash"
+                 :label "Trash a program"
+                 :msg (msg "trash " (:title target))
+                 :choices {:req #(and (installed? %)
+                                      (program? %))}
+                 :cost [:trash :tag 1]
+                 :effect (effect (trash eid target nil))}]}
+
+
 
    "Khondi Plaza"
    {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))

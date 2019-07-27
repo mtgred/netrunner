@@ -3,7 +3,7 @@
 (declare forfeit prompt! damage mill is-scored? system-msg
          unknown->kw discard-from-hand card-str trash trash-cards
          all-installed-runner-type pick-credit-providing-cards all-active
-         eligible-pay-credit-cards)
+         eligible-pay-credit-cards lose-tags)
 
 (defn deduct
   "Deduct the value from the player's attribute."
@@ -110,6 +110,8 @@
       :click (<= 0 (- (get-in @state [side :click]) amount))
       :trash (some? (get-card state card))
       :forfeit (<= 0 (- (count (get-in @state [side :scored])) amount))
+      ; Can't use count-tags as we can't remove additional tags
+      :tag (<= 0 (- (get-in @state [:runner :tag :base] 0) amount))
       :hardware (<= 0 (- (count (all-installed-runner-type state :hardware)) amount))
       :program (<= 0 (- (count (all-installed-runner-type state :program)) amount))
       :resource (<= 0 (- (count (all-installed-runner-type state :resource)) amount))
@@ -173,6 +175,7 @@
                                              (str "hosted " (name cost-type) " counter"))
       ; other
       :forfeit (str "forfeit " (quantify amount "Agenda"))
+      :tag (str "remove " (quantify amount "tag"))
       :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
       (str (quantify amount (name cost-type))))))
 
@@ -308,6 +311,14 @@
                                                    " (" (:title target) ")"))))}
                     card nil))
 
+(defn pay-tags
+  "Removes a tag from the runner. Only use is Keegan Lane."
+  [state side eid card amount]
+  (wait-for (lose-tags state side amount)
+            (complete-with-result
+              state side eid
+              (str "removes " (quantify amount "tag")))))
+
 (defn pay-trash-installed
   "Trash a card as part of paying for a card or ability"
   ([state side eid card card-type amount select-fn] (pay-trash-installed state side eid card card-type amount select-fn nil))
@@ -397,14 +408,16 @@
   ([state side card action costs cost] (cost-handler state side (make-eid state) card action costs cost))
   ([state side eid card action costs [cost-type amount]]
    (case cost-type
-     ;; Pay credits
+     ; Symbols
      :credit (pay-credits state side eid card amount)
-
      :click (pay-clicks state side eid action costs cost-type amount)
-
      :trash (pay-trash state side eid card amount)
 
+     ; Forfeit an agenda
      :forfeit (pay-forfeit state side eid card amount)
+
+     ; Remove a tag from the runner
+     :tag (pay-tags state side eid card amount)
 
      ;; Trash installed cards
      :hardware (pay-trash-installed state side eid card "piece of hardware" amount
@@ -418,8 +431,7 @@
                                       (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
      :ice (pay-trash-installed state :corp eid card "rezzed ICE" amount
                                (every-pred rezzed? ice?)
-                               {:cause :ability-cost
-                                :keep-server-alive true
+                               {:keep-server-alive true
                                 :plural "rezzed ICE"})
 
      ;; Suffer damage
