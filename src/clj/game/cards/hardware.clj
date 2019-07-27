@@ -633,13 +633,10 @@
    {:in-play [:memory 1]
     :interactions {:prevent [{:type #{:net :brain :meat}
                               :req (req true)}]}
-    :abilities [{:msg (msg "prevent 1 damage, trashing "
-                           (when (facedown? target) "a facedown ")
-                           (:title target))
-                 :choices {:req #(and (runner? %) (installed? %))}
-                 :priority 50
-                 :effect (effect (trash target {:unpreventable true})
-                                 (damage-prevent :brain 1)
+    :abilities [{:label "Prevent 1 damage"
+                 :msg "prevent 1 damage"
+                 :cost [:installed 1]
+                 :effect (effect (damage-prevent :brain 1)
                                  (damage-prevent :meat 1)
                                  (damage-prevent :net 1))}]}
 

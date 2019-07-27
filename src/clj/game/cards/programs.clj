@@ -1022,12 +1022,9 @@
                            (continue state side nil))}}}
 
    "Endless Hunger"
-   {:abilities [{:label "Trash 1 installed card to break 1 \"End the run.\" subroutine"
-                 :prompt "Select a card to trash for Endless Hunger"
-                 :choices {:req #(and (runner? %) (installed? %))}
-                 :msg (msg "trash " (:title target)
-                           " and break 1 \"[Subroutine] End the run.\" subroutine")
-                 :effect (effect (trash target {:unpreventable true}))}]}
+   {:abilities [{:label "Break 1 \"End the run.\" subroutine"
+                 :msg (msg "break 1 \"[Subroutine] End the run.\" subroutine")
+                 :cost [:installed 1]}]}
 
    "Engolo"
    (auto-icebreaker

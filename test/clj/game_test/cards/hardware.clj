@@ -697,7 +697,7 @@
       (click-card state :runner cache)
       (is (= 1 (count (:discard (get-runner)))) "Prevented 1 net damage")
       (is (= 2 (count (:hand (get-runner)))))
-      (is (second-last-log-contains? state "Runner uses Heartbeat to prevent 1 damage, trashing Cache\\.") "Prompt correct")
+      (is (second-last-log-contains? state "Runner trashes 1 installed card \\(Cache\\) to use Heartbeat to prevent 1 damage\\."))
       (card-subroutine state :corp (refresh nk) 0)
       (is (= (-> (get-runner) :prompt first :msg)
              "Prevent any of the 3 net damage?")
@@ -709,7 +709,7 @@
           "Damage prevention message correct.")
       (click-prompt state :runner "Done")
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card")
-      (is (last-n-log-contains? state 2 "Runner uses Heartbeat to prevent 1 damage, trashing a facedown Heartbeat\\.") "Prompt correct"))))
+      (is (last-n-log-contains? state 2 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 damage\\.")))))
 
 (deftest hijacked-router
   ;; Hijacked Router

@@ -112,6 +112,7 @@
       :forfeit (<= 0 (- (count (get-in @state [side :scored])) amount))
       ; Can't use count-tags as we can't remove additional tags
       :tag (<= 0 (- (get-in @state [:runner :tag :base] 0) amount))
+      :installed (<= 0 (- (count (all-installed state side)) amount))
       :hardware (<= 0 (- (count (all-installed-runner-type state :hardware)) amount))
       :program (<= 0 (- (count (all-installed-runner-type state :program)) amount))
       :resource (<= 0 (- (count (all-installed-runner-type state :resource)) amount))
@@ -159,6 +160,7 @@
       :click (->> "[Click]" repeat (take amount) (apply str))
       :trash "[Trash]"
       ; trashing installed cards
+      :installed (str "trash " (quantify amount "installed card"))
       :hardware (str "trash " (quantify amount "installed hardware" ""))
       :program (str "trash " (quantify amount "installed program"))
       :resource (str "trash " (quantify amount "installed resource"))
@@ -211,8 +213,8 @@
       (str (build-cost-label cost) ": " label)
       label)))
 
-(let [cost-types #{:trash
-                   :hardware :program :resource :connection :ice
+(let [cost-types #{:trash :tag :trash-entire-hand
+                   :installed :hardware :program :resource :connection :ice
                    :net :meat :brain
                    :trash-from-deck :trash-from-hand :randomly-trash-from-hand
                    :agenda :power :virus :advancement
@@ -331,6 +333,7 @@
                                 :max amount
                                 :req select-fn}
                       :async true
+                      :priority 11
                       :effect (req (wait-for (trash-cards state side targets (merge args {:unpreventable true}))
                                              (complete-with-result
                                                state side eid
@@ -434,6 +437,7 @@
      :tag (pay-tags state side eid card amount)
 
      ;; Trash installed cards
+     :installed (pay-trash-installed state side eid card "installed card" amount runner?)
      :hardware (pay-trash-installed state side eid card "piece of hardware" amount
                                     (every-pred installed? hardware? (complement facedown?))
                                     {:plural "pieces of hardware"})
