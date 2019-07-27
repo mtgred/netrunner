@@ -1775,28 +1775,27 @@
    "Reclaim"
    {:abilities
     [{:label "Install a program, piece of hardware, or virtual resource from your Heap"
-      :cost [:click 1 :trash]
-      :req (req (not-empty (:hand runner)))
-      :prompt "Choose a card to trash"
-      :choices (req (cancellable (:hand runner) :sorted))
-      :async true
-      :effect (req (wait-for
-                     (trash state :runner target {:unpreventable true})
-                     (continue-ability
-                       state :runner
-                       {:prompt "Choose a card to install"
-                        :choices (req (cancellable
-                                        (filter #(and (or (program? %)
-                                                          (hardware? %)
-                                                          (and (resource? %)
-                                                               (has-subtype? % "Virtual")))
-                                                      (can-pay? state :runner eid card nil (:cost %)))
-                                                (:discard runner))
-                                        :sorted))
-                        :msg (msg "install " (:title target) " from the Heap")
-                        :async true
-                        :effect (req (runner-install state :runner (assoc eid :source card :source-type :runner-install) target nil))}
-                       card nil)))}]}
+      :cost [:click 1 :trash :trash-from-hand]
+      :effect
+      (effect
+        (continue-ability
+          {:prompt "Choose a card to install"
+           :choices (req (conj (vec (sort-by
+                                      :title
+                                      (filter #(and (or (program? %)
+                                                        (hardware? %)
+                                                        (and (resource? %)
+                                                             (has-subtype? % "Virtual")))
+                                                    (can-pay? state :runner eid card nil (:cost %)))
+                                              (:discard runner))))
+                               "No install"))
+           :msg (msg (if (= target "No install")
+                       (str "search the heap, but does not find anything to install")
+                       (str "install " (:title target) " from the heap")))
+           :async true
+           :effect (req (when (not= target "No install")
+                          (runner-install state :runner (assoc eid :source card :source-type :runner-install) target nil)))}
+          card nil))}]}
 
    "Rogue Trading"
    {:data {:counter {:credit 18}}
