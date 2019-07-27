@@ -237,6 +237,52 @@
      (when (not (string/blank? cost-string))
        (capitalize cost-string)))))
 
+;; Cost Handler functions
+
+(defn all-active-pay-credit-cards
+  [state side eid card]
+  (filter #(when-let [pc (-> % card-def :interactions :pay-credits)]
+             (if (:req pc)
+               ((:req pc) state side eid % [card])
+               true))
+          (all-active state side)))
+
+(defn eligible-pay-credit-cards
+  [state side eid card]
+  (filter
+    #(case (-> % card-def :interactions :pay-credits :type)
+       :recurring
+       (pos? (get-counters (get-card state %) :recurring))
+       :credit
+       (pos? (get-counters (get-card state %) :credit))
+       :custom
+       ((-> % card-def :interactions :pay-credits :req) state side eid % [card]))
+    (all-active-pay-credit-cards state side eid card)))
+
+(defn pay-credits
+  [state side eid card amount]
+  (let [provider-func #(eligible-pay-credit-cards state side eid card)]
+    (if (and (pos? amount)
+             (pos? (count (provider-func))))
+      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid amount) card nil)
+                (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
+                (complete-with-result state side eid (str "pays " (:msg async-result))))
+      (do
+        (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
+        (complete-with-result state side eid (deduct state side [:credit amount]))))))
+
+(defn pay-clicks
+  [state side eid action costs cost-type amount]
+  (let [a (first (keep :action action))]
+    (when (not= a :steal-cost)
+      ;; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
+      (swap! state assoc :click-state (dissoc @state :log)))
+    (trigger-event state side
+                   (if (= side :corp) :corp-spent-click :runner-spent-click)
+                   a (:click (into {} costs)))
+    (swap! state assoc-in [side :register :spent-click] true)
+    (complete-with-result state side eid (deduct state side [cost-type amount]))))
+
 (defn pay-trash
   "[Trash] cost as part of an ability"
   [state side eid card amount]
@@ -287,26 +333,6 @@
               state side eid
               (str "suffers " amount " " (name dmg-type) " damage"))))
 
-(defn pay-shuffle-installed-to-stack
-  "Shuffle installed runner cards into the stack as part of paying for a card or ability"
-  [state side eid card amount]
-  (continue-ability state :runner
-                    {:prompt (str "Choose " (quantify amount "card") " to shuffle into the stack")
-                     :choices {:max amount
-                               :all true
-                               :req #(and (installed? %)
-                                          (runner? %))}
-                     :async true
-                     :effect (req (doseq [c targets]
-                                    (move state :runner c :deck))
-                                  (shuffle! state :runner :deck)
-                                  (complete-with-result
-                                    state side eid
-                                    (str "shuffles " (quantify amount "card")
-                                         " (" (join ", " (map :title targets)) ")"
-                                         " into their stack")))}
-                    card nil))
-
 (defn pay-trash-from-deck
   [state side eid amount]
   (let [cards (take amount (get-in @state [side :deck]))]
@@ -346,37 +372,25 @@
                 (str "trashes " (quantify amount "card") " randomly from "
                      (if (= :corp side) "HQ" "the grip"))))))
 
-(defn all-active-pay-credit-cards
-  [state side eid card]
-  (filter #(when-let [pc (-> % card-def :interactions :pay-credits)]
-             (if (:req pc)
-               ((:req pc) state side eid % [card])
-               true))
-          (all-active state side)))
-
-(defn eligible-pay-credit-cards
-  [state side eid card]
-  (filter
-    #(case (-> % card-def :interactions :pay-credits :type)
-       :recurring
-       (pos? (get-counters (get-card state %) :recurring))
-       :credit
-       (pos? (get-counters (get-card state %) :credit))
-       :custom
-       ((-> % card-def :interactions :pay-credits :req) state side eid % [card]))
-    (all-active-pay-credit-cards state side eid card)))
-
-(defn pay-credits
+(defn pay-shuffle-installed-to-stack
+  "Shuffle installed runner cards into the stack as part of paying for a card or ability"
   [state side eid card amount]
-  (let [provider-func #(eligible-pay-credit-cards state side eid card)]
-    (if (and (pos? amount)
-             (pos? (count (provider-func))))
-      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid amount) card nil)
-                (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
-                (complete-with-result state side eid (str "pays " (:msg async-result))))
-      (do
-        (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
-        (complete-with-result state side eid (deduct state side [:credit amount]))))))
+  (continue-ability state :runner
+                    {:prompt (str "Choose " (quantify amount "card") " to shuffle into the stack")
+                     :choices {:max amount
+                               :all true
+                               :req #(and (installed? %)
+                                          (runner? %))}
+                     :async true
+                     :effect (req (doseq [c targets]
+                                    (move state :runner c :deck))
+                                  (shuffle! state :runner :deck)
+                                  (complete-with-result
+                                    state side eid
+                                    (str "shuffles " (quantify amount "card")
+                                         " (" (join ", " (map :title targets)) ")"
+                                         " into their stack")))}
+                    card nil))
 
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"
@@ -386,15 +400,7 @@
      ;; Pay credits
      :credit (pay-credits state side eid card amount)
 
-     :click (let [a (first (keep :action action))]
-              (when (not= a :steal-cost)
-                ;; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
-                (swap! state assoc :click-state (dissoc @state :log)))
-              (trigger-event state side
-                             (if (= side :corp) :corp-spent-click :runner-spent-click)
-                             a (:click (into {} costs)))
-              (swap! state assoc-in [side :register :spent-click] true)
-              (complete-with-result state side eid (deduct state side [cost-type amount])))
+     :click (pay-clicks state side eid action costs cost-type amount)
 
      :trash (pay-trash state side eid card amount)
 
