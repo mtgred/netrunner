@@ -124,6 +124,7 @@
       (:net :meat :brain) (<= amount (count (get-in @state [:runner :hand])))
       :trash-from-deck (<= 0 (- (count (get-in @state [side :deck])) amount))
       (:trash-from-hand :randomly-trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount))
+      :trash-program-from-grip (<= 0 (- (count (filter program? (get-in @state [:runner :hand]))) amount))
       :trash-entire-hand true
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
       :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
@@ -177,6 +178,7 @@
       :trash-from-hand (str "trash " (quantify amount "card") " from your hand")
       :randomly-trash-from-hand (str "trash " (quantify amount "card") " randomly from your hand")
       :trash-entire-hand "trash all cards in your hand"
+      :trash-program-from-grip "trash a program in your graip"
       (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
       (:agenda :power :virus :advancement) (if (< 1 amount)
                                              (quantify amount (str "hosted " (name cost-type) " counter"))
@@ -220,6 +222,7 @@
                    :installed :hardware :program :resource :connection :ice
                    :net :meat :brain
                    :trash-from-deck :trash-from-hand :randomly-trash-from-hand
+                   :trash-program-from-grip
                    :agenda :power :virus :advancement
                    :forfeit :forfeit-self :shuffle-installed-to-stack
                    :any-agenda-counter}]
@@ -427,6 +430,24 @@
                                (pos? (count cards)))
                       (str " (" (map :title cards) ")")))))))
 
+(defn pay-trash-program-from-grip
+  [state side eid amount]
+  (continue-ability
+    state side
+    {:prompt "Choose a program to trash from your grip"
+     :async true
+     :choices {:all true
+               :max amount
+               :req #(and (program? %)
+                          (in-hand? %))}
+     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+                            (complete-with-result
+                              state side eid
+                              (str "trashes " (quantify amount "card")
+                                   " (" (join ", " (map :title targets)) ")"
+                                   " from the grip"))))}
+    nil nil))
+
 (defn pay-shuffle-installed-to-stack
   "Shuffle installed runner cards into the stack as part of paying for a card or ability"
   [state side eid card amount]
@@ -511,6 +532,7 @@
      :trash-from-hand (pay-trash-from-hand state side eid amount)
      :randomly-trash-from-hand (pay-randomly-trash-from-hand state side eid amount)
      :trash-entire-hand (pay-trash-entire-hand state side eid)
+     :trash-program-from-grip (pay-trash-program-from-grip state side eid amount)
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card amount)

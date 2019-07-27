@@ -862,13 +862,9 @@
                                 :req (req true)}]}
       :in-play [:memory 3]
       :effect (effect (resolve-ability (mhelper 1) card nil))
-      :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
-                   :priority 50
-                   :choices {:req #(and (program? %)
-                                        (in-hand? %))}
-                   :prompt "Choose a program to trash from your Grip"
-                   :effect (effect (trash target)
-                                   (damage-prevent :brain 1)
+      :abilities [{:msg (msg "prevent 1 brain or net damage")
+                   :cost [:trash-program-from-grip 1]
+                   :effect (effect (damage-prevent :brain 1)
                                    (damage-prevent :net 1))}]})
 
    "Muresh Bodysuit"
