@@ -915,7 +915,7 @@
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}
-                 :runner {:deck ["Faust" (qty "Sure Gamble" 3)]}})
+                 :runner {:deck ["Faust" "Sure Gamble"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
@@ -924,41 +924,40 @@
         (run-on state :hq)
         (card-ability state :runner faust 0)
         (click-prompt state :runner "End the run")
-        (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+        (click-card state :runner "Sure Gamble")
         (is (= 1 (count (:discard (get-runner)))) "1 card trashed"))))
   (testing "Basic test: Pump by discarding"
     (do-game
-      (new-game {:runner {:deck ["Faust" (qty "Sure Gamble" 3)]}})
+      (new-game {:runner {:deck ["Faust" "Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Faust")
       (let [faust (get-program state 0)]
         (card-ability state :runner faust 1)
-        (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+        (click-card state :runner "Sure Gamble")
         (is (= 4 (:current-strength (refresh faust))) "4 current strength")
         (is (= 1 (count (:discard (get-runner)))) "1 card trashed"))))
   (testing "Pump does not trigger trash prevention. #760"
     (do-game
-      (new-game {:runner {:deck ["Faust"
+      (new-game {:runner {:hand ["Faust"
                                  "Sacrificial Construct"
                                  "Fall Guy"
                                  "Astrolabe"
                                  "Gordian Blade"
                                  "Armitage Codebusting"]}})
       (take-credits state :corp)
-      (core/draw state :runner 1)
       (play-from-hand state :runner "Faust")
       (play-from-hand state :runner "Fall Guy")
       (play-from-hand state :runner "Sacrificial Construct")
       (is (= 2 (count (get-resource state))) "Resources installed")
       (let [faust (get-program state 0)]
         (card-ability state :runner faust 1)
-        (click-card state :runner (find-card "Astrolabe" (:hand (get-runner))))
+        (click-card state :runner "Astrolabe")
         (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for hardware")
         (card-ability state :runner faust 1)
-        (click-card state :runner (find-card "Gordian Blade" (:hand (get-runner))))
+        (click-card state :runner "Gordian Blade")
         (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for program")
         (card-ability state :runner faust 1)
-        (click-card state :runner (find-card "Armitage Codebusting" (:hand (get-runner))))
+        (click-card state :runner "Armitage Codebusting")
         (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for resource")))))
 
 (deftest femme-fatale

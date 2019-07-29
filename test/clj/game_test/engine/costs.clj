@@ -27,7 +27,11 @@
       (is (= [[:click 4] [:credit 2]]
              (core/merge-costs [[:click 1] [:click 3] [:credit 1] [:credit 1]]))))
     (testing "Deeply nested costs are flattened"
-      (is (= [[:click 3]] (core/merge-costs [[[[[:click 1]]] [[[[[:click 1]]]]]] :click 1])))))
+      (is (= [[:click 3]] (core/merge-costs [[[[[:click 1]]] [[[[[:click 1]]]]]] :click 1]))))
+    (testing "Empty costs return an empty list"
+      (is (= '() (core/merge-costs []))))
+    (testing "nil costs return an empty list"
+      (is (= '() (core/merge-costs nil)))))
   (testing "Damage costs"
     (testing "Damage costs are moved to the end"
       (is (= [[:credit 1] [:net 1]] (core/merge-costs [[:net 1 :credit 1]]))))
