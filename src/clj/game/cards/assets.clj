@@ -323,8 +323,7 @@
    {:abilities [{:label "Add 1 power counter"
                  :effect (effect (add-counter card :power 1)
                                  (system-msg (str "adds 1 power counter to Chief Slee")))}
-                {:counter-cost [:power 5]
-                 :cost [:click 1]
+                {:cost [:click 1 :power 5]
                  :async true
                  :msg "do 5 meat damage"
                  :effect (effect (damage eid :meat 5 {:card card}))}]}
@@ -584,8 +583,7 @@
 
    "Drudge Work"
    {:effect (effect (add-counter card :power 3))
-    :abilities [{:cost [:click 1]
-                 :counter-cost [:power 1]
+    :abilities [{:cost [:click 1 :power 1]
                  :async true
                  :choices {:req #(and (agenda? %)
                                       (or (in-hand? %)
@@ -600,7 +598,7 @@
                               (gain-credits state :corp (get-agenda-points state :corp target))
                               (move state :corp target :deck)
                               (shuffle! state :corp :deck)
-                              (if (zero? (get-counters card :power))
+                              (if (not (pos? (get-counters (get-card state card) :power)))
                                 (trash state side eid card nil)
                                 (effect-completed state side eid)))}]}
 
@@ -725,8 +723,7 @@
                :msg (msg "give the runner " (quantify (tag-count (get-card state card)) "tag"))
                :async true
                :effect (effect (gain-tags :corp eid (tag-count (get-card state card))))}
-      :abilities [{:cost [:click 1]
-                   :advance-counter-cost 7
+      :abilities [{:cost [:click 1 :advancement 7]
                    :label "Add False Flag to your score area as an agenda worth 3 agenda points"
                    :msg "add it to their score area as an agenda worth 3 agenda points"
                    :async true
@@ -776,8 +773,7 @@
              :async true
              :effect (effect (damage eid :net (get-counters (get-card state card) :advancement)
                                      {:card card}))}
-    :abilities [{:cost [:click 1]
-                 :advance-counter-cost 3
+    :abilities [{:cost [:click 1 :advancement 2]
                  :label "Add Gene Splicing to your score area as an agenda worth 1 agenda point"
                  :msg "add it to their score area as an agenda worth 1 agenda point"
                  :async true
@@ -809,8 +805,7 @@
     :abilities [{:label "Gain [Click][Click]"
                  :once :per-turn
                  :msg "gain [Click][Click]"
-                 :cost [:click 1]
-                 :advance-counter-cost 1
+                 :cost [:click 1 :advancement 1]
                  :effect (effect (gain :click 2))}]}
 
    "Honeyfarm"
@@ -890,7 +885,7 @@
                  :effect (effect (move target :hand))}]}
 
    "IT Department"
-   {:abilities [{:counter-cost [:power 1]
+   {:abilities [{:cost [:power 1]
                  :label "Add strength to a rezzed ICE"
                  :choices {:req #(and (ice? %) (:rezzed %))}
                  :req (req (pos? (get-counters card :power)))
@@ -1074,18 +1069,19 @@
       :move-zone re-enable-target})
 
    "Marilyn Campaign"
-   (let [ability {:msg "gain 2 [Credits]"
-                  :counter-cost [:credit 2]
-                  :once :per-turn
+   (let [ability {:once :per-turn
                   :interactive (req true)
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain 2 [Credits] (start of turn)")
+                  :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                   :async true
-                  :effect (req (gain-credits state :corp 2)
-                               (if (zero? (get-counters (get-card state card) :credit))
+                  :effect (req (let [credits (min 2 (get-counters card :credit))]
+                                 (add-counter state side card :credit (- credits))
+                                 (gain-credits state :corp credits))
+                               (if (not (pos? (get-counters (get-card state card) :credit)))
                                  (trash state :corp eid card {:unpreventable true})
                                  (effect-completed state :corp eid)))}]
-     {:effect (effect (add-counter card :credit 8))
+     {:data {:counter {:credit 8}}
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
@@ -1122,8 +1118,8 @@
    (let [ability {:msg "take 1 [Credits]"
                   :label "Take 1 [Credits] (start of turn)"
                   :once :per-turn
-                  :counter-cost [:credit 1]
-                  :effect (effect (gain-credits 1))}]
+                  :effect (effect (add-counter card :credit -1)
+                                  (gain-credits 1))}]
      {:abilities [ability
                   {:cost [:click 1]
                    :msg "store 3 [Credits]"
@@ -1136,8 +1132,7 @@
                  :msg "to force the Runner to lose a [Click] next turn and place a power counter on itself"
                  :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
                               (add-counter state side card :power 1))}
-                {:cost [:click 1 :trash]
-                 :counter-cost [:power 3]
+                {:cost [:click 1 :power 3 :trash]
                  :msg "gain 4 [Click] and trash itself"
                  :effect (effect (gain :click 4))}]}
 
@@ -1328,8 +1323,7 @@
 
    "NGO Front"
    (letfn [(builder [cost cred]
-             {:advance-counter-cost cost
-              :cost [:trash]
+             {:cost [:advancement cost :trash]
               :effect (effect (gain-credits cred))
               :label (str "Gain " cred " [Credits]")
               :msg (str "gain " cred " [Credits]")})]
@@ -1466,10 +1460,11 @@
    "Private Contracts"
    {:effect (effect (add-counter card :credit 14))
     :abilities [{:cost [:click 1]
-                 :counter-cost [:credit 2]
-                 :msg "gain 2 [Credits]"
-                 :effect (req (gain-credits state :corp 2)
-                              (when (zero? (get-counters (get-card state card) :credit))
+                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
+                 :effect (req (let [credits (min 2 (get-counters card :credit))]
+                                (add-counter state side card :credit (- credits))
+                                (gain-credits state :corp credits))
+                              (when (not (pos? (get-counters (get-card state card) :credit)))
                                 (trash state :corp card)))}]}
 
    "Project Junebug"
@@ -1631,7 +1626,7 @@
                   :req (req (:corp-phase-12 @state))
                   :label "Remove 1 counter (start of turn)"
                   :effect (req (add-counter state side card :power -1)
-                               (when (zero? (get-counters (get-card state card) :power))
+                               (when (not (pos? (get-counters (get-card state card) :power)))
                                  (trash state side card)
                                  (resolve-ability
                                    state side
@@ -1867,8 +1862,7 @@
                                card nil))}}
 
    "Storgotic Resonator"
-   {:abilities [{:cost [:click 1]
-                 :counter-cost [:power 1]
+   {:abilities [{:cost [:click 1 :power 1]
                  :label "Do 1 net damage"
                  :msg "do 1 net damage"
                  :async true
@@ -2068,7 +2062,7 @@
     :events {:corp-turn-begins
              {:async true
               :effect (req (add-counter state side card :power -1)
-                           (if (zero? (get-counters (get-card state card) :power))
+                           (if (not (pos? (get-counters (get-card state card) :power)))
                              (wait-for (trash state side card nil)
                                        (do (system-msg state :corp "uses Urban Renewal to do 4 meat damage")
                                            (damage state side eid :meat 4 {:card card})))

@@ -176,11 +176,10 @@
    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
     :advanceable :always
     :abilities [{:label "End the run"
-                 :advance-counter-cost 2
                  :req (req (:run @state))
                  :msg "end the run"
                  :async true
-                 :cost [:trash]
+                 :cost [:advancement 2 :trash]
                  :effect (effect (end-run eid card))}]}
 
    "Black Level Clearance"
@@ -431,7 +430,7 @@
                                                          :msg "pay 1 [Credit] to place a power counter on Embolus"}}}
                                          card nil))}
          etr {:req (req this-server)
-              :counter-cost [:power 1]
+              :cost [:power 1]
               :msg "end the run"
               :effect (effect (end-run eid card))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -746,7 +745,7 @@
                  :msg (msg "trash " (:title target))
                  :choices {:req #(and (installed? %)
                                       (program? %))}
-                 :cost [:trash :tag 1]
+                 :cost [:tag 1 :trash]
                  :effect (effect (trash eid target nil))}]}
 
 

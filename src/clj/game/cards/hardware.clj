@@ -396,8 +396,7 @@
 
    "Dorm Computer"
    {:data {:counter {:power 4}}
-    :abilities [{:counter-cost [:power 1]
-                 :cost [:click 1]
+    :abilities [{:cost [:click 1 :power 1]
                  :req (req (not run))
                  :prompt "Choose a server"
                  :choices (req runnable-servers)
@@ -474,8 +473,8 @@
       :abilities [{:label "Take 1 [Credits] from Flame-out"
                    :req (req (and (not-empty (:hosted card))
                                   (pos? (get-counters card :credit))))
-                   :counter-cost [:credit 1]
-                   :effect (req (gain-credits state :runner 1)
+                   :effect (req (add-counter state side card :credit -1)
+                                (gain-credits state :runner 1)
                                 (system-msg state :runner "takes 1 [Credits] from Flame-out")
                                 (register-events
                                   state :runner
@@ -736,7 +735,7 @@
    "Mâché"
    {:abilities [{:label "Draw 1 card"
                  :msg "draw 1 card"
-                 :counter-cost [:power 3]
+                 :cost [:power 3]
                  :async true
                  :effect (effect (draw :runner eid 1 nil))}]
     :events {:runner-trash {:once :per-turn
@@ -833,8 +832,7 @@
                               :req (req (= target :rd))
                               :effect (effect (add-counter card :power 1))}}
     :abilities [{:async true
-                 :cost [:click 1]
-                 :counter-cost [:power 3]
+                 :cost [:click 1 :power 3]
                  :msg "access the top card of R&D"
                  :effect (req (do-access state side eid [:rd] {:no-root true}))}]}
 
@@ -1069,7 +1067,7 @@
    {:data [:counter {:power 4}]
     :interactions {:prevent [{:type #{:meat}
                               :req (req true)}]}
-    :abilities [{:counter-cost [:power 1]
+    :abilities [{:cost [:power 1]
                  :msg "prevent 1 meat damage"
                  :effect (req (damage-prevent state side :meat 1)
                               (when (zero? (get-counters (get-card state card) :power))

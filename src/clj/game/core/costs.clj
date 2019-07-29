@@ -129,6 +129,7 @@
       :trash-entire-hand true
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
       :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
+      (:advancement :agenda :power :virus) (<= 0 (- (get-counters card cost-type) amount))
       ;; default to cannot afford
       false)))
 
@@ -182,7 +183,7 @@
       :trash-entire-hand "trash all cards in your hand"
       :trash-program-from-grip "trash a program in your graip"
       (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
-      (:agenda :power :virus :advancement) (if (< 1 amount)
+      (:advancement :agenda :power :virus) (if (< 1 amount)
                                              (quantify amount (str "hosted " (name cost-type) " counter"))
                                              (str "hosted " (name cost-type) " counter"))
       :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
@@ -209,12 +210,7 @@
                   (and (string? (:msg ability))
                        (capitalize (:msg ability)))
                   "")
-        cost (concat (:cost ability)
-                     (when-let [cost (:counter-cost ability)]
-                       (when (not= :credit (first cost))
-                         cost))
-                     (when-let [cost (:advance-counter-cost ability)]
-                       [:advancement cost]))]
+        cost (:cost ability)]
     (if (and (seq cost) (not (string/blank? label)))
       (str (build-cost-label cost) ": " label)
       label)))
@@ -489,11 +485,26 @@
                           (is-scored? state side %)
                           (pos? (get-counters % :agenda)))}
      :effect (effect (add-counter target :agenda -1)
-                     (trigger-event :agenda-counter-spent target)
+                     (trigger-event :agenda-counter-spent (get-card state target))
                      (complete-with-result
-                       eid (str "spends an agenda counter on " (:title target))))}
+                       eid (str "spends an agenda counter from on " (:title target))))}
     nil nil))
 
+(defn pay-counter
+  [state side eid card counter amount]
+  (update! state side
+           (if (= counter :advancement)
+             (update card :advance-counter - amount)
+             (update-in card [:counter counter] - amount)))
+  (when (agenda? card)
+    (trigger-event state side :agenda-counter-spent (get-card state card)))
+  (complete-with-result
+    state side eid
+    (str "spends "
+         (if (< 1 amount)
+           (quantify amount (str "hosted " (name counter) " counter"))
+           (str "a hosted " (name counter) " counter"))
+         " from on " (:title card))))
 
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"
@@ -553,6 +564,12 @@
 
      ;; Spend an agenda counter on another card
      :any-agenda-counter (pay-any-agenda-counter state side eid)
+
+     ;; Counter costs
+     :advancement (pay-counter state side eid card :advancement amount)
+     :agenda (pay-counter state side eid card :agenda amount)
+     :power (pay-counter state side eid card :power amount)
+     :virus (pay-counter state side eid card :virus amount)
 
      ;; Else
      (do

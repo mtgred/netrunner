@@ -78,7 +78,7 @@
   {"Aaron Marrón"
    (let [am {:effect (effect (add-counter card :power 2)
                              (system-msg :runner (str "places 2 power counters on Aaron Marrón")))}]
-     {:abilities [{:counter-cost [:power 1]
+     {:abilities [{:cost [:power 1]
                    :msg "remove 1 tag and draw 1 card"
                    :async true
                    :effect (effect (lose-tags 1) (draw eid 1 nil))}]
@@ -173,9 +173,9 @@
     :choices :credit
     :msg (msg "add " target " power counters")
     :effect (effect (add-counter card :power target))
-    :abilities [{:counter-cost [:power 1]
+    :abilities [{:cost [:power 1]
                  :msg "look at the top card of Stack"
-                 :effect (req (when (zero? (get-counters (get-card state card) :power))
+                 :effect (req (when (not (pos? (get-counters (get-card state card) :power)))
                                 (trash state :runner card {:unpreventable true})))
                  :optional {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
                             :yes-ability {:msg "add the top card of Stack to the bottom"
@@ -184,10 +184,11 @@
    "Armitage Codebusting"
    {:data {:counter {:credit 12}}
     :abilities [{:cost [:click 1]
-                 :counter-cost [:credit 2]
-                 :msg "gain 2 [Credits]"
-                 :effect (req (gain-credits state :runner 2)
-                              (when (zero? (get-counters (get-card state card) :credit))
+                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
+                 :effect (req (let [credits (min 2 (get-counters card :credit))]
+                                (add-counter state side card :credit (- credits))
+                                (gain-credits state :runner credits))
+                              (when (not (pos? (get-counters (get-card state card) :credit)))
                                 (trash state :runner card {:unpreventable true})))}]}
 
    "Artist Colony"
@@ -252,7 +253,7 @@
                                                                            :choices {:number (req (get-counters (get-card state c) :credit))}
                                                                            :msg (msg "gain " target " [Credits]")
                                                                            :effect (req (gain-credits state side target)
-                                                                                        (set-prop state side c :counter {:credit (- creds target)})
+                                                                                        (add-counter state side card :credit (- target))
                                                                                         (when (not (pos? (get-counters (get-card state c) :credit)))
                                                                                           (trash state side c {:unpreventable true})))}
                                                                           card nil)))}
@@ -262,11 +263,10 @@
                                                         {:prompt "How many Bank Job credits?"
                                                          :choices {:number (req (get-counters (get-card state card) :credit))}
                                                          :msg (msg "gain " target " [Credits]")
-                                                         :effect (req (let [creds (get-counters (get-card state card) :credit)]
-                                                                        (gain-credits state side target)
-                                                                        (set-prop state side card :counter {:credit (- creds target)})
-                                                                        (when (not (pos? (get-counters (get-card state card) :credit)))
-                                                                          (trash state side card {:unpreventable true}))))}
+                                                         :effect (req (gain-credits state side target)
+                                                                      (add-counter state side card :credit (- target))
+                                                                      (when (not (pos? (get-counters (get-card state card) :credit)))
+                                                                        (trash state side card {:unpreventable true})))}
                                                         bj nil)))}))))}}}
 
    "Bazaar"
@@ -578,10 +578,10 @@
                   :label "Take 1 [Credits] (start of turn)"
                   :msg "gain 1 [Credits]"
                   :req (req (:runner-phase-12 @state))
-                  :counter-cost [:credit 1]
                   :async true
-                  :effect (req (gain-credits state :runner 1)
-                               (if (zero? (get-counters (get-card state card) :credit))
+                  :effect (req (add-counter state side card :credit -1)
+                               (gain-credits state :runner 1)
+                               (if (not (pos? (get-counters (get-card state card) :credit)))
                                  (do (trash state :runner card {:unpreventable true})
                                      (system-msg state :runner (str "trashes Crowdfunding"
                                                                     (when (not (empty? (:deck runner)))
@@ -631,8 +631,7 @@
                  :choices (req (cancellable (filter #(and (program? %)
                                                           (has-subtype? % "Virus"))
                                                     (:deck runner)) :sorted))
-                 :cost [:click 1 :trash]
-                 :counter-cost [:virus 3]
+                 :cost [:click 1 :virus 3 :trash]
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (runner-install target))}
@@ -662,11 +661,12 @@
    "Daily Casts"
    (let [ability {:once :per-turn
                   :label "Take 2 [Credits] (start of turn)"
-                  :msg "gain 2 [Credits]"
                   :req (req (:runner-phase-12 @state))
-                  :counter-cost [:credit 2]
-                  :effect (req (gain-credits state :runner 2)
-                               (when (zero? (get-counters (get-card state card) :credit))
+                  :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
+                  :effect (req (let [credits (min 2 (get-counters card :credit))]
+                                 (add-counter state side card :credit (- credits))
+                                 (gain-credits state :runner credits))
+                               (when (not (pos? (get-counters (get-card state card) :credit)))
                                  (trash state :runner card {:unpreventable true})))}]
      {:data {:counter {:credit 8}}
       :flags {:drip-economy true}
@@ -674,7 +674,8 @@
       :events {:runner-turn-begins ability}})
 
    "Data Dealer"
-   {:abilities [{:cost [:click 1 :forfeit] :effect (effect (gain-credits 9))
+   {:abilities [{:cost [:click 1 :forfeit]
+                 :effect (effect (gain-credits 9))
                  :msg (msg "gain 9 [Credits]")}]}
 
    "Data Folding"
@@ -741,8 +742,7 @@
      {:implementation "Adding power counters must be done manually for programs/hardware trashed manually (e.g. by being over MU)"
       :abilities [{:label "Add a card from your heap to your grip"
                    :req (req (seq (eligible-cards runner)))
-                   :counter-cost [:power 3]
-                   :cost [:click 1]
+                   :cost [:click 1 :power 3]
                    :prompt "Select a card to add to grip?"
                    :choices (req (eligible-cards runner))
                    :effect (effect (move target :hand))
@@ -867,11 +867,11 @@
    "Earthrise Hotel"
    (let [ability {:msg "draw 2 cards"
                   :once :per-turn
-                  :counter-cost [:power 1]
+                  :cost [:power 1]
                   :req (req (:runner-phase-12 @state))
                   :async true
                   :effect (req (wait-for (draw state :runner 2 nil)
-                                         (if (zero? (get-counters (get-card state card) :power))
+                                         (if (not (pos? (get-counters (get-card state card) :power)))
                                            (trash state :runner eid card {:unpreventable true})
                                            (effect-completed state side eid))))}]
      {:flags {:runner-turn-draw true
@@ -1027,12 +1027,12 @@
 
    "Ghost Runner"
    {:data {:counter {:credit 3}}
-    :abilities [{:counter-cost [:credit 1]
-                 :msg "gain 1 [Credits]"
+    :abilities [{:msg "gain 1 [Credits]"
                  :req (req (:run @state))
-                 :effect (req (gain-credits state side 1)
+                 :effect (req (add-counter state side card :credit -1)
+                              (gain-credits state side 1)
                               (trigger-event state side :spent-stealth-credit card)
-                              (when (zero? (get-counters (get-card state card) :credit))
+                              (when (not (pos? (get-counters (get-card state card) :credit)))
                                 (trash state :runner card {:unpreventable true})))}]
     :events (trash-on-empty :credit)
     ; See Net Mercur for why this implementation was chosen
@@ -1120,8 +1120,8 @@
     :events {:rez {:req (req (ice? target))
                    :msg "place 1 [Credits] on Ice Analyzer"
                    :effect (effect (add-counter :runner card :credit 1))}}
-    :abilities [{:counter-cost [:credit 1]
-                 :effect (effect (gain-credits 1))
+    :abilities [{:effect (effect (add-counter card :credit -1)
+                                 (gain-credits 1))
                  :msg "take 1 [Credits] to install programs"}]
     :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
                                                 (program? target)))
@@ -1192,9 +1192,9 @@
     :interactions {:prevent [{:type #{:meat}
                               :req (req true)}]}
     :abilities [{:label "Prevent 1 meat damage"
-                 :counter-cost [:power 1]
+                 :cost [:power 1]
                  :effect (req (damage-prevent state side :meat 1)
-                              (when (zero? (get-counters (get-card state card) :power))
+                              (when (not (pos? (get-counters (get-card state card) :power)))
                                 (trash state :runner card {:unpreventable true})))}]}
 
    "John Masanori"
@@ -1450,10 +1450,10 @@
                  :effect (effect (draw eid 1 nil))}]}
 
    "Net Mercur"
-   {:abilities [{:counter-cost [:credit 1]
-                 :msg "gain 1 [Credits]"
-                 :effect (effect (gain-credits 1)
-                                 (trigger-event :spent-stealth-credit card))}]
+   {:abilities [{:msg "gain 1 [Credits]"
+                 :effect (effect (add-counter card :credit -1)
+                                 (trigger-event :spent-stealth-credit card)
+                                 (gain-credits 1))}]
     :events {:spent-stealth-credit
              {:req (req (and (:run @state)
                              (has-subtype? target "Stealth")))
@@ -1682,7 +1682,7 @@
           :once :per-turn
           :msg (msg "remove 1 counter from " (:title target))
           :choices {:req #(:host %)}
-          :effect (req (if (zero? (get-counters (get-card state target) :power))
+          :effect (req (if (not (pos? (get-counters (get-card state target) :power)))
                          (runner-install state side (dissoc target :counter) {:ignore-all-cost true})
                          (add-counter state side target :power -1)))}]
      {:flags {:drip-economy true}
@@ -1691,7 +1691,7 @@
                    :choices {:req #(and (#{"Program" "Hardware"} (:type %))
                                         (in-hand? %)
                                         (runner? %))}
-                   :effect (req (if (zero? (:cost target))
+                   :effect (req (if (not (pos? (:cost target)))
                                   (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
                                   (host state side card
                                         (assoc target :counter {:power (:cost target)}))))
@@ -1800,10 +1800,11 @@
    "Rogue Trading"
    {:data {:counter {:credit 18}}
     :abilities [{:cost [:click 2]
-                 :counter-cost [:credit 6]
                  :msg "gain 6 [Credits] and take 1 tag"
-                 :effect (req (gain-credits state :runner 6)
-                              (when (zero? (get-counters (get-card state card) :credit))
+                 :effect (req (let [credits (min 6 (get-counters card :credit))]
+                                (add-counter state side card :credit (- credits))
+                                (gain-credits state :runner 6))
+                              (when (not (pos? (get-counters (get-card state card) :credit)))
                                 (trash state :runner card {:unpreventable true}))
                               (gain-tags state :runner eid 1))}]}
 
@@ -2073,7 +2074,7 @@
                  :msg "place 1 power counter on it"
                  :effect (effect (add-counter card :power 1))}
                 {:label "Gain [Click]"
-                 :counter-cost [:power 1]
+                 :cost [:power 1]
                  :req (req (= (:active-player @state) :runner))
                  :msg "gain [Click]" :once :per-turn
                  :effect (effect (gain :click 1))}]}
@@ -2087,12 +2088,12 @@
     :effect (effect (update! (assoc card :server-target target)))
     :events {:successful-run
              {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
-              :msg "gain 4 [Credits]"
-              :effect (req (let [creds (get-counters card :credit)]
-                             (gain-credits state side 4)
-                             (set-prop state side card :counter {:credit (- creds 4)})
-                             (when (zero? (get-counters (get-card state card) :credit))
-                               (trash state side card {:unpreventable true}))))}}}
+              :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
+              :effect (req (let [credits (min 4 (get-counters card :credit))]
+                             (add-counter state side card :credit (- credits))
+                             (gain-credits state side credits))
+                           (when (not (pos? (get-counters (get-card state card) :credit)))
+                             (trash state side card {:unpreventable true})))}}}
 
    "The Archivist"
    {:in-play [:link 1]
@@ -2272,7 +2273,7 @@
    "The Turning Wheel"
    (let [ttw-ab (fn [m s]
                   {:label (str "Access an additional card in " m)
-                   :counter-cost [:power 2]
+                   :cost [:power 2]
                    :req (req run)
                    :msg (msg "access 1 additional card from " m " for the remainder of the run")
                    :effect (req (access-bonus state side s 1))})]

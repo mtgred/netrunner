@@ -145,7 +145,7 @@
   [ice-type]
   (auto-icebreaker [ice-type]
                    {:data {:counter {:power 4}}
-                    :abilities [{:counter-cost [:power 1]
+                    :abilities [{:cost [:power 1]
                                  :msg (str "break up to 2 " (lower-case ice-type) " subroutines")}
                                 (strength-pump 1 1)]}))
 
@@ -577,7 +577,7 @@
                                   :effect (effect (gain-credits :runner 2))}]})
 
    "Cache"
-   {:abilities [{:counter-cost [:virus 1]
+   {:abilities [{:cost [:virus 1]
                  :effect (effect (gain-credits 1))
                  :msg "gain 1 [Credits]"}]
     :data {:counter {:virus 3}}}
@@ -794,7 +794,7 @@
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
     :data {:counter {:power 3}}
-    :abilities [{:counter-cost [:power 1]
+    :abilities [{:cost [:power 1]
                  :msg "break 1 subroutine"}]}
 
    "Dagger"
@@ -833,7 +833,7 @@
                                   :effect (req (let [c (:datasucker-count (get-card state card))]
                                                  (ice-strength-bonus state side (- c) target)))}
                :pass-ice ds :run-ends ds})
-    :abilities [{:counter-cost [:virus 1]
+    :abilities [{:cost [:virus 1]
                  :msg (msg "give -1 strength to " (:title current-ice))
                  :req (req (and current-ice (:rezzed current-ice)))
                  :effect (req (update! state side (update-in card [:datasucker-count] (fnil #(+ % 1) 0)))
@@ -1164,7 +1164,7 @@
    (auto-icebreaker ["All"]
                     {:flags {:runner-phase-12 (req true)}
                      :abilities [(strength-pump 2 1)
-                                 {:counter-cost [:virus 1]
+                                 {:cost [:virus 1]
                                   :msg "break 1 subroutine"}
                                  {:label "Take 1 tag to place 2 virus counters (start of turn)"
                                   :once :per-turn
@@ -1207,8 +1207,7 @@
    {:events (let [e {:req (req (and (installed? target) (= (:side target) "Corp")))
                      :effect (effect (add-counter :runner card :virus 1))}]
               {:runner-trash e :corp-trash e})
-    :abilities [{:counter-cost [:virus 1]
-                 :cost [:click 1]
+    :abilities [{:cost [:click 1 :virus 1]
                  :msg "force the Corp to trash the top card of R&D"
                  :effect (effect (mill :corp))}]}
 
@@ -1232,8 +1231,7 @@
    "Hemorrhage"
    {:events {:successful-run {:silent (req true)
                               :effect (effect (add-counter card :virus 1))}}
-    :abilities [{:counter-cost [:virus 2]
-                 :cost [:click 1]
+    :abilities [{:cost [:click 1 :virus 2]
                  :req (req (pos? (count (:hand corp))))
                  :msg "force the Corp to trash 1 card from HQ"
                  :effect (req (show-wait-prompt state :runner "Corp to trash a card from HQ")
@@ -1311,7 +1309,7 @@
     :interactions {:access-ability {:label "Trash card"
                                     :req (req (and (not (get-in @state [:per-turn (:cid card)]))
                                                    (pos? (get-counters card :virus))))
-                                    :counter-cost [:virus 1]
+                                    :cost [:virus 1]
                                     :msg (msg "trash " (:title target) " at no cost")
                                     :once :per-turn
                                     :async true
@@ -1486,7 +1484,7 @@
                                   :effect (effect (lose-credits target)
                                                   (add-counter card :power target))
                                   :msg (msg "place " target " power counters on it")}
-                                 {:counter-cost [:power 1]
+                                 {:cost [:power 1]
                                   :label "Hosted power counter: Break ICE subroutine"
                                   :msg "break 1 ICE subroutine"}
                                  (strength-pump 2 2)]
@@ -1645,7 +1643,7 @@
    "Overmind"
    (auto-icebreaker ["All"]
                     {:effect (effect (add-counter card :power (available-mu state)))
-                     :abilities [{:counter-cost [:power 1]
+                     :abilities [{:cost [:power 1]
                                   :msg "break 1 subroutine"}
                                  (strength-pump 1 1)]})
 
@@ -1798,7 +1796,7 @@
     :abilities [{:once :per-turn
                  :req (req (and current-ice
                                 (rezzed? current-ice)))
-                 :counter-cost [:virus 1]
+                 :cost [:virus 1]
                  :label "Make currently encountered ice gain a subtype"
                  :prompt "Choose an ICE subtype"
                  :choices (req (->> (server-cards)
@@ -2193,7 +2191,7 @@
                 {:req (req (and (:run @state)
                                 (rezzed? current-ice)
                                 (>= (get-counters card :power) 2)))
-                 :counter-cost [:power 2]
+                 :cost [:power 2]
                  :label "Increase non-AI icebreaker strength by +3 until end of encounter"
                  :prompt "Choose an installed non-AI icebreaker"
                  :choices {:req #(and (has-subtype? % "Icebreaker")
@@ -2289,8 +2287,7 @@
     :events {:successful-run {:silent (req true)
                               :req (req (= target :rd))
                               :effect (effect (add-counter card :power 1))}}
-    :abilities [{:cost [:click 1]
-                 :counter-cost [:power 3]
+    :abilities [{:cost [:click 1 :power 3]
                  :once :per-turn
                  :msg "gain [Click][Click]"
                  :effect (effect (gain :click 2))}]}
