@@ -1105,7 +1105,7 @@
                 (take-credits state :corp)
                 (play-from-hand state :runner "Imp")
                 (run-empty-server state "HQ")
-                (click-prompt state :runner "[Imp]: Trash card")
+                (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
                 (is (= 1 (count (:discard (get-corp)))))))]
       (doall (map imp-test
                   ["Hostile Takeover"
@@ -1126,7 +1126,7 @@
         (play-from-hand state :runner "Imp")
         (run-empty-server state :remote1)
         (click-prompt state :corp "Yes")
-        (click-prompt state :runner "[Imp]: Trash card")
+        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
         (is (= 2 (- credits (:credit (get-corp)))) "Corp paid 2 for Prisec")
         (is (= 1 (- (count-tags state) tags)) "Runner has 1 tag")
         (is (= 2 (- grip (count (:hand (get-runner))))) "Runner took 1 meat damage")
@@ -1143,7 +1143,7 @@
         ;; Should access TFP at this point
         (click-prompt state :corp "1 [Credits]")
         (click-prompt state :runner "0 [Credits]")
-        (click-prompt state :runner "[Imp]: Trash card")
+        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
         (take-credits state :runner)
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
         (is (zero? (:agenda-point (get-runner))) "Runner did not steal TFP")
@@ -1156,7 +1156,7 @@
         (click-prompt state :corp "0 [Credits]")
         (click-prompt state :runner "0 [Credits]")
         ;; Fail psi game
-        (click-prompt state :runner "[Imp]: Trash card")
+        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
         (is (zero? (:agenda-point (get-runner))) "Runner did not steal TFP"))))
   (testing "vs cards in Archives"

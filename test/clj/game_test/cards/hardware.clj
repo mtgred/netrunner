@@ -165,6 +165,23 @@
     (is (= 6 (core/available-mu state)))
     (is (= 7 (hand-size :runner)))))
 
+(deftest bookmark
+  ;; Bookmark
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
+               :runner {:hand ["Bookmark" "Sure Gamble" "Daily Casts" "Brain Chip"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bookmark")
+    (let [bm (get-hardware state 0)]
+    (card-ability state :runner bm 0)
+    (click-card state :runner "Sure Gamble")
+    (click-card state :runner "Daily Casts")
+    (click-card state :runner "Brain Chip")
+    (is (= 3 (count (:hosted (refresh bm)))) "Bookmark can host cards of any type")
+    (card-ability state :runner bm 2)
+    (is (nil? (refresh bm)) "Bookmark is now trashed")
+    (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip"))))
+
 (deftest brain-chip
   ;; Brain Chip handsize and memory limit
   (do-game
@@ -216,22 +233,17 @@
         (let [ds (get-program state 0)]
           (is (not (nil? ds)))
           (is (= (:title ds) "Datasucker"))))))
-  (testing "don't show inavalid choices"
+  (testing "don't show invalid choices"
     (do-game
-      (new-game {:runner {:deck ["Inti" "Magnum Opus" "Clone Chip"]}})
+      (new-game {:runner {:deck ["Clone Chip"]
+                          :discard ["Inti" "Magnum Opus"]}})
       (take-credits state :corp)
-      (trash-from-hand state :runner "Inti")
-      (trash-from-hand state :runner "Magnum Opus")
       (play-from-hand state :runner "Clone Chip")
       (is (= (get-in @state [:runner :click]) 3) "Runner has 3 clicks left")
       (let [chip (get-hardware state 0)]
         (card-ability state :runner chip 0)
         (click-card state :runner (find-card "Magnum Opus" (:discard (get-runner))))
-        (is (nil? (get-program state 0)) "No program was installed"))
-      (let [chip (get-hardware state 0)]
-        (is (not (nil? chip)) "Clone Chip is still installed")
-        (is (= (get-in @state [:runner :click]) 3) "Runner has 3 clicks left")
-        (card-ability state :runner chip 0)
+        (is (nil? (get-program state 0)) "No program was installed")
         (click-card state :runner (find-card "Inti" (:discard (get-runner))))
         (let [inti (get-program state 0)]
           (is (not (nil? inti)) "Program was installed")
@@ -363,7 +375,7 @@
       (play-from-hand state :runner "Demolisher")
       (let [credits (:credit (get-runner))]
         (run-empty-server state :hq)
-        (click-prompt state :runner "[Imp]: Trash card")
+        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
         (is (= (:credit (get-runner)) (+ 1 credits)) "Demolisher earns a credit when trashing with Imp")))))
 
 (deftest desperado
@@ -685,7 +697,7 @@
       (click-card state :runner cache)
       (is (= 1 (count (:discard (get-runner)))) "Prevented 1 net damage")
       (is (= 2 (count (:hand (get-runner)))))
-      (is (second-last-log-contains? state "Runner uses Heartbeat to prevent 1 damage, trashing Cache\\.") "Prompt correct")
+      (is (second-last-log-contains? state "Runner trashes 1 installed card \\(Cache\\) to use Heartbeat to prevent 1 damage\\."))
       (card-subroutine state :corp (refresh nk) 0)
       (is (= (-> (get-runner) :prompt first :msg)
              "Prevent any of the 3 net damage?")
@@ -697,7 +709,7 @@
           "Damage prevention message correct.")
       (click-prompt state :runner "Done")
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card")
-      (is (last-n-log-contains? state 2 "Runner uses Heartbeat to prevent 1 damage, trashing a facedown Heartbeat\\.") "Prompt correct"))))
+      (is (last-n-log-contains? state 2 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 damage\\.")))))
 
 (deftest hijacked-router
   ;; Hijacked Router
@@ -947,7 +959,7 @@
             counters (get-counters (refresh mache) :power)
             hand (-> (get-runner) :hand count)]
         (run-empty-server state :hq)
-        (click-prompt state :runner "[Imp]: Trash card")
+        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
         (is (= counters (get-counters (refresh mache) :power)) "Mache should gain no counters from trashing a card with no trash cost")
         (run-empty-server state :remote1)
         (click-prompt state :runner "Pay 4 [Credits] to trash")

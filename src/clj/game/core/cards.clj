@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare all-installed all-active-installed cards card-init deactivate
-         card-flag? gain lose get-card-hosted handle-end-run
+         card-flag? gain get-all-installed lose get-card-hosted handle-end-run
          register-events remove-from-host remove-icon make-card
          toast-check-mu trash trigger-event
          update-breaker-strength update-hosted! update-ice-strength unregister-events

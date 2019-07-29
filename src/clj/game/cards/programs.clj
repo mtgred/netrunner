@@ -145,16 +145,16 @@
   [ice-type]
   (auto-icebreaker [ice-type]
                    {:data {:counter {:power 4}}
-                    :abilities [{:counter-cost [:power 1]
+                    :abilities [{:cost [:power 1]
                                  :msg (str "break up to 2 " (lower-case ice-type) " subroutines")}
                                 (strength-pump 1 1)]}))
 
 (defn- break-and-enter
   "Breakers from the Break and Entry set"
   [ice-type]
-  (cloud-icebreaker {:abilities [{:label (str "[Trash]: Break up to 3 " (lower-case ice-type) "subroutines")
+  (cloud-icebreaker {:abilities [{:label (str "Break up to 3 " (lower-case ice-type) "subroutines")
                                   :msg (str "break up to 3 " (lower-case ice-type) " subroutines")
-                                  :effect (effect (trash card {:cause :ability-cost}))}]
+                                  :cost [:trash]}]
                      :events (let [cloud {:silent (req true)
                                           :req (req (has-subtype? target "Icebreaker"))
                                           :effect (effect (update-breaker-strength card))}]
@@ -301,7 +301,7 @@
                                  {:label "Bypass Code Gate being encountered"
                                   :req (req (has-subtype? current-ice "Code Gate"))
                                   :msg (msg "trash it and bypass " (:title current-ice))
-                                  :effect (effect (trash card {:cause :ability-cost}))}]})
+                                  :cost [:trash]}]})
 
    "Adept"
    (ancient-greek-breaker "adept" [{:cost [:credit 2]
@@ -456,15 +456,13 @@
    {:implementation "Bankroll gains credits automatically."
     :events {:successful-run {:effect (effect (add-counter card :credit 1)
                                               (system-msg "places 1 [Credit] on Bankroll"))}}
-    :abilities [{:label "[Trash]: Take all credits from Bankroll"
+    :abilities [{:label "Take all credits from Bankroll"
                  :async true
                  ;; Cannot trash unless there are counters (so game state changes)
                  :req (req (pos? (get-counters card :credit)))
-                 :effect (req (let [credits-on-bankroll (get-counters card :credit)]
-                                (wait-for (trash state :runner card {:cause :ability-cost})
-                                          (gain-credits state :runner credits-on-bankroll)
-                                          (system-msg state :runner (str "trashes Bankroll and takes "
-                                                                         credits-on-bankroll " credits from it")))))}]}
+                 :msg (msg "gain " (get-counters card :credit) " credits")
+                 :cost [:trash]
+                 :effect (effect (gain-credits (get-counters card :credit)))}]}
 
    "Battering Ram"
    (auto-icebreaker ["Barrier"]
@@ -579,7 +577,7 @@
                                   :effect (effect (gain-credits :runner 2))}]})
 
    "Cache"
-   {:abilities [{:counter-cost [:virus 1]
+   {:abilities [{:cost [:virus 1]
                  :effect (effect (gain-credits 1))
                  :msg "gain 1 [Credits]"}]
     :data {:counter {:virus 3}}}
@@ -693,11 +691,11 @@
                                                         (ice? %)
                                                         (= (:title %) icename))}
                                    :msg "redirect the run"
+                                   :cost [:trash]
                                    :effect (req (let [dest (second (:zone target))
                                                       tgtndx (ice-index state target)]
                                                   (swap! state update-in [:run]
-                                                         #(assoc % :position tgtndx :server [dest]))
-                                                  (trash state side card {:cause :ability-cost})))}
+                                                         #(assoc % :position tgtndx :server [dest]))))}
                                   card nil)))}]}
 
    "Corroder"
@@ -729,7 +727,8 @@
    {:implementation "Does not check that all subroutines were broken"
     :abilities [{:req (req (rezzed? current-ice))
                  :msg (msg "derez " (:title current-ice))
-                 :effect (effect (trash card {:cause :ability-cost}) (derez current-ice))}]}
+                 :cost [:trash]
+                 :effect (effect (derez current-ice))}]}
 
    "Crowbar"
    (break-and-enter "Code Gate")
@@ -795,7 +794,7 @@
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
     :data {:counter {:power 3}}
-    :abilities [{:counter-cost [:power 1]
+    :abilities [{:cost [:power 1]
                  :msg "break 1 subroutine"}]}
 
    "Dagger"
@@ -834,7 +833,7 @@
                                   :effect (req (let [c (:datasucker-count (get-card state card))]
                                                  (ice-strength-bonus state side (- c) target)))}
                :pass-ice ds :run-ends ds})
-    :abilities [{:counter-cost [:virus 1]
+    :abilities [{:cost [:virus 1]
                  :msg (msg "give -1 strength to " (:title current-ice))
                  :req (req (and current-ice (:rezzed current-ice)))
                  :effect (req (update! state side (update-in card [:datasucker-count] (fnil #(+ % 1) 0)))
@@ -852,8 +851,8 @@
                                                                (in-hand? %))}
                                           :req (req (not (install-locked? state side)))
                                           :msg (msg "install " (:title target) " at no cost")
-                                          :effect (effect (trash card {:cause :ability-cost})
-                                                          (runner-install (assoc eid :source card :source-type :runner-install) target {:ignore-install-cost true}))}
+                                          :cost [:trash]
+                                          :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:ignore-install-cost true}))}
                                          card nil)))}]}
 
    "Deep Thought"
@@ -872,16 +871,16 @@
                                  {:label "Bypass Barrier being encountered"
                                   :req (req (has-subtype? current-ice "Barrier"))
                                   :msg (msg "trash it and bypass " (:title current-ice))
-                                  :effect (effect (trash card {:cause :ability-cost}))}]})
+                                  :cost [:trash]}]})
 
    "Deus X"
    {:interactions {:prevent [{:type #{:net}
                               :req (req true)}]}
     :abilities [{:msg "break any number of AP subroutines"
-                 :effect (effect (trash card {:cause :ability-cost}))}
+                 :cost [:trash]}
                 {:msg "prevent any amount of net damage"
-                 :effect (effect (trash card {:cause :ability-cost})
-                                 (damage-prevent :net Integer/MAX_VALUE))}]}
+                 :cost [:trash]
+                 :effect (effect (damage-prevent :net Integer/MAX_VALUE))}]}
 
    "Dhegdheer"
    {:abilities [{:label "Install a program on Dhegdheer"
@@ -940,8 +939,8 @@
                         {:optional
                          {:prompt "Use Disrupter's ability?"
                           :yes-ability
-                          {:effect (req (trash state side card {:cause :ability-cost})
-                                        (swap! state assoc-in [:trace :force-base] 0))}
+                          {:cost [:trash]
+                           :effect (req (swap! state assoc-in [:trace :force-base] 0))}
                           :end-effect (effect (clear-wait-prompt :corp))}}
                         card nil))}}}
 
@@ -1023,12 +1022,9 @@
                            (continue state side nil))}}}
 
    "Endless Hunger"
-   {:abilities [{:label "Trash 1 installed card to break 1 \"End the run.\" subroutine"
-                 :prompt "Select a card to trash for Endless Hunger"
-                 :choices {:req #(and (runner? %) (installed? %))}
-                 :msg (msg "trash " (:title target)
-                           " and break 1 \"[Subroutine] End the run.\" subroutine")
-                 :effect (effect (trash target {:unpreventable true}))}]}
+   {:abilities [{:label "Break 1 \"End the run.\" subroutine"
+                 :msg (msg "break 1 \"[Subroutine] End the run.\" subroutine")
+                 :cost [:installed 1]}]}
 
    "Engolo"
    (auto-icebreaker
@@ -1168,7 +1164,7 @@
    (auto-icebreaker ["All"]
                     {:flags {:runner-phase-12 (req true)}
                      :abilities [(strength-pump 2 1)
-                                 {:counter-cost [:virus 1]
+                                 {:cost [:virus 1]
                                   :msg "break 1 subroutine"}
                                  {:label "Take 1 tag to place 2 virus counters (start of turn)"
                                   :once :per-turn
@@ -1184,12 +1180,12 @@
    (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 2 2 "Sentry")
                                  (strength-pump 2 4)
-                                 {:label "Derez a Sentry and return Golden to your Grip"
-                                  :cost [:credit 2]
-                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Sentry")))
-                                  :msg (msg "derez " (:title current-ice) " and return Golden to their Grip")
-                                  :effect (effect (derez current-ice)
-                                                  (move card :hand))}]})
+                                 {:label "Derez a Sentry"
+                                  :cost [:credit 2 :return-to-hand]
+                                  :req (req (and (rezzed? current-ice)
+                                                 (has-subtype? current-ice "Sentry")))
+                                  :msg (msg "derez " (:title current-ice))
+                                  :effect (effect (derez current-ice))}]})
 
    "Gordian Blade"
    (auto-icebreaker ["Code Gate"]
@@ -1197,21 +1193,21 @@
                                  (strength-pump 1 1 :all-run)]})
 
    "Gorman Drip v1"
-   {:abilities [{:cost [:click 1] :effect (effect (gain-credits (get-virus-counters state card))
-                                                  (trash card {:cause :ability-cost}))
+   {:abilities [{:cost [:click 1 :trash]
+                 :effect (effect (gain-credits (get-virus-counters state card)))
                  :msg (msg "gain " (get-virus-counters state card) " [Credits]")}]
     :events {:corp-click-credit {:effect (effect (add-counter :runner card :virus 1))}
              :corp-click-draw {:effect (effect (add-counter :runner card :virus 1))}}}
 
    "Grappling Hook"
-   {:abilities [{:msg "break all but 1 subroutine" :effect (effect (trash card {:cause :ability-cost}))}]}
+   {:abilities [{:msg "break all but 1 subroutine"
+                 :cost [:trash]}]}
 
    "Gravedigger"
    {:events (let [e {:req (req (and (installed? target) (= (:side target) "Corp")))
                      :effect (effect (add-counter :runner card :virus 1))}]
               {:runner-trash e :corp-trash e})
-    :abilities [{:counter-cost [:virus 1]
-                 :cost [:click 1]
+    :abilities [{:cost [:click 1 :virus 1]
                  :msg "force the Corp to trash the top card of R&D"
                  :effect (effect (mill :corp))}]}
 
@@ -1235,8 +1231,7 @@
    "Hemorrhage"
    {:events {:successful-run {:silent (req true)
                               :effect (effect (add-counter card :virus 1))}}
-    :abilities [{:counter-cost [:virus 2]
-                 :cost [:click 1]
+    :abilities [{:cost [:click 1 :virus 2]
                  :req (req (pos? (count (:hand corp))))
                  :msg "force the Corp to trash 1 card from HQ"
                  :effect (req (show-wait-prompt state :runner "Corp to trash a card from HQ")
@@ -1311,10 +1306,10 @@
 
    "Imp"
    {:data {:counter {:virus 2}}
-    :interactions {:access-ability {:label "[Imp]: Trash card"
+    :interactions {:access-ability {:label "Trash card"
                                     :req (req (and (not (get-in @state [:per-turn (:cid card)]))
                                                    (pos? (get-counters card :virus))))
-                                    :counter-cost [:virus 1]
+                                    :cost [:virus 1]
                                     :msg (msg "trash " (:title target) " at no cost")
                                     :once :per-turn
                                     :async true
@@ -1322,12 +1317,11 @@
 
    "Incubator"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}
-    :abilities [{:cost [:click 1]
+    :abilities [{:cost [:click 1 :trash]
                  :msg (msg "move " (get-counters card :virus) " virus counter to " (:title target))
                  :choices {:req #(and (installed? %)
                                       (has-subtype? % "Virus"))}
-                 :effect (effect (trash card {:cause :ability-cost})
-                                 (add-counter target :virus (get-counters card :virus)))}]}
+                 :effect (effect (add-counter target :virus (get-counters card :virus)))}]}
 
    "Inti"
    (auto-icebreaker ["Barrier"]
@@ -1461,10 +1455,10 @@
     :abilities [{:cost [:credit 3]
                  :msg "prevent a hardware from being trashed"
                  :effect (effect (trash-prevent :hardware 1))}
-                {:label "[Trash]: Prevent a hardware from being trashed"
+                {:label "Prevent a hardware from being trashed"
                  :msg "prevent a hardware from being trashed"
-                 :effect (effect (trash-prevent :hardware 1)
-                                 (trash card {:cause :ability-cost}))}]}
+                 :cost [:trash]
+                 :effect (effect (trash-prevent :hardware 1))}]}
 
    "Lustig"
    (auto-icebreaker ["Sentry"]
@@ -1473,7 +1467,7 @@
                                  {:label "Bypass Sentry being encountered"
                                   :req (req (has-subtype? current-ice "Sentry"))
                                   :msg (msg "trash it and bypass " (:title current-ice))
-                                  :effect (effect (trash card {:cause :ability-cost}))}]})
+                                  :cost [:trash]}]})
 
    "Magnum Opus"
    {:abilities [{:cost [:click 1]
@@ -1490,7 +1484,7 @@
                                   :effect (effect (lose-credits target)
                                                   (add-counter card :power target))
                                   :msg (msg "place " target " power counters on it")}
-                                 {:counter-cost [:power 1]
+                                 {:cost [:power 1]
                                   :label "Hosted power counter: Break ICE subroutine"
                                   :msg "break 1 ICE subroutine"}
                                  (strength-pump 2 2)]
@@ -1649,7 +1643,7 @@
    "Overmind"
    (auto-icebreaker ["All"]
                     {:effect (effect (add-counter card :power (available-mu state)))
-                     :abilities [{:counter-cost [:power 1]
+                     :abilities [{:cost [:power 1]
                                   :msg "break 1 subroutine"}
                                  (strength-pump 1 1)]})
 
@@ -1772,12 +1766,12 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "Code Gate")
                                  (strength-pump 3 3)
-                                 {:label "Derez a Code Gate and return Peregrine to your Grip"
-                                  :cost [:credit 2]
-                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Code Gate")))
-                                  :msg (msg "derez " (:title current-ice) " and return Peregrine to their Grip")
-                                  :effect (effect (derez current-ice)
-                                                  (move card :hand))}]})
+                                 {:label "Derez a Code Gate"
+                                  :cost [:credit 2 :return-to-hand]
+                                  :req (req (and (rezzed? current-ice)
+                                                 (has-subtype? current-ice "Code Gate")))
+                                  :msg (msg "derez " (:title current-ice))
+                                  :effect (effect (derez current-ice))}]})
 
    "Persephone"
    (auto-icebreaker ["Sentry"]
@@ -1802,7 +1796,7 @@
     :abilities [{:once :per-turn
                  :req (req (and current-ice
                                 (rezzed? current-ice)))
-                 :counter-cost [:virus 1]
+                 :cost [:virus 1]
                  :label "Make currently encountered ice gain a subtype"
                  :prompt "Choose an ICE subtype"
                  :choices (req (->> (server-cards)
@@ -2000,12 +1994,12 @@
    (auto-icebreaker ["Barrier"]
                     {:abilities [(break-sub 1 1 "Barrier")
                                  (strength-pump 2 2)
-                                 {:label "Derez a Barrier and return Saker to your Grip"
-                                  :cost [:credit 2]
-                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Barrier")))
-                                  :msg (msg "derez " (:title current-ice) " and return Saker to their Grip")
-                                  :effect (effect (derez current-ice)
-                                                  (move card :hand))}]})
+                                 {:label "Derez a Barrier"
+                                  :cost [:credit 2 :return-to-hand]
+                                  :req (req (and (rezzed? current-ice)
+                                                 (has-subtype? current-ice "Barrier")))
+                                  :msg (msg "derez " (:title current-ice))
+                                  :effect (effect (derez current-ice))}]})
 
    "Savant"
    (ancient-greek-breaker "savant" [{:cost [:credit 2] :req (req (has-subtype? current-ice "Sentry"))
@@ -2044,28 +2038,29 @@
 
    "Self-modifying Code"
    {:abilities [{:req (req (not (install-locked? state side)))
-                 :effect (req (wait-for (trash state side card {:cause :ability-cost})
-                                        (continue-ability state side
-                                                          {:prompt "Choose a program to install"
-                                                           :msg (req (if (not= target "No install")
-                                                                       (str "install " (:title target))
-                                                                       (str "shuffle their Stack")))
-                                                           :priority true
-                                                           :choices (req (cancellable
-                                                                           (conj (vec (sort-by :title (filter program?
-                                                                                                              (:deck runner))))
-                                                                                 "No install")))
-                                                           :cost [:credit 2]
-                                                           :effect (req (trigger-event state side :searched-stack nil)
-                                                                        (shuffle! state side :deck)
-                                                                        (when (not= target "No install")
-                                                                          (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))} card nil)))}]}
+                 :cost [:trash]
+                 :effect (effect (continue-ability
+                                   {:prompt "Choose a program to install"
+                                    :msg (req (if (not= target "No install")
+                                                (str "install " (:title target))
+                                                (str "shuffle their Stack")))
+                                    :priority true
+                                    :choices (req (cancellable
+                                                    (conj (vec (sort-by :title (filter program?
+                                                                                       (:deck runner))))
+                                                          "No install")))
+                                    :cost [:credit 2]
+                                    :effect (req (trigger-event state side :searched-stack nil)
+                                                 (shuffle! state side :deck)
+                                                 (when (not= target "No install")
+                                                   (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))}
+                                   card nil))}]}
 
    "Sharpshooter"
    (auto-icebreaker ["Destroyer"]
-                    {:abilities [{:label "[Trash]: Break any number of Destroyer subroutines"
+                    {:abilities [{:label "Break any number of Destroyer subroutines"
                                   :msg "break any number of Destroyer subroutines"
-                                  :effect (effect (trash card {:cause :ability-cost}))}
+                                  :cost [:trash]}
                                  (strength-pump 1 2)]})
 
    "Shiv"
@@ -2196,7 +2191,7 @@
                 {:req (req (and (:run @state)
                                 (rezzed? current-ice)
                                 (>= (get-counters card :power) 2)))
-                 :counter-cost [:power 2]
+                 :cost [:power 2]
                  :label "Increase non-AI icebreaker strength by +3 until end of encounter"
                  :prompt "Choose an installed non-AI icebreaker"
                  :choices {:req #(and (has-subtype? % "Icebreaker")
@@ -2236,21 +2231,21 @@
 
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :power 1))}}
-    :abilities [{:cost [:click 1]
-                 :label "[Click], remove Trope from the game: Reshuffle cards from Heap back into Stack"
-                 :effect (effect
-                           (move card :rfg)
-                           (resolve-ability
-                             {:show-discard true
-                              :choices {:max (min (get-counters card :power) (count (:discard runner)))
-                                        :all true
-                                        :req #(and (runner? %)
-                                                   (in-discard? %))}
-                              :msg (msg "shuffle " (join ", " (map :title targets))
-                                        " into their Stack")
-                              :effect (req (doseq [c targets] (move state side c :deck))
-                                           (shuffle! state side :deck))}
-                             card nil))}]}
+    :abilities [{:effect
+                 (effect
+                   (continue-ability
+                     {:cost [:click 1 :remove-from-game]
+                      :label "Reshuffle cards from Heap back into Stack"
+                      :show-discard true
+                      :choices {:max (min (get-counters card :power) (count (:discard runner)))
+                                :all true
+                                :req #(and (runner? %)
+                                           (in-discard? %))}
+                      :msg (msg "shuffle " (join ", " (map :title targets))
+                                " into their Stack")
+                      :effect (req (doseq [c targets] (move state side c :deck))
+                                   (shuffle! state side :deck))}
+                     card nil))}]}
 
    "Trypano"
    (let [trash-if-5 (req (when-let [h (get-card state (:host card))]
@@ -2292,8 +2287,7 @@
     :events {:successful-run {:silent (req true)
                               :req (req (= target :rd))
                               :effect (effect (add-counter card :power 1))}}
-    :abilities [{:cost [:click 1]
-                 :counter-cost [:power 3]
+    :abilities [{:cost [:click 1 :power 3]
                  :once :per-turn
                  :msg "gain [Click][Click]"
                  :effect (effect (gain :click 2))}]}

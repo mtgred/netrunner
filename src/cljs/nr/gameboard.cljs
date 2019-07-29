@@ -443,15 +443,6 @@
       (let [cardinfo (-> @touchmove :card ((.-parse js/JSON)) (js->clj :keywordize-keys true))]
         (send-command "move" {:card cardinfo :server server})))))
 
-(defn ability-costs [ab]
-  (when-let [costs (:cost ab)]
-    (str (join ", " (for [[cost amount] (partition 2 costs)
-                          :let [cost-symbol (str "[" (capitalize (name cost)) "]")]]
-                      (case cost
-                        "credit" (str amount " " cost-symbol)
-                        (join "" (repeat amount cost-symbol)))))
-         ": ")))
-
 (defn remote->num [server]
   (-> server str (clojure.string/split #":remote") last str->int))
 
@@ -582,7 +573,7 @@
        [:div {:key i
               :on-click #(do (send-command "runner-ability" {:card card
                                                              :ability i}))}
-        (render-icons (str (ability-costs ab) (:label ab)))])
+        (render-icons (:label ab))])
      runner-abilities)
    (when (> (count subroutines) 1)
      [:div {:on-click #(send-command "system-msg"
@@ -603,7 +594,7 @@
        (fn [i ab]
          [:div {:on-click #(do (send-command "corp-ability" {:card card
                                                              :ability i}))}
-          (render-icons (str (ability-costs ab) (:label ab)))])
+          (render-icons (:label ab))])
        corp-abilities)])
 
 (defn server-menu [card c-state remotes type zone]
@@ -639,11 +630,11 @@
              [:div {:key i
                     :on-click #(do (send-command "dynamic-ability" (assoc (select-keys ab [:dynamic :source :index])
                                                                      :card card)))}
-              (render-icons (str (ability-costs ab) (:label ab)))]
+              (render-icons (:label ab))]
              [:div {:key i
                     :on-click #(do (send-command "ability" {:card card
                                                             :ability (- i dynabi-count)}))}
-              (render-icons (str (ability-costs ab) (:label ab)))]))
+              (render-icons (:label ab))]))
          abilities)
        (map-indexed
          (fn [i sub]

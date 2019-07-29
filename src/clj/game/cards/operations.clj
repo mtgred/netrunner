@@ -440,7 +440,7 @@
 
    "Distract the Masses"
    (let [shuffle-two {:async true
-                      :effect (effect (rfg-and-shuffle-rd-effect (find-cid (:cid card) (:discard corp)) 2))}
+                      :effect (effect (rfg-and-shuffle-rd-effect eid (find-cid (:cid card) (:discard corp)) 2 nil))}
          trash-from-hq {:async true
                         :prompt "Select up to 2 cards in HQ to trash"
                         :choices {:max 2
@@ -796,8 +796,8 @@
 
    "Genotyping"
    {:async true
+    :msg "trash the top 2 cards of R&D"
     :effect (effect (mill :corp 2)
-                    (system-msg "trashes the top 2 cards of R&D")
                     (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) 4 false))}
 
    "Green Level Clearance"
@@ -1285,7 +1285,7 @@
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
 
    "Preemptive Action"
-   {:effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) (min (count (:discard corp)) 3) true))}
+   {:effect (effect (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) (min (count (:discard corp)) 3) true))}
 
    "Priority Construction"
    (letfn [(install-card [chosen]

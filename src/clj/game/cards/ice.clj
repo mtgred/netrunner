@@ -17,7 +17,7 @@
 (defn runner-pay-or-break
   "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, etc)"
   [cost subs label]
-  (let [cost-str (build-cost-str [cost])
+  (let [cost-str (build-cost-string cost cost->label)
         subs-str (quantify subs "subroutine")]
     {:cost cost
      :label (str label " " subs-str)
@@ -97,7 +97,7 @@
   (assoc ability
          :label (str "Hosted power counter: " label)
          :msg (str message " using 1 power counter")
-         :counter-cost [:power 1]))
+         :cost [:power 1]))
 
 (defn do-psi
   "Start a psi game, if not equal do ability"
@@ -482,8 +482,8 @@
    {:abilities [{:label "End the run"
                  :msg (msg "end the run")
                  :async true
-                 :effect (effect (trash card {:cause :ability-cost})
-                                 (end-run eid card))}]
+                 :cost [:trash]
+                 :effect (effect (end-run eid card))}]
     :subroutines [{:label "Gain 1 [Credits] for each ice protecting this server"
                    :msg (msg "gain "
                              (count (:ices (card->server state card)))
@@ -2304,7 +2304,7 @@
                  :label "Reveal all cards in the Runner's Grip"
                  :msg (msg "reveal the Runner's Grip ( " (join ", " (map :title (:hand runner))) " )")}
                 {:req (req (pos? (get-counters card :power)))
-                 :counter-cost [:power 1]
+                 :cost [:power 1]
                  :label "Hosted power counter: Reveal all cards in Grip and trash 1 card"
                  :msg (msg "look at all cards in Grip and trash " (:title target)
                            " using 1 power counter")

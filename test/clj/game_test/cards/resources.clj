@@ -312,6 +312,19 @@
 
 (deftest citadel-sanctuary
   ;; Citadel Sanctuary
+  (testing "basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Scorched Earth"]}
+                 :runner {:deck ["Citadel Sanctuary" (qty "Sure Gamble" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Citadel Sanctuary")
+      (take-credits state :runner)
+      (core/gain-tags state :runner 1)
+      (play-from-hand state :corp "Scorched Earth")
+      (is (zero? (count (:discard (get-runner)))) "No cards have been discarded or trashed yet")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 3 (count (:discard (get-runner)))) "CS and all cards in grip are trashed")))
   (testing "Interaction with Corporate Grant and Thunder Art Gallery"
     (do-game
       (new-game {:runner {:deck ["Citadel Sanctuary" "Thunder Art Gallery" "Corroder" "Corporate \"Grant\""]}})
@@ -1961,7 +1974,7 @@
       (card-ability state :runner (get-resource state 0) 0)
       (is (zero? (:click (get-runner))) "Should now have 0 clicks")
       (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
-      (is (last-log-contains? state "uses Logic Bomb"))
+      (is (last-log-contains? state "use Logic Bomb"))
       (is (last-log-contains? state "\\[Click\\]\\[Click\\]") "Log should mention 2 clicks")))
   (testing "if the runner has no clicks left"
     (do-game
@@ -1978,7 +1991,7 @@
       (card-ability state :runner (get-resource state 0) 0)
       (is (zero? (:click (get-runner))) "Should still have 0 clicks")
       (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
-      (is (last-log-contains? state "uses Logic Bomb"))
+      (is (last-log-contains? state "use Logic Bomb"))
       (is (not (last-log-contains? state "\\[Click\\]")) "Log shouldn't mention any clicks"))))
 
 (deftest london-library
@@ -2556,7 +2569,7 @@
       (is (empty? (get-program state)) "No programs installed")
       (is (= 5 (:credit (get-runner))) "Runner starts with 5c.")
       (card-ability state :runner (get-resource state 0) 0)
-      (click-prompt state :runner (find-card "Clone Chip" (:hand (get-runner))))
+      (click-card state :runner (find-card "Clone Chip" (:hand (get-runner))))
       (click-prompt state :runner (find-card "Mimic" (:discard (get-runner))))
       (is (= 1 (count (get-program state))) "1 Program installed")
       (is (= 2 (:credit (get-runner))) "Runner paid install cost")))
@@ -2575,7 +2588,7 @@
       (is (empty? (get-program state)) "No programs installed")
       (is (= 5 (:credit (get-runner))) "Runner starts with 5c.")
       (card-ability state :runner (get-resource state 0) 0)
-      (click-prompt state :runner (find-card "Mimic" (:hand (get-runner))))
+      (click-card state :runner (find-card "Mimic" (:hand (get-runner))))
       (click-prompt state :runner (find-card "Mimic" (:discard (get-runner))))
       (is (= 1 (count (get-program state))) "1 Program installed")
       (is (= 2 (:credit (get-runner))) "Runner paid install cost")))
@@ -2585,10 +2598,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Reclaim")
       (card-ability state :runner (get-resource state 0) 0)
-      (is (empty? (get-program state)) "No programs installed")
-      (is (= 5 (:credit (get-runner))) "Runner starts with 5c.")
-      (card-ability state :runner (get-resource state 0) 0)
-      (click-prompt state :runner (find-card "Alpha" (:hand (get-runner))))
+      (click-card state :runner (find-card "Alpha" (:hand (get-runner))))
       (is (empty? (get-program state)) "Did not install program")
       (is (= 5 (:credit (get-runner))) "Runner did not spend credits"))))
 
@@ -2628,22 +2638,24 @@
 (deftest rosetta-2-0
   ;; Rosetta 2.0 remove an installed program from the game and install one from the heap lower install cost
   (do-game
-    (new-game {:runner {:deck ["Rosetta 2.0" "Corroder" "Gordian Blade"]}})
+    (new-game {:runner {:deck ["Gordian Blade"]
+                        :hand ["Rosetta 2.0" "Corroder"]
+                        :credits 10}})
     (take-credits state :corp)
-    (starting-hand state :runner ["Rosetta 2.0" "Corroder"])
-    (core/gain state :runner :credit 2)
     (play-from-hand state :runner "Rosetta 2.0")
     (play-from-hand state :runner "Corroder")
-    (is (= 3 (core/available-mu state)) "Corrder cost 1 mu")
-    (is (= 2 (:credit (get-runner))) "Starting with 2 credits")
-    (card-ability state :runner (get-resource state 0) 0)
-    (click-card state :runner (get-program state 0))
-    (click-prompt state :runner (find-card "Gordian Blade" (:deck (get-runner))))
-    (is (= 3 (core/available-mu state)) "Gordian cost 1 mu, Corroder freed")
-    (is (zero? (:credit (get-runner))) "Ending with 0 credits")
-    (is (= 1 (count (:rfg (get-runner)))) "Corroder removed from game")
-    (is (= 1 (count (get-program state))) "One program installed")
-    (is (= "Gordian Blade" (:title (get-program state 0))) "Gordian installed")))
+    (let [rosetta (get-resource state 0)
+          corroder (get-program state 0)]
+      (is (= 3 (core/available-mu state)) "Corrder cost 1 mu")
+      (is (= 5 (:credit (get-runner))) "Starting with 5 credits")
+      (card-ability state :runner rosetta 0)
+      (click-prompt state :runner (find-card "Gordian Blade" (:deck (get-runner))))
+      (click-card state :runner corroder)
+      (is (= 3 (core/available-mu state)) "Gordian cost 1 mu, Corroder freed")
+      (is (= 3 (:credit (get-runner))) "Ending with 3 credits")
+      (is (= 1 (count (:rfg (get-runner)))) "Corroder removed from game")
+      (is (= 1 (count (get-program state))) "One program installed")
+      (is (= "Gordian Blade" (:title (get-program state 0))) "Gordian installed"))))
 
 (deftest sacrificial-construct
   ;; Sacrificial Construct - Trash to prevent trash of installed program or hardware
@@ -2704,7 +2716,7 @@
       (core/rez state :corp hostile)
       (run-empty-server state "Server 1")
       (is (seq (:prompt (get-runner))) "Prompting to trash.")
-      (click-prompt state :runner "[Salsette Slums]: Remove card from game")
+      (click-prompt state :runner "[Salsette Slums] Remove card from game")
       (is (empty? (:prompt (get-runner))) "All prompts done")
       (is (= 3 (count (:hand (get-runner)))) "On-trash ability of other Hostile didn't fire")
       (is (= (:cid ts) (:cid (last (:rfg (get-corp))))) "Tech Startup was removed from game")
@@ -2717,9 +2729,9 @@
       (click-prompt state :runner "No action")
       (run-empty-server state :remote3)
       (is (seq (:prompt (get-runner))) "Prompting to trash")
-      (is (= ["[Salsette Slums]: Remove card from game" "Pay 1 [Credits] to trash" "No action"]
+      (is (= ["[Salsette Slums] Remove card from game" "Pay 1 [Credits] to trash" "No action"]
              (->> (get-runner) :prompt first :choices)) "Second Salsette Slums can be used")
-      (click-prompt state :runner "[Salsette Slums]: Remove card from game")
+      (click-prompt state :runner "[Salsette Slums] Remove card from game")
       (is (= 2 (count (:rfg (get-corp)))) "Two cards should be RFG now"))))
 
 (deftest scrubber

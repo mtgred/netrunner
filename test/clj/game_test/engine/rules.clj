@@ -246,7 +246,7 @@
     (play-from-hand state :runner "Imp")
     (let [imp (get-program state 0)]
       (run-empty-server state "HQ")
-      (click-prompt state :runner "[Imp]: Trash card")
+      (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
       (is (= 1 (count (:discard (get-corp)))) "Accessed Hedge Fund is trashed")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
@@ -257,7 +257,7 @@
     (let [imp (get-program state 0)]
       (is (= 2 (get-counters (refresh imp) :virus)) "Reinstalled Imp has 2 counters")
       (run-empty-server state "HQ")
-      (click-prompt state :runner "[Imp]: Trash card"))
+      (click-prompt state :runner "[Imp] Hosted virus counter: Trash card"))
     (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn")))
 
 (deftest trash-seen-and-unseen
