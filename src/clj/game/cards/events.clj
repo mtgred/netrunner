@@ -1344,10 +1344,10 @@
                                         (wait-for
                                           (resolve-ability state side (access-revealed revealed) card nil)
                                           (shuffle! state :corp :deck)
-                                          (system-msg state :runner " shuffles R&D")
+                                          (system-msg state :runner "shuffles R&D")
                                           (effect-completed state side eid)))
                                     (do (shuffle! state :corp :deck)
-                                        (system-msg state :runner " shuffles R&D")
+                                        (system-msg state :runner "shuffles R&D")
                                         (effect-completed state side eid))))))}}
                   card))})
 

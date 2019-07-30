@@ -7,6 +7,7 @@
             [game.core.toasts :refer [toast]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
+            [game.cards.programs :refer [break-sub]] ;; TODO: REMOVE ME AND EXPORT BREAK-SUB INTO ice.clj
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer :all]))
@@ -143,7 +144,7 @@
    {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
     :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"
                  :prompt "Choose how many [Credit] to move" :once :per-turn
-                 :choices {:number (req (min (:credit runner) 3))}
+                 :choices {:number (req (min 3 (total-available-credits state :runner eid card)))}
                  :effect (effect (lose-credits target)
                                  (add-counter card :credit target))
                  :msg (msg "move " target " [Credit] to Algo Trading")}
@@ -1096,8 +1097,8 @@
    "Hernando Cortez"
    {:events {:pre-rez-cost {:req (req (and (>= (:credit corp) 10) (ice? target)))
                             :effect (effect (rez-additional-cost-bonus
-                                              [:credit (count-num-subroutines target)]))
-                            :msg (msg "increase the rez cost by " (count-num-subroutines target) " [Credit]")}}}
+                                              [:credit (count (:subroutines target))]))
+                            :msg (msg "increase the rez cost by " (count (:subroutines target)) " [Credit]")}}}
 
    "Human First"
    {:events {:agenda-scored {:msg (msg "gain " (get-agenda-points state :corp target) " [Credits]")
@@ -1707,8 +1708,8 @@
                                   (resolve-ability
                                     state side
                                     {:prompt "How many counters to remove?"
-                                     :choices {:number (req (min (:credit runner)
-                                                                 num-counters))}
+                                     :choices {:number (req (min num-counters
+                                                                 (total-available-credits state :runner eid card)))}
                                      :msg (msg "remove " target " counters from " (:title paydowntarget))
                                      :effect (req (do
                                                     (lose-credits state side target)
