@@ -329,8 +329,3 @@
   If a function is passed in, instead call that on [:special toggle-kw] and return the result."
   ([toggle-kw] (get-autoresolve toggle-kw {:always "Yes" :never "No"}))
   ([toggle-kw pred] (req (pred (get-in (get-card state card) [:special toggle-kw])))))
-
-(defn get-strength
-  [card]
-  (or (:current-strength card)
-      (:strength card)))

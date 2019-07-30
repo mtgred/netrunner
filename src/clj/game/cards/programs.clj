@@ -11,193 +11,6 @@
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer :all]))
 
-(defn break-subroutines-impl
-  ([ice target-count] (break-subroutines-impl ice target-count '()))
-  ([ice target-count broken-subs]
-   {:async true
-    :prompt (str "Break a subroutine"
-                 (when (and target-count (< 1 target-count))
-                   (str " (" (count broken-subs)
-                        " of " target-count ")")))
-    :choices (req (concat (unbroken-subroutines-choice ice) '("Done")))
-    :effect (req (if (= "Done" target)
-                   (complete-with-result state side eid broken-subs)
-                   (let [sub (first (filter #(and (not (:broken %)) (= target (make-label (:sub-effect %)))) (:subroutines ice)))
-                         ice (break-subroutine ice sub)
-                         broken-subs (cons sub broken-subs)]
-                     (if (and (pos? (count (unbroken-subroutines-choice ice)))
-                              (< (count broken-subs) (if (pos? target-count) target-count (count (:subroutines ice)))))
-                       (continue-ability state side (break-subroutines-impl ice target-count broken-subs) card nil)
-                       (complete-with-result state side eid broken-subs)))))}))
-
-(defn break-subroutines-pay
-  [ice cost broken-subs]
-  (when (seq broken-subs)
-    {:msg (msg "break " (quantify (count broken-subs) "subroutine")
-               " on " (:title ice)
-               " (\"[subroutine] "
-               (join "\" and \"[subroutine] "
-                     (map :label (sort-by :index broken-subs)))
-               "\")")
-     :cost cost}))
-
-(defn break-subroutines
-  ([ice cost n] (break-subroutines ice cost n nil))
-  ([ice cost n args]
-   (let [args (merge {:repeatable true} args)]
-     {:async true
-      :effect (req (wait-for (resolve-ability state side (break-subroutines-impl ice n) card nil)
-                             (let [broken-subs async-result]
-                               (wait-for (resolve-ability state side (make-eid state {:source-type :ability})
-                                                          (break-subroutines-pay ice cost broken-subs) card nil)
-                                         (doseq [sub broken-subs]
-                                           (break-subroutine! state (get-card state ice) sub))
-                                         (let [ice (get-card state ice)]
-                                           (if (and (:repeatable args)
-                                                    (seq broken-subs)
-                                                    (pos? (count (unbroken-subroutines-choice ice)))
-                                                    (can-pay? state side eid (get-card state card) nil cost))
-                                             (continue-ability state side (break-subroutines ice cost n args) card nil)
-                                             (continue-ability state side {:effect (:additional-ability args)} card nil)))))))})))
-
-(defn break-sub
-  "Creates a break subroutine ability.
-  If n = 0 then any number of subs are broken."
-  ([cost n] (break-sub cost n nil nil))
-  ([cost n subtypes] (break-sub cost n subtypes nil))
-  ([cost n subtypes args]
-   (let [cost (if (number? cost) [:credit cost] cost)
-         subtypes (cond (string? subtypes) #{subtypes}
-                        (sequential? subtypes) (into #{} subtypes)
-                        :else #{"All"})]
-     {:req (req (and current-ice
-                     (seq (remove :broken (:subroutines current-ice)))
-                     ;; `req` returns a function, so we have to call it,
-                     ;; not just use the return value
-                     (if-let [break-req (:req args)]
-                       (break-req state side eid card targets)
-                       (and (<= (get-strength current-ice) (get-strength card))
-                            (if subtypes
-                              (or (contains? subtypes "All")
-                                  (some #(has-subtype? current-ice %) subtypes))
-                              true)))))
-      :break n
-      :breaks subtypes
-      :label (str (when cost (str (build-cost-string cost) ": "))
-                  (or (:label args)
-                      (str "break "
-                           (when (< 1 n) "up to ")
-                           (if (pos? n) n "any number of")
-                           (when subtypes (str " " (join " or " subtypes)))
-                           (pluralize " subroutine" n))))
-      :effect (effect (continue-ability
-                        (break-subroutines current-ice cost n args)
-                        card nil))})))
-
-(defn- strength-pump
-  "Creates a strength pump ability.
-  Cost can be a credit amount or a list of costs e.g. [:credit 2]."
-  ([cost strength] (strength-pump cost strength :encounter nil))
-  ([cost strength duration] (strength-pump cost strength duration nil))
-  ([cost strength duration args]
-   (let [cost (if (number? cost) [:credit cost] cost)
-         duration-string (cond
-                           (= duration :all-run)
-                           " for the remainder of the run"
-                           (= duration :all-turn)
-                           " for the remainder of the turn")]
-     {:label (str (when cost (str (build-cost-string cost) ": "))
-                  (or (:label args)
-                      (str "add " strength " strength"
-                           duration-string)))
-      :req (req (if-let [str-req (:req args)]
-                  (str-req state side eid card targets)
-                  true))
-      :msg (msg "increase its strength from " (get-strength card)
-                " to " (+ strength (get-strength card))
-                duration-string)
-      :cost cost
-      :pump strength
-      :effect (effect (pump card strength duration))})))
-
-(def breaker-auto-pump
-  "Updates an icebreaker's abilities with a pseudo-ability to trigger the
-  auto-pump routine in core, IF we are encountering a rezzed ice with a subtype
-  we can break."
-  {:effect
-   (req (let [abs (remove #(and (= (:dynamic %) :auto-pump)
-                                (= (:dynamic %) :auto-pump-and-break))
-                          (:abilities (card-def card)))
-              current-ice (when-not (get-in @state [:run :ending])
-                            (get-card state current-ice))
-              ;; match strength
-              pump-ability (some #(when (:pump %) %) abs)
-              strength-diff (when (and current-ice
-                                       (get-strength current-ice)
-                                       (get-strength card))
-                              (max 0 (- (get-strength current-ice)
-                                        (get-strength card))))
-              times-pump (when strength-diff
-                           (int (Math/ceil (/ strength-diff (:pump pump-ability 1)))))
-              total-pump-cost (when (and pump-ability
-                                         times-pump)
-                                (repeat times-pump (:cost pump-ability)))
-              ;; break all subs
-              can-break (fn [ability]
-                          (if-let [subtypes (:breaks ability)]
-                            (or (contains? subtypes "All")
-                                (some #(has-subtype? current-ice %) subtypes))
-                            true))
-              break-ability (some #(when (can-break %) %) abs)
-              subs-broken-at-once (when break-ability
-                                    (:break break-ability 1))
-              unbroken-subs (when (:subroutines current-ice)
-                              (count (remove :broken (:subroutines current-ice))))
-              times-break (when (and unbroken-subs
-                                     subs-broken-at-once)
-                            (if (pos? subs-broken-at-once)
-                              (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
-                              1))
-              total-break-cost (when (and break-ability
-                                          times-break)
-                                 (repeat times-break (:cost break-ability)))
-              total-cost (merge-costs (conj total-pump-cost total-break-cost))]
-          (update! state side
-                   (assoc card :abilities
-                          (if (and (seq total-cost)
-                                   (rezzed? current-ice)
-                                   break-ability)
-                            (vec (concat (when (and (pos? unbroken-subs)
-                                                    (can-pay? state side eid card total-cost))
-                                           [{:dynamic :auto-pump-and-break
-                                             :cost total-cost
-                                             :label (str (if (pos? times-pump)
-                                                           "Match strength and fully break "
-                                                           "Fully break ")
-                                                         (:title current-ice))}])
-                                         (when (and (pos? times-pump)
-                                                    (can-pay? state side eid card total-pump-cost))
-                                           [{:dynamic :auto-pump
-                                             :cost total-pump-cost
-                                             :label (str "Match strength of " (:title current-ice))}])
-                                         abs))
-                            abs)))))})
-
-;; Takes a a card definition, and returns a new card definition that
-;; hooks up breaker-auto-pump to the necessary events.
-;; IMPORTANT: Events on cdef take precedence, and should call
-;; (:effect breaker-auto-pump) themselves.
-(defn auto-icebreaker [cdef]
-  (assoc cdef
-         :events (merge {:run breaker-auto-pump
-                         :pass-ice breaker-auto-pump
-                         :run-ends breaker-auto-pump
-                         :ice-strength-changed breaker-auto-pump
-                         :ice-subtype-changed breaker-auto-pump
-                         :breaker-strength-changed breaker-auto-pump
-                         :approach-ice breaker-auto-pump}
-                        (:events cdef))))
-
 (defn- wrestling-breaker
   "Laamb and Engolo. Makes currently encountered ice gain chosen type until end of encounter."
   [cost ice-type]
@@ -342,17 +155,6 @@
               :run nil}
      :abilities abilities}))
 
-(defmacro central-breaker
-  "'Cannot be used on a remote server' breakers.
-  This has to be a macro so we can insert the :req into the args position."
-  [break pump]
-  (let [subtype (last break)
-        central-req `{:req ~(req (and (#{:hq :rd :archives} (first (:server run)))
-                                      (<= (get-strength current-ice) (get-strength card))
-                                      (has-subtype? current-ice subtype)))}]
-    (auto-icebreaker {:abilities [(concat break (list central-req))
-                                  pump]})))
-
 (defn- ancient-greek-breaker
   "Adept, Sage and Savant. Strength depends on available memory units."
   [card-name abilities]
@@ -410,30 +212,39 @@
                                                      n (:number async-result)]
                                            (add-strength state card message n))))}]}))
 
-(defmacro khan-breaker
+(defn central-breaker
   [break pump]
-  (let [ice-type (last break)]
-    (auto-icebreaker
-      {:abilities [break
-                   pump
-                   `{:label (str "Derez " ~ice-type " being encountered")
-                     :cost [:credit 2 :return-to-hand]
-                     :req ~(req (and (rezzed? current-ice)
-                                     (has-subtype? current-ice ice-type)))
-                     :msg ~(msg "derez " (:title current-ice))
-                     :effect ~(effect (derez current-ice))}]})))
+  (auto-icebreaker
+    {:abilities [(break-sub (nth break 1) (nth break 2) (last break)
+                            {:req (req (and (#{:hq :rd :archives} (first (:server run)))
+                                            (<= (get-strength current-ice) (get-strength card))
+                                            (has-subtype? current-ice (last break))))})
+                 pump]}))
 
-(defmacro fraud-breaker
+(defn khan-breaker
   [break pump]
   (let [ice-type (last break)]
     (auto-icebreaker
       {:abilities [break
                    pump
-                   `{:label (str "Bypass " ~ice-type " being encountered")
-                     :cost [:trash]
-                     :req ~(req (and (rezzed? current-ice)
-                                     (has-subtype? current-ice ice-type)))
-                     :msg ~(msg "bypass " (:title current-ice))}]})))
+                   {:label (str "Derez " ice-type " being encountered")
+                    :cost [:credit 2 :return-to-hand]
+                    :req (req (and (rezzed? current-ice)
+                                   (has-subtype? current-ice ice-type)))
+                    :msg (msg "derez " (:title current-ice))
+                    :effect (effect (derez current-ice))}]})))
+
+(defn fraud-breaker
+  [break pump]
+  (let [ice-type (last break)]
+    (auto-icebreaker
+      {:abilities [break
+                   pump
+                   {:label (str "Bypass " ice-type " being encountered")
+                    :cost [:trash]
+                    :req (req (and (rezzed? current-ice)
+                                   (has-subtype? current-ice ice-type)))
+                    :msg (msg "bypass " (:title current-ice))}]})))
 
 ;; Card definitions
 (def card-definitions
@@ -472,7 +283,7 @@
                      (effect-completed state side eid)))}}}
 
    "Alias"
-   (central-breaker (break-sub 1 1 "Sentry")
+   (central-breaker '(break-sub 1 1 "Sentry")
                     (strength-pump 2 3))
 
    "Alpha"
@@ -674,7 +485,7 @@
                                 :run-ends put-back})})
 
    "Breach"
-   (central-breaker (break-sub 2 3 "Barrier")
+   (central-breaker '(break-sub 2 3 "Barrier")
                     (strength-pump 2 4))
 
    "Bug"
@@ -1285,9 +1096,8 @@
                                                            (effect-completed state side eid))))}]})
 
    "Golden"
-   (khan-breaker
-     (break-sub 2 2 "Sentry")
-     (strength-pump 2 4))
+   (khan-breaker '(break-sub 2 2 "Sentry")
+                 (strength-pump 2 4))
 
    "Gordian Blade"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
@@ -1301,8 +1111,13 @@
              :corp-click-draw {:effect (effect (add-counter :runner card :virus 1))}}}
 
    "Grappling Hook"
-   {:abilities [{:msg "break all but 1 subroutine"
-                 :cost [:trash]}]}
+   {:abilities [{:effect
+                 (effect
+                   (continue-ability
+                     (let [total-subs (count (:subroutines current-ice))]
+                       (break-sub [:trash] (dec total-subs) "All" {:label "break all but 1 subroutine"
+                                                                   :req (req true)}))
+                     card nil))}]}
 
    "Gravedigger"
    {:events (let [e {:req (req (and (installed? target) (= (:side target) "Corp")))
@@ -1821,7 +1636,7 @@
                                  :type :recurring}}}
 
    "Passport"
-   (central-breaker (break-sub 1 1 "Code Gate")
+   (central-breaker '(break-sub 1 1 "Code Gate")
                     (strength-pump 2 2))
 
    "Pawn"
@@ -1862,9 +1677,8 @@
                                  (strength-pump 2 3)]})
 
    "Peregrine"
-   (khan-breaker
-     (break-sub 1 1 "Code Gate")
-     (strength-pump 3 3))
+   (khan-breaker '(break-sub 1 1 "Code Gate")
+                 (strength-pump 3 3))
 
    "Persephone"
    (auto-icebreaker {:implementation "Requires runner to input the number of subroutines allowed to resolve"
@@ -2091,9 +1905,8 @@
                                  :type :recurring}}}
 
    "Saker"
-   (khan-breaker
-     (break-sub 1 1 "Barrier")
-     (strength-pump 2 2))
+   (khan-breaker '(break-sub 1 1 "Barrier")
+                 (strength-pump 2 2))
 
    "Savant"
    (ancient-greek-breaker "savant" [(break-sub 2 2 "Code Gate")

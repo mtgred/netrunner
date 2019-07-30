@@ -2053,6 +2053,7 @@
           qmsg "break 1 Barrier subroutine"]
       (core/rez state :corp iwall)
       (card-ability state :runner q 0)
+      (click-prompt state :runner "End the run")
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (run-jack-out state)
       (core/click-credit state :runner nil)
@@ -2065,6 +2066,7 @@
       (core/click-credit state :runner nil)
       (run-on state "HQ")
       (card-ability state :runner (refresh q) 0)
+      (click-prompt state :runner "End the run")
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (core/jack-out state :runner nil))))
 

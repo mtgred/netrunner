@@ -7,7 +7,6 @@
             [game.core.toasts :refer [toast]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
-            [game.cards.programs :refer [break-sub]] ;; TODO: REMOVE ME AND EXPORT BREAK-SUB INTO ice.clj
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer :all]))
@@ -165,9 +164,7 @@
    {:implementation "Run requirement not enforced"
     :events {:runner-turn-begins
              {:effect (req (toast state :runner "Reminder: Always Be Running requires a run on the first click" "info"))}}
-    :abilities [{:once :per-turn
-                 :cost [:click 2]
-                 :msg (msg "break 1 subroutine")}]}
+    :abilities [(assoc (break-sub [:click 2] 1 "All" {:req (req true)}) :once :per-turn)]}
 
    "Angel Arena"
    {:prompt "How many power counters?"
@@ -1014,12 +1011,9 @@
                                (continue-ability state :runner ability card nil))))}}}
 
    "Gbahali"
-   {:abilities [{:label "Break the last subroutine on the encountered piece of ice"
-                 :req (req (and (:run @state) (rezzed? current-ice)))
-                 :cost [:trash]
-                 :effect (effect (system-msg :runner
-                                             (str "trashes Gbahali to break the last subroutine on "
-                                                  (:title current-ice))))}]}
+   {:implementation "Subroutine location not enforced"
+    :abilities [(break-sub [:trash] 1 "All" {:label "Break the last subroutine"
+                                             :req (req true)})]}
 
    "Gene Conditioning Shoppe"
    {:msg "make Genetics trigger a second time each turn"
@@ -1260,10 +1254,9 @@
       :effect (effect (gain-credits 2))}}}
 
    "Kongamato"
-   {:abilities [{:label "Break the first subroutine on the encountered piece of ice"
-                 :req (req (and (:run @state) (rezzed? current-ice)))
-                 :cost [:trash]
-                 :msg (msg "break the first subroutine on " (:title current-ice))}]}
+   {:implementation "Subroutine location not enforced"
+    :abilities [(break-sub [:trash] 1 "All" {:label "Break the first subroutine"
+                                             :req (req true)})]}
 
    "Laguna Velasco District"
    {:events {:pre-runner-click-draw {:msg "draw 1 additional card"
