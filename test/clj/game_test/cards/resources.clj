@@ -1440,11 +1440,36 @@
       ;; Core has "pay for Snare, wait for agenda-scored" prompts.
       (is (= 2 (count (:prompt (get-corp)))) "Corp has the prompt to use Snare!"))))
 
+(deftest gbahali
+  ;; Gbahali
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma"]}
+               :runner {:hand [(qty "Gbahali" 2)]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gbahali")
+    (play-from-hand state :runner "Gbahali")
+    (run-on state :hq)
+    (let [gbahali-1 (get-resource state 0)
+          gbahali-2 (get-resource state 1)
+          enigma (get-ice state :hq 0)]
+      (card-ability state :runner (refresh gbahali-1) 0)
+      (is (nil? (refresh gbahali-1)) "Gbahali is trashed")
+      (is (:broken (last (:subroutines (refresh enigma))))
+          "Enigma's ETR should be broken")
+      (is (not (:broken (first (:subroutines (refresh enigma)))))
+          "Enigma's Lose a Click should not be broken")
+      (card-ability state :runner (refresh gbahali-2) 0)
+      (is (refresh gbahali-2)
+          "Second Gbahali isn't trashed as last subroutine is already broken"))))
+
 (deftest gene-conditioning-shoppe
   ;; Gene Conditioning Shoppe - set :genetics-trigger-twice flag
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
                  :runner {:deck ["Gene Conditioning Shoppe"
                                  "Adjusted Chronotype"]}})
       (take-credits state :corp)
@@ -1916,6 +1941,31 @@
       (card-ability state :runner (refresh kati) 1)
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (get-counters (refresh kati) :credit)) "No counters left on Kati"))))
+
+(deftest kongamato
+  ;; Kongamato
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma"]}
+               :runner {:hand [(qty "Kongamato" 2)]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Kongamato")
+    (play-from-hand state :runner "Kongamato")
+    (run-on state :hq)
+    (let [kongamato-1 (get-resource state 0)
+          kongamato-2 (get-resource state 1)
+          enigma (get-ice state :hq 0)]
+      (card-ability state :runner (refresh kongamato-1) 0)
+      (is (nil? (refresh kongamato-1)) "Kongamato is trashed")
+      (is (:broken (first (:subroutines (refresh enigma))))
+          "Enigma's Lose a Click should be broken")
+      (is (not (:broken (last (:subroutines (refresh enigma)))))
+          "Enigma's ETR should not be broken")
+      (card-ability state :runner (refresh kongamato-2) 0)
+      (is (refresh kongamato-2)
+          "Second Kongamato isn't trashed as first subroutine is already broken"))))
 
 (deftest lewi-guilherme
   ;; Lewi Guilherme - lower corp hand size by 1, pay 1 credit when turn begins or trash

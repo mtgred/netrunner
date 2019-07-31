@@ -244,7 +244,7 @@
   (or (:current-strength card)
       (:strength card)))
 
-;; lifted directly from programs.clj
+;; Break abilities
 (defn- break-subroutines-impl
   ([ice target-count] (break-subroutines-impl ice target-count '()))
   ([ice target-count broken-subs]
@@ -264,18 +264,23 @@
                        (continue-ability state side (break-subroutines-impl ice target-count broken-subs) card nil)
                        (complete-with-result state side eid broken-subs)))))}))
 
+(defn break-subroutines-msg
+  ([ice broken-subs] (break-subroutines-msg ice broken-subs nil))
+  ([ice broken-subs args]
+   (str "break " (quantify (count broken-subs)
+                           (str (when-let [subtypes (:subtypes args)]
+                                  (str (join " or " subtypes) " "))
+                                "subroutine"))
+        " on " (:title ice)
+        " (\"[subroutine] "
+        (join "\" and \"[subroutine] "
+              (map :label (sort-by :index broken-subs)))
+        "\")")))
+
 (defn- break-subroutines-pay
   [ice cost broken-subs args]
   (when (seq broken-subs)
-    {:msg (msg "break " (quantify (count broken-subs)
-                                  (str (when-let [subtypes (:subtypes args)]
-                                         (str (join " or " subtypes) " "))
-                                       "subroutine"))
-               " on " (:title ice)
-               " (\"[subroutine] "
-               (join "\" and \"[subroutine] "
-                     (map :label (sort-by :index broken-subs)))
-               "\")")
+    {:msg (break-subroutines-msg ice broken-subs args)
      :cost cost}))
 
 (defn break-subroutines

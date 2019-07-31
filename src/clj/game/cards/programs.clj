@@ -1111,18 +1111,35 @@
              :corp-click-draw {:effect (effect (add-counter :runner card :virus 1))}}}
 
    "Grappling Hook"
-   {:abilities [{:effect
-                 (effect
-                   (continue-ability
-                     (let [total-subs (count (:subroutines current-ice))]
-                       (break-sub [:trash] (dec total-subs) "All" {:label "break all but 1 subroutine"
-                                                                   :req (req true)}))
-                     card nil))}]}
+   {:abilities [{:label "break all but 1 subroutine"
+                 :req (req (and current-ice
+                                (< 1 (count (remove :broken (:subroutines current-ice))))))
+                 :cost [:trash]
+                 :prompt "Select the subroutine to NOT break"
+                 :choices (req (unbroken-subroutines-choice current-ice))
+                 :msg (msg (let [subroutines (:subroutines current-ice)
+                                 target (->> subroutines
+                                             (filter #(and (not (:broken %))
+                                                           (= target (make-label (:sub-effect %)))))
+                                             first)
+                                 broken-subs (->> (:subroutines current-ice)
+                                                  (remove #(= (:index %) (:index target))))]
+                             (break-subroutines-msg current-ice broken-subs)))
+                 :effect (req (let [subroutines (:subroutines current-ice)
+                                    target (->> subroutines
+                                                (filter #(and (not (:broken %))
+                                                              (= target (make-label (:sub-effect %)))))
+                                                first)
+                                    broken-subs (->> subroutines
+                                                     (remove #(= (:index %) (:index target))))]
+                                (doseq [sub broken-subs]
+                                  (break-subroutine! state (get-card state current-ice) sub))))}]}
 
    "Gravedigger"
    {:events (let [e {:req (req (and (installed? target) (= (:side target) "Corp")))
                      :effect (effect (add-counter :runner card :virus 1))}]
-              {:runner-trash e :corp-trash e})
+              {:runner-trash e
+               :corp-trash e})
     :abilities [{:cost [:click 1 :virus 1]
                  :msg "force the Corp to trash the top card of R&D"
                  :effect (effect (mill :corp))}]}

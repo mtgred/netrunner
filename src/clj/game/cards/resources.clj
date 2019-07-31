@@ -73,6 +73,18 @@
                                   :effect turn-ends-effect}}
       :abilities [(assoc ability :req ability-req)]})))
 
+(defn bitey-boi
+  [f]
+  (let [selector (resolve f)
+        descriptor (str f)]
+    {:abilities [{:req (req (and current-ice
+                                 (not (:broken (selector (:subroutines current-ice))))))
+                  :cost [:trash]
+                  :label (str "Break the " descriptor " subroutine")
+                  :msg (msg "break the " descriptor " subroutine on " (:title current-ice)
+                            " (\"[subroutine] " (:label (selector (:subroutines current-ice))) "\")")
+                  :effect (req (break-subroutine! state current-ice (selector (:subroutines current-ice))))}]}))
+
 ;; Card definitions
 (def card-definitions
   {"Aaron Marrón"
@@ -1011,9 +1023,7 @@
                                (continue-ability state :runner ability card nil))))}}}
 
    "Gbahali"
-   {:implementation "Subroutine location not enforced"
-    :abilities [(break-sub [:trash] 1 "All" {:label "Break the last subroutine"
-                                             :req (req true)})]}
+   (bitey-boi 'last)
 
    "Gene Conditioning Shoppe"
    {:msg "make Genetics trigger a second time each turn"
@@ -1254,9 +1264,7 @@
       :effect (effect (gain-credits 2))}}}
 
    "Kongamato"
-   {:implementation "Subroutine location not enforced"
-    :abilities [(break-sub [:trash] 1 "All" {:label "Break the first subroutine"
-                                             :req (req true)})]}
+   (bitey-boi 'first)
 
    "Laguna Velasco District"
    {:events {:pre-runner-click-draw {:msg "draw 1 additional card"
