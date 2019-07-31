@@ -427,6 +427,21 @@
       (is (= 1 (count-tags state)) "Runner took 1 tag")
       (is (nil? (get-in @state [:run])) "Run was ended"))))
 
+(deftest endless-eula
+  ;; Endless EULA
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Endless EULA"]}
+               :runner {:credits 10}})
+    (play-from-hand state :corp "Endless EULA" "HQ")
+    (take-credits state :corp)
+    (let [eula (get-ice state :hq 0)
+          credits (:credit (get-runner))]
+      (core/rez state :corp eula)
+      (run-on state "HQ")
+      (card-side-ability state :runner eula 0)
+      (is (= (- credits 6) (:credit (get-runner))) "Runner should lose 6 credits"))))
+
 (deftest enigma
   ;; Enigma - Force Runner to lose 1 click if able
   (do-game

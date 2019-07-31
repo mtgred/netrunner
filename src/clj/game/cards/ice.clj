@@ -48,15 +48,14 @@
      :label (str label " " subs-str)
      :effect (req (system-msg state :runner (str "spends " cost-str " to " label " " subs-str " on " (:title card))))}))
 
-(defn runner-break
-  "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, etc)"
-  [cost qty]
-  (runner-pay-or-break cost qty "break"))
-
 (defn runner-pay
   "Ability to pay to avoid a subroutine by spending a resource (Popup Window, Turing, etc)"
   [cost qty]
   (runner-pay-or-break cost qty "pay for"))
+
+(defn bioroid-break
+  [cost qty]
+  (break-sub [:click cost] qty))
 
 ;;; General subroutines
 (def end-the-run
@@ -84,8 +83,7 @@
              (str "Pay " amount " [Credits]")]
    :effect (req (if (= "End the run" target)
                   (end-run state :corp eid)
-                  (do (pay state :runner :credit amount)
-                      (effect-completed state side))))})
+                  (pay-sync state :runner eid [:credit amount])))})
 
 (defn end-the-run-unless-runner
   [label prompt ability]
@@ -881,8 +879,10 @@
 
    "DNA Tracker"
    (let [sub {:msg "do 1 net damage and make the Runner lose 2 [Credits]"
+              :async true
               :effect (req (wait-for (damage state side :net 1 {:card card})
-                                     (lose-credits state :runner 2)))}]
+                                     (lose-credits state :runner 2)
+                                     (effect-completed state side eid)))}]
      {:subroutines [sub
                     sub
                     sub]})
@@ -903,22 +903,50 @@
    "Eli 1.0"
    {:subroutines [end-the-run
                   end-the-run]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Eli 2.0"
    {:subroutines [{:msg "draw 1 card"
                    :effect (effect (draw))}
                   end-the-run
                   end-the-run]
-    :runner-abilities [(runner-break [:click 2] 2)]}
+    :runner-abilities [(bioroid-break 2 2)]}
 
    "Endless EULA"
    (let [sub (end-the-run-unless-runner-pays 1)]
+     (letfn [(break-fn [unbroken-subs total]
+               {:effect
+                (req (if (seq unbroken-subs)
+                       (wait-for (pay-sync state :runner (make-eid state {:source-type :subroutine}) card [:credit 1])
+                                 (system-msg state :runner async-result)
+                                 (continue-ability
+                                   state side
+                                   (break-fn (next unbroken-subs) (inc total))
+                                   card nil))
+                       (let [msgs (when (pos? total)
+                                    (str "resolves " (quantify total "unbroken subroutine")
+                                         " on Endless EULA"
+                                         " (\"[subroutine] "
+                                         (:label sub) "\")"))]
+                         (when (pos? total)
+                           (system-msg state side msgs))
+                         (effect-completed state side eid))))})]
      {:subroutines [sub sub
                     sub sub
                     sub sub]
-      :runner-abilities [(runner-pay [:credit 1] 1)
-                         (runner-pay [:credit 6] 6)]})
+      :runner-abilities [{:req (req (<= (count (remove :broken (:subroutines card)))
+                                        (total-available-credits state :runner eid card)))
+                          :async true
+                          :label "Pay for all unbroken subs"
+                          :effect (req (let [unbroken-subs (remove :broken (:subroutines card))
+                                             eid (assoc eid :source-type :subroutine)]
+                                         (->> unbroken-subs
+                                              (reduce resolve-subroutine card)
+                                              (update! state side))
+                                         (continue-ability
+                                           state side
+                                           (break-fn unbroken-subs 0)
+                                           card nil)))}]}))
 
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
@@ -932,7 +960,7 @@
                   {:msg "trash all virtual resources"
                    :effect (req (doseq [c (filter #(has-subtype? % "Virtual") (all-active-installed state :runner))]
                                   (trash state side c)))}]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Enigma"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
@@ -978,7 +1006,7 @@
                                  (system-msg state side "pays 1 [Credits]"))
                              (continue-ability state :runner trash-installed card nil)))}]
      {:subroutines [sub sub]
-      :runner-abilities [(runner-break [:click 1] 1)]})
+      :runner-abilities [(bioroid-break 1 1)]})
 
    "Fairchild 2.0"
    (let [sub {:label "Force the Runner to pay 2 [Credits] or trash an installed card"
@@ -992,7 +1020,7 @@
                              (continue-ability state :runner trash-installed card nil)))}]
      {:subroutines [sub sub
                     (do-brain-damage 1)]
-      :runner-abilities [(runner-break [:click 2] 2)]})
+      :runner-abilities [(bioroid-break 2 2)]})
 
    "Fairchild 3.0"
    (let [sub {:label "Force the Runner to pay 3 [Credits] or trash an installed card"
@@ -1013,7 +1041,7 @@
                      :effect (req (if (= target "Do 1 brain damage")
                                     (damage state side eid :brain 1 {:card card})
                                     (end-run state side eid)))}]
-      :runner-abilities [(runner-break [:click 3] 3)]})
+      :runner-abilities [(bioroid-break 3 3)]})
 
    "Fenris"
    {:effect take-bad-pub
@@ -1187,7 +1215,7 @@
    "Heimdall 1.0"
    {:subroutines [(do-brain-damage 1)
                   end-the-run end-the-run]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Heimdall 2.0"
    {:subroutines [(do-brain-damage 1)
@@ -1195,7 +1223,7 @@
                    :effect (req (wait-for (damage state side :brain 1 {:card card})
                                           (end-run state side eid)))}
                   end-the-run]
-    :runner-abilities [(runner-break [:click 2] 2)]}
+    :runner-abilities [(bioroid-break 2 2)]}
 
    "Herald"
    {:flags {:rd-reveal (req true)}
@@ -1331,7 +1359,7 @@
    (let [sub {:msg "prevent the Runner from accessing more than 1 card during this run"
               :effect (effect (max-access 1))}]
      {:subroutines [sub sub]
-      :runner-abilities [(runner-break [:click 1] 1)]})
+      :runner-abilities [(bioroid-break 1 1)]})
 
    "Hunter"
    {:subroutines [(tag-trace 3)]}
@@ -1367,7 +1395,7 @@
                                     :async true
                                     :effect (req (wait-for (damage state :runner :brain 1 {:card card})
                                                            (gain-tags state :corp eid 1)))})]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Ichi 2.0"
    {:subroutines [trash-program trash-program
@@ -1376,7 +1404,7 @@
                                     :async true
                                     :effect (req (wait-for (damage state :runner :brain 1 {:card card})
                                                            (gain-tags state :corp eid 1)))})]
-    :runner-abilities [(runner-break [:click 2] 2)]}
+    :runner-abilities [(bioroid-break 2 2)]}
 
    "Inazuma"
    {:abilities [{:msg "prevent the Runner from breaking subroutines on the next piece of ICE they encounter this run"}
@@ -1440,7 +1468,7 @@
                   (do-brain-damage 1)
                   (do-brain-damage 1)
                   (do-brain-damage 1)]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Jua"
    {:implementation "Encounter effect is manual"
@@ -1507,7 +1535,7 @@
      {:subroutines [(brain-trash "resource")
                     (brain-trash "hardware")
                     (brain-trash "program")]
-      :runner-abilities [(runner-break [:click 1] 1)]})
+      :runner-abilities [(bioroid-break 1 1)]})
 
    "Kitsune"
    {:subroutines [{:prompt "Select a card in HQ to force access"
@@ -1690,7 +1718,7 @@
 
    "Markus 1.0"
    {:subroutines [trash-installed end-the-run]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Masvingo"
    (let [ability {:req (req (same-card? card target))
@@ -1901,7 +1929,7 @@
 
    "Najja 1.0"
    {:subroutines [end-the-run end-the-run]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Nebula"
    (space-ice trash-program)
@@ -1909,7 +1937,7 @@
    "Negotiator"
    {:subroutines [(gain-credits-sub 2)
                   trash-program]
-    :runner-abilities [(runner-break [:credit 2] 1)]}
+    :runner-abilities [(bioroid-break 2 1)]}
 
    "Nerine 2.0"
    (let [sub {:label "Do 1 brain damage and Corp may draw 1 card"
@@ -1925,7 +1953,7 @@
                                                        :effect (effect (draw eid 1 nil))}}}
                                        card nil)))}]
      {:subroutines [sub sub]
-      :runner-abilities [(runner-break [:click 2] 2)]})
+      :runner-abilities [(bioroid-break 2 2)]})
 
    "Neural Katana"
    {:subroutines [(do-net-damage 3)]}
@@ -2122,10 +2150,9 @@
                                   (reset-variable-subs state side card n sub)))}]})
 
    "Pop-up Window"
-   {:implementation "Encounter effect is manual. Runner choice is not implemented"
+   {:implementation "Encounter effect is manual."
     :abilities [(gain-credits-sub 1)]
-    :subroutines [end-the-run]
-    :runner-abilities [(runner-pay [:credit 1] 1)]}
+    :subroutines [(end-the-run-unless-runner-pays 1)]}
 
    "Pup"
    (let [sub {:player :runner
@@ -2138,8 +2165,7 @@
                              (continue-ability state side (do-net-damage 1) card nil)
                              (do (pay state :runner :credit 1)
                                  (effect-completed state side))))}]
-     {:subroutines [sub sub]
-      :runner-abilities [(runner-pay [:credit 1] 1)]})
+     {:subroutines [sub sub]})
 
    "Quandary"
    {:subroutines [end-the-run]}
@@ -2163,7 +2189,7 @@
                                    (has-subtype? % "Bioroid"))}
               :msg (msg "resolve a subroutine on " (:title target))}]
      {:subroutines [sub sub]
-      :runner-abilities [(runner-break [:click 1] 1)]})
+      :runner-abilities [(bioroid-break 1 1)]})
 
    "Red Tape"
    {:subroutines [{:label "Give +3 strength to all ICE for the remainder of the run"
@@ -2410,7 +2436,7 @@
                                     :label "Add an installed program to the top of the Runner's Stack"
                                     :msg (msg "add " (:title target) " to the top of the Runner's Stack")
                                     :effect (effect (move :runner target :deck {:front true}))})]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Sherlock 2.0"
    (let [sub (trace-ability 4 {:choices {:req #(and (installed? %)
@@ -2420,7 +2446,7 @@
                                :effect (effect (move :runner target :deck))})]
      {:subroutines [sub sub
                     (give-tags 1)]
-      :runner-abilities [(runner-break [:click 2] 2)]})
+      :runner-abilities [(bioroid-break 2 2)]})
 
    "Shinobi"
    {:effect take-bad-pub
@@ -2723,9 +2749,11 @@
 
    "Turing"
    {:implementation "AI restriction not implemented"
-    :subroutines [end-the-run]
-    :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))
-    :runner-abilities [(runner-pay [:click 3] 1)]}
+    :subroutines [(end-the-run-unless-runner
+                    "spends [Click][Click][Click]"
+                    "spend [Click][Click][Click]"
+                    (runner-pay [:click 3] 1))]
+    :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))}
 
    "Turnpike"
    {:implementation "Encounter effect is manual"
@@ -2779,18 +2807,18 @@
     :subroutines [{:msg "prevent the Runner from using programs for the remainder of this run"}
                   (trace-ability 4 (do-brain-damage 1))
                   (trace-ability 4 (do-brain-damage 1))]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Viktor 1.0"
    {:subroutines [(do-brain-damage 1)
                   end-the-run]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Viktor 2.0"
    {:abilities [(power-counter-ability (do-brain-damage 1))]
     :subroutines [(trace-ability 2 add-power-counter)
                   end-the-run]
-    :runner-abilities [(runner-break [:click 2] 2)]}
+    :runner-abilities [(bioroid-break 2 2)]}
 
    "Viper"
    {:subroutines [(trace-ability 3 {:label "The Runner loses 1 [Click] if able"
@@ -2907,11 +2935,11 @@
    {:implementation "Restriction on having spent [click] is not implemented"
     :subroutines [(do-brain-damage 1)
                   (do-brain-damage 1)]
-    :runner-abilities [(runner-break [:click 1] 1)]}
+    :runner-abilities [(bioroid-break 1 1)]}
 
    "Zed 2.0"
    {:implementation "Restriction on having spent [click] is not implemented"
     :subroutines [trash-hardware
                   trash-hardware
                   (do-brain-damage 2)]
-    :runner-abilities [(runner-break [:click 2] 2)]}})
+    :runner-abilities [(bioroid-break 2 2)]}})
