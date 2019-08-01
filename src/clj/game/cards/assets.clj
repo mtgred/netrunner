@@ -160,8 +160,10 @@
                                                 :msg (msg "add " (:title target) " to the Runner's Grip")
                                                 :effect (effect (move :runner target :hand true))}}}}})]
      {:events {:agenda-scored {:interactive (req true)
+                               :async true
                                :effect (effect (continue-ability (senai-ability target) card nil))}
                :agenda-stolen {:interactive (req true)
+                               :async true
                                :effect (effect (continue-ability (senai-ability target) card nil))}}
       :abilities [(set-autoresolve :auto-fire "whether to fire Amani Senai")]})
 
