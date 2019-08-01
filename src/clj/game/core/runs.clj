@@ -983,6 +983,8 @@
                 (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
                 (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
                 (update-breaker-strength state side p))
+              (doseq [ice (get-in @state [:corp :servers server :ices])]
+                (reset-all-subs! state ice))
               (let [run-effect (get-in @state [:run :run-effect])]
                 (if-let [end-run-effect (:end-run run-effect)]
                   (wait-for (resolve-ability state side end-run-effect (:card run-effect) [server])

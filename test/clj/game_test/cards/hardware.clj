@@ -549,17 +549,23 @@
         (is (empty? (:hosted (refresh fo))) "Mimic trashed"))))
   (testing "Pay-credits prompt"
     (do-game
-      (new-game {:runner {:deck ["Flame-out" "Mimic"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Owl"]}
+                 :runner {:deck ["Flame-out" "Mimic"]}})
+      (play-from-hand state :corp "Owl" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
       (play-from-hand state :runner "Flame-out")
       (let [fo (get-hardware state 0)]
         (card-ability state :runner fo 2)
-        (click-card state :runner (find-card "Mimic" (:hand (get-runner))))
+        (click-card state :runner "Mimic")
         (take-credits state :runner)
         (take-credits state :corp)
         (is (= 1 (count (:hosted (refresh fo)))) "Mimic still hosted")
         (is (= 2 (:credit (get-runner))) "Runner starts with 2 credits")
+        (run-on state :hq)
         (card-ability state :runner (first (:hosted (refresh fo))) 0)
+        (click-prompt state :runner "Add installed program to the top of the Runner's Stack")
         (click-card state :runner fo)
         (is (= 2 (:credit (get-runner))) "Runner has not paid any credits from their credit pool")
         (take-credits state :runner)
@@ -690,6 +696,7 @@
       (core/rez state :corp pup)
       (core/rez state :corp nk)
       (card-subroutine state :corp (refresh pup) 0)
+      (click-prompt state :runner "Suffer 1 net damage")
       (is (= (-> (get-runner) :prompt first :msg)
              "Prevent any of the 1 net damage?")
           "Damage prevention message correct.")
@@ -2070,6 +2077,7 @@
     (let [pup (get-ice state :hq 0)]
       (core/rez state :corp pup)
       (card-subroutine state :corp pup 0)
+      (click-prompt state :runner "Suffer 1 net damage")
       (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner)))) ; Ribs takes precedence over CP on Runner turn
       (is (= 3 (count (:discard (get-runner)))) "Chose card lost from 1 net damage")
       (run-jack-out state)

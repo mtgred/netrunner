@@ -329,17 +329,3 @@
   If a function is passed in, instead call that on [:special toggle-kw] and return the result."
   ([toggle-kw] (get-autoresolve toggle-kw {:always "Yes" :never "No"}))
   ([toggle-kw pred] (req (pred (get-in (get-card state card) [:special toggle-kw])))))
-
-(defn get-strength
-  [card]
-  (or (:current-strength card)
-      (:strength card)))
-
-(defn count-num-subroutines
-  "Count the number of subroutines for Hernando Cortez. Note that this only
-  counts subroutines that exist as part of the card text. It does not count
-  subroutines that the card will gain once rezzed."
-  [card]
-  (->> (-> card :title server-card :text split-lines)
-       (filter #(starts-with? % "[subroutine]"))
-       count))

@@ -175,11 +175,9 @@
 
 (defn card-subroutine
   "Trigger a piece of ice's subroutine with the 0-based index."
-  ([state side card ability] (card-subroutine state side card ability nil))
-  ([state side card ability targets]
-   (core/play-subroutine state side {:card (core/get-card state card)
-                                     :subroutine ability
-                                     :targets targets})))
+  [state side card ability]
+  (core/play-subroutine state side {:card (core/get-card state card)
+                                    :subroutine ability}))
 
 (defn card-side-ability
   ([state side card ability] (card-side-ability state side card ability nil))

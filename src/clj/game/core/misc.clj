@@ -253,6 +253,7 @@
   "Removes the old current when a new one is played, or an agenda is stolen / scored"
   [state side current-side]
   (when-let [current (first (get-in @state [current-side :current]))] ; trash old current
+    (trigger-event state side :trash-current current)
     (if (get-in current [:special :rfg-when-trashed])
       (do (system-say state side (str (:title current) " is removed from the game."))
           (move state (other-side side) current :rfg))

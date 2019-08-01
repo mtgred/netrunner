@@ -278,14 +278,14 @@
       (is (= 1 (core/access-count state :runner :rd-access)) "Should only access 1 from missed psi game")))
   (testing "Shiro interaction: second sub should give Akiko 2 accesses"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 10) "Shiro"]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Shiro"]}
                  :runner {:id "Akiko Nisei: Head Case"
                           :deck [(qty "Sure Gamble" 3)]}})
-      (starting-hand state :corp ["Shiro"])
       (play-from-hand state :corp "Shiro" "New remote")
+      (take-credits state :corp)
       (let [shiro (get-ice state :remote1 0)]
         (core/rez state :corp shiro)
-        (take-credits state :corp)
         (run-on state :remote1)
         (card-subroutine state :corp shiro 1)
         (click-prompt state :corp "0 [Credits]")
@@ -504,11 +504,13 @@
       (let [pup (get-ice state :hq 0)]
         (core/rez state :corp pup)
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (click-prompt state :corp "Yes")
         (let [imp (find-card "Imp" (:hand (get-runner)))]
           (click-prompt state :corp imp)
           (is (= 1 (count (:discard (get-runner)))))
           (card-subroutine state :corp pup 0)
+          (click-prompt state :runner "Suffer 1 net damage")
           (is (empty? (:prompt (get-corp))) "No choice on second net damage")
           (is (= 2 (count (:discard (get-runner)))))
           (run-jack-out state)
@@ -547,8 +549,10 @@
       (let [pup (get-ice state :hq 0)]
         (core/rez state :corp pup)
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (is (empty? (:prompt (get-corp))) "No choice because of Employee Strike")
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (is (= 2 (count (:discard (get-runner)))))
         (run-jack-out state)
         (take-credits state :runner)
@@ -556,6 +560,7 @@
         (play-from-hand state :runner "Scrubbed")
         (run-on state :hq)
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (is (seq (:prompt (get-corp))) "Employee Strike out of play - Ability turned on correctly")))))
 
 (deftest edward-kim-humanity-s-hammer
@@ -2048,6 +2053,7 @@
           qmsg "break 1 Barrier subroutine"]
       (core/rez state :corp iwall)
       (card-ability state :runner q 0)
+      (click-prompt state :runner "End the run")
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (run-jack-out state)
       (core/click-credit state :runner nil)
@@ -2060,6 +2066,7 @@
       (core/click-credit state :runner nil)
       (run-on state "HQ")
       (card-ability state :runner (refresh q) 0)
+      (click-prompt state :runner "End the run")
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (core/jack-out state :runner nil))))
 

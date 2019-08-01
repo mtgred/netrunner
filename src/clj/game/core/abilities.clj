@@ -210,10 +210,10 @@
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets cost-str]
   (when-let [message (:msg ability)]
-    (when-let [desc (if (string? message) message (message state side eid card targets))]
+    (let [desc (if (string? message) message (message state side eid card targets))
+          cost-spend-msg (build-spend-msg cost-str "use")]
       (system-msg state (to-keyword (:side card))
-                  (str (build-spend-msg cost-str "use")
-                       (:title card) (when desc (str " to " desc)))))))
+                  (str cost-spend-msg (:title card) (str " to " desc))))))
 
 (defn register-once
   "Register ability as having happened if :once specified"

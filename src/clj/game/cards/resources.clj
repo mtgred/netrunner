@@ -73,6 +73,18 @@
                                   :effect turn-ends-effect}}
       :abilities [(assoc ability :req ability-req)]})))
 
+(defn bitey-boi
+  [f]
+  (let [selector (resolve f)
+        descriptor (str f)]
+    {:abilities [{:req (req (and current-ice
+                                 (not (:broken (selector (:subroutines current-ice))))))
+                  :cost [:trash]
+                  :label (str "Break the " descriptor " subroutine")
+                  :msg (msg "break the " descriptor " subroutine on " (:title current-ice)
+                            " (\"[subroutine] " (:label (selector (:subroutines current-ice))) "\")")
+                  :effect (req (break-subroutine! state current-ice (selector (:subroutines current-ice))))}]}))
+
 ;; Card definitions
 (def card-definitions
   {"Aaron Marrón"
@@ -143,7 +155,7 @@
    {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
     :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"
                  :prompt "Choose how many [Credit] to move" :once :per-turn
-                 :choices {:number (req (min (:credit runner) 3))}
+                 :choices {:number (req (min 3 (total-available-credits state :runner eid card)))}
                  :effect (effect (lose-credits target)
                                  (add-counter card :credit target))
                  :msg (msg "move " target " [Credit] to Algo Trading")}
@@ -164,9 +176,7 @@
    {:implementation "Run requirement not enforced"
     :events {:runner-turn-begins
              {:effect (req (toast state :runner "Reminder: Always Be Running requires a run on the first click" "info"))}}
-    :abilities [{:once :per-turn
-                 :cost [:click 2]
-                 :msg (msg "break 1 subroutine")}]}
+    :abilities [(assoc (break-sub [:click 2] 1 "All" {:req (req true)}) :once :per-turn)]}
 
    "Angel Arena"
    {:prompt "How many power counters?"
@@ -1013,12 +1023,7 @@
                                (continue-ability state :runner ability card nil))))}}}
 
    "Gbahali"
-   {:abilities [{:label "Break the last subroutine on the encountered piece of ice"
-                 :req (req (and (:run @state) (rezzed? current-ice)))
-                 :cost [:trash]
-                 :effect (effect (system-msg :runner
-                                             (str "trashes Gbahali to break the last subroutine on "
-                                                  (:title current-ice))))}]}
+   (bitey-boi 'last)
 
    "Gene Conditioning Shoppe"
    {:msg "make Genetics trigger a second time each turn"
@@ -1096,8 +1101,8 @@
    "Hernando Cortez"
    {:events {:pre-rez-cost {:req (req (and (>= (:credit corp) 10) (ice? target)))
                             :effect (effect (rez-additional-cost-bonus
-                                              [:credit (count-num-subroutines target)]))
-                            :msg (msg "increase the rez cost by " (count-num-subroutines target) " [Credit]")}}}
+                                              [:credit (count (:subroutines target))]))
+                            :msg (msg "increase the rez cost by " (count (:subroutines target)) " [Credit]")}}}
 
    "Human First"
    {:events {:agenda-scored {:msg (msg "gain " (get-agenda-points state :corp target) " [Credits]")
@@ -1259,10 +1264,7 @@
       :effect (effect (gain-credits 2))}}}
 
    "Kongamato"
-   {:abilities [{:label "Break the first subroutine on the encountered piece of ice"
-                 :req (req (and (:run @state) (rezzed? current-ice)))
-                 :cost [:trash]
-                 :msg (msg "break the first subroutine on " (:title current-ice))}]}
+   (bitey-boi 'first)
 
    "Laguna Velasco District"
    {:events {:pre-runner-click-draw {:msg "draw 1 additional card"
@@ -1707,8 +1709,8 @@
                                   (resolve-ability
                                     state side
                                     {:prompt "How many counters to remove?"
-                                     :choices {:number (req (min (:credit runner)
-                                                                 num-counters))}
+                                     :choices {:number (req (min num-counters
+                                                                 (total-available-credits state :runner eid card)))}
                                      :msg (msg "remove " target " counters from " (:title paydowntarget))
                                      :effect (req (do
                                                     (lose-credits state side target)
@@ -1999,6 +2001,34 @@
                              (do (add-counter state side card :power 1)
                                  (gain state side :click 1)
                                  (system-msg state side "uses Stim Dealer to gain [Click]"))))}}}
+
+   "Street Magic"
+   (letfn [(runner-break [unbroken-subs]
+             {:prompt "Resolve a subroutine"
+              :choices unbroken-subs
+              :effect (req (let [sub (first (filter #(and (not (:broken %))
+                                                          (= target (make-label (:sub-effect %))))
+                                                    (:subroutines current-ice)))]
+                             (wait-for (resolve-ability state side (make-eid state {:source-type :subroutine})
+                                                        (:sub-effect sub) current-ice nil)
+                                       (if (and (:run @state)
+                                                (not (:ended (:run @state)))
+                                                (next unbroken-subs))
+                                         (continue-ability
+                                           state side
+                                           (runner-break (remove-once #(= target %) unbroken-subs))
+                                           card nil)
+                                         (effect-completed state side eid)))))})]
+     {:abilities [{:implementation "Effect is manually triggered"
+                   :req (req (pos? (count (remove :broken (:subroutines current-ice)))))
+                   :async true
+                   :msg (msg "select the order the unbroken subroutines on "
+                          (:title current-ice) " resolve")
+                   :effect (effect
+                             (continue-ability
+                               (let [unbroken-subs (unbroken-subroutines-choice current-ice)]
+                                 (runner-break unbroken-subs))
+                               card nil))}]})
 
    "Street Peddler"
    {:interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))

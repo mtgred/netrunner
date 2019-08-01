@@ -767,12 +767,23 @@
 
    "Marcus Batty"
    {:abilities [{:req (req this-server)
-                 :label "Start a Psi game"
-                 :psi {:not-equal {:prompt "Select a rezzed piece of ICE to resolve one of its subroutines"
-                                   :choices {:req #(and (ice? %)
-                                                        (rezzed? %))}
-                                   :msg (msg "resolve a subroutine on " (:title target))}}
-                 :cost [:trash]}]}
+                 :label "Start a Psi game to resolve a subroutine"
+                 :cost [:trash]
+                 :psi {:not-equal
+                       {:prompt "Select the ice"
+                        :choices {:req #(and (ice? %)
+                                             (rezzed? %))
+                                  :all true}
+                        :effect (effect
+                                  (continue-ability
+                                    (let [ice target]
+                                      {:prompt "Select the subroutine"
+                                       :choices (req (unbroken-subroutines-choice ice))
+                                       :msg (msg "resolve the subroutine (\"[subroutine] "
+                                                 target "\") from " (:title ice))
+                                       :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
+                                                      (continue-ability state side (:sub-effect sub) ice nil)))})
+                                    card nil))}}}]}
 
    "Mason Bellamy"
    {:implementation "Manually triggered by Corp"

@@ -27,9 +27,9 @@
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (do-game
-    (new-game {:corp {:deck ["Archangel" "Hedge Fund"]}
+    (new-game {:corp {:deck ["Archangel"]
+                      :hand ["Hedge Fund"]}
                :runner {:deck ["Bank Job"]}})
-    (starting-hand state :corp ["Hedge Fund"])
     (take-credits state :corp)
     (play-from-hand state :runner "Bank Job")
     (run-empty-server state :rd)
@@ -42,6 +42,7 @@
     (is (not (:run @state)) "Run ended")))
 
 (deftest architect
+  ;; Architect
   (testing "Architect is untrashable while installed and rezzed, but trashable if derezzed or from HQ"
     (do-game
       (new-game {:corp {:deck [(qty "Architect" 3)]}})
@@ -70,6 +71,24 @@
       (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits")
       (card-subroutine state :corp afshar 1)
       (is (not (:run @state)) "Run is ended"))))
+
+(deftest ashigaru
+  ;; Ashigaru
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ashigaru" "Hedge Fund"]
+                      :credits 9}})
+    (play-from-hand state :corp "Ashigaru" "HQ")
+    (let [ashigaru (get-ice state :hq 0)]
+      (core/rez state :corp ashigaru)
+      (is (= 1 (count (:subroutines (refresh ashigaru)))))
+      (core/draw state :corp 1)
+      (is (= 2 (count (:subroutines (refresh ashigaru)))))
+      (core/draw state :corp 1)
+      (is (= 3 (count (:subroutines (refresh ashigaru)))))
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (is (= 1 (count (:subroutines (refresh ashigaru))))))))
 
 (deftest asteroid-belt
   ;; Asteroid Belt - Space ICE rez cost reduced by 3 credits per advancement
@@ -107,50 +126,49 @@
 (deftest blockchain
   (testing "Face up transactions"
     (do-game
-      (new-game {:corp {:deck ["Blockchain" (qty "Beanstalk Royalties" 5)]}})
-      (core/gain state :corp :credit 2 :click 5)
+      (new-game {:corp {:deck ["Blockchain" (qty "Beanstalk Royalties" 5)]
+                        :credits 7}})
+      (core/gain state :corp :click 5)
       (play-from-hand state :corp "Blockchain" "HQ")
       (let [bc (get-ice state :hq 0)]
         (core/rez state :corp bc)
         (card-ability state :corp bc 0)
-        (is (last-log-contains? state "uses Blockchain to gain 0 additional subroutines") "No subroutines gained because no Transactions are in Archives")
+        (is (= 2 (count (:subroutines (refresh bc)))) "No subroutines gained because no Transactions are in Archives")
         (play-from-hand state :corp "Beanstalk Royalties")
         (card-ability state :corp bc 0)
-        (is (last-log-contains? state "uses Blockchain to gain 0 additional subroutines") "No subroutines gained because only 1 Transaction is in Archives")
+        (is (= 2 (count (:subroutines (refresh bc)))) "No subroutines gained because only 1 Transaction is in Archives")
         (play-from-hand state :corp "Beanstalk Royalties")
         (card-ability state :corp bc 0)
-        (is (last-log-contains? state "uses Blockchain to gain 1 additional subroutine") "1 subroutine gained because 2 Transactions are in Archives")
+        (is (= 3 (count (:subroutines (refresh bc)))) "1 subroutine gained because 2 Transactions are in Archives")
         (play-from-hand state :corp "Beanstalk Royalties")
         (card-ability state :corp bc 0)
-        (is (last-log-contains? state "uses Blockchain to gain 1 additional subroutine") "1 subroutine gained because 3 Transactions are in Archives")
+        (is (= 3 (count (:subroutines (refresh bc)))) "1 subroutine gained because 3 Transactions are in Archives")
         (play-from-hand state :corp "Beanstalk Royalties")
         (card-ability state :corp bc 0)
-        (is (last-log-contains? state "uses Blockchain to gain 2 additional subroutines") "2 subroutines gained because 4 Transactions are in Archives")
+        (is (= 4 (count (:subroutines (refresh bc)))) "2 subroutines gained because 4 Transactions are in Archives")
         (is (= 12 (:credit (get-corp))) "Corp has 12 credits from four Beanstalks")
         (card-subroutine state :corp bc 0)
         (is (= 13 (:credit (get-corp))) "Corp gained 1 credit from Blockchain")
         (is (= 4 (:credit (get-runner))) "Runner lost 1 credit from Blockchain"))))
   (testing "Face down transactions"
     (do-game
-      (new-game {:corp {:hand ["Blockchain" (qty "Beanstalk Royalties" 5)]
-                        :credit 7}})
+      (new-game {:corp {:hand ["Blockchain" (qty "Beanstalk Royalties" 2)]
+                        :discard [(qty "Beanstalk Royalties" 3)]
+                        :credits 7}})
       (core/gain state :corp :click 5)
-      (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :discard)
-      (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :discard)
-      (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :discard)
       (play-from-hand state :corp "Blockchain" "HQ")
       (let [bc (get-ice state :hq 0)]
         (core/rez state :corp bc)
         (card-ability state :corp bc 0)
-        (is (last-log-contains? state "uses Blockchain to gain 0 additional subroutines")
+        (is (= 2 (count (:subroutines (refresh bc))))
             "No subroutines gained because no face up Transactions are in Archives")
         (play-from-hand state :corp "Beanstalk Royalties")
         (card-ability state :corp bc 0)
-        (is (last-log-contains? state "uses Blockchain to gain 0 additional subroutines")
+        (is (= 2 (count (:subroutines (refresh bc))))
             "No subroutines gained because 1 face up Transactions is in Archives")
         (play-from-hand state :corp "Beanstalk Royalties")
         (card-ability state :corp bc 0)
-        (is (last-log-contains? state "uses Blockchain to gain 1 additional subroutine")
+        (is (= 3 (count (:subroutines (refresh bc))))
             "1 subroutine gained because 2 face up Transactions are in Archives")
         (is (= 5 (count (:discard (get-corp)))) "5 cards in discard pile")))))
 
@@ -172,6 +190,48 @@
       (card-ability state :corp bc 0)
       (is (nil? (refresh bc)))
       (is (nil? (get-run))))))
+
+(deftest brainstorm
+  ;; Brainstorm
+  (testing "Subroutine gain/loss ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Brainstorm"]
+                        :credits 9}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Brainstorm" "HQ")
+      (let [bs (get-ice state :hq 0)]
+        (core/rez state :corp bs)
+        (card-ability state :corp bs 0)
+        (is (= 1 (count (:subroutines (refresh bs)))))
+        (core/draw state :runner 1)
+        (card-ability state :corp bs 0)
+        (is (= 2 (count (:subroutines (refresh bs)))))
+        (core/draw state :runner 1)
+        (card-ability state :corp bs 0)
+        (is (= 3 (count (:subroutines (refresh bs)))))
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (card-ability state :corp bs 0)
+        (is (= 1 (count (:subroutines (refresh bs))))))))
+  (testing "Subroutines not going away until end of run"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Brainstorm"]
+                        :credits 9}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Brainstorm" "R&D")
+      (take-credits state :corp)
+      (run-on state :rd)
+      (let [bs (get-ice state :rd 0)]
+        (core/rez state :corp bs)
+        (card-ability state :corp bs 0)
+        (is (= 1 (count (:subroutines (refresh bs)))))
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (zero? (count (:subroutines (refresh bs)))))))))
 
 (deftest bullfrog
   ;; Bullfrog - Win psi to move to outermost position of another server and continue run there
@@ -358,6 +418,21 @@
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner took 1 tag")
       (is (nil? (get-in @state [:run])) "Run was ended"))))
+
+(deftest endless-eula
+  ;; Endless EULA
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Endless EULA"]}
+               :runner {:credits 10}})
+    (play-from-hand state :corp "Endless EULA" "HQ")
+    (take-credits state :corp)
+    (let [eula (get-ice state :hq 0)
+          credits (:credit (get-runner))]
+      (core/rez state :corp eula)
+      (run-on state "HQ")
+      (card-side-ability state :runner eula 0)
+      (is (= (- credits 6) (:credit (get-runner))) "Runner should lose 6 credits"))))
 
 (deftest enigma
   ;; Enigma - Force Runner to lose 1 click if able
@@ -761,6 +836,56 @@
         (card-subroutine state :corp hydra 2)
         (is (not (:run @state)) "Hydra sub 3 ended the run when Runner is tagged")))))
 
+(deftest ice-wall
+  ;; Ice Wall
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (let [iw (get-ice state :remote1 0)]
+      (core/rez state :corp iw)
+      (advance state iw 1)
+      (is (= 2 (core/get-strength (refresh iw))))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (is (:run @state))
+      (card-subroutine state :corp iw 0)
+      (is (nil? (:run @state))))))
+
+(deftest information-overload
+  ;; Information Overload
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Information Overload"]
+                      :credits 6}})
+    (play-from-hand state :corp "Information Overload" "HQ")
+    (let [io (get-ice state :hq 0)]
+      (core/rez state :corp io)
+      (is (zero? (count (:subroutines (refresh io)))))
+      (card-ability state :corp (refresh io) 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (= 1 (count (:subroutines (refresh io)))))
+      (card-ability state :corp (refresh io) 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (= 2 (count (:subroutines (refresh io)))))
+      (core/lose-tags state :runner 2)
+      (is (zero? (count (:subroutines (refresh io))))))))
+
+(deftest ireress
+  ;; Information Overload
+  ;; TODO: This is a bad test cuz losing bp isn't consistent
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ireress" "Hostile Takeover"]}})
+    (play-from-hand state :corp "Ireress" "HQ")
+    (let [irs (get-ice state :hq 0)]
+      (core/rez state :corp irs)
+      (is (zero? (count (:subroutines (refresh irs)))))
+      (play-and-score state "Hostile Takeover")
+      (is (= 1 (count (:subroutines (refresh irs))))))))
+
 (deftest iq
   ;; IQ - Rez cost and strength equal to cards in HQ
   (do-game
@@ -959,6 +1084,46 @@
         (click-prompt state :corp "Yes")
         (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use")))))
 
+(deftest komainu
+  ;; Komainu
+  (testing "Subroutine gain/loss ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Komainu"]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Komainu" "HQ")
+      (let [ko (get-ice state :hq 0)]
+        (core/rez state :corp ko)
+        (card-ability state :corp ko 0)
+        (is (= 1 (count (:subroutines (refresh ko)))))
+        (core/draw state :runner 1)
+        (card-ability state :corp ko 0)
+        (is (= 2 (count (:subroutines (refresh ko)))))
+        (core/draw state :runner 1)
+        (card-ability state :corp ko 0)
+        (is (= 3 (count (:subroutines (refresh ko)))))
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (card-ability state :corp ko 0)
+        (is (= 1 (count (:subroutines (refresh ko))))))))
+  (testing "Subroutines not going away until end of run"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Komainu"]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Komainu" "R&D")
+      (take-credits state :corp)
+      (run-on state :rd)
+      (let [ko (get-ice state :rd 0)]
+        (core/rez state :corp ko)
+        (card-ability state :corp ko 0)
+        (is (= 1 (count (:subroutines (refresh ko)))))
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (zero? (count (:subroutines (refresh ko)))))))))
+
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game
@@ -1137,7 +1302,40 @@
         (is (= 1 (core/get-virus-counters state (second (:hosted (refresh m)))))
           "Second parasite gains a virus counter on rezzed Magnet")))))
 
+(deftest marker
+  ;; Marker
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Marker" "Ice Wall" "Fire Wall"]
+                      :credits 100}})
+    (play-from-hand state :corp "Marker" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Fire Wall" "New remote")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (let [mark (get-ice state :remote1 0)
+          iw (get-ice state :remote2 0)
+          fw (get-ice state :remote3 0)]
+      (core/rez state :corp mark)
+      (core/rez state :corp iw)
+      (core/rez state :corp fw)
+      (card-subroutine state :corp mark 0)
+      (is (last-log-contains? state "Marker to give the next ICE encountered")
+          "The message correctly prints")
+      (is (= 1 (count (:subroutines (refresh iw)))) "Ice Wall starts with 1 subroutine")
+      (is (= 1 (count (:subroutines (refresh fw)))) "Fire Wall starts with 1 subroutine")
+      (card-ability state :corp mark 0)
+      (click-card state :corp "Ice Wall")
+      (is (= 2 (count (:subroutines (refresh iw)))) "Marker correctly gives Ice Wall an additional subroutine")
+      (card-ability state :corp mark 0)
+      (click-card state :corp "Fire Wall")
+      (is (= 2 (count (:subroutines (refresh fw)))) "Marker can mark multiple cards")
+      (run-jack-out state)
+      (is (= 1 (count (:subroutines (refresh iw)))) "Ice Wall's subroutines reset after the run ends")
+      (is (= 1 (count (:subroutines (refresh fw)))) "All cards marked have their subroutines reset"))))
+
 (deftest masvingo
+  ;; Masvingo
   (do-game
     (new-game {:corp {:deck ["Masvingo"]}})
     (play-from-hand state :corp "Masvingo" "HQ")
@@ -1145,6 +1343,9 @@
       (is (zero? (get-counters (refresh mas) :advancement)) "Should install with 0 counter")
       (core/rez state :corp (refresh mas))
       (is (= 1 (get-counters (refresh mas) :advancement)) "Should rez with 1 counter")
+      (is (= 1 (count (:subroutines (refresh mas)))) "Should gain 1 subroutine")
+      (advance state (refresh mas) 1)
+      (is (= 2 (count (:subroutines (refresh mas)))) "Should gain 1 subroutine")
       (take-credits state :corp)
       (run-on state :hq)
       (card-subroutine state :corp mas 0)
@@ -1296,6 +1497,31 @@
       (is (has-subtype? (refresh mg) "Code Gate") "Mother Goddess has Code Gate")
       (is (has-subtype? (refresh mg) "NEXT") "Mother Goddess has NEXT"))))
 
+(deftest news-hound
+  ;; News Hound
+  (do-game
+    (new-game {:corp {:deck [(qty "Project Atlas" 5)]
+                      :hand [(qty "Scarcity of Resources" 2) "News Hound"]}
+               :runner {:hand ["Employee Strike"]}})
+    (play-from-hand state :corp "News Hound" "R&D")
+    (let [news (get-ice state :rd 0)]
+      (core/rez state :corp news)
+      (is (= 1 (count (:subroutines (refresh news)))) "News Hound starts with 1 sub")
+      (play-from-hand state :corp "Scarcity of Resources")
+      (is (= 2 (count (:subroutines (refresh news)))) "News Hound gains a sub on corp current")
+      (play-from-hand state :corp "Scarcity of Resources")
+      (is (= 2 (count (:subroutines (refresh news)))) "News Hound doesn't gain 2 subs on second current played")
+      (take-credits state :corp)
+      (run-on state :rd)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (is (= 1 (count (:subroutines (refresh news)))) "News Hound loses a sub on steal")
+      (play-from-hand state :runner "Employee Strike")
+      (is (= 2 (count (:subroutines (refresh news)))) "News Hound gains a sub on runner current")
+      (take-credits state :runner)
+      (play-and-score state "Project Atlas")
+      (is (= 1 (count (:subroutines (refresh news)))) "News Hound loses a sub on score"))))
+
 (deftest next-bronze
   ;; NEXT Bronze - Add 1 strength for every rezzed NEXT ice
   (do-game
@@ -1344,6 +1570,35 @@
       (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
       (core/rez state :corp (get-ice state :hq 0))
       (is (zero? (:credit (get-corp))) "Corp spends 9 credits to rez"))))
+
+(deftest next-opal
+  ;; NEXT Opal
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["NEXT Opal" "NEXT Bronze"
+                             "Hostile Takeover" "PAD Campaign"
+                             "Mumbad Virtual Tour"]
+                      :credits 100}})
+    (play-from-hand state :corp "NEXT Opal" "HQ")
+    (let [no (get-ice state :hq 0)]
+      (core/rez state :corp no)
+      (is (= 1 (count (:subroutines (refresh no)))) "Should rez with 1 subroutine")
+      (card-subroutine state :corp no 0)
+      (click-card state :corp "NEXT Bronze")
+      (click-prompt state :corp "New remote")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (is (= 2 (count (:subroutines (refresh no))))
+          "Should gain additional sub when another NEXT ice is rezzed")
+      ; Demonstration that all non-operation types can be installed
+      (card-subroutine state :corp no 0)
+      (click-card state :corp "Hostile Takeover")
+      (click-prompt state :corp "New remote")
+      (card-subroutine state :corp no 0)
+      (click-card state :corp "PAD Campaign")
+      (click-prompt state :corp "New remote")
+      (card-subroutine state :corp no 0)
+      (click-card state :corp "Mumbad Virtual Tour")
+      (click-prompt state :corp "New remote"))))
 
 (deftest next-sapphire
   ;; NEXT Sapphire
@@ -1403,6 +1658,26 @@
         (is (= deck (count (:deck (get-corp)))) "Nothing selected so R&D shouldn't change")
         (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck)))
             "Corp should shuffle even when selecting nothing")))))
+
+(deftest next-silver
+  ;; NEXT Silver
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["NEXT Silver" "NEXT Bronze"]
+                      :credits 100}})
+    (play-from-hand state :corp "NEXT Silver" "HQ")
+    (play-from-hand state :corp "NEXT Bronze" "New remote")
+    (let [sil (get-ice state :hq 0)
+          bro (get-ice state :remote1 0)]
+      (core/rez state :corp sil)
+      (is (= 1 (count (:subroutines (refresh sil)))) "Should rez with 1 subroutine")
+      (core/rez state :corp bro)
+      (is (= 2 (count (:subroutines (refresh sil))))
+          "Should gain additional sub when another NEXT ice is rezzed")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-subroutine state :corp sil 0)
+      (is (not (:run @state)) "Run has ended"))))
 
 (deftest nightdancer
   ;; Nightdancer - Runner loses a click if able, corp gains a click on next turn
@@ -1507,12 +1782,13 @@
       (card-ability state :corp tom 0)
       (click-prompt state :corp "Event")
       (is (last-log-contains? state "5") "Correctly counted Events in Runner grip")
-      (card-side-ability state :runner tom 1)
-      (card-side-ability state :runner tom 1)
-      (card-side-ability state :runner tom 1)
-      (card-side-ability state :runner tom 1)
+      (core/resolve-unbroken-subs! state :corp (refresh tom))
+      (click-prompt state :runner "Take 1 tag")
+      (click-prompt state :runner "Take 1 tag")
+      (click-prompt state :runner "Take 1 tag")
+      (click-prompt state :runner "Take 1 tag")
       (is (= 4 (count-tags state)) "Tag ability sucessful")
-      (card-side-ability state :runner tom 0)
+      (click-prompt state :runner "End the run")
       (is (not (:run @state)) "Run ended"))))
 
 (deftest resistor
@@ -1639,6 +1915,18 @@
         (card-subroutine state :corp sai 0)
         (is (= 1 (-> (get-runner) :discard count)) "Only one card should be trashed due to incorrectly guessing")))))
 
+(deftest salvage
+  ;; Salvage
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Salvage"]}})
+    (play-from-hand state :corp "Salvage" "HQ")
+    (let [salvage (get-ice state :hq 0)]
+      (core/rez state :corp salvage)
+      (is (zero? (count (:subroutines (refresh salvage)))) "Salvage starts with 0 subs")
+      (advance state salvage 2)
+      (is (= 2 (count (:subroutines (refresh salvage)))) "Salvage gains 2 subs"))))
+
 (deftest sand-storm
   ;; Sand Storm should not end the run if protecting an otherwise empty/naked server
   (do-game
@@ -1758,6 +2046,36 @@
       (is (= 2 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength increased")
       (take-credits state :corp 2)
       (is (= 2 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength increased"))))
+
+(deftest sensei
+  ;; Sensei
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Special Offer" "Snowflake" "Sensei"]
+                      :credits 20}})
+    (play-from-hand state :corp "Sensei" "HQ")
+    (play-from-hand state :corp "Special Offer" "Archives")
+    (play-from-hand state :corp "Snowflake" "R&D")
+    (take-credits state :corp)
+    (let [sensei (get-ice state :hq 0)
+          offer (get-ice state :archives 0)
+          snow (get-ice state :rd 0)]
+      (run-on state :hq)
+      (core/rez state :corp sensei)
+      (core/rez state :corp offer)
+      (core/rez state :corp snow)
+      (is (= 1 (count (:subroutines (refresh offer)))) "Special Offer starts with 1 sub")
+      (card-ability state :corp (refresh sensei) 0)
+      (click-card state :corp offer)
+      (is (= 2 (count (:subroutines (refresh offer)))) "Special Offer gains 1 sub from Sensei")
+      ;; Note that Sensei can select any ice
+      (is (= 1 (count (:subroutines (refresh snow)))) "Snowflake starts with 1 sub")
+      (card-ability state :corp (refresh sensei) 0)
+      (click-card state :corp snow)
+      (is (= 2 (count (:subroutines (refresh snow)))) "Snowflake gains 1 sub from Sensei")
+      (core/end-run state :corp)
+      (is (= 1 (count (:subroutines (refresh offer)))) "Special Offer resets on run-end")
+      (is (= 1 (count (:subroutines (refresh snow)))) "Snowflake resets on run-end"))))
 
 (deftest sherlock-1-0
   ;; Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack
@@ -1945,6 +2263,19 @@
       (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
 
+(deftest swarm
+  ;; Swarm
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Swarm"]
+                      :credits 10}})
+    (play-from-hand state :corp "Swarm" "HQ")
+    (let [swarm (get-ice state :hq 0)]
+      (core/rez state :corp swarm)
+      (is (zero? (count (:subroutines (refresh swarm)))) "Swarm starts with 0 subs")
+      (advance state swarm 2)
+      (is (= 2 (count (:subroutines (refresh swarm)))) "Swarm gains 2 subs"))))
+
 (deftest thimblerig
   (testing "Thimblerig does not flag phase 1.2 if it's the only piece of ice"
     (do-game
@@ -2024,10 +2355,10 @@
           (core/derez state :corp (refresh ti))
           (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")
           (run-on state "HQ")
-          (card-subroutine state :corp ti 2)
+          (card-subroutine state :corp ti 3)
           (click-card state :corp (refresh wast))
           (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
-          (card-subroutine state :corp ti 1)
+          (card-subroutine state :corp ti 2)
           (is (not (:run @state)) "Run ended")))))
   (testing "Do not prompt for alt cost #2734"
     (do-game
@@ -2042,6 +2373,27 @@
         (is (rezzed? (refresh ti)))
         (is (= "Oversight AI" (:title (first (:hosted (refresh ti)))))
             "Tithonium hosting OAI as a condition")))))
+
+(deftest tl-dr
+  ;; TL;DR
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma" "TL;DR"]
+                      :credits 20}})
+    (play-from-hand state :corp "TL;DR" "HQ")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (let [e (get-ice state :hq 1)
+          tldr (get-ice state :hq 0)]
+      (run-on state :hq)
+      (core/rez state :corp e)
+      (core/rez state :corp tldr)
+      (is (= 2 (count (:subroutines (refresh e)))) "Enigma starts with 2 subroutines")
+      (card-ability state :corp (refresh tldr) 0)
+      (click-card state :corp e)
+      (is (= 4 (count (:subroutines (refresh e)))) "Enigma has 4 subroutines after TLDR doubles them")
+      (run-continue state)
+      (is (= 2 (count (:subroutines (refresh e)))) "Enigma starts with 2 subroutines"))))
 
 (deftest tmi
   ;; TMI
@@ -2065,6 +2417,26 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (not (rezzed? (refresh tmi))))))))
+
+(deftest tour-guide
+  ;; Tour Guide
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Tour Guide" (qty "NGO Front" 3)]
+                      :credits 10}})
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Tour Guide" "HQ")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (let [tg (get-ice state :hq 0)]
+      (core/rez state :corp tg)
+      (is (zero? (count (:subroutines (refresh tg)))) "Tour Guide starts with 0 subs")
+      (core/rez state :corp (get-content state :remote1 0))
+      (is (= 1 (count (:subroutines (refresh tg)))) "Tour Guide gains 1 sub on asset rez")
+      (core/rez state :corp (get-content state :remote2 0))
+      (core/rez state :corp (get-content state :remote3 0))
+      (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs"))))
 
 (deftest trebuchet
   ;; Trebuchet
@@ -2147,6 +2519,19 @@
       (is (= 5 (:current-strength (refresh t2)))
           "Turing increased to 5 strength over a remote server"))))
 
+(deftest tyrant
+  ;; Tyrant
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Tyrant"]
+                      :credits 10}})
+    (play-from-hand state :corp "Tyrant" "HQ")
+    (let [tyrant (get-ice state :hq 0)]
+      (core/rez state :corp tyrant)
+      (is (zero? (count (:subroutines (refresh tyrant)))) "Tyrant starts with 0 subs")
+      (advance state tyrant 2)
+      (is (= 2 (count (:subroutines (refresh tyrant)))) "Tyrant gains 2 subs"))))
+
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
   (do-game
@@ -2185,6 +2570,44 @@
         (is (not (has-subtype? (refresh wend) "Barrier")) "Wendigo lost Barrier")
         (is (has-subtype? (refresh wend) "Code Gate") "Wendigo gained Code Gate")
         (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
+
+(deftest woodcutter
+  ;; Woodcutter
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Woodcutter"]
+                      :credits 10}})
+    (play-from-hand state :corp "Woodcutter" "HQ")
+    (let [woodcutter (get-ice state :hq 0)]
+      (core/rez state :corp woodcutter)
+      (is (zero? (count (:subroutines (refresh woodcutter)))) "Woodcutter starts with 0 subs")
+      (advance state woodcutter 2)
+      (is (= 2 (count (:subroutines (refresh woodcutter)))) "Woodcutter gains 2 subs"))))
+
+(deftest wormhole
+  ;; Wormhole
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall" "Wormhole"]
+                      :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Wormhole" "HQ")
+    (take-credits state :corp)
+    (let [iw (get-ice state :rd 0)
+          wormhole (get-ice state :hq 0)]
+      (core/rez state :corp wormhole)
+      (run-on state :hq)
+      (card-subroutine state :corp wormhole 0)
+      (is (:fired (first (:subroutines (refresh wormhole))))
+          "Subroutine fires even when there are no viable ice.")
+      (is (empty? (:prompt (get-corp))) "No choice prompt for the Corp")
+      (core/end-run state :corp)
+      (run-on state :hq)
+      (core/rez state :corp iw)
+      (core/resolve-unbroken-subs! state :corp (refresh wormhole))
+      (click-card state :corp iw)
+      (click-prompt state :corp "End the run")
+      (is (not (:run @state)) "Run has been ended"))))
 
 (deftest wraparound
   ;; Wraparound - Strength boosted when no fracter is installed

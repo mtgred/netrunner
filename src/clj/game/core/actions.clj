@@ -6,7 +6,8 @@
          enforce-msg gain-agenda-point get-remote-names get-run-ices jack-out move
          name-zone play-instant purge make-run runner-install trash
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
-         can-run-server? can-score? say play-sfx base-mod-size free-mu)
+         can-run-server? can-score? say play-sfx base-mod-size free-mu
+         reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-all-subroutines!)
 
 ;;; Neutral actions
 (defn play
@@ -262,7 +263,8 @@
             (.println *err* (with-out-str
                               (clojure.stacktrace/print-stack-trace
                                 (Exception. "Error in a text prompt") 25)))
-            (.println *err* (str "Current prompt: " prompt))))))))
+            (.println *err* (str "Current prompt: " prompt))
+            (.println *err* (str "Current args: " args))))))))
 
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
@@ -335,6 +337,54 @@
                                             "the strength of " (:title card) " to "
                                             (:current-strength (get-card state card))))))))
 
+(defn play-auto-pump-and-break
+  "Use play-auto-pump and then break all available subroutines"
+  [state side args]
+  (let [run (:run @state)
+        card (get-card state (:card args))
+        eid (make-eid state {:source card :source-type :ability})
+        run-ice (get-run-ices state)
+        ice-cnt (count run-ice)
+        ice-idx (dec (:position run 0))
+        in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
+        current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
+        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
+        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
+                                           (or (:current-strength card) (:strength card)))))
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))
+        total-pump-cost (merge-costs (repeat pumpnum (:cost pumpabi)))
+        breakabi (some #(when (:break %) %) (:abilities (card-def card)))
+        nsubs (when (:subroutines current-ice)
+                (count (remove :broken (:subroutines current-ice))))
+        some-already-broken (not= (:subroutines current-ice)
+                                  (remove :broken (:subroutines current-ice)))
+        subs-broken-at-once (when breakabi (:break breakabi))
+        times-break (when (and nsubs subs-broken-at-once)
+                      (if (pos? subs-broken-at-once)
+                        (/ nsubs subs-broken-at-once)
+                        1))
+        total-break-cost (when (and times-break breakabi)
+                           (repeat times-break (:cost breakabi)))
+        total-cost (merge-costs (conj total-pump-cost total-break-cost))]
+    (when (can-pay? state side eid card (:title card) total-cost)
+      (wait-for (pay-sync state side (make-eid state eid) card total-cost)
+                (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :cost :msg) (get-card state card) nil))
+                (break-all-subroutines! state current-ice)
+                (system-msg state side (if (pos? pumpnum)
+                                         (str (build-spend-msg async-result "increase")
+                                              "the strength of " (:title card) " to "
+                                              (:current-strength (get-card state card))
+                                              " and break all " nsubs " subroutines on "
+                                              (:title current-ice))
+                                         (str (build-spend-msg async-result "use")
+                                              (:title card)
+                                              " to break "
+                                              (if some-already-broken
+                                                "the remaining "
+                                                "all ")
+                                              nsubs " subroutines on "
+                                              (:title current-ice))))))))
+
 (defn play-copy-ability
   "Play an ability from another card's definition."
   [state side {:keys [card source index] :as args}]
@@ -347,6 +397,7 @@
 
 (def dynamic-abilities
   {"auto-pump" play-auto-pump
+   "auto-pump-and-break" play-auto-pump-and-break
    "copy" play-copy-ability})
 
 (defn play-dynamic-ability
@@ -373,26 +424,18 @@
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
-  ([state side args]
-   (let [eid (make-eid state {:source (-> args :card :title)
-                              :source-type :subroutine})]
-     (play-subroutine state side eid args)))
-  ([state side eid {:keys [card subroutine targets] :as args}]
-   (let [card (get-card state card)
-         sub (nth (:subroutines card) subroutine nil)]
-     (if (or (nil? sub)
-             (nil? (:from-cid sub)))
-       (let [cdef-idx (if (nil? sub) subroutine (-> sub :data :cdef-idx))
-             cdef (card-def card)
-             cdef-sub (get-in cdef [:subroutines cdef-idx])
-             cost (:cost cdef-sub)]
-         (when (or (nil? cost)
-                   (can-pay? state side eid card (:title card) cost))
-           (when-let [activatemsg (:activatemsg cdef-sub)] (system-msg state side activatemsg))
-           (resolve-ability state side eid cdef-sub card targets)))
-       (when-let [sub-card (find-latest state {:cid (:from-cid sub) :side side})]
-         (when-let [sub-effect (:sub-effect (card-def sub-card))]
-           (resolve-ability state side eid sub-effect card (assoc (:data sub) :targets targets))))))))
+  [state side {:keys [card subroutine] :as args}]
+  (let [card (get-card state card)
+        sub (nth (:subroutines card) subroutine nil)]
+    (when card
+      (resolve-subroutine! state side card sub))))
+
+(defn play-unbroken-subroutines
+  "Triggers each unbroken subroutine on a card in order, waiting for each to complete"
+  [state side {:keys [card] :as args}]
+  (let [card (get-card state card)]
+    (when card
+      (resolve-unbroken-subs! state side card))))
 
 ;;; Corp actions
 (defn trash-resource
@@ -549,12 +592,10 @@
                    (system-msg state :corp (str "scores " (:title c) " and gains " (quantify points "agenda point")))
                    (trigger-event-simult state :corp eid :agenda-scored
                                          {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
-                                                                         ;; TODO: Make this use remove-old-current
-                                                                         (system-say state side (str (:title current) " is trashed."))
                                                                          ;; This is to handle Employee Strike with damage IDs #2688
                                                                          (when (:disable-id (card-def current))
-                                                                           (swap! state assoc-in [:corp :disable-id] true))
-                                                                         (trash state side current)))}
+                                                                           (swap! state assoc-in [:corp :disable-id] true)))
+                                                                       (remove-old-current state side :runner))}
                                           :card-ability (card-as-handler c)
                                           :after-active-player {:effect (req (let [c (get-card state c)
                                                                                    points (or (get-agenda-points state :corp c) points)]
@@ -614,7 +655,8 @@
                 (swap! state assoc-in [:run :no-action] false)
                 (system-msg state side "continues the run")
                 (when cur-ice
-                  (update-ice-strength state side cur-ice))
+                  (reset-all-subs! state (get-card state cur-ice))
+                  (update-ice-strength state side (get-card state cur-ice)))
                 (wait-for (trigger-event-simult state side (if next-ice :approach-ice :approach-server) nil (when next-ice next-ice))
                           (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                             (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))

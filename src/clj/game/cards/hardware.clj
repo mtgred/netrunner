@@ -41,9 +41,7 @@
     :msg (msg "host it on " (card-str state target))
     :effect (effect (update! (assoc target :subtype (combine-subtypes false (-> target :subtype) "AI")))
                     (host (get-card state target) (get-card state card)))
-    :abilities [{:cost [:click 1]
-                 :req (req run)
-                 :msg "break ice subroutine"}]
+    :abilities [(break-sub [:click 1] 1 "All" {:req (req true)})]
     :events {:pre-card-moved {:req (req (same-card? target card))
                               :effect (effect (update! (assoc (-> card :host) :subtype (-> card :host :subtype (remove-subtypes-once ["AI"])))))}}}
 
@@ -420,8 +418,7 @@
    {:in-play [:memory 1 :link 1]}
 
    "e3 Feedback Implants"
-   {:implementation "Usage restriction not enforced"
-    :abilities [{:cost [:credit 1] :msg "break 1 additional subroutine"}]}
+   {:abilities [(break-sub 1 1 "All" {:req (req true)})]}
 
    "Ekomind"
    (let [update-base-mu (fn [state n] (swap! state assoc-in [:runner :memory :base] n))]

@@ -1724,6 +1724,7 @@
       (play-from-hand state :corp "Pup" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (card-subroutine state :corp (get-ice state :hq 0) 0)
+      (click-prompt state :runner "Suffer 1 net damage")
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 3 (count (:hand (get-runner)))) "I've Had Worse triggered and drew 3 cards")
       (starting-hand state :runner ["I've Had Worse" "Imp" "Imp"])
@@ -2135,7 +2136,7 @@
         (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))
   (testing "Eater interaction"
     (do-game
-      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"]}
+      (new-game {:corp {:hand ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Ice Wall"]}
                  :runner {:deck ["Khusyuk"
                                  (qty "Cache" 3)
                                  "Eater"]}})
@@ -2146,14 +2147,17 @@
       (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
       (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
       ;; R&D is now from top to bottom: A B C
+      (play-from-hand state :corp "Ice Wall" "R&D")
       (take-credits state :corp)
       (core/gain state :runner :click 100)
       (core/gain state :runner :credit 100)
       (play-from-hand state :runner "Eater")
       (dotimes [_ 3] (play-from-hand state :runner "Cache"))
       (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+      (core/rez state :corp (get-ice state :rd 0))
       (card-ability state :runner (get-program state 0) 0) ; use Eater
       (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "End the run")
       (click-prompt state :runner "1 [Credit]: 3 cards")
       (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
       (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))

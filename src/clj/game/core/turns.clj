@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan
-         make-card turn-message)
+         make-card turn-message add-sub)
 
 (defn- card-implemented
   "Checks if the card is implemented. Looks for a valid return from `card-def`.
@@ -81,14 +81,23 @@
                             (init-hands state)))))
     state))
 
+(defn- subroutines-init
+  "Initialised the subroutines associated with the card, these work as abilities"
+  [card cdef]
+  (->> (:subroutines cdef)
+       (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) card)
+       :subroutines))
+
 (defn make-card
   "Makes or remakes (with current cid) a proper card from a server card"
   ([card] (make-card card (make-cid)))
   ([card cid]
-  (-> card
-      (assoc :cid cid :implementation (card-implemented card))
-      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)
-      (map->Card))))
+   (-> card
+       (assoc :cid cid
+              :implementation (card-implemented card)
+              :subroutines (subroutines-init (assoc card :cid cid) (card-def card)))
+       (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)
+       (map->Card))))
 
 (defn build-card
   [card]
