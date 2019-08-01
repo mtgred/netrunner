@@ -523,22 +523,22 @@
     :effect (effect (update-all-ice))}
 
    "Harishchandra Ent.: Where You're the Star"
-   {:events {:runner-gain-tag {:effect (req (when (is-tagged? state)
-                                              (reveal-hand state :runner)))}
-             :runner-lose-tag {:effect (req (when-not (is-tagged? state)
-                                              (conceal-hand state :runner)))}
-             ;; Triggered when Paparazzi enters / leaves
-             :runner-is-tagged {:effect (req (if (is-tagged? state)
-                                               (reveal-hand state :runner)
-                                               (conceal-hand state :runner)))}
-             ;; Triggered when gaining or losing additional tag
-             :runner-additional-tag-change {:effect (req (if (is-tagged? state)
-                                                           (reveal-hand state :runner)
-                                                           (conceal-hand state :runner)))}}
-    :effect (req (when (is-tagged? state)
-                   (reveal-hand state :runner)))
-    :leave-play (req (when (is-tagged? state)
-                       (conceal-hand state :runner)))}
+   (let [ab {:effect (req (if (is-tagged? state)
+                            (reveal-hand state :runner)
+                            (conceal-hand state :runner)))}]
+     {:events {:runner-gain-tag ab
+               :runner-lose-tag ab
+               ;; Triggered when the runner clicks the '+' and '-' buttons
+               :manual-gain-tag ab
+               :manual-lose-tag ab
+               ;; Triggered when Paparazzi enters / leaves
+               :runner-is-tagged ab
+               ;; Triggered when gaining or losing additional tag
+               :runner-additional-tag-change ab}
+      :effect (req (when (is-tagged? state)
+                     (reveal-hand state :runner)))
+      :leave-play (req (when (is-tagged? state)
+                         (conceal-hand state :runner)))})
 
    "Harmony Medtech: Biomedical Pioneer"
    {:effect (effect (lose :agenda-point-req 1) (lose :runner :agenda-point-req 1))

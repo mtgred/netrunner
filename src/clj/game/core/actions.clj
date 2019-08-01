@@ -80,9 +80,11 @@
 (defn- change-tags
   "Change a player's base tag count"
   [state delta]
-  (if (neg? delta)
-    (deduct state :runner [:tag (Math/abs delta)])
-    (gain state :runner :tag delta))
+  (if (pos? delta)
+    (do (gain state :runner :tag delta)
+        (trigger-event state :runner :manual-gain-tag delta))
+    (do (deduct state :runner [:tag (Math/abs delta)])
+        (trigger-event state :runner :manual-lose-tag delta)))
   (system-msg state :runner
               (str "sets Tags to " (get-in @state [:runner :tag :base])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
