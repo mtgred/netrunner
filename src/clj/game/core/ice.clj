@@ -268,8 +268,8 @@
   ([ice broken-subs] (break-subroutines-msg ice broken-subs nil))
   ([ice broken-subs args]
    (str "break " (quantify (count broken-subs)
-                           (str (when-let [subtypes (:subtypes args)]
-                                  (str (join " or " subtypes) " "))
+                           (str (when-let [subtype (:subtype args)]
+                                  (str subtype " "))
                                 "subroutine"))
         " on " (:title ice)
         " (\"[subroutine] "
@@ -306,13 +306,10 @@
   "Creates a break subroutine ability.
   If n = 0 then any number of subs are broken."
   ([cost n] (break-sub cost n nil nil))
-  ([cost n subtypes] (break-sub cost n subtypes nil))
-  ([cost n subtypes args]
+  ([cost n subtype] (break-sub cost n subtype nil))
+  ([cost n subtype args]
    (let [cost (if (number? cost) [:credit cost] cost)
-         subtypes (cond (string? subtypes) #{subtypes}
-                        (sequential? subtypes) (into #{} subtypes)
-                        :else #{"All"})
-         args (assoc args :subtypes subtypes)]
+         args (assoc args :subtype subtype)]
      {:req (req (and current-ice
                      (seq (remove :broken (:subroutines current-ice)))
                      ;; `req` returns a function, so we have to call it,
@@ -320,18 +317,18 @@
                      (if-let [break-req (:req args)]
                        (break-req state side eid card targets)
                        (and (<= (get-strength current-ice) (get-strength card))
-                            (if subtypes
-                              (or (contains? subtypes "All")
-                                  (some #(has-subtype? current-ice %) subtypes))
+                            (if subtype
+                              (or (= subtype "All")
+                                  (has-subtype? current-ice subtype))
                               true)))))
       :break n
-      :breaks subtypes
+      :breaks subtype
       :label (str (when cost (str (build-cost-string cost) ": "))
                   (or (:label args)
                       (str "break "
                            (when (< 1 n) "up to ")
                            (if (pos? n) n "any number of")
-                           (when subtypes (str " " (join " or " subtypes)))
+                           (when subtype (str " " subtype))
                            (pluralize " subroutine" n))))
       :effect (effect (continue-ability
                         (break-subroutines current-ice cost n args)
@@ -387,9 +384,9 @@
                                 (repeat times-pump (:cost pump-ability)))
               ;; break all subs
               can-break (fn [ability]
-                          (if-let [subtypes (:breaks ability)]
-                            (or (contains? subtypes "All")
-                                (some #(has-subtype? current-ice %) subtypes))
+                          (if-let [subtype (:breaks ability)]
+                            (or (= subtype "All")
+                                (has-subtype? current-ice subtype))
                             true))
               break-ability (some #(when (can-break %) %) abs)
               subs-broken-at-once (when break-ability
