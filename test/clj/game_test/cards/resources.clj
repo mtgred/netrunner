@@ -2884,6 +2884,24 @@
       (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
       (is (= 4 (:click (get-runner))) "Didn't gain extra click"))))
 
+(deftest street-magic
+  ;; Street Magic
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand "Little Engine"}
+               :runner {:hand ["Street Magic"]}})
+    (play-from-hand state :corp "Little Engine" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Street Magic")
+    (run-on state :hq)
+    (core/rez state :corp (get-ice state :hq 0))
+    (card-ability state :runner (get-resource state 0) 0)
+    (let [credits (:credit (get-runner))]
+      (click-prompt state :runner "Make the Runner gain 5 [Credits]")
+      (is (= (+ 5 credits) (:credit (get-runner))) "Runner gained 5 credits")
+      (click-prompt state :runner "End the run")
+      (is (not (:run @state)) "Run has ended"))))
+
 (deftest street-peddler
   ;; Street Peddler
   (testing "Basic test"

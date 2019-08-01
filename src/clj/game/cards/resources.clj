@@ -2002,6 +2002,31 @@
                                  (gain state side :click 1)
                                  (system-msg state side "uses Stim Dealer to gain [Click]"))))}}}
 
+   "Street Magic"
+   (letfn [(runner-break [unbroken-subs]
+             {:prompt "Resolve a subroutine"
+              :choices unbroken-subs
+              :effect (req (let [sub (first (filter #(and (not (:broken %))
+                                                          (= target (make-label (:sub-effect %))))
+                                                    (:subroutines current-ice)))]
+                             (wait-for (resolve-ability state side (make-eid state {:source-type :subroutine}) (:sub-effect sub) card nil)
+                                       (if (and (:run @state)
+                                                (not (:ended (:run @state)))
+                                                (next unbroken-subs))
+                                         (continue-ability
+                                           state side
+                                           (runner-break (remove-once #(= target %) unbroken-subs))
+                                           card nil)
+                                         (effect-completed state side eid)))))})]
+     {:abilities [{:implementation "Effect is manually triggered"
+                   :req (req (pos? (count (remove :broken (:subroutines current-ice)))))
+                   :async true
+                   :effect (effect
+                             (continue-ability
+                               (let [unbroken-subs (unbroken-subroutines-choice current-ice)]
+                                 (runner-break unbroken-subs))
+                               card nil))}]})
+
    "Street Peddler"
    {:interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
     :effect (req (doseq [c (take 3 (:deck runner))]
