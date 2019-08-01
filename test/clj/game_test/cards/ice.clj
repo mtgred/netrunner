@@ -7,13 +7,8 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-; salvage
 ; sensei
 ; swarm
-; tl-dr
-; tour-guide
-; tyrant
-; woodcutter
 
 (deftest aimor
   ;; Aimor - trash the top 3 cards of the stack, trash Aimor
@@ -1923,6 +1918,18 @@
         (card-subroutine state :corp sai 0)
         (is (= 1 (-> (get-runner) :discard count)) "Only one card should be trashed due to incorrectly guessing")))))
 
+(deftest salvage
+  ;; Salvage
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Salvage"]}})
+    (play-from-hand state :corp "Salvage" "HQ")
+    (let [salvage (get-ice state :hq 0)]
+      (core/rez state :corp salvage)
+      (is (zero? (count (:subroutines (refresh salvage)))) "Salvage starts with 0 subs")
+      (advance state salvage 2)
+      (is (= 2 (count (:subroutines (refresh salvage)))) "Salvage gains 2 subs"))))
+
 (deftest sand-storm
   ;; Sand Storm should not end the run if protecting an otherwise empty/naked server
   (do-game
@@ -2371,6 +2378,26 @@
         (click-prompt state :runner "0")
         (is (not (rezzed? (refresh tmi))))))))
 
+(deftest tour-guide
+  ;; Tour Guide
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Tour Guide" (qty "NGO Front" 3)]
+                      :credits 10}})
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Tour Guide" "HQ")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (let [tg (get-ice state :hq 0)]
+      (core/rez state :corp tg)
+      (is (zero? (count (:subroutines (refresh tg)))) "Tour Guide starts with 0 subs")
+      (core/rez state :corp (get-content state :remote1 0))
+      (is (= 1 (count (:subroutines (refresh tg)))) "Tour Guide gains 1 sub on asset rez")
+      (core/rez state :corp (get-content state :remote2 0))
+      (core/rez state :corp (get-content state :remote3 0))
+      (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs"))))
+
 (deftest trebuchet
   ;; Trebuchet
   (testing "No stealing on successful trace."
@@ -2452,6 +2479,19 @@
       (is (= 5 (:current-strength (refresh t2)))
           "Turing increased to 5 strength over a remote server"))))
 
+(deftest tyrant
+  ;; Tyrant
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Tyrant"]
+                      :credits 10}})
+    (play-from-hand state :corp "Tyrant" "HQ")
+    (let [tyrant (get-ice state :hq 0)]
+      (core/rez state :corp tyrant)
+      (is (zero? (count (:subroutines (refresh tyrant)))) "Tyrant starts with 0 subs")
+      (advance state tyrant 2)
+      (is (= 2 (count (:subroutines (refresh tyrant)))) "Tyrant gains 2 subs"))))
+
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
   (do-game
@@ -2490,6 +2530,19 @@
         (is (not (has-subtype? (refresh wend) "Barrier")) "Wendigo lost Barrier")
         (is (has-subtype? (refresh wend) "Code Gate") "Wendigo gained Code Gate")
         (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
+
+(deftest woodcutter
+  ;; Woodcutter
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Woodcutter"]
+                      :credits 10}})
+    (play-from-hand state :corp "Woodcutter" "HQ")
+    (let [woodcutter (get-ice state :hq 0)]
+      (core/rez state :corp woodcutter)
+      (is (zero? (count (:subroutines (refresh woodcutter)))) "Woodcutter starts with 0 subs")
+      (advance state woodcutter 2)
+      (is (= 2 (count (:subroutines (refresh woodcutter)))) "Woodcutter gains 2 subs"))))
 
 (deftest wormhole
   ;; Wormhole
