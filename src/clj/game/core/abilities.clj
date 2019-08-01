@@ -265,14 +265,18 @@
   ([state side card message ability targets] (optional-ability state side (make-eid state) card message ability targets))
   ([state side eid card message ability targets]
    (letfn [(prompt-fn [prompt-choice]
-             (let [yes-ability (:yes-ability ability)]
+             (let [yes-ability (:yes-ability ability)
+                   no-ability (:no-ability ability)
+                   end-effect (:end-effect ability)]
                (if (and (= prompt-choice "Yes")
                         yes-ability
                         (can-pay? state side eid card (:title card) (:cost yes-ability)))
                  (resolve-ability state side (assoc yes-ability :eid eid) card targets)
-                 (if-let [no-ability (:no-ability ability)]
+                 (if no-ability
                    (resolve-ability state side (assoc no-ability :eid eid) card targets)
-                   (effect-completed state side eid)))))]
+                   (effect-completed state side eid)))
+               (if end-effect
+                 (end-effect state side eid card nil))))]
      (let [autoresolve-fn     (:autoresolve ability)
            autoresolve-answer (when autoresolve-fn
                                 (autoresolve-fn state side eid card targets))]

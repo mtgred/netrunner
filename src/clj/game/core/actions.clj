@@ -424,11 +424,12 @@
 
 (defn rez
   "Rez a corp card."
-  ([state side card] (rez state side (make-eid state {:source card :source-type :rez}) card nil))
+  ([state side card] (rez state side (make-eid state) card nil))
   ([state side card args]
-   (rez state side (make-eid state {:source card :source-type :rez}) card args))
+   (rez state side (make-eid state) card args))
   ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force no-get-card paid-alt cached-bonus] :as args}]
-   (let [card (if no-get-card
+   (let [eid (eid-set-defaults eid :source nil :source-type :rez)
+         card (if no-get-card
                 card
                 (get-card state card))
          altcost (when (and card (not no-get-card))
@@ -514,10 +515,11 @@
 (defn advance
   "Advance a corp card that can be advanced.
    If you pass in a truthy value as the no-cost parameter, it will advance at no cost (for the card Success)."
-  ([state side {:keys [card]}] (advance state side (make-eid state {:source :action :source-type :advance}) card nil))
-  ([state side card no-cost] (advance state side (make-eid state {:source :action :source-type :advance}) card no-cost))
+  ([state side {:keys [card]}] (advance state side (make-eid state) card nil))
+  ([state side card no-cost] (advance state side (make-eid state) card no-cost))
   ([state side eid card no-cost]
-   (let [card (get-card state card)]
+   (let [card (get-card state card)
+         eid (eid-set-defaults eid :source nil :source-type :advance)]
      (when (can-advance? state side card)
        (wait-for (pay-sync state side (make-eid state eid) card :click (if-not no-cost 1 0) :credit (if-not no-cost 1 0) {:action :corp-advance})
                  (when-let [cost-str async-result]

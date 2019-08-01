@@ -292,28 +292,29 @@
   ([state side card server] (corp-install state side (make-eid state) card server nil))
   ([state side card server args] (corp-install state side (make-eid state) card server args))
   ([state side eid card server {:keys [host-card] :as args}]
-   (cond
-     ;; No server selected; show prompt to select an install site (Interns, Lateral Growth, etc.)
-     (not server)
-     (continue-ability state side
-                       {:prompt (str "Choose a location to install " (:title card))
-                        :choices (corp-install-list state card)
-                        :async true
-                        :effect (effect (corp-install eid card target args))}
-                       card nil)
-     ;; A card was selected as the server; recurse, with the :host-card parameter set.
-     (and (map? server) (not host-card))
-     (corp-install state side eid card server (assoc args :host-card server))
-     ;; A server was selected
-     :else
-     (let [slot (if host-card
-                  (:zone host-card)
-                  (conj (server->zone state server) (if (ice? card) :ices :content)))
-           dest-zone (get-in @state (cons :corp slot))]
-       ;; trigger :pre-corp-install before computing install costs so that
-       ;; event handlers may adjust the cost.
-       (wait-for (trigger-event-simult state side :pre-corp-install nil card {:server server :dest-zone dest-zone})
-                 (corp-install-pay state side eid card server args slot))))))
+   (let [eid (eid-set-defaults eid :source nil :source-type :corp-install)]
+     (cond
+       ;; No server selected; show prompt to select an install site (Interns, Lateral Growth, etc.)
+       (not server)
+       (continue-ability state side
+                         {:prompt (str "Choose a location to install " (:title card))
+                          :choices (corp-install-list state card)
+                          :async true
+                          :effect (effect (corp-install eid card target args))}
+                         card nil)
+       ;; A card was selected as the server; recurse, with the :host-card parameter set.
+       (and (map? server) (not host-card))
+       (corp-install state side eid card server (assoc args :host-card server))
+       ;; A server was selected
+       :else
+       (let [slot (if host-card
+                    (:zone host-card)
+                    (conj (server->zone state server) (if (ice? card) :ices :content)))
+             dest-zone (get-in @state (cons :corp slot))]
+         ;; trigger :pre-corp-install before computing install costs so that
+         ;; event handlers may adjust the cost.
+         (wait-for (trigger-event-simult state side :pre-corp-install nil card {:server server :dest-zone dest-zone})
+                   (corp-install-pay state side eid card server args slot)))))))
 
 
 ;;; Installing a runner card
@@ -401,55 +402,54 @@
 (defn runner-install
   "Installs specified runner card if able
   Params include extra-cost, no-cost, host-card, facedown and custom-message."
-  ([state side card] (runner-install state side (make-eid state {:source nil
-                                                                 :source-type :runner-install}) card nil))
-  ([state side card params] (runner-install state side (make-eid state {:source nil
-                                                                        :source-type :runner-install}) card params))
+  ([state side card] (runner-install state side (make-eid state) card nil))
+  ([state side card params] (runner-install state side (make-eid state) card params))
   ([state side eid card {:keys [host-card facedown no-mu no-msg] :as params}]
-   (if (and (empty? (get-in @state [side :locked (-> card :zone first)]))
-            (not (install-locked? state :runner)))
-     (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
-       (continue-ability state side
-                         {:choices hosting
-                          :prompt (str "Choose a card to host " (:title card) " on")
-                          :async true
-                          :effect (effect (runner-install eid card (assoc params :host-card target)))}
-                         card nil)
-       (wait-for (trigger-event-simult state side :pre-install nil card facedown)
-                 (let [cost (runner-get-cost state side card params)]
-                   (if (runner-can-install? state side card facedown)
-                     (wait-for (pay-sync state side (make-eid state eid) card cost)
-                               (if-let [cost-str async-result]
-                                 (let [c (if host-card
-                                           (host state side host-card card)
-                                           (move state side card
-                                                 [:rig (if facedown :facedown (to-keyword (:type card)))]))
-                                       c (assoc c :installed :this-turn :new true)
-                                       installed-card (if facedown
-                                                        (do (update! state side c)
-                                                            (find-latest state c))
-                                                        (card-init state side c {:resolve-effect false
-                                                                                 :init-data true}))]
-                                   (when-not no-msg
-                                     (runner-install-message state side (:title card) cost-str params))
+   (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)]
+     (if (and (empty? (get-in @state [side :locked (-> card :zone first)]))
+              (not (install-locked? state :runner)))
+       (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
+         (continue-ability state side
+                           {:choices hosting
+                            :prompt (str "Choose a card to host " (:title card) " on")
+                            :async true
+                            :effect (effect (runner-install eid card (assoc params :host-card target)))}
+                           card nil)
+         (wait-for (trigger-event-simult state side :pre-install nil card facedown)
+                   (let [cost (runner-get-cost state side card params)]
+                     (if (runner-can-install? state side card facedown)
+                       (wait-for (pay-sync state side (make-eid state eid) card cost)
+                                 (if-let [cost-str async-result]
+                                   (let [c (if host-card
+                                             (host state side host-card card)
+                                             (move state side card
+                                                   [:rig (if facedown :facedown (to-keyword (:type card)))]))
+                                         c (assoc c :installed :this-turn :new true)
+                                         installed-card (if facedown
+                                                          (do (update! state side c)
+                                                              (find-latest state c))
+                                                          (card-init state side c {:resolve-effect false
+                                                                                   :init-data true}))]
+                                     (when-not no-msg
+                                       (runner-install-message state side (:title card) cost-str params))
 
-                                   (play-sfx state side "install-runner")
-                                   (when (and (program? card)
-                                              (not facedown)
-                                              (not no-mu))
-                                     ;; Use up mu from program not installed facedown
-                                     (use-mu state (:memoryunits card))
-                                     (toast-check-mu state))
-                                   (handle-virus-counter-flag state side installed-card)
-                                   (when (and (not facedown) (resource? card))
-                                     (swap! state assoc-in [:runner :register :installed-resource] true))
-                                   (when (and (not facedown) (has-subtype? c "Icebreaker"))
-                                     (update-breaker-strength state side c))
-                                   (trigger-event-simult state side eid :runner-install
-                                                         (when-not facedown
-                                                           {:card-ability (card-as-handler installed-card)})
-                                                         installed-card))
-                                 (effect-completed state side eid)))
-                               (effect-completed state side eid)))
+                                     (play-sfx state side "install-runner")
+                                     (when (and (program? card)
+                                                (not facedown)
+                                                (not no-mu))
+                                       ;; Use up mu from program not installed facedown
+                                       (use-mu state (:memoryunits card))
+                                       (toast-check-mu state))
+                                     (handle-virus-counter-flag state side installed-card)
+                                     (when (and (not facedown) (resource? card))
+                                       (swap! state assoc-in [:runner :register :installed-resource] true))
+                                     (when (and (not facedown) (has-subtype? c "Icebreaker"))
+                                       (update-breaker-strength state side c))
+                                     (trigger-event-simult state side eid :runner-install
+                                                           (when-not facedown
+                                                             {:card-ability (card-as-handler installed-card)})
+                                                           installed-card))
+                                   (effect-completed state side eid)))
+                       (effect-completed state side eid)))
                    (clear-install-cost-bonus state side)))
-       (effect-completed state side eid))))
+       (effect-completed state side eid)))))

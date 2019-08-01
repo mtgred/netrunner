@@ -803,4 +803,30 @@
        (is (empty? (:prompt (get-corp))) "No prompt displaying")
        (take-credits state :runner)
        (take-credits state :corp)
-       (is (empty? (:prompt (get-corp))) "No prompt displaying, as conditions are not met")))))
+       (is (empty? (:prompt (get-corp))) "No prompt displaying, as conditions are not met"))))
+  (testing "CtM autoresolve"
+    (do-game
+      (new-game {:corp {:id "NBN: Controlling the Message"
+                        :deck [(qty "Rashida Jaheem" 3)]}})
+      (letfn [(toggle-ctm [setting]
+                (card-ability state :corp (get-in @state [:corp :identity]) 0)
+                (click-prompt state :corp setting))]
+        (play-from-hand state :corp "Rashida Jaheem" "New remote")
+        (play-from-hand state :corp "Rashida Jaheem" "New remote")
+        (play-from-hand state :corp "Rashida Jaheem" "New remote")
+        (take-credits state :corp)
+        (toggle-ctm "Ask")
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (toggle-ctm "Always")
+        (run-empty-server state "Server 2")
+        (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (empty? (:prompt (get-corp))) "No prompt displaying for Corp")
+        (is (empty? (:prompt (get-runner))) "No prompt displaying for Runner")))))
