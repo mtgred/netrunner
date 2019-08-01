@@ -292,11 +292,7 @@
   ([state side card server] (corp-install state side (make-eid state) card server nil))
   ([state side card server args] (corp-install state side (make-eid state) card server args))
   ([state side eid card server {:keys [host-card] :as args}]
-   (let [eid (assoc eid
-                    :source (or (:source eid)
-                                nil)
-                    :source-type (or (:source-type eid)
-                                     :corp-install))]
+   (let [eid (eid-set-defaults eid :source nil :source-type :corp-install)]
      (cond
        ;; No server selected; show prompt to select an install site (Interns, Lateral Growth, etc.)
        (not server)
@@ -409,11 +405,7 @@
   ([state side card] (runner-install state side (make-eid state) card nil))
   ([state side card params] (runner-install state side (make-eid state) card params))
   ([state side eid card {:keys [host-card facedown no-mu no-msg] :as params}]
-   (let [eid (assoc eid
-                    :source (or (:source eid)
-                                nil)
-                    :source-type (or (:source-type eid)
-                                     :runner-install))]
+   (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)]
      (if (and (empty? (get-in @state [side :locked (-> card :zone first)]))
               (not (install-locked? state :runner)))
        (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]

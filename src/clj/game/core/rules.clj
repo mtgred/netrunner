@@ -40,11 +40,7 @@
                              (play-instant state side eid? card? nil)
                              (play-instant state side (make-eid state) eid? card?)))
   ([state side eid card {:keys [targets ignore-cost extra-cost no-additional-cost]}]
-   (let [eid (assoc eid
-                    :source (or (:source eid)
-                                nil)
-                    :source-type (or (:source-type eid)
-                                     :play))]
+   (let [eid (eid-set-defaults eid :source nil :source-type :play)]
      (swap! state update-in [:bonus] dissoc :play-cost)
      (wait-for (trigger-event-simult state side (make-eid state eid) :pre-play-instant nil card)
                (when (empty? (get-in @state [side :locked (-> card :zone first)]))
