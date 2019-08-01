@@ -7,9 +7,6 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-; sensei
-; swarm
-
 (deftest aimor
   ;; Aimor - trash the top 3 cards of the stack, trash Aimor
   (do-game
@@ -2050,6 +2047,36 @@
       (take-credits state :corp 2)
       (is (= 2 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength increased"))))
 
+(deftest sensei
+  ;; Sensei
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Special Offer" "Snowflake" "Sensei"]
+                      :credits 20}})
+    (play-from-hand state :corp "Sensei" "HQ")
+    (play-from-hand state :corp "Special Offer" "Archives")
+    (play-from-hand state :corp "Snowflake" "R&D")
+    (take-credits state :corp)
+    (let [sensei (get-ice state :hq 0)
+          offer (get-ice state :archives 0)
+          snow (get-ice state :rd 0)]
+      (run-on state :hq)
+      (core/rez state :corp sensei)
+      (core/rez state :corp offer)
+      (core/rez state :corp snow)
+      (is (= 1 (count (:subroutines (refresh offer)))) "Special Offer starts with 1 sub")
+      (card-ability state :corp (refresh sensei) 0)
+      (click-card state :corp offer)
+      (is (= 2 (count (:subroutines (refresh offer)))) "Special Offer gains 1 sub from Sensei")
+      ;; Note that Sensei can select any ice
+      (is (= 1 (count (:subroutines (refresh snow)))) "Snowflake starts with 1 sub")
+      (card-ability state :corp (refresh sensei) 0)
+      (click-card state :corp snow)
+      (is (= 2 (count (:subroutines (refresh snow)))) "Snowflake gains 1 sub from Sensei")
+      (core/end-run state :corp)
+      (is (= 1 (count (:subroutines (refresh offer)))) "Special Offer resets on run-end")
+      (is (= 1 (count (:subroutines (refresh snow)))) "Snowflake resets on run-end"))))
+
 (deftest sherlock-1-0
   ;; Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack
   (do-game
@@ -2235,6 +2262,19 @@
       (is (= 2 (count-tags state)) "Runner did not take tags from Surveyor Trace 6 with boost 6")
       (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
+
+(deftest swarm
+  ;; Swarm
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Swarm"]
+                      :credits 10}})
+    (play-from-hand state :corp "Swarm" "HQ")
+    (let [swarm (get-ice state :hq 0)]
+      (core/rez state :corp swarm)
+      (is (zero? (count (:subroutines (refresh swarm)))) "Swarm starts with 0 subs")
+      (advance state swarm 2)
+      (is (= 2 (count (:subroutines (refresh swarm)))) "Swarm gains 2 subs"))))
 
 (deftest thimblerig
   (testing "Thimblerig does not flag phase 1.2 if it's the only piece of ice"

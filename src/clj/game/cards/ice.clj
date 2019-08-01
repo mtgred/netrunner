@@ -2457,7 +2457,7 @@
                                       (installed? %)
                                       (rezzed? %))}
                  :effect (effect (add-sub! target end-the-run (:cid card) {:back true})
-                                 (update! (update-in card [:special :sensei] #(conj % target))))}]
+                                 (update! (update-in card [:special :sensei] conj target)))}]
     :subroutines [{:label "Give each other ICE encountered \"End the run\""
                    :msg (msg "give each other ICE encountered \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run")}]}
 
