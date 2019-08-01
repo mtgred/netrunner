@@ -13,15 +13,17 @@
 
 ;;;; Helper functions specific for ICE
 (defn reset-variable-subs
-  ([state side card total sub] (reset-variable-subs state side card total sub {:variable true}))
+  ([state side card total sub] (reset-variable-subs state side card total sub nil))
   ([state side card total sub args]
-   (let [old-subs (remove #(and (= (:cid card) (:from-cid %))
+   (let [args (merge {:variable true} args)
+         old-subs (remove #(and (= (:cid card) (:from-cid %))
                                 (:variable %))
                           (:subroutines card))
          new-card (assoc card :subroutines old-subs)
          new-subs (->> (range total)
                        (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
-                       :subroutines)
+                       :subroutines
+                       (into []))
          new-card (assoc new-card :subroutines new-subs)]
      (update! state :corp new-card))))
 
@@ -1988,11 +1990,18 @@
    {:subroutines [(do-net-damage 3)]}
 
    "News Hound"
-   {:subroutines [(tag-trace 3)
-                  {:label "End the run if a Current is active"
-                   :req (req (or (not (empty? (runner :current)))
-                                 (not (empty? (corp :current)))))
-                   :effect (effect (end-run)) :msg "end the run"}]}
+   (let [ab {:req (req (has-subtype? target "Current"))
+             :msg "make News Hound gain \"[subroutine] End the run\""
+             :effect (effect (continue-ability
+                               (reset-variable-subs state side card 1 end-the-run {:back true})
+                               card nil))}]
+     {:events {:play-event ab
+               :play-operation ab
+               :trash-current {:msg "make News Hound lose \"[subroutine] End the run\""
+                               :effect (effect (continue-ability
+                                                 (reset-variable-subs state side card 0 nil)
+                                                 card nil))}}
+      :subroutines [(tag-trace 3)]})
 
    "NEXT Bronze"
    {:subroutines [end-the-run]

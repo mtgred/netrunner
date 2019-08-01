@@ -1505,6 +1505,31 @@
       (is (has-subtype? (refresh mg) "Code Gate") "Mother Goddess has Code Gate")
       (is (has-subtype? (refresh mg) "NEXT") "Mother Goddess has NEXT"))))
 
+(deftest news-hound
+  ;; News Hound
+  (do-game
+    (new-game {:corp {:deck [(qty "Project Atlas" 5)]
+                      :hand [(qty "Scarcity of Resources" 2) "News Hound"]}
+               :runner {:hand ["Employee Strike"]}})
+    (play-from-hand state :corp "News Hound" "R&D")
+    (let [news (get-ice state :rd 0)]
+      (core/rez state :corp news)
+      (is (= 1 (count (:subroutines (refresh news)))) "News Hound starts with 1 sub")
+      (play-from-hand state :corp "Scarcity of Resources")
+      (is (= 2 (count (:subroutines (refresh news)))) "News Hound gains a sub on corp current")
+      (play-from-hand state :corp "Scarcity of Resources")
+      (is (= 2 (count (:subroutines (refresh news)))) "News Hound doesn't gain 2 subs on second current played")
+      (take-credits state :corp)
+      (run-on state :rd)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (is (= 1 (count (:subroutines (refresh news)))) "News Hound loses a sub on steal")
+      (play-from-hand state :runner "Employee Strike")
+      (is (= 2 (count (:subroutines (refresh news)))) "News Hound gains a sub on runner current")
+      (take-credits state :runner)
+      (play-and-score state "Project Atlas")
+      (is (= 1 (count (:subroutines (refresh news)))) "News Hound loses a sub on score"))))
+
 (deftest next-bronze
   ;; NEXT Bronze - Add 1 strength for every rezzed NEXT ice
   (do-game

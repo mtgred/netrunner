@@ -590,12 +590,10 @@
                    (system-msg state :corp (str "scores " (:title c) " and gains " (quantify points "agenda point")))
                    (trigger-event-simult state :corp eid :agenda-scored
                                          {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
-                                                                         ;; TODO: Make this use remove-old-current
-                                                                         (system-say state side (str (:title current) " is trashed."))
                                                                          ;; This is to handle Employee Strike with damage IDs #2688
                                                                          (when (:disable-id (card-def current))
-                                                                           (swap! state assoc-in [:corp :disable-id] true))
-                                                                         (trash state side current)))}
+                                                                           (swap! state assoc-in [:corp :disable-id] true)))
+                                                                       (remove-old-current state side :runner))}
                                           :card-ability (card-as-handler c)
                                           :after-active-player {:effect (req (let [c (get-card state c)
                                                                                    points (or (get-agenda-points state :corp c) points)]
