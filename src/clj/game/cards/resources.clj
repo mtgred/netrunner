@@ -2009,7 +2009,8 @@
               :effect (req (let [sub (first (filter #(and (not (:broken %))
                                                           (= target (make-label (:sub-effect %))))
                                                     (:subroutines current-ice)))]
-                             (wait-for (resolve-ability state side (make-eid state {:source-type :subroutine}) (:sub-effect sub) card nil)
+                             (wait-for (resolve-ability state side (make-eid state {:source-type :subroutine})
+                                                        (:sub-effect sub) current-ice nil)
                                        (if (and (:run @state)
                                                 (not (:ended (:run @state)))
                                                 (next unbroken-subs))
@@ -2021,6 +2022,8 @@
      {:abilities [{:implementation "Effect is manually triggered"
                    :req (req (pos? (count (remove :broken (:subroutines current-ice)))))
                    :async true
+                   :msg (msg "select the order the unbroken subroutines on "
+                          (:title current-ice) " resolve")
                    :effect (effect
                              (continue-ability
                                (let [unbroken-subs (unbroken-subroutines-choice current-ice)]
