@@ -276,6 +276,35 @@
   [card number]
   (<= number (get-advance-counters card)))
 
+(defn resolve-another-subroutine
+  "For cards like Orion or Upayoga."
+  ([] (resolve-another-subroutine (constantly true) "Resolve a subroutine on another ice"))
+  ([pred] (resolve-another-subroutine pred "Resolve a subroutine on another ice"))
+  ([pred label]
+   (let [pred #(and (ice? %)
+                    (rezzed? %)
+                    (pred %))]
+     {:async true
+      :label label
+      :effect
+      (effect
+        (continue-ability
+          (when (< 1 (count (filter pred (all-active-installed state :corp))))
+            {:prompt "Select the ice"
+             :choices {:req pred
+                       :all true}
+             :effect (effect
+                       (continue-ability
+                         (let [ice target]
+                           {:prompt "Select the subroutine"
+                            :choices (req (unbroken-subroutines-choice ice))
+                            :msg (msg "resolve a subroutine (\"[subroutine] "
+                                      target "\") from " (:title ice))
+                            :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
+                                           (continue-ability state side (:sub-effect sub) card nil)))})
+                         card nil))})
+          card nil))})))
+
 ;;; Helper function for adding implementation notes to ICE defined with functions
 (defn- implementation-note
   "Adds an implementation note to the ice-definition"
@@ -2072,8 +2101,9 @@
     :subroutines [end-the-run end-the-run]}
 
    "Orion"
-   (implementation-note "\"Resolve a subroutine...\" subroutine is not implemented"
-                        (space-ice trash-program end-the-run))
+   (space-ice trash-program
+              (resolve-another-subroutine)
+              end-the-run)
 
    "Otoroshi"
    {:subroutines [{:async true
@@ -2183,11 +2213,9 @@
    {:subroutines [end-the-run]}
 
    "Ravana 1.0"
-   (let [sub {:label "Resolve a subroutine on another piece of rezzed bioroid ICE"
-              :choices {:req #(and (rezzed? %)
-                                   (ice? %)
-                                   (has-subtype? % "Bioroid"))}
-              :msg (msg "resolve a subroutine on " (:title target))}]
+   (let [sub (resolve-another-subroutine
+               #(has-subtype? % "Bioroid")
+               "Resolve a subroutine on a rezzed bioroid ice")]
      {:subroutines [sub sub]
       :runner-abilities [(bioroid-break 1 1)]})
 
@@ -2777,12 +2805,13 @@
                                   (lose-credits state :runner 1)))}]}
 
    "Upayoga"
-   {:implementation "\"Resolve a subroutine...\" subroutine is not implemented"
-    :subroutines [(do-psi {:label "Make the Runner lose 2 [Credits]"
+   {:subroutines [(do-psi {:label "Make the Runner lose 2 [Credits]"
                            :msg "make the Runner lose 2 [Credits]"
                            :effect (effect (lose-credits :runner 2)
                                            (effect-completed eid))})
-                  {:msg "resolve a subroutine on a piece of rezzed psi ICE"}]}
+                  (resolve-another-subroutine
+                    #(has-subtype? % "Psi")
+                    "Resolve a subroutine on a rezzed psi ice")]}
 
    "Uroboros"
    {:subroutines [(trace-ability 4 {:label "Prevent the Runner from making another run"
@@ -2894,9 +2923,7 @@
    (zero-to-hero (do-net-damage 1))
 
    "Wormhole"
-   ;; TODO: create an ability for wormhole
-   (implementation-note "Wormhole subroutine is not implemented"
-                        (space-ice))
+   (space-ice (resolve-another-subroutine))
 
    "Wotan"
    {:subroutines [(end-the-run-unless-runner

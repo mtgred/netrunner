@@ -2445,6 +2445,31 @@
         (is (has-subtype? (refresh wend) "Code Gate") "Wendigo gained Code Gate")
         (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
 
+(deftest wormhole
+  ;; Wormhole
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall" "Wormhole"]
+                      :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Wormhole" "HQ")
+    (take-credits state :corp)
+    (let [iw (get-ice state :rd 0)
+          wormhole (get-ice state :hq 0)]
+      (core/rez state :corp wormhole)
+      (run-on state :hq)
+      (card-subroutine state :corp wormhole 0)
+      (is (:fired (first (:subroutines (refresh wormhole))))
+          "Subroutine fires even when there are no viable ice.")
+      (is (empty? (:prompt (get-corp))) "No choice prompt for the Corp")
+      (core/end-run state :corp)
+      (run-on state :hq)
+      (core/rez state :corp iw)
+      (core/resolve-unbroken-subs! state :corp (refresh wormhole))
+      (click-card state :corp iw)
+      (click-prompt state :corp "End the run")
+      (is (not (:run @state)) "Run has been ended"))))
+
 (deftest wraparound
   ;; Wraparound - Strength boosted when no fracter is installed
   (do-game
