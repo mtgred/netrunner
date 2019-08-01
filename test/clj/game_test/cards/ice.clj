@@ -2327,6 +2327,27 @@
         (is (= "Oversight AI" (:title (first (:hosted (refresh ti)))))
             "Tithonium hosting OAI as a condition")))))
 
+(deftest tl-dr
+  ;; TL;DR
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma" "TL;DR"]
+                      :credits 20}})
+    (play-from-hand state :corp "TL;DR" "HQ")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (let [e (get-ice state :hq 1)
+          tldr (get-ice state :hq 0)]
+      (run-on state :hq)
+      (core/rez state :corp e)
+      (core/rez state :corp tldr)
+      (is (= 2 (count (:subroutines (refresh e)))) "Enigma starts with 2 subroutines")
+      (card-ability state :corp (refresh tldr) 0)
+      (click-card state :corp e)
+      (is (= 4 (count (:subroutines (refresh e)))) "Enigma has 4 subroutines after TLDR doubles them")
+      (run-continue state)
+      (is (= 2 (count (:subroutines (refresh e)))) "Enigma starts with 2 subroutines"))))
+
 (deftest tmi
   ;; TMI
   (testing "Basic test"

@@ -2707,7 +2707,8 @@
                                  new-subs (into [] (take-nth 2 curr-subs))
                                  new-card (assoc target :subroutines new-subs)
                                  card-list (remove-once #(same-card? % target) (get-in card [:special :tldr]))]
-                             (update! state :corp (assoc-in new-card [:special :tldr] card-list))))}}
+                             (update! state :corp new-card)
+                             (update! state :corp (assoc-in card [:special :tldr] card-list))))}}
     :abilities [{:label "Double subroutines on an ICE"
                  :choices {:req #(and (ice? %)
                                       (installed? %)
@@ -2715,8 +2716,8 @@
                  :effect (req (let [curr-subs (:subroutines target)
                                     new-subs (into [] (interleave curr-subs curr-subs))
                                     new-card (assoc target :subroutines new-subs)]
-                                (update! state :corp new-card))
-                              (update! (update-in card [:special :tldr] #(conj % target))))}]
+                                (update! state :corp new-card)
+                                (update! state :corp (update-in card [:special :tldr] conj target))))}]
     :subroutines [{:label "Give the next ICE encountered \"End the run\""
                    :msg (msg "give the next ICE encountered \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run")}]}
 
