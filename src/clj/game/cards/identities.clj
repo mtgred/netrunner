@@ -419,7 +419,7 @@
     {:access-ability
      {:async true
       :once :per-turn
-      :label "[Freedom]: Trash card"
+      :label "Trash card"
       :req (req (and (not (:disabled card))
                      (not (agenda? target))
                      (<= (:cost target)
@@ -1035,8 +1035,7 @@
                            :effect (effect (gain-credits :corp 1))}}}
 
    "Quetzal: Free Spirit"
-   {:abilities [{:once :per-turn
-                 :msg "break 1 Barrier subroutine"}]}
+   {:abilities [(assoc (break-sub nil 1 "Barrier" {:req (req true)}) :once :per-turn)]}
 
    "Reina Roja: Freedom Fighter"
    (letfn [(not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))

@@ -1254,7 +1254,35 @@
         (click-card state :corp tith)
         (click-prompt state :corp "No")
         (is (and (:installed (refresh tith)) (rezzed? (refresh tith))) "Rezzed Tithonium")
-        (is (= 1 (:credit (get-corp))) "EBC saved 1 credit on the rez of Tithonium")))))
+        (is (= 1 (:credit (get-corp))) "EBC saved 1 credit on the rez of Tithonium"))))
+  (testing "works with pay-credits prompt for Mumba Temple"
+    (do-game
+      (new-game {:corp {:deck ["Mumba Temple" "Eve Campaign" "Executive Boot Camp"]}})
+      (play-from-hand state :corp "Eve Campaign" "New remote")
+      (play-from-hand state :corp "Executive Boot Camp" "New remote")
+      (play-from-hand state :corp "Mumba Temple" "New remote")
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-corp))) "Corp ends turn with 5 credits")
+      (let [eve (get-content state :remote1 0)
+            ebc (get-content state :remote2 0)
+            mum (get-content state :remote3 0)]
+        (core/rez state :corp ebc)
+        (core/rez state :corp mum)
+        (take-credits state :runner)
+        (is (:corp-phase-12 @state) "Corp in Step 1.2")
+        (card-ability state :corp ebc 0)
+        (click-card state :corp eve)
+        (dotimes [_ 2]
+          (click-card state :corp mum))
+        (is (= 2 (:credit (get-corp))) "EBC + Mumba saved 3 credit on the rez of Eve")
+        (is (= 16 (get-counters (refresh eve) :credit)))
+        (core/end-phase-12 state :corp nil)
+        (is (= 2 (:credit (get-corp))) "Corp did not gain credits from Eve")
+        (is (= 16 (get-counters (refresh eve) :credit)) "Did not take counters from Eve")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (not (:corp-phase-12 @state)) "With nothing to rez, EBC does not trigger Step 1.2")
+        (is (= 14 (get-counters (refresh eve) :credit)) "Took counters from Eve")))))
 
 (deftest executive-search-firm
   ;; Executive Search Firm
@@ -2128,11 +2156,11 @@
 (deftest lily-lockwell
   ;; Lily Lockwell
   (do-game
-    (new-game {:corp {:deck ["Lily Lockwell" "Beanstalk Royalties" (qty "Fire Wall" 10)]}})
-    (core/gain state :corp :click 10)
-    (starting-hand state :corp ["Lily Lockwell" "Beanstalk Royalties"])
+    (new-game {:corp {:deck [(qty "Fire Wall" 10)]
+                      :hand ["Lily Lockwell" "Beanstalk Royalties"]
+                      :credits 10}
+               :runner {:tags 2}})
     (play-from-hand state :corp "Lily Lockwell" "New remote")
-    (core/gain-tags state :runner 2)
     (let [lily (get-content state :remote1 0)
           clicks (:click (get-corp))
           number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))
@@ -2141,15 +2169,15 @@
       (is (= (+ 3 hand) (-> (get-corp) :hand count)) "Rezzing Lily Lockwell should draw 3 cards")
       (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :deck)
       (card-ability state :corp (refresh lily) 0)
-      (click-prompt state :corp (find-card "Beanstalk Royalties" (-> (get-corp) :prompt first :choices)))
+      (click-prompt state :corp "Beanstalk Royalties")
       (is (= "Beanstalk Royalties" (-> (get-corp) :deck first :title)) "Beanstalk Royalties should be moved to top of R&D")
       (is (= 1 (count-tags state)) "Runner should have 1 tag from Lily Lockwell ability")
       (is (= (dec clicks) (:click (get-corp))) "Lily Lockwell ability should cost 1 click")
       (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Corp should shuffle deck")
       (core/draw state :corp)
       (card-ability state :corp (refresh lily) 0)
-      (click-prompt state :corp "Cancel")
-      (is (last-log-contains? state "did not find") "Lily Lockwell's ability didn't find an operation")
+      (click-prompt state :corp "No action")
+      (is (last-log-contains? state "does not find") "Lily Lockwell's ability didn't find an operation")
       (is (zero? (count-tags state)) "Runner should have 0 tags from Lily Lockwell ability even when no operation found"))))
 
 (deftest long-term-investment
@@ -3178,11 +3206,9 @@
       (play-from-hand state :corp "Scorched Earth")
       (is (= 4 (count (:discard (get-runner)))))
       (is (= 1 (get-counters (refresh rc) :advancement)) "Reconstruction Contract has 1 advancement token")
-      (starting-hand state :runner ["Imp" "Imp"])
-      (play-from-hand state :corp "Pup" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (card-subroutine state :corp (get-ice state :hq 0) 0)
-      (is (= 5 (count (:discard (get-runner)))))
+      (is (= 4 (count (:discard (get-runner)))))
       (is (= 1 (get-counters (refresh rc) :advancement)) "Reconstruction Contract doesn't get advancement token for net damage"))))
 
 (deftest reversed-accounts
@@ -3385,9 +3411,9 @@
           iw (get-ice state :hq 0)]
       (core/rez state :corp ss)
       (core/rez state :corp iw)
-      (card-ability state :corp ss 0)
       (let [credits (:credit (get-corp))
             clicks (:click (get-corp))]
+        (card-ability state :corp ss 0)
         (click-card state :corp iw)
         (is (= (+ credits 4) (:credit (get-corp))) "Corp should gain 4 from Security Subcontract ability")
         (is (= "Ice Wall" (-> (get-corp) :discard first :title)) "Ice Wall should be in Archives from Security Subcontract ability")
@@ -4333,20 +4359,20 @@
       (core/rez state :corp kak)
       (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo starts with 1 sub")
       (core/rez state :corp eli)
-      (is (= 2 (count (:subroutines (refresh eli)))) "Eli 2.0 starts with 2 subs")
-      (is (zero? (count (:subroutines (refresh ichi)))) "Unrezzed Ichi 2.0 starts with 0 subs")
+      (is (= 3 (count (:subroutines (refresh eli)))) "Eli 3.0 starts with 2 subs")
+      (is (= 3 (count (:subroutines (refresh ichi)))) "Unrezzed Ichi 2.0 starts with 3 subs")
       (core/rez state :corp wf)
       (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
-      (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 gains 1 sub")
-      (is (zero? (count (:subroutines (refresh ichi)))) "Unrezzed Ichi 2.0 stays at 0 subs")
+      (is (= 4 (count (:subroutines (refresh eli)))) "Eli 2.0 gains 1 sub")
+      (is (= 3 (count (:subroutines (refresh ichi)))) "Unrezzed Ichi 2.0 stays at 2 subs")
       (core/rez state :corp ichi)
       (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
-      (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 stays at 1 sub")
-      (is (= 3 (count (:subroutines (refresh ichi)))) "Ichi 2.0 rezzes with 3 subs")
+      (is (= 4 (count (:subroutines (refresh eli)))) "Eli 2.0 stays at 4 subs")
+      (is (= 4 (count (:subroutines (refresh ichi)))) "Ichi 2.0 rezzes with 4 subs")
       (core/derez state :corp (refresh wf))
       (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
-      (is (= 2 (count (:subroutines (refresh eli)))) "Eli 2.0 reverts")
-      (is (= 2 (count (:subroutines (refresh ichi)))) "Ichi 2.0 reverts"))))
+      (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 reverts")
+      (is (= 3 (count (:subroutines (refresh ichi)))) "Ichi 2.0 reverts"))))
 
 (deftest watchdog
   ;; Watchdog - Reduce rez cost of first ICE per turn by number of Runner tags

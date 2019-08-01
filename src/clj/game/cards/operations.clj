@@ -440,7 +440,7 @@
 
    "Distract the Masses"
    (let [shuffle-two {:async true
-                      :effect (effect (rfg-and-shuffle-rd-effect (find-cid (:cid card) (:discard corp)) 2))}
+                      :effect (effect (rfg-and-shuffle-rd-effect eid (find-cid (:cid card) (:discard corp)) 2 nil))}
          trash-from-hq {:async true
                         :prompt "Select up to 2 cards in HQ to trash"
                         :choices {:max 2
@@ -509,12 +509,12 @@
       :choices {:req #(and (ice? %)
                            (installed? %))}
       :msg (msg "give " (card-str state target {:visible false}) " additional text")
-      :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub)
+      :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
                    (update-ice-strength state side target)
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
-      :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
+      :leave-play (req (remove-extra-subs! state :corp (:cid card) (:host card)))
       :events {:rez {:req (req (same-card? target (:host card)))
-                     :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub))}}})
+                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}}})
 
    "Economic Warfare"
    {:req (req (and (last-turn? state :runner :successful-run)
@@ -796,8 +796,8 @@
 
    "Genotyping"
    {:async true
+    :msg "trash the top 2 cards of R&D"
     :effect (effect (mill :corp 2)
-                    (system-msg "trashes the top 2 cards of R&D")
                     (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) 4 false))}
 
    "Green Level Clearance"
@@ -1285,7 +1285,7 @@
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
 
    "Preemptive Action"
-   {:effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) (min (count (:discard corp)) 3) true))}
+   {:effect (effect (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) (min (count (:discard corp)) 3) true))}
 
    "Priority Construction"
    (letfn [(install-card [chosen]
@@ -1800,12 +1800,12 @@
       :choices {:req #(and (ice? %) (rezzed? %))}
       :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
       :effect (req (update! state side (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))
-                   (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub)
+                   (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
                    (update-ice-strength state side target)
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
-      :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
+      :leave-play (req (remove-extra-subs! state :corp (:cid card) (:host card)))
       :events {:rez {:req (req (same-card? target (:host card)))
-                     :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub))}}})
+                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}}})
 
    "Subcontract"
    (letfn [(sc [i sccard]
@@ -2101,11 +2101,11 @@
                            (rezzed? %))}
       :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 brain damage\" before all its other subroutines")
       :sub-effect (do-brain-damage 1)
-      :effect (req (add-extra-sub state :corp (:cid card) target 0 new-sub)
+      :effect (req (add-extra-sub! state :corp target new-sub (:cid card) {:front true})
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
-      :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
+      :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
       :events {:rez {:req (req (same-card? target (:host card)))
-                     :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) 0 new-sub))}}})
+                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card) {:front true}))}}})
 
    "Witness Tampering"
    {:msg "remove 2 bad publicity"

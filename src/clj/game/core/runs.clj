@@ -157,6 +157,12 @@
   [card]
   (interactions card :access-ability))
 
+(defn- access-ab-label
+  [card]
+  (let [title (first (string/split (:title card) #":"))
+        label (make-label (access-ab card))]
+    (str "[" title "] " label)))
+
 (defn access-non-agenda
   "Access a non-agenda. Show a prompt to trash for trashable cards."
   [state side eid c & {:keys [skip-trigger-event]}]
@@ -198,7 +204,7 @@
                              (card-flag-fn? state side card :must-trash true)))
           ; If we must trash, make the label only from the trash abilities
           ; Otherwise, make the label from all abilities
-          ability-strs (mapv #(make-label (access-ab %))
+          ability-strs (mapv access-ab-label
                              (if must-trash? trash-ab-cards access-ab-cards))
           ; Only display "No action" when we're not forced to do anything
           no-action-str (when-not (or must-trash? must-trash-with-credits?)
@@ -241,14 +247,6 @@
                                     (access-end state side eid c)))))}
         card nil))))
 
-(defn- join-cost-strs
-  [& costs]
-  (->> costs
-       flatten
-       (filter some?)
-       (interpose " and ")
-       (apply str)))
-
 (defn- access-agenda
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
   [state side eid card]
@@ -256,23 +254,23 @@
   (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (let [cost (steal-cost state side card)
         part-cost (partition 2 cost)
-        cost-strs (seq (map build-cost-str part-cost))
+        cost-strs (build-cost-string cost)
         can-pay (can-pay? state side (make-eid state eid) card (:title card) cost)
         can-steal (can-steal? state side card)
         ; Access abilities are useless in the discard
         access-ab-cards (when-not (in-discard? card)
                           (seq (filter #(can-trigger? state :runner (access-ab %) % [card])
                                        (all-active state :runner))))
-        ability-strs (mapv #(make-label (access-ab %)) access-ab-cards)
+        ability-strs (mapv access-ab-label access-ab-cards)
         ;; strs
         steal-str (when (and can-steal can-pay)
-                    (if cost-strs
+                    (if (not (string/blank? cost-strs))
                       ["Pay to steal"]
                       ["Steal"]))
         no-action-str (when-not (= steal-str ["Steal"])
                         ["No action"])
-        prompt-str (if cost-strs
-                     (str " " (join-cost-strs (string/capitalize (first cost-strs)) (map lower-case (rest cost-strs))) " to steal?")
+        prompt-str (if (not (string/blank? cost-strs))
+                     (str " " cost-strs " to steal?")
                      "")
         prompt-str (str "You accessed " (:title card) "." prompt-str)
         choices (vec (concat ability-strs steal-str no-action-str))]
@@ -330,6 +328,14 @@
     ;; Check if the zone-reveal keyword exists in the flags property of the card definition
     (when-let [reveal-fn (get-in cdef [:flags reveal-kw])]
       (reveal-fn state side (make-eid state) card nil))))
+
+(defn- join-cost-strs
+  [& costs]
+  (->> costs
+       flatten
+       (filter some?)
+       (interpose " and ")
+       (apply str)))
 
 (defn msg-handle-access
   "Generate the message from the access"
@@ -977,6 +983,8 @@
                 (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
                 (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
                 (update-breaker-strength state side p))
+              (doseq [ice (get-in @state [:corp :servers server :ices])]
+                (reset-all-subs! state ice))
               (let [run-effect (get-in @state [:run :run-effect])]
                 (if-let [end-run-effect (:end-run run-effect)]
                   (wait-for (resolve-ability state side end-run-effect (:card run-effect) [server])

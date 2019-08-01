@@ -623,7 +623,7 @@
         (click-prompt state :runner "HQ")
         (is (= 4 (get-counters (find-card "Cold Read" (get-in @state [:runner :play-area])) :recurring)) "Cold Read has 4 counters")
         (run-successful state)
-        (click-prompt state :runner "[Imp]: Trash card")
+        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
         (click-card state :runner (get-program state 0))
         (is (= 2 (count (:discard (get-runner)))) "Imp and Cold Read in discard")
         ; Cold Read works when Blacklist rezzed - #2378
@@ -913,10 +913,10 @@
     (is (= [:rd] (get-in @state [:run :server])) "Run initiated on R&D")
     (run-successful state)
     (click-prompt state :runner "Unrezzed upgrade in R&D")
-    (click-prompt state :runner "[Demolition Run]: Trash card")
+    (click-prompt state :runner "[Demolition Run] Trash card")
     (is (= 3 (:credit (get-runner))) "Trashed Shell Corporation at no cost")
     (click-prompt state :runner "Card from deck")
-    (click-prompt state :runner "[Demolition Run]: Trash card")
+    (click-prompt state :runner "[Demolition Run] Trash card")
     (is (zero? (:agenda-point (get-runner))) "Didn't steal False Lead")
     (is (= 2 (count (:discard (get-corp)))) "2 cards in Archives")
     (is (empty? (:prompt (get-runner))) "Run concluded")))
@@ -1724,6 +1724,7 @@
       (play-from-hand state :corp "Pup" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (card-subroutine state :corp (get-ice state :hq 0) 0)
+      (click-prompt state :runner "Suffer 1 net damage")
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 3 (count (:hand (get-runner)))) "I've Had Worse triggered and drew 3 cards")
       (starting-hand state :runner ["I've Had Worse" "Imp" "Imp"])
@@ -2135,7 +2136,7 @@
         (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))
   (testing "Eater interaction"
     (do-game
-      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"]}
+      (new-game {:corp {:hand ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Ice Wall"]}
                  :runner {:deck ["Khusyuk"
                                  (qty "Cache" 3)
                                  "Eater"]}})
@@ -2146,14 +2147,17 @@
       (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
       (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
       ;; R&D is now from top to bottom: A B C
+      (play-from-hand state :corp "Ice Wall" "R&D")
       (take-credits state :corp)
       (core/gain state :runner :click 100)
       (core/gain state :runner :credit 100)
       (play-from-hand state :runner "Eater")
       (dotimes [_ 3] (play-from-hand state :runner "Cache"))
       (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
+      (core/rez state :corp (get-ice state :rd 0))
       (card-ability state :runner (get-program state 0) 0) ; use Eater
       (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "End the run")
       (click-prompt state :runner "1 [Credit]: 3 cards")
       (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
       (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))

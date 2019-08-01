@@ -96,7 +96,6 @@
              Example: Hayley Kaplan will not show a prompt if there are no valid targets in the grip.
 
   OTHER KEYS
-  :counter-cost / :advance-counter-cost -- number of counters to remove to resolve the ability
   :once -- its only value is :per-turn; signifies an effect that can only be triggered once per turn.
   :once-key -- by default, each :once is distinct per card. If multiple copies of a card can only resolve
                some ability once between all of them, then the card should specify a manual :once-key that can
@@ -207,47 +206,19 @@
                   (if not-distinct cards (distinct-by :title cards))))]
        (prompt! state s card prompt cs ab args)))))
 
-(declare print-msg do-effect register-end-turn register-once)
-
-(defn- do-ability
-  "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [eid cost counter-cost advance-counter-cost] :as ability} {:keys [advance-counter] :as card} targets]
-  ;; Ensure counter costs can be paid
-  (let [[counter-type counter-amount] counter-cost]
-    (when (and (or (not counter-cost)
-                   (<= (or counter-amount 0)
-                       (get-in card [:counter counter-type] 0)))
-               (or (not advance-counter-cost)
-                   (<= advance-counter-cost (or advance-counter 0))))
-      ;; Ensure that any costs can be paid
-      (wait-for
-        (pay-sync state side (make-eid state eid) card cost {:action (:cid card)})
-        (if-let [cost-str async-result]
-          (let [c (if counter-cost
-                    (update-in card [:counter counter-type] #(- (or % 0) (or counter-amount 0)))
-                    card)
-                c (if advance-counter-cost
-                    (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
-                    c)]
-            ;; Remove any counters
-            (when (or counter-cost advance-counter-cost)
-              (update! state side c)
-              (when (agenda? card)
-                (trigger-event state side :agenda-counter-spent card)))
-            ;; Print the message
-            (print-msg state side ability card targets cost-str)
-            ;; Trigger the effect
-            (register-once state ability card)
-            (do-effect state side ability c targets)))))))
-
 (defn- print-msg
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets cost-str]
   (when-let [message (:msg ability)]
-    (when-let [desc (if (string? message) message (message state side eid card targets))]
+    (let [desc (if (string? message) message (message state side eid card targets))
+          cost-spend-msg (build-spend-msg cost-str "use")]
       (system-msg state (to-keyword (:side card))
-                  (str (build-spend-msg cost-str "use")
-                       (:title card) (when desc (str " to " desc)))))))
+                  (str cost-spend-msg (:title card) (str " to " desc))))))
+
+(defn register-once
+  "Register ability as having happened if :once specified"
+  [state {:keys [once once-key] :as ability} {:keys [cid] :as card}]
+  (when once (swap! state assoc-in [once (or once-key cid)] true)))
 
 (defn- do-effect
   "Trigger the effect"
@@ -255,10 +226,30 @@
   (when-let [ability-effect (:effect ability)]
     (ability-effect state side eid card targets)))
 
-(defn register-once
-  "Register ability as having happened if :once specified"
-  [state {:keys [once once-key] :as ability} {:keys [cid] :as card}]
-  (when once (swap! state assoc-in [once (or once-key cid)] true)))
+(defn- ugly-counter-hack
+  "This is brought over from the old do-ability because using `get-card` or `find-latest`
+  currently doesn't work properly with `pay-counters`"
+  [card cost]
+  ;; TODO: Remove me some day
+  (let [[counter-type counter-amount] (first (filter #(some #{:advancement :agenda :power :virus} %) (partition 2 cost)))]
+    (if counter-type
+      (let [counter (if (= :advancement counter-type)
+                      [:advance-counter]
+                      [:counter counter-type])]
+        (update-in card counter - counter-amount))
+      card)))
+
+(defn- do-ability
+  "Perform the ability, checking all costs can be paid etc."
+  [state side {:keys [eid cost] :as ability} card targets]
+  ;; Ensure that any costs can be paid
+  (wait-for (pay-sync state side (make-eid state eid) card cost {:action (:cid card)})
+            (when-let [cost-str async-result]
+              ;; Print the message
+              (print-msg state side ability card targets cost-str)
+              ;; Trigger the effect
+              (register-once state ability card)
+              (do-effect state side ability (ugly-counter-hack card cost) targets))))
 
 (defn active-prompt?
   "Checks if this card has an active prompt"
@@ -274,14 +265,18 @@
   ([state side card message ability targets] (optional-ability state side (make-eid state) card message ability targets))
   ([state side eid card message ability targets]
    (letfn [(prompt-fn [prompt-choice]
-             (let [yes-ability (:yes-ability ability)]
+             (let [yes-ability (:yes-ability ability)
+                   no-ability (:no-ability ability)
+                   end-effect (:end-effect ability)]
                (if (and (= prompt-choice "Yes")
                         yes-ability
                         (can-pay? state side eid card (:title card) (:cost yes-ability)))
                  (resolve-ability state side (assoc yes-ability :eid eid) card targets)
-                 (if-let [no-ability (:no-ability ability)]
+                 (if no-ability
                    (resolve-ability state side (assoc no-ability :eid eid) card targets)
-                   (effect-completed state side eid)))))]
+                   (effect-completed state side eid)))
+               (if end-effect
+                 (end-effect state side eid card nil))))]
      (let [autoresolve-fn     (:autoresolve ability)
            autoresolve-answer (when autoresolve-fn
                                 (autoresolve-fn state side eid card targets))]
@@ -491,11 +486,10 @@
                                        :runner-credits runner-credits})]
                (trace-start state side eid card trace)))))
 
-(defn rfg-and-shuffle-rd-effect
-  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))
-  ([state side card n all?] (rfg-and-shuffle-rd-effect state side (make-eid state) card n all?))
+(defn shuffle-into-rd-effect
+  ([state side card n] (shuffle-into-rd-effect state side (make-eid state) card n false))
+  ([state side card n all?] (shuffle-into-rd-effect state side (make-eid state) card n all?))
   ([state side eid card n all?]
-   (move state side card :rfg)
    (continue-ability state side
                     {:show-discard  true
                      :choices {:max n
@@ -514,3 +508,10 @@
                                   (shuffle! state side :deck))
                      :cancel-effect (req (shuffle! state side :deck))}
                     card nil)))
+
+(defn rfg-and-shuffle-rd-effect
+  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))
+  ([state side card n all?] (rfg-and-shuffle-rd-effect state side (make-eid state) card n all?))
+  ([state side eid card n all?]
+   (move state side card :rfg)
+   (shuffle-into-rd-effect state side eid card n all?)))

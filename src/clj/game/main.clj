@@ -48,6 +48,7 @@
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
    "toast" toast
    "trash-resource" core/trash-resource
+   "unbroken-subroutines" core/play-unbroken-subroutines
    "view-deck" core/view-deck})
 
 (defn strip [state]
@@ -137,8 +138,9 @@
   "Ensures the user is allowed to do command they are trying to do"
   [user command state side args]
   (if (not-spectator? state user)
-    (do ((commands command) state side args)
-        (set-action-id state side))
+    (when-let [c (get commands command)]
+      (c state side args)
+      (set-action-id state side))
     (when-let [cmd (spectator-commands command)]
       (cmd state side args))))
 

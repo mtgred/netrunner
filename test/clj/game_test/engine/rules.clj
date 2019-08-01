@@ -246,7 +246,7 @@
     (play-from-hand state :runner "Imp")
     (let [imp (get-program state 0)]
       (run-empty-server state "HQ")
-      (click-prompt state :runner "[Imp]: Trash card")
+      (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
       (is (= 1 (count (:discard (get-corp)))) "Accessed Hedge Fund is trashed")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
@@ -257,7 +257,7 @@
     (let [imp (get-program state 0)]
       (is (= 2 (get-counters (refresh imp) :virus)) "Reinstalled Imp has 2 counters")
       (run-empty-server state "HQ")
-      (click-prompt state :runner "[Imp]: Trash card"))
+      (click-prompt state :runner "[Imp] Hosted virus counter: Trash card"))
     (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn")))
 
 (deftest trash-seen-and-unseen
@@ -803,4 +803,30 @@
        (is (empty? (:prompt (get-corp))) "No prompt displaying")
        (take-credits state :runner)
        (take-credits state :corp)
-       (is (empty? (:prompt (get-corp))) "No prompt displaying, as conditions are not met")))))
+       (is (empty? (:prompt (get-corp))) "No prompt displaying, as conditions are not met"))))
+  (testing "CtM autoresolve"
+    (do-game
+      (new-game {:corp {:id "NBN: Controlling the Message"
+                        :deck [(qty "Rashida Jaheem" 3)]}})
+      (letfn [(toggle-ctm [setting]
+                (card-ability state :corp (get-in @state [:corp :identity]) 0)
+                (click-prompt state :corp setting))]
+        (play-from-hand state :corp "Rashida Jaheem" "New remote")
+        (play-from-hand state :corp "Rashida Jaheem" "New remote")
+        (play-from-hand state :corp "Rashida Jaheem" "New remote")
+        (take-credits state :corp)
+        (toggle-ctm "Ask")
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (toggle-ctm "Always")
+        (run-empty-server state "Server 2")
+        (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (empty? (:prompt (get-corp))) "No prompt displaying for Corp")
+        (is (empty? (:prompt (get-runner))) "No prompt displaying for Runner")))))

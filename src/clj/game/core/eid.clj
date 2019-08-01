@@ -7,6 +7,17 @@
           (when source {:source source})
           (when source-type {:source-type source-type}))))
 
+(defn eid-set-defaults
+  "Set default values for fields in the `eid` if they are not already set."
+  [eid & args]
+  (let
+    [remove-fn (fn [[k v]]
+                 (contains? eid k))
+     kvs (remove remove-fn (partition 2 args))]
+    (if (not-empty kvs)
+      (apply assoc eid (flatten kvs))
+      eid)))
+
 (defn register-effect-completed
   [state side eid effect]
   (swap! state update-in [:effect-completed (:eid eid)] #(conj % effect)))

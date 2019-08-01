@@ -45,4 +45,4 @@
     (.println *err* (with-out-str
                       (print-stack-trace
                         (Exception. (str "Tried to select card def for non-existent card: " card))
-                        25)))))
+                        2500)))))

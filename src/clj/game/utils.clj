@@ -108,11 +108,6 @@
       m)
     (dissoc m k)))
 
-(defn make-label
-  "Looks into an ability for :label, if it doesn't find it, capitalizes :msg instead."
-  [ability]
-  (or (:label ability) (and (string? (:msg ability)) (capitalize (:msg ability))) ""))
-
 (defn click-spent?
   "Returns true if player has spent at least one click"
   [side state]

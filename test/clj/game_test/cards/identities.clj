@@ -278,14 +278,14 @@
       (is (= 1 (core/access-count state :runner :rd-access)) "Should only access 1 from missed psi game")))
   (testing "Shiro interaction: second sub should give Akiko 2 accesses"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 10) "Shiro"]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Shiro"]}
                  :runner {:id "Akiko Nisei: Head Case"
                           :deck [(qty "Sure Gamble" 3)]}})
-      (starting-hand state :corp ["Shiro"])
       (play-from-hand state :corp "Shiro" "New remote")
+      (take-credits state :corp)
       (let [shiro (get-ice state :remote1 0)]
         (core/rez state :corp shiro)
-        (take-credits state :corp)
         (run-on state :remote1)
         (card-subroutine state :corp shiro 1)
         (click-prompt state :corp "0 [Credits]")
@@ -504,11 +504,13 @@
       (let [pup (get-ice state :hq 0)]
         (core/rez state :corp pup)
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (click-prompt state :corp "Yes")
         (let [imp (find-card "Imp" (:hand (get-runner)))]
           (click-prompt state :corp imp)
           (is (= 1 (count (:discard (get-runner)))))
           (card-subroutine state :corp pup 0)
+          (click-prompt state :runner "Suffer 1 net damage")
           (is (empty? (:prompt (get-corp))) "No choice on second net damage")
           (is (= 2 (count (:discard (get-runner)))))
           (run-jack-out state)
@@ -547,8 +549,10 @@
       (let [pup (get-ice state :hq 0)]
         (core/rez state :corp pup)
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (is (empty? (:prompt (get-corp))) "No choice because of Employee Strike")
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (is (= 2 (count (:discard (get-runner)))))
         (run-jack-out state)
         (take-credits state :runner)
@@ -556,6 +560,7 @@
         (play-from-hand state :runner "Scrubbed")
         (run-on state :hq)
         (card-subroutine state :corp pup 0)
+        (click-prompt state :runner "Suffer 1 net damage")
         (is (seq (:prompt (get-corp))) "Employee Strike out of play - Ability turned on correctly")))))
 
 (deftest edward-kim-humanity-s-hammer
@@ -633,7 +638,7 @@
                 (take-credits state :corp)
                 (play-from-hand state :runner "Cache")
                 (run-empty-server state "HQ")
-                (click-prompt state :runner "[Freedom]: Trash card")
+                (click-prompt state :runner "[Freedom Khumalo] Trash card")
                 (click-card state :runner (get-program state 0))
                 (click-card state :runner (get-program state 0))
                 (is (= 1 (count (:discard (get-corp))))
@@ -653,7 +658,7 @@
                 (play-from-hand state :runner "Cache")
                 (run-empty-server state "HQ")
                 (let [cost (->> (get-corp) :hand first :cost)]
-                  (click-prompt state :runner "[Freedom]: Trash card")
+                  (click-prompt state :runner "[Freedom Khumalo] Trash card")
                   (when (pos? cost)
                     (dotimes [_ cost]
                       (click-card state :runner (get-program state 0))))
@@ -691,7 +696,7 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "HQ")
-      (click-prompt state :runner "[Freedom]: Trash card")
+      (click-prompt state :runner "[Freedom Khumalo] Trash card")
       (click-card state :runner (get-program state 0))
       (click-card state :runner (get-resource state 0))
       (is (= 1 (count (:discard (get-corp))))
@@ -710,7 +715,7 @@
         (take-credits state :corp)
         (click-prompt state :runner "Yes")
         (run-empty-server state "HQ")
-        (click-prompt state :runner "[Freedom]: Trash card")
+        (click-prompt state :runner "[Freedom Khumalo] Trash card")
         (click-card state :runner (-> (refresh iw) :hosted first)))
       (is (= 1 (count (:discard (get-corp)))) "Accessed Ice Wall should be discarded after selecting 1 virus counter")))
   (testing "Doesn't trigger when accessing an Agenda"
@@ -743,13 +748,13 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "HQ")
       (is (= 3 (->> @state :runner :prompt first :choices count)) "Should have 3 choices: Freedom, Trash, No action")
-      (click-prompt state :runner "[Freedom]: Trash card")
+      (click-prompt state :runner "[Freedom Khumalo] Trash card")
       (click-card state :runner (get-program state 0))
       (click-prompt state :runner "Done")
       (is (= 3 (-> @state :runner :prompt first :choices count))
           (str "Should go back to access prompts, with 3 choices: Freedom, Trash, No action. "
                "Choices seen: " (-> @state :runner :prompt first :choices)))
-      (click-prompt state :runner "[Freedom]: Trash card")
+      (click-prompt state :runner "[Freedom Khumalo] Trash card")
       (click-card state :runner (get-program state 0))
       (click-card state :runner (get-program state 0))
       (is (= 1 (count (:discard (get-corp)))) "Card should now be properly discarded")))
@@ -762,7 +767,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
       (run-empty-server state "R&D")
-      (click-prompt state :runner "[Freedom]: Trash card")
+      (click-prompt state :runner "[Freedom Khumalo] Trash card")
       (click-card state :runner (get-program state 0))
       (is (= 1 (count (:discard (get-corp)))) "Accessed Ice Wall should be discarded now")
       (is (not (:run @state)) "Run ended")))
@@ -777,7 +782,7 @@
       (play-from-hand state :runner "Aumakua")
       (run-empty-server state "R&D")
       (is (zero? (get-counters (get-program state 1) :virus)) "Aumakuma shouldn't have any virus counters yet.")
-      (click-prompt state :runner "[Freedom]: Trash card")
+      (click-prompt state :runner "[Freedom Khumalo] Trash card")
       (click-card state :runner (get-program state 0))
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall should be discarded now")
       (is (zero? (get-counters (get-program state 1) :virus)) "Aumakua doesn't gain any virus counters from trash ability.")
@@ -800,12 +805,12 @@
       (run-empty-server state "Server 1")
       (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "The Board should cost 6 to trash")
       (is (= 3 (-> (get-runner) :prompt first :choices count)) "Runner can use Freedom or Imp to trash")
-      (click-prompt state :runner "[Freedom]: Trash card")
+      (click-prompt state :runner "[Freedom Khumalo] Trash card")
       (click-card state :runner (get-program state 0))
       (click-prompt state :runner "Done")
       (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "Skulljack shouldn't trigger a second time")
       (is (= 3 (-> (get-runner) :prompt first :choices count)) "Runner can still use Freedom or Imp the second time around")
-      (click-prompt state :runner "[Imp]: Trash card")
+      (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
       (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board with Imp and gain 2 agenda points")))
   (testing "Doesn't trigger when Cerberal Static installed"
     (do-game
@@ -2048,6 +2053,7 @@
           qmsg "break 1 Barrier subroutine"]
       (core/rez state :corp iwall)
       (card-ability state :runner q 0)
+      (click-prompt state :runner "End the run")
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (run-jack-out state)
       (core/click-credit state :runner nil)
@@ -2060,6 +2066,7 @@
       (core/click-credit state :runner nil)
       (run-on state "HQ")
       (card-ability state :runner (refresh q) 0)
+      (click-prompt state :runner "End the run")
       (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (core/jack-out state :runner nil))))
 
@@ -2447,8 +2454,7 @@
           (is (zero? (get-counters (refresh scored) :agenda)) "Agenda counter used by Mark Yale")
           (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")
           (card-ability state :corp my 1)
-          (click-card state :corp (refresh scored))
-          (is (zero? (get-counters (refresh scored) :agenda)) "No agenda counter used by Mark Yale")
+          (is (empty? (:prompt (get-corp))) "No prompt for the Corp as no counters exist to spend")
           (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale"))))))
 
 (deftest weyland-consortium-because-we-built-it

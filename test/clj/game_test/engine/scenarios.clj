@@ -116,6 +116,7 @@
           (core/rez state :corp tur)
           (is (= 5 (:current-strength (refresh tur))) "Turing +3 strength protecting a remote")
           (card-subroutine state :corp tur 0) ; end the run
+          (click-prompt state :runner "End the run")
           (play-from-hand state :runner "Emergency Shutdown")
           (click-card state :runner tur)
           (is (not (:rezzed (refresh tur))) "Turing derezzed")
