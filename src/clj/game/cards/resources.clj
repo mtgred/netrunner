@@ -1099,7 +1099,8 @@
       :abilities [ability]})
 
    "Hernando Cortez"
-   {:events {:pre-rez-cost {:req (req (and (>= (:credit corp) 10) (ice? target)))
+   {:events {:pre-rez-cost {:req (req (and (<= 10 (:credit corp))
+                                           (ice? target)))
                             :effect (effect (rez-additional-cost-bonus
                                               [:credit (count (:subroutines target))]))
                             :msg (msg "increase the rez cost by " (count (:subroutines target)) " [Credit]")}}}

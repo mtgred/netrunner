@@ -483,7 +483,8 @@
          (trigger-event state side :pre-rez card)
          (if (or (#{"Asset" "ICE" "Upgrade"} (:type card))
                    (:install-rezzed (card-def card)))
-           (do (trigger-event state side :pre-rez-cost card)
+           (do (when-not (= ignore-cost :all-costs)
+                 (trigger-event state side :pre-rez-cost card))
                (if (and altcost (can-pay? state side eid card nil altcost) (not ignore-cost))
                  (let [curr-bonus (get-rez-cost-bonus state side)]
                    (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
@@ -508,7 +509,7 @@
                                      (when (and (not= ignore-cost :all-costs)
                                                 (not (:disabled card)))
                                        additional-costs))]
-                   (wait-for (apply pay-sync state side (make-eid state eid) card costs)
+                   (wait-for (pay-sync state side (make-eid state eid) card costs)
                              (when-let [cost-str (and (string? async-result) async-result)]
                                ;; Deregister the derezzed-events before rezzing card
                                (when (:derezzed-events cdef)
