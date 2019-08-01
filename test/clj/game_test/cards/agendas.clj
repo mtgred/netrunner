@@ -2002,6 +2002,7 @@
       (card-ability state :corp pk-scored 0)
       (click-card state :corp (get-ice state :hq 0))
       (is (last-log-contains? state "Do 1 net damage"))
+      (is (= 2 (count (:subroutines (get-ice state :hq 0)))) "Ice Wall gains 1 subroutine")
       (is (zero? (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 0 agenda counters"))))
 
 (deftest project-vitruvius
@@ -2028,22 +2029,26 @@
       (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand"))))
 
 (deftest project-wotan
-  ;; Project Wotan - Only checks if agenda counter is spent
+  ;; Project Wotan
   (do-game
     (new-game {:corp {:deck ["Project Wotan"
                              "Eli 1.0"
                              (qty "Hedge Fund" 3)]}})
     (starting-hand state :corp ["Project Wotan" "Eli 1.0"])
     (play-from-hand state :corp "Eli 1.0" "HQ")
-    (let [eli (get-ice state :hq 0)]
-      (core/rez state :corp eli))
     (play-and-score state "Project Wotan")
     (take-credits state :corp)
-    (let [wot-scored (get-scored state :corp 0)]
+    (let [wot-scored (get-scored state :corp 0)
+          eli (get-ice state :hq 0)]
+      (core/rez state :corp eli)
       (is (= 3 (get-counters (refresh wot-scored) :agenda)) "Wotan should start with 3 agenda counters")
       (run-on state "HQ")
       (card-ability state :corp wot-scored 0)
-      (is (= 2 (get-counters (refresh wot-scored) :agenda))) "Wotan should only have 2 agenda counters")))
+      (is (last-log-contains? state "End the run"))
+      (is (= 2 (get-counters (refresh wot-scored) :agenda)) "Wotan should only have 2 agenda counters")
+      (is (= 3 (count (:subroutines (refresh eli)))) "Eli gains a sub from Project Wotan")
+      (core/end-run state :corp)
+      (is (= 2 (count (:subroutines (refresh eli)))) "Eli resets to normal number of subs"))))
 
 (deftest project-yagi-uda
   (testing "Swap ICE from HQ"

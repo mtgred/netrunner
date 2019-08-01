@@ -2205,6 +2205,20 @@
             "No RNG Key prompt, straight to access prompt")
         (is (= 5 (:credit (get-runner))) "Gained no credits")))))
 
+(deftest sage
+  ;; Sage - +1 str for each unused MU
+  (do-game
+    (new-game {:runner {:deck ["Sage" "Box-E"]}})
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Sage")
+    (let [sage (get-program state 0)]
+      (is (= 2 (core/available-mu state)))
+      (is (= 2 (:current-strength (refresh sage))) "+2 strength for 2 unused MU")
+      (play-from-hand state :runner "Box-E")
+      (is (= 4 (core/available-mu state)))
+      (is (= 4 (:current-strength (refresh sage))) "+4 strength for 4 unused MU"))))
+
 (deftest sahasrara
   ;; Sahasrara
   (testing "Pay-credits prompt"
@@ -2218,6 +2232,20 @@
                            (play-from-hand state :runner "Equivocation")
                            (click-card state :runner rara)
                            (click-card state :runner rara))))))
+
+(deftest savant
+  ;; Savant - +1 str for each unused MU
+  (do-game
+    (new-game {:runner {:deck ["Savant" "Box-E"]}})
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Savant")
+    (let [savant (get-program state 0)]
+      (is (= 2 (core/available-mu state)))
+      (is (= 3 (:current-strength (refresh savant))) "+2 strength for 2 unused MU")
+      (play-from-hand state :runner "Box-E")
+      (is (= 4 (core/available-mu state)))
+      (is (= 5 (:current-strength (refresh savant))) "+4 strength for 4 unused MU"))))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
