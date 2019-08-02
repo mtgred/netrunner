@@ -1950,14 +1950,17 @@
                {:req (req (= (zone->name (get-in @state [:run :server]))
                              (:server-target (get-card state card))))
                 :once :per-turn
+                :silent (req true)
                 :effect (req (let [st card]
-                               (swap! state assoc-in [:run :run-effect :replace-access]
-                                      {:mandatory true
-                                       :effect (effect (resolve-ability
-                                                         {:msg "gain 2 [Credits] instead of accessing"
-                                                          :effect (effect (gain-credits 2)
-                                                                          (update! (dissoc st :server-target)))}
-                                                         st nil))})))}
+                               (swap! state assoc-in [:run :run-effect]
+                                      {:card st
+                                       :replace-access
+                                       {:mandatory true
+                                        :effect (effect (continue-ability
+                                                          {:msg "gain 2 [Credits] instead of accessing"
+                                                           :effect (effect (gain-credits 2)
+                                                                           (update! (dissoc st :server-target)))}
+                                                          st nil))}})))}
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
       :abilities [ability]})
 
