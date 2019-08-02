@@ -747,7 +747,7 @@
     :events {:run {:optional
                    {:async true
                     :interactive (req true)
-                    :req (req (and (<= 1 (:credit runner))
+                    :req (req (and (pos? (total-available-credits state side (assoc eid :source-type :runner-install) card))
                                    (some hardware? (:hand runner))))
                     :prompt "Pay 1 [Credit] to install a hardware?"
                     :yes-ability {:async true
@@ -758,6 +758,7 @@
                                   :effect (effect (install-cost-bonus [:credit 1])
                                                   (runner-install eid target nil))}}}
              :runner-install {:async true
+                              :interactive (req true)
                               :req (req (and (hardware? target)
                                              (first-event? state side :runner-install #(hardware? (first %)))))
                               :effect (effect (draw eid 1 nil))}}}
