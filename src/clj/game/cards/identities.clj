@@ -888,6 +888,7 @@
    "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
    (let [ability {:label "Gain 1 [Credits] (start of turn)"
                   :once :per-turn
+                  :interactive (req true)
                   :effect (req (when (and (> 3 (count (:hand runner)))
                                           (:runner-phase-12 @state))
                                  (system-msg state :runner (str "uses " (:title card) " to gain 1 [Credits]"))

@@ -880,6 +880,7 @@
                   :cost [:power 1]
                   :req (req (:runner-phase-12 @state))
                   :async true
+                  :interactive (req true)
                   :effect (req (wait-for (draw state :runner 2 nil)
                                          (if (not (pos? (get-counters (get-card state card) :power)))
                                            (trash state :runner eid card {:unpreventable true})
