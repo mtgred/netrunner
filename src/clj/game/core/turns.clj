@@ -42,7 +42,7 @@
 
 (defn- init-game-state
   "Initialises the game state"
-  [{:keys [players gameid spectatorhands room] :as game}]
+  [{:keys [players gameid log spectatorhands room] :as game}]
   (let [corp (some #(when (corp? %) %) players)
         runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp) (:user corp))
@@ -61,6 +61,7 @@
       (new-state
         gameid
         room
+        log
         (t/now)
         spectatorhands
         (new-corp (:user corp) corp-identity corp-options (zone :deck corp-deck) corp-deck-id corp-quote)
@@ -72,6 +73,7 @@
   (let [state (init-game-state game)
         corp-identity (get-in @state [:corp :identity])
         runner-identity (get-in @state [:runner :identity])]
+    (system-say state :corp "[hr]")
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
     (let [side :corp]

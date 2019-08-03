@@ -223,10 +223,11 @@
               :room           room
               :format         format
               :players        [{:user    user
-                                :ws-id      client-id
+                                :ws-id   client-id
                                 :side    side
                                 :options options}]
               :spectators     []
+              :log            []
               :last-update    (t/now)}]
     (swap! all-games assoc gameid game)
     (swap! client-gameids assoc client-id gameid)
@@ -239,22 +240,26 @@
   (when-let [{gameid :gameid} (game-for-client client-id)]
     (when (player-or-spectator client-id gameid)
       (remove-user client-id gameid)
-      (ws/broadcast-to! (lobby-clients gameid)
-                        :lobby/message
-                        {:user "__system__"
-                         :text (str username " left the game.")}))))
+      (let [message {:user "__system__"
+                     :text (str username " left the game.")}]
+        (swap! all-games update-in [gameid :log] conj message)
+        (ws/broadcast-to! (lobby-clients gameid)
+                          :lobby/message
+                          message)))))
 
 (defn handle-lobby-say
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     {:keys [msg gameid]}                :?data}]
   (when (player-or-spectator client-id gameid)
-    (let [game (game-for-id gameid)]
+    (let [game (game-for-id gameid)
+          message {:user user
+                   :text msg}]
+      (swap! all-games update-in [gameid :log] conj message)
       (ws/broadcast-to!
         (map :ws-id (concat (:players game) (:spectators game)))
         :lobby/message
-        {:user user
-         :text msg}))))
+        message))))
 
 (defn handle-swap-sides
   [{{{:keys [username] :as user} :user} :ring-req
@@ -286,14 +291,16 @@
       (if (and (not (already-in-game? user game))
                (or (empty? game-password)
                    (bcrypt/check password game-password)))
-        (do (join-game user client-id gameid)
-            (ws/broadcast-to! (lobby-clients gameid)
-                              :lobby/message
-                              {:user         "__system__"
-                               :notification "ting"
-                               :text         (str username " joined the game.")})
-            (ws/send! client-id [:lobby/select {:gameid gameid}])
-            (when reply-fn (reply-fn 200)))
+        (let [message {:user         "__system__"
+                       :notification "ting"
+                       :text         (str username " joined the game.")}]
+          (join-game user client-id gameid)
+          (swap! all-games update-in [gameid :log] conj message)
+          (ws/broadcast-to! (lobby-clients gameid)
+                            :lobby/message
+                            message)
+          (ws/send! client-id [:lobby/select {:gameid gameid}])
+          (when reply-fn (reply-fn 200)))
         (when reply-fn (reply-fn 403))))
     (when reply-fn (reply-fn 404))))
 
@@ -311,16 +318,17 @@
         (if (and (not (already-in-game? user game))
                  (or (empty? game-password)
                      (bcrypt/check password game-password)))
-          (do (spectate-game user client-id gameid)
-
-              (ws/broadcast-to! (lobby-clients gameid)
-                                :lobby/message
-                                {:user         "__system__"
-                                 :notification "ting"
-                                 :text         (str username " joined the game as a spectator.")})
-              (ws/send! client-id [:lobby/select {:gameid gameid :started started}])
-              (when reply-fn (reply-fn 200))
-              true)
+          (let [message {:user         "__system__"
+                         :notification "ting"
+                         :text         (str username " joined the game as a spectator.")}]
+            (spectate-game user client-id gameid)
+            (swap! all-games update-in [gameid :log] conj message)
+            (ws/broadcast-to! (lobby-clients gameid)
+                              :lobby/message
+                              message)
+            (ws/send! client-id [:lobby/select {:gameid gameid :started started}])
+            (when reply-fn (reply-fn 200))
+            true)
           (when reply-fn
             (reply-fn 403)
             false))))

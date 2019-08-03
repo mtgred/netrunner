@@ -41,9 +41,9 @@
    winning-user])
 
 (defn new-state
-  [gameid room now spectatorhands corp runner]
+  [gameid room log now spectatorhands corp runner]
   (map->State
-    {:gameid gameid :log [] :active-player :runner :end-turn true
+    {:gameid gameid :log log :active-player :runner :end-turn true
      :room room
      :rid 0 :turn 0 :eid 0
      :sfx [] :sfx-current-id 0
