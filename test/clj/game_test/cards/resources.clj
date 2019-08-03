@@ -1577,6 +1577,7 @@
       (core/gain state :runner :agenda-point 6)
       (play-from-hand state :runner "Guru Davinder")
       (run-empty-server state "Server 1")
+      (is (= ["No action"] (:choices (first (:prompt (get-runner))))) "Should only have No action choice")
       (click-prompt state :runner "No action")
       (is (zero? (count (:discard (get-runner)))) "Runner did not pay damage")
       (is (not= :runner (:winner @state)) "Runner has not won"))))

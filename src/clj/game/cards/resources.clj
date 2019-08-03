@@ -1063,10 +1063,10 @@
                              (resolve-ability state side ab card targets)))}}}
 
    "Guru Davinder"
-   {:flags {:cannot-pay-net-damage true}
+   {:flags {:cannot-pay-net true}
     :events {:pre-damage
-             {:req    (req (and (or (= target :meat) (= target :net))
-                                (pos? (last targets))))
+             {:req (req (and (or (= target :meat) (= target :net))
+                             (pos? (last targets))))
               :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
               :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
                            (damage-prevent state side :net Integer/MAX_VALUE)
