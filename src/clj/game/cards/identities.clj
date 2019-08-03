@@ -842,7 +842,8 @@
                                 "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                   :once :per-turn
                   :async true
-                  :effect (effect (mill :runner 2) (draw eid 1 nil))}]
+                  :effect (effect (mill :runner 2)
+                                  (draw eid 1 nil))}]
      {:flags {:runner-turn-draw true
               :runner-phase-12 (req (and (not (:disabled card))
                                          (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
