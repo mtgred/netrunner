@@ -323,7 +323,8 @@
                               true)))))
       :break n
       :breaks subtype
-      :label (str (when cost (str (build-cost-string cost) ": "))
+      :break-cost cost
+      :label (str (when cost (str (build-cost-label cost) ": "))
                   (or (:label args)
                       (str "break "
                            (when (< 1 n) "up to ")
@@ -346,7 +347,7 @@
                            " for the remainder of the run"
                            (= duration :all-turn)
                            " for the remainder of the turn")]
-     {:label (str (when cost (str (build-cost-string cost) ": "))
+     {:label (str (when cost (str (build-cost-label cost) ": "))
                   (or (:label args)
                       (str "add " strength " strength"
                            duration-string)))
@@ -400,7 +401,7 @@
                               1))
               total-break-cost (when (and break-ability
                                           times-break)
-                                 (repeat times-break (:cost break-ability)))
+                                 (repeat times-break (:break-cost break-ability)))
               total-cost (merge-costs (conj total-pump-cost total-break-cost))]
           (update! state side
                    (assoc card :abilities
@@ -410,8 +411,9 @@
                             (vec (concat (when (and (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
                                            [{:dynamic :auto-pump-and-break
-                                             :cost total-cost
-                                             :label (str (if (pos? times-pump)
+                                             :label (str (when (seq total-cost)
+                                                           (str (build-cost-label total-cost) ": "))
+                                                         (if (pos? times-pump)
                                                            "Match strength and fully break "
                                                            "Fully break ")
                                                          (:title current-ice))}])
