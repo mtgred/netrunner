@@ -223,7 +223,7 @@
       (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
       (play-from-hand state :corp "Building Blocks")
       (is (= 1 (:credit (get-corp))) "Spent 5 credits on Building Blocks")
-      (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (click-card state :corp "Ice Wall")
       (click-prompt state :corp "New remote")
       (let [iw (get-ice state :remote1 0)]
         (is (= 1 (:credit (get-corp))) "Corp spent no credits installing ice")
@@ -233,11 +233,7 @@
       (new-game {:corp {:deck ["Building Blocks" "Hedge Fund" "Cortex Lock"]}})
       (core/gain state :corp :credit 1)
       (play-from-hand state :corp "Building Blocks")
-      (is (= "Select a target for Building Blocks" (:msg (first (:prompt (get-corp))))) "Starting prompt is correct")
-      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
-      (is (= "Select a target for Building Blocks" (:msg (first (:prompt (get-corp))))) "Cannot select non-ICE")
-      (click-card state :corp (find-card "Cortex Lock" (:hand (get-corp))))
-      (is (= "Select a target for Building Blocks" (:msg (first (:prompt (get-corp))))) "Cannot select non-barrier ICE"))))
+      (is (empty? (:prompt (get-corp))) "Can't play Building Blocks without a Barrier in hand"))))
 
 (deftest casting-call
   ;; Casting Call - Only do card-init on the Public agendas.  Issue #1128

@@ -292,11 +292,16 @@
     :effect (effect (damage eid :meat 7 {:card card}))}
 
    "Building Blocks"
-   {:choices {:req #(and (corp? %)
+   {:req (req (pos? (count (filter #(has-subtype? % "Barrier") (:hand corp)))))
+    :prompt "Select a Barrier to install and rez"
+    :choices {:req #(and (corp? %)
                          (has-subtype? % "Barrier")
                          (in-hand? %))}
     :async true
-    :effect (req (corp-install state side eid target nil {:ignore-all-cost true :install-state :rezzed-no-cost}))}
+    :msg (msg "reveal " (:title target))
+    :effect (effect (reveal target)
+                    (corp-install eid target nil {:ignore-all-cost true
+                                                  :install-state :rezzed-no-cost}))}
 
    "Casting Call"
    {:choices {:req #(and (agenda? %)
