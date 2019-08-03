@@ -66,6 +66,10 @@
   [state side n]
   (swap! state update-in [:runner :next-run-credit] (fnil + 0 0) n))
 
+(defn no-trash-or-steal
+  [state]
+  (swap! state update-in [:runner :register :no-trash-or-steal] (fnil inc 0)))
+
 (defn access-end
   "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"
   [state side eid c]
@@ -78,7 +82,7 @@
   (when (and (get-card state c)
              ;; Don't increment :no-trash-or-steal if accessing a card in Archives
              (not= (:zone c) [:discard]))
-    (swap! state update-in [:runner :register :no-trash-or-steal] (fnil inc 0)))
+    (no-trash-or-steal state))
   (swap! state dissoc :access)
   (trigger-event-sync state side eid :post-access-card c))
 
