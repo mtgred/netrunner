@@ -2312,4 +2312,22 @@
         (click-card state :runner cor)
         (click-card state :runner mem)
         (is (= 3 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards (and CV already in heap)")
-        (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ by Clan Vengeance")))))
+        (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ by Clan Vengeance"))))
+  (testing "Doesn't trigger from Maxx. Issue #4329"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                        :hand ["Warroid Tracker"]}
+                 :runner {:id "MaxX: Maximum Punk Rock"
+                          :deck [(qty "Sure Gamble" 10)]
+                          :hand ["Corroder" "Dyson Mem Chip"]}})
+      (play-from-hand state :corp "Warroid Tracker" "HQ")
+      (let [war (get-content state :hq 0)]
+        (core/rez state :corp war)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (play-from-hand state :runner "Dyson Mem Chip")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 2 (count (:hand (get-runner)))) "MaxX draws 2 cards")
+        (is (empty? (:prompt (get-corp))) "Corp has no prompt")
+        (is (empty? (:prompt (get-runner))) "Runner has no prompt")))))

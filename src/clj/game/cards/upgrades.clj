@@ -1324,16 +1324,15 @@
                                                 (update! (dissoc card :times-used)))}}}
 
    "Warroid Tracker"
-   (letfn [(wt [card n t]
+   (letfn [(wt [n]
              {:prompt "Choose an installed card to trash due to Warroid Tracker"
               :async true
               :player :runner
-              :priority 2
               :choices {:req #(and (installed? %) (runner? %))}
-              :effect (req (system-msg state side (str "trashes " (card-str state target) " due to Warroid Tracker"))
+              :effect (req (system-msg state :corp (str "uses Warriod Tracker to force the Runner to trash " (card-str state target)))
                            (trash state side target {:unpreventable true})
-                           (if (> n t)
-                             (continue-ability state side (wt card n (inc t)) card nil)
+                           (if (pos? (dec n))
+                             (continue-ability state side (wt (dec n)) card nil)
                              (do (clear-wait-prompt state :corp)
                                  (effect-completed state side eid)))
                            ;; this ends-the-run if WT is the only card and is trashed, and trashes at least one runner card
@@ -1342,26 +1341,27 @@
      {:implementation "Does not handle UFAQ interaction with Singularity"
       :events {:runner-trash
                {:async true
-                :req (req (let [target-zone (:zone target)
-                                target-zone (or (central->zone target-zone) target-zone)
-                                warroid-zone (:zone card)]
-                            (= (second warroid-zone)
-                               (second target-zone))))
+                :req (req (and (corp? target)
+                               (let [target-zone (:zone target)
+                                     target-zone (or (central->zone target-zone) target-zone)
+                                     warroid-zone (:zone card)]
+                                 (= (second warroid-zone)
+                                    (second target-zone)))))
                 :trace {:base 4
                         :successful
                         {:effect
-                         (req (let [n (count (all-installed state :runner))
-                                    n (if (> n 2) 2 n)]
+                         (req (let [n (min 2 (count (all-installed state :runner)))]
+                                (system-msg
+                                  state side
+                                  (str "uses Warroid Tracker "
+                                       (if (pos? n)
+                                         (str "to force the runner to trash "
+                                              (quantify n " installed card"))
+                                         "but there are no installed cards to trash")))
                                 (if (pos? n)
-                                  (do (system-msg
-                                        state side
-                                        (str "uses Warroid Tracker to force the runner to trash "
-                                             (quantify n " installed card")))
-                                      (show-wait-prompt state :corp "Runner to choose cards to trash")
-                                      (resolve-ability state side (wt card n 1) card nil))
-                                  (system-msg
-                                    state side
-                                    "uses Warroid Tracker but there are no installed cards to trash"))))}}}}})
+                                  (do (show-wait-prompt state :corp "Runner to choose cards to trash")
+                                      (continue-ability state side (wt n) card nil))
+                                  (effect-completed state side eid))))}}}}})
 
    "Will-o'-the-Wisp"
    {:events
