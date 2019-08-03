@@ -822,7 +822,7 @@
                                            " net damage"))
                             :effect (req (letfn [(do-damage [t]
                                                    (if-not (empty? t)
-                                                     (wait-for (damage state side :net 1 {:card card})
+                                                     (wait-for (damage state :corp :net 1 {:card card})
                                                                (do-damage (rest t)))
                                                      (effect-completed state side eid)))]
                                            (do-damage (filter corp? targets))))}}

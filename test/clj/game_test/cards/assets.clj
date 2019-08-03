@@ -3689,13 +3689,20 @@
   ;; Click+counter is 1 net damage
   (testing "Basic behavior"
     (do-game
-      (new-game {:corp {:deck ["Storgotic Resonator" "Breached Dome"]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Storgotic Resonator" "Breached Dome" "Hostile Infrastructure" "Launch Campaign"]
+                        :credits 20}
                  :runner {:id "Null: Whistleblower"
-                          :deck ["Mimic" (qty "Sure Gamble" 3)]}})
-      (starting-hand state :runner ["Sure Gamble" "Sure Gamble" "Sure Gamble"])
+                          :deck [(qty "Sure Gamble" 5)]
+                          :hand [(qty "Mimic" 3)]
+                          :credits 10}})
       (play-from-hand state :corp "Storgotic Resonator" "New remote")
-      (let [sr (get-content state :remote1 0)]
+      (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (let [sr (get-content state :remote1 0)
+            hi (get-content state :remote2 0)]
         (core/rez state :corp (refresh sr))
+        (core/rez state :corp (refresh hi))
         (take-credits state :corp)
         (is (zero? (get-counters (refresh sr) :power)) "No power counters initially")
         (is (empty? (:discard (get-runner))) "Nothing in trash")
@@ -3704,9 +3711,15 @@
         (is (= 1 (get-counters (refresh sr) :power)) "Gained power counter when trashing Mimic")
         (is (= 2 (count (:discard (get-runner)))) "Mimic was trashed")
         (take-credits state :runner)
+        (take-credits state :corp)
+        (run-on state :remote3)
+        (run-successful state)
+        (click-prompt state :runner "Pay 2 [Credits] to trash")
+        (is (= 2 (get-counters (refresh sr) :power)))
+        (take-credits state :runner)
         (card-ability state :corp (refresh sr) 0)
-        (is (zero? (get-counters (refresh sr) :power)) "Spent power counter")
-        (is (= 3 (count (:discard (get-runner)))) "Did net damage")))))
+        (is (= 2 (get-counters (refresh sr) :power)) "Spent power counter, did damage, got counter back")
+        (is (= 4 (count (:discard (get-runner)))) "Did net damage")))))
 
 (deftest student-loans
   ;; Student Loans - costs Runner 2c extra to play event if already same one in discard
