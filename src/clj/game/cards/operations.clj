@@ -292,7 +292,7 @@
     :effect (effect (damage eid :meat 7 {:card card}))}
 
    "Building Blocks"
-   {:req (req (seq (filter #(has-subtype? % "Barrier") (:hand corp))))
+   {:req (req (pos? (count (filter #(has-subtype? % "Barrier") (:hand corp)))))
     :prompt "Select a Barrier to install and rez"
     :choices {:req #(and (corp? %)
                          (has-subtype? % "Barrier")
