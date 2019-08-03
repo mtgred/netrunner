@@ -1495,11 +1495,13 @@
     :events {:pre-access {:req (req (and (= target :archives)
                                          (seq (filter :trash (:discard corp)))))
                           :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
-             :pre-trash {:req (req (let [cards (map first (turn-events state side :pre-trash))]
+             :pre-trash {:req (req (let [cards (map first (rest (turn-events state side :pre-trash)))]
                                      (and (empty? (filter :trash cards))
                                           (number? (:trash target)))))
                          :once :per-turn
-                         :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] true))}
+                         :msg (msg "reveal " (card-str state target {:visible true}))
+                         :effect (req (reveal state side target)
+                                      (swap! state assoc-in [:runner :register :must-trash-with-credits] true))}
              :post-access-card {:req (req (get-in @state [:runner :register :must-trash-with-credits]))
                                 :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] false))}}}
 
