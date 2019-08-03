@@ -298,6 +298,7 @@
                          (has-subtype? % "Barrier")
                          (in-hand? %))}
     :async true
+    :msg (msg "reveal " (:title target))
     :effect (effect (reveal target)
                     (corp-install eid target nil {:ignore-all-cost true
                                                   :install-state :rezzed-no-cost}))}
