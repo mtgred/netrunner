@@ -1577,6 +1577,7 @@
       (core/gain state :runner :agenda-point 6)
       (play-from-hand state :runner "Guru Davinder")
       (run-empty-server state "Server 1")
+      (is (= ["No action"] (:choices (first (:prompt (get-runner))))) "Should only have No action choice")
       (click-prompt state :runner "No action")
       (is (zero? (count (:discard (get-runner)))) "Runner did not pay damage")
       (is (not= :runner (:winner @state)) "Runner has not won"))))
@@ -2842,7 +2843,32 @@
       (run-empty-server state "Archives")
       (is (= 9 (:credit (get-runner))) "Gained 2 credits")
       (run-empty-server state "R&D")
-      (is (= 11 (:credit (get-runner)))))))
+      (is (= 11 (:credit (get-runner))))))
+  (testing "with Paragon and other successful-run triggers"
+    (do-game
+      (new-game {:corp {:id "AgInfusion: New Miracles for a New World"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:deck ["Sure Gamble"]
+                          :hand ["Diversion of Funds"
+                                 "Paragon"
+                                 "Security Testing"]
+                          :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Security Testing")
+      (play-from-hand state :runner "Paragon")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "Archives")
+      (play-from-hand state :runner "Diversion of Funds")
+      (card-ability state :corp (:identity (get-corp)) 0)
+      (click-prompt state :corp "Archives")
+      (let [credits (:credit (get-runner))]
+        (run-successful state)
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Yes")
+        (is (= (+ 3 credits) (:credit (get-runner))) "2 from Sec Testing, 1 from Paragon")))))
 
 (deftest spoilers
   ;; Spoilers - Mill the Corp when it scores an agenda

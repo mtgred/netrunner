@@ -880,6 +880,7 @@
                   :cost [:power 1]
                   :req (req (:runner-phase-12 @state))
                   :async true
+                  :interactive (req true)
                   :effect (req (wait-for (draw state :runner 2 nil)
                                          (if (not (pos? (get-counters (get-card state card) :power)))
                                            (trash state :runner eid card {:unpreventable true})
@@ -1062,10 +1063,10 @@
                              (resolve-ability state side ab card targets)))}}}
 
    "Guru Davinder"
-   {:flags {:cannot-pay-net-damage true}
+   {:flags {:cannot-pay-net true}
     :events {:pre-damage
-             {:req    (req (and (or (= target :meat) (= target :net))
-                                (pos? (last targets))))
+             {:req (req (and (or (= target :meat) (= target :net))
+                             (pos? (last targets))))
               :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
               :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
                            (damage-prevent state side :net Integer/MAX_VALUE)
@@ -1099,7 +1100,8 @@
       :abilities [ability]})
 
    "Hernando Cortez"
-   {:events {:pre-rez-cost {:req (req (and (>= (:credit corp) 10) (ice? target)))
+   {:events {:pre-rez-cost {:req (req (and (<= 10 (:credit corp))
+                                           (ice? target)))
                             :effect (effect (rez-additional-cost-bonus
                                               [:credit (count (:subroutines target))]))
                             :msg (msg "increase the rez cost by " (count (:subroutines target)) " [Credit]")}}}
@@ -1494,11 +1496,13 @@
     :events {:pre-access {:req (req (and (= target :archives)
                                          (seq (filter :trash (:discard corp)))))
                           :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
-             :pre-trash {:req (req (let [cards (map first (turn-events state side :pre-trash))]
+             :pre-trash {:req (req (let [cards (map first (rest (turn-events state side :pre-trash)))]
                                      (and (empty? (filter :trash cards))
                                           (number? (:trash target)))))
                          :once :per-turn
-                         :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] true))}
+                         :msg (msg "reveal " (card-str state target {:visible true}))
+                         :effect (req (reveal state side target)
+                                      (swap! state assoc-in [:runner :register :must-trash-with-credits] true))}
              :post-access-card {:req (req (get-in @state [:runner :register :must-trash-with-credits]))
                                 :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] false))}}}
 
@@ -1950,14 +1954,17 @@
                {:req (req (= (zone->name (get-in @state [:run :server]))
                              (:server-target (get-card state card))))
                 :once :per-turn
+                :silent (req true)
                 :effect (req (let [st card]
-                               (swap! state assoc-in [:run :run-effect :replace-access]
-                                      {:mandatory true
-                                       :effect (effect (resolve-ability
-                                                         {:msg "gain 2 [Credits] instead of accessing"
-                                                          :effect (effect (gain-credits 2)
-                                                                          (update! (dissoc st :server-target)))}
-                                                         st nil))})))}
+                               (swap! state assoc-in [:run :run-effect]
+                                      {:card st
+                                       :replace-access
+                                       {:mandatory true
+                                        :effect (effect (continue-ability
+                                                          {:msg "gain 2 [Credits] instead of accessing"
+                                                           :effect (effect (gain-credits 2)
+                                                                           (update! (dissoc st :server-target)))}
+                                                          st nil))}})))}
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
       :abilities [ability]})
 

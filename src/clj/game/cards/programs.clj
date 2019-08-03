@@ -441,7 +441,8 @@
 
    "Bankroll"
    {:implementation "Bankroll gains credits automatically."
-    :events {:successful-run {:effect (effect (add-counter card :credit 1)
+    :events {:successful-run {:req (req (not= "Jak Sinclair" (get-in run [:run-effect :card :title]))) ;; TODO: dirty hack
+                              :effect (effect (add-counter card :credit 1)
                                               (system-msg "places 1 [Credit] on Bankroll"))}}
     :abilities [{:label "Take all credits from Bankroll"
                  :async true

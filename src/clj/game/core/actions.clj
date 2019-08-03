@@ -4,10 +4,10 @@
 
 (declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler
          enforce-msg gain-agenda-point get-remote-names get-run-ices jack-out move
-         name-zone play-instant purge make-run runner-install trash
+         name-zone play-instant purge make-run runner-install trash get-strength
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu
-         reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-all-subroutines!)
+         reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!)
 
 ;;; Neutral actions
 (defn play
@@ -80,9 +80,11 @@
 (defn- change-tags
   "Change a player's base tag count"
   [state delta]
-  (if (neg? delta)
-    (deduct state :runner [:tag (Math/abs delta)])
-    (gain state :runner :tag delta))
+  (if (pos? delta)
+    (do (gain state :runner :tag delta)
+        (trigger-event state :runner :manual-gain-tag delta))
+    (do (deduct state :runner [:tag (Math/abs delta)])
+        (trigger-event state :runner :manual-lose-tag delta)))
   (system-msg state :runner
               (str "sets Tags to " (get-in @state [:runner :tag :base])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
@@ -325,17 +327,25 @@
         ice-idx (dec (:position run 0))
         in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
         current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
-        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
-        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
-                                           (or (:current-strength card) (:strength card)))))
-        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))
-        total-pump-cost (merge-costs (repeat pumpnum (:cost pumpabi)))]
+        pump-ability (some #(when (:pump %) %) (:abilities (card-def card)))
+        strength-diff (when (and current-ice
+                                 (get-strength current-ice)
+                                 (get-strength card))
+                        (max 0 (- (get-strength current-ice)
+                                  (get-strength card))))
+        times-pump (when strength-diff
+                     (int (Math/ceil (/ strength-diff (:pump pump-ability 1)))))
+        total-pump-cost (when (and pump-ability
+                                   times-pump)
+                          (repeat times-pump (:cost pump-ability)))]
     (when (can-pay? state side eid card total-pump-cost)
       (wait-for (pay-sync state side (make-eid state eid) card total-pump-cost)
-                (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :cost :msg) (get-card state card) nil))
+                (dotimes [n times-pump]
+                  (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
                 (system-msg state side (str (build-spend-msg async-result "increase")
                                             "the strength of " (:title card) " to "
-                                            (:current-strength (get-card state card))))))))
+                                            (:current-strength (get-card state card))))
+                (effect-completed state side eid)))))
 
 (defn play-auto-pump-and-break
   "Use play-auto-pump and then break all available subroutines"
@@ -348,42 +358,60 @@
         ice-idx (dec (:position run 0))
         in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
         current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
-        pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
-        strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
-                                           (or (:current-strength card) (:strength card)))))
-        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))
-        total-pump-cost (merge-costs (repeat pumpnum (:cost pumpabi)))
-        breakabi (some #(when (:break %) %) (:abilities (card-def card)))
-        nsubs (when (:subroutines current-ice)
-                (count (remove :broken (:subroutines current-ice))))
-        some-already-broken (not= (:subroutines current-ice)
-                                  (remove :broken (:subroutines current-ice)))
-        subs-broken-at-once (when breakabi (:break breakabi))
-        times-break (when (and nsubs subs-broken-at-once)
+        ;; match strength
+        pump-ability (some #(when (:pump %) %) (:abilities (card-def card)))
+        strength-diff (when (and current-ice
+                                 (get-strength current-ice)
+                                 (get-strength card))
+                        (max 0 (- (get-strength current-ice)
+                                  (get-strength card))))
+        times-pump (when strength-diff
+                     (int (Math/ceil (/ strength-diff (:pump pump-ability 1)))))
+        total-pump-cost (when (and pump-ability
+                                   times-pump)
+                          (repeat times-pump (:cost pump-ability)))
+        ;; break all subs
+        can-break (fn [ability]
+                    (if-let [subtype (:breaks ability)]
+                      (or (= subtype "All")
+                          (has-subtype? current-ice subtype))
+                      true))
+        break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
+        subs-broken-at-once (when break-ability
+                              (:break break-ability 1))
+        unbroken-subs (when (:subroutines current-ice)
+                        (count (remove :broken (:subroutines current-ice))))
+        some-already-broken (not= unbroken-subs (count (:subroutines current-ice)))
+        times-break (when (and unbroken-subs
+                               subs-broken-at-once)
                       (if (pos? subs-broken-at-once)
-                        (/ nsubs subs-broken-at-once)
+                        (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
                         1))
-        total-break-cost (when (and times-break breakabi)
-                           (repeat times-break (:cost breakabi)))
+        total-break-cost (when (and break-ability
+                                    times-break)
+                           (repeat times-break (:break-cost break-ability)))
         total-cost (merge-costs (conj total-pump-cost total-break-cost))]
     (when (can-pay? state side eid card (:title card) total-cost)
       (wait-for (pay-sync state side (make-eid state eid) card total-cost)
-                (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :cost :msg) (get-card state card) nil))
-                (break-all-subroutines! state current-ice)
-                (system-msg state side (if (pos? pumpnum)
+                (dotimes [n times-pump]
+                  (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
+                (doseq [sub (remove :broken (:subroutines current-ice))]
+                  (break-subroutine! state (get-card state current-ice) sub))
+                (system-msg state side (if (pos? times-pump)
                                          (str (build-spend-msg async-result "increase")
-                                              "the strength of " (:title card) " to "
-                                              (:current-strength (get-card state card))
-                                              " and break all " nsubs " subroutines on "
-                                              (:title current-ice))
+                                              "the strength of " (:title card)
+                                              " to " (get-strength (get-card state card))
+                                              " and break all " unbroken-subs
+                                              " subroutines on " (:title current-ice))
                                          (str (build-spend-msg async-result "use")
                                               (:title card)
                                               " to break "
                                               (if some-already-broken
                                                 "the remaining "
                                                 "all ")
-                                              nsubs " subroutines on "
-                                              (:title current-ice))))))))
+                                              unbroken-subs " subroutines on "
+                                              (:title current-ice))))
+                (effect-completed state side eid)))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."
@@ -483,7 +511,8 @@
          (trigger-event state side :pre-rez card)
          (if (or (#{"Asset" "ICE" "Upgrade"} (:type card))
                    (:install-rezzed (card-def card)))
-           (do (trigger-event state side :pre-rez-cost card)
+           (do (when-not (= ignore-cost :all-costs)
+                 (trigger-event state side :pre-rez-cost card))
                (if (and altcost (can-pay? state side eid card nil altcost) (not ignore-cost))
                  (let [curr-bonus (get-rez-cost-bonus state side)]
                    (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
@@ -508,7 +537,7 @@
                                      (when (and (not= ignore-cost :all-costs)
                                                 (not (:disabled card)))
                                        additional-costs))]
-                   (wait-for (apply pay-sync state side (make-eid state eid) card costs)
+                   (wait-for (pay-sync state side (make-eid state eid) card costs)
                              (when-let [cost-str (and (string? async-result) async-result)]
                                ;; Deregister the derezzed-events before rezzing card
                                (when (:derezzed-events cdef)

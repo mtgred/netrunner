@@ -160,8 +160,10 @@
                                                 :msg (msg "add " (:title target) " to the Runner's Grip")
                                                 :effect (effect (move :runner target :hand true))}}}}})]
      {:events {:agenda-scored {:interactive (req true)
+                               :async true
                                :effect (effect (continue-ability (senai-ability target) card nil))}
                :agenda-stolen {:interactive (req true)
+                               :async true
                                :effect (effect (continue-ability (senai-ability target) card nil))}}
       :abilities [(set-autoresolve :auto-fire "whether to fire Amani Senai")]})
 
@@ -820,7 +822,7 @@
                                            " net damage"))
                             :effect (req (letfn [(do-damage [t]
                                                    (if-not (empty? t)
-                                                     (wait-for (damage state side :net 1 {:card card})
+                                                     (wait-for (damage state :corp :net 1 {:card card})
                                                                (do-damage (rest t)))
                                                      (effect-completed state side eid)))]
                                            (do-damage (filter corp? targets))))}}

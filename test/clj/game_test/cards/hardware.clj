@@ -1031,7 +1031,41 @@
       (is (= 6 (count (:hand (get-runner)))) "Runner shouldn't draw a card from installing a non-hardware after installing a single hardware")
       (play-from-hand state :runner "Acacia")
       (play-from-hand state :runner "Daily Casts")
-      (is (= 4 (count (:hand (get-runner)))) "Runner shouldn't draw any more cards from installing anything"))))
+      (is (= 4 (count (:hand (get-runner)))) "Runner shouldn't draw any more cards from installing anything")))
+  (testing "Interactions with multiple triggers. Issue #4256"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:id "Armand \"Geist\" Walker: Tech Lord"
+                          :deck [(qty "Clone Chip" 10)]
+                          :hand ["Masterwork (v37)"
+                                 "DJ Fenris"
+                                 "The Class Act"
+                                 "Street Peddler"]
+                          :credits 100}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Masterwork (v37)")
+      (play-from-hand state :runner "Street Peddler")
+      (play-from-hand state :runner "DJ Fenris")
+      (click-prompt state :runner "Hayley Kaplan: Universal Scholar")
+      (play-from-hand state :runner "The Class Act")
+      (take-credits state :runner)
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 5 (count (:hand (get-runner)))) "Starts with 5 cards in hand")
+      (is (= "Street Peddler" (:title (:card (first (:prompt (get-runner)))))))
+      (click-prompt state :runner "Clone Chip")
+      (is (= 5 (count (:hand (get-runner)))) "Geist's draw triggers The Class Act")
+      (is (= "The Class Act" (:title (:card (first (:prompt (get-runner)))))))
+      (click-prompt state :runner "Clone Chip")
+      (is (= 6 (count (:hand (get-runner)))) "Geist draw finishes")
+      (is (= "Choose a trigger to resolve" (:msg (first (:prompt (get-runner))))))
+      (click-prompt state :runner "Masterwork (v37)")
+      (is (= 7 (count (:hand (get-runner)))) "Masterwork draw")
+      (is (= "Hayley Kaplan: Universal Scholar" (:title (:card (first (:prompt (get-runner)))))))
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (find-card "Clone Chip" (:hand (get-runner))))
+      (is (= 6 (count (:hand (get-runner)))) "Hayley install")
+      (is (empty? (:prompt (get-runner)))))))
 
 (deftest maui
   ;; Maui (Māui)
