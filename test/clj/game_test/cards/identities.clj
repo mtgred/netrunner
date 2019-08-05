@@ -990,7 +990,20 @@
                            "Used 2 credits from Sahasrara to install Corroder"
                            (click-card state :runner rara)
                            (click-card state :runner rara)))
-      (is (empty? (:hand (get-runner))) "Installed Sahasrara and Corroder."))))
+      (is (empty? (:hand (get-runner))) "Installed Sahasrara and Corroder.")))
+  (testing "Fake prompt when nothing to install"
+    (do-game
+      (new-game {:runner {:id "Hayley Kaplan: Universal Scholar"
+                          :hand ["Corroder" (qty "Fan Site" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Corp has a wait prompt")
+      (is (= :bogus (-> (get-runner) :prompt first :prompt-type)) "Runner has a bogus prompt to fake out the corp")
+      (click-prompt state :runner "Carry on!")
+      (is (= 2 (count (:hand (get-runner)))) "Installed Corroder and Cache.")
+      (play-from-hand state :runner "Fan Site")
+      (is (empty? (:prompt (get-corp))) "No Hayley wait prompt if not first install this turn.")
+      (is (empty? (:prompt (get-runner))) "No Hayley prompt if not first install this turn."))))
 
 (deftest hyoubu-institute-absolute-clarity
   (testing "ID abilities"
