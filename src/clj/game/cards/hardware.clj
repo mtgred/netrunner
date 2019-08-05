@@ -1226,9 +1226,15 @@
      {:effect (req (damage state side eid :meat 1 {:unboostable true :card card}))
       :msg "suffer 1 meat damage"
       :events {:runner-hand-change {:req (req (and (zero? target)
-                                              (first-event? state side :runner-hand-change #(zero? (first %)))))
+                                                   (first-event? state side :runner-hand-change #(zero? (first %)))))
                                     :async true
-                                    :effect (req (continue-ability state side ability card nil))}}})
+                                    :effect (req (continue-ability state side ability card nil))}
+               :runner-turn-begins {:req (req (empty? (:hand runner)))
+                                    :async true
+                                    :effect (effect (continue-ability ability card nil))}
+               :corp-turn-begins {:req (req (empty? (:hand runner)))
+                                  :async true
+                                  :effect (effect (continue-ability ability card nil))}}})
 
    "Rubicon Switch"
    {:abilities [{:cost [:click 1]
