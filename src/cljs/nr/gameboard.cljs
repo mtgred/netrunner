@@ -1532,7 +1532,9 @@
                                   (render-message c)]
                                  [:button {:key (or (:cid c) i)
                                            :class (when (:rotated c) :rotated)
-                                           :on-click #(send-command "choice" {:card c}) :id {:code c}} (:title c)])))
+                                           :on-click #(send-command "choice" {:card c})
+                                           :id {:code c}}
+                                  (render-message (:title c))])))
                            (:choices prompt))))]
          (if @run
            (let [rs (:server @run)
