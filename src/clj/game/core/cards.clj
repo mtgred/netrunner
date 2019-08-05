@@ -185,6 +185,12 @@
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
              (move-zone-fn state side (make-eid state) moved-card card))
            (trigger-event state side :card-moved card (assoc moved-card :move-to-side side))
+           (when-let [z (or (#{:discard :hand :deck} src-zone)
+                            (#{:discard :hand :deck} to))]
+             (let [event (keyword (str (name side) "-" (name z) "-change"))]
+               ; (trigger-event state side :corp-hand-change card moved-card)
+               ; (trigger-event state side :runner-discard-change card moved-card)
+               (trigger-event state side event (count (get-in @state [side z])) moved-card)))
            ;; Default a card when moved to inactive zones (except :persistent key)
            (when (#{:discard :hand :deck :rfg :scored} to)
              (reset-card state side moved-card)

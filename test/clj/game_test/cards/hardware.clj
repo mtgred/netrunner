@@ -1748,17 +1748,17 @@
 (deftest respirocytes
   (testing "Should draw multiple cards when multiple respirocytes are in play"
     (do-game
-      (new-game {:runner {:deck [(qty "Respirocytes" 3) (qty "Sure Gamble" 3)]}})
+      (new-game {:runner {:deck [(qty "Respirocytes" 3) (qty "Sure Gamble" 3)]
+                          :hand ["Respirocytes" "Respirocytes" "Respirocytes" "Sure Gamble"]}})
       (take-credits state :corp)
-      (starting-hand state :runner ["Respirocytes" "Respirocytes" "Respirocytes" "Sure Gamble"])
       (dotimes [_ 2]
         (play-from-hand state :runner "Respirocytes"))
       (is (= 2 (count (:discard (get-runner)))) "2 damage done")
       (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
   (testing "Respirocytes should not trigger after being trashed (issue #3699)"
     (do-game
-      (new-game {:runner {:deck ["Respirocytes" (qty "Sure Gamble" 20)]}})
-      (starting-hand state :runner ["Respirocytes" "Sure Gamble"])
+      (new-game {:runner {:deck ["Respirocytes" (qty "Sure Gamble" 20)]
+                          :hand ["Respirocytes" "Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Respirocytes")
       (is (= 1 (-> (get-runner) :discard count)) "Took 1 damage from Respirocytes")

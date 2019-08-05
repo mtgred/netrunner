@@ -1218,25 +1218,17 @@
                   :msg "draw 1 card and add a power counter to itself"
                   :async true
                   :effect (req (wait-for (draw state :runner 1 nil)
-                                         (do (add-counter state side (get-card state card) :power 1)
-                                             (if (= (get-counters (get-card state card) :power) 3)
-                                               (do (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
-                                                   (trash state side eid card {:unpreventable true}))
-                                               (effect-completed state side eid)))))}
-         watch-id (fn [card] (keyword (str "respirocytes-" (:cid card))))]
-     {:effect (req (add-watch state (watch-id card)
-                              (fn [k ref old new]
-                                (when (and (seq (get-in old [:runner :hand]))
-                                           (empty? (get-in new [:runner :hand])))
-                                  (resolve-ability ref side ability card nil))))
-                   (damage state side eid :meat 1 {:unboostable true :card card}))
+                                         (add-counter state side (get-card state card) :power 1)
+                                         (if (= 3 (get-counters (get-card state card) :power))
+                                           (do (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
+                                               (trash state side eid card {:unpreventable true}))
+                                           (effect-completed state side eid))))}]
+     {:effect (req (damage state side eid :meat 1 {:unboostable true :card card}))
       :msg "suffer 1 meat damage"
-      :trash-effect {:effect (req (remove-watch state (watch-id card)))}
-      :leave-play (req (remove-watch state (watch-id card)))
-      :events {:runner-turn-begins {:req (req (empty? (get-in @state [:runner :hand])))
-                                    :effect (effect (resolve-ability ability card nil))}
-               :corp-turn-begins {:req (req (empty? (get-in @state [:runner :hand])))
-                                  :effect (effect (resolve-ability ability card nil))}}})
+      :events {:runner-hand-change {:req (req (and (zero? target)
+                                              (first-event? state side :runner-hand-change #(zero? (first %)))))
+                                    :async true
+                                    :effect (req (continue-ability state side ability card nil))}}})
 
    "Rubicon Switch"
    {:abilities [{:cost [:click 1]
