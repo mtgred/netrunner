@@ -2330,4 +2330,30 @@
         (take-credits state :corp)
         (is (= 2 (count (:hand (get-runner)))) "MaxX draws 2 cards")
         (is (empty? (:prompt (get-corp))) "Corp has no prompt")
-        (is (empty? (:prompt (get-runner))) "Runner has no prompt")))))
+        (is (empty? (:prompt (get-runner))) "Runner has no prompt"))))
+  (testing "Interactions with IG. Issue #4329"
+    (do-game
+      (new-game {:corp {:id "Industrial Genomics: Growing Solutions"
+                        :deck [(qty "Hedge Fund" 3)]
+                        :hand ["Warroid Tracker" "Launch Campaign" (qty "Sure Gamble" 2)]
+                        :credits 100}
+                 :runner {:deck [(qty "Sure Gamble" 10)]
+                          :hand ["Corroder" "Dyson Mem Chip"]
+                          :credits 100}})
+      (play-from-hand state :corp "Warroid Tracker" "New remote")
+      (play-from-hand state :corp "Launch Campaign" "Remote 1")
+      (let [war (get-content state :remote1 0)]
+        (core/rez state :corp war)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (play-from-hand state :runner "Dyson Mem Chip")
+        (run-empty-server state :remote1)
+        (click-card state :runner "Launch Campaign")
+        (is (zero? (count (:discard (get-runner)))) "Before trashing anything")
+        (click-prompt state :runner "Pay 2 [Credits] to trash")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :runner "Corroder")
+        (click-card state :runner "Dyson Mem Chip")
+        (click-prompt state :runner "Done")
+        (is (= 2 (count (:discard (get-runner)))) "Runner trashes 2 cards to Warriod Tracker")))))
