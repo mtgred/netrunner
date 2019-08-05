@@ -308,10 +308,12 @@
              ;; recurring credit abilities are not in the :abilities map and are implicit
              {:msg "take 1 [Recurring Credits]"
               :req (req (pos? (get-counters card :recurring)))
+              :async true
               :effect (req (add-prop state side card :rec-counter -1)
                            (gain state side :credit 1)
-                           (when (has-subtype? card "Stealth")
-                             (trigger-event state side :spent-stealth-credit card)))}
+                           (let [event (when (has-subtype? card "Stealth")
+                                         :spent-stealth-credit)]
+                             (trigger-event-sync state side eid event card)))}
              (get-in cdef [:abilities ability]))]
     (when-not (:disabled card)
       (do-play-ability state side card ab targets))))
