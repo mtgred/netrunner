@@ -6,6 +6,10 @@
          get-remote-names card-name can-access-loud can-steal?
          prevent-jack-out card-flag? can-run?)
 
+(defn clear-run-costs
+  [state]
+  (swap! state update-in [:bonus] dissoc :run-cost))
+
 ;;; Steps in the run sequence
 (defn make-run
   "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
@@ -14,9 +18,9 @@
   ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
   ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
   ([state side eid server run-effect card {:keys [click-run ignore-costs] :as args}]
+   (clear-run-costs state)
    (wait-for (trigger-event-simult state :runner :pre-init-run nil server card args)
              (let [all-run-costs (when-not ignore-costs (run-costs state server args))]
-               (swap! state update-in [:bonus] dissoc :run-cost)
                (if (and (can-run? state :runner)
                         (can-run-server? state server)
                         (can-pay? state :runner (make-eid state eid) card "a run" all-run-costs))

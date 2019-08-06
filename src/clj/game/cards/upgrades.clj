@@ -17,9 +17,11 @@
   NOTE: If card has an :effect or :leave-play, see function source for the things they need to do to ensure tracking works."
   [unit-costs cdef]
   (let [store-key [:special :current-added-cost]]
-       (letfn [(reset-cost [state card amt]
+       (letfn [(reset-cost [state card qty]
                  (swap! state update-in [:corp :servers (second (:zone card)) :additional-cost]
-                        #(merge-costs (concat % (vec (flatten (map (fn [x] [(first x) (* amt (second x))]) (partition 2 unit-costs))))))))
+                        #(merge-costs (concat % (mapv (fn [[cost-type amount]]
+                                                        [cost-type (* qty amount)])
+                                                      (partition 2 unit-costs))))))
                (recompute-cost [state card]
                  (let [change ((fnil - 0 0) (get-counters card :power) (get-in card store-key))]
                    (reset-cost state card change)

@@ -1881,21 +1881,7 @@
        (click-prompt state :runner "Pay 4 [Credits] to trash") ; pay to trash / 6 cr - 4 cr
        (is (= 1 (:click (get-runner))))
        (run-on state :hq)
-       (is (:run @state) "Runner got to run"))))
-  (testing "If runner cannot pay additional cost, server not shown as an option for run events or click to run button"
-    (do-game
-     (new-game {:corp {:deck ["Ruhr Valley"]}
-                :runner {:deck ["Dirty Laundry"]}})
-     (play-from-hand state :corp "Ruhr Valley" "HQ")
-     (take-credits state :corp)
-     (let [ruhr (get-content state :hq 0)]
-       (core/rez state :corp ruhr)
-       (core/gain state :runner :click -3)
-       (is (= 1 (:click (get-runner))))
-       (play-from-hand state :runner "Dirty Laundry")
-       (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner should only get choice of Archives or R&D")
-       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
-           "Runner should only get choice of Archives or R&D")))))
+       (is (:run @state) "Runner got to run")))))
 
 (deftest ryon-knight
   ;; Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining

@@ -151,3 +151,19 @@
         (is (= 4 (count (remove :broken (:subroutines (refresh hive))))) "Only broken 1 sub")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
         (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")))))
+
+(deftest run-additional-costs
+  (testing "If runner cannot pay additional cost, server not shown as an option for run events or click to run button"
+    (do-game
+     (new-game {:corp {:deck ["Ruhr Valley"]}
+                :runner {:deck ["Dirty Laundry"]}})
+     (play-from-hand state :corp "Ruhr Valley" "HQ")
+     (take-credits state :corp)
+     (let [ruhr (get-content state :hq 0)]
+       (core/rez state :corp ruhr)
+       (core/gain state :runner :click -3)
+       (is (= 1 (:click (get-runner))))
+       (play-from-hand state :runner "Dirty Laundry")
+       (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner should only get choice of Archives or R&D")
+       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
+           "Runner should only get choice of Archives or R&D")))))

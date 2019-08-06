@@ -148,9 +148,11 @@
                (same-side? s (:side card))
                (or (= last-zone :play-area)
                    (same-side? side (:side card))))
-      (let [move-card-to (partial move state s (dissoc c :seen :rezzed))
-            log-move (fn [verb & text] (system-msg state side (str verb " " label from-str
-                                                                   (when (seq text) (apply str " " text)))))]
+      (let [move-card-to (partial move state s c)
+            log-move (fn [verb & text]
+                       (system-msg state side (str verb " " label from-str
+                                                   (when (seq text)
+                                                     (apply str " " text)))))]
         (case server
           ("Heap" "Archives")
           (if (= :hand (first (:zone c)))
@@ -292,7 +294,7 @@
   (let [cost (:cost ability)]
     (when (or (nil? cost)
               (if (has-subtype? card "Run")
-                (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost (run-costs state side card))
+                (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost (run-costs state nil nil))
                 (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost)))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))

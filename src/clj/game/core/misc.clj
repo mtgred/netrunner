@@ -16,7 +16,7 @@
          permitted-zones (remove (set restricted-zones) zones)]
      (if ignore-costs
        permitted-zones
-       (filter #(can-pay? state :runner nil (run-costs state % true))
+       (filter #(can-pay? state :runner nil (run-costs state % nil))
                permitted-zones)))))
 
 (defn get-remotes [state]
