@@ -598,7 +598,7 @@
 (defn- pay-sync-next
   [state side eid costs card action msgs]
   (if (empty? costs)
-    (effect-completed state side (make-result eid msgs))
+    (complete-with-result state side eid msgs)
     (wait-for (cost-handler state side (make-eid state eid) card action costs (first costs))
               (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
 
@@ -612,7 +612,7 @@
                 (complete-with-result state side eid (->> async-result
                                                           (filter some?)
                                                           (join " and "))))
-      (effect-completed state side (make-result eid nil)))))
+      (complete-with-result state side eid nil))))
 
 (defn gain [state side & args]
   (doseq [[type amount] (partition 2 args)]

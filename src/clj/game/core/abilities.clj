@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
-(declare any-flag-fn? init-trace optional-ability check-optional check-psi check-trace
-         complete-ability do-choices do-ability psi-game resolve-ability-eid
-         resolve-psi resolve-trace)
+(declare any-flag-fn? init-trace optional-ability
+         do-choices do-ability psi-game resolve-ability-eid resolve-psi resolve-trace
+         check-optional check-psi check-trace check-prompt check-ability)
 
 ;;;; Functions for implementing card abilities and prompts
 
@@ -109,62 +109,75 @@
    (resolve-ability-eid state side (assoc ability :eid eid :source card :source-type :ability) card targets)))
 
 (defn- resolve-ability-eid
-  ([state side {:keys [eid] :as ability} card targets]
-   (if (= 1 (count ability)) ;; only has the eid, in effect a nil ability
-     (effect-completed state side eid)
-     (if (and ability (not eid))
-       (resolve-ability-eid state side (assoc ability :eid (make-eid state eid)) card targets)
-       (when ability
-         ;; Is this an optional ability?
-         (check-optional state side ability card targets)
-         ;; Is this a psi game?
-         (check-psi state side ability card targets)
-         ;; Is this a trace?
-         (check-trace state side ability card targets)
-         ;; Ensure this ability can be triggered more than once per turn,
-         ;; or has not been yet been triggered this turn.
-         (if (can-trigger? state side ability card targets)
-           (if (:choices ability)
-             ;; It's a prompt!
-             (do-choices state side ability card targets)
-             ;; Not a prompt. Trigger the ability.
-             (do-ability state side ability card targets))
-           (effect-completed state side eid))
-         (complete-ability state side ability))))))
+  [state side {:keys [eid optional psi trace choices] :as ability} card targets]
+  (cond
+    ;; Only has the eid, in effect a nil ability
+    (and eid (= 1 (count ability)))
+    (effect-completed state side eid)
+    ;; This was called directly without an eid present
+    (and ability (not eid))
+    (resolve-ability-eid state side (assoc ability :eid (make-eid state eid)) card targets)
+    ;; Both ability and eid are present, so we're good to go
+    (and ability eid)
+    (cond
+      ;; Is this an optional ability?
+      optional (check-optional state side ability card targets)
+      ;; Is this a psi game?
+      psi (check-psi state side ability card targets)
+      ;; Is this a trace?
+      trace (check-trace state side ability card targets)
+      ;; Is this a prompt?
+      choices (check-prompt state side ability card targets)
+      ;; Just a normal ability
+      :else (check-ability state side ability card targets))
+    ;; Something has gone terribly wrong, error out
+    :else
+    (.println *err* (with-out-str
+                      (print-stack-trace
+                        (Exception. (str "Ability is nil????" ability card targets))
+                        2500)))))
 
 ;;; Checking functions for resolve-ability
-(defn- complete-ability
-  [state side {:keys [eid choices optional async psi trace]}]
-  ;; If it doesn't have choices and it doesn't have a true async or
-  ;; if it does have choices and has false async
-  (when (or (not (or choices optional psi trace async))
-            (and (or choices optional psi trace)
-                 (false? async)))
-    (effect-completed state side eid)))
-
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
-  [state side {:keys [eid] :as ability} card targets]
-  (when-let [optional (:optional ability)]
-    (if (can-trigger? state side optional card targets)
-      (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets)
-      (effect-completed state side eid))))
+  [state side {:keys [eid optional] :as ability} card targets]
+  (if (can-trigger? state side optional card targets)
+    (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets)
+    (effect-completed state side eid)))
 
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
-  [state side {:keys [eid] :as ability} card targets]
-  (when-let [psi (:psi ability)]
-    (if (can-trigger? state side psi card targets)
-      (psi-game state side eid card psi)
-      (effect-completed state side eid))))
+  [state side {:keys [eid psi] :as ability} card targets]
+  (if (can-trigger? state side psi card targets)
+    (psi-game state side eid card psi)
+    (effect-completed state side eid)))
 
 (defn- check-trace
   "Checks if there is a trace to resolve"
+  [state side {:keys [eid trace] :as ability} card targets]
+  (if (can-trigger? state side ability card targets)
+    (init-trace state side eid card trace)
+    (effect-completed state side eid)))
+
+(defn- check-prompt
   [state side {:keys [eid] :as ability} card targets]
-  (when-let [trace (:trace ability)]
-    (if (can-trigger? state side ability card targets)
-      (init-trace state side eid card trace)
-      (effect-completed state side eid))))
+  (if (can-trigger? state side ability card targets)
+    (do-choices state side ability card targets)
+    (effect-completed state side eid)))
+
+(defn- check-ability
+  [state side {:keys [eid choices optional psi trace async] :as ability} card targets]
+  (cond
+    ;; Can't trigger, so complete the eid and exit
+    (not (can-trigger? state side ability card targets))
+    (effect-completed state side eid)
+    ;; Ability is async, so let it complete itself
+    (or async choices optional psi trace)
+    (do-ability state side ability card targets)
+    ;; Ability isn't async, so we have to complete it outselves
+    :else
+    (do (do-ability state side ability card targets)
+        (effect-completed state side eid))))
 
 (defn- do-choices
   "Handle a choices ability"
