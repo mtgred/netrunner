@@ -2083,6 +2083,43 @@
                    :async true
                    :effect (req (as-agenda state :runner eid card 2))}}
 
+   "Wall To Wall"
+   (let [all [{:msg "gain 1 [Credits]"
+               :effect (effect (gain-credits 1))}
+              {:msg "draw 1 card"
+               :async true
+               :effect (effect (draw eid 1 nil))}
+              {:label "place 1 advancement token on a piece of ice"
+               :msg (msg "place 1 advancement token on " (card-str state target))
+               :prompt "Choose a piece of ice on which to place an advancement"
+               :async true
+               :choices {:req #(and (ice? %)
+                                    (installed? %))}
+               :cancel-effect (effect (effect-completed eid))
+               :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+              {:label "add this asset to HQ"
+               :msg "add it to HQ"
+               :effect (effect (move card :hand))}
+              {:msg "done"}]
+         choice (fn choice [abis n]
+                  {:prompt "Choose an ability to resolve"
+                   :choices (map #(capitalize (or (:label %) (:msg %))) abis)
+                   :async true
+                   :effect (req (let [chosen (some #(when (= target (capitalize (or (:label %) (:msg %)))) %) abis)]
+                                  (wait-for
+                                    (resolve-ability state side chosen card nil)
+                                    (if (and (pos? (dec n)) (not= "done" (:msg chosen)))
+                                      (continue-ability state side (choice (remove-once #(= % chosen) abis) (dec n)) card nil)
+                                      (effect-completed state side eid)))))})
+         ability {:async true
+                  :once :per-turn
+                  :effect (effect (continue-ability (choice all (if (< 1 (count (filter #(asset? %) (all-active-installed state :corp))))
+                                                                  1
+                                                                  3)) card nil))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
+
    "Warden Fatuma"
    (let [new-sub {:label "[Warden Fatuma] Force the Runner to lose 1 [Click], if able"}]
      (letfn [(all-rezzed-bios [state]

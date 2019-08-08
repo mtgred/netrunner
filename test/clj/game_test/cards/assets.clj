@@ -4496,6 +4496,40 @@
       (is (= 1 (count (get-scored state :runner))) "Runner should have 1 card in score area")
       (is (zero? (-> (get-corp) :discard count)) "Victoria Jenkins shouldn't go to Archives when trashed"))))
 
+(deftest wall-to-wall
+  (testing "Basic functionality"
+    (do-game
+      (new-game {:corp {:deck ["Wall To Wall" (qty "Hedge Fund" 3)
+                               "PAD Campaign" "Ice Wall"]}})
+      (play-from-hand state :corp "Wall To Wall" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [w2w (get-content state :remote1 0)
+            pad (get-content state :remote2 0)
+            iw (get-ice state :hq 0)]
+        (core/rez state :corp w2w)
+        (take-credits state :corp)
+        (dotimes [_ 3]
+          (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck))
+        (take-credits state :runner)
+        (changes-val-macro 1 (:credit (get-corp))
+                           "Gained 1 credit"
+                           (click-prompt state :corp "Gain 1 [Credits]"))
+        (changes-val-macro 1 (count (:hand (get-corp)))
+                           "Drew 1 card"
+                           (click-prompt state :corp "Draw 1 card"))
+        (changes-val-macro 1 (get-counters (refresh iw) :advancement)
+                           "Added 1 advancement token"
+                           (click-prompt state :corp "Place 1 advancement token on a piece of ice")
+                           (click-card state :corp iw))
+        (core/rez state :corp pad)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (changes-val-macro 2 (count (:hand (get-corp)))
+                           "Added this asset to HQ (and took mandatory draw)"
+                           (click-prompt state :corp "Add this asset to HQ"))
+        (is (empty? (:prompt (get-corp))) "No further options because PAD Campaign is rezzed")))))
+
 (deftest warden-fatuma
   ;; Warden Fatuma - rezzed bioroid ice gains an additional sub
   (do-game
