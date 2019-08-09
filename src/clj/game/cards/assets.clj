@@ -1679,13 +1679,13 @@
 
    "Sandburg"
    {:effect (effect (update-all-ice))
+    :constant-abilities [{:type :ice-strength
+                          :req (req (<= 10 (:credit corp)))
+                          :effect (req (quot (:credit corp) 5))}]
     :events {:corp-gain {:req (req (= :credit (first target)))
                          :effect (effect (update-all-ice))}
              :corp-lose {:req (req (= :credit (first target)))
-                         :effect (effect (update-all-ice))}
-             :pre-ice-strength {:req (req (and (ice? target)
-                                               (>= (:credit corp) 10)))
-                                :effect (effect (ice-strength-bonus (quot (:credit corp) 5) target))}}
+                         :effect (effect (update-all-ice))}}
     :leave-play (effect (update-all-ice))}
 
    "Sealed Vault"

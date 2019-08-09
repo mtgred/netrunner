@@ -8,6 +8,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [game.core.state :refer :all]
             [game.core.player :refer :all]
+            [game.core.constant-abilities :refer :all]
             [clj-time.core :as t]
             [clojure.string :as string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.java.io :as io]

@@ -17,14 +17,16 @@
                       (+ c (count (filter #(and (has-subtype? % subtype)
                                                 (rezzed? %))
                                           (:ices server)))))
-                    0 (flatten (seq (:servers corp)))))]
+                    0
+                    (flatten (seq (:servers corp)))))]
     {:msg (msg "gain " (count-ice corp) " [Credits]")
      :interactive (req true)
      :effect (effect (gain-credits (count-ice corp))
                      (update-all-ice))
      :swapped {:effect (req (update-all-ice state side))}
-     :events {:pre-ice-strength {:req (req (has-subtype? target subtype))
-                                 :effect (effect (ice-strength-bonus 1 target))}}}))
+     :constant-abilities [{:type :ice-strength
+                           :req (req (has-subtype? target subtype))
+                           :effect (req 1)}]}))
 
 ;; Card definitions
 (def card-definitions
@@ -729,9 +731,10 @@
    {:silent (req true)
     :effect (req (update-all-ice state side))
     :swapped {:effect (req (update-all-ice state side))}
-    :events {:pre-ice-strength {:req (req (has-subtype? target "Tracer"))
-                                :effect (effect (ice-strength-bonus 1 target))}
-             :pre-init-trace {:req (req (and (has-subtype? target "Tracer")
+    :constant-abilities [{:type :ice-strength
+                          :req (req (has-subtype? target "Tracer"))
+                          :effect (req 1)}]
+    :events {:pre-init-trace {:req (req (and (has-subtype? target "Tracer")
                                              (= :subroutine (:source-type (second targets)))))
                               :effect (effect (init-trace-bonus 1))}}}
 

@@ -1033,7 +1033,8 @@
 
    "Lag Time"
    {:effect (effect (update-all-ice))
-    :events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1 target))}}
+    :constant-abilities [{:type :ice-strength
+                          :effect (req 1)}]
     :leave-play (effect (update-all-ice))}
 
    "Lateral Growth"
@@ -1256,8 +1257,9 @@
     :msg (msg "give +2 strength to " (card-str state target))
     :effect (effect (host target (assoc card :zone [:discard] :seen true :condition true))
                     (update-ice-strength (get-card state target)))
-    :events {:pre-ice-strength {:req (req (same-card? target (:host card)))
-                                :effect (effect (ice-strength-bonus 2 target))}}}
+    :constant-abilities [{:type :ice-strength
+                          :req (req (same-card? target (:host card)))
+                          :effect (req 2)}]}
 
    "Paywall Implementation"
    {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain-credits :corp 1))}}}
@@ -1636,10 +1638,11 @@
     :msg (msg "host it as a condition counter on " (card-str state target))
     :effect (effect (host target (assoc card :zone [:discard] :seen true :condition true))
                     (update-ice-strength (get-card state target)))
+    :constant-abilities [{:type :ice-strength
+                          :req (req (same-card? target (:host card)))
+                          :effect (req (get-counters card :power))}]
     :events {:pass-ice {:req (req (same-card? target (:host card)))
-                        :effect (effect (add-counter card :power 1))}
-             :pre-ice-strength {:req (req (same-card? target (:host card)))
-                                :effect (effect (ice-strength-bonus (get-counters card :power) target))}}}
+                        :effect (effect (add-counter card :power 1))}}}
 
    "Sacrifice"
    {:req (req (and (pos? (count-bad-pub state))

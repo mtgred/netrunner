@@ -478,7 +478,7 @@
                  :effect (req (let [b (get-card state card)
                                     hosted? (ice? (:host b))
                                     remote? (is-remote? (second (:zone (:host b))))]
-                                (resolve-ability
+                                (continue-ability
                                   state side
                                   {:prompt (msg "Host Bishop on a piece of ICE protecting "
                                                 (if hosted? (if remote? "a central" "a remote") "any") " server")
@@ -497,12 +497,13 @@
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa"))
                                                                     (:hosted %))))}
                                    :msg (msg "host it on " (card-str state target))
-                                   :effect (effect (host target card))} card nil)))}]
-    :events {:pre-ice-strength
-             {:req (req (and (= (:cid target)
-                                (:cid (:host card)))
-                             (:rezzed target)))
-              :effect (effect (ice-strength-bonus -2 target))}}}
+                                   :effect (effect (host target card))}
+                                  card nil)))}]
+    :constant-abilities [{:type :ice-strength
+                          :req (req (and (= (:cid target)
+                                            (:cid (:host card)))
+                                         (:rezzed target)))
+                          :effect (req -2)}]}
 
    "Black Orchestra"
    (install-from-heap "Black Orchestra" "Code Gate"
@@ -612,11 +613,12 @@
                                     (trash state side current-ice))
                                 (do (system-msg state side (str "places 1 virus counter on " (card-str state current-ice)))
                                     (add-counter state side card :virus 1))))}]
+    :constant-abilities [{:type :ice-strength
+                          :req (req (same-card? target (:host card)))
+                          :effect (req (- (get-virus-counters state card)))}]
     :events {:counter-added {:req (req (or (same-card? target card)
                                            (= (:title target) "Hivemind")))
-                             :effect (effect (update-ice-strength (:host card)))}
-             :pre-ice-strength {:req (req (same-card? target (:host card)))
-                                :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}}}
+                             :effect (effect (update-ice-strength (:host card)))}}}
 
    "Cloak"
    {:recurring 1
@@ -836,11 +838,12 @@
               {:successful-run {:silent (req true)
                                 :effect (effect (add-counter card :virus 1))
                                 :req (req (#{:hq :rd :archives} target))}
-               :pre-ice-strength {:req (req (and (same-card? target current-ice)
-                                                 (:datasucker-count card)))
-                                  :effect (req (let [c (:datasucker-count (get-card state card))]
-                                                 (ice-strength-bonus state side (- c) target)))}
-               :pass-ice ds :run-ends ds})
+               :pass-ice ds
+               :run-ends ds})
+    :constant-abilities [{:type :ice-strength
+                          :req (req (and (same-card? target current-ice)
+                                         (:datasucker-count card)))
+                          :effect (req (- (:datasucker-count (get-card state card))))}]
     :abilities [{:cost [:virus 1]
                  :msg (msg "give -1 strength to " (:title current-ice))
                  :req (req (and current-ice (:rezzed current-ice)))
@@ -1704,14 +1707,14 @@
                    (update-ice-strength state side h)
                    (when-let [card (get-card state card)]
                      (update! state side (update-in card [:special] dissoc :installing)))))
+    :constant-abilities [{:type :ice-strength
+                          :req (req (same-card? target (:host card)))
+                          :effect (req (- (get-virus-counters state card)))}]
     :events {:runner-turn-begins
              {:effect (req (add-counter state side card :virus 1))}
              :counter-added
              {:req (req (or (= (:title target) "Hivemind") (same-card? target card)))
               :effect (effect (update-ice-strength (:host card)))}
-             :pre-ice-strength
-             {:req (req (same-card? target (:host card)))
-              :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}
              :ice-strength-changed
              {:req (req (and (same-card? target (:host card))
                              (not (card-flag? (:host card) :untrashable-while-rezzed true))

@@ -164,14 +164,20 @@
   (when (or (pos? n) (not (card-flag? ice :cannot-lower-strength true)))
     (swap! state update-in [:bonus :ice-strength] (fnil + 0) n)))
 
+(defn get-ice-strength-bonus
+  [state]
+  (get-in @state [:bonus :ice-strength] 0))
+
 (defn ice-strength
   "Gets the modified strength of the given ice."
-  [state side card]
-  (let [strength (:strength card 0)]
-    (+ (if-let [strfun (:strength-bonus (card-def card))]
-         (+ strength (strfun state side (make-eid state) card nil))
+  [state side ice]
+  (let [strength (:strength ice 0)
+        mods (gather-constant-abilities state side :ice-strength)]
+    (+ (if-let [strfun (:strength-bonus (card-def ice))]
+         (+ strength (strfun state side nil ice nil))
          strength)
-       (get-in @state [:bonus :ice-strength] 0))))
+       (sum-constant-abilities state side mods ice)
+       (get-ice-strength-bonus state))))
 
 (defn update-ice-strength
   "Updates the given ice's strength by triggering strength events and updating the card."
@@ -188,7 +194,8 @@
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."
   [state side server]
-  (doseq [ice (:ices server)] (update-ice-strength state side ice)))
+  (doseq [ice (:ices server)]
+    (update-ice-strength state side ice)))
 
 (defn update-all-ice
   "Updates all installed ice."

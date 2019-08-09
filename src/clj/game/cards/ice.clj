@@ -2285,13 +2285,13 @@
     :subroutines [{:label "Runner loses 1 [Credit]"
                    :msg "force the Runner to lose 1 [Credit]"
                    :effect (effect (lose-credits :runner 1))}]
+    :constant-abilities [{:type :ice-strength
+                          :req (req (protecting-same-server? card target))
+                          :effect (req 1)}]
     :events {:corp-moved {:req (req (ice? target))
                           :effect (effect (update-ice-strength target))}
              :corp-install {:req (req (ice? target))
-                            :effect (effect (update-ice-strength target))}
-             :pre-ice-strength {:req (req (and (ice? target)
-                                               (protecting-same-server? card target)))
-                                :effect (effect (ice-strength-bonus 1 target))}}}
+                            :effect (effect (update-ice-strength target))}}}
 
    "Rototurret"
    {:subroutines [trash-program

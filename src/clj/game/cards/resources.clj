@@ -1130,9 +1130,9 @@
                                  :type :credit}}}
 
    "Ice Carver"
-   {:events {:pre-ice-strength
-             {:req (req (and (same-card? target current-ice) (:rezzed target)))
-              :effect (effect (ice-strength-bonus -1 target))}}}
+   {:constant-abilities [{:type :ice-strength
+                          :req (req (same-card? current-ice target))
+                          :effect (req -1)}]}
 
    "Inside Man"
    {:recurring 2

@@ -1324,12 +1324,12 @@
                  :effect (effect (lose :runner :hand-size 1)
                                  (update! (assoc card :sifr-target current-ice :sifr-used true))
                                  (update-ice-strength current-ice))}]
+    :constant-abilities [{:type :ice-strength
+                          :req (req (same-card? target (:sifr-target card)))
+                          :effect (req (- (get-strength target)))}]
     :events {:runner-turn-begins {:req (req (:sifr-used card))
                                   :effect (effect (gain :runner :hand-size 1)
                                                   (update! (dissoc card :sifr-used)))}
-             :pre-ice-strength {:req (req (= (:cid target) (get-in card [:sifr-target :cid])))
-                                :effect (req (let [ice-str (:current-strength target)]
-                                               (ice-strength-bonus state side (- ice-str) target)))}
              :run-ends {:effect (effect (update! (dissoc card :sifr-target)))}}}
 
    "Silencer"

@@ -313,10 +313,11 @@
                   :effect (effect (add-counter card :power 1))}]})
 
    "Corporate Troubleshooter"
-   {:abilities [{:label "Add strength to a rezzed ICE protecting this server" :choices :credit
+   {:abilities [{:label "Add strength to a rezzed ICE protecting this server"
+                 :choices :credit
                  :prompt "How many credits?"
                  :effect (req (let [boost target]
-                                (resolve-ability
+                                (continue-ability
                                   state side
                                   {:choices {:req #(and (ice? %)
                                                         (rezzed? %))}
@@ -325,7 +326,8 @@
                                                                            :troubleshooter-target target
                                                                            :troubleshooter-amount boost))
                                                 (trash state side (get-card state card))
-                                                (update-ice-strength state side target))} card nil)))}]
+                                                (update-ice-strength state side target))}
+                                  card nil)))}]
     :events {:pre-ice-strength nil
              :runner-turn-ends nil
              :corp-turn-ends nil}
@@ -486,11 +488,12 @@
       :abilities [maybe-gain-counter etr]})
 
    "Experiential Data"
-   {:effect (req (update-ice-in-server state side (card->server state card)))
-    :events {:pre-ice-strength {:req (req (protecting-same-server? card target))
-                                :effect (effect (ice-strength-bonus 1 target))}}
-    :derez-effect {:effect (req (update-ice-in-server state side (card->server state card)))}
-    :trash-effect {:effect (req (update-all-ice state side))}}
+   {:effect (effect (update-all-ice))
+    :constant-abilities [{:type :ice-strength
+                          :req (req (protecting-same-server? card target))
+                          :effect (req 1)}]
+    :derez-effect {:effect (effect (update-all-ice))}
+    :trash-effect {:effect (effect (update-all-ice))}}
 
    "Expo Grid"
    (let [ability {:req (req (some #(and (asset? %)

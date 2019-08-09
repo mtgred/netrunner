@@ -2097,11 +2097,12 @@
    "Scrubbed"
    {:implementation "Encounter effect is manual"
     :abilities [{:label "Lower ice strength"
-                 :effect (effect (update! (assoc card :scrubbed-target current-ice))
-                                 (update-ice-strength current-ice))}]
-    :events {:pre-ice-strength {:req (req (= (:cid target) (get-in card [:scrubbed-target :cid])))
-                                :effect (effect (ice-strength-bonus -2 target))}
-             :run-ends {:effect (effect (update! (dissoc card :scrubbed-target)))}}}
+                 :effect (effect (update! (assoc-in card [:special :scrubbed-target] current-ice))
+                                 (update-all-ice))}]
+    :constant-abilities [{:type :ice-strength
+                          :req (req (same-card? target (get-in (get-card state card) [:special :scrubbed-target])))
+                          :effect (req -2)}]
+    :events {:run-ends {:effect (effect (update! (dissoc-in card [:special :scrubbed-target])))}}}
 
    "Showing Off"
    {:req (req rd-runnable)
