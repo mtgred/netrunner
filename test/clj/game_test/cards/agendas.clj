@@ -2887,6 +2887,44 @@
          (is (= innermost (get-in @state [:run :position])) "Run position unchanged because ice was installed 'behind' the runner")
          (is (= corp-credits (:credit (get-corp))) "Install was free"))))))
 
+(deftest transport-monopoly
+  (testing "Basic functionality"
+    (do-game
+     (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
+                :runner {:deck [(qty "Dirty Laundry" 3)]}})
+     (play-and-score state "Transport Monopoly")
+     (take-credits state :corp)
+     (let [tm (get-scored state :corp 0)]
+       (changes-val-macro -2 (:credit (get-runner))
+                          "Did not gain 5c from DL"
+                          (play-from-hand state :runner "Dirty Laundry")
+                          (click-prompt state :runner "HQ")
+                          (card-ability state :corp (refresh tm) 0)
+                          (run-continue state)
+                          (run-successful state)
+                          (click-prompt state :runner "No action")) ; accessed Hedge Fund
+       (changes-val-macro 3 (:credit (get-runner))
+                          "Gained 5c from DL"
+                          (play-from-hand state :runner "Dirty Laundry")
+                          (click-prompt state :runner "HQ")
+                          (run-continue state)
+                          (run-successful state)
+                          (click-prompt state :runner "No action"))))) ; accessed Hedge Fund
+  (testing "Omar interaction"
+    (do-game
+     (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
+                :runner {:id "Omar Keung: Conspiracy Theorist"
+                         :deck [(qty "Sure Gamble" 3)]}})
+     (play-and-score state "Transport Monopoly")
+     (take-credits state :corp)
+     (let [tm (get-scored state :corp 0)
+           omar (get-in @state [:runner :identity])]
+        (card-ability state :runner omar 0)
+        (card-ability state :corp (refresh tm) 0)
+        (run-successful state)
+        (is (empty? (-> (get-runner) :register :successful-run)))
+        (is (empty? (:prompt (get-runner))) "No omar prompt")))))
+
 (deftest underway-renovation
   ;; Underway Renovation
   (do-game
