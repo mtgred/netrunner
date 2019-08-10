@@ -1685,6 +1685,50 @@
     (run-successful state)
     (is (= 12 (:credit (get-runner))) "Runner gains 12 credits")))
 
+(deftest hostage
+  ;; Hostage - Search for connection, add it to grip, optionally play installing cost
+  (testing "Basic test, not installing"
+    (do-game
+     (new-game {:runner {:hand ["Hostage"]
+                         :deck ["Kati Jones"]}}) ; 2 cost connection
+    (take-credits state :corp)
+     (let [original-deck-count (count (:deck (get-runner)))
+           original-hand-count (count (:hand (get-runner)))]
+       (play-from-hand state :runner "Hostage")
+       (click-prompt state :runner "Kati Jones")
+       (click-prompt state :runner "No")
+       (is (= (+ 5 -1) (:credit (get-runner))) "Spent 1 credits")
+       (is (= 0 (count (get-resource state))) "Pulled card was not installed")
+       (is (= (+ original-deck-count -1) (count (:deck (get-runner)))) "Took card from deck")
+       (is (= (+ original-hand-count -1 1) (count (:hand (get-runner)))) "Put card in hand"))))
+  (testing "Basic test, installing"
+    (do-game
+     (new-game {:runner {:hand ["Hostage"]
+                         :deck ["Kati Jones"]}}) ; 2 cost connection
+    (take-credits state :corp)
+     (let [original-deck-count (count (:deck (get-runner)))
+           original-hand-count (count (:hand (get-runner)))]
+       (play-from-hand state :runner "Hostage")
+       (click-prompt state :runner "Kati Jones")
+       (click-prompt state :runner "Yes")
+       (is (= (+ 5 -1 -2) (:credit (get-runner))) "Spent 3 credits")
+       (is (= "Kati Jones" (:title (get-resource state 0))) "Pulled card was correctly installed")
+       (is (= (+ original-deck-count -1) (count (:deck (get-runner)))) "Took card from deck")
+       (is (= (+ original-hand-count -1) (count (:hand (get-runner)))) "Did not install card."))))
+  (testing "Not enough to play pulled card (#4364)"
+    (do-game
+     (new-game {:runner {:hand ["Hostage"]
+                         :deck ["Professional Contacts"]}}) ; 5 cost connection
+    (take-credits state :corp)
+     (let [original-deck-count (count (:deck (get-runner)))
+           original-hand-count (count (:hand (get-runner)))]
+       (play-from-hand state :runner "Hostage")
+       (click-prompt state :runner "Professional Contacts")
+       (is (= (+ 5 -1) (:credit (get-runner))) "Spent 1 credit")
+       (is (= 0 (count (get-resource state))) "Pulled card was not installed")
+       (is (= (+ original-deck-count -1) (count (:deck (get-runner)))) "Took card from deck")
+       (is (= (+ original-hand-count -1 1) (count (:hand (get-runner)))) "Put card in hand")))))
+
 (deftest hot-pursuit
   ;; Hot Pursuit
   (do-game
