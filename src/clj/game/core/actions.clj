@@ -411,7 +411,7 @@
                                                 "all ")
                                               unbroken-subs " subroutines on "
                                               (:title current-ice))))
-                (effect-completed state side eid)))))
+                (continue-ability state side (:additional-ability break-ability) card nil)))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."
