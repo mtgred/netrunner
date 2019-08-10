@@ -435,13 +435,12 @@
                                                    :choices {:req #(and (ice? %)
                                                                         (not (same-card? from-ice %))
                                                                         (can-be-advanced? %))}
+                                                   :msg (msg "move an advancement token from "
+                                                             (card-str state from-ice)
+                                                             " to "
+                                                             (card-str state target))
                                                    :effect (effect (add-prop :corp target :advance-counter 1)
                                                                    (add-prop :corp from-ice :advance-counter -1)
-                                                                   (system-msg
-                                                                     (str "uses Constellation Protocol to move an advancement token from "
-                                                                          (card-str state from-ice)
-                                                                          " to "
-                                                                          (card-str state target)))
                                                                    (clear-wait-prompt :runner))}
                                                   card nil)))}
                                 card nil))}]}
