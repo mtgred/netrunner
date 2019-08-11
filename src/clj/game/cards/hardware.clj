@@ -173,7 +173,13 @@
                             :choices (req (cancellable
                                             (conj (vec (sort-by :title targets)) "No thanks")))
                             :effect (req (when-not (= "No thanks" target)
-                                           (move state side target :deck)))}}}
+                                           (move state side target :deck)))}
+             :corp-trash {:once :per-turn
+                          :prompt "Add a trashed card to the bottom of the Heap?"
+                          :choices (req (cancellable
+                                          (conj (vec (sort-by :title targets)) "No thanks")))
+                          :effect (req (when-not (= "No thanks" target)
+                                         (move state side target :deck)))}}}
 
    "Capstone"
    {:abilities [{:req (req (pos? (count (:hand runner))))

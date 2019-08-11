@@ -223,6 +223,21 @@
         (is (= 2 (count (:discard (get-runner)))))
         (is (= target-cid (:cid (last (:deck (get-runner))))))
         (is (= non-target-cids (set (map :cid (:discard (get-runner)))))))))
+  (testing "The player may move one card trashed from the Grip by the Corp to the bottom of the Stack"
+    (do-game
+      (new-game {:runner {:hand ["Buffer Drive", "Corroder", "Yog.0", "Mimic"]
+                          :deck ["Stimhack"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (let [[target & non-targets] (:hand (get-runner))
+            {target-name :title, target-cid :cid} target
+            non-target-cids (set (map :cid non-targets))]
+        (core/trash-cards state :runner (:hand (get-runner)))
+        (click-prompt state :runner target-name)
+        (is (= 2 (count (:deck (get-runner)))))
+        (is (= 2 (count (:discard (get-runner)))))
+        (is (= target-cid (:cid (last (:deck (get-runner))))))
+        (is (= non-target-cids (set (map :cid (:discard (get-runner)))))))))
   (testing "The player may not move a card trashed while installed to the bottom of the Stack")
   (testing "Buffer Drive must not trigger a second time in one turn"
     (do-game
