@@ -167,6 +167,9 @@
                              :memory (runner-points @state)
                              :hand-size (runner-points @state)))})
 
+   "Buffer Drive"
+   {}
+
    "Capstone"
    {:abilities [{:req (req (pos? (count (:hand runner))))
                  :cost [:click 1]

@@ -198,6 +198,21 @@
     (is (= 5 (hand-size :runner)) "Hand size reset")
     (is (= 4 (core/available-mu state)) "Memory limit reset")))
 
+(deftest buffer-drive
+  (testing "The player may decline to move a card to the bottom of the stack"
+    (do-game
+      (new-game {:runner {:deck ["Buffer Drive", "Sure Gamble"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (core/trash-cards state :runner (:hand (get-runner)))
+      (click-prompt state :runner "No thanks")
+      (is (= 1 (count (:discard (get-runner)))))))
+  (testing "The player may move a single trashed card to the bottom of the Stack")
+  (testing "The player may move one of multiple trashed cards to the bottom of the Stack")
+  (testing "Buffer Drive must not trigger a second time in one turn")
+  (testing "Buffer Drive must not trigger on the second trash of the turn if it was installed after the first trash")
+  (testing "The player may remove Buffer Drive from the game to move any card in the Heap to the bottom of the Stack"))
+
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn beings trash 1 card, then draw or remove tag
   (do-game
