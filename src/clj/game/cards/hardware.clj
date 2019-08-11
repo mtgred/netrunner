@@ -169,7 +169,7 @@
 
    "Buffer Drive"
    (let [triggered-ability {:once :per-turn
-                            :prompt "Add a trashed card to the bottom of the Heap?"
+                            :prompt "Add a trashed card to the bottom of the Stack"
                             :choices (req (cancellable
                                             (conj (vec (sort-by :title targets)) "No thanks")))
                             :effect (req (when-not (= "No thanks" target)

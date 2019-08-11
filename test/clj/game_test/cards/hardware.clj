@@ -238,6 +238,17 @@
         (is (= 2 (count (:discard (get-runner)))))
         (is (= target-cid (:cid (last (:deck (get-runner))))))
         (is (= non-target-cids (set (map :cid (:discard (get-runner)))))))))
+  (testing "After a runner effect trashes a card, a corp effect must not cause Buffer Drive to trigger again"
+    (do-game
+      (new-game {:runner {:hand ["Buffer Drive", "Corroder", "Yog.0", "Mimic"]
+                          :deck ["Stimhack"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (core/trash-cards state :runner [(first (:hand (get-runner)))])
+      (click-prompt state :runner "Corroder")
+      (core/trash-cards state :corp [(first (:hand (get-runner)))])
+      (is empty? (:prompt (get-runner)))))
+  (testing "The player may move one card trashed from the Heap to the bottom of the Stack")
   (testing "The player may not move a card trashed while installed to the bottom of the Stack")
   (testing "Buffer Drive must not trigger a second time in one turn"
     (do-game
