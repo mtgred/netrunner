@@ -1680,6 +1680,32 @@
                                                                  (vec)))
                                                   card nil))}}})
 
+   "Paladin Poemu"
+   (assoc
+     (companion-builder
+       ;; companion-builder: ability-req
+       (req (and (pos? (get-counters (get-card state card) :credit))
+                 (:successful run)))
+       ;; companion-builder: turn-ends-effect
+       (effect (show-wait-prompt :corp "Runner to take decision on Paladin Poemu")
+               (continue-ability
+                 {:prompt "Select an installed card to trash for Paladin Poemu"
+                      :player :runner
+                      :msg (msg "trash " (:title target))
+                      :choices {:req #(and (installed? %)
+                                           (runner? %))}
+                      :effect (effect (trash target {:cause :ability}))}
+                 card nil))
+       ;; companion-builder: ability
+       {:msg "take 1 [Credits]"
+        :effect (effect (add-counter card :credit -1)
+                        (gain :credit 1))})
+     ;; assoc: arguments
+     :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
+                                                 (resource? card)
+                                                 (not (has-subtype? card "Connection"))))
+                                  :type :credit}})
+
    "Paparazzi"
    {:effect (req (swap! state update-in [:runner :tag :is-tagged] inc)
                  (trigger-event state :runner :runner-is-tagged true))

@@ -313,7 +313,8 @@
     (doall (map companion-test
                 ["Fencer Fueno"
                  "Trickster Taka"
-                 "Mystic Maemi"]))))
+                 "Mystic Maemi"
+                 "Paladin Poemu"]))))
 
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
@@ -2585,6 +2586,40 @@
       (is (= 2 (count (get-program state))) "Installed Ninja")
       (is (= 11 (count (:discard (get-runner)))) "11 cards in heap")
       (is (= 2 (:credit (get-runner))) "No charge to install Ninja"))))
+
+(deftest paladin-poemu
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Project Vitruvius"]}
+                 :runner {:deck ["Corroder" "Fan Site" "Dummy Box" "Hernando Cortez" "Paladin Poemu"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paladin Poemu")
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Dummy Box")
+      (let [pp (get-resource state 0)
+            fs (get-resource state 1)
+            db (get-resource state 2)]
+        (is (= 0 (get-counters (refresh pp) :credit)) "No credits on Poemu yet")
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "Steal")
+        (is (= 1 (get-counters (refresh pp) :credit)) "+1c from steal")
+        (take-credits state :corp)
+        (is (= 2 (get-counters (refresh pp) :credit)) "+1c from start of turn")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 3 (get-counters (refresh pp) :credit)) "+1c from start of turn")
+        (take-credits state :runner)
+        (click-card state :runner fs)
+        (is (not-empty (:prompt (get-runner))) "Prompt to prevent trashing with Dummy Box")
+        (click-prompt state :runner "Done")
+        (take-credits state :corp)
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used Poemu to install Corroder for free"
+                           (play-from-hand state :runner "Corroder")
+                           (click-card state :runner pp)
+                           (click-card state :runner pp))
+        (play-from-hand state :runner "Hernando Cortez")
+        (is (empty? (:prompt (get-runner))) "No pay-credits prompt on the install of a Connection")))))
 
 (deftest patron
   ;; Patron
