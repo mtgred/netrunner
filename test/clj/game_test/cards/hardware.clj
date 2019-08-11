@@ -5,7 +5,8 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
-            [clojure.test :refer :all]))
+            [clojure.test :refer :all]
+            [clojure.set :refer [subset?]]))
 
 (deftest acacia
   ;; Acacia - Optionally gain credits for number of virus tokens then trash
@@ -201,17 +202,47 @@
 (deftest buffer-drive
   (testing "The player may decline to move a card to the bottom of the stack"
     (do-game
-      (new-game {:runner {:deck ["Buffer Drive", "Sure Gamble"]}})
+      (new-game {:runner {:hand ["Buffer Drive", "Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (core/trash-cards state :runner (:hand (get-runner)))
       (click-prompt state :runner "No thanks")
       (is (= 1 (count (:discard (get-runner)))))))
-  (testing "The player may move a single trashed card to the bottom of the Stack")
-  (testing "The player may move one of multiple trashed cards to the bottom of the Stack")
-  (testing "Buffer Drive must not trigger a second time in one turn")
+  (testing "The player may move one card trashed from the Grip by the Runner to the bottom of the Stack"
+    (do-game
+      (new-game {:runner {:hand ["Buffer Drive", "Corroder", "Yog.0", "Mimic"]
+                          :deck ["Stimhack"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (let [[target & non-targets] (:hand (get-runner))
+            {target-name :title, target-cid :cid} target
+            non-target-cids (set (map :cid non-targets))]
+        (core/trash-cards state :runner (:hand (get-runner)))
+        (click-prompt state :runner target-name)
+        (is (= 2 (count (:deck (get-runner)))))
+        (is (= 2 (count (:discard (get-runner)))))
+        (is (= target-cid (:cid (last (:deck (get-runner))))))
+        (is (= non-target-cids (set (map :cid (:discard (get-runner)))))))))
+  (testing "The player may not move a card trashed while installed to the bottom of the Stack")
+  (testing "Buffer Drive must not trigger a second time in one turn"
+    (do-game
+      (new-game {:runner {:hand ["Buffer Drive", "Corroder", "Yog.0", "Mimic"]
+                          :deck ["Stimhack"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (core/trash-cards state :runner [(first (:hand (get-runner)))])
+      (click-prompt state :runner "No thanks")
+      (let [remaining-grip-cids (set (map :cid (:hand (get-runner))))]
+        (core/trash-cards state :runner (:hand (get-runner)))
+        (is (empty? (:prompt (get-runner))))
+        (is (= 1 (count (:deck (get-runner)))))
+        (is (= 3 (count (:discard (get-runner)))))
+        (is (subset? remaining-grip-cids (set (map :cid (:discard (get-runner)))))))))
   (testing "Buffer Drive must not trigger on the second trash of the turn if it was installed after the first trash")
-  (testing "The player may remove Buffer Drive from the game to move any card in the Heap to the bottom of the Stack"))
+  (testing "The player may remove Buffer Drive from the game to move any card in the Heap to the bottom of the Stack")
+  (testing "The effect triggers on meat damage")
+  (testing "The effect triggers on net damage")
+  (testing "The effect triggers on brain damage"))
 
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn beings trash 1 card, then draw or remove tag

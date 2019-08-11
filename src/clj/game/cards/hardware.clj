@@ -168,8 +168,12 @@
                              :hand-size (runner-points @state)))})
 
    "Buffer Drive"
-   {:events {:runner-trash {:prompt "Add a trashed card to the bottom of the Heap?"
-                            :choices ["No thanks"]}}}
+   {:events {:runner-trash {:once :per-turn
+                            :prompt "Add a trashed card to the bottom of the Heap?"
+                            :choices (req (cancellable
+                                            (conj (vec (sort-by :title targets)) "No thanks")))
+                            :effect (req (when-not (= "No thanks" target)
+                                           (move state side target :deck)))}}}
 
    "Capstone"
    {:abilities [{:req (req (pos? (count (:hand runner))))
