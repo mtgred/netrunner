@@ -863,7 +863,8 @@
                                   :effect (effect (move target :discard)
                                                   (trash-prevent (keyword type) 1))})]
      {:interactions {:prevent [{:type #{:trash-hardware :trash-resource :trash-program}
-                                :req (req (not= :purge (:cause target)))}]}
+                                :req (req (and (not= :purge (:cause target))
+                                               (not= :runner-ability (:cause target))))}]}
       :abilities [(dummy-prevent "hardware")
                   (dummy-prevent "resource")
                   (dummy-prevent "program")]})
@@ -1694,7 +1695,7 @@
                       :msg (msg "trash " (:title target))
                       :choices {:req #(and (installed? %)
                                            (runner? %))}
-                      :effect (effect (trash target {:cause :ability}))}
+                      :effect (effect (trash target {:cause :runner-ability}))}
                  card nil))
        ;; companion-builder: ability
        {:msg "take 1 [Credits]"
@@ -1702,8 +1703,7 @@
                         (gain :credit 1))})
      ;; assoc: arguments
      :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
-                                                 (resource? card)
-                                                 (not (has-subtype? card "Connection"))))
+                                                 (not (has-subtype? target "Connection"))))
                                   :type :credit}})
 
    "Paparazzi"
