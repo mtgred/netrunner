@@ -962,9 +962,9 @@
        ;; companion-builder: ability
        {:msg "take 1 [Credits]"
         :effect (effect (add-counter card :credit -1)
-                        (gain-run-credits 1))}
-       :interactions {:pay-credits {:req (req (:successful run))
-                                    :type :credit}}))
+                        (gain-run-credits 1))})
+     :interactions {:pay-credits {:req (req (:successful run))
+                                  :type :credit}})
 
    "Fester"
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"

@@ -1031,7 +1031,7 @@
    "F2P"
    {:subroutines [add-runner-card-to-grip
                   (give-tags 1)]
-    :runner-abilities [(runner-break [:credit 2] 1)]}
+    :runner-abilities [(break-sub [:credit 2] 1 nil {:req (req (not tagged))})]}
 
    "Fairchild"
    {:subroutines [(end-the-run-unless-runner-pays 4)

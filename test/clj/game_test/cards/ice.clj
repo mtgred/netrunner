@@ -531,17 +531,16 @@
         (core/rez state :corp (refresh f2p))
         (changes-val-macro -2 (:credit (get-runner))
                            "Pay 2c to break sub"
-                           (core/play-runner-ability state :runner {:card f2p
-                                                                    :ability 0
-                                                                    :targets nil}))
+                           (card-side-ability state :runner f2p 0)
+                           (click-prompt state :runner "Add an installed Runner card to the grip"))
         (card-subroutine state :corp (refresh f2p) 0)
         (changes-val-macro 1 (count (:hand (get-runner)))
                            "Bounce Inti to hand"
-                           (click-card state :corp (find-card "Inti" (get-in (get-runner) [:rig :program]))))
+                           (click-card state :corp "Inti"))
         (card-subroutine state :corp (refresh f2p) 0)
         (changes-val-macro 1 (count (:hand (get-runner)))
                            "Bounce Scrubber to hand"
-                           (click-card state :corp (find-card "Scrubber" (get-in (get-runner) [:rig :resource]))))
+                           (click-card state :corp "Scrubber"))
         (card-subroutine state :corp (refresh f2p) 0)
         (is (empty? (:prompt (get-corp))) "F2P doesn't fire if no installed cards")))))
 
