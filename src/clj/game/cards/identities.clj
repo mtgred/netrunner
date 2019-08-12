@@ -548,22 +548,29 @@
    {:events {:runner-install
              {:silent (req (not (and (first-event? state side :runner-install)
                                      (some #(is-type? % (:type target)) (:hand runner)))))
-              :req (req (and (first-event? state side :runner-install)
-                             (some #(is-type? % (:type target)) (:hand runner))))
+              :req (req (first-event? state side :runner-install))
               :once :per-turn
               :async true
               :effect
               (req (let [itarget target
-                         type (:type itarget)]
+                         card-type (:type itarget)]
+                     (show-wait-prompt state :corp "Runner to use Hayley's ability")
                      (continue-ability
                        state side
-                       {:optional {:prompt (msg "Install another " type " from your Grip?")
-                                   :yes-ability
-                                   {:prompt (msg "Select another " type " to install from your Grip")
-                                    :choices {:req #(and (is-type? % type)
-                                                         (in-hand? %))}
-                                    :msg (msg "install " (:title target))
-                                    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}}}
+                       (if (some #(is-type? % (:type itarget)) (:hand runner))
+                         {:optional
+                          {:prompt (msg "Install another " card-type " from your Grip?")
+                           :yes-ability
+                           {:prompt (msg "Select another " card-type " to install from your Grip")
+                            :choices {:req #(and (is-type? % card-type)
+                                                 (in-hand? %))}
+                            :msg (msg "install " (:title target))
+                            :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
+                           :end-effect (effect (clear-wait-prompt :corp))}}
+                         {:prompt (str "You have no " card-type "s in hand")
+                          :choices ["Carry on!"]
+                          :prompt-type :bogus
+                          :effect (effect (clear-wait-prompt :corp))})
                        card nil)))}}}
 
    "Hoshiko Shiro"
