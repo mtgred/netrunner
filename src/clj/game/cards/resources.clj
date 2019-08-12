@@ -2490,9 +2490,10 @@
                                                             (all-active-installed state :runner))))))}
     :events {:runner-turn-begins {:async true
                                   :effect (req (lose state side :click 1)
-                                               (when-not (get-in @state [:per-turn (:cid card)])
-                                                 (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")
-                                                 (draw state side eid 2 nil)))}}
+                                               (if (get-in @state [:per-turn (:cid card)])
+                                                 (effect-completed state side eid)
+                                                 (do (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")
+                                                     (draw state side eid 2 nil))))}}
     :abilities [{:msg "draw 2 cards and lose [Click]"
                  :once :per-turn
                  :async true

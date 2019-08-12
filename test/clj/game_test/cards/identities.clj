@@ -1589,16 +1589,13 @@
   (testing "with Wyldside - using Wyldside during Step 1.2 should lose 1 click"
     (do-game
       (new-game {:runner {:id "MaxX: Maximum Punk Rock"
-                          :deck [(qty "Wyldside" 3)
-                                 (qty "Sure Gamble" 3)
-                                 (qty "Infiltration" 3)
-                                 (qty "Corroder" 3)
-                                 (qty "Eater" 3)]}})
+                          :hand ["Wyldside"]
+                          :deck [(qty "Sure Gamble" 10)]}})
       (take-credits state :corp)
       (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
       (starting-hand state :runner ["Wyldside"])
       (play-from-hand state :runner "Wyldside")
-      (take-credits state :runner 3)
+      (take-credits state :runner)
       (is (= 5 (:credit (get-runner))) "Runner has 5 credits at end of first turn")
       (is (find-card "Wyldside" (get-resource state)) "Wyldside was installed")
       (take-credits state :corp)
@@ -1606,8 +1603,8 @@
       (is (:runner-phase-12 @state) "Runner is in Step 1.2")
       (let [maxx (get-in @state [:runner :identity])
             wyld (find-card "Wyldside" (get-resource state))]
-        (card-ability state :runner maxx 0)
         (card-ability state :runner wyld 0)
+        (card-ability state :runner maxx 0)
         (core/end-phase-12 state :runner nil)
         (is (= 4 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
