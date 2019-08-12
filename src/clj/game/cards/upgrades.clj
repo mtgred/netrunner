@@ -1350,14 +1350,15 @@
                                     (second target-zone)))))
                 :trace {:base 4
                         :successful
-                        {:effect
+                        {:async true
+                         :effect
                          (req (let [n (min 2 (count (all-installed state :runner)))]
                                 (system-msg
                                   state side
                                   (str "uses Warroid Tracker "
                                        (if (pos? n)
                                          (str "to force the runner to trash "
-                                              (quantify n " installed card"))
+                                              (quantify n "installed card"))
                                          "but there are no installed cards to trash")))
                                 (if (pos? n)
                                   (do (show-wait-prompt state :corp "Runner to choose cards to trash")
