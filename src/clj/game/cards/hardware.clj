@@ -1223,7 +1223,7 @@
                                            (do (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
                                                (trash state side eid card {:unpreventable true}))
                                            (effect-completed state side eid))))}]
-     {:effect (req (damage state side eid :meat 1 {:unboostable true :card card}))
+     {:effect (effect (damage eid :meat 1 {:unboostable true :card card}))
       :msg "suffer 1 meat damage"
       :events {:runner-hand-change {:req (req (and (zero? target)
                                                    (first-event? state side :runner-hand-change #(zero? (first %)))))
