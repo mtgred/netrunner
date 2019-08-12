@@ -9,19 +9,57 @@
 
 (deftest adonis-campaign
   ;; Adonis Campaign
-  (do-game
-    (new-game {:corp {:deck ["Adonis Campaign"]}})
-    (play-from-hand state :corp "Adonis Campaign" "New remote")
-    (let [ac (get-content state :remote1 0)]
-      (core/rez state :corp ac)
-      (is (= 1 (:credit (get-corp))))
-      (is (= 12 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
-      (take-credits state :corp)
-      (let [credits (:credit (get-corp))
-            counters (get-counters (refresh ac) :credit)]
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Adonis Campaign"]}})
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (let [ac (get-content state :remote1 0)]
+        (core/rez state :corp ac)
+        (is (= 1 (:credit (get-corp))))
+        (is (= 12 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
+        (take-credits state :corp)
+        (let [credits (:credit (get-corp))
+              counters (get-counters (refresh ac) :credit)]
+          (take-credits state :runner)
+          (is (= (+ credits 3) (:credit (get-corp))) "Gain 3 from Adonis")
+          (is (= (- counters 3) (get-counters (refresh ac) :credit)) "9 counter remaining on Adonis"))
         (take-credits state :runner)
-        (is (= (+ credits 3) (:credit (get-corp))) "Gain 3 from Adonis")
-        (is (= (- counters 3) (get-counters (refresh ac) :credit)) "9 counter remaining on Adonis")))))
+        (take-credits state :corp)
+        (is (= 6 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 3 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
+        (take-credits state :runner)
+        (is (nil? (refresh ac)) "Adonis Campaign should be trashed")
+        (is (= "Adonis Campaign" (->> (get-corp) :discard first :title))))))
+  (testing "With Gravedigger, async issues"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Adonis Campaign"]}
+                 :runner {:hand ["Gravedigger"]}})
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (let [ac (get-content state :remote1 0)]
+        (core/rez state :corp ac)
+        (is (= 1 (:credit (get-corp))))
+        (is (= 12 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Gravedigger")
+        (let [credits (:credit (get-corp))
+              counters (get-counters (refresh ac) :credit)]
+          (take-credits state :runner)
+          (is (= (+ credits 3) (:credit (get-corp))) "Gain 3 from Adonis")
+          (is (= (- counters 3) (get-counters (refresh ac) :credit)) "9 counter remaining on Adonis"))
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 6 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 3 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
+        (take-credits state :runner)
+        (is (nil? (refresh ac)) "Adonis Campaign should be trashed")
+        (is (= "Adonis Campaign" (->> (get-corp) :discard first :title)))
+        (is (= 1 (get-counters (get-program state 0) :virus)))))))
 
 (deftest advanced-assembly-lines
   ;; Advanced Assembly Lines
@@ -926,6 +964,7 @@
       (is (= 5 (:credit (get-runner))) "No successful runs on Daily Quest server")
       (is (= 6 (:credit (get-corp))))
       (take-credits state :runner)
+      (core/end-phase-12 state :corp nil)
       (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server")))
   (testing "Corp gains credits on no successful runs last turn when hosted on Rec Studio. Issue #4193"
     (do-game
@@ -947,6 +986,7 @@
           (is (= 5 (:credit (get-runner))) "No successful runs on Daily Quest server")
           (is (= 3 (:credit (get-corp))))
           (take-credits state :runner)
+          (core/end-phase-12 state :corp nil)
           (is (= 6 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))))
 
 (deftest dedicated-response-team

@@ -168,7 +168,7 @@
         (or (< 1 c)
             (pos? (+ (count corp-abilities)
                      (count runner-abilities)))
-            (some #{"derez" "advance"} actions)
+            (some #{"rez derez" "advance"} actions)
             (and (= type "ICE")
                  (not (:run @game-state)))
             (and (corp? card)
@@ -643,7 +643,6 @@
 (defn card-abilities [card c-state abilities subroutines]
   (let [actions (action-list card)
         dynabi-count (count (filter :dynamic abilities))
-        cur-ice (current-ice)
         show-all (or (:abilities @c-state)
                      (and (= :corp (get-side @game-state))
                           (= card (current-ice))

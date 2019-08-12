@@ -40,19 +40,21 @@
 (defn campaign
   "Creates a Campaign with X counters draining Y per-turn.
   Trashes itself when out of counters"
-  [counters per-turn]
-  (let [num-credits (fn [card] (min per-turn (get-counters card :credit)))
-        ability {:msg (msg "gain " (num-credits card) " [Credits]")
-                 :once :per-turn
-                 :req (req (:corp-phase-12 @state))
-                 :label (str "Gain " per-turn " [Credits] (start of turn)")
-                 :effect (effect (gain-credits (num-credits card))
-                                 (add-counter card :credit (- (num-credits card))))}]
-    {:effect (effect (add-counter card :credit counters))
-     :derezzed-events {:runner-turn-ends corp-rez-toast}
-     :events (merge (trash-on-empty :credit)
-                    {:corp-turn-begins ability})
-     :abilities [ability]}))
+  ([counters per-turn] (campaign counters per-turn :credit))
+  ([counters per-turn counter-type]
+   (let [num-counters (fn [card] (min per-turn (get-counters card counter-type)))
+         ability {:msg (msg "gain " (num-counters card) " [Credits]")
+                  :once :per-turn
+                  :req (req (:corp-phase-12 @state))
+                  :label (str "Gain " per-turn " [Credits] (start of turn)")
+                  :async true
+                  :effect (effect (gain-credits (num-counters card))
+                                  (add-counter eid card counter-type (- (num-counters card)) nil))}]
+     {:effect (req (add-counter state side card counter-type counters))
+      :derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events (merge (trash-on-empty counter-type)
+                     {:corp-turn-begins ability})
+      :abilities [ability]})))
 
 (defn as-trashed-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points after resolving the trash prompt."
@@ -540,17 +542,20 @@
                                            (effect-completed state side eid)))))}}}
 
    "Daily Quest"
-   {:rez-req (req (= (:active-player @state) :corp))
-    :events {:successful-run {:req (req this-server)
-                              :effect (effect (gain-credits :runner 2)
-                                              (system-msg :runner (str "gains 2 [Credits] for a successful run "
-                                                                       "on the Daily Quest server")))}
-             :corp-turn-begins {:req (req (let [servers (get-in @state [:runner :register-last-turn :successful-run])]
-                                            (not (some #{(second (:zone card))
-                                                         (second (:zone (:host card)))}
-                                                       servers))))
-                                :msg "gain 3 [Credits]"
-                                :effect (effect (gain-credits :corp 3))}}}
+   (let [ability {:req (req (let [servers (get-in @state [:runner :register-last-turn :successful-run])]
+                              (not (some #{(second (:zone card))
+                                           (second (:zone (:host card)))}
+                                         servers))))
+                  :msg "gain 3 [Credits]"
+                  :effect (effect (gain-credits :corp 3))}]
+     {:rez-req (req (= (:active-player @state) :corp))
+      :flags {:corp-phase-12 (req true)}
+      :events {:successful-run {:req (req this-server)
+                                :effect (effect (gain-credits :runner 2)
+                                                (system-msg :runner (str "gains 2 [Credits] for a successful run "
+                                                                         "on the Daily Quest server")))}
+               :corp-turn-begins ability}
+      :abilities [ability]})
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged)
@@ -1627,22 +1632,21 @@
    (let [ability {:once :per-turn
                   :req (req (:corp-phase-12 @state))
                   :label "Remove 1 counter (start of turn)"
-                  :effect (req (add-counter state side card :power -1)
-                               (when (not (pos? (get-counters (get-card state card) :power)))
-                                 (trash state side card)
-                                 (resolve-ability
-                                   state side
-                                   {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
-                                    :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
-                                    :msg (msg (if (= target "Remove 1 bad publicity")
-                                                "remove 1 bad publicity" "gain 5 [Credits]"))
-                                    :effect (req (if (= target "Remove 1 bad publicity")
-                                                   (lose-bad-publicity state side 1)
-                                                   (gain-credits state side 5)))}
-                                   card targets)))}]
+                  :effect (effect (add-counter card :power -1))}]
      {:effect (effect (add-counter card :power 3))
       :derezzed-events {:runner-turn-ends corp-rez-toast}
-      :events {:corp-turn-begins ability}
+      :events (merge (trash-on-empty :power)
+                     {:corp-turn-begins ability
+                      :corp-trash {:req (req (and (same-card? card target)
+                                                  (installed? target)
+                                                  (zero? (get-counters card :power))))
+                                   :prompt "Remove 1 bad publicity or gain 5 [Credits]?"
+                                   :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
+                                   :msg (msg (if (= target "Remove 1 bad publicity")
+                                               "remove 1 bad publicity" "gain 5 [Credits]"))
+                                   :effect (req (if (= target "Remove 1 bad publicity")
+                                                  (lose-bad-publicity state side 1)
+                                                  (gain-credits state side 5)))}})
       :ability [ability]})
 
    "Ronald Five"

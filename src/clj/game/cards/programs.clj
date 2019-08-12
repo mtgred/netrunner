@@ -1181,8 +1181,10 @@
                                   (break-subroutine! state (get-card state current-ice) sub))))}]}
 
    "Gravedigger"
-   {:events (let [e {:req (req (and (installed? target) (= (:side target) "Corp")))
-                     :effect (effect (add-counter :runner card :virus 1))}]
+   {:events (let [e {:req (req (and (installed? target)
+                                    (corp? target)))
+                     :msg (msg "place 1 virus counter on " (:title card))
+                     :effect (effect (add-counter :runner card :virus 1 nil))}]
               {:runner-trash e
                :corp-trash e})
     :abilities [{:cost [:click 1 :virus 1]
