@@ -2024,7 +2024,6 @@
       (dotimes [_ 3] (play-from-hand state :runner "Akamatsu Mem Chip"))
       (play-from-hand state :runner "Gordian Blade")
       (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
-      (click-prompt state :runner "Replacement effect")
       (click-prompt state :runner "1 [Credit]: 6 cards")
       (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi, DNA Tracker, Excalibur, Fire Wall") "Revealed correct 6 cards from R&D")
       (click-prompt state :runner "Brainstorm")
@@ -2050,7 +2049,6 @@
       (dotimes [_ 3] (play-from-hand state :runner "Cache"))
       (dotimes [_ 3] (play-from-hand state :runner "Akamatsu Mem Chip"))
       (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
-      (click-prompt state :runner "Replacement effect")
       (click-prompt state :runner "1 [Credit]: 6 cards")
       (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
       (click-prompt state :runner "Brainstorm")
@@ -2075,7 +2073,6 @@
       (dotimes [_ 3] (play-from-hand state :runner "Cache"))
       (play-from-hand state :runner "R&D Interface")
       (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
-      (click-prompt state :runner "Replacement effect")
       (click-prompt state :runner "1 [Credit]: 3 cards")
       (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
       (click-prompt state :runner "Brainstorm")
@@ -2092,7 +2089,6 @@
       (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
       (take-credits state :corp)
       (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
-      (click-prompt state :runner "Replacement effect")
       (click-prompt state :runner "1 [Credit]: 0 cards")
       (is (empty? (:prompt (get-runner))) "Runner shouldn't get any access prompt when nothing is installed")))
  (testing "Interaction with The Turning Wheel"
@@ -2106,7 +2102,6 @@
       (play-from-hand state :runner "The Turning Wheel")
       (let [tww (get-resource state 0)]
         (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
-        (click-prompt state :runner "Replacement effect")
         (is (zero? (get-counters (refresh tww) :power)) "The Turning Wheel shouldn't gain counters yet"))))
   (testing "Ash interaction"
     (do-game
@@ -2130,7 +2125,6 @@
         (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0") ;lose Ash trace
-        (click-prompt state :runner "Replacement effect")
         (click-prompt state :runner "1 [Credit]: 3 cards")
         (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
         (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))
@@ -2153,11 +2147,11 @@
       (core/gain state :runner :credit 100)
       (play-from-hand state :runner "Eater")
       (dotimes [_ 3] (play-from-hand state :runner "Cache"))
-      (play-run-event state (find-card "Khusyuk" (:hand (get-runner))) :rd)
       (core/rez state :corp (get-ice state :rd 0))
+      (play-from-hand state :runner "Khusyuk")
       (card-ability state :runner (get-program state 0) 0) ; use Eater
-      (click-prompt state :runner "Replacement effect")
       (click-prompt state :runner "End the run")
+      (run-successful state)
       (click-prompt state :runner "1 [Credit]: 3 cards")
       (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
       (is (empty? (:prompt (get-runner))) "No prompt to access cards."))))
