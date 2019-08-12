@@ -498,7 +498,8 @@
   ([state side card] (rez state side (make-eid state) card nil))
   ([state side card args]
    (rez state side (make-eid state) card args))
-  ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force no-get-card paid-alt cached-bonus] :as args}]
+  ([state side eid {:keys [disabled] :as card}
+    {:keys [ignore-cost no-warning force no-get-card paid-alt cached-bonus no-msg] :as args}]
    (let [eid (eid-set-defaults eid :source nil :source-type :rez)
          card (if no-get-card
                 card
@@ -549,14 +550,12 @@
                                  (update! state side (-> h
                                                          (update-in [:zone] #(map to-keyword %))
                                                          (update-in [:host :zone] #(map to-keyword %)))))
-                               (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
-                                                           (:title card)
-                                                           (cond
-                                                             paid-alt
-                                                             " by paying its alternative cost"
-
-                                                             ignore-cost
-                                                             " at no cost")))
+                               (when-not no-msg
+                                 (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
+                                                             (:title card)
+                                                             (cond
+                                                               paid-alt " by paying its alternative cost"
+                                                               ignore-cost " at no cost"))))
                                (when (and (not no-warning) (:corp-phase-12 @state))
                                  (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
                                                     Please rez prior to clicking Start Turn in the future." "warning"

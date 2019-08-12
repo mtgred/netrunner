@@ -1421,33 +1421,32 @@
                  :msg (msg "draw 2 cards")
                  :async true
                  :effect (req (wait-for (draw state side 2 nil)
-                                        (if-let [drawn (get-in @state [:runner :register :most-recent-drawn])]
-                                          (continue-ability
-                                            state side
+                                        (continue-ability
+                                          state side
+                                          (if-let [drawn (get-in @state [:runner :register :most-recent-drawn])]
                                             {:prompt "Select 1 card to add to the bottom of the Stack"
                                              :choices {:req #(and (in-hand? %)
                                                                   (some (fn [c] (same-card? c %)) drawn))}
                                              :msg (msg "add 1 card to the bottom of the Stack")
-                                             :effect (req (move state side target :deck))}
-                                            card nil)
-                                          (effect-completed state side eid))))}]}
+                                             :effect (req (move state side target :deck))})
+                                          card nil)))}]}
 
    "Muertos Gang Member"
-   {:effect (req (resolve-ability
-                   state :corp
-                   {:prompt "Select a card to derez"
-                    :choices {:req #(and (corp? %)
-                                         (not (agenda? %))
-                                         (:rezzed %))}
-                    :effect (req (derez state side target))}
-                   card nil))
-    :leave-play (req (resolve-ability
-                       state :corp
-                       {:prompt "Select a card to rez, ignoring the rez cost"
-                        :choices {:req #(not (:rezzed %))}
-                        :effect (req (rez state side target {:ignore-cost :rez-cost})
-                                     (system-msg state side (str "rezzes " (:title target) " at no cost")))}
-                       card nil))
+   {:effect (effect (continue-ability
+                      :corp
+                      {:prompt "Select a card to derez"
+                       :choices {:req #(and (corp? %)
+                                            (not (agenda? %))
+                                            (:rezzed %))}
+                       :effect (effect (derez target))}
+                      card nil))
+    :leave-play (effect (continue-ability
+                          :corp
+                          {:prompt "Select a card to rez, ignoring the rez cost"
+                           :choices {:req (complement rezzed?)}
+                           :effect (effect (rez target {:ignore-cost :rez-cost :no-msg true})
+                                           (system-say (str (:title card) " allows the Corp to rez " (:title target) " at no cost")))}
+                          card nil))
     :abilities [{:msg "draw 1 card"
                  :async true
                  :cost [:trash]
