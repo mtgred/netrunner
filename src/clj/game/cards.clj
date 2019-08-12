@@ -225,6 +225,13 @@
       (pick-credit-triggers state side eid (next selected-cards) counter-count message))
     (effect-completed state side (make-result eid {:number counter-count :msg message}))))
 
+(defn trigger-stealth-cards
+  [state side eid cards]
+  (if (seq cards)
+    (wait-for (trigger-event-sync state side :spent-stealth-credit (first cards))
+              (trigger-stealth-cards state side eid (next cards)))
+    (effect-completed state side eid)))
+
 (defn pick-credit-providing-cards
   "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
   ([provider-func outereid] (pick-credit-providing-cards provider-func outereid nil (hash-map) 0))
@@ -248,11 +255,10 @@
                                      " from their credit pool"))]
                   (deduct state side [:credit remainder])
                   (swap! state update-in [:stats side :spent :credit] (fnil + 0) target-count)
-                  ; Only one card watches this right now (Net Mercur) so I'm okay with not iterating
-                  (when-let [{:keys [card]} (some #(when (has-subtype? (:card %) "Stealth") %) (vals selected-cards))]
-                    (trigger-event state side :spent-stealth-credit card))
-                  ; Now we trigger all of the :counter-added events we'd neglected previously
-                  (pick-credit-triggers state side eid selected-cards counter-count message))
+                  (let [cards (filter #(has-subtype? % "Stealth") (map :card (vals selected-cards)))]
+                    (wait-for (trigger-stealth-cards state side cards)
+                              ; Now we trigger all of the :counter-added events we'd neglected previously
+                              (pick-credit-triggers state side eid selected-cards counter-count message))))
                 (continue-ability
                   state side
                   (pick-credit-providing-cards provider-func eid target-count selected-cards counter-count)

@@ -1035,11 +1035,12 @@
    {:data {:counter {:credit 3}}
     :abilities [{:msg "gain 1 [Credits]"
                  :req (req (:run @state))
+                 :async true
                  :effect (req (add-counter state side card :credit -1)
                               (gain-credits state side 1)
-                              (trigger-event state side :spent-stealth-credit card)
-                              (when (not (pos? (get-counters (get-card state card) :credit)))
-                                (trash state :runner card {:unpreventable true})))}]
+                              (wait-for (trigger-event-sync state side :spent-stealth-credit card)
+                                        (when (not (pos? (get-counters (get-card state card) :credit)))
+                                          (trash state :runner card {:unpreventable true}))))}]
     :events (trash-on-empty :credit)
     ; See Net Mercur for why this implementation was chosen
     :interactions {:pay-credits {:req (req (:run @state))
@@ -1454,9 +1455,10 @@
 
    "Net Mercur"
    {:abilities [{:msg "gain 1 [Credits]"
+                 :async true
                  :effect (effect (add-counter card :credit -1)
-                                 (trigger-event :spent-stealth-credit card)
-                                 (gain-credits 1))}]
+                                 (gain-credits 1)
+                                 (trigger-event-sync eid :spent-stealth-credit card))}]
     :events {:spent-stealth-credit
              {:req (req (and (:run @state)
                              (has-subtype? target "Stealth")))
@@ -2381,9 +2383,10 @@
                                    (gain-tags state :runner eid 1))))}
                  card nil))
        {:msg "take 1 [Credits]"
+        :async true
         :effect (effect (add-counter card :credit -1)
-                        (trigger-event :spent-stealth-credit card)
-                        (gain-credits 1))})
+                        (gain-credits 1)
+                        (trigger-event-sync eid :spent-stealth-credit card))})
      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                  (program? target)
                                                  run))
