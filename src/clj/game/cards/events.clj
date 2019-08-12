@@ -1298,8 +1298,8 @@
    "Khusyuk"
    (let [access-revealed (fn [revealed]
                            {:async true
-                            :mandatory true
                             :prompt "Which of the revealed cards would you like to access (first card is on top)?"
+                            :not-distinct true
                             :choices revealed
                             :req (req (not= (:max-access run) 0))
                             :effect (effect (access-card eid target))})
@@ -1331,6 +1331,7 @@
                    :async true
                    :replace-access
                    {:async true
+                    :mandatory true
                     :effect (req
                               (wait-for
                                 (resolve-ability state side (select-install-cost state) card nil)
