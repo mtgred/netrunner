@@ -30,17 +30,18 @@
   "Resolves all abilities registered as handlers for the given event key, passing them
   the targets given."
   [state side event & targets]
-  (swap! state update-in [:turn-events] #(cons [event targets] %))
-  (let [get-side #(-> % :card :side game.utils/to-keyword)
-        is-active-player #(= (:active-player @state) (get-side %))
-        handlers (->> (get-in @state [:events event])
-                      (sort-by (complement is-active-player))
-                      (filter #(and (not (apply trigger-suppress state side event (:card %) targets))
-                                    (can-trigger? state side (:ability %) (get-card state (:card %)) targets)))
-                      doall)]
-    (doseq [{:keys [ability card]} handlers]
-      (when-let [card (get-card state card)]
-        (resolve-ability state side (dissoc ability :req) card targets)))))
+  (when (some? event)
+    (swap! state update-in [:turn-events] #(cons [event targets] %))
+    (let [get-side #(-> % :card :side game.utils/to-keyword)
+          is-active-player #(= (:active-player @state) (get-side %))
+          handlers (->> (get-in @state [:events event])
+                        (sort-by (complement is-active-player))
+                        (filter #(and (not (apply trigger-suppress state side event (:card %) targets))
+                                      (can-trigger? state side (:ability %) (get-card state (:card %)) targets)))
+                        doall)]
+      (doseq [{:keys [ability card]} handlers]
+        (when-let [card (get-card state card)]
+          (resolve-ability state side (dissoc ability :req) card targets))))))
 
 (defn- trigger-event-sync-next
   [state side eid handlers event & targets]
@@ -56,16 +57,18 @@
   "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler. Does not
   give the user a choice of what order to resolve handlers."
   [state side eid event & targets]
-  (swap! state update-in [:turn-events] #(cons [event targets] %))
-  (let [get-side #(-> % :card :side game.utils/to-keyword)
-        is-active-player #(= (:active-player @state) (get-side %))
-        handlers (->> (get-in @state [:events event])
-                      (sort-by (complement is-active-player))
-                      (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
-                                    (can-trigger? state side (:ability %) (get-card state (:card %)) targets)))
-                      doall)]
-    (wait-for (apply trigger-event-sync-next state side handlers event targets)
-              (effect-completed state side eid))))
+  (if (nil? event)
+    (effect-completed state side eid)
+    (do (swap! state update-in [:turn-events] #(cons [event targets] %))
+        (let [get-side #(-> % :card :side game.utils/to-keyword)
+              is-active-player #(= (:active-player @state) (get-side %))
+              handlers (->> (get-in @state [:events event])
+                            (sort-by (complement is-active-player))
+                            (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
+                                          (can-trigger? state side (:ability %) (get-card state (:card %)) targets)))
+                            doall)]
+          (wait-for (apply trigger-event-sync-next state side handlers event targets)
+                    (effect-completed state side eid))))))
 
 (defn- trigger-event-simult-player
   "Triggers the simultaneous event handlers for the given event trigger and player.
@@ -167,43 +170,45 @@
                  process, likely because an event handler caused a change to the game state that cancels future handlers.
                  (Film Critic)
   targets:       a varargs list of targets to the event, as usual"
-  ([state side eid event {:keys [first-ability card-ability after-active-player cancel-fn] :as options} & targets]
-   (swap! state update-in [:turn-events] #(cons [event targets] %))
-   (let [get-side #(-> % :card :side game.utils/to-keyword)
-         get-ability-side #(-> % :ability :side)
-         active-player (:active-player @state)
-         opponent (other-side active-player)
-         is-player (fn [player ability] (or (= player (get-side ability)) (= player (get-ability-side ability))))
-         get-handlers (fn [player-side]
-                        ;; prepare the list of the given player's handlers for this event.
-                        ;; Gather all registered handlers from the state, then append the card-ability if appropriate,
-                        ;; then filter to remove suppressed handlers and those whose req is false.
-                        ;; This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
-                        ;; http://nisei.net/files/Comprehensive_Rules_1.1.pdf
-                        (let [abis (filter (partial is-player player-side) (get-in @state [:events event]))
-                              abis (if (= player-side (get-side card-ability))
-                                     (cons card-ability abis)
-                                     abis)]
-                          (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
-                                        (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
-                                  abis)))
-         active-player-events (doall (get-handlers active-player))
-         opponent-events (doall (get-handlers opponent))]
-     (wait-for (resolve-ability state side (make-eid state eid) first-ability nil nil)
-               (show-wait-prompt state opponent
-                                 (str (side-str active-player) " to resolve " (event-title event) " triggers")
-                                 {:priority -1})
-               ; let active player activate their events first
-               (wait-for (trigger-event-simult-player state side (make-eid state eid) event active-player-events cancel-fn targets)
-                         (when after-active-player
-                           (resolve-ability state side eid after-active-player nil nil))
-                         (clear-wait-prompt state opponent)
-                         (show-wait-prompt state active-player
-                                           (str (side-str opponent) " to resolve " (event-title event) " triggers")
-                                           {:priority -1})
-                         (wait-for (trigger-event-simult-player state opponent (make-eid state eid) event opponent-events cancel-fn targets)
-                                   (clear-wait-prompt state active-player)
-                                   (effect-completed state side eid)))))))
+  [state side eid event {:keys [first-ability card-ability after-active-player cancel-fn] :as options} & targets]
+  (if (nil? event)
+    (effect-completed state side eid)
+    (do (swap! state update-in [:turn-events] #(cons [event targets] %))
+        (let [get-side #(-> % :card :side game.utils/to-keyword)
+              get-ability-side #(-> % :ability :side)
+              active-player (:active-player @state)
+              opponent (other-side active-player)
+              is-player (fn [player ability] (or (= player (get-side ability)) (= player (get-ability-side ability))))
+              get-handlers (fn [player-side]
+                             ;; prepare the list of the given player's handlers for this event.
+                             ;; Gather all registered handlers from the state, then append the card-ability if appropriate,
+                             ;; then filter to remove suppressed handlers and those whose req is false.
+                             ;; This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
+                             ;; http://nisei.net/files/Comprehensive_Rules_1.1.pdf
+                             (let [abis (filter (partial is-player player-side) (get-in @state [:events event]))
+                                   abis (if (= player-side (get-side card-ability))
+                                          (cons card-ability abis)
+                                          abis)]
+                               (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
+                                             (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
+                                       abis)))
+              active-player-events (doall (get-handlers active-player))
+              opponent-events (doall (get-handlers opponent))]
+          (wait-for (resolve-ability state side (make-eid state eid) first-ability nil nil)
+                    (show-wait-prompt state opponent
+                                      (str (side-str active-player) " to resolve " (event-title event) " triggers")
+                                      {:priority -1})
+                    ; let active player activate their events first
+                    (wait-for (trigger-event-simult-player state side (make-eid state eid) event active-player-events cancel-fn targets)
+                              (when after-active-player
+                                (resolve-ability state side eid after-active-player nil nil))
+                              (clear-wait-prompt state opponent)
+                              (show-wait-prompt state active-player
+                                                (str (side-str opponent) " to resolve " (event-title event) " triggers")
+                                                {:priority -1})
+                              (wait-for (trigger-event-simult-player state opponent (make-eid state eid) event opponent-events cancel-fn targets)
+                                        (clear-wait-prompt state active-player)
+                                        (effect-completed state side eid))))))))
 
 
 ; Functions for registering trigger suppression events.

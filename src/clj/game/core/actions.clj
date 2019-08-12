@@ -134,9 +134,11 @@
         label (if (and (not= last-zone :play-area)
                        (not (and (runner? c)
                                  (= last-zone :hand)
-                                 (= server "Grip")))
+                                 (or (= server "Stack")
+                                     (= server "Grip"))))
                        (or (and (runner? c)
-                                (not (facedown? c)))
+                                (or (not (facedown? c))
+                                    (not= last-zone :hand)))
                            (rezzed? c)
                            (:seen c)
                            (= last-zone :deck)))
@@ -148,9 +150,11 @@
                (same-side? s (:side card))
                (or (= last-zone :play-area)
                    (same-side? side (:side card))))
-      (let [move-card-to (partial move state s (dissoc c :seen :rezzed))
-            log-move (fn [verb & text] (system-msg state side (str verb " " label from-str
-                                                                   (when (seq text) (apply str " " text)))))]
+      (let [move-card-to (partial move state s c)
+            log-move (fn [verb & text]
+                       (system-msg state side (str verb " " label from-str
+                                                   (when (seq text)
+                                                     (apply str " " text)))))]
         (case server
           ("Heap" "Archives")
           (if (= :hand (first (:zone c)))
@@ -292,7 +296,7 @@
   (let [cost (:cost ability)]
     (when (or (nil? cost)
               (if (has-subtype? card "Run")
-                (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost (run-costs state side card))
+                (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost (run-costs state nil nil))
                 (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost)))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
@@ -308,10 +312,12 @@
              ;; recurring credit abilities are not in the :abilities map and are implicit
              {:msg "take 1 [Recurring Credits]"
               :req (req (pos? (get-counters card :recurring)))
+              :async true
               :effect (req (add-prop state side card :rec-counter -1)
                            (gain state side :credit 1)
-                           (when (has-subtype? card "Stealth")
-                             (trigger-event state side :spent-stealth-credit card)))}
+                           (let [event (when (has-subtype? card "Stealth")
+                                         :spent-stealth-credit)]
+                             (trigger-event-sync state side eid event card)))}
              (get-in cdef [:abilities ability]))]
     (when-not (:disabled card)
       (do-play-ability state side card ab targets))))
@@ -411,7 +417,7 @@
                                                 "all ")
                                               unbroken-subs " subroutines on "
                                               (:title current-ice))))
-                (effect-completed state side eid)))))
+                (continue-ability state side (:additional-ability break-ability) card nil)))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."
@@ -498,7 +504,8 @@
   ([state side card] (rez state side (make-eid state) card nil))
   ([state side card args]
    (rez state side (make-eid state) card args))
-  ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force no-get-card paid-alt cached-bonus] :as args}]
+  ([state side eid {:keys [disabled] :as card}
+    {:keys [ignore-cost no-warning force no-get-card paid-alt cached-bonus no-msg] :as args}]
    (let [eid (eid-set-defaults eid :source nil :source-type :rez)
          card (if no-get-card
                 card
@@ -549,14 +556,12 @@
                                  (update! state side (-> h
                                                          (update-in [:zone] #(map to-keyword %))
                                                          (update-in [:host :zone] #(map to-keyword %)))))
-                               (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
-                                                           (:title card)
-                                                           (cond
-                                                             paid-alt
-                                                             " by paying its alternative cost"
-
-                                                             ignore-cost
-                                                             " at no cost")))
+                               (when-not no-msg
+                                 (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
+                                                             (:title card)
+                                                             (cond
+                                                               paid-alt " by paying its alternative cost"
+                                                               ignore-cost " at no cost"))))
                                (when (and (not no-warning) (:corp-phase-12 @state))
                                  (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
                                                     Please rez prior to clicking Start Turn in the future." "warning"

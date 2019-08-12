@@ -424,29 +424,32 @@
 (defn trash-prevent [state side type n]
   (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
+(defn remove-from-trash-list
+  [state eid card]
+  (let [trash-list (get-in @state [:trash :trash-list eid])]
+    (if (= 1 (count trash-list))
+      (swap! state update-in [:trash :trash-list] dissoc eid)
+      (swap! state update-in [:trash :trash-list eid] #(remove-once (fn [x] (same-card? x card)) %)))))
+
 (defn- resolve-trash-end
   ([state side eid card args] (resolve-trash-end state side eid card eid args))
   ([state side eid {:keys [disabled] :as card} oid
     {:keys [cause keep-server-alive host-trashed] :as args}]
+   (remove-from-trash-list state oid card)
    (if card
      (let [cdef (card-def card)
            moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
-       (swap! state update-in [:trash :trash-list] dissoc oid)
-       (if-let [trash-effect (:trash-effect cdef)]
-         (if (and (not disabled)
-                  (or (and (runner? card)
-                           (installed? card)
-                           (not (facedown? card)))
-                      (and (rezzed? card)
-                           (not host-trashed))
-                      (and (:when-inactive trash-effect)
-                           (not host-trashed))))
-           (wait-for (resolve-ability state side trash-effect moved-card (list cause))
-                     (effect-completed state side eid))
-           (effect-completed state side eid))
-         (effect-completed state side eid)))
-     (do (swap! state update-in [:trash :trash-list] dissoc oid)
-         (effect-completed state side eid)))))
+       (let [trash-effect (when (and (not disabled)
+                                     (or (and (runner? card)
+                                              (installed? card)
+                                              (not (facedown? card)))
+                                         (and (rezzed? card)
+                                              (not host-trashed))
+                                         (and (:when-inactive (:trash-effect cdef))
+                                              (not host-trashed))))
+                            (:trash-effect cdef))]
+         (continue-ability state side trash-effect moved-card (list cause))))
+     (effect-completed state side eid))))
 
 (defn- resolve-trash
   ([state side eid card args] (resolve-trash state side eid card eid args))

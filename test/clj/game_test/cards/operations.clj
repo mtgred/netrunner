@@ -2886,7 +2886,6 @@
     (play-from-hand state :runner "Film Critic")
     (play-from-hand state :runner "Khusyuk")
     (run-successful state)
-    (click-prompt state :runner "Replacement effect")
     (click-prompt state :runner "1 [Credit]: 1 card")
     (click-prompt state :runner "Ice Wall")
     (click-prompt state :runner "No action")

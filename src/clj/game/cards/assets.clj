@@ -63,9 +63,11 @@
      (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored options)
      ; allow force option in case of Blacklist/News Team
      (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored options))
+   (no-trash-or-steal state)
+   (system-msg state :runner (str "adds " (:title card) " to their score area as an agenda worth " (quantify n "agenda point")))
    (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
-             (do (gain-agenda-point state side n)
-                 (effect-completed state side eid)))))
+             (gain-agenda-point state side n)
+             (effect-completed state side eid))))
 
 ;; Card definitions
 (def card-definitions
@@ -269,7 +271,8 @@
    {:abilities [{:cost [:click 1]
                  :msg "draw 2 cards"
                  :once :per-turn
-                 :effect (effect (draw 2))}]
+                 :async true
+                 :effect (effect (draw eid 2 nil))}]
     :trash-effect {:req (req (= :servers (first (:previous-zone card))))
                    :async true
                    :effect (effect (show-wait-prompt :runner "Corp to use Calvin B4L3Y")
@@ -279,7 +282,7 @@
                                        :priority 1
                                        :player :corp
                                        :yes-ability {:msg "draw 2 cards"
-                                                     :effect (effect (draw :eid 2 nil))}
+                                                     :effect (effect (draw eid 2 nil))}
                                        :end-effect (effect (clear-wait-prompt :runner))}}
                                     card nil))}}
 
@@ -435,13 +438,12 @@
                                                    :choices {:req #(and (ice? %)
                                                                         (not (same-card? from-ice %))
                                                                         (can-be-advanced? %))}
+                                                   :msg (msg "move an advancement token from "
+                                                             (card-str state from-ice)
+                                                             " to "
+                                                             (card-str state target))
                                                    :effect (effect (add-prop :corp target :advance-counter 1)
                                                                    (add-prop :corp from-ice :advance-counter -1)
-                                                                   (system-msg
-                                                                     (str "uses Constellation Protocol to move an advancement token from "
-                                                                          (card-str state from-ice)
-                                                                          " to "
-                                                                          (card-str state target)))
                                                                    (clear-wait-prompt :runner))}
                                                   card nil)))}
                                 card nil))}]}
@@ -1316,9 +1318,7 @@
                                 :prompt "Take 2 tags or add News Team to your score area as an agenda worth -1 agenda point?"
                                 :choices ["Take 2 tags" "Add News Team to score area"]
                                 :effect (req (if (= target "Add News Team to score area")
-                                               (do (system-msg state :runner (str "adds News Team to their score area as an agenda worth -1 agenda point"))
-                                                   (trigger-event state side :no-trash card)
-                                                   (as-trashed-agenda state :runner eid card -1 {:force true}))
+                                               (as-trashed-agenda state :runner eid card -1 {:force true})
                                                (do (system-msg state :runner (str "takes 2 tags from News Team"))
                                                    (gain-tags state :runner eid 2))))}
                                card targets))}}
@@ -1799,11 +1799,9 @@
                                             :choices [(str "Take " dmg " net damage") "Add Shi.Kyū to score area"]
                                             :async true
                                             :effect (req (if (= target "Add Shi.Kyū to score area")
-                                                           (do (system-msg state :runner (str "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"))
-                                                               (trigger-event state side :no-trash card)
-                                                               (as-trashed-agenda state :runner eid card -1 {:force true}))
-                                                           (do (damage state :corp eid :net dmg {:card card})
-                                                               (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū")))))}
+                                                           (as-trashed-agenda state :runner eid card -1 {:force true})
+                                                           (do (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))
+                                                               (damage state :corp eid :net dmg {:card card}))))}
                                            card targets)))}
                          :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                        card targets))}}

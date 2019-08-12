@@ -1748,17 +1748,17 @@
 (deftest respirocytes
   (testing "Should draw multiple cards when multiple respirocytes are in play"
     (do-game
-      (new-game {:runner {:deck [(qty "Respirocytes" 3) (qty "Sure Gamble" 3)]}})
+      (new-game {:runner {:deck [(qty "Respirocytes" 3) (qty "Sure Gamble" 3)]
+                          :hand ["Respirocytes" "Respirocytes" "Respirocytes" "Sure Gamble"]}})
       (take-credits state :corp)
-      (starting-hand state :runner ["Respirocytes" "Respirocytes" "Respirocytes" "Sure Gamble"])
       (dotimes [_ 2]
         (play-from-hand state :runner "Respirocytes"))
       (is (= 2 (count (:discard (get-runner)))) "2 damage done")
       (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
   (testing "Respirocytes should not trigger after being trashed (issue #3699)"
     (do-game
-      (new-game {:runner {:deck ["Respirocytes" (qty "Sure Gamble" 20)]}})
-      (starting-hand state :runner ["Respirocytes" "Sure Gamble"])
+      (new-game {:runner {:deck ["Respirocytes" (qty "Sure Gamble" 20)]
+                          :hand ["Respirocytes" "Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Respirocytes")
       (is (= 1 (-> (get-runner) :discard count)) "Took 1 damage from Respirocytes")
@@ -1780,7 +1780,26 @@
         (take-credits state :runner)
         (take-credits state :corp)
         (is (zero? (-> (get-runner) :hand count))
-            "Respirocytes still does not trigger when trashed")))))
+            "Respirocytes still does not trigger when trashed"))))
+  (testing "Should wait to draw until after draws are handled. #4190"
+    (do-game
+      (new-game {:runner {:hand [(qty "Respirocytes" 4) "The Class Act"
+                                 "Acacia" "Bankroll" "Cache"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Acacia" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Cache" (:hand (get-runner))) :deck)
+      (play-from-hand state :runner "The Class Act")
+      (play-from-hand state :runner "Respirocytes")
+      (play-from-hand state :runner "Respirocytes")
+      (is (= 2 (count (:discard (get-runner)))) "2 damage done")
+      (is (= ["Acacia" "Bankroll"] (->> (get-runner) :prompt first :choices (map :title)))
+          "First Respirocytes triggers The Class Act")
+      (is (zero? (count (:hand (get-runner)))) "Runner hasn't drawn anything yet")
+      (click-prompt state :runner "Acacia")
+      (is (= ["Bankroll" "Cache"] (->> (get-runner) :hand (map :title)))
+          "Acacia is on the bottom of the deck so Runner drew Cache"))))
 
 (deftest rubicon-switch
   ;; Rubicon Switch

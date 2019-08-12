@@ -1044,11 +1044,12 @@
    {:data {:counter {:credit 3}}
     :abilities [{:msg "gain 1 [Credits]"
                  :req (req (:run @state))
+                 :async true
                  :effect (req (add-counter state side card :credit -1)
                               (gain-credits state side 1)
-                              (trigger-event state side :spent-stealth-credit card)
-                              (when (not (pos? (get-counters (get-card state card) :credit)))
-                                (trash state :runner card {:unpreventable true})))}]
+                              (wait-for (trigger-event-sync state side :spent-stealth-credit card)
+                                        (when (not (pos? (get-counters (get-card state card) :credit)))
+                                          (trash state :runner card {:unpreventable true}))))}]
     :events (trash-on-empty :credit)
     ; See Net Mercur for why this implementation was chosen
     :interactions {:pay-credits {:req (req (:run @state))
@@ -1430,33 +1431,32 @@
                  :msg (msg "draw 2 cards")
                  :async true
                  :effect (req (wait-for (draw state side 2 nil)
-                                        (if-let [drawn (get-in @state [:runner :register :most-recent-drawn])]
-                                          (continue-ability
-                                            state side
+                                        (continue-ability
+                                          state side
+                                          (if-let [drawn (get-in @state [:runner :register :most-recent-drawn])]
                                             {:prompt "Select 1 card to add to the bottom of the Stack"
                                              :choices {:req #(and (in-hand? %)
                                                                   (some (fn [c] (same-card? c %)) drawn))}
                                              :msg (msg "add 1 card to the bottom of the Stack")
-                                             :effect (req (move state side target :deck))}
-                                            card nil)
-                                          (effect-completed state side eid))))}]}
+                                             :effect (req (move state side target :deck))})
+                                          card nil)))}]}
 
    "Muertos Gang Member"
-   {:effect (req (resolve-ability
-                   state :corp
-                   {:prompt "Select a card to derez"
-                    :choices {:req #(and (corp? %)
-                                         (not (agenda? %))
-                                         (:rezzed %))}
-                    :effect (req (derez state side target))}
-                   card nil))
-    :leave-play (req (resolve-ability
-                       state :corp
-                       {:prompt "Select a card to rez, ignoring the rez cost"
-                        :choices {:req #(not (:rezzed %))}
-                        :effect (req (rez state side target {:ignore-cost :rez-cost})
-                                     (system-msg state side (str "rezzes " (:title target) " at no cost")))}
-                       card nil))
+   {:effect (effect (continue-ability
+                      :corp
+                      {:prompt "Select a card to derez"
+                       :choices {:req #(and (corp? %)
+                                            (not (agenda? %))
+                                            (:rezzed %))}
+                       :effect (effect (derez target))}
+                      card nil))
+    :leave-play (effect (continue-ability
+                          :corp
+                          {:prompt "Select a card to rez, ignoring the rez cost"
+                           :choices {:req (complement rezzed?)}
+                           :effect (effect (rez target {:ignore-cost :rez-cost :no-msg true})
+                                           (system-say (str (:title card) " allows the Corp to rez " (:title target) " at no cost")))}
+                          card nil))
     :abilities [{:msg "draw 1 card"
                  :async true
                  :cost [:trash]
@@ -1495,9 +1495,10 @@
 
    "Net Mercur"
    {:abilities [{:msg "gain 1 [Credits]"
+                 :async true
                  :effect (effect (add-counter card :credit -1)
-                                 (trigger-event :spent-stealth-credit card)
-                                 (gain-credits 1))}]
+                                 (gain-credits 1)
+                                 (trigger-event-sync eid :spent-stealth-credit card))}]
     :events {:spent-stealth-credit
              {:req (req (and (:run @state)
                              (has-subtype? target "Stealth")))
@@ -2457,9 +2458,10 @@
                  card nil))
        ;; companion-builder: ability
        {:msg "take 1 [Credits]"
+        :async true
         :effect (effect (add-counter card :credit -1)
-                        (trigger-event :spent-stealth-credit card)
-                        (gain-credits 1))})
+                        (gain-credits 1)
+                        (trigger-event-sync eid :spent-stealth-credit card))})
      ;; assoc: arguments
      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                  (program? target)
@@ -2566,9 +2568,10 @@
                                                             (all-active-installed state :runner))))))}
     :events {:runner-turn-begins {:async true
                                   :effect (req (lose state side :click 1)
-                                               (when-not (get-in @state [:per-turn (:cid card)])
-                                                 (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")
-                                                 (draw state side eid 2 nil)))}}
+                                               (if (get-in @state [:per-turn (:cid card)])
+                                                 (effect-completed state side eid)
+                                                 (do (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")
+                                                     (draw state side eid 2 nil))))}}
     :abilities [{:msg "draw 2 cards and lose [Click]"
                  :once :per-turn
                  :async true

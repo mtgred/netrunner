@@ -42,7 +42,7 @@
 
 (defn- init-game-state
   "Initialises the game state"
-  [{:keys [players gameid spectatorhands room] :as game}]
+  [{:keys [players gameid log spectatorhands room] :as game}]
   (let [corp (some #(when (corp? %) %) players)
         runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp) (:user corp))
@@ -61,6 +61,7 @@
       (new-state
         gameid
         room
+        log
         (t/now)
         spectatorhands
         (new-corp (:user corp) corp-identity corp-options (zone :deck corp-deck) corp-deck-id corp-quote)
@@ -72,6 +73,7 @@
   (let [state (init-game-state game)
         corp-identity (get-in @state [:corp :identity])
         runner-identity (get-in @state [:runner :identity])]
+    (system-say state :corp "[hr]")
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
     (let [side :corp]
@@ -240,22 +242,22 @@
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended
                  (when (= :this-turn (installed? card))
-                   (update! state side (assoc card :installed true)))
+                   (update! state side (assoc (get-card state card) :installed true)))
                  ;; Clear the added-virus-counter flag for each virus in play.
                  ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
                  (when (has-subtype? card "Virus")
-                   (set-prop state :runner card :added-virus-counter false))
+                   (set-prop state :runner (get-card state card) :added-virus-counter false))
                  ;; Remove all-turn strength from icebreakers.
                  ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
                  (when (has-subtype? card "Icebreaker")
                    (update! state side (update-in (get-card state card) [:pump] dissoc :all-turn))
-                   (update-breaker-strength state :runner card)))
+                   (update-breaker-strength state :runner (get-card state card))))
                (doseq [card (all-installed state :corp)]
                  ;; Clear :this-turn flags as turn has ended
                  (when (= :this-turn (installed? card))
-                   (update! state side (assoc card :installed true)))
+                   (update! state side (assoc (get-card state card) :installed true)))
                  (when (= :this-turn (:rezzed card))
-                   (update! state side (assoc card :rezzed true))))
+                   (update! state side (assoc (get-card state card) :rezzed true))))
                ;; Update strength of all ice every turn
                (update-all-ice state side)
                (swap! state assoc :end-turn true)

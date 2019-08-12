@@ -185,6 +185,13 @@
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
              (move-zone-fn state side (make-eid state) moved-card card))
            (trigger-event state side :card-moved card (assoc moved-card :move-to-side side))
+           (when-let [zone (or (#{:discard :hand :deck} src-zone)
+                               (#{:discard :hand :deck} to))]
+             (let [event (keyword (str (name side) "-" (name zone) "-change"))]
+               ; To easily grep:
+               ; :corp-hand-change :corp-deck-change :corp-discard-change
+               ; :runner-hand-change :runner-deck-change :runner-discard-change
+               (trigger-event-sync state side (make-eid state) event (count (get-in @state [side zone])) moved-card)))
            ;; Default a card when moved to inactive zones (except :persistent key)
            (when (#{:discard :hand :deck :rfg :scored} to)
              (reset-card state side moved-card)
@@ -197,11 +204,8 @@
   "Moves all cards from one zone to another, as in Chronos Project."
   [state side server to]
   (when-not (seq (get-in @state [side :locked server]))
-    (let [from-zone (cons side (if (sequential? server) server [server]))
-          to-zone (cons side (if (sequential? to) to [to]))]
-      (swap! state assoc-in to-zone (concat (get-in @state to-zone)
-                                            (zone to (get-in @state from-zone))))
-      (swap! state assoc-in from-zone []))))
+    (doseq [card (get-in @state [side server])]
+      (move state side card to))))
 
 (defn add-prop
   "Adds the given value n to the existing value associated with the key in the card.

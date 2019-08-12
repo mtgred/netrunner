@@ -1881,21 +1881,7 @@
        (click-prompt state :runner "Pay 4 [Credits] to trash") ; pay to trash / 6 cr - 4 cr
        (is (= 1 (:click (get-runner))))
        (run-on state :hq)
-       (is (:run @state) "Runner got to run"))))
-  (testing "If runner cannot pay additional cost, server not shown as an option for run events or click to run button"
-    (do-game
-     (new-game {:corp {:deck ["Ruhr Valley"]}
-                :runner {:deck ["Dirty Laundry"]}})
-     (play-from-hand state :corp "Ruhr Valley" "HQ")
-     (take-credits state :corp)
-     (let [ruhr (get-content state :hq 0)]
-       (core/rez state :corp ruhr)
-       (core/gain state :runner :click -3)
-       (is (= 1 (:click (get-runner))))
-       (play-from-hand state :runner "Dirty Laundry")
-       (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner should only get choice of Archives or R&D")
-       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
-           "Runner should only get choice of Archives or R&D")))))
+       (is (:run @state) "Runner got to run")))))
 
 (deftest ryon-knight
   ;; Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining
@@ -2330,4 +2316,30 @@
         (take-credits state :corp)
         (is (= 2 (count (:hand (get-runner)))) "MaxX draws 2 cards")
         (is (empty? (:prompt (get-corp))) "Corp has no prompt")
-        (is (empty? (:prompt (get-runner))) "Runner has no prompt")))))
+        (is (empty? (:prompt (get-runner))) "Runner has no prompt"))))
+  (testing "Interactions with IG. Issue #4329"
+    (do-game
+      (new-game {:corp {:id "Industrial Genomics: Growing Solutions"
+                        :deck [(qty "Hedge Fund" 3)]
+                        :hand ["Warroid Tracker" "Launch Campaign" (qty "Sure Gamble" 2)]
+                        :credits 100}
+                 :runner {:deck [(qty "Sure Gamble" 10)]
+                          :hand ["Corroder" "Dyson Mem Chip"]
+                          :credits 100}})
+      (play-from-hand state :corp "Warroid Tracker" "New remote")
+      (play-from-hand state :corp "Launch Campaign" "Remote 1")
+      (let [war (get-content state :remote1 0)]
+        (core/rez state :corp war)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (play-from-hand state :runner "Dyson Mem Chip")
+        (run-empty-server state :remote1)
+        (click-card state :runner "Launch Campaign")
+        (is (zero? (count (:discard (get-runner)))) "Before trashing anything")
+        (click-prompt state :runner "Pay 2 [Credits] to trash")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :runner "Corroder")
+        (click-card state :runner "Dyson Mem Chip")
+        (click-prompt state :runner "Done")
+        (is (= 2 (count (:discard (get-runner)))) "Runner trashes 2 cards to Warriod Tracker")))))

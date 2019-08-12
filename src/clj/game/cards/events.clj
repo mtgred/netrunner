@@ -1055,14 +1055,17 @@
     :msg (msg "add " (:title target) " to their Grip and shuffle their Stack")
     :effect (effect (trigger-event :searched-stack nil)
                     (continue-ability
-                      (let [connection target]
-                        {:optional
-                         {:prompt (str "Install " (:title connection) "?")
-                          :yes-ability {:effect (effect (runner-install (assoc eid :source card :source-type :runner-install) connection)
-                                                        (shuffle! :deck))}
-                          :no-ability {:effect (effect (move connection :hand)
-                                                       (shuffle! :deck))}}})
-                      card nil))}
+                     (let [connection target
+                           install-hostage {:effect (effect (runner-install (assoc eid :source card :source-type :runner-install) connection nil)
+                                                            (shuffle! :deck))}
+                           grip-hostage {:effect (effect (move connection :hand)
+                                                         (shuffle! :deck))}]
+                       (if (can-pay? state side eid card nil :credit (:cost connection))
+                         {:optional {:prompt (str "Install " (:title connection) "?")
+                                     :yes-ability install-hostage
+                                     :no-ability grip-hostage}}
+                         grip-hostage))
+                     card nil))}
 
    "Hot Pursuit"
    {:req (req hq-runnable)
@@ -1295,8 +1298,8 @@
    "Khusyuk"
    (let [access-revealed (fn [revealed]
                            {:async true
-                            :mandatory true
                             :prompt "Which of the revealed cards would you like to access (first card is on top)?"
+                            :not-distinct true
                             :choices revealed
                             :req (req (not= (:max-access run) 0))
                             :effect (effect (access-card eid target))})
@@ -1328,6 +1331,7 @@
                    :async true
                    :replace-access
                    {:async true
+                    :mandatory true
                     :effect (req
                               (wait-for
                                 (resolve-ability state side (select-install-cost state) card nil)

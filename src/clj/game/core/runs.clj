@@ -6,6 +6,10 @@
          get-remote-names card-name can-access-loud can-steal?
          prevent-jack-out card-flag? can-run?)
 
+(defn clear-run-costs
+  [state]
+  (swap! state update-in [:bonus] dissoc :run-cost))
+
 ;;; Steps in the run sequence
 (defn make-run
   "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
@@ -14,9 +18,9 @@
   ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
   ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
   ([state side eid server run-effect card {:keys [click-run ignore-costs] :as args}]
+   (clear-run-costs state)
    (wait-for (trigger-event-simult state :runner :pre-init-run nil server card args)
              (let [all-run-costs (when-not ignore-costs (run-costs state server args))]
-               (swap! state update-in [:bonus] dissoc :run-cost)
                (if (and (can-run? state :runner)
                         (can-run-server? state server)
                         (can-pay? state :runner (make-eid state eid) card "a run" all-run-costs))
@@ -66,6 +70,10 @@
   [state side n]
   (swap! state update-in [:runner :next-run-credit] (fnil + 0 0) n))
 
+(defn no-trash-or-steal
+  [state]
+  (swap! state update-in [:runner :register :no-trash-or-steal] (fnil inc 0)))
+
 (defn access-end
   "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"
   [state side eid c]
@@ -78,7 +86,7 @@
   (when (and (get-card state c)
              ;; Don't increment :no-trash-or-steal if accessing a card in Archives
              (not= (:zone c) [:discard]))
-    (swap! state update-in [:runner :register :no-trash-or-steal] (fnil inc 0)))
+    (no-trash-or-steal state))
   (swap! state dissoc :access)
   (trigger-event-sync state side eid :post-access-card c))
 

@@ -2654,22 +2654,38 @@
 
 (deftest news-team
   ;; News Team - on access take 2 tags or take as agenda worth -1
-  (do-game
-    (new-game {:corp {:deck [(qty "News Team" 3) "Blacklist"]}})
-    (trash-from-hand state :corp "News Team")
-    (play-from-hand state :corp "Blacklist" "New remote")
-    (take-credits state :corp)
-    (run-empty-server state :archives)
-    (click-prompt state :runner "Take 2 tags")
-    (is (= 2 (count-tags state)) "Runner has 2 tags")
-    (run-empty-server state :archives)
-    (click-prompt state :runner "Add News Team to score area")
-    (is (= 1 (count (:scored (get-runner)))) "News Team added to Runner score area")
-    (trash-from-hand state :corp "News Team")
-    (core/rez state :corp (get-content state :remote1 0))
-    (run-empty-server state :archives)
-    (click-prompt state :runner "Add News Team to score area")
-    (is (= 2 (count (:scored (get-runner)))) "News Team added to Runner score area with Blacklist rez")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "News Team" 3) "Blacklist"]}})
+      (trash-from-hand state :corp "News Team")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :archives)
+      (click-prompt state :runner "Take 2 tags")
+      (is (= 2 (count-tags state)) "Runner has 2 tags")
+      (run-empty-server state :archives)
+      (click-prompt state :runner "Add News Team to score area")
+      (is (= 1 (count (:scored (get-runner)))) "News Team added to Runner score area")
+      (trash-from-hand state :corp "News Team")
+      (core/rez state :corp (get-content state :remote1 0))
+      (run-empty-server state :archives)
+      (click-prompt state :runner "Add News Team to score area")
+      (is (= 2 (count (:scored (get-runner)))) "News Team added to Runner score area with Blacklist rez")))
+  (testing "interaction with Maw. Issue #4214"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Government Takeover" "News Team"]}
+                 :runner {:hand ["Maw"]
+                          :credits 10}})
+      (play-from-hand state :corp "News Team" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Maw")
+      (is (zero? (count (:discard (get-corp)))) "Corp has 0 cards in archives to start")
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Add News Team to score area")
+      (is (= 1 (count (:discard (get-corp)))) "Corp discards a card from hand")
+      (is (= "Government Takeover" (-> (get-corp) :discard first :title))
+          "Corp discards card from hand from Maw"))))
 
 (deftest ngo-front
   ;; NGO Front - full test
@@ -3553,25 +3569,43 @@
 
 (deftest shi-kyu
   ;; Shi.Kyū
-  (do-game
-    (new-game {:corp {:deck ["Shi.Kyū"]}
-               :runner {:deck [(qty "Sure Gamble" 5)]}})
-    (play-from-hand state :corp "Shi.Kyū" "New remote")
-    (take-credits state :corp)
-    (run-empty-server state "Server 1")
-    (click-prompt state :corp "Yes")
-    (click-prompt state :corp "5")
-    (is (= "Take 5 net damage" (-> (prompt-map :runner) :choices first)))
-    (click-prompt state :runner "Take 5 net damage")
-    (click-prompt state :runner "No action")
-    (is (zero? (count (:hand (get-runner)))) "Runner took 5 net damage from Shi.Kyū")
-    (run-empty-server state "Server 1")
-    (click-prompt state :corp "Yes")
-    (click-prompt state :corp "2")
-    (is (= "Take 2 net damage" (-> (prompt-map :runner) :choices first)))
-    (click-prompt state :runner "Add Shi.Kyū to score area")
-    (is (empty? (prompt-map :runner)) "Runner shouldn't get the option to trash Shi.Kyū as it was added to agenda area")
-    (is (= -1 (:agenda-point (get-runner))) "Runner should be at -1 agenda points after adding Shi.Kyū to agenda area")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Shi.Kyū"]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Shi.Kyū" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "5")
+      (is (= "Take 5 net damage" (-> (prompt-map :runner) :choices first)))
+      (click-prompt state :runner "Take 5 net damage")
+      (click-prompt state :runner "No action")
+      (is (zero? (count (:hand (get-runner)))) "Runner took 5 net damage from Shi.Kyū")
+      (run-empty-server state "Server 1")
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "2")
+      (is (= "Take 2 net damage" (-> (prompt-map :runner) :choices first)))
+      (click-prompt state :runner "Add Shi.Kyū to score area")
+      (is (empty? (prompt-map :runner)) "Runner shouldn't get the option to trash Shi.Kyū as it was added to agenda area")
+      (is (= -1 (:agenda-point (get-runner))) "Runner should be at -1 agenda points after adding Shi.Kyū to agenda area")))
+  (testing "interaction with Maw. Issue #4214"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Government Takeover" "Shi.Kyū"]}
+                 :runner {:hand ["Maw"]
+                          :credits 10}})
+      (play-from-hand state :corp "Shi.Kyū" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Maw")
+      (is (zero? (count (:discard (get-corp)))) "Corp has 0 cards in archives to start")
+      (run-empty-server state :remote1)
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "5")
+      (click-prompt state :runner "Add Shi.Kyū to score area")
+      (is (= 1 (count (:discard (get-corp)))) "Corp discards a card from hand")
+      (is (= "Government Takeover" (-> (get-corp) :discard first :title))
+          "Corp discards card from hand from Maw"))))
 
 (deftest shock
   ;; Shock! - do 1 net damage on access

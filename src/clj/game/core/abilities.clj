@@ -380,7 +380,7 @@
                           strength)
         trigger-trace (select-keys trace [:player :other :base :bonus :link :priority :ability :strength])]
     (wait-for (pay-sync state other (make-eid state eid) card [:credit boost])
-              (system-msg state other (str " spends " boost
+              (system-msg state other (str "spends " boost
                                            " [Credits] to increase " (if (corp-start? trace) "link" "trace")
                                            " strength to " (if (corp-start? trace)
                                                              runner-strength
@@ -421,8 +421,8 @@
                    ((fnil + 0 0) link boost))
         trace (assoc trace :strength strength)]
     (wait-for (pay-sync state player (make-eid state eid) card [:credit boost])
-              (system-msg state player (str " spends " boost
-                                            "[Credits] to increase " (if (corp-start? trace) "trace" "link")
+              (system-msg state player (str "spends " boost
+                                            " [Credits] to increase " (if (corp-start? trace) "trace" "link")
                                             " strength to " strength))
               (clear-wait-prompt state other)
               (show-wait-prompt state player
