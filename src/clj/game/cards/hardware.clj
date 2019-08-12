@@ -168,9 +168,18 @@
                              :hand-size (runner-points @state)))})
 
    "Buffer Drive"
-   (letfn [(triggered-ability [trash-side]
+   (letfn [(in-runner-grip? [target]
+             (and (= "Runner" (:side target))
+                  (some #(= :hand %) (:zone target))))
+           (in-runner-heap? [target]
+             (and (= "Runner" (:side target))
+                  (some #(= :discard %) (:zone target))))
+           (grip-or-heap-trash? [event] ;; a <side>-trash event is a list of targets for trashing
+             (every? #(or (in-runner-heap? %)
+                          (in-runner-grip? %)) event))
+           (triggered-ability [trash-side]
              {:once :per-turn
-              :req (req (first-event? state side trash-side))
+              :req (req (and (first-event? state side trash-side grip-or-heap-trash?)))
               :prompt "Add a trashed card to the bottom of the Stack"
               :choices (req (cancellable
                               (conj (vec (sort-by :title targets)) "No thanks")))
