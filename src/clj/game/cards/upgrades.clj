@@ -667,6 +667,7 @@
                            :once :per-turn
                            :once-key :jinja-city-grid-draw
                            :async true
+                           :req (req (not (find-cid (:cid card) (flatten (vals (get-in @state [:trash :trash-list]))))))
                            :effect (req (cond
                                           ;; If ice were drawn, do the full routine.
                                           (some ice? (:most-recent-drawn corp-reg))
