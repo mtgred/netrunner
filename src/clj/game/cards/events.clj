@@ -1064,7 +1064,7 @@
                          {:optional {:prompt (str "Install " (:title connection) "?")
                                      :yes-ability install-hostage
                                      :no-ability grip-hostage}}
-                         grip-hostage))`
+                         grip-hostage))
                      card nil))}
 
    "Hot Pursuit"
