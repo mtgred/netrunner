@@ -1055,14 +1055,17 @@
     :msg (msg "add " (:title target) " to their Grip and shuffle their Stack")
     :effect (effect (trigger-event :searched-stack nil)
                     (continue-ability
-                      (let [connection target]
-                        {:optional
-                         {:prompt (str "Install " (:title connection) "?")
-                          :yes-ability {:effect (effect (runner-install (assoc eid :source card :source-type :runner-install) connection)
-                                                        (shuffle! :deck))}
-                          :no-ability {:effect (effect (move connection :hand)
-                                                       (shuffle! :deck))}}})
-                      card nil))}
+                     (let [connection target
+                           install-hostage {:effect (effect (runner-install (assoc eid :source card :source-type :runner-install) connection nil)
+                                                            (shuffle! :deck))}
+                           grip-hostage {:effect (effect (move connection :hand)
+                                                         (shuffle! :deck))}]
+                       (if (can-pay? state side eid card nil :credit (:cost connection))
+                         {:optional {:prompt (str "Install " (:title connection) "?")
+                                     :yes-ability install-hostage
+                                     :no-ability grip-hostage}}
+                         grip-hostage))
+                     card nil))}
 
    "Hot Pursuit"
    {:req (req hq-runnable)
