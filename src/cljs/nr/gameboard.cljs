@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
-            [game.core.card :refer [active? has-subtype? asset? rezzed? ice?]]
+            [game.core.card :refer [active? has-subtype? asset? rezzed? ice? corp? faceup?]]
             [jinteki.utils :refer [str->int is-tagged?] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
@@ -165,12 +165,14 @@
       (cond
 
         ;; Toggle abilities panel
-        (or (pos? c)
+        (or (< 1 c)
             (pos? (+ (count corp-abilities)
                      (count runner-abilities)))
             (some #{"derez" "advance"} actions)
             (and (= type "ICE")
-                 (not (:run @game-state))))
+                 (not (:run @game-state)))
+            (and (corp? card)
+                 (not (faceup? card))))
         (do (when (= side card-side)
               (if (:abilities @c-state)
                 (swap! c-state dissoc :abilities)
@@ -609,7 +611,7 @@
                                                              :ability i}))}
         (render-icons (:label ab))])
      runner-abilities)
-   (when (pos? (count subroutines))
+   (when (< 1 (count subroutines))
      [:div {:on-click #(send-command "system-msg"
                                      {:msg (str "indicates to fire all unbroken subroutines on " title)})}
       "Let all subroutines fire"])
