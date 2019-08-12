@@ -2376,7 +2376,22 @@
             (card-ability state :runner ped2 0)
             (click-prompt state :runner (-> (get-runner) :prompt first :choices first)) ; choose Spy Camera
             ;; the fact that we got this far means the bug is fixed
-            (is (= 1 (count (get-hardware state))) "Spy Camera installed")))))))
+            (is (= 1 (count (get-hardware state))) "Spy Camera installed"))))))
+  (testing "Interaction with The Class Act. Issue #4282"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 10)]
+                          :hand ["Off-Campus Apartment" "The Class Act"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Off-Campus Apartment")
+      (let [oca (get-resource state 0)]
+        (card-ability state :runner oca 0)
+        (click-card state :runner "The Class Act")
+        (click-prompt state :runner "Sure Gamble")
+        (is (= 1 (count (:hand (get-runner)))))
+        (take-credits state :runner)
+        (is (= 5 (count (:hand (get-runner)))) "Draw 4 cards from The Class Act")
+        (take-credits state :corp)
+        (is (= 5 (count (:hand (get-runner)))) "Don't draw any more")))))
 
 (deftest officer-frank
   ;; Officer Frank - meat damage to trash 2 from HQ
