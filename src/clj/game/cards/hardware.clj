@@ -195,7 +195,8 @@
                                (assoc target :zone [:discard]))))})]
      {:events {:runner-trash (triggered-ability)
                :corp-trash (triggered-ability)}
-      :abilities [{:msg "add a card from the Heap to the bottom of the Stack"
+      :abilities [{:label "Remove Buffer Drive from the game to add a card from the Heap to the bottom of the Stack"
+                   :msg "add a card from the Heap to the bottom of the Stack"
                    :show-discard true
                    :choices {:req #(and (runner? %)
                                         (= :discard (first (:zone %))))}
