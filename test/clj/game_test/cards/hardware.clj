@@ -325,7 +325,31 @@
       (play-from-hand state :runner "Buffer Drive")
       (core/damage state :runner :brain 1)
       (is (not (empty? (:prompt (get-runner)))))))
-  )
+  (testing "The player may remove Buffer Drive from the game to move any card in the Heap to the bottom of the Stack"
+    (do-game
+      (new-game {:runner {:hand ["Buffer Drive"]
+                          :discard ["Sure Gamble", "Stimhack"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (card-ability state :runner (get-hardware state 0) 0) ; pop buffer drive
+      (let [sure-gamble (find-card "Sure Gamble" (:discard (get-runner))) ]
+        (click-card state :runner sure-gamble)
+        (is (= (:cid sure-gamble) (:cid (last (:deck (get-runner)))))))
+      (is (= 0 (count (:hardware (:rig (get-runner))))))
+      (is (= 1 (count (:rfg (get-runner)))))
+      (is (= 1 (count (:discard (get-runner)))))))
+  (testing "The player may cancel the remove from the game effect of Buffer Drive"
+    (do-game
+      (new-game {:runner {:hand ["Buffer Drive"]
+                          :discard ["Sure Gamble", "Stimhack"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (card-ability state :runner (get-hardware state 0) 0) ; pop buffer drive
+      (click-prompt state :runner "Done")
+      (is (empty? (:prompt (get-runner))))
+      (is (= 1 (count (:hardware (:rig (get-runner))))))
+      (is (= 0 (count (:rfg (get-runner)))))
+      (is (= 2 (count (:discard (get-runner)))))))
 
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn beings trash 1 card, then draw or remove tag
