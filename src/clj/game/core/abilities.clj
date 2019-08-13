@@ -313,22 +313,22 @@
 (defn psi-game
   "Starts a psi game by showing the psi prompt to both players. psi is a map containing
   :equal and :not-equal abilities which will be triggered in resolve-psi accordingly."
-  ([state side card psi] (psi-game state side (make-eid state) card psi))
+  ([state side card psi] (psi-game state side (make-eid state {:source-type :psi}) card psi))
   ([state side eid card psi]
    (swap! state assoc :psi {})
    (register-once state psi card)
    (system-msg state (:player psi :corp) (str "uses " (:title card) " to start a psi game"))
-   (doseq [s [:corp :runner]]
-     (let [all-amounts (range (min 3 (inc (get-in @state [s :credit]))))
-           valid-amounts (remove #(or (any-flag-fn? state :corp :prevent-secretly-spend %)
-                                      (any-flag-fn? state :runner :prevent-secretly-spend %))
-                                 all-amounts)]
-
-       (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
-                              (map #(str % " [Credits]") valid-amounts)
-                              #(resolve-psi state s eid card psi (str->int (first (split % #" "))))
-                    {:priority 2
-                     :prompt-type :psi})))))
+   (let [eid (assoc eid :source-type :psi)]
+     (doseq [s [:corp :runner]]
+       (let [all-amounts (range (min 3 (inc (total-available-credits state s eid card))))
+             valid-amounts (remove #(or (any-flag-fn? state :corp :prevent-secretly-spend %)
+                                        (any-flag-fn? state :runner :prevent-secretly-spend %))
+                                   all-amounts)]
+         (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
+                                (map #(str % " [Credits]") valid-amounts)
+                                #(resolve-psi state s eid card psi (str->int (first (split % #" "))))
+                                {:priority 2
+                                 :prompt-type :psi}))))))
 
 (defn resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
@@ -337,16 +337,20 @@
   (swap! state assoc-in [:psi side] bet)
   (let [opponent (if (= side :corp) :runner :corp)]
     (if-let [opponent-bet (get-in @state [:psi opponent])]
-      (do (clear-wait-prompt state opponent)
-          (deduct state opponent [:credit opponent-bet])
+      (wait-for
+        (pay-sync state opponent (make-eid state eid) card [:credit opponent-bet])
+        (wait-for
+          (pay-sync state side (make-eid state eid) card [:credit bet])
+          (clear-wait-prompt state opponent)
+          ; (deduct state opponent [:credit opponent-bet])
           (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
-          (deduct state side [:credit bet])
+          ; (deduct state side [:credit bet])
           (system-msg state side (str "spends " bet " [Credits]"))
-          (wait-for (trigger-event-simult state side :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
+          (wait-for (trigger-event-simult state side (make-eid state eid) :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
                     (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
                       (let [card-side (if (corp? card) :corp :runner)]
                         (continue-ability state card-side (assoc ability :async true) card nil))
-                      (effect-completed state side eid))))
+                      (effect-completed state side eid)))))
       (show-wait-prompt
         state side (str (string/capitalize (name opponent)) " to choose psi game credits")))))
 
