@@ -168,14 +168,16 @@
                              :hand-size (runner-points @state)))})
 
    "Buffer Drive"
-   (let [triggered-ability {:once :per-turn
-                            :prompt "Add a trashed card to the bottom of the Stack"
-                            :choices (req (cancellable
-                                            (conj (vec (sort-by :title targets)) "No thanks")))
-                            :effect (req (when-not (= "No thanks" target)
-                                           (move state side target :deck)))}]
-     {:events {:runner-trash triggered-ability
-               :corp-trash triggered-ability}})
+   (letfn [(triggered-ability [trash-side]
+             {:once :per-turn
+              :req (req (first-event? state side trash-side))
+              :prompt "Add a trashed card to the bottom of the Stack"
+              :choices (req (cancellable
+                              (conj (vec (sort-by :title targets)) "No thanks")))
+              :effect (req (when-not (= "No thanks" target)
+                             (move state side target :deck)))})]
+     {:events {:runner-trash (triggered-ability :runner-trash)
+               :corp-trash (triggered-ability :corp-trash)}})
 
    "Capstone"
    {:abilities [{:req (req (pos? (count (:hand runner))))
