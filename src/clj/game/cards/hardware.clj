@@ -177,12 +177,12 @@
            (grip-or-stack-trash? [event] ;; a <side>-trash event is a list of targets for trashing
              (every? #(or (in-runner-grip? %)
                           (in-runner-stack? %)) event))
-           (triggered-ability [trash-side]
+           (triggered-ability []
              {:once :per-turn
-              :req (req (first-event? state side trash-side grip-or-stack-trash?))
+              :req (req (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
+                                (event-count state side :corp-trash grip-or-stack-trash?))))
               :prompt "Add a trashed card to the bottom of the Stack"
-              :choices (req (cancellable
-                              (conj (vec (sort-by :title targets)) "No action")))
+              :choices (req (conj (vec (sort-by :title targets)) "No action"))
               :effect (req (when-not (= "No action" target)
                              (register-events
                                state side
@@ -193,8 +193,8 @@
                                                               (unregister-events state side moved-card {:effects {:card-moved nil}})
                                                               (move state side moved-card :deck)))}})
                                (assoc target :zone [:discard]))))})]
-     {:events {:runner-trash (triggered-ability :runner-trash)
-               :corp-trash (triggered-ability :corp-trash)}
+     {:events {:runner-trash (triggered-ability)
+               :corp-trash (triggered-ability)}
       :abilities [{:effect (req (resolve-ability
                                  state side
                                  {:msg "add a card from the Heap to the bottom of the Stack"
