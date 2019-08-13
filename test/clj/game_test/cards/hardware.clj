@@ -249,11 +249,10 @@
             non-target-cids (set (map :cid non-targets))]
         (core/trash-cards state :runner (take 3 (:deck (get-runner))))
         (click-prompt state :runner target-name)
-        ; (is (= 2 (count (:deck (get-runner)))))
-        ; (is (= 2 (count (:discard (get-runner)))))
+        (is (= 2 (count (:deck (get-runner)))))
+        (is (= 2 (count (:discard (get-runner)))))
         (is (= target-cid (:cid (last (:deck (get-runner))))))
-        ; (is (= non-target-cids (set (map :cid (:discard (get-runner))))))
-        )))
+        (is (= non-target-cids (set (map :cid (:discard (get-runner)))))))))
   (testing "After a runner effect trashes a card, a corp effect must not cause Buffer Drive to trigger again"
     (do-game
       (new-game {:runner {:hand ["Buffer Drive", "Corroder", "Yog.0", "Mimic"]
@@ -273,7 +272,16 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Pay 0 [Credits] to trash")
       (is (empty? (:prompt (get-runner))))))
-  (testing "The player may not move a card trashed while installed to the bottom of the Stack")
+  (testing "The player may not move a card trashed while installed to the bottom of the Stack"
+    (do-game
+      (new-game {:runner {:hand ["Buffer Drive", "Spy Camera"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (play-from-hand state :runner "Spy Camera")
+      (card-ability state :runner (get-hardware state 1) 1) ; pop spy camera
+      (click-prompt state :runner "OK")
+      (is (empty? (:prompt (get-runner))))
+      (is (= 1 (count (:discard (get-runner)))))))
   (testing "Buffer Drive must not trigger a second time in one turn"
     (do-game
       (new-game {:runner {:hand ["Buffer Drive", "Corroder", "Yog.0", "Mimic"]
@@ -296,10 +304,28 @@
       (play-from-hand state :runner "Buffer Drive")
       (core/trash-cards state :runner [(first (:hand (get-runner)))])
       (is (empty? (:prompt (get-runner))))))
-  (testing "The player may remove Buffer Drive from the game to move any card in the Heap to the bottom of the Stack")
-  (testing "The effect triggers on meat damage")
-  (testing "The effect triggers on net damage")
-  (testing "The effect triggers on brain damage"))
+  (testing "The effect triggers on meat damage"
+    (do-game
+      (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (core/damage state :runner :meat 1)
+      (is (not (empty? (:prompt (get-runner)))))))
+  (testing "The effect triggers on net damage"
+    (do-game
+      (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (core/damage state :runner :net 1)
+      (is (not (empty? (:prompt (get-runner)))))))
+  (testing "The effect triggers on brain damage"
+    (do-game
+      (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (core/damage state :runner :brain 1)
+      (is (not (empty? (:prompt (get-runner)))))))
+  )
 
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn beings trash 1 card, then draw or remove tag
