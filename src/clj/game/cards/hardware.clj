@@ -194,7 +194,17 @@
                                                               (move state side moved-card :deck)))}})
                                (assoc target :zone [:discard]))))})]
      {:events {:runner-trash (triggered-ability :runner-trash)
-               :corp-trash (triggered-ability :corp-trash)}})
+               :corp-trash (triggered-ability :corp-trash)}
+      :abilities [{:effect (req (resolve-ability
+                                 state side
+                                 {:msg "add a card from the Heap to the bottom of the Stack"
+                                  :show-discard true
+                                  :choices {:req #(and (runner? %)
+                                                       (= :discard (first (:zone %))))}
+                                  :effect (effect (move card :rfg)
+                                                  (move target :deck))}
+                                 card nil))}]})
+
 
    "Capstone"
    {:abilities [{:req (req (pos? (count (:hand runner))))
