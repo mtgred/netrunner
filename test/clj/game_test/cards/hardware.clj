@@ -5,8 +5,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
-            [clojure.test :refer :all]
-            [clojure.set :refer [subset?]]))
+            [clojure.test :refer :all]))
 
 (deftest acacia
   ;; Acacia - Optionally gain credits for number of virus tokens then trash
@@ -295,7 +294,7 @@
         (is (empty? (:prompt (get-runner))))
         (is (= 1 (count (:deck (get-runner)))))
         (is (= 3 (count (:discard (get-runner)))))
-        (is (subset? remaining-grip-cids (set (map :cid (:discard (get-runner)))))))))
+        (is (every? (set (map :cid (:discard (get-runner)))) remaining-grip-cids)))))
   (testing "Buffer Drive must not trigger on the second trash of the turn if it was installed after the first trash"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
