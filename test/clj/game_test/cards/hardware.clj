@@ -248,6 +248,15 @@
       (click-prompt state :runner "Corroder")
       (core/trash-cards state :corp [(first (:hand (get-runner)))])
       (is empty? (:prompt (get-runner)))))
+  (testing "Trashing a corp card must not trigger Buffer Drive"
+    (do-game
+      (new-game {:runner {:hand ["Buffer Drive"]}
+                 :corp {:deck [(qty "Aggressive Secretary" 5)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Pay 0 [Credits] to trash")
+      (is (empty? (:prompt (get-runner))))))
   (testing "The player may move one card trashed from the Heap to the bottom of the Stack")
   (testing "The player may not move a card trashed while installed to the bottom of the Stack")
   (testing "Buffer Drive must not trigger a second time in one turn"
