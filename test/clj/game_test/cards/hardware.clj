@@ -350,6 +350,22 @@
       (is (= 1 (count (:hardware (:rig (get-runner))))))
       (is (= 0 (count (:rfg (get-runner)))))
       (is (= 2 (count (:discard (get-runner)))))))
+  (testing "Corp trash -> install -> Runner trash should not cause Buffer Drive to trigger"
+    (do-game
+      (new-game {:runner {:hand [(qty "Buffer Drive" 5)]}})
+      (take-credits state :corp)
+      (core/trash-cards state :corp [(first (:hand (get-runner)))])
+      (play-from-hand state :runner "Buffer Drive")
+      (core/trash-cards state :runner [(first (:hand (get-runner)))])
+      (is (empty? (:prompt (get-runner))))))
+  (testing "Runner trash -> install -> Corp trash should not cause Buffer Drive to trigger"
+    (do-game
+      (new-game {:runner {:hand [(qty "Buffer Drive" 5)]}})
+      (take-credits state :corp)
+      (core/trash-cards state :runner [(first (:hand (get-runner)))])
+      (play-from-hand state :runner "Buffer Drive")
+      (core/trash-cards state :corp [(first (:hand (get-runner)))])
+      (is (empty? (:prompt (get-runner)))))))
 
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn beings trash 1 card, then draw or remove tag
