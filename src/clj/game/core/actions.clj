@@ -614,10 +614,7 @@
   ([state side eid args]
    (let [card (or (:card args) args)]
      (wait-for (trigger-event-simult state :corp :pre-agenda-scored nil card)
-               (when (and (can-score? state side card)
-                          (empty? (filter #(same-card? card %) (get-in @state [:corp :register :cannot-score])))
-                          (>= (get-counters card :advancement) (or (:current-cost card)
-                                                                   (:advancementcost card))))
+               (when (can-score? state side card)
                  ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
                  (let [moved-card (move state :corp card :scored)
                        c (card-init state :corp moved-card {:resolve-effect false
