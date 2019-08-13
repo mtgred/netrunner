@@ -168,15 +168,15 @@
                              :hand-size (runner-points @state)))})
 
    "Buffer Drive"
-   (letfn [(in-runner-grip? [target]
+   (letfn [(in-grip? [target]
              (and (= "Runner" (:side target))
                   (some #(= :hand %) (:zone target))))
-           (in-runner-stack? [target]
+           (in-stack? [target]
              (and (= "Runner" (:side target))
                   (some #(= :deck %) (:zone target))))
            (grip-or-stack-trash? [event] ;; a <side>-trash event is a list of targets for trashing
-             (every? #(or (in-runner-grip? %)
-                          (in-runner-stack? %)) event))
+             (every? #(or (in-grip? %)
+                          (in-stack? %)) event))
            (triggered-ability []
              {:once :per-turn
               :req (req (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
@@ -195,15 +195,12 @@
                                (assoc target :zone [:discard]))))})]
      {:events {:runner-trash (triggered-ability)
                :corp-trash (triggered-ability)}
-      :abilities [{:effect (req (resolve-ability
-                                 state side
-                                 {:msg "add a card from the Heap to the bottom of the Stack"
-                                  :show-discard true
-                                  :choices {:req #(and (runner? %)
-                                                       (= :discard (first (:zone %))))}
-                                  :effect (effect (move card :rfg)
-                                                  (move target :deck))}
-                                 card nil))}]})
+      :abilities [{:msg "add a card from the Heap to the bottom of the Stack"
+                   :show-discard true
+                   :choices {:req #(and (runner? %)
+                                        (= :discard (first (:zone %))))}
+                   :effect (effect (move card :rfg)
+                                   (move target :deck))}]})
 
 
    "Capstone"
