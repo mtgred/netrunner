@@ -164,7 +164,7 @@
     (case cost-type
       :credit (str amount " [Credits]")
       :click (->> "[Click]" repeat (take amount) (apply str))
-      :trash "[Trash]"
+      :trash "[trash]"
       :forfeit (str "forfeit " (quantify amount "Agenda"))
       :forfeit-self "forfeit this Agenda"
       :tag (str "remove " (quantify amount "tag"))
@@ -211,8 +211,13 @@
                        (capitalize (:msg ability)))
                   "")
         cost (:cost ability)]
-    (if (and (seq cost) (not (string/blank? label)))
-      (str (build-cost-label cost) ": " label)
+    (cond
+      (and (seq cost)
+           (not (string/blank? label)))
+      (str (build-cost-label cost) ": " (capitalize label))
+      (not (string/blank? label))
+      (capitalize label)
+      :else
       label)))
 
 (defn cost->string

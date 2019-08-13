@@ -381,7 +381,7 @@
                     (if-let [subtype (:breaks ability)]
                       (or (= subtype "All")
                           (has-subtype? current-ice subtype))
-                      true))
+                      false))
         break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
         subs-broken-at-once (when break-ability
                               (:break break-ability 1))
