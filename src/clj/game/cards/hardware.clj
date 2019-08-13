@@ -171,20 +171,28 @@
    (letfn [(in-runner-grip? [target]
              (and (= "Runner" (:side target))
                   (some #(= :hand %) (:zone target))))
-           (in-runner-heap? [target]
+           (in-runner-stack? [target]
              (and (= "Runner" (:side target))
-                  (some #(= :discard %) (:zone target))))
-           (grip-or-heap-trash? [event] ;; a <side>-trash event is a list of targets for trashing
-             (every? #(or (in-runner-heap? %)
-                          (in-runner-grip? %)) event))
+                  (some #(= :deck %) (:zone target))))
+           (grip-or-stack-trash? [event] ;; a <side>-trash event is a list of targets for trashing
+             (every? #(or (in-runner-grip? %)
+                          (in-runner-stack? %)) event))
            (triggered-ability [trash-side]
              {:once :per-turn
-              :req (req (and (first-event? state side trash-side grip-or-heap-trash?)))
+              :req (req (first-event? state side trash-side grip-or-stack-trash?))
               :prompt "Add a trashed card to the bottom of the Stack"
               :choices (req (cancellable
-                              (conj (vec (sort-by :title targets)) "No thanks")))
-              :effect (req (when-not (= "No thanks" target)
-                             (move state side target :deck)))})]
+                              (conj (vec (sort-by :title targets)) "No action")))
+              :effect (req (when-not (= "No action" target)
+                             (register-events
+                               state side
+                               (let [trashed-card target]
+                                 {:card-moved {:req (req (let [moved-card (second targets)]
+                                                           (same-card? moved-card trashed-card)))
+                                               :effect (req (let [moved-card (second targets)]
+                                                              (unregister-events state side moved-card {:effects {:card-moved nil}})
+                                                              (move state side moved-card :deck)))}})
+                               (assoc target :zone [:discard]))))})]
      {:events {:runner-trash (triggered-ability :runner-trash)
                :corp-trash (triggered-ability :corp-trash)}})
 

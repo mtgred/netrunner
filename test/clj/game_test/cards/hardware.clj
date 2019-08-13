@@ -206,7 +206,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (core/trash-cards state :runner (:hand (get-runner)))
-      (click-prompt state :runner "No thanks")
+      (click-prompt state :runner "No action")
       (is (= 1 (count (:discard (get-runner)))))))
   (testing "The player may move one card trashed from the Grip by the Runner to the bottom of the Stack"
     (do-game
@@ -238,6 +238,22 @@
         (is (= 2 (count (:discard (get-runner)))))
         (is (= target-cid (:cid (last (:deck (get-runner))))))
         (is (= non-target-cids (set (map :cid (:discard (get-runner)))))))))
+  (testing "The player may move one card trashed from the Heap to the bottom of the Stack"
+    (do-game
+      (new-game {:runner {:hand ["Buffer Drive"]
+                          :deck ["Stimhack", "Corroder", "Yog.0", "Mimic"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (let [[target & non-targets] (take 3 (:deck (get-runner)))
+            {target-name :title, target-cid :cid} target
+            non-target-cids (set (map :cid non-targets))]
+        (core/trash-cards state :runner (take 3 (:deck (get-runner))))
+        (click-prompt state :runner target-name)
+        ; (is (= 2 (count (:deck (get-runner)))))
+        ; (is (= 2 (count (:discard (get-runner)))))
+        (is (= target-cid (:cid (last (:deck (get-runner))))))
+        ; (is (= non-target-cids (set (map :cid (:discard (get-runner))))))
+        )))
   (testing "After a runner effect trashes a card, a corp effect must not cause Buffer Drive to trigger again"
     (do-game
       (new-game {:runner {:hand ["Buffer Drive", "Corroder", "Yog.0", "Mimic"]
@@ -257,7 +273,6 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Pay 0 [Credits] to trash")
       (is (empty? (:prompt (get-runner))))))
-  (testing "The player may move one card trashed from the Heap to the bottom of the Stack")
   (testing "The player may not move a card trashed while installed to the bottom of the Stack")
   (testing "Buffer Drive must not trigger a second time in one turn"
     (do-game
@@ -266,7 +281,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (core/trash-cards state :runner [(first (:hand (get-runner)))])
-      (click-prompt state :runner "No thanks")
+      (click-prompt state :runner "No action")
       (let [remaining-grip-cids (set (map :cid (:hand (get-runner))))]
         (core/trash-cards state :runner (:hand (get-runner)))
         (is (empty? (:prompt (get-runner))))
