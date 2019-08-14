@@ -2737,9 +2737,13 @@
     :subroutines [end-the-run]}
 
    "Tour Guide"
-   (let [ability {:req (req (asset? target))
-                  :effect (effect (reset-variable-subs card (count (filter asset? (all-active-installed state :corp))) end-the-run))}]
-     {:events {:rez ability
+   (let [ef (effect (reset-variable-subs card (count (filter asset? (all-active-installed state :corp))) end-the-run))
+         ability {:label "Reset number of subs"
+                  :req (req (asset? target))
+                  :effect ef}]
+     {:effect ef
+      :abilities [(dissoc ability :req)]
+      :events {:rez ability
                :derez ability}})
 
    "Trebuchet"
