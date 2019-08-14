@@ -1051,12 +1051,11 @@
                                         (when (not (pos? (get-counters (get-card state card) :credit)))
                                           (trash state :runner card {:unpreventable true}))))}]
     :events (trash-on-empty :credit)
-    ; See Net Mercur for why this implementation was chosen
-    :interactions {:pay-credits {:req (req (:run @state))
+    :interactions {:pay-credits {:req (req run)
                                  :type :credit}}}
 
    "Globalsec Security Clearance"
-   {:req (req (> (:link runner) 1))
+   {:req (req (< 1 (:link runner)))
     :flags {:runner-phase-12 (req true)}
     :abilities [{:msg "lose [Click] and look at the top card of R&D"
                  :once :per-turn
@@ -1521,8 +1520,9 @@
                                 card nil))}}
     ; Normally this should be (req true), but having pay-credits prompts on
     ; literally every interaction would get tiresome. Therefore Net Mercur will
-    ; only ask for payments during a run and on traces.
-    :interactions {:pay-credits {:req (req (or (:run @state)
+    ; only ask for payments during a run, traces, and psi games
+    :interactions {:pay-credits {:req (req (or run
+                                               (= :psi (:source-type eid))
                                                (= :trace (:source-type eid))))
                                  :type :credit}}}
 

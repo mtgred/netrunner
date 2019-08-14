@@ -94,7 +94,8 @@
                  recurring)]
          (register-events state side
                           {(if (= side :corp) :corp-phase-12 :runner-phase-12)
-                           {:effect r}} c)))
+                           {:req (req (not (:disabled card)))
+                            :effect r}} c)))
      (update! state side c)
      (when-let [events (:events cdef)]
        (register-events state side events c))
@@ -427,24 +428,25 @@
                                                           (card-init state side c {:resolve-effect false
                                                                                    :init-data true}))]
                                      (when-not no-msg
-                                       (runner-install-message state side (:title card) cost-str params))
-
+                                       (runner-install-message state side (:title installed-card) cost-str params))
                                      (play-sfx state side "install-runner")
-                                     (when (and (program? card)
+                                     (when (and (program? installed-card)
                                                 (not facedown)
                                                 (not no-mu))
                                        ;; Use up mu from program not installed facedown
-                                       (use-mu state (:memoryunits card))
+                                       (use-mu state (:memoryunits installed-card))
                                        (toast-check-mu state))
-                                     (handle-virus-counter-flag state side installed-card)
-                                     (when (and (not facedown) (resource? card))
+                                     (handle-virus-counter-flag state side (get-card state installed-card))
+                                     (when (and (not facedown)
+                                                (resource? card))
                                        (swap! state assoc-in [:runner :register :installed-resource] true))
-                                     (when (and (not facedown) (has-subtype? c "Icebreaker"))
-                                       (update-breaker-strength state side c))
+                                     (when (and (not facedown)
+                                                (has-subtype? installed-card "Icebreaker"))
+                                       (update-breaker-strength state side installed-card))
                                      (trigger-event-simult state side eid :runner-install
                                                            (when-not facedown
-                                                             {:card-ability (card-as-handler installed-card)})
-                                                           installed-card))
+                                                             {:card-ability (card-as-handler (get-card state installed-card))})
+                                                           (get-card state installed-card)))
                                    (effect-completed state side eid)))
                        (effect-completed state side eid)))
                    (clear-install-cost-bonus state side)))

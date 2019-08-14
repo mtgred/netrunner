@@ -2750,25 +2750,31 @@
     (let [utae (get-program state 0)]
       (run-on state "HQ")
       (core/rez state :corp (get-ice state :hq 0))
-      (card-ability state :runner utae 2)
-      (card-ability state :runner utae 0)
-      (click-prompt state :runner "2")
-      (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
-      (click-prompt state :runner "End the run")
-      (is (= 5 (:credit (get-runner))))
-      (card-ability state :runner utae 0)
-      (is (empty? (:prompt (get-runner))) "Can only use ability once per run")
-      (card-ability state :runner utae 1)
-      (is (= 5 (:credit (get-runner))) "Cannot use this ability without 3 installed virtual resources")
+      (let [credits (:credit (get-runner))]
+        (card-ability state :runner utae 2)
+        (is (= (dec credits) (:credit (get-runner)))))
+      (let [credits (:credit (get-runner))]
+        (card-ability state :runner utae 0)
+        (click-prompt state :runner "2")
+        (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
+        (click-prompt state :runner "End the run")
+        (is (= (- credits 2) (:credit (get-runner)))))
+      (let [credits (:credit (get-runner))]
+        (card-ability state :runner utae 0)
+        (is (empty? (:prompt (get-runner))) "Can only use ability once per run")
+        (card-ability state :runner utae 1)
+        (is (= credits (:credit (get-runner))) "Cannot use this ability without 3 installed virtual resources"))
       (run-jack-out state)
       (core/gain state :runner :click 2)
       (dotimes [_ 3]
         (play-from-hand state :runner "Logic Bomb"))
       (run-on state "HQ")
       (card-ability state :runner utae 2)
-      (card-ability state :runner utae 1)
-      (click-prompt state :runner "End the run")
-      (click-prompt state :runner "Done")
+      (let [credits (:credit (get-runner))]
+        (card-ability state :runner utae 1)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "Done")
+        (is (= (dec credits) (:credit (get-runner)))))
       (is (= 3 (:credit (get-runner))) "Able to use ability now"))))
 
 (deftest wyrm

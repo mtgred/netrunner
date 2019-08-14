@@ -164,7 +164,7 @@
     (case cost-type
       :credit (str amount " [Credits]")
       :click (->> "[Click]" repeat (take amount) (apply str))
-      :trash "[Trash]"
+      :trash "[trash]"
       :forfeit (str "forfeit " (quantify amount "Agenda"))
       :forfeit-self "forfeit this Agenda"
       :tag (str "remove " (quantify amount "tag"))
@@ -211,8 +211,13 @@
                        (capitalize (:msg ability)))
                   "")
         cost (:cost ability)]
-    (if (and (seq cost) (not (string/blank? label)))
-      (str (build-cost-label cost) ": " label)
+    (cond
+      (and (seq cost)
+           (not (string/blank? label)))
+      (str (build-cost-label cost) ": " (capitalize label))
+      (not (string/blank? label))
+      (capitalize label)
+      :else
       label)))
 
 (defn cost->string
@@ -593,7 +598,7 @@
 (defn- pay-sync-next
   [state side eid costs card action msgs]
   (if (empty? costs)
-    (effect-completed state side (make-result eid msgs))
+    (complete-with-result state side eid msgs)
     (wait-for (cost-handler state side (make-eid state eid) card action costs (first costs))
               (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
 
@@ -607,7 +612,7 @@
                 (complete-with-result state side eid (->> async-result
                                                           (filter some?)
                                                           (join " and "))))
-      (effect-completed state side (make-result eid nil)))))
+      (complete-with-result state side eid nil))))
 
 (defn gain [state side & args]
   (doseq [[type amount] (partition 2 args)]

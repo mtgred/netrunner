@@ -418,24 +418,20 @@
    "Dedication Ceremony"
    {:prompt "Select a faceup card"
     :choices {:req #(or (and (corp? %)
-                             (:rezzed %))
+                             (rezzed? %))
                         (and (runner? %)
                              (or (installed? %)
                                  (:host %))
                              (not (facedown? %))))}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
-    :effect (req (add-prop state :corp target :advance-counter 3 {:placed true})
-                 (effect-completed state side eid)
-                 (let [tgtcid (:cid target)]
-                   (register-turn-flag!
-                     state side
-                     target :can-score
-                     (fn [state side card]
-                       (if (and (= (:cid card) tgtcid)
-                                (>= (get-counters card :advancement) (or (:current-cost card)
-                                                                         (:advancementcost card))))
-                         ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
-                         true)))))}
+    :effect (effect (add-prop target :advance-counter 3 {:placed true})
+                    (register-turn-flag!
+                      target :can-score
+                      (fn [state side card]
+                        (if (same-card? card target)
+                          ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
+                          true)))
+                    (effect-completed eid))}
 
    "Defective Brainchips"
    {:events {:pre-damage {:req (req (= target :brain))
@@ -1119,27 +1115,28 @@
 
    "Mushin No Shin"
    {:prompt "Select a card to install from HQ"
-    :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
+    :choices {:req #(and (not (operation? %))
                          (corp? %)
                          (in-hand? %))}
-    :effect (req (corp-install state side (assoc target :advance-counter 3) "New remote")
-                 (effect-completed state side eid)
-                 (let [tgtcid (:cid target)]
-                   (register-turn-flag!
-                     state side
-                     card :can-rez
-                     (fn [state side card]
-                       (if (= (:cid card) tgtcid)
-                         ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))
-                         true)))
-                   (register-turn-flag!
-                     state side
-                     card :can-score
-                     (fn [state side card]
-                       (if (and (= (:cid card) tgtcid)
-                                (>= (get-counters card :advancement) (or (:current-cost card) (:advancementcost card))))
-                         ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
-                         true)))))}
+    :async true
+    :effect (req (wait-for (corp-install state side target "New remote" nil)
+                           (let [target (find-latest state target)]
+                             (add-prop state side target :advance-counter 3 {:placed true}))
+                           (register-turn-flag!
+                             state side
+                             card :can-rez
+                             (fn [state side card]
+                               (if (same-card? card target)
+                                 ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))
+                                 true)))
+                           (register-turn-flag!
+                             state side
+                             card :can-score
+                             (fn [state side card]
+                               (if (same-card? card target)
+                                 ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
+                                 true)))
+                           (effect-completed state side eid)))}
 
    "Mutate"
    {:req (req (some #(and (ice? %)

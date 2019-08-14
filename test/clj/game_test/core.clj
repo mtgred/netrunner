@@ -117,7 +117,6 @@
   [{:keys [corp runner mulligan start-as dont-start-turn dont-start-game] :as players}]
   (let [state (core/init-game
                 {:gameid 1
-                 :log []
                  :players [{:side "Corp"
                             :user {:username "Corp"}
                             :deck {:identity (:identity corp)

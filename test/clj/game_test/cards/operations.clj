@@ -476,6 +476,26 @@
       (click-prompt state :runner "Pay 4 [Credits] to trash")
       (is (= (+ 4 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner trashed PAD Campaign"))))
 
+(deftest dedication-ceremony
+  ;; Dedication Ceremony
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Hostile Takeover" "Underway Renovation" "Dedication Ceremony"]}})
+    (play-from-hand state :corp "Underway Renovation" "New remote")
+    (play-from-hand state :corp "Dedication Ceremony")
+    (click-card state :corp "Underway Renovation")
+    (let [under (get-content state :remote1 0)]
+      (is (= 3 (get-counters under :advancement)) "Underway Renovation has 3 advancement counters on it")
+      (core/score state :corp {:card (refresh under)})
+      (is (refresh under) "Underway Renovation isn't scored because of Dedication Ceremony")
+      (play-and-score state "Hostile Takeover")
+      (is (= "Hostile Takeover" (:title (get-scored state :corp 0))) "Other agendas can be scored")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/score state :corp {:card (refresh under)})
+      (is (nil? (refresh under)) "Underway Renovation is scored")
+      (is (= "Underway Renovation" (:title (get-scored state :corp 1)))))))
+
 (deftest defective-brainchips
   ;; Defective Brainchips - Do 1 add'l brain damage the first time Runner takes some each turn
   (do-game

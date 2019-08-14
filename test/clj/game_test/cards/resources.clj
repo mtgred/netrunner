@@ -1546,7 +1546,28 @@
                            "Used 1 credit from Ghost Runner"
                            (card-ability state :runner refr 1)
                            (click-card state :runner gr))
-        (is (not-empty (:discard (get-runner))) "Empty Ghost Runner trashed")))))
+        (is (not-empty (:discard (get-runner))) "Empty Ghost Runner trashed"))))
+  (testing "Can be used in psi games. Issue #1149"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Snowflake"]}
+                 :runner {:hand ["Ghost Runner"]
+                          :credits 1}})
+      (play-from-hand state :corp "Snowflake" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ghost Runner")
+      (run-on state :hq)
+      (let [sf (get-ice state :hq 0)
+            gr (get-resource state 0)]
+        (card-subroutine state :corp sf 0)
+        (is (zero? (:credit (get-runner))) "Runner has 0 credits")
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "2 [Credits]")
+        (click-card state :runner gr)
+        (click-card state :runner gr)
+        (is (zero? (:credit (get-runner))) "Runner still has 0 credits")
+        (is (= 1 (get-counters (refresh gr) :credit)) "Ghost Runner now has only 1 credit")))))
 
 (deftest globalsec-security-clearance
   ;; Globalsec Security Clearance - Ability, click lost on use

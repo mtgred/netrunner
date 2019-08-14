@@ -830,3 +830,25 @@
         (click-prompt state :runner "0")
         (is (empty? (:prompt (get-corp))) "No prompt displaying for Corp")
         (is (empty? (:prompt (get-runner))) "No prompt displaying for Runner")))))
+
+(deftest no-scoring-after-terminal
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["IPO" "Hostile Takeover"]
+                      :credits 15}})
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (let [ht (get-content state :remote1 0)]
+      (advance state ht 2)
+      (let [credits (:credit (get-corp))]
+        (play-from-hand state :corp "IPO")
+        (is (= (+ 5 credits) (:credit (get-corp))) "Corp gains 5 credits from IPO"))
+      (core/score state :corp {:card (refresh ht)})
+      (is (refresh ht) "Hostile Takeover isn't scored because a terminal Operation was played")
+      (take-credits state :corp)
+      (core/score state :corp {:card (refresh ht)})
+      (is (refresh ht) "Hostile Takeover isn't scored because it's the Runner's turn")
+      (take-credits state :runner)
+      (core/score state :corp {:card (refresh ht)})
+      (is (nil? (refresh ht)) "Hostile Takeover is scored because it's the Corp's turn again")
+      (is (= "Hostile Takeover" (:title (get-scored state :corp 0)))))))

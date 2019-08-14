@@ -1018,7 +1018,8 @@
 
    "Errand Boy"
    {:subroutines [(gain-credits-sub 1)
-                  {:msg "draw 1 card" :effect (effect (draw))}]}
+                  {:msg "draw 1 card"
+                   :effect (effect (draw eid 1 nil))}]}
 
    "Excalibur"
    {:subroutines [{:label "The Runner cannot make another run this turn"
@@ -2682,6 +2683,7 @@
 
    "Thoth"
    {:implementation "Encounter effect is manual"
+    :abilities [(give-tags 1)]
     :runner-abilities [{:label "Take 1 tag"
                         :async true
                         :effect (req (system-msg state :runner "takes 1 tag on encountering Thoth")

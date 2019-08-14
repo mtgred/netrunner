@@ -221,7 +221,7 @@
         oldstren (or (:current-strength breaker) (:strength breaker))]
     (swap! state update-in [:bonus] dissoc :breaker-strength)
     (trigger-event state side :pre-breaker-strength breaker)
-    (update! state side (assoc breaker :current-strength (breaker-strength state side breaker)))
+    (update! state side (assoc (get-card state breaker) :current-strength (breaker-strength state side breaker)))
     (trigger-event state side :breaker-strength-changed (get-card state breaker) oldstren)))
 
 (defn pump
@@ -328,8 +328,7 @@
       :break n
       :breaks subtype
       :break-cost cost
-      :label (str (when cost (str (build-cost-label cost) ": "))
-                  (or (:label args)
+      :label (str (or (:label args)
                       (str "break "
                            (when (< 1 n) "up to ")
                            (if (pos? n) n "any number of")
@@ -351,8 +350,7 @@
                            " for the remainder of the run"
                            (= duration :all-turn)
                            " for the remainder of the turn")]
-     {:label (str (when cost (str (build-cost-label cost) ": "))
-                  (or (:label args)
+     {:label (str (or (:label args)
                       (str "add " strength " strength"
                            duration-string)))
       :req (req (if-let [str-req (:req args)]
@@ -372,7 +370,7 @@
   {:effect
    (req (let [abs (remove #(and (= (:dynamic %) :auto-pump)
                                 (= (:dynamic %) :auto-pump-and-break))
-                          (:abilities (card-def card)))
+                          (:abilities card))
               current-ice (when-not (get-in @state [:run :ending])
                             (get-card state current-ice))
               ;; match strength
@@ -392,7 +390,7 @@
                           (if-let [subtype (:breaks ability)]
                             (or (= subtype "All")
                                 (has-subtype? current-ice subtype))
-                            true))
+                            false))
               break-ability (some #(when (can-break %) %) abs)
               subs-broken-at-once (when break-ability
                                     (:break break-ability 1))
@@ -412,7 +410,8 @@
                           (if (and (seq total-cost)
                                    (rezzed? current-ice)
                                    break-ability)
-                            (vec (concat (when (and (pos? unbroken-subs)
+                            (vec (concat (when (and break-ability
+                                                    (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
                                            [{:dynamic :auto-pump-and-break
                                              :label (str (when (seq total-cost)

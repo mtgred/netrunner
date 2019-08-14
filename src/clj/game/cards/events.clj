@@ -19,6 +19,7 @@
    (run-event cdef run-ability pre-run-effect nil))
   ([cdef run-ability pre-run-effect post-run-effect]
    (merge {:prompt "Choose a server"
+           :makes-run true
            :choices (req runnable-servers)
            :effect (effect ((or pre-run-effect (effect)) eid card targets)
                            (make-run target run-ability card)
@@ -30,6 +31,7 @@
   ;; Subtype does nothing currently, but might be used if trashing is properly implemented
   {:implementation "Ice trash is manual, always enables Reprisals"
    :async true
+   :makes-run true
    :effect (req (continue-ability state :runner
                                   (run-event nil nil nil
                                              (req (swap! state assoc-in [:runner :register :trashed-card] true)))
@@ -60,6 +62,7 @@
      {:prompt "Choose a server"
       :choices (req runnable-servers)
       :async true
+      :makes-run true
       :msg (msg "make a run on " target)
       :effect (req (let [run-server (server->zone state target)]
                      (wait-for (make-run state side (make-eid state) target nil card nil)
@@ -67,7 +70,8 @@
 
    "Amped Up"
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
-    :effect (effect (gain :click 3) (damage eid :brain 1 {:unpreventable true :card card}))}
+    :effect (effect (gain :click 3)
+                    (damage eid :brain 1 {:unpreventable true :card card}))}
 
    "Another Day, Another Paycheck"
    {:events {:agenda-stolen
@@ -154,6 +158,7 @@
 
    "Bribery"
    {:implementation "ICE chosen for cost increase is specified at start of run, not on approach"
+    :makes-run true
     :prompt "How many credits?"
     :choices :credit
     :msg (msg "increase the rez cost of the first unrezzed ICE approached by " target " [Credits]")
@@ -284,6 +289,7 @@
                                (continue-ability state side (cbi-final chosen original) card nil))))})]
      {:req (req hq-runnable)
       :async true
+      :makes-run true
       :effect (effect (make-run :hq {:replace-access
                                      {:msg "force the Corp to add all cards in HQ to the top of R&D"
                                       :async true
@@ -298,6 +304,7 @@
 
    "Code Siphon"
    {:req (req rd-runnable)
+    :makes-run true
     :effect (effect (make-run :rd
                               {:replace-access
                                {:async true
@@ -319,6 +326,7 @@
      {:async true
       :prompt "Choose a server"
       :recurring 4
+      :makes-run true
       :choices (req runnable-servers)
       :effect (req (let [c (move state side (assoc card :zone '(:discard)) :play-area {:force true})]
                      (card-init state side c {:resolve-effect false})
@@ -345,6 +353,7 @@
       :msg "make a run and install a program on encounter with the first piece of ICE"
       :choices (req runnable-servers)
       :async true
+      :makes-run true
       :abilities [{:label "Install a program using Compile"
                    :prompt "Install a program from your Stack or Heap?"
                    :choices ["Stack" "Heap"]
@@ -388,7 +397,9 @@
     :leave-play (req (swap! state update-in [:corp :bad-publicity :additional] dec))}
 
    "Credit Crash"
-   {:prompt "Choose a server" :choices (req runnable-servers)
+   {:prompt "Choose a server"
+    :choices (req runnable-servers)
+    :makes-run true
     :effect (effect (make-run target nil card)
                     (register-events (:events (card-def card))
                                      (assoc card :zone '(:discard))))
@@ -435,6 +446,7 @@
    {:prompt "Choose a server"
     :choices (req runnable-servers)
     :async true
+    :makes-run true
     :effect (req (let [serv target]
                    (continue-ability
                      state :corp
@@ -452,6 +464,7 @@
    "Data Breach"
    {:req (req rd-runnable)
     :async true
+    :makes-run true
     :effect (req (let [db-eid (make-eid state)
                        events (:events (card-def card))]
                    (register-events state side
@@ -475,6 +488,7 @@
 
    "Deep Data Mining"
    {:req (req rd-runnable)
+    :makes-run true
     :effect (effect (make-run :rd nil card)
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
@@ -497,6 +511,7 @@
    {:req (req (or rd-runnable hq-runnable))
     :prompt "Choose a server"
     :choices ["HQ" "R&D"]
+    :makes-run true
     :effect (effect (make-run target nil card)
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
@@ -551,6 +566,7 @@
     :msg "make a run and install a program on encounter with each ICE"
     :choices (req runnable-servers)
     :async true
+    :makes-run true
     :abilities [{:label "Install a program using Diana's Hunt?"
                  :async true
                  :effect (effect (resolve-ability
@@ -1607,7 +1623,7 @@
 
    "Net Celebrity"
    {:recurring 1
-    :interactions {:pay-credits {:req (req (:run @state))
+    :interactions {:pay-credits {:req (req run)
                                  :type :recurring}}}
 
    "Networking"
@@ -1698,14 +1714,9 @@
    "Peace in Our Time"
    {:req (req (not (:scored-agenda corp-reg)))
     :msg "gain 10 [Credits]. The Corp gains 5 [Credits]"
-    :effect (req (gain-credits state :runner 10)
-                 (gain-credits state :corp 5)
-                 (apply prevent-run-on-server
-                        state card (get-zones state))
-                 (register-events state side
-                                  {:runner-turn-ends {:effect (req (apply enable-run-on-server state card (get-zones state)))}}
-                                  (assoc card :zone '(:discard))))
-    :events {:runner-turn-ends nil}}
+    :effect (effect (gain-credits :runner 10)
+                    (gain-credits :corp 5)
+                    (register-turn-flag! card :can-run nil))}
 
    "Planned Assault"
    {:msg (msg "play " (:title target))
@@ -1723,6 +1734,7 @@
       :events {:purge {:effect (effect (trash card {:cause :purge}))}}
       :trash-effect {:effect (req (let [current-side (get-scoring-owner state {:cid (:agenda-cid card)})]
                                     (update-agenda-points state current-side (find-cid (:agenda-cid card) (get-in @state [current-side :scored])) 1)))}
+      :makes-run true
       :effect (effect (make-run
                         :archives
                         {:req (req (= target :archives))
@@ -1807,6 +1819,7 @@
                   "make a run"))
       :prompt "Choose a server"
       :choices (req runnable-servers)
+      :makes-run true
       :async true
       :effect (req (when (<= (hsize @state) 2)
                      (let [breakers (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
@@ -1935,6 +1948,7 @@
 
    "Retrieval Run"
    {:req (req archives-runnable)
+    :makes-run true
     :effect (effect (make-run
                       :archives
                       {:req (req (= target :archives))
@@ -1981,6 +1995,7 @@
 
    "Rip Deal"
    {:req (req hq-runnable)
+    :makes-run true
     :effect (effect
               (make-run
                 :hq {:req (req (= target :hq))
@@ -2032,6 +2047,7 @@
    "Run Amok"
    {:implementation "Ice trash is manual"
     :prompt "Choose a server" :choices (req runnable-servers)
+    :makes-run true
     :effect (effect (make-run target {:end-run {:msg " trash 1 piece of ICE that was rezzed during the run"}} card))}
 
    "Running Interference"
@@ -2085,6 +2101,7 @@
 
    "Showing Off"
    {:req (req rd-runnable)
+    :makes-run true
     :effect (effect (make-run
                       :rd
                       {:replace-access
@@ -2136,6 +2153,7 @@
    {:implementation "Bypass is manual"
     :prompt "Choose a server"
     :choices (req runnable-servers)
+    :makes-run true
     :effect (effect (make-run target nil card))}
 
    "Spec Work"
@@ -2161,6 +2179,7 @@
     :msg "expose 1 card and make a run"
     :choices {:req #(and (installed? %) (not (ice? %)) (corp? %))}
     :async true
+    :makes-run true
     :effect (req (wait-for (expose state side target)
                            (continue-ability
                              state side
@@ -2254,6 +2273,7 @@
 
    "The Maker's Eye"
    {:req (req rd-runnable)
+    :makes-run true
     :effect (effect (make-run :rd nil card)
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
@@ -2376,6 +2396,7 @@
 
    "Vamp"
    {:req (req hq-runnable)
+    :makes-run true
     :effect (effect (make-run
                       :hq {:req (req (= target :hq))
                            :replace-access
@@ -2387,6 +2408,7 @@
 
    "Wanton Destruction"
    {:req (req hq-runnable)
+    :makes-run true
     :effect (effect (make-run
                       :hq {:req (req (= target :hq))
                            :replace-access
