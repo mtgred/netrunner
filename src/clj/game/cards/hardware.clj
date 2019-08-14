@@ -192,11 +192,11 @@
               :corp-trash triggered-ability}
      :abilities [{:label "Remove Buffer Drive from the game to add a card from the Heap to the bottom of the Stack"
                   :msg "add a card from the Heap to the bottom of the Stack"
+                  :cost [:remove-from-game]
                   :show-discard true
                   :choices {:req #(and (runner? %)
                                        (in-discard? %))}
-                  :effect (effect (move card :rfg)
-                                  (move target :deck))}]})
+                  :effect (req (move state side target :deck))}]})
 
    "Capstone"
    {:abilities [{:req (req (pos? (count (:hand runner))))
