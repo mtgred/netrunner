@@ -2146,7 +2146,8 @@
                                   (rezzed? current-ice)
                                   (has-subtype? current-ice "Barrier")))
                    :label "Swap the Barrier ICE currently being encountered with a piece of ICE directly before or after it"
-                   :effect (effect (resolve-ability (surf state current-ice) card nil))}]})
+                   :async true
+                   :effect (effect (continue-ability (surf state current-ice) card nil))}]})
 
    "Switchblade"
    (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
