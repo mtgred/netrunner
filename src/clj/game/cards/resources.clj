@@ -1046,7 +1046,7 @@
                                  :type :credit}}}
 
    "Globalsec Security Clearance"
-   {:req (req (> (:link runner) 1))
+   {:req (req (< 1 (:link runner)))
     :flags {:runner-phase-12 (req true)}
     :abilities [{:msg "lose [Click] and look at the top card of R&D"
                  :once :per-turn
