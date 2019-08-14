@@ -1563,19 +1563,31 @@
 
 (deftest nbn-making-news
   ;; NBN: Making News
-  (do-game
-    (new-game {:corp {:id "NBN: Making News"
-                      :deck [(qty "Hedge Fund" 5)]
-                      :hand ["Snatch and Grab"]}})
-    (let [nbn-mn (:identity (get-corp))]
-      (play-from-hand state :corp "Snatch and Grab")
-      (is (= (+ (:credit (get-corp)) (get-counters (refresh nbn-mn) :recurring))
-             (:choices (prompt-map :corp))) "7 total available credits for the trace")
-      (click-prompt state :corp "7")
-      (dotimes [_ 2]
-        (click-card state :corp nbn-mn))
-      (is (zero? (get-counters (refresh nbn-mn) :recurring)) "Has used recurring credit")
-      (is (= 10 (:strength (prompt-map :runner))) "Current trace strength should be 10"))))
+  (testing "Pay credits, and not refilling on disabled. Issue #2439"
+    (do-game
+      (new-game {:corp {:id "NBN: Making News"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Snatch and Grab" "Scarcity of Resources"]}
+                 :runner {:hand ["Employee Strike"]}})
+      (let [nbn-mn (:identity (get-corp))]
+        (play-from-hand state :corp "Snatch and Grab")
+        (is (= (+ (:credit (get-corp)) (get-counters (refresh nbn-mn) :recurring))
+               (:choices (prompt-map :corp))) "7 total available credits for the trace")
+        (click-prompt state :corp "7")
+        (click-card state :corp nbn-mn)
+        (click-card state :corp nbn-mn)
+        (is (zero? (get-counters (refresh nbn-mn) :recurring)) "Has used recurring credit")
+        (is (= 10 (:strength (prompt-map :runner))) "Current trace strength should be 10")
+        (click-prompt state :runner "0")
+        (click-prompt state :corp "Done")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Employee Strike")
+        (take-credits state :runner)
+        (is (zero? (get-counters (refresh nbn-mn) :recurring)) "Making News doesn't get recurring credits cuz it's disabled")
+        (play-from-hand state :corp "Scarcity of Resources")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 2 (get-counters (refresh nbn-mn) :recurring)) "Recurring credits refill once MN isn't disabled anymore")))))
 
 (deftest maxx-maximum-punk-rock
   ;; MaxX

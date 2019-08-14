@@ -94,7 +94,8 @@
                  recurring)]
          (register-events state side
                           {(if (= side :corp) :corp-phase-12 :runner-phase-12)
-                           {:effect r}} c)))
+                           {:req (req (not (:disabled card)))
+                            :effect r}} c)))
      (update! state side c)
      (when-let [events (:events cdef)]
        (register-events state side events c))
