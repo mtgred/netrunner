@@ -1607,7 +1607,7 @@
 
    "Net Celebrity"
    {:recurring 1
-    :interactions {:pay-credits {:req (req (:run @state))
+    :interactions {:pay-credits {:req (req run)
                                  :type :recurring}}}
 
    "Networking"
