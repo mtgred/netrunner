@@ -24,17 +24,20 @@
 
 (defn effect-completed
   [state side eid]
-  (doseq [handler (get-in @state [:effect-completed (:eid eid)])]
-    (handler state side eid))
-  (swap! state update-in [:effect-completed] dissoc (:eid eid)))
+  (let [results
+        (reduce (fn [result handler]
+                  (conj result (handler state side eid)))
+                []
+                (get-in @state [:effect-completed (:eid eid)]))]
+    (swap! state update-in [:effect-completed] dissoc (:eid eid))
+    results))
 
 (defn make-result
   [eid result]
   (assoc eid :result result))
 
 (defn complete-with-result
-  "Calls `effect-complete` with `make-result` and also returns the argument.
-  Helper function for cost-handler"
+  "Calls `effect-complete` with `make-result` and also returns the argument"
   [state side eid result]
   (effect-completed state side (make-result eid result))
   result)

@@ -1485,11 +1485,11 @@
                          :effect (effect (mill :corp :runner (adv4? state card)))}}})
 
    "Unorthodox Predictions"
-   {:async false
-    :implementation "Prevention of subroutine breaking is not enforced"
+   {:implementation "Prevention of subroutine breaking is not enforced"
     :prompt "Choose an ICE type for Unorthodox Predictions"
     :choices ["Barrier" "Code Gate" "Sentry"]
-    :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}
+    :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")
+    :effect (effect (effect-completed eid))}
 
    "Utopia Fragment"
    {:events {:pre-steal-cost {:req (req (pos? (get-counters target :advancement)))
