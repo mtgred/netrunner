@@ -683,7 +683,7 @@
                 (render-icons (:label ab))]))
            abilities))
        (when (and show-all
-                  (pos? (count (remove #(or (:broken %) (:fired %)) subroutines))))
+                  (seq subroutines))
          [:div {:on-click #(send-command "unbroken-subroutines" {:card card})}
           "Fire unbroken subroutines"])
        (when (and show-all
