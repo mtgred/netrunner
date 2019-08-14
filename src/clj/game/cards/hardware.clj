@@ -171,13 +171,13 @@
   (let [triggered-ability
         {:once :per-turn
          :req (req (letfn [(grip-or-stack-trash? [event] ;; a <side>-trash event is a list of targets for trashing
-                             (every? #(and (runner? %)
+                             (some #(and (runner? %)
                                            (or (in-hand? %) (in-deck? %)))
                                      event))]
                      (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
                              (event-count state side :corp-trash grip-or-stack-trash?)))))
          :prompt "Add a trashed card to the bottom of the Stack"
-         :choices (req (conj (vec (sort-by :title targets)) "No action"))
+         :choices (req (conj (vec (sort-by :title (filter #(:cid %) targets))) "No action"))
          :effect (req (when-not (= "No action" target)
                         (register-events
                           state side
