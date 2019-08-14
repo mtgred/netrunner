@@ -204,7 +204,7 @@
       (new-game {:runner {:hand ["Buffer Drive", "Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
-      (core/trash-cards state :runner (:hand (get-runner)))
+      (trash-from-hand state :runner "Sure Gamble")
       (click-prompt state :runner "No action")
       (is (= 1 (count (:discard (get-runner)))))))
   (testing "The player may move one card trashed from the Grip by the Runner to the bottom of the Stack"
@@ -258,9 +258,9 @@
                           :deck ["Stimhack"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
-      (core/trash-cards state :runner [(first (:hand (get-runner)))])
+      (trash-from-hand state :runner "Corroder")
       (click-prompt state :runner "Corroder")
-      (core/trash-cards state :corp [(first (:hand (get-runner)))])
+      (trash-from-hand state :corp "Yog.0")
       (is empty? (:prompt (get-runner)))))
   (testing "Trashing a corp card must not trigger Buffer Drive"
     (do-game
@@ -287,21 +287,20 @@
                           :deck ["Stimhack"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
-      (core/trash-cards state :runner [(first (:hand (get-runner)))])
+      (trash-from-hand state :runner "Corroder")
       (click-prompt state :runner "No action")
       (let [remaining-grip-cids (set (map :cid (:hand (get-runner))))]
-        (core/trash-cards state :runner (:hand (get-runner)))
+        (trash-from-hand state :runner "Yog.0")
         (is (empty? (:prompt (get-runner))))
         (is (= 1 (count (:deck (get-runner)))))
-        (is (= 3 (count (:discard (get-runner)))))
-        (is (every? (set (map :cid (:discard (get-runner)))) remaining-grip-cids)))))
+        (is (= 2 (count (:discard (get-runner))))))))
   (testing "Buffer Drive must not trigger on the second trash of the turn if it was installed after the first trash"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
       (take-credits state :corp)
-      (core/trash-cards state :runner [(first (:hand (get-runner)))])
+      (trash-from-hand state :runner "Buffer Drive")
       (play-from-hand state :runner "Buffer Drive")
-      (core/trash-cards state :runner [(first (:hand (get-runner)))])
+      (trash-from-hand state :runner "Buffer Drive")
       (is (empty? (:prompt (get-runner))))))
   (testing "The effect triggers on meat damage"
     (do-game
@@ -353,17 +352,17 @@
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 5)]}})
       (take-credits state :corp)
-      (core/trash-cards state :corp [(first (:hand (get-runner)))])
+      (trash-from-hand state :runner "Buffer Drive")
       (play-from-hand state :runner "Buffer Drive")
-      (core/trash-cards state :runner [(first (:hand (get-runner)))])
+      (trash-from-hand state :runner "Buffer Drive")
       (is (empty? (:prompt (get-runner))))))
   (testing "Runner trash -> install -> Corp trash should not cause Buffer Drive to trigger"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 5)]}})
       (take-credits state :corp)
-      (core/trash-cards state :runner [(first (:hand (get-runner)))])
+      (trash-from-hand state :runner "Buffer Drive")
       (play-from-hand state :runner "Buffer Drive")
-      (core/trash-cards state :corp [(first (:hand (get-runner)))])
+      (trash-from-hand state :runner "Buffer Drive")
       (is (empty? (:prompt (get-runner)))))))
 
 (deftest chop-bot-3000
