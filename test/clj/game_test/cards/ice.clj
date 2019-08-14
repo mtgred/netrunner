@@ -1767,27 +1767,26 @@
 (deftest peeping-tom
   ;;Peeping Tom - Counts # of chosen card type in Runner grip
   (do-game
-    (new-game {:corp {:deck ["Peeping Tom"]}
-               :runner {:deck [(qty "Sure Gamble" 5)]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Peeping Tom"]}
+               :runner {:deck ["Corroder" (qty "Sure Gamble" 5)]}})
     (play-from-hand state :corp "Peeping Tom" "HQ")
     (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
     (run-on state "HQ")
     (let [tom (get-ice state :hq 0)]
       (core/rez state :corp (refresh tom))
       (card-ability state :corp tom 0)
       (click-prompt state :corp "Hardware")
-      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
+      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
           "Revealed Runner grip")
       (is (last-log-contains? state "0") "Correctly counted Hardware in Runner grip")
       (card-ability state :corp tom 0)
       (click-prompt state :corp "Event")
-      (is (last-log-contains? state "5") "Correctly counted Events in Runner grip")
+      (is (last-log-contains? state "4") "Correctly counted Events in Runner grip")
       (core/resolve-unbroken-subs! state :corp (refresh tom))
       (click-prompt state :runner "Take 1 tag")
-      (click-prompt state :runner "Take 1 tag")
-      (click-prompt state :runner "Take 1 tag")
-      (click-prompt state :runner "Take 1 tag")
-      (is (= 4 (count-tags state)) "Tag ability sucessful")
+      (is (= 1 (count-tags state)) "Tag ability sucessful")
       (click-prompt state :runner "End the run")
       (is (not (:run @state)) "Run ended"))))
 
