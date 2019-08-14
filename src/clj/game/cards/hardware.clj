@@ -168,41 +168,35 @@
                              :hand-size (runner-points @state)))})
 
    "Buffer Drive"
-   (letfn [(in-grip? [target]
-             (and (= "Runner" (:side target))
-                  (some #(= :hand %) (:zone target))))
-           (in-stack? [target]
-             (and (= "Runner" (:side target))
-                  (some #(= :deck %) (:zone target))))
-           (grip-or-stack-trash? [event] ;; a <side>-trash event is a list of targets for trashing
-             (every? #(or (in-grip? %)
-                          (in-stack? %)) event))
-           (triggered-ability []
-             {:once :per-turn
-              :req (req (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
-                                (event-count state side :corp-trash grip-or-stack-trash?))))
-              :prompt "Add a trashed card to the bottom of the Stack"
-              :choices (req (conj (vec (sort-by :title targets)) "No action"))
-              :effect (req (when-not (= "No action" target)
-                             (register-events
-                               state side
-                               (let [trashed-card target]
-                                 {:card-moved {:req (req (let [moved-card (second targets)]
-                                                           (same-card? moved-card trashed-card)))
-                                               :effect (req (let [moved-card (second targets)]
-                                                              (unregister-events state side moved-card {:effects {:card-moved nil}})
-                                                              (move state side moved-card :deck)))}})
-                               (assoc target :zone [:discard]))))})]
-     {:events {:runner-trash (triggered-ability)
-               :corp-trash (triggered-ability)}
-      :abilities [{:label "Remove Buffer Drive from the game to add a card from the Heap to the bottom of the Stack"
-                   :msg "add a card from the Heap to the bottom of the Stack"
-                   :show-discard true
-                   :choices {:req #(and (runner? %)
-                                        (= :discard (first (:zone %))))}
-                   :effect (effect (move card :rfg)
-                                   (move target :deck))}]})
-
+  (let [triggered-ability
+        {:once :per-turn
+         :req (req (letfn [(grip-or-stack-trash? [event] ;; a <side>-trash event is a list of targets for trashing
+                             (every? #(and (runner? %)
+                                           (or (in-hand? %) (in-deck? %)))
+                                     event))]
+                     (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
+                             (event-count state side :corp-trash grip-or-stack-trash?)))))
+         :prompt "Add a trashed card to the bottom of the Stack"
+         :choices (req (conj (vec (sort-by :title targets)) "No action"))
+         :effect (req (when-not (= "No action" target)
+                        (register-events
+                          state side
+                          (let [trashed-card target]
+                            {:card-moved {:req (req (let [moved-card (second targets)]
+                                                      (same-card? moved-card trashed-card)))
+                                          :effect (req (let [moved-card (second targets)]
+                                                         (unregister-events state side moved-card {:effects {:card-moved nil}})
+                                                         (move state side moved-card :deck)))}})
+                          (assoc target :zone [:discard]))))}]
+    {:events {:runner-trash triggered-ability
+              :corp-trash triggered-ability}
+     :abilities [{:label "Remove Buffer Drive from the game to add a card from the Heap to the bottom of the Stack"
+                  :msg "add a card from the Heap to the bottom of the Stack"
+                  :show-discard true
+                  :choices {:req #(and (runner? %)
+                                       (in-discard? %))}
+                  :effect (effect (move card :rfg)
+                                  (move target :deck))}]})
 
    "Capstone"
    {:abilities [{:req (req (pos? (count (:hand runner))))
