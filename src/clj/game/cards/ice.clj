@@ -2672,6 +2672,7 @@
 
    "Thoth"
    {:implementation "Encounter effect is manual"
+    :abilities [(give-tags 1)]
     :runner-abilities [{:label "Take 1 tag"
                         :async true
                         :effect (req (system-msg state :runner "takes 1 tag on encountering Thoth")
