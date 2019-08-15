@@ -87,11 +87,12 @@
   (Conspiracy suite: Black Orchestra, MKUltra, Paperclip)"
   [cost strength subtype]
   (merge
-    (dissoc (break-sub cost strength subtype) :req :cost)
+    (dissoc (break-sub cost strength subtype) :req)
     {:label (str "add " strength " strength and "
                  " break up to " strength
                  " " subtype
                  " subroutines")
+     :cost cost
      :msg (msg "increase its strength from " (get-strength card)
                " to " (+ strength (get-strength card)))
      :effect (effect (pump card strength)
