@@ -1495,9 +1495,9 @@
      {:silent (req true)
       :effect (effect (add-counter card :agenda 2))
       :abilities [{:cost [:agenda 1]
-                   :req (req (:run @state))
+                   :req (req run)
                    :msg "prevent this run from becoming successful"
-                   :effect (req (update! state side (assoc-in card [:special :transport-monopoly] true)))}]
+                   :effect (effect (update! (assoc-in card [:special :transport-monopoly] true)))}]
       :suppress {:pre-successful-run suppress-event
                  :successful-run suppress-event}
       :events {:pre-successful-run

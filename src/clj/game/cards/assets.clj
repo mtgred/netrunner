@@ -2096,16 +2096,17 @@
                :choices {:req #(and (ice? %)
                                     (installed? %))}
                :cancel-effect (effect (effect-completed eid))
-               :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+               :effect (effect (add-prop target :advance-counter 1 {:placed true})
+                               (effect-completed eid))}
               {:label "add this asset to HQ"
                :msg "add it to HQ"
                :effect (effect (move card :hand))}
               {:msg "done"}]
          choice (fn choice [abis n]
                   {:prompt "Choose an ability to resolve"
-                   :choices (map #(capitalize (or (:label %) (:msg %))) abis)
+                   :choices (map make-label abis)
                    :async true
-                   :effect (req (let [chosen (some #(when (= target (capitalize (or (:label %) (:msg %)))) %) abis)]
+                   :effect (req (let [chosen (some #(when (= target (make-label %)) %) abis)]
                                   (wait-for
                                     (resolve-ability state side chosen card nil)
                                     (if (and (pos? (dec n)) (not= "done" (:msg chosen)))
@@ -2113,7 +2114,7 @@
                                       (effect-completed state side eid)))))})
          ability {:async true
                   :once :per-turn
-                  :effect (effect (continue-ability (choice all (if (< 1 (count (filter #(asset? %) (all-active-installed state :corp))))
+                  :effect (effect (continue-ability (choice all (if (< 1 (count (filter asset? (all-active-installed state :corp))))
                                                                   1
                                                                   3)) card nil))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
