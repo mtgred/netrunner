@@ -140,7 +140,8 @@
     (f (if (= "exception" type) (build-exception-msg msg (:last-error @game-state)) msg))
     (send-command "toast")))
 
-(defn action-list [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
+(defn action-list
+  [{:keys [type zone rezzed advanceable advance-counter advancementcost current-cost] :as card}]
   (-> []
       (#(if (or (and (= type "Agenda")
                      (#{"servers" "onhost"} (first zone)))
@@ -168,7 +169,7 @@
         (or (< 1 c)
             (pos? (+ (count corp-abilities)
                      (count runner-abilities)))
-            (some #{"rez derez" "advance"} actions)
+            (some #{"rez" "derez" "advance"} actions)
             (and (= type "ICE")
                  (not (:run @game-state)))
             (and (corp? card)
