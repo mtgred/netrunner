@@ -1601,6 +1601,11 @@
                   (pos? (:click @me)))
              #(send-command "credit")]]))])})))
 
+(defn starting-timestamp []
+  [:div
+   {:class ["panel" "blue-shade"]}
+   (str "Game start: " (.toLocaleTimeString (js/Date.)))])
+
 (defn gameboard []
   (let [run (r/cursor game-state [:run])
         side (r/cursor game-state [:side])
@@ -1701,6 +1706,7 @@
                        me-current (r/cursor game-state [me-side :current])
                        me-play-area (r/cursor game-state [me-side :play-area])]
                    [:div
+                    [starting-timestamp]
                     [rfg-view op-rfg "Removed from the game" true]
                     [rfg-view me-rfg "Removed from the game" true]
                     [play-area-view op-user "Temporary Zone" op-play-area]
