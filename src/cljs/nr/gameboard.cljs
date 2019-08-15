@@ -1586,13 +1586,13 @@
                        me-current (r/cursor game-state [me-side :current])
                        me-play-area (r/cursor game-state [me-side :play-area])]
                    [:div
+                    [starting-timestamp]
                     [rfg-view op-rfg "Removed from the game" true]
                     [rfg-view me-rfg "Removed from the game" true]
                     [play-area-view op-user "Temporary Zone" op-play-area]
                     [play-area-view me-user "Temporary Zone" me-play-area]
                     [rfg-view op-current "Current" false]
-                    [rfg-view me-current "Current" false]
-                    [starting-timestamp]])
+                    [rfg-view me-current "Current" false]])
                  (when-not (= @side :spectator)
                    [button-pane {:side me-side :active-player active-player :run run :end-turn end-turn
                                  :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12
