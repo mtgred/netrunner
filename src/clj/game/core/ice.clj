@@ -123,7 +123,10 @@
      (resolve-next-unbroken-sub state side eid ice subroutines nil)))
   ([state side eid ice subroutines] (resolve-next-unbroken-sub state side eid ice subroutines nil))
   ([state side eid ice subroutines msgs]
-   (if (and subroutines (:run @state))
+   (if (and subroutines
+            (:run @state)
+            (not (get-in @state [:run :ending]))
+            (not (get-in @state [:run :ended])))
      (let [sub (first subroutines)]
        (wait-for (resolve-subroutine! state side (make-eid state eid) ice sub)
                  (resolve-next-unbroken-sub state side eid
@@ -368,10 +371,11 @@
   auto-pump routine in core, IF we are encountering a rezzed ice with a subtype
   we can break."
   {:effect
-   (req (let [abs (remove #(and (= (:dynamic %) :auto-pump)
-                                (= (:dynamic %) :auto-pump-and-break))
+   (req (let [abs (remove #(or (= (:dynamic %) :auto-pump)
+                               (= (:dynamic %) :auto-pump-and-break))
                           (:abilities card))
-              current-ice (when-not (get-in @state [:run :ending])
+              current-ice (when-not (or (get-in @state [:run :ending])
+                                        (get-in @state [:run :ended]))
                             (get-card state current-ice))
               ;; match strength
               pump-ability (some #(when (:pump %) %) abs)
@@ -394,9 +398,8 @@
               break-ability (some #(when (can-break %) %) abs)
               subs-broken-at-once (when break-ability
                                     (:break break-ability 1))
-              unbroken-subs (when (:subroutines current-ice)
-                              (count (remove :broken (:subroutines current-ice))))
-              times-break (when (and unbroken-subs
+              unbroken-subs (count (remove :broken (:subroutines current-ice)))
+              times-break (when (and (pos? unbroken-subs)
                                      subs-broken-at-once)
                             (if (pos? subs-broken-at-once)
                               (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
@@ -423,8 +426,9 @@
                                          (when (and (pos? times-pump)
                                                     (can-pay? state side eid card total-pump-cost))
                                            [{:dynamic :auto-pump
-                                             :cost total-pump-cost
-                                             :label (str "Match strength of " (:title current-ice))}])
+                                             :label (str (when (seq total-pump-cost)
+                                                           (str (build-cost-label total-pump-cost) ": "))
+                                                         "Match strength of " (:title current-ice))}])
                                          abs))
                             abs)))))})
 

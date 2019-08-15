@@ -986,6 +986,7 @@
   [state side]
   (let [server (-> @state :run :server first)]
     (swap! state assoc-in [:run :ending] true)
+    (swap! state assoc-in [:run :ended] true)
     (wait-for (trigger-event-sync state side :run-ends server)
               (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                 (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
@@ -1002,10 +1003,10 @@
 (defn handle-end-run
   "Initiate run resolution."
   [state side]
-  (if-not (and (empty? (get-in @state [:runner :prompt]))
-               (empty? (get-in @state [:corp :prompt])))
-    (swap! state assoc-in [:run :ended] true)
-    (run-cleanup state side)))
+  (if (and (empty? (get-in @state [:runner :prompt]))
+           (empty? (get-in @state [:corp :prompt])))
+    (run-cleanup state side)
+    (swap! state assoc-in [:run :ended] true)))
 
 (defn close-access-prompt
   "Closes a 'You accessed _' prompt through a non-standard card effect like Imp."

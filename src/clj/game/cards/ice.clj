@@ -1443,7 +1443,8 @@
                 {:msg "prevent the Runner from jacking out until after the next piece of ICE"
                  :effect (effect (register-events
                                    {:pass-ice {:effect (req (swap! state update-in [:run] dissoc :prevent-jack-out)
-                                                            (unregister-events state side card))}} card)
+                                                            (unregister-events state side card))}}
+                                   card)
                                  (prevent-jack-out))}]}
 
    "Information Overload"
@@ -2163,6 +2164,7 @@
 
    "Peeping Tom"
    (let [sub {:label "End the run unless Runner takes 1 tag"
+              :async true
               :effect (req (show-wait-prompt state :corp "Runner deciding about Peeping Tom")
                            (continue-ability
                              state :runner
