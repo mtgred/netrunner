@@ -328,7 +328,8 @@
       :break n
       :breaks subtype
       :break-cost cost
-      :label (str (or (:label args)
+      :label (str (when cost (str (build-cost-label cost) ": "))
+                  (or (:label args)
                       (str "break "
                            (when (< 1 n) "up to ")
                            (if (pos? n) n "any number of")
