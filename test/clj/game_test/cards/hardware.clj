@@ -352,17 +352,19 @@
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 5)]}})
       (take-credits state :corp)
-      (trash-from-hand state :runner "Buffer Drive")
+      (core/trash state :corp (first (:hand (get-runner))))
       (play-from-hand state :runner "Buffer Drive")
-      (trash-from-hand state :runner "Buffer Drive")
+      (core/trash state :runner (first (:hand (get-runner))))
+      (is (= 2 (count (:discard (get-runner)))))
       (is (empty? (:prompt (get-runner))))))
   (testing "Runner trash -> install -> Corp trash should not cause Buffer Drive to trigger"
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 5)]}})
       (take-credits state :corp)
-      (trash-from-hand state :runner "Buffer Drive")
+      (core/trash state :runner (first (:hand (get-runner))))
       (play-from-hand state :runner "Buffer Drive")
-      (trash-from-hand state :runner "Buffer Drive")
+      (core/trash state :corp (first (:hand (get-runner))))
+      (is (= 2 (count (:discard (get-runner)))))
       (is (empty? (:prompt (get-runner)))))))
 
 (deftest chop-bot-3000
