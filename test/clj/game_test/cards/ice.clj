@@ -2419,23 +2419,60 @@
 
 (deftest tour-guide
   ;; Tour Guide
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Tour Guide" (qty "NGO Front" 3)]
-                      :credits 10}})
-    (core/gain state :corp :click 10)
-    (play-from-hand state :corp "Tour Guide" "HQ")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (let [tg (get-ice state :hq 0)]
-      (core/rez state :corp tg)
-      (is (zero? (count (:subroutines (refresh tg)))) "Tour Guide starts with 0 subs")
+  (testing "Rez before other assets"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tour Guide" (qty "NGO Front" 3)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Tour Guide" "HQ")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [tg (get-ice state :hq 0)]
+        (core/rez state :corp tg)
+        (is (zero? (count (:subroutines (refresh tg)))) "Tour Guide starts with 0 subs")
+        (core/rez state :corp (get-content state :remote1 0))
+        (is (= 1 (count (:subroutines (refresh tg)))) "Tour Guide gains 1 sub on asset rez")
+        (core/rez state :corp (get-content state :remote2 0))
+        (core/rez state :corp (get-content state :remote3 0))
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs"))))
+  (testing "Rez after other assets"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tour Guide" (qty "NGO Front" 3)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
-      (is (= 1 (count (:subroutines (refresh tg)))) "Tour Guide gains 1 sub on asset rez")
       (core/rez state :corp (get-content state :remote2 0))
       (core/rez state :corp (get-content state :remote3 0))
-      (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs"))))
+      (play-from-hand state :corp "Tour Guide" "HQ")
+      (let [tg (get-ice state :hq 0)]
+        (core/rez state :corp tg)
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs"))))
+  (testing "Reset subs with ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tour Guide" (qty "NGO Front" 3)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (core/rez state :corp (get-content state :remote2 0))
+      (core/rez state :corp (get-content state :remote3 0))
+      (play-from-hand state :corp "Tour Guide" "HQ")
+      (let [tg (get-ice state :hq 0)]
+        (core/rez state :corp tg)
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs")
+        (core/update! state :corp (assoc tg :subroutines []))
+        (is (zero? (count (:subroutines (refresh tg)))) "Tour Guide loses all subroutines")
+        (card-ability state :corp tg 0)
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs")))))
 
 (deftest trebuchet
   ;; Trebuchet
