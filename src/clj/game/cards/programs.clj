@@ -87,11 +87,12 @@
   (Conspiracy suite: Black Orchestra, MKUltra, Paperclip)"
   [cost strength subtype]
   (merge
-    (dissoc (break-sub cost strength subtype) :req :cost)
+    (dissoc (break-sub cost strength subtype) :req)
     {:label (str "add " strength " strength and "
                  " break up to " strength
                  " " subtype
                  " subroutines")
+     :cost cost
      :msg (msg "increase its strength from " (get-strength card)
                " to " (+ strength (get-strength card)))
      :effect (effect (pump card strength)
@@ -337,11 +338,11 @@
 
    "Alpha"
    (auto-icebreaker {:abilities [(merge
-                                   (dissoc (break-sub 1 1) :cost)
+                                   (break-sub 1 1)
                                    {:req (req (= (:position run) (count run-ices)))
                                     :effect (effect (continue-ability (break-sub 1 1) card nil))})
                                  (merge
-                                   (dissoc (strength-pump 1 1) :cost)
+                                   (strength-pump 1 1)
                                    {:req (req (= (:position run) (count run-ices)))
                                     :effect (effect (continue-ability (strength-pump 1 1) card nil))})]})
 
@@ -596,9 +597,8 @@
     :events {:runner-turn-ends {:msg "add itself to Grip"
                                 :effect (effect (move card :hand))}}
     :abilities [(merge
-                  (dissoc (break-sub 1 1 {:req (req (and (<= (get-strength current-ice) (get-strength card))
-                                                         (has-subtype? current-ice (:subtype-target card))))})
-                          :cost)
+                  (break-sub 1 1 {:req (req (and (<= (get-strength current-ice) (get-strength card))
+                                                 (has-subtype? current-ice (:subtype-target card))))})
                   {:effect (effect
                              (continue-ability
                                (break-sub 1 1 (:subtype-target card))
@@ -778,14 +778,14 @@
                      :effect (effect (update! (assoc card :server-target target)))
                      :leave-play (effect (update! (dissoc card :server-target)))
                      :abilities [(merge
-                                   (dissoc (break-sub 1 1 "Code Gate") :cost)
+                                   (break-sub 1 1 "Code Gate")
                                    {:req (req (#{(last (server->zone state (:server-target card)))} (first (:server run))))
                                     :effect (effect
                                               (continue-ability
                                                 (break-sub 1 1 "Code Gate")
                                                 card nil))})
                                  (merge
-                                   (dissoc (strength-pump 1 1) :cost)
+                                   (strength-pump 1 1)
                                    {:req (req (#{(last (server->zone state (:server-target card)))} (first (:server run))))
                                     :effect (effect
                                               (continue-ability
@@ -805,7 +805,7 @@
    "Dai V"
    (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                      :abilities [(merge
-                                   (dissoc (break-sub 2 0) :cost :req)
+                                   (dissoc (break-sub 2 0) :req)
                                    {:effect
                                     (effect
                                       (continue-ability
@@ -1609,11 +1609,11 @@
 
    "Omega"
    (auto-icebreaker {:abilities [(merge
-                                   (dissoc (break-sub 1 1) :cost)
+                                   (break-sub 1 1)
                                    {:req (req (= 1 (:position run)))
                                     :effect (effect (continue-ability (break-sub 1 1) card nil))})
                                  (merge
-                                   (dissoc (strength-pump 1 1) :cost)
+                                   (strength-pump 1 1)
                                    {:req (req (= 1 (:position run)))
                                     :effect (effect (continue-ability (strength-pump 1 1) card nil))})]})
 
