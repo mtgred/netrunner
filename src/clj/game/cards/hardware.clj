@@ -1403,7 +1403,8 @@
 
    "Swift"
    {:in-play [:memory 1]
-    :events {:play-event {:req (req (has-subtype? target "Run"))
+    :events {:play-event {:req (req (and (has-subtype? target "Run")
+                                         (first-event? state side :play-event #(has-subtype? (first %) "Run"))))
                           :effect (effect (gain :click 1))}}}
 
    "The Gauntlet"
