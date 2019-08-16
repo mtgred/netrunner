@@ -300,7 +300,8 @@
                                                           (break-subroutines-pay ice cost broken-subs args) card nil)
                                          (doseq [sub broken-subs]
                                            (break-subroutine! state (get-card state ice) sub))
-                                         (let [ice (get-card state ice)]
+                                         (let [ice (get-card state ice)
+                                               card (get-card state card)]
                                            (if (and (not early-exit)
                                                     (:repeatable args)
                                                     (seq broken-subs)
