@@ -1602,9 +1602,9 @@
              #(send-command "credit")]]))])})))
 
 (defn starting-timestamp []
-  [:div
-   {:class ["panel" "blue-shade"]}
-   (str "Game start: " (.toLocaleTimeString (js/Date.)))])
+  [:div.panel.blue-shade
+   [:span.float-center
+    (str "Game start: " (.toLocaleTimeString (js/Date.)))]])
 
 (defn gameboard []
   (let [run (r/cursor game-state [:run])
