@@ -1997,7 +1997,12 @@
              :effect (effect (continue-ability
                                (reset-variable-subs state side card 1 end-the-run {:back true})
                                card nil))}]
-     {:events {:play-event ab
+     {:effect (effect (continue-ability
+                        (when (pos? (count (concat (get-in @state [:corp :current])
+                                                   (get-in @state [:runner :current]))))
+                          (reset-variable-subs state side card 1 end-the-run {:back true}))
+                        card nil))
+      :events {:play-event ab
                :play-operation ab
                :trash-current {:msg "make News Hound lose \"[subroutine] End the run\""
                                :effect (effect (continue-ability
