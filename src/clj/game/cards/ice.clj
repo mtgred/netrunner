@@ -1,7 +1,7 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.eid :refer [make-eid effect-completed]]
+            [game.core.eid :refer [make-eid effect-completed complete-with-result]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
             [game.core.toasts :refer [toast]]
@@ -2700,13 +2700,26 @@
     :cannot-host true
     :subroutines [trash-program
                   trash-program
-                  end-the-run
-                  {:label "Trash a resource"
-                   :msg (msg "trash " (:title target))
+                  {:label "Trash a resource and end the run"
                    :async true
-                   :choices {:req #(and (installed? %)
-                                        (resource? %))}
-                   :effect (effect (trash target {:reason :subroutine}))}]}
+                   :effect (req (wait-for
+                                  (resolve-ability
+                                    state side
+                                    {:req (req (pos? (count (filter resource? (all-installed state :runner)))))
+                                     :async true
+                                     :choices {:all true
+                                               :req #(and (installed? %)
+                                                          (resource? %))}
+                                     :effect (req (wait-for (trash state side target {:cause :subroutine})
+                                                            (complete-with-result state side eid target)))}
+                                    card nil)
+                                  (system-msg state side
+                                              (str "uses Tithonium to "
+                                                   (if async-result
+                                                     (str "trash " (:title async-result)
+                                                          " and ends the run")
+                                                     "end the run")))
+                                  (end-run state side eid card)))}]}
 
    "TL;DR"
    {:implementation "Subroutine-adding is manual"
