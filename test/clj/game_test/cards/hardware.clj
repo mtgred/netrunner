@@ -2059,7 +2059,14 @@
       (new-game {:runner {:hand ["Swift"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Swift")
-      (is (= 5 (core/available-mu state))))))
+      (is (= 5 (core/available-mu state)))))
+  (testing "Installing Swift then playing a run event gives you a click back"
+    (do-game
+      (new-game {:runner {:hand ["Swift", "Dirty Laundry"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Swift")
+      (play-from-hand state :runner "Dirty Laundry")
+      (is (= 3 (get-in @state [:runner :click]))))))
 
 (deftest the-gauntlet
   (testing "Access additional cards on run on HQ, not with Gang Sign. Issue #2749"
