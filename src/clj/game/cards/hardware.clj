@@ -1402,7 +1402,9 @@
                              card nil))}}}
 
    "Swift"
-   {:in-play [:memory 1]}
+   {:in-play [:memory 1]
+    :events {:play-event {:req (req (has-subtype? target "Run"))
+                          :effect (effect (gain :click 1))}}}
 
    "The Gauntlet"
    {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
