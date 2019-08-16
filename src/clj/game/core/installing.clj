@@ -57,7 +57,7 @@
                     (conj (:abilities cdef) {:msg "Take 1 [Recurring Credits]"})
                     (:abilities cdef))]
     (for [ab abilities]
-      (assoc (select-keys ab [:cost :pump :breaks]) :label (make-label ab)))))
+      (assoc (dissoc ab :req :effect) :label (make-label ab)))))
 
 (defn- corp-ability-init
   "Gets abilities associated with the card"
