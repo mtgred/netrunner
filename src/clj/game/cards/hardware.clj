@@ -1401,6 +1401,9 @@
                                                          (clear-wait-prompt state :corp))}}}
                              card nil))}}}
 
+   "Swift"
+   {:in-play [:memory 1]}
+
    "The Gauntlet"
    {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
     :in-play [:memory 2]
