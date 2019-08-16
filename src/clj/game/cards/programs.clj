@@ -772,21 +772,25 @@
                                   (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))}]})
 
    "Cyber-Cypher"
-   (auto-icebreaker {:prompt "Choose a server where this copy of Cyber-Cypher can be used:"
+   (auto-icebreaker {:prompt "Choose a server"
                      :msg (msg "target " target)
                      :choices (req servers)
                      :effect (effect (update! (assoc card :server-target target)))
                      :leave-play (effect (update! (dissoc card :server-target)))
                      :abilities [(merge
                                    (break-sub 1 1 "Code Gate")
-                                   {:req (req (#{(last (server->zone state (:server-target card)))} (first (:server run))))
+                                   {:req (req (if (:server-target card)
+                                                (#{(last (server->zone state (:server-target card)))} (first (:server run)))
+                                                true))
                                     :effect (effect
                                               (continue-ability
                                                 (break-sub 1 1 "Code Gate")
                                                 card nil))})
                                  (merge
                                    (strength-pump 1 1)
-                                   {:req (req (#{(last (server->zone state (:server-target card)))} (first (:server run))))
+                                   {:req (req (if (:server-target card)
+                                                (#{(last (server->zone state (:server-target card)))} (first (:server run)))
+                                                true))
                                     :effect (effect
                                               (continue-ability
                                                 (strength-pump 1 1)

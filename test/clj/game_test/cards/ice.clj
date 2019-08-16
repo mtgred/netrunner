@@ -1769,7 +1769,7 @@
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Peeping Tom"]}
-               :runner {:deck ["Corroder" (qty "Sure Gamble" 5)]}})
+               :runner {:hand ["Corroder" (qty "Sure Gamble" 5)]}})
     (play-from-hand state :corp "Peeping Tom" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
