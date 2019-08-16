@@ -2053,6 +2053,14 @@
       (click-prompt state :runner "Yes")
       (is (= (:credit (get-runner)) (+ 2 credits)) "Runner gained 2 credits"))))
 
+(deftest swift
+  (testing "Swift gives the runner +1[mu]"
+    (do-game
+      (new-game {:runner {:hand ["Swift"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Swift")
+      (is (= 5 (core/available-mu state))))))
+
 (deftest the-gauntlet
   (testing "Access additional cards on run on HQ, not with Gang Sign. Issue #2749"
     (do-game
