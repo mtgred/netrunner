@@ -1595,11 +1595,10 @@
     (do-game
       (new-game {:corp {:hand [(qty "Megaprix Qualifier" 2)]}})
       (play-and-score state "Megaprix Qualifier")
-      (let [first-qualifier (first (:scored (get-corp)))
-            second-qualifier (first (:hand (get-corp)))]
-        (play-and-score state "Megaprix Qualifier")
+      (play-and-score state "Megaprix Qualifier")
+      (let [[first-qualifier second-qualifier] (:scored (get-corp))]
         (is (zero? (get-counters first-qualifier :agenda)))
-        (is (= 1 (get-counters (refresh second-qualifier) :agenda))))
+        (is (= 1 (get-counters second-qualifier :agenda))))
       (is (= 3 (:agenda-point (get-corp))))))
   (testing "Stolen Megaprix Qualifiers are only ever worth 1 point, and don't get counters"
     (do-game
@@ -1607,12 +1606,11 @@
       (take-credits state :corp)
       (run-empty-server state "HQ")
       (click-prompt state :runner "Steal")
-      (let [first-qualifier (first (:scored (get-runner)))
-            second-qualifier (first (:hand (get-corp)))]
-        (run-empty-server state "HQ")
-        (click-prompt state :runner "Steal")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (let [[first-qualifier second-qualifier] (:scored (get-runner))]
         (is (zero? (get-counters first-qualifier :agenda)))
-        (is (= 0 (get-counters (refresh second-qualifier) :agenda))))
+        (is (= 0 (get-counters second-qualifier :agenda))))
       (is (= 2 (:agenda-point (get-runner))))))
   (testing "A Megaprix Qualifier scored after the runner steals one gets a counter, and is worth 2 points"
     (do-game
@@ -1621,11 +1619,11 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Steal")
       (take-credits state :runner)
+      (play-and-score state "Megaprix Qualifier")
       (let [first-qualifier (first (:scored (get-runner)))
-            second-qualifier (first (:hand (get-corp)))]
-        (play-and-score state "Megaprix Qualifier")
+            second-qualifier (first (:scored (get-corp)))]
         (is (zero? (get-counters first-qualifier :agenda)))
-        (is (= 1 (get-counters (refresh second-qualifier) :agenda))))
+        (is (= 1 (get-counters second-qualifier :agenda))))
       (is (= 1 (:agenda-point (get-runner))))
       (is (= 2 (:agenda-point (get-corp)))))))
 
