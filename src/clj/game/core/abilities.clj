@@ -142,21 +142,39 @@
   "Checks if there is an optional ability to resolve"
   [state side {:keys [eid optional] :as ability} card targets]
   (if (can-trigger? state side optional card targets)
-    (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets)
+    (resolve-ability
+      state side
+      (-> ability
+          (dissoc :optional)
+          (assoc :async true
+                 :effect (req (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets))))
+      card targets)
     (effect-completed state side eid)))
 
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
   [state side {:keys [eid psi] :as ability} card targets]
   (if (can-trigger? state side psi card targets)
-    (psi-game state side eid card psi)
+    (resolve-ability
+      state side
+      (-> ability
+          (dissoc :psi)
+          (assoc :async true
+                 :effect (effect (psi-game eid card psi))))
+      card targets)
     (effect-completed state side eid)))
 
 (defn- check-trace
   "Checks if there is a trace to resolve"
   [state side {:keys [eid trace] :as ability} card targets]
   (if (can-trigger? state side ability card targets)
-    (init-trace state side eid card trace)
+    (resolve-ability
+      state side
+      (-> ability
+          (dissoc :trace)
+          (assoc :async true
+                 :effect (effect (init-trace eid card trace))))
+      card targets)
     (effect-completed state side eid)))
 
 (defn- check-prompt
