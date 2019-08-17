@@ -249,14 +249,19 @@
 
 ;; Break abilities
 (defn- break-subroutines-impl
-  ([ice target-count] (break-subroutines-impl ice target-count '()))
-  ([ice target-count broken-subs]
+  ([ice target-count] (break-subroutines-impl ice target-count '() nil))
+  ([ice target-count broken-subs] (break-subroutines-impl ice target-count broken-subs nil))
+  ([ice target-count broken-subs args]
    {:async true
     :prompt (str "Break a subroutine"
                  (when (and target-count (< 1 target-count))
                    (str " (" (count broken-subs)
                         " of " target-count ")")))
-    :choices (req (concat (unbroken-subroutines-choice ice) '("Done")))
+    :choices (req (concat (unbroken-subroutines-choice ice)
+                          (when-not (and (:all args)
+                                         (pos? (count (unbroken-subroutines-choice ice)))
+                                         (< 1 target-count))
+                            '("Done"))))
     :effect (req (if (= "Done" target)
                    (complete-with-result state side eid {:broken-subs broken-subs
                                                          :early-exit true})
@@ -265,7 +270,7 @@
                          broken-subs (cons sub broken-subs)]
                      (if (and (pos? (count (unbroken-subroutines-choice ice)))
                               (< (count broken-subs) (if (pos? target-count) target-count (count (:subroutines ice)))))
-                       (continue-ability state side (break-subroutines-impl ice target-count broken-subs) card nil)
+                       (continue-ability state side (break-subroutines-impl ice target-count broken-subs args) card nil)
                        (complete-with-result state side eid {:broken-subs broken-subs
                                                              :early-exit false})))))}))
 
@@ -291,9 +296,11 @@
 (defn break-subroutines
   ([ice cost n] (break-subroutines ice cost n nil))
   ([ice cost n args]
-   (let [args (merge {:repeatable true} args)]
+   (let [args (merge {:repeatable true
+                      :all false}
+                     args)]
      {:async true
-      :effect (req (wait-for (resolve-ability state side (break-subroutines-impl ice n) card nil)
+      :effect (req (wait-for (resolve-ability state side (break-subroutines-impl ice n '() args) card nil)
                              (let [broken-subs (:broken-subs async-result)
                                    early-exit (:early-exit async-result)]
                                (wait-for (resolve-ability state side (make-eid state {:source-type :ability})
