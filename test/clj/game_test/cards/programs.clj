@@ -2311,7 +2311,7 @@
       (run-on state :rd)
       (card-ability state :runner (refresh savant) 0)
       (click-prompt state :runner "Make the Runner lose 2 [Credits]")
-      (click-prompt state :runner "Done")
+      (click-prompt state :runner "End the run")
       (is (:broken (first (:subroutines (refresh afshar)))) "Broke a code gate subroutine"))))
 
 
