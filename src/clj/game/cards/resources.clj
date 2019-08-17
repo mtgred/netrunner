@@ -244,40 +244,27 @@
 
    "Bank Job"
    {:data {:counter {:credit 8}}
-    :events {:successful-run
-             {:silent (req true)
-              :req (req (is-remote? (:server run)))
-              :effect (req (let [bj (get-card state card)]
-                             (when-not (:replace-access (get-in @state [:run :run-effect]))
-                               (swap! state assoc-in [:run :run-effect :replace-access]
-                                      {:effect (req (if (> (count (filter #(= (:title %) "Bank Job") (all-active-installed state :runner))) 1)
-                                                      (resolve-ability
-                                                        state side
-                                                        {:prompt "Select a copy of Bank Job to use"
-                                                         :choices {:req #(and (installed? %) (= (:title %) "Bank Job"))}
-                                                         :effect (req (let [c target
-                                                                            creds (get-counters (get-card state c) :credit)]
-                                                                        (resolve-ability
-                                                                          state side
-                                                                          {:prompt "How many Bank Job credits?"
-                                                                           :choices {:number (req (get-counters (get-card state c) :credit))}
-                                                                           :msg (msg "gain " target " [Credits]")
-                                                                           :effect (req (gain-credits state side target)
-                                                                                        (add-counter state side card :credit (- target))
-                                                                                        (when (not (pos? (get-counters (get-card state c) :credit)))
-                                                                                          (trash state side c {:unpreventable true})))}
-                                                                          card nil)))}
-                                                        bj nil)
-                                                      (resolve-ability
-                                                        state side
-                                                        {:prompt "How many Bank Job credits?"
-                                                         :choices {:number (req (get-counters (get-card state card) :credit))}
-                                                         :msg (msg "gain " target " [Credits]")
-                                                         :effect (req (gain-credits state side target)
-                                                                      (add-counter state side card :credit (- target))
-                                                                      (when (not (pos? (get-counters (get-card state card) :credit)))
-                                                                        (trash state side card {:unpreventable true})))}
-                                                        bj nil)))}))))}}}
+    :events (assoc (trash-on-empty :credit)
+                   :successful-run
+                   {:silent (req true)
+                    :req (req (is-remote? (:server run)))
+                    :effect (req (let [bj (get-card state card)]
+                                   (when-not (:replace-access (get-in @state [:run :run-effect]))
+                                     (swap! state assoc-in [:run :run-effect :replace-access]
+                                            {:effect (req (letfn [(select-credits-ability [bj]
+                                                              {:prompt "How many Bank Job credits?"
+                                                               :choices {:number (req (get-counters (get-card state bj) :credit))}
+                                                               :msg (msg "gain " target " [Credits]")
+                                                               :effect (req (gain-credits state side target)
+                                                                            (add-counter state side bj :credit (- target)))})]
+                                                            (if (> (count (filter #(= (:title %) "Bank Job") (all-active-installed state :runner))) 1)
+                                                              (resolve-ability
+                                                                state side
+                                                                {:prompt "Select a copy of Bank Job to use"
+                                                                 :choices {:req #(and (installed? %) (= (:title %) "Bank Job"))}
+                                                                 :effect (req (resolve-ability state side (select-credits-ability target) target nil))}
+                                                                bj nil)
+                                                              (resolve-ability state side (select-credits-ability bj) bj nil))))}))))})}
 
    "Bazaar"
    (letfn [(hardware-and-in-hand? [target runner]
