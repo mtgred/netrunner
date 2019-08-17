@@ -118,18 +118,18 @@
   (Greek/Philosopher suite: Adept, Sage, Savant)"
   [first-qty first-type second-qty second-type]
   {:cost [:credit 2]
-   :req (req (or (has-subtype? current-ice first-type)
-                 (has-subtype? current-ice second-type)))
+   :req (req (or (and (has-subtype? current-ice first-type)
+                      (<= first-qty (count (remove :broken (:subroutines current-ice)))))
+                 (and (has-subtype? current-ice second-type)
+                      (<= second-qty (count (remove :broken (:subroutines current-ice)))))))
    :label (str "break "
-               (when (< 1 first-qty) " up to ")
                (quantify first-qty (str first-type " subroutine")) " or "
-               (when (< 1 second-qty) " up to ")
                (quantify second-qty (str second-type " subroutine")))
    :effect (effect
              (continue-ability
                (if (has-subtype? current-ice first-type)
-                 (break-sub nil first-qty first-type)
-                 (break-sub nil second-qty second-type))
+                 (break-sub nil first-qty first-type {:all (< 1 first-qty)})
+                 (break-sub nil second-qty second-type {:all (< 1 second-qty)}))
                card nil))})
 
 (defn- give-ice-subtype
@@ -813,7 +813,7 @@
                                    {:effect
                                     (effect
                                       (continue-ability
-                                        (break-sub 2 (count (:subroutines current-ice)))
+                                        (break-sub 2 (count (:subroutines current-ice)) "All" {:all true})
                                         card nil))})
                                  (strength-pump 1 1)]})
 
