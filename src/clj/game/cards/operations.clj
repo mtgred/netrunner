@@ -442,6 +442,38 @@
                           :once :per-turn
                           :effect (effect (damage-bonus :brain 1))}}}
 
+   "Digital Rights Management"
+   {:req (req (not (in-coll? (get-in @state [:runner :register-last-turn :successful-run]) :hq)))
+    :prompt "Choose an Agenda"
+    :implementation "Does not prevent scoring agendas installed later in the turn"
+    ; ToDo: When floating triggers are implemented, this should be an effect that listens to :corp-install as Clot does
+    :choices (req (conj (vec (filter agenda? (:deck corp))) "None"))
+    :msg (msg (if (not= "None" target)
+                (str "add " (:title target) " to HQ and shuffle R&D")
+                "shuffle R&D"))
+    :effect (let [end-effect (req (system-msg state side "can not score agendas for the remainder of the turn")
+                                  (swap! state assoc-in [:corp :register :cannot-score]
+                                         (filter agenda? (all-installed state :corp)))
+                                  (effect-completed state side eid))]
+              (req (when (not= "None" target)
+                        (reveal state side target)
+                        (move state side target :hand))
+                   (shuffle! state side :deck)
+                   (continue-ability state side
+                                     {:prompt "You may install a card in HQ"
+                                      :choices {:req #(and (in-hand? %) (corp? %) (not (operation? %)))}
+                                      :effect (req (wait-for (resolve-ability state side
+                                                                              (let [card-to-install target]
+                                                                                {:prompt (str "Choose a location to install " (:title target))
+                                                                                 :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state target))
+                                                                                 :async true
+                                                                                 :effect (effect (corp-install eid card-to-install target nil))})
+                                                                              target nil)
+                                                             (end-effect state side eid card targets)))
+                                      :cancel-effect (effect (system-msg "does not use Digital Rights Management to install a card")
+                                                             (end-effect eid card targets))}
+                                     card nil)))}
+
    "Distract the Masses"
    (let [shuffle-two {:async true
                       :effect (effect (rfg-and-shuffle-rd-effect eid (find-cid (:cid card) (:discard corp)) 2 nil))}

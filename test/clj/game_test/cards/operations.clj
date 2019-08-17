@@ -540,6 +540,92 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
+(deftest digital-rights-management
+  (testing "DRM only searches for Agendas in R&D"
+    (do-game
+      (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
+                        :deck [(qty "Project Beale" 2)
+                               (qty "PAD Campaign" 2)
+                               (qty "Hedge Fund" 2)
+                               (qty "Crisium Grid" 2)
+                               (qty "Ice Wall" 2)]}})
+      (play-from-hand state :corp "Digital Rights Management")
+      (is (= 2 (-> (get-corp) :prompt first :choices count)) "Only Beale and 'None' option displayed")
+      (let [cards-in-hand (count (:hand (get-corp)))]
+        (click-prompt state :corp "Project Beale")
+        (is (= (inc cards-in-hand) (count (:hand (get-corp)))) "Beale added to hand"))
+      (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
+      (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to install on centrals")
+      (click-prompt state :corp "New remote")
+      (core/gain state :corp :click 1)
+      (let [beale (get-content state :remote1 0)]
+        (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
+        (core/score state :corp {:card (refresh beale)})
+        (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (core/score state :corp {:card (refresh beale)})
+        (is (= 1 (count (get-scored state :corp))) "Beale was scored"))))
+  (testing "DRM only installs on remotes"
+    (do-game
+      (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
+                        :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      (play-from-hand state :corp "Digital Rights Management")
+      (click-prompt state :corp "Project Beale")
+      (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
+      (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to install on centrals")
+      (click-prompt state :corp "New remote")))
+  (testing "Cannot score Agenda installed by DRM"
+    (do-game
+      (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
+                        :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      (play-from-hand state :corp "Digital Rights Management")
+      (click-prompt state :corp "Project Beale")
+      (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
+      (click-prompt state :corp "New remote")
+      (core/gain state :corp :click 1)
+      (let [beale (get-content state :remote1 0)]
+        (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
+        (core/score state :corp {:card (refresh beale)})
+        (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (core/score state :corp {:card (refresh beale)})
+        (is (= 1 (count (get-scored state :corp))) "Beale was scored"))))
+  (testing "Cannot score Agenda installed before playing DRM"
+    (do-game
+      (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Beale" (qty "Hedge Fund" 2)]
+                        :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      (core/gain state :corp :click 3)
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (let [beale (get-content state :remote1 0)]
+        (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
+        (play-from-hand state :corp "Digital Rights Management")
+        (click-prompt state :corp "None")
+        (click-prompt state :corp "Done")
+        (core/score state :corp {:card (refresh beale)})
+        (is (= 0 (count (get-scored state :corp))) "Beale was not scored"))))
+  ;; ToDo: Activate test once implementation is complete
+  ; (testing "Cannot score Agenda installed after playing DRM"
+    ; (do-game
+      ; (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Vitruvius" (qty "Hedge Fund" 2)]
+                        ; :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      ; (play-from-hand state :corp "Digital Rights Management")
+      ; (click-prompt state :corp "None")
+      ; (play-and-score state "Project Vitruvius")
+      ; (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
+      ; ))
+  (testing "Cannot play if runner made a successful run on HQ last turn"
+    (do-game
+      (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 2)]
+                        :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No Action")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Digital Rights Management")
+      (is (empty? (:prompt (get-corp))) "No prompt displayed"))))
+
 (deftest distract-the-masses
   (do-game
     (new-game {:corp {:deck [(qty "Distract the Masses" 2) (qty "Hedge Fund" 3)]}})
