@@ -846,6 +846,7 @@
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (click-card state :runner (get-content state :remote1 0))
+    (click-prompt state :runner "Pay to access")
     (is (zero? (:credit (get-runner))) "Paid 1 credit to access")
     (click-prompt state :runner "No action") ; Dismiss trash prompt
     (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")
