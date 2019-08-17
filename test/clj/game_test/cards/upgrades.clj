@@ -1173,6 +1173,27 @@
 
 (deftest marcus-batty
   ;; Marcus Batty
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Marcus Batty" "Ice Wall"]
+                        :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Marcus Batty" "HQ")
+      (let [iw (get-ice state :hq 0)
+            mb (get-content state :hq 0)]
+        (core/rez state :corp mb)
+        (core/rez state :corp iw)
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (card-ability state :corp mb 0)
+        (is (= :psi (:prompt-type (prompt-map :corp))))
+        (click-prompt state :corp "1 [Credits]")
+        (click-prompt state :runner "0 [Credits]")
+        (click-card state :corp iw)
+        (click-prompt state :corp "End the run")
+        (is (not (:run @state)) "Run has ended")
+        (is (nil? (refresh mb)) "Marcus Batty is trashed"))))
   (testing "Simultaneous Interaction with Security Nexus"
     (do-game
       (new-game {:corp {:deck ["Marcus Batty" "Enigma"]}
