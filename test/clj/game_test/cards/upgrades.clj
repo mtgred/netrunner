@@ -1273,15 +1273,61 @@
                      (:choices (first (:prompt (get-corp)))))) "Central servers are not listed in the install prompt")))
   (testing "At the start of their turn The Corp may place an advancement token on a card in La Costa Grid's server"
     (do-game
-      (new-game {:corp {:hand ["La Costa Grid"]}})
+      (new-game {:corp {:hand ["La Costa Grid", "Breaking News"]}})
       (play-from-hand state :corp "La Costa Grid" "New remote")
-      (let [la-costa (first (get-in (get-corp) [:servers :remote1 :content]))]
+      (play-from-hand state :corp "Breaking News" "Server 1")
+      (let [[la-costa breaking-news] (get-in (get-corp) [:servers :remote1 :content])]
         (core/rez state :corp la-costa)
         (take-credits state :corp)
         (take-credits state :runner)
         (is (not (empty? (:prompt (get-corp)))) "The Corp is prompted to place one advancement token on a card")
         (click-card state :corp la-costa)
-        (is (= 1 (get-counters (refresh la-costa) :advancement)) "Clicking on La Costa Grid advances it")))))
+        (is (= 1 (get-counters (refresh la-costa) :advancement)) "Clicking on La Costa Grid advances it")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (click-card state :corp breaking-news)
+        (is (= 1 (get-counters (refresh breaking-news) :advancement)) "Clicking on Breaking News advances it"))))
+  (testing "The Corp may not advance cards which are not in La Costa Grid's server"
+    (do-game
+      (new-game {:corp {:hand ["La Costa Grid", (qty "Mumbad Virtual Tour" 2), (qty "Vanilla" 3)]}})
+      (play-from-hand state :corp "La Costa Grid" "New remote")
+      (let [[la-costa] (get-in (get-corp) [:servers :remote1 :content])]
+        (core/rez state :corp la-costa)
+        (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+        (let [[remote-mvt] (get-in (get-corp) [:servers :remote2 :content])]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp remote-mvt)
+          (is (not (empty? (:prompt (get-corp)))) "Clicking a card in a different remote does not clear the prompt")
+          (is (zero? (get-counters (refresh remote-mvt) :advancement)) "Clicking a card in a different remote does not advance it"))
+        (play-from-hand state :corp "Mumbad Virtual Tour" "HQ")
+        (let [[hq-mvt] (get-in (get-corp) [:servers :hq :content])]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp hq-mvt)
+          (is (not (empty? (:prompt (get-corp)))) "Clicking a card in a central does not clear the prompt")
+          (is (zero? (get-counters (refresh hq-mvt) :advancement)) "Clicking a card in a central does not advance it"))
+        (play-from-hand state :corp "Vanilla" "Server 1")
+        (let [[vanilla] (get-in (get-corp) [:servers :remote1 :content])]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp vanilla)
+          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa does not clear the prompt")
+          (is (zero? (get-counters (refresh vanilla) :advancement)) "Clicking a an ice protecting La Costa does not advance it"))
+        (play-from-hand state :corp "Vanilla" "Server 2")
+        (let [[remote-vanilla] (get-in (get-corp) [:servers :remote2 :content])]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp remote-vanilla)
+          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa does not clear the prompt")
+          (is (zero? (get-counters (refresh remote-vanilla) :advancement)) "Clicking a an ice protecting La Costa does not advance it"))
+        (play-from-hand state :corp "Vanilla" "HQ")
+        (let [[central-vanilla] (get-in (get-corp) [:servers :hq :content])]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp central-vanilla)
+          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa does not clear the prompt")
+          (is (zero? (get-counters (refresh central-vanilla) :advancement)) "Clicking a an ice protecting La Costa does not advance it"))))))
 
 (deftest letheia-nisei
   ;; Letheia Nisei
