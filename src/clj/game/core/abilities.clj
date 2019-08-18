@@ -101,7 +101,8 @@
                some ability once between all of them, then the card should specify a manual :once-key that can
                be any value, preferrably a unique keyword.
   :optional -- shows a 'Yes/No' prompt to let the user decide whether to resolve the ability.
-  :makes-run -- indicates if the ability makes a run."
+  :makes-run -- indicates if the ability makes a run.
+  :install-req -- a function which returns a list of servers a card may be installed into"
   ;; perhaps the most important function in the game logic
   ([state side {:keys [eid] :as ability} card targets]
    (resolve-ability state side (or eid (make-eid state {:source card :source-type :ability})) ability card targets))
