@@ -713,8 +713,9 @@
         (when (:tooltip-active @c-state)
           (let [tooltip-text
                 (cond
-                  true
-                  title
+                  (and
+                    (get-in @game-state [:run]))
+                  (str "Costs: " (get-in @game-state [:bonus :access-cost]))
 
                   :else
                   nil)]
