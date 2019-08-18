@@ -1130,7 +1130,7 @@
       (new-game {:corp {:hand ["La Costa Grid", "Breaking News"]}})
       (play-from-hand state :corp "La Costa Grid" "New remote")
       (play-from-hand state :corp "Breaking News" "Server 1")
-      (let [[la-costa breaking-news] (get-in (get-corp) [:servers :remote1 :content])]
+      (let [[la-costa breaking-news] (get-content state :remote1)]
         (core/rez state :corp la-costa)
         (take-credits state :corp)
         (take-credits state :runner)
@@ -1145,43 +1145,43 @@
     (do-game
       (new-game {:corp {:hand ["La Costa Grid", (qty "Mumbad Virtual Tour" 2), (qty "Vanilla" 3)]}})
       (play-from-hand state :corp "La Costa Grid" "New remote")
-      (let [[la-costa] (get-in (get-corp) [:servers :remote1 :content])]
+      (let [[la-costa] (get-content state :remote1)]
         (core/rez state :corp la-costa)
         (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
-        (let [[remote-mvt] (get-in (get-corp) [:servers :remote2 :content])]
+        (let [[remote-mvt] (get-content state :remote2)]
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp remote-mvt)
           (is (not (empty? (:prompt (get-corp)))) "Clicking a card in a different remote does not clear the prompt")
           (is (zero? (get-counters (refresh remote-mvt) :advancement)) "Clicking a card in a different remote does not advance it"))
         (play-from-hand state :corp "Mumbad Virtual Tour" "HQ")
-        (let [[hq-mvt] (get-in (get-corp) [:servers :hq :content])]
+        (let [[central-mvt] (get-content state :hq)]
           (take-credits state :corp)
           (take-credits state :runner)
-          (click-card state :corp hq-mvt)
+          (click-card state :corp central-mvt)
           (is (not (empty? (:prompt (get-corp)))) "Clicking a card in a central does not clear the prompt")
-          (is (zero? (get-counters (refresh hq-mvt) :advancement)) "Clicking a card in a central does not advance it"))
+          (is (zero? (get-counters (refresh central-mvt) :advancement)) "Clicking a card in a central does not advance it"))
         (play-from-hand state :corp "Vanilla" "Server 1")
-        (let [[vanilla] (get-in (get-corp) [:servers :remote1 :content])]
+        (let [[vanilla] (get-ice state :remote1)]
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp vanilla)
           (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa does not clear the prompt")
           (is (zero? (get-counters (refresh vanilla) :advancement)) "Clicking a an ice protecting La Costa does not advance it"))
         (play-from-hand state :corp "Vanilla" "Server 2")
-        (let [[remote-vanilla] (get-in (get-corp) [:servers :remote2 :content])]
+        (let [[remote-vanilla] (get-ice state :remote2)]
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp remote-vanilla)
           (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa does not clear the prompt")
           (is (zero? (get-counters (refresh remote-vanilla) :advancement)) "Clicking a an ice protecting La Costa does not advance it"))
         (play-from-hand state :corp "Vanilla" "HQ")
-        (let [[central-vanilla] (get-in (get-corp) [:servers :hq :content])]
+        (let [[central-vanilla] (get-ice state :hq)]
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp central-vanilla)
-          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa does not clear the prompt")
-          (is (zero? (get-counters (refresh central-vanilla) :advancement)) "Clicking a an ice protecting La Costa does not advance it"))))))
+          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting HQ does not clear the prompt")
+          (is (zero? (get-counters (refresh central-vanilla) :advancement)) "Clicking a an ice protecting HQ does not advance it"))))))
 
 (deftest letheia-nisei
   ;; Letheia Nisei
