@@ -688,78 +688,101 @@
                  flipped]
   (r/with-let [c-state (r/atom {})]
     [:div.card-frame
-     [:div.blue-shade.card {:class (str (when selected "selected") (when new " new"))
-                            :draggable (when (not-spectator?) true)
-                            :on-touch-start #(handle-touchstart % card)
-                            :on-touch-end   #(handle-touchend %)
-                            :on-touch-move  #(handle-touchmove %)
-                            :on-drag-start #(handle-dragstart % card)
-                            :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
-                            :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
-                                                       (spectator-view-hidden?)
-                                                       (= (:side @game-state) (keyword (.toLowerCase side))))
-                                               (put! zoom-channel card))
-                            :on-mouse-leave #(put! zoom-channel false)
-                            :on-click #(handle-card-click card c-state)}
-      (when-let [url (image-url card)]
-        (if (or (not code) flipped facedown)
-          (let [facedown-but-known (or (not (or (not code) flipped facedown))
-                                       (spectator-view-hidden?)
-                                       (= (:side @game-state) (keyword (.toLowerCase side))))
-                alt-str (if facedown-but-known (str "Facedown " title) nil)]
-            [facedown-card side ["bg"] alt-str])
-          [:div
-           [:span.cardname title]
-           [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]]))
-      [:div.counters
-       (when counter
-         (map-indexed (fn [i [type num-counters]]
-                (when (pos? num-counters)
-                  (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
-                    [(keyword selector) {:key type} num-counters])))
-              counter))
-       (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter {:key "rec"} rec-counter])
-       (when (pos? advance-counter) [:div.darkbg.advance-counter.counter {:key "adv"} advance-counter])]
-      (when (and (or current-strength strength)
-                 (or (ice? card)
-                     (has-subtype? card "Icebreaker"))
-                 (active? card))
-        [:div.darkbg.strength (or current-strength strength)])
-      (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
-      (when server-target [:div.darkbg.server-target server-target])
-      (when subtype-target
-        (let [colour-type (case subtype-target
-                            ("Barrier" "Sentry") (lower-case subtype-target)
-                            "Code Gate" "code-gate"
-                            nil)
-              label (if (includes? subtype-target " - ")
-                      (->> (split subtype-target #" - ")
-                           (map first)
-                           (join " - "))
-                      subtype-target)]
-          [:div.darkbg.subtype-target {:class colour-type} label]))
+     (letfn [(update-cursor-pos [event]
+               (swap! c-state assoc :tooltip-pos
+                      {:x (.-clientX event)
+                       :y (.-clientY event)}))]
+       [:div.blue-shade.card {:class (str (when selected "selected") (when new " new"))
+                              :draggable (when (not-spectator?) true)
+                              :on-touch-start #(handle-touchstart % card)
+                              :on-touch-end   #(handle-touchend %)
+                              :on-touch-move  #(handle-touchmove %)
+                              :on-drag-start #(handle-dragstart % card)
+                              :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
+                              :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
+                                                         (spectator-view-hidden?)
+                                                         (= (:side @game-state) (keyword (.toLowerCase side))))
+                                                 (put! zoom-channel card)
+                                                 (update-cursor-pos %)
+                                                 (swap! c-state assoc :tooltip-active true))
+                              :on-mouse-move #(update-cursor-pos %)
+                              :on-mouse-leave #(do (put! zoom-channel false)
+                                                 (update-cursor-pos %)
+                                                 (swap! c-state assoc :tooltip-active false))
+                              :on-click #(handle-card-click card c-state)}
+        (when (:tooltip-active @c-state)
+          (let [tooltip-text
+                (cond
+                  true
+                  title
 
-      (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
-        [server-menu card c-state remotes type zone])
+                  :else
+                  nil)]
+            [:div.cost-tooltip {:style
+                                {:left (+ 20 (:x (:tooltip-pos @c-state)))
+                                 :top (+ -20 (:y (:tooltip-pos @c-state)))
+                                 :display (if (:tooltip-active @c-state) "block" "hidden")}}
+             tooltip-text]))
 
-      (when (pos? (+ (count runner-abilities) (count subroutines)))
-        [runner-abs card c-state runner-abilities subroutines title])
+        (when-let [url (image-url card)]
+          (if (or (not code) flipped facedown)
+            (let [facedown-but-known (or (not (or (not code) flipped facedown))
+                                         (spectator-view-hidden?)
+                                         (= (:side @game-state) (keyword (.toLowerCase side))))
+                  alt-str (if facedown-but-known (str "Facedown " title) nil)]
+              [facedown-card side ["bg"] alt-str])
+            [:div
+             [:span.cardname title]
+             [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]]))
+        [:div.counters
+         (when counter
+           (map-indexed (fn [i [type num-counters]]
+                          (when (pos? num-counters)
+                            (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
+                              [(keyword selector) {:key type} num-counters])))
+                        counter))
+         (when (pos? rec-counter) [:div.darkbg.recurring-counter.counter {:key "rec"} rec-counter])
+         (when (pos? advance-counter) [:div.darkbg.advance-counter.counter {:key "adv"} advance-counter])]
+        (when (and (or current-strength strength)
+                   (or (ice? card)
+                       (has-subtype? card "Icebreaker"))
+                   (active? card))
+          [:div.darkbg.strength (or current-strength strength)])
+        (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
+        (when server-target [:div.darkbg.server-target server-target])
+        (when subtype-target
+          (let [colour-type (case subtype-target
+                              ("Barrier" "Sentry") (lower-case subtype-target)
+                              "Code Gate" "code-gate"
+                              nil)
+                label (if (includes? subtype-target " - ")
+                        (->> (split subtype-target #" - ")
+                             (map first)
+                             (join " - "))
+                        subtype-target)]
+            [:div.darkbg.subtype-target {:class colour-type} label]))
 
-      (when (pos? (count corp-abilities))
-        [corp-abs card c-state corp-abilities])
+        (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
+          [server-menu card c-state remotes type zone])
 
-      [card-abilities card c-state abilities subroutines]
+        (when (pos? (+ (count runner-abilities) (count subroutines)))
+          [runner-abs card c-state runner-abilities subroutines title])
 
-      (when (#{"servers" "onhost"} (first zone))
-        (cond
-          (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
-          [:div.panel.blue-shade.menu.abilities
-           [:div {:on-click #(send-command "advance" {:card card})} "Advance"]
-           [:div {:on-click #(send-command "score" {:card card})} "Score"]]
-          (or (= advanceable "always") (and rezzed (= advanceable "rezzed-only")))
-          [:div.panel.blue-shade.menu.abilities
-           [:div {:on-click #(send-command "advance" {:card card})} "Advance"]
-           [:div {:on-click #(send-command "rez" {:card card})} "Rez"]]))]
+        (when (pos? (count corp-abilities))
+          [corp-abs card c-state corp-abilities])
+
+        [card-abilities card c-state abilities subroutines]
+
+        (when (#{"servers" "onhost"} (first zone))
+          (cond
+            (and (= type "Agenda") (>= advance-counter (or current-cost advancementcost)))
+            [:div.panel.blue-shade.menu.abilities
+             [:div {:on-click #(send-command "advance" {:card card})} "Advance"]
+             [:div {:on-click #(send-command "score" {:card card})} "Score"]]
+            (or (= advanceable "always") (and rezzed (= advanceable "rezzed-only")))
+            [:div.panel.blue-shade.menu.abilities
+             [:div {:on-click #(send-command "advance" {:card card})} "Advance"]
+             [:div {:on-click #(send-command "rez" {:card card})} "Rez"]]))])
      (when (pos? (count hosted))
        [:div.hosted
         (doall
