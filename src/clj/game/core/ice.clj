@@ -306,16 +306,16 @@
                                (wait-for (resolve-ability state side (make-eid state {:source-type :ability})
                                                           (break-subroutines-pay ice cost broken-subs args) card nil)
                                          (doseq [sub broken-subs]
-                                           (break-subroutine! state (get-card state ice) sub))
+                                           (break-subroutine! state (get-card state ice) sub)
+                                           (continue-ability state side (:additional-ability args) card nil))
                                          (let [ice (get-card state ice)
                                                card (get-card state card)]
-                                           (if (and (not early-exit)
-                                                    (:repeatable args)
-                                                    (seq broken-subs)
-                                                    (pos? (count (unbroken-subroutines-choice ice)))
-                                                    (can-pay? state side eid (get-card state card) nil cost))
-                                             (continue-ability state side (break-subroutines ice cost n args) card nil)
-                                             (continue-ability state side (:additional-ability args) card nil)))))))})))
+                                           (when (and (not early-exit)
+                                                      (:repeatable args)
+                                                      (seq broken-subs)
+                                                      (pos? (count (unbroken-subroutines-choice ice)))
+                                                      (can-pay? state side eid (get-card state card) nil cost))
+                                             (continue-ability state side (break-subroutines ice cost n args) card nil)))))))})))
 
 (defn break-sub
   "Creates a break subroutine ability.

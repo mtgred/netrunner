@@ -402,7 +402,8 @@
                 (dotimes [n times-pump]
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
                 (doseq [sub (remove :broken (:subroutines current-ice))]
-                  (break-subroutine! state (get-card state current-ice) sub))
+                  (break-subroutine! state (get-card state current-ice) sub)
+                  (continue-ability state side (:additional-ability break-ability) (get-card state card) nil))
                 (system-msg state side (if (pos? times-pump)
                                          (str (build-spend-msg async-result "increase")
                                               "the strength of " (:title card)
@@ -416,8 +417,7 @@
                                                 "the remaining "
                                                 "all ")
                                               unbroken-subs " subroutines on "
-                                              (:title current-ice))))
-                (continue-ability state side (:additional-ability break-ability) card nil)))))
+                                              (:title current-ice))))))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."
