@@ -717,7 +717,14 @@
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
    "La Costa Grid"
-   {:install-req (req (remove #{"HQ", "R&D", "Archives"} targets))}
+   {:install-req (req (remove #{"HQ", "R&D", "Archives"} targets))
+    :events {:corp-turn-begins {:effect (effect
+                                          (continue-ability
+                                            {:prompt "Select a card in this server"
+                                             :msg (msg "place an advancement token on " (card-str state target))
+                                             :choices {:req #(in-same-server? % card)}
+                                             :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+                                            card nil))}}}
 
    "Letheia Nisei"
    (let [ability {:label "Force runner to re-approach outer ice"
