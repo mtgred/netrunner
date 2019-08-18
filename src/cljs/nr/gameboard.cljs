@@ -711,19 +711,24 @@
                                                  (swap! c-state assoc :tooltip-active false))
                               :on-click #(handle-card-click card c-state)}
         (when (:tooltip-active @c-state)
-          (let [tooltip-text
+          ;; TODO: namespace clj/game/utils.clj into cljs
+          ;;       watch out: it seems that in cljs, `(str zone)` evaluates to "remote1" instead of ":remote1"
+          (let [is-remote? (fn [zone]
+                             (.startsWith (str zone) "remote"))
+                tooltip-text
                 (cond
-                  (and
-                    (get-in @game-state [:run]))
-                  (str "Costs: " (get-in @game-state [:bonus :access-cost]))
+                  (and (= "gagarin-deep-space-expanding-the-horizon" (get-in @game-state [:corp :identity :normalizedtitle]))
+                       (is-remote? (second (:zone card))))
+                  [:div "Additional costs:" [:br] (render-message "+1[Credits] to access")]
 
                   :else
                   nil)]
-            [:div.cost-tooltip {:style
-                                {:left (+ 20 (:x (:tooltip-pos @c-state)))
-                                 :top (+ -20 (:y (:tooltip-pos @c-state)))
-                                 :display (if (:tooltip-active @c-state) "block" "hidden")}}
-             tooltip-text]))
+            (when tooltip-text
+              [:div.blue-shade.cost-tooltip {:style
+                                             {:left (+ 15 (:x (:tooltip-pos @c-state)))
+                                              :top (+ 15 (:y (:tooltip-pos @c-state)))
+                                              :display (if (:tooltip-active @c-state) "block" "hidden")}}
+               tooltip-text])))
 
         (when-let [url (image-url card)]
           (if (or (not code) flipped facedown)
