@@ -2696,7 +2696,23 @@
         (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
         (card-ability state :corp (refresh nisei) 0)
         (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used after Nisei MK II fires")
-        (is (= 1 (:current-strength (refresh tycoon))) "Tycoon strength back down to 1.")))))
+        (is (= 1 (:current-strength (refresh tycoon))) "Tycoon strength back down to 1."))))
+  ;; Issue #4423: Tycoon no longer working automatically
+  (testing "Tycoon pays out on auto-pump-and-break"
+    (do-game
+      (new-game {:corp {:deck ["Markus 1.0"]}
+                 :runner {:deck ["Tycoon"]}})
+      (play-from-hand state :corp "Markus 1.0" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Tycoon")
+      (let [tycoon (get-program state 0)
+            credits (:credit (get-corp))]
+        (run-on state "HQ")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh tycoon)})
+        (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
+        (run-continue state)
+        (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used")))))
 
 (deftest upya
   (do-game
