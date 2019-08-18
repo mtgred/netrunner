@@ -1616,9 +1616,9 @@
         zoom-card (r/cursor app-state [:zoom])
         background (r/cursor app-state [:options :background])]
 
-  (go (while true
-        (let [card (<! zoom-channel)]
-          (swap! app-state assoc :zoom card))))
+    (go (while true
+          (let [card (<! zoom-channel)]
+            (swap! app-state assoc :zoom card))))
 
     (r/create-class
       {:display-name "gameboard"
