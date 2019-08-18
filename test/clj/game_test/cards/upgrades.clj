@@ -1264,6 +1264,14 @@
                            (core/rez state :corp en)
                            (dotimes [c 3] (click-card state :corp kh)))))))
 
+
+(deftest la-costa-grid
+  (testing "La Costa Grid cannot be installed in a central server"
+    (do-game
+      (new-game {:corp {:hand ["La Costa Grid"]}})
+      (play-from-hand state :corp "La Costa Grid")
+      (is (not (some (zipmap ["HQ", "R&D", "Archives"] (repeat true)) (:choices (first (:prompt (get-corp))))))))))
+
 (deftest letheia-nisei
   ;; Letheia Nisei
   (do-game
