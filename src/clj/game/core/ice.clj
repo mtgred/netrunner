@@ -315,7 +315,7 @@
                                                     (pos? (count (unbroken-subroutines-choice ice)))
                                                     (can-pay? state side eid (get-card state card) nil cost))
                                              (continue-ability state side (break-subroutines ice cost n args) card nil)
-                                             (continue-ability state side {:effect (:additional-ability args)} card nil)))))))})))
+                                             (continue-ability state side (:additional-ability args) card nil)))))))})))
 
 (defn break-sub
   "Creates a break subroutine ability.
@@ -336,6 +336,7 @@
                               (or (= subtype "All")
                                   (has-subtype? current-ice subtype))
                               true)))))
+      :additional-ability (:additional-ability args)
       :break n
       :breaks subtype
       :break-cost cost
