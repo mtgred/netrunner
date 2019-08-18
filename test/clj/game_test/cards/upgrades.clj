@@ -1269,8 +1269,19 @@
   (testing "La Costa Grid cannot be installed in a central server"
     (do-game
       (new-game {:corp {:hand ["La Costa Grid"]}})
-      (play-from-hand state :corp "La Costa Grid")
-      (is (not (some (zipmap ["HQ", "R&D", "Archives"] (repeat true)) (:choices (first (:prompt (get-corp))))))))))
+      (is (not (some (zipmap ["HQ", "R&D", "Archives"] (repeat true))
+                     (:choices (first (:prompt (get-corp)))))) "Central servers are not listed in the install prompt")))
+  (testing "At the start of their turn The Corp may place an advancement token on a card in La Costa Grid's server"
+    (do-game
+      (new-game {:corp {:hand ["La Costa Grid"]}})
+      (play-from-hand state :corp "La Costa Grid" "New remote")
+      (let [la-costa (first (get-in (get-corp) [:servers :remote1 :content]))]
+        (core/rez state :corp la-costa)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (not (empty? (:prompt (get-corp)))) "The Corp is prompted to place one advancement token on a card")
+        (click-card state :corp la-costa)
+        (is (= 1 (get-counters (refresh la-costa) :advancement)) "Clicking on La Costa Grid advances it")))))
 
 (deftest letheia-nisei
   ;; Letheia Nisei
