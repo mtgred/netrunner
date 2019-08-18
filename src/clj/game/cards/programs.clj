@@ -1069,9 +1069,10 @@
 
    "Faerie"
    (auto-icebreaker {:abilities [(break-sub 0 1 "Sentry"
-                                            {:additional-ability (effect (update! (assoc-in card [:special :faerie-used] true)))})
+                                            {:additional-ability {:effect (effect (update! (assoc-in card [:special :faerie-used] true)))}})
                                  (strength-pump 1 1)]
                      :events {:pass-ice {:req (req (get-in card [:special :faerie-used]))
+                                         :msg (msg "trash " (:title card))
                                          :effect (effect (trash card))}}})
 
    "False Echo"

@@ -1040,23 +1040,36 @@
     (is (not (:run @state)) "Run ended")))
 
 (deftest faerie
-  ;; Faerie - trash after encounter is over, not before.
-  (do-game
-    (new-game {:corp {:deck ["Caduceus"]}
-               :runner {:deck ["Faerie"]}})
-    (play-from-hand state :corp "Caduceus" "Archives")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Faerie")
-    (let [fae (get-program state 0)]
-      (run-on state :archives)
-      (core/rez state :corp (get-ice state :archives 0))
-      (card-ability state :runner fae 1)
-      (card-ability state :runner fae 0)
-      (click-prompt state :runner "Trace 3 - Gain 3 [Credits]")
-      (click-prompt state :runner "Trace 2 - End the run")
-      (is (refresh fae) "Faerie not trashed until encounter over")
-      (run-continue state)
-      (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed"))))
+  (testing "Trash after encounter is over, not before"
+    (do-game
+      (new-game {:corp {:deck ["Caduceus"]}
+                 :runner {:deck ["Faerie"]}})
+      (play-from-hand state :corp "Caduceus" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Faerie")
+      (let [fae (get-program state 0)]
+        (run-on state :archives)
+        (core/rez state :corp (get-ice state :archives 0))
+        (card-ability state :runner fae 1)
+        (card-ability state :runner fae 0)
+        (click-prompt state :runner "Trace 3 - Gain 3 [Credits]")
+        (click-prompt state :runner "Trace 2 - End the run")
+        (is (refresh fae) "Faerie not trashed until encounter over")
+        (run-continue state)
+        (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed"))))
+  (testing "Works with auto-pump-and-break"
+    (do-game
+      (new-game {:corp {:deck ["Caduceus"]}
+                 :runner {:deck ["Faerie"]}})
+      (play-from-hand state :corp "Caduceus" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Faerie")
+      (let [fae (get-program state 0)]
+        (run-on state :archives)
+        (core/rez state :corp (get-ice state :archives 0))
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh fae)})
+        (run-continue state)
+        (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed")))))
 
 (deftest false-echo
   ;; False Echo - choice for Corp
