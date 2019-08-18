@@ -1002,7 +1002,8 @@
                                           (use-mu (:memoryunits target)))}}}
 
    "Eater"
-   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability (effect (max-access 0))
+   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg (msg "access not more than 0 cards for the remainder of this run")
+                                                                            :effect (effect (max-access 0))}
                                                        :label "break 1 subroutine and access 0 cards"})
                                  (strength-pump 1 1)]})
 

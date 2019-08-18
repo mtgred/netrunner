@@ -1000,6 +1000,24 @@
         (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
         (is (= 2 (:click (get-runner))) "1click to use Djinn ability")))))
 
+(deftest eater
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
+                 :runner {:deck [(qty "Eater" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Eater")
+      (let [eater (get-program state 0)
+            iw (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp (refresh iw))
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh eater)})
+        (run-continue state)
+        (run-successful state)
+        (is (empty? (:prompt (get-runner))) "No prompt for accessing cards")))))
+
 (deftest equivocation
   ;; Equivocation - interactions with other successful-run events.
   (do-game
