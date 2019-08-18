@@ -716,6 +716,9 @@
                      :async true
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
+   "La Costa Grid"
+   {:install-req (req (remove #{"HQ", "R&D", "Archives"} targets))}
+
    "Letheia Nisei"
    (let [ability {:label "Force runner to re-approach outer ice"
                   :once :per-turn
