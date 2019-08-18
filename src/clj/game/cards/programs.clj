@@ -2100,8 +2100,8 @@
 
    "Snowball"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier"
-                                            {:repeatable false
-                                             :additional-ability (effect (pump card 1 :all-run))})
+                                            {:additional-ability {:msg "gain +1 strength for the remainder of the run"
+                                                                  :effect (effect (pump card 1 :all-run))}})
                                  (strength-pump 1 1)]})
 
    "Spike"

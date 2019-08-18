@@ -2541,41 +2541,58 @@
       (is (empty? (get-in @state [:runner :prompt])) "No option to jack out"))))
 
 (deftest snowball
-  ;; Snowball - Strength boost until end of run when used to break a subroutine
-  (do-game
-    (new-game {:corp {:deck ["Spiderweb" "Fire Wall" "Hedge Fund"]}
-               :runner {:deck ["Snowball"]}})
-    (play-from-hand state :corp "Hedge Fund")
-    (play-from-hand state :corp "Fire Wall" "HQ")
-    (play-from-hand state :corp "Spiderweb" "HQ")
-    (take-credits state :corp)
-    (core/gain state :runner :credit 10)
-    (play-from-hand state :runner "Snowball")
-    (let [sp (get-ice state :hq 1)
-          fw (get-ice state :hq 0)
-          snow (get-program state 0)]
-      (run-on state "HQ")
-      (core/rez state :corp sp)
-      (core/rez state :corp fw)
-      (card-ability state :runner snow 1) ; match strength
-      (is (= 2 (:current-strength (refresh snow))))
-      (card-ability state :runner snow 0) ; strength matched, break a sub
-      (click-prompt state :runner "End the run")
-      (card-ability state :runner snow 0) ; break a sub
-      (click-prompt state :runner "End the run")
-      (is (= 4 (:current-strength (refresh snow))) "Broke 2 subs, gained 2 more strength")
-      (run-continue state)
-      (is (= 3 (:current-strength (refresh snow))) "Has +2 strength until end of run; lost 1 per-encounter boost")
-      (card-ability state :runner snow 1)
-      (card-ability state :runner snow 1) ; match strength
-      (is (= 5 (:current-strength (refresh snow))) "Matched strength, gained 2")
-      (card-ability state :runner snow 0) ; strength matched, break a sub
-      (click-prompt state :runner "End the run")
-      (is (= 6 (:current-strength (refresh snow))) "Broke 1 sub, gained 1 more strength")
-      (run-continue state)
-      (is (= 4 (:current-strength (refresh snow))) "+3 until-end-of-run strength")
-      (run-jack-out state)
-      (is (= 1 (:current-strength (refresh snow))) "Back to default strength"))))
+  (testing "Strength boost until end of run when used to break a subroutine"
+    (do-game
+      (new-game {:corp {:deck ["Spiderweb" "Fire Wall" "Hedge Fund"]}
+                 :runner {:deck ["Snowball"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Fire Wall" "HQ")
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Snowball")
+      (let [sp (get-ice state :hq 1)
+            fw (get-ice state :hq 0)
+            snow (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp sp)
+        (core/rez state :corp fw)
+        (card-ability state :runner snow 1) ; match strength
+        (is (= 2 (:current-strength (refresh snow))))
+        (card-ability state :runner snow 0) ; strength matched, break a sub
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
+        (is (= 5 (:current-strength (refresh snow))) "Broke 3 subs, gained 3 more strength")
+        (run-continue state)
+        (is (= 4 (:current-strength (refresh snow))) "Has +3 strength until end of run; lost 1 per-encounter boost")
+        (card-ability state :runner snow 1) ; match strength
+        (is (= 5 (:current-strength (refresh snow))) "Matched strength, gained 1")
+        (card-ability state :runner snow 0) ; strength matched, break a sub
+        (click-prompt state :runner "End the run")
+        (is (= 6 (:current-strength (refresh snow))) "Broke 1 sub, gained 1 more strength")
+        (run-continue state)
+        (is (= 5 (:current-strength (refresh snow))) "+4 until-end-of-run strength")
+        (run-jack-out state)
+        (is (= 1 (:current-strength (refresh snow))) "Back to default strength"))))
+  (testing "Strength boost until end of run when used to break a subroutine"
+    (do-game
+      (new-game {:corp {:deck ["Spiderweb" "Hedge Fund"]}
+                 :runner {:deck ["Snowball"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Snowball")
+      (let [sp (get-ice state :hq 0)
+            snow (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp sp)
+        (is (= 1 (:current-strength (refresh snow))) "Snowball starts at 1 strength")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh snow)})
+        (is (= 5 (:current-strength (refresh snow))) "Snowball was pumped once and gained 3 strength from breaking")
+        (run-continue state)
+        (is (= 4 (:current-strength (refresh snow))) "+3 until-end-of-run strength")))))
 
 (deftest stargate
   ;; Stargate - once per turn Keyhole which doesn't shuffle
