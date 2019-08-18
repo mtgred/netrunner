@@ -725,13 +725,16 @@
    (break-and-enter "Code Gate")
 
    "Crypsis"
-   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability (effect (update! (assoc card :crypsis-broke true)))})
+   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:effect (effect (update! (assoc card :crypsis-broke true)))}})
                                  (strength-pump 1 1)
                                  {:cost [:click 1]
                                   :msg "place 1 virus counter"
                                   :effect (effect (add-counter card :virus 1))}]
                      :events (let [encounter-ends-effect
                                    {:req (req (:crypsis-broke card))
+                                    :msg (msg (if (pos? (get-counters card :virus))
+                                                (str "remove a virus token from " (:title card))
+                                                (str "trash " (:title card))))
                                     :effect (req ((:effect breaker-auto-pump) state side eid card targets)
                                                  (if (pos? (get-counters card :virus))
                                                    (add-counter state side card :virus -1)

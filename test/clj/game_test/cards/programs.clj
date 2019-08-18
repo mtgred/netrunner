@@ -685,51 +685,71 @@
 
 (deftest crypsis
   ;; Crypsis - Loses a virus counter after encountering ice it broke
-  (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}
-               :runner {:deck [(qty "Crypsis" 2)]}})
-    (play-from-hand state :corp "Ice Wall" "Archives")
-    (take-credits state :corp)
-    (core/gain state :runner :credit 100)
-    (play-from-hand state :runner "Crypsis")
-    (let [crypsis (get-program state 0)]
-      (card-ability state :runner crypsis 2)
-      (is (= 1 (get-counters (refresh crypsis) :virus))
-          "Crypsis has 1 virus counter")
-      (run-on state "Archives")
-      (core/rez state :corp (get-ice state :archives 0))
-      (card-ability state :runner (refresh crypsis) 1) ; Match strength
-      (card-ability state :runner (refresh crypsis) 0) ; Break
-      (click-prompt state :runner "End the run")
-      (is (= 1 (get-counters (refresh crypsis) :virus))
-          "Crypsis has 1 virus counter")
-      (run-continue state)
-      (is (zero? (get-counters (refresh crypsis) :virus))
-          "Crypsis has 0 virus counters")
-      (run-jack-out state)
-      (is (zero? (get-counters (refresh crypsis) :virus))
-          "Crypsis has 0 virus counters")
-      (run-on state "Archives")
-      (card-ability state :runner (refresh crypsis) 1) ; Match strength
-      (card-ability state :runner (refresh crypsis) 0) ; Break
-      (click-prompt state :runner "End the run")
-      (is (zero? (get-counters (refresh crypsis) :virus))
-          "Crypsis has 0 virus counters")
-      (run-jack-out state)
-      (is (= "Crypsis" (:title (first (:discard (get-runner)))))
-          "Crypsis was trashed"))
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (play-from-hand state :runner "Crypsis")
-    (let [crypsis (get-program state 0)]
-      (run-on state "Archives")
-      (card-ability state :runner (refresh crypsis) 1) ; Match strength
-      (card-ability state :runner (refresh crypsis) 0) ; Break
-      (click-prompt state :runner "End the run")
-      (is (zero? (get-counters (refresh crypsis) :virus))
-          "Crypsis has 0 virus counters")
-      (run-jack-out state)
-      (is (= 2 (count (:discard (get-runner)))) "Crypsis was trashed"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck [(qty "Crypsis" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Crypsis")
+      (let [crypsis (get-program state 0)]
+        (card-ability state :runner crypsis 2)
+        (is (= 1 (get-counters (refresh crypsis) :virus))
+            "Crypsis has 1 virus counter")
+        (run-on state "Archives")
+        (core/rez state :corp (get-ice state :archives 0))
+        (card-ability state :runner (refresh crypsis) 1) ; Match strength
+        (card-ability state :runner (refresh crypsis) 0) ; Break
+        (click-prompt state :runner "End the run")
+        (is (= 1 (get-counters (refresh crypsis) :virus))
+            "Crypsis has 1 virus counter")
+        (run-continue state)
+        (is (zero? (get-counters (refresh crypsis) :virus))
+            "Crypsis has 0 virus counters")
+        (run-jack-out state)
+        (is (zero? (get-counters (refresh crypsis) :virus))
+            "Crypsis has 0 virus counters")
+        (run-on state "Archives")
+        (card-ability state :runner (refresh crypsis) 1) ; Match strength
+        (card-ability state :runner (refresh crypsis) 0) ; Break
+        (click-prompt state :runner "End the run")
+        (is (zero? (get-counters (refresh crypsis) :virus))
+            "Crypsis has 0 virus counters")
+        (run-jack-out state)
+        (is (= "Crypsis" (:title (first (:discard (get-runner)))))
+            "Crypsis was trashed"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crypsis")
+      (let [crypsis (get-program state 0)]
+        (run-on state "Archives")
+        (card-ability state :runner (refresh crypsis) 1) ; Match strength
+        (card-ability state :runner (refresh crypsis) 0) ; Break
+        (click-prompt state :runner "End the run")
+        (is (zero? (get-counters (refresh crypsis) :virus))
+            "Crypsis has 0 virus counters")
+        (run-jack-out state)
+        (is (= 2 (count (:discard (get-runner)))) "Crypsis was trashed"))))
+  (testing "Working with auto-pump-and-break"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck [(qty "Crypsis" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Crypsis")
+      (let [crypsis (get-program state 0)
+            iw (get-ice state :hq 0)]
+        (card-ability state :runner crypsis 2)
+        (is (= 1 (get-counters (refresh crypsis) :virus))
+            "Crypsis has 1 virus counter")
+        (run-on state "HQ")
+        (core/rez state :corp (refresh iw))
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh crypsis)})
+        (run-continue state)
+        (is (= 0 (get-counters (refresh crypsis) :virus))
+            "Used up virus token on Crypsis")))))
 
 (deftest cyber-cypher
   (do-game
