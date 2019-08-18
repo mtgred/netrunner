@@ -524,7 +524,7 @@
 
    "Brahman"
    (auto-icebreaker {:abilities [(break-sub 1 2 "All"
-                                            {:additional-ability (effect (update! (assoc-in card [:special :brahman-used] true)))})
+                                            {:additional-ability {:effect (effect (update! (assoc-in card [:special :brahman-used] true)))}})
                                  (strength-pump 2 1)]
                      :events (let [put-back {:req (req (get-in card [:special :brahman-used]))
                                              :player :runner ; Needed for when the run is ended by the Corp

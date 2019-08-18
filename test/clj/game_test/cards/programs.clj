@@ -388,7 +388,26 @@
         (card-ability state :corp (refresh nisei) 0) ; Nisei Token
         (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
         (click-card state :runner brah)
-        (is (= 1 (count (:deck (get-runner)))) "Brahman on top of Stack now.")))))
+        (is (= 1 (count (:deck (get-runner)))) "Brahman on top of Stack now."))))
+  (testing "Works with dynamic ability"
+    (do-game
+      (new-game {:runner {:deck ["Brahman" "Paricia"]}
+                 :corp {:deck ["Spiderweb"]}})
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Brahman")
+      (play-from-hand state :runner "Paricia")
+      (core/gain state :runner :credit 1)
+      (let [brah (get-program state 0)
+            par (get-program state 1)
+            spi (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp spi)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh brah)})
+        (run-continue state)
+        (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
+        (click-card state :runner par)
+        (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now.")))))
 
 (deftest bukhgalter
   ;; Bukhgalter ability
