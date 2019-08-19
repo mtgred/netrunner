@@ -1327,7 +1327,23 @@
           (take-credits state :runner)
           (click-card state :corp central-vanilla)
           (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting HQ does not clear the prompt")
-          (is (zero? (get-counters (refresh central-vanilla) :advancement)) "Clicking a an ice protecting HQ does not advance it"))))))
+          (is (zero? (get-counters (refresh central-vanilla) :advancement)) "Clicking a an ice protecting HQ does not advance it")))))
+  (testing "The Corp may advance hosted cards in La Costa Grid's server"
+    (do-game
+      (new-game {:corp {:hand ["La Costa Grid", "Full Immersion RecStudio", "Project Beale"]}})
+      (play-from-hand state :corp "La Costa Grid" "New remote")
+      (play-from-hand state :corp "Full Immersion RecStudio" "Server 1")
+      (let [[la-costa recstudio] (get-content state :remote1)]
+        (core/rez state :corp recstudio)
+        (card-ability state :corp recstudio 0)
+        (click-card state :corp (first (:hand (get-corp))))
+        (let [[beale] (:hosted (refresh recstudio))]
+          (println (game.utils/zone->name (second (:zone beale))))
+          (core/rez state :corp la-costa)
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp beale)
+          (is (= 1 (get-counters (refresh beale) :advancement)) "Clicking on a hosted card in the La Costa Grid server advances it"))))))
 
 (deftest letheia-nisei
   ;; Letheia Nisei
