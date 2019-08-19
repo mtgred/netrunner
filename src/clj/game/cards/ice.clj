@@ -324,8 +324,8 @@
    "Aiki"
    {:subroutines [(do-psi {:label "Runner draws 2 cards"
                            :msg "make the Runner draw 2 cards"
-                           :effect (effect (draw :runner 2)
-                                           (effect-completed eid))})
+                           :async true
+                           :effect (effect (draw :runner eid 2 nil))})
                   (do-net-damage 1)
                   (do-net-damage 1)]}
 
