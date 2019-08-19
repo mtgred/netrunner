@@ -2575,7 +2575,7 @@
         (is (= 5 (:current-strength (refresh snow))) "+4 until-end-of-run strength")
         (run-jack-out state)
         (is (= 1 (:current-strength (refresh snow))) "Back to default strength"))))
-  (testing "Strength boost until end of run when used to break a subroutine"
+  (testing "Strength boost until end of run when using dynamic auto-pump-and-break ability"
     (do-game
       (new-game {:corp {:deck ["Spiderweb" "Hedge Fund"]}
                  :runner {:deck ["Snowball"]}})
