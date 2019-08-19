@@ -1076,7 +1076,7 @@
               {:prompt "Draw 1 card to force the Corp to draw 1 card?"
                :yes-ability {:msg "draw 1 card and force the Corp to draw 1 card"
                              :async true
-                             :effect (req (wait-for (draw state :runner 1)
+                             :effect (req (wait-for (draw state :runner 1 nil)
                                                     (draw state :corp eid 1 nil)))}
                :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                          (effect-completed state side eid))}}}]
