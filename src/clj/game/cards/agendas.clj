@@ -1050,6 +1050,7 @@
    {:silent (req true)
     :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))
     :abilities [{:cost [:agenda 1]
+                 :label "Add 1 card from Archives to HQ"
                  :prompt "Choose a card in Archives to add to HQ"
                  :show-discard true
                  :choices {:req #(and (in-discard? %)
