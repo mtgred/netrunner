@@ -307,9 +307,9 @@
                                                           (break-subroutines-pay ice cost broken-subs args) card nil)
                                          (doseq [sub broken-subs]
                                            (break-subroutine! state (get-card state ice) sub)
-                                           (continue-ability state side (assoc (:additional-ability args)
-                                                                              :eid (make-eid state {:source-type :ability}))
-                                                             card nil))
+                                           (resolve-ability state side (make-eid state {:source card :source-type :ability})
+                                                            (:additional-ability args)
+                                                            card nil))
                                          (let [ice (get-card state ice)
                                                card (get-card state card)]
                                            (if (and (not early-exit)
