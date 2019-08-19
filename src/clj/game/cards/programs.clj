@@ -842,7 +842,7 @@
                :run-ends ds})
     :constant-abilities [{:type :ice-strength
                           :req (req (and (same-card? target current-ice)
-                                         (:datasucker-count card)))
+                                         (:datasucker-count (get-card state card))))
                           :effect (req (- (:datasucker-count (get-card state card))))}]
     :abilities [{:cost [:virus 1]
                  :msg (msg "give -1 strength to " (:title current-ice))

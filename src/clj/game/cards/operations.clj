@@ -5,6 +5,7 @@
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
             [game.core.toasts :refer [toast]]
+            [game.core.constant-abilities :refer [register-constant-abilities]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
@@ -1253,12 +1254,14 @@
                     (host (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))}
 
    "Patch"
-   {:choices {:req #(and (ice? %) (rezzed? %))}
+   {:choices {:req #(and (ice? %)
+                         (rezzed? %))}
     :msg (msg "give +2 strength to " (card-str state target))
-    :effect (effect (host target (assoc card :zone [:discard] :seen true :condition true))
-                    (update-ice-strength (get-card state target)))
+    :effect (req (let [card (host state side target (assoc card :zone [:discard] :seen true :condition true))]
+                   (register-constant-abilities state card)
+                   (update-ice-strength state side (get-card state target))))
     :constant-abilities [{:type :ice-strength
-                          :req (req (same-card? target (:host card)))
+                          :req (req (same-card? target (:host (get-card state card))))
                           :effect (req 2)}]}
 
    "Paywall Implementation"

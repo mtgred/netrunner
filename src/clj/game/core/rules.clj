@@ -26,6 +26,7 @@
       (do (let [ability (-> card card-def (dissoc :req) (assoc :eid eid))]
             ;; Resolve ability, removing :req as that has already been checked.
             (resolve-ability state side ability card nil))
+          (register-constant-abilities state card)
           (when-let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))]
             (move state side c :discard))
           (when (has-subtype? card "Terminal")

@@ -1325,7 +1325,7 @@
                                  (update! (assoc card :sifr-target current-ice :sifr-used true))
                                  (update-ice-strength current-ice))}]
     :constant-abilities [{:type :ice-strength
-                          :req (req (same-card? target (:sifr-target card)))
+                          :req (req (same-card? target (:sifr-target (get-card state card))))
                           :effect (req (- (get-strength target)))}]
     :events {:runner-turn-begins {:req (req (:sifr-used card))
                                   :effect (effect (gain :runner :hand-size 1)
