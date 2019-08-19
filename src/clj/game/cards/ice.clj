@@ -2211,7 +2211,7 @@
               :effect (req (if (= "Suffer 1 net damage" target)
                              (continue-ability state side (do-net-damage 1) card nil)
                              (do (pay state :runner :credit 1)
-                                 (effect-completed state side))))}]
+                                 (effect-completed state side eid))))}]
      {:subroutines [sub sub]})
 
    "Quandary"
