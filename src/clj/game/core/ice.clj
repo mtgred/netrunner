@@ -123,7 +123,7 @@
      (resolve-next-unbroken-sub state side eid ice subroutines nil)))
   ([state side eid ice subroutines] (resolve-next-unbroken-sub state side eid ice subroutines nil))
   ([state side eid ice subroutines msgs]
-   (if (and subroutines
+   (if (and (seq subroutines)
             (:run @state)
             (not (get-in @state [:run :ending]))
             (not (get-in @state [:run :ended])))
@@ -131,7 +131,7 @@
        (wait-for (resolve-subroutine! state side (make-eid state eid) ice sub)
                  (resolve-next-unbroken-sub state side eid
                                             (get-card state ice)
-                                            (next subroutines)
+                                            (rest subroutines)
                                             (cons sub msgs))))
      (effect-completed state side (make-result eid (reverse msgs))))))
 
@@ -141,9 +141,7 @@
                               :source-type :subroutine})]
      (resolve-unbroken-subs! state side eid ice)))
   ([state side eid ice]
-   (if-let [subroutines (->> (:subroutines ice)
-                             (remove :broken)
-                             seq)]
+   (if-let [subroutines (remove :broken (:subroutines ice))]
      (wait-for (resolve-next-unbroken-sub state side (make-eid state eid) ice subroutines)
                (system-msg state :corp (str "resolves " (quantify (count async-result) "unbroken subroutine")
                                             " on " (:title ice)

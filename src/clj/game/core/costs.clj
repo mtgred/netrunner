@@ -600,7 +600,7 @@
   (if (empty? costs)
     (complete-with-result state side eid msgs)
     (wait-for (cost-handler state side (make-eid state eid) card action costs (first costs))
-              (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
+              (pay-sync-next state side eid (rest costs) card action (conj msgs async-result)))))
 
 (defn pay-sync
   "Same as pay, but awaitable."

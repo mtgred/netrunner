@@ -952,7 +952,7 @@
                                  (system-msg state :runner async-result)
                                  (continue-ability
                                    state side
-                                   (break-fn (next unbroken-subs) (inc total))
+                                   (break-fn (rest unbroken-subs) (inc total))
                                    card nil))
                        (let [msgs (when (pos? total)
                                     (str "resolves " (quantify total "unbroken subroutine")

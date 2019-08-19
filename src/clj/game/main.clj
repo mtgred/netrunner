@@ -88,7 +88,7 @@
            z zones]
       (if (empty? z)
         s
-        (recur (update-in s (first z) #(private-card-vector state :corp %)) (next z))))))
+        (recur (update-in s (first z) #(private-card-vector state :corp %)) (rest z))))))
 
 (defn- make-private-deck [state side deck]
   (if (:view-deck (side @state))

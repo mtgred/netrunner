@@ -1206,7 +1206,7 @@
               :effect (req (wait-for
                              (access-card state side (first cards))
                              (if (< 1 (count cards))
-                               (continue-ability state side (access-pile (next cards) pile pile-size) card nil)
+                               (continue-ability state side (access-pile (rest cards) pile pile-size) card nil)
                                (effect-completed state side eid))))})
            (which-pile [p1 p2]
              {:prompt "Choose a pile to access"
@@ -1377,7 +1377,7 @@
    "Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
     :msg (msg "force the Corp to trash an ICE protecting " target)
-    :effect (req (let [serv (next (server->zone state target))
+    :effect (req (let [serv (rest (server->zone state target))
                        servname target]
                    (resolve-ability
                      state :corp

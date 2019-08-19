@@ -310,7 +310,7 @@
                 :req (req this-server)
                 :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
                              (swap! state update-in [:run] dissoc :successful)
-                             (swap! state update-in [:runner :register :successful-run] #(next %)))}}})
+                             (swap! state update-in [:runner :register :successful-run] #(seq (rest %))))}}})
 
    "Cyberdex Virus Suite"
    {:flags {:rd-reveal (req true)}
