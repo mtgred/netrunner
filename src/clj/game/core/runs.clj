@@ -383,12 +383,12 @@
         cost-str (build-cost-string cost)
         can-pay (when (not-empty cost)
                   (can-pay? state side (make-eid state eid) nil nil cost))
-        choices (if can-pay
-                  ["Pay to access" "No action"]
-                  ["OK"])
         prompt-str (if can-pay
                      (str cost-str " to access this card?")
-                     "You can't pay the cost to access this card.")]
+                     "You can't pay the cost to access this card.")
+        choices (if can-pay
+                  ["Pay to access" "No action"]
+                  ["OK"])]
     (cond
       ;; Did a pre-access-card effect trash the card? (By Any Means)
       (not (get-card state card))
@@ -398,14 +398,14 @@
       (continue-ability
         state :runner
         {:async true
-         :prompt (str cost-str " to access this card?")
+         :prompt prompt-str
          :choices choices
          :effect (req (cond
                         (= "OK" target)
                         (access-end state side eid card)
                         (= "No action" target)
                         (access-end state side eid card)
-                        (= "Pay to access" target)
+                        :else
                         (wait-for (pay-sync state side card cost)
                                   (if async-result
                                     (access-trigger-events state side eid card title async-result)
