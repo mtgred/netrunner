@@ -162,6 +162,7 @@
 (def special-patterns
   (letfn [(regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
     (->> {"[hr]" [:hr]
+          "[br]" [:br]
           "[!]" [:div.smallwarning "!"]}
       (map (fn [[k v]] [(regex-of k) v]))
       (sort-by (comp count str first) >))))

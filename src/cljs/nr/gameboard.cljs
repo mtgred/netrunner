@@ -719,7 +719,8 @@
                 (cond
                   (and (= "gagarin-deep-space-expanding-the-horizon" (get-in @game-state [:corp :identity :normalizedtitle]))
                        (is-remote? (second (:zone card))))
-                  [:div "Additional costs:" [:br] (render-message "+1[Credits] to access")]
+                  [:div [:div.title "Additional costs:"]
+                   [:div.cost (render-message "pay 1[Credits] to access") [:div.source (render-message "Gagarin Deep Space: Expanding the Horizon")]]]
 
                   :else
                   nil)]
