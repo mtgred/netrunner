@@ -26,20 +26,36 @@
 
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
-  (do-game
-    (new-game {:corp {:deck ["Archangel"]
-                      :hand ["Hedge Fund"]}
-               :runner {:deck ["Bank Job"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Bank Job")
-    (run-empty-server state :rd)
-    (click-prompt state :corp "Yes")
-    (click-prompt state :runner "Yes")
-    (click-prompt state :corp "0")
-    (click-prompt state :runner "0")
-    (click-card state :corp (get-resource state 0))
-    (click-prompt state :runner "No action")
-    (is (not (:run @state)) "Run ended")))
+  (testing "Basic test of subroutine"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Archangel"]}
+                 :runner {:hand ["Bank Job"]}})
+      (play-from-hand state :corp "Archangel" "HQ")
+      (let [archangel (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (core/rez state :corp archangel)
+        (play-from-hand state :runner "Bank Job")
+        (run-on state "HQ")
+        (card-subroutine state :corp archangel 0)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :corp (get-resource state 0))
+        (is (nil? (get-resource state 0)) "Bank Job is trashed"))))
+  (testing "Access test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Archangel"]}
+                 :runner {:hand ["Bank Job"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bank Job")
+      (run-empty-server state :hq)
+      (click-prompt state :corp "Yes")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (click-card state :corp (get-resource state 0))
+      (is (nil? (get-resource state 0)) "Bank Job is trashed"))))
 
 (deftest architect
   ;; Architect
@@ -760,23 +776,39 @@
 
 (deftest herald
   ;; Herald
-  (do-game
-    (new-game {:corp {:deck ["Herald" "Project Beale"]}})
-    (play-from-hand state :corp "Herald" "HQ")
-    (play-from-hand state :corp "Project Beale" "New remote")
-    (let [herald (get-ice state :hq 0)
-          beale (get-content state :remote1 0)]
-      (core/rez state :corp herald)
-      (take-credits state :corp)
-      (run-on state "HQ")
-      (= 4 (:credit (get-corp)))
-      (card-subroutine state :corp herald 0)
-      (= 6 (:credit (get-corp)))
-      (card-subroutine state :corp herald 1)
-      (click-prompt state :corp "2")
-      (click-card state :corp beale)
-      (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
-      (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens"))))
+  (testing "Basic test of subroutines"
+    (do-game
+      (new-game {:corp {:deck ["Herald" "Project Beale"]}})
+      (play-from-hand state :corp "Herald" "HQ")
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (let [herald (get-ice state :hq 0)
+            beale (get-content state :remote1 0)]
+        (core/rez state :corp herald)
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (= 4 (:credit (get-corp)))
+        (card-subroutine state :corp herald 0)
+        (= 6 (:credit (get-corp)))
+        (card-subroutine state :corp herald 1)
+        (click-prompt state :corp "2")
+        (click-card state :corp beale)
+        (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
+        (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens"))))
+  (testing "Access test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Herald" "Project Beale"]}})
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (let [beale (get-content state :remote1 0)]
+        (take-credits state :corp)
+        (run-empty-server state :hq)
+        (= 4 (:credit (get-corp)))
+        (click-prompt state :runner "Yes")
+        (= 6 (:credit (get-corp)))
+        (click-prompt state :corp "2")
+        (click-card state :corp beale)
+        (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
+        (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens")))))
 
 (deftest holmegaard
   ;; Holmegaard - Stop Runner from accessing cards if win trace
@@ -1985,6 +2017,34 @@
       (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
       (card-subroutine state :corp (refresh sand) 0)
       (is (empty? (:prompt (get-corp))) "Sandman doesn't fire if no installed cards"))))
+
+(deftest sapper
+  ;; Sapper
+  (testing "Basic test of subroutine"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Sapper"]}
+                 :runner {:hand ["Corroder"]}})
+      (play-from-hand state :corp "Sapper" "HQ")
+      (let [sapper (get-ice state :hq 0)]
+        (core/rez state :corp sapper)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (run-on state "HQ")
+        (card-subroutine state :corp sapper 0)
+        (click-card state :corp (get-program state 0))
+        (is (nil? (get-program state 0)) "Corroder is trashed"))))
+  (testing "Access test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Sapper"]}
+                 :runner {:hand ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Yes")
+      (click-card state :corp (get-program state 0))
+      (is (nil? (get-program state 0)) "Corroder is trashed"))))
 
 (deftest searchlight
   ;; Searchlight - Trace bace equal to advancement counters
