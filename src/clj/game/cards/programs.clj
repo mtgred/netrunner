@@ -524,7 +524,7 @@
 
    "Brahman"
    (auto-icebreaker {:abilities [(break-sub 1 2 "All"
-                                            {:additional-ability (effect (update! (assoc-in card [:special :brahman-used] true)))})
+                                            {:additional-ability {:effect (effect (update! (assoc-in card [:special :brahman-used] true)))}})
                                  (strength-pump 2 1)]
                      :events (let [put-back {:req (req (get-in card [:special :brahman-used]))
                                              :player :runner ; Needed for when the run is ended by the Corp
@@ -725,13 +725,16 @@
    (break-and-enter "Code Gate")
 
    "Crypsis"
-   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability (effect (update! (assoc card :crypsis-broke true)))})
+   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:effect (effect (update! (assoc card :crypsis-broke true)))}})
                                  (strength-pump 1 1)
                                  {:cost [:click 1]
                                   :msg "place 1 virus counter"
                                   :effect (effect (add-counter card :virus 1))}]
                      :events (let [encounter-ends-effect
                                    {:req (req (:crypsis-broke card))
+                                    :msg (msg (if (pos? (get-counters card :virus))
+                                                (str "remove a virus token from " (:title card))
+                                                (str "trash " (:title card))))
                                     :effect (req ((:effect breaker-auto-pump) state side eid card targets)
                                                  (if (pos? (get-counters card :virus))
                                                    (add-counter state side card :virus -1)
@@ -999,7 +1002,8 @@
                                           (use-mu (:memoryunits target)))}}}
 
    "Eater"
-   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability (effect (max-access 0))
+   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg (msg "access not more than 0 cards for the remainder of this run")
+                                                                            :effect (effect (max-access 0))}
                                                        :label "break 1 subroutine and access 0 cards"})
                                  (strength-pump 1 1)]})
 
@@ -1065,9 +1069,10 @@
 
    "Faerie"
    (auto-icebreaker {:abilities [(break-sub 0 1 "Sentry"
-                                            {:additional-ability (effect (update! (assoc-in card [:special :faerie-used] true)))})
+                                            {:additional-ability {:effect (effect (update! (assoc-in card [:special :faerie-used] true)))}})
                                  (strength-pump 1 1)]
                      :events {:pass-ice {:req (req (get-in card [:special :faerie-used]))
+                                         :msg (msg "trash " (:title card))
                                          :effect (effect (trash card))}}})
 
    "False Echo"
@@ -2095,8 +2100,8 @@
 
    "Snowball"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier"
-                                            {:repeatable false
-                                             :additional-ability (effect (pump card 1 :all-run))})
+                                            {:additional-ability {:msg "gain +1 strength for the remainder of the run"
+                                                                  :effect (effect (pump card 1 :all-run))}})
                                  (strength-pump 1 1)]})
 
    "Spike"
@@ -2271,7 +2276,7 @@
 
    "Tycoon"
    (auto-icebreaker {:abilities [(break-sub 1 2 "Barrier"
-                                            {:additional-ability (effect (update! (assoc-in card [:special :tycoon-used] true)))})
+                                            {:additional-ability {:effect (effect (update! (assoc-in card [:special :tycoon-used] true)))}})
                                  (strength-pump 2 3)]
                      :events (let [give-credits {:req (req (get-in card [:special :tycoon-used]))
                                                  :msg "give the Corp 2 [Credits]"

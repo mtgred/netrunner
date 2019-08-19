@@ -388,7 +388,26 @@
         (card-ability state :corp (refresh nisei) 0) ; Nisei Token
         (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
         (click-card state :runner brah)
-        (is (= 1 (count (:deck (get-runner)))) "Brahman on top of Stack now.")))))
+        (is (= 1 (count (:deck (get-runner)))) "Brahman on top of Stack now."))))
+  (testing "Works with dynamic ability"
+    (do-game
+      (new-game {:runner {:deck ["Brahman" "Paricia"]}
+                 :corp {:deck ["Spiderweb"]}})
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Brahman")
+      (play-from-hand state :runner "Paricia")
+      (core/gain state :runner :credit 1)
+      (let [brah (get-program state 0)
+            par (get-program state 1)
+            spi (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp spi)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh brah)})
+        (run-continue state)
+        (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
+        (click-card state :runner par)
+        (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now.")))))
 
 (deftest bukhgalter
   ;; Bukhgalter ability
@@ -666,51 +685,71 @@
 
 (deftest crypsis
   ;; Crypsis - Loses a virus counter after encountering ice it broke
-  (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}
-               :runner {:deck [(qty "Crypsis" 2)]}})
-    (play-from-hand state :corp "Ice Wall" "Archives")
-    (take-credits state :corp)
-    (core/gain state :runner :credit 100)
-    (play-from-hand state :runner "Crypsis")
-    (let [crypsis (get-program state 0)]
-      (card-ability state :runner crypsis 2)
-      (is (= 1 (get-counters (refresh crypsis) :virus))
-          "Crypsis has 1 virus counter")
-      (run-on state "Archives")
-      (core/rez state :corp (get-ice state :archives 0))
-      (card-ability state :runner (refresh crypsis) 1) ; Match strength
-      (card-ability state :runner (refresh crypsis) 0) ; Break
-      (click-prompt state :runner "End the run")
-      (is (= 1 (get-counters (refresh crypsis) :virus))
-          "Crypsis has 1 virus counter")
-      (run-continue state)
-      (is (zero? (get-counters (refresh crypsis) :virus))
-          "Crypsis has 0 virus counters")
-      (run-jack-out state)
-      (is (zero? (get-counters (refresh crypsis) :virus))
-          "Crypsis has 0 virus counters")
-      (run-on state "Archives")
-      (card-ability state :runner (refresh crypsis) 1) ; Match strength
-      (card-ability state :runner (refresh crypsis) 0) ; Break
-      (click-prompt state :runner "End the run")
-      (is (zero? (get-counters (refresh crypsis) :virus))
-          "Crypsis has 0 virus counters")
-      (run-jack-out state)
-      (is (= "Crypsis" (:title (first (:discard (get-runner)))))
-          "Crypsis was trashed"))
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (play-from-hand state :runner "Crypsis")
-    (let [crypsis (get-program state 0)]
-      (run-on state "Archives")
-      (card-ability state :runner (refresh crypsis) 1) ; Match strength
-      (card-ability state :runner (refresh crypsis) 0) ; Break
-      (click-prompt state :runner "End the run")
-      (is (zero? (get-counters (refresh crypsis) :virus))
-          "Crypsis has 0 virus counters")
-      (run-jack-out state)
-      (is (= 2 (count (:discard (get-runner)))) "Crypsis was trashed"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck [(qty "Crypsis" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Crypsis")
+      (let [crypsis (get-program state 0)]
+        (card-ability state :runner crypsis 2)
+        (is (= 1 (get-counters (refresh crypsis) :virus))
+            "Crypsis has 1 virus counter")
+        (run-on state "Archives")
+        (core/rez state :corp (get-ice state :archives 0))
+        (card-ability state :runner (refresh crypsis) 1) ; Match strength
+        (card-ability state :runner (refresh crypsis) 0) ; Break
+        (click-prompt state :runner "End the run")
+        (is (= 1 (get-counters (refresh crypsis) :virus))
+            "Crypsis has 1 virus counter")
+        (run-continue state)
+        (is (zero? (get-counters (refresh crypsis) :virus))
+            "Crypsis has 0 virus counters")
+        (run-jack-out state)
+        (is (zero? (get-counters (refresh crypsis) :virus))
+            "Crypsis has 0 virus counters")
+        (run-on state "Archives")
+        (card-ability state :runner (refresh crypsis) 1) ; Match strength
+        (card-ability state :runner (refresh crypsis) 0) ; Break
+        (click-prompt state :runner "End the run")
+        (is (zero? (get-counters (refresh crypsis) :virus))
+            "Crypsis has 0 virus counters")
+        (run-jack-out state)
+        (is (= "Crypsis" (:title (first (:discard (get-runner)))))
+            "Crypsis was trashed"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Crypsis")
+      (let [crypsis (get-program state 0)]
+        (run-on state "Archives")
+        (card-ability state :runner (refresh crypsis) 1) ; Match strength
+        (card-ability state :runner (refresh crypsis) 0) ; Break
+        (click-prompt state :runner "End the run")
+        (is (zero? (get-counters (refresh crypsis) :virus))
+            "Crypsis has 0 virus counters")
+        (run-jack-out state)
+        (is (= 2 (count (:discard (get-runner)))) "Crypsis was trashed"))))
+  (testing "Working with auto-pump-and-break"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck [(qty "Crypsis" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Crypsis")
+      (let [crypsis (get-program state 0)
+            iw (get-ice state :hq 0)]
+        (card-ability state :runner crypsis 2)
+        (is (= 1 (get-counters (refresh crypsis) :virus))
+            "Crypsis has 1 virus counter")
+        (run-on state "HQ")
+        (core/rez state :corp (refresh iw))
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh crypsis)})
+        (run-continue state)
+        (is (= 0 (get-counters (refresh crypsis) :virus))
+            "Used up virus token on Crypsis")))))
 
 (deftest cyber-cypher
   (do-game
@@ -961,6 +1000,24 @@
         (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
         (is (= 2 (:click (get-runner))) "1click to use Djinn ability")))))
 
+(deftest eater
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
+                 :runner {:deck [(qty "Eater" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Eater")
+      (let [eater (get-program state 0)
+            iw (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (core/rez state :corp (refresh iw))
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh eater)})
+        (run-continue state)
+        (run-successful state)
+        (is (empty? (:prompt (get-runner))) "No prompt for accessing cards")))))
+
 (deftest equivocation
   ;; Equivocation - interactions with other successful-run events.
   (do-game
@@ -983,23 +1040,36 @@
     (is (not (:run @state)) "Run ended")))
 
 (deftest faerie
-  ;; Faerie - trash after encounter is over, not before.
-  (do-game
-    (new-game {:corp {:deck ["Caduceus"]}
-               :runner {:deck ["Faerie"]}})
-    (play-from-hand state :corp "Caduceus" "Archives")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Faerie")
-    (let [fae (get-program state 0)]
-      (run-on state :archives)
-      (core/rez state :corp (get-ice state :archives 0))
-      (card-ability state :runner fae 1)
-      (card-ability state :runner fae 0)
-      (click-prompt state :runner "Trace 3 - Gain 3 [Credits]")
-      (click-prompt state :runner "Trace 2 - End the run")
-      (is (refresh fae) "Faerie not trashed until encounter over")
-      (run-continue state)
-      (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed"))))
+  (testing "Trash after encounter is over, not before"
+    (do-game
+      (new-game {:corp {:deck ["Caduceus"]}
+                 :runner {:deck ["Faerie"]}})
+      (play-from-hand state :corp "Caduceus" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Faerie")
+      (let [fae (get-program state 0)]
+        (run-on state :archives)
+        (core/rez state :corp (get-ice state :archives 0))
+        (card-ability state :runner fae 1)
+        (card-ability state :runner fae 0)
+        (click-prompt state :runner "Trace 3 - Gain 3 [Credits]")
+        (click-prompt state :runner "Trace 2 - End the run")
+        (is (refresh fae) "Faerie not trashed until encounter over")
+        (run-continue state)
+        (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed"))))
+  (testing "Works with auto-pump-and-break"
+    (do-game
+      (new-game {:corp {:deck ["Caduceus"]}
+                 :runner {:deck ["Faerie"]}})
+      (play-from-hand state :corp "Caduceus" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Faerie")
+      (let [fae (get-program state 0)]
+        (run-on state :archives)
+        (core/rez state :corp (get-ice state :archives 0))
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh fae)})
+        (run-continue state)
+        (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed")))))
 
 (deftest false-echo
   ;; False Echo - choice for Corp
@@ -2471,41 +2541,58 @@
       (is (empty? (get-in @state [:runner :prompt])) "No option to jack out"))))
 
 (deftest snowball
-  ;; Snowball - Strength boost until end of run when used to break a subroutine
-  (do-game
-    (new-game {:corp {:deck ["Spiderweb" "Fire Wall" "Hedge Fund"]}
-               :runner {:deck ["Snowball"]}})
-    (play-from-hand state :corp "Hedge Fund")
-    (play-from-hand state :corp "Fire Wall" "HQ")
-    (play-from-hand state :corp "Spiderweb" "HQ")
-    (take-credits state :corp)
-    (core/gain state :runner :credit 10)
-    (play-from-hand state :runner "Snowball")
-    (let [sp (get-ice state :hq 1)
-          fw (get-ice state :hq 0)
-          snow (get-program state 0)]
-      (run-on state "HQ")
-      (core/rez state :corp sp)
-      (core/rez state :corp fw)
-      (card-ability state :runner snow 1) ; match strength
-      (is (= 2 (:current-strength (refresh snow))))
-      (card-ability state :runner snow 0) ; strength matched, break a sub
-      (click-prompt state :runner "End the run")
-      (card-ability state :runner snow 0) ; break a sub
-      (click-prompt state :runner "End the run")
-      (is (= 4 (:current-strength (refresh snow))) "Broke 2 subs, gained 2 more strength")
-      (run-continue state)
-      (is (= 3 (:current-strength (refresh snow))) "Has +2 strength until end of run; lost 1 per-encounter boost")
-      (card-ability state :runner snow 1)
-      (card-ability state :runner snow 1) ; match strength
-      (is (= 5 (:current-strength (refresh snow))) "Matched strength, gained 2")
-      (card-ability state :runner snow 0) ; strength matched, break a sub
-      (click-prompt state :runner "End the run")
-      (is (= 6 (:current-strength (refresh snow))) "Broke 1 sub, gained 1 more strength")
-      (run-continue state)
-      (is (= 4 (:current-strength (refresh snow))) "+3 until-end-of-run strength")
-      (run-jack-out state)
-      (is (= 1 (:current-strength (refresh snow))) "Back to default strength"))))
+  (testing "Strength boost until end of run when used to break a subroutine"
+    (do-game
+      (new-game {:corp {:deck ["Spiderweb" "Fire Wall" "Hedge Fund"]}
+                 :runner {:deck ["Snowball"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Fire Wall" "HQ")
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Snowball")
+      (let [sp (get-ice state :hq 1)
+            fw (get-ice state :hq 0)
+            snow (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp sp)
+        (core/rez state :corp fw)
+        (card-ability state :runner snow 1) ; match strength
+        (is (= 2 (:current-strength (refresh snow))))
+        (card-ability state :runner snow 0) ; strength matched, break a sub
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
+        (is (= 5 (:current-strength (refresh snow))) "Broke 3 subs, gained 3 more strength")
+        (run-continue state)
+        (is (= 4 (:current-strength (refresh snow))) "Has +3 strength until end of run; lost 1 per-encounter boost")
+        (card-ability state :runner snow 1) ; match strength
+        (is (= 5 (:current-strength (refresh snow))) "Matched strength, gained 1")
+        (card-ability state :runner snow 0) ; strength matched, break a sub
+        (click-prompt state :runner "End the run")
+        (is (= 6 (:current-strength (refresh snow))) "Broke 1 sub, gained 1 more strength")
+        (run-continue state)
+        (is (= 5 (:current-strength (refresh snow))) "+4 until-end-of-run strength")
+        (run-jack-out state)
+        (is (= 1 (:current-strength (refresh snow))) "Back to default strength"))))
+  (testing "Strength boost until end of run when using dynamic auto-pump-and-break ability"
+    (do-game
+      (new-game {:corp {:deck ["Spiderweb" "Hedge Fund"]}
+                 :runner {:deck ["Snowball"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Snowball")
+      (let [sp (get-ice state :hq 0)
+            snow (get-program state 0)]
+        (run-on state "HQ")
+        (core/rez state :corp sp)
+        (is (= 1 (:current-strength (refresh snow))) "Snowball starts at 1 strength")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh snow)})
+        (is (= 5 (:current-strength (refresh snow))) "Snowball was pumped once and gained 3 strength from breaking")
+        (run-continue state)
+        (is (= 4 (:current-strength (refresh snow))) "+3 until-end-of-run strength")))))
 
 (deftest stargate
   ;; Stargate - once per turn Keyhole which doesn't shuffle
@@ -2696,7 +2783,23 @@
         (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
         (card-ability state :corp (refresh nisei) 0)
         (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used after Nisei MK II fires")
-        (is (= 1 (:current-strength (refresh tycoon))) "Tycoon strength back down to 1.")))))
+        (is (= 1 (:current-strength (refresh tycoon))) "Tycoon strength back down to 1."))))
+  ;; Issue #4423: Tycoon no longer working automatically
+  (testing "Tycoon pays out on auto-pump-and-break"
+    (do-game
+      (new-game {:corp {:deck ["Markus 1.0"]}
+                 :runner {:deck ["Tycoon"]}})
+      (play-from-hand state :corp "Markus 1.0" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Tycoon")
+      (let [tycoon (get-program state 0)
+            credits (:credit (get-corp))]
+        (run-on state "HQ")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh tycoon)})
+        (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
+        (run-continue state)
+        (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used")))))
 
 (deftest upya
   (do-game

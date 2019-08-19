@@ -304,7 +304,10 @@
                                (wait-for (resolve-ability state side (make-eid state {:source-type :ability})
                                                           (break-subroutines-pay ice cost broken-subs args) card nil)
                                          (doseq [sub broken-subs]
-                                           (break-subroutine! state (get-card state ice) sub))
+                                           (break-subroutine! state (get-card state ice) sub)
+                                           (resolve-ability state side (make-eid state {:source card :source-type :ability})
+                                                            (:additional-ability args)
+                                                            card nil))
                                          (let [ice (get-card state ice)
                                                card (get-card state card)]
                                            (if (and (not early-exit)
@@ -313,11 +316,12 @@
                                                     (pos? (count (unbroken-subroutines-choice ice)))
                                                     (can-pay? state side eid (get-card state card) nil cost))
                                              (continue-ability state side (break-subroutines ice cost n args) card nil)
-                                             (continue-ability state side {:effect (:additional-ability args)} card nil)))))))})))
+                                             (effect-completed state side eid)))))))})))
 
 (defn break-sub
   "Creates a break subroutine ability.
-  If n = 0 then any number of subs are broken."
+  If n = 0 then any number of subs are broken.
+  :additional-ability is a non-async ability that is called after using the break ability."
   ([cost n] (break-sub cost n nil nil))
   ([cost n subtype] (break-sub cost n subtype nil))
   ([cost n subtype args]
@@ -334,6 +338,7 @@
                               (or (= subtype "All")
                                   (has-subtype? current-ice subtype))
                               true)))))
+      :additional-ability (:additional-ability args)
       :break n
       :breaks subtype
       :break-cost cost
