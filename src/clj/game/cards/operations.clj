@@ -1882,7 +1882,7 @@
       :choices (req servers)
       :async true
       :msg (msg "rearrange ICE protecting " target)
-      :effect (req (let [serv (next (server->zone state target))]
+      :effect (req (let [serv (rest (server->zone state target))]
                      (continue-ability state side (sun serv) card nil)))})
 
    "Surveillance Sweep"

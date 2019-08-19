@@ -544,9 +544,11 @@
 
    "Daily Quest"
    (let [ability {:req (req (let [servers (get-in @state [:runner :register-last-turn :successful-run])]
-                              (not (some #{(second (:zone card))
-                                           (second (:zone (:host card)))}
-                                         servers))))
+                              (and servers
+                                   (not (some (into #{}
+                                                    (list (second (:zone card))
+                                                          (second (:zone (:host card)))))
+                                              servers)))))
                   :msg "gain 3 [Credits]"
                   :effect (effect (gain-credits :corp 3))}]
      {:rez-req (req (= (:active-player @state) :corp))

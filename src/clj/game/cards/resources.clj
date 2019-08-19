@@ -486,7 +486,7 @@
                                                " and removes Climactic Showdown from the game")
                                      :effect (effect (continue-ability
                                                        :corp
-                                                       (trash-or-bonus (next (server->zone state target)))
+                                                       (trash-or-bonus (rest (server->zone state target)))
                                                        card nil))}
                                     {:msg (str "choose a server protected by ice but cannot"
                                                " and removes Climactic Showdown from the game")})
@@ -2008,7 +2008,7 @@
                                                         (:sub-effect sub) current-ice nil)
                                        (if (and (:run @state)
                                                 (not (:ended (:run @state)))
-                                                (next unbroken-subs))
+                                                (rest unbroken-subs))
                                          (continue-ability
                                            state side
                                            (runner-break (remove-once #(= target %) unbroken-subs))

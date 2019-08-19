@@ -324,8 +324,8 @@
    "Aiki"
    {:subroutines [(do-psi {:label "Runner draws 2 cards"
                            :msg "make the Runner draw 2 cards"
-                           :effect (effect (draw :runner 2)
-                                           (effect-completed eid))})
+                           :async true
+                           :effect (effect (draw :runner eid 2 nil))})
                   (do-net-damage 1)
                   (do-net-damage 1)]}
 
@@ -952,7 +952,7 @@
                                  (system-msg state :runner async-result)
                                  (continue-ability
                                    state side
-                                   (break-fn (next unbroken-subs) (inc total))
+                                   (break-fn (rest unbroken-subs) (inc total))
                                    card nil))
                        (let [msgs (when (pos? total)
                                     (str "resolves " (quantify total "unbroken subroutine")
@@ -2211,7 +2211,7 @@
               :effect (req (if (= "Suffer 1 net damage" target)
                              (continue-ability state side (do-net-damage 1) card nil)
                              (do (pay state :runner :credit 1)
-                                 (effect-completed state side))))}]
+                                 (effect-completed state side eid))))}]
      {:subroutines [sub sub]})
 
    "Quandary"
