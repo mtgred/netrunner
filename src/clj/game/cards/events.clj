@@ -2225,7 +2225,7 @@
                                          :choices {:max 2
                                                    :req #(and (in-hand? %) (corp? %))}
                                          :effect (effect (trash-cards :corp targets)
-                                                         (clear-wait-prompt state :runner)
+                                                         (clear-wait-prompt :runner)
                                                          (system-msg :corp "discards 2 cards from SYN Attack"))}
                                         card nil)))}
                       card nil))}
