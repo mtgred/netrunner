@@ -1286,7 +1286,7 @@
         (take-credits state :corp)
         (take-credits state :runner)
         (click-card state :corp breaking-news)
-        (is (= 1 (get-counters (refresh breaking-news) :advancement)) "Clicking on Breaking News advances it"))))
+        (is (= 1 (get-counters (refresh breaking-news) :advancement)) "Clicking on a card in La Costa Grid's server advances it"))))
   (testing "The Corp may not advance cards which are not in La Costa Grid's server"
     (do-game
       (new-game {:corp {:hand ["La Costa Grid", (qty "Mumbad Virtual Tour" 2), (qty "Vanilla" 3)]}})
@@ -1312,15 +1312,15 @@
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp vanilla)
-          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa does not clear the prompt")
-          (is (zero? (get-counters (refresh vanilla) :advancement)) "Clicking a an ice protecting La Costa does not advance it"))
+          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa Grid does not clear the prompt")
+          (is (zero? (get-counters (refresh vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
         (play-from-hand state :corp "Vanilla" "Server 2")
         (let [[remote-vanilla] (get-ice state :remote2)]
           (take-credits state :corp)
           (take-credits state :runner)
           (click-card state :corp remote-vanilla)
-          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa does not clear the prompt")
-          (is (zero? (get-counters (refresh remote-vanilla) :advancement)) "Clicking a an ice protecting La Costa does not advance it"))
+          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa Grid does not clear the prompt")
+          (is (zero? (get-counters (refresh remote-vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
         (play-from-hand state :corp "Vanilla" "HQ")
         (let [[central-vanilla] (get-ice state :hq)]
           (take-credits state :corp)
