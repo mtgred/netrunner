@@ -521,20 +521,29 @@
                    (:install-rezzed (card-def card)))
            (do (when-not (= ignore-cost :all-costs)
                  (trigger-event state side :pre-rez-cost card))
-               (if (and altcost (can-pay? state side eid card nil altcost) (not ignore-cost))
+               (if (and altcost
+                        (not ignore-cost)
+                        (can-pay? state side eid card nil altcost))
                  (let [curr-bonus (get-rez-cost-bonus state side)]
-                   (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
-                            {:async true
-                             :effect (req (if (and (= target "Yes")
-                                                   (can-pay? state side eid card (:title card) altcost))
-                                            (do (pay state side card altcost)
-                                                (rez state side eid (-> card (dissoc :alternative-cost))
-                                                     (merge args {:ignore-cost true
-                                                                  :no-get-card true
-                                                                  :paid-alt true})))
-                                            (rez state side eid (-> card (dissoc :alternative-cost))
-                                                 (merge args {:no-get-card true
-                                                              :cached-bonus curr-bonus}))))}))
+                   (continue-ability
+                     state side
+                     {:optional
+                      {:prompt "Pay the alternative Rez cost?"
+                       :yes-ability
+                       {:cost altcost
+                        :async true
+                        :effect
+                        (effect (rez eid (dissoc card :alternative-cost)
+                                     (merge args {:ignore-cost true
+                                                  :no-get-card true
+                                                  :paid-alt true})))}
+                       :no-ability
+                       {:async true
+                        :effect
+                        (effect (rez eid (dissoc card :alternative-cost)
+                                     (merge args {:no-get-card true
+                                                  :cached-bonus curr-bonus})))}}}
+                   card nil))
                  (let [cdef (card-def card)
                        cost (rez-cost state side card)
                        additional-costs (concat (:additional-cost cdef)
