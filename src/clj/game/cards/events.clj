@@ -1628,11 +1628,15 @@
 
    "Networking"
    {:msg "remove 1 tag"
-    :effect (effect (lose-tags 1))
-    :optional {:prompt "Pay 1 [Credits] to add Networking to Grip?"
-               :yes-ability {:cost [:credit 1]
-                             :msg "add it to their Grip"
-                             :effect (effect (move (last (:discard runner)) :hand))}}}
+    :effect (effect (lose-tags 1)
+                    (continue-ability
+                      {:optional
+                       {:prompt "Pay 1 [Credits] to add Networking to Grip?"
+                        :yes-ability
+                        {:cost [:credit 1]
+                         :msg "add it to their Grip"
+                         :effect (effect (move (last (:discard runner)) :hand))}}}
+                      card nil))}
 
    "Notoriety"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
