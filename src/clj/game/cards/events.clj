@@ -343,11 +343,13 @@
    (letfn [(compile-fn [where]
              {:prompt "Choose a program to install"
               :choices (req (cancellable (filter program? (get runner where))))
+              :async true
               :effect (req (when (= :deck where)
                              (trigger-event state side :searched-stack nil)
                              (shuffle! state side :deck))
-                           (runner-install state side (make-eid state {:source card :source-type :runner-install})
-                                           (assoc-in target [:special :compile-installed] true) {:ignore-all-cost true}))})]
+                           (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                           (assoc-in target [:special :compile-installed] true)
+                                           {:ignore-all-cost true}))})]
      {:implementation "Trigger only on first encounter not enforced"
       :prompt "Choose a server"
       :msg "make a run and install a program on encounter with the first piece of ICE"
@@ -359,7 +361,7 @@
                    :choices ["Stack" "Heap"]
                    :msg (msg "install a program from their " target)
                    :effect (effect (continue-ability
-                                     (compile-fn (if (= "Stack" target) :deck :heap))
+                                     (compile-fn (if (= "Stack" target) :deck :discard))
                                      card nil))}]
       :effect (effect (make-run target nil card)
                       (prompt! card (str "Click Compile in the Temporary Zone to install a Program") ["OK"] {})

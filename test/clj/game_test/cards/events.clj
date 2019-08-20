@@ -690,6 +690,25 @@
         (run-jack-out state)
         (is (= (inc deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
         (is (nil? (get-program state 0))))))
+  (testing "Can install from discard. Issue #4441"
+    (do-game
+      (new-game {:runner {:deck ["Compile"]
+                          :discard ["Gordian Blade"]}})
+      (starting-hand state :runner ["Compile"])
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Compile")
+      (click-prompt state :runner "Archives")
+      (click-prompt state :runner "OK")  ; notification that Compile must be clicked to install
+      (let [compile-card (first (get-in @state [:runner :play-area]))]
+        (card-ability state :runner compile-card 0)
+        (click-prompt state :runner "Heap")
+        (click-prompt state :runner (find-card "Gordian Blade" (:discard (get-runner))))
+        (is (:installed (get-program state 0)) "Gordian Blade should be installed"))
+      (let [deck (count (:deck (get-runner)))]
+        (run-jack-out state)
+        (is (= (inc deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
+        (is (nil? (get-program state 0))))))
   (testing "with Self-modifying Code, neither SMC nor other card should be shuffled back in"
     (do-game
       (new-game {:runner {:deck ["Compile" "Clone Chip"
