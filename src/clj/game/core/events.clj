@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-trigger? event-title get-card
+(declare can-trigger? event-title
          register-suppress resolve-ability
          trigger-suppress unregister-suppress)
 

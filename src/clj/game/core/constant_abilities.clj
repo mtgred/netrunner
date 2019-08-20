@@ -1,6 +1,7 @@
 (ns game.core.constant-abilities
   (:require [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
+            [game.core.card :refer [get-card]]
             [game.utils :refer [same-card? to-keyword]]))
 
 (defn register-constant-abilities
@@ -58,6 +59,6 @@
     (->> mods
          (filter #(if-not (:req %)
                     true
-                    ((:req %) state side eid (:card %) [card])))
-         (map #((:effect %) state side eid (:card %) [card]))
+                    ((:req %) state side eid (get-card state (:card %)) [card])))
+         (map #((:effect %) state side eid (get-card state (:card %)) [card]))
          (reduce +))))

@@ -18,17 +18,6 @@
     (when-let [hosted-lost (:hosted-lost (card-def host-card))]
       (hosted-lost state side (make-eid state) (get-card state host-card) (dissoc card :host)))))
 
-(defn get-card-hosted
-  "Finds the current version of the given card by finding its host."
-  [state {:keys [cid zone side host] :as card}]
-  (let [root-host (get-card state (get-nested-host card))
-        helper (fn search [card target]
-                 (when-not (nil? card)
-                   (if-let [c (some #(when (same-card? % target) %) (:hosted card))]
-                     c
-                     (some #(when-let [s (search % target)] s) (:hosted card)))))]
-    (helper root-host card)))
-
 (defn host
   "Host the target onto the card."
   ([state side card target] (host state side card target nil))

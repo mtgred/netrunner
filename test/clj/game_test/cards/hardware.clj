@@ -258,13 +258,13 @@
     (play-from-hand state :runner "Comet")
     (let [comet (get-hardware state 0)]
       (play-from-hand state :runner "Easy Mark")
-      (is (true? (:comet-event (core/get-card state comet)))) ; Comet ability enabled
+      (is (true? (:comet-event (get-card state comet)))) ; Comet ability enabled
       (card-ability state :runner comet 0)
       (is (= (:cid comet) (-> @state :runner :prompt first :card :cid)))
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (= 7 (:credit (get-runner))))
       (is (= 2 (:click (get-runner))))
-      (is (nil? (:comet-event (core/get-card state comet))) "Comet ability disabled"))))
+      (is (nil? (:comet-event (get-card state comet))) "Comet ability disabled"))))
 
 (deftest cortez-chip
   ;; Cortez Chip - Trash to add 2 credits to rez cost of an ICE until end of turn

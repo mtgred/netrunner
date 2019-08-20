@@ -2100,7 +2100,7 @@
                  :effect (effect (update! (assoc-in card [:special :scrubbed-target] current-ice))
                                  (update-all-ice))}]
     :constant-abilities [{:type :ice-strength
-                          :req (req (same-card? target (get-in (get-card state card) [:special :scrubbed-target])))
+                          :req (req (same-card? target (get-in card [:special :scrubbed-target])))
                           :effect (req -2)}]
     :events {:run-ends {:effect (effect (update! (dissoc-in card [:special :scrubbed-target])))}}}
 

@@ -2791,7 +2791,7 @@
         (core/rez state :corp architect-rezzed)
         (take-credits state :corp)
         (play-from-hand state :runner "Trypano")
-        (click-card state :runner (game.core/get-card state architect-rezzed))
+        (click-card state :runner (get-card state architect-rezzed))
         (play-from-hand state :runner "Trypano")
         (click-card state :runner architect-unrezzed)
         (is (= 2 (core/available-mu state)) "Trypano consumes 1 MU"))

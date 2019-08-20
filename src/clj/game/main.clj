@@ -3,7 +3,7 @@
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.core :refer [card-is-public?] :as core]
             [game.core.toasts :refer [toast]]
-            [game.core.card :refer [private-card]]
+            [game.core.card :refer [private-card get-card]]
             [differ.core :as differ]))
 
 (add-encoder java.lang.Object encode-str)
@@ -40,7 +40,7 @@
    "rez" #(core/rez %1 %2 (:card %3) nil)
    "run" core/click-run
    "runner-ability" core/play-runner-ability
-   "score" #(core/score %1 %2 (game.core/get-card %1 (:card %3)))
+   "score" #(core/score %1 %2 (get-card %1 (:card %3)))
    "select" core/select
    "shuffle" core/shuffle-deck
    "start-turn" core/start-turn

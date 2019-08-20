@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare all-installed all-active-installed cards card-init deactivate
-         card-flag? gain get-all-installed lose get-card-hosted handle-end-run
+         card-flag? gain get-all-installed lose handle-end-run
          register-events remove-from-host remove-icon make-card
          toast-check-mu trash trigger-event
          update-breaker-strength update-hosted! update-ice-strength unregister-events
@@ -28,23 +28,6 @@
     :corp
     (find-cid cid (get-in @state [:runner :scored]))
     :runner))
-
-(defn get-card
-  "Returns the most recent copy of the card from the current state, as identified
-  by the argument's :zone and :cid."
-  [state {:keys [cid zone side host type] :as card}]
-  (when card
-    (if (= type "Identity")
-      (get-in @state [(to-keyword side) :identity])
-      (if zone
-        (if host
-          (get-card-hosted state card)
-          (some #(when (= cid (:cid %)) %)
-                (let [zones (map to-keyword zone)]
-                  (if (= (first zones) :scored)
-                    (into (get-in @state [:corp :scored]) (get-in @state [:runner :scored]))
-                    (get-in @state (cons (to-keyword side) zones))))))
-        card))))
 
 ;;; Functions for updating cards
 (defn update!
