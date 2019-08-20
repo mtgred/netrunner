@@ -2359,7 +2359,7 @@
           (run-on state "HQ")
           (card-subroutine state :corp ti 2)
           (is (not (:run @state)) "Run ended")))))
-  (testing "Do not prompt for alt cost #2734"
+  (testing "Oversight AI does not prompt for alt cost #2734"
     (do-game
       (new-game {:corp {:deck ["Hostile Takeover" "Oversight AI" "Tithonium"]}})
       (play-from-hand state :corp "Hostile Takeover" "New remote")
