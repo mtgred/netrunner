@@ -1261,7 +1261,7 @@
                    (register-constant-abilities state card)
                    (update-ice-strength state side (get-card state target))))
     :constant-abilities [{:type :ice-strength
-                          :req (req (same-card? target (:host (get-card state card))))
+                          :req (req (same-card? target (:host card)))
                           :effect (req 2)}]}
 
    "Paywall Implementation"
