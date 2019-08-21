@@ -1130,7 +1130,7 @@
                                  :type :credit}}}
 
    "Ice Carver"
-   {:constant-abilities [{:type :ice-strength
+   {:persistent-effects [{:type :ice-strength
                           :req (req (same-card? current-ice target))
                           :effect (req -1)}]}
 

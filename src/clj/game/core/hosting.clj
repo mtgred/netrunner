@@ -24,7 +24,8 @@
   ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown] :as options}]
    (when (not= cid (:cid card))
      (when installed
-       (unregister-events state side target))
+       (unregister-events state side target)
+       (unregister-persistent-effects state target))
      (doseq [s [:runner :corp]]
        (if host
          (when-let [host-card (get-card state host)]
@@ -44,21 +45,22 @@
            cdef (card-def card)
            tdef (card-def c)]
        (update! state side (update-in card [:hosted] #(conj % c)))
-
-       ;; events should be registered for: runner cards that are installed; corp cards that are Operations, or are installed and rezzed
+       ;; events should be registered for:
+       ;; * runner cards that are installed;
+       ;; * corp cards that are Operations, or are installed and rezzed
        (when (or (operation? target)
                  (and (event? target) (not facedown))
                  (and installed (runner? target))
                  (and installed (corp? target) (rezzed? target)))
          (when-let [events (:events tdef)]
            (register-events state side events c))
+         (register-persistent-effects state c)
          (when (or (:recurring tdef)
                    (:prevent tdef)
                    (:corp-abilities tdef)
                    (:runner-abilities tdef))
            (card-init state side c {:resolve-effect false
                                     :init-data true})))
-
        (when-let [events (:events tdef)]
          (when (and installed (:recurring tdef))
            (unregister-events state side target)

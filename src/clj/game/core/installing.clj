@@ -35,7 +35,7 @@
   ([state side card] (deactivate state side card nil))
   ([state side {:keys [cid disabled facedown installed memoryunits rezzed] :as card} keep-counter]
    (unregister-events state side card)
-   (unregister-constant-abilities state card)
+   (unregister-persistent-effects state card)
    (trigger-leave-effect state side card)
    (when (and memoryunits
               installed
@@ -100,7 +100,7 @@
      (update! state side c)
      (when-let [events (:events cdef)]
        (register-events state side events c))
-     (register-constant-abilities state card)
+     (register-persistent-effects state card)
      (if (and resolve-effect (is-ability? cdef))
        (resolve-ability state side eid cdef c nil)
        (effect-completed state side eid))

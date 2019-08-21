@@ -24,7 +24,7 @@
      :effect (effect (gain-credits (count-ice corp))
                      (update-all-ice))
      :swapped {:effect (req (update-all-ice state side))}
-     :constant-abilities [{:type :ice-strength
+     :persistent-effects [{:type :ice-strength
                            :req (req (has-subtype? target subtype))
                            :effect (req 1)}]}))
 
@@ -731,7 +731,7 @@
    {:silent (req true)
     :effect (req (update-all-ice state side))
     :swapped {:effect (req (update-all-ice state side))}
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (has-subtype? target "Tracer"))
                           :effect (req 1)}]
     :events {:pre-init-trace {:req (req (and (has-subtype? target "Tracer")

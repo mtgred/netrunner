@@ -3484,7 +3484,7 @@
       (click-prompt state :corp "Yes")
       (is (zero? (count-bad-pub state)) "Removed 1 bad pub"))))
 
-(deftest sandburg
+(deftest ^:test-refresh/focus sandburg
   ;; Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c
   (testing "Basic test"
     (do-game

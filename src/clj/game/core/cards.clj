@@ -82,6 +82,8 @@
                           (update! state side newh)
                           (unregister-events state side h)
                           (register-events state side (:events (card-def newh)) newh)
+                          (unregister-persistent-effects state h)
+                          (register-persistent-effects state newh)
                           newh))
         hosted (seq (flatten (map (if same-zone? update-hosted trash-hosted) (:hosted card))))
         ;; Set :seen correctly
@@ -268,6 +270,7 @@
   (let [id (assoc (get-in @state [side :identity]) :disabled true)]
     (update! state side id)
     (unregister-events state side id)
+    (unregister-persistent-effects state id)
     (when-let [leave-play (:leave-play (card-def id))]
       (leave-play state side (make-eid state) id nil))))
 
@@ -299,7 +302,8 @@
     (when effect
       (effect state side (make-eid state) id nil))
     (when events
-      (register-events state side events id))))
+      (register-events state side events id))
+    (register-persistent-effects state id)))
 
 (defn enable-identity
   "Enables the side's identity"

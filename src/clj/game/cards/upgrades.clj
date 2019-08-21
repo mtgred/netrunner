@@ -489,7 +489,7 @@
 
    "Experiential Data"
    {:effect (effect (update-all-ice))
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (protecting-same-server? card target))
                           :effect (req 1)}]
     :derez-effect {:effect (effect (update-all-ice))}

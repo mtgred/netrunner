@@ -602,15 +602,15 @@
                                       (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI")))}
                  :effect (req (when-let [host (get-card state (:host card))]
-                                (update! state side (dissoc-in host [:pump :all-turn]))
+                                (update! state side (dissoc-in host [:pump :end-of-turn]))
                                 (update-breaker-strength state side host))
                               (host state side target card))}]
     :events {:pump-breaker {:silent (req true)
                             :req (req (same-card? (second targets) (:host card)))
-                            :effect (effect (update! (update-in (second targets) [:pump :all-turn] (fnil #(+ % (first targets)) 0)))
+                            :effect (effect (update! (update-in (second targets) [:pump :end-of-turn] (fnil #(+ % (first targets)) 0)))
                                             (update-breaker-strength (second targets)))}}
     :leave-play (req (when-let [host (get-card state (:host card))]
-                       (update! state side (dissoc-in host [:pump :all-turn]))
+                       (update! state side (dissoc-in host [:pump :end-of-turn]))
                        (update-breaker-strength state side host)))}
 
    "GPI Net Tap"
@@ -1324,7 +1324,7 @@
                  :effect (effect (lose :runner :hand-size 1)
                                  (update! (assoc card :sifr-target current-ice :sifr-used true))
                                  (update-ice-strength current-ice))}]
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (same-card? target (:sifr-target card)))
                           :effect (req (- (get-strength target)))}]
     :events {:runner-turn-begins {:req (req (:sifr-used card))

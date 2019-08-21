@@ -243,6 +243,8 @@
       (when-let [events (:events (card-def new-scored))]
         (unregister-events state side new-scored)
         (register-events state side events new-scored))
+      (unregister-persistent-effects state new-scored)
+      (register-persistent-effects state new-scored)
       (resolve-ability state side (:swapped (card-def new-scored)) new-scored nil))
     ;; Set up abilities and events for new stolen agenda
     (when-not (card-flag? scored :has-events-when-stolen true)

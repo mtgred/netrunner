@@ -508,7 +508,7 @@
                             :effect (effect (gain-credits 1))}}}
 
    "Haas-Bioroid: Stronger Together"
-   {:constant-abilities [{:type :ice-strength
+   {:persistent-effects [{:type :ice-strength
                           :req (req (has-subtype? target "Bioroid"))
                           :effect (req 1)}]
     :leave-play (effect (update-all-ice))
@@ -1002,7 +1002,7 @@
                  :effect (effect (update! (assoc-in card [:special :null-target] current-ice))
                                  (update-ice-strength current-ice)
                                  (trash target {:unpreventable true}))}]
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (same-card? target (get-in card [:special :null-target])))
                           :effect (req -2)}]
     :events {:pass-ice {:effect (effect (update! (dissoc-in card [:special :null-target]))

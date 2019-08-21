@@ -462,7 +462,7 @@
 
    "Battering Ram"
    (auto-icebreaker {:abilities [(break-sub 2 2 "Barrier")
-                                 (strength-pump 1 1 :all-run)]})
+                                 (strength-pump 1 1 :end-of-run)]})
 
    "Berserker"
    {:implementation "Encounter effect is manual."
@@ -499,7 +499,7 @@
                                    :msg (msg "host it on " (card-str state target))
                                    :effect (effect (host target card))}
                                   card nil)))}]
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (and (= (:cid target)
                                             (:cid (:host card)))
                                          (:rezzed target)))
@@ -514,11 +514,11 @@
     :abilities [(break-sub 1 1 "Barrier")
                 (break-sub 1 3 "Barrier" {:label "break up to 3 Barrier subroutines (using a stealth [Credits])"})
                 (strength-pump 2 1)
-                (strength-pump 2 1 :encounter {:label "add 2 strength (using at least 1 stealth [Credits])"})]}
+                (strength-pump 2 1 :end-of-encounter {:label "add 2 strength (using at least 1 stealth [Credits])"})]}
 
    "Blackstone"
    {:abilities [(break-sub 1 1 "Barrier")
-                (strength-pump 3 4 :all-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]}
+                (strength-pump 3 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]}
 
 
    "Brahman"
@@ -613,7 +613,7 @@
                                     (trash state side current-ice))
                                 (do (system-msg state side (str "places 1 virus counter on " (card-str state current-ice)))
                                     (add-counter state side card :virus 1))))}]
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (same-card? target (:host card)))
                           :effect (req (- (get-virus-counters state card)))}]
     :events {:counter-added {:req (req (or (same-card? target card)
@@ -840,7 +840,7 @@
                                 :req (req (#{:hq :rd :archives} target))}
                :pass-ice ds
                :run-ends ds})
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (and (same-card? target current-ice)
                                          (:datasucker-count card)))
                           :effect (req (- (:datasucker-count card)))}]
@@ -1112,7 +1112,7 @@
                  :prompt "How many credits?"
                  :effect (effect
                            (continue
-                             (strength-pump target target :all-run)
+                             (strength-pump target target :end-of-run)
                              card nil))
                  :msg (msg "increase strength by " target " for the remainder of the run")}]}
 
@@ -1176,7 +1176,7 @@
 
    "Gordian Blade"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
-                                 (strength-pump 1 1 :all-run)]})
+                                 (strength-pump 1 1 :end-of-run)]})
 
    "Gorman Drip v1"
    {:abilities [{:cost [:click 1 :trash]
@@ -1290,7 +1290,7 @@
 
    "Houdini"
    {:abilities [(break-sub 1 1 "Code Gate")
-                (strength-pump 2 4 :all-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]}
+                (strength-pump 2 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])"})]}
 
    "Hyperdriver"
    {:flags {:runner-phase-12 (req true)}
@@ -1332,7 +1332,7 @@
 
    "Inti"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
-                                 (strength-pump 2 1 :all-run)]})
+                                 (strength-pump 2 1 :end-of-run)]})
 
    "Inversificator"
    (auto-icebreaker {:implementation "No restriction on which pieces of ICE are chosen"
@@ -1707,7 +1707,7 @@
                    (update-ice-strength state side h)
                    (when-let [card (get-card state card)]
                      (update! state side (update-in card [:special] dissoc :installing)))))
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (same-card? target (:host card)))
                           :effect (req (- (get-virus-counters state card)))}]
     :events {:runner-turn-begins
@@ -1835,7 +1835,7 @@
 
    "Pipeline"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
-                                 (strength-pump 2 1 :all-run)]})
+                                 (strength-pump 2 1 :end-of-run)]})
 
    "Plague"
    {:prompt "Choose a server for Plague"
@@ -1910,7 +1910,7 @@
    "Refractor"
    (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                      :abilities [(break-sub 1 1 "Code Gate")
-                                 (strength-pump 1 3 :encounter {:label "add 3 strength (using at least 1 stealth [Credits])"})]})
+                                 (strength-pump 1 3 :end-of-encounter {:label "add 3 strength (using at least 1 stealth [Credits])"})]})
 
    "Rezeki"
    {:events {:runner-turn-begins {:msg "gain 1 [Credits]"
@@ -2103,7 +2103,7 @@
    "Snowball"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier"
                                             {:additional-ability {:msg "gain +1 strength for the remainder of the run"
-                                                                  :effect (effect (pump card 1 :all-run))}})
+                                                                  :effect (effect (pump card 1 :end-of-run))}})
                                  (strength-pump 1 1)]})
 
    "Spike"
@@ -2187,7 +2187,7 @@
    "Switchblade"
    (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                      :abilities [(break-sub 1 0 "Sentry" {:label "break any number of Sentry subroutines (using 1 stealth [Credits])"})
-                                 (strength-pump 1 7 :encounter {:label "add 7 strength (using 1 stealth [Credits])"})]})
+                                 (strength-pump 1 7 :end-of-encounter {:label "add 7 strength (using 1 stealth [Credits])"})]})
 
    "Takobi"
    {:implementation "Adding power counter is manual"
@@ -2204,7 +2204,7 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                  :msg (msg "add +3 strength to " (:title target) " for remainder of encounter")
-                 :effect (effect (pump target 3 :encounter))}]}
+                 :effect (effect (pump target 3 :end-of-encounter))}]}
 
    "Tapwrm"
    (let [ability {:label "Gain [Credits] (start of turn)"

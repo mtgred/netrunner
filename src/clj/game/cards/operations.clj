@@ -5,7 +5,7 @@
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
             [game.core.toasts :refer [toast]]
-            [game.core.constant-abilities :refer [register-constant-abilities]]
+            [game.core.effects :refer [register-persistent-effects]]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
@@ -1034,7 +1034,7 @@
 
    "Lag Time"
    {:effect (effect (update-all-ice))
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :effect (req 1)}]
     :leave-play (effect (update-all-ice))}
 
@@ -1258,9 +1258,9 @@
                          (rezzed? %))}
     :msg (msg "give +2 strength to " (card-str state target))
     :effect (req (let [card (host state side target (assoc card :zone [:discard] :seen true :condition true))]
-                   (register-constant-abilities state card)
+                   (register-persistent-effects state card)
                    (update-ice-strength state side (get-card state target))))
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (same-card? target (:host card)))
                           :effect (req 2)}]}
 
@@ -1641,7 +1641,7 @@
     :msg (msg "host it as a condition counter on " (card-str state target))
     :effect (effect (host target (assoc card :zone [:discard] :seen true :condition true))
                     (update-ice-strength (get-card state target)))
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (same-card? target (:host card)))
                           :effect (req (get-counters card :power))}]
     :events {:pass-ice {:req (req (same-card? target (:host card)))

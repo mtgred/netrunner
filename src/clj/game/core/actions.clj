@@ -597,6 +597,7 @@
         (resolve-ability state side derez-effect (get-card state card) nil))
       (when-let [dre (:derezzed-events cdef)]
         (register-events state side dre card)))
+    (unregister-persistent-effects state card)
     (trigger-event state side :derez card side)))
 
 (defn advance
@@ -699,8 +700,8 @@
                   (reset-all-subs! state (get-card state cur-ice))
                   (update-ice-strength state side (get-card state cur-ice)))
                 (wait-for (trigger-event-simult state side (if next-ice :approach-ice :approach-server) nil (when next-ice next-ice))
+                          (remove-floating-effects state :end-of-encounter)
                           (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                            (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
                             (update-breaker-strength state side p)))))))
 
 (defn view-deck

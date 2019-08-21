@@ -237,6 +237,7 @@
      (wait-for (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil)
                (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
                (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
+               (remove-floating-effects state :end-of-turn)
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended
                  (when (= :this-turn (installed? card))
@@ -248,7 +249,6 @@
                  ;; Remove all-turn strength from icebreakers.
                  ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
                  (when (has-subtype? card "Icebreaker")
-                   (update! state side (update-in (get-card state card) [:pump] dissoc :all-turn))
                    (update-breaker-strength state :runner (get-card state card))))
                (doseq [card (all-installed state :corp)]
                  ;; Clear :this-turn flags as turn has ended

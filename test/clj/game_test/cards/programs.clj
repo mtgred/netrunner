@@ -99,28 +99,30 @@
   ;; Alias
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand [(qty "Ice Wall" 2)]}
-               :runner {:hand ["Breach"]
+                      :hand [(qty "Zed 1.0" 2)]}
+               :runner {:hand ["Alias"]
                         :credits 10}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Zed 1.0" "HQ")
+    (play-from-hand state :corp "Zed 1.0" "New remote")
     (take-credits state :corp)
-    (play-from-hand state :runner "Breach")
-    (let [breach (get-program state 0)
-          iw1 (get-ice state :hq 0)
-          iw2 (get-ice state :remote1 0)]
-      (core/rez state :corp (refresh iw1))
-      (core/rez state :corp (refresh iw2))
-      (is (= 2 (core/get-strength (refresh breach))) "Starts with 2 strength")
-      (card-ability state :runner (refresh breach) 1)
-      (is (= 6 (core/get-strength (refresh breach))) "Can gain strength outside of a run")
+    (play-from-hand state :runner "Alias")
+    (let [alias (get-program state 0)
+          zed1 (get-ice state :hq 0)
+          zed2 (get-ice state :remote1 0)]
+      (core/rez state :corp (refresh zed1))
+      (core/rez state :corp (refresh zed2))
+      (is (= 1 (core/get-strength (refresh alias))) "Starts with 2 strength")
+      (card-ability state :runner (refresh alias) 1)
+      (is (= 4 (core/get-strength (refresh alias))) "Can gain strength outside of a run")
       (run-on state :hq)
-      (card-ability state :runner (refresh breach) 0)
-      (click-prompt state :runner "End the run")
-      (is (= 1 (count (filter :broken (:subroutines (refresh iw1))))) "The subroutine is broken")
+      (card-ability state :runner (refresh alias) 0)
+      (click-prompt state :runner "Do 1 brain damage")
+      (click-prompt state :runner "Done")
+      (is (= 1 (count (filter :broken (:subroutines (refresh zed1))))) "The subroutine is broken")
       (run-jack-out state)
+      (is (= 1 (core/get-strength (refresh alias))) "Drops back down to base strength on run end")
       (run-on state :remote1)
-      (card-ability state :runner (refresh breach) 0)
+      (card-ability state :runner (refresh alias) 0)
       (is (empty? (:prompt (get-runner))) "No break prompt because we're running a remote"))))
 
 (deftest amina

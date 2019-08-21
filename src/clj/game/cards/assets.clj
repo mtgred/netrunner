@@ -1679,7 +1679,7 @@
 
    "Sandburg"
    {:effect (effect (update-all-ice))
-    :constant-abilities [{:type :ice-strength
+    :persistent-effects [{:type :ice-strength
                           :req (req (<= 10 (:credit corp)))
                           :effect (req (quot (:credit corp) 5))}]
     :events {:corp-gain {:req (req (= :credit (first target)))

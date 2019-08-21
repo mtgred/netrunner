@@ -171,12 +171,11 @@
 (defn ice-strength
   "Gets the modified strength of the given ice."
   [state side ice]
-  (let [strength (:strength ice 0)
-        mods (gather-constant-abilities state side :ice-strength)]
+  (let [strength (:strength ice 0)]
     (+ (if-let [strfun (:strength-bonus (card-def ice))]
          (+ strength (strfun state side nil ice nil))
          strength)
-       (sum-constant-abilities state side mods ice)
+       (sum-effects state side ice :ice-strength)
        (get-ice-strength-bonus state))))
 
 (defn update-ice-strength
@@ -221,9 +220,7 @@
     (+ (if-let [strfun (:strength-bonus (card-def card))]
          (+ strength (strfun state side (make-eid state) card nil))
          strength)
-       (get-in card [:pump :encounter] 0)
-       (get-in card [:pump :all-run] 0)
-       (get-in card [:pump :all-turn] 0)
+       (sum-effects state side card :breaker-strength)
        (get-in @state [:bonus :breaker-strength] 0))))
 
 (defn update-breaker-strength
@@ -237,12 +234,17 @@
     (trigger-event state side :breaker-strength-changed (get-card state breaker) oldstren)))
 
 (defn pump
-  "Increase a breaker's strength by n for the given duration of :encounter, :all-run or :all-turn"
-  ([state side card n] (pump state side card n :encounter))
+  "Increase a breaker's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
+  ([state side card n] (pump state side card n :end-of-encounter))
   ([state side card n duration]
-   (update! state side (update-in (get-card state card) [:pump duration] (fnil #(+ % n) 0)))
+   (create-floating-effect
+     state (get-card state card)
+     {:type :breaker-strength
+      :duration duration
+      :req (req (same-card? card target))
+      :effect (req n)})
    (update-breaker-strength state side (get-card state card))
-   (trigger-event state side :pump-breaker n card)))
+   (trigger-event state side :pump-breaker n (get-card state card))))
 
 ;;; Others
 (defn ice-index
@@ -368,14 +370,14 @@
 (defn strength-pump
   "Creates a strength pump ability.
   Cost can be a credit amount or a list of costs e.g. [:credit 2]."
-  ([cost strength] (strength-pump cost strength :encounter nil))
+  ([cost strength] (strength-pump cost strength :end-of-encounter nil))
   ([cost strength duration] (strength-pump cost strength duration nil))
   ([cost strength duration args]
    (let [cost (if (number? cost) [:credit cost] cost)
          duration-string (cond
-                           (= duration :all-run)
+                           (= duration :end-of-run)
                            " for the remainder of the run"
-                           (= duration :all-turn)
+                           (= duration :end-of-turn)
                            " for the remainder of the turn")]
      {:label (str (or (:label args)
                       (str "add " strength " strength"
