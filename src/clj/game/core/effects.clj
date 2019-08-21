@@ -44,8 +44,7 @@
         is-active-player #(= (:active-player @state) (get-side %))]
     (->> (:effects @state)
          (filter #(= effect-type (:type %)))
-         (sort-by (complement is-active-player))
-         (into []))))
+         (sort-by (complement is-active-player)))))
 
 (defn get-effects
   "Filters and then 'executes' the effects of a given type."
@@ -59,5 +58,5 @@
 
 (defn sum-effects
   "Sums the results from get-effects."
-  [state side mods card]
-  (reduce + (get-effects state side mods card)))
+  [state side card effect-type]
+  (reduce + (get-effects state side card effect-type)))
