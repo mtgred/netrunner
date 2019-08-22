@@ -1,6 +1,7 @@
 (ns game.cards.upgrades
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
+            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer [effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -314,35 +315,26 @@
 
    "Corporate Troubleshooter"
    {:abilities [{:label "Add strength to a rezzed ICE protecting this server"
-                 :choices :credit
+                 :choices {:number (req (total-available-credits state :corp eid card))}
                  :prompt "How many credits?"
-                 :effect (req (let [boost target]
-                                (continue-ability
-                                  state side
-                                  {:choices {:req #(and (ice? %)
-                                                        (rezzed? %))}
-                                   :msg (msg "add " boost " strength to " (:title target))
-                                   :effect (req (update! state side (assoc card
-                                                                           :troubleshooter-target target
-                                                                           :troubleshooter-amount boost))
-                                                (trash state side (get-card state card))
-                                                (update-ice-strength state side target))}
-                                  card nil)))}]
-    :events {:pre-ice-strength nil
-             :runner-turn-ends nil
-             :corp-turn-ends nil}
-    :trash-effect
-    {:effect (req (register-events
-                    state side
-                    (let [ct {:effect (req (unregister-events state side card)
-                                           (update! state side (dissoc card :troubleshooter-target))
-                                           (update-ice-strength state side (:troubleshooter-target card)))}]
-                      {:pre-ice-strength
-                       {:req (req (same-card? target (:troubleshooter-target card)))
-                        :effect (effect (ice-strength-bonus (:troubleshooter-amount card) target))}
-                       :runner-turn-ends ct
-                       :corp-turn-ends ct})
-                    card))}}
+                 :effect (effect
+                           (continue-ability
+                             (let [boost target]
+                               {:cost [:credit boost :trash]
+                                :choices {:all true
+                                          :req #(and (ice? %)
+                                                     (rezzed? %)
+                                                     (protecting-same-server? card %))}
+                                :msg (msg "add " boost " strength to " (:title target))
+                                :effect (req (let [ice target]
+                                               (create-floating-effect
+                                                 state card
+                                                 {:type :ice-strength
+                                                  :duration :end-of-turn
+                                                  :req (req (same-card? ice target))
+                                                  :effect (req boost)})
+                                               (update-all-ice state side)))})
+                             card nil))}]}
 
    "Crisium Grid"
    (let [suppress-event {:req (req (and this-server (not (same-card? target card))))}]
@@ -588,19 +580,13 @@
                                 (pos? (count (:hand corp)))))
                  :async true
                  :cost [:trash-from-hand 1]
-                 :effect (req (register-events
-                                state side
-                                {:pre-ice-strength {:req (req (= (card->server state card)
-                                                                 (card->server state target)))
-                                                    :effect (effect (ice-strength-bonus 2 target))}
-                                 :run-ends {:effect (effect (unregister-events card))}}
-                                card)
-                              (continue-ability
-                                state side
-                                {:effect (req (update-ice-in-server
-                                                state side (card->server state card)))}
-                                card nil))}]
-    :events {:pre-ice-strength nil}}
+                 :effect (req (create-floating-effect
+                                state card
+                                {:type :ice-strength
+                                 :duration :end-of-run
+                                 :req (req (protecting-same-server? card target))
+                                 :effect (req 2)})
+                              (update-all-ice state side))}]}
 
    "Henry Phillips"
    {:implementation "Manually triggered by Corp"

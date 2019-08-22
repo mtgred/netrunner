@@ -1,5 +1,6 @@
 (ns game.cards.programs
   (:require [game.core :refer :all]
+            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer :all]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -2361,27 +2362,21 @@
                                   card nil))}}})
 
    "Wyrm"
-   (let [wyrm-req (req (not (pos? (get-strength current-ice))))]
-     (auto-icebreaker {:abilities [(break-sub 3 1 "All" {:label "break 1 subroutine on ICE with 0 or less strength"
-                                                         :req wyrm-req})
-                                   {:cost [:credit 1]
-                                    :label "Give -1 strength to current ICE"
-                                    :req (req (rezzed? current-ice))
-                                    :msg (msg "give -1 strength to " (:title current-ice))
-                                    :effect (req (update! state side (update-in card [:wyrm-count] (fnil #(+ % 1) 0)))
-                                                 (update-ice-strength state side current-ice))}
-                                   (strength-pump 1 1)]
-                       :events (let [auto-pump (fn [state side eid card targets]
-                                                 ((:effect breaker-auto-pump) state side eid card targets))
-                                     wy {:effect (effect (update! (dissoc card :wyrm-count))
-                                                         (auto-pump eid (get-card state card) targets))}]
-                                 {:pre-ice-strength {:req (req (and (same-card? target current-ice)
-                                                                    (:wyrm-count card)))
-                                                     :effect (req (let [c (:wyrm-count (get-card state card))]
-                                                                    (ice-strength-bonus state side (- c) target)
-                                                                    (auto-pump state side eid card targets)))}
-                                  :pass-ice wy
-                                  :run-ends wy})}))
+   (auto-icebreaker {:abilities [(break-sub 3 1 "All" {:label "break 1 subroutine on ICE with 0 or less strength"
+                                                       :req (req (not (pos? (get-strength current-ice))))})
+                                 {:cost [:credit 1]
+                                  :label "Give -1 strength to current ICE"
+                                  :req (req (rezzed? current-ice))
+                                  :msg (msg "give -1 strength to " (:title current-ice))
+                                  :effect (req (let [ice current-ice]
+                                                 (create-floating-effect
+                                                   state card
+                                                   {:type :ice-strength
+                                                    :duration :end-of-encounter
+                                                    :req (req (same-card? ice target))
+                                                    :effect (req -1)}))
+                                               (update-all-ice state side))}
+                                 (strength-pump 1 1)]})
 
    "Yog.0"
    {:abilities [(break-sub 0 1 "Code Gate")]}

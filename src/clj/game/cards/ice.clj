@@ -1,6 +1,7 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
+            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer [make-eid effect-completed complete-with-result]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -738,15 +739,15 @@
                    :prompt "Select the ICE the Runner is encountering"
                    :choices {:req #(and (rezzed? %) (ice? %))}
                    :msg (msg "give " (:title target) " +2 strength")
-                   :effect (req (let [ice (:cid target)]
-                                  (register-events state side
-                                                   {:pre-ice-strength {:req (req (= (:cid target) ice))
-                                                                       :effect (effect (ice-strength-bonus 2 target))}
-                                                    :run-ends {:effect (effect (unregister-events card))}}
-                                                   card)
+                   :effect (req (let [ice target]
+                                  (create-floating-effect
+                                    state card
+                                    {:type :ice-strength
+                                     :duration :end-of-run
+                                     :req (req (same-card? ice target))
+                                     :effect (req 2)})
                                   (update-all-ice state side)))}
-                  (do-net-damage 3)]
-    :events {:pre-ice-strength nil :run-ends nil}}
+                  (do-net-damage 3)]}
 
    "Clairvoyant Monitor"
    {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"
@@ -2263,12 +2264,13 @@
    "Red Tape"
    {:subroutines [{:label "Give +3 strength to all ICE for the remainder of the run"
                    :msg "give +3 strength to all ICE for the remainder of the run"
-                   :effect (effect (register-events
-                                     {:pre-ice-strength {:effect (effect (ice-strength-bonus 3 target))}
-                                      :run-ends {:effect (effect (unregister-events card))}}
-                                     card)
-                                   (update-all-ice))}]
-    :events {:pre-ice-strength nil :run-ends nil}}
+                   :effect (req (let [ice target]
+                                  (create-floating-effect
+                                    state card
+                                    {:type :ice-strength
+                                     :duration :end-of-run
+                                     :effect (req 3)})
+                                  (update-all-ice state side)))}]}
 
    "Resistor"
    (let [resistor-effect {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))

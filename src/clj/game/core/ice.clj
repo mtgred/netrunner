@@ -157,13 +157,6 @@
      (effect-completed state side eid))))
 
 ;;; Ice strength functions
-(defn ice-strength-bonus
-  "Increase the strength of the given ice by n. Negative values cause a decrease."
-  [state side n ice]
-  ;; apply the strength bonus if the bonus is positive, or if the ice doesn't have the "can't lower strength" flag
-  (when (or (pos? n) (not (card-flag? ice :cannot-lower-strength true)))
-    (swap! state update-in [:bonus :ice-strength] (fnil + 0) n)))
-
 (defn ice-strength
   "Gets the modified strength of the given ice."
   [state side ice]

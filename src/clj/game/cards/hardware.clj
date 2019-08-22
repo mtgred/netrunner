@@ -628,7 +628,19 @@
                                                        (into []))))
                                          (update-breaker-strength state side target))}}
     :leave-play (req (when-let [host (get-card state (:host card))]
-                       (update! state side (dissoc-in host [:pump :end-of-turn]))
+                       (swap! state assoc :effects
+                              (reduce
+                                (fn [effects e]
+                                  (conj effects
+                                        (if (and (same-card? host (:card e))
+                                                 (= :breaker-strength (:type e))
+                                                 (:original-duration e))
+                                          (-> e
+                                              (assoc :duration (:original-duration e))
+                                              (dissoc :original-duration))
+                                          e)))
+                                []
+                                (:effects @state)))
                        (update-breaker-strength state side host)))}
 
    "GPI Net Tap"
