@@ -48,6 +48,12 @@
    "Akamatsu Mem Chip"
    {:in-play [:memory 1]}
 
+   "Aniccam"
+   (let [draw-card {:msg "draw 1 card."
+                    :effect (effect (draw))}]
+     {:events {:runner-trash draw-card
+               :corp-trash draw-card}})
+
    "Archives Interface"
    {:events
     {:pre-access
