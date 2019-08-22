@@ -54,6 +54,32 @@
     (play-from-hand state :runner "Akamatsu Mem Chip")
     (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
+(deftest aniccam
+  (testing "The runner draws 1 card when an event is trashed from the Grip by the Runner"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (trash-from-hand state :runner "Sure Gamble")
+      (is (= 0 (count (:deck (get-runner)))) "There are no cards in the Stack")
+      (is (= 1 (count (:discard (get-runner)))) "There is 1 card in the Heap")
+      (is (find-card "Sure Gamble" (:discard (get-runner))) "The card in the Heap is Sure Gamble")
+      (is (= 1 (count (:hand (get-runner)))) "There is 1 card in the Grip")
+      (is (find-card "Corroder" (:hand (get-runner))) "The card in the Grip is Corroder")))
+  (testing "The runner draws 1 card when an event is trashed from the Grip by the Corp"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/trash state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      (is (= 0 (count (:deck (get-runner)))) "There are no cards in the Stack")
+      (is (= 1 (count (:discard (get-runner)))) "There is 1 card in the Heap")
+      (is (find-card "Sure Gamble" (:discard (get-runner))) "The card in the Heap is Sure Gamble")
+      (is (= 1 (count (:hand (get-runner)))) "There is 1 card in the Grip")
+      (is (find-card "Corroder" (:hand (get-runner))) "The card in the Grip is Corroder"))))
+
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
   (do-game
