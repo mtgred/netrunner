@@ -50,6 +50,7 @@
 
    "Aniccam"
    (let [draw-card {:msg "draw 1 card."
+                    :req (req (is-type? target "Event"))
                     :effect (effect (draw))}]
      {:events {:runner-trash draw-card
                :corp-trash draw-card}})
