@@ -164,13 +164,6 @@
   (when (or (pos? n) (not (card-flag? ice :cannot-lower-strength true)))
     (swap! state update-in [:bonus :ice-strength] (fnil + 0) n)))
 
-(defn get-ice-strength-bonus
-  [state side ice]
-  (+ (reduce + (filter #(or (pos? %)
-                            (not (card-flag? ice :cannot-lower-strength true)))
-                       (get-effects state side ice :ice-strength)))
-     (get-in @state [:bonus :ice-strength] 0)))
-
 (defn ice-strength
   "Gets the modified strength of the given ice."
   [state side ice]
@@ -178,7 +171,10 @@
     (+ (if-let [strfun (:strength-bonus (card-def ice))]
          (+ strength (strfun state side nil ice nil))
          strength)
-       (get-ice-strength-bonus state side ice))))
+       (reduce + (filter #(or (pos? %)
+                              (not (card-flag? ice :cannot-lower-strength true)))
+                         (get-effects state side ice :ice-strength)))
+       (get-in @state [:bonus :ice-strength] 0))))
 
 (defn update-ice-strength
   "Updates the given ice's strength by triggering strength events and updating the card."
