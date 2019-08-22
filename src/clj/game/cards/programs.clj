@@ -2204,7 +2204,7 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                  :msg (msg "add +3 strength to " (:title target) " for remainder of encounter")
-                 :effect (effect (pump target 3 :end-of-encounter))}]}
+                 :effect (effect (pump target 3))}]}
 
    "Tapwrm"
    (let [ability {:label "Gain [Credits] (start of turn)"

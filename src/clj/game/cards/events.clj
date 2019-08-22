@@ -1265,8 +1265,9 @@
      nil
      (effect (continue-ability
                {:prompt "Select an icebreaker"
-                :choices {:req #(and (installed? %) (has-subtype? % "Icebreaker"))}
-                :effect (effect (pump target 2 :all-run))}
+                :choices {:req #(and (installed? %)
+                                     (has-subtype? % "Icebreaker"))}
+                :effect (effect (pump target 2 :end-of-run))}
                card nil)))
 
    "Inside Job"
@@ -1428,7 +1429,7 @@
                                         ", adding +2 strength to all icebreakers"))
     :effect (req (when (< (count (filter program? (all-active-installed state :runner))) 4)
                    (doseq [c (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                     (pump state side c 2 :all-run)))
+                     (pump state side c 2 :end-of-run)))
                  (make-run state side (make-eid state) target nil card))}
 
    "Leave No Trace"
@@ -1817,24 +1818,25 @@
                   (continue-ability state side (runner-choice choices) card nil)))})
 
    "Pushing the Envelope"
-   (letfn [(hsize [s] (count (get-in s [:runner :hand])))]
-     {:msg (msg (if (<= (hsize @state) 2)
-                  "make a run, and adds +2 strength to installed icebreakers"
-                  "make a run"))
-      :prompt "Choose a server"
-      :choices (req runnable-servers)
-      :makes-run true
-      :async true
-      :effect (req (when (<= (hsize @state) 2)
-                     (let [breakers (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                       (doseq [t breakers] (pump state side t 2 :all-run))))
-                   (make-run state side (make-eid state) target))})
+   {:msg (msg (if (<= (count (:hand runner)) 2)
+                "make a run, and adds +2 strength to installed icebreakers"
+                "make a run"))
+    :prompt "Choose a server"
+    :choices (req runnable-servers)
+    :makes-run true
+    :async true
+    :effect (req (when (<= (count (:hand runner)) 2)
+                   (doseq [breaker (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
+                     (pump state side breaker 2 :end-of-run)))
+                 (make-run state side eid target))}
 
    "Quality Time"
-   {:msg "draw 5 cards" :async true :effect (effect (draw eid 5 nil))}
+   {:msg "draw 5 cards"
+    :async true
+    :effect (effect (draw eid 5 nil))}
 
    "Queen's Gambit"
-   {:choices ["0", "1", "2", "3"]
+   {:choices ["0" "1" "2" "3"]
     :prompt "How many advancement tokens?"
     :effect (req (let [c (str->int target)]
                    (resolve-ability
@@ -2242,15 +2244,15 @@
                          :effect (effect (lose-credits :corp 1))}}}
 
    "System Seizure"
-   {:effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
-    :events {:pump-breaker {:silent (req true)
-                            :req (req (or (and (has-flag? state side :current-run :system-seizure)
-                                               (run-flag? state side (second targets) :system-seizure))
-                                          (not (get-in @state [:per-turn (:cid card)]))))
-                            :effect (req (update! state side (update-in (second targets) [:pump :all-run] (fnil #(+ % (first targets)) 0)))
-                                         (register-run-flag! state side card :system-seizure (fn [_ _ c] (same-card? c (second targets))))
-                                         (update-breaker-strength state side (second targets))
-                                         (swap! state assoc-in [:per-turn (:cid card)] targets))}}
+   {:effect (req (register-events state side (:events (card-def card)) (assoc card :zone '(:discard))))
+    :events {:pump-breaker {:once :per-turn
+                            :effect (req (let [last-pump (assoc (last (:effects @state)) :duration :end-of-run)]
+                                           (swap! state assoc :effects
+                                                  (->> (:effects @state)
+                                                       butlast
+                                                       (into [])
+                                                       (#(conj % last-pump)))))
+                                         (update-breaker-strength state side target))}}
     :move-zone (req (when (= [:discard] (:zone card))
                       (unregister-events state side card)))}
 

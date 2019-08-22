@@ -663,6 +663,44 @@
       (is (= 2 (get-counters (refresh aum) :virus)) "Aumakua gained 1 counter")
       (is (zero? (get-counters (refresh fc) :virus)) "Friday Chip lost 1 counter"))))
 
+(deftest gebrselassie
+  ;; Gebrselassie
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "Fire Wall" 2)]
+                      :credits 10}
+               :runner {:hand ["Corroder" "Bukhgalter" "Gebrselassie"]
+                        :credits 20}})
+    (play-from-hand state :corp "Fire Wall" "HQ")
+    (play-from-hand state :corp "Fire Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (core/rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (core/gain state :runner :click 5)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Bukhgalter")
+    (play-from-hand state :runner "Gebrselassie")
+    (let [cor (get-program state 0)
+          bukh (get-program state 1)
+          geb (get-hardware state 0)]
+      (card-ability state :runner geb 0)
+      (click-card state :runner cor)
+      (run-on state :hq)
+      (is (= 2 (:current-strength (refresh cor))) "Corroder starts with 2 strength")
+      (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter starts with 1 strength")
+      (card-ability state :runner cor 1)
+      (card-ability state :runner cor 1)
+      (card-ability state :runner cor 1)
+      (is (= 5 (:current-strength (refresh cor))) "Corroder has 5 strength")
+      (card-ability state :runner bukh 1)
+      (is (= 2 (:current-strength (refresh bukh))) "Bukhgalter has 2 strength")
+      (card-ability state :runner cor 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (is (= 5 (:current-strength (refresh cor))) "Corroder still has 5 strength")
+      (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter has reset to 1")
+      (run-jack-out state))))
+
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
   (do-game

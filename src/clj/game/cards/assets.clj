@@ -1,6 +1,7 @@
 (ns game.cards.assets
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
+            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer [effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -895,26 +896,22 @@
                  :effect (effect (move target :hand))}]}
 
    "IT Department"
-   {:abilities [{:cost [:power 1]
+   {:abilities [{:cost [:click 1]
+                 :msg "add 1 counter"
+                 :effect (effect (add-counter card :power 1))}
+                {:cost [:power 1]
                  :label "Add strength to a rezzed ICE"
-                 :choices {:req #(and (ice? %) (:rezzed %))}
+                 :choices {:req #(and (ice? %) (rezzed? %))}
                  :req (req (pos? (get-counters card :power)))
                  :msg (msg "add strength to a rezzed ICE")
-                 :effect (req (update! state side (update-in card [:it-targets (keyword (str (:cid target)))]
-                                                             (fnil inc 0)))
-                              (update-ice-strength state side target))}
-                {:cost [:click 1]
-                 :msg "add 1 counter"
-                 :effect (effect (add-counter card :power 1))}]
-    :events (let [it {:req (req (:it-targets card))
-                      :effect (req (update! state side (dissoc card :it-targets))
-                                   (update-all-ice state side))}]
-              {:pre-ice-strength {:req (req (get-in card [:it-targets (keyword (str (:cid target)))]))
-                                  :effect (effect (ice-strength-bonus
-                                                    (* (get-in card [:it-targets (keyword (str (:cid target)))])
-                                                       (inc (get-counters card :power))) target))}
-               :runner-turn-ends it
-               :corp-turn-ends it})}
+                 :effect (req (create-floating-effect
+                                state card
+                                (let [it-target target]
+                                  {:type :ice-strength
+                                   :duration :end-of-turn
+                                   :req (req (same-card? target it-target))
+                                   :effect (req (inc (get-counters card :power)))}))
+                              (update-ice-strength state side target))}]}
 
    "Jackson Howard"
    {:abilities [{:cost [:click 1]

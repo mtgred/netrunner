@@ -602,13 +602,31 @@
                                       (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI")))}
                  :effect (req (when-let [host (get-card state (:host card))]
-                                (update! state side (dissoc-in host [:pump :end-of-turn]))
+                                (swap! state assoc :effects
+                                       (reduce
+                                         (fn [effects e]
+                                           (conj effects
+                                                 (if (and (same-card? host (:card e))
+                                                          (= :breaker-strength (:type e))
+                                                          (:original-duration e))
+                                                   (-> e
+                                                       (assoc :duration (:original-duration e))
+                                                       (dissoc :original-duration))
+                                                   e)))
+                                         []
+                                         (:effects @state)))
                                 (update-breaker-strength state side host))
                               (host state side target card))}]
-    :events {:pump-breaker {:silent (req true)
-                            :req (req (same-card? (second targets) (:host card)))
-                            :effect (effect (update! (update-in (second targets) [:pump :end-of-turn] (fnil #(+ % (first targets)) 0)))
-                                            (update-breaker-strength (second targets)))}}
+    :events {:pump-breaker {:req (req (same-card? target (:host card)))
+                            :effect (req (let [last-pump (assoc (last (:effects @state))
+                                                                :duration :end-of-run
+                                                                :original-duration (:duration (last (:effects @state))))]
+                                           (swap! state assoc :effects
+                                                  (->> (:effects @state)
+                                                       butlast
+                                                       (#(conj % last-pump))
+                                                       (into []))))
+                                         (update-breaker-strength state side target))}}
     :leave-play (req (when-let [host (get-card state (:host card))]
                        (update! state side (dissoc-in host [:pump :end-of-turn]))
                        (update-breaker-strength state side host)))}
@@ -870,14 +888,15 @@
                           :effect (effect (damage-prevent :meat 1))}}}
 
    "Net-Ready Eyes"
-   {:effect (effect (damage eid :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
+   {:effect (effect (damage eid :meat 2 {:unboostable true :card card}))
+    :msg "suffer 2 meat damage"
     :events {:run {:req (req (some #(and (program? %)
                                          (has-subtype? % "Icebreaker"))
                                    (all-active-installed state :runner)))
                    :choices {:req #(and (installed? %)
                                         (has-subtype? % "Icebreaker"))}
                    :msg (msg "give " (:title target) " +1 strength")
-                   :effect (effect (pump target 1 :all-run))}}}
+                   :effect (effect (pump target 1 :end-of-run))}}}
 
    "NetChip"
    {:abilities [{:label "Install a program on NetChip"
@@ -1261,7 +1280,7 @@
                                       (not (has-subtype? % "Cloud"))
                                       (installed? %))}
                  :cost [:trash]
-                 :effect (effect (pump target (:link runner) :all-run))}
+                 :effect (effect (pump target (:link runner) :end-of-run))}
                 {:label "Add [Link] strength to any Cloud icebreakers until the end of the run"
                  :msg (msg "add " (:link runner) " strength to " (count targets) " Cloud icebreakers until the end of the run")
                  :req (req (:run @state))
@@ -1272,7 +1291,7 @@
                                       (installed? %))}
                  :cost [:trash]
                  :effect (req (doseq [t targets]
-                                (pump state side t (:link runner) :all-run)
+                                (pump state side t (:link runner) :end-of-run)
                                 (update-breaker-strength state side t)))}]}
 
    "Security Nexus"

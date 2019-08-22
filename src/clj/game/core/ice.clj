@@ -246,7 +246,7 @@
       :req (req (same-card? card target))
       :effect (req n)})
    (update-breaker-strength state side (get-card state card))
-   (trigger-event state side :pump-breaker n (get-card state card))))
+   (trigger-event state side :pump-breaker (get-card state card) n)))
 
 ;;; Others
 (defn ice-index

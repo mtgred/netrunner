@@ -1258,7 +1258,6 @@
                          (rezzed? %))}
     :msg (msg "give +2 strength to " (card-str state target))
     :effect (req (let [card (host state side target (assoc card :zone [:discard] :seen true :condition true))]
-                   (register-persistent-effects state card)
                    (update-ice-strength state side (get-card state target))))
     :persistent-effects [{:type :ice-strength
                           :req (req (same-card? target (:host card)))
