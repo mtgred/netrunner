@@ -134,7 +134,7 @@
                      #(and (= :credit (first %))
                            (zero? (second %)))
                      (fn [x] false))]
-     (remove remove-fn (mapv vec (concat (reduce reduce-fn {} plain-costs) damage-costs))))))
+     (mapv vec (remove remove-fn (concat (reduce reduce-fn {} plain-costs) damage-costs))))))
 
 (defn- flag-stops-pay?
   "Checks installed cards to see if payment type is prevented by a flag"
@@ -669,12 +669,10 @@
                                                           (join " and "))))
       (complete-with-result state side eid nil))))
 
-(defn play-cost-bonus [state side costs]
-  (swap! state update-in [:bonus :play-cost] #(merge-costs (concat % costs))))
-
 (defn play-cost [state side card all-cost]
   (vec (map #(if (keyword? %) % (max % 0))
-            (-> (concat all-cost (get-in @state [:bonus :play-cost])
+            (-> (concat all-cost
+                        (get-effects state side card :play-cost)
                         (when-let [playfun (:play-cost-bonus (card-def card))]
                           (playfun state side (make-eid state) card nil)))
                 merge-costs

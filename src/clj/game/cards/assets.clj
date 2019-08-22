@@ -1875,10 +1875,10 @@
                                             (add-counter card :power 1))}}}
 
    "Student Loans"
-   {:events {:pre-play-instant
-             {:req (req (and (event? target) (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
-              :effect (effect (system-msg :corp (str "makes the runner pay an extra 2 [Credits] due to Student Loans"))
-                              (play-cost-bonus [:credit 2]))}}}
+   {:persistent-effects [{:type :play-cost
+                          :req (req (and (event? target)
+                                         (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
+                          :effect (req [:credit 2])}]}
 
    "Sundew"
    ; If this a run event then handle in :begin-run as we do not know the server

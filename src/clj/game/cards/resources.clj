@@ -806,9 +806,8 @@
                                     (register-events state side events c))))}})
 
    "Donut Taganes"
-   {:msg "increase the play cost of operations and events by 1 [Credits]"
-    :events {:pre-play-instant
-             {:effect (effect (play-cost-bonus [:credit 1]))}}}
+   {:persistent-effects [{:type :play-cost
+                          :effect (req [:credit 1])}]}
 
    "Dr. Lovegood"
    {:flags {:runner-phase-12 (req (> (count (all-installed state :runner)) 1))}

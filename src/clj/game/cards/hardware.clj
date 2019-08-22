@@ -1031,66 +1031,38 @@
     :abilities [(set-autoresolve :auto-fire "Paragon")]}
 
    "Patchwork"
-   (letfn [(patchwork-discount [cost-type bonus-fn]
-             {:async true
-              :req (req (and (get-in card [:special :patchwork])
-                             (= "Runner" (:side target))
-                             ;; We need at least one card (that is not the card played) in hand
-                             (not-empty (remove (partial same-card? target) (:hand runner)))))
-              :effect (req (let [playing target]
-                             (continue-ability
-                               state side
-                               {:prompt (str "Trash a card to lower the " cost-type " cost of " (:title playing) " by 2 [Credits].")
-                                :priority 2
-                                :choices {:req #(and (in-hand? %)
-                                                     (runner? %)
-                                                     (not (same-card? % playing)))}
-                                :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
-                                          (:title playing) " by 2 [Credits]")
-                                :effect (effect (trash target {:unpreventable true})
-                                                (bonus-fn [:credit -2])
-                                                (update! (dissoc-in card [:special :patchwork])))
-                                :cancel-effect (effect (effect-completed eid))}
-                               card nil)))})]
-     (let [patchwork-ability {:once :per-turn
-                              :effect (effect (update! (assoc-in card [:special :patchwork] true))
-                                              (toast "Your next card played will trigger Patchwork." "info"))}]
-       {:in-play [:memory 1]
-        :implementation "Click Patchwork before playing/installing a card."
-        :abilities [patchwork-ability]
-        :events {:pre-play-instant (patchwork-discount "play" play-cost-bonus)
-                 :pre-install (patchwork-discount "install" install-cost-bonus)
-                 :runner-turn-ends {:effect (effect (update! (dissoc-in card [:special :patchwork])))}
-                 :corp-turn-ends {:effect (effect (update! (dissoc-in card [:special :patchwork])))}}
-        :interactions {:pay-credits {:req (req (and (or (= :play (:source-type eid))
-                                                        (= :runner-install (:source-type eid)))
-                                                    ;; We need at least one card (that is not the card played) in hand
-                                                    (not-empty (remove (partial same-card? target) (:hand runner)))
-                                                    ;; Patchwork wasn't used in the traditional way
-                                                    (not (get-in card [:special :patchwork]))
-                                                    ;; Check if Patchwork can trigger
-                                                    (can-trigger? state side patchwork-ability card targets)))
-                                     :custom (req (let [cost-type (str (when (= :play (:source-type eid)) "play")
-                                                                       (when (= :runner-install (:source-type eid)) "install"))
-                                                        patchwork card
-                                                        targetcard target]
-                                                    (continue-ability
-                                                      state side
-                                                      {:prompt (str "Trash a card to lower the " cost-type
-                                                                    " cost of " (:title targetcard) " by 2 [Credits].")
-                                                       :priority 2
-                                                       :async true
-                                                       :choices {:req #(and (in-hand? %)
-                                                                            (runner? %)
-                                                                            (not (same-card? % targetcard)))}
-                                                       :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
-                                                                 (:title targetcard) " by 2 [Credits]")
-                                                       :effect (req (trash state side target {:unpreventable true})
-                                                                    (register-once state patchwork-ability patchwork)
-                                                                    (effect-completed state side (make-result eid 2))) ; provide 2 credits
-                                                       :cancel-effect (effect (effect-completed (make-result eid 0)))} ; provide 0 credits
-                                                      nil nil)))
-                                     :type :custom}}}))
+   (let [patchwork-ability {:once :per-turn
+                            :effect (effect (update! (assoc-in card [:special :patchwork] true)))}]
+    {:in-play [:memory 1]
+     :interactions {:pay-credits {:req (req (and (or (= :play (:source-type eid))
+                                                     (= :runner-install (:source-type eid)))
+                                                 ;; We need at least one card (that is not the card played) in hand
+                                                 (not-empty (remove (partial same-card? target) (:hand runner)))
+                                                 ;; Patchwork wasn't used in the traditional way
+                                                 (not (get-in card [:special :patchwork]))
+                                                 ;; Check if Patchwork can trigger
+                                                 (can-trigger? state side patchwork-ability card targets)))
+                                  :custom (req (let [cost-type (str (when (= :play (:source-type eid)) "play")
+                                                                    (when (= :runner-install (:source-type eid)) "install"))
+                                                     patchwork card
+                                                     targetcard target]
+                                                 (continue-ability
+                                                   state side
+                                                   {:prompt (str "Trash a card to lower the " cost-type
+                                                                 " cost of " (:title targetcard) " by 2 [Credits].")
+                                                    :priority 2
+                                                    :async true
+                                                    :choices {:req #(and (in-hand? %)
+                                                                         (runner? %)
+                                                                         (not (same-card? % targetcard)))}
+                                                    :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
+                                                              (:title targetcard) " by 2 [Credits]")
+                                                    :effect (req (trash state side target {:unpreventable true})
+                                                                 (register-once state patchwork-ability patchwork)
+                                                                 (effect-completed state side (make-result eid 2))) ; provide 2 credits
+                                                    :cancel-effect (effect (effect-completed (make-result eid 0)))} ; provide 0 credits
+                                                   nil nil)))
+                                  :type :custom}}})
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]

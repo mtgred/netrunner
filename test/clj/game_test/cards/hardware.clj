@@ -1495,34 +1495,7 @@
 
 (deftest patchwork
   ;; Patchwork
-  (testing "Play event"
-    (do-game
-      (new-game {:runner {:deck ["Patchwork" (qty "Sure Gamble" 2) "Easy Mark"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 4)
-      (play-from-hand state :runner "Patchwork")
-      (card-ability state :runner (get-hardware state 0) 0)
-      (play-from-hand state :runner "Sure Gamble")
-      (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
-      (is (empty? (:discard (get-runner))) "Sure Gamble is not in heap yet")
-      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
-      (is (= 11 (:credit (get-runner))) "Runner was only charge 3 credits to play Sure Gamble")
-      (is (= 2 (count (:discard (get-runner)))) "2 cards now in heap")
-      (play-from-hand state :runner "Sure Gamble")
-      (is (= 15 (:credit (get-runner))) "Patchwork is once-per-turn")))
-  (testing "Install a card"
-    (do-game
-      (new-game {:runner {:deck ["Patchwork" "Easy Mark" "Cyberfeeder"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 4)
-      (play-from-hand state :runner "Patchwork")
-      (card-ability state :runner (get-hardware state 0) 0)
-      (play-from-hand state :runner "Cyberfeeder")
-      (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
-      (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
-      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
-      (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder")))
-  (testing "Play event with pay-credits prompt"
+  (testing "Play an event"
     (do-game
       (new-game {:runner {:deck ["Patchwork" (qty "Sure Gamble" 2) "Easy Mark"]}})
       (take-credits state :corp)
@@ -1535,7 +1508,7 @@
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (not-empty (:discard (get-runner))) "Easy Mark is in heap")
       (is (= 11 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble")))
-  (testing "Install a card with pay-credits prompt"
+  (testing "Install a card"
     (do-game
       (new-game {:runner {:deck ["Patchwork" "Easy Mark" "Cyberfeeder"]}})
       (take-credits state :corp)

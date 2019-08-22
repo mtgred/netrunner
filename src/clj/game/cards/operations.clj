@@ -1630,10 +1630,11 @@
 
    "Rolling Brownout"
    {:msg "increase the play cost of operations and events by 1 [Credits]"
+    :persistent-effects [{:type :play-cost
+                          :effect (req [:credit 1])}]
     :events {:play-event {:once :per-turn
                           :msg "gain 1 [Credits]"
-                          :effect (effect (gain-credits :corp 1))}
-             :pre-play-instant {:effect (effect (play-cost-bonus [:credit 1]))}}}
+                          :effect (effect (gain-credits :corp 1))}}}
 
    "Rover Algorithm"
    {:choices {:req #(and (ice? %) (rezzed? %))}
