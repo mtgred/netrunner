@@ -1,6 +1,7 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
+            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -363,9 +364,10 @@
                                    (host state side card)
                                    (update-breaker-strength state side))
                               (update! state side (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}]
-    :events {:pre-breaker-strength {:req (req (same-card? target (first (:hosted card))))
-                                    :effect (effect (breaker-strength-bonus 2))}
-             :card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
+    :persistent-effects [{:type :breaker-strength
+                          :req (req (same-card? target (first (:hosted card))))
+                          :effect (req 2)}]
+    :events {:card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
                           :effect (effect (update! (dissoc-in card [:special :dino-breaker]))
                                           (use-mu (:memoryunits target)))}}}
 
@@ -720,19 +722,17 @@
    {:in-play [:link 1 :memory 1 :hand-size 1]}
 
    "LLDS Processor"
-   (let [llds {:effect (req (let [cards (:llds-target card)]
-                              (update! state side (dissoc card :llds-target))
-                              (doseq [c cards]
-                                (update-breaker-strength state side
-                                                         (find-cid (:cid c) (all-active-installed state :runner))))))}]
-     {:events
-      {:runner-turn-ends llds :corp-turn-ends llds
-       :runner-install {:silent (req true)
-                        :req (req (has-subtype? target "Icebreaker"))
-                        :effect (effect (update! (update-in card [:llds-target] #(conj % target)))
-                                        (update-breaker-strength target))}
-       :pre-breaker-strength {:req (req (some #(same-card? target %) (:llds-target card)))
-                              :effect (effect (breaker-strength-bonus 1))}}})
+   {:events {:runner-install
+             {:silent (req true)
+              :req (req (has-subtype? target "Icebreaker"))
+              :effect (req (create-floating-effect
+                             state card
+                             (let [breaker target]
+                               {:type :breaker-strength
+                                :duration :end-of-turn
+                                :req (req (same-card? breaker target))
+                                :effect (req 1)}))
+                           (update-breaker-strength state side target))}}}
 
    "Lockpick"
    {:recurring 1
@@ -1459,8 +1459,9 @@
    {:hosting {:req #(and (has-subtype? % "Icebreaker")
                          (installed? %))}
     :effect (effect (update-breaker-strength (:host card)))
-    :events {:pre-breaker-strength {:req (req (same-card? target (:host card)))
-                                    :effect (effect (breaker-strength-bonus 1))}}}
+    :persistent-effects [{:type :breaker-strength
+                          :req (req (same-card? target (:host card)))
+                          :effect (req 1)}]}
 
    "The Toolbox"
    {:in-play [:link 2 :memory 2]

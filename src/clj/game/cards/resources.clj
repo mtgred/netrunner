@@ -1,6 +1,7 @@
 (ns game.cards.resources
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
+            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer [make-eid effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -716,23 +717,19 @@
                                    true)))))}]}
 
    "Dean Lister"
-   {:abilities [{:req (req (:run @state))
+   {:abilities [{:req (req run)
                  :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")
-                 :choices {:req #(and (has-subtype? % "Icebreaker")
-                                      (installed? %))}
-                 ; :cost [:trash]
-                 :effect (effect (update! (assoc card :dean-target target))
-                                 (trash (get-card state card) {:cause :ability-cost})
-                                 (update-breaker-strength target))}]
-    :events {:run-ends nil :pre-breaker-strength nil}
-    :trash-effect {:effect
-                   (effect (register-events
-                             (let [dean {:effect (effect (unregister-events card)
-                                                         (update! (dissoc card :dean-target))
-                                                         (update-breaker-strength (:dean-target card)))}]
-                               {:run-ends dean
-                                :pre-breaker-strength {:req (req (same-card? target (:dean-target card)))
-                                                       :effect (effect (breaker-strength-bonus (count (:hand runner))))}}) card))}}
+                 :choices {:req #(and (installed? %)
+                                      (has-subtype? % "Icebreaker"))}
+                 :cost [:trash]
+                 :effect (req (create-floating-effect
+                                state card
+                                (let [breaker target]
+                                  {:type :breaker-strength
+                                   :duration :end-of-run
+                                   :req (req (same-card? breaker target))
+                                   :effect (req (count (:hand runner)))}))
+                                 (update-breaker-strength state side target))}]}
 
    "Decoy"
    {:interactions {:prevent [{:type #{:tag}
@@ -2239,19 +2236,15 @@
     :abilities [{:msg (msg "give +2 strength to " (:title target))
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (installed? %))}
-                 ; :cost [:trash]
-                 :effect (effect (update! (assoc card :hai-target target))
-                                 (trash (get-card state card) {:cause :ability-cost})
-                                 (update-breaker-strength target))}]
-    :events {:runner-turn-ends nil :corp-turn-ends nil :pre-breaker-strength nil}
-    :trash-effect {:effect
-                   (effect (register-events
-                             (let [hai {:effect (effect (unregister-events card)
-                                                        (update! (dissoc card :hai-target))
-                                                        (update-breaker-strength (:hai-target card)))}]
-                               {:runner-turn-ends hai :corp-turn-ends hai
-                                :pre-breaker-strength {:req (req (same-card? target (:hai-target card)))
-                                                       :effect (effect (breaker-strength-bonus 2))}}) card))}}
+                 :cost [:trash]
+                 :effect (req (create-floating-effect
+                                state card
+                                (let [breaker target]
+                                  {:type :breaker-strength
+                                   :duration :end-of-turn
+                                   :req (req (same-card? breaker target))
+                                   :effect (req 2)}))
+                              (update-breaker-strength state side target))}]}
 
    "The Nihilist"
    (let [has-2-virus-tokens? (req (<= 2 (number-of-virus-counters state)))

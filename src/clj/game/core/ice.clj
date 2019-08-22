@@ -195,11 +195,6 @@
 
 
 ;;; Icebreaker functions.
-(defn breaker-strength-bonus
-  "Increase the strength of the breaker by n. Negative values cause a decrease."
-  [state side n]
-  (swap! state update-in [:bonus :breaker-strength] (fnil #(+ % n) 0)))
-
 (defn breaker-strength
   "Gets the modified strength of the given breaker."
   [state side {:keys [strength] :as card}]
