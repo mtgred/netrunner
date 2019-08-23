@@ -2053,6 +2053,43 @@
       (click-prompt state :runner "Yes")
       (is (= (:credit (get-runner)) (+ 2 credits)) "Runner gained 2 credits"))))
 
+(deftest swift
+  (letfn [(laundry-archives [state]
+            (play-from-hand state :runner "Dirty Laundry")
+            (click-prompt state :runner "Archives")
+            (run-successful state))]
+    (testing "Installing Swift gives the runner +1[mu]"
+      (do-game
+        (new-game {:runner {:hand ["Swift"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Swift")
+        (is (= 5 (core/available-mu state))) "The runner has 5[mu]"))
+    (testing "Playing a run event must gain the runner a click"
+      (do-game
+        (new-game {:runner {:hand ["Swift", "Dirty Laundry"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Swift")
+        (laundry-archives state)
+        (is (= 3 (:click (get-runner))) "Gain a click after playing the run event")))
+    (testing "Playing a second run event must not gain the runner a click"
+      (do-game
+        (new-game {:runner {:hand ["Swift", (qty "Dirty Laundry" 2)]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Swift")
+        (laundry-archives state)
+        (is (= 3 (:click (get-runner))) "Gain a click after playing the first run event")
+        (laundry-archives state)
+        (is (= 2 (:click (get-runner))) "Don't gain a click after playing the second run event")))
+    (testing "Playing a run event, installing Swift, then playing another run event must not gain the runner a click"
+      (do-game
+        (new-game {:runner {:hand ["Swift", (qty "Dirty Laundry" 2)]}})
+        (take-credits state :corp)
+        (laundry-archives state)
+        (is (= 3 (:click (get-runner))) "Gain a click after playing the first run event")
+        (play-from-hand state :runner "Swift")
+        (laundry-archives state)
+        (is (= 1 (:click (get-runner))) "Don't gain a click after playing the second run event")))))
+
 (deftest the-gauntlet
   (testing "Access additional cards on run on HQ, not with Gang Sign. Issue #2749"
     (do-game

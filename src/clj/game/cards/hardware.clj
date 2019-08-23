@@ -1401,6 +1401,13 @@
                                                          (clear-wait-prompt state :corp))}}}
                              card nil))}}}
 
+   "Swift"
+   {:in-play [:memory 1]
+    :events {:play-event {:req (req (and (has-subtype? target "Run")
+                                         (first-event? state side :play-event #(has-subtype? (first %) "Run"))))
+                          :msg "gain a [click]"
+                          :effect (effect (gain :click 1))}}}
+
    "The Gauntlet"
    {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
     :in-play [:memory 2]
