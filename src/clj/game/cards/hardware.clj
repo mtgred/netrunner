@@ -50,7 +50,13 @@
 
    "Aniccam"
    (let [draw-card {:msg "draw 1 card."
-                    :req (req (is-type? target "Event"))
+                    :req (req (letfn [(event-trashed? [trash-event]
+                                        ;; a <side>-trash event is a list of targets for trashing followed by
+                                        ;; optionally a reason for the trash, or nil
+                                        (some #(is-type? % "Event") trash-event))]
+                                (and (is-type? target "Event")
+                                     (= 1 (+ (event-count state side :runner-trash event-trashed?)
+                                             (event-count state side :corp-trash event-trashed?))))))
                     :async true
                     :effect (effect (draw :runner eid 1 nil))}]
      {:events {:runner-trash draw-card
