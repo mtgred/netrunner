@@ -131,7 +131,15 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
       (core/damage state :runner :brain 1)
-      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card"))))
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "Trashing an event from R&D triggers Annicam"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam"]
+                          :deck [(qty "Sure Gamble" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/trash state :runner (first (:deck (get-runner))))
+      (is (find-card "Sure Gamble" (:hand (get-runner))) "The runner has drawn a card"))))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
