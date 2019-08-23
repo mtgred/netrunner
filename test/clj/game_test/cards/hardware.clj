@@ -107,7 +107,24 @@
                (find-card "Mimic" (:discard (get-runner)))
                (find-card "Daily Casts" (:discard (get-runner)))) "All cards from the Grip are now in the Heap")
       (is (= 1 (count (:hand (get-runner)))) "There is 1 card in the Grip")
-      (is (find-card "Corroder" (:hand (get-runner))) "The card in the Grip is Corroder"))))
+      (is (find-card "Corroder" (:hand (get-runner))) "The card in the Grip is Corroder")))
+  (doseq [first-side [:corp :runner]
+          second-side [:corp :runner]]
+    (testing (str (name first-side) " trash -> install Aniccam -> " (name second-side) " trash does not trigger Aniccam")
+      (do-game
+        (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
+                            :deck ["Corroder"]}})
+        (take-credits state :corp)
+        (core/trash state first-side (find-card "Sure Gamble" (:hand (get-runner))))
+        (play-from-hand state :runner "Aniccam")
+        (core/trash state second-side (find-card "Dirty Laundry" (:hand (get-runner))))
+        (is (= 1 (count (:deck (get-runner)))) "There is 1 card in the Stack")
+        (is (find-card "Corroder" (:deck (get-runner))) "The card in the Stack is Corroder")
+        (is (= 2 (count (:discard (get-runner)))) "There are 2 cards in the Heap")
+        (is (and (find-card "Sure Gamble" (:discard (get-runner)))
+                 (find-card "Dirty Laundry" (:discard (get-runner))))
+            "The cards in the Stack are Sure Gamble and Dirty Laundry")
+        (is (= 0 (count (:hand (get-runner)))) "There are no cards in the Grip")))))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
