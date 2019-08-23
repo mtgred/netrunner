@@ -108,6 +108,16 @@
                (find-card "Daily Casts" (:discard (get-runner)))) "All cards from the Grip are now in the Heap")
       (is (= 1 (count (:hand (get-runner)))) "There is 1 card in the Grip")
       (is (find-card "Corroder" (:hand (get-runner))) "The card in the Grip is Corroder")))
+  (testing "Aniccam must not trigger a second time in one turn"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder", "Mimic"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (trash-from-hand state :runner "Sure Gamble")
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")
+      (trash-from-hand state :runner "Corroder")
+      (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a second card")))
   (doseq [first-side [:corp :runner]
           second-side [:corp :runner]]
     (testing (str (name first-side) " trash -> install Aniccam -> " (name second-side) " trash does not trigger Aniccam")
