@@ -107,7 +107,31 @@
         (core/trash state first-side (find-card "Sure Gamble" (:hand (get-runner))))
         (play-from-hand state :runner "Aniccam")
         (core/trash state second-side (find-card "Dirty Laundry" (:hand (get-runner))))
-        (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card")))))
+        (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card"))))
+  (testing "The effect triggers on meat damage"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/damage state :runner :meat 1)
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "The effect triggers on net damage"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/damage state :runner :net 1)
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "The effect triggers on brain damage"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/damage state :runner :brain 1)
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card"))))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
