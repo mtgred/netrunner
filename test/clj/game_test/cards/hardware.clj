@@ -95,7 +95,7 @@
       (is (= 0 (count (:hand (get-runner)))) "There are no cards in the Grip")))
   (testing "Trashing an event along with some non events triggers Aniccam"
     (do-game
-      (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Clone Chip", "Mimic", "Daily Casts"]
+      (new-game {:runner {:hand ["Aniccam", "Clone Chip", "Sure Gamble", "Mimic", "Daily Casts"]
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
