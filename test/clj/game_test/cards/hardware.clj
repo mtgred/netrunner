@@ -90,7 +90,7 @@
   (testing "Aniccam must not trigger a second time in one turn"
     (do-game
       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-                          :deck ["Corroder", "Mimic"]}})
+                          :deck [(qty "Corroder" 2)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
       (trash-from-hand state :runner "Sure Gamble")
