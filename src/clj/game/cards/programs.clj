@@ -597,8 +597,8 @@
     :events {:runner-turn-ends {:msg "add itself to Grip"
                                 :effect (effect (move card :hand))}}
     :abilities [(merge
-                  (break-sub 1 1 {:req (req (and (<= (get-strength current-ice) (get-strength card))
-                                                 (has-subtype? current-ice (:subtype-target card))))})
+                  (break-sub 1 1 "All" {:req (req (and (<= (get-strength current-ice) (get-strength card))
+                                                       (has-subtype? current-ice (:subtype-target card))))})
                   {:effect (effect
                              (continue-ability
                                (break-sub 1 1 (:subtype-target card))
