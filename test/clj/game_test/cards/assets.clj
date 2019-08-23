@@ -1010,7 +1010,18 @@
           (is (= 3 (:credit (get-corp))))
           (take-credits state :runner)
           (core/end-phase-12 state :corp nil)
-          (is (= 6 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))))
+          (is (= 6 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server")))))
+  (testing "Corp gains credits when there were no runs last turn. Issue #4447"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daily Quest"]}})
+      (play-from-hand state :corp "Daily Quest" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (is (= 6 (:credit (get-corp))))
+      (take-credits state :runner)
+      (core/end-phase-12 state :corp nil)
+      (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))
 
 (deftest dedicated-response-team
   ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged
