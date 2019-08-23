@@ -275,7 +275,7 @@
 
 (defn second-event?
   "Returns true if the given event has occurred twice this turn.
-  Includese itself if this is checked in the requirement for an event ability.
+  Includes itself if this is checked in the requirement for an event ability.
   Filters on events satisfying (pred targets) if given pred."
   ([state side ev] (second-event? state side ev (constantly true)))
   ([state side ev pred]
@@ -285,6 +285,16 @@
   "Returns true if the active run is the first succesful run on the given server"
   [state server]
   (first-event? state :runner :successful-run #(= [server] %)))
+
+(defn first-trash?
+  "Returns true if cards have been trashed by either player only once this turn.
+  Includes itself if this is checked in the requirement for an event ability.
+  Filters on trash events satisfying (pred targets) if given pred.
+  Note that trash event targets may be optionally followed by a reason for the trash, or nil."
+  ([state] (first-trash? state (constantly true)))
+  ([state pred]
+   (= 1 (+ (event-count state nil :runner-trash pred)
+           (event-count state nil :corp-trash pred)))))
 
 (defn get-turn-damage
   "Returns the value of damage take this turn"
