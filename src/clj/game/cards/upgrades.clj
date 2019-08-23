@@ -1258,7 +1258,6 @@
                      (pos? (last targets))
                      (can-pay? state :corp eid card nil [:credit 2])))
       :effect (req (swap! state assoc-in [:damage :damage-replace] true)
-                   (damage-defer state side :net (last targets))
                    (show-wait-prompt state :runner "Corp to use Tori Hanzō")
                    (continue-ability
                      state side

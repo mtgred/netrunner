@@ -2346,21 +2346,21 @@
         (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards"))))
   (testing "With Respirocytes"
     (do-game
-      (new-game {:runner {:deck ["Zer0" "Titanium Ribs" "Respirocytes"(qty "Sure Gamble" 7)]}})
-      (starting-hand state :runner ["Zer0" "Titanium Ribs" "Respirocytes" "Sure Gamble" "Sure Gamble" "Sure Gamble" "Sure Gamble"])
+      (new-game {:runner {:deck [(qty "Clone Chip" 5)]
+                          :hand ["Zer0" "Titanium Ribs" "Respirocytes"
+                                 "Sure Gamble" "Easy Mark" "Zamba" "Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Zer0")
       (play-from-hand state :runner "Titanium Ribs")
-      (click-card state :runner (second (:hand (get-runner))))
-      (click-card state :runner (nth (:hand (get-runner)) 2))
+      (click-card state :runner "Sure Gamble")
+      (click-card state :runner "Easy Mark")
       (play-from-hand state :runner "Respirocytes")
-      (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
-      ;; Now 1 Gamble in hand
+      (click-card state :runner "Zamba")
       (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
       (let  [z (get-hardware state 0)]
         (card-ability state :runner z 0)
         (is (= 3 (:credit (get-runner))) "Zer0 has not yet resolved because Ribs prompt is open")
         (is (= 1 (count (:hand (get-runner)))) "Zer0 has not yet resolved because Ribs prompt is open")
-        (click-card state :runner (first (:hand (get-runner))))
+        (click-card state :runner "Corroder")
         (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
         (is (= 3 (count (:hand (get-runner)))) "Runner has 3 cards")))))
