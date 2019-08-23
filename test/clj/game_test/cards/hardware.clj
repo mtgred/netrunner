@@ -92,7 +92,22 @@
       (is (and (find-card "Clone Chip" (:discard (get-runner)))
                (find-card "Mimic" (:discard (get-runner)))
                (find-card "Daily Casts" (:discard (get-runner)))) "All cards from the Grip are now in the Heap")
-      (is (= 0 (count (:hand (get-runner)))) "There are no cards in the Grip"))))
+      (is (= 0 (count (:hand (get-runner)))) "There are no cards in the Grip")))
+  (testing "Trashing an event along with some non events triggers Aniccam"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Clone Chip", "Mimic", "Daily Casts"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/trash-cards state :runner (:hand (get-runner)))
+      (is (= 0 (count (:deck (get-runner)))) "There are no cards in the Stack")
+      (is (= 4 (count (:discard (get-runner)))) "There are 4 cards in the Heap")
+      (is (and (find-card "Sure Gamble" (:discard (get-runner)))
+               (find-card "Clone Chip" (:discard (get-runner)))
+               (find-card "Mimic" (:discard (get-runner)))
+               (find-card "Daily Casts" (:discard (get-runner)))) "All cards from the Grip are now in the Heap")
+      (is (= 1 (count (:hand (get-runner)))) "There is 1 card in the Grip")
+      (is (find-card "Corroder" (:hand (get-runner))) "The card in the Grip is Corroder"))))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
