@@ -2,18 +2,22 @@
   (:require [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
             [game.core.card :refer [get-card]]
-            [game.utils :refer [same-card? to-keyword]]))
+            [game.utils :refer [same-card? to-keyword]]
+            [clj-uuid :as uuid]))
 
 (defn register-persistent-effects
   [state card]
-  (when-let [abilities (:persistent-effects (card-def card))]
-    (swap! state update :effects
-           #(apply conj % (for [ability abilities]
-                            (assoc
-                              (select-keys ability [:type :req :effect])
-                              :duration :persistent
-                              :card card)))))
-  (:effects @state))
+  (when (:persistent-effects (card-def card))
+    (let [persistent-effects (:persistent-effects (card-def card))
+          abilities (for [ability persistent-effects]
+                      (assoc
+                        (select-keys ability [:type :req :effect])
+                        :duration :persistent
+                        :card card
+                        :uuid (uuid/v1)))]
+      (swap! state update :effects
+             #(apply conj % abilities))
+      abilities)))
 
 (defn unregister-persistent-effects
   [state card]
@@ -25,11 +29,12 @@
 
 (defn create-floating-effect
   [state card ability]
-  (swap! state update :effects
-         conj (assoc
-                (select-keys ability [:type :duration :req :effect])
-                :card card))
-  (:effects @state))
+  (let [ability (assoc
+                  (select-keys ability [:type :duration :req :effect])
+                  :card card
+                  :uuid (uuid/v1))]
+    (swap! state update :effects conj ability)
+    ability))
 
 (defn remove-floating-effects
   [state duration]

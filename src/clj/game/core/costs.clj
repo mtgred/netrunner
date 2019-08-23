@@ -673,6 +673,7 @@
   (vec (map #(if (keyword? %) % (max % 0))
             (-> (concat all-cost
                         (get-effects state side card :play-cost)
+                        (get-effects state side card :play-additional-cost)
                         (when-let [playfun (:play-cost-bonus (card-def card))]
                           (playfun state side (make-eid state) card nil)))
                 merge-costs

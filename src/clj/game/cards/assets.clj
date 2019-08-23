@@ -1875,7 +1875,7 @@
                                             (add-counter card :power 1))}}}
 
    "Student Loans"
-   {:persistent-effects [{:type :play-cost
+   {:persistent-effects [{:type :play-additional-cost
                           :req (req (and (event? target)
                                          (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
                           :effect (req [:credit 2])}]}
