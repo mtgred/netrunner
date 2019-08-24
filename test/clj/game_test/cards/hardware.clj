@@ -154,7 +154,19 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (:hand (get-runner))))))
+      (core/trash-cards state :runner (:hand (get-runner)))))
+  (testing "Trashing a current triggers Aniccam"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Hacktivist Meeting"]
+                          :deck ["Corroder"]}
+                 :corp {:hand ["Scarcity of Resources"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (play-from-hand state :runner "Hacktivist Meeting")
+      (is (not (find-card "Corroder" (:hand (get-runner)))) "The runner has not drawn a card immediately after playing a current")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Scarcity of Resources")
+      (is (find-card "Corroder" (:hand (get-runner))) "The has drawn a card after their current was trashed"))))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
