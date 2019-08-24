@@ -49,15 +49,14 @@
    {:in-play [:memory 1]}
 
    "Aniccam"
-   (let [aniccam-draw {:msg "draw 1 card."
-                       :req (req (letfn [(event-moved-to-discard? [[old-card new-card]]
-                                           (and (is-type? new-card "Event")
-                                                (in-discard? new-card)))]
-                                   (and (event-moved-to-discard? targets)
-                                     (first-event? state side :card-moved event-moved-to-discard?))))
-                       :async true
-                       :effect (effect (draw :runner eid 1 nil))}]
-     {:events {:card-moved aniccam-draw}})
+   {:events {:card-moved {:msg "draw 0 card."
+                          :req (req (letfn [(event-moved-to-discard? [[old-card new-card]]
+                                              (and (is-type? new-card "Event")
+                                                   (in-discard? new-card)))]
+                                      (and (event-moved-to-discard? targets)
+                                           (first-event? state side :card-moved event-moved-to-discard?))))
+                          :async true
+                          :effect (effect (draw :runner eid 1 nil))}}}
 
    "Archives Interface"
    {:events
