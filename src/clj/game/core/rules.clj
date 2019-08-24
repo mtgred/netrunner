@@ -189,17 +189,6 @@
   (swap! state update-in [:damage :damage-prevent dtype] (fnil #(+ % n) 0))
   (damage-prevent-update-prompt state side dtype n))
 
-(defn damage-defer
-  "Registers n damage of the given type to be deferred until later. (Chronos Protocol.)"
-  ([state side dtype n] (damage-defer state side dtype n nil))
-  ([state side dtype n {:keys [part-resolved] :as args}]
-   (swap! state assoc-in [:damage :defer-damage dtype] {:n n
-                                                        :part-resolved part-resolved})))
-
-(defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
-  (let [{:keys [n part-resolved]} (get-in @state [:damage :defer-damage dtype])]
-    (when (or part-resolved (not unpreventable)) n)))
-
 (defn enable-runner-damage-choice
   [state side]
   (swap! state assoc-in [:damage :damage-choose-runner] true))
@@ -226,38 +215,52 @@
         (swap! state update-in [:damage] dissoc :damage-choose-runner)
         (swap! state update-in [:damage] dissoc :damage-choose-corp)))))
 
+(defn handle-replaced-damage
+  [state side eid]
+  (swap! state update-in [:damage :defer-damage] dissoc type)
+  (swap! state update-in [:damage] dissoc :damage-replace)
+  (effect-completed state side eid))
+
+(defn chosen-damage
+  [state side & targets]
+  (swap! state update-in [:damage :chosen-damage] #(apply conj % (flatten targets))))
+
+(defn get-chosen-damage
+  [state]
+  (get-in @state [:damage :chosen-damage]))
+
 (defn resolve-damage
   "Resolves the attempt to do n damage, now that both sides have acted to boost or
   prevent damage."
   [state side eid type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
+  (swap! state dissoc-in [:damage :chosen-damage])
   (damage-choice-priority state)
   (wait-for (trigger-event-sync state side :pre-resolve-damage type card n)
-            (when-not (or (get-in @state [:damage :damage-replace])
-                          (runner-can-choose-damage? state))
-              (let [n (or (get-defer-damage state side type args) n)]
-                (when (pos? n)
-                  (let [hand (get-in @state [:runner :hand])
-                        cards-trashed (take n (shuffle hand))]
-                    (when (= type :brain)
-                      (swap! state update-in [:runner :brain-damage] #(+ % n))
-                      (swap! state update-in [:runner :hand-size :mod] #(- % n)))
-                    (when-let [trashed-msg (join ", " (map :title cards-trashed))]
-                      (system-msg state :runner (str "trashes " trashed-msg " due to " (name type) " damage")))
-                    (if (< (count hand) n)
-                      (do (flatline state)
-                          (trash-cards state side (make-eid state) cards-trashed
-                                       {:unpreventable true})
-                          (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
-                          (swap! state update-in [:stats :corp :damage type] (fnil + 0) n))
-                      (do (trash-cards state side (make-eid state) cards-trashed
-                                       {:unpreventable true :cause type})
-                          (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
-                          (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
-                          (trigger-event state side :damage type card n cards-trashed)))))))
-            (swap! state update-in [:damage :defer-damage] dissoc type)
-            (swap! state update-in [:damage] dissoc :damage-replace)
-            (effect-completed state side eid)))
+            (if (get-in @state [:damage :damage-replace])
+              (handle-replaced-damage state side eid)
+              (if (pos? n)
+                (let [hand (get-in @state [:runner :hand])
+                      chosen-cards (seq (get-chosen-damage state))
+                      chosen-cids (into #{} (map :cid chosen-cards))
+                      leftovers (remove #(contains? chosen-cids (:cid %)) hand)
+                      cards-trashed (filter identity (flatten (conj chosen-cards (seq (take (- n (count chosen-cards)) (shuffle leftovers))))))]
+                  (when (= type :brain)
+                    (swap! state update-in [:runner :brain-damage] #(+ % n))
+                    (swap! state update-in [:runner :hand-size :mod] #(- % n)))
+                  (when-let [trashed-msg (join ", " (map :title cards-trashed))]
+                    (system-msg state :runner (str "trashes " trashed-msg " due to " (name type) " damage")))
+                  (if (< (count hand) n)
+                    (do (flatline state)
+                        (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
+                        (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
+                        (trash-cards state side eid cards-trashed {:unpreventable true}))
+                    (wait-for (trash-cards state side cards-trashed {:unpreventable true :cause type})
+                              (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
+                              (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
+                              (trigger-event state side :damage type card n cards-trashed)
+                              (effect-completed state side eid))))
+                (effect-completed state side eid)))))
 
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the

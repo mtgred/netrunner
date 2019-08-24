@@ -370,18 +370,21 @@
               :prompt "Name a Runner card"
               :choices {:card-title (req (and (runner? target)
                                               (not (identity? target))))}
-              :effect (effect (system-msg (str "uses Complete Image to name " target))
-                              (continue-ability (damage-ability) card targets))})
+              :msg (msg "name " target)
+              :effect (effect (continue-ability (damage-ability) card targets))})
            (damage-ability []
              {:async true
               :msg "do 1 net damage"
               :effect (req (wait-for (damage state side :net 1 {:card card})
-                                     (when-let* [should-continue (not (:winner @state))
-                                                 cards (some #(when (same-card? (second %) card) (last %))
-                                                             (turn-events state :corp :damage))
-                                                 dmg (some #(when (= (:title %) target) %) cards)]
-                                       (continue-ability state side (name-a-card) card nil))))})]
-     {:async true
+                                     (let [should-continue (not (:winner @state))
+                                           cards (some #(when (same-card? (second %) card) (last %))
+                                                       (turn-events state :corp :damage))
+                                           dmg (some #(when (= (:title %) target) %) cards)]
+                                       (continue-ability state side (when (and should-continue dmg)
+                                                                      (name-a-card))
+                                                         card nil))))})]
+     {:implementation "Doesn't work with Chronos Protocol: Selective Mind-mapping"
+      :async true
       :req (req (and (last-turn? state :runner :successful-run)
                      (<= 3 (:agenda-point runner))))
       :effect (effect (continue-ability (name-a-card) card nil))})

@@ -411,7 +411,33 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "Complete Image")
-      (is (empty? (:prompt (get-corp))) "Corp shouldn't be able to play Complete Image"))))
+      (is (empty? (:prompt (get-corp))) "Corp shouldn't be able to play Complete Image")))
+  (testing "Interaction with Chronos Protocol"
+    (do-game
+      (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Complete Image" "Priority Requisition"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Priority Requisition" "New remote")
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Complete Image")
+      (is (-> (get-runner) :discard count zero?) "Runner's heap should be empty")
+      (click-prompt state :corp "Sure Gamble") ;; Complete Image
+      (is (seq (:prompt (get-corp))) "Corp guessed right so should have another choice")
+      (click-prompt state :corp "Yes") ;; Chronos Protocol
+      (click-prompt state :corp "Sure Gamble") ;; Chronos Protocol
+      (click-prompt state :corp "Sure Gamble") ;; Complete Image
+      (click-prompt state :corp "Sure Gamble") ;; Complete Image
+      (click-prompt state :corp "Sure Gamble") ;; Complete Image
+      (is (seq (:prompt (get-corp))) "Even when the runner has no cards in hand, Corp must choose again")
+      (click-prompt state :corp "Sure Gamble") ;; Complete Image
+      (click-prompt state :corp "Sure Gamble") ;; Complete Image
+      (is (empty? (:prompt (get-corp))) "Runner is flatlined so no more choices")
+      (is (= 5 (-> (get-runner) :discard count)) "Runner's heap should have 5 cards"))))
 
 (deftest consulting-visit
   ;; Consulting Visit - Only show single copies of operations corp can afford as choices. Play chosen operation
