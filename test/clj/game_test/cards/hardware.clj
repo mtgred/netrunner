@@ -139,7 +139,22 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
       (core/trash state :runner (first (:deck (get-runner))))
-      (is (find-card "Sure Gamble" (:hand (get-runner))) "The runner has drawn a card"))))
+      (is (find-card "Sure Gamble" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "An event being trashed after playing it triggers Aniccam"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Easy Mark"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (play-from-hand state :runner "Easy Mark")
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "Event play/trash events"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/trash-cards state :runner (:hand (get-runner))))))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
