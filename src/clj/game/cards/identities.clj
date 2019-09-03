@@ -268,7 +268,9 @@
                      :once :per-turn
                      :msg (msg "gain 2 [Credits] from " (:az-target card))}]
      {:events {:corp-turn-ends choose-type
-               :runner-install check-type
+               :runner-install (assoc check-type
+                                      :req (req (and (is-type? target (:az-target card))
+                                                     (not (facedown? target)))))
                :play-event check-type}})
 
    "Az McCaffrey: Mechanical Prodigy"
