@@ -310,7 +310,7 @@
                 :req (req this-server)
                 :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
                              (swap! state update-in [:run] dissoc :successful)
-                             (swap! state update-in [:runner :register :successful-run] #(next %)))}}})
+                             (swap! state update-in [:runner :register :successful-run] #(seq (rest %))))}}})
 
    "Cyberdex Virus Suite"
    {:flags {:rd-reveal (req true)}
@@ -1258,7 +1258,6 @@
                      (pos? (last targets))
                      (can-pay? state :corp eid card nil [:credit 2])))
       :effect (req (swap! state assoc-in [:damage :damage-replace] true)
-                   (damage-defer state side :net (last targets))
                    (show-wait-prompt state :runner "Corp to use Tori Hanzō")
                    (continue-ability
                      state side

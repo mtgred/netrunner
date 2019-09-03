@@ -49,8 +49,8 @@
     (if-let [card (get-card state (:card e))]
       (let [ability (dissoc (:ability e) :req)]
         (wait-for (resolve-ability state side ability card targets)
-                  (apply trigger-event-sync-next state side eid (next handlers) event targets)))
-      (apply trigger-event-sync-next state side eid (next handlers) event targets))
+                  (apply trigger-event-sync-next state side eid (rest handlers) event targets)))
+      (apply trigger-event-sync-next state side eid (rest handlers) event targets))
     (effect-completed state side eid)))
 
 (defn trigger-event-sync
@@ -102,7 +102,7 @@
                         card-to-resolve (:card to-resolve)
                         others (if (= 1 (count non-silent))
                                  (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
-                                 (next handlers))]
+                                 (rest handlers))]
                     (if-let [the-card (get-card state card-to-resolve)]
                       {:async true
                        :effect (req (wait-for (resolve-ability state (to-keyword (:side the-card))
@@ -114,7 +114,7 @@
                                                 (effect-completed state side eid))))}
                       {:async true
                        :effect (req (if (should-continue state handlers)
-                                      (continue-ability state side (choose-handler (next handlers)) nil event-targets)
+                                      (continue-ability state side (choose-handler (rest handlers)) nil event-targets)
                                       (effect-completed state side eid)))}))
                   {:prompt "Choose a trigger to resolve"
                    :choices titles

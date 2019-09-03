@@ -1543,6 +1543,11 @@ nav ul
     font-size: 12px
     line-height: 16px
 
+    > span
+      margin: 2px
+      &:last-child
+        margin-bottom: 0
+
     > div
       border: 1px solid white
       padding: 3px 6px
@@ -2004,13 +2009,13 @@ nav ul
             margin: -1px 6px
 
           .abilities
-            top: 66%
+            top: 0
             bottom: auto
             transform(rotate(90deg) translateY(-100%))
             transform-origin(0 0)
 
           .runner-abilities, .corp-abilities
-            bottom: 66%
+            bottom: 0
             transform(rotate(-90deg) translateY(100%))
             transform-origin(0 100%)
 

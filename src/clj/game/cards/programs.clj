@@ -87,11 +87,12 @@
   (Conspiracy suite: Black Orchestra, MKUltra, Paperclip)"
   [cost strength subtype]
   (merge
-    (dissoc (break-sub cost strength subtype) :req :cost)
+    (dissoc (break-sub cost strength subtype) :req)
     {:label (str "add " strength " strength and "
                  " break up to " strength
                  " " subtype
                  " subroutines")
+     :cost cost
      :msg (msg "increase its strength from " (get-strength card)
                " to " (+ strength (get-strength card)))
      :effect (effect (pump card strength)
@@ -117,18 +118,18 @@
   (Greek/Philosopher suite: Adept, Sage, Savant)"
   [first-qty first-type second-qty second-type]
   {:cost [:credit 2]
-   :req (req (or (has-subtype? current-ice first-type)
-                 (has-subtype? current-ice second-type)))
+   :req (req (or (and (has-subtype? current-ice first-type)
+                      (<= first-qty (count (remove :broken (:subroutines current-ice)))))
+                 (and (has-subtype? current-ice second-type)
+                      (<= second-qty (count (remove :broken (:subroutines current-ice)))))))
    :label (str "break "
-               (when (< 1 first-qty) " up to ")
                (quantify first-qty (str first-type " subroutine")) " or "
-               (when (< 1 second-qty) " up to ")
                (quantify second-qty (str second-type " subroutine")))
    :effect (effect
              (continue-ability
                (if (has-subtype? current-ice first-type)
-                 (break-sub nil first-qty first-type)
-                 (break-sub nil second-qty second-type))
+                 (break-sub nil first-qty first-type {:all (< 1 first-qty)})
+                 (break-sub nil second-qty second-type {:all (< 1 second-qty)}))
                card nil))})
 
 (defn- give-ice-subtype
@@ -337,11 +338,11 @@
 
    "Alpha"
    (auto-icebreaker {:abilities [(merge
-                                   (dissoc (break-sub 1 1) :cost)
+                                   (break-sub 1 1)
                                    {:req (req (= (:position run) (count run-ices)))
                                     :effect (effect (continue-ability (break-sub 1 1) card nil))})
                                  (merge
-                                   (dissoc (strength-pump 1 1) :cost)
+                                   (strength-pump 1 1)
                                    {:req (req (= (:position run) (count run-ices)))
                                     :effect (effect (continue-ability (strength-pump 1 1) card nil))})]})
 
@@ -523,7 +524,7 @@
 
    "Brahman"
    (auto-icebreaker {:abilities [(break-sub 1 2 "All"
-                                            {:additional-ability (effect (update! (assoc-in card [:special :brahman-used] true)))})
+                                            {:additional-ability {:effect (effect (update! (assoc-in card [:special :brahman-used] true)))}})
                                  (strength-pump 2 1)]
                      :events (let [put-back {:req (req (get-in card [:special :brahman-used]))
                                              :player :runner ; Needed for when the run is ended by the Corp
@@ -596,9 +597,8 @@
     :events {:runner-turn-ends {:msg "add itself to Grip"
                                 :effect (effect (move card :hand))}}
     :abilities [(merge
-                  (dissoc (break-sub 1 1 {:req (req (and (<= (get-strength current-ice) (get-strength card))
-                                                         (has-subtype? current-ice (:subtype-target card))))})
-                          :cost)
+                  (break-sub 1 1 "All" {:req (req (and (<= (get-strength current-ice) (get-strength card))
+                                                       (has-subtype? current-ice (:subtype-target card))))})
                   {:effect (effect
                              (continue-ability
                                (break-sub 1 1 (:subtype-target card))
@@ -725,13 +725,16 @@
    (break-and-enter "Code Gate")
 
    "Crypsis"
-   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability (effect (update! (assoc card :crypsis-broke true)))})
+   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:effect (effect (update! (assoc card :crypsis-broke true)))}})
                                  (strength-pump 1 1)
                                  {:cost [:click 1]
                                   :msg "place 1 virus counter"
                                   :effect (effect (add-counter card :virus 1))}]
                      :events (let [encounter-ends-effect
                                    {:req (req (:crypsis-broke card))
+                                    :msg (msg (if (pos? (get-counters card :virus))
+                                                (str "remove a virus token from " (:title card))
+                                                (str "trash " (:title card))))
                                     :effect (req ((:effect breaker-auto-pump) state side eid card targets)
                                                  (if (pos? (get-counters card :virus))
                                                    (add-counter state side card :virus -1)
@@ -772,21 +775,25 @@
                                   (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))}]})
 
    "Cyber-Cypher"
-   (auto-icebreaker {:prompt "Choose a server where this copy of Cyber-Cypher can be used:"
+   (auto-icebreaker {:prompt "Choose a server"
                      :msg (msg "target " target)
                      :choices (req servers)
                      :effect (effect (update! (assoc card :server-target target)))
                      :leave-play (effect (update! (dissoc card :server-target)))
                      :abilities [(merge
-                                   (dissoc (break-sub 1 1 "Code Gate") :cost)
-                                   {:req (req (#{(last (server->zone state (:server-target card)))} (first (:server run))))
+                                   (break-sub 1 1 "Code Gate")
+                                   {:req (req (if (:server-target card)
+                                                (#{(last (server->zone state (:server-target card)))} (first (:server run)))
+                                                true))
                                     :effect (effect
                                               (continue-ability
                                                 (break-sub 1 1 "Code Gate")
                                                 card nil))})
                                  (merge
-                                   (dissoc (strength-pump 1 1) :cost)
-                                   {:req (req (#{(last (server->zone state (:server-target card)))} (first (:server run))))
+                                   (strength-pump 1 1)
+                                   {:req (req (if (:server-target card)
+                                                (#{(last (server->zone state (:server-target card)))} (first (:server run)))
+                                                true))
                                     :effect (effect
                                               (continue-ability
                                                 (strength-pump 1 1)
@@ -805,11 +812,11 @@
    "Dai V"
    (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
                      :abilities [(merge
-                                   (dissoc (break-sub 2 0) :cost :req)
+                                   (dissoc (break-sub 2 0) :req)
                                    {:effect
                                     (effect
                                       (continue-ability
-                                        (break-sub 2 (count (:subroutines current-ice)))
+                                        (break-sub 2 (count (:subroutines current-ice)) "All" {:all true})
                                         card nil))})
                                  (strength-pump 1 1)]})
 
@@ -995,7 +1002,8 @@
                                           (use-mu (:memoryunits target)))}}}
 
    "Eater"
-   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability (effect (max-access 0))
+   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg (msg "access not more than 0 cards for the remainder of this run")
+                                                                            :effect (effect (max-access 0))}
                                                        :label "break 1 subroutine and access 0 cards"})
                                  (strength-pump 1 1)]})
 
@@ -1061,9 +1069,10 @@
 
    "Faerie"
    (auto-icebreaker {:abilities [(break-sub 0 1 "Sentry"
-                                            {:additional-ability (effect (update! (assoc-in card [:special :faerie-used] true)))})
+                                            {:additional-ability {:effect (effect (update! (assoc-in card [:special :faerie-used] true)))}})
                                  (strength-pump 1 1)]
                      :events {:pass-ice {:req (req (get-in card [:special :faerie-used]))
+                                         :msg (msg "trash " (:title card))
                                          :effect (effect (trash card))}}})
 
    "False Echo"
@@ -1609,11 +1618,11 @@
 
    "Omega"
    (auto-icebreaker {:abilities [(merge
-                                   (dissoc (break-sub 1 1) :cost)
+                                   (break-sub 1 1)
                                    {:req (req (= 1 (:position run)))
                                     :effect (effect (continue-ability (break-sub 1 1) card nil))})
                                  (merge
-                                   (dissoc (strength-pump 1 1) :cost)
+                                   (strength-pump 1 1)
                                    {:req (req (= 1 (:position run)))
                                     :effect (effect (continue-ability (strength-pump 1 1) card nil))})]})
 
@@ -2091,8 +2100,8 @@
 
    "Snowball"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier"
-                                            {:repeatable false
-                                             :additional-ability (effect (pump card 1 :all-run))})
+                                            {:additional-ability {:msg "gain +1 strength for the remainder of the run"
+                                                                  :effect (effect (pump card 1 :all-run))}})
                                  (strength-pump 1 1)]})
 
    "Spike"
@@ -2267,7 +2276,7 @@
 
    "Tycoon"
    (auto-icebreaker {:abilities [(break-sub 1 2 "Barrier"
-                                            {:additional-ability (effect (update! (assoc-in card [:special :tycoon-used] true)))})
+                                            {:additional-ability {:effect (effect (update! (assoc-in card [:special :tycoon-used] true)))}})
                                  (strength-pump 2 3)]
                      :events (let [give-credits {:req (req (get-in card [:special :tycoon-used]))
                                                  :msg "give the Corp 2 [Credits]"

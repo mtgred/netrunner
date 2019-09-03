@@ -343,11 +343,13 @@
    (letfn [(compile-fn [where]
              {:prompt "Choose a program to install"
               :choices (req (cancellable (filter program? (get runner where))))
+              :async true
               :effect (req (when (= :deck where)
                              (trigger-event state side :searched-stack nil)
                              (shuffle! state side :deck))
-                           (runner-install state side (make-eid state {:source card :source-type :runner-install})
-                                           (assoc-in target [:special :compile-installed] true) {:ignore-all-cost true}))})]
+                           (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                           (assoc-in target [:special :compile-installed] true)
+                                           {:ignore-all-cost true}))})]
      {:implementation "Trigger only on first encounter not enforced"
       :prompt "Choose a server"
       :msg "make a run and install a program on encounter with the first piece of ICE"
@@ -359,7 +361,7 @@
                    :choices ["Stack" "Heap"]
                    :msg (msg "install a program from their " target)
                    :effect (effect (continue-ability
-                                     (compile-fn (if (= "Stack" target) :deck :heap))
+                                     (compile-fn (if (= "Stack" target) :deck :discard))
                                      card nil))}]
       :effect (effect (make-run target nil card)
                       (prompt! card (str "Click Compile in the Temporary Zone to install a Program") ["OK"] {})
@@ -1206,7 +1208,7 @@
               :effect (req (wait-for
                              (access-card state side (first cards))
                              (if (< 1 (count cards))
-                               (continue-ability state side (access-pile (next cards) pile pile-size) card nil)
+                               (continue-ability state side (access-pile (rest cards) pile pile-size) card nil)
                                (effect-completed state side eid))))})
            (which-pile [p1 p2]
              {:prompt "Choose a pile to access"
@@ -1377,7 +1379,7 @@
    "Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
     :msg (msg "force the Corp to trash an ICE protecting " target)
-    :effect (req (let [serv (next (server->zone state target))
+    :effect (req (let [serv (rest (server->zone state target))
                        servname target]
                    (resolve-ability
                      state :corp
@@ -1628,11 +1630,15 @@
 
    "Networking"
    {:msg "remove 1 tag"
-    :effect (effect (lose-tags 1))
-    :optional {:prompt "Pay 1 [Credits] to add Networking to Grip?"
-               :yes-ability {:cost [:credit 1]
-                             :msg "add it to their Grip"
-                             :effect (effect (move (last (:discard runner)) :hand))}}}
+    :effect (effect (lose-tags 1)
+                    (continue-ability
+                      {:optional
+                       {:prompt "Pay 1 [Credits] to add Networking to Grip?"
+                        :yes-ability
+                        {:cost [:credit 1]
+                         :msg "add it to their Grip"
+                         :effect (effect (move (last (:discard runner)) :hand))}}}
+                      card nil))}
 
    "Notoriety"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
@@ -2225,7 +2231,7 @@
                                          :choices {:max 2
                                                    :req #(and (in-hand? %) (corp? %))}
                                          :effect (effect (trash-cards :corp targets)
-                                                         (clear-wait-prompt state :runner)
+                                                         (clear-wait-prompt :runner)
                                                          (system-msg :corp "discards 2 cards from SYN Attack"))}
                                         card nil)))}
                       card nil))}

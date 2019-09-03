@@ -209,6 +209,31 @@
         (click-prompt state :runner "6")
         (is (= 13 (:credit (get-runner))))
         (is (= 2 (get-counters (refresh bj2) :credit)) "2 credits remaining on 2nd copy"))))
+  (testing "Trashing when empty with multiple installed Bank Jobs"
+    (do-game
+      (new-game {:corp {:deck ["PAD Campaign"]}
+                 :runner {:deck [(qty "Bank Job" 2)]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bank Job")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "4")
+      (play-from-hand state :runner "Bank Job")
+      (let [bj1 (get-resource state 0)
+            bj2 (get-resource state 1)
+            credits (:credit (get-runner))]
+        (is (= 4 (get-counters (refresh bj1) :credit)) "4 credits remaining on 1st copy")
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Replacement effect")
+        (click-card state :runner bj1)
+        (changes-val-macro 4 (:credit (get-runner))
+                           "Got last 4 credits from Bank Job"
+                           (click-prompt state :runner "4"))
+        (is (nil? (refresh bj1)) "Bank Job 1 got moved to the heap")
+        (is (some? bj2) "Bank Job 2 still installed")
+        (is (= 1 (count (:discard (get-runner)))) "One Bank Job moved to heap")
+        (is (= 8 (get-counters (refresh bj2) :credit)) "8 credits remaining on 2nd copy"))))
   (testing "Security Testing takes priority"
     (do-game
       (new-game {:corp {:deck ["PAD Campaign"]}
@@ -1283,6 +1308,7 @@
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 1 credit from Fencer Fueno"
                            (click-card state :runner pad)
+                           (click-prompt state :runner "Pay to access")
                            (click-card state :runner ff) ; pay Gagarin credit
                            (click-prompt state :runner "Pay 4 [Credits] to trash")
                            (dotimes [_ 4] (click-card state :runner ff)))))))

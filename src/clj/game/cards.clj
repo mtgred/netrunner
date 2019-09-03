@@ -221,15 +221,15 @@
   (if-let [[cid selected] (first selected-cards)]
     (if-let [{:keys [card number]} selected]
       (wait-for (trigger-event-sync state side :counter-added (get-card state card) number)
-                (pick-credit-triggers state side eid (next selected-cards) counter-count message))
-      (pick-credit-triggers state side eid (next selected-cards) counter-count message))
+                (pick-credit-triggers state side eid (rest selected-cards) counter-count message))
+      (pick-credit-triggers state side eid (rest selected-cards) counter-count message))
     (effect-completed state side (make-result eid {:number counter-count :msg message}))))
 
 (defn trigger-stealth-cards
   [state side eid cards]
   (if (seq cards)
     (wait-for (trigger-event-sync state side :spent-stealth-credit (first cards))
-              (trigger-stealth-cards state side eid (next cards)))
+              (trigger-stealth-cards state side eid (rest cards)))
     (effect-completed state side eid)))
 
 (defn pick-credit-providing-cards

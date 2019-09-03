@@ -402,7 +402,9 @@
                 (dotimes [n times-pump]
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
                 (doseq [sub (remove :broken (:subroutines current-ice))]
-                  (break-subroutine! state (get-card state current-ice) sub))
+                  (break-subroutine! state (get-card state current-ice) sub)
+                  (resolve-ability state side (make-eid state {:source card :source-type :ability})
+                                   (:additional-ability break-ability) (get-card state card) nil))
                 (system-msg state side (if (pos? times-pump)
                                          (str (build-spend-msg async-result "increase")
                                               "the strength of " (:title card)
@@ -416,8 +418,7 @@
                                                 "the remaining "
                                                 "all ")
                                               unbroken-subs " subroutines on "
-                                              (:title current-ice))))
-                (continue-ability state side (:additional-ability break-ability) card nil)))))
+                                              (:title current-ice))))))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."
@@ -520,20 +521,29 @@
                    (:install-rezzed (card-def card)))
            (do (when-not (= ignore-cost :all-costs)
                  (trigger-event state side :pre-rez-cost card))
-               (if (and altcost (can-pay? state side eid card nil altcost) (not ignore-cost))
+               (if (and altcost
+                        (not ignore-cost)
+                        (can-pay? state side eid card nil altcost))
                  (let [curr-bonus (get-rez-cost-bonus state side)]
-                   (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
-                            {:async true
-                             :effect (req (if (and (= target "Yes")
-                                                   (can-pay? state side eid card (:title card) altcost))
-                                            (do (pay state side card altcost)
-                                                (rez state side eid (-> card (dissoc :alternative-cost))
-                                                     (merge args {:ignore-cost true
-                                                                  :no-get-card true
-                                                                  :paid-alt true})))
-                                            (rez state side eid (-> card (dissoc :alternative-cost))
-                                                 (merge args {:no-get-card true
-                                                              :cached-bonus curr-bonus}))))}))
+                   (continue-ability
+                     state side
+                     {:optional
+                      {:prompt "Pay the alternative Rez cost?"
+                       :yes-ability
+                       {:cost altcost
+                        :async true
+                        :effect
+                        (effect (rez eid (dissoc card :alternative-cost)
+                                     (merge args {:ignore-cost true
+                                                  :no-get-card true
+                                                  :paid-alt true})))}
+                       :no-ability
+                       {:async true
+                        :effect
+                        (effect (rez eid (dissoc card :alternative-cost)
+                                     (merge args {:no-get-card true
+                                                  :cached-bonus curr-bonus})))}}}
+                   card nil))
                  (let [cdef (card-def card)
                        cost (rez-cost state side card)
                        additional-costs (concat (:additional-cost cdef)

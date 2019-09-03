@@ -141,22 +141,6 @@
       vec))
 
 ;;; Accessing rules.
-(defn access-cost-bonus
-  "Applies a cost to the next access. costs can be a vector of [:key value] pairs,
-  for example [:credit 2 :click 1]."
-  [state side costs]
-  (swap! state update-in [:bonus :access-cost] #(merge-costs (concat % costs))))
-
-(defn access-cost
-  "Gets a vector of costs for accessing the given card."
-  [state side card]
-  (-> (when-let [costfun (:access-cost-bonus (card-def card))]
-        (costfun state side (make-eid state) card nil))
-      (concat (get-in @state [:bonus :access-cost]))
-      merge-costs
-      flatten
-      vec))
-
 (defn interactions
   [card ability-key]
   (get-in (card-def card) [:interactions ability-key]))
@@ -381,34 +365,55 @@
                   (access-non-agenda state side eid c))
                 (access-end state side eid c)))))
 
+(defn access-cost-bonus
+  "Applies a cost to the next access. costs can be a vector of [:key value] pairs,
+  for example [:credit 2 :click 1]."
+  [state side costs]
+  (swap! state update-in [:bonus :access-cost] #(merge-costs (concat % costs))))
+
+(defn access-cost
+  "Gets a vector of costs for accessing the given card."
+  [state side card]
+  (merge-costs (get-in @state [:bonus :access-cost])))
+
 (defn- access-pay
   "Force the runner to pay any costs to access this card, if any, before proceeding with access."
-  [state side eid c title]
-  (let [acost (access-cost state side c)
-        ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
-        anon-card (dissoc c :title)
-        cant-pay {:prompt "You can't pay the cost to access this card"
-                  :choices ["OK"]
-                  :async true
-                  :effect (effect (access-end eid c))}]
+  [state side eid card title]
+  (let [cost (access-cost state side card)
+        cost-str (build-cost-string cost)
+        can-pay (when (not-empty cost)
+                  (can-pay? state side (make-eid state eid) nil nil cost))
+        prompt-str (if can-pay
+                     (str cost-str " to access this card?")
+                     "You can't pay the cost to access this card.")
+        choices (if can-pay
+                  ["Pay to access" "No action"]
+                  ["OK"])]
     (cond
-      ;; Check if a pre-access-card effect trashed the card (By Any Means)
-      (not (get-card state c))
-      (access-end state side eid c)
-
-      ;; Either there were no access costs, or the runner could pay them.
-      (empty? acost)
-      (access-trigger-events state side eid c title)
-
-      (not-empty acost)
-      ;; Await the payment of the costs; if payment succeeded, proceed with access.
-      (wait-for (pay-sync state side anon-card acost)
-                (if async-result
-                  (access-trigger-events state side eid c title async-result)
-                  (resolve-ability state :runner eid cant-pay c nil)))
+      ;; Did a pre-access-card effect trash the card? (By Any Means)
+      (not (get-card state card))
+      (access-end state side eid card)
+      ;; There are access costs
+      (not-empty cost)
+      (continue-ability
+        state :runner
+        {:async true
+         :prompt prompt-str
+         :choices choices
+         :effect (req (cond
+                        (= "OK" target)
+                        (access-end state side eid card)
+                        (= "No action" target)
+                        (access-end state side eid card)
+                        :else
+                        (wait-for (pay-sync state side card cost)
+                                  (if async-result
+                                    (access-trigger-events state side eid card title async-result)
+                                    (access-end state side eid card)))))}
+        card nil)
+      ;; There are no access costs
       :else
-      ;; The runner cannot afford the cost to access the card
-      (resolve-ability state :runner eid cant-pay c nil))))
+      (access-trigger-events state side eid card title))))
 
 (defn access-card
   "Apply game rules for accessing the given card."
@@ -986,6 +991,7 @@
   [state side]
   (let [server (-> @state :run :server first)]
     (swap! state assoc-in [:run :ending] true)
+    (swap! state assoc-in [:run :ended] true)
     (wait-for (trigger-event-sync state side :run-ends server)
               (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                 (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
@@ -1002,10 +1008,10 @@
 (defn handle-end-run
   "Initiate run resolution."
   [state side]
-  (if-not (and (empty? (get-in @state [:runner :prompt]))
-               (empty? (get-in @state [:corp :prompt])))
-    (swap! state assoc-in [:run :ended] true)
-    (run-cleanup state side)))
+  (if (and (empty? (get-in @state [:runner :prompt]))
+           (empty? (get-in @state [:corp :prompt])))
+    (run-cleanup state side)
+    (swap! state assoc-in [:run :ended] true)))
 
 (defn close-access-prompt
   "Closes a 'You accessed _' prompt through a non-standard card effect like Imp."

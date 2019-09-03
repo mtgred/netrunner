@@ -1076,7 +1076,7 @@
               {:prompt "Draw 1 card to force the Corp to draw 1 card?"
                :yes-ability {:msg "draw 1 card and force the Corp to draw 1 card"
                              :async true
-                             :effect (req (wait-for (draw state :runner 1)
+                             :effect (req (wait-for (draw state :runner 1 nil)
                                                     (draw state :corp eid 1 nil)))}
                :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                          (effect-completed state side eid))}}}]
@@ -1223,7 +1223,8 @@
                                            (do (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
                                                (trash state side eid card {:unpreventable true}))
                                            (effect-completed state side eid))))}]
-     {:effect (effect (damage eid :meat 1 {:unboostable true :card card}))
+     {:async true
+      :effect (effect (damage eid :meat 1 {:unboostable true :card card}))
       :msg "suffer 1 meat damage"
       :events {:runner-hand-change {:req (req (and (zero? target)
                                                    (first-event? state side :runner-hand-change #(zero? (first %)))))
@@ -1438,7 +1439,12 @@
                                  :type :recurring}}}
 
    "Titanium Ribs"
-   {:events
+   {:async true
+    :effect (effect (enable-runner-damage-choice)
+                    (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
+                    (damage eid :meat 2 {:unboostable true :card card}))
+    :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-runner))
+    :events
     {:pre-resolve-damage
      {:async true
       :req (req (and (pos? (last targets))
@@ -1446,37 +1452,26 @@
                      (not (get-in @state [:damage :damage-replace]))))
       :effect (req (let [dtype target
                          src (second targets)
-                         dmg (last targets)]
-                     (when (> dmg (count (:hand runner)))
-                       (flatline state))
-                     (when (= dtype :brain)
-                       (swap! state update-in [:runner :brain-damage] #(+ % dmg))
-                       (swap! state update-in [:runner :hand-size :mod] #(- % dmg)))
+                         dmg (last targets)
+                         hand (:hand runner)]
                      (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
-                     (wait-for (resolve-ability
-                                 state side
-                                 {:async true
-                                  :prompt (msg "Select " dmg " cards to trash for the " (name dtype) " damage")
-                                  :player :runner
-                                  :choices {:max dmg
-                                            :all true
-                                            :req #(and (in-hand? %)
-                                                       (runner? %))}
-                                  :msg (msg "trash " (join ", " (map :title targets)))
-                                  :effect (req (clear-wait-prompt state :corp)
-                                               (doseq [c targets]
-                                                 (trash state side c {:cause dtype :unpreventable true}))
-                                               (trigger-event state side :damage-chosen)
-                                               (damage-defer state side dtype 0)
-                                               (effect-completed state side eid))}
-                                 card nil)
-                               (trigger-event-sync state side eid :damage dtype src dmg))))}
-     :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
-    :async true
-    :effect (effect (enable-runner-damage-choice)
-                    (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
-                    (damage eid :meat 2 {:unboostable true :card card}))
-    :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-runner))}
+                     (continue-ability
+                       state :runner
+                       (if (< (count hand) dmg)
+                         {:async true
+                          :effect (req (clear-wait-prompt state :corp)
+                                       (chosen-damage state :runner hand)
+                                       (effect-completed state side eid))}
+                         {:prompt (msg "Select " dmg " cards to trash for the " (name dtype) " damage")
+                          :choices {:max dmg
+                                    :all true
+                                    :req #(and (in-hand? %)
+                                               (runner? %))}
+                          :msg (msg "trash " (join ", " (map :title targets)))
+                          :effect (req (clear-wait-prompt state :corp)
+                                       (chosen-damage state :runner targets)
+                                       (effect-completed state side eid))})
+                         card nil)))}}}
 
    "Top Hat"
    (letfn [(ability [n]

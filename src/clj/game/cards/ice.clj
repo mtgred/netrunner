@@ -1,7 +1,7 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.eid :refer [make-eid effect-completed]]
+            [game.core.eid :refer [make-eid effect-completed complete-with-result]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
             [game.core.toasts :refer [toast]]
@@ -342,8 +342,8 @@
    "Aiki"
    {:subroutines [(do-psi {:label "Runner draws 2 cards"
                            :msg "make the Runner draw 2 cards"
-                           :effect (effect (draw :runner 2)
-                                           (effect-completed eid))})
+                           :async true
+                           :effect (effect (draw :runner eid 2 nil))})
                   (do-net-damage 1)
                   (do-net-damage 1)]}
 
@@ -728,7 +728,7 @@
                                          :prompt "You are encountering Chrysalis. Allow its subroutine to fire?"
                                          :priority 1
                                          :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                       (play-subroutine eid {:card card :subroutine 0}))}
+                                                                       (resolve-unbroken-subs! :corp eid card))}
                                          :no-ability {:effect (effect (clear-wait-prompt :corp)
                                                                       (effect-completed eid))}}}
                                card nil))}}
@@ -966,7 +966,7 @@
                                  (system-msg state :runner async-result)
                                  (continue-ability
                                    state side
-                                   (break-fn (next unbroken-subs) (inc total))
+                                   (break-fn (rest unbroken-subs) (inc total))
                                    card nil))
                        (let [msgs (when (pos? total)
                                     (str "resolves " (quantify total "unbroken subroutine")
@@ -1303,8 +1303,7 @@
                                          :prompt "You are encountering Herald. Allow its subroutines to fire?"
                                          :priority 1
                                          :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                       (play-subroutine :corp eid {:card card :subroutine 0})
-                                                                       (play-subroutine :corp eid {:card card :subroutine 1}))}
+                                                                       (resolve-unbroken-subs! :corp eid card))}
                                          :no-ability {:effect (effect (clear-wait-prompt :corp)
                                                                       (effect-completed eid))}}}
                                card nil))}}
@@ -1462,7 +1461,8 @@
                 {:msg "prevent the Runner from jacking out until after the next piece of ICE"
                  :effect (effect (register-events
                                    {:pass-ice {:effect (req (swap! state update-in [:run] dissoc :prevent-jack-out)
-                                                            (unregister-events state side card))}} card)
+                                                            (unregister-events state side card))}}
+                                   card)
                                  (prevent-jack-out))}]}
 
    "Information Overload"
@@ -2015,7 +2015,12 @@
              :effect (effect (continue-ability
                                (reset-variable-subs state side card 1 end-the-run {:back true})
                                card nil))}]
-     {:events {:play-event ab
+     {:effect (effect (continue-ability
+                        (when (pos? (count (concat (get-in @state [:corp :current])
+                                                   (get-in @state [:runner :current]))))
+                          (reset-variable-subs state side card 1 end-the-run {:back true}))
+                        card nil))
+      :events {:play-event ab
                :play-operation ab
                :trash-current {:msg "make News Hound lose \"[subroutine] End the run\""
                                :effect (effect (continue-ability
@@ -2182,6 +2187,7 @@
 
    "Peeping Tom"
    (let [sub {:label "End the run unless Runner takes 1 tag"
+              :async true
               :effect (req (show-wait-prompt state :corp "Runner deciding about Peeping Tom")
                            (continue-ability
                              state :runner
@@ -2223,7 +2229,7 @@
               :effect (req (if (= "Suffer 1 net damage" target)
                              (continue-ability state side (do-net-damage 1) card nil)
                              (do (pay state :runner :credit 1)
-                                 (effect-completed state side))))}]
+                                 (effect-completed state side eid))))}]
      {:subroutines [sub sub]})
 
    "Quandary"
@@ -2421,15 +2427,18 @@
                             (some program? (all-active-installed state :runner))))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Sapper subroutine")
                              (continue-ability
-                               :runner {:optional
-                                        {:player :runner
-                                         :prompt "Allow Sapper subroutine to fire?"
-                                         :priority 1
-                                         :yes-ability {:effect (req (clear-wait-prompt state :corp)
-                                                                    (show-wait-prompt state :runner "Corp to trash a program with Sapper")
-                                                                    (play-subroutine state :corp eid {:card card :subroutine 0}))}
-                                         :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                      (effect-completed eid))}}}
+                               :runner
+                               {:optional
+                                {:player :runner
+                                 :prompt "Allow Sapper subroutine to fire?"
+                                 :priority 1
+                                 :yes-ability
+                                 {:effect (effect (clear-wait-prompt :corp)
+                                                  (show-wait-prompt :runner "Corp to trash a program with Sapper")
+                                                  (resolve-unbroken-subs! :corp eid card))}
+                                 :no-ability
+                                 {:effect (effect (clear-wait-prompt :corp)
+                                                  (effect-completed eid))}}}
                                card nil))}}
 
    "Searchlight"
@@ -2703,13 +2712,26 @@
     :cannot-host true
     :subroutines [trash-program
                   trash-program
-                  end-the-run
-                  {:label "Trash a resource"
-                   :msg (msg "trash " (:title target))
+                  {:label "Trash a resource and end the run"
                    :async true
-                   :choices {:req #(and (installed? %)
-                                        (resource? %))}
-                   :effect (effect (trash target {:reason :subroutine}))}]}
+                   :effect (req (wait-for
+                                  (resolve-ability
+                                    state side
+                                    {:req (req (pos? (count (filter resource? (all-installed state :runner)))))
+                                     :async true
+                                     :choices {:all true
+                                               :req #(and (installed? %)
+                                                          (resource? %))}
+                                     :effect (req (wait-for (trash state side target {:cause :subroutine})
+                                                            (complete-with-result state side eid target)))}
+                                    card nil)
+                                  (system-msg state side
+                                              (str "uses Tithonium to "
+                                                   (if async-result
+                                                     (str "trash " (:title async-result)
+                                                          " and ends the run")
+                                                     "end the run")))
+                                  (end-run state side eid card)))}]}
 
    "TL;DR"
    {:implementation "Subroutine-adding is manual"
@@ -2747,9 +2769,13 @@
     :subroutines [end-the-run]}
 
    "Tour Guide"
-   (let [ability {:req (req (asset? target))
-                  :effect (effect (reset-variable-subs card (count (filter asset? (all-active-installed state :corp))) end-the-run))}]
-     {:events {:rez ability
+   (let [ef (effect (reset-variable-subs card (count (filter asset? (all-active-installed state :corp))) end-the-run))
+         ability {:label "Reset number of subs"
+                  :req (req (asset? target))
+                  :effect ef}]
+     {:effect ef
+      :abilities [(dissoc ability :req)]
+      :events {:rez ability
                :derez ability}})
 
    "Trebuchet"

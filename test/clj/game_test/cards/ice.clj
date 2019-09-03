@@ -52,20 +52,36 @@
 
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
-  (do-game
-    (new-game {:corp {:deck ["Archangel"]
-                      :hand ["Hedge Fund"]}
-               :runner {:deck ["Bank Job"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Bank Job")
-    (run-empty-server state :rd)
-    (click-prompt state :corp "Yes")
-    (click-prompt state :runner "Yes")
-    (click-prompt state :corp "0")
-    (click-prompt state :runner "0")
-    (click-card state :corp (get-resource state 0))
-    (click-prompt state :runner "No action")
-    (is (not (:run @state)) "Run ended")))
+  (testing "Basic test of subroutine"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Archangel"]}
+                 :runner {:hand ["Bank Job"]}})
+      (play-from-hand state :corp "Archangel" "HQ")
+      (let [archangel (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (core/rez state :corp archangel)
+        (play-from-hand state :runner "Bank Job")
+        (run-on state "HQ")
+        (card-subroutine state :corp archangel 0)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :corp (get-resource state 0))
+        (is (nil? (get-resource state 0)) "Bank Job is trashed"))))
+  (testing "Access test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Archangel"]}
+                 :runner {:hand ["Bank Job"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bank Job")
+      (run-empty-server state :hq)
+      (click-prompt state :corp "Yes")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (click-card state :corp (get-resource state 0))
+      (is (nil? (get-resource state 0)) "Bank Job is trashed"))))
 
 (deftest architect
   ;; Architect
@@ -815,23 +831,39 @@
 
 (deftest herald
   ;; Herald
-  (do-game
-    (new-game {:corp {:deck ["Herald" "Project Beale"]}})
-    (play-from-hand state :corp "Herald" "HQ")
-    (play-from-hand state :corp "Project Beale" "New remote")
-    (let [herald (get-ice state :hq 0)
-          beale (get-content state :remote1 0)]
-      (core/rez state :corp herald)
-      (take-credits state :corp)
-      (run-on state "HQ")
-      (= 4 (:credit (get-corp)))
-      (card-subroutine state :corp herald 0)
-      (= 6 (:credit (get-corp)))
-      (card-subroutine state :corp herald 1)
-      (click-prompt state :corp "2")
-      (click-card state :corp beale)
-      (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
-      (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens"))))
+  (testing "Basic test of subroutines"
+    (do-game
+      (new-game {:corp {:deck ["Herald" "Project Beale"]}})
+      (play-from-hand state :corp "Herald" "HQ")
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (let [herald (get-ice state :hq 0)
+            beale (get-content state :remote1 0)]
+        (core/rez state :corp herald)
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (= 4 (:credit (get-corp)))
+        (card-subroutine state :corp herald 0)
+        (= 6 (:credit (get-corp)))
+        (card-subroutine state :corp herald 1)
+        (click-prompt state :corp "2")
+        (click-card state :corp beale)
+        (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
+        (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens"))))
+  (testing "Access test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Herald" "Project Beale"]}})
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (let [beale (get-content state :remote1 0)]
+        (take-credits state :corp)
+        (run-empty-server state :hq)
+        (= 4 (:credit (get-corp)))
+        (click-prompt state :runner "Yes")
+        (= 6 (:credit (get-corp)))
+        (click-prompt state :corp "2")
+        (click-card state :corp beale)
+        (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
+        (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens")))))
 
 (deftest holmegaard
   ;; Holmegaard - Stop Runner from accessing cards if win trace
@@ -1822,27 +1854,26 @@
 (deftest peeping-tom
   ;;Peeping Tom - Counts # of chosen card type in Runner grip
   (do-game
-    (new-game {:corp {:deck ["Peeping Tom"]}
-               :runner {:deck [(qty "Sure Gamble" 5)]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Peeping Tom"]}
+               :runner {:hand ["Corroder" (qty "Sure Gamble" 4)]}})
     (play-from-hand state :corp "Peeping Tom" "HQ")
     (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
     (run-on state "HQ")
     (let [tom (get-ice state :hq 0)]
       (core/rez state :corp (refresh tom))
       (card-ability state :corp tom 0)
       (click-prompt state :corp "Hardware")
-      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
+      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
           "Revealed Runner grip")
       (is (last-log-contains? state "0") "Correctly counted Hardware in Runner grip")
       (card-ability state :corp tom 0)
       (click-prompt state :corp "Event")
-      (is (last-log-contains? state "5") "Correctly counted Events in Runner grip")
+      (is (last-log-contains? state "4") "Correctly counted Events in Runner grip")
       (core/resolve-unbroken-subs! state :corp (refresh tom))
       (click-prompt state :runner "Take 1 tag")
-      (click-prompt state :runner "Take 1 tag")
-      (click-prompt state :runner "Take 1 tag")
-      (click-prompt state :runner "Take 1 tag")
-      (is (= 4 (count-tags state)) "Tag ability sucessful")
+      (is (= 1 (count-tags state)) "Tag ability sucessful")
       (click-prompt state :runner "End the run")
       (is (not (:run @state)) "Run ended"))))
 
@@ -2041,6 +2072,34 @@
       (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
       (card-subroutine state :corp (refresh sand) 0)
       (is (empty? (:prompt (get-corp))) "Sandman doesn't fire if no installed cards"))))
+
+(deftest sapper
+  ;; Sapper
+  (testing "Basic test of subroutine"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Sapper"]}
+                 :runner {:hand ["Corroder"]}})
+      (play-from-hand state :corp "Sapper" "HQ")
+      (let [sapper (get-ice state :hq 0)]
+        (core/rez state :corp sapper)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (run-on state "HQ")
+        (card-subroutine state :corp sapper 0)
+        (click-card state :corp (get-program state 0))
+        (is (nil? (get-program state 0)) "Corroder is trashed"))))
+  (testing "Access test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Sapper"]}
+                 :runner {:hand ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Yes")
+      (click-card state :corp (get-program state 0))
+      (is (nil? (get-program state 0)) "Corroder is trashed"))))
 
 (deftest searchlight
   ;; Searchlight - Trace bace equal to advancement counters
@@ -2407,15 +2466,15 @@
           (card-ability state :runner (refresh pawn) 0)
           (click-card state :runner (refresh ti))
           (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")
-          (core/derez state :corp (refresh ti))
-          (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")
           (run-on state "HQ")
-          (card-subroutine state :corp ti 3)
+          (card-subroutine state :corp ti 2)
           (click-card state :corp (refresh wast))
           (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
+          (is (not (:run @state)) "Run ended")
+          (run-on state "HQ")
           (card-subroutine state :corp ti 2)
           (is (not (:run @state)) "Run ended")))))
-  (testing "Do not prompt for alt cost #2734"
+  (testing "Oversight AI does not prompt for alt cost #2734"
     (do-game
       (new-game {:corp {:deck ["Hostile Takeover" "Oversight AI" "Tithonium"]}})
       (play-from-hand state :corp "Hostile Takeover" "New remote")
@@ -2475,23 +2534,60 @@
 
 (deftest tour-guide
   ;; Tour Guide
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Tour Guide" (qty "NGO Front" 3)]
-                      :credits 10}})
-    (core/gain state :corp :click 10)
-    (play-from-hand state :corp "Tour Guide" "HQ")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (let [tg (get-ice state :hq 0)]
-      (core/rez state :corp tg)
-      (is (zero? (count (:subroutines (refresh tg)))) "Tour Guide starts with 0 subs")
+  (testing "Rez before other assets"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tour Guide" (qty "NGO Front" 3)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Tour Guide" "HQ")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [tg (get-ice state :hq 0)]
+        (core/rez state :corp tg)
+        (is (zero? (count (:subroutines (refresh tg)))) "Tour Guide starts with 0 subs")
+        (core/rez state :corp (get-content state :remote1 0))
+        (is (= 1 (count (:subroutines (refresh tg)))) "Tour Guide gains 1 sub on asset rez")
+        (core/rez state :corp (get-content state :remote2 0))
+        (core/rez state :corp (get-content state :remote3 0))
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs"))))
+  (testing "Rez after other assets"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tour Guide" (qty "NGO Front" 3)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
-      (is (= 1 (count (:subroutines (refresh tg)))) "Tour Guide gains 1 sub on asset rez")
       (core/rez state :corp (get-content state :remote2 0))
       (core/rez state :corp (get-content state :remote3 0))
-      (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs"))))
+      (play-from-hand state :corp "Tour Guide" "HQ")
+      (let [tg (get-ice state :hq 0)]
+        (core/rez state :corp tg)
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs"))))
+  (testing "Reset subs with ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tour Guide" (qty "NGO Front" 3)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (core/rez state :corp (get-content state :remote2 0))
+      (core/rez state :corp (get-content state :remote3 0))
+      (play-from-hand state :corp "Tour Guide" "HQ")
+      (let [tg (get-ice state :hq 0)]
+        (core/rez state :corp tg)
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs")
+        (core/update! state :corp (assoc tg :subroutines []))
+        (is (zero? (count (:subroutines (refresh tg)))) "Tour Guide loses all subroutines")
+        (card-ability state :corp tg 0)
+        (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs")))))
 
 (deftest trebuchet
   ;; Trebuchet

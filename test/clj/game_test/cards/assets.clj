@@ -492,25 +492,48 @@
 
 (deftest chairman-hiro
   ;; Chairman Hiro - Reduce Runner max hand size; add as 2 agenda points if Runner trashes him
-  (do-game
-    (new-game {:corp {:deck [(qty "Chairman Hiro" 2)]}})
-    (play-from-hand state :corp "Chairman Hiro" "New remote")
-    (play-from-hand state :corp "Chairman Hiro" "Server 1")
-    (click-prompt state :corp "OK")
-    (is (= 1 (count (:discard (get-corp)))) "First Hiro trashed")
-    (is (zero? (:agenda-point (get-runner))) "No points for Runner if trashed by Corp")
-    (let [hiro (get-content state :remote1 0)]
-      (core/rez state :corp hiro)
-      (is (= 3 (hand-size :runner)) "Runner max hand size reduced by 2")
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Chairman Hiro" 2)]}})
+      (play-from-hand state :corp "Chairman Hiro" "New remote")
+      (play-from-hand state :corp "Chairman Hiro" "Server 1")
+      (click-prompt state :corp "OK")
+      (is (= 1 (count (:discard (get-corp)))) "First Hiro trashed")
+      (is (zero? (:agenda-point (get-runner))) "No points for Runner if trashed by Corp")
+      (let [hiro (get-content state :remote1 0)]
+        (core/rez state :corp hiro)
+        (is (= 3 (hand-size :runner)) "Runner max hand size reduced by 2")
+        (take-credits state :corp)
+        (take-credits state :runner 3)
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Pay 6 [Credits] to trash")
+        (is (= 2 (:credit (get-runner))) "Runner paid 6 credits to trash")
+        (is (= 5 (hand-size :runner)) "Runner max hand size restored to 5")
+        (is (= 1 (count (get-scored state :runner)))
+            "Chairman Hiro added to Runner score area")
+        (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points"))))
+  (testing "Interaction with Bacterial Programming. Issue #3090"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chairman Hiro"
+                               "DNA Tracker" "Excalibur" "Fire Wall" "Gemini"]
+                        :hand ["Bacterial Programming"]}})
+      (play-from-hand state :corp "Bacterial Programming" "New remote")
       (take-credits state :corp)
-      (take-credits state :runner 3)
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "Pay 6 [Credits] to trash")
-      (is (= 2 (:credit (get-runner))) "Runner paid 6 credits to trash")
-      (is (= 5 (hand-size :runner)) "Runner max hand size restored to 5")
-      (is (= 1 (count (get-scored state :runner)))
-          "Chairman Hiro added to Runner score area")
-      (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points"))))
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Steal")
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Chairman Hiro")
+      (click-prompt state :corp "Done")
+      (click-prompt state :corp "Done")
+      (click-prompt state :corp "Accelerated Beta Test")
+      (click-prompt state :corp "Brainstorm")
+      (click-prompt state :corp "DNA Tracker")
+      (click-prompt state :corp "Excalibur")
+      (click-prompt state :corp "Fire Wall")
+      (click-prompt state :corp "Gemini")
+      (click-prompt state :corp "Done")
+      (is (= ["Bacterial Programming"] (mapv :title (get-scored state :runner))) "Runner shouldn't score Chairman Hiro")
+      (is (= ["Chairman Hiro"] (mapv :title (:discard (get-corp)))) "Chairman Hiro should be in Archives"))))
 
 (deftest chief-slee
   ;; Chief Slee
@@ -987,7 +1010,18 @@
           (is (= 3 (:credit (get-corp))))
           (take-credits state :runner)
           (core/end-phase-12 state :corp nil)
-          (is (= 6 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))))
+          (is (= 6 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server")))))
+  (testing "Corp gains credits when there were no runs last turn. Issue #4447"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Daily Quest"]}})
+      (play-from-hand state :corp "Daily Quest" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (is (= 6 (:credit (get-corp))))
+      (take-credits state :runner)
+      (core/end-phase-12 state :corp nil)
+      (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))
 
 (deftest dedicated-response-team
   ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged
