@@ -23,7 +23,7 @@
                  [crypto-password "0.2.0"]
                  [binaryage/devtools "0.9.7"]
                  [digest "1.4.6"]
-                 [http-kit "2.3.0"]
+                 [http-kit "2.4.0-alpha3"]
                  [org.slf4j/slf4j-nop "1.7.12"]
                  [jwarwick/trello "0.3.3"]
                  [clj-time "0.14.2"]

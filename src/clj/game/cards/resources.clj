@@ -641,7 +641,14 @@
     :events {:runner-install {:silent (req true)
                               :req (req (and (has-subtype? target "Icebreaker")
                                              (not (has-subtype? target "AI"))))
-                              :effect (effect (pump target 2 :all-turn))}}}
+                              :effect (req (create-floating-effect
+                                             state card
+                                             (let [breaker target]
+                                               {:type :breaker-strength
+                                                :duration :end-of-turn
+                                                :req (req (same-card? breaker target))
+                                                :effect (req 2)}))
+                                           (update-breaker-strength state side target))}}}
 
    "Dadiana Chacon"
    (let [trashme {:effect (effect (unregister-events card)
