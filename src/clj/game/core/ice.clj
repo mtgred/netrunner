@@ -229,7 +229,7 @@
   "Increase a breaker's strength by n for the given duration of :encounter, :all-run or :all-turn"
   ([state side card n] (pump state side card n :encounter))
   ([state side card n duration]
-   (update! state side (update-in card [:pump duration] (fnil #(+ % n) 0)))
+   (update! state side (update-in (get-card state card) [:pump duration] (fnil #(+ % n) 0)))
    (update-breaker-strength state side (get-card state card))
    (trigger-event state side :pump-breaker n card)))
 
