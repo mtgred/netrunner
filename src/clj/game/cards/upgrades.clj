@@ -244,6 +244,54 @@
      {:events {:approach-server ability}
       :abilities [ability]})
 
+   "Cayambe Grid"
+   {:events {:corp-turn-begins
+             {:interactive (req (->> (all-installed state :corp)
+                                     (filter #(and (ice? %)
+                                                   (same-server? card %)))
+                                     count
+                                     pos?))
+              :effect
+              (effect
+                (continue-ability
+                  (when (->> (all-installed state :corp)
+                             (filter #(and (ice? %)
+                                           (same-server? card %)))
+                             count
+                             pos?)
+                    {:prompt "Place 1 advancement token on an ice protecting this server"
+                     :choices {:req #(and (ice? %)
+                                          (same-server? % card))}
+                     :msg (msg "place an advancement token on " (card-str state target))
+                     :effect (effect (add-prop target :advance-counter 1 {:placed true}))})
+                  card nil))}
+             :approach-server
+             {:req (req (and this-server
+                             (zero? (:position run))))
+              :effect
+              (effect
+                (show-wait-prompt :corp "Runner to choose for Cayambe Grid")
+                (continue-ability
+                  (let [cost (->> (get-run-ices state)
+                                  (filter #(pos? (get-counters % :advancement)))
+                                  count
+                                  (* 2))]
+                    {:async true
+                     :player :runner
+                     :prompt (str "Pay " cost " [Credits] or end the run?")
+                     :choices (concat
+                                (when (can-pay? state :runner eid card nil [:credit cost])
+                                  [(str "Pay " cost " [Credits]")])
+                                ["End the run"])
+                     :msg (msg (if (= target "End the run")
+                                 "end the run"
+                                 (str "force the runner to pay " cost " [Credits]")))
+                     :effect (req (clear-wait-prompt state :corp)
+                                  (if (= target "End the run")
+                                    (end-run state side eid card)
+                                    (pay-sync state :runner eid card :credit cost)))})
+                  card nil))}}}
+
    "ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
                                 :async true
@@ -715,6 +763,17 @@
                                     (zero? (:position run)))) ; trigger on unprotected server
                      :async true
                      :effect (req (continue-ability state :runner abi card nil))}}})
+
+   "La Costa Grid"
+   {:install-req (req (remove #{"HQ", "R&D", "Archives"} targets))
+    :events {:corp-turn-begins {:effect (effect
+                                          (continue-ability
+                                            (let [server-name (zone->name (second (:zone card)))]
+                                              {:prompt (str "Advance a card in Server " server-name)
+                                               :msg (msg "place an advancement token on " (card-str state target))
+                                               :choices {:req #(in-same-server? % card)}
+                                               :effect (effect (add-prop target :advance-counter 1 {:placed true}))})
+                                            card nil))}}}
 
    "Letheia Nisei"
    (let [ability {:label "Force runner to re-approach outer ice"

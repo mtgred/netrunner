@@ -836,6 +836,13 @@
     :advancement-cost-bonus (req (- (count (filter #(= (:title %) "Medical Breakthrough")
                                                    (concat (:scored corp) (:scored runner))))))}
 
+   "Megaprix Qualifier"
+   {:silent (req true)
+    :req (req (< 1 (count (filter #(= (:title %) "Megaprix Qualifier")
+                                  (concat (:scored corp) (:scored runner))))))
+    :effect (effect (add-counter card :agenda 1))
+    :agendapoints-corp (req (if (zero? (get-counters card :agenda)) 1 2))}
+
    "Merger"
    {:agendapoints-runner (req 3)}
 

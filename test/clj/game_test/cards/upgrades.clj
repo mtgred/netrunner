@@ -470,6 +470,152 @@
       (run-on state "HQ")
       (is (empty? (get-in @state [:corp :prompt])) "Caprice does not trigger on other servers"))))
 
+(deftest cayambe-grid
+  ;; Cayambe Grid
+  (testing "Advance ability"
+    (testing "No ice"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Cayambe Grid"]}})
+        (play-from-hand state :corp "Cayambe Grid" "HQ")
+        (let [cg (get-content state :hq 0)]
+          (core/rez state :corp cg))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (zero? (->> (get-corp) :prompt count)) "corp has no prompts when no ice is installed in this server")))
+    (testing "1 ice in same server"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Cayambe Grid" "Enigma"]}})
+        (play-from-hand state :corp "Enigma" "HQ")
+        (play-from-hand state :corp "Cayambe Grid" "HQ")
+        (let [cg (get-content state :hq 0)]
+          (core/rez state :corp cg))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (let [enigma (get-ice state :hq 0)]
+          (is (zero? (get-counters (refresh enigma) :advancement)) "Enigma has 0 counters to start")
+          (click-card state :corp enigma)
+          (is (= 1 (get-counters (refresh enigma) :advancement)) "Enigma has 1 counter"))))
+    (testing "1 ice in another server"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Cayambe Grid" "Enigma"]}})
+        (play-from-hand state :corp "Enigma" "New remote")
+        (play-from-hand state :corp "Cayambe Grid" "HQ")
+        (let [cg (get-content state :hq 0)]
+          (core/rez state :corp cg))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (let [enigma (get-ice state :remote1 0)]
+          (is (zero? (get-counters (refresh enigma) :advancement)) "Enigma has 0 counters to start")
+          (is (zero? (->> (get-corp) :prompt count)) "corp has no prompts when no ice is installed in this server")))))
+  (testing "Payment ability"
+    (testing "No ice"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Cayambe Grid"]}})
+        (play-from-hand state :corp "Cayambe Grid" "HQ")
+        (let [cg (get-content state :hq 0)]
+          (core/rez state :corp cg)
+          (take-credits state :corp)
+          (run-on state :hq)
+          (run-continue state)
+          (let [credits (:credit (get-runner))]
+            (is (= "Pay 0 [Credits] or end the run?" (->> (get-runner) :prompt first :msg)))
+            (click-prompt state :runner "Pay 0 [Credits]")
+            (is (= credits (:credit (get-runner))))
+            (is (:run @state) "Run hasn't ended")))))
+    (testing "1 ice with no counter"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Cayambe Grid" "Enigma"]
+                          :credits 10}})
+        (play-from-hand state :corp "Enigma" "HQ")
+        (play-from-hand state :corp "Cayambe Grid" "HQ")
+        (let [cg (get-content state :hq 0)]
+          (core/rez state :corp cg)
+          (take-credits state :corp)
+          (run-on state :hq)
+          (run-continue state)
+          (let [credits (:credit (get-runner))]
+            (is (= "Pay 0 [Credits] or end the run?" (->> (get-runner) :prompt first :msg)))
+            (click-prompt state :runner "Pay 0 [Credits]")
+            (is (= credits (:credit (get-runner))))
+            (is (:run @state) "Run hasn't ended")))))
+    (testing "1 ice with a counter"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Cayambe Grid" "Ice Wall"]
+                          :credits 10}})
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Cayambe Grid" "HQ")
+        (let [cg (get-content state :hq 0)
+              iw (get-ice state :hq 0)]
+          (core/rez state :corp cg)
+          (advance state (refresh iw) 1)
+          (take-credits state :corp)
+          (run-on state :hq)
+          (run-continue state)
+          (let [credits (:credit (get-runner))]
+            (is (= "Pay 2 [Credits] or end the run?" (->> (get-runner) :prompt first :msg)))
+            (click-prompt state :runner "Pay 2 [Credits]")
+            (is (= (- credits 2) (:credit (get-runner))))
+            (is (:run @state) "Run hasn't ended")))))
+    (testing "2 ice with counters"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Cayambe Grid" (qty "Ice Wall" 2)]
+                          :credits 10}})
+        (core/gain state :corp :click 10)
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Cayambe Grid" "HQ")
+        (let [cg (get-content state :hq 0)
+              iw1 (get-ice state :hq 0)
+              iw2 (get-ice state :hq 1)]
+          (core/rez state :corp cg)
+          (advance state (refresh iw1) 1)
+          (advance state (refresh iw2) 1)
+          (take-credits state :corp)
+          (run-on state :hq)
+          (run-continue state)
+          (run-continue state)
+          (let [credits (:credit (get-runner))]
+            (is (= "Pay 4 [Credits] or end the run?" (->> (get-runner) :prompt first :msg)))
+            (click-prompt state :runner "Pay 4 [Credits]")
+            (is (= (- credits 4) (:credit (get-runner))))
+            (is (:run @state) "Run hasn't ended")))))
+    (testing "3 ice with counters"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Cayambe Grid" (qty "Ice Wall" 3)]
+                          :credits 10}})
+        (core/gain state :corp :click 10)
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Cayambe Grid" "HQ")
+        (let [cg (get-content state :hq 0)
+              iw1 (get-ice state :hq 0)
+              iw2 (get-ice state :hq 1)
+              iw3 (get-ice state :hq 2)]
+          (core/rez state :corp cg)
+          (advance state (refresh iw1) 1)
+          (advance state (refresh iw2) 1)
+          (advance state (refresh iw3) 1)
+          (take-credits state :corp)
+          (run-on state :hq)
+          (run-continue state)
+          (run-continue state)
+          (run-continue state)
+          (let [credits (:credit (get-runner))]
+            (is (= "Pay 6 [Credits] or end the run?" (->> (get-runner) :prompt first :msg)))
+            (is (= 1 (->> (get-runner) :prompt first :choices count)))
+            (click-prompt state :runner "End the run")
+            (is (= credits (:credit (get-runner))))
+            (is (not (:run @state)) "Run has ended")))))))
+
 (deftest chilo-city-grid
   ;; ChiLo City Grid - Give 1 tag for successful traces during runs on its server
   (do-game
@@ -1117,6 +1263,87 @@
                            "Used 3 credits from Khondi Plaza"
                            (core/rez state :corp en)
                            (dotimes [c 3] (click-card state :corp kh)))))))
+
+
+(deftest la-costa-grid
+  (testing "La Costa Grid cannot be installed in a central server"
+    (do-game
+      (new-game {:corp {:hand ["La Costa Grid"]}})
+      (is (not (some (zipmap ["HQ", "R&D", "Archives"] (repeat true))
+                     (:choices (first (:prompt (get-corp)))))) "Central servers are not listed in the install prompt")))
+  (testing "At the start of their turn The Corp may place an advancement token on a card in La Costa Grid's server"
+    (do-game
+      (new-game {:corp {:hand ["La Costa Grid", "Breaking News"]}})
+      (play-from-hand state :corp "La Costa Grid" "New remote")
+      (play-from-hand state :corp "Breaking News" "Server 1")
+      (let [[la-costa breaking-news] (get-content state :remote1)]
+        (core/rez state :corp la-costa)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (not (empty? (:prompt (get-corp)))) "The Corp is prompted to place one advancement token on a card")
+        (click-card state :corp la-costa)
+        (is (= 1 (get-counters (refresh la-costa) :advancement)) "Clicking on La Costa Grid advances it")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (click-card state :corp breaking-news)
+        (is (= 1 (get-counters (refresh breaking-news) :advancement)) "Clicking on a card in La Costa Grid's server advances it"))))
+  (testing "The Corp may not advance cards which are not in La Costa Grid's server"
+    (do-game
+      (new-game {:corp {:hand ["La Costa Grid", (qty "Mumbad Virtual Tour" 2), (qty "Vanilla" 3)]}})
+      (play-from-hand state :corp "La Costa Grid" "New remote")
+      (let [[la-costa] (get-content state :remote1)]
+        (core/rez state :corp la-costa)
+        (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+        (let [[remote-mvt] (get-content state :remote2)]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp remote-mvt)
+          (is (not (empty? (:prompt (get-corp)))) "Clicking a card in a different remote does not clear the prompt")
+          (is (zero? (get-counters (refresh remote-mvt) :advancement)) "Clicking a card in a different remote does not advance it"))
+        (play-from-hand state :corp "Mumbad Virtual Tour" "HQ")
+        (let [[central-mvt] (get-content state :hq)]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp central-mvt)
+          (is (not (empty? (:prompt (get-corp)))) "Clicking a card in a central does not clear the prompt")
+          (is (zero? (get-counters (refresh central-mvt) :advancement)) "Clicking a card in a central does not advance it"))
+        (play-from-hand state :corp "Vanilla" "Server 1")
+        (let [[vanilla] (get-ice state :remote1)]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp vanilla)
+          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa Grid does not clear the prompt")
+          (is (zero? (get-counters (refresh vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
+        (play-from-hand state :corp "Vanilla" "Server 2")
+        (let [[remote-vanilla] (get-ice state :remote2)]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp remote-vanilla)
+          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting La Costa Grid does not clear the prompt")
+          (is (zero? (get-counters (refresh remote-vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
+        (play-from-hand state :corp "Vanilla" "HQ")
+        (let [[central-vanilla] (get-ice state :hq)]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp central-vanilla)
+          (is (not (empty? (:prompt (get-corp)))) "Clicking an ice protecting HQ does not clear the prompt")
+          (is (zero? (get-counters (refresh central-vanilla) :advancement)) "Clicking a an ice protecting HQ does not advance it")))))
+  (testing "The Corp may advance hosted cards in La Costa Grid's server"
+    (do-game
+      (new-game {:corp {:hand ["La Costa Grid", "Full Immersion RecStudio", "Project Beale"]}})
+      (play-from-hand state :corp "La Costa Grid" "New remote")
+      (play-from-hand state :corp "Full Immersion RecStudio" "Server 1")
+      (let [[la-costa recstudio] (get-content state :remote1)]
+        (core/rez state :corp recstudio)
+        (card-ability state :corp recstudio 0)
+        (click-card state :corp (first (:hand (get-corp))))
+        (let [[beale] (:hosted (refresh recstudio))]
+          (println (game.utils/zone->name (second (:zone beale))))
+          (core/rez state :corp la-costa)
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-card state :corp beale)
+          (is (= 1 (get-counters (refresh beale) :advancement)) "Clicking on a hosted card in the La Costa Grid server advances it"))))))
 
 (deftest letheia-nisei
   ;; Letheia Nisei

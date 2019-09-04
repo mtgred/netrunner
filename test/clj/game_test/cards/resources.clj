@@ -312,7 +312,8 @@
                 (is (= (inc counters) (get-counters (refresh cc) :credit)) "Companion doesn't gain 1c when no agenda stolen"))))]
     (doall (map companion-test
                 ["Fencer Fueno"
-                 "Trickster Taka"]))))
+                 "Trickster Taka"
+                 "Mystic Maemi"]))))
 
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
@@ -686,6 +687,32 @@
           (run-empty-server state :archives)
           (take-credits state :runner)
           (is (empty? (:prompt (get-runner))) "Crowdfunding shouldn't prompt for install")))))
+
+(deftest cybertrooper-talut
+  ;; Cybertrooper Talut
+  (testing "Basic test"
+    (do-game
+     (new-game {:runner {:deck ["Cybertrooper Talut"
+                                "Corroder"
+                                "Aumakua"]}})
+     (take-credits state :corp)
+     (core/gain state :runner :credit 10)
+     (is (= 0 (:link (get-runner))) "Start with 0 link")
+     (play-from-hand state :runner "Cybertrooper Talut")
+     (is (= 1 (:link (get-runner))) "Gained 1 link")
+     (play-from-hand state :runner "Corroder")
+     (play-from-hand state :runner "Aumakua")
+     (let [cor (get-program state 0)
+           aum (get-program state 1)]
+       (is (= 4 (:current-strength (refresh cor))) "+2 strength by Talut")
+       (is (= 0 (:current-strength (refresh aum))) "No strength boost for AI")
+       (run-on state :hq)
+       (card-ability state :runner cor 1)
+       (is (= 5 (:current-strength (refresh cor))) "+1 strength by hand")
+       (run-jack-out state)
+       (is (= 4 (:current-strength (refresh cor))) "Strength back down to 4")
+       (take-credits state :runner)
+       (is (= 2 (:current-strength (refresh cor))) "Corroder strength back down to normal")))))
 
 (deftest dadiana-chacon
   ;; gain 1 cr at start of turn if you have less than 6,
@@ -2202,6 +2229,38 @@
           (click-card state :corp toll)
           (is (rezzed? (refresh toll)) "Tollbooth was rezzed")
           (is (zero? (:credit (get-corp))) "Corp has 0 credits"))))))
+
+(deftest mystic-maemi
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Project Vitruvius"]}
+                 :runner {:deck [(qty "Sure Gamble" 3) "Mystic Maemi"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mystic Maemi")
+      (let [mm (get-resource state 0)]
+        (is (= 0 (get-counters (refresh mm) :credit)) "No credits on Maemi yet")
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "Steal")
+        (is (= 1 (get-counters (refresh mm) :credit)) "+1c from steal")
+        (take-credits state :corp)
+        (is (= 2 (get-counters (refresh mm) :credit)) "+1c from start of turn")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 3 (get-counters (refresh mm) :credit)) "+1c from start of turn")
+        (take-credits state :runner)
+        (changes-val-macro -1 (count (:hand (get-runner)))
+                           "Trashed one card from grip"
+                           (click-prompt state :runner "Card from grip"))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Sure Gamble")
+        (changes-val-macro 5 (:credit (get-runner))
+                           "Used 1 credit from Maemi"
+                           (click-card state :runner mm)
+                           (click-prompt state :runner "Done"))
+        (take-credits state :runner)
+        (changes-val-macro 1 (count (:discard (get-runner)))
+                           "Trashed Maemi"
+                           (click-prompt state :runner "Trash"))))))
 
 (deftest net-mercur
   ;; Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used

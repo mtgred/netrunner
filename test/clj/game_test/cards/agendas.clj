@@ -1539,6 +1539,49 @@
       (core/score state :corp {:card (refresh mb3)})
       (is (= 4 (:agenda-point (get-corp))) "Only needed 2 advancements to score"))))
 
+(deftest megaprix-qualifier
+  (testing "The first scored Megaprix Qualifier doesn't get a counter, and is worth 1 point"
+    (do-game
+      (new-game {:corp {:hand ["Megaprix Qualifier"]}})
+      (play-and-score state "Megaprix Qualifier")
+      (let [megaprix-qualifier (first (:scored (get-corp)))]
+        (is (zero? (get-counters megaprix-qualifier :agenda)) "Has 0 counters"))
+      (is (= 1 (:agenda-point (get-corp))) "Is worth 1 agenda point")))
+  (testing "A second scored Megaprix Qualifier gets a counter, and is worth 2 points"
+    (do-game
+      (new-game {:corp {:hand [(qty "Megaprix Qualifier" 2)]}})
+      (play-and-score state "Megaprix Qualifier")
+      (play-and-score state "Megaprix Qualifier")
+      (let [[first-qualifier second-qualifier] (:scored (get-corp))]
+        (is (zero? (get-counters first-qualifier :agenda)) "First has 0 counters")
+        (is (= 1 (get-counters second-qualifier :agenda))) "Second has 1 counter")
+      (is (= 3 (:agenda-point (get-corp))) "Are worth 3 agenda points in total")))
+  (testing "Stolen Megaprix Qualifiers are only ever worth 1 point, and don't get counters"
+    (do-game
+      (new-game {:corp {:hand [(qty "Megaprix Qualifier" 2)]}})
+      (take-credits state :corp)
+      (dotimes [_ 2]
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "Steal"))
+      (let [[first-qualifier second-qualifier] (:scored (get-runner))]
+        (is (zero? (get-counters first-qualifier :agenda)) "First has 0 counters")
+        (is (zero? (get-counters second-qualifier :agenda)) "Second has 0 counters"))
+      (is (= 2 (:agenda-point (get-runner))) "Are worth 2 agenda points in total")))
+  (testing "A Megaprix Qualifier scored after the runner steals one gets a counter, and is worth 2 points"
+    (do-game
+      (new-game {:corp {:hand [(qty "Megaprix Qualifier" 2)]}})
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (play-and-score state "Megaprix Qualifier")
+      (let [first-qualifier (first (:scored (get-runner)))
+            second-qualifier (first (:scored (get-corp)))]
+        (is (zero? (get-counters first-qualifier :agenda)) "First has 0 counters")
+        (is (= 1 (get-counters second-qualifier :agenda)) "Second has 1 counter"))
+      (is (= 1 (:agenda-point (get-runner))) "Is worth 1 agenda point to the runner")
+      (is (= 2 (:agenda-point (get-corp))) "Is worth 2 agenda points to the corp"))))
+
 (deftest merger
   ;; Merger
   (do-game
