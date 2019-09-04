@@ -434,6 +434,22 @@
     (click-prompt state :runner (find-card "Bank Job" (:hosted (:identity (get-runner)))))
     (is (= 3 (count (get-in @state [:runner :hand]))) "There are 3 cards in the runner's Grip")))
 
+(deftest azmari-edtech-shaping-the-future
+  ;; Azmari EdTech: Shaping the Future
+  (testing "Don't gain credits when installing facedown #4477"
+    (do-game
+      (new-game {:corp {:id "Azmari EdTech: Shaping the Future"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 5)]}
+                 :runner {:id "Apex: Invasive Predator"
+                          :hand ["Sure Gamble"]}})
+      (take-credits state :corp)
+      (click-prompt state :corp "Event")
+      (core/end-phase-12 state :runner nil)
+      (let [credits (:credit (get-corp))]
+        (click-card state :runner "Sure Gamble")
+        (is (= credits (:credit (get-corp))) "Corp gains no credits from facedown install"))) ))
+
 (deftest az-mccaffrey-mechanical-prodigy
   ;; Az McCaffrey: Mechanical Prodigy
   (do-game
