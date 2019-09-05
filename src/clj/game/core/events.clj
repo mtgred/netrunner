@@ -9,22 +9,31 @@
   "Registers each event handler defined in the given card definition.
   Also registers any suppression events. (Crisium Grid.)"
   [state side events card]
-  (doseq [e events]
-    (swap! state update-in [:events (first e)] #(conj % {:ability (last e) :card card})))
-  (register-suppress state side (:suppress (card-def card)) card))
+  (let [abilities (for [[event ability] events]
+                    {:type event
+                     :duration :persistent
+                     :ability ability
+                     :card card
+                     :uuid (uuid/v1)})]
+    (swap! state update :events
+           #(apply conj % abilities))
+    (register-suppress state side (:suppress (card-def card)) card)))
 
 (defn unregister-events
   "Removes all event handlers defined for the given card.
-   Optionally input a partial card-definition map to remove only some handlers"
+  Optionally input a partial card-definition map to remove only some handlers"
   ([state side card] (unregister-events state side card nil))
   ([state side card part-def]
-   (let [cdef (or part-def (card-def card))]
-    ;; Combine normal events and derezzed events. Any merge conflicts should not matter
-    ;; as they should cause all relevant events to be removed anyway.
-    (doseq [e (merge (:events cdef) (:derezzed-events cdef))]
-      (swap! state update-in [:events (first e)]
-             #(remove (fn [effect] (same-card? (:card effect) card)) %))))
-  (unregister-suppress state side card)))
+   (let [cdef (or part-def (card-def card))
+         ;; Combine normal events and derezzed events. Any merge conflicts should not matter
+         ;; as they should cause all relevant events to be removed anyway.
+         abilities (map first (merge (:events cdef) (:derezzed-events cdef)))]
+     (swap! state assoc :events
+            (->> (:events @state)
+                 (remove #(and (same-card? card (:card %))
+                               (in-coll? abilities (:type %))))
+                 (into [])))
+     (unregister-suppress state side card))))
 
 (defn trigger-event
   "Resolves all abilities registered as handlers for the given event key, passing them
@@ -34,7 +43,8 @@
     (swap! state update-in [:turn-events] #(cons [event targets] %))
     (let [get-side #(-> % :card :side game.utils/to-keyword)
           is-active-player #(= (:active-player @state) (get-side %))
-          handlers (->> (get-in @state [:events event])
+          handlers (->> (:events @state)
+                        (filter #(= event (:type %)))
                         (sort-by (complement is-active-player))
                         (filter #(and (not (apply trigger-suppress state side event (:card %) targets))
                                       (can-trigger? state side (:ability %) (get-card state (:card %)) targets)))
@@ -62,7 +72,8 @@
     (do (swap! state update-in [:turn-events] #(cons [event targets] %))
         (let [get-side #(-> % :card :side game.utils/to-keyword)
               is-active-player #(= (:active-player @state) (get-side %))
-              handlers (->> (get-in @state [:events event])
+              handlers (->> (:events @state)
+                            (filter #(= event (:type %)))
                             (sort-by (complement is-active-player))
                             (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
                                           (can-trigger? state side (:ability %) (get-card state (:card %)) targets)))
@@ -186,7 +197,9 @@
                              ;; then filter to remove suppressed handlers and those whose req is false.
                              ;; This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
                              ;; http://nisei.net/files/Comprehensive_Rules_1.1.pdf
-                             (let [abis (filter (partial is-player player-side) (get-in @state [:events event]))
+                             (let [abis (->> (:events @state)
+                                             (filter #(= event (:type %)))
+                                             (filter (partial is-player player-side)))
                                    abis (if (= player-side (get-side card-ability))
                                           (cons card-ability abis)
                                           abis)]

@@ -10,6 +10,7 @@
             [game.core.player :refer :all]
             [game.core.effects :refer :all]
             [clj-time.core :as t]
+            [clj-uuid :as uuid]
             [clojure.string :as string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.java.io :as io]
             [clojure.core.match :refer [match]]
