@@ -326,14 +326,7 @@
                                                      (rezzed? %)
                                                      (protecting-same-server? card %))}
                                 :msg (msg "add " boost " strength to " (:title target))
-                                :effect (req (let [ice target]
-                                               (create-floating-effect
-                                                 state card
-                                                 {:type :ice-strength
-                                                  :duration :end-of-turn
-                                                  :req (req (same-card? ice target))
-                                                  :effect (req boost)})
-                                               (update-all-ice state side)))})
+                                :effect (effect (pump-ice target boost :end-of-turn))})
                              card nil))}]}
 
    "Crisium Grid"

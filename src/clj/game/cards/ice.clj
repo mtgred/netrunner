@@ -739,14 +739,7 @@
                    :prompt "Select the ICE the Runner is encountering"
                    :choices {:req #(and (rezzed? %) (ice? %))}
                    :msg (msg "give " (:title target) " +2 strength")
-                   :effect (req (let [ice target]
-                                  (create-floating-effect
-                                    state card
-                                    {:type :ice-strength
-                                     :duration :end-of-run
-                                     :req (req (same-card? ice target))
-                                     :effect (req 2)})
-                                  (update-all-ice state side)))}
+                   :effect (effect (pump-ice target 2))}
                   (do-net-damage 3)]}
 
    "Clairvoyant Monitor"
@@ -2264,13 +2257,7 @@
    "Red Tape"
    {:subroutines [{:label "Give +3 strength to all ICE for the remainder of the run"
                    :msg "give +3 strength to all ICE for the remainder of the run"
-                   :effect (req (let [ice target]
-                                  (create-floating-effect
-                                    state card
-                                    {:type :ice-strength
-                                     :duration :end-of-run
-                                     :effect (req 3)})
-                                  (update-all-ice state side)))}]}
+                   :effect (effect (pump-ice target 3 :end-of-run))}]}
 
    "Resistor"
    (let [resistor-effect {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))

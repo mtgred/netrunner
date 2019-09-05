@@ -641,14 +641,7 @@
     :events {:runner-install {:silent (req true)
                               :req (req (and (has-subtype? target "Icebreaker")
                                              (not (has-subtype? target "AI"))))
-                              :effect (req (create-floating-effect
-                                             state card
-                                             (let [breaker target]
-                                               {:type :breaker-strength
-                                                :duration :end-of-turn
-                                                :req (req (same-card? breaker target))
-                                                :effect (req 2)}))
-                                           (update-breaker-strength state side target))}}}
+                              :effect (effect (pump target 2 :end-of-turn))}}}
 
    "Dadiana Chacon"
    (let [trashme {:effect (effect (unregister-events card)
@@ -2243,14 +2236,7 @@
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (installed? %))}
                  :cost [:trash]
-                 :effect (req (create-floating-effect
-                                state card
-                                (let [breaker target]
-                                  {:type :breaker-strength
-                                   :duration :end-of-turn
-                                   :req (req (same-card? breaker target))
-                                   :effect (req 2)}))
-                              (update-breaker-strength state side target))}]}
+                 :effect (effect (pump target 2 :end-of-turn))}]}
 
    "The Nihilist"
    (let [has-2-virus-tokens? (req (<= 2 (number-of-virus-counters state)))

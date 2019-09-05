@@ -193,6 +193,18 @@
   (doseq [server (get-in @state [:corp :servers])]
     (update-ice-in-server state side (second server))))
 
+(defn pump-ice
+  "Change a piece of ice's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
+  ([state side card n] (pump-ice state side card n :end-of-encounter))
+  ([state side card n duration]
+   (create-floating-effect
+     state card
+     {:type :ice-strength
+      :duration duration
+      :req (req (same-card? card target))
+      :effect (req n)})
+   (update-ice-strength state side (get-card state card))))
+
 
 ;;; Icebreaker functions.
 (defn breaker-strength
@@ -220,7 +232,7 @@
     (trigger-event state side :breaker-strength-changed (get-card state breaker) oldstren)))
 
 (defn pump
-  "Increase a breaker's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
+  "Change a breaker's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
   ([state side card n] (pump state side card n :end-of-encounter))
   ([state side card n duration]
    (create-floating-effect

@@ -1,7 +1,6 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -725,14 +724,7 @@
    {:events {:runner-install
              {:silent (req true)
               :req (req (has-subtype? target "Icebreaker"))
-              :effect (req (create-floating-effect
-                             state card
-                             (let [breaker target]
-                               {:type :breaker-strength
-                                :duration :end-of-turn
-                                :req (req (same-card? breaker target))
-                                :effect (req 1)}))
-                           (update-breaker-strength state side target))}}}
+              :effect (effect (pump target 1 :end-of-turn))}}}
 
    "Lockpick"
    {:recurring 1

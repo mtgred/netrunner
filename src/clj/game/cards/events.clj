@@ -1,7 +1,6 @@
 (ns game.cards.events
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]

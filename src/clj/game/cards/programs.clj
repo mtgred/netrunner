@@ -2368,14 +2368,7 @@
                                   :label "Give -1 strength to current ICE"
                                   :req (req (rezzed? current-ice))
                                   :msg (msg "give -1 strength to " (:title current-ice))
-                                  :effect (req (let [ice current-ice]
-                                                 (create-floating-effect
-                                                   state card
-                                                   {:type :ice-strength
-                                                    :duration :end-of-encounter
-                                                    :req (req (same-card? ice target))
-                                                    :effect (req -1)}))
-                                               (update-all-ice state side))}
+                                  :effect (effect (pump-ice current-ice -1))}
                                  (strength-pump 1 1)]})
 
    "Yog.0"
