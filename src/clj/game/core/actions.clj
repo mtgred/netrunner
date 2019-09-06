@@ -595,8 +595,7 @@
     (let [cdef (card-def card)]
       (when-let [derez-effect (:derez-effect cdef)]
         (resolve-ability state side derez-effect (get-card state card) nil))
-      (when-let [dre (:derezzed-events cdef)]
-        (register-events state side dre card)))
+      (register-events state side card (:derezzed-events cdef)))
     (unregister-persistent-effects state card)
     (trigger-event state side :derez card side)))
 

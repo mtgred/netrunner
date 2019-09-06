@@ -108,11 +108,12 @@
                  :effect (effect (rez-cost-bonus -7) (rez target)
                                  (update! (dissoc (get-card state target) :facedown))
                                  (register-events
+                                   card
                                    [{:type :run-ends
                                      :effect (req (doseq [c (:hosted card)]
                                                     (when (:rezzed c)
                                                       (trash state side c)))
-                                                  (unregister-events state side card))}] card))}]
+                                                  (unregister-events state side card))}]))}]
     :events [{:type :run-ends}]}
 
    "Bamboo Dome"
@@ -154,14 +155,14 @@
      {:trash-effect
       {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
        :effect (effect (register-events
+                         (assoc card :zone '(:discard))
                          [(assoc bm
                                  :type :pre-steal-cost
                                  :req (req (or (= (:zone target) (:previous-zone card))
                                                (= (central->zone (:zone target))
                                                   (butlast (:previous-zone card))))))
                           {:type :run-ends
-                           :effect (effect (unregister-events card))}]
-                                        (assoc card :zone '(:discard))))}
+                           :effect (effect (unregister-events card))}]))}
       :events [(assoc bm :type :pre-steal-cost)
                {:type :run-ends}]})
 
@@ -344,8 +345,8 @@
 
    "Crisium Grid"
    (let [suppress-event {:req (req (and this-server (not (same-card? target card))))}]
-     {:suppress {:pre-successful-run suppress-event
-                 :successful-run suppress-event}
+     {:suppress [(assoc suppress-event :type :pre-successful-run)
+                 (assoc suppress-event :type :successful-run)]
       :events [{:type :pre-successful-run
                 :silent (req true)
                 :req (req this-server)
@@ -544,7 +545,7 @@
                                     :effect (req (let [c (move state side card
                                                                (conj (server->zone state target) :content))]
                                                    (unregister-events state side card)
-                                                   (register-events state side (:events (card-def c)) c)))}
+                                                   (register-events state side c)))}
                                    card nil))}]}
 
    "Giordano Memorial Field"
@@ -932,6 +933,7 @@
       :trash-effect                     ; if there is a run, mark mwanza effects to remain active until the end of the run
       {:req (req (:run @state))
        :effect (effect (register-events
+                         (assoc card :zone '(:discard))
                          [(assoc boost-access-by-3
                                  :type :pre-access
                                  :req (req (= target (second (:previous-zone card)))))
@@ -941,8 +943,7 @@
                           {:type :unsuccessful-run-ends
                            :effect (effect (unregister-events card))}
                           {:type :successful-run-ends
-                           :effect (effect (unregister-events card))}]
-                                        (assoc card :zone '(:discard))))}})
+                           :effect (effect (unregister-events card))}]))}})
 
    "NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
@@ -1039,7 +1040,7 @@
      {:trash-effect
       {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
        :effect (req (register-events
-                      state side
+                      state side (assoc card :zone '(:discard))
                       [(assoc ohg
                               :type :pre-steal-cost
                               :req (req (or (= (:zone (get-nested-host target))
@@ -1048,8 +1049,7 @@
                                                (butlast (:previous-zone card))))))
                        {:type :run-ends
                         :effect (req (unregister-events state side (find-latest state card))
-                                     (clear-persistent-flag! state side card :can-steal))}]
-                      (assoc card :zone '(:discard))))}
+                                     (clear-persistent-flag! state side card :can-steal))}]))}
       :events [(assoc ohg :type :pre-steal-cost)
                {:type :access
                 :effect (req (clear-persistent-flag! state side card :can-steal))}
@@ -1074,6 +1074,7 @@
       {:req (req (and (= :servers (first (:previous-zone card)))
                       (:run @state)))
        :effect (effect (register-events
+                         (assoc card :zone '(:discard))
                          [(assoc om
                                  :type :runner-trash
                                  :req (req (or (= (:zone (get-nested-host target))
@@ -1081,8 +1082,7 @@
                                                (= (central->zone (:zone target))
                                                   (butlast (:previous-zone card))))))
                           {:type :run-ends
-                           :effect (effect (unregister-events card))}]
-                         (assoc card :zone '(:discard))))}
+                           :effect (effect (unregister-events card))}]))}
       :events [{:type :run-ends}
                (assoc om :type :runner-trash)]})
 
@@ -1131,14 +1131,14 @@
      {:trash-effect
       {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
        :effect (effect (register-events
+                         (assoc card :zone '(:discard))
                          [(assoc ab
                                  :type :pre-steal-cost
                                  :req (req (or (= (:zone target) (:previous-zone card))
                                                (= (central->zone (:zone target))
                                                   (butlast (:previous-zone card))))))
                           {:type :run-ends
-                           :effect (effect (unregister-events card))}]
-                                        (assoc card :zone '(:discard))))}
+                           :effect (effect (unregister-events card))}]))}
       :events [(assoc ab :type :pre-steal-cost)
                {:type :run-ends}]})
 
@@ -1262,14 +1262,14 @@
      {:trash-effect
       {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
        :effect (effect (register-events
+                         (assoc card :zone '(:discard))
                          [(assoc ab
                                  :type :pre-steal-cost
                                  :req (req (or (= (:zone target) (:previous-zone card))
                                                (= (central->zone (:zone target))
                                                   (butlast (:previous-zone card))))))
                           {:type :run-ends
-                           :effect (effect (unregister-events card))}]
-                                        (assoc card :zone '(:discard))))}
+                           :effect (effect (unregister-events card))}]))}
       :events [(assoc ab :type :pre-steal-cost)
                {:type :run-ends}]})
 
@@ -1415,13 +1415,12 @@
     :trash-effect {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
                    :effect (req (when-let [n (:times-used card)]
                                   (register-events
-                                    state side
+                                    state side (assoc card :zone '(:discard))
                                     [{:type :corp-turn-begins
                                       :msg (msg "increase the Runner's maximum hand size by " n)
                                       :effect (effect (change-hand-size :runner n)
                                                       (unregister-events card)
-                                                      (update! (dissoc card :times-used)))}]
-                                    (assoc card :zone '(:discard)))))}
+                                                      (update! (dissoc card :times-used)))}])))}
     :events [{:type :corp-turn-begins
               :req (req (:times-used card))
               :msg (msg "increase the Runner's maximum hand size by "

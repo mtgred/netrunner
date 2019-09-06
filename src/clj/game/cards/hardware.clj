@@ -263,14 +263,15 @@
                  :effect (effect (update! (assoc card
                                                  :zone '(:discard)
                                                  :cortez-target target)))}]
-    :trash-effect {:effect (effect (register-events [{:type :pre-rez
-                                                      :req (req (same-card? target (:cortez-target card)))
-                                                      :effect (effect (rez-additional-cost-bonus [:credit 2]))}
-                                                     {:type :runner-turn-ends
-                                                      :effect (effect (unregister-events card))}
-                                                     {:type :corp-turn-ends
-                                                      :effect (effect (unregister-events card))}]
-                                                    (get-card state card)))}
+    :trash-effect {:effect (effect (register-events
+                                     (get-card state card)
+                                     [{:type :pre-rez
+                                       :req (req (same-card? target (:cortez-target card)))
+                                       :effect (effect (rez-additional-cost-bonus [:credit 2]))}
+                                      {:type :runner-turn-ends
+                                       :effect (effect (unregister-events card))}
+                                      {:type :corp-turn-ends
+                                       :effect (effect (unregister-events card))}]))}
     :events [{:type :pre-rez}
              {:type :runner-turn-ends}
              {:type :corp-turn-ends}]}
@@ -454,6 +455,7 @@
                  :msg "prevent the Corp from rezzing more than 1 piece of ICE for the remainder of the run"
                  :cost [:trash]
                  :effect (effect (register-events
+                                   (assoc card :zone '(:discard))
                                    [{:type :rez
                                      :req (req (ice? target))
                                      :effect (effect (register-run-flag!
@@ -464,7 +466,7 @@
                                                             (toast state :corp "Cannot rez ICE the rest of this run due to EMP Device"))
                                                            true))))}
                                     {:type :run-ends
-                                     :effect (effect (unregister-events card))}] (assoc card :zone '(:discard))))}]
+                                     :effect (effect (unregister-events card))}]))}]
     :events [{:type :rez}
              {:type :run-ends}]}
 
@@ -496,10 +498,9 @@
                                 (gain-credits state :runner 1)
                                 (system-msg state :runner "takes 1 [Credits] from Flame-out")
                                 (register-events
-                                  state :runner
+                                  state :runner (get-card state card)
                                   [(assoc turn-end :type :runner-turn-ends)
-                                   (assoc turn-end :type :corp-turn-ends)]
-                                  (get-card state card)))}
+                                   (assoc turn-end :type :corp-turn-ends)]))}
                   {:label "Take all [Credits] from Flame-out"
                    :req (req (and (not-empty (:hosted card))
                                   (pos? (get-counters card :credit))))
@@ -508,10 +509,9 @@
                                   (update! state :runner (dissoc-in card [:counter :credit]))
                                   (system-msg state :runner (str "takes " credits "[Credits] from Flame-out"))
                                   (register-events
-                                    state :runner
+                                    state :runner (get-card state card)
                                     [(assoc turn-end :type :runner-turn-ends)
-                                     (assoc turn-end :type :corp-turn-ends)]
-                                    (get-card state card))))}
+                                     (assoc turn-end :type :corp-turn-ends)])))}
                   {:label "Install a program on Flame-out"
                    :req (req (empty? (:hosted card)))
                    :cost [:click 1]
@@ -539,10 +539,10 @@
                                                   (same-card? card (:host target))
                                                   (pos? (get-counters card :credit))))
                                    :custom (req (add-counter state side card :credit -1)
-                                                (register-events state side
-                                                                 [(assoc turn-end :type :runner-turn-ends)
-                                                                  (assoc turn-end :type :corp-turn-ends)]
-                                                                 (get-card state card))
+                                                (register-events
+                                                  state side (get-card state card)
+                                                  [(assoc turn-end :type :runner-turn-ends)
+                                                   (assoc turn-end :type :corp-turn-ends)])
                                                 (effect-completed state side (make-result eid 1)))
                                    :type :custom}}})
 
@@ -1347,13 +1347,12 @@
                                                                         :suppress-event true})
                                        (make-run state side srv nil card)
                                        (register-events
-                                         state side
+                                         state side card
                                          [{:type :pre-access
                                            :silent (req true)
                                            :effect (effect (access-bonus kw bonus))}
                                           {:type :run-ends
-                                           :effect (effect (unregister-events card))}]
-                                         card)
+                                           :effect (effect (unregister-events card))}])
                                        (effect-completed state side eid))))})]
      {:abilities [{:req (req (<= 2 (count (:hand runner))))
                    :cost [:click 1]

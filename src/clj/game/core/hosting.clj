@@ -52,8 +52,7 @@
                  (and (event? target) (not facedown))
                  (and installed (runner? target))
                  (and installed (corp? target) (rezzed? target)))
-         (when-let [events (:events tdef)]
-           (register-events state side events c))
+         (register-events state side c)
          (register-persistent-effects state c)
          (when (or (:recurring tdef)
                    (:prevent tdef)
@@ -61,10 +60,10 @@
                    (:runner-abilities tdef))
            (card-init state side c {:resolve-effect false
                                     :init-data true})))
-       (when-let [events (:events tdef)]
+       (when (:events tdef)
          (when (and installed (:recurring tdef))
            (unregister-events state side target)
-           (register-events state side events c)))
+           (register-events state side c)))
        (when-let [hosted-gained (:hosted-gained cdef)]
          (hosted-gained state side (make-eid state) (get-card state card) [c]))
        c))))

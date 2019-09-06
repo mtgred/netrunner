@@ -114,7 +114,7 @@
                                        (when (:run @state)
                                          (swap! state assoc-in [:run :did-steal] true))
                                        (when (card-flag? c :has-events-when-stolen true)
-                                         (register-events state side (:events (card-def c)) c))
+                                         (register-events state side c))
                                        (remove-old-current state side :corp))}
           :card-ability (ability-as-handler c (:stolen (card-def c)))}
          c)

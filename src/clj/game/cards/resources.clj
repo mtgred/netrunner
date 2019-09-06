@@ -480,7 +480,7 @@
                               (trash :corp eid target {:unpreventable true}))
               :cancel-effect (effect (system-msg (str "does not trash a piece of ice protecting " (zone->name chosen-server)))
                                      (register-events
-                                       :runner
+                                       :runner (assoc card :zone [:rfg])
                                        [{:type :pre-access
                                          :req (req (#{:hq :rd} target))
                                          :once :per-turn
@@ -488,8 +488,7 @@
                                          :effect (effect (access-bonus :runner target 2))}
                                         {:type :runner-turn-ends
                                          :effect (effect (unregister-events card {:events [{:type :pre-access}
-                                                                                           {:type :runner-turn-ends}]}))}]
-                                       (assoc card :zone [:rfg]))
+                                                                                           {:type :runner-turn-ends}]}))}])
                                      (effect-completed eid))})]
      {:events [{:type :pre-access}
                {:type :runner-turn-ends}
@@ -561,24 +560,24 @@
                  :msg (msg "run " target " and trashes Counter Surveillance")
                  :choices (req (cancellable runnable-servers))
                  :effect (req (make-run state side target nil card)
-                              (register-events state side
-                                               [{:type :successful-run
-                                                 :silent (req true)
-                                                 :effect (req (let [tags (count-tags state)]
-                                                                (if (>= (:credit runner) tags)
-                                                                  ;; Can pay, do access
-                                                                  (do (system-msg state side (str "uses Counter Surveillance to access up to "
-                                                                                                  tags " cards by paying "
-                                                                                                  tags " [Credit]"))
-                                                                      (pay state side card :credit tags)
-                                                                      (access-bonus state side target (- tags 1)))
-                                                                  ;; Can't pay, don't access cards
-                                                                  (do (system-msg state side "could not afford to use Counter Surveillance")
-                                                                      ;; Cannot access any cards
-                                                                      (max-access state side 0)))))}
-                                                {:type :run-ends
-                                                 :effect (effect (unregister-events card))}]
-                                               (assoc card :zone '(:discard))))}]
+                              (register-events
+                                state side (assoc card :zone '(:discard))
+                                [{:type :successful-run
+                                  :silent (req true)
+                                  :effect (req (let [tags (count-tags state)]
+                                                 (if (>= (:credit runner) tags)
+                                                   ;; Can pay, do access
+                                                   (do (system-msg state side (str "uses Counter Surveillance to access up to "
+                                                                                   tags " cards by paying "
+                                                                                   tags " [Credit]"))
+                                                       (pay state side card :credit tags)
+                                                       (access-bonus state side target (- tags 1)))
+                                                   ;; Can't pay, don't access cards
+                                                   (do (system-msg state side "could not afford to use Counter Surveillance")
+                                                       ;; Cannot access any cards
+                                                       (max-access state side 0)))))}
+                                 {:type :run-ends
+                                  :effect (effect (unregister-events card))}]))}]
     :events [{:type :successful-run}
              {:type :run-ends}]}
 
@@ -625,9 +624,9 @@
                                         card nil))}
          heap-event (req (when (in-discard? card)
                            (unregister-events state side card)
-                           (register-events state side
-                                            [(assoc install-prompt :type :runner-turn-ends)]
-                                            (assoc card :zone [:discard]))))]
+                           (register-events
+                             state side (assoc card :zone [:discard])
+                             [(assoc install-prompt :type :runner-turn-ends)])))]
      {:data {:counter {:credit 3}}
       :flags {:drip-economy true
               :runner-turn-draw (req (= 1 (get-counters (get-card state card) :credit)))
@@ -825,8 +824,7 @@
                                   (update! state side c)
                                   (when effect
                                     (effect state side (make-eid state) c nil))
-                                  (when events
-                                    (register-events state side events c))))}})
+                                  (register-events state side c)))}})
 
    "Donut Taganes"
    {:persistent-effects [{:type :play-cost
@@ -841,13 +839,14 @@
                  :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
                  :effect (req (let [c target]
                                 (disable-card state side c)
-                                (register-events state side
-                                                 [{:type :post-runner-turn-ends
-                                                   :effect (req (enable-card state side (get-card state c))
-                                                                (when-let [reactivate-effect (:reactivate (card-def c))]
-                                                                  (resolve-ability state :runner reactivate-effect
-                                                                                   (get-card state c) nil))
-                                                                (unregister-events state side card))}] card)))}]
+                                (register-events
+                                  state side card
+                                  [{:type :post-runner-turn-ends
+                                    :effect (req (enable-card state side (get-card state c))
+                                                 (when-let [reactivate-effect (:reactivate (card-def c))]
+                                                   (resolve-ability state :runner reactivate-effect
+                                                                    (get-card state c) nil))
+                                                 (unregister-events state side card))}])))}]
     :events [{:type :post-runner-turn-ends}]}
 
    "Drug Dealer"
@@ -2384,7 +2383,8 @@
                    :effect (effect (host card target)) :msg (msg "host " (:title target) "")}
                   ability]
       ; A card installed by The Supplier is ineligible to receive the turn-begins event for this turn.
-      :suppress {:runner-turn-begins {:req (req (= (:cid target) (:supplier-installed (get-card state card))))}}
+      :suppress [{:type :runner-turn-begins
+                  :req (req (= (:cid target) (:supplier-installed (get-card state card))))}]
       :events [(assoc ability :type :runner-turn-begins)
                {:type :runner-turn-ends
                 :req (req (:supplier-installed card))
@@ -2547,8 +2547,8 @@
                                                                          (agenda? target)))}
                                          :effect (effect (system-msg (str "trashes " (:title card)
                                                                           " to name " (:title target)))
-                                                   (register-events (steal-events target)
-                                                                    (dissoc card :zone))
+                                                   (register-events (dissoc card :zone)
+                                                                    (steal-events target))
                                                    (trash eid card {:unpreventable true
                                                                     :cause :ability-cost}))}}}]
       :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]})

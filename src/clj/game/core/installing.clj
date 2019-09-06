@@ -93,14 +93,14 @@
        (let [r (if (number? recurring)
                  (effect (set-prop card :rec-counter recurring))
                  recurring)]
-         (register-events state side
-                          [{:type (if (= side :corp) :corp-phase-12 :runner-phase-12)
-                            :req (req (not (:disabled card)))
-                            :effect r}] c)))
+         (register-events
+           state side c
+           [{:type (if (= side :corp) :corp-phase-12 :runner-phase-12)
+             :req (req (not (:disabled card)))
+             :effect r}])))
      (update! state side c)
-     (when-let [events (:events cdef)]
-       (register-events state side events c))
-     (register-persistent-effects state card)
+     (register-events state side c)
+     (register-persistent-effects state c)
      (if (and resolve-effect (is-ability? cdef))
        (resolve-ability state side eid cdef c nil)
        (effect-completed state side eid))
@@ -248,7 +248,7 @@
                     (event state side eid nil))
                   (when-let [dre (:derezzed-events cdef)]
                     (when-not (:rezzed (get-card state moved-card))
-                      (register-events state side dre moved-card))))))))
+                      (register-events state side moved-card dre))))))))
 
 (defn- corp-install-pay
   "Used by corp-install to pay install costs, code continues in corp-install-continue"

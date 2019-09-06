@@ -108,7 +108,7 @@
     (doseq [newcard [a-new b-new]]
       (unregister-events state side newcard)
       (when (rezzed? newcard)
-        (register-events state side (:events (card-def newcard)) newcard))
+        (register-events state side newcard))
       (doseq [h (:hosted newcard)]
         (let [newh (-> h
                        (assoc-in [:zone] '(:onhost))
@@ -116,7 +116,7 @@
           (update! state side newh)
           (unregister-events state side h)
           (when (rezzed? h)
-            (register-events state side (:events (card-def newh)) newh)))))
+            (register-events state side newh)))))
     (update-ice-strength state side a-new)
     (update-ice-strength state side b-new)))
 
@@ -141,7 +141,7 @@
                        (assoc-in [:host :zone] (:zone newcard)))]
           (update! state side newh)
           (unregister-events state side h)
-          (register-events state side (:events (card-def newh)) newh))))))
+          (register-events state side newh))))))
 
 (defn do-net-damage
   "Do specified amount of net-damage."

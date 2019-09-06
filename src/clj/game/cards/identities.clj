@@ -1105,11 +1105,11 @@
                                     stypes (:subtype ice)]
                                 (update! state side (assoc ice :subtype (combine-subtypes true stypes "Code Gate")))
                                 (register-events
-                                  state side
+                                  state side card
                                   [{:type :run-ends
                                     :effect (effect (update! (assoc ice :subtype stypes))
                                                     (trigger-event :ice-subtype-changed ice)
-                                                    (unregister-events card))}] card)
+                                                    (unregister-events card))}])
                                 (update-ice-strength state side ice)
                                 (trigger-event state side :ice-subtype-changed ice)))}]
     :events [{:type :run-ends}]}

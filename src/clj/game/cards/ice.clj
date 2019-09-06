@@ -508,12 +508,12 @@
                    :async true
                    :effect (effect (gain-tags :corp eid 1)
                                    (register-events
+                                     card
                                      [{:type :successful-run
                                        :effect (effect (lose-tags :corp 1))
                                        :msg "make the Runner lose 1 tag"}
                                       {:type :run-ends
-                                       :effect (effect (unregister-events card))}]
-                                     card))}]
+                                       :effect (effect (unregister-events card))}]))}]
     :events [{:type :successful-run}
              {:type :run-ends}]}
 
@@ -683,13 +683,13 @@
     :subroutines [(trace-ability 5 {:label "Do 3 meat damage when this run is successful"
                                     :msg "do 3 meat damage when this run is successful"
                                     :effect (effect (register-events
+                                                      card
                                                       [{:type :successful-run
                                                         :async true
                                                         :msg "do 3 meat damage"
                                                         :effect (effect (damage eid :meat 3 {:card card}))}
                                                        {:type :run-ends
-                                                        :effect (effect (unregister-events card))}]
-                                                      card))})]
+                                                        :effect (effect (unregister-events card))}]))})]
     :events [{:type :successful-run}
              {:type :run-ends}]}
 
@@ -1214,11 +1214,11 @@
                    :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
                    :effect (effect (lose :runner :hand-size 2)
                                    (register-events
+                                     card
                                      [{:type :corp-turn-begins
                                        :msg "increase the Runner's maximum hand size by 2"
                                        :effect (effect (gain :runner :hand-size 2)
-                                                       (unregister-events card))}]
-                                     card))}]
+                                                       (unregister-events card))}]))}]
     :events [{:type :corp-turn-begins}]}
 
    "Hadrian's Wall"
@@ -1472,10 +1472,10 @@
    {:abilities [{:msg "prevent the Runner from breaking subroutines on the next piece of ICE they encounter this run"}
                 {:msg "prevent the Runner from jacking out until after the next piece of ICE"
                  :effect (effect (register-events
+                                   card
                                    [{:type :pass-ice
                                      :effect (req (swap! state update-in [:run] dissoc :prevent-jack-out)
-                                                  (unregister-events state side card {:type :pass-ice}))}]
-                                   card)
+                                                  (unregister-events state side card {:type :pass-ice}))}])
                                  (prevent-jack-out))}]}
 
    "Information Overload"

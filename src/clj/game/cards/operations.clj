@@ -201,7 +201,7 @@
                    (toast-check-mu state)
                    (system-msg state :runner "must trash programs to free up [mu]"))
                  (register-events
-                   state side
+                   state side card
                    [{:type :corp-turn-ends
                      :effect (effect (gain :runner :memory 2)
                                      (system-msg :runner "regains 2[mu]")
@@ -209,8 +209,7 @@
                     {:type :runner-turn-ends
                      :effect (effect (gain :runner :memory 2)
                                      (system-msg :runner "regains 2[mu]")
-                                     (unregister-events card))}]
-                   card))
+                                     (unregister-events card))}]))
     :events [{:type :corp-turn-ends}
              {:type :runner-turn-ends}]}
 
@@ -1083,8 +1082,7 @@
 
    "Load Testing"
    {:msg "make the Runner lose [Click] when their next turn begins"
-    :effect (effect (register-events (:events (card-def card))
-                                     (assoc card :zone '(:discard))))
+    :effect (effect (register-events (assoc card :zone '(:discard))))
     :events [{:type :runner-turn-begins
               :msg "make the Runner lose [Click]"
               :effect (effect (lose :runner :click 1)
@@ -1899,12 +1897,12 @@
                                             {:prompt "Add Subliminal Messaging to HQ?"
                                              :yes-ability {:effect (req (move state side card :hand)
                                                                         (system-msg state side "adds Subliminal Messaging to HQ"))}
-                                             :no-ability {:effect (effect (register-events (subliminal) (assoc card :zone '(:discard))))}}}
+                                             :no-ability {:effect (effect (register-events (assoc card :zone '(:discard)) (subliminal)))}}}
                                            card nil)
                           (unregister-events state side card))
                       (do (unregister-events state side card)
                           (resolve-ability state side
-                                           {:effect (effect (register-events (subliminal) (assoc card :zone '(:discard))))}
+                                           {:effect (effect (register-events (assoc card :zone '(:discard)) (subliminal)))}
                                            card nil))))}])]
      {:msg "gain 1 [Credits]"
       :effect (effect (gain-credits 1)
@@ -1914,7 +1912,7 @@
                                         :effect (effect (gain :corp :click 1))}
                                        card nil))
       :move-zone (req (if (= [:discard] (:zone card))
-                        (register-events state side (subliminal) (assoc card :zone '(:discard)))
+                        (register-events state side (assoc card :zone '(:discard)) (subliminal))
                         (unregister-events state side card)))
       :events [{:type :corp-phase-12}]})
 
@@ -2047,12 +2045,12 @@
                                                          :zone [:discard]
                                                          :seen true))
                     (register-events
+                      target
                       [{:type :advance
                         :req (req (= (:hosted card) (:hosted target)))
                         :effect (effect (gain-credits 1)
                                         (system-msg
-                                          (str "uses Transparency Initiative to gain 1 [Credit]")))}]
-                      target))}
+                                          (str "uses Transparency Initiative to gain 1 [Credit]")))}]))}
 
    "Trick of Light"
    {:choices {:req #(pos? (get-counters % :advancement))}

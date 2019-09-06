@@ -122,8 +122,7 @@
 
    "Black Hat"
    {:trace {:base 4
-            :unsuccessful {:effect (effect (register-events (:events (card-def card))
-                                                            (assoc card :zone '(:discard))))}}
+            :unsuccessful {:effect (effect (register-events (assoc card :zone '(:discard))))}}
     :events [{:type :pre-access
               :req (req (#{:hq :rd} target))
               :effect (effect (access-bonus target 2))}
@@ -173,7 +172,7 @@
                                             foremost-ice (last (remove rezzed? run-ices))]
                                         (update! state side (assoc foremost-ice :bribery true))
                                         (register-events
-                                          state side
+                                          state side (assoc card :zone '(:discard))
                                           [{:type :pre-rez-cost
                                             :req (req (:bribery target))
                                             :once :per-turn
@@ -181,8 +180,7 @@
                                            {:type :run-ends
                                             :effect (effect (unregister-events card [{:type :pre-rez-cost}
                                                                                      {:type :run-ends}])
-                                                            (update! (dissoc (find-latest state foremost-ice) :bribery)))}]
-                                          (assoc card :zone '(:discard)))))})
+                                                            (update! (dissoc (find-latest state foremost-ice) :bribery)))}])))})
                       card nil))}
 
    "Brute-Force-Hack"
@@ -231,8 +229,7 @@
     :effect (effect (gain-credits 1) (draw eid 2 nil))}
 
    "By Any Means"
-   {:effect (effect (register-events (:events (card-def card))
-                                     (dissoc card :zone)))
+   {:effect (effect (register-events (dissoc card :zone)))
     :events [{:type :runner-turn-ends
               :effect (effect (unregister-events card))}
              {:type :access
@@ -262,17 +259,18 @@
     :effect (effect (add-icon card target "CP" "red")
                     (system-msg (str "prevents the rezzing of " (card-str state target)
                                      " for the rest of this turn via Careful Planning"))
-                    (register-events [{:type :runner-turn-ends
-                                       :effect (effect (remove-icon card target)
-                                                       (unregister-events
-                                                         card
-                                                         {:events [{:type :runner-turn-ends}]}))}]
-                                     (assoc card :zone '(:discard)))
+                    (register-events
+                      (assoc card :zone '(:discard))
+                      [{:type :runner-turn-ends
+                        :effect (effect (remove-icon card target)
+                                        (unregister-events
+                                          card
+                                          {:events [{:type :runner-turn-ends}]}))}])
                     (register-turn-flag! card :can-rez
                                          (fn [state side card]
                                            (if (same-card? card target)
                                              ((constantly false)
-                                               (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
+                                              (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
                                              true))))}
 
    "CBI Raid"
@@ -413,8 +411,7 @@
     :choices (req runnable-servers)
     :makes-run true
     :effect (effect (make-run target nil card)
-                    (register-events (:events (card-def card))
-                                     (assoc card :zone '(:discard))))
+                    (register-events (assoc card :zone '(:discard))))
     :events [{:type :pre-access-card
               :once :per-run
               :async true
@@ -479,9 +476,9 @@
     :makes-run true
     :effect (req (let [db-eid (make-eid state)
                        events (:events (card-def card))]
-                   (register-events state side
-                                    [(assoc (first events) :eid db-eid)]
-                                    (assoc card :zone '(:discard)))
+                   (register-events
+                     state side (assoc card :zone '(:discard))
+                     [(assoc (first events) :eid db-eid)])
                    (wait-for (make-run state side db-eid :rd nil card)
                              (let [card (get-card state (assoc card :zone '(:discard)))]
                                (unregister-events state side card)
@@ -502,7 +499,7 @@
    {:req (req rd-runnable)
     :makes-run true
     :effect (effect (make-run :rd nil card)
-                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+                    (register-events (assoc card :zone '(:discard))))
     :events [{:type :successful-run
               :silent (req true)
               :effect (effect (access-bonus :rd (max 0 (min 4 (available-mu state)))))}
@@ -531,10 +528,9 @@
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
                                       (card-init state side c {:resolve-effect false})
                                       (register-events
-                                        state side
+                                        state side c
                                         [{:type :run-ends
-                                          :effect (effect (trash c))}]
-                                        c)))}
+                                          :effect (effect (trash c))}])))}
                       card nil))
     :events [{:type :run-ends}]
     :interactions {:access-ability
@@ -601,7 +597,7 @@
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
                                       (card-init state side c {:resolve-effect false})
                                       (register-events
-                                        state side
+                                        state side c
                                         [{:type :run-ends
                                           :effect (req (let [hunt (:diana @state)]
                                                          (doseq [c hunt]
@@ -611,8 +607,7 @@
                                                                (trash state side installed {:unpreventable true}))))
                                                          (swap! state dissoc :diana)
                                                          (unregister-events state side card {:type :run-ends})
-                                                         (trash state side c)))}]
-                                        c)))}
+                                                         (trash state side c)))}])))}
                       card nil))}
 
    "Diesel"
@@ -666,7 +661,7 @@
     :makes-run true
     :async true
     :effect (effect (make-run :archives nil card)
-                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+                    (register-events (assoc card :zone '(:discard))))
     :events [{:type :end-access-phase
               :async true
               :req (req (= :archives (:from-server target)))
@@ -923,8 +918,7 @@
    {:req (req hq-runnable)
     :implementation "Bypass is manual"
     :effect (effect (make-run :hq nil card)
-                    (register-events (:events (card-def card))
-                                     (assoc card :zone '(:discard))))
+                    (register-events (assoc card :zone '(:discard))))
     ;; Don't need a msg since game will print that card access is prevented
     :events [{:type :successful-run
               :effect (effect (prevent-access))}
@@ -983,10 +977,9 @@
               :async true
               :effect (req (if (not= target "No install")
                              (do (register-events
-                                   state side
+                                   state side (assoc card :zone '(:discard))
                                    [{:type :runner-shuffle-deck
-                                     :effect (effect (update! (assoc card :shuffle-occurred true)))}]
-                                   (assoc card :zone '(:discard)))
+                                     :effect (effect (update! (assoc card :shuffle-occurred true)))}])
                                  (install-cost-bonus state side [:credit -5])
                                  (let [to-trash (remove #(same-card? % target) topten)]
                                    (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)
@@ -1134,7 +1127,7 @@
    "Immolation Script"
    {:req (req archives-runnable)
     :effect (effect (make-run :archives nil card)
-                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+                    (register-events (assoc card :zone '(:discard))))
     :events [{:type :pre-access
               :async true
               :req (req (and (= target :archives)
@@ -1163,8 +1156,7 @@
                              card nil))}]}
 
    "In the Groove"
-   {:effect (req (register-events state side (:events (card-def card))
-                                  (dissoc card :zone)))
+   {:effect (req (register-events state side (dissoc card :zone)))
     :events [{:type :runner-turn-ends
               :effect (effect (unregister-events card))}
              {:type :runner-install
@@ -1469,7 +1461,7 @@
       :effect (req
                 (let [old-ice-cids (get-rezzed-cids (all-installed state :corp))]
                   (swap! state assoc :lnt old-ice-cids)
-                  (register-events state side (:events (card-def card)) (assoc card :zone '(:discard)))
+                  (register-events state side (assoc card :zone '(:discard)))
                   (make-run state side (make-eid state) target nil card)))
       :events [{:type :run-ends
                 :effect (req (let [new (set (get-rezzed-cids (all-installed state :corp)))
@@ -1486,8 +1478,7 @@
    "Legwork"
    {:req (req hq-runnable)
     :effect (effect (make-run :hq nil card)
-                    (register-events (:events (card-def card))
-                                     (assoc card :zone '(:discard))))
+                    (register-events (assoc card :zone '(:discard))))
     :events [{:type :successful-run
               :silent (req true)
               :effect (effect (access-bonus :hq 2))}
@@ -1505,6 +1496,7 @@
                  :msg "is immune to damage until the beginning of the Runner's next turn"
                  :effect (effect
                            (register-events
+                             (assoc card :zone '(:discard))
                              [{:type :pre-damage
                                :effect (effect (damage-prevent :net Integer/MAX_VALUE)
                                                (damage-prevent :meat Integer/MAX_VALUE)
@@ -1513,8 +1505,7 @@
                                :effect (effect (unregister-events
                                                  card
                                                  {:events [{:type :runner-turn-begins}
-                                                           {:type :pre-damage}]}))}]
-                             (assoc card :zone '(:discard))))}}
+                                                           {:type :pre-damage}]}))}]))}}
 
    "Levy AR Lab Access"
    {:msg "shuffle their Grip and Heap into their Stack and draw 5 cards"
@@ -1533,7 +1524,7 @@
     :choices (req runnable-servers)
     :async true
     :effect (effect (make-run target nil card)
-                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+                    (register-events (assoc card :zone '(:discard))))
     :events [{:type :agenda-stolen
               :silent (req true)
               :effect (effect (update! (assoc card :steal true)))}
@@ -1625,21 +1616,19 @@
     :effect (req (let [mob-eid (make-eid state)
                        events (:events (card-def card))]
                    (register-events
-                     state side
-                     [(assoc (second events) :eid mob-eid)]
-                     (assoc card :zone '(:discard)))
+                     state side (assoc card :zone '(:discard))
+                     [(assoc (second events) :eid mob-eid)])
                    (wait-for (make-run state side mob-eid :rd nil card)
                              (let [card (get-card state (assoc card :zone '(:discard)))]
                                (unregister-events state side card)
                                (when (:run-again card)
                                  (update! state side (dissoc card :run-again))
                                  (register-events
-                                   state side
+                                   state side card
                                    [{:type :successful-run
                                      :req (req (= target :rd))
                                      :msg "gain 4 [Credits]"
-                                     :effect (effect (gain-credits 4))}]
-                                   card)
+                                     :effect (effect (gain-credits 4))}])
                                  (wait-for (make-run state side (make-eid state mob-eid) :rd nil card)
                                            (unregister-events state side card)))))))
     :events [{:type :successful-run}
@@ -1744,7 +1733,7 @@
                                         card nil))}]]
      (run-event
        {:move-zone (req (if (= [:discard] (:zone card))
-                          (register-events state side ashes-flag (assoc card :zone [:discard]))
+                          (register-events state side (assoc card :zone [:discard]) ashes-flag)
                           (unregister-events state side card {:events [{:type :runner-phase-12}]})))}
        nil))
 
@@ -1793,8 +1782,7 @@
    {:req (req (seq (filter #(has-subtype? % "Seedy") (all-active-installed state :runner))))
     :msg "give the Corp 1 fewer [Click] to spend on their next turn"
     :effect (effect (lose :corp :click-per-turn 1)
-                    (register-events (:events (card-def card))
-                                     (assoc card :zone '(:discard))))
+                    (register-events (assoc card :zone '(:discard))))
     :events [{:type :corp-turn-ends
               :effect (effect (gain :corp :click-per-turn 1)
                               (unregister-events card))}]}
@@ -1806,13 +1794,13 @@
 
    "Power to the People"
    {:effect (effect (register-events
+                      (assoc card :zone '(:discard))
                       [{:type :pre-steal-cost
                         :once :per-turn
                         :effect (effect (gain-credits 7))
                         :msg "gain 7 [Credits]"}
                        {:type :runner-turn-ends
-                        :effect (effect (unregister-events card {:type :pre-steal-cost}))}]
-                      (assoc card :zone '(:discard))))
+                        :effect (effect (unregister-events card {:type :pre-steal-cost}))}]))
     :events [{:type :pre-steal-cost}
              {:type :runner-turn-ends}]}
 
@@ -2103,13 +2091,14 @@
                {:type :run-ends}]}
      nil
      nil
-     (effect (register-events [{:type :pre-rez-cost
-                                :req (req (ice? target))
-                                :msg (msg "double the cost (as an additional cost) to rez " (card-str state target))
-                                :effect (effect (rez-additional-cost-bonus [:credit (:cost target)]))}
-                               {:type :run-ends
-                                :effect (effect (unregister-events card))}]
-                              (assoc card :zone '(:discard)))))
+     (effect (register-events
+               (assoc card :zone '(:discard))
+               [{:type :pre-rez-cost
+                 :req (req (ice? target))
+                 :msg (msg "double the cost (as an additional cost) to rez " (card-str state target))
+                 :effect (effect (rez-additional-cost-bonus [:credit (:cost target)]))}
+                {:type :run-ends
+                 :effect (effect (unregister-events card))}])))
 
    "Satellite Uplink"
    {:choices {:max 2 :req installed?}
@@ -2159,14 +2148,8 @@
                        {:msg "access cards from the bottom of R&D"
                         :mandatory true
                         :async true
-                        :effect (req
-                                  ;; Not sure why this is done
-                                  (wait-for (resolve-ability state side
-                                                             {:effect (effect (register-events
-                                                                                (:events (card-def card))
-                                                                                (assoc card :zone '(:discard))))}
-                                                             card nil)
-                                            (do-access state side eid (:server run))))}} card))
+                        :effect (effect (register-events (assoc card :zone '(:discard)))
+                                        (do-access eid (:server run)))}} card))
     :events [{:type :pre-access
               :silent (req true)
               :effect (req (swap! state assoc-in [:runner :rd-access-fn] reverse))}
@@ -2192,6 +2175,7 @@
                      state :runner
                      {:msg (msg "select the piece of ICE at position " (ice-index state ice) " of " serv)
                       :effect (effect (register-events
+                                        (assoc card :zone '(:discard))
                                         [{:type :runner-turn-ends
                                           :effect (effect (unregister-events
                                                             card
@@ -2201,8 +2185,7 @@
                                           :req (req (= target ice))
                                           :effect (req (let [cost (rez-cost state side (get-card state target))]
                                                          (gain-credits state :runner cost)))
-                                          :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")}]
-                                        (assoc card :zone '(:discard))))}
+                                          :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")}]))}
                      card nil)))}
 
    "Spear Phishing"
@@ -2293,7 +2276,7 @@
               :effect (effect (lose-credits :corp 1))}]}
 
    "System Seizure"
-   {:effect (req (register-events state side (:events (card-def card)) (assoc card :zone '(:discard))))
+   {:effect (req (register-events state side (assoc card :zone '(:discard))))
     :events [{:type :pump-breaker
               :once :per-turn
               :effect (req (let [last-pump (assoc (last (:effects @state)) :duration :end-of-run)]
@@ -2316,7 +2299,7 @@
       :prompt "Install a program from your Stack or Heap?"
       :choices ["Stack" "Heap"]
       :msg (msg "install a program from their " target)
-      :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard)))
+      :effect (effect (register-events (assoc card :zone '(:discard)))
                       (continue-ability
                         (let [where target]
                           {:prompt "Choose a program to install"
@@ -2333,7 +2316,7 @@
    {:req (req rd-runnable)
     :makes-run true
     :effect (effect (make-run :rd nil card)
-                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+                    (register-events (assoc card :zone '(:discard))))
     :events [{:type :successful-run
               :silent (req true)
               :req (req (= target :rd))
@@ -2346,7 +2329,7 @@
     :effect (req (doseq [c (:hand runner)]
                    (trash state side c))
                  (register-events
-                   state side
+                   state side (assoc card :zone '(:discard))
                    [{:type :pre-damage
                      :effect (effect (damage-prevent :net Integer/MAX_VALUE)
                                      (damage-prevent :meat Integer/MAX_VALUE)
@@ -2355,8 +2338,7 @@
                      :effect (effect (unregister-events
                                        card
                                        {:events [{:type :pre-damage}
-                                                 {:type :run-ends}]}))}]
-                   (assoc card :zone '(:discard)))
+                                                 {:type :run-ends}]}))}])
                  (continue-ability
                    state side
                    {:prompt "Choose a server"
@@ -2368,7 +2350,7 @@
    "The Price of Freedom"
    {:additional-cost [:connection 1]
     :msg "prevent the Corp from advancing cards during their next turn"
-    :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
+    :effect (effect (register-events (assoc card :zone '(:rfg)))
                     (move (first (:play-area runner)) :rfg))
     :events [{:type :corp-turn-begins
               :effect (effect (register-turn-flag!
@@ -2380,11 +2362,11 @@
 
    "Three Steps Ahead"
    {:effect (effect (register-events
+                      (assoc card :zone '(:discard))
                       [{:type :runner-turn-ends
                         :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")
                         :effect (effect (gain-credits (* 2 (count (:successful-run runner-reg))))
-                                        (unregister-events card {:events [{:type :runner-turn-ends}]}))}]
-                      (assoc card :zone '(:discard))))}
+                                        (unregister-events card {:events [{:type :runner-turn-ends}]}))}]))}
 
    "Tinkering"
    {:prompt "Select a piece of ICE"
@@ -2399,11 +2381,11 @@
                                       (update-ice-strength (get-card state ice))
                                       (add-icon card (get-card state ice) "T" "green")
                                       (register-events
+                                        (assoc card :zone '(:discard))
                                         [{:type :runner-turn-ends
                                           :effect (effect (remove-icon card (get-card state ice))
                                                           (update! (assoc (get-card state ice) :subtype stypes))
-                                                          (unregister-events card {:events [{:type :runner-turn-ends}]}))}]
-                                                       (assoc card :zone '(:discard))))}
+                                                          (unregister-events card {:events [{:type :runner-turn-ends}]}))}]))}
                      card nil)))}
 
    "Trade-In"
@@ -2486,8 +2468,7 @@
       :prompt "Choose a server"
       :choices (req (filter #(can-run-server? state %) remotes))
       :effect (effect (make-run target nil card)
-                (register-events (:events (card-def card))
-                                 (dissoc card :zone)))
+                      (register-events (dissoc card :zone)))
       :events [{:type :pre-access-card
                 :req (req (and (not= (:type target) "Agenda")
                                (get-in @state [:run :successful])))
@@ -2496,7 +2477,7 @@
                                (system-msg state :runner (str "to remove " t " from the game, and watch for other copies of " t " to burn"))
                                (move state :corp target :rfg)
                                ;; in the below, the new :cid ensures that when unregister-events is called, the rfg-card-event is left alone
-                               (register-events state side (rfg-card-event t) (dissoc (assoc card :cid (make-cid)) :zone))))}
+                               (register-events state side (dissoc (assoc card :cid (make-cid)) :zone) (rfg-card-event t))))}
                {:type :run-ends
                 :effect (effect (unregister-events (dissoc card :zone)))}]})
 

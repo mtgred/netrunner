@@ -240,9 +240,8 @@
           abilities (:abilities (card-def new-scored))
           new-scored (merge new-scored {:abilities abilities})]
       (update! state :corp new-scored)
-      (when-let [events (:events (card-def new-scored))]
-        (unregister-events state side new-scored)
-        (register-events state side events new-scored))
+      (unregister-events state side new-scored)
+      (register-events state side new-scored)
       (unregister-persistent-effects state new-scored)
       (register-persistent-effects state new-scored)
       (resolve-ability state side (:swapped (card-def new-scored)) new-scored nil))

@@ -81,7 +81,7 @@
                                        (assoc-in [:host :zone] newz))]
                           (update! state side newh)
                           (unregister-events state side h)
-                          (register-events state side (:events (card-def newh)) newh)
+                          (register-events state side newh)
                           (unregister-persistent-effects state h)
                           (register-persistent-effects state newh)
                           newh))
@@ -297,12 +297,11 @@
   "Actually enables the side's identity"
   [state side]
   (let [id (assoc (get-in @state [side :identity]) :disabled false)
-        {:keys [events effect]} (card-def id)]
+        {:keys [effect]} (card-def id)]
     (update! state side id)
     (when effect
       (effect state side (make-eid state) id nil))
-    (when events
-      (register-events state side events id))
+    (register-events state side id)
     (register-persistent-effects state id)))
 
 (defn enable-identity

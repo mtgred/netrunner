@@ -7,27 +7,28 @@
 ; Functions for registering and dispatching events.
 (defn register-events
   "Registers each event handler defined in the given card definition.
-  Also registers any suppression events. (Crisium Grid.)"
-  [state side events card]
-  (let [abilities (for [ability events]
-                    {:type (:type ability)
-                     :duration :persistent
-                     :ability (dissoc ability :type)
-                     :card card
-                     :uuid (uuid/v1)})]
-    (swap! state update :events
-           #(apply conj % abilities))
-    (register-suppress state side (:suppress (card-def card)) card)))
+  Also registers any suppression events."
+  ([state side card] (register-events state side card (:events (card-def card))))
+  ([state side card events]
+   (when events
+     (let [abilities (for [ability events]
+                       {:type (:type ability)
+                        :duration (or (:duration ability) :persistent)
+                        :ability (dissoc ability :type)
+                        :card card
+                        :uuid (uuid/v1)})]
+       (swap! state update :events
+              #(apply conj % abilities))))
+   (register-suppress state side card)))
 
 (defn unregister-events
   "Removes all event handlers defined for the given card.
   Optionally input a partial card-definition map to remove only some handlers"
-  ([state side card] (unregister-events state side card nil))
-  ([state side card part-def]
-   (let [cdef (or part-def (card-def card))
-         ;; Combine normal events and derezzed events. Any merge conflicts should not matter
-         ;; as they should cause all relevant events to be removed anyway.
-         abilities (map :type (concat (:events cdef) (:derezzed-events cdef)))]
+  ([state side card] (unregister-events state side card (card-def card)))
+  ([state side card cdef]
+   ;; Combine normal events and derezzed events. Any merge conflicts should not matter
+   ;; as they should cause all relevant events to be removed anyway.
+   (let [abilities (map :type (concat (:events cdef) (:derezzed-events cdef)))]
      (swap! state assoc :events
             (->> (:events @state)
                  (remove #(and (same-card? card (:card %))
@@ -227,23 +228,37 @@
 
 ; Functions for registering trigger suppression events.
 (defn register-suppress
-  "Registers each suppression handler in teh given card definition. Suppression handlers
-  can prevent the dispatching of a particular event. (Crisium Grid.)"
-  [state side events card]
-  (doseq [e events]
-    (swap! state update-in [:suppress (first e)] #(conj % {:ability (last e) :card card}))))
+  "Registers each suppression handler in the given card definition. Suppression handlers
+  can prevent the dispatching of a particular event."
+  ([state side card] (register-suppress state side card (:suppress (card-def card))))
+  ([state side card events]
+  (when events
+    (let [abilities (for [ability events]
+                      {:type (:type ability)
+                       :ability (dissoc ability :type)
+                       :card card
+                       :uuid (uuid/v1)})]
+      (swap! state update :suppress
+             #(apply conj % abilities))))))
 
-(defn unregister-suppress [state side card]
-  (doseq [e (:suppress (card-def card))]
-    (swap! state update-in [:suppress (first e)]
-           #(remove (fn [effect] (same-card? (:card effect) card)) %))))
+(defn unregister-suppress
+  "Removes all event handler suppression effects as defined for the given card"
+  ([state side card] (unregister-suppress state side card (:suppress (card-def card))))
+  ([state side card events]
+   (let [abilities (map :type events)]
+     (swap! state assoc :suppress
+            (->> (:suppress @state)
+                 (remove #(and (same-card? card (:card %))
+                               (in-coll? abilities (:type %))))
+                 (into []))))))
 
 (defn trigger-suppress
   "Returns true if the given event on the given targets should be suppressed, by triggering
   each suppression handler and returning true if any suppression handler returns true."
   [state side event & targets]
-  (reduce #(or %1 ((:req (:ability %2)) state side (make-eid state) (:card %2) targets))
-          false (get-in @state [:suppress event])))
+  (->> (:suppress @state)
+       (filter #(= event (:type %)))
+       (some #((:req (:ability %)) state side (make-eid state) (:card %) targets))))
 
 (defn turn-events
   "Returns the targets vectors of each event with the given key that was triggered this turn."

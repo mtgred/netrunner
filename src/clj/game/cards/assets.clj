@@ -696,7 +696,8 @@
    {:derezzed-events [corp-rez-toast]
     :flags {:corp-phase-12 (req (some #(not (rezzed? %)) (all-installed state :corp)))}
     ; A card rezzed by Executive Bootcamp is ineligible to receive the turn-begins event for this turn.
-    :suppress {:corp-turn-begins {:req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}}
+    :suppress [{:type :corp-turn-begins
+                :req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}]
     :events [{:type :corp-turn-ends
               :req (req (:ebc-rezzed card))
               :effect (effect (update! (dissoc card :ebc-rezzed)))}]

@@ -72,11 +72,11 @@
                                     card targets))}
         heap-event (req (when (in-discard? card)
                           (unregister-events state side card)
-                          (register-events state side
-                                           [(assoc install-prompt :type :rez)
-                                            (assoc install-prompt :type :approach-ice)
-                                            (assoc install-prompt :type :run)]
-                                           (assoc card :zone [:discard]))))]
+                          (register-events
+                            state side (assoc card :zone [:discard])
+                            [(assoc install-prompt :type :rez)
+                             (assoc install-prompt :type :approach-ice)
+                             (assoc install-prompt :type :run)])))]
     {:move-zone heap-event
      :events [{:type :rez}
               {:type :approach-ice}
@@ -152,13 +152,15 @@
                                                               :subtype-target stargets
                                                               :subtype stypes))
                                               (unregister-events card)
-                                              (register-events (:events (card-def card)) card))}]
+                                              (register-events card))}]
                   (update! state side (assoc ice
                                              :subtype-target (combine-subtypes true stargets ice-type)
                                              :subtype (combine-subtypes true stypes ice-type)))
                   (update-ice-strength state side (get-card state ice))
-                  (register-events state side [(assoc remove-subtype :type :pass-ice)
-                                               (assoc remove-subtype :type :run-ends)] card)))})
+                  (register-events
+                    state side card
+                    [(assoc remove-subtype :type :pass-ice)
+                     (assoc remove-subtype :type :run-ends)])))})
 
 (defn- virus-breaker
   "Spends virus counters from any card to pump/break, gains virus counters for successful runs
@@ -1700,10 +1702,12 @@
                                              " until the end of the next run this turn")
                                    :effect (effect (update! (assoc ice :subtype (combine-subtypes true stypes target)))
                                                    (update-ice-strength (get-card state ice))
-                                                   (register-events [{:type :run-ends
-                                                                      :effect (effect (update! (assoc (get-card state ice) :subtype stypes))
-                                                                                      (unregister-events card)
-                                                                                      (update-ice-strength (get-card state ice)))}] card))}
+                                                   (register-events
+                                                     card
+                                                     [{:type :run-ends
+                                                       :effect (effect (update! (assoc (get-card state ice) :subtype stypes))
+                                                                       (unregister-events card)
+                                                                       (update-ice-strength (get-card state ice)))}]))}
                                   card nil)))}]
     :events [{:type :run-ends}]}
 
@@ -1731,10 +1735,10 @@
                                     {:effect (effect (update! (assoc (get-card state ice) :subtype stypes))
                                                      (system-say (str (card-str state ice) " loses " chosen-type "."))
                                                      (unregister-events card)
-                                                     (register-events (:events (card-def card)) card))}]
+                                                     (register-events card))}]
                                 (update! state side (assoc ice :subtype (combine-subtypes false stypes chosen-type)))
                                 (update-ice-strength state side (get-card state ice))
-                                (register-events state side [(assoc remove-subtype :type :run-ends)] card)))}]}
+                                (register-events state side card [(assoc remove-subtype :type :run-ends)])))}]}
 
    "Paperclip"
    (install-from-heap "Paperclip" "Barrier"
@@ -1866,11 +1870,13 @@
                                     {:effect (effect (update! (assoc (get-card state ice) :subtype stypes))
                                                      (system-say (str (card-str state ice) " loses " chosen-type "."))
                                                      (unregister-events card)
-                                                     (register-events (:events (card-def card)) card))}]
+                                                     (register-events card))}]
                                 (update! state side (assoc ice :subtype (combine-subtypes false stypes chosen-type)))
                                 (update-ice-strength state side (get-card state ice))
-                                (register-events state side [(assoc remove-subtype :type :pass-ice)
-                                                             (assoc remove-subtype :type :run-ends)] card)))}]}
+                                (register-events
+                                  state side card
+                                  [(assoc remove-subtype :type :pass-ice)
+                                   (assoc remove-subtype :type :run-ends)])))}]}
 
    "Pheromones"
    {:recurring (req (when (< (get-counters card :recurring) (get-counters card :virus))

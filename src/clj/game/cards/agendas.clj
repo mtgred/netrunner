@@ -76,10 +76,10 @@
       :optional {:prompt "Look at the top 3 cards of R&D?"
                  :yes-ability {:async true
                                :msg "look at the top 3 cards of R&D"
-                               :effect (req (register-events state side
-                                                             [{:type :corp-shuffle-deck
-                                                               :effect (effect (update! (assoc card :shuffle-occurred true)))}]
-                                                             card)
+                               :effect (req (register-events
+                                              state side card
+                                              [{:type :corp-shuffle-deck
+                                                :effect (effect (update! (assoc card :shuffle-occurred true)))}])
                                          (let [n (count (filter ice? (take 3 (:deck corp))))]
                                            (doseq [c (take (min (count (:deck corp)) 3) (:deck corp))]
                                              (move state side c :play-area))
@@ -319,6 +319,7 @@
    {:async true
     :effect (effect (gain-tags :corp eid 2)
                     (register-events
+                      card
                       [{:type :corp-turn-ends
                         :msg "make the Runner lose 2 tags"
                         :effect (effect (lose :runner :tag 2)
@@ -326,8 +327,7 @@
                        {:type :runner-turn-ends
                         :msg "make the Runner lose 2 tags"
                         :effect (effect (lose :runner :tag 2)
-                                        (unregister-events card))}]
-                      card))
+                                        (unregister-events card))}]))
     :silent (req true)
     :msg "give the Runner 2 tags"
     :events [{:type :corp-turn-ends}
@@ -1310,14 +1310,13 @@
                  :effect (req (let [c target]
                                 (rez state side c {:ignore-cost :all-costs})
                                 (register-events
-                                  state side
+                                  state side card
                                   [{:type :corp-turn-ends
                                     :effect (effect (derez c)
                                                     (unregister-events card))}
                                    {:type :runner-turn-ends
                                     :effect (effect (derez c)
-                                                    (unregister-events card))}]
-                                  card)))}]
+                                                    (unregister-events card))}])))}]
     :events [{:type :corp-turn-ends}
              {:type :runner-turn-ends}]}
 
@@ -1521,9 +1520,9 @@
                              (unregister-events state side card)
                              (damage state side eid :net cnt {:card card})))}]
      {:effect (effect (register-events
+                        card
                         [(assoc dmg :type :corp-turn-ends)
-                         (assoc dmg :type :runner-turn-ends)]
-                        card))
+                         (assoc dmg :type :runner-turn-ends)]))
       :events [{:type :corp-turn-ends}
                {:type :runner-turn-ends}]})
 
