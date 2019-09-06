@@ -94,9 +94,9 @@
                  (effect (set-prop card :rec-counter recurring))
                  recurring)]
          (register-events state side
-                          {(if (= side :corp) :corp-phase-12 :runner-phase-12)
-                           {:req (req (not (:disabled card)))
-                            :effect r}} c)))
+                          [{:type (if (= side :corp) :corp-phase-12 :runner-phase-12)
+                            :req (req (not (:disabled card)))
+                            :effect r}] c)))
      (update! state side c)
      (when-let [events (:events cdef)]
        (register-events state side events c))

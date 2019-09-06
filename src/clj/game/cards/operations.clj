@@ -27,7 +27,8 @@
                     :msg (msg "trigger the \"when scored\" ability of " (:title target))
                     :async true
                     :effect (effect (continue-ability (card-def target) target nil)
-                                    (unregister-events target {:events {:corp-turn-ends nil :runner-turn-ends nil}}))}
+                                    (unregister-events target {:events [{:type :corp-turn-ends}
+                                                                        {:type :runner-turn-ends}]}))}
                    card nil))}
 
    "Accelerated Diagnostics"
@@ -201,15 +202,17 @@
                    (system-msg state :runner "must trash programs to free up [mu]"))
                  (register-events
                    state side
-                   {:corp-turn-ends {:effect (effect (gain :runner :memory 2)
-                                                     (system-msg :runner "regains 2[mu]")
-                                                     (unregister-events card))}
-                    :runner-turn-ends {:effect (effect (gain :runner :memory 2)
-                                                       (system-msg :runner "regains 2[mu]")
-                                                       (unregister-events card))}}
+                   [{:type :corp-turn-ends
+                     :effect (effect (gain :runner :memory 2)
+                                     (system-msg :runner "regains 2[mu]")
+                                     (unregister-events card))}
+                    {:type :runner-turn-ends
+                     :effect (effect (gain :runner :memory 2)
+                                     (system-msg :runner "regains 2[mu]")
+                                     (unregister-events card))}]
                    card))
-    :events {:corp-turn-ends nil
-             :runner-turn-ends nil}}
+    :events [{:type :corp-turn-ends}
+             {:type :runner-turn-ends}]}
 
    "Beanstalk Royalties"
    {:msg "gain 3 [Credits]"
@@ -324,9 +327,10 @@
                                                                                :installed true))
                                                 (system-msg state side (str "hosts Casting Call on " (:title agenda)))))}
                      card nil)))
-    :events {:access {:req (req (same-card? target (:host card)))
-                      :async true
-                      :effect (effect (gain-tags :runner eid 2)) :msg "give the Runner 2 tags"}}}
+    :events [{:type :access
+              :req (req (same-card? target (:host card)))
+              :async true
+              :effect (effect (gain-tags :runner eid 2)) :msg "give the Runner 2 tags"}]}
 
    "Celebrity Gift"
    {:choices {:max 5
@@ -351,9 +355,10 @@
     :leave-play (effect (enable-identity :runner))}
 
    "\"Clones are not People\""
-   {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 1 agenda point"
-                             :async true
-                             :effect (req (as-agenda state :corp eid card 1))}}}
+   {:events [{:type :agenda-scored
+              :msg "add it to their score area as an agenda worth 1 agenda point"
+              :async true
+              :effect (req (as-agenda state :corp eid card 1))}]}
 
    "Closed Accounts"
    {:req (req tagged)
@@ -416,8 +421,10 @@
    (let [gain-cred-effect {:msg "gain 1 [Credits]"
                            :effect (effect (gain-credits :corp 1))}]
      {:implementation "Credit gain mandatory to save on wait-prompts, adjust credits manually if credit not wanted."
-      :events {:runner-install gain-cred-effect
-               :runner-trash (assoc gain-cred-effect :req (req (installed? target)))}})
+      :events [(assoc gain-cred-effect :type :runner-install)
+               (assoc gain-cred-effect
+                      :type :runner-trash
+                      :req (req (installed? target)))]})
 
    "Dedication Ceremony"
    {:prompt "Select a faceup card"
@@ -438,10 +445,11 @@
                     (effect-completed eid))}
 
    "Defective Brainchips"
-   {:events {:pre-damage {:req (req (= target :brain))
-                          :msg "do 1 additional brain damage"
-                          :once :per-turn
-                          :effect (effect (damage-bonus :brain 1))}}}
+   {:events [{:type :pre-damage
+              :req (req (= target :brain))
+              :msg "do 1 additional brain damage"
+              :once :per-turn
+              :effect (effect (damage-bonus :brain 1))}]}
 
    "Digital Rights Management"
    {:req (req (and (< 1 (:turn @state))
@@ -525,8 +533,8 @@
                      card nil)))}
 
    "Door to Door"
-   {:events {:runner-turn-begins
-             {:trace {:base 1
+   {:events [{:type :runner-turn-begins
+              :trace {:base 1
                       :label "Do 1 meat damage if Runner is tagged, or give the Runner 1 tag"
                       :successful {:msg (msg (if tagged
                                                "do 1 meat damage"
@@ -534,7 +542,7 @@
                                    :async true
                                    :effect (req (if tagged
                                                   (damage state side eid :meat 1 {:card card})
-                                                  (gain-tags state :corp eid 1)))}}}}}
+                                                  (gain-tags state :corp eid 1)))}}}]}
 
    "Eavesdrop"
    (let [new-sub {:label "[Eavesdrop]: Trace 3 - Give the Runner 1 tag"}]
@@ -551,8 +559,9 @@
                    (update-ice-strength state side target)
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
       :leave-play (req (remove-extra-subs! state :corp (:cid card) (:host card)))
-      :events {:rez {:req (req (same-card? target (:host card)))
-                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}}})
+      :events [{:type :rez
+                :req (req (same-card? target (:host card)))
+                :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}]})
 
    "Economic Warfare"
    {:req (req (and (last-turn? state :runner :successful-run)
@@ -593,9 +602,10 @@
 
    "Enhanced Login Protocol"
    {:msg "uses Enhanced Login Protocol to add an additional cost of [Click] to make the first run not through a card ability this turn"
-    :events {:pre-init-run {:req (req (and (first-event? state side :pre-init-run #(:click-run (nth % 2)))
-                                           (:click-run (nth targets 2))))
-                            :effect (effect (run-additional-cost-bonus [:click 1]))}}}
+    :events [{:type :pre-init-run
+              :req (req (and (first-event? state side :pre-init-run #(:click-run (nth % 2)))
+                             (:click-run (nth targets 2))))
+              :effect (effect (run-additional-cost-bonus [:click 1]))}]}
 
    "Exchange of Information"
    {:req (req (and tagged
@@ -962,12 +972,13 @@
       :effect (effect (damage eid :meat (dmg-count state) {:card card}))})
 
    "Housekeeping"
-   {:events {:runner-install {:player :runner
-                              :prompt "Select a card from your Grip to trash for Housekeeping" :once :per-turn
-                              :choices {:req #(and (runner? %)
-                                                   (in-hand? %))}
-                              :msg (msg "force the Runner to trash " (:title target) " from their Grip")
-                              :effect (effect (trash target {:unpreventable true}))}}}
+   {:events [{:type :runner-install
+              :player :runner
+              :prompt "Select a card from your Grip to trash for Housekeeping" :once :per-turn
+              :choices {:req #(and (runner? %)
+                                   (in-hand? %))}
+              :msg (msg "force the Runner to trash " (:title target) " from their Grip")
+              :effect (effect (trash target {:unpreventable true}))}]}
 
    "Hunter Seeker"
    {:req (req (last-turn? state :runner :stole-agenda))
@@ -1028,9 +1039,11 @@
                                          :successful {:msg "do 1 brain damage"
                                                       :async true
                                                       :effect (effect (damage :runner eid :brain 1 {:card card}))}}}]
-     {:events {:access (assoc trace-for-brain-damage :req (req (agenda? target))
-                              :interactive (req (agenda? target)))
-               :agenda-scored trace-for-brain-damage}})
+     {:events [(assoc trace-for-brain-damage
+                      :type :access
+                      :req (req (agenda? target))
+                      :interactive (req (agenda? target)))
+               (assoc trace-for-brain-damage :type :agenda-scored)]})
 
    "Lag Time"
    {:effect (effect (update-all-ice))
@@ -1072,9 +1085,10 @@
    {:msg "make the Runner lose [Click] when their next turn begins"
     :effect (effect (register-events (:events (card-def card))
                                      (assoc card :zone '(:discard))))
-    :events {:runner-turn-begins {:msg "make the Runner lose [Click]"
-                                  :effect (effect (lose :runner :click 1)
-                                                  (unregister-events card))}}}
+    :events [{:type :runner-turn-begins
+              :msg "make the Runner lose [Click]"
+              :effect (effect (lose :runner :click 1)
+                              (unregister-events card))}]}
 
    "Localized Product Line"
    {:prompt "Choose a card"
@@ -1093,12 +1107,13 @@
                      card nil)))}
 
    "Manhunt"
-   {:events {:successful-run {:interactive (req true)
-                              :req (req (first-event? state side :successful-run))
-                              :trace {:base 2
-                                      :successful {:msg "give the Runner 1 tag"
-                                                   :async true
-                                                   :effect (effect (gain-tags eid 1))}}}}}
+   {:events [{:type :successful-run
+              :interactive (req true)
+              :req (req (first-event? state side :successful-run))
+              :trace {:base 2
+                      :successful {:msg "give the Runner 1 tag"
+                                   :async true
+                                   :effect (effect (gain-tags eid 1))}}}]}
 
    "Market Forces"
    (letfn [(credit-diff [state]
@@ -1264,7 +1279,8 @@
                           :effect (req 2)}]}
 
    "Paywall Implementation"
-   {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain-credits :corp 1))}}}
+   {:events [{:type :successful-run
+              :msg "gain 1 [Credits]" :effect (effect (gain-credits :corp 1))}]}
 
    "Peak Efficiency"
    {:msg (msg "gain " (reduce (fn [c server]
@@ -1324,7 +1340,8 @@
                          (effect-completed state side eid)))))}
 
    "Predictive Algorithm"
-   {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
+   {:events [{:type :pre-steal-cost
+              :effect (effect (steal-cost-bonus [:credit 2]))}]}
 
    "Preemptive Action"
    {:effect (effect (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) (min (count (:discard corp)) 3) true))}
@@ -1632,9 +1649,10 @@
    {:msg "increase the play cost of operations and events by 1 [Credits]"
     :persistent-effects [{:type :play-cost
                           :effect (req [:credit 1])}]
-    :events {:play-event {:once :per-turn
-                          :msg "gain 1 [Credits]"
-                          :effect (effect (gain-credits :corp 1))}}}
+    :events [{:type :play-event
+              :once :per-turn
+              :msg "gain 1 [Credits]"
+              :effect (effect (gain-credits :corp 1))}]}
 
    "Rover Algorithm"
    {:choices {:req #(and (ice? %) (rezzed? %))}
@@ -1644,8 +1662,9 @@
     :persistent-effects [{:type :ice-strength
                           :req (req (same-card? target (:host card)))
                           :effect (req (get-counters card :power))}]
-    :events {:pass-ice {:req (req (same-card? target (:host card)))
-                        :effect (effect (add-counter card :power 1))}}}
+    :events [{:type :pass-ice
+              :req (req (same-card? target (:host card)))
+              :effect (effect (add-counter card :power 1))}]}
 
    "Sacrifice"
    {:req (req (and (pos? (count-bad-pub state))
@@ -1672,9 +1691,10 @@
 
    "Scarcity of Resources"
    {:msg "increase the install cost of resources by 2"
-    :events {:pre-install {:req (req (and (resource? target)
-                                          (not (second targets)))) ; not facedown
-                           :effect (effect (install-cost-bonus [:credit 2]))}}}
+    :events [{:type :pre-install
+              :req (req (and (resource? target)
+                             (not (second targets)))) ; not facedown
+              :effect (effect (install-cost-bonus [:credit 2]))}]}
 
    "Scorched Earth"
    {:req (req tagged)
@@ -1729,8 +1749,9 @@
 
    "Service Outage"
    {:msg "add a cost of 1 [Credit] for the Runner to make the first run each turn"
-    :events {:pre-init-run {:req (req (first-event? state side :pre-init-run))
-                            :effect (effect (run-additional-cost-bonus [:credit 1]))}}}
+    :events [{:type :pre-init-run
+              :req (req (first-event? state side :pre-init-run))
+              :effect (effect (run-additional-cost-bonus [:credit 1]))}]}
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}
@@ -1848,8 +1869,9 @@
                    (update-ice-strength state side target)
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
       :leave-play (req (remove-extra-subs! state :corp (:cid card) (:host card)))
-      :events {:rez {:req (req (same-card? target (:host card)))
-                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}}})
+      :events [{:type :rez
+                :req (req (same-card? target (:host card)))
+                :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}]})
 
    "Subcontract"
    (letfn [(sc [i sccard]
@@ -1869,8 +1891,8 @@
 
    "Subliminal Messaging"
    (letfn [(subliminal []
-             {:corp-phase-12
-              {:effect
+             [{:type :corp-phase-12
+               :effect
                (req (if (not-last-turn? state :runner :made-run)
                       (do (resolve-ability state side
                                            {:optional
@@ -1883,17 +1905,18 @@
                       (do (unregister-events state side card)
                           (resolve-ability state side
                                            {:effect (effect (register-events (subliminal) (assoc card :zone '(:discard))))}
-                                           card nil))))}})]
+                                           card nil))))}])]
      {:msg "gain 1 [Credits]"
       :effect (effect (gain-credits 1)
                       (resolve-ability {:once :per-turn
                                         :once-key :subliminal-messaging
                                         :msg "gain [Click]"
-                                        :effect (effect (gain :corp :click 1))} card nil))
+                                        :effect (effect (gain :corp :click 1))}
+                                       card nil))
       :move-zone (req (if (= [:discard] (:zone card))
                         (register-events state side (subliminal) (assoc card :zone '(:discard)))
                         (unregister-events state side card)))
-      :events {:corp-phase-12 nil}})
+      :events [{:type :corp-phase-12}]})
 
    "Success"
    {:additional-cost [:forfeit]
@@ -1928,8 +1951,9 @@
                      (continue-ability state side (sun serv) card nil)))})
 
    "Surveillance Sweep"
-   {:events {:pre-init-trace {:req (req run)
-                              :effect (req (swap! state assoc-in [:trace :player] :runner))}}}
+   {:events [{:type :pre-init-trace
+              :req (req run)
+              :effect (req (swap! state assoc-in [:trace :player] :runner))}]}
 
    "Sweeps Week"
    {:effect (effect (gain-credits (count (:hand runner))))
@@ -1944,8 +1968,8 @@
                                       (not (identity? target))))}
       :effect (effect (update! (assoc card :marketing-target target))
                       (system-msg (str "uses Targeted Marketing to name " target)))
-      :events {:runner-install gaincr
-               :play-event gaincr}})
+      :events [(assoc gaincr :type :runner-install)
+               (assoc gaincr :type :play-event)]})
 
    "The All-Seeing I"
    (let [trash-all-resources
@@ -2023,10 +2047,11 @@
                                                          :zone [:discard]
                                                          :seen true))
                     (register-events
-                      {:advance {:req (req (= (:hosted card) (:hosted target)))
-                                 :effect (effect (gain-credits 1)
-                                                 (system-msg
-                                                   (str "uses Transparency Initiative to gain 1 [Credit]")))}}
+                      [{:type :advance
+                        :req (req (= (:hosted card) (:hosted target)))
+                        :effect (effect (gain-credits 1)
+                                        (system-msg
+                                          (str "uses Transparency Initiative to gain 1 [Credit]")))}]
                       target))}
 
    "Trick of Light"
@@ -2148,8 +2173,9 @@
       :effect (req (add-extra-sub! state :corp target new-sub (:cid card) {:front true})
                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
       :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
-      :events {:rez {:req (req (same-card? target (:host card)))
-                     :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card) {:front true}))}}})
+      :events [{:type :rez
+                :req (req (same-card? target (:host card)))
+                :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card) {:front true}))}]})
 
    "Witness Tampering"
    {:msg "remove 2 bad publicity"

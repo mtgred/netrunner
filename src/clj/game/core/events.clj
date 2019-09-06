@@ -9,10 +9,10 @@
   "Registers each event handler defined in the given card definition.
   Also registers any suppression events. (Crisium Grid.)"
   [state side events card]
-  (let [abilities (for [[event ability] events]
-                    {:type event
+  (let [abilities (for [ability events]
+                    {:type (:type ability)
                      :duration :persistent
-                     :ability ability
+                     :ability (dissoc ability :type)
                      :card card
                      :uuid (uuid/v1)})]
     (swap! state update :events
@@ -27,7 +27,7 @@
    (let [cdef (or part-def (card-def card))
          ;; Combine normal events and derezzed events. Any merge conflicts should not matter
          ;; as they should cause all relevant events to be removed anyway.
-         abilities (map first (merge (:events cdef) (:derezzed-events cdef)))]
+         abilities (map :type (concat (:events cdef) (:derezzed-events cdef)))]
      (swap! state assoc :events
             (->> (:events @state)
                  (remove #(and (same-card? card (:card %))

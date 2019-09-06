@@ -460,14 +460,9 @@
 ;; hooks up breaker-auto-pump to the necessary events.
 ;; IMPORTANT: Events on cdef take precedence, and should call
 ;; (:effect breaker-auto-pump) themselves.
-(defn auto-icebreaker [cdef]
-  (assoc cdef
-         :events (merge {:run breaker-auto-pump
-                         :pass-ice breaker-auto-pump
-                         :run-ends breaker-auto-pump
-                         :ice-strength-changed breaker-auto-pump
-                         :ice-subtype-changed breaker-auto-pump
-                         :breaker-strength-changed breaker-auto-pump
-                         :approach-ice breaker-auto-pump
-                         :subroutines-changed breaker-auto-pump}
-                        (:events cdef))))
+(let [events (for [event [:run :approach-ice :pass-ice :run-ends
+                          :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
+                          :subroutines-changed]]
+               (assoc breaker-auto-pump :type event))]
+  (defn auto-icebreaker [cdef]
+    (assoc cdef :events (apply conj events (:events cdef)))))

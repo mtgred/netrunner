@@ -33,7 +33,8 @@
 (def corp-rez-toast
   "Effect to be placed with `:runner-turn-ends` to remind players of 'when turn begins'
   triggers"
-  {:effect (req (toast state :corp "Reminder: You have unrezzed cards with \"when turn begins\" abilities." "info"))})
+  {:type :runner-turn-ends
+   :effect (req (toast state :corp "Reminder: You have unrezzed cards with \"when turn begins\" abilities." "info"))})
 
 (declare reorder-final) ; forward reference since reorder-choice and reorder-final are mutually recursive
 
@@ -169,11 +170,12 @@
 (defn trash-on-empty
   "Used in :event maps for effects like Daily Casts"
   [counter-type]
-  {:counter-added {:req (req (and (same-card? card target)
-                                  (not (pos? (get-counters card counter-type)))))
-                   :async true
-                   :effect (effect (system-msg (str "trashes " (:title card)))
-                                   (trash eid card {:unpreventable true}))}})
+  {:type :counter-added
+   :req (req (and (same-card? card target)
+                  (not (pos? (get-counters card counter-type)))))
+   :async true
+   :effect (effect (system-msg (str "trashes " (:title card)))
+                   (trash eid card {:unpreventable true}))})
 
 (defn pick-virus-counters-to-spend
   "Pick virus counters to spend. For use with Freedom Khumalo and virus breakers, and any other relevant cards.
