@@ -520,6 +520,7 @@
         (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon, +1 from installing onto Scheherazade"))
       (is (zero? (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
       (take-credits state :runner)
+      (click-prompt state :runner "Chameleon")
       (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2")))
   (testing "Can break subroutines only on chosen subtype"
     (do-game

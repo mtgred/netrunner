@@ -609,6 +609,7 @@
     :effect (effect (update! (assoc card :subtype-target target)))
     :events [{:type :runner-turn-ends
               :msg "add itself to Grip"
+              :interactive (req true)
               :effect (effect (move card :hand))}]
     :abilities [(merge
                   (break-sub 1 1 "All" {:req (req (and (<= (get-strength current-ice) (get-strength card))

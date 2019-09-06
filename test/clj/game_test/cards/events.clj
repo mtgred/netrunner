@@ -541,30 +541,45 @@
       (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
   (testing "Effect persists when moved from discard"
     (do-game
-     (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"}
-                :runner {:deck [(qty "By Any Means" 2)]}})
-     (take-credits state :corp)
-     (play-from-hand state :runner "By Any Means")
-     (card-ability state :corp (get-in @state [:corp :identity]) 0)
-     (click-prompt state :corp (find-card "By Any Means" (:discard (get-runner))))
-     (is (= 1 (count (get-in @state [:runner :rfg]))) "By Any Means RFGed")
-     (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
-     (is (= 1 (count (:hand (get-runner)))) "No damage yet")
-     (run-empty-server state "HQ")
-     (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
-     (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
+      (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck [(qty "By Any Means" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "By Any Means")
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (click-prompt state :corp (find-card "By Any Means" (:discard (get-runner))))
+      (is (= 1 (count (get-in @state [:runner :rfg]))) "By Any Means RFGed")
+      (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
+      (is (= 1 (count (:hand (get-runner)))) "No damage yet")
+      (run-empty-server state "HQ")
+      (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
+      (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
   (testing "Effect does not persist between turns"
     (do-game
-     (new-game {:runner {:deck [(qty "By Any Means" 2)]}})
-     (take-credits state :corp)
-     (play-from-hand state :runner "By Any Means")
-     (take-credits state :runner)
-     (take-credits state :corp)
-     (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
-     (is (= 1 (count (:hand (get-runner)))) "No damage yet")
-     (run-empty-server state "HQ")
-     (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
-     (is (= 1 (count (:hand (get-runner)))) "No damage"))))
+      (new-game {:runner {:deck [(qty "By Any Means" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "By Any Means")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
+      (is (= 1 (count (:hand (get-runner)))) "No damage yet")
+      (run-empty-server state "HQ")
+      (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
+      (is (= 1 (count (:hand (get-runner)))) "No damage")))
+  (testing "Effect persists when moved from discard"
+    (do-game
+      (new-game {:corp {:hand ["Hedge Fund"]}
+                 :runner {:hand [(qty "By Any Means" 2) "Levy AR Lab Access"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "By Any Means")
+      (play-from-hand state :runner "Levy AR Lab Access")
+      (is (= ["By Any Means" "By Any Means"] (->> (get-runner) :hand (mapv :title))) "By Any Means back in the grip")
+      (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
+      (is (= 2 (count (:hand (get-runner)))) "No damage yet")
+      (run-empty-server state "HQ")
+      (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
+      (is (= 1 (count (:hand (get-runner)))) "Took 1 meat damage"))))
 
 (deftest careful-planning
   ;; Careful Planning - Prevent card in/protecting remote server from being rezzed this turn

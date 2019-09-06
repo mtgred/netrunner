@@ -1416,9 +1416,9 @@
                  :msg (msg "add " (:title target) " to their Grip")
                  :effect (effect (move target :hand))}]
     :events [{:type :runner-turn-ends
-              :effect (req (doseq [c (:hosted card)]
-                             (when (program? c)
-                               (trash state side c))))}]}
+              :interactive (req true)
+              :async true
+              :effect (effect (trash-cards eid (filter program? (:hosted card)) nil))}]}
 
    "Maxwell James"
    {:in-play [:link 1]

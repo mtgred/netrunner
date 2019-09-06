@@ -229,11 +229,10 @@
     :effect (effect (gain-credits 1) (draw eid 2 nil))}
 
    "By Any Means"
-   {:effect (effect (register-events (dissoc card :zone)))
-    :events [{:type :runner-turn-ends
-              :effect (effect (unregister-events card))}
-             {:type :access
-              :req (req (not= [:discard] (:zone target)))
+   {:effect (effect (register-events card))
+    :events [{:type :access
+              :duration :end-of-turn
+              :req (req (not (in-discard? target)))
               :interactive (req true)
               :async true
               :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")

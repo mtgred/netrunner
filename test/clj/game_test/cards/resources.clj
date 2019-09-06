@@ -2159,6 +2159,7 @@
       (is (= 3 (count (:hosted (refresh lib)))) "3 programs hosted")
       (is (zero? (count (:discard (get-runner)))) "Nothing in archives yet")
       (take-credits state :runner)
+      (click-prompt state :runner "Chameleon") ; Simultaneous resolution
       (is (zero? (count (:hosted (refresh lib)))) "All programs trashed when turn ends")
       (is (= 2 (count (:hand (get-runner)))) "Darwin never got played, Chameleon returned to hand")
       (is (= 2 (count (:discard (get-runner)))) "Femme Fatale and Study Guide trashed"))))

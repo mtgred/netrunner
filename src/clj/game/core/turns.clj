@@ -234,10 +234,11 @@
      (when (and (= side :runner)
                 (neg? (hand-size state side)))
        (flatline state))
-     (wait-for (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil)
+     (wait-for (trigger-event-simult state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil nil)
                (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
                (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
                (remove-floating-effects state :end-of-turn)
+               (unregister-floating-events state side :end-of-turn)
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended
                  (when (= :this-turn (installed? card))
