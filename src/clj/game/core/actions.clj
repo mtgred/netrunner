@@ -506,85 +506,79 @@
   ([state side card args]
    (rez state side (make-eid state) card args))
   ([state side eid {:keys [disabled] :as card}
-    {:keys [ignore-cost no-warning force no-get-card paid-alt cached-bonus no-msg] :as args}]
+    {:keys [ignore-cost no-warning force declined-alternative-cost paid-alt no-msg
+            cost-bonus] :as args}]
    (let [eid (eid-set-defaults eid :source nil :source-type :rez)
-         card (if no-get-card
-                card
-                (get-card state card))
-         altcost (when (and card (not no-get-card))
-                   (:alternative-cost (card-def card)))]
-     (when cached-bonus (rez-cost-bonus state side cached-bonus))
-     (if (and card (or force (can-rez? state side card)))
-       (do
-         (trigger-event state side :pre-rez card)
-         (if (or (#{"Asset" "ICE" "Upgrade"} (:type card))
-                   (:install-rezzed (card-def card)))
-           (do (when-not (= ignore-cost :all-costs)
-                 (trigger-event state side :pre-rez-cost card))
-               (if (and altcost
-                        (not ignore-cost)
-                        (can-pay? state side eid card nil altcost))
-                 (let [curr-bonus (get-rez-cost-bonus state side)]
-                   (continue-ability
-                     state side
-                     {:optional
-                      {:prompt "Pay the alternative Rez cost?"
-                       :yes-ability
-                       {:cost altcost
-                        :async true
-                        :effect
-                        (effect (rez eid (dissoc card :alternative-cost)
-                                     (merge args {:ignore-cost true
-                                                  :no-get-card true
-                                                  :paid-alt true})))}
-                       :no-ability
-                       {:async true
-                        :effect
-                        (effect (rez eid (dissoc card :alternative-cost)
-                                     (merge args {:no-get-card true
-                                                  :cached-bonus curr-bonus})))}}}
-                   card nil))
-                 (let [cdef (card-def card)
-                       cost (rez-cost state side card)
-                       additional-costs (concat (:additional-cost cdef)
-                                                (:additional-cost card)
-                                                (get-rez-additional-cost-bonus state side))
-                       costs (concat (when-not ignore-cost
-                                       [:credit cost])
-                                     (when (and (not= ignore-cost :all-costs)
-                                                (not (:disabled card)))
-                                       additional-costs))]
-                   (wait-for (pay-sync state side (make-eid state eid) card costs)
-                             (when-let [cost-str (and (string? async-result) async-result)]
-                               ;; Deregister the derezzed-events before rezzing card
-                               (when (:derezzed-events cdef)
-                                 (unregister-events state side card))
-                               (if-not disabled
-                                 (card-init state side (assoc card :rezzed :this-turn))
-                                 (update! state side (assoc card :rezzed :this-turn)))
-                               (doseq [h (:hosted card)]
-                                 (update! state side (-> h
-                                                         (update-in [:zone] #(map to-keyword %))
-                                                         (update-in [:host :zone] #(map to-keyword %)))))
-                               (when-not no-msg
-                                 (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
-                                                             (:title card)
-                                                             (cond
-                                                               paid-alt " by paying its alternative cost"
-                                                               ignore-cost " at no cost"))))
-                               (when (and (not no-warning) (:corp-phase-12 @state))
-                                 (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
-                                                    Please rez prior to clicking Start Turn in the future." "warning"
-                                        {:time-out 0 :close-button true}))
-                               (if (ice? card)
-                                 (do (update-ice-strength state side card)
-                                     (play-sfx state side "rez-ice"))
-                                 (play-sfx state side "rez-other"))
-                               (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
-                               (trigger-event-sync state side eid :rez card))))))
-           (effect-completed state side eid))
-         (swap! state update-in [:bonus] dissoc :cost :rez))
-       (effect-completed state side eid)))))
+         card (get-card state card)
+         alternative-cost (when (and card
+                                     (not paid-alt)
+                                     (not declined-alternative-cost))
+                            (:alternative-cost (card-def card)))]
+     (if (and card
+              (or force
+                  (can-rez? state side card))
+              (or (asset? card)
+                  (ice? card)
+                  (upgrade? card)
+                  (:install-rezzed (card-def card))))
+       (if (and alternative-cost
+                (not ignore-cost)
+                (can-pay? state side eid card nil alternative-cost))
+         (continue-ability
+           state side
+           {:optional
+            {:prompt "Pay the alternative Rez cost?"
+             :yes-ability
+             {:cost alternative-cost
+              :async true
+              :effect
+              (effect (rez eid card (merge args {:ignore-cost true
+                                                 :paid-alt true})))}
+             :no-ability
+             {:async true
+              :effect
+              (effect (rez eid card (merge args {:declined-alternative-cost true})))}}}
+           card nil)
+         (let [cdef (card-def card)
+               cost (rez-cost state side card)
+               additional-costs (rez-additional-cost-bonus state side card)
+               costs (concat (when-not ignore-cost
+                               [[:credit cost]])
+                             (when-not ignore-cost
+                               cost-bonus)
+                             (when (and (not= ignore-cost :all-costs)
+                                        (not (:disabled card)))
+                               additional-costs))]
+           (wait-for (pay-sync state side (make-eid state eid) card costs)
+                     (if-let [cost-str (and (string? async-result) async-result)]
+                       (do (when (:derezzed-events cdef)
+                             (unregister-events state side card))
+                           (if-not disabled
+                             (card-init state side (assoc card :rezzed :this-turn))
+                             (update! state side (assoc card :rezzed :this-turn)))
+                           (doseq [h (:hosted card)]
+                             (update! state side (-> h
+                                                     (update-in [:zone] #(map to-keyword %))
+                                                     (update-in [:host :zone] #(map to-keyword %)))))
+                           (when-not no-msg
+                             (system-msg state side
+                                         (str (build-spend-msg cost-str "rez" "rezzes")
+                                              (:title card)
+                                              (cond
+                                                paid-alt " by paying its alternative cost"
+                                                ignore-cost " at no cost"))))
+                           (when (and (not no-warning) (:corp-phase-12 @state))
+                             (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
+                                                Please rez prior to clicking Start Turn in the future." "warning"
+                                    {:time-out 0 :close-button true}))
+                           (if (ice? card)
+                             (do (update-ice-strength state side card)
+                                 (play-sfx state side "rez-ice"))
+                             (play-sfx state side "rez-other"))
+                           (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
+                           (trigger-event-sync state side eid :rez card))
+                       (effect-completed state side eid))))
+         (effect-completed state side eid)))))
 
 (defn derez
   "Derez a corp card."

@@ -1,6 +1,7 @@
 (ns game.cards.events
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
+            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -170,17 +171,20 @@
                          :effect (req (make-run state side target nil card)
                                       (let [run-ices (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices]))
                                             foremost-ice (last (remove rezzed? run-ices))]
-                                        (update! state side (assoc foremost-ice :bribery true))
+                                        (create-floating-effect
+                                          state card
+                                          {:type :rez-additional-cost
+                                           :duration :end-of-run
+                                           :req (req (and (same-card? foremost-ice target)
+                                                          (not (get-in @state [:per-run (:cid card)]))))
+                                           :effect (req [:credit bribery-x])})
                                         (register-events
-                                          state side (assoc card :zone '(:discard))
-                                          [{:type :pre-rez-cost
-                                            :req (req (:bribery target))
-                                            :once :per-turn
-                                            :effect (effect (rez-additional-cost-bonus [:credit bribery-x]))}
-                                           {:type :run-ends
-                                            :effect (effect (unregister-events card [{:type :pre-rez-cost}
-                                                                                     {:type :run-ends}])
-                                                            (update! (dissoc (find-latest state foremost-ice) :bribery)))}])))})
+                                          state side card
+                                          [{:type :rez
+                                            :duration :end-of-run
+                                            :req (req (and (same-card? foremost-ice target)
+                                                           (not (get-in @state [:per-run (:cid card)]))))
+                                            :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}])))})
                       card nil))}
 
    "Brute-Force-Hack"
@@ -189,24 +193,17 @@
                      (for [ice (all-installed state :corp)
                            :when (and (ice? ice)
                                       (rezzed? ice))]
-                       (let [_ (trigger-event state side :pre-rez-cost ice)
-                             cost (rez-cost state side ice)
-                             _ (swap! state update-in [:bonus] dissoc :cost :rez)]
-                         (when (<= cost (:credit runner))
-                           true))))))
+                       (can-pay? state side eid card nil [:credit (rez-cost state side ice)])))))
     :effect
-    (req (let [credits (:credit runner)
-               affordable-ice
+    (req (let [affordable-ice
                (seq (filter
                       some?
                       (for [ice (all-installed state :corp)
                             :when (and (ice? ice)
-                                       (rezzed? ice))]
-                        (let [_ (trigger-event state side :pre-rez-cost ice)
-                              cost (rez-cost state side ice)
-                              _ (swap! state update-in [:bonus] dissoc :cost :rez)]
-                          (when (<= cost credits)
-                            [(:cid ice) cost])))))]
+                                       (rezzed? ice))
+                            :let [cost (rez-cost state side ice)]]
+                        (when (can-pay? state side eid card nil [:credit cost])
+                          [(:cid ice) cost]))))]
            (continue-ability
              state side
              {:prompt "How many [Credits]?"
@@ -941,7 +938,9 @@
                      {:prompt (msg "Rez " (:title ice) " at position " icepos
                                    " of " serv " or trash it?") :choices ["Rez" "Trash"]
                       :effect (effect (resolve-ability
-                                        (if (and (= target "Rez") (<= (rez-cost state :corp ice) (:credit corp)))
+                                        (if (and (= target "Rez")
+                                                 (<= (rez-cost state :corp ice)
+                                                     (:credit corp)))
                                           {:msg (msg "force the rez of " (:title ice))
                                            :effect (effect (rez :corp ice))}
                                           {:msg (msg "trash the ICE at position " icepos " of " serv)
@@ -1069,9 +1068,9 @@
                  (gain-credits state :runner 10))}
 
    "Hacktivist Meeting"
-   {:events [{:type :pre-rez-cost
-              :req (req (not (ice? target)))
-              :effect (effect (rez-additional-cost-bonus [:randomly-trash-from-hand 1]))}]}
+   {:persistent-effects [{:type :rez-additional-cost
+                          :req (req (not (ice? target)))
+                          :effect (req [:randomly-trash-from-hand 1])}]}
 
    "High-Stakes Job"
    (run-event
@@ -2080,24 +2079,22 @@
 
    "Run Amok"
    {:implementation "Ice trash is manual"
-    :prompt "Choose a server" :choices (req runnable-servers)
+    :prompt "Choose a server"
+    :choices (req runnable-servers)
     :makes-run true
     :effect (effect (make-run target {:end-run {:msg " trash 1 piece of ICE that was rezzed during the run"}} card))}
 
    "Running Interference"
    (run-event
-     {:events [{:type :pre-rez-cost}
-               {:type :run-ends}]}
      nil
      nil
-     (effect (register-events
-               (assoc card :zone '(:discard))
-               [{:type :pre-rez-cost
-                 :req (req (ice? target))
-                 :msg (msg "double the cost (as an additional cost) to rez " (card-str state target))
-                 :effect (effect (rez-additional-cost-bonus [:credit (:cost target)]))}
-                {:type :run-ends
-                 :effect (effect (unregister-events card))}])))
+     nil
+     (req (create-floating-effect
+            state card
+            {:type :rez-additional-cost
+             :duration :end-of-run
+             :req (req (ice? target))
+             :effect (req [:credit (:cost target)])})))
 
    "Satellite Uplink"
    {:choices {:max 2 :req installed?}
@@ -2167,25 +2164,20 @@
 
    "Social Engineering"
    {:prompt "Select an unrezzed piece of ICE"
-    :choices {:req #(and (= (last (:zone %)) :ices) (not (rezzed? %)) (ice? %))}
-    :effect (req (let [ice target
-                       serv (zone->name (second (:zone ice)))]
-                   (resolve-ability
-                     state :runner
-                     {:msg (msg "select the piece of ICE at position " (ice-index state ice) " of " serv)
-                      :effect (effect (register-events
-                                        (assoc card :zone '(:discard))
-                                        [{:type :runner-turn-ends
-                                          :effect (effect (unregister-events
-                                                            card
-                                                            {:events [{:type :pre-rez-cost}
-                                                                      {:type :runner-turn-ends}]}))}
-                                         {:type :pre-rez-cost
-                                          :req (req (= target ice))
-                                          :effect (req (let [cost (rez-cost state side (get-card state target))]
-                                                         (gain-credits state :runner cost)))
-                                          :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")}]))}
-                     card nil)))}
+    :choices {:req #(and (not (rezzed? %))
+                         (ice? %))}
+    :effect (effect
+              (continue-ability
+                (let [ice target]
+                  {:msg (msg "select " (card-str state ice))
+                   :effect (effect (register-events
+                                     card
+                                     [{:type :rez
+                                       :duration :end-of-turn
+                                       :req (req (= target ice))
+                                       :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")
+                                       :effect (effect (gain-credits :runner (rez-cost state side (get-card state target))))}]))})
+                card nil))}
 
    "Spear Phishing"
    {:implementation "Bypass is manual"

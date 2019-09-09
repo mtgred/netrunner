@@ -43,18 +43,18 @@
 ;; Card definitions
 (def card-definitions
   {"Akitaro Watanabe"
-   {:events [{:type :pre-rez-cost
-              :req (req (and (ice? target)
-                             (= (card->server state card) (card->server state target))))
-              :effect (effect (rez-cost-bonus -2))}]}
+   {:persistent-effects [{:type :rez-cost
+                          :req (req (and (ice? target)
+                                         (= (card->server state card) (card->server state target))))
+                          :effect (req [:credit -2])}]}
 
    "Amazon Industrial Zone"
    {:events [{:type :corp-install
               :optional
               {:req (req (and (ice? target)
                               (protecting-same-server? card target)))
-               :prompt "Rez ICE with rez cost lowered by 3?" :priority 2
-               :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}]}
+               :prompt "Rez ICE with rez cost lowered by 3?"
+               :yes-ability {:effect (effect (rez eid target {:cost-bonus [:credit -3]}))}}}]}
 
    "Arella Salvatore"
    (let [select-ability
@@ -103,18 +103,18 @@
                 {:req (req (and this-server
                                 (zero? (get-in @state [:run :position]))))
                  :label "Rez a hosted piece of Bioroid ICE"
-                 :prompt "Choose a piece of Bioroid ICE to rez" :choices (req (:hosted card))
+                 :prompt "Choose a piece of Bioroid ICE to rez"
+                 :choices (req (:hosted card))
                  :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
-                 :effect (effect (rez-cost-bonus -7) (rez target)
+                 :effect (effect (rez eid target {:cost-bonus [:credit -7]})
                                  (update! (dissoc (get-card state target) :facedown))
                                  (register-events
                                    card
-                                   [{:type :run-ends
-                                     :effect (req (doseq [c (:hosted card)]
-                                                    (when (:rezzed c)
-                                                      (trash state side c)))
-                                                  (unregister-events state side card))}]))}]
-    :events [{:type :run-ends}]}
+                                   (let [ice target]
+                                     [{:type :run-ends
+                                       :duration :end-of-run
+                                       :req (req (get-card state ice))
+                                       :effect (req (trash state side (get-card state ice)))}])))}]}
 
    "Bamboo Dome"
    (letfn [(dome [dcard]
@@ -211,9 +211,9 @@
                                 card nil))}]}
 
    "Breaker Bay Grid"
-   {:events [{:type :pre-rez-cost
-              :req (req (in-same-server? card target))
-              :effect (effect (rez-cost-bonus -5))}]}
+   {:persistent-effects [{:type :rez-cost
+                          :req (req (in-same-server? card target))
+                          :effect (req [:credit -5])}]}
 
    "Bryan Stinson"
    {:abilities [{:cost [:click 1]
@@ -1281,15 +1281,14 @@
                              (not (same-card? target card))
                              (seq (filter #(and (not (rezzed? %))
                                                 (not (agenda? %))) (all-installed state :corp)))))
-              :effect (effect (resolve-ability
+              :effect (effect (continue-ability
                                 {:optional
                                  {:prompt (msg "Rez another card with Surat City Grid?")
                                   :yes-ability {:prompt "Select a card to rez"
                                                 :choices {:req #(and (not (rezzed? %))
                                                                      (not (agenda? %)))}
                                                 :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
-                                                :effect (effect (rez-cost-bonus -2)
-                                                                (rez target))}}}
+                                                :effect (effect (rez eid target {:cost-bonus [:credit -2]}))}}}
                                 card nil))}]}
 
    "Tempus"

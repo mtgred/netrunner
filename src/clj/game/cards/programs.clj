@@ -1116,13 +1116,12 @@
                                 (not (rezzed? current-ice))))
                  :msg "make the Corp rez the passed ICE or add it to HQ"
                  :effect (req (let [s (:server run)
-                                    ice (nth (get-in @state (vec (concat [:corp :servers] s [:ices]))) (:position run))
-                                    icename (:title ice)
-                                    icecost (rez-cost state side ice)]
+                                    ice (nth (get-in @state (vec (concat [:corp :servers] s [:ices]))) (:position run))]
                                 (continue-ability
                                   state side
-                                  {:prompt (msg "Rez " icename " or add it to HQ?") :player :corp
-                                   :choices (req (if (< (:credit corp) icecost)
+                                  {:prompt (msg "Rez " (:title ice) " or add it to HQ?")
+                                   :player :corp
+                                   :choices (req (if (< (:credit corp) (rez-cost state side ice))
                                                    ["Add to HQ"]
                                                    ["Rez" "Add to HQ"]))
                                    :effect (req (if (= target "Rez")
@@ -2051,9 +2050,10 @@
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
                                    :msg (msg "host it on " (card-str state target))
                                    :effect (effect (host target card))} card nil)))}]
-    :events [{:type :pre-rez-cost
-              :req (req (= (:zone (:host card)) (:zone target)))
-              :effect (effect (rez-cost-bonus 2))}]}
+    :persistent-effects [{:type :rez-cost
+                          :req (req (and (ice? target)
+                                         (= (:zone (:host card)) (:zone target))))
+                          :effect (req [:credit 2])}]}
 
    "Sadyojata"
    (swap-with-in-hand "Sadyojata"

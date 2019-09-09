@@ -319,11 +319,12 @@
     (all-active-pay-credit-cards state side eid card)))
 
 (defn pay-credits
+  "All credit-based costs should go through this function"
   [state side eid card amount]
   (let [provider-func #(eligible-pay-credit-cards state side eid card)]
     (cond
       (and (pos? amount)
-             (pos? (count (provider-func))))
+           (pos? (count (provider-func))))
       (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid amount) card nil)
                 (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
                 (complete-with-result state side eid (str "pays " (:msg async-result))))
@@ -669,37 +670,40 @@
                                                           (join " and "))))
       (complete-with-result state side eid nil))))
 
-(defn play-cost [state side card all-cost]
-  (vec (map #(if (keyword? %) % (max % 0))
-            (-> (concat all-cost
-                        (get-effects state side card :play-cost)
-                        (get-effects state side card :play-additional-cost)
-                        (when-let [playfun (:play-cost-bonus (card-def card))]
-                          (playfun state side (make-eid state) card nil)))
-                merge-costs
-                flatten))))
+(defn play-cost
+  [state side card all-cost]
+  "Combines all relevant effects and costs to play a given card"
+  (->> (concat all-cost
+               (get-effects state side card :play-cost)
+               (get-effects state side card :play-additional-cost)
+               (when-let [playfun (:play-cost-bonus (card-def card))]
+                 (playfun state side (make-eid state) card nil)))
+       merge-costs
+       flatten
+       (map #(if (keyword? %) % (max % 0)))
+       (into [])))
 
-(defn rez-cost-bonus [state side n]
-  (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
-
-(defn get-rez-cost-bonus [state side]
-  (get-in @state [:bonus :cost] 0))
+(defn rez-cost
+  "Combines all rez effects and costs into a single number, not a cost vector"
+  [state side {:keys [cost] :as card}]
+  (when-not (nil? cost)
+    (->> (concat [:credit cost]
+                 (get-effects state side card :rez-cost)
+                 (when-let [rezfun (:rez-cost-bonus (card-def card))]
+                   (rezfun state side (make-eid state) card nil)))
+         merge-costs
+         flatten
+         second
+         (max 0))))
 
 (defn rez-additional-cost-bonus
-  [state side n]
-  (swap! state update-in [:bonus :rez :additional-cost] #(merge-costs (concat % n))))
+  [state side card]
+  (merge-costs
+    (concat (:additional-cost card)
+            (:additional-cost (card-def card))
+            (get-effects state side card :rez-additional-cost))))
 
-(defn get-rez-additional-cost-bonus
-  [state side]
-  (get-in @state [:bonus :rez :additional-cost]))
-
-(defn rez-cost [state side {:keys [cost] :as card}]
-  (when-not (nil? cost)
-    (-> (if-let [rezfun (:rez-cost-bonus (card-def card))]
-          (+ cost (rezfun state side (make-eid state) card nil))
-          cost)
-        (+ (get-rez-cost-bonus state side))
-        (max 0))))
+;;; Converted to use effects go above
 
 (defn run-additional-cost-bonus
   [state side & n]

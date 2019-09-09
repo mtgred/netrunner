@@ -533,24 +533,24 @@
                            (toast state :corp (str "Runner has the opportunity to derez with Councilman.") "error"))}]
     :abilities [{:prompt "Select an asset or upgrade that was just rezzed"
                  :choices {:req #(and (rezzed? %)
-                                      (or (asset? %) (upgrade? %)))}
-                 :effect (req (let [c target
-                                    creds (rez-cost state :corp c)]
-                                (when (can-pay? state side eid card nil [:credit creds])
-                                  (resolve-ability
-                                    state :runner
-                                    {:msg (msg "pay " creds " [Credit] and derez " (:title c) ". Councilman is trashed")
-                                     :effect (req (lose-credits state :runner creds)
-                                                  (derez state :corp c)
-                                                  (register-turn-flag!
-                                                    state side card :can-rez
-                                                    (fn [state side card]
-                                                      (if (same-card? card c)
-                                                        ((constantly false)
-                                                         (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
-                                                        true)))
-                                                  (trash state side card {:unpreventable true}))}
-                                    card nil))))}]}
+                                      (or (asset? %)
+                                          (upgrade? %)))}
+                 :effect (effect
+                           (continue-ability
+                             :runner
+                             (let [c target]
+                               {:cost [:credit (rez-cost state :corp c)]
+                                :msg (msg "derez " (:title c))
+                                :effect (req (derez state :corp c)
+                                             (register-turn-flag!
+                                               state side card :can-rez
+                                               (fn [state side card]
+                                                 (if (same-card? card c)
+                                                   ((constantly false)
+                                                    (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
+                                                   true)))
+                                             (trash state side card {:unpreventable true}))})
+                             card nil))}]}
 
    "Counter Surveillance"
    {:implementation "Does not prevent access of cards installed in the root of a server"
@@ -1121,12 +1121,10 @@
       :abilities [ability]})
 
    "Hernando Cortez"
-   {:events [{:type :pre-rez-cost
-              :req (req (and (<= 10 (:credit corp))
-                             (ice? target)))
-              :effect (effect (rez-additional-cost-bonus
-                                [:credit (count (:subroutines target))]))
-              :msg (msg "increase the rez cost by " (count (:subroutines target)) " [Credit]")}]}
+   {:persistent-effects [{:type :rez-additional-cost
+                          :req (req (and (<= 10 (:credit corp))
+                                         (ice? target)))
+                          :effect (req [:credit (count (:subroutines target))])}]}
 
    "Human First"
    {:events [{:type :agenda-scored
@@ -2595,9 +2593,9 @@
                  :effect (effect (draw eid 2 nil))}]}
 
    "Xanadu"
-   {:events [{:type :pre-rez-cost
-              :req (req (ice? target))
-              :effect (effect (rez-cost-bonus 1))}]}
+   {:persistent-effects [{:type :rez-cost
+                          :req (req (ice? target))
+                          :effect (req [:credit 1])}]}
 
    "Zona Sul Shipping"
    (trash-when-tagged-contructor

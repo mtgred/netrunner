@@ -1714,13 +1714,10 @@
         (is (= 11 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
         (core/rez state :corp pw1)
         (is (= 10 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
-        (is (second-last-log-contains? state "increase the rez cost by 1 \\[Credit\\]") "Hernando Cortez use was logged")
         (core/rez state :corp pw2)
         (is (= 9 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
-        (is (second-last-log-contains? state "increase the rez cost by 1 \\[Credit\\]") "Hernando Cortez use was logged")
         (core/rez state :corp pw3)
-        (is (= 9 (:credit (get-corp))) "Paid 0 to rez Paper Wall")
-        (is (not (second-last-log-contains? state "increase the rez cost by 1 \\[Credit\\]")) "Hernando Cortez use was not logged"))))
+        (is (= 9 (:credit (get-corp))) "Paid 0 to rez Paper Wall"))))
   (testing "Rezzing a three subroutine ICE"
     (do-game
       (new-game {:corp {:deck [(qty "Ichi 1.0" 2) "Launch Campaign"]}
@@ -1744,10 +1741,8 @@
         (is (= 13 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
         (core/rez state :corp ichi1)
         (is (= 5 (:credit (get-corp))) "Paid 8 instead of 5 to rez Ichi 1.0")
-        (is (second-last-log-contains? state "increase the rez cost by 3 \\[Credit\\]") "Hernando Cortez use was logged")
         (core/rez state :corp ichi2)
-        (is (= 0 (:credit (get-corp))) "Paid 5 to rez Ichi 1.0")
-        (is (not (second-last-log-contains? state "increase the rez cost by 3 \\[Credit\\]")) "Hernando Cortez use was not logged"))))
+        (is (= 0 (:credit (get-corp))) "Paid 5 to rez Ichi 1.0"))))
   (testing "Rezzing a zero subroutine ICE"
     (do-game
       (new-game {:corp {:deck ["Tour Guide" "NEXT Silver" "Launch Campaign"]}
@@ -1771,10 +1766,8 @@
         (is (= 12 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
         (core/rez state :corp tour-guide)
         (is (= 10 (:credit (get-corp))) "Paid 2 to rez Tour Guide")
-        (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged")
         (core/rez state :corp next-silver)
-        (is (= 7 (:credit (get-corp))) "Paid 3 to rez NEXT Silver")
-        (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged"))))
+        (is (= 7 (:credit (get-corp))) "Paid 3 to rez NEXT Silver"))))
   (testing "interactions with non-rez abilities, such as Blue Sun. Issue #4000"
     (do-game
       (new-game {:corp {:id "Blue Sun: Powering the Future"

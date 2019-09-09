@@ -1,6 +1,7 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
+            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -100,15 +101,11 @@
     :events [{:type :expose
               :msg (msg "attempt to force the rez of " (:title target))
               :async true
-              :effect (req (trigger-event state side :pre-rez-cost target)
-                           (let [c target
+              :effect (req (let [c target
                                  cdef (card-def c)
                                  cname (:title c)
                                  cost (rez-cost state side target)
-                                 additional-costs (concat (:additional-cost cdef)
-                                                          (:additional-cost card)
-                                                          (get-rez-additional-cost-bonus state side))]
-                             (swap! state update-in [:bonus] dissoc :cost :rez)
+                                 additional-costs (rez-additional-cost-bonus state side target)]
                              (if (seq additional-costs)
                                (do (show-wait-prompt state :runner (str "Corp to decide if they will rez " cname))
                                    (continue-ability
@@ -256,25 +253,18 @@
 
    "Cortez Chip"
    {:abilities [{:prompt "Select a piece of ICE"
-                 :choices {:req ice?}
-                 :msg (msg "trashes Cortez Chip to increase the rez cost of " (card-str state target)
+                 :choices {:req #(and (ice? %)
+                                      (not (rezzed? %)))}
+                 :msg (msg "increase the rez cost of " (card-str state target)
                            " by 2 [Credits] until the end of the turn")
                  :cost [:trash]
-                 :effect (effect (update! (assoc card
-                                                 :zone '(:discard)
-                                                 :cortez-target target)))}]
-    :trash-effect {:effect (effect (register-events
-                                     (get-card state card)
-                                     [{:type :pre-rez
-                                       :req (req (same-card? target (:cortez-target card)))
-                                       :effect (effect (rez-additional-cost-bonus [:credit 2]))}
-                                      {:type :runner-turn-ends
-                                       :effect (effect (unregister-events card))}
-                                      {:type :corp-turn-ends
-                                       :effect (effect (unregister-events card))}]))}
-    :events [{:type :pre-rez}
-             {:type :runner-turn-ends}
-             {:type :corp-turn-ends}]}
+                 :effect (req (create-floating-effect
+                                state card
+                                (let [ice target]
+                                  {:type :rez-additional-cost
+                                   :duration :end-of-turn
+                                   :req (req (same-card? target ice))
+                                   :effect (req [:credit 2])})))}]}
 
    "Cyberdelia"
    {:implementation "Credit gain is manually triggered."

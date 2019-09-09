@@ -1717,25 +1717,23 @@
       (run-on state "HQ")
       (let [iwall (get-ice state :hq 0)
             nasir (get-in @state [:runner :identity])]
+        (is (= 5 (:credit (get-runner))))
         (core/rez state :corp iwall)
-        (is (= 5 (:credit (get-runner))) "Nasir Ability does not trigger automatically")
-        (card-ability state :runner nasir 0)
         (is (= 1 (:credit (get-runner))) "Credits at 1 after Nasir ability trigger"))))
   (testing "with Xanadu"
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}
                  :runner {:id "Nasir Meidan: Cyber Explorer"
-                          :deck ["Xanadu"]}})
+                          :deck ["Xanadu"]
+                          :credits 6}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
-      (swap! state assoc-in [:runner :credit] 6)
       (play-from-hand state :runner "Xanadu")
       (run-on state "HQ")
-      (let [iwall (get-in @state [:corp :servers :hq :ices 0])
+      (let [iwall (get-ice state :hq 0)
             nasir (get-in @state [:runner :identity])]
-        (core/rez state :corp iwall)
         (is (= 3 (:credit (get-runner))) "Pay 3 to install Xanadu")
-        (card-ability state :runner nasir 0)
+        (core/rez state :corp iwall)
         (is (= 2 (:credit (get-runner))) "Gain 1 more credit due to Xanadu")))))
 
 (deftest nathaniel-gnat-hall-one-of-a-kind

@@ -310,12 +310,9 @@
                                      (some rezzed? (all-installed state :corp))))}
     :abilities [{:choices {:req rezzed?}
                  :label "Add 1 rezzed card to HQ and gain credits equal to its rez cost"
-                 :effect (req (trigger-event state side :pre-rez-cost target)
-                              (let [cost (rez-cost state side target)]
-                                (gain-credits state side cost)
-                                (move state side target :hand)
-                                (system-msg state side (str "adds " (:title target) " to HQ and gains " cost " [Credits]"))
-                                (swap! state update-in [:bonus] dissoc :cost :rez)))}]}
+                 :msg (msg "add " (:title target) " to HQ and gain " (rez-cost state side target) " [Credits]")
+                 :effect (effect (gain-credits (rez-cost state side target))
+                                 (move target :hand))}]}
 
    "Boris \"Syfr\" Kovac: Crafty Veteran"
    {:events [{:type :pre-start-game
@@ -519,9 +516,8 @@
                                  :msg (msg "rez " (:title target))
                                  :cancel-effect (effect (clear-wait-prompt :runner)
                                                         (effect-completed eid))
-                                 :effect (effect (rez-cost-bonus -4)
-                                                 (clear-wait-prompt :runner)
-                                                 (rez eid target nil))}
+                                 :effect (effect (clear-wait-prompt :runner)
+                                                 (rez eid target {:cost-bonus [:credit -4]}))}
                                 card nil))}]}
 
    "Haas-Bioroid: Engineering the Future"
@@ -905,21 +901,11 @@
 
    "Nasir Meidan: Cyber Explorer"
    {:events [{:type :rez
-              :req (req (and (:run @state)
-                             ;; check that the rezzed item is the encountered ice
-                             (= (:cid target)
-                                (:cid (get-card state current-ice)))))
-              :effect (req (toast state :runner "Click Nasir Meidan: Cyber Explorer to lose all credits and gain credits equal to the rez cost of the newly rezzed ice." "info"))}]
-    :abilities [{:req (req (and (:run @state)
-                                (:rezzed (get-card state current-ice))))
-                 :effect (req (let [current-ice (get-card state current-ice)]
-                                (trigger-event state side :pre-rez-cost current-ice)
-                                (let [cost (rez-cost state side current-ice)]
-                                  (lose-credits state side (:credit runner))
-                                  (gain-credits state side cost)
-                                  (system-msg state side (str "loses all credits and gains " cost
-                                                              " [Credits] from the rez of " (:title current-ice)))
-                                  (swap! state update-in [:bonus] dissoc :cost))))}]}
+              :req (req (same-card? target current-ice))
+              :msg (msg "lose all credits and gain " (rez-cost state side current-ice)
+                        " [Credits] from the rez of " (:title current-ice))
+              :effect (effect (lose-credits :runner (:credit runner))
+                              (gain-credits :runner (rez-cost state side current-ice)))}]}
 
    "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
    (let [ability {:label "Gain 1 [Credits] (start of turn)"
@@ -1087,11 +1073,11 @@
            (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
      {:effect (req (when (pos? (event-count state :corp :rez #(ice? (first %))))
                      (mark-triggered state card)))
-      :events [{:type :pre-rez
-                :req (req (and (ice? target)
-                               (not-triggered? state card)))
-                :effect (effect (rez-cost-bonus 1))}
-               {:type :rez
+      :persistent-effects [{:type :rez-cost
+                            :req (req (and (ice? target)
+                                           (not-triggered? state card)))
+                            :effect (req [:credit 1])}]
+      :events [{:type :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))
                 :effect (req (mark-triggered state card))}]})

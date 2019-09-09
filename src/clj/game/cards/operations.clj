@@ -518,7 +518,7 @@
               :max (req (count (filter rezzed? (all-installed state :corp))))}
     :effect (req (doseq [c targets]
                    (derez state side c))
-                 (let [discount (* -3 (count targets))]
+                 (let [discount [:credit (* -3 (count targets))]]
                    (continue-ability
                      state side
                      {:async true
@@ -527,8 +527,7 @@
                                            (corp? %)
                                            (not (rezzed? %))
                                            (not (agenda? %)))}
-                      :effect (effect (rez-cost-bonus discount)
-                                      (rez eid target nil))}
+                      :effect (effect (rez eid target {:cost-bonus discount}))}
                      card nil)))}
 
    "Door to Door"

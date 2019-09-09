@@ -311,9 +311,9 @@
    "Braintrust"
    {:effect (effect (add-counter card :agenda (quot (- (get-counters card :advancement) 3) 2)))
     :silent (req true)
-    :events [{:type :pre-rez-cost
-              :req (req (ice? target))
-              :effect (req (rez-cost-bonus state side (- (get-counters card :agenda))))}]}
+    :persistent-effects [{:type :rez-cost
+                          :req (req (ice? target))
+                          :effect (req [:credit (- (get-counters card :agenda))])}]}
 
    "Breaking News"
    {:async true

@@ -255,10 +255,10 @@
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
 
    "Brain-Taping Warehouse"
-   {:events [{:type :pre-rez
-              :req (req (and (ice? target)
-                             (has-subtype? target "Bioroid")))
-              :effect (effect (rez-cost-bonus (- (:click runner))))}]}
+   {:persistent-effects [{:type :rez-cost
+                          :req (req (and (ice? target)
+                                         (has-subtype? target "Bioroid")))
+                          :effect (req [:credit (- (:click runner))])}]}
 
    "Breached Dome"
    {:flags {:rd-reveal (req true)}
@@ -706,8 +706,7 @@
                  :choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
-                 :effect (req (rez-cost-bonus state side -1)
-                              (wait-for (rez state side target {:no-warning true})
+                 :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus [:credit -1]})
                                         (update! state side (assoc card :ebc-rezzed (:cid target)))))}
                 {:prompt "Choose an asset to reveal and add to HQ"
                  :msg (msg "reveal " (:title target) " and add it to HQ")
@@ -1557,8 +1556,7 @@
                            :msg (msg "rez " (:title target))
                            :effect (req (let [agenda (last (:rfg corp))
                                               ap (:agendapoints agenda 0)]
-                                          (rez-cost-bonus state side (* ap -2))
-                                          (rez state side target {:no-warning true})
+                                          (rez state side target {:no-warning true :cost-bonus [:credit (* ap -2)]})
                                           (if (< cnt 3)
                                             (continue-ability state side (rez-ice (inc cnt)) card nil)
                                             (effect-completed state side eid))))})]
@@ -2153,12 +2151,18 @@
                   :effect (req (add-one (:cid card) state (get-card state target)))}]}))
 
    "Watchdog"
-   {:events [{:type :pre-rez
-              :req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
-              :effect (effect (rez-cost-bonus (- (count-tags state))))}
-             {:type :rez
-              :req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
-              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]}
+   (letfn [(not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
+           (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
+     {:effect (req (when (pos? (event-count state :corp :rez #(ice? (first %))))
+                     (mark-triggered state card)))
+      :persistent-effects [{:type :rez-cost
+                            :req (req (and (ice? target)
+                                           (not-triggered? state card)))
+                            :effect (req [:credit (- (count-tags state))])}]
+      :events [{:type :rez
+                :req (req (and (ice? target)
+                               (not-triggered? state card)))
+                :effect (req (mark-triggered state card))}]})
 
    "Whampoa Reclamation"
    {:abilities [{:label "Add 1 card from Archives to the bottom of R&D"
@@ -2189,8 +2193,8 @@
                                       (corp? %))}
                  :msg (msg "host " (:title target))
                  :effect (req (corp-install state side target card) ;; install target onto card
-                              (rez-cost-bonus state side -2)
-                              (rez state side (last (:hosted (get-card state card)))))}]}
+                              (rez state side eid (last (:hosted (get-card state card)))
+                                   {:cost-bonus [:credit -2]}))}]}
 
    "Zaibatsu Loyalty"
    {:interactions {:prevent [{:type #{:expose}
