@@ -592,7 +592,28 @@
         (click-prompt state :runner "No action")
         (is (= 2 (count (:hand (get-runner)))) "Runner did draw cards from Obelus after all accesses are done")
         (is (= 1 (count (:discard (get-runner)))) "Counter Surveillance trashed")
-        (is (zero? (:credit (get-runner))) "Runner has no credits")))))
+        (is (zero? (:credit (get-runner))) "Runner has no credits"))))
+  (testing "Interaction with By Any Means. Issue #3377"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Blue Level Clearance" "Red Level Clearance"]}
+                 :runner {:hand [(qty "Sure Gamble" 2) "Counter Surveillance" "By Any Means"]
+                          :tags 2}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "By Any Means")
+      (play-from-hand state :runner "Counter Surveillance")
+      (is (= 2 (:credit (get-runner))) "Runner has 4 credits")
+      (let [cs (get-resource state 0)]
+        (card-ability state :runner cs 0)
+        (click-prompt state :runner "HQ")
+        (run-successful state)
+        (is (= [:hq] (get-in @state [:runner :register :successful-run])))
+        (click-prompt state :runner "Card from hand")
+        (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
+        (click-prompt state :runner "Card from hand")
+        (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
+        (is (= 4 (count (:discard (get-runner)))) "Counter Surveillance trashed")
+        (is (zero? (:credit (get-runner))) "Runner has 2 credits")))))
 
 (deftest crash-space
   ;; Crash Space

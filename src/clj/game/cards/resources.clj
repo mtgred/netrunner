@@ -557,29 +557,28 @@
     :abilities [{:cost [:click 1 :trash]
                  :makes-run true
                  :prompt "Choose a server to run with Counter Surveillance"
-                 :msg (msg "run " target " and trashes Counter Surveillance")
+                 :msg (msg "run " target)
                  :choices (req (cancellable runnable-servers))
                  :effect (req (make-run state side target nil card)
                               (register-events
-                                state side (assoc card :zone '(:discard))
+                                state side card
                                 [{:type :successful-run
+                                  :duration :end-of-run
                                   :silent (req true)
                                   :effect (req (let [tags (count-tags state)]
-                                                 (if (>= (:credit runner) tags)
+                                                 (if (<= tags (total-available-credits state :runner eid card))
                                                    ;; Can pay, do access
-                                                   (do (system-msg state side (str "uses Counter Surveillance to access up to "
-                                                                                   tags " cards by paying "
-                                                                                   tags " [Credit]"))
-                                                       (pay state side card :credit tags)
-                                                       (access-bonus state side target (- tags 1)))
+                                                   (continue-ability
+                                                     state side
+                                                     {:cost [:credit tags]
+                                                      :msg (str "access up to " tags " cards")
+                                                      :effect
+                                                      (effect (access-bonus target (dec tags)))}
+                                                     card targets)
                                                    ;; Can't pay, don't access cards
                                                    (do (system-msg state side "could not afford to use Counter Surveillance")
                                                        ;; Cannot access any cards
-                                                       (max-access state side 0)))))}
-                                 {:type :run-ends
-                                  :effect (effect (unregister-events card))}]))}]
-    :events [{:type :successful-run}
-             {:type :run-ends}]}
+                                                       (max-access state side 0)))))}]))}]}
 
    "Crash Space"
    {:interactions {:prevent [{:type #{:meat}
