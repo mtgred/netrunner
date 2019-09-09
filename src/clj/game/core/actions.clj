@@ -690,6 +690,8 @@
           next-ice (when (and pos (< 1 pos) (<= (dec pos) (count run-ice)))
                      (get-card state (nth run-ice (- pos 2))))]
       (wait-for (trigger-event-sync state side :pass-ice cur-ice)
+                (remove-floating-effects state :end-of-encounter)
+                (unregister-floating-events state side :end-of-encounter)
                 (update-ice-in-server
                   state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
                 (swap! state update-in [:run :position] (fnil dec 1))
@@ -699,7 +701,6 @@
                   (reset-all-subs! state (get-card state cur-ice))
                   (update-ice-strength state side (get-card state cur-ice)))
                 (wait-for (trigger-event-simult state side (if next-ice :approach-ice :approach-server) nil (when next-ice next-ice))
-                          (remove-floating-effects state :end-of-encounter)
                           (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                             (update-breaker-strength state side p)))))))
 

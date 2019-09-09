@@ -24,7 +24,8 @@
   (when (:persistent-effects (card-def card))
     (swap! state assoc :effects
            (->> (:effects @state)
-                (remove #(same-card? (:card %) card))
+                (remove #(and (same-card? card (:card %))
+                              (= :persistent (:duration %))))
                 (into [])))))
 
 (defn create-floating-effect

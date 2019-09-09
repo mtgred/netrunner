@@ -14,7 +14,7 @@
      (let [abilities
            (->> (for [ability events]
                   {:type (:type ability)
-                   :duration (or (:duration ability) :persistent)
+                   :duration (or (:duration ability) :while-installed)
                    :ability (dissoc ability :type :duration)
                    :card card
                    :uuid (uuid/v1)})
@@ -34,14 +34,15 @@
      (swap! state assoc :events
             (->> (:events @state)
                  (remove #(and (same-card? card (:card %))
-                               (in-coll? abilities (:type %))))
+                               (in-coll? abilities (:type %))
+                               (= :while-installed (:duration %))))
                  (into [])))
      (unregister-suppress state side card))))
 
 (defn unregister-floating-events
   "Removes all event handlers with a non-persistent duration"
   [state side duration]
-  (when (not= :persistent duration)
+  (when (not= :while-installed duration)
     (swap! state assoc :events
            (->> (:events @state)
                 (remove #(= duration (:duration %)))
@@ -49,7 +50,7 @@
 
 (defn card-for-ability
   [state ability]
-  (if (= :persistent (:duration ability))
+  (if (= :while-installed (:duration ability))
     (get-card state (:card ability))
     (:card ability)))
 
@@ -170,7 +171,7 @@
 (defn ability-as-handler
   "Wraps a card ability as an event handler."
   [card ability]
-  {:duration (or (:duration ability) :persistent)
+  {:duration (or (:duration ability) :while-installed)
    :card card
    :ability ability})
 

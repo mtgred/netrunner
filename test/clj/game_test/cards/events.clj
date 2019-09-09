@@ -566,7 +566,7 @@
       (run-empty-server state "HQ")
       (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
       (is (= 1 (count (:hand (get-runner)))) "No damage")))
-  (testing "Effect persists when moved from discard"
+  (testing "Effect persists when moved from discard. Issue #3341"
     (do-game
       (new-game {:corp {:hand ["Hedge Fund"]}
                  :runner {:hand [(qty "By Any Means" 2) "Levy AR Lab Access"]

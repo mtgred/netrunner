@@ -147,12 +147,11 @@
    :effect (req (let [ice current-ice
                       stargets (:subtype-target ice)
                       stypes (:subtype ice)
-                      remove-subtype {:effect
+                      remove-subtype {:duration :end-of-encounter
+                                      :effect
                                       (effect (update! (assoc (get-card state ice)
                                                               :subtype-target stargets
-                                                              :subtype stypes))
-                                              (unregister-events card)
-                                              (register-events card))}]
+                                                              :subtype stypes)))}]
                   (update! state side (assoc ice
                                              :subtype-target (combine-subtypes true stargets ice-type)
                                              :subtype (combine-subtypes true stypes ice-type)))

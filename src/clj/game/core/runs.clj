@@ -1082,7 +1082,9 @@
     (swap! state assoc-in [:run :ended] true)
     (wait-for (trigger-event-sync state side :run-ends server)
               (remove-floating-effects state :end-of-encounter)
+              (unregister-floating-events state side :end-of-encounter)
               (remove-floating-effects state :end-of-run)
+              (unregister-floating-events state side :end-of-run)
               (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                 (update-breaker-strength state side p))
               (doseq [ice (get-in @state [:corp :servers server :ices])]

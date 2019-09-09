@@ -1110,6 +1110,30 @@
         (run-successful state)
         (is (empty? (:prompt (get-runner))) "No prompt for accessing cards")))))
 
+(deftest engolo
+  ;; Engolo
+  (testing "Subtype is removed when Engolo is trashed mid-encounter. Issue #4039"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rototurret"]}
+                 :runner {:hand ["Engolo"]
+                          :credits 10}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Engolo")
+      (let [roto (get-ice state :hq 0)
+            engolo (get-program state 0)]
+        (core/rez state :corp roto)
+        (run-on state :hq)
+        (card-ability state :runner engolo 2)
+        (is (has-subtype? (refresh roto) "Code Gate"))
+        (card-subroutine state :corp roto 0)
+        (click-card state :corp engolo)
+        (core/no-action state :corp nil)
+        (run-continue state)
+        (is (nil? (refresh engolo)) "Engolo is trashed")
+        (is (not (has-subtype? (refresh roto) "Code Gate")) "Rototurret loses subtype even when Engolo is trashed")))))
+
 (deftest equivocation
   ;; Equivocation - interactions with other successful-run events.
   (do-game
