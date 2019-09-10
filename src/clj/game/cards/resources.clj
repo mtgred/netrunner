@@ -827,7 +827,7 @@
 
    "Donut Taganes"
    {:persistent-effects [{:type :play-cost
-                          :effect (req [:credit 1])}]}
+                          :effect 1}]}
 
    "Dr. Lovegood"
    {:flags {:runner-phase-12 (req (> (count (all-installed state :runner)) 1))}
@@ -1802,17 +1802,21 @@
 
    "Political Operative"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
-    :abilities [{:prompt "Select a rezzed card with a trash cost"
-                 :choices {:req #(and (:trash %)
-                                      (rezzed? %))}
-                 :effect (effect
-                           (continue-ability
-                             (let [cost (modified-trash-cost state :runner target)]
-                               (when (can-pay? state side eid card nil [:credit cost])
-                                 {:msg (msg "trash " (:title target))
-                                  :cost [:credit cost :trash]
-                                  :effect (effect (trash eid target nil))}))
-                             card targets))}]}
+    :abilities [{:effect
+                 (effect
+                   (continue-ability
+                     {:prompt "Select a rezzed card with a trash cost"
+                      :choices {:req #(and (:trash %)
+                                           (rezzed? %)
+                                           (can-pay? state side eid card nil [:credit (trash-cost state :runner %)]))}
+                      :effect (effect
+                                (continue-ability
+                                  {:async true
+                                   :msg (msg "trash " (card-str state target))
+                                   :cost [:credit (trash-cost state :runner target) :trash]
+                                   :effect (effect (trash eid target nil))}
+                                  card targets))}
+                     card nil))}]}
 
    "Power Tap"
    {:events [{:type :pre-init-trace
@@ -2595,7 +2599,7 @@
    "Xanadu"
    {:persistent-effects [{:type :rez-cost
                           :req (req (ice? target))
-                          :effect (req [:credit 1])}]}
+                          :effect 1}]}
 
    "Zona Sul Shipping"
    (trash-when-tagged-contructor

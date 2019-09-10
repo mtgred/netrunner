@@ -46,7 +46,7 @@
    {:persistent-effects [{:type :rez-cost
                           :req (req (and (ice? target)
                                          (= (card->server state card) (card->server state target))))
-                          :effect (req [:credit -2])}]}
+                          :effect -2}]}
 
    "Amazon Industrial Zone"
    {:events [{:type :corp-install
@@ -213,7 +213,7 @@
    "Breaker Bay Grid"
    {:persistent-effects [{:type :rez-cost
                           :req (req (in-same-server? card target))
-                          :effect (req [:credit -5])}]}
+                          :effect -5}]}
 
    "Bryan Stinson"
    {:abilities [{:cost [:click 1]
@@ -1000,9 +1000,9 @@
                                    (effect-completed state side eid)))))}]}
 
    "Oaktown Grid"
-   {:events [{:type :pre-trash
-              :req (req (in-same-server? card target))
-              :effect (effect (trash-cost-bonus 3))}]}
+   {:persistent-effects [{:type :trash-cost
+                          :req (req (in-same-server? card target))
+                          :effect 3}]}
 
    "Oberth Protocol"
    {:additional-cost [:forfeit]

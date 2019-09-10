@@ -258,7 +258,7 @@
    {:persistent-effects [{:type :rez-cost
                           :req (req (and (ice? target)
                                          (has-subtype? target "Bioroid")))
-                          :effect (req [:credit (- (:click runner))])}]}
+                          :effect (req (- (:click runner)))}]}
 
    "Breached Dome"
    {:flags {:rd-reveal (req true)}
@@ -670,9 +670,9 @@
                                  (gain-bad-publicity :corp 1))}]}
 
    "Encryption Protocol"
-   {:events [{:type :pre-trash
-              :req (req (installed? target))
-              :effect (effect (trash-cost-bonus 1))}]}
+   {:persistent-effects [{:type :trash-cost
+                          :req (req (installed? target))
+                          :effect 1}]}
 
    "Estelle Moon"
    {:events [{:type :corp-install
@@ -2158,7 +2158,7 @@
       :persistent-effects [{:type :rez-cost
                             :req (req (and (ice? target)
                                            (not-triggered? state card)))
-                            :effect (req [:credit (- (count-tags state))])}]
+                            :effect (req (- (count-tags state)))}]
       :events [{:type :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))

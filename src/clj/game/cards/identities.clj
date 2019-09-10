@@ -624,9 +624,8 @@
       :abilities [ability]})
 
    "Industrial Genomics: Growing Solutions"
-   {:events [{:type :pre-trash
-              :effect (effect (trash-cost-bonus
-                                (count (remove #(:seen %) (:discard corp)))))}]}
+   {:persistent-effects [{:type :trash-cost
+                          :effect (req (count (remove :seen (:discard corp))))}]}
 
    "Information Dynamics: All You Need To Know"
    {:events (let [inf {:req (req (and (not (:disabled card))
@@ -1076,7 +1075,7 @@
       :persistent-effects [{:type :rez-cost
                             :req (req (and (ice? target)
                                            (not-triggered? state card)))
-                            :effect (req [:credit 1])}]
+                            :effect 1}]
       :events [{:type :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))

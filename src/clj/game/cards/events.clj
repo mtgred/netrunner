@@ -1670,7 +1670,7 @@
     :msg "add it to their score area as an agenda worth 1 agenda point"}
 
    "Office Supplies"
-   {:play-cost-bonus (req [:credit (- (:link runner 0))])
+   {:play-cost-bonus (req (- (:link runner 0)))
     :prompt "Gain 4 [Credits] or draw 4 cards?"
     :choices ["Gain 4 [Credits]" "Draw 4 cards"]
     :async true

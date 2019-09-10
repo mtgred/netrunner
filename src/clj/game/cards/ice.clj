@@ -198,7 +198,7 @@
   [& abilities]
   {:advanceable :always
    :subroutines (vec abilities)
-   :rez-cost-bonus (req [:credit (* -3 (get-advance-counters card))])})
+   :rez-cost-bonus (req (* -3 (get-advance-counters card)))})
 
 ;;; For Grail ICE
 (defn grail-in-hand
@@ -1505,7 +1505,7 @@
                                   (update-ice-strength ref side (get-card ref card)))))))
     :subroutines [end-the-run]
     :strength-bonus (req (count (:hand corp)))
-    :rez-cost-bonus (req [:credit (count (:hand corp))])
+    :rez-cost-bonus (req (count (:hand corp)))
     :leave-play (req (remove-watch state (keyword (str "iq" (:cid card)))))}
 
    "Ireress"
@@ -2058,7 +2058,7 @@
                (assoc nb :type :card-moved)])}
 
    "NEXT Diamond"
-   {:rez-cost-bonus (req [:credit (- (next-ice-count corp))])
+   {:rez-cost-bonus (req (- (next-ice-count corp)))
     :subroutines [(do-brain-damage 1)
                   (do-brain-damage 1)
                   {:prompt "Select a card to trash"

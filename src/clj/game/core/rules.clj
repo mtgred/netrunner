@@ -41,18 +41,19 @@
                              (play-instant state side (make-eid state) eid? card?)))
   ([state side eid card {:keys [targets ignore-cost extra-cost no-additional-cost]}]
    (let [eid (eid-set-defaults eid :source nil :source-type :play)
-         {:keys [req additional-cost makes-run]} (card-def card)
-         additional-cost (if (has-subtype? card "Triple")
-                           (concat additional-cost [:click 2])
-                           additional-cost)
-         additional-cost (if (and (has-subtype? card "Double")
-                                  (not (get-in @state [side :register :double-ignore-additional])))
-                           (concat additional-cost [:click 1])
-                           additional-cost)
-         total-cost (play-cost state side card
-                               (concat extra-cost ;; Should be a click
-                                       [:credit (:cost card)]
-                                       (when-not no-additional-cost additional-cost)))
+         {:keys [req makes-run]} (card-def card)
+         cost (play-cost state side card)
+         additional-costs (play-additional-cost-bonus state side card)
+         costs (merge-costs
+                 [(when-not ignore-cost
+                    [extra-cost [:credit cost]])
+                  (when (has-subtype? card "Triple")
+                    [:click 2])
+                  (when (and (has-subtype? card "Double")
+                             (not (get-in @state [side :register :double-ignore-additional])))
+                    [:click 1])
+                  (when-not (and no-additional-cost ignore-cost)
+                    [additional-costs])])
          eid (if-not eid (make-eid state) eid)]
      ;; ensure the instant can be played
      (if (and ;; req is satisfied
@@ -75,7 +76,7 @@
          ;; Only mark the register once costs have been paid and card has been moved
          (if (has-subtype? card "Run")
            (swap! state assoc-in [:runner :register :click-type] :run))
-         (wait-for (pay-sync state side (make-eid state eid) moved-card (if ignore-cost 0 total-cost) {:action :play-instant})
+         (wait-for (pay-sync state side (make-eid state eid) moved-card costs {:action :play-instant})
                    (if-let [cost-str async-result]
                      (complete-play-instant state side eid moved-card cost-str ignore-cost)
                      ;; could not pay the card's price; put it back and mark the effect as being over.

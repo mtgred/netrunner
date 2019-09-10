@@ -60,9 +60,11 @@
          (filter #(if-not (:req %)
                     true
                     ((:req %) state side eid (get-card state (:card %)) [card])))
-         (mapv #((:effect %) state side eid (get-card state (:card %)) [card])))))
+         (mapv #(if-not (fn? (:effect %))
+                  (:effect %)
+                  ((:effect %) state side eid (get-card state (:card %)) [card]))))))
 
 (defn sum-effects
   "Sums the results from get-effects."
   [state side card effect-type]
-  (reduce + (get-effects state side card effect-type)))
+  (reduce + (filter identity (get-effects state side card effect-type))))

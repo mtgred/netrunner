@@ -313,7 +313,7 @@
     :silent (req true)
     :persistent-effects [{:type :rez-cost
                           :req (req (ice? target))
-                          :effect (req [:credit (- (get-counters card :agenda))])}]}
+                          :effect (req (- (get-counters card :agenda)))}]}
 
    "Breaking News"
    {:async true

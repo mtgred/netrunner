@@ -2053,7 +2053,7 @@
     :persistent-effects [{:type :rez-cost
                           :req (req (and (ice? target)
                                          (= (:zone (:host card)) (:zone target))))
-                          :effect (req [:credit 2])}]}
+                          :effect 2}]}
 
    "Sadyojata"
    (swap-with-in-hand "Sadyojata"

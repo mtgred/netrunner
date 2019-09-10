@@ -334,9 +334,9 @@
 
    "Demolisher"
    {:in-play [:memory 1]
-    :events [{:type :pre-trash
-              :effect (effect (trash-cost-bonus -1))}
-             {:type :runner-trash
+    :persistent-effects [{:type :trash-cost
+                          :effect -1}]
+    :events [{:type :runner-trash
               :once :per-turn
               :req (req (corp? target))
               :msg "gain 1 [Credits]"
@@ -1379,8 +1379,8 @@
 
    "Skulljack"
    {:effect (effect (damage eid :brain 1 {:card card}))
-    :events [{:type :pre-trash
-              :effect (effect (trash-cost-bonus -1))}]}
+    :persistent-effects [{:type :trash-cost
+                          :effect -1}]}
 
    "Spinal Modem"
    {:in-play [:memory 1]

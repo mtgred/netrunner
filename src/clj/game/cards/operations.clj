@@ -1362,12 +1362,11 @@
     :choices {:req #(and (rezzed? %)
                          (or (asset? %)
                              (upgrade? %)))}
-    :effect (req (let [tcost (modified-trash-cost state side target)]
-                   (wait-for (trash state side target {:unpreventable true})
-                             (do (gain-credits state :corp tcost)
-                                 (system-msg state side (str "uses Product Recall to trash " (card-str state target)
-                                                             " and gain " tcost "[Credits]"))
-                                 (effect-completed state side eid)))))}
+    :msg (msg "trash " (card-str state target)
+              " and gain " (trash-cost state side target) " [Credits]")
+    :effect (req (wait-for (trash state side target {:unpreventable true})
+                           (gain-credits state :corp (trash-cost state side target))
+                           (effect-completed state side eid)))}
 
    "Psychographics"
    {:req (req tagged)
@@ -1645,7 +1644,7 @@
    "Rolling Brownout"
    {:msg "increase the play cost of operations and events by 1 [Credits]"
     :persistent-effects [{:type :play-cost
-                          :effect (req [:credit 1])}]
+                          :effect 1}]
     :events [{:type :play-event
               :once :per-turn
               :msg "gain 1 [Credits]"
