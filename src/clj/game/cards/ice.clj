@@ -2160,7 +2160,8 @@
                                    (system-msg (str "adds " (:title target) " to the top of the Runner's Stack")))}]}
 
    "Pachinko"
-   {:subroutines [end-the-run-if-tagged]}
+   {:subroutines [end-the-run-if-tagged
+                  end-the-run-if-tagged]}
 
    "Paper Wall"
    {:implementation "Trash on break is manual"
