@@ -593,11 +593,11 @@
    {:abilities [{:cost [:click 2]
                  :msg "add 1 power counter"
                  :effect (effect (add-counter card :power 1))}]
-    :events [{:type :pre-install
-              :req (req (and (pos? (get-counters card :power))
-                             (not (get-in @state [:per-turn (:cid card)]))))
-              :effect (effect (install-cost-bonus [:credit (get-counters card :power)]))}
-             {:type :runner-install
+    :persistent-effects [{:type :install-cost
+                          :req (req (and (pos? (get-counters card :power))
+                                         (not (get-in @state [:per-turn (:cid card)]))))
+                          :effect (req (get-counters card :power))}]
+    :events [{:type :runner-install
               :silent (req true)
               :req (req (and (pos? (get-counters card :power))
                              (not (get-in @state [:per-turn (:cid card)]))))
@@ -706,7 +706,7 @@
                  :choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
-                 :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus [:credit -1]})
+                 :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus -1})
                                         (update! state side (assoc card :ebc-rezzed (:cid target)))))}
                 {:prompt "Choose an asset to reveal and add to HQ"
                  :msg (msg "reveal " (:title target) " and add it to HQ")
@@ -1556,7 +1556,7 @@
                            :msg (msg "rez " (:title target))
                            :effect (req (let [agenda (last (:rfg corp))
                                               ap (:agendapoints agenda 0)]
-                                          (rez state side target {:no-warning true :cost-bonus [:credit (* ap -2)]})
+                                          (rez state side target {:no-warning true :cost-bonus (* ap -2)})
                                           (if (< cnt 3)
                                             (continue-ability state side (rez-ice (inc cnt)) card nil)
                                             (effect-completed state side eid))))})]
@@ -1969,12 +1969,13 @@
    (letfn [(is-techno-target [card]
              (or (program? card)
                  (hardware? card)
-                 (and (resource? card) (has-subtype? card "Virtual"))))]
-     {:events [{:type :pre-install
-                :req (req (and (is-techno-target target)
-                               (not (second targets)))) ; not facedown
-                :effect (effect (install-cost-bonus [:credit 1]))}
-               {:type :runner-install
+                 (and (resource? card)
+                      (has-subtype? card "Virtual"))))]
+     {:persistent-effects [{:type :install-cost
+                            :req (req (and (is-techno-target target)
+                                           (not (:facedown (second targets)))))
+                            :effect 1}]
+      :events [{:type :runner-install
                 :req (req (and (is-techno-target target)
                                (not (second targets)))) ; not facedown
                 :msg "gain 1 [Credits]"
@@ -2194,7 +2195,7 @@
                  :msg (msg "host " (:title target))
                  :effect (req (corp-install state side target card) ;; install target onto card
                               (rez state side eid (last (:hosted (get-card state card)))
-                                   {:cost-bonus [:credit -2]}))}]}
+                                   {:cost-bonus -2}))}]}
 
    "Zaibatsu Loyalty"
    {:interactions {:prevent [{:type #{:expose}

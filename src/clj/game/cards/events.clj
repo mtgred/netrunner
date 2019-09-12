@@ -188,16 +188,15 @@
                       card nil))}
 
    "Brute-Force-Hack"
-   {:req (req (seq (filter
-                     some?
-                     (for [ice (all-installed state :corp)
-                           :when (and (ice? ice)
-                                      (rezzed? ice))]
-                       (can-pay? state side eid card nil [:credit (rez-cost state side ice)])))))
+   {:req (req (some #(and (ice? %)
+                          (rezzed? %)
+                          (can-pay? state side eid card nil
+                                    [:credit (rez-cost state side %)]))
+                    (all-installed state :corp)))
     :effect
     (req (let [affordable-ice
                (seq (filter
-                      some?
+                      identity
                       (for [ice (all-installed state :corp)
                             :when (and (ice? ice)
                                        (rezzed? ice))
@@ -240,14 +239,21 @@
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (resource? %))
                                      (all-active-installed state :runner))) " [Credits]")
-    :effect (effect (gain-credits (count (filter #(and (has-subtype? % "Connection") (resource? %))
+    :effect (effect (gain-credits (count (filter #(and (has-subtype? % "Connection")
+                                                       (resource? %))
                                                  (all-active-installed state :runner)))))}
 
    "Career Fair"
    {:prompt "Select a resource to install from your Grip"
-    :choices {:req #(and (resource? %)
-                         (in-hand? %))}
-    :effect (effect (install-cost-bonus [:credit -3]) (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
+    :req (req (some #(and (resource? %)
+                          (can-pay? state side eid card nil
+                                    [:credit (install-cost state side % {:cost-bonus -3})]))
+                    (:hand runner)))
+    :choices {:card (req (and (resource? target)
+                              (in-hand? target)
+                              (can-pay? state side eid card nil
+                                        [:credit (install-cost state side target {:cost-bonus -3})])))}
+    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))}
 
    "Careful Planning"
    {:prompt "Choose a card in or protecting a remote server"
@@ -307,18 +313,26 @@
    "Code Siphon"
    {:req (req rd-runnable)
     :makes-run true
-    :effect (effect (make-run :rd
-                              {:replace-access
-                               {:async true
-                                :prompt "Choose a program to install"
-                                :msg (msg "install " (:title target) " and take 1 tag")
-                                :choices (req (filter program? (:deck runner)))
-                                :effect (effect (trigger-event :searched-stack nil)
-                                                (shuffle! :deck)
-                                                (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
-                                                (runner-install (assoc eid :source card :source-type :runner-install) target nil)
-                                                (gain-tags eid 1))}}
-                              card))}
+    :effect
+    (effect
+      (make-run :rd
+                {:replace-access
+                 (let [rd-ice (fn [state] (* -3 (count (get-in @state [:corp :servers :rd :ices]))))]
+                   {:async true
+                    :prompt "Choose a program to install"
+                    :msg (msg "install " (:title target) " and take 1 tag")
+                    :choices (req (filter #(and (program? %)
+                                                (runner-can-install? state side % false)
+                                                (can-pay? state side eid card nil
+                                                          [:credit (install-cost state side % {:cost-bonus (rd-ice state)})]))
+                                          (:deck runner)))
+                    :effect (effect (trigger-event :searched-stack nil)
+                                    (shuffle! :deck)
+                                    (runner-install
+                                      (assoc eid :source card :source-type :runner-install)
+                                      target {:cost-bonus (rd-ice state)})
+                                    (gain-tags eid 1))})}
+                card))}
 
    "Cold Read"
    (let [end-effect {:prompt "Choose a program that was used during the run to trash "
@@ -438,13 +452,13 @@
    "Credit Kiting"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :prompt "Select a card to install from your Grip"
-    :choices {:req #(and (or (hardware? %)
-                             (program? %)
-                             (resource? %))
-                         (in-hand? %))}
+    :choices {:card (req (and (not (event? target))
+                              (in-hand? target)
+                              (can-pay? state side eid card nil
+                                        [:credit (install-cost state side target {:cost-bonus -8})])))}
     :async true
-    :effect (req (install-cost-bonus state :runner [:credit -8])
-                 (wait-for (runner-install state :runner (make-eid state {:source card :source-type :runner-install}) target nil)
+    :effect (req (wait-for (runner-install state :runner (make-eid state {:source card :source-type :runner-install})
+                                           target {:cost-bonus -8})
                            (gain-tags state eid :runner 1)))}
 
    "Cyber Threat"
@@ -729,16 +743,19 @@
              {:async true
               :prompt "Choose a hardware or program to install"
               :msg (msg "trash " (if (empty? to-trash) "no cards" (join ", " (map :title to-trash)))
-                        " and install " (:title target) " lowering the cost by " trash-cost)
+                        " and install " (:title target)
+                        " lowering the cost by " trash-cost)
               :choices (req (cancellable (filter #(or (program? %)
-                                                      (hardware? %))
+                                                      (hardware? %)
+                                                      (can-pay? state side eid card nil
+                                                                [:credit (install-cost state side % {:cost-bonus (- trash-cost)})]))
                                                  (:deck runner)) :sorted))
               :effect (req (trigger-event state side :searched-stack nil)
                            (shuffle! state side :deck)
                            (doseq [c to-trash]
                              (trash state side c {:unpreventable true}))
-                           (install-cost-bonus state side [:credit (- trash-cost)])
-                           (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)
+                           (runner-install state side (make-eid state {:source card :source-type :runner-install})
+                                           target {:cost-bonus (- trash-cost)})
                            (effect-completed state side eid))})]
      {:prompt "Choose Hardware and Programs to trash from your Grip"
       :choices {:req #(and (or (hardware? %)
@@ -793,19 +810,21 @@
 
    "Eureka!"
    {:effect (req (let [topcard (first (:deck runner))
-                       caninst (or (hardware? topcard)
-                                   (program? topcard)
-                                   (resource? topcard))]
+                       caninst (and (or (hardware? topcard)
+                                        (program? topcard)
+                                        (resource? topcard))
+                                    (can-pay? state side eid card nil
+                                              [:credit (install-cost state side topcard {:cost-bonus -10})]))]
                    (if caninst
                      (resolve-ability
                        state side
                        {:optional {:prompt (msg "Install " (:title topcard) "?")
-                                   :yes-ability {:effect (effect (install-cost-bonus [:credit -10])
-                                                                 (runner-install topcard))}
+                                   :yes-ability {:effect (effect (runner-install eid topcard {:cost-bonus -10}))}
                                    :no-ability {:effect (effect (trash topcard {:unpreventable true})
                                                                 (reveal topcard)
                                                                 (system-msg (str "reveals and trashes "
-                                                                                 (:title topcard))))}}} card nil)
+                                                                                 (:title topcard))))}}}
+                       card nil)
                      (do (reveal state side topcard)
                          (trash state side topcard {:unpreventable true})
                          (system-msg state side (str "reveals and trashes " (:title topcard)))))))}
@@ -820,7 +839,8 @@
                            (effect-completed state side eid)))}
 
    "Executive Wiretaps"
-   {:msg (msg "reveal cards in HQ: " (join ", " (map :title (:hand corp))))}
+   {:msg (msg "reveal cards in HQ: " (join ", " (map :title (:hand corp))))
+    :effect (effect (reveal (:hand corp)))}
 
    "Exploit"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
@@ -960,36 +980,37 @@
 
    "Frantic Coding"
    {:async true
-    :events [{:type :runner-shuffle-deck}]
     :effect
-    (req (let [topten (take 10 (:deck runner))]
+    (req (let [top-ten (take 10 (:deck runner))]
            (prompt! state :runner card (str "The top 10 cards of the Stack are "
-                                            (join ", " (map :title topten))) ["OK"] {})
+                                            (join ", " (map :title top-ten))) ["OK"] {})
            (continue-ability
              state side
              {:prompt "Install a program?"
-              :choices (conj (vec (sort-by :title (filter #(and (program? %)
-                                                                (can-pay? state side eid card nil
-                                                                          (modified-install-cost state side % [:credit -5])))
-                                                          topten))) "No install")
+              :choices (concat
+                         (->> top-ten
+                              (filter #(and (program? %)
+                                            (can-pay? state side eid card nil
+                                                      [:credit (install-cost state side % {:cost-bonus -5})])))
+                              (sort-by :title)
+                              (into []))
+                         ["No install"])
               :async true
               :effect (req (if (not= target "No install")
-                             (do (register-events
-                                   state side (assoc card :zone '(:discard))
-                                   [{:type :runner-shuffle-deck
-                                     :effect (effect (update! (assoc card :shuffle-occurred true)))}])
-                                 (install-cost-bonus state side [:credit -5])
-                                 (let [to-trash (remove #(same-card? % target) topten)]
-                                   (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)
-                                             (let [card (get-card state (assoc card :zone '(:discard)))]
-                                               (if (not (:shuffle-occurred card))
-                                                 (do (system-msg state side (str "trashes " (join ", " (map :title to-trash))))
-                                                     (doseq [c to-trash] (trash state side c {:unpreventable true}))
-                                                     (effect-completed state side eid))
-                                                 (do (system-msg state side "does not have to trash cards because the stack was shuffled")
-                                                     (effect-completed state side eid)))))))
-                             (do (doseq [c topten] (trash state side c {:unpreventable true}))
-                                 (system-msg state side (str "trashes " (join ", " (map :title topten)))))))}
+                             (let [number-of-shuffles (count (turn-events state :runner :runner-shuffle-deck))
+                                   to-trash (remove #(same-card? % target) top-ten)]
+                               (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
+                                                         target {:cost-bonus -5})
+                                         (if (= number-of-shuffles (count (turn-events state :runner :runner-shuffle-deck)))
+                                           (do (system-msg state side (str "trashes " (join ", " (map :title to-trash))))
+                                               (doseq [c to-trash]
+                                                 (trash state side c {:unpreventable true}))
+                                               (effect-completed state side eid))
+                                           (do (system-msg state side "does not have to trash cards because the stack was shuffled")
+                                               (effect-completed state side eid)))))
+                             (do (doseq [c top-ten]
+                                   (trash state side c {:unpreventable true}))
+                                 (system-msg state side (str "trashes " (join ", " (map :title top-ten)))))))}
              card nil)))}
 
    "\"Freedom Through Equality\""
@@ -1639,10 +1660,12 @@
 
    "Modded"
    {:prompt "Select a program or piece of hardware to install from your Grip"
-    :choices {:req #(and (or (hardware? %)
-                             (program? %))
-                         (in-hand? %))}
-    :effect (effect (install-cost-bonus [:credit -3]) (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
+    :choices {:card (req (and (or (hardware? target)
+                                  (program? target))
+                              (in-hand? target)
+                              (can-pay? state side eid card nil
+                                        [:credit (install-cost state side target {:cost-bonus -3})])))}
+    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))}
 
    "Net Celebrity"
    {:recurring 1
@@ -1958,17 +1981,20 @@
                                        (installed? %))}
                   :effect (req (move state side target :hand)
                                (effect-completed state side (make-result eid (:cost target))))}
-         put-down (fn [st si eid card bonus]
+         put-down (fn [bonus]
                     {:async true
                      :prompt "Select a program or piece of hardware to install"
-                     :choices {:req #(and (valid-target? %)
-                                          (can-pay? st si eid card nil (modified-install-cost st si % [:credit (- bonus)])))}
-                     :effect (effect (install-cost-bonus [:credit (- bonus)])
-                                     (runner-install (assoc eid :source card :source-type :runner-install) target nil))})]
+                     :choices
+                     {:card (req (and (valid-target? target)
+                                      (can-pay? state side eid card nil
+                                                [:credit (install-cost state side target
+                                                                       {:cost-bonus (- bonus)})])))}
+                     :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
+                                                     target {:cost-bonus (- bonus)}))})]
      {:req (req (some valid-target? (all-installed state :runner)))
       :effect (req (wait-for (resolve-ability state side pick-up card nil)
                              (continue-ability state side
-                                               (put-down state side eid card async-result)
+                                               (put-down async-result)
                                                card nil)))})
 
    "Reshape"
@@ -2107,22 +2133,26 @@
    {:prompt "Select an installed program to trash"
     :choices {:req #(and (program? %)
                          (installed? %))}
-    :effect (req (let [trashed target tcost (- (:cost trashed))
-                       st state
-                       si side
-                       e eid
-                       c card]
+    :effect (req (let [trashed target
+                       tcost (:cost trashed)]
                    (trash state side trashed)
-                   (resolve-ability
+                   (continue-ability
                      state side
                      {:prompt "Select a program to install from your Grip or Heap"
                       :show-discard true
-                      :choices {:req #(and (program? %)
-                                           (#{[:hand] [:discard]} (:zone %))
-                                           (can-pay? st si e c nil (modified-install-cost st si % [:credit tcost])))}
-                      :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
-                                      (runner-install (assoc eid :source card :source-type :runner-install) target nil))
-                      :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}
+                      :choices
+                      {:card (req (and (program? target)
+                                       (or (in-hand? target)
+                                           (in-discard? target))
+                                       (can-pay? state side eid card nil
+                                                 [:credit (install-cost state side target
+                                                                        {:cost-bonus (- tcost)})])))}
+                      :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
+                                                      target {:cost-bonus (- tcost)}))
+                      :msg (msg "trash " (:title trashed)
+                                " and install " (:title target)
+                                ", lowering the cost by " tcost " [Credits]")}
+                     card nil)))}
 
    "Scrubbed"
    {:implementation "Encounter effect is manual"

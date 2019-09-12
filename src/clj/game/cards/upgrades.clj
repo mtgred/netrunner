@@ -52,9 +52,12 @@
    {:events [{:type :corp-install
               :optional
               {:req (req (and (ice? target)
-                              (protecting-same-server? card target)))
+                              (protecting-same-server? card target)
+                              (can-pay? state side eid card nil
+                                        [:credit (rez-cost state side target {:cost-bonus -3})])))
                :prompt "Rez ICE with rez cost lowered by 3?"
-               :yes-ability {:effect (effect (rez eid target {:cost-bonus [:credit -3]}))}}}]}
+               :yes-ability {:msg (msg "lower the rez cost of " (:title target) " by 3 [Credits]")
+                             :effect (effect (rez eid target {:cost-bonus -3}))}}}]}
 
    "Arella Salvatore"
    (let [select-ability
@@ -101,12 +104,15 @@
                  :msg "host a piece of Bioroid ICE"
                  :effect (req (corp-install state side target card {:ignore-all-cost true}))}
                 {:req (req (and this-server
-                                (zero? (get-in @state [:run :position]))))
+                                (zero? (get-in @state [:run :position]))
+                                (some #(can-pay? state side eid card nil
+                                                 [:credit (rez-cost state side % {:cost-bonus -7})])
+                                      (:hosted card))))
                  :label "Rez a hosted piece of Bioroid ICE"
                  :prompt "Choose a piece of Bioroid ICE to rez"
                  :choices (req (:hosted card))
                  :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
-                 :effect (effect (rez eid target {:cost-bonus [:credit -7]})
+                 :effect (effect (rez eid target {:cost-bonus -7})
                                  (update! (dissoc (get-card state target) :facedown))
                                  (register-events
                                    card
@@ -687,7 +693,7 @@
                                (continue-ability state side (choose-ice remaining grids) card nil)
                                (do (reveal state side ice)
                                    (system-msg state side (str "reveals that they drew " (:title ice)))
-                                   (wait-for (corp-install state side ice server {:extra-cost [:credit -4]})
+                                   (wait-for (corp-install state side ice server {:cost-bonus -4})
                                              (if (= 1 (count ices))
                                                (effect-completed state side eid)
                                                (continue-ability state side (choose-ice remaining grids)
@@ -1279,16 +1285,21 @@
                              (not (and (upgrade? target)
                                        (is-central? (second (:zone target)))))
                              (not (same-card? target card))
-                             (seq (filter #(and (not (rezzed? %))
-                                                (not (agenda? %))) (all-installed state :corp)))))
+                             (some #(and (not (rezzed? %))
+                                         (not (agenda? %))
+                                         (can-pay? state side eid card nil
+                                                   [:credit (install-cost state side % {:cost-bonus -2})]))
+                                   (all-installed state :corp))))
               :effect (effect (continue-ability
                                 {:optional
                                  {:prompt (msg "Rez another card with Surat City Grid?")
                                   :yes-ability {:prompt "Select a card to rez"
                                                 :choices {:req #(and (not (rezzed? %))
-                                                                     (not (agenda? %)))}
+                                                                     (not (agenda? %))
+                                                                     (can-pay? state side eid card nil
+                                                                               [:credit (rez-cost state side % {:cost-bonus -2})]))}
                                                 :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
-                                                :effect (effect (rez eid target {:cost-bonus [:credit -2]}))}}}
+                                                :effect (effect (rez eid target {:cost-bonus -2}))}}}
                                 card nil))}]}
 
    "Tempus"

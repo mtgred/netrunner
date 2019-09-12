@@ -2853,8 +2853,8 @@
       (is (= 3 (core/available-mu state)) "Corrder cost 1 mu")
       (is (= 5 (:credit (get-runner))) "Starting with 5 credits")
       (card-ability state :runner rosetta 0)
-      (click-prompt state :runner (find-card "Gordian Blade" (:deck (get-runner))))
       (click-card state :runner corroder)
+      (click-prompt state :runner (find-card "Gordian Blade" (:deck (get-runner))))
       (is (= 3 (core/available-mu state)) "Gordian cost 1 mu, Corroder freed")
       (is (= 3 (:credit (get-runner))) "Ending with 3 credits")
       (is (= 1 (count (:rfg (get-runner)))) "Corroder removed from game")
@@ -3127,20 +3127,20 @@
         (is (= 3 (core/available-mu state)) "Gordian cost 1 mu"))))
   (testing "Can't afford install"
     (do-game
-      (new-game {:runner {:deck ["Street Peddler" (qty "Gordian Blade" 3)]}})
+      (new-game {:runner {:deck [(qty "Gordian Blade" 3)]
+                          :hand ["Street Peddler"]
+                          :credits 0}})
       (take-credits state :corp)
-      (starting-hand state :runner ["Street Peddler"])
       (play-from-hand state :runner "Street Peddler")
       (let [sp (get-resource state 0)]
         (card-ability state :runner sp 0)
-        (core/lose state :runner :credit 3)
-        (is (= 2 (count (:choices (first (:prompt (get-runner))))))
-            "1 card and 1 cancel option on Street Peddler")
-        (click-prompt state :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
+        (is (= ["Cancel"] (:choices (first (:prompt (get-runner))))) "1 cancel option on Street Peddler")
+        (click-prompt state :runner "Cancel") ; choose to install Gordian
         (is (zero? (count (get-program state)))
             "Gordian Blade was not installed")
-        (is (and (:installed (refresh sp)) (= 3 (count (:hosted (refresh sp))))
-                 "Street Peddler still installed with 3 hosted cards")))))
+        (is (and (:installed (refresh sp))
+                 (= 3 (count (:hosted (refresh sp)))))
+            "Street Peddler still installed with 3 hosted cards"))))
   (testing "Interaction with Kate discount"
     (do-game
       (new-game {:runner {:id "Kate \"Mac\" McCaffrey: Digital Tinker"

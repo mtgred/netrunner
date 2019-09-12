@@ -33,8 +33,7 @@
                           :msg message}
                     ability-options)]
       :install-cost-bonus (req (when (can-install-shard? state run)
-                                 [:credit (- INFINITY)
-                                  :click -1]))
+                                 (- INFINITY)))
       :effect (req (when (can-install-shard? state run)
                      (wait-for (register-successful-run state side (:server run))
                                (do (clear-wait-prompt state :corp)
@@ -428,10 +427,15 @@
                 {:cost [:click 1]
                  :label "Install a program from your Grip"
                  :prompt "Select a program to install from your Grip"
-                 :choices {:req #(and (program? %) (in-hand? %))}
+                 :choices
+                 {:card (req (and (program? target)
+                                  (in-hand? target)
+                                  (can-pay? state :runner eid card nil
+                                            [:credit (install-cost state side target
+                                                                   {:cost-bonus (- (get-counters card :power))})])))}
                  :msg (msg "install " (:title target))
-                 :effect (req (install-cost-bonus state side [:credit (- (get-counters card :power))])
-                              (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)
+                 :effect (req (runner-install state side (make-eid state {:source card :source-type :runner-install})
+                                              target {:cost-bonus (- (get-counters card :power))})
                               (when (pos? (get-counters card :power))
                                 (add-counter state side card :power -1)))}]}
 
@@ -450,7 +454,6 @@
     :events [{:type :runner-turn-ends
               :req (req (pos? (count-tags state)))
               :msg "force the Corp to initiate a trace"
-              :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
               :trace {:base 1
                       :unsuccessful {:msg "remove 1 tag"
                                      :async true
@@ -1210,7 +1213,7 @@
                   :effect (effect (make-run target nil card))}]
      {:implementation "Doesn't prevent program use"
       :flags {:runner-phase-12 (req true)}
-      :install-cost-bonus (req [:credit (- (:link runner))])
+      :install-cost-bonus (req (- (:link runner)))
       :events [{:type :runner-turn-begins
                 :optional
                 {:req (req (not (get-in @state [:per-turn (:cid card)])))
@@ -1550,10 +1553,10 @@
 
    "Network Exchange"
    {:msg "increase the install cost of non-innermost ICE by 1"
-    :events [{:type :pre-corp-install
-              :req (req (ice? target))
-              :effect (req (when (pos? (count (:dest-zone (second targets))))
-                             (install-cost-bonus state :corp [:credit 1])))}]}
+    :persistent-effects [{:type :install-cost
+                          :req (req (ice? target))
+                          :effect (req (when (pos? (count (:dest-zone (second targets))))
+                                         1))}]}
 
    "Neutralize All Threats"
    {:in-play [:hq-access 1]
@@ -1915,27 +1918,40 @@
 
    "Rosetta 2.0"
    (let [find-rfg (fn [state card]
-                    (first (filter #(= (:cid card) (get-in % [:persistent :from-cid])) (get-in @state [:runner :rfg]))))]
+                    (last (filter #(= (:cid card) (get-in % [:persistent :from-cid]))
+                                  (get-in @state [:runner :rfg]))))]
      {:abilities [{:req (req (not (install-locked? state side)))
                    :async true
                    :cost [:click 1 :rfg-program 1]
-                   :prompt "Choose a non-virus program to install"
-                   :msg (msg "search the stack"
-                             (if (= target "No install")
-                               ", but does not find a program to install"
-                               (str "and install " (:title target)
-                                    ", lowering its cost by " (:cost (find-rfg state card)))))
-                   :choices (req (conj (vec (sort-by :title (filter #(and (program? %)
-                                                                          (not (has-subtype? % "Virus")))
-                                                                    (:deck runner))))
-                                       "No install"))
-                   :effect (req (trigger-event state side :searched-stack nil)
-                                (shuffle! state side :deck)
-                                (when (not= target "No install")
-                                  (install-cost-bonus state side [:credit (- (:cost (find-rfg state card)))])
-                                  (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil))
-                                (when-let [c (find-rfg state card)]
-                                  (update! state side (dissoc-in card [:persistent :from-cid]))))}]})
+                   :effect
+                   (effect
+                     (continue-ability
+                       {:async true
+                        :prompt "Choose a non-virus program to install"
+                        :choices (req (concat
+                                        (->> (:deck runner)
+                                             (filter
+                                               #(and (program? %)
+                                                     (not (has-subtype? % "Virus"))
+                                                     (can-pay? state :runner eid card nil
+                                                               [:credit (install-cost
+                                                                          state side %
+                                                                          {:cost-bonus (- (:cost (find-rfg state card)))})])))
+                                             (sort-by :title)
+                                             (into []))
+                                        ["No install"]))
+                        :msg (msg "search the stack"
+                                  (if (= target "No install")
+                                    ", but does not find a program to install"
+                                    (str "and install " (:title target)
+                                         ", lowering its cost by " (:cost (find-rfg state card)))))
+                        :effect (req (trigger-event state side :searched-stack nil)
+                                     (shuffle! state side :deck)
+                                     (if (= target "No install")
+                                       (effect-completed state side eid)
+                                       (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                                       target {:cost-bonus (- (:cost (find-rfg state card)))})))}
+                       card nil))}]})
 
    "Sacrificial Clone"
    {:interactions {:prevent [{:type #{:net :brain :meat}
@@ -2123,19 +2139,19 @@
                    (host state side (get-card state card) c {:facedown true})))
     :abilities [{:req (req (not (install-locked? state side)))
                  :prompt "Choose a card on Street Peddler to install"
-                 :choices (req (cancellable (filter #(and (not (event? %))
-                                                          (runner-can-install? state side % nil)
-                                                          (can-pay? state side eid card nil (modified-install-cost state side % [:credit -1])))
-                                                    (:hosted card))))
+                 :choices (req (cancellable
+                                 (filter #(and (not (event? %))
+                                               (runner-can-install? state side % nil)
+                                               (can-pay? state side eid card nil
+                                                         [:credit (install-cost state side % {:cost-bonus -1})]))
+                                         (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
-                 :effect (req
-                           (when (can-pay? state side eid card nil (modified-install-cost state side target [:credit -1]))
-                             (install-cost-bonus state side [:credit -1])
-                             (trash state side (update-in card [:hosted]
-                                                          (fn [coll]
-                                                            (remove-once #(same-card? % target) coll)))
-                                    {:cause :ability-cost})
-                             (runner-install state side (assoc eid :source card :source-type :runner-install) (dissoc target :facedown) nil)))}]}
+                 :effect (req (trash state side (update-in card [:hosted]
+                                                           (fn [coll]
+                                                             (remove-once #(same-card? % target) coll)))
+                                     {:cause :ability-cost})
+                              (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                              (dissoc target :facedown) {:cost-bonus -1}))}]}
 
    "Symmetrical Visage"
    {:events [{:type :runner-click-draw
@@ -2241,14 +2257,23 @@
                  :effect (effect (gain-credits 2))}
                 {:cost [:click 1]
                  :label "Install a program of piece of hardware"
+                 :req (req (some #(and (or (hardware? %)
+                                           (program? %))
+                                       (can-pay? state side eid card nil
+                                                 [:credit (install-cost state side % {:cost-bonus -1})]))
+                                 (:hand runner)))
                  :prompt "Select a program or piece of hardware to install from your Grip"
-                 :choices {:req #(and (or (hardware? %)
-                                          (program? %))
-                                      (in-hand? %))}
+                 :choices
+                 {:card (req (and (or (hardware? target)
+                                      (program? target))
+                                  (in-hand? target)
+                                  (can-pay? state side eid card nil
+                                            [:credit (install-cost state side target {:cost-bonus -1})])))}
                  :once :per-turn
                  :once-key :artist-install
-                 :effect (effect (install-cost-bonus [:credit -1])
-                                 (runner-install (assoc eid :source card :source-type :runner-install) target {:no-msg true}))
+                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
+                                                 target {:no-msg true
+                                                         :cost-bonus -1}))
                  :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]}
 
    "The Black File"
@@ -2318,12 +2343,13 @@
                                                               (draw :runner eid 2 nil))}}}
          maybe-spend-2 {:prompt "Spend 2 virus counters on The Nihilist?"
                         :async true
-                        :yes-ability {:effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
-                                                             (if (:number async-result)
-                                                               (do (system-msg state side (str "spends " (:msg async-result) " on The Nihilist"))
-                                                                   (show-wait-prompt state :runner "Corp to decide")
-                                                                   (continue-ability state side corp-choice card nil))
-                                                               (effect-completed state side eid))))}}]
+                        :yes-ability
+                        {:effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
+                                                (if (:number async-result)
+                                                  (do (system-msg state side (str "spends " (:msg async-result) " on The Nihilist"))
+                                                      (show-wait-prompt state :runner "Corp to decide")
+                                                      (continue-ability state side corp-choice card nil))
+                                                  (effect-completed state side eid))))}}]
      {:events [{:type :runner-turn-begins
                 :interactive (req true)
                 :req has-2-virus-tokens?
@@ -2359,29 +2385,37 @@
    "The Supplier"
    (let [ability {:label "Install a hosted card (start of turn)"
                   :prompt "Choose a card hosted on The Supplier to install"
-                  :req (req (some #(can-pay? state side eid card nil (modified-install-cost state side % [:credit -2]))
+                  :req (req (some #(can-pay? state side eid card nil [:credit (install-cost state side % {:cost-bonus -2})])
                                   (:hosted card)))
-                  :choices {:req #(and (= "The Supplier" (:title (:host %)))
-                                       (runner? %))}
+                  :choices
+                  {:card (req (and (= "The Supplier" (:title (:host target)))
+                                   (runner? target)
+                                   (can-pay? state side eid card nil
+                                             [:credit (install-cost state side target {:cost-bonus -2})])))}
                   :once :per-turn
-                  :effect (req
-                            (runner-can-install? state side target nil)
-                            (when (and (can-pay? state side eid card nil (modified-install-cost state side target [:credit -2]))
-                                       (not (and (:uniqueness target) (in-play? state target))))
-                              (install-cost-bonus state side [:credit -2])
-                              (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
-                              (system-msg state side (str "uses The Supplier to install " (:title target) " lowering its install cost by 2"))
-                              (update! state side (-> card
-                                                      (assoc :supplier-installed (:cid target))
-                                                      (update-in [:hosted]
-                                                                 (fn [coll]
-                                                                   (remove-once #(same-card? % target) coll)))))))}]
+                  :msg (msg "install " (:title target)
+                            ", lowering its install cost by 2 [Credits]")
+                  :async true
+                  :effect
+                  (req (if-not (runner-can-install? state side target nil)
+                         (effect-completed state side eid)
+                         (do (update! state side
+                                      (-> card
+                                          (assoc :supplier-installed (:cid target))
+                                          (update-in [:hosted]
+                                                     (fn [coll]
+                                                       (remove-once #(same-card? % target) coll)))))
+                             (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                             target {:cost-bonus -2}))))}]
      {:flags {:drip-economy true}  ; not technically drip economy, but has an interaction with Drug Dealer
-      :abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
+      :abilities [{:label "Host a resource or piece of hardware"
+                   :cost [:click 1]
                    :prompt "Select a card to host on The Supplier"
-                   :choices {:req #(and (#{"Resource" "Hardware"} (:type %))
+                   :choices {:req #(and (or (hardware? %)
+                                            (resource? %))
                                         (in-hand? %))}
-                   :effect (effect (host card target)) :msg (msg "host " (:title target) "")}
+                   :effect (effect (host card target))
+                   :msg (msg "host " (:title target))}
                   ability]
       ; A card installed by The Supplier is ineligible to receive the turn-begins event for this turn.
       :suppress [{:type :runner-turn-begins
@@ -2426,20 +2460,19 @@
    "Thunder Art Gallery"
    (let [first-event-check (fn [state fn1 fn2] (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
                                                     (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
-         ability {:choices {:req #(and (runner? %)
-                                       (in-hand? %)
-                                       (not (event? %)))}
+         ability {:choices
+                  {:card (req (and (runner? target)
+                                   (in-hand? target)
+                                   (not (event? target))
+                                   (can-pay? state side eid card nil
+                                             [:credit (install-cost state side target {:cost-bonus -1})])))}
                   :async true
                   :prompt (msg "Select a card to install with Thunder Art Gallery")
-                  :effect (req (if (and (runner-can-install? state side target)
-                                        (can-pay? state side (merge eid {:source card
-                                                                         :source-type :runner-install}) target nil
-                                                  (install-cost state side target [:credit (dec (:cost target))])))
-                                 (do (install-cost-bonus state side [:credit -1])
-                                     (system-msg state side "uses Thunder Art Gallery to install a card")
-                                     (runner-install state side (merge eid {:source card
-                                                                            :source-type :runner-install}) target nil))
-                                 (effect-completed state side eid)))
+                  :msg (msg "install " (:title target))
+                  :effect (effect (runner-install (assoc eid
+                                                         :source card
+                                                         :source-type :runner-install)
+                                                  target {:cost-bonus -1}))
                   :cancel-effect (effect (effect-completed eid))}]
      {:events [(assoc ability
                       :type :runner-lose-tag

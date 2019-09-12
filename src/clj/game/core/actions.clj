@@ -277,11 +277,16 @@
   if the max number of cards has been selected."
   [state side {:keys [card] :as args}]
   (let [card (get-card state card)
-        r (get-in @state [side :selected 0 :req])
-        cid (get-in @state [side :selected 0 :not-self])]
+        prompt (first (get-in @state [side :selected]))
+        ability (:ability prompt)
+        five (:card prompt)
+        r (:req prompt)
+        cid (:not-self prompt)]
     (when (and (not= (:cid card) cid)
-               (or (not r)
-                   (r card)))
+               (cond
+                 r (r card)
+                 five (five state side (:eid ability) (:card ability) [card])
+                 :else true))
       (let [c (update-in card [:selected] not)]
         (update! state side c)
         (if (:selected c)
@@ -500,6 +505,18 @@
       (system-msg state side message))
     (play-sfx state side "virus-purge")))
 
+(defn get-rez-cost
+  [state side card {:keys [ignore-cost cost-bonus] :as args}]
+  (if (= :all-costs ignore-cost)
+    [:credit 0]
+    (let [cost (rez-cost state side card {:cost-bonus cost-bonus})
+          additional-costs (rez-additional-cost-bonus state side card)]
+      (concat
+        (when-not ignore-cost
+          [:credit cost])
+        (when (not (:disabled card))
+          additional-costs)))))
+
 (defn rez
   "Rez a corp card."
   ([state side card] (rez state side (make-eid state) card nil))
@@ -540,15 +557,7 @@
               (effect (rez eid card (merge args {:declined-alternative-cost true})))}}}
            card nil)
          (let [cdef (card-def card)
-               cost (rez-cost state side card)
-               additional-costs (rez-additional-cost-bonus state side card)
-               costs (concat (when-not ignore-cost
-                               [[:credit cost]])
-                             (when-not ignore-cost
-                               cost-bonus)
-                             (when (and (not= ignore-cost :all-costs)
-                                        (not (:disabled card)))
-                               additional-costs))]
+               costs (get-rez-cost state side card args)]
            (wait-for (pay-sync state side (make-eid state eid) card costs)
                      (if-let [cost-str (and (string? async-result) async-result)]
                        (do (when (:derezzed-events cdef)

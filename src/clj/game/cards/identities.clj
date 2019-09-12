@@ -294,11 +294,11 @@
            (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
      {:effect (req (when (pos? (event-count state :runner :runner-install #(az-type? (first %))))
                      (mark-triggered state card)))
-      :events [{:type :pre-install
-                :req (req (and (az-type? target)
-                               (not-triggered? state card)))
-                :effect (effect (install-cost-bonus [:credit -1]))}
-               {:type :runner-install
+      :persistent-effects [{:type :install-cost
+                            :req (req (and (az-type? target)
+                                           (not-triggered? state card)))
+                            :effect -1}]
+      :events [{:type :runner-install
                 :req (req (and (az-type? target)
                                (not-triggered? state card)))
                 :silent (req true)
@@ -511,13 +511,18 @@
                                              (turn-events state side :pass-ice)))))
               :effect (effect (show-wait-prompt :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
                               (continue-ability
-                                {:prompt "Select a Bioroid to rez" :player :corp
-                                 :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
+                                {:prompt "Select a Bioroid to rez"
+                                 :player :corp
+                                 :choices
+                                 {:card (req (and (has-subtype? target "Bioroid")
+                                                  (not (rezzed? target))
+                                                  (can-pay? state side eid card nil
+                                                            [:credit (rez-cost state side target {:cost-bonus -4})])))}
                                  :msg (msg "rez " (:title target))
                                  :cancel-effect (effect (clear-wait-prompt :runner)
                                                         (effect-completed eid))
                                  :effect (effect (clear-wait-prompt :runner)
-                                                 (rez eid target {:cost-bonus [:credit -4]}))}
+                                                 (rez eid target {:cost-bonus -4}))}
                                 card nil))}]}
 
    "Haas-Bioroid: Engineering the Future"
@@ -641,10 +646,9 @@
    "Jamie \"Bzzz\" Micken: Techno Savant"
    {:events [{:type :pre-start-game
               :effect draft-points-target}
-             {:type :pre-install
+             {:type :runner-install
               :req (req (and (has-most-faction? state :runner "Shaper")
-                             (pos? (count (:deck runner)))
-                             (first-event? state side :pre-install)))
+                             (first-event? state side :runner-install)))
               :msg "draw 1 card"
               :once :per-turn
               :async true
@@ -756,13 +760,16 @@
                  :prompt "Choose a program"
                  :choices (req (cancellable
                                  (filter #(and (program? %)
-                                               (not (has-subtype? % "Virus")))
+                                               (not (has-subtype? % "Virus"))
+                                               (can-pay? state :runner eid card nil
+                                                         [:credit (install-cost state side % {:cost-bonus -1})]))
                                          (:deck runner))))
-                 :msg (msg "install " (:title target) " from their stack, lowering the cost by 1 [Credit]")
+                 :msg (msg "install " (:title target) " from the stack, lowering the cost by 1 [Credit]")
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
-                                 (install-cost-bonus [:credit -1])
-                                 (runner-install (assoc eid :source card :source-type :runner-install) (assoc-in target [:special :kabonesa] true) nil))}]})
+                                 (runner-install (assoc eid :source card :source-type :runner-install)
+                                                 (assoc-in target [:special :kabonesa] true)
+                                                 {:cost-bonus -1}))}]})
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
@@ -772,11 +779,11 @@
            (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
      {:effect (req (when (pos? (event-count state :runner :runner-install #(kate-type? (first %))))
                      (mark-triggered state card)))
-      :events [{:type :pre-install
-                :req (req (and (kate-type? target)
-                               (not-triggered? state card)))
-                :effect (effect (install-cost-bonus [:credit -1]))}
-               {:type :runner-install
+      :persistent-effects [{:type :install-cost
+                            :req (req (and (kate-type? target)
+                                           (not-triggered? state card)))
+                            :effect -1}]
+      :events [{:type :runner-install
                 :req (req (and (kate-type? target)
                                (not-triggered? state card)))
                 :silent (req true)
@@ -794,16 +801,22 @@
    {:events [{:type :pass-ice
               :req (req (first-event? state :corp :pass-ice))
               :async true
-              :effect (req (if (some #(has-subtype? % "Icebreaker") (:hand runner))
-                             (continue-ability state side
-                                               {:prompt "Select an icebreaker to install from your Grip"
-                                                :choices {:req #(and (in-hand? %) (has-subtype? % "Icebreaker"))}
-                                                :async true
-                                                :msg (msg "install " (:title target))
-                                                :effect (effect (install-cost-bonus [:credit -1])
-                                                                (runner-install eid target nil))}
-                                               card nil)
-                             (effect-completed state side eid)))}]}
+              :effect (effect
+                        (continue-ability
+                          (when (some #(and (has-subtype? % "Icebreaker")
+                                            (can-pay? state side eid card nil
+                                                      [:credit (install-cost state side % {:cost-bonus -1})]))
+                                      (:hand runner))
+                            {:prompt "Select an icebreaker to install from your Grip"
+                             :choices
+                             {:card (req (and (in-hand? target)
+                                              (has-subtype? target "Icebreaker")
+                                              (can-pay? state side eid card nil
+                                                        [:credit (install-cost state side target {:cost-bonus -1})])))}
+                             :async true
+                             :msg (msg "install " (:title target) ", lowering the cost by 1 [Credits]")
+                             :effect (effect (runner-install eid target {:cost-bonus -1}))})
+                          card nil))}]}
 
    "Laramy Fisk: Savvy Investor"
    {:events [{:type :successful-run

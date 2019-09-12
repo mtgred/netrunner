@@ -1196,11 +1196,12 @@
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
   (testing "Single draws"
     (do-game
-      (new-game {:corp {:deck ["Jinja City Grid" (qty "Vanilla" 3) (qty "Ice Wall" 3)]}})
-      (starting-hand state :corp ["Jinja City Grid"])
+      (new-game {:corp {:deck [(qty "Vanilla" 3) (qty "Ice Wall" 3)]
+                        :hand ["Jinja City Grid"]}})
       (core/gain state :corp :click 6)
       (play-from-hand state :corp "Jinja City Grid" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
+      (is (= 4 (:credit (get-corp))) "Starts with 4 credits")
       (dotimes [n 5]
         (core/click-draw state :corp 1)
         (click-prompt state :corp (-> (get-corp) :prompt first :choices first))

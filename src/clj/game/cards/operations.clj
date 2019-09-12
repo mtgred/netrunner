@@ -518,7 +518,7 @@
               :max (req (count (filter rezzed? (all-installed state :corp))))}
     :effect (req (doseq [c targets]
                    (derez state side c))
-                 (let [discount [:credit (* -3 (count targets))]]
+                 (let [discount (* -3 (count targets))]
                    (continue-ability
                      state side
                      {:async true
@@ -1687,10 +1687,9 @@
 
    "Scarcity of Resources"
    {:msg "increase the install cost of resources by 2"
-    :events [{:type :pre-install
-              :req (req (and (resource? target)
-                             (not (second targets)))) ; not facedown
-              :effect (effect (install-cost-bonus [:credit 2]))}]}
+    :persistent-effects [{:type :install-cost
+                          :req (req (resource? target))
+                          :effect 2}]}
 
    "Scorched Earth"
    {:req (req tagged)
@@ -1720,14 +1719,13 @@
                                          (continue-ability
                                            state side
                                            {:async true
-                                            :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                            :prompt (str "Select where to install " (:title chosen-ice))
                                             :choices ["Archives" "R&D" "HQ"]
-                                            :msg (msg "reveal " (:title chosen-ice) "and install it, paying 3[credit] less")
+                                            :msg (msg "reveal " (:title chosen-ice) " and install it, paying 3 [Credit] less")
                                             :effect (effect (clear-wait-prompt :runner)
                                                             (reveal state side chosen-ice)
                                                             (shuffle! :deck)
-                                                            (install-cost-bonus [:credit -3])
-                                                            (corp-install eid chosen-ice target nil))}
+                                                            (corp-install eid chosen-ice target {:cost-bonus -3}))}
                                            card nil)))}
                          card nil))
                    (do (shuffle! state side :deck)

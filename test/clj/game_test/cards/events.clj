@@ -45,7 +45,7 @@
       (play-from-hand state :runner "New Angeles City Hall")
       (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
       (let [nach (get-resource state 0)]
-        (play-run-event state (first (get-in @state [:runner :hand])) :hq)
+        (play-run-event state "Account Siphon" :hq)
         (click-prompt state :runner "Account Siphon")
         (is (= 4 (:credit (get-runner))) "Runner still has 4 credits due to BP")
         (card-ability state :runner nach 0)

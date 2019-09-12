@@ -47,9 +47,11 @@
          costs (merge-costs
                  [(when-not ignore-cost
                     [extra-cost [:credit cost]])
-                  (when (has-subtype? card "Triple")
+                  (when (and (has-subtype? card "Triple")
+                             (not no-additional-cost))
                     [:click 2])
                   (when (and (has-subtype? card "Double")
+                             (not no-additional-cost)
                              (not (get-in @state [side :register :double-ignore-additional])))
                     [:click 1])
                   (when-not (and no-additional-cost ignore-cost)

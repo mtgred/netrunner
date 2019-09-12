@@ -914,22 +914,29 @@
                  :effect (effect (damage-prevent :net Integer/MAX_VALUE))}]}
 
    "Dhegdheer"
-   {:abilities [{:label "Install a program on Dhegdheer"
-                 :req (req (nil? (get-in card [:special :dheg-prog])))
-                 :effect (effect (resolve-ability
-                                   {:cost [:click 1]
-                                    :prompt "Choose a program in your Grip to install on Dhegdheer"
-                                    :choices {:req #(and (program? %)
-                                                         (runner-can-install? state side % false)
-                                                         (in-hand? %))}
-                                    :msg (msg (str "host " (:title target)
-                                                   (when (-> target :cost pos?)
-                                                     ", lowering its cost by 1 [Credit]")))
-                                    :effect (effect (when (-> target :cost pos?)
-                                                      (install-cost-bonus state side [:credit -1]))
-                                                    (runner-install (assoc eid :source card :source-type :runner-install) target {:host-card card :no-mu true})
-                                                    (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
-                                   card nil))}
+   {:abilities [{:req (req (and (not (get-in card [:special :dheg-prog]))
+                                (some #(and (program? %)
+                                            (runner-can-install? state side % false)
+                                            (can-pay? state side eid card nil
+                                                      [:credit (install-cost state side % {:cost-bonus -1})]))
+                                      (:hand runner))))
+                 :cost [:click 1]
+                 :label "Install a program on Dhegdheer"
+                 :prompt "Choose a program in your Grip to install on Dhegdheer"
+                 :choices
+                 {:card (req (and (program? target)
+                                  (runner-can-install? state side target false)
+                                  (in-hand? target)
+                                  (can-pay? state side eid card nil
+                                            [:credit (install-cost state side target {:cost-bonus -1})])))}
+                 :msg (msg (str "host " (:title target)
+                                (when (-> target :cost pos?)
+                                  ", lowering its cost by 1 [Credit]")))
+                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
+                                                 target {:host-card card
+                                                         :no-mu true
+                                                         :cost-bonus -1})
+                                 (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
                 {:label "Host an installed program on Dhegdheer with [Credit] discount"
                  :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer with [Credit] discount"
@@ -980,15 +987,14 @@
    {:prompt "Choose the server that this copy of Diwan is targeting:"
     :choices (req servers)
     :effect (effect (update! (assoc card :server-target target)))
+    :persistent-effects [{:type :install-cost
+                          :req (req (let [serv (:server (second targets))]
+                                      (and (= serv (:server-target card))
+                                           (not (and (is-central? serv)
+                                                     (upgrade? target))))))
+                          :effect 1}]
     :events [{:type :purge
-              :effect (effect (trash card {:cause :purge}))}
-             {:type :pre-corp-install
-              :req (req (let [c target
-                              serv (:server (second targets))]
-                          (and (= serv (:server-target card))
-                               (not (and (is-central? serv)
-                                         (upgrade? c))))))
-              :effect (effect (install-cost-bonus [:credit 1]))}]}
+              :effect (effect (trash card {:cause :purge}))}]}
 
    "Djinn"
    {:abilities [{:label "Search your Stack for a virus program and add it to your Grip"

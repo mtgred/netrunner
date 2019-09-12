@@ -218,23 +218,22 @@
                                           card nil)))}]}
 
    "Clone Chip"
-   {:abilities [{:effect
-                 (effect
-                   (continue-ability
-                     (let [can-pay-for? #(can-pay? state side eid card nil [:credit (:cost %)])]
-                       {:prompt "Select a program to install from your Heap"
-                        :priority true
-                        :show-discard true
-                        :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
-                                       (not (install-locked? state side))
-                                       (some can-pay-for? (filter program? (:discard runner)))))
-                        :choices {:req #(and (program? %)
-                                             (in-discard? %)
-                                             (can-pay-for? %))}
-                        :cost [:trash]
-                        :msg (msg "install " (:title target))
-                        :effect (effect (runner-install eid target nil))})
-                     card nil))}]}
+   {:abilities [{:prompt "Select a program to install from your Heap"
+                 :priority true
+                 :show-discard true
+                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
+                                (not (install-locked? state side))
+                                (some #(and (program? %)
+                                            (can-pay? state side eid card nil
+                                                      [:credit (install-cost state side %)]))
+                                      (:discard runner))))
+                 :choices {:card (req (and (program? target)
+                                           (in-discard? target)
+                                           (can-pay? state side eid card nil
+                                                     [:credit (install-cost state side target)])))}
+                 :cost [:trash]
+                 :msg (msg "install " (:title target))
+                 :effect (effect (runner-install eid target nil))}]}
 
    "Comet"
    {:in-play [:memory 1]
@@ -789,16 +788,20 @@
               :optional
               {:async true
                :interactive (req true)
-               :req (req (and (pos? (total-available-credits state side (assoc eid :source-type :runner-install) card))
-                              (some hardware? (:hand runner))))
+               :req (req (some #(and (hardware? %)
+                                     (can-pay? state side eid card nil
+                                               [:credit (install-cost state side % {:cost-bonus 1})]))
+                               (:hand runner)))
                :prompt "Pay 1 [Credit] to install a hardware?"
                :yes-ability {:async true
                              :prompt "Select a piece of hardware"
-                             :choices {:req #(and (in-hand? %)
-                                                  (hardware? %))}
+                             :choices
+                             {:card (req (and (in-hand? target)
+                                              (hardware? target)
+                                              (can-pay? state side eid card nil
+                                                        [:credit (install-cost state side target {:cost-bonus 1})])))}
                              :msg (msg "install " (:title target) " from the grip, paying 1 [Credit] more")
-                             :effect (effect (install-cost-bonus [:credit 1])
-                                             (runner-install eid target nil))}}}
+                             :effect (effect (runner-install eid target {:cost-bonus 1}))}}}
              {:type :runner-install
               :async true
               :interactive (req true)
@@ -891,17 +894,21 @@
                                 card nil))}]}
 
    "Monolith"
-   (let [mhelper (fn mh [n] {:prompt "Select a program to install"
-                             :choices {:req #(and (program? %)
-                                                  (in-hand? %))}
-                             :effect (req (install-cost-bonus state side [:credit -4])
-                                          (runner-install state side target nil)
-                                          (when (< n 3)
-                                            (resolve-ability state side (mh (inc n)) card nil)))})]
+   (let [mhelper
+         (fn mh [n]
+           {:prompt "Select a program to install"
+            :choices {:card (req (and (program? target)
+                                      (in-hand? target)
+                                      (can-pay? state side eid card nil
+                                                [:credit (install-cost state side target {:cost-bonus -4})])))}
+            :async true
+            :effect (req (wait-for (runner-install state side target {:cost-bonus -4})
+                                   (continue-ability state side (when (< n 3) (mh (inc n))) card nil)))})]
      {:interactions {:prevent [{:type #{:net :brain}
                                 :req (req true)}]}
       :in-play [:memory 3]
-      :effect (effect (resolve-ability (mhelper 1) card nil))
+      :async true
+      :effect (effect (continue-ability (mhelper state side eid card 1) card nil))
       :abilities [{:msg (msg "prevent 1 brain or net damage")
                    :cost [:trash-program-from-grip 1]
                    :effect (effect (damage-prevent :brain 1)

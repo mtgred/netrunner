@@ -484,12 +484,14 @@
                                  (set-prop card :counter {:agenda 1} :agendapoints 1))}]}
 
    "Eden Fragment"
-   {:events [{:type :pre-corp-install
-              :req (req (and (ice? target)
-                             (empty? (let [cards (map first (turn-events state side :corp-install))]
-                                       (filter ice? cards)))))
-              :effect (effect (ignore-install-cost true))}
-             {:type :corp-install
+   {:persistent-effects [{:type :ignore-install-cost
+                          :req (req (and (ice? target)
+                                         (->> (turn-events state side :corp-install)
+                                              (map first)
+                                              (filter ice?)
+                                              empty?)))
+                          :effect true}]
+    :events [{:type :corp-install
               :req (req (and (ice? target)
                              (empty? (let [cards (map first (turn-events state side :corp-install))]
                                        (filter ice? cards)))))
@@ -1567,8 +1569,8 @@
              :effect (effect (gain-bad-publicity :corp 1))}}
 
    "Water Monopoly"
-   {:events [{:type :pre-install
-              :req (req (and (resource? target)
-                             (not (has-subtype? target "Virtual"))
-                             (not (second targets)))) ; not facedown
-              :effect (effect (install-cost-bonus [:credit 1]))}]}})
+   {:persistent-effects [{:type :install-cost
+                          :req (req (and (resource? target)
+                                         (not (has-subtype? target "Virtual"))
+                                         (not (:facedown (second targets)))))
+                          :effect 1}]}})

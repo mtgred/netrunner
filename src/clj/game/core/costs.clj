@@ -670,16 +670,19 @@
                                                           (join " and "))))
       (complete-with-result state side eid nil))))
 
+;; Cost generation functions
 (defn play-cost
   "Combines all relevant effects and costs to play a given card"
-  [state side {:keys [cost] :as card}]
-  (when-not (nil? cost)
-    (->> [cost
-          (when-let [playfun (:play-cost-bonus (card-def card))]
-            (playfun state side (make-eid state) card nil))
-          (sum-effects state side card :play-cost)]
-         (reduce (fnil + 0 0))
-         (max 0))))
+  ([state side card] (play-cost state side card nil))
+  ([state side {:keys [cost] :as card} {:keys [cost-bonus]}]
+   (when-not (nil? cost)
+     (->> [cost
+           (or cost-bonus 0)
+           (when-let [playfun (:play-cost-bonus (card-def card))]
+             (playfun state side (make-eid state) card nil))
+           (sum-effects state side card :play-cost)]
+          (reduce (fnil + 0 0))
+          (max 0)))))
 
 (defn play-additional-cost-bonus
   [state side card]
@@ -690,14 +693,16 @@
 
 (defn rez-cost
   "Combines all rez effects and costs into a single number, not a cost vector"
-  [state side {:keys [cost] :as card}]
-  (when-not (nil? cost)
-    (->> [cost
-          (when-let [rezfun (:rez-cost-bonus (card-def card))]
-            (rezfun state side (make-eid state) card nil))
-          (sum-effects state side card :rez-cost)]
-         (reduce (fnil + 0 0))
-         (max 0))))
+  ([state side card] (rez-cost state side card nil))
+  ([state side {:keys [cost] :as card} {:keys [cost-bonus]}]
+   (when-not (nil? cost)
+     (->> [cost
+           (or cost-bonus 0)
+           (when-let [rezfun (:rez-cost-bonus (card-def card))]
+             (rezfun state side (make-eid state) card nil))
+           (sum-effects state side card :rez-cost)]
+          (reduce (fnil + 0 0))
+          (max 0)))))
 
 (defn rez-additional-cost-bonus
   [state side card]
@@ -707,15 +712,42 @@
             (get-effects state side card :rez-additional-cost))))
 
 (defn trash-cost
-  "Returns the numbe of credits required to trash the given card."
-  [state side {:keys [trash] :as card}]
-  (when-not (nil? trash)
-    (->> [trash
-          (when-let [trashfun (:trash-cost-bonus (card-def card))]
-            (trashfun state side (make-eid state) card nil))
-          (sum-effects state side card :trash-cost)]
-         (reduce (fnil + 0 0))
-         (max 0))))
+  "Returns the number of credits required to trash the given card."
+  ([state side card] (trash-cost state side card nil))
+  ([state side {:keys [trash] :as card} {:keys [cost-bonus]}]
+   (when-not (nil? trash)
+     (->> [trash
+           (or cost-bonus 0)
+           (when-let [trashfun (:trash-cost-bonus (card-def card))]
+             (trashfun state side (make-eid state) card nil))
+           (sum-effects state side card :trash-cost)]
+          (reduce (fnil + 0 0))
+          (max 0)))))
+
+(defn install-cost
+  "Returns the number of credits required to install the given card."
+  ([state side card] (install-cost state side card nil nil))
+  ([state side card args] (install-cost state side card args nil))
+  ([state side card {:keys [cost-bonus]} & targets]
+   (->> [(when (runner? card)
+           (:cost card))
+         (or cost-bonus 0)
+         (when-let [instfun (:install-cost-bonus (card-def card))]
+           (instfun state side (make-eid state) card nil))
+         (sum-effects state side card :install-cost targets)]
+        (reduce (fnil + 0 0))
+        (max 0))))
+
+(defn install-additional-cost-bonus
+  [state side card]
+  (merge-costs
+    (concat (:additional-cost card)
+            (:additional-cost (card-def card))
+            (get-effects state side card :install-additional-cost))))
+
+(defn ignore-install-cost?
+  [state side card]
+  (some true? (get-effects state side card :ignore-install-cost)))
 
 ;;; Converted to use effects go above
 
@@ -731,37 +763,3 @@
         global-costs (get-in @state [:bonus :run-cost :additional-cost])
         server-costs (get-in @state [:corp :servers server :additional-cost])]
     (merge-costs (concat click-run-cost global-costs server-costs))))
-
-(defn install-cost-bonus [state side n]
-  (swap! state update-in [:bonus :install-cost] #(merge-costs (concat % n))))
-
-(defn ignore-install-cost [state side b]
-  (swap! state assoc-in [:bonus :ignore-install-cost] b))
-
-(defn ignore-install-cost? [state side]
-  (get-in @state [:bonus :ignore-install-cost]))
-
-(defn clear-install-cost-bonus [state side]
-  (swap! state update-in [:bonus] dissoc :install-cost :ignore-install-cost))
-
-(defn install-cost
-  [state side card all-cost]
-  (vec (map #(if (keyword? %) % (max % 0))
-            (-> (concat all-cost
-                        (get-in @state [:bonus :install-cost])
-                        (when-let [instfun (:install-cost-bonus (card-def card))]
-                          (instfun state side (make-eid state) card nil)))
-                merge-costs
-                flatten))))
-
-(defn modified-install-cost
-  "Returns the number of credits required to install the given card, after modification effects including
-  the argument 'additional', which is a vector of costs like [:credit -1]. Allows cards like
-  Street Peddler to pre-calculate install costs without actually triggering the install."
-  ([state side card] (modified-install-cost state side card nil))
-  ([state side card additional]
-   (trigger-event state side :pre-install card)
-   (let [cost (install-cost state side card (merge-costs (concat additional [:credit (:cost card)])))]
-     (swap! state update-in [:bonus] dissoc :install-cost)
-     (swap! state update-in [:bonus] dissoc :ignore-install-cost)
-     cost)))

@@ -54,17 +54,19 @@
 
 (defn get-effects
   "Filters and then 'executes' the effects of a given type."
-  [state side card effect-type]
-  (let [eid (make-eid state)]
-    (->> (gather-effects state side effect-type)
-         (filter #(if-not (:req %)
-                    true
-                    ((:req %) state side eid (get-card state (:card %)) [card])))
-         (mapv #(if-not (fn? (:effect %))
-                  (:effect %)
-                  ((:effect %) state side eid (get-card state (:card %)) [card]))))))
+  ([state side card effect-type] (get-effects state side card effect-type nil))
+  ([state side card effect-type targets]
+   (let [eid (make-eid state)]
+     (->> (gather-effects state side effect-type)
+          (filter #(if-not (:req %)
+                     true
+                     ((:req %) state side eid (get-card state (:card %)) (cons card targets))))
+          (mapv #(if-not (fn? (:effect %))
+                   (:effect %)
+                   ((:effect %) state side eid (get-card state (:card %)) (cons card targets))))))))
 
 (defn sum-effects
   "Sums the results from get-effects."
-  [state side card effect-type]
-  (reduce + (filter identity (get-effects state side card effect-type))))
+  ([state side card effect-type] (sum-effects state side card effect-type nil))
+  ([state side card effect-type targets]
+   (reduce + (filter identity (get-effects state side card effect-type targets)))))
