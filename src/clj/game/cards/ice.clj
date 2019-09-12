@@ -1003,9 +1003,15 @@
                   end-the-run]}
 
    "Errand Boy"
-   {:subroutines [(gain-credits-sub 1)
-                  {:msg "draw 1 card"
-                   :effect (effect (draw eid 1 nil))}]}
+   (let [sub {:label "Draw a card or gain 1 [Credits]"
+              :prompt "Choose one:"
+              :choices ["Gain 1 [Credits]" "Draw 1 card"]
+              :effect (req (if (= target "Gain 1 [Credits]")
+                                  (do (gain-credits state :corp 1)
+                                      (system-msg state side "gains 1 [Credits] with Errand Boy"))
+                                  (do (draw state :corp eid 1 nil)
+                                      (system-msg state side "draws 1 card with Errand Boy"))))}]
+     {:subroutines [sub sub sub]})
 
    "Excalibur"
    {:subroutines [{:label "The Runner cannot make another run this turn"
