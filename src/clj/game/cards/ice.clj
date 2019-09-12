@@ -1006,11 +1006,12 @@
    (let [sub {:label "Draw a card or gain 1 [Credits]"
               :prompt "Choose one:"
               :choices ["Gain 1 [Credits]" "Draw 1 card"]
+              :msg (req (if (= target "Gain 1 [Credits]")
+                          "gain 1 [Credits]"
+                          "draw 1 card"))
               :effect (req (if (= target "Gain 1 [Credits]")
-                                  (do (gain-credits state :corp 1)
-                                      (system-msg state side "gains 1 [Credits] with Errand Boy"))
-                                  (do (draw state :corp eid 1 nil)
-                                      (system-msg state side "draws 1 card with Errand Boy"))))}]
+                                   (gain-credits state :corp 1)
+                                   (draw state :corp eid 1 nil)))}]
      {:subroutines [sub sub sub]})
 
    "Excalibur"
