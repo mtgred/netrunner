@@ -1073,7 +1073,10 @@
     (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
     (swap! state assoc-in [:runner :run-credit] 0)
     (swap! state assoc :run nil)
+    (update-all-icebreakers state side)
     (update-all-ice state side)
+    (doseq [ice (get-in @state [:corp :servers (first (:server run)) :ices])]
+      (reset-all-subs! state ice))
     (clear-run-register! state)
     (trigger-run-end-events state side (:eid run) run)))
 
@@ -1091,14 +1094,10 @@
     (swap! state assoc-in [:run :ending] true)
     (swap! state assoc-in [:run :ended] true)
     (wait-for (trigger-event-sync state side :run-ends server)
-              (remove-floating-effects state :end-of-encounter)
+              (unregister-floating-effects state side :end-of-encounter)
               (unregister-floating-events state side :end-of-encounter)
-              (remove-floating-effects state :end-of-run)
+              (unregister-floating-effects state side :end-of-run)
               (unregister-floating-events state side :end-of-run)
-              (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                (update-breaker-strength state side p))
-              (doseq [ice (get-in @state [:corp :servers server :ices])]
-                (reset-all-subs! state ice))
               (let [run-effects (get-in @state [:run :run-effects])
                     end-of-run-effects (filter :end-run run-effects)]
                 (wait-for (end-run-effect-impl state side server end-of-run-effects)

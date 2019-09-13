@@ -7,7 +7,8 @@
          name-zone play-instant purge make-run runner-install trash get-strength
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
-         reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!)
+         reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
+         update-all-ice update-all-icebreakers)
 
 ;;; Neutral actions
 (defn play
@@ -595,7 +596,7 @@
       (when-let [derez-effect (:derez-effect cdef)]
         (resolve-ability state side derez-effect (get-card state card) nil))
       (register-events state side card (:derezzed-events cdef)))
-    (unregister-persistent-effects state card)
+    (unregister-persistent-effects state side card)
     (trigger-event state side :derez card side)))
 
 (defn advance
@@ -689,19 +690,17 @@
           next-ice (when (and pos (< 1 pos) (<= (dec pos) (count run-ice)))
                      (get-card state (nth run-ice (- pos 2))))]
       (wait-for (trigger-event-sync state side :pass-ice cur-ice)
-                (remove-floating-effects state :end-of-encounter)
+                (unregister-floating-effects state side :end-of-encounter)
                 (unregister-floating-events state side :end-of-encounter)
-                (update-ice-in-server
-                  state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
                 (swap! state update-in [:run :position] (fnil dec 1))
                 (swap! state assoc-in [:run :no-action] false)
                 (system-msg state side "continues the run")
                 (when cur-ice
-                  (reset-all-subs! state (get-card state cur-ice))
-                  (update-ice-strength state side (get-card state cur-ice)))
-                (wait-for (trigger-event-simult state side (if next-ice :approach-ice :approach-server) nil (when next-ice next-ice))
-                          (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                            (update-breaker-strength state side p)))))))
+                  (reset-all-subs! state (get-card state cur-ice)))
+                (update-all-ice state side)
+                (update-all-icebreakers state side)
+                (trigger-event-simult state side (make-eid state)
+                                      (if next-ice :approach-ice :approach-server) nil (when next-ice next-ice))))))
 
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."

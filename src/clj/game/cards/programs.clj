@@ -1,6 +1,5 @@
 (ns game.cards.programs
   (:require [game.core :refer :all]
-            [game.core.effects :refer [create-floating-effect]]
             [game.core.eid :refer :all]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]

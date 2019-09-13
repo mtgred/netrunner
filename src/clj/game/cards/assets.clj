@@ -1,7 +1,7 @@
 (ns game.cards.assets
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.effects :refer [create-floating-effect]]
+            [game.core.effects :refer [register-floating-effect]]
             [game.core.eid :refer [effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -922,14 +922,14 @@
                  :choices {:req #(and (ice? %) (rezzed? %))}
                  :req (req (pos? (get-counters card :power)))
                  :msg (msg "add strength to a rezzed ICE")
-                 :effect (req (create-floating-effect
-                                state card
-                                (let [it-target target]
-                                  {:type :ice-strength
-                                   :duration :end-of-turn
-                                   :req (req (same-card? target it-target))
-                                   :effect (req (inc (get-counters card :power)))}))
-                              (update-ice-strength state side target))}]}
+                 :effect (effect (register-floating-effect
+                                   card
+                                   (let [it-target target]
+                                     {:type :ice-strength
+                                      :duration :end-of-turn
+                                      :req (req (same-card? target it-target))
+                                      :effect (req (inc (get-counters card :power)))}))
+                                 (update-ice-strength target))}]}
 
    "Jackson Howard"
    {:abilities [{:cost [:click 1]

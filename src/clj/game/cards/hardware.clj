@@ -1,7 +1,7 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.effects :refer [create-floating-effect]]
+            [game.core.effects :refer [register-floating-effect]]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -257,13 +257,13 @@
                  :msg (msg "increase the rez cost of " (card-str state target)
                            " by 2 [Credits] until the end of the turn")
                  :cost [:trash]
-                 :effect (req (create-floating-effect
-                                state card
-                                (let [ice target]
-                                  {:type :rez-additional-cost
-                                   :duration :end-of-turn
-                                   :req (req (same-card? target ice))
-                                   :effect (req [:credit 2])})))}]}
+                 :effect (effect (register-floating-effect
+                                   card
+                                   (let [ice target]
+                                     {:type :rez-additional-cost
+                                      :duration :end-of-turn
+                                      :req (req (same-card? target ice))
+                                      :effect (req [:credit 2])})))}]}
 
    "Cyberdelia"
    {:implementation "Credit gain is manually triggered."

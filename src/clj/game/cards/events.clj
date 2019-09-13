@@ -1,7 +1,7 @@
 (ns game.cards.events
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.effects :refer [create-floating-effect]]
+            [game.core.effects :refer [register-floating-effect]]
             [game.core.eid :refer [make-eid make-result effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -171,8 +171,8 @@
                          :effect (req (make-run state side target nil card)
                                       (let [run-ices (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices]))
                                             foremost-ice (last (remove rezzed? run-ices))]
-                                        (create-floating-effect
-                                          state card
+                                        (register-floating-effect
+                                          state side card
                                           {:type :rez-additional-cost
                                            :duration :end-of-run
                                            :req (req (and (same-card? foremost-ice target)
@@ -1464,8 +1464,7 @@
     :msg (msg "make a run on " target (when (< (count (filter program? (all-active-installed state :runner))) 4)
                                         ", adding +2 strength to all icebreakers"))
     :effect (req (when (< (count (filter program? (all-active-installed state :runner))) 4)
-                   (doseq [c (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                     (pump state side c 2 :end-of-run)))
+                   (pump-all-icebreakers state side 2 :end-of-run))
                  (make-run state side (make-eid state) target nil card))}
 
    "Leave No Trace"
@@ -1875,8 +1874,7 @@
     :makes-run true
     :async true
     :effect (req (when (<= (count (:hand runner)) 2)
-                   (doseq [breaker (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                     (pump state side breaker 2 :end-of-run)))
+                   (pump-all-icebreakers state side 2 :end-of-run))
                  (make-run state side eid target))}
 
    "Quality Time"
@@ -2115,12 +2113,12 @@
      nil
      nil
      nil
-     (req (create-floating-effect
-            state card
-            {:type :rez-additional-cost
-             :duration :end-of-run
-             :req (req (ice? target))
-             :effect (req [:credit (:cost target)])})))
+     (effect (register-floating-effect
+               card
+               {:type :rez-additional-cost
+                :duration :end-of-run
+                :req (req (ice? target))
+                :effect (req [:credit (:cost target)])})))
 
    "Satellite Uplink"
    {:choices {:max 2 :req installed?}

@@ -6,7 +6,7 @@
             [clj-uuid :as uuid]))
 
 (defn register-persistent-effects
-  [state card]
+  [state side card]
   (when (:persistent-effects (card-def card))
     (let [persistent-effects (:persistent-effects (card-def card))
           abilities (for [ability persistent-effects]
@@ -20,7 +20,7 @@
       abilities)))
 
 (defn unregister-persistent-effects
-  [state card]
+  [state side card]
   (when (:persistent-effects (card-def card))
     (swap! state assoc :effects
            (->> (:effects @state)
@@ -28,8 +28,8 @@
                               (= :persistent (:duration %))))
                 (into [])))))
 
-(defn create-floating-effect
-  [state card ability]
+(defn register-floating-effect
+  [state side card ability]
   (let [ability (assoc
                   (select-keys ability [:type :duration :req :effect])
                   :card card
@@ -37,8 +37,8 @@
     (swap! state update :effects conj ability)
     ability))
 
-(defn remove-floating-effects
-  [state duration]
+(defn unregister-floating-effects
+  [state side duration]
   (swap! state assoc :effects
          (->> (:effects @state)
               (remove #(= duration (:duration %)))

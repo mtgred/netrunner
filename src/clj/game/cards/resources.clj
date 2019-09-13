@@ -1,7 +1,7 @@
 (ns game.cards.resources
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.effects :refer [create-floating-effect]]
+            [game.core.effects :refer [register-floating-effect]]
             [game.core.eid :refer [make-eid effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -745,14 +745,14 @@
                  :choices {:req #(and (installed? %)
                                       (has-subtype? % "Icebreaker"))}
                  :cost [:trash]
-                 :effect (req (create-floating-effect
-                                state card
-                                (let [breaker target]
-                                  {:type :breaker-strength
-                                   :duration :end-of-run
-                                   :req (req (same-card? breaker target))
-                                   :effect (req (count (:hand runner)))}))
-                                 (update-breaker-strength state side target))}]}
+                 :effect (effect (register-floating-effect
+                                   card
+                                   (let [breaker target]
+                                     {:type :breaker-strength
+                                      :duration :end-of-run
+                                      :req (req (same-card? breaker target))
+                                      :effect (req (count (:hand runner)))}))
+                                 (update-breaker-strength target))}]}
 
    "Decoy"
    {:interactions {:prevent [{:type #{:tag}

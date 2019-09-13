@@ -1,7 +1,7 @@
 (ns game.cards.upgrades
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
-            [game.core.effects :refer [create-floating-effect]]
+            [game.core.effects :refer [register-floating-effect]]
             [game.core.eid :refer [effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -570,13 +570,13 @@
                                 (pos? (count (:hand corp)))))
                  :async true
                  :cost [:trash-from-hand 1]
-                 :effect (req (create-floating-effect
-                                state card
-                                {:type :ice-strength
-                                 :duration :end-of-run
-                                 :req (req (protecting-same-server? card target))
-                                 :effect (req 2)})
-                              (update-all-ice state side))}]}
+                 :effect (effect (register-floating-effect
+                                   card
+                                   {:type :ice-strength
+                                    :duration :end-of-run
+                                    :req (req (protecting-same-server? card target))
+                                    :effect (req 2)})
+                                 (update-all-ice))}]}
 
    "Henry Phillips"
    {:implementation "Manually triggered by Corp"
