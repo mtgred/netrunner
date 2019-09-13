@@ -26,7 +26,7 @@
            (->> (:effects @state)
                 (remove #(and (same-card? card (:card %))
                               (= :persistent (:duration %))))
-                (into [])))))
+                doall))))
 
 (defn register-floating-effect
   [state side card ability]
@@ -42,7 +42,7 @@
   (swap! state assoc :effects
          (->> (:effects @state)
               (remove #(= duration (:duration %)))
-              (into []))))
+              doall)))
 
 (defn- gather-effects
   [state side effect-type]
@@ -60,7 +60,7 @@
      (->> (gather-effects state side effect-type)
           (filter #(if-not (:req %)
                      true
-                     ((:req %) state side eid (get-card state (:card %)) (cons card targets))))
+                     (true? ((:req %) state side eid (get-card state (:card %)) (cons card targets)))))
           (mapv #(if-not (fn? (:effect %))
                    (:effect %)
                    ((:effect %) state side eid (get-card state (:card %)) (cons card targets))))))))
