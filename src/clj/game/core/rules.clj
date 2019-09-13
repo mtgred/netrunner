@@ -39,14 +39,14 @@
   ([state side eid? card?] (if (:eid eid?)
                              (play-instant state side eid? card? nil)
                              (play-instant state side (make-eid state) eid? card?)))
-  ([state side eid card {:keys [targets ignore-cost extra-cost no-additional-cost]}]
+  ([state side eid card {:keys [targets ignore-cost base-cost no-additional-cost]}]
    (let [eid (eid-set-defaults eid :source nil :source-type :play)
          {:keys [req makes-run]} (card-def card)
          cost (play-cost state side card)
          additional-costs (play-additional-cost-bonus state side card)
          costs (merge-costs
                  [(when-not ignore-cost
-                    [extra-cost [:credit cost]])
+                    [base-cost [:credit cost]])
                   (when (and (has-subtype? card "Triple")
                              (not no-additional-cost))
                     [:click 2])

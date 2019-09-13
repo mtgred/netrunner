@@ -12,34 +12,6 @@
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer :all]))
 
-(defn- counter-based-extra-cost
-  "Cold Site Server and Reduced Service. Modify cost to run current server whenever counters are added or removed.
-  Unit-Costs is a vec like [:credit 1 :click 1] saying how much extra cost 1 counter adds.
-  NOTE: If card has an :effect or :leave-play, see function source for the things they need to do to ensure tracking works."
-  [unit-costs cdef]
-  (let [store-key [:special :current-added-cost]]
-       (letfn [(reset-cost [state card qty]
-                 (swap! state update-in [:corp :servers (second (:zone card)) :additional-cost]
-                        #(merge-costs (concat % (mapv (fn [[cost-type amount]]
-                                                        [cost-type (* qty amount)])
-                                                      (partition 2 unit-costs))))))
-               (recompute-cost [state card]
-                 (let [change ((fnil - 0 0) (get-counters card :power) (get-in card store-key))]
-                   (reset-cost state card change)
-                   (update! state :corp (assoc-in card store-key (get-counters card :power)))))
-               (clear-cost [state card]
-                 (reset-cost state card (- (get-in card store-key 0)))
-                 (update! state :corp (assoc-in card store-key 0)))]
-         (merge cdef
-                {:events (apply conj [{:type :counter-added
-                                       :req (req (same-card? target card))
-                                       :effect (req (recompute-cost state card))}]
-                                (:events cdef))
-                 :effect (if (:effect cdef) (:effect cdef)
-                             (req (add-counter state side (get-card state card) :power 0)))
-                 :leave-play (if (:leave-play cdef) (:leave-play cdef)
-                                 (req (clear-cost state card)))}))))
-
 ;; Card definitions
 (def card-definitions
   {"Akitaro Watanabe"
@@ -323,15 +295,16 @@
                                                              icename " again"))))}]}
 
    "Cold Site Server"
-   (counter-based-extra-cost
-    [:credit 1 :click 1]
-    {:events [{:type :corp-turn-begins
-               :req (req (pos? (get-counters card :power)))
-               :msg " uses Cold Site Server to remove all hosted power counters"
-               :effect (effect (add-counter card :power (- (get-counters card :power))))}]
-     :abilities [{:cost [:click 1]
-                  :msg "place 1 power counter on Cold Site Server"
-                  :effect (effect (add-counter card :power 1))}]})
+   {:persistent-effects [{:type :run-additional-cost
+                          :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
+                          :effect (req (repeat (get-counters card :power) [:credit 1 :click 1]))}]
+    :events [{:type :corp-turn-begins
+              :req (req (pos? (get-counters card :power)))
+              :msg "remove all hosted power counters"
+              :effect (effect (add-counter card :power (- (get-counters card :power))))}]
+    :abilities [{:cost [:click 1]
+                 :msg "place 1 power counter on Cold Site Server"
+                 :effect (effect (add-counter card :power 1))}]}
 
    "Corporate Troubleshooter"
    {:abilities [{:label "Add strength to a rezzed ICE protecting this server"
@@ -1149,23 +1122,25 @@
                {:type :run-ends}]})
 
    "Reduced Service"
-   (counter-based-extra-cost
-    [:credit 2]
-    {:events [{:type :successful-run
-               :req (req (and (pos? (get-counters card :power))
-                              (is-central? (:server run))))
-               :msg "remove a hosted power counter"
-               :effect (effect (add-counter card :power -1))}]
-    :effect (req (show-wait-prompt state :runner "Corp to place credits on Reduced Service")
-                 (continue-ability state side {:choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
-                                               :prompt "How many credits to spend?"
-                                               :effect (req (clear-wait-prompt state :runner)
-                                                            (let [spent (str->int target)]
-                                                              (lose state :corp :credit spent)
-                                                              (add-counter state :corp card :power spent)
-                                                              (system-msg state :corp (str "places " (quantify spent "power counter") " on Reduced Service"))
-                                                              (effect-completed state side eid)))}
-                                   card nil))})
+   {:persistent-effects [{:type :run-additional-cost
+                          :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
+                          :effect (req (repeat (get-counters card :power) [:credit 2]))}]
+    :events [{:type :successful-run
+              :req (req (and (pos? (get-counters card :power))
+                             (is-central? (:server run))))
+              :msg "remove a hosted power counter"
+              :effect (effect (add-counter card :power -1))}]
+    :effect (effect (show-wait-prompt :runner "Corp to place credits on Reduced Service")
+                    (continue-ability
+                      {:choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
+                       :prompt "How many credits to spend?"
+                       :effect (req (clear-wait-prompt state :runner)
+                                    (let [spent (str->int target)]
+                                      (lose state :corp :credit spent)
+                                      (add-counter state :corp card :power spent)
+                                      (system-msg state :corp (str "places " (quantify spent "power counter") " on Reduced Service"))
+                                      (effect-completed state side eid)))}
+                      card nil))}
 
    "Research Station"
    {:init {:root "HQ"}
@@ -1173,12 +1148,9 @@
     :in-play [:hand-size 2]}
 
    "Ruhr Valley"
-   (letfn [(change-click-cost [n]
-             (req (let [server (second (:zone card))]
-                    (swap! state update-in [:corp :servers server :additional-cost]
-                           #(merge-costs (concat % [:click n]))))))]
-     {:effect (change-click-cost 1)
-      :leave-play (change-click-cost -1)})
+   {:persistent-effects [{:type :run-additional-cost
+                          :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
+                          :effect (req [:click 1])}]}
 
    "Rutherford Grid"
    {:events [{:type :pre-init-trace

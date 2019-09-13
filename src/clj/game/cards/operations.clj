@@ -600,10 +600,10 @@
 
    "Enhanced Login Protocol"
    {:msg "uses Enhanced Login Protocol to add an additional cost of [Click] to make the first run not through a card ability this turn"
-    :events [{:type :pre-init-run
-              :req (req (and (first-event? state side :pre-init-run #(:click-run (nth % 2)))
-                             (:click-run (nth targets 2))))
-              :effect (effect (run-additional-cost-bonus [:click 1]))}]}
+    :persistent-effects [{:type :run-additional-cost
+                          :req (req (and (no-event? state side :run #(:click-run (second %)))
+                                         (:click-run (second targets))))
+                          :effect (req [:click 1])}]}
 
    "Exchange of Information"
    {:req (req (and tagged
@@ -1743,9 +1743,9 @@
 
    "Service Outage"
    {:msg "add a cost of 1 [Credit] for the Runner to make the first run each turn"
-    :events [{:type :pre-init-run
-              :req (req (first-event? state side :pre-init-run))
-              :effect (effect (run-additional-cost-bonus [:credit 1]))}]}
+    :persistent-effects [{:type :run-additional-cost
+                          :req (req (no-event? state side :run))
+                          :effect (req [:credit 1])}]}
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}

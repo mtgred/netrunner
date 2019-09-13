@@ -6,7 +6,7 @@
          enforce-msg gain-agenda-point get-remote-names get-run-ices jack-out move
          name-zone play-instant purge make-run runner-install trash get-strength
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
-         can-run-server? can-score? say play-sfx base-mod-size free-mu
+         can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
          reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!)
 
 ;;; Neutral actions
@@ -16,12 +16,11 @@
   (when-let [card (get-card state card)]
     (case (:type card)
       ("Event" "Operation") (play-instant state side (make-eid state {:source :action
-                                                                      :source-type :play}) card {:extra-cost [:click 1]})
+                                                                      :source-type :play}) card {:base-cost [:click 1]})
       ("Hardware" "Resource" "Program") (runner-install state side (make-eid state {:source :action
-                                                                                    :source-type :runner-install}) card {:extra-cost [:click 1]})
+                                                                                    :source-type :runner-install}) card {:base-cost [:click 1]})
       ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side (make-eid state {:source server
-                                                                                   :source-type :corp-install}) card server {:extra-cost [:click 1] :action :corp-click-install}))
-    (trigger-event state side :play card)))
+                                                                                   :source-type :corp-install}) card server {:base-cost [:click 1] :action :corp-click-install}))))
 
 (defn shuffle-deck
   "Shuffle R&D/Stack."
@@ -298,11 +297,12 @@
             (resolve-select state side update! resolve-ability)))))))
 
 (defn- do-play-ability [state side card ability targets]
-  (let [cost (:cost ability)]
-    (when (or (nil? cost)
-              (if (has-subtype? card "Run")
-                (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost (run-costs state nil nil))
-                (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost)))
+  (let [cost (:cost ability)
+        cost-to-run (when (has-subtype? card "Run")
+                      (total-run-cost state side card))]
+    (when (or (and (nil? cost)
+                   (nil? cost-to-run))
+              (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost cost-to-run))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
       (resolve-ability state side ability card targets))))

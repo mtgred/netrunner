@@ -251,7 +251,7 @@
 
 (defn- corp-install-pay
   "Used by corp-install to pay install costs, code continues in corp-install-continue"
-  [state side eid card server {:keys [extra-cost ignore-install-cost ignore-all-cost host-card action cost-bonus] :as args} slot]
+  [state side eid card server {:keys [base-cost ignore-install-cost ignore-all-cost host-card action cost-bonus] :as args} slot]
   (let [dest-zone (get-in @state (cons :corp slot))
         ice-cost (if (and (ice? card)
                           (not ignore-install-cost)
@@ -263,7 +263,7 @@
                            {:cost-bonus (+ (or cost-bonus 0) ice-cost)}
                            {:server server :dest-zone dest-zone})
         costs (when-not ignore-all-cost
-                [extra-cost [:credit cost]])]
+                [base-cost [:credit cost]])]
     (if (and (corp-can-install? state side card dest-zone)
              (not (install-locked? state :corp)))
       (wait-for (pay-sync state side (make-eid state eid) card costs {:action action})
@@ -278,8 +278,8 @@
 (defn corp-install
   "Installs a card in the chosen server. If server is nil, asks for server to install in.
   The args input takes the following values:
+  :base-cost - Only used for click actions
   :host-card - Card to host on
-  :extra-cost - Extra install costs
   :ignore-all-cost - true if install costs should be ignored
   :action - What type of action installed the card
   :install-state - Can be :rezzed-no-cost, :rezzed-no-rez-cost, :rezzed, or :face-up
@@ -361,13 +361,13 @@
 
 (defn- runner-get-cost
   "Get the total install cost for specified card"
-  [state side card {:keys [extra-cost ignore-install-cost ignore-all-cost facedown cost-bonus] :as params}]
+  [state side card {:keys [base-cost ignore-install-cost ignore-all-cost facedown cost-bonus] :as params}]
   (if ignore-all-cost
     [:credit 0]
     (let [cost (install-cost state side card {:cost-bonus cost-bonus} {:facedown facedown})
           additional-costs (install-additional-cost-bonus state side card)]
       (merge-costs
-        [extra-cost
+        [base-cost
          (when (and (not ignore-install-cost)
                     (not facedown))
            [:credit cost])
@@ -395,7 +395,7 @@
 
 (defn runner-install
   "Installs specified runner card if able
-  Params include extra-cost, no-cost, host-card, facedown and custom-message."
+  Params include base-cost, no-cost, host-card, facedown and custom-message."
   ([state side card] (runner-install state side (make-eid state) card nil))
   ([state side card params] (runner-install state side (make-eid state) card params))
   ([state side eid card {:keys [host-card facedown no-mu no-msg cost-bonus] :as params}]

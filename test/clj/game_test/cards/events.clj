@@ -1744,6 +1744,7 @@
     (core/gain state :runner :credit 1)
     (is (= 6 (:credit (get-runner))) "Runner starts with 6 credits")
     (play-from-hand state :runner "High-Stakes Job")
+    (is (= 1 (-> (get-runner) :prompt first :choices count)) "Only has 1 server to choose from")
     (click-prompt state :runner "HQ")
     (run-successful state)
     (is (= 12 (:credit (get-runner))) "Runner gains 12 credits")))

@@ -6,15 +6,25 @@
          get-remote-names card-name can-access-loud can-steal?
          prevent-jack-out card-flag? can-run?)
 
-(defn clear-run-costs
-  [state]
-  (swap! state update-in [:bonus] dissoc :run-cost))
-
 (defn add-run-effect
   [state side run-effect]
   (swap! state update-in [:run :run-effects] conj run-effect))
 
-;;; Steps in the run sequence
+(defn total-run-cost
+  ([state side card] (total-run-cost state side card nil))
+  ([state side card {:keys [click-run ignore-costs] :as args}]
+   (let [cost (let [cost (run-cost state side card nil args)]
+                (when (and (pos? cost)
+                           (not ignore-costs))
+                  [:credit cost]))
+         additional-costs (run-additional-cost-bonus state side card args)
+         click-run-cost (when click-run [:click 1])]
+     (when-not ignore-costs
+       (merge-costs
+         [click-run-cost
+          cost
+          additional-costs])))))
+
 (defn make-run
   "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
   ([state side server] (make-run state side (make-eid state) server nil nil nil))
@@ -22,17 +32,17 @@
   ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
   ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
   ([state side eid server run-effect card {:keys [click-run ignore-costs] :as args}]
-   (clear-run-costs state)
    (wait-for (trigger-event-simult state :runner :pre-init-run nil server card args)
-             (let [all-run-costs (when-not ignore-costs (run-costs state server args))]
+             (let [cost-args (assoc args :server (unknown->kw server))
+                   costs (total-run-cost state side card cost-args)]
                (if (and (can-run? state :runner)
                         (can-run-server? state server)
-                        (can-pay? state :runner (make-eid state eid) card "a run" all-run-costs))
+                        (can-pay? state :runner (make-eid state eid) card "a run" costs))
                  (do (when click-run
                        (swap! state assoc-in [:runner :register :click-type] :run)
                        (swap! state assoc-in [:runner :register :made-click-run] true)
                        (play-sfx state side "click-run"))
-                     (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :make-run}) nil all-run-costs)
+                     (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :make-run}) nil costs)
                                (if-let [cost-str async-result]
                                  (do
                                    (when click-run
@@ -57,7 +67,7 @@
                                      (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
                                      (update-all-ice state :corp)
                                      (swap! state update-in [:stats side :runs :started] (fnil inc 0))
-                                     (wait-for (trigger-event-simult state :runner :run nil s)
+                                     (wait-for (trigger-event-simult state :runner :run nil s cost-args)
                                                (when (>= n 2) (trigger-event state :runner :run-big s n))
                                                (when (zero? n)
                                                  (trigger-event-simult state :runner (make-eid state) :approach-server nil)))))

@@ -749,17 +749,18 @@
   [state side card]
   (some true? (get-effects state side card :ignore-install-cost)))
 
-;;; Converted to use effects go above
+(defn run-cost
+  "Get a list of all costs required to run a server."
+  ([state side card] (run-cost state side card nil nil))
+  ([state side card args] (run-cost state side card args nil))
+  ([state side card {:keys [cost-bonus]} & targets]
+   (->> [(or cost-bonus 0)
+         (sum-effects state side card :run-cost targets)]
+        (reduce (fnil + 0 0))
+        (max 0))))
 
 (defn run-additional-cost-bonus
-  [state side & n]
-  (swap! state update-in [:bonus :run-cost :additional-cost] #(merge-costs (concat % n))))
-
-(defn run-costs
-  "Get a list of all costs required to run a server, including additional costs. If click-run, run is made by spending a click, and include the assumed click in the cost list."
-  [state server {:keys [click-run]}]
-  (let [server (unknown->kw server)
-        click-run-cost (when click-run [:click 1])
-        global-costs (get-in @state [:bonus :run-cost :additional-cost])
-        server-costs (get-in @state [:corp :servers server :additional-cost])]
-    (merge-costs (concat click-run-cost global-costs server-costs))))
+  ([state side card] (run-additional-cost-bonus state side card nil))
+  ([state side card & targets]
+   (merge-costs
+     (get-effects state side card :run-additional-cost targets))))
