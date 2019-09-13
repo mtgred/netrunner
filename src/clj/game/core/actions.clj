@@ -545,16 +545,12 @@
            state side
            {:optional
             {:prompt "Pay the alternative Rez cost?"
-             :yes-ability
-             {:cost alternative-cost
-              :async true
-              :effect
-              (effect (rez eid card (merge args {:ignore-cost true
-                                                 :paid-alt true})))}
-             :no-ability
-             {:async true
-              :effect
-              (effect (rez eid card (merge args {:declined-alternative-cost true})))}}}
+             :yes-ability {:cost alternative-cost
+                           :async true
+                           :effect (effect (rez eid card (merge args {:ignore-cost true
+                                                                      :paid-alt true})))}
+             :no-ability {:async true
+                          :effect (effect (rez eid card (merge args {:declined-alternative-cost true})))}}}
            card nil)
          (let [cdef (card-def card)
                costs (get-rez-cost state side card args)]
