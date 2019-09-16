@@ -255,10 +255,10 @@
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
 
    "Brain-Taping Warehouse"
-   {:persistent-effects [{:type :rez-cost
-                          :req (req (and (ice? target)
-                                         (has-subtype? target "Bioroid")))
-                          :effect (req (- (:click runner)))}]}
+   {:constant-effects [{:type :rez-cost
+                        :req (req (and (ice? target)
+                                       (has-subtype? target "Bioroid")))
+                        :effect (req (- (:click runner)))}]}
 
    "Breached Dome"
    {:flags {:rd-reveal (req true)}
@@ -593,10 +593,10 @@
    {:abilities [{:cost [:click 2]
                  :msg "add 1 power counter"
                  :effect (effect (add-counter card :power 1))}]
-    :persistent-effects [{:type :install-cost
-                          :req (req (and (pos? (get-counters card :power))
-                                         (not (get-in @state [:per-turn (:cid card)]))))
-                          :effect (req (get-counters card :power))}]
+    :constant-effects [{:type :install-cost
+                        :req (req (and (pos? (get-counters card :power))
+                                       (not (get-in @state [:per-turn (:cid card)]))))
+                        :effect (req (get-counters card :power))}]
     :events [{:type :runner-install
               :silent (req true)
               :req (req (and (pos? (get-counters card :power))
@@ -670,9 +670,9 @@
                                  (gain-bad-publicity :corp 1))}]}
 
    "Encryption Protocol"
-   {:persistent-effects [{:type :trash-cost
-                          :req (req (installed? target))
-                          :effect 1}]}
+   {:constant-effects [{:type :trash-cost
+                        :req (req (installed? target))
+                        :effect 1}]}
 
    "Estelle Moon"
    {:events [{:type :corp-install
@@ -1707,9 +1707,9 @@
 
    "Sandburg"
    {:effect (effect (update-all-ice))
-    :persistent-effects [{:type :ice-strength
-                          :req (req (<= 10 (:credit corp)))
-                          :effect (req (quot (:credit corp) 5))}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (<= 10 (:credit corp)))
+                        :effect (req (quot (:credit corp) 5))}]
     :events [{:type :corp-credit-gain
               :req (req (= :credit (first target)))
               :effect (effect (update-all-ice))}
@@ -1910,10 +1910,10 @@
                               (add-counter card :power 1))}]}
 
    "Student Loans"
-   {:persistent-effects [{:type :play-additional-cost
-                          :req (req (and (event? target)
-                                         (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
-                          :effect (req [:credit 2])}]}
+   {:constant-effects [{:type :play-additional-cost
+                        :req (req (and (event? target)
+                                       (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
+                        :effect (req [:credit 2])}]}
 
    "Sundew"
    ; If this a run event then handle in :begin-run as we do not know the server
@@ -1971,10 +1971,10 @@
                  (hardware? card)
                  (and (resource? card)
                       (has-subtype? card "Virtual"))))]
-     {:persistent-effects [{:type :install-cost
-                            :req (req (and (is-techno-target target)
-                                           (not (:facedown (second targets)))))
-                            :effect 1}]
+     {:constant-effects [{:type :install-cost
+                          :req (req (and (is-techno-target target)
+                                         (not (:facedown (second targets)))))
+                          :effect 1}]
       :events [{:type :runner-install
                 :req (req (and (is-techno-target target)
                                (not (second targets)))) ; not facedown
@@ -2156,10 +2156,10 @@
            (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
      {:effect (req (when (pos? (event-count state :corp :rez #(ice? (first %))))
                      (mark-triggered state card)))
-      :persistent-effects [{:type :rez-cost
-                            :req (req (and (ice? target)
-                                           (not-triggered? state card)))
-                            :effect (req (- (count-tags state)))}]
+      :constant-effects [{:type :rez-cost
+                          :req (req (and (ice? target)
+                                         (not-triggered? state card)))
+                          :effect (req (- (count-tags state)))}]
       :events [{:type :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))

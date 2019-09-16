@@ -244,8 +244,8 @@
       (update! state :corp new-scored)
       (unregister-events state side new-scored)
       (register-events state side new-scored)
-      (unregister-persistent-effects state side new-scored)
-      (register-persistent-effects state side new-scored)
+      (unregister-constant-effects state side new-scored)
+      (register-constant-effects state side new-scored)
       (resolve-ability state side (:swapped (card-def new-scored)) new-scored nil))
     ;; Set up abilities and events for new stolen agenda
     (when-not (card-flag? scored :has-events-when-stolen true)
@@ -257,7 +257,7 @@
   [state side current-side]
   (when-let [current (first (get-in @state [current-side :current]))] ; trash old current
     (trigger-event state side :trash-current current)
-    (unregister-persistent-effects state side current)
+    (unregister-constant-effects state side current)
     (if (get-in current [:special :rfg-when-trashed])
       (do (system-say state side (str (:title current) " is removed from the game."))
           (move state (other-side side) current :rfg))

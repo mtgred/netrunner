@@ -333,8 +333,8 @@
 
    "Demolisher"
    {:in-play [:memory 1]
-    :persistent-effects [{:type :trash-cost
-                          :effect -1}]
+    :constant-effects [{:type :trash-cost
+                        :effect -1}]
     :events [{:type :runner-trash
               :once :per-turn
               :req (req (corp? target))
@@ -369,9 +369,9 @@
                                    (host state side card)
                                    (update-breaker-strength state side))
                               (update! state side (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}]
-    :persistent-effects [{:type :breaker-strength
-                          :req (req (same-card? target (first (:hosted card))))
-                          :effect (req 2)}]
+    :constant-effects [{:type :breaker-strength
+                        :req (req (same-card? target (first (:hosted card))))
+                        :effect (req 2)}]
     :events [{:type :card-moved
               :req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
               :effect (effect (update! (dissoc-in card [:special :dino-breaker]))
@@ -1367,9 +1367,9 @@
                  :effect (effect (lose :runner :hand-size 1)
                                  (update! (assoc card :sifr-target current-ice :sifr-used true))
                                  (update-ice-strength current-ice))}]
-    :persistent-effects [{:type :ice-strength
-                          :req (req (same-card? target (:sifr-target card)))
-                          :effect (req (- (get-strength target)))}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (same-card? target (:sifr-target card)))
+                        :effect (req (- (get-strength target)))}]
     :events [{:type :runner-turn-begins
               :req (req (:sifr-used card))
               :effect (effect (gain :runner :hand-size 1)
@@ -1386,8 +1386,8 @@
 
    "Skulljack"
    {:effect (effect (damage eid :brain 1 {:card card}))
-    :persistent-effects [{:type :trash-cost
-                          :effect -1}]}
+    :constant-effects [{:type :trash-cost
+                        :effect -1}]}
 
    "Spinal Modem"
    {:in-play [:memory 1]
@@ -1477,9 +1477,9 @@
    {:hosting {:req #(and (has-subtype? % "Icebreaker")
                          (installed? %))}
     :effect (effect (update-breaker-strength (:host card)))
-    :persistent-effects [{:type :breaker-strength
-                          :req (req (same-card? target (:host card)))
-                          :effect (req 1)}]}
+    :constant-effects [{:type :breaker-strength
+                        :req (req (same-card? target (:host card)))
+                        :effect (req 1)}]}
 
    "The Toolbox"
    {:in-play [:link 2 :memory 2]

@@ -24,9 +24,9 @@
      :effect (effect (gain-credits (count-ice corp))
                      (update-all-ice))
      :swapped {:effect (req (update-all-ice state side))}
-     :persistent-effects [{:type :ice-strength
-                           :req (req (has-subtype? target subtype))
-                           :effect (req 1)}]}))
+     :constant-effects [{:type :ice-strength
+                         :req (req (has-subtype? target subtype))
+                         :effect (req 1)}]}))
 
 ;; Card definitions
 (def card-definitions
@@ -311,9 +311,9 @@
    "Braintrust"
    {:effect (effect (add-counter card :agenda (quot (- (get-counters card :advancement) 3) 2)))
     :silent (req true)
-    :persistent-effects [{:type :rez-cost
-                          :req (req (ice? target))
-                          :effect (req (- (get-counters card :agenda)))}]}
+    :constant-effects [{:type :rez-cost
+                        :req (req (ice? target))
+                        :effect (req (- (get-counters card :agenda)))}]}
 
    "Breaking News"
    {:async true
@@ -484,13 +484,13 @@
                                  (set-prop card :counter {:agenda 1} :agendapoints 1))}]}
 
    "Eden Fragment"
-   {:persistent-effects [{:type :ignore-install-cost
-                          :req (req (and (ice? target)
-                                         (->> (turn-events state side :corp-install)
-                                              (map first)
-                                              (filter ice?)
-                                              empty?)))
-                          :effect true}]
+   {:constant-effects [{:type :ignore-install-cost
+                        :req (req (and (ice? target)
+                                       (->> (turn-events state side :corp-install)
+                                            (map first)
+                                            (filter ice?)
+                                            empty?)))
+                        :effect true}]
     :events [{:type :corp-install
               :req (req (and (ice? target)
                              (empty? (let [cards (map first (turn-events state side :corp-install))]
@@ -741,9 +741,9 @@
    {:silent (req true)
     :effect (req (update-all-ice state side))
     :swapped {:effect (req (update-all-ice state side))}
-    :persistent-effects [{:type :ice-strength
-                          :req (req (has-subtype? target "Tracer"))
-                          :effect (req 1)}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (has-subtype? target "Tracer"))
+                        :effect (req 1)}]
     :events [{:type :pre-init-trace
               :req (req (and (has-subtype? target "Tracer")
                              (= :subroutine (:source-type (second targets)))))
@@ -1569,8 +1569,8 @@
              :effect (effect (gain-bad-publicity :corp 1))}}
 
    "Water Monopoly"
-   {:persistent-effects [{:type :install-cost
-                          :req (req (and (resource? target)
-                                         (not (has-subtype? target "Virtual"))
-                                         (not (:facedown (second targets)))))
-                          :effect 1}]}})
+   {:constant-effects [{:type :install-cost
+                        :req (req (and (resource? target)
+                                       (not (has-subtype? target "Virtual"))
+                                       (not (:facedown (second targets)))))
+                        :effect 1}]}})

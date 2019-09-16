@@ -2294,9 +2294,9 @@
     :subroutines [{:label "Runner loses 1 [Credit]"
                    :msg "force the Runner to lose 1 [Credit]"
                    :effect (effect (lose-credits :runner 1))}]
-    :persistent-effects [{:type :ice-strength
-                          :req (req (protecting-same-server? card target))
-                          :effect (req 1)}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (protecting-same-server? card target))
+                        :effect (req 1)}]
     :events [{:type :corp-moved
               :req (req (ice? target))
               :effect (effect (update-ice-strength target))}

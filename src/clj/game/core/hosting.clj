@@ -25,7 +25,7 @@
    (when (not= cid (:cid card))
      (when installed
        (unregister-events state side target)
-       (unregister-persistent-effects state side target))
+       (unregister-constant-effects state side target))
      (doseq [s [:runner :corp]]
        (if host
          (when-let [host-card (get-card state host)]
@@ -53,7 +53,7 @@
                  (and installed (runner? target))
                  (and installed (corp? target) (rezzed? target)))
          (register-events state side c)
-         (register-persistent-effects state side c)
+         (register-constant-effects state side c)
          (when (or (:recurring tdef)
                    (:prevent tdef)
                    (:corp-abilities tdef)

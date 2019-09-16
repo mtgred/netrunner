@@ -294,10 +294,10 @@
            (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
      {:effect (req (when (pos? (event-count state :runner :runner-install #(az-type? (first %))))
                      (mark-triggered state card)))
-      :persistent-effects [{:type :install-cost
-                            :req (req (and (az-type? target)
-                                           (not-triggered? state card)))
-                            :effect -1}]
+      :constant-effects [{:type :install-cost
+                          :req (req (and (az-type? target)
+                                         (not-triggered? state card)))
+                          :effect -1}]
       :events [{:type :runner-install
                 :req (req (and (az-type? target)
                                (not-triggered? state card)))
@@ -532,9 +532,9 @@
               :effect (effect (gain-credits 1))}]}
 
    "Haas-Bioroid: Stronger Together"
-   {:persistent-effects [{:type :ice-strength
-                          :req (req (has-subtype? target "Bioroid"))
-                          :effect (req 1)}]
+   {:constant-effects [{:type :ice-strength
+                        :req (req (has-subtype? target "Bioroid"))
+                        :effect (req 1)}]
     :leave-play (effect (update-all-ice))
     :effect (effect (update-all-ice))}
 
@@ -629,8 +629,8 @@
       :abilities [ability]})
 
    "Industrial Genomics: Growing Solutions"
-   {:persistent-effects [{:type :trash-cost
-                          :effect (req (count (remove :seen (:discard corp))))}]}
+   {:constant-effects [{:type :trash-cost
+                        :effect (req (count (remove :seen (:discard corp))))}]}
 
    "Information Dynamics: All You Need To Know"
    {:events (let [inf {:req (req (and (not (:disabled card))
@@ -781,10 +781,10 @@
            (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
      {:effect (req (when (pos? (event-count state :runner :runner-install #(kate-type? (first %))))
                      (mark-triggered state card)))
-      :persistent-effects [{:type :install-cost
-                            :req (req (and (kate-type? target)
-                                           (not-triggered? state card)))
-                            :effect -1}]
+      :constant-effects [{:type :install-cost
+                          :req (req (and (kate-type? target)
+                                         (not-triggered? state card)))
+                          :effect -1}]
       :events [{:type :runner-install
                 :req (req (and (kate-type? target)
                                (not-triggered? state card)))
@@ -1040,9 +1040,9 @@
                  :effect (effect (update! (assoc-in card [:special :null-target] current-ice))
                                  (update-ice-strength current-ice)
                                  (trash target {:unpreventable true}))}]
-    :persistent-effects [{:type :ice-strength
-                          :req (req (same-card? target (get-in card [:special :null-target])))
-                          :effect (req -2)}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (same-card? target (get-in card [:special :null-target])))
+                        :effect (req -2)}]
     :events [{:type :pass-ice
               :effect (effect (update! (dissoc-in card [:special :null-target]))
                               (update-all-ice))}
@@ -1087,10 +1087,10 @@
            (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
      {:effect (req (when (pos? (event-count state :corp :rez #(ice? (first %))))
                      (mark-triggered state card)))
-      :persistent-effects [{:type :rez-cost
-                            :req (req (and (ice? target)
-                                           (not-triggered? state card)))
-                            :effect 1}]
+      :constant-effects [{:type :rez-cost
+                          :req (req (and (ice? target)
+                                         (not-triggered? state card)))
+                          :effect 1}]
       :events [{:type :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))

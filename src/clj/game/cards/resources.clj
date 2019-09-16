@@ -829,8 +829,8 @@
                                   (register-events state side c)))}})
 
    "Donut Taganes"
-   {:persistent-effects [{:type :play-cost
-                          :effect 1}]}
+   {:constant-effects [{:type :play-cost
+                        :effect 1}]}
 
    "Dr. Lovegood"
    {:flags {:runner-phase-12 (req (> (count (all-installed state :runner)) 1))}
@@ -1124,10 +1124,10 @@
       :abilities [ability]})
 
    "Hernando Cortez"
-   {:persistent-effects [{:type :rez-additional-cost
-                          :req (req (and (<= 10 (:credit corp))
-                                         (ice? target)))
-                          :effect (req [:credit (count (:subroutines target))])}]}
+   {:constant-effects [{:type :rez-additional-cost
+                        :req (req (and (<= 10 (:credit corp))
+                                       (ice? target)))
+                        :effect (req [:credit (count (:subroutines target))])}]}
 
    "Human First"
    {:events [{:type :agenda-scored
@@ -1161,9 +1161,9 @@
                                  :type :credit}}}
 
    "Ice Carver"
-   {:persistent-effects [{:type :ice-strength
-                          :req (req (same-card? current-ice target))
-                          :effect (req -1)}]}
+   {:constant-effects [{:type :ice-strength
+                        :req (req (same-card? current-ice target))
+                        :effect (req -1)}]}
 
    "Inside Man"
    {:recurring 2
@@ -1553,10 +1553,10 @@
 
    "Network Exchange"
    {:msg "increase the install cost of non-innermost ICE by 1"
-    :persistent-effects [{:type :install-cost
-                          :req (req (ice? target))
-                          :effect (req (when (pos? (count (:dest-zone (second targets))))
-                                         1))}]}
+    :constant-effects [{:type :install-cost
+                        :req (req (ice? target))
+                        :effect (req (when (pos? (count (:dest-zone (second targets))))
+                                       1))}]}
 
    "Neutralize All Threats"
    {:in-play [:hq-access 1]
@@ -2630,9 +2630,9 @@
                  :effect (effect (draw eid 2 nil))}]}
 
    "Xanadu"
-   {:persistent-effects [{:type :rez-cost
-                          :req (req (ice? target))
-                          :effect 1}]}
+   {:constant-effects [{:type :rez-cost
+                        :req (req (ice? target))
+                        :effect 1}]}
 
    "Zona Sul Shipping"
    (trash-when-tagged-contructor

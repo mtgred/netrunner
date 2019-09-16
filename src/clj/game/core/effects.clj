@@ -5,27 +5,27 @@
             [game.utils :refer [same-card? to-keyword]]
             [clj-uuid :as uuid]))
 
-(defn register-persistent-effects
+(defn register-constant-effects
   [state side card]
-  (when (:persistent-effects (card-def card))
-    (let [persistent-effects (:persistent-effects (card-def card))
-          abilities (for [ability persistent-effects]
+  (when (:constant-effects (card-def card))
+    (let [constant-effects (:constant-effects (card-def card))
+          abilities (for [ability constant-effects]
                       (assoc
                         (select-keys ability [:type :req :effect])
-                        :duration :persistent
+                        :duration :constant
                         :card card
                         :uuid (uuid/v1)))]
       (swap! state update :effects
              #(apply conj % abilities))
       abilities)))
 
-(defn unregister-persistent-effects
+(defn unregister-constant-effects
   [state side card]
-  (when (:persistent-effects (card-def card))
+  (when (:constant-effects (card-def card))
     (swap! state assoc :effects
            (->> (:effects @state)
                 (remove #(and (same-card? card (:card %))
-                              (= :persistent (:duration %))))
+                              (= :constant (:duration %))))
                 doall))))
 
 (defn register-floating-effect

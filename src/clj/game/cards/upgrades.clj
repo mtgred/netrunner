@@ -15,10 +15,10 @@
 ;; Card definitions
 (def card-definitions
   {"Akitaro Watanabe"
-   {:persistent-effects [{:type :rez-cost
-                          :req (req (and (ice? target)
-                                         (= (card->server state card) (card->server state target))))
-                          :effect -2}]}
+   {:constant-effects [{:type :rez-cost
+                        :req (req (and (ice? target)
+                                       (= (card->server state card) (card->server state target))))
+                        :effect -2}]}
 
    "Amazon Industrial Zone"
    {:events [{:type :corp-install
@@ -189,9 +189,9 @@
                                 card nil))}]}
 
    "Breaker Bay Grid"
-   {:persistent-effects [{:type :rez-cost
-                          :req (req (in-same-server? card target))
-                          :effect -5}]}
+   {:constant-effects [{:type :rez-cost
+                        :req (req (in-same-server? card target))
+                        :effect -5}]}
 
    "Bryan Stinson"
    {:abilities [{:cost [:click 1]
@@ -295,9 +295,9 @@
                                                              icename " again"))))}]}
 
    "Cold Site Server"
-   {:persistent-effects [{:type :run-additional-cost
-                          :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
-                          :effect (req (repeat (get-counters card :power) [:credit 1 :click 1]))}]
+   {:constant-effects [{:type :run-additional-cost
+                        :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
+                        :effect (req (repeat (get-counters card :power) [:credit 1 :click 1]))}]
     :events [{:type :corp-turn-begins
               :req (req (pos? (get-counters card :power)))
               :msg "remove all hosted power counters"
@@ -471,9 +471,9 @@
 
    "Experiential Data"
    {:effect (effect (update-all-ice))
-    :persistent-effects [{:type :ice-strength
-                          :req (req (protecting-same-server? card target))
-                          :effect (req 1)}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (protecting-same-server? card target))
+                        :effect (req 1)}]
     :derez-effect {:effect (effect (update-all-ice))}
     :trash-effect {:effect (effect (update-all-ice))}}
 
@@ -979,9 +979,9 @@
                                    (effect-completed state side eid)))))}]}
 
    "Oaktown Grid"
-   {:persistent-effects [{:type :trash-cost
-                          :req (req (in-same-server? card target))
-                          :effect 3}]}
+   {:constant-effects [{:type :trash-cost
+                        :req (req (in-same-server? card target))
+                        :effect 3}]}
 
    "Oberth Protocol"
    {:additional-cost [:forfeit]
@@ -1122,9 +1122,9 @@
                {:type :run-ends}]})
 
    "Reduced Service"
-   {:persistent-effects [{:type :run-additional-cost
-                          :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
-                          :effect (req (repeat (get-counters card :power) [:credit 2]))}]
+   {:constant-effects [{:type :run-additional-cost
+                        :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
+                        :effect (req (repeat (get-counters card :power) [:credit 2]))}]
     :events [{:type :successful-run
               :req (req (and (pos? (get-counters card :power))
                              (is-central? (:server run))))
@@ -1148,9 +1148,9 @@
     :in-play [:hand-size 2]}
 
    "Ruhr Valley"
-   {:persistent-effects [{:type :run-additional-cost
-                          :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
-                          :effect (req [:click 1])}]}
+   {:constant-effects [{:type :run-additional-cost
+                        :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
+                        :effect (req [:click 1])}]}
 
    "Rutherford Grid"
    {:events [{:type :pre-init-trace

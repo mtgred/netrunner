@@ -1089,9 +1089,9 @@
                  (gain-credits state :runner 10))}
 
    "Hacktivist Meeting"
-   {:persistent-effects [{:type :rez-additional-cost
-                          :req (req (not (ice? target)))
-                          :effect (req [:randomly-trash-from-hand 1])}]}
+   {:constant-effects [{:type :rez-additional-cost
+                        :req (req (not (ice? target)))
+                        :effect (req [:randomly-trash-from-hand 1])}]}
 
    "High-Stakes Job"
    (run-event
@@ -2157,9 +2157,9 @@
     :abilities [{:label "Lower ice strength"
                  :effect (effect (update! (assoc-in card [:special :scrubbed-target] current-ice))
                                  (update-all-ice))}]
-    :persistent-effects [{:type :ice-strength
-                          :req (req (same-card? target (get-in card [:special :scrubbed-target])))
-                          :effect (req -2)}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (same-card? target (get-in card [:special :scrubbed-target])))
+                        :effect (req -2)}]
     :events [{:type :run-ends
               :effect (effect (update! (dissoc-in card [:special :scrubbed-target])))}]}
 

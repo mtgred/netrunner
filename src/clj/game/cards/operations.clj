@@ -202,15 +202,9 @@
                  (register-events
                    state side card
                    [{:type :corp-turn-ends
+                     :duration :end-of-turn
                      :effect (effect (gain :runner :memory 2)
-                                     (system-msg :runner "regains 2[mu]")
-                                     (unregister-events card))}
-                    {:type :runner-turn-ends
-                     :effect (effect (gain :runner :memory 2)
-                                     (system-msg :runner "regains 2[mu]")
-                                     (unregister-events card))}]))
-    :events [{:type :corp-turn-ends}
-             {:type :runner-turn-ends}]}
+                                     (system-msg :runner "regains 2[mu]"))}]))}
 
    "Beanstalk Royalties"
    {:msg "gain 3 [Credits]"
@@ -599,10 +593,10 @@
 
    "Enhanced Login Protocol"
    {:msg "uses Enhanced Login Protocol to add an additional cost of [Click] to make the first run not through a card ability this turn"
-    :persistent-effects [{:type :run-additional-cost
-                          :req (req (and (no-event? state side :run #(:click-run (second %)))
-                                         (:click-run (second targets))))
-                          :effect (req [:click 1])}]}
+    :constant-effects [{:type :run-additional-cost
+                        :req (req (and (no-event? state side :run #(:click-run (second %)))
+                                       (:click-run (second targets))))
+                        :effect (req [:click 1])}]}
 
    "Exchange of Information"
    {:req (req (and tagged
@@ -1044,8 +1038,8 @@
 
    "Lag Time"
    {:effect (effect (update-all-ice))
-    :persistent-effects [{:type :ice-strength
-                          :effect (req 1)}]
+    :constant-effects [{:type :ice-strength
+                        :effect (req 1)}]
     :leave-play (effect (update-all-ice))}
 
    "Lateral Growth"
@@ -1270,9 +1264,9 @@
     :msg (msg "give +2 strength to " (card-str state target))
     :effect (req (let [card (host state side target (assoc card :zone [:discard] :seen true :condition true))]
                    (update-ice-strength state side (get-card state target))))
-    :persistent-effects [{:type :ice-strength
-                          :req (req (same-card? target (:host card)))
-                          :effect (req 2)}]}
+    :constant-effects [{:type :ice-strength
+                        :req (req (same-card? target (:host card)))
+                        :effect (req 2)}]}
 
    "Paywall Implementation"
    {:events [{:type :successful-run
@@ -1642,8 +1636,8 @@
 
    "Rolling Brownout"
    {:msg "increase the play cost of operations and events by 1 [Credits]"
-    :persistent-effects [{:type :play-cost
-                          :effect 1}]
+    :constant-effects [{:type :play-cost
+                        :effect 1}]
     :events [{:type :play-event
               :once :per-turn
               :msg "gain 1 [Credits]"
@@ -1654,9 +1648,9 @@
     :msg (msg "host it as a condition counter on " (card-str state target))
     :effect (effect (host target (assoc card :zone [:discard] :seen true :condition true))
                     (update-ice-strength (get-card state target)))
-    :persistent-effects [{:type :ice-strength
-                          :req (req (same-card? target (:host card)))
-                          :effect (req (get-counters card :power))}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (same-card? target (:host card)))
+                        :effect (req (get-counters card :power))}]
     :events [{:type :pass-ice
               :req (req (same-card? target (:host card)))
               :effect (effect (add-counter card :power 1))}]}
@@ -1686,9 +1680,9 @@
 
    "Scarcity of Resources"
    {:msg "increase the install cost of resources by 2"
-    :persistent-effects [{:type :install-cost
-                          :req (req (resource? target))
-                          :effect 2}]}
+    :constant-effects [{:type :install-cost
+                        :req (req (resource? target))
+                        :effect 2}]}
 
    "Scorched Earth"
    {:req (req tagged)
@@ -1742,9 +1736,9 @@
 
    "Service Outage"
    {:msg "add a cost of 1 [Credit] for the Runner to make the first run each turn"
-    :persistent-effects [{:type :run-additional-cost
-                          :req (req (no-event? state side :run))
-                          :effect (req [:credit 1])}]}
+    :constant-effects [{:type :run-additional-cost
+                        :req (req (no-event? state side :run))
+                        :effect (req [:credit 1])}]}
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}

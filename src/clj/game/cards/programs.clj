@@ -507,11 +507,11 @@
                                    :msg (msg "host it on " (card-str state target))
                                    :effect (effect (host target card))}
                                   card nil)))}]
-    :persistent-effects [{:type :ice-strength
-                          :req (req (and (= (:cid target)
-                                            (:cid (:host card)))
-                                         (:rezzed target)))
-                          :effect (req -2)}]}
+    :constant-effects [{:type :ice-strength
+                        :req (req (and (= (:cid target)
+                                          (:cid (:host card)))
+                                       (:rezzed target)))
+                        :effect (req -2)}]}
 
    "Black Orchestra"
    (install-from-heap "Black Orchestra" "Code Gate"
@@ -627,9 +627,9 @@
                                     (trash state side current-ice))
                                 (do (system-msg state side (str "places 1 virus counter on " (card-str state current-ice)))
                                     (add-counter state side card :virus 1))))}]
-    :persistent-effects [{:type :ice-strength
-                          :req (req (same-card? target (:host card)))
-                          :effect (req (- (get-virus-counters state card)))}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (same-card? target (:host card)))
+                        :effect (req (- (get-virus-counters state card)))}]
     :events [{:type :counter-added
               :req (req (or (same-card? target card)
                             (= (:title target) "Hivemind")))
@@ -863,10 +863,10 @@
                 :req (req (#{:hq :rd :archives} target))}
                (assoc ds :type :pass-ice)
                (assoc ds :type :run-ends)])
-    :persistent-effects [{:type :ice-strength
-                          :req (req (and (same-card? target current-ice)
-                                         (:datasucker-count card)))
-                          :effect (req (- (:datasucker-count card)))}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (and (same-card? target current-ice)
+                                       (:datasucker-count card)))
+                        :effect (req (- (:datasucker-count card)))}]
     :abilities [{:cost [:virus 1]
                  :msg (msg "give -1 strength to " (:title current-ice))
                  :req (req (and current-ice (:rezzed current-ice)))
@@ -986,12 +986,12 @@
    {:prompt "Choose the server that this copy of Diwan is targeting:"
     :choices (req servers)
     :effect (effect (update! (assoc card :server-target target)))
-    :persistent-effects [{:type :install-cost
-                          :req (req (let [serv (:server (second targets))]
-                                      (and (= serv (:server-target card))
-                                           (not (and (is-central? serv)
-                                                     (upgrade? target))))))
-                          :effect 1}]
+    :constant-effects [{:type :install-cost
+                        :req (req (let [serv (:server (second targets))]
+                                    (and (= serv (:server-target card))
+                                         (not (and (is-central? serv)
+                                                   (upgrade? target))))))
+                        :effect 1}]
     :events [{:type :purge
               :effect (effect (trash card {:cause :purge}))}]}
 
@@ -1760,9 +1760,9 @@
                    (update-ice-strength state side h)
                    (when-let [card (get-card state card)]
                      (update! state side (update-in card [:special] dissoc :installing)))))
-    :persistent-effects [{:type :ice-strength
-                          :req (req (same-card? target (:host card)))
-                          :effect (req (- (get-virus-counters state card)))}]
+    :constant-effects [{:type :ice-strength
+                        :req (req (same-card? target (:host card)))
+                        :effect (req (- (get-virus-counters state card)))}]
     :events [{:type :runner-turn-begins
               :effect (req (add-counter state side card :virus 1))}
              {:type :counter-added
@@ -2055,10 +2055,10 @@
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
                                    :msg (msg "host it on " (card-str state target))
                                    :effect (effect (host target card))} card nil)))}]
-    :persistent-effects [{:type :rez-cost
-                          :req (req (and (ice? target)
-                                         (= (:zone (:host card)) (:zone target))))
-                          :effect 2}]}
+    :constant-effects [{:type :rez-cost
+                        :req (req (and (ice? target)
+                                       (= (:zone (:host card)) (:zone target))))
+                        :effect 2}]}
 
    "Sadyojata"
    (swap-with-in-hand "Sadyojata"

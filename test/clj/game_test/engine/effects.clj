@@ -21,10 +21,10 @@
                      :side :runner
                      :title "Test Card 2"}
         type-1 {:type :test-type
-                :duration :persistent
+                :duration :constant
                 :effect 1}
         type-2 {:type :test-type-2
-                :duration :persistent
+                :duration :constant
                 :effect (fn [state side eid card targets] 2)}]
 
     (testing "Effect type filtering"
@@ -55,10 +55,10 @@
             :side :corp
             :title "Test Card 2"}
         f1 {:type :test-type
-            :duration :persistent
+            :duration :constant
             :effect 1}
         f2 {:type :test-type
-            :duration :persistent
+            :duration :constant
             :effect (fn [state side eid card targets] 2)}]
 
     ;; This is testing if the :req is not present, so no need to retest
@@ -108,7 +108,7 @@
               :title "Test Card"}
         f (fn [n]
             {:type :test-type
-             :duration :persistent
+             :duration :constant
              :effect n})]
 
     (testing "Handles non-numbers"
