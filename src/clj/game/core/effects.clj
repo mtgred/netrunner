@@ -44,7 +44,7 @@
               (remove #(= duration (:duration %)))
               doall)))
 
-(defn- gather-effects
+(defn gather-effects
   [state side effect-type]
   (let [get-side #(-> % :card :side to-keyword)
         is-active-player #(= (:active-player @state) (get-side %))]
@@ -60,7 +60,7 @@
      (->> (gather-effects state side effect-type)
           (filter #(if-not (:req %)
                      true
-                     (true? ((:req %) state side eid (get-card state (:card %)) (cons card targets)))))
+                     ((:req %) state side eid (get-card state (:card %)) (cons card targets))))
           (mapv #(if-not (fn? (:effect %))
                    (:effect %)
                    ((:effect %) state side eid (get-card state (:card %)) (cons card targets))))))))
