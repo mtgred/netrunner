@@ -749,13 +749,7 @@
     :leave-play (req (apply enable-run-on-server state card (map first (get-remotes state))))}
 
    "Kabonesa Wu: Netspace Thrillseeker"
-   (let [rfg-ability {:req (req (seq (filter #(get-in % [:special :kabonesa]) (all-installed state :runner))))
-                      :effect (req (doseq [program (filter #(get-in % [:special :kabonesa]) (all-installed state :runner))]
-                                     (move state side program :rfg)
-                                     (system-msg state side (str "remove " (:title program) " from the game"))))}]
-     {:events [(assoc rfg-ability :type :corp-turn-ends)
-               (assoc rfg-ability :type :runner-turn-ends)]
-      :abilities [{:label "Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
+   {:abilities [{:label "Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
                  :cost [:click 1]
                  :prompt "Choose a program"
                  :choices (req (cancellable
@@ -769,7 +763,15 @@
                                  (shuffle! :deck)
                                  (runner-install (assoc eid :source card :source-type :runner-install)
                                                  (assoc-in target [:special :kabonesa] true)
-                                                 {:cost-bonus -1}))}]})
+                                                 {:cost-bonus -1})
+                                 (register-events
+                                   card
+                                   [{:type :runner-turn-ends
+                                     :duration :end-of-turn
+                                     :req (req (some #(get-in % [:special :kabonesa]) (all-installed state :runner)))
+                                     :msg (msg "remove " (:title target) " from the game")
+                                     :effect (req (doseq [program (filter #(get-in % [:special :kabonesa]) (all-installed state :runner))]
+                                                    (move state side program :rfg)))}]))}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn

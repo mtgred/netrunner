@@ -1366,18 +1366,37 @@
 
 (deftest kabonesa-wu-netspace-thrillseeker
   ;; Kabonesa Wu
-  (do-game
-    (new-game {:options {:start-as :runner}
-               :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
-                        :deck ["Cache" "Gordian Blade"]
-                        :hand ["Sure Gamble"]}})
-    (card-ability state :runner (:identity (get-runner)) 0)
-    (is (= [(find-card "Gordian Blade" (:deck (get-runner))) "Cancel"] (:choices (prompt-map :runner))) "Cache shouldn't be in the prompt")
-    (click-prompt state :runner "Gordian Blade")
-    (is (= 2 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")
-    (take-credits state :runner)
-    (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
-    (is (= "Gordian Blade" (-> @state :runner :rfg first :title)) "Kabonesa Wu should rfg card installed with ability")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
+                          :deck ["Cache" "Gordian Blade"]
+                          :hand ["Sure Gamble"]}})
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (is (= [(find-card "Gordian Blade" (:deck (get-runner))) "Cancel"] (:choices (prompt-map :runner))) "Cache shouldn't be in the prompt")
+      (click-prompt state :runner "Gordian Blade")
+      (is (some? (get-program state 0)) "Gordian Blade should be installed")
+      (is (= 2 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")
+      (take-credits state :runner)
+      (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
+      (is (= "Gordian Blade" (-> (get-runner) :rfg last :title)) "Kabonesa Wu should rfg card installed with ability")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
+                          :deck ["Cache" "Gordian Blade"]
+                          :hand ["Sure Gamble" "Rebirth"]}})
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (is (= [(find-card "Gordian Blade" (:deck (get-runner))) "Cancel"] (:choices (prompt-map :runner))) "Cache shouldn't be in the prompt")
+      (click-prompt state :runner "Gordian Blade")
+      (is (some? (get-program state 0)) "Gordian Blade should be installed")
+      (play-from-hand state :runner "Rebirth")
+      (click-prompt state :runner "Lat: Ethical Freelancer")
+      (is (= "Lat: Ethical Freelancer" (:title (:identity (get-runner)))) "Runner is now Lat")
+      (take-credits state :runner)
+      (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
+      (is (= "Gordian Blade" (-> (get-runner) :rfg last :title))
+          "Kabonesa Wu should rfg card installed with ability even tho runner is now a different identity"))))
 
 (deftest kate-mac-mccaffrey-digital-tinker
   ;; Kate 'Mac' McCaffrey
