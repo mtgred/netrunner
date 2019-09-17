@@ -7,14 +7,13 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(def start {:active-player :corp
-               :eid 0
-               :req-called 0})
-(def state (atom start))
-(def side :corp)
-
 (deftest gather-effects
-  (let [corp-card {:cid 1
+  (let [start {:active-player :corp
+               :eid 0
+               :req-called 0}
+        state (atom start)
+        side :corp
+        corp-card {:cid 1
                    :side :corp
                    :title "Test Card 1"}
         runner-card {:cid 2
@@ -48,7 +47,12 @@
             "Effects are sorted by active player first")))))
 
 (deftest get-effects
-  (let [c1 {:cid 1
+  (let [start {:active-player :corp
+               :eid 0
+               :req-called 0}
+        state (atom start)
+        side :corp
+        c1 {:cid 1
             :side :corp
             :title "Test Card 1"}
         c2 {:cid 2
@@ -103,7 +107,12 @@
           (is (= [] effects) "Should not return the effect value"))))))
 
 (deftest sum-effects
-  (let [card {:cid 1
+  (let [start {:active-player :corp
+               :eid 0
+               :req-called 0}
+        state (atom start)
+        side :corp
+        card {:cid 1
               :side :corp
               :title "Test Card"}
         f (fn [n]
