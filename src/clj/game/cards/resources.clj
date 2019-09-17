@@ -693,14 +693,13 @@
                   :req (req (:runner-phase-12 @state))
                   :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                   :effect (req (let [credits (min 2 (get-counters card :credit))]
-                                 (add-counter state side card :credit (- credits))
-                                 (gain-credits state :runner credits))
-                               (when (not (pos? (get-counters (get-card state card) :credit)))
-                                 (trash state :runner card {:unpreventable true})))}]
+                                 (gain-credits state :runner credits)
+                                 (add-counter state side card :credit (- credits))))}]
      {:data {:counter {:credit 8}}
       :flags {:drip-economy true}
       :abilities [ability]
-      :events [(assoc ability :type :runner-turn-begins)]})
+      :events [(assoc ability :type :runner-turn-begins)
+               (trash-on-empty :credit)]})
 
    "Data Dealer"
    {:abilities [{:cost [:click 1 :forfeit]
@@ -1061,9 +1060,7 @@
                  :async true
                  :effect (req (add-counter state side card :credit -1)
                               (gain-credits state side 1)
-                              (wait-for (trigger-event-sync state side :spent-stealth-credit card)
-                                        (when (not (pos? (get-counters (get-card state card) :credit)))
-                                          (trash state :runner card {:unpreventable true}))))}]
+                              (trigger-event-sync state side eid :spent-stealth-credit card))}]
     :events [(trash-on-empty :credit)]
     :interactions {:pay-credits {:req (req run)
                                  :type :credit}}}
