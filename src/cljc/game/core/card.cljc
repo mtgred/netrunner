@@ -1,6 +1,5 @@
 (ns game.core.card
-  (:require [clojure.string :refer [lower-case includes?]]
-            [game.utils :refer [same-card? to-keyword]]))
+  (:require [clojure.string :refer [lower-case includes?]]))
 
 (defrecord Card
   [advancementcost
@@ -240,6 +239,11 @@
 
 (declare get-card-hosted)
 
+(defn- to-keyword [string]
+  (if (string? string)
+    (keyword (lower-case string))
+    string))
+
 (defn get-card
   "Returns the most recent copy of the card from the current state, as identified
   by the argument's :zone and :cid."
@@ -256,6 +260,12 @@
                     (into (get-in @state [:corp :scored]) (get-in @state [:runner :scored]))
                     (get-in @state (cons (to-keyword side) zones))))))
         card))))
+
+(defn- same-card?
+  "Checks if the two cards are the same by :cid. Alternatively specify 1-function to use to check the card"
+  ([card1 card2] (same-card? :cid card1 card2))
+  ([func card1 card2]
+    (= (func card1) (func card2))))
 
 (defn get-card-hosted
   "Finds the current version of the given card by finding its host."
