@@ -177,7 +177,7 @@
                                            :duration :end-of-run
                                            :req (req (and (same-card? foremost-ice target)
                                                           (not (get-in @state [:per-run (:cid card)]))))
-                                           :effect (req [:credit bribery-x])})
+                                           :effect [:credit bribery-x]})
                                         (register-events
                                           state side card
                                           [{:type :rez
@@ -1091,7 +1091,7 @@
    "Hacktivist Meeting"
    {:constant-effects [{:type :rez-additional-cost
                         :req (req (not (ice? target)))
-                        :effect (req [:randomly-trash-from-hand 1])}]}
+                        :effect [:randomly-trash-from-hand 1]}]}
 
    "High-Stakes Job"
    (run-event

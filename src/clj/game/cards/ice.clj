@@ -2296,7 +2296,7 @@
                    :effect (effect (lose-credits :runner 1))}]
     :constant-effects [{:type :ice-strength
                         :req (req (protecting-same-server? card target))
-                        :effect (req 1)}]
+                        :effect 1}]
     :events [{:type :corp-moved
               :req (req (ice? target))
               :effect (effect (update-ice-strength target))}

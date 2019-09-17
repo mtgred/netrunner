@@ -263,7 +263,7 @@
                                      {:type :rez-additional-cost
                                       :duration :end-of-turn
                                       :req (req (same-card? target ice))
-                                      :effect (req [:credit 2])})))}]}
+                                      :effect [:credit 2]})))}]}
 
    "Cyberdelia"
    {:implementation "Credit gain is manually triggered."
@@ -371,7 +371,7 @@
                               (update! state side (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}]
     :constant-effects [{:type :breaker-strength
                         :req (req (same-card? target (first (:hosted card))))
-                        :effect (req 2)}]
+                        :effect 2}]
     :events [{:type :card-moved
               :req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
               :effect (effect (update! (dissoc-in card [:special :dino-breaker]))
@@ -1479,7 +1479,7 @@
     :effect (effect (update-breaker-strength (:host card)))
     :constant-effects [{:type :breaker-strength
                         :req (req (same-card? target (:host card)))
-                        :effect (req 1)}]}
+                        :effect 1}]}
 
    "The Toolbox"
    {:in-play [:link 2 :memory 2]

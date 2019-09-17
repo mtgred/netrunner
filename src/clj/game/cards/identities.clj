@@ -534,7 +534,7 @@
    "Haas-Bioroid: Stronger Together"
    {:constant-effects [{:type :ice-strength
                         :req (req (has-subtype? target "Bioroid"))
-                        :effect (req 1)}]
+                        :effect 1}]
     :leave-play (effect (update-all-ice))
     :effect (effect (update-all-ice))}
 

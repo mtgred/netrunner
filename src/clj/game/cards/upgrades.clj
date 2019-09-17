@@ -473,7 +473,7 @@
    {:effect (effect (update-all-ice))
     :constant-effects [{:type :ice-strength
                         :req (req (protecting-same-server? card target))
-                        :effect (req 1)}]
+                        :effect 1}]
     :derez-effect {:effect (effect (update-all-ice))}
     :trash-effect {:effect (effect (update-all-ice))}}
 
@@ -575,7 +575,7 @@
                                    {:type :ice-strength
                                     :duration :end-of-run
                                     :req (req (protecting-same-server? card target))
-                                    :effect (req 2)})
+                                    :effect 2})
                                  (update-all-ice))}]}
 
    "Henry Phillips"
@@ -1150,7 +1150,7 @@
    "Ruhr Valley"
    {:constant-effects [{:type :run-additional-cost
                         :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
-                        :effect (req [:click 1])}]}
+                        :effect [:click 1]}]}
 
    "Rutherford Grid"
    {:events [{:type :pre-init-trace

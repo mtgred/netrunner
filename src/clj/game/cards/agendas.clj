@@ -26,7 +26,7 @@
      :swapped {:effect (req (update-all-ice state side))}
      :constant-effects [{:type :ice-strength
                          :req (req (has-subtype? target subtype))
-                         :effect (req 1)}]}))
+                         :effect 1}]}))
 
 ;; Card definitions
 (def card-definitions
@@ -743,7 +743,7 @@
     :swapped {:effect (req (update-all-ice state side))}
     :constant-effects [{:type :ice-strength
                         :req (req (has-subtype? target "Tracer"))
-                        :effect (req 1)}]
+                        :effect 1}]
     :events [{:type :pre-init-trace
               :req (req (and (has-subtype? target "Tracer")
                              (= :subroutine (:source-type (second targets)))))

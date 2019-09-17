@@ -1913,7 +1913,7 @@
    {:constant-effects [{:type :play-additional-cost
                         :req (req (and (event? target)
                                        (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
-                        :effect (req [:credit 2])}]}
+                        :effect [:credit 2]}]}
 
    "Sundew"
    ; If this a run event then handle in :begin-run as we do not know the server
@@ -1977,7 +1977,7 @@
                           :effect 1}]
       :events [{:type :runner-install
                 :req (req (and (is-techno-target target)
-                               (not (second targets)))) ; not facedown
+                               (not (:facedown (second targets)))))
                 :msg "gain 1 [Credits]"
                 :effect (req (gain-credits state :corp 1))}]})
 

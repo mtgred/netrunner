@@ -596,7 +596,7 @@
     :constant-effects [{:type :run-additional-cost
                         :req (req (and (no-event? state side :run #(:click-run (second %)))
                                        (:click-run (second targets))))
-                        :effect (req [:click 1])}]}
+                        :effect [:click 1]}]}
 
    "Exchange of Information"
    {:req (req (and tagged
@@ -1039,7 +1039,7 @@
    "Lag Time"
    {:effect (effect (update-all-ice))
     :constant-effects [{:type :ice-strength
-                        :effect (req 1)}]
+                        :effect 1}]
     :leave-play (effect (update-all-ice))}
 
    "Lateral Growth"
@@ -1266,7 +1266,7 @@
                    (update-ice-strength state side (get-card state target))))
     :constant-effects [{:type :ice-strength
                         :req (req (same-card? target (:host card)))
-                        :effect (req 2)}]}
+                        :effect 2}]}
 
    "Paywall Implementation"
    {:events [{:type :successful-run
@@ -1738,7 +1738,7 @@
    {:msg "add a cost of 1 [Credit] for the Runner to make the first run each turn"
     :constant-effects [{:type :run-additional-cost
                         :req (req (no-event? state side :run))
-                        :effect (req [:credit 1])}]}
+                        :effect [:credit 1]}]}
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}
