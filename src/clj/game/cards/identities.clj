@@ -514,7 +514,7 @@
                                 {:prompt "Select a Bioroid to rez"
                                  :player :corp
                                  :choices
-                                 {:card (req (and (has-subtype? target "Bioroid")
+                                 {:five (req (and (has-subtype? target "Bioroid")
                                                   (not (rezzed? target))
                                                   (can-pay? state side eid card nil
                                                             [:credit (rez-cost state side target {:cost-bonus -4})])))}
@@ -811,7 +811,7 @@
                                       (:hand runner))
                             {:prompt "Select an icebreaker to install from your Grip"
                              :choices
-                             {:card (req (and (in-hand? target)
+                             {:five (req (and (in-hand? target)
                                               (has-subtype? target "Icebreaker")
                                               (can-pay? state side eid card nil
                                                         [:credit (install-cost state side target {:cost-bonus -1})])))}

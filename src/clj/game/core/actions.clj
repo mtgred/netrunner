@@ -279,7 +279,7 @@
   (let [card (get-card state card)
         prompt (first (get-in @state [side :selected]))
         ability (:ability prompt)
-        five (:card prompt)
+        five (:five prompt)
         r (:req prompt)
         cid (:not-self prompt)]
     (when (and (not= (:cid card) cid)

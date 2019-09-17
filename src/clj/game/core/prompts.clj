@@ -110,7 +110,7 @@
        (swap! state update-in [side :selected]
               #(conj (vec %) {:ability (dissoc ability :choices)
                               :req (get-in ability [:choices :req])
-                              :card (get-in ability [:choices :card])
+                              :five (get-in ability [:choices :five])
                               :not-self (when (get-in ability [:choices :not-self]) (:cid card))
                               :max m
                               :all all}))

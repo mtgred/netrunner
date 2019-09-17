@@ -923,7 +923,7 @@
                  :label "Install a program on Dhegdheer"
                  :prompt "Choose a program in your Grip to install on Dhegdheer"
                  :choices
-                 {:card (req (and (program? target)
+                 {:five (req (and (program? target)
                                   (runner-can-install? state side target false)
                                   (in-hand? target)
                                   (can-pay? state side eid card nil

@@ -215,7 +215,7 @@
        (prompt! state s card prompt choices ab args)
        ;; a select prompt
        (or (:req choices)
-           (:card choices))
+           (:five choices))
        (show-select state s card ability update! resolve-ability args)
        ;; a :number prompt
        (:number choices)

@@ -428,7 +428,7 @@
                  :label "Install a program from your Grip"
                  :prompt "Select a program to install from your Grip"
                  :choices
-                 {:card (req (and (program? target)
+                 {:five (req (and (program? target)
                                   (in-hand? target)
                                   (can-pay? state :runner eid card nil
                                             [:credit (install-cost state side target
@@ -2261,7 +2261,7 @@
                                  (:hand runner)))
                  :prompt "Select a program or piece of hardware to install from your Grip"
                  :choices
-                 {:card (req (and (or (hardware? target)
+                 {:five (req (and (or (hardware? target)
                                       (program? target))
                                   (in-hand? target)
                                   (can-pay? state side eid card nil
@@ -2385,7 +2385,7 @@
                   :req (req (some #(can-pay? state side eid card nil [:credit (install-cost state side % {:cost-bonus -2})])
                                   (:hosted card)))
                   :choices
-                  {:card (req (and (= "The Supplier" (:title (:host target)))
+                  {:five (req (and (= "The Supplier" (:title (:host target)))
                                    (runner? target)
                                    (can-pay? state side eid card nil
                                              [:credit (install-cost state side target {:cost-bonus -2})])))}
@@ -2458,7 +2458,7 @@
    (let [first-event-check (fn [state fn1 fn2] (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
                                                     (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
          ability {:choices
-                  {:card (req (and (runner? target)
+                  {:five (req (and (runner? target)
                                    (in-hand? target)
                                    (not (event? target))
                                    (can-pay? state side eid card nil

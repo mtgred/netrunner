@@ -249,7 +249,7 @@
                           (can-pay? state side eid card nil
                                     [:credit (install-cost state side % {:cost-bonus -3})]))
                     (:hand runner)))
-    :choices {:card (req (and (resource? target)
+    :choices {:five (req (and (resource? target)
                               (in-hand? target)
                               (can-pay? state side eid card nil
                                         [:credit (install-cost state side target {:cost-bonus -3})])))}
@@ -452,7 +452,7 @@
    "Credit Kiting"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :prompt "Select a card to install from your Grip"
-    :choices {:card (req (and (not (event? target))
+    :choices {:five (req (and (not (event? target))
                               (in-hand? target)
                               (can-pay? state side eid card nil
                                         [:credit (install-cost state side target {:cost-bonus -8})])))}
@@ -1659,7 +1659,7 @@
 
    "Modded"
    {:prompt "Select a program or piece of hardware to install from your Grip"
-    :choices {:card (req (and (or (hardware? target)
+    :choices {:five (req (and (or (hardware? target)
                                   (program? target))
                               (in-hand? target)
                               (can-pay? state side eid card nil
@@ -1983,7 +1983,7 @@
                     {:async true
                      :prompt "Select a program or piece of hardware to install"
                      :choices
-                     {:card (req (and (valid-target? target)
+                     {:five (req (and (valid-target? target)
                                       (can-pay? state side eid card nil
                                                 [:credit (install-cost state side target
                                                                        {:cost-bonus (- bonus)})])))}
@@ -2139,7 +2139,7 @@
                      {:prompt "Select a program to install from your Grip or Heap"
                       :show-discard true
                       :choices
-                      {:card (req (and (program? target)
+                      {:five (req (and (program? target)
                                        (or (in-hand? target)
                                            (in-discard? target))
                                        (can-pay? state side eid card nil

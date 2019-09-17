@@ -227,7 +227,7 @@
                                             (can-pay? state side eid card nil
                                                       [:credit (install-cost state side %)]))
                                       (:discard runner))))
-                 :choices {:card (req (and (program? target)
+                 :choices {:five (req (and (program? target)
                                            (in-discard? target)
                                            (can-pay? state side eid card nil
                                                      [:credit (install-cost state side target)])))}
@@ -796,7 +796,7 @@
                :yes-ability {:async true
                              :prompt "Select a piece of hardware"
                              :choices
-                             {:card (req (and (in-hand? target)
+                             {:five (req (and (in-hand? target)
                                               (hardware? target)
                                               (can-pay? state side eid card nil
                                                         [:credit (install-cost state side target {:cost-bonus 1})])))}
@@ -897,7 +897,7 @@
    (let [mhelper
          (fn mh [n]
            {:prompt "Select a program to install"
-            :choices {:card (req (and (program? target)
+            :choices {:five (req (and (program? target)
                                       (in-hand? target)
                                       (can-pay? state side eid card nil
                                                 [:credit (install-cost state side target {:cost-bonus -4})])))}
