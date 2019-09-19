@@ -33,7 +33,7 @@
 (def corp-rez-toast
   "Effect to be placed with `:runner-turn-ends` to remind players of 'when turn begins'
   triggers"
-  {:type :runner-turn-ends
+  {:event :runner-turn-ends
    :effect (req (toast state :corp "Reminder: You have unrezzed cards with \"when turn begins\" abilities." "info"))})
 
 (declare reorder-final) ; forward reference since reorder-choice and reorder-final are mutually recursive
@@ -170,7 +170,7 @@
 (defn trash-on-empty
   "Used in :event maps for effects like Daily Casts"
   [counter-type]
-  {:type :counter-added
+  {:event :counter-added
    :req (req (and (same-card? card target)
                   (not (pos? (get-counters card counter-type)))))
    :async true

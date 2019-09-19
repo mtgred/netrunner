@@ -18,10 +18,10 @@
    {:constant-effects [{:type :rez-cost
                         :req (req (and (ice? target)
                                        (= (card->server state card) (card->server state target))))
-                        :effect -2}]}
+                        :value -2}]}
 
    "Amazon Industrial Zone"
-   {:events [{:type :corp-install
+   {:events [{:event :corp-install
               :optional
               {:req (req (and (ice? target)
                               (protecting-same-server? card target)
@@ -46,7 +46,7 @@
                                                (str "uses Arella Salvatore to install and place a counter on "
                                                     (card-str state inst-target) ", ignoring all costs"))
                                    (effect-completed state side eid))))}]
-     {:events [{:type :agenda-scored
+     {:events [{:event :agenda-scored
                 :req (req (= (:previous-zone target) (:zone card)))
                 :interactive (req (some corp-installable-type? (:hand corp)))
                 :silent (req (not-any? corp-installable-type? (:hand corp)))
@@ -56,7 +56,7 @@
                                (effect-completed state side eid)))}]})
 
    "Ash 2X3ZB9CY"
-   {:events [{:type :successful-run
+   {:events [{:event :successful-run
               :interactive (req true)
               :req (req this-server)
               :trace {:base 4
@@ -89,7 +89,7 @@
                                  (register-events
                                    card
                                    (let [ice target]
-                                     [{:type :run-ends
+                                     [{:event :run-ends
                                        :duration :end-of-run
                                        :req (req (get-card state ice))
                                        :effect (req (trash state side (get-card state ice)))}])))}]}
@@ -135,17 +135,17 @@
        :effect (effect (register-events
                          (assoc card :zone '(:discard))
                          [(assoc bm
-                                 :type :pre-steal-cost
+                                 :event :pre-steal-cost
                                  :req (req (or (= (:zone target) (:previous-zone card))
                                                (= (central->zone (:zone target))
                                                   (butlast (:previous-zone card))))))
-                          {:type :run-ends
+                          {:event :run-ends
                            :effect (effect (unregister-events card))}]))}
-      :events [(assoc bm :type :pre-steal-cost)
-               {:type :run-ends}]})
+      :events [(assoc bm :event :pre-steal-cost)
+               {:event :run-ends}]})
 
    "Bernice Mai"
-   {:events [{:type :successful-run
+   {:events [{:event :successful-run
               :interactive (req true)
               :req (req this-server)
               :trace {:base 5
@@ -167,7 +167,7 @@
                  :effect (effect (end-run eid card))}]}
 
    "Black Level Clearance"
-   {:events [{:type :successful-run
+   {:events [{:event :successful-run
               :interactive (req true)
               :req (req this-server)
               :async true
@@ -191,7 +191,7 @@
    "Breaker Bay Grid"
    {:constant-effects [{:type :rez-cost
                         :req (req (in-same-server? card target))
-                        :effect -5}]}
+                        :value -5}]}
 
    "Bryan Stinson"
    {:abilities [{:cost [:click 1]
@@ -224,7 +224,7 @@
                                  (zero? (:position run))))
                   :psi {:not-equal {:msg "end the run"
                                     :effect (effect (end-run eid card))}}}]
-     {:events [(assoc ability :type :approach-server)]
+     {:events [(assoc ability :event :approach-server)]
       :abilities [ability]})
 
    "Cayambe Grid"
@@ -247,8 +247,8 @@
                          :msg (msg "place an advancement token on " (card-str state target))
                          :effect (effect (add-prop target :advance-counter 1 {:placed true}))})
                       card nil))}]
-     {:events [(assoc ability :type :corp-turn-begins)
-               {:type :approach-server
+     {:events [(assoc ability :event :corp-turn-begins)
+               {:event :approach-server
                 :req (req (and this-server
                                (zero? (:position run))))
                 :effect
@@ -277,7 +277,7 @@
       :abilities [ability]})
 
    "ChiLo City Grid"
-   {:events [{:type :successful-trace
+   {:events [{:event :successful-trace
               :req (req this-server)
               :async true
               :effect (effect (gain-tags :corp eid 1))
@@ -297,8 +297,8 @@
    "Cold Site Server"
    {:constant-effects [{:type :run-additional-cost
                         :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
-                        :effect (req (repeat (get-counters card :power) [:credit 1 :click 1]))}]
-    :events [{:type :corp-turn-begins
+                        :value (req (repeat (get-counters card :power) [:credit 1 :click 1]))}]
+    :events [{:event :corp-turn-begins
               :req (req (pos? (get-counters card :power)))
               :msg "remove all hosted power counters"
               :effect (effect (add-counter card :power (- (get-counters card :power))))}]
@@ -324,9 +324,9 @@
 
    "Crisium Grid"
    (let [suppress-event {:req (req (and this-server (not (same-card? target card))))}]
-     {:suppress [(assoc suppress-event :type :pre-successful-run)
-                 (assoc suppress-event :type :successful-run)]
-      :events [{:type :pre-successful-run
+     {:suppress [(assoc suppress-event :event :pre-successful-run)
+                 (assoc suppress-event :event :successful-run)]
+      :events [{:event :pre-successful-run
                 :silent (req true)
                 :req (req this-server)
                 :effect (req (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
@@ -376,7 +376,7 @@
                                                  :not-self true}
                                        :effect (effect (continue-ability (choose-swap target) card nil))}
                          :no-ability {:effect (effect (clear-wait-prompt :runner))}}})]
-     {:events [{:type :approach-server
+     {:events [{:event :approach-server
                 :async true
                 :effect (effect (show-wait-prompt :runner "Corp to use Daruma")
                           (continue-ability :corp (ability card) card nil))}]})
@@ -436,7 +436,7 @@
                                 card nil)))}})
 
    "Drone Screen"
-   {:events [{:type :run
+   {:events [{:event :run
               :req (req (and this-server tagged))
               :async true
               :trace {:base 3
@@ -460,9 +460,9 @@
               :cost [:power 1]
               :msg "end the run"
               :effect (effect (end-run eid card))}]
-     {:derezzed-events [(assoc corp-rez-toast :type :runner-turn-ends)]
-      :events [(assoc maybe-gain-counter :type :corp-turn-begins)
-               {:type :successful-run
+     {:derezzed-events [(assoc corp-rez-toast :event :runner-turn-ends)]
+      :events [(assoc maybe-gain-counter :event :corp-turn-begins)
+               {:event :successful-run
                 :req (req (pos? (get-counters card :power)))
                 :msg "remove 1 power counter from Embolus"
                 :effect (effect (add-counter card :power -1))}]
@@ -473,7 +473,7 @@
    {:effect (effect (update-all-ice))
     :constant-effects [{:type :ice-strength
                         :req (req (protecting-same-server? card target))
-                        :effect 1}]
+                        :value 1}]
     :derez-effect {:effect (effect (update-all-ice))}
     :trash-effect {:effect (effect (update-all-ice))}}
 
@@ -485,8 +485,8 @@
                   :once :per-turn
                   :label "Gain 1 [Credits] (start of turn)"
                   :effect (effect (gain-credits 1))}]
-     {:derezzed-events [(assoc corp-rez-toast :type :runner-turn-ends)]
-      :events [(assoc ability :type :corp-turn-begins)]
+     {:derezzed-events [(assoc corp-rez-toast :event :runner-turn-ends)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Forced Connection"
@@ -508,7 +508,7 @@
                  :effect (effect (mill :corp :runner 2))}]}
 
    "Georgia Emelyov"
-   {:events [{:type :unsuccessful-run
+   {:events [{:event :unsuccessful-run
               :req (req (= (first (:server target))
                            (second (:zone card))))
               :async true
@@ -528,7 +528,7 @@
                                    card nil))}]}
 
    "Giordano Memorial Field"
-   {:events [{:type :successful-run
+   {:events [{:event :successful-run
               :interactive (req true)
               :async true
               :req (req this-server)
@@ -575,7 +575,7 @@
                                    {:type :ice-strength
                                     :duration :end-of-run
                                     :req (req (protecting-same-server? card target))
-                                    :effect 2})
+                                    :value 2})
                                  (update-all-ice))}]}
 
    "Henry Phillips"
@@ -605,13 +605,13 @@
                                              card nil)
                            (do (system-msg state :runner (str "wants to pay the additional cost from Hired Help but has no scored agenda to trash"))
                                (end-run state side eid card)))))}]
-     {:events [{:type :run
+     {:events [{:event :run
                 :req (req (and this-server
                                (empty? (filter #(= :hq %) (:successful-run runner-reg)))))
                 :effect (req (continue-ability state :runner prompt-to-trash-agenda-or-etr card nil))}]})
 
    "Hokusai Grid"
-   {:events [{:type :successful-run
+   {:events [{:event :successful-run
               :req (req this-server)
               :msg "do 1 net damage"
               :async true
@@ -689,7 +689,7 @@
                                                  (choose-grid (some #(when (= target (:title %)) %) ices)
                                                               ices grids)
                                                  card nil)))}))]
-     {:events [{:type :corp-draw
+     {:events [{:event :corp-draw
                 ;; This prevents multiple Jinja from showing the "choose a server to install into" sequence
                 :once :per-turn
                 :once-key :jinja-city-grid-draw
@@ -720,7 +720,7 @@
                                ;; otherwise, we done
                                :else
                                (effect-completed state side eid)))}
-               {:type :post-corp-draw
+               {:event :post-corp-draw
                 :effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw])
                           (when (= :runner (:active-player @state))
                             (clear-wait-prompt state :runner)))}]})
@@ -734,11 +734,11 @@
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to take 1 tag")))
                              (do (end-run state side eid card)
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run")))))}]
-     {:events [{:type :pass-ice
+     {:events [{:event :pass-ice
                 :req (req (and this-server (= (:position run) 1))) ; trigger when last ice passed
                 :async true
                 :effect (req (continue-ability state :runner abi card nil))}
-               {:type :run
+               {:event :run
                 :req (req (and this-server
                                (zero? (:position run)))) ; trigger on unprotected server
                 :async true
@@ -755,7 +755,7 @@
                          :effect (effect (add-prop target :advance-counter 1 {:placed true}))})
                       card nil))}]
      {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Letheia Nisei"
@@ -778,7 +778,7 @@
                                 :effect (req (swap! state assoc-in [:run :position] (count run-ices)))}
                                :end-effect (effect (clear-wait-prompt :runner))}}
                              card nil))}}}]
-     {:events [(assoc ability :type :approach-server)]
+     {:events [(assoc ability :event :approach-server)]
       :abilities [ability
                   (set-autoresolve :auto-fire "Fire Letheia Nisei?")]})
 
@@ -804,7 +804,7 @@
                                  :type :recurring}}}
 
    "Manta Grid"
-   {:events [{:type :successful-run-ends
+   {:events [{:event :successful-run-ends
               :msg "gain a [Click] next turn"
               :req (req (and (= (first (:server target)) (second (:zone card)))
                              (or (< (:credit runner) 6) (zero? (:click runner)))))
@@ -905,8 +905,8 @@
                             :msg "force the Runner to access 3 additional cards"
                             :effect (req (access-bonus state :runner (-> card :zone second) 3))}]
      {:install-req (req (filter #{"HQ" "R&D"} targets))
-      :events [(assoc boost-access-by-3 :type :pre-access)
-               (assoc gain-creds-and-clear :type :end-access-phase)]
+      :events [(assoc boost-access-by-3 :event :pre-access)
+               (assoc gain-creds-and-clear :event :end-access-phase)]
       ;; TODO: as written, this may fail if mwanza is trashed outside of a run on its server
       ;; (e.g. mwanza on R&D, run HQ, use polop to trash mwanza mid-run, shiro fires to cause RD
       :trash-effect                     ; if there is a run, mark mwanza effects to remain active until the end of the run
@@ -914,14 +914,14 @@
        :effect (effect (register-events
                          (assoc card :zone '(:discard))
                          [(assoc boost-access-by-3
-                                 :type :pre-access
+                                 :event :pre-access
                                  :req (req (= target (second (:previous-zone card)))))
                           (assoc gain-creds-and-clear
-                                 :type :end-access-phase
+                                 :event :end-access-phase
                                  :req (req (= (:from-server target) (second (:previous-zone card)))))
-                          {:type :unsuccessful-run-ends
+                          {:event :unsuccessful-run-ends
                            :effect (effect (unregister-events card))}
-                          {:type :successful-run-ends
+                          {:event :successful-run-ends
                            :effect (effect (unregister-events card))}]))}})
 
    "NeoTokyo Grid"
@@ -929,11 +929,11 @@
              :once :per-turn
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits 1))}]
-     {:events [(assoc ng :type :advance)
-               (assoc ng :type :advancement-placed)]})
+     {:events [(assoc ng :event :advance)
+               (assoc ng :event :advancement-placed)]})
 
    "Nihongai Grid"
-   {:events [{:type :successful-run
+   {:events [{:event :successful-run
               :interactive (req true)
               :async true
               :req (req (and this-server
@@ -981,11 +981,11 @@
    "Oaktown Grid"
    {:constant-effects [{:type :trash-cost
                         :req (req (in-same-server? card target))
-                        :effect 3}]}
+                        :value 3}]}
 
    "Oberth Protocol"
    {:additional-cost [:forfeit]
-    :events [{:type :advance
+    :events [{:event :advance
               :req (req (and (same-server? card target)
                              (= 1 (count (filter #(= (second (:zone %)) (second (:zone card)))
                                                  (map first (turn-events state side :advance)))))))
@@ -995,9 +995,9 @@
    "Off the Grid"
    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
     :effect (req (prevent-run-on-server state card (second (:zone card))))
-    :events [{:type :runner-turn-begins
+    :events [{:event :runner-turn-begins
               :effect (req (prevent-run-on-server state card (second (:zone card))))}
-             {:type :successful-run
+             {:event :successful-run
               :req (req (= target :hq))
               :effect (req (trash state :corp card)
                            (enable-run-on-server state card
@@ -1021,18 +1021,18 @@
        :effect (req (register-events
                       state side (assoc card :zone '(:discard))
                       [(assoc ohg
-                              :type :pre-steal-cost
+                              :event :pre-steal-cost
                               :req (req (or (= (:zone (get-nested-host target))
                                                (:previous-zone card))
                                             (= (central->zone (:zone target))
                                                (butlast (:previous-zone card))))))
-                       {:type :run-ends
+                       {:event :run-ends
                         :effect (req (unregister-events state side (find-latest state card))
                                      (clear-persistent-flag! state side card :can-steal))}]))}
-      :events [(assoc ohg :type :pre-steal-cost)
-               {:type :access
+      :events [(assoc ohg :event :pre-steal-cost)
+               {:event :access
                 :effect (req (clear-persistent-flag! state side card :can-steal))}
-               {:type :run-ends}]})
+               {:event :run-ends}]})
 
    "Overseer Matrix"
    (let [om {:req (req (in-same-server? card target))
@@ -1055,15 +1055,15 @@
        :effect (effect (register-events
                          (assoc card :zone '(:discard))
                          [(assoc om
-                                 :type :runner-trash
+                                 :event :runner-trash
                                  :req (req (or (= (:zone (get-nested-host target))
                                                   (:previous-zone card))
                                                (= (central->zone (:zone target))
                                                   (butlast (:previous-zone card))))))
-                          {:type :run-ends
+                          {:event :run-ends
                            :effect (effect (unregister-events card))}]))}
-      :events [{:type :run-ends}
-               (assoc om :type :runner-trash)]})
+      :events [{:event :run-ends}
+               (assoc om :event :runner-trash)]})
 
    "Panic Button"
    {:init {:root "HQ"}
@@ -1075,11 +1075,11 @@
    {:msg "prevent the Runner from jacking out unless they trash an installed program"
     :effect (req (when this-server
                    (prevent-jack-out state side)))
-    :events [{:type :run
+    :events [{:event :run
               :req (req this-server)
               :msg "prevent the Runner from jacking out unless they trash an installed program"
               :effect (effect (prevent-jack-out))}
-             {:type :runner-trash
+             {:event :runner-trash
               :req (req (and this-server (program? target)))
               :effect (req (swap! state update-in [:run] dissoc :cannot-jack-out))}]}
 
@@ -1112,20 +1112,20 @@
        :effect (effect (register-events
                          (assoc card :zone '(:discard))
                          [(assoc ab
-                                 :type :pre-steal-cost
+                                 :event :pre-steal-cost
                                  :req (req (or (= (:zone target) (:previous-zone card))
                                                (= (central->zone (:zone target))
                                                   (butlast (:previous-zone card))))))
-                          {:type :run-ends
+                          {:event :run-ends
                            :effect (effect (unregister-events card))}]))}
-      :events [(assoc ab :type :pre-steal-cost)
-               {:type :run-ends}]})
+      :events [(assoc ab :event :pre-steal-cost)
+               {:event :run-ends}]})
 
    "Reduced Service"
    {:constant-effects [{:type :run-additional-cost
                         :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
-                        :effect (req (repeat (get-counters card :power) [:credit 2]))}]
-    :events [{:type :successful-run
+                        :value (req (repeat (get-counters card :power) [:credit 2]))}]
+    :events [{:event :successful-run
               :req (req (and (pos? (get-counters card :power))
                              (is-central? (:server run))))
               :msg "remove a hosted power counter"
@@ -1150,10 +1150,10 @@
    "Ruhr Valley"
    {:constant-effects [{:type :run-additional-cost
                         :req (req (= (:server (second targets)) (unknown->kw (:zone card))))
-                        :effect [:click 1]}]}
+                        :value [:click 1]}]}
 
    "Rutherford Grid"
-   {:events [{:type :pre-init-trace
+   {:events [{:event :pre-init-trace
               :req (req this-server)
               :effect (effect (init-trace-bonus 2))}]}
 
@@ -1167,11 +1167,11 @@
    {:effect (req (when-let [agenda (some #(when (agenda? %) %)
                                          (:content (card->server state card)))]
                    (update-advancement-cost state side agenda)))
-    :events [{:type :corp-install
+    :events [{:event :corp-install
               :req (req (and (agenda? target)
                              (in-same-server? card target)))
               :effect (effect (update-advancement-cost target))}
-             {:type :pre-advancement-cost
+             {:event :pre-advancement-cost
               :req (req (in-same-server? card target))
               :effect (effect (advancement-cost-bonus -1))}]}
 
@@ -1179,7 +1179,7 @@
    {:effect (req (doseq [c (:ices (card->server state card))]
                    (set-prop state side c :extra-advance-counter 1))
                  (update-all-ice state side))
-    :events [{:type :corp-install
+    :events [{:event :corp-install
               :req (req (and (ice? target)
                              (protecting-same-server? card target)))
               :effect (effect (set-prop target :extra-advance-counter 1))}]
@@ -1225,7 +1225,7 @@
                                    (register-run-flag! card :runner-lock-install (constantly true))
                                    (toast :runner "Cannot install until the end of the run")
                                    (toast :corp "Cannot install until the end of the run"))}
-    :events [{:type :run-ends}]}
+    :events [{:event :run-ends}]}
 
    "Simone Diego"
    {:recurring 2
@@ -1242,17 +1242,17 @@
        :effect (effect (register-events
                          (assoc card :zone '(:discard))
                          [(assoc ab
-                                 :type :pre-steal-cost
+                                 :event :pre-steal-cost
                                  :req (req (or (= (:zone target) (:previous-zone card))
                                                (= (central->zone (:zone target))
                                                   (butlast (:previous-zone card))))))
-                          {:type :run-ends
+                          {:event :run-ends
                            :effect (effect (unregister-events card))}]))}
-      :events [(assoc ab :type :pre-steal-cost)
-               {:type :run-ends}]})
+      :events [(assoc ab :event :pre-steal-cost)
+               {:event :run-ends}]})
 
    "Surat City Grid"
-   {:events [{:type :rez
+   {:events [{:event :rez
               :req (req (and (same-server? card target)
                              (not (and (upgrade? target)
                                        (is-central? (second (:zone target)))))
@@ -1329,7 +1329,7 @@
                                   card nil)))}]}
 
    "Tori Hanzō"
-   {:events [{:type :pre-resolve-damage
+   {:events [{:event :pre-resolve-damage
               :once :per-run
               :async true
               :req (req (and this-server
@@ -1358,14 +1358,14 @@
                                              (clear-wait-prompt state :runner)
                                              (effect-completed state side eid))}}}
                              card nil))}
-             {:type :prevented-damage
+             {:event :prevented-damage
               :req (req (and this-server
                              (= target :net)
                              (pos? (last targets))))
               :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}]}
 
    "Traffic Analyzer"
-   {:events [{:type :rez
+   {:events [{:event :rez
               :req (req (and (protecting-same-server? card target)
                              (ice? target)))
               :interactive (req true)
@@ -1382,7 +1382,7 @@
 
    "Underway Grid"
    {:implementation "Bypass prevention is not implemented"
-    :events [{:type :pre-expose
+    :events [{:event :pre-expose
               :req (req (same-server? card target))
               :msg "prevent 1 card from being exposed"
               :effect (effect (expose-prevent 1))}]}
@@ -1398,12 +1398,12 @@
                    :effect (req (when-let [n (:times-used card)]
                                   (register-events
                                     state side (assoc card :zone '(:discard))
-                                    [{:type :corp-turn-begins
+                                    [{:event :corp-turn-begins
                                       :msg (msg "increase the Runner's maximum hand size by " n)
                                       :effect (effect (change-hand-size :runner n)
                                                       (unregister-events card)
                                                       (update! (dissoc card :times-used)))}])))}
-    :events [{:type :corp-turn-begins
+    :events [{:event :corp-turn-begins
               :req (req (:times-used card))
               :msg (msg "increase the Runner's maximum hand size by "
                         (:times-used card))
@@ -1426,7 +1426,7 @@
                            (when (zero? (count (cards-to-access state side (get-in @state [:run :server]))))
                              (handle-end-run state side)))})]
      {:implementation "Does not handle UFAQ interaction with Singularity"
-      :events [{:type :runner-trash
+      :events [{:event :runner-trash
                 :async true
                 :req (req (and (corp? target)
                                (let [target-zone (:zone target)
@@ -1452,7 +1452,7 @@
                                   (effect-completed state side eid))))}}}]})
 
    "Will-o'-the-Wisp"
-   {:events [{:type :successful-run
+   {:events [{:event :successful-run
               :interactive (req true)
               :async true
               :req (req (and this-server

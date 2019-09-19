@@ -262,8 +262,8 @@
     {:advanceable :always
      :effect (morph-effect base other)
      :subroutines [ability]
-     :events [(assoc ab :type :advance)
-              (assoc ab :type :advancement-placed)]}))
+     :events [(assoc ab :event :advance)
+              (assoc ab :event :advancement-placed)]}))
 
 ;;; For Constellation ICE
 (defn constellation-ice
@@ -278,9 +278,9 @@
   (let [ability {:req (req (same-card? card target))
                  :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]
     {:advanceable :while-rezzed
-     :events [(assoc ability :type :advance)
-              (assoc ability :type :advancement-placed)
-              (assoc ability :type :rez)]}))
+     :events [(assoc ability :event :advance)
+              (assoc ability :event :advancement-placed)
+              (assoc ability :event :rez)]}))
 
 ;; For 7 Wonders ICE
 (defn wonder-sub
@@ -467,12 +467,12 @@
                    :msg (msg (corp-install-msg target))}]}
 
    "Ashigaru"
-   {:events [{:type :card-moved
+   {:events [{:event :card-moved
               :req (req (and (corp? target)
                              (or (= :hand (first (:zone target)))
                                  (= :hand (first (:previous-zone target))))))
               :effect (effect (reset-variable-subs card (count (:hand corp)) end-the-run))}
-             {:type :rez
+             {:event :rez
               :req (req (same-card? card target))
               :effect (effect (reset-variable-subs card (count (:hand corp)) end-the-run))}]}
 
@@ -504,13 +504,13 @@
                    :effect (effect (gain-tags :corp eid 1)
                                    (register-events
                                      card
-                                     [{:type :successful-run
+                                     [{:event :successful-run
                                        :effect (effect (lose-tags :corp 1))
                                        :msg "make the Runner lose 1 tag"}
-                                      {:type :run-ends
+                                      {:event :run-ends
                                        :effect (effect (unregister-events card))}]))}]
-    :events [{:type :successful-run}
-             {:type :run-ends}]}
+    :events [{:event :successful-run}
+             {:event :run-ends}]}
 
    "Bastion"
    {:subroutines [end-the-run]}
@@ -602,7 +602,7 @@
 
    "Brainstorm"
    {:implementation "Encounter effect is manual"
-    :events [{:type :run-ends
+    :events [{:event :run-ends
               :effect (effect (reset-variable-subs card 0 nil))}]
     :abilities [{:label "Reset subroutines"
                  :effect (effect (reset-variable-subs card (count (:hand runner)) (do-brain-damage 1)))}]}
@@ -679,14 +679,14 @@
                                     :msg "do 3 meat damage when this run is successful"
                                     :effect (effect (register-events
                                                       card
-                                                      [{:type :successful-run
+                                                      [{:event :successful-run
                                                         :async true
                                                         :msg "do 3 meat damage"
                                                         :effect (effect (damage eid :meat 3 {:card card}))}
-                                                       {:type :run-ends
+                                                       {:event :run-ends
                                                         :effect (effect (unregister-events card))}]))})]
-    :events [{:type :successful-run}
-             {:type :run-ends}]}
+    :events [{:event :successful-run}
+             {:event :run-ends}]}
 
    "Chetana"
    {:subroutines [{:msg "make each player gain 2 [Credits]"
@@ -706,8 +706,8 @@
                                       :subtype-target target
                                       :subtype (combine-subtypes true (:subtype card) target)))
                       (update-ice-strength card))
-      :events [(assoc turn-end-ability :type :runner-turn-ends)
-               (assoc turn-end-ability :type :corp-turn-ends)]
+      :events [(assoc turn-end-ability :event :runner-turn-ends)
+               (assoc turn-end-ability :event :corp-turn-ends)]
       :subroutines [end-the-run]})
 
    "Chiyashi"
@@ -783,7 +783,7 @@
     :strength-bonus advance-counters}
 
    "Congratulations!"
-   {:events [{:type :pass-ice
+   {:events [{:event :pass-ice
               :req (req (same-card? target card))
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits :corp 1))}]
@@ -828,9 +828,9 @@
     :events (let [cw {:req (req (and (not (same-card? card target))
                                      (= (card->server state card) (card->server state target))))
                       :effect (effect (update-ice-strength card))}]
-              [(assoc cw :type :corp-install)
-               (assoc cw :type :trash)
-               (assoc cw :type :card-moved)])}
+              [(assoc cw :event :corp-install)
+               (assoc cw :event :trash)
+               (assoc cw :event :card-moved)])}
 
    "Data Hound"
    (letfn [(dh-trash [cards]
@@ -1210,11 +1210,11 @@
                    :effect (effect (lose :runner :hand-size 2)
                                    (register-events
                                      card
-                                     [{:type :corp-turn-begins
+                                     [{:event :corp-turn-begins
                                        :msg "increase the Runner's maximum hand size by 2"
                                        :effect (effect (gain :runner :hand-size 2)
                                                        (unregister-events card))}]))}]
-    :events [{:type :corp-turn-begins}]}
+    :events [{:event :corp-turn-begins}]}
 
    "Hadrian's Wall"
    {:advanceable :always
@@ -1320,11 +1320,11 @@
    (let [corp-points (fn [corp] (min 5 (max 0 (- 5 (:agenda-point corp 0)))))
          ability {:effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]
      {:events [(assoc ability
-                      :type :rez
+                      :event :rez
                       :req (req (same-card? card target)))
-               (assoc ability :type :agenda-scored)
+               (assoc ability :event :agenda-scored)
                (assoc ability
-                      :type :as-agenda
+                      :event :as-agenda
                       :req (req (= "Corp" (:as-agenda-side target))))]
       :abilities [{:label "Lose subroutines"
                    :msg (msg "lose " (- 5 (corp-points corp)) " subroutines")
@@ -1407,7 +1407,7 @@
                                                         (card-init state side newice {:resolve-effect false
                                                                                       :init-data true})
                                                         (trigger-event state side :corp-install newice)))} card nil)))}]
-      :events [{:type :run-ends
+      :events [{:event :run-ends
                 :req (req (:howler-target card))
                 :effect (effect (trash card {:cause :self-trash})
                                 (derez (get-card state (:howler-target card))))}]})
@@ -1468,19 +1468,19 @@
                 {:msg "prevent the Runner from jacking out until after the next piece of ICE"
                  :effect (effect (register-events
                                    card
-                                   [{:type :pass-ice
+                                   [{:event :pass-ice
                                      :effect (req (swap! state update-in [:run] dissoc :prevent-jack-out)
-                                                  (unregister-events state side card {:type :pass-ice}))}])
+                                                  (unregister-events state side card {:event :pass-ice}))}])
                                  (prevent-jack-out))}]}
 
    "Information Overload"
    (let [ability {:effect (effect (reset-variable-subs card (count-tags state) trash-installed))}]
      {:implementation "Encounter effect is manual"
       :events [(assoc ability
-                      :type :rez
+                      :event :rez
                       :req (req (same-card? card target)))
-               (assoc ability :type :runner-gain-tag)
-               (assoc ability :type :runner-lose-tag)]
+               (assoc ability :event :runner-gain-tag)
+               (assoc ability :event :runner-lose-tag)]
       :abilities [(tag-trace 1)]})
 
    "Interrupt 0"
@@ -1511,8 +1511,8 @@
    (let [sub {:msg "make the Runner lose 1 [Credits]"
               :effect (effect (lose-credits :runner 1))}
          ability {:effect (effect (reset-variable-subs card (count-bad-pub state) sub))}]
-     {:events [(assoc ability :type :corp-gain-bad-publicity)
-               (assoc ability :type :corp-lose-bad-publicity)]})
+     {:events [(assoc ability :event :corp-gain-bad-publicity)
+               (assoc ability :event :corp-lose-bad-publicity)]})
 
    "It's a Trap!"
    {:expose {:msg "do 2 net damage"
@@ -1559,7 +1559,7 @@
                                     card nil)))}]}
 
    "Kakugo"
-   {:events [{:type :pass-ice
+   {:events [{:event :pass-ice
               :async true
               :req (req (same-card? target card))
               :msg "do 1 net damage"
@@ -1621,7 +1621,7 @@
    "Komainu"
    (let [sub (do-net-damage 1)]
      {:implementation "Encounter effect is manual"
-      :events [{:type :run-ends
+      :events [{:event :run-ends
                 :effect (effect (reset-variable-subs card 0 nil))}]
       :abilities [{:label "Reset subroutines"
                    :effect (effect (reset-variable-subs card (count (:hand runner)) sub))}]})
@@ -1747,7 +1747,7 @@
       :derez-effect {:req (req (not-empty (:hosted card)))
                      :effect (req (doseq [c (get-in card [:hosted])]
                                     (card-init state side c {:resolve-effect false})))}
-      :events [{:type :runner-install
+      :events [{:event :runner-install
                 :req (req (same-card? card (:host target)))
                 :effect (req (disable-hosted state side card)
                           (update-ice-strength state side card))}]
@@ -1763,7 +1763,7 @@
 
    "Marker"
    {:implementation "Subroutine-adding is manual"
-    :events [{:type :run-ends
+    :events [{:event :run-ends
               :effect (req (let [cid (:cid card)
                                  ices (get-in card [:special :marker])]
                              (doseq [i ices]
@@ -1789,9 +1789,9 @@
                   :effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))}]
      {:advanceable :always
       :effect (effect (add-prop card :advance-counter 1))
-      :events [(assoc ability :type :advance)
-               (assoc ability :type :advancement-placed)
-               (assoc ability :type :rez)]})
+      :events [(assoc ability :event :advance)
+               (assoc ability :event :advancement-placed)
+               (assoc ability :event :rez)]})
 
    "Matrix Analyzer"
    {:implementation "Encounter effect is manual"
@@ -1982,10 +1982,10 @@
              :effect ab}]
      {:effect ab
       :subroutines [end-the-run]
-      :events [(assoc mg :type :rez)
-               (assoc mg :type :card-moved)
-               (assoc mg :type :derez)
-               (assoc mg :type :ice-subtype-changed)]})
+      :events [(assoc mg :event :rez)
+               (assoc mg :event :card-moved)
+               (assoc mg :event :derez)
+               (assoc mg :event :ice-subtype-changed)]})
 
    "Muckraker"
    {:effect take-bad-pub
@@ -2036,9 +2036,9 @@
                                                    (get-in @state [:runner :current]))))
                           (reset-variable-subs state side card 1 end-the-run {:back true}))
                         card nil))
-      :events [(assoc ab :type :play-event)
-               (assoc ab :type :play-operation)
-               {:type :trash-current
+      :events [(assoc ab :event :play-event)
+               (assoc ab :event :play-operation)
+               {:event :trash-current
                 :msg "make News Hound lose \"[subroutine] End the run\""
                 :effect (effect (continue-ability
                                   (reset-variable-subs state side card 0 nil)
@@ -2051,10 +2051,10 @@
     :events (let [nb {:req (req (and (not (same-card? target card))
                                      (has-subtype? target "NEXT")))
                       :effect (effect (update-ice-strength card))}]
-              [(assoc nb :type :rez)
-               (assoc nb :type :derez)
-               (assoc nb :type :trash)
-               (assoc nb :type :card-moved)])}
+              [(assoc nb :event :rez)
+               (assoc nb :event :derez)
+               (assoc nb :event :trash)
+               (assoc nb :event :card-moved)])}
 
    "NEXT Diamond"
    {:rez-cost-bonus (req (- (next-ice-count corp)))
@@ -2086,8 +2086,8 @@
          ability {:req (req (and (ice? target)
                                  (has-subtype? target "NEXT")))
                   :effect (effect (reset-variable-subs card (next-ice-count corp) sub))}]
-     {:events [(assoc ability :type :rez)
-               (assoc ability :type :derez)]})
+     {:events [(assoc ability :event :rez)
+               (assoc ability :event :derez)]})
 
    "NEXT Sapphire"
    {:subroutines [{:label "Draw up to X cards"
@@ -2128,8 +2128,8 @@
    (let [ability {:req (req (and (ice? target)
                                  (has-subtype? target "NEXT")))
                   :effect (effect (reset-variable-subs card (next-ice-count corp) end-the-run))}]
-     {:events [(assoc ability :type :rez)
-               (assoc ability :type :derez)]})
+     {:events [(assoc ability :event :rez)
+               (assoc ability :event :derez)]})
 
    "Nightdancer"
    (let [sub {:label (str "The Runner loses [Click], if able. "
@@ -2221,7 +2221,7 @@
                                                  (end-run state :runner eid card))))}
                              card nil))}]
      {:implementation "Encounter effect is manual"
-      :events [{:type :run-ends
+      :events [{:event :run-ends
                 :effect (effect (reset-variable-subs card 0 nil))}]
       :abilities [{:label "Name a card type and reveal all cards in the Runner's Grip"
                    :prompt "Choose a card type"
@@ -2282,9 +2282,9 @@
    "Resistor"
    (let [resistor-effect {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))
                                           (update-ice-strength (get-card state card)))}]
-     {:events [(assoc resistor-effect :type :runner-gain-tag)
-               (assoc resistor-effect :type :runner-lose-tag)
-               (assoc resistor-effect :type :runner-additional-tag-change)]
+     {:events [(assoc resistor-effect :event :runner-gain-tag)
+               (assoc resistor-effect :event :runner-lose-tag)
+               (assoc resistor-effect :event :runner-additional-tag-change)]
       :strength-bonus (req (count-tags state))
       :subroutines [(trace-ability 4 end-the-run)]})
 
@@ -2296,11 +2296,11 @@
                    :effect (effect (lose-credits :runner 1))}]
     :constant-effects [{:type :ice-strength
                         :req (req (protecting-same-server? card target))
-                        :effect 1}]
-    :events [{:type :corp-moved
+                        :value 1}]
+    :events [{:event :corp-moved
               :req (req (ice? target))
               :effect (effect (update-ice-strength target))}
-             {:type :corp-install
+             {:event :corp-install
               :req (req (ice? target))
               :effect (effect (update-ice-strength target))}]}
 
@@ -2483,8 +2483,8 @@
      {:effect recalculate-strength
       :strength-bonus (req (count (:ices (card->server state card))))
       :subroutines [end-the-run]
-      :events [(assoc recalc-event :type :card-moved)
-               (assoc recalc-event :type :corp-install)]})
+      :events [(assoc recalc-event :event :card-moved)
+               (assoc recalc-event :event :corp-install)]})
 
    "Self-Adapting Code Wall"
    {:subroutines [end-the-run]
@@ -2492,7 +2492,7 @@
 
    "Sensei"
    {:implementation "Subroutine-adding is manual"
-    :events [{:type :run-ends
+    :events [{:event :run-ends
               :effect (req (let [cid (:cid card)
                                  ices (get-in card [:special :sensei])]
                              (doseq [i ices]
@@ -2639,8 +2639,8 @@
                      :trace {:base x
                              :label "End the run"
                              :successful end-the-run}}]
-      :events [(assoc recalc-event :type :card-moved)
-               (assoc recalc-event :type :corp-install)]})
+      :events [(assoc recalc-event :event :card-moved)
+               (assoc recalc-event :event :corp-install)]})
 
    "Susanoo-no-Mikoto"
    {:subroutines [{:req (req (not= (:server run) [:discard]))
@@ -2669,9 +2669,9 @@
                   :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]
      {:advanceable :always
       :effect take-bad-pub
-      :events [(assoc ability :type :advance)
-               (assoc ability :type :advancement-placed)
-               (assoc ability :type :rez)]})
+      :events [(assoc ability :event :advance)
+               (assoc ability :event :advancement-placed)
+               (assoc ability :event :rez)]})
 
    "Swordsman"
    {:implementation "AI restriction not implemented"
@@ -2762,7 +2762,7 @@
 
    "TL;DR"
    {:implementation "Subroutine-adding is manual"
-    :events [{:type :pass-ice
+    :events [{:event :pass-ice
               :req (req (some #(same-card? % target) (get-in card [:special :tldr])))
               :effect (req (let [curr-subs (:subroutines target)
                                  new-subs (into [] (take-nth 2 curr-subs))
@@ -2802,8 +2802,8 @@
                   :effect ef}]
      {:effect ef
       :abilities [(dissoc ability :req)]
-      :events [(assoc ability :type :rez)
-               (assoc ability :type :derez)]})
+      :events [(assoc ability :event :rez)
+               (assoc ability :event :derez)]})
 
    "Trebuchet"
    {:effect take-bad-pub
@@ -3023,9 +3023,9 @@
                       :req (req (and (not (same-card? target card))
                                      (has-subtype? target "Fracter")))
                       :effect (effect (update-ice-strength card))}]
-              [(assoc wr :type :runner-install)
-               (assoc wr :type :trash)
-               (assoc wr :type :card-moved)])}
+              [(assoc wr :event :runner-install)
+               (assoc wr :event :trash)
+               (assoc wr :event :card-moved)])}
 
    "Yagura"
    {:subroutines [(do-net-damage 1)

@@ -11,7 +11,7 @@
     (let [constant-effects (:constant-effects (card-def card))
           abilities (for [ability constant-effects]
                       (assoc
-                        (select-keys ability [:type :req :effect])
+                        (select-keys ability [:type :req :value])
                         :duration :constant
                         :card card
                         :uuid (uuid/v1)))]
@@ -31,7 +31,7 @@
 (defn register-floating-effect
   [state side card ability]
   (let [ability (assoc
-                  (select-keys ability [:type :duration :req :effect])
+                  (select-keys ability [:type :duration :req :value])
                   :card card
                   :uuid (uuid/v1))]
     (swap! state update :effects conj ability)
@@ -61,9 +61,9 @@
           (filter #(if-not (:req %)
                      true
                      ((:req %) state side eid (get-card state (:card %)) (cons card targets))))
-          (mapv #(if-not (fn? (:effect %))
-                   (:effect %)
-                   ((:effect %) state side eid (get-card state (:card %)) (cons card targets))))))))
+          (mapv #(if-not (fn? (:value %))
+                   (:value %)
+                   ((:value %) state side eid (get-card state (:card %)) (cons card targets))))))))
 
 (defn sum-effects
   "Sums the results from get-effects."

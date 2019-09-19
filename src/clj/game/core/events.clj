@@ -13,9 +13,9 @@
    (when events
      (let [abilities
            (->> (for [ability events]
-                  {:type (:type ability)
+                  {:event (:event ability)
                    :duration (or (:duration ability) :while-installed)
-                   :ability (dissoc ability :type :duration)
+                   :ability (dissoc ability :event :duration)
                    :card card
                    :uuid (uuid/v1)})
                 (into []))]
@@ -30,11 +30,11 @@
   ([state side card cdef]
    ;; Combine normal events and derezzed events. Any merge conflicts should not matter
    ;; as they should cause all relevant events to be removed anyway.
-   (let [abilities (map :type (concat (:events cdef) (:derezzed-events cdef)))]
+   (let [abilities (map :event (concat (:events cdef) (:derezzed-events cdef)))]
      (swap! state assoc :events
             (->> (:events @state)
                  (remove #(and (same-card? card (:card %))
-                               (in-coll? abilities (:type %))
+                               (in-coll? abilities (:event %))
                                (= :while-installed (:duration %))))
                  (into [])))
      (unregister-suppress state side card))))
@@ -63,7 +63,7 @@
     (let [get-side #(-> % :card :side game.utils/to-keyword)
           is-active-player #(= (:active-player @state) (get-side %))
           handlers (->> (:events @state)
-                        (filter #(= event (:type %)))
+                        (filter #(= event (:event %)))
                         (sort-by (complement is-active-player))
                         (filter (fn [ability]
                                   (let [card (card-for-ability state ability)]
@@ -93,7 +93,7 @@
         (let [get-side #(-> % :card :side game.utils/to-keyword)
               is-active-player #(= (:active-player @state) (get-side %))
               handlers (->> (:events @state)
-                            (filter #(= event (:type %)))
+                            (filter #(= event (:event %)))
                             (sort-by (complement is-active-player))
                             (filter (fn [ability]
                                       (let [card (card-for-ability state ability)]
@@ -221,7 +221,7 @@
                              ;; This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
                              ;; http://nisei.net/files/Comprehensive_Rules_1.1.pdf
                              (let [abis (->> (:events @state)
-                                             (filter #(= event (:type %)))
+                                             (filter #(= event (:event %)))
                                              (filter (partial is-player player-side)))
                                    abis (if (= player-side (get-side card-ability))
                                           (cons card-ability abis)
@@ -259,8 +259,8 @@
    (when events
      (let [abilities
            (->> (for [ability events]
-                  {:type (:type ability)
-                   :ability (dissoc ability :type)
+                  {:event (:event ability)
+                   :ability (dissoc ability :event)
                    :card card
                    :uuid (uuid/v1)})
                 (into []))]
@@ -271,11 +271,11 @@
   "Removes all event handler suppression effects as defined for the given card"
   ([state side card] (unregister-suppress state side card (:suppress (card-def card))))
   ([state side card events]
-   (let [abilities (map :type events)]
+   (let [abilities (map :event events)]
      (swap! state assoc :suppress
             (->> (:suppress @state)
                  (remove #(and (same-card? card (:card %))
-                               (in-coll? abilities (:type %))))
+                               (in-coll? abilities (:event %))))
                  (into []))))))
 
 (defn trigger-suppress
@@ -283,7 +283,7 @@
   each suppression handler and returning true if any suppression handler returns true."
   [state side event & targets]
   (->> (:suppress @state)
-       (filter #(= event (:type %)))
+       (filter #(= event (:event %)))
        (some #((:req (:ability %)) state side (make-eid state) (:card %) targets))))
 
 (defn turn-events

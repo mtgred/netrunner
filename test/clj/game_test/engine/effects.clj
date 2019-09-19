@@ -21,10 +21,10 @@
                      :title "Test Card 2"}
         type-1 {:type :test-type
                 :duration :constant
-                :effect 1}
+                :value 1}
         type-2 {:type :test-type-2
                 :duration :constant
-                :effect (fn [state side eid card targets] 2)}]
+                :value (fn [state side eid card targets] 2)}]
 
     (testing "Effect type filtering"
       (reset! state start)
@@ -60,19 +60,19 @@
             :title "Test Card 2"}
         f1 {:type :test-type
             :duration :constant
-            :effect 1}
+            :value 1}
         f2 {:type :test-type
             :duration :constant
-            :effect (fn [state side eid card targets] 2)}]
+            :value (fn [state side eid card targets] 2)}]
 
     ;; This is testing if the :req is not present, so no need to retest
-    (testing ":effect static values"
+    (testing ":value static values"
       (reset! state start)
       (e/register-floating-effect state side c1 f1)
       (let [effects (e/get-effects state :corp c2 :test-type)]
         (is (= [1] effects) "Should return the static value")))
 
-    (testing ":effect function values"
+    (testing ":value function values"
       (reset! state start)
       (e/register-floating-effect state side c1 f2)
       (let [effects (e/get-effects state :corp c2 :test-type)]
@@ -118,7 +118,7 @@
         f (fn [n]
             {:type :test-type
              :duration :constant
-             :effect n})]
+             :value n})]
 
     (testing "Handles non-numbers"
       (reset! state start)

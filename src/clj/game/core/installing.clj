@@ -95,7 +95,7 @@
                  recurring)]
          (register-events
            state side c
-           [{:type (if (= side :corp) :corp-phase-12 :runner-phase-12)
+           [{:event (if (= side :corp) :corp-phase-12 :runner-phase-12)
              :req (req (not (:disabled card)))
              :effect r}])))
      (update! state side c)

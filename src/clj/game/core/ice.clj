@@ -208,7 +208,7 @@
      {:type :ice-strength
       :duration duration
       :req (req (same-card? card target))
-      :effect (req n)})
+      :value n})
    (update-ice-strength state side (get-card state card))))
 
 
@@ -245,7 +245,7 @@
      {:type :breaker-strength
       :duration duration
       :req (req (same-card? card target))
-      :effect (req n)})
+      :value n})
    (update-breaker-strength state side (get-card state card))
    (trigger-event state side :pump-breaker (get-card state card) n)))
 

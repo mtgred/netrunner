@@ -54,7 +54,7 @@
      {:effect (req (add-counter state side card counter-type counters))
       :derezzed-events [corp-rez-toast]
       :events [(trash-on-empty counter-type)
-               (assoc ability :type :corp-turn-begins)]
+               (assoc ability :event :corp-turn-begins)]
       :abilities [ability]})))
 
 (defn as-trashed-agenda
@@ -138,7 +138,7 @@
                                    card nil))}]}
 
    "Alix T4LB07"
-   {:events [{:type :corp-install
+   {:events [{:event :corp-install
               :effect (effect (add-counter card :power 1))}]
     :abilities [{:label "Gain 2 [Credits] for each counter on Alix T4LB07"
                  :cost [:click 1 :trash]
@@ -165,11 +165,11 @@
                                                 :label "add an installed card to the Grip"
                                                 :msg (msg "add " (:title target) " to the Runner's Grip")
                                                 :effect (effect (move :runner target :hand))}}}}})]
-     {:events [{:type :agenda-scored
+     {:events [{:event :agenda-scored
                 :interactive (req true)
                 :async true
                 :effect (effect (continue-ability (senai-ability target) card nil))}
-               {:type :agenda-stolen
+               {:event :agenda-stolen
                 :interactive (req true)
                 :async true
                 :effect (effect (continue-ability (senai-ability target) card nil))}]
@@ -182,8 +182,8 @@
                                   (add-prop card :advance-counter 1 {:placed true}))}]
      {:derezzed-events [corp-rez-toast]
       :flags {:corp-phase-12 (req true)}
-      :events [(assoc ability :type :corp-turn-begins)
-               {:type :rez
+      :events [(assoc ability :event :corp-turn-begins)
+               {:event :rez
                 :req (req (and (ice? target)
                                (pos? (get-counters card :advancement))))
                 :async true
@@ -222,7 +222,7 @@
                                                                (card-str state target) " and gains 3 [Credits]"))))}]})
 
    "Aryabhata Tech"
-   {:events [{:type :successful-trace
+   {:events [{:event :successful-trace
               :msg "gain 1 [Credit] and force the Runner to lose 1 [Credit]"
               :effect (effect (gain-credits 1)
                               (lose-credits :runner 1))}]}
@@ -235,7 +235,7 @@
                   :msg "do 1 net damage"
                   :effect (effect (damage eid :net 1 {:card card}))}]
      {:derezzed-events [corp-rez-toast]
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Bioroid Work Crew"
@@ -258,7 +258,7 @@
    {:constant-effects [{:type :rez-cost
                         :req (req (and (ice? target)
                                        (has-subtype? target "Bioroid")))
-                        :effect (req (- (:click runner)))}]}
+                        :value (req (- (:click runner)))}]}
 
    "Breached Dome"
    {:flags {:rd-reveal (req true)}
@@ -270,7 +270,7 @@
                             (damage state side eid :meat 1 {:card card})))}}
 
    "Broadcast Square"
-   {:events [{:type :pre-bad-publicity
+   {:events [{:event :pre-bad-publicity
               :async true
               :trace {:base 3
                       :successful {:msg "prevents all bad publicity"
@@ -309,7 +309,7 @@
                  :cost [:credit 2 :trash]
                  :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
                  :effect (effect (gain-credits (get-counters card :credit)))}]
-    :events [{:type :corp-turn-begins
+    :events [{:event :corp-turn-begins
               :req (req (>= (get-counters card :credit) 6))
               :effect (effect (add-counter card :credit 2)
                               (system-msg (str "adds 2 [Credits] to C.I. Fund")))}]}
@@ -347,7 +347,7 @@
    "City Surveillance"
    {:derezzed-events [corp-rez-toast]
     :flags {:runner-phase-12 (req (pos? (:credit runner)))}
-    :events [{:type :runner-turn-begins
+    :events [{:event :runner-turn-begins
               :player :runner
               :prompt "Pay 1 [Credits] or take 1 tag"
               :choices (req (concat (when (pos? (:credit runner))
@@ -404,7 +404,7 @@
                                      (mill state :runner))))}]
      {:derezzed-events [corp-rez-toast]
       :flags {:corp-phase-12 (req true)}
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Commercial Bankers Group"
@@ -414,7 +414,7 @@
                   :msg "gain 3 [Credits]"
                   :effect (effect (gain-credits 3))}]
      {:derezzed-events [corp-rez-toast]
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Constellation Protocol"
@@ -492,7 +492,7 @@
                  :effect (effect (trash eid target {:unpreventable true}))}]}
 
    "CPC Generator"
-   {:events [{:type :runner-click-credit
+   {:events [{:event :runner-click-credit
               :req (req (first-event? state side :runner-click-credit))
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits :corp 1))}]}
@@ -511,14 +511,14 @@
                                     card nil))}]
      {:derezzed-events [corp-rez-toast]
       :flags {:corp-phase-12 (req true)}
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Cybernetics Court"
    {:in-play [:hand-size 4]}
 
    "Daily Business Show"
-   {:events [{:type :pre-corp-draw
+   {:events [{:event :pre-corp-draw
               :msg "draw additional cards"
               ;; The req catches draw events that happened before DBS was rezzed.
               :req (req (first-event? state :corp :pre-corp-draw))
@@ -529,7 +529,7 @@
                                                           (rezzed? %))
                                                     (all-installed state :corp)))]
                              (draw-bonus state side dbs)))}
-             {:type :post-corp-draw
+             {:event :post-corp-draw
               :req (req (first-event? state :corp :post-corp-draw))
               :once :per-turn
               :once-key :daily-business-show-put-bottom
@@ -560,16 +560,16 @@
                   :msg "gain 3 [Credits]"
                   :effect (effect (gain-credits :corp 3))}]
      {:rez-req (req (= (:active-player @state) :corp))
-      :events [{:type :successful-run
+      :events [{:event :successful-run
                 :req (req this-server)
                 :effect (effect (gain-credits :runner 2)
                                 (system-msg :runner (str "gains 2 [Credits] for a successful run "
                                                          "on the Daily Quest server")))}
-               (assoc ability :type :corp-turn-begins)]
+               (assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Dedicated Response Team"
-   {:events [{:type :successful-run-ends
+   {:events [{:event :successful-run-ends
               :req (req tagged)
               :msg "do 2 meat damage"
               :async true
@@ -596,8 +596,8 @@
     :constant-effects [{:type :install-cost
                         :req (req (and (pos? (get-counters card :power))
                                        (not (get-in @state [:per-turn (:cid card)]))))
-                        :effect (req (get-counters card :power))}]
-    :events [{:type :runner-install
+                        :value (req (get-counters card :power))}]
+    :events [{:event :runner-install
               :silent (req true)
               :req (req (and (pos? (get-counters card :power))
                              (not (get-in @state [:per-turn (:cid card)]))))
@@ -672,10 +672,10 @@
    "Encryption Protocol"
    {:constant-effects [{:type :trash-cost
                         :req (req (installed? target))
-                        :effect 1}]}
+                        :value 1}]}
 
    "Estelle Moon"
-   {:events [{:type :corp-install
+   {:events [{:event :corp-install
               :req (req (and (#{"Asset" "Agenda" "Upgrade"} (:type target))
                              (is-remote? (second (:zone target)))))
               :effect (effect (add-counter card :power 1)
@@ -696,9 +696,9 @@
    {:derezzed-events [corp-rez-toast]
     :flags {:corp-phase-12 (req (some #(not (rezzed? %)) (all-installed state :corp)))}
     ; A card rezzed by Executive Bootcamp is ineligible to receive the turn-begins event for this turn.
-    :suppress [{:type :corp-turn-begins
+    :suppress [{:event :corp-turn-begins
                 :req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}]
-    :events [{:type :corp-turn-ends
+    :events [{:event :corp-turn-ends
               :req (req (:ebc-rezzed card))
               :effect (effect (update! (dissoc card :ebc-rezzed)))}]
     :abilities [{:async true
@@ -756,7 +756,7 @@
                    :effect (req (as-agenda state :corp eid card 3))}]})
 
    "Franchise City"
-   {:events [{:type :access
+   {:events [{:event :access
               :req (req (agenda? target))
               :msg "add it to their score area as an agenda worth 1 agenda point"
               :async true
@@ -785,7 +785,7 @@
                  :effect (req (host state side card target))}]}
 
    "Fumiko Yamamori"
-   {:events [{:type :reveal-spent-credits
+   {:events [{:event :reveal-spent-credits
               :async true
               :req (req (and (some? (first targets))
                              (some? (second targets))
@@ -811,7 +811,7 @@
     :effect (req (max-draw state :runner 2)
                  (when (zero? (remaining-draws state :runner))
                    (prevent-draw state :runner)))
-    :events [{:type :runner-turn-begins
+    :events [{:event :runner-turn-begins
               :effect (effect (max-draw :runner 2))}]
     :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))}
 
@@ -842,7 +842,7 @@
              :effect (effect (lose-credits :runner 1))}}
 
    "Hostile Infrastructure"
-   {:events [{:type :runner-trash
+   {:events [{:event :runner-trash
               :async true
               :req (req (some corp? targets))
               :msg (msg (str "do " (count (filter corp? targets))
@@ -858,7 +858,7 @@
                  :effect (effect (damage eid :net 1 {:card card}))}]}
 
    "Hyoubu Research Facility"
-   {:events [{:type :reveal-spent-credits
+   {:events [{:event :reveal-spent-credits
               :req (req (some? (first targets)))
               :once :per-turn
               :msg (msg "gain " target " [Credits]")
@@ -892,7 +892,7 @@
                   :effect (effect (gain-credits 1)
                                   (draw eid 1 nil))}]
      {:derezzed-events [corp-rez-toast]
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]
       :trash-effect {:req (req (and (= :servers (first (:previous-zone card)))
                                     (= side :runner)))
@@ -903,8 +903,8 @@
    (let [iuse {:req (req (not= (:faction target) (:faction (:identity corp))))
                :msg "gain 1 [Credits]"
                :effect (effect (gain-credits 1))}]
-     {:events [(assoc iuse :type :play-operation)
-               (assoc iuse :type :rez)]})
+     {:events [(assoc iuse :event :play-operation)
+               (assoc iuse :event :rez)]})
 
    "Isabel McGuire"
    {:abilities [{:label "Add an installed card to HQ"
@@ -928,7 +928,7 @@
                                      {:type :ice-strength
                                       :duration :end-of-turn
                                       :req (req (same-card? target it-target))
-                                      :effect (req (inc (get-counters card :power)))}))
+                                      :value (req (inc (get-counters card :power)))}))
                                  (update-ice-strength target))}]}
 
    "Jackson Howard"
@@ -949,14 +949,14 @@
      {:abilities [ability]
       :leave-play cleanup
       :trash-effect {:effect cleanup}
-      :events [{:type :corp-spent-click
+      :events [{:event :corp-spent-click
                 :effect (req (when-not target
                                (print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
                              (update! state side (update-in card [:seen-this-turn (or target :this-is-a-hack)]
                                                             (fnil + 0) (second targets)))
                              (when (>= (get-in (get-card state card) [:seen-this-turn (or target :this-is-a-hack)]) 3)
                                (resolve-ability state side ability card nil)))}
-               {:type :corp-turn-ends
+               {:event :corp-turn-ends
                 :effect cleanup}]})
 
    "Kala Ghoda Real TV"
@@ -1004,11 +1004,11 @@
                                                         (clear-wait-prompt state :runner)
                                                         (effect-completed state side eid)))}
                                 card nil))}]
-    :events [{:type :corp-turn-begins
+    :events [{:event :corp-turn-begins
               :effect (effect (add-counter card :power 1))}]}
 
    "Lakshmi Smartfabrics"
-   {:events [{:type :rez
+   {:events [{:event :rez
               :effect (effect (add-counter card :power 1))}]
     :abilities [{:req (req (seq (filter #(and (agenda? %)
                                               (>= (get-counters card :power)
@@ -1075,7 +1075,7 @@
                  :choices {:counter :credit}
                  :msg (msg "gain " target " [Credits]")
                  :effect (effect (gain-credits target))}]
-    :events [{:type :corp-turn-begins
+    :events [{:event :corp-turn-begins
               :effect (effect (add-counter card :credit 2)
                               (system-msg (str "adds 2 [Credit] to Long-Term Investment")))}]}
 
@@ -1112,7 +1112,7 @@
                                  (effect-completed state :corp eid)))}]
      {:data {:counter {:credit 8}}
       :derezzed-events [corp-rez-toast]
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
       :trash-effect {:req (req (= :servers (first (:previous-zone card))))
                      :async true
@@ -1132,7 +1132,7 @@
                                        card nil))}})
 
    "Mark Yale"
-   {:events [{:type :agenda-counter-spent
+   {:events [{:event :agenda-counter-spent
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits 1))}]
     :abilities [{:label "Gain 2 [Credits]"
@@ -1154,7 +1154,7 @@
                   {:cost [:click 1]
                    :msg "store 3 [Credits]"
                    :effect (effect (add-counter card :credit 3))}]
-      :events [(assoc ability :type :corp-turn-begins)]})
+      :events [(assoc ability :event :corp-turn-begins)]})
 
    "MCA Austerity Policy"
    {:abilities [{:cost [:click 1]
@@ -1179,11 +1179,11 @@
      {:effect (effect (gain :runner :hand-size 1))
       :leave-play (effect (lose :runner :hand-size 1))
       :derezzed-events [corp-rez-toast]
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Mr. Stone"
-   {:events [{:type :runner-gain-tag
+   {:events [{:event :runner-gain-tag
               :async true
               :msg "do 1 meat damage"
               :effect (effect (damage :corp eid :meat 1 {:card card}))}]}
@@ -1215,7 +1215,7 @@
 
    "Mumbad Construction Co."
    {:derezzed-events [corp-rez-toast]
-    :events [{:type :corp-turn-begins
+    :events [{:event :corp-turn-begins
               :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
     :abilities [{:cost [:credit 2]
                  :req (req (and (pos? (get-counters card :advancement))
@@ -1260,7 +1260,7 @@
     :implementation "Errata from FAQ 3.1: should be unique"}
 
    "Nanoetching Matrix"
-   {:events [{:type :runner-trash
+   {:events [{:event :runner-trash
               :req (req (same-card? card target))
               :effect (effect (show-wait-prompt :runner "Corp to use Nanoetching Matrix")
                               (continue-ability
@@ -1283,7 +1283,7 @@
                   :effect (effect (gain-credits 1))}]
      {:implementation "Manual - click NASX to add power counters"
       :derezzed-events [corp-rez-toast]
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability
                   {:label "Place 1 power counter"
                    :cost [:credit 1]
@@ -1310,10 +1310,10 @@
                                       :end-effect (effect (clear-wait-prompt :runner))}}
                                     card nil))}]
      {:events [(assoc ability
-                      :type :runner-lose-tag
+                      :event :runner-lose-tag
                       :req (req (= side :runner)))
                (assoc ability
-                      :type :runner-prevent
+                      :event :runner-prevent
                       :req (req (seq (filter #(some #{:tag} %) targets))))]})
 
    "Net Police"
@@ -1367,7 +1367,7 @@
                   (builder 2 8)]})
 
    "Open Forum"
-   {:events [{:type :corp-mandatory-draw
+   {:events [{:event :corp-mandatory-draw
               :interactive (req true)
               :msg (msg (if (-> corp :deck count pos?)
                           (str "reveal and draw " (-> corp :deck first :title) " from R&D")
@@ -1391,7 +1391,7 @@
                   :once :per-turn
                   :effect (effect (gain-credits 1))}]
      {:derezzed-events [corp-rez-toast]
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "PAD Factory"
@@ -1422,11 +1422,11 @@
                                          (draw state :runner eid 1 nil)))}]
      {:derezzed-events [corp-rez-toast]
       :flags {:corp-phase-12 (req true)}
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Personalized Portal"
-   {:events [{:type :corp-turn-begins
+   {:events [{:event :corp-turn-begins
               :async true
               :effect (req (wait-for (draw state :runner 1 nil)
                                      (let [cnt (count (get-in @state [:runner :hand]))
@@ -1477,7 +1477,7 @@
                             :effect (req (if (< (inc n) (count agendas))
                                            (continue-ability state side (pdhelper agendas (inc n)) card nil)
                                            (effect-completed state side eid)))}}})]
-     {:events [{:type :corp-draw
+     {:events [{:event :corp-draw
                 :async true
                 :req (req (let [drawn (get-in @state [:corp :register :most-recent-drawn])
                                 agendas (filter agenda? drawn)]
@@ -1533,16 +1533,16 @@
                   :effect (effect (reveal (-> @state :corp :deck first))
                                   (gain-credits 2))}]
      {:derezzed-events [corp-rez-toast]
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Public Support"
    {:effect (effect (add-counter card :power 3))
     :derezzed-events [corp-rez-toast]
-    :events [{:type :corp-turn-begins
+    :events [{:event :corp-turn-begins
               :req (req (pos? (get-counters card :power)))
               :effect (effect (add-counter card :power -1))}
-             {:type :counter-added
+             {:event :counter-added
               :req (req (same-card? card target)
                         (not (pos? (get-counters card :power))))
               :async true
@@ -1613,7 +1613,7 @@
                                     card nil))}]
      {:derezzed-events [corp-rez-toast]
       :flags {:corp-phase-12 (req true)}
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Reality Threedee"
@@ -1624,11 +1624,11 @@
      {:effect (effect (gain-bad-publicity :corp 1)
                       (system-msg "takes 1 bad publicity"))
       :derezzed-events [corp-rez-toast]
-      :events [(assoc ability :type :corp-turn-begins)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Reconstruction Contract"
-   {:events [{:type :damage
+   {:events [{:event :damage
               :req (req (and (pos? (nth targets 2)) (= :meat target)))
               :effect (effect (add-counter card :advancement 1)
                               (system-msg "adds 1 advancement token to Reconstruction Contract"))}]
@@ -1663,8 +1663,8 @@
      {:effect (effect (add-counter card :power 3))
       :derezzed-events [corp-rez-toast]
       :events [(trash-on-empty :power)
-               (assoc ability :type :corp-turn-begins)
-               {:type :corp-trash
+               (assoc ability :event :corp-turn-begins)
+               {:event :corp-trash
                 :req (req (and (same-card? card target)
                                (installed? target)
                                (zero? (get-counters card :power))))
@@ -1678,7 +1678,7 @@
       :ability [ability]})
 
    "Ronald Five"
-   {:events [{:type :runner-trash
+   {:events [{:event :runner-trash
               :req (req (and (= (:side target) "Corp")
                              (pos? (:click runner))))
               :msg "force the runner to lose 1 [Click]"
@@ -1709,11 +1709,11 @@
    {:effect (effect (update-all-ice))
     :constant-effects [{:type :ice-strength
                         :req (req (<= 10 (:credit corp)))
-                        :effect (req (quot (:credit corp) 5))}]
-    :events [{:type :corp-credit-gain
+                        :value (req (quot (:credit corp) 5))}]
+    :events [{:event :corp-gain
               :req (req (= :credit (first target)))
               :effect (effect (update-all-ice))}
-             {:type :corp-credit-lose
+             {:event :corp-lose
               :req (req (= :credit (first target)))
               :effect (effect (update-all-ice))}]
     :leave-play (effect (update-all-ice))}
@@ -1767,8 +1767,8 @@
                   :msg "gain 2 [Credits]"}]
      {:derezzed-events [corp-rez-toast]
       :abilities [ability]
-      :events [(assoc ability :type :corp-turn-begins)
-               {:type :corp-install
+      :events [(assoc ability :event :corp-turn-begins)
+               {:event :corp-install
                 :req (req (ice? target))
                 :async true
                 :effect (req (wait-for (trash state side card nil)
@@ -1901,7 +1901,7 @@
                  :msg "do 1 net damage"
                  :async true
                  :effect (effect (damage eid :net 1 {:card card}))}]
-    :events [{:type :corp-trash
+    :events [{:event :corp-trash
               :once :per-turn
               :req (req (first-event?
                           state side :corp-trash
@@ -1913,18 +1913,18 @@
    {:constant-effects [{:type :play-additional-cost
                         :req (req (and (event? target)
                                        (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
-                        :effect [:credit 2]}]}
+                        :value [:credit 2]}]}
 
    "Sundew"
    ; If this a run event then handle in :begin-run as we do not know the server
    ; being run on in :runner-spent-click.
-   {:events [{:type :runner-spent-click
+   {:events [{:event :runner-spent-click
               :req (req (first-event? state side :runner-spent-click))
               :msg (req (if (not= :run (get-in @state [:runner :register :click-type]))
                           "gain 2 [Credits]"))
               :effect (req (if (not= :run (get-in @state [:runner :register :click-type]))
                              (gain-credits state :corp 2)))}
-             {:type :begin-run
+             {:event :begin-run
               :once :per-turn
               :req (req (first-event? state side :runner-spent-click))
               :msg (req (if (and (= :run (get-in @state [:runner :register :click-type]))
@@ -1942,7 +1942,7 @@
                  :effect (effect (damage eid :net 1 {:card card}))}]}
 
    "Team Sponsorship"
-   {:events [{:type :agenda-scored
+   {:events [{:event :agenda-scored
               :label "Install a card from Archives or HQ"
               :prompt "Select a card from Archives or HQ to install"
               :show-discard true
@@ -1974,8 +1974,8 @@
      {:constant-effects [{:type :install-cost
                           :req (req (and (is-techno-target target)
                                          (not (:facedown (second targets)))))
-                          :effect 1}]
-      :events [{:type :runner-install
+                          :value 1}]
+      :events [{:event :runner-install
                 :req (req (and (is-techno-target target)
                                (not (:facedown (second targets)))))
                 :msg "gain 1 [Credits]"
@@ -2018,7 +2018,7 @@
                                             (clear-wait-prompt state :runner))))}]})
 
    "Tiered Subscription"
-   {:events [{:type :run
+   {:events [{:event :run
               :req (req (first-event? state side :run))
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits :corp 1))}]}
@@ -2036,16 +2036,16 @@
                      :effect (req (as-agenda state :runner eid card 2))}
       :events [(-> the-board
                    (dissoc :req)
-                   (assoc :type :agenda-stolen))
-               (assoc the-board :type :as-agenda)
-               {:type :pre-card-moved
+                   (assoc :event :agenda-stolen))
+               (assoc the-board :event :as-agenda)
+               {:event :pre-card-moved
                 :req (req (let [c (first targets)
                                 c-cid (:cid c)]
                             (some #(when (= c-cid (:cid %)) %) (:scored runner))))
                 :effect (req (gain state :runner :agenda-point 1))}]})
 
    "The News Now Hour"
-   {:events [{:type :runner-turn-begins
+   {:events [{:event :runner-turn-begins
               :effect (req (prevent-current state side))}]
     :effect (req (prevent-current state side))
     :leave-play (req (swap! state assoc-in [:runner :register :cannot-play-current] false))}
@@ -2099,14 +2099,14 @@
      "Swap Toshiyuki Sakai with an agenda or asset from HQ?")
 
    "Turtlebacks"
-   {:events [{:type :server-created
+   {:events [{:event :server-created
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits 1))}]}
 
    "Urban Renewal"
    {:effect (effect (add-counter card :power 3))
     :derezzed-events [corp-rez-toast]
-    :events [{:type :corp-turn-begins
+    :events [{:event :corp-turn-begins
               :async true
               :effect (req (add-counter state side card :power -1)
                            (if (not (pos? (get-counters (get-card state card) :power)))
@@ -2146,7 +2146,7 @@
                       (update-all state (partial remove-one (:cid card))))
         :sub-effect {:msg "force the Runner to lose 1 [Click], if able"
                      :effect (req (lose state :runner :click 1))}
-        :events [{:type :rez
+        :events [{:event :rez
                   :req (req (and (ice? target)
                                  (has-subtype? target "Bioroid")))
                   :effect (req (add-one (:cid card) state (get-card state target)))}]}))
@@ -2159,8 +2159,8 @@
       :constant-effects [{:type :rez-cost
                           :req (req (and (ice? target)
                                          (not-triggered? state card)))
-                          :effect (req (- (count-tags state)))}]
-      :events [{:type :rez
+                          :value (req (- (count-tags state)))}]
+      :events [{:event :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))
                 :effect (req (mark-triggered state card))}]})
@@ -2200,7 +2200,7 @@
    "Zaibatsu Loyalty"
    {:interactions {:prevent [{:type #{:expose}
                               :req (req true)}]}
-    :derezzed-events [{:type :pre-expose
+    :derezzed-events [{:event :pre-expose
                        :async true
                        :effect (req (let [etarget target]
                                       (continue-ability

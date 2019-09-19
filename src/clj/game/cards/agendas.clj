@@ -26,7 +26,7 @@
      :swapped {:effect (req (update-all-ice state side))}
      :constant-effects [{:type :ice-strength
                          :req (req (has-subtype? target subtype))
-                         :effect 1}]}))
+                         :value 1}]}))
 
 ;; Card definitions
 (def card-definitions
@@ -78,7 +78,7 @@
                                :msg "look at the top 3 cards of R&D"
                                :effect (req (register-events
                                               state side card
-                                              [{:type :corp-shuffle-deck
+                                              [{:event :corp-shuffle-deck
                                                 :effect (effect (update! (assoc card :shuffle-occurred true)))}])
                                          (let [n (count (filter ice? (take 3 (:deck corp))))]
                                            (doseq [c (take (min (count (:deck corp)) 3) (:deck corp))]
@@ -87,7 +87,7 @@
 
    "Advanced Concept Hopper"
    {:events
-    [{:type :run
+    [{:event :run
       :req (req (first-event? state side :run))
       :effect (effect (show-wait-prompt :runner "Corp to use Advanced Concept Hopper")
                       (continue-ability
@@ -109,12 +109,12 @@
                         card nil))}]}
 
    "Ancestral Imager"
-   {:events [{:type :jack-out
+   {:events [{:event :jack-out
               :msg "do 1 net damage"
               :effect (effect (damage :net 1))}]}
 
    "AR-Enhanced Security"
-   {:events [{:type :runner-trash
+   {:events [{:event :runner-trash
               :once :per-turn
               :async true
               :req (req (some corp? targets))
@@ -252,13 +252,13 @@
                                                     (gain-tags state :corp eid 1))}
                          :end-effect (effect (clear-wait-prompt :runner))}}
                        card nil)))]
-     {:events [{:type :play-event
+     {:events [{:event :play-event
                 :req (req (and (first-event? state :runner :run)
                                (has-subtype? target "Run")
                                (not (used-this-turn? (:cid card) state))))
                 :async true
                 :effect (ability "playing a run event")}
-               {:type :runner-install
+               {:event :runner-install
                 :silent (req true)
                 :req (req (and (has-subtype? target "Icebreaker")
                                (first-event? state :runner :runner-install #(has-subtype? (first %) "Icebreaker"))
@@ -313,25 +313,25 @@
     :silent (req true)
     :constant-effects [{:type :rez-cost
                         :req (req (ice? target))
-                        :effect (req (- (get-counters card :agenda)))}]}
+                        :value (req (- (get-counters card :agenda)))}]}
 
    "Breaking News"
    {:async true
     :effect (effect (gain-tags :corp eid 2)
                     (register-events
                       card
-                      [{:type :corp-turn-ends
+                      [{:event :corp-turn-ends
                         :msg "make the Runner lose 2 tags"
                         :effect (effect (lose :runner :tag 2)
                                         (unregister-events card))}
-                       {:type :runner-turn-ends
+                       {:event :runner-turn-ends
                         :msg "make the Runner lose 2 tags"
                         :effect (effect (lose :runner :tag 2)
                                         (unregister-events card))}]))
     :silent (req true)
     :msg "give the Runner 2 tags"
-    :events [{:type :corp-turn-ends}
-             {:type :runner-turn-ends}]}
+    :events [{:event :corp-turn-ends}
+             {:event :runner-turn-ends}]}
 
    "Broad Daylight"
    (letfn [(add-counters [state side card eid]
@@ -397,8 +397,8 @@
                            (add-counter state side card :credit -1)))}]
      {:effect (effect (add-counter card :credit 10))
       :silent (req true)
-      :events [(assoc e :type :runner-turn-begins)
-               (assoc e :type :corp-turn-begins)]})
+      :events [(assoc e :event :runner-turn-begins)
+               (assoc e :event :corp-turn-begins)]})
 
    "Corporate War"
    {:msg (msg (if (> (:credit corp) 6) "gain 7 [Credits]" "lose all credits"))
@@ -413,11 +413,11 @@
                   :once :per-turn
                   :msg "do 1 meat damage"
                   :effect (effect (damage eid :meat 1 {:card card}))}]
-     {:events [(assoc ability :type :corp-turn-begins)]
+     {:events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Dedicated Neural Net"
-   {:events [{:type :successful-run
+   {:events [{:event :successful-run
               :interactive (req true)
               :psi {:req (req (= target :hq))
                     :once :per-turn
@@ -451,7 +451,7 @@
 
    "Divested Trust"
    {:events
-    [{:type :agenda-stolen
+    [{:event :agenda-stolen
       :async true
       :interactive (req true)
       :effect (req (if (:winner @state)
@@ -490,8 +490,8 @@
                                             (map first)
                                             (filter ice?)
                                             empty?)))
-                        :effect true}]
-    :events [{:type :corp-install
+                        :value true}]
+    :events [{:event :corp-install
               :req (req (and (ice? target)
                              (empty? (let [cards (map first (turn-events state side :corp-install))]
                                        (filter ice? cards)))))
@@ -678,7 +678,7 @@
 
    "Hollywood Renovation"
    {:install-state :face-up
-    :events [{:type :advance
+    :events [{:event :advance
               :async true
               :req (req (same-card? card target))
               :effect (req (let [n (if (>= (get-counters (get-card state card) :advancement) 6) 2 1)]
@@ -743,15 +743,15 @@
     :swapped {:effect (req (update-all-ice state side))}
     :constant-effects [{:type :ice-strength
                         :req (req (has-subtype? target "Tracer"))
-                        :effect 1}]
-    :events [{:type :pre-init-trace
+                        :value 1}]
+    :events [{:event :pre-init-trace
               :req (req (and (has-subtype? target "Tracer")
                              (= :subroutine (:source-type (second targets)))))
               :effect (effect (init-trace-bonus 1))}]}
 
    "Jumon"
    {:events
-    [{:type :corp-turn-ends
+    [{:event :corp-turn-ends
       :req (req (some #(and (= (last (:zone %)) :content)
                             (is-remote? (second (:zone %))))
                       (all-installed state :corp)))
@@ -866,17 +866,17 @@
                             (when (pos? extra)
                               (gain-credits state side extra)
                               (system-msg state :corp (str "uses Net Quarantine to gain " extra "[Credits]")))))}]
-     {:events [{:type :pre-init-trace
+     {:events [{:event :pre-init-trace
                 :once :per-turn
                 :silent (req true)
                 :effect (req (system-msg state :corp "uses Net Quarantine to reduce Runner's base link to zero")
                              (swap! state assoc-in [:trace :force-link] 0))}
-               (assoc nq :type :successful-trace)
-               (assoc nq :type :unsuccessful-trace)]})
+               (assoc nq :event :successful-trace)
+               (assoc nq :event :unsuccessful-trace)]})
 
    "New Construction"
    {:install-state :face-up
-    :events [{:type :advance
+    :events [{:event :advance
               :optional
               {:req (req (same-card? card target))
                :prompt "Install a card from HQ in a new remote?"
@@ -915,7 +915,7 @@
 
    "Oaktown Renovation"
    {:install-state :face-up
-    :events [{:type :advance
+    :events [{:event :advance
               :req (req (same-card? card target))
               :msg (msg "gain " (if (>= (get-counters (get-card state card) :advancement) 5) "3" "2") " [Credits]")
               :effect (req (gain-credits state side
@@ -940,9 +940,9 @@
                            {:msg (msg "force the Runner to trash " (:title c) " from their Grip at random")
                             :effect (effect (trash eid c nil))})
                          card nil))}]
-     {:events [(assoc pp :type :searched-stack)
+     {:events [(assoc pp :event :searched-stack)
                (assoc pp
-                      :type :runner-install
+                      :event :runner-install
                       :req (req (and (some #{:discard} (:previous-zone target))
                                      (pos? (count (:hand runner))))))]})
 
@@ -1030,7 +1030,7 @@
    "Project Kusanagi"
    {:silent (req true)
     :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 2)))
-    :events [{:type :run-ends
+    :events [{:event :run-ends
               :effect (req (let [cid (:cid card)
                                  ices (get-in card [:special :kusanagi])]
                              (doseq [i ices]
@@ -1068,7 +1068,7 @@
    "Project Wotan"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))
-    :events [{:type :run-ends
+    :events [{:event :run-ends
               :effect (req (let [cid (:cid card)
                                  ices (get-in card [:special :wotan])]
                              (doseq [i ices]
@@ -1125,7 +1125,7 @@
                              (continue-ability (choose-card (:server run))
                                                card nil))}]})
    "Puppet Master"
-   {:events [{:type :successful-run
+   {:events [{:event :successful-run
               :interactive (req true)
               :async true
               :effect (req (show-wait-prompt state :runner "Corp to use Puppet Master")
@@ -1313,17 +1313,17 @@
                                 (rez state side c {:ignore-cost :all-costs})
                                 (register-events
                                   state side card
-                                  [{:type :corp-turn-ends
+                                  [{:event :corp-turn-ends
                                     :effect (effect (derez c)
                                                     (unregister-events card))}
-                                   {:type :runner-turn-ends
+                                   {:event :runner-turn-ends
                                     :effect (effect (derez c)
                                                     (unregister-events card))}])))}]
-    :events [{:type :corp-turn-ends}
-             {:type :runner-turn-ends}]}
+    :events [{:event :corp-turn-ends}
+             {:event :runner-turn-ends}]}
 
    "Sentinel Defense Program"
-   {:events [{:type :pre-resolve-damage
+   {:events [{:event :pre-resolve-damage
               :req (req (and (= target :brain)
                              (pos? (last targets))))
               :msg "do 1 net damage"
@@ -1349,7 +1349,7 @@
       :abilities [(set-autoresolve :auto-fire "whether to take credits off SSL")]
       :stolen {:effect add-credits}
       :interactive (req true)
-      :events [(assoc remove-credits :type :corp-turn-begins)]
+      :events [(assoc remove-credits :event :corp-turn-begins)]
       :flags {:has-events-when-stolen true}})
 
    "Standoff"
@@ -1416,7 +1416,7 @@
              :effect (effect (gain-tags eid 1))}}
 
    "The Cleaners"
-   {:events [{:type :pre-damage
+   {:events [{:event :pre-damage
               :req (req (and (= target :meat)
                              (= side :corp)))
               :msg "do 1 additional meat damage"
@@ -1484,7 +1484,7 @@
    "Underway Renovation"
    (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]
      {:install-state :face-up
-      :events [{:type :advance
+      :events [{:event :advance
                 :req (req (same-card? card target))
                 :msg (msg (if (pos? (count (:deck runner)))
                             (str "trash "
@@ -1501,7 +1501,7 @@
     :effect (effect (effect-completed eid))}
 
    "Utopia Fragment"
-   {:events [{:type :pre-steal-cost
+   {:events [{:event :pre-steal-cost
               :req (req (pos? (get-counters target :advancement)))
               :effect (req (let [counter (get-counters target :advancement)]
                              (steal-cost-bonus state side [:credit (* 2 counter)])))}]}
@@ -1523,15 +1523,15 @@
                              (damage state side eid :net cnt {:card card})))}]
      {:effect (effect (register-events
                         card
-                        [(assoc dmg :type :corp-turn-ends)
-                         (assoc dmg :type :runner-turn-ends)]))
-      :events [{:type :corp-turn-ends}
-               {:type :runner-turn-ends}]})
+                        [(assoc dmg :event :corp-turn-ends)
+                         (assoc dmg :event :runner-turn-ends)]))
+      :events [{:event :corp-turn-ends}
+               {:event :runner-turn-ends}]})
 
    "Voting Machine Initiative"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))
-    :events [{:type :runner-turn-begins
+    :events [{:event :runner-turn-begins
               :async true
               :req (req (pos? (get-counters card :agenda)))
               :effect (effect (show-wait-prompt :runner "Corp to use Voting Machine Initiative")
@@ -1553,7 +1553,7 @@
                                         (if (same-card? other-card card)
                                           ((constantly false) (toast state :corp "Cannot score Vulnerability Audit the turn it was installed." "warning"))
                                           true))))]
-     {:derezzed-events [{:type :pre-agenda-scored
+     {:derezzed-events [{:event :pre-agenda-scored
                          :req (req (and (same-card? target card)
                                         (let [agenda-cids (map #(:cid (first %))
                                                                (filter #(agenda? (first %))
@@ -1573,4 +1573,4 @@
                         :req (req (and (resource? target)
                                        (not (has-subtype? target "Virtual"))
                                        (not (:facedown (second targets)))))
-                        :effect 1}]}})
+                        :value 1}]}})
