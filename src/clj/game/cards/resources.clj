@@ -1973,7 +1973,7 @@
    (let [ability {:prompt "Choose a server for Security Testing"
                   :choices (req (conj servers "No server"))
                   :msg (msg "target " target)
-                  :req (req (and (not (click-spent? :runner state))
+                  :req (req (and (:runner-phase-12 @state)
                                  (not (used-this-turn? (:cid card) state))))
                   :effect (req (when (not= target "No server")
                                  (update! state side (assoc card :server-target target))))}]
@@ -1983,16 +1983,13 @@
                              (:server-target (get-card state card))))
                 :once :per-turn
                 :silent (req true)
-                :effect (req (let [st card]
-                               (swap! state assoc-in [:run :run-effect]
-                                      {:card st
-                                       :replace-access
-                                       {:mandatory true
-                                        :effect (effect (continue-ability
-                                                          {:msg "gain 2 [Credits] instead of accessing"
-                                                           :effect (effect (gain-credits 2)
-                                                                           (update! (dissoc st :server-target)))}
-                                                          st nil))}})))}
+                :effect (effect (add-run-effect
+                                  {:card card
+                                   :replace-access
+                                   {:mandatory true
+                                    :msg "gain 2 [Credits] instead of accessing"
+                                    :effect (effect (gain-credits 2)
+                                                    (update! (dissoc (get-card state card) :server-target)))}}))}
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
       :abilities [ability]})
 
