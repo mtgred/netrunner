@@ -135,6 +135,7 @@
                  :req (req (and (:run @state) (not (rezzed? current-ice)) (can-rez? state side current-ice {:ignore-unique true})))
                  :prompt "Choose another server and redirect the run to its outermost position"
                  :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
+                 :label "Trash a piece of ice to choose another server- the runner is now running that server"
                  :msg (msg "trash the approached ICE. The Runner is now running on " target)
                  :effect (req (let [dest (server->zone state target)]
                                 (trash state side current-ice)
@@ -296,6 +297,7 @@
    {:flags {:corp-phase-12 (req (and (not (:disabled card))
                                      (some rezzed? (all-installed state :corp))))}
     :abilities [{:choices {:req rezzed?}
+                 :label "Add 1 rezzed card to HQ and gain credits equal to its rez cost"
                  :effect (req (trigger-event state side :pre-rez-cost target)
                               (let [cost (rez-cost state side target)]
                                 (gain-credits state side cost)
@@ -1285,6 +1287,7 @@
                                     (trash-resource-bonus state side -2)
                                     (update! state side (-> card (assoc :sync-front true
                                                                         :code "09001"))))))
+                 :label "Flip this identity"
                  :msg (msg "flip their ID")}]
     :leave-play (req (if (:sync-front card)
                        (tag-remove-bonus state side 1)
@@ -1309,6 +1312,7 @@
    {:flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
                                      (not-last-turn? state :runner :successful-run)))}
     :abilities [{:msg (msg "place 1 advancement token on " (card-str state target))
+                 :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"
                  :choices {:req installed?}
                  :req (req (and (:corp-phase-12 @state) (not-last-turn? state :runner :successful-run)))
                  :once :per-turn
