@@ -2213,7 +2213,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Top Hat")
       (run-empty-server state :rd)
-      (click-prompt state :runner "Yes") ;Top Hat Prompt
+      (click-prompt state :runner "Replacement effect") ;Top Hat Prompt
       (click-prompt state :runner "4") ;select ABT
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))) "Runner stole DNN")))
@@ -2238,9 +2238,9 @@
         (core/gain state :runner :credit 100)
         (play-from-hand state :runner "Top Hat")
         (run-empty-server state :rd)
-        (click-prompt state :runner "Yes") ;Top Hat Prompt
         (click-prompt state :corp "0") ;init Ash trace <<< fails here
         (click-prompt state :runner "0") ;lose Ash trace
+        (click-prompt state :runner "Replacement effect") ;Top Hat Prompt
         (is (empty? (:prompt (get-runner))) "No prompt to access cards.")))))
 
 (deftest turntable

@@ -1473,20 +1473,19 @@
                          card nil)))}}}
 
    "Top Hat"
-   (letfn [(ability [n]
-             {:async true
-              :mandatory true
-              :req (req (not= (:max-access run) 0))
-              :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
-              :choices (take n ["1" "2" "3" "4" "5"])
-              :effect (effect (system-msg (str "accesses the card at position " (str->int target) " of R&D"))
-                              (access-card eid (nth (:deck corp) (dec (str->int target))) "an unseen card"))})]
-     {:events {:successful-run
-               {:req (req (= target :rd))
-                :interactive (req true)
-                :optional {:prompt "Use Top Hat to choose one of the top 5 cards in R&D to access?"
-                           :yes-ability {:effect (req (swap! state assoc-in [:run :run-effect :replace-access]
-                                                             (ability (count (:deck corp)))))}}}}})
+   {:events {:successful-run
+             {:req (req (= target :rd))
+              :effect (effect
+                        (add-run-effect
+                          {:card card
+                           :replace-access
+                           (let [n (count (:deck corp))]
+                             {:async true
+                              :req (req (not= (:max-access run) 0))
+                              :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
+                              :choices (take n (range 1 6))
+                              :msg (msg "access the card at position " target " of R&D")
+                              :effect (effect (access-card eid (nth (:deck corp) (dec target)) "an unseen card"))})}))}}}
 
    "Turntable"
    {:in-play [:memory 1]
