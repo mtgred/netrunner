@@ -843,6 +843,10 @@
                        (wait-for (trigger-event-simult state side :post-successful-run nil (first (get-in @state [:run :server])))
                                  (effect-completed state side eid))))))
 
+(defn add-run-effect
+  [state side run-effect]
+  (swap! state update-in [:run :run-effect] conj run-effect))
+
 (defn- successful-run-trigger
   "The real 'successful run' trigger."
   [state side]

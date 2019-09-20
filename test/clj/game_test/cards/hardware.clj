@@ -1717,6 +1717,22 @@
       (click-prompt state :runner "Done")
       (is (= 2 (count (:hand (get-runner)))) "Runner took no brain damage"))))
 
+(deftest record-reconstructor
+  ;; Record Reconstructor
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Hedge Fund"]
+                      :discard ["PAD Campaign"]}
+               :runner {:hand ["Record Reconstructor"]}})
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (play-from-hand state :runner "Record Reconstructor")
+    (is (= "Hedge Fund" (-> (get-corp) :deck first :title)) "Hedge Fund is on top of R&D")
+    (run-empty-server state :archives)
+    (click-prompt state :runner "Replacement effect")
+    (click-prompt state :runner "PAD Campaign")
+    (is (= "PAD Campaign" (-> (get-corp) :deck first :title)) "PAD Campaign is now first card in R&D")))
+
 (deftest replicator
   ;; Replicator
   (testing "interaction with Bazaar. Issue #1511"

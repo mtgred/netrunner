@@ -1182,15 +1182,14 @@
    "Record Reconstructor"
    {:events
     {:successful-run
-     {:req (req (= (get-in @state [:run :server]) [:archives]))
-      :effect (req (let [rr card]
-                     (swap! state assoc-in [:run :run-effect :replace-access]
-                            {:effect (effect (resolve-ability
-                                               {:prompt "Choose one faceup card to add to the top of R&D"
-                                                :choices (req (filter #(:seen %) (:discard corp)))
-                                                :msg (msg "add " (:title target) " to the top of R&D")
-                                                :effect (req (move state :corp target :deck {:front true}))}
-                                               rr nil))})))}}}
+     {:req (req (= target :archives))
+      :effect (effect (add-run-effect
+                        {:card card
+                         :replace-access
+                         {:prompt "Choose one faceup card to add to the top of R&D"
+                          :choices (req (filter #(:seen %) (:discard corp)))
+                          :msg (msg "add " (card-str state target) " to the top of R&D")
+                          :effect (effect (move :corp target :deck {:front true}))}}))}}}
 
    "Reflection"
    {:in-play [:memory 1 :link 1]
