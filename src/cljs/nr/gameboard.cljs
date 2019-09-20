@@ -932,11 +932,12 @@
         (let [size (count @cards)]
           [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")
                                       :on-click (when popup #(-> (:rfg-popup @dom) js/$ .fadeToggle))}
-           (map-indexed (fn [i card]
-                          [:div.card-wrapper {:key i
-                                              :style {:left (when (> size 1)(* (/ 128 size) i))}}
-                           [:div [card-view card]]])
-                        @cards)
+           (doall
+             (map-indexed (fn [i card]
+                            [:div.card-wrapper {:key i
+                                                :style {:left (when (> size 1) (* (/ 128 size) i))}}
+                             [:div [card-view card]]])
+                          @cards))
            [label @cards {:opts {:name name}}]
 
            (when popup
@@ -954,23 +955,25 @@
     (let [size (count @cards)]
       (when (pos? size)
         [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
-         (map-indexed (fn [i card]
-                        [:div.card-wrapper {:key i
-                                            :style {:left (when (> size 1) (* (/ 128 size) i))}}
-                         (if (this-user? @user)
-                           [card-view card]
-                           [facedown-card (:side card)])])
-                      @cards)
+         (doall
+           (map-indexed (fn [i card]
+                          [:div.card-wrapper {:key i
+                                              :style {:left (when (> size 1) (* (/ 128 size) i))}}
+                           (if (this-user? @user)
+                             [card-view card]
+                             [facedown-card (:side card)])])
+                        @cards))
          [label @cards {:opts {:name name}}]]))))
 
 (defn scored-view [scored]
   (let [size (count @scored)]
     [:div.panel.blue-shade.scored.squeeze
-     (map-indexed (fn [i card]
-                    [:div.card-wrapper {:key i
-                                        :style {:left (when (> size 1) (* (/ 128 (dec size)) i))}}
-                     [:div [card-view card]]])
-                  @scored)
+     (doall
+       (map-indexed (fn [i card]
+                      [:div.card-wrapper {:key i
+                                          :style {:left (when (> size 1) (* (/ 128 (dec size)) i))}}
+                       [:div [card-view card]]])
+                    @scored))
      [label @scored {:opts {:name "Scored Area"}}]]))
 
 (defn controls
@@ -1052,28 +1055,30 @@
                                   (+ 84 3 (* 42 (dec max-hosted))))}}
       (when-let [run-card (:card (:run-effect run))]
         [:div.run-card [card-img run-card]])
-      (for [ice (reverse ices)]
-        [:div.ice {:key (:cid ice)
-                   :class (when (not-empty (:hosted ice)) "host")}
-         (let [flipped (not (:rezzed ice))]
-           [card-view ice flipped])
-         (when (and current-ice (= (:cid current-ice) (:cid ice)))
-           [run-arrow])])
+      (doall
+        (for [ice (reverse ices)]
+          [:div.ice {:key (:cid ice)
+                     :class (when (not-empty (:hosted ice)) "host")}
+           (let [flipped (not (:rezzed ice))]
+             [card-view ice flipped])
+           (when (and current-ice (= (:cid current-ice) (:cid ice)))
+             [run-arrow])]))
       (when (and run (not current-ice))
         [run-arrow])]
      [:div.content
       (when central-view
         central-view)
       (when (not-empty content)
-        (for [card content]
-          (let [is-first (= card (first content))
-                flipped (not (:rezzed card))]
-            [:div.server-card {:key (:cid card)
-                               :class (str (when central-view "central ")
-                                           (when (or central-view
-                                                     (and (< 1 (count content)) (not is-first)))
-                                             "shift"))}
-             [card-view card flipped]])))
+        (doall
+          (for [card content]
+            (let [is-first (= card (first content))
+                  flipped (not (:rezzed card))]
+              [:div.server-card {:key (:cid card)
+                                 :class (str (when central-view "central ")
+                                             (when (or central-view
+                                                       (and (< 1 (count content)) (not is-first)))
+                                               "shift"))}
+               [card-view card flipped]]))))
       [label content (update-in opts [:opts] assoc :classes "server-label" :hide-cursor true)]]]))
 
 (defn stacked-label [cursor similar-servers opts]
@@ -1178,13 +1183,14 @@
                     [identity-view identity]]]
     [:div.runner-board {:class (if is-me "me" "opponent")}
      (when-not is-me centrals)
-     (doall (for [zone [:program :hardware :resource :facedown]]
-              ^{:key zone}
-              [:div
-               (doall (for [c (zone @rig)]
-                        ^{:key (:cid c)}
-                        [:div.card-wrapper {:class (when (playable? c) "playable")}
-                         [card-view c]]))]))
+     (doall
+       (for [zone [:program :hardware :resource :facedown]]
+         ^{:key zone}
+         [:div
+          (doall (for [c (zone @rig)]
+                   ^{:key (:cid c)}
+                   [:div.card-wrapper {:class (when (playable? c) "playable")}
+                    [card-view c]]))]))
      (when is-me centrals)]))
 
 (defn cond-button [text cond f]
