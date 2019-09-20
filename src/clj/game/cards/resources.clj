@@ -1688,8 +1688,10 @@
                      (trigger-event state :runner :runner-is-tagged (pos? (get-in @state [:runner :tag :is-tagged]))))}
 
    "Patron"
-   (let [ability {:prompt "Choose a server for Patron" :choices (req (conj servers "No server"))
-                  :req (req (and (not (click-spent? :runner state)) (not (used-this-turn? (:cid card) state))))
+   (let [ability {:prompt "Choose a server for Patron"
+                  :choices (req (conj servers "No server"))
+                  :req (req (and (:runner-phase-12 @state)
+                                 (not (used-this-turn? (:cid card) state))))
                   :msg (msg "target " target)
                   :effect (req (when (not= target "No server")
                                  (update! state side (assoc card :server-target target))))}]
@@ -1697,16 +1699,15 @@
                :successful-run
                {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
                 :once :per-turn
-                :effect (req (let [st card]
-                               (swap! state assoc-in [:run :run-effect :replace-access]
-                                      {:mandatory true
-                                       :effect (effect (resolve-ability
-                                                         {:msg "draw 2 cards instead of accessing"
-                                                          :async true
-                                                          :effect (effect (update! (dissoc st :server-target))
-                                                                          (draw eid 2 nil))}
-                                                         st nil))})))}
-               :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
+                :effect (effect (add-run-effect
+                                  {:card card
+                                   :replace-access
+                                   {:mandatory true
+                                    :msg "draw 2 cards instead of accessing"
+                                    :async true
+                                    :effect (effect (update! (dissoc (get-card state card) :server-target))
+                                                    (draw eid 2 nil))}}))}
+               :runner-turn-ends {:effect (effect (update! (dissoc (get-card state card) :server-target)))}}
       :abilities [ability]})
 
    "Personal Workshop"
