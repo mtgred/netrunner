@@ -573,7 +573,6 @@
     (run-empty-server state :hq)
     (click-prompt state :runner "0 [Credits]")
     (click-prompt state :corp "1 [Credits]")
-    (is (-> @state :run :run-effect :replace-access) "Replace-access tiggered")
     (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
     (click-prompt state :runner "Card from hand")
     (is (accessing state "Hedge Fund") "Runner accessing Hedge Fund")

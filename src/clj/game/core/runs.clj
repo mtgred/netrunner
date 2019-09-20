@@ -605,28 +605,6 @@
                                         card nil)))
                   (effect-completed state side eid)))})
 
-(defmethod choose-access :hq [cards server {:keys [no-root] :as args}]
-  {:async true
-   :effect (req (if (pos? (count cards))
-                  (if (and (= 1 (count cards))
-                           (not (any-flag-fn? state :runner :slow-hq-access true)))
-                    (access-card state side eid (first cards))
-                    (let [from-hq (min (access-count state side :hq-access)
-                                       (-> @state :corp :hand count))
-                          ; Handle root only access - no cards to access in hand
-                          from-hq (if (some #(= '[:hand] (:zone %)) cards) from-hq 0)]
-                      (continue-ability state side (access-helper-hq-or-rd
-                                                     state :hq "hand" from-hq
-                                                     (fn [already-accessed] (some #(when-not (already-accessed %) %)
-                                                                                  (shuffle (-> @state :corp :hand))))
-                                                     (fn [card] (:title card))
-                                                     (if no-root
-                                                       (set (get-in @state [:corp :servers :hq :content]))
-                                                       #{}))
-                                        card nil)))
-                  (effect-completed state side eid)))})
-
-
 (defn access-helper-hq
   "This is a helper for cards to invoke HQ access without knowing how to use the full access method. See Dedicated Neural Net."
   [state from-hq already-accessed]
@@ -636,6 +614,53 @@
                           :title
                           already-accessed))
 
+(defmethod choose-access :hq [cards server {:keys [no-root] :as args}]
+  {:async true
+   :effect (req (let [cards-count (count cards)]
+                  (cond
+                    ;; Only 1 card
+                    (and (= 1 cards-count)
+                         (not (any-flag-fn? state :runner :slow-hq-access true)))
+                    (access-card state side eid (first cards))
+                    ;; Corp chooses accessed cards
+                    (and (pos? cards-count)
+                         (not (run-flag? state side nil :corp-choose-access)))
+                    (do (show-wait-prompt state :runner "Corp to select cards in HQ to be accessed")
+                        (continue-ability
+                          state :corp
+                          {:prompt (msg "Select " (access-count state side :hq-access) " cards in HQ for the Runner to access")
+                           :choices {:req #(and (in-hand? %) (corp? %))
+                                     :all true
+                                     :max (req (access-count state side :hq-access))}
+                           :async true
+                           :effect (effect (clear-wait-prompt :runner)
+                                           (continue-ability
+                                             :runner
+                                             (access-helper-hq
+                                               state (access-count state side :hq-access)
+                                               ; access-helper-hq uses a set to keep track of which cards have already
+                                               ; been accessed. Using the set difference we make the runner unable to
+                                               ; access non-selected cards from the corp prompt
+                                               (clojure.set/difference (set (:hand corp)) (set targets)))
+                                             card nil))}
+                          card nil))
+                    ;; Normal access
+                    (pos? cards-count)
+                    (let [from-hq (min (access-count state side :hq-access)
+                                       (-> @state :corp :hand count))
+                          ; Handle root only access - no cards to access in hand
+                          from-hq (if (some in-hand? cards) from-hq 0)]
+                      (continue-ability state side (access-helper-hq-or-rd
+                                                     state :hq "hand" from-hq
+                                                     (fn [already-accessed] (some #(when-not (already-accessed %) %)
+                                                                                  (shuffle (-> @state :corp :hand))))
+                                                     (fn [card] (:title card))
+                                                     (if no-root
+                                                       (set (get-in @state [:corp :servers :hq :content]))
+                                                       #{}))
+                                        card nil))
+                    :else
+                    (effect-completed state side eid))))})
 
 (defn- get-archives-accessible [state]
   ;; only include agendas and cards with an :access ability whose :req is true
