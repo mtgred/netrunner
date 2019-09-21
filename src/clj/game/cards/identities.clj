@@ -384,7 +384,7 @@
                                    (register-turn-flag! state side card :can-trash-operation (constantly false)))
                       :msg (msg "trash " (:title target))}
              :successful-run-ends {:req (req (and (= (:server target) [:archives])
-                                                  (nil? (:replace-access (:run-effect target)))
+                                                  (empty? (filter :replace-access (:run-effects target)))
                                                   (not= (:max-access target) 0)
                                                   (seq (filter operation? (:discard corp)))))
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
@@ -1020,9 +1020,6 @@
                                   :effect (req (let [target-server (if (= target "HQ") :hq :rd)]
                                                  (swap! state update-in [:runner :register :successful-run] #(rest %))
                                                  (swap! state assoc-in [:run :server] [target-server])
-                                                 ; remove the :req from the run-effect, so that other cards that replace
-                                                 ; access don't use Omar's req.
-                                                 (swap! state dissoc-in [:run :run-effect :req])
                                                  (trigger-event state :corp :no-action)
                                                  (swap! state update-in [:runner :register :successful-run] #(conj % target-server))
                                                  (system-msg state side (str "uses Omar Keung: Conspiracy Theorist to make a successful run on " target))))}
@@ -1123,7 +1120,7 @@
                                                 card nil))}}}
 
    "Skorpios Defense Systems: Persuasive Power"
-   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted.  Cannot use on in progress run event"
+   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"
     :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
                  :async true
                  :effect (req (when-not (and (used-this-turn? (:cid card) state) (active-prompt? state side card))
@@ -1133,7 +1130,7 @@
                                                    :once :per-turn
                                                    :choices (req (cancellable
                                                                    ;; do not allow a run event in progress to get nuked #2963
-                                                                   (remove #(same-card? % (get-in @state [:run :run-effect :card]))
+                                                                   (remove (fn [c] (some #(same-card? c (:card %)) (:run-effects run)))
                                                                            (:discard runner))))
                                                    :msg (msg "remove " (:title target) " from the game")
                                                    :effect (req (move state :runner target :rfg)
@@ -1212,7 +1209,7 @@
    {:events {:successful-run
              {:req (req (and (= target :hq)
                              (first-successful-run-on-server? state :hq)
-                             (if (-> @state :run :run-effect :card)
+                             (if (pos? (count (->> @state :run :run-effects #(map :card))))
                                (> (count (:discard runner)) 2)
                                (> (count (:discard runner)) 1))))
               :interactive (req true)
@@ -1221,9 +1218,10 @@
                                 {:async true
                                  :prompt "Select 2 cards in your Heap"
                                  :show-discard true
-                                 :choices {:max 2 :req #(and (in-discard? %)
-                                                             (runner? %)
-                                                             (not= (-> @state :run :run-effect :card :cid) (:cid %)))}
+                                 :choices {:max 2
+                                           :req #(and (in-discard? %)
+                                                      (runner? %)
+                                                      (not (some (fn [c] (same-card? % (:card c))) (:run-effects run))))}
                                  :cancel-effect (req (effect-completed state side eid))
                                  :effect (req (let [c1 (first targets)
                                                     c2 (second targets)]

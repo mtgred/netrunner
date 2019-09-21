@@ -268,7 +268,7 @@
    (let [card (if (map? card) card (find-card card (get-in @state [:runner :hand])))]
      (core/play state :runner {:card card})
      (is (= [server] (get-in @state [:run :server])) "Correct server is run")
-     (is (get-in @state [:run :run-effect]) "There is a run-effect")
+     (is (get-in @state [:run :run-effects]) "There is a run-effect")
      (core/no-action state :corp nil)
      (core/successful-run state :runner nil)
      (if show-prompt

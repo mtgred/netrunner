@@ -575,11 +575,9 @@
     (click-prompt state :corp "1 [Credits]")
     (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
     (click-prompt state :runner "Card from hand")
-    (is (accessing state "Hedge Fund") "Runner accessing Hedge Fund")
     (click-prompt state :runner "No action")
     ;; test for #2376
     (click-prompt state :runner "Unrezzed upgrade in HQ")
-    (is (accessing state "Caprice Nisei") "Runner accessing Caprice")
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run completed")
     (run-empty-server state :hq)

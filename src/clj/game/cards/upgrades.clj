@@ -83,16 +83,8 @@
                               :trace {:base 4
                                       :successful
                                       {:msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
-                                       :effect (req (max-access state side 0)
-                                                    (when-not (:replace-access (get-in @state [:run :run-effect]))
-                                                      (let [ash card]
-                                                        (swap! state update-in [:run :run-effect]
-                                                               #(assoc % :replace-access
-                                                                       {:mandatory true
-                                                                        :async true
-                                                                        :effect (req (wait-for (access-card state :runner ash)
-                                                                                               (effect-completed state side eid)))
-                                                                        :card ash})))))}}}}}
+                                       :effect (effect (set-cards-to-access card)
+                                                       (effect-completed eid))}}}}}
 
    "Awakening Center"
    {:can-host (req (ice? target))
@@ -356,7 +348,7 @@
       :events {:pre-successful-run
                {:silent (req true)
                 :req (req this-server)
-                :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
+                :effect (req (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
                              (swap! state update-in [:run] dissoc :successful)
                              (swap! state update-in [:runner :register :successful-run] #(seq (rest %))))}}})
 

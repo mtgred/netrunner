@@ -1474,18 +1474,28 @@
 
    "Top Hat"
    {:events {:successful-run
-             {:req (req (= target :rd))
-              :effect (effect
-                        (add-run-effect
-                          {:card card
-                           :replace-access
-                           (let [n (count (:deck corp))]
-                             {:async true
-                              :req (req (not= (:max-access run) 0))
-                              :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
-                              :choices (take n (range 1 6))
-                              :msg (msg "access the card at position " target " of R&D")
-                              :effect (effect (access-card eid (nth (:deck corp) (dec target)) "an unseen card"))})}))}}}
+             {:interactive (req true)
+              :req (req (and (= target :rd)
+                             (not= (:max-access run) 0)))
+              :async true
+              :effect
+              (effect
+                (continue-ability
+                  {:optional
+                   {:prompt "Use Top Hat to access a single card?"
+                    :yes-ability
+                    {:prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
+                     :choices (take (count (:deck corp)) (range 1 6))
+                     :msg (msg "only access the card at position " target " of R&D")
+                     :effect (effect
+                               (add-run-effect
+                                 (let [t target]
+                                   {:card card
+                                    :replace-access
+                                    {:mandatory true
+                                     :effect (req (when (empty? (get-cards-to-access state))
+                                                    (access-card state side eid (nth (:deck corp) (dec t)) "an unseen card")))}})))}}}
+                  card nil))}}}
 
    "Turntable"
    {:in-play [:memory 1]
