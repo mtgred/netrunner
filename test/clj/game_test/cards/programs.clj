@@ -142,6 +142,30 @@
       (card-ability state :runner (refresh amina) 2)
       (is (= 3 (:credit (get-corp))) "Can only use ability once per turn"))))
 
+(deftest analog-dreamers
+  ;; Analog Dreamers
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Hostile Takeover" "PAD Campaign"]}
+               :runner {:hand ["Analog Dreamers"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (advance state (get-content state :remote1 0) 1)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Analog Dreamers")
+    (card-ability state :runner (get-program state 0) 0)
+    (run-successful state)
+    (click-prompt state :runner "Analog Dreamers")
+    (click-card state :runner "Hostile Takeover")
+    (is (= "Choose a card to shuffle into R&D" (-> (get-runner) :prompt first :msg))
+        "Can't click on Hostile Takeover")
+    (let [number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))
+          pad (get-content state :remote2 0)]
+      (click-card state :runner "PAD Campaign")
+      (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Should be shuffled")
+      (is (some #(utils/same-card? pad %) (:deck (get-corp))) "PAD Campaign is shuffled into R&D")
+      (is (nil? (refresh pad)) "PAD Campaign is shuffled into R&D"))))
+
 (deftest atman
   ;; Atman
   (testing "Installing with 0 power counters"

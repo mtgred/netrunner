@@ -905,8 +905,8 @@
                       state :runner
                       {:prompt "Choose a mandatory replacement effect"
                        :choices (mapv #(get-in % [:card :title]) mandatory-run-effects)
-                       :effect (req (let [target (some #(when (= target (get-in % [:card :title])) %) mandatory-run-effects)]
-                                      (replace-access state :runner (:replace-access target) (:card target))))}
+                       :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) mandatory-run-effects)]
+                                      (replace-access state :runner (:replace-access chosen) (:card chosen))))}
                       nil nil)
 
                     ;; Any number of optional replace-access effects
@@ -915,8 +915,8 @@
                       state :runner
                       {:prompt "Use a replacement effect instead of accessing cards?"
                        :choices (conj (mapv #(get-in % [:card :title]) run-effects) "Access cards")
-                       :effect (req (if-let [target (some #(when (= target (get-in % [:card :title])) %) run-effects)]
-                                      (replace-access state :runner (:replace-access target) (:card target))
+                       :effect (req (if-let [chosen (some #(when (= target (get-in % [:card :title])) %) run-effects)]
+                                      (replace-access state :runner (:replace-access chosen) (:card chosen))
                                       (wait-for (do-access state :runner server)
                                                 (handle-end-run state :runner))))}
                       nil nil)

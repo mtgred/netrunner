@@ -780,7 +780,8 @@
                                   (system-msg state side "has finished rearranging ICE")))})]
      {:req (req hq-runnable)
       :effect (effect (make-run :hq {:replace-access
-                                     {:msg "rearrange installed ICE"
+                                     {:mandatory true
+                                      :msg "rearrange installed ICE"
                                       :effect (effect (resolve-ability (es) card nil))}} card))})
 
    "Eureka!"
@@ -828,7 +829,7 @@
    (run-event
      {:replace-access
       {:prompt "Advancements to remove from a card in or protecting this server?"
-       :choices ["0", "1", "2", "3"]
+       :choices ["0" "1" "2" "3"]
        :async true
        :mandatory true
        :effect (req (let [c (str->int target)]
@@ -2398,7 +2399,8 @@
                       :hq {:req (req (= target :hq))
                            :replace-access
                            {:async true
-                            :prompt "How many [Credits]?" :choices :credit
+                            :prompt "How many [Credits]?"
+                            :choices :credit
                             :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
                             :effect (effect (lose-credits :corp target)
                                             (gain-tags eid 1))}} card))}

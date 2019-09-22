@@ -368,11 +368,9 @@
                                        :choices {:req #(and (not (ice? %))
                                                             (not (rezzed? %))
                                                             (zero? (get-counters % :advancement)))}
-                                       :effect (req (move state :corp target :deck)
-                                                    (shuffle! state :corp :deck)
-                                                    (swap! state update-in [:runner :prompt] rest)
-                                                    (handle-end-run state side)) ; remove the replace-access prompt
-                                       :msg "shuffle a card into R&D"}}
+                                       :msg (msg "shuffle " (card-str state target) " into R&D")
+                                       :effect (effect (move :corp target :deck)
+                                                       (shuffle! :corp :deck))}}
                                      card))}]}
 
    "Ankusa"
@@ -1065,7 +1063,9 @@
                  :effect (effect (make-run :hq {:req (req (= target :hq))
                                                 :replace-access
                                                 {:msg (msg "reveal cards in HQ: "
-                                                           (join ", " (map :title (:hand corp))))}} card))}]}
+                                                           (join ", " (map :title (:hand corp))))
+                                                 :effect (effect (reveal (:hand corp)))}}
+                                           card))}]}
 
    "Faerie"
    (auto-icebreaker {:abilities [(break-sub 0 1 "Sentry"
@@ -1924,17 +1924,19 @@
                                                     (effect-completed state side eid))
                                                 (if (or (= guess (:cost target))
                                                         (= guess (:advancementcost target)))
-                                                  (continue-ability state side
-                                                                    {:prompt "Choose RNG Key award"
-                                                                     :choices ["Gain 3 [Credits]" "Draw 2 cards"]
-                                                                     :async true
-                                                                     :effect (req (if (= target "Draw 2 cards")
-                                                                                    (do (system-msg state :runner "uses RNG Key to draw 2 cards")
-                                                                                        (draw state :runner eid 2 nil))
-                                                                                    (do (system-msg state :runner "uses RNG Key to gain 3 [Credits]")
-                                                                                        (gain-credits state :runner 3)
-                                                                                        (effect-completed state side eid))))}
-                                                                    card nil)
+                                                  (do (reveal state side target)
+                                                      (continue-ability
+                                                        state side
+                                                        {:prompt "Choose RNG Key award"
+                                                         :choices ["Gain 3 [Credits]" "Draw 2 cards"]
+                                                         :async true
+                                                         :effect (req (if (= target "Draw 2 cards")
+                                                                        (do (system-msg state :runner "uses RNG Key to draw 2 cards")
+                                                                            (draw state :runner eid 2 nil))
+                                                                        (do (system-msg state :runner "uses RNG Key to gain 3 [Credits]")
+                                                                            (gain-credits state :runner 3)
+                                                                            (effect-completed state side eid))))}
+                                                        card nil))
                                                   (effect-completed state side eid)))
                                               (effect-completed state side eid)))}
              :post-access-card {:effect (effect (update! (assoc-in card [:special :rng-guess] nil)))}
