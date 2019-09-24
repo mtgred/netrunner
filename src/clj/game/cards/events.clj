@@ -426,10 +426,10 @@
                                        :no-ability {:msg (msg "trash " title " at no cost")
                                                     :async true
                                                     :effect (effect (clear-wait-prompt :runner)
-                                                                    (trash-no-cost eid c))}}}
+                                                                    (trash eid (assoc c :seen true) nil))}}}
                                      card nil))
                                (do (system-msg state side (str "uses Credit Crash to trash " title " at no cost"))
-                                   (trash-no-cost state side eid c)))))}
+                                   (trash state side eid (assoc c :seen true) nil)))))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Credit Kiting"
@@ -527,7 +527,7 @@
                    {:label "Trash card"
                     :msg (msg "trash " (:title target) " at no cost")
                     :async true
-                    :effect (effect (trash-no-cost eid target))}}}
+                    :effect (effect (trash eid (assoc target :seen true) nil))}}}
 
    "Deuces Wild"
    (let [all [{:effect (effect (gain-credits 3))
