@@ -440,8 +440,8 @@
       (swap! state update-in [:trash :trash-list] dissoc eid)
       (swap! state update-in [:trash :trash-list eid] #(remove-once (fn [x] (same-card? x card)) %)))))
 
-(defn- resolve-trash-end
-  ([state side eid card args] (resolve-trash-end state side eid card eid args))
+(defn- resolve-trash
+  ([state side eid card args] (resolve-trash state side eid card eid args))
   ([state side eid {:keys [disabled] :as card} oid
     {:keys [cause keep-server-alive host-trashed] :as args}]
    (remove-from-trash-list state oid card)
@@ -459,18 +459,6 @@
                             (:trash-effect cdef))]
          (continue-ability state side trash-effect moved-card (list cause))))
      (effect-completed state side eid))))
-
-(defn- resolve-trash
-  ([state side eid card args] (resolve-trash state side eid card eid args))
-  ([state side eid {:keys [zone] :as card} oid
-   {:keys [cause suppress-event] :as args}]
-  (if (and (not suppress-event)
-           (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
-    (wait-for (trigger-event-sync state side (if (= side :corp) :corp-trash :runner-trash) card cause)
-              (when (not= side (-> card :side lower-case keyword))
-                (swap! state assoc-in [side :register :trashed-card] true))
-              (resolve-trash-end state side eid card oid args))
-    (resolve-trash-end state side eid card args))))
 
 (defn- prevent-trash
   ([state side card oid] (prevent-trash state side (make-eid state) card oid nil))
@@ -526,37 +514,37 @@
                  (effect-completed state side eid))))))
      (effect-completed state side eid))))
 
-(defn trash
-  "Attempts to trash the given card, allowing for boosting/prevention effects."
-  ([state side card] (trash state side (make-eid state) card nil))
-  ([state side card args] (trash state side (make-eid state) card args))
-  ([state side eid card args]
-   (wait-for (prevent-trash state side card eid args)
-             (if-let [c (first (get-in @state [:trash :trash-list eid]))]
-               (resolve-trash state side eid c args)
-               (effect-completed state side eid)))))
-
 (defn trash-cards
   "Attempts to trash each given card, and then once all given cards have been either
   added or not added to the trash list, all of those cards are trashed"
   ([state side cards] (trash-cards state side (make-eid state) cards nil))
   ([state side eid cards] (trash-cards state side eid cards nil))
-  ([state side eid cards args]
-   (letfn [(trashrec [cs]
-             (if (not-empty cs)
-               (wait-for (resolve-trash-end state side (get-card state (first cs)) eid args)
-                         (trashrec (rest cs)))
-               (effect-completed state side eid)))
-           (preventrec [cs]
-             (if (not-empty cs)
-               (wait-for (prevent-trash state side (get-card state (first cs)) eid args)
-                         (preventrec (rest cs)))
-               (let [trashlist (get-in @state [:trash :trash-list eid])]
-                 (wait-for (apply trigger-event-sync state side (if (= side :corp) :corp-trash :runner-trash) trashlist)
-                           (when (seq (remove #{side} (map #(-> % :side lower-case keyword) trashlist)))
-                             (swap! state assoc-in [side :register :trashed-card] true))
-                           (trashrec trashlist)))))]
-     (preventrec cards))))
+  ([state side eid cards {:keys [cause suppress-event] :as args}]
+   (let [num-cards (< 1 (count cards))]
+     (letfn [(get-card? [s c] (if num-cards (get-card s c) c))
+             (trashrec [cs]
+               (if (not-empty cs)
+                 (wait-for (resolve-trash state side (get-card? state (first cs)) eid args)
+                           (trashrec (rest cs)))
+                 (effect-completed state side eid)))
+             (preventrec [cs]
+               (if (not-empty cs)
+                 (wait-for (prevent-trash state side (get-card? state (first cs)) eid args)
+                           (preventrec (rest cs)))
+                 (let [trashlist (get-in @state [:trash :trash-list eid])]
+                   (wait-for (apply trigger-event-sync state side
+                                    (when-not suppress-event
+                                      (if (= side :corp) :corp-trash :runner-trash))
+                                    (first trashlist) cause (rest trashlist))
+                             (when (seq (remove #{side} (map to-keyword trashlist)))
+                               (swap! state assoc-in [side :register :trashed-card] true))
+                             (trashrec trashlist)))))]
+       (preventrec cards)))))
+
+(defn trash
+  ([state side card] (trash-cards state side (make-eid state) [card] nil))
+  ([state side card args] (trash-cards state side (make-eid state) [card] args))
+  ([state side eid card args] (trash-cards state side eid [card] args)))
 
 (defn trash-no-cost
   [state side eid card & {:keys [seen unpreventable]
