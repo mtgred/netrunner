@@ -183,7 +183,7 @@
       (run-empty-server state "Server 1")
       (click-prompt state :corp "2") ; Manhunt trace active
       (click-prompt state :runner "0")
-      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "Bank Job")
       (is (= "Bank Job" (:title (:card (first (get-in @state [:runner :prompt])))))
           "Bank Job prompt active")
       (click-prompt state :runner "8")
@@ -197,14 +197,14 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Bank Job")
       (run-empty-server state "Server 1")
-      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "Bank Job")
       (click-prompt state :runner "4")
       (play-from-hand state :runner "Bank Job")
       (let [bj1 (get-resource state 0)
             bj2 (get-resource state 1)]
         (is (= 4 (get-counters (refresh bj1) :credit)) "4 credits remaining on 1st copy")
         (run-empty-server state "Server 1")
-        (click-prompt state :runner "Replacement effect")
+        (click-prompt state :runner "Bank Job")
         (click-card state :runner bj2)
         (click-prompt state :runner "6")
         (is (= 13 (:credit (get-runner))))
@@ -217,7 +217,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Bank Job")
       (run-empty-server state "Server 1")
-      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "Bank Job")
       (click-prompt state :runner "4")
       (play-from-hand state :runner "Bank Job")
       (let [bj1 (get-resource state 0)
@@ -225,7 +225,7 @@
             credits (:credit (get-runner))]
         (is (= 4 (get-counters (refresh bj1) :credit)) "4 credits remaining on 1st copy")
         (run-empty-server state "Server 1")
-        (click-prompt state :runner "Replacement effect")
+        (click-prompt state :runner "Bank Job")
         (click-card state :runner bj1)
         (changes-val-macro 4 (:credit (get-runner))
                            "Got last 4 credits from Bank Job"
@@ -2391,7 +2391,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "New Angeles City Hall")
       (play-run-event state (first (:hand (get-runner))) :hq)
-      (click-prompt state :runner "Replacement effect")
+      (click-prompt state :runner "Account Siphon")
       (let [nach (get-resource state 0)]
         (is (= 4 (:credit (get-runner))) "Have not gained Account Siphon credits until tag avoidance window closes")
         (card-ability state :runner nach 0)
@@ -2951,7 +2951,7 @@
         (click-prompt state :runner "Server 1")
         (run-empty-server state "Archives")
         (is (= 12 (:credit (get-runner))) "Did not gain credits when running other server"))))
-  (testing "with multiple copies"
+  (testing "with multiple copies on different servers"
     (do-game
       (new-game {:runner {:deck [(qty "Security Testing" 2)]}})
       (take-credits state :corp)
@@ -2965,6 +2965,19 @@
       (is (= 9 (:credit (get-runner))) "Gained 2 credits")
       (run-empty-server state "R&D")
       (is (= 11 (:credit (get-runner))))))
+  (testing "with multiple copies on the same server"
+    (do-game
+      (new-game {:runner {:deck [(qty "Security Testing" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Security Testing")
+      (play-from-hand state :runner "Security Testing")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "Archives")
+      (click-prompt state :runner "Archives")
+      (run-empty-server state "Archives")
+      (click-prompt state :runner "Security Testing")
+      (is (= 9 (:credit (get-runner))) "Gained 2 credits")))
   (testing "with Paragon and other successful-run triggers"
     (do-game
       (new-game {:corp {:id "AgInfusion: New Miracles for a New World"
@@ -2989,7 +3002,22 @@
         (run-successful state)
         (click-prompt state :runner "Yes")
         (click-prompt state :runner "Yes")
-        (is (= (+ 3 credits) (:credit (get-runner))) "2 from Sec Testing, 1 from Paragon")))))
+        (is (= (+ 3 credits) (:credit (get-runner))) "2 from Sec Testing, 1 from Paragon"))))
+  (testing "with Dirty Laundry. Issue #4390"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Security Testing" "Dirty Laundry"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Security Testing")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "Archives")
+      (play-from-hand state :runner "Dirty Laundry")
+      (click-prompt state :runner "Archives")
+      (let [credits (:credit (get-runner))]
+        (run-successful state)
+        (is (= (+ credits 5 2) (:credit (get-runner))) "Runner gains 5 from Dirty Laundry and 2 from Security Testing")))))
 
 (deftest spoilers
   ;; Spoilers - Mill the Corp when it scores an agenda

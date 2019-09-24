@@ -10,6 +10,10 @@
   [state]
   (swap! state update-in [:bonus] dissoc :run-cost))
 
+(defn add-run-effect
+  [state side run-effect]
+  (swap! state update-in [:run :run-effects] conj run-effect))
+
 ;;; Steps in the run sequence
 (defn make-run
   "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
@@ -43,8 +47,9 @@
                                             :run {:server s
                                                   :position n
                                                   :access-bonus []
-                                                  :run-effect (assoc run-effect :card card)
                                                   :eid eid})
+                                     (when (or run-effect card)
+                                       (add-run-effect state side (assoc run-effect :card card)))
                                      (trigger-event state side :begin-run :server s)
                                      (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
                                      (swap! state assoc-in [:runner :next-run-credit] 0)
@@ -800,6 +805,16 @@
   (let [contents (get-in @state [:corp :servers (first server) :content])]
     (filter (partial can-access-loud state side) (concat contents (get-all-hosted contents)))))
 
+(defn set-cards-to-access
+  "Currently only used with Ash 2X"
+  [state side & cards]
+  (swap! state update :cards-to-access concat cards))
+
+(defn get-cards-to-access
+  "Currently only used with do-access below and Top Hat. It's hacky but whatever"
+  [state]
+  (seq (filter identity (map #(get-card state %) (get @state :cards-to-access)))))
+
 (defn do-access
   "Starts the access routines for the run's server."
   ([state side server] (do-access state side (make-eid state) server))
@@ -810,7 +825,9 @@
                    cards (if hq-root-only (remove #(= '[:hand] (:zone %)) cards) cards)
                    cards (if no-root (remove #(or (= '[:servers :rd :content] (:zone %))
                                                   (= '[:servers :hq :content] (:zone %))) cards) cards)
+                   cards (or (get-cards-to-access state) cards)
                    n (count cards)]
+               (swap! state dissoc :cards-to-access)
                ;; Make `:did-access` true when reaching the access step (no replacement)
                (when (:run @state)
                  (swap! state assoc-in [:run :did-access] true))
@@ -823,15 +840,6 @@
                                (wait-for (trigger-event-sync state side :end-access-phase {:from-server (first server)})
                                          (effect-completed state side eid)))))))))
 
-(defn replace-access
-  "Replaces the standard access routine with the :replace-access effect of the card"
-  [state side ability card]
-  (wait-for (resolve-ability state side ability card nil)
-            (run-cleanup state side)))
-
-;;;; OLDER ACCESS ROUTINES. DEPRECATED.
-
-
 ;;; Ending runs.
 (defn register-successful-run
   ([state side server] (register-successful-run state side (make-eid state) server))
@@ -843,43 +851,78 @@
                        (wait-for (trigger-event-simult state side :post-successful-run nil (first (get-in @state [:run :server])))
                                  (effect-completed state side eid))))))
 
+(defn replace-access
+  "Replaces the standard access routine with the :replace-access effect of the card"
+  [state side ability card]
+  (wait-for (resolve-ability state side ability card nil)
+            (run-cleanup state side)))
+
+(defn successful-run-effect-impl
+  [state side eid run-effects]
+  (if-let [run-effect (first run-effects)]
+    (wait-for (resolve-ability state side (when-not (trigger-suppress state side :successful-run (:card run-effect))
+                                            (:successful-run run-effect))
+                               (:card run-effect) nil)
+              (successful-run-effect-impl state side eid (next run-effects)))
+    (effect-completed state side eid)))
+
 (defn- successful-run-trigger
   "The real 'successful run' trigger."
   [state side]
-  (let [successful-run-effect (get-in @state [:run :run-effect :successful-run])
-        card (get-in @state [:run :run-effect :card])]
-    (when (and successful-run-effect
-               (not (apply trigger-suppress state side :successful-run card)))
-      (resolve-ability state side successful-run-effect (:card successful-run-effect) nil)))
-  (wait-for (register-successful-run state side (get-in @state [:run :server]))
-            (let [the-run (:run @state)
-                  server (:server the-run) ; bind here as the server might have changed
-                  run-effect (:run-effect the-run)
-                  run-req (:req run-effect)
-                  card (:card run-effect)
-                  replace-effect (:replace-access run-effect)]
+  (wait-for
+    (successful-run-effect-impl state side (filter :successful-run (get-in @state [:run :run-effects])))
+    (wait-for (register-successful-run state side (get-in @state [:run :server]))
               (if (:ended (:run @state))
-                (run-cleanup state side)
-                (if (:prevent-access the-run)
-                  (do (system-msg state :runner "is prevented from accessing any cards this run")
-                      (resolve-ability state :runner
-                                       {:prompt "You are prevented from accessing any cards this run."
-                                        :choices ["OK"]
-                                        :effect (effect (handle-end-run))}
-                                       nil nil))
-                  (if (and replace-effect
-                           (or (not run-req)
-                               (run-req state side (make-eid state) card [(first server)])))
-                    (if (:mandatory replace-effect)
-                      (replace-access state side replace-effect card)
-                      (swap! state update-in [side :prompt]
-                             (fn [p]
-                               (conj (vec p) {:msg "Use replacement effect instead of accessing cards?"
-                                              :choices ["Replacement effect" "Access cards"]
-                                              :effect #(if (= % "Replacement effect")
-                                                         (replace-access state side replace-effect card)
-                                                         (wait-for (do-access state side server)
-                                                                   (handle-end-run state side)))}))))
+                (run-cleanup state :runner)
+                (let [the-run (:run @state)
+                      server (:server the-run) ; bind here as the server might have changed
+                      run-effects (->> (:run-effects the-run)
+                                       (filter #(and (:replace-access %)
+                                                     (or (not (:req %))
+                                                         ((:req %) state :runner (:eid the-run) (:card %) [(first server)]))))
+                                       doall)
+                      mandatory-run-effects (->> run-effects
+                                                 (filter #(get-in % [:replace-access :mandatory]))
+                                                 doall)]
+                  (cond
+                    ;; Prevented from accessing anything
+                    (:prevent-access the-run)
+                    (resolve-ability
+                      state :runner
+                      {:prompt "You are prevented from accessing any cards this run."
+                       :choices ["OK"]
+                       :effect (effect (system-msg :runner "is prevented from accessing any cards this run")
+                                       (handle-end-run))}
+                      nil nil)
+
+                    ;; One mandatory replace-access effect
+                    (= 1 (count mandatory-run-effects))
+                    (replace-access state :runner (:replace-access (first mandatory-run-effects)) (:card (first mandatory-run-effects)))
+
+                    ;; Multiple mandatory replace-access effects
+                    (pos? (count mandatory-run-effects))
+                    (resolve-ability
+                      state :runner
+                      {:prompt "Choose a mandatory replacement effect"
+                       :choices (mapv #(get-in % [:card :title]) mandatory-run-effects)
+                       :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) mandatory-run-effects)]
+                                      (replace-access state :runner (:replace-access chosen) (:card chosen))))}
+                      nil nil)
+
+                    ;; Any number of optional replace-access effects
+                    (pos? (count run-effects))
+                    (resolve-ability
+                      state :runner
+                      {:prompt "Use a replacement effect instead of accessing cards?"
+                       :choices (conj (mapv #(get-in % [:card :title]) run-effects) "Access cards")
+                       :effect (req (if-let [chosen (some #(when (= target (get-in % [:card :title])) %) run-effects)]
+                                      (replace-access state :runner (:replace-access chosen) (:card chosen))
+                                      (wait-for (do-access state :runner server)
+                                                (handle-end-run state :runner))))}
+                      nil nil)
+
+                    ;; No replace-access effects
+                    :else
                     (wait-for (do-access state side server)
                               (handle-end-run state side))))))))
 
@@ -1011,6 +1054,13 @@
     (clear-run-register! state)
     (trigger-run-end-events state side (:eid run) run)))
 
+(defn- end-run-effect-impl
+  [state side eid server run-effects]
+  (if-let [run-effect (first run-effects)]
+    (wait-for (resolve-ability state side (:end-run run-effect) (:card run-effect) [server])
+              (end-run-effect-impl state side eid server (next run-effects)))
+    (effect-completed state side eid)))
+
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
@@ -1024,11 +1074,10 @@
                 (update-breaker-strength state side p))
               (doseq [ice (get-in @state [:corp :servers server :ices])]
                 (reset-all-subs! state ice))
-              (let [run-effect (get-in @state [:run :run-effect])]
-                (if-let [end-run-effect (:end-run run-effect)]
-                  (wait-for (resolve-ability state side end-run-effect (:card run-effect) [server])
-                            (run-cleanup-2 state side))
-                  (run-cleanup-2 state side))))))
+              (let [run-effects (get-in @state [:run :run-effects])
+                    end-of-run-effects (filter :end-run run-effects)]
+                (wait-for (end-run-effect-impl state side server end-of-run-effects)
+                          (run-cleanup-2 state side))))))
 
 (defn handle-end-run
   "Initiate run resolution."

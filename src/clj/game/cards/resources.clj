@@ -248,23 +248,24 @@
                    :successful-run
                    {:silent (req true)
                     :req (req (is-remote? (:server run)))
-                    :effect (req (let [bj (get-card state card)]
-                                   (when-not (:replace-access (get-in @state [:run :run-effect]))
-                                     (swap! state assoc-in [:run :run-effect :replace-access]
-                                            {:effect (req (letfn [(select-credits-ability [bj]
-                                                              {:prompt "How many Bank Job credits?"
-                                                               :choices {:number (req (get-counters (get-card state bj) :credit))}
-                                                               :msg (msg "gain " target " [Credits]")
-                                                               :effect (req (gain-credits state side target)
-                                                                            (add-counter state side bj :credit (- target)))})]
-                                                            (if (> (count (filter #(= (:title %) "Bank Job") (all-active-installed state :runner))) 1)
-                                                              (resolve-ability
-                                                                state side
-                                                                {:prompt "Select a copy of Bank Job to use"
-                                                                 :choices {:req #(and (installed? %) (= (:title %) "Bank Job"))}
-                                                                 :effect (req (resolve-ability state side (select-credits-ability target) target nil))}
-                                                                bj nil)
-                                                              (resolve-ability state side (select-credits-ability bj) bj nil))))}))))})}
+                    :effect (effect
+                              (add-run-effect
+                                {:card card
+                                 :replace-access
+                                 {:effect (req (letfn [(select-credits-ability [bj]
+                                                         {:prompt "How many Bank Job credits?"
+                                                          :choices {:number (req (get-counters (get-card state bj) :credit))}
+                                                          :msg (msg "gain " target " [Credits]")
+                                                          :effect (effect (gain-credits :runner target)
+                                                                          (add-counter :runner bj :credit (- target)))})]
+                                                 (if (< 1 (count (filter #(= (:title %) "Bank Job") (all-active-installed state :runner))))
+                                                   (continue-ability
+                                                     state side
+                                                     {:prompt "Select a copy of Bank Job to use"
+                                                      :choices {:req #(and (installed? %) (= (:title %) "Bank Job"))}
+                                                      :effect (effect (continue-ability (select-credits-ability target) target nil))}
+                                                     card nil)
+                                                   (continue-ability state side (select-credits-ability card) card nil))))}}))})}
 
    "Bazaar"
    (letfn [(hardware-and-in-hand? [target runner]
@@ -1687,8 +1688,10 @@
                      (trigger-event state :runner :runner-is-tagged (pos? (get-in @state [:runner :tag :is-tagged]))))}
 
    "Patron"
-   (let [ability {:prompt "Choose a server for Patron" :choices (req (conj servers "No server"))
-                  :req (req (and (not (click-spent? :runner state)) (not (used-this-turn? (:cid card) state))))
+   (let [ability {:prompt "Choose a server for Patron"
+                  :choices (req (conj servers "No server"))
+                  :req (req (and (:runner-phase-12 @state)
+                                 (not (used-this-turn? (:cid card) state))))
                   :msg (msg "target " target)
                   :effect (req (when (not= target "No server")
                                  (update! state side (assoc card :server-target target))))}]
@@ -1696,16 +1699,15 @@
                :successful-run
                {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
                 :once :per-turn
-                :effect (req (let [st card]
-                               (swap! state assoc-in [:run :run-effect :replace-access]
-                                      {:mandatory true
-                                       :effect (effect (resolve-ability
-                                                         {:msg "draw 2 cards instead of accessing"
-                                                          :async true
-                                                          :effect (effect (update! (dissoc st :server-target))
-                                                                          (draw eid 2 nil))}
-                                                         st nil))})))}
-               :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
+                :effect (effect (add-run-effect
+                                  {:card card
+                                   :replace-access
+                                   {:mandatory true
+                                    :msg "draw 2 cards instead of accessing"
+                                    :async true
+                                    :effect (effect (update! (dissoc (get-card state card) :server-target))
+                                                    (draw eid 2 nil))}}))}
+               :runner-turn-ends {:effect (effect (update! (dissoc (get-card state card) :server-target)))}}
       :abilities [ability]})
 
    "Personal Workshop"
@@ -1971,7 +1973,7 @@
    (let [ability {:prompt "Choose a server for Security Testing"
                   :choices (req (conj servers "No server"))
                   :msg (msg "target " target)
-                  :req (req (and (not (click-spent? :runner state))
+                  :req (req (and (:runner-phase-12 @state)
                                  (not (used-this-turn? (:cid card) state))))
                   :effect (req (when (not= target "No server")
                                  (update! state side (assoc card :server-target target))))}]
@@ -1981,16 +1983,13 @@
                              (:server-target (get-card state card))))
                 :once :per-turn
                 :silent (req true)
-                :effect (req (let [st card]
-                               (swap! state assoc-in [:run :run-effect]
-                                      {:card st
-                                       :replace-access
-                                       {:mandatory true
-                                        :effect (effect (continue-ability
-                                                          {:msg "gain 2 [Credits] instead of accessing"
-                                                           :effect (effect (gain-credits 2)
-                                                                           (update! (dissoc st :server-target)))}
-                                                          st nil))}})))}
+                :effect (effect (add-run-effect
+                                  {:card card
+                                   :replace-access
+                                   {:mandatory true
+                                    :msg "gain 2 [Credits] instead of accessing"
+                                    :effect (effect (gain-credits 2)
+                                                    (update! (dissoc (get-card state card) :server-target)))}}))}
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
       :abilities [ability]})
 
