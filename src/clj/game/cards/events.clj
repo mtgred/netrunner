@@ -612,8 +612,7 @@
                                                    :effect (effect (move (get-card state card) :deck)
                                                                    (shuffle! :deck)
                                                                    (effect-completed eid))}
-                                     :no-ability {:effect (effect (trash (get-card state card) {:unpreventable true :suppress-event true})
-                                                                  (effect-completed eid))}}}]
+                                     :no-ability {:effect (effect (trash eid (get-card state card) {:unpreventable true :suppress-event true}))}}}]
      {:effect (req (doseq [s [:corp :runner]]
                      (disable-identity state s))
                    (continue-ability state side
