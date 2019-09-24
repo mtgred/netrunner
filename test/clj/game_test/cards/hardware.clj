@@ -2000,6 +2000,22 @@
       (click-prompt state :runner "Done")
       (is (= 2 (count (:hand (get-runner)))) "Runner took no brain damage"))))
 
+(deftest record-reconstructor
+  ;; Record Reconstructor
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Hedge Fund"]
+                      :discard ["PAD Campaign"]}
+               :runner {:hand ["Record Reconstructor"]}})
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (play-from-hand state :runner "Record Reconstructor")
+    (is (= "Hedge Fund" (-> (get-corp) :deck first :title)) "Hedge Fund is on top of R&D")
+    (run-empty-server state :archives)
+    (click-prompt state :runner "Record Reconstructor")
+    (click-prompt state :runner "PAD Campaign")
+    (is (= "PAD Campaign" (-> (get-corp) :deck first :title)) "PAD Campaign is now first card in R&D")))
+
 (deftest replicator
   ;; Replicator
   (testing "interaction with Bazaar. Issue #1511"
@@ -2484,7 +2500,7 @@
       (click-prompt state :runner "4") ;select ABT
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))) "Runner stole DNN")))
-  (testing "Ash interaction"
+  (testing "Ash interaction, currently not accurate"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Neural Net" "Ash 2X3ZB9CY"]}
                  :runner {:deck ["Top Hat"]}})
@@ -2505,10 +2521,11 @@
         (core/gain state :runner :credit 100)
         (play-from-hand state :runner "Top Hat")
         (run-empty-server state :rd)
-        (click-prompt state :runner "Yes") ;Top Hat Prompt
-        (click-prompt state :corp "0") ;init Ash trace <<< fails here
-        (click-prompt state :runner "0") ;lose Ash trace
-        (is (empty? (:prompt (get-runner))) "No prompt to access cards.")))))
+        (click-prompt state :runner "Yes") ; Top Hat activation
+        (click-prompt state :runner "1") ; Top Hat
+        (click-prompt state :corp "0") ; init Ash trace
+        (click-prompt state :runner "0") ; lose Ash trace
+        (is (empty? (:prompt (get-runner))) "Can't trash Ash")))))
 
 (deftest turntable
   ;; Turntable - Swap a stolen agenda for a scored agenda

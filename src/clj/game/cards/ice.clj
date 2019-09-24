@@ -1017,9 +1017,16 @@
                   end-the-run]}
 
    "Errand Boy"
-   {:subroutines [(gain-credits-sub 1)
-                  {:msg "draw 1 card"
-                   :effect (effect (draw eid 1 nil))}]}
+   (let [sub {:label "Draw a card or gain 1 [Credits]"
+              :prompt "Choose one:"
+              :choices ["Gain 1 [Credits]" "Draw 1 card"]
+              :msg (req (if (= target "Gain 1 [Credits]")
+                          "gain 1 [Credits]"
+                          "draw 1 card"))
+              :effect (req (if (= target "Gain 1 [Credits]")
+                                   (gain-credits state :corp 1)
+                                   (draw state :corp eid 1 nil)))}]
+     {:subroutines [sub sub sub]})
 
    "Excalibur"
    {:subroutines [{:label "The Runner cannot make another run this turn"
@@ -2179,7 +2186,8 @@
                                    (system-msg (str "adds " (:title target) " to the top of the Runner's Stack")))}]}
 
    "Pachinko"
-   {:subroutines [end-the-run-if-tagged]}
+   {:subroutines [end-the-run-if-tagged
+                  end-the-run-if-tagged]}
 
    "Paper Wall"
    {:implementation "Trash on break is manual"

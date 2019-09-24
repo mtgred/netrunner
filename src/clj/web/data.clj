@@ -3,7 +3,8 @@
             [web.utils :refer [response]]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
-            [web.config :refer [server-config]]))
+            [web.config :refer [server-config]]
+            [clojure.edn :as edn]))
 
 (defn cards-handler [req]
   (let [r (map #(dissoc % :_id) (mc/find-maps db "cards"))]
@@ -23,6 +24,10 @@
 
 (defn donors-handler [req]
   (response 200 (->> (mc/find-maps db "donators")
+                     (map #(let [amount (:amount %)]
+                             (assoc % :amount (if (string? amount)
+                                                (edn/read-string amount)
+                                                amount))))
                      (sort-by :amount >)
                      (map #(let [username (:username %)]
                              (if (empty? username)

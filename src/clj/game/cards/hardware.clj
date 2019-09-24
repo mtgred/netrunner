@@ -1223,15 +1223,14 @@
    "Record Reconstructor"
    {:events
     {:successful-run
-     {:req (req (= (get-in @state [:run :server]) [:archives]))
-      :effect (req (let [rr card]
-                     (swap! state assoc-in [:run :run-effect :replace-access]
-                            {:effect (effect (resolve-ability
-                                               {:prompt "Choose one faceup card to add to the top of R&D"
-                                                :choices (req (filter #(:seen %) (:discard corp)))
-                                                :msg (msg "add " (:title target) " to the top of R&D")
-                                                :effect (req (move state :corp target :deck {:front true}))}
-                                               rr nil))})))}}}
+     {:req (req (= target :archives))
+      :effect (effect (add-run-effect
+                        {:card card
+                         :replace-access
+                         {:prompt "Choose one faceup card to add to the top of R&D"
+                          :choices (req (filter #(:seen %) (:discard corp)))
+                          :msg (msg "add " (card-str state target) " to the top of R&D")
+                          :effect (effect (move :corp target :deck {:front true}))}}))}}}
 
    "Reflection"
    {:in-play [:memory 1 :link 1]
@@ -1515,20 +1514,29 @@
                          card nil)))}}}
 
    "Top Hat"
-   (letfn [(ability [n]
-             {:async true
-              :mandatory true
-              :req (req (not= (:max-access run) 0))
-              :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
-              :choices (take n ["1" "2" "3" "4" "5"])
-              :effect (effect (system-msg (str "accesses the card at position " (str->int target) " of R&D"))
-                              (access-card eid (nth (:deck corp) (dec (str->int target))) "an unseen card"))})]
-     {:events {:successful-run
-               {:req (req (= target :rd))
-                :interactive (req true)
-                :optional {:prompt "Use Top Hat to choose one of the top 5 cards in R&D to access?"
-                           :yes-ability {:effect (req (swap! state assoc-in [:run :run-effect :replace-access]
-                                                             (ability (count (:deck corp)))))}}}}})
+   {:events {:successful-run
+             {:interactive (req true)
+              :req (req (and (= target :rd)
+                             (not= (:max-access run) 0)))
+              :async true
+              :effect
+              (effect
+                (continue-ability
+                  {:optional
+                   {:prompt "Use Top Hat to access a single card?"
+                    :yes-ability
+                    {:prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
+                     :choices (take (count (:deck corp)) (range 1 6))
+                     :msg (msg "only access the card at position " target " of R&D")
+                     :effect (effect
+                               (add-run-effect
+                                 (let [t target]
+                                   {:card card
+                                    :replace-access
+                                    {:mandatory true
+                                     :effect (req (when (empty? (get-cards-to-access state))
+                                                    (access-card state side eid (nth (:deck corp) (dec t)) "an unseen card")))}})))}}}
+                  card nil))}}}
 
    "Turntable"
    {:in-play [:memory 1]

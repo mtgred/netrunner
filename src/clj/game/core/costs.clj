@@ -441,7 +441,7 @@
                     (if (= :runner side) "their grip" "HQ")
                     (when (and (= :runner side)
                                (pos? (count cards)))
-                      (str " (" (map :title cards) ")")))))))
+                      (str " (" (join ", " (map :title cards)) ")")))))))
 
 (defn pay-trash-program-from-grip
   [state side eid amount]

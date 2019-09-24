@@ -135,6 +135,7 @@
                  :req (req (and (:run @state) (not (rezzed? current-ice)) (can-rez? state side current-ice {:ignore-unique true})))
                  :prompt "Choose another server and redirect the run to its outermost position"
                  :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
+                 :label "Trash a piece of ice to choose another server- the runner is now running that server"
                  :msg (msg "trash the approached ICE. The Runner is now running on " target)
                  :effect (req (let [dest (server->zone state target)]
                                 (trash state side current-ice)
@@ -268,7 +269,9 @@
                      :once :per-turn
                      :msg (msg "gain 2 [Credits] from " (:az-target card))}]
      {:events {:corp-turn-ends choose-type
-               :runner-install check-type
+               :runner-install (assoc check-type
+                                      :req (req (and (is-type? target (:az-target card))
+                                                     (not (facedown? target)))))
                :play-event check-type}})
 
    "Az McCaffrey: Mechanical Prodigy"
@@ -294,6 +297,7 @@
    {:flags {:corp-phase-12 (req (and (not (:disabled card))
                                      (some rezzed? (all-installed state :corp))))}
     :abilities [{:choices {:req rezzed?}
+                 :label "Add 1 rezzed card to HQ and gain credits equal to its rez cost"
                  :effect (req (trigger-event state side :pre-rez-cost target)
                               (let [cost (rez-cost state side target)]
                                 (gain-credits state side cost)
@@ -380,7 +384,7 @@
                                    (register-turn-flag! state side card :can-trash-operation (constantly false)))
                       :msg (msg "trash " (:title target))}
              :successful-run-ends {:req (req (and (= (:server target) [:archives])
-                                                  (nil? (:replace-access (:run-effect target)))
+                                                  (empty? (filter :replace-access (:run-effects target)))
                                                   (not= (:max-access target) 0)
                                                   (seq (filter operation? (:discard corp)))))
                                    :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}}}
@@ -420,7 +424,7 @@
                                          {:async true
                                           :msg (msg "trash " (:title accessed-card) " at no cost")
                                           :effect (effect (clear-wait-prompt :corp)
-                                                          (trash-no-cost eid accessed-card))}
+                                                          (trash eid (assoc accessed-card :seen true) nil))}
                                          card nil)
                        (wait-for (resolve-ability state side (pick-virus-counters-to-spend play-or-rez) card nil)
                                  (do (clear-wait-prompt state :corp)
@@ -429,7 +433,7 @@
                                                        (str "uses Freedom Khumalo: Crypto-Anarchist to"
                                                             " trash " (:title accessed-card)
                                                             " at no cost, spending " msg))
-                                           (trash-no-cost state side eid accessed-card))
+                                           (trash state side eid (assoc accessed-card :seen true) nil))
                                        ;; Player cancelled ability
                                        (do (swap! state dissoc-in [:per-turn (:cid card)])
                                            (access-non-agenda state side eid accessed-card :skip-trigger-event true))))))))}}}
@@ -1016,9 +1020,6 @@
                                   :effect (req (let [target-server (if (= target "HQ") :hq :rd)]
                                                  (swap! state update-in [:runner :register :successful-run] #(rest %))
                                                  (swap! state assoc-in [:run :server] [target-server])
-                                                 ; remove the :req from the run-effect, so that other cards that replace
-                                                 ; access don't use Omar's req.
-                                                 (swap! state dissoc-in [:run :run-effect :req])
                                                  (trigger-event state :corp :no-action)
                                                  (swap! state update-in [:runner :register :successful-run] #(conj % target-server))
                                                  (system-msg state side (str "uses Omar Keung: Conspiracy Theorist to make a successful run on " target))))}
@@ -1119,7 +1120,7 @@
                                                 card nil))}}}
 
    "Skorpios Defense Systems: Persuasive Power"
-   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted.  Cannot use on in progress run event"
+   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"
     :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
                  :async true
                  :effect (req (when-not (and (used-this-turn? (:cid card) state) (active-prompt? state side card))
@@ -1129,7 +1130,7 @@
                                                    :once :per-turn
                                                    :choices (req (cancellable
                                                                    ;; do not allow a run event in progress to get nuked #2963
-                                                                   (remove #(same-card? % (get-in @state [:run :run-effect :card]))
+                                                                   (remove (fn [c] (some #(same-card? c (:card %)) (:run-effects run)))
                                                                            (:discard runner))))
                                                    :msg (msg "remove " (:title target) " from the game")
                                                    :effect (req (move state :runner target :rfg)
@@ -1208,7 +1209,7 @@
    {:events {:successful-run
              {:req (req (and (= target :hq)
                              (first-successful-run-on-server? state :hq)
-                             (if (-> @state :run :run-effect :card)
+                             (if (pos? (count (->> @state :run :run-effects #(map :card))))
                                (> (count (:discard runner)) 2)
                                (> (count (:discard runner)) 1))))
               :interactive (req true)
@@ -1217,9 +1218,10 @@
                                 {:async true
                                  :prompt "Select 2 cards in your Heap"
                                  :show-discard true
-                                 :choices {:max 2 :req #(and (in-discard? %)
-                                                             (runner? %)
-                                                             (not= (-> @state :run :run-effect :card :cid) (:cid %)))}
+                                 :choices {:max 2
+                                           :req #(and (in-discard? %)
+                                                      (runner? %)
+                                                      (not (some (fn [c] (same-card? % (:card c))) (:run-effects run))))}
                                  :cancel-effect (req (effect-completed state side eid))
                                  :effect (req (let [c1 (first targets)
                                                     c2 (second targets)]
@@ -1283,6 +1285,7 @@
                                     (trash-resource-bonus state side -2)
                                     (update! state side (-> card (assoc :sync-front true
                                                                         :code "09001"))))))
+                 :label "Flip this identity"
                  :msg (msg "flip their ID")}]
     :leave-play (req (if (:sync-front card)
                        (tag-remove-bonus state side 1)
@@ -1307,6 +1310,7 @@
    {:flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
                                      (not-last-turn? state :runner :successful-run)))}
     :abilities [{:msg (msg "place 1 advancement token on " (card-str state target))
+                 :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"
                  :choices {:req installed?}
                  :req (req (and (:corp-phase-12 @state) (not-last-turn? state :runner :successful-run)))
                  :once :per-turn
