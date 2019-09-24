@@ -1317,7 +1317,7 @@
                                     :msg (msg "trash " (:title target) " at no cost")
                                     :once :per-turn
                                     :async true
-                                    :effect (effect (trash-no-cost eid target))}}}
+                                    :effect (effect (trash eid (assoc target :seen true) nil))}}}
 
    "Incubator"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}

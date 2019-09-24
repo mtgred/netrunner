@@ -558,13 +558,6 @@
                            (trashrec trashlist)))))]
      (preventrec cards))))
 
-(defn trash-no-cost
-  [state side eid card & {:keys [seen unpreventable]
-                          :or {seen true}}]
-  (when (not= side (-> card :side lower-case keyword))
-    (swap! state assoc-in [side :register :trashed-card] true))
-  (trash state side eid (assoc card :seen seen) {:unpreventable unpreventable}))
-
 ;;; Agendas
 (defn get-agenda-points
   "Apply agenda-point modifications to calculate the number of points this card is worth
@@ -674,7 +667,7 @@
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :deck]))]
      (doseq [card milltargets]
-       (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
+       (trash state from-side (make-eid state) card {:unpreventable true})))))
 
 (defn discard-from-hand
   "Force the discard of n cards from the hand by trashing them"
@@ -683,7 +676,7 @@
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :hand]))]
      (doseq [card milltargets]
-       (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
+       (trash state from-side (make-eid state) card {:unpreventable true})))))
 
 (defn change-hand-size
   "Changes a side's hand-size modification by specified amount (positive or negative)"

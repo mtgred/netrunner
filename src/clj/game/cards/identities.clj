@@ -424,7 +424,7 @@
                                          {:async true
                                           :msg (msg "trash " (:title accessed-card) " at no cost")
                                           :effect (effect (clear-wait-prompt :corp)
-                                                          (trash-no-cost eid accessed-card))}
+                                                          (trash eid (assoc accessed-card :seen true) nil))}
                                          card nil)
                        (wait-for (resolve-ability state side (pick-virus-counters-to-spend play-or-rez) card nil)
                                  (do (clear-wait-prompt state :corp)
@@ -433,7 +433,7 @@
                                                        (str "uses Freedom Khumalo: Crypto-Anarchist to"
                                                             " trash " (:title accessed-card)
                                                             " at no cost, spending " msg))
-                                           (trash-no-cost state side eid accessed-card))
+                                           (trash state side eid (assoc accessed-card :seen true) nil))
                                        ;; Player cancelled ability
                                        (do (swap! state dissoc-in [:per-turn (:cid card)])
                                            (access-non-agenda state side eid accessed-card :skip-trigger-event true))))))))}}}
