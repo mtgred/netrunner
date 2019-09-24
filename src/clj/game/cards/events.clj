@@ -2348,16 +2348,12 @@
     :effect (req (doseq [c (:hand runner)]
                    (trash state side c))
                  (register-events
-                   state side (assoc card :zone '(:discard))
+                   state side card
                    [{:event :pre-damage
+                     :duration :end-of-run
                      :effect (effect (damage-prevent :net Integer/MAX_VALUE)
                                      (damage-prevent :meat Integer/MAX_VALUE)
-                                     (damage-prevent :brain Integer/MAX_VALUE))}
-                    {:event :run-ends
-                     :effect (effect (unregister-events
-                                       card
-                                       {:events [{:events :pre-damage}
-                                                 {:events :run-ends}]}))}])
+                                     (damage-prevent :brain Integer/MAX_VALUE))}])
                  (continue-ability
                    state side
                    {:prompt "Choose a server"
