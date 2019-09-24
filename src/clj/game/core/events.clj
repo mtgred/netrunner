@@ -4,13 +4,25 @@
          register-suppress resolve-ability
          trigger-suppress unregister-suppress)
 
+(defn default-locations
+  [card]
+  (case (to-keyword (:type card))
+    :agenda [:scored]
+    (:asset :ice :upgrade) [:servers]
+    (:event :operation) [:current :play-area]
+    (:hardware :program :resource) [:rig]
+    :identity [:identity]))
+
 ; Functions for registering and dispatching events.
 (defn register-events
   "Registers each event handler defined in the given card definition.
   Also registers any suppression events. (Crisium Grid.)"
   [state side events card]
-  (doseq [e events]
-    (swap! state update-in [:events (first e)] #(conj % {:ability (last e) :card card})))
+  (let [location (default-locations card)
+        zone (first (:zone card))
+        new-events (filter (fn [e] (when (#{zone} (or (:location (second e) location))) e)) events)]
+    (doseq [[k v] new-events]
+      (swap! state update-in [:events k] #(conj % {:ability v :card card}))))
   (register-suppress state side (:suppress (card-def card)) card))
 
 (defn unregister-events

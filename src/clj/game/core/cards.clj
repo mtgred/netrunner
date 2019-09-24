@@ -192,6 +192,10 @@
                ; :corp-hand-change :corp-deck-change :corp-discard-change
                ; :runner-hand-change :runner-deck-change :runner-discard-change
                (trigger-event-sync state side (make-eid state) event (count (get-in @state [side zone])) moved-card)))
+           (let [zone (first (:previous-zone moved-card))
+                 old-events (filter (fn [e] (#{zone} (:location (second e)))) (:events (card-def moved-card)))]
+             (unregister-events state side moved-card {:events (into {} old-events)}))
+           (register-events state side (:events (card-def moved-card)) moved-card)
            ;; Default a card when moved to inactive zones (except :persistent key)
            (when (#{:discard :hand :deck :rfg :scored} to)
              (reset-card state side moved-card)
