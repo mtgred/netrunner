@@ -447,7 +447,8 @@
                                      card nil))
                                (do (system-msg state side (str "uses Credit Crash to trash " title " at no cost"))
                                    (trash state side eid (assoc c :seen true) nil)))))}
-             :run-ends {:effect (effect (unregister-events card))}]}
+             {:event :run-ends
+              :effect (effect (unregister-events card))}]}
 
    "Credit Kiting"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
