@@ -85,7 +85,7 @@
              (str "Pay " amount " [Credits]")]
    :effect (req (if (= "End the run" target)
                   (end-run state :corp eid)
-                  (pay-sync state :runner eid [:credit amount])))})
+                  (pay-sync state :runner eid card [:credit amount])))})
 
 (defn end-the-run-unless-runner
   [label prompt ability]
