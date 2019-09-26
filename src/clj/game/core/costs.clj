@@ -5,7 +5,7 @@
          all-installed-runner-type pick-credit-providing-cards all-active
          eligible-pay-credit-cards lose-tags)
 
-(defn deduct
+(defn- deduct
   "Deduct the value from the player's attribute."
   [state side [attr value]]
   (cond
@@ -34,12 +34,63 @@
         (when (and (= attr :credit)
                    (= side :runner)
                    (pos? (get-in @state [:runner :run-credit] 0)))
-          (swap! state update-in [:runner :run-credit] (sub->0 value)))
-        (cond
-          (= :credit attr)
-          (str "pays " value " [Credits]")
-          (= :click attr)
-          (str "spends " (->> "[Click]" repeat (take value) (apply str)))))))
+          (swap! state update-in [:runner :run-credit] (sub->0 value))))))
+
+(defn gain [state side & args]
+  (doseq [[cost-type amount] (partition 2 args)]
+    (cond
+      ;; amount is a map, merge-update map
+      (map? amount)
+      (doseq [[subtype amount] amount]
+        (swap! state update-in [side cost-type subtype] (safe-inc-n amount))
+        (swap! state update-in [:stats side :gain cost-type subtype] (fnil + 0) amount))
+
+      ;; Default cases for the types that expect a map
+      (#{:hand-size :memory} cost-type)
+      (gain state side cost-type {:mod amount})
+
+      ;; Default case for tags and bad publicity is `:base`
+      (#{:tag :bad-publicity} cost-type)
+      (gain state side cost-type {:base amount})
+
+      ;; Else assume amount is a number and try to increment cost-type by it.
+      :else
+      (do (swap! state update-in [side cost-type] (safe-inc-n amount))
+          (swap! state update-in [:stats side :gain cost-type] (fnil + 0 0) amount)))
+    (trigger-event state side (if (= side :corp) :corp-gain :runner-gain) [cost-type amount])))
+
+(defn lose [state side & args]
+  (doseq [[cost-type amount] (partition 2 args)]
+    (if (= amount :all)
+      (do (swap! state assoc-in [side cost-type] 0)
+          (swap! state update-in [:stats side :lose cost-type] (fnil + 0) (get-in @state [side cost-type])))
+      (do (when (number? amount)
+            (swap! state update-in [:stats side :lose cost-type] (fnil + 0) amount))
+          (deduct state side [cost-type amount])))
+    (trigger-event state side (if (= side :corp) :corp-lose :runner-lose) [cost-type amount])))
+
+(defn gain-credits
+  "Utility function for triggering events"
+  ([state side amount] (gain-credits state side (make-eid state) amount nil))
+  ([state side amount args] (gain-credits state side (make-eid state) amount args))
+  ([state side eid amount args]
+   (if (and amount
+            (pos? amount))
+     (do (gain state side :credit amount)
+         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) args))
+     (effect-completed state side eid))))
+
+(defn lose-credits
+  "Utility function for triggering events"
+  ([state side amount] (lose-credits state side (make-eid state) amount nil))
+  ([state side amount args] (lose-credits state side (make-eid state) amount args))
+  ([state side eid amount args]
+   (if (and amount
+            (or (= :all amount)
+                (pos? amount)))
+     (do (lose state side :credit amount)
+         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-loss :runner-credit-loss) args))
+     (effect-completed state side eid))))
 
 (defn- add-default-to-costs
   "Take a sequence of costs (nested or otherwise) and add a default value of 1
@@ -270,14 +321,17 @@
 (defn pay-credits
   [state side eid card amount]
   (let [provider-func #(eligible-pay-credit-cards state side eid card)]
-    (if (and (pos? amount)
+    (cond
+      (and (pos? amount)
              (pos? (count (provider-func))))
       (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid amount) card nil)
                 (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
                 (complete-with-result state side eid (str "pays " (:msg async-result))))
-      (do
-        (swap! state update-in [:stats side :spent :credit] (fnil + 0) amount)
-        (complete-with-result state side eid (deduct state side [:credit amount]))))))
+      (pos? amount)
+      (do (lose state side :credit amount)
+          (complete-with-result state side eid (str "pays " amount " [Credits]")))
+      :else
+      (complete-with-result state side eid (str "pays 0 [Credits]")))))
 
 (defn pay-clicks
   [state side eid action costs cost-type amount]
@@ -285,11 +339,12 @@
     (when (not= a :steal-cost)
       ;; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
       (swap! state assoc :click-state (dissoc @state :log)))
+    (lose state side :click amount)
     (trigger-event state side
                    (if (= side :corp) :corp-spent-click :runner-spent-click)
                    a (:click (into {} costs)))
     (swap! state assoc-in [side :register :spent-click] true)
-    (complete-with-result state side eid (deduct state side [cost-type amount]))))
+    (complete-with-result state side eid (str "spends " (->> "[Click]" repeat (take amount) (apply str))))))
 
 (defn pay-trash
   "[Trash] cost as part of an ability"
@@ -613,57 +668,6 @@
                                                           (filter some?)
                                                           (join " and "))))
       (complete-with-result state side eid nil))))
-
-(defn gain [state side & args]
-  (doseq [[type amount] (partition 2 args)]
-    (cond
-      ;; amount is a map, merge-update map
-      (map? amount)
-      (doseq [[subtype amount] amount]
-        (swap! state update-in [side type subtype] (safe-inc-n amount))
-        (swap! state update-in [:stats side :gain type subtype] (fnil + 0) amount))
-
-      ;; Default cases for the types that expect a map
-      (#{:hand-size :memory} type)
-      (gain state side type {:mod amount})
-
-      ;; Default case for tags and bad publicity is `:base`
-      (#{:tag :bad-publicity} type)
-      (gain state side type {:base amount})
-
-      ;; Else assume amount is a number and try to increment type by it.
-      :else
-      (do (swap! state update-in [side type] (safe-inc-n amount))
-          (swap! state update-in [:stats side :gain type] (fnil + 0 0) amount)))))
-
-(defn lose [state side & args]
-  (doseq [r (partition 2 args)]
-    (trigger-event state side (if (= side :corp) :corp-loss :runner-loss) r)
-    (if (= (last r) :all)
-      (do (swap! state assoc-in [side (first r)] 0)
-          (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (get-in @state [side (first r)])))
-      (do (when (number? (second r))
-            (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (second r)))
-          (deduct state side r)))))
-
-(defn gain-credits
-  "Utility function for triggering events"
-  [state side amount & args]
-  (when (and amount
-             (pos? amount))
-    (gain state side :credit amount)
-    (let [kw (keyword (str (name side) "-credit-gain"))]
-      (apply trigger-event-sync state side (make-eid state) kw args))))
-
-(defn lose-credits
-  "Utility function for triggering events"
-  [state side amount & args]
-  (when (and amount
-             (or (= :all amount)
-                 (pos? amount)))
-    (lose state side :credit amount)
-    (let [kw (keyword (str (name side) "-credit-loss"))]
-      (apply trigger-event-sync state side (make-eid state) kw args))))
 
 (defn play-cost-bonus [state side costs]
   (swap! state update-in [:bonus :play-cost] #(merge-costs (concat % costs))))

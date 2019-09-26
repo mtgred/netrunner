@@ -1798,7 +1798,7 @@
               :async true
               :effect (req (let [correct-guess ((if (= target "Even") even? odd?) spent)]
                              (clear-wait-prompt state :runner)
-                             (deduct state :runner [:credit spent])
+                             (lose state :runner :credit spent)
                              (system-msg state :runner (str "spends " spent " [Credit]"))
                              (system-msg state :corp (str (if correct-guess " " " in")
                                                           "correctly guesses " (lower-case target)))
@@ -1976,7 +1976,7 @@
               :choices choices
               :async true
               :effect (req (clear-wait-prompt state :runner)
-                           (deduct state :runner [:credit spent])
+                           (lose state :runner :credit spent)
                            (system-msg state :runner (str "spends " spent " [Credit]"))
                            (system-msg state :corp (str " guesses " target " [Credit]"))
                            (wait-for (trigger-event-simult state side :reveal-spent-credits nil nil spent)

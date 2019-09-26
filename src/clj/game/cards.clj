@@ -253,8 +253,8 @@
                                    remainder-str
                                    (when (and card-strs remainder-str)
                                      " from their credit pool"))]
-                  (deduct state side [:credit remainder])
-                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) target-count)
+                  (lose state side :credit remainder)
+                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) (- target-count remainder))
                   (let [cards (filter #(has-subtype? % "Stealth") (map :card (vals selected-cards)))]
                     (wait-for (trigger-stealth-cards state side cards)
                               ; Now we trigger all of the :counter-added events we'd neglected previously
