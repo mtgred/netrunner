@@ -25,9 +25,11 @@
      (assoc ice :subroutines new-subs))))
 
 (defn add-sub!
-  ([state side ice sub] (update! state :corp (add-sub ice sub (:cid ice) nil)))
-  ([state side ice sub cid] (update! state :corp (add-sub ice sub cid nil)))
-  ([state side ice sub cid args] (update! state :corp (add-sub ice sub cid args))))
+  ([state side ice sub] (add-sub! state side ice sub (:cid ice) nil))
+  ([state side ice sub cid] (add-sub! state side ice sub cid nil))
+  ([state side ice sub cid args]
+   (update! state :corp (add-sub ice sub cid args))
+   (trigger-event state side :subroutines-changed (get-card state ice))))
 
 (defn remove-sub
   "Removes a single sub from a piece of ice. By default removes the first subroutine
@@ -39,9 +41,10 @@
      (assoc ice :subroutines new-subs))))
 
 (defn remove-sub!
-  ([state side ice] (update! state :corp (remove-sub ice #(= (:cid ice) (:from-cid %)))))
+  ([state side ice] (remove-sub! state side ice #(= (:cid ice) (:from-cid %))))
   ([state side ice pred]
-   (update! state :corp (remove-sub ice pred))))
+   (update! state :corp (remove-sub ice pred))
+   (trigger-event state side :subroutines-changed (get-card state ice))))
 
 (defn add-extra-sub!
   "Add a run time subroutine to a piece of ice (Warden, Sub Boost, etc)"
@@ -58,8 +61,9 @@
         extra-subs (some #(= (:cid ice) (:from-cid %)) new-subs)]
     (update! state :corp
              (-> ice
-               (assoc :subroutines (vec new-subs))
-               (assoc-in [:special :extra-subs] extra-subs)))))
+                 (assoc :subroutines (vec new-subs))
+                 (assoc-in [:special :extra-subs] extra-subs)))
+    (trigger-event state side :subroutines-changed (get-card state ice))))
 
 (defn break-subroutine
   "Marks a given subroutine as broken"
@@ -456,5 +460,6 @@
                          :ice-strength-changed breaker-auto-pump
                          :ice-subtype-changed breaker-auto-pump
                          :breaker-strength-changed breaker-auto-pump
-                         :approach-ice breaker-auto-pump}
+                         :approach-ice breaker-auto-pump
+                         :subroutines-changed breaker-auto-pump}
                         (:events cdef))))

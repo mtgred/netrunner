@@ -25,7 +25,8 @@
                        :subroutines
                        (into []))
          new-card (assoc new-card :subroutines new-subs)]
-     (update! state :corp new-card))))
+     (update! state :corp new-card)
+     (trigger-event state side :subroutines-changed (get-card state new-card)))))
 
 (defn reset-printed-subs
   ([state side card total sub] (reset-printed-subs state side card total sub {:printed true}))
@@ -38,7 +39,8 @@
                        (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
                        :subroutines)
          new-card (assoc new-card :subroutines new-subs)]
-     (update! state :corp new-card))))
+     (update! state :corp new-card)
+     (trigger-event state side :subroutines-changed (get-card state new-card)))))
 
 ;;; Runner abilites for breaking subs
 (defn runner-pay-or-break
