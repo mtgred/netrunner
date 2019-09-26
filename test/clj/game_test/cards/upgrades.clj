@@ -1338,7 +1338,6 @@
         (card-ability state :corp recstudio 0)
         (click-card state :corp (first (:hand (get-corp))))
         (let [[beale] (:hosted (refresh recstudio))]
-          (println (game.utils/zone->name (second (:zone beale))))
           (core/rez state :corp la-costa)
           (take-credits state :corp)
           (take-credits state :runner)
