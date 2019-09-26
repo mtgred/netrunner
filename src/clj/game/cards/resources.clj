@@ -2122,7 +2122,9 @@
 
    "Technical Writer"
    {:events {:runner-install {:silent (req true)
-                              :req (req (some #(= % (:type target)) '("Hardware" "Program")))
+                              :req (req (and (or (hardware? target)
+                                                 (program? target))
+                                             (not (facedown? target))))
                               :effect (effect (add-counter :runner card :credit 1)
                                               (system-msg (str "places 1 [Credits] on Technical Writer")))}}
     :abilities [{:cost [:click 1 :trash]
