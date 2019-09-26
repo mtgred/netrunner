@@ -785,7 +785,7 @@
                                                 true))
                                     :effect (effect
                                               (continue-ability
-                                                (break-sub 1 1 "Code Gate")
+                                                (break-sub nil 1 "Code Gate")
                                                 card nil))})
                                  (merge
                                    (strength-pump 1 1)
@@ -794,7 +794,7 @@
                                                 true))
                                     :effect (effect
                                               (continue-ability
-                                                (strength-pump 1 1)
+                                                (strength-pump nil 1)
                                                 card nil))})]})
 
    "D4v1d"
