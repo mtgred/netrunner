@@ -364,7 +364,9 @@
                                            :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                                card nil))}
     :abilities [{:label "Purge virus counters"
-                 :msg "purge virus counters" :effect (effect (trash card) (purge))}]}
+                 :msg "purge virus counters"
+                 :cost [:trash]
+                 :effect (effect (purge))}]}
 
    "Daruma"
    (letfn [(choose-swap [to-swap]
