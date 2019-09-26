@@ -208,7 +208,24 @@
         (click-prompt state :corp "New remote")
         (is (= "Adonis Campaign" (:title (get-content state :remote4 0)))
             "Adonis installed by Team Sponsorship")
-        (is (nil? (find-card "Adonis Campaign" (:discard (get-corp)))) "No Adonis in discard")))))
+        (is (nil? (find-card "Adonis Campaign" (:discard (get-corp)))) "No Adonis in discard"))))
+  (testing "with Gang Sign. Issue #4487"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Amani Senai" "Hostile Takeover" "Hostile Takeover"]}
+                 :runner {:hand ["Gang Sign"]}})
+      (play-from-hand state :corp "Amani Senai" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gang Sign")
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (click-prompt state :corp "Hostile Takeover")
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (click-card state :corp "Gang Sign")
+      (is (empty? (:prompt (get-runner))) "Runner doesn't get an access prompt"))))
 
 (deftest anson-rose
   ;; Anson Rose

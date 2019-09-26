@@ -162,7 +162,7 @@
                                                                      (runner? %))}
                                                 :label "add an installed card to the Grip"
                                                 :msg (msg "add " (:title target) " to the Runner's Grip")
-                                                :effect (effect (move :runner target :hand true))}}}}})]
+                                                :effect (effect (move :runner target :hand))}}}}})]
      {:events {:agenda-scored {:interactive (req true)
                                :async true
                                :effect (effect (continue-ability (senai-ability target) card nil))}
