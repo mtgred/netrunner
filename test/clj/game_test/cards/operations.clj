@@ -1291,6 +1291,28 @@
     (click-prompt state :runner "0")
     (is (= 4 (count-tags state)) "Runner should gain 4 tags from losing Hard-Hitting News trace")))
 
+(deftest hasty-relocation
+  ;; Hasty Relocation
+  (do-game
+    (new-game {:corp {:hand ["Hasty Relocation"
+                             "Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                             "DNA Tracker" "Excalibur" "Fire Wall"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Excalibur" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+      (is (empty? (:discard (get-corp))) "Archives starts empty")
+      (play-from-hand state :corp "Hasty Relocation")
+      (is (= "Accelerated Beta Test" (-> (get-corp) :discard first :title)) "ABT is in Archives")
+      (is (= ["Brainstorm" "Chiyashi" "DNA Tracker"] (prompt-titles :corp)) "Next 3 cards are in HQ")
+      (click-prompt state :corp "Brainstorm")
+      (click-prompt state :corp "Chiyashi")
+      (click-prompt state :corp "DNA Tracker")
+      (click-prompt state :corp "Done")
+      (is (= "DNA Tracker" (-> (get-corp) :deck first :title)) "DNA Tracker is now on top of R&D")))
+
 (deftest hatchet-job
   ;; Hatchet Job - Win trace to add installed non-virtual to grip
   (do-game
