@@ -2396,7 +2396,8 @@
                                   (trash state side card {:unpreventable true})))}]}
 
    "Sandstone"
-   {:subroutines [end-the-run]
+   {:implementation "Encounter effect is manual"
+    :subroutines [end-the-run]
     :strength-bonus (req (- (get-counters card :virus)))
     :abilities [{:label "Place one virus counter"
                  :req (req (same-card? current-ice card))
