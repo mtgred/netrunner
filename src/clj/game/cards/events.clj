@@ -334,7 +334,7 @@
                      (make-run state side (make-eid state) target
                                {:end-run {:async true
                                           :effect (effect (trash card)
-                                                          (continue-ability end-effect nil nil))}}
+                                                          (continue-ability :runner end-effect nil nil))}}
                                (assoc c :cold-read-active true))))
       :interactions {:pay-credits {:req (req (:cold-read-active card))
                                    :type :recurring}}})
