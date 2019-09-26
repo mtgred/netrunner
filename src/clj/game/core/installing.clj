@@ -214,7 +214,7 @@
       ;; Check to see if a second agenda/asset was installed.
       (wait-for (corp-install-asset-agenda state side moved-card dest-zone server)
                 (letfn [(event [state side eid _]
-                          (trigger-event-simult state side eid :corp-install nil (get-card state moved-card)))]
+                          (trigger-event-simult state side eid :corp-install nil (get-card state moved-card) install-state))]
                   (case install-state
                     ;; Ignore all costs. Pass eid to rez.
                     :rezzed-no-cost

@@ -1461,14 +1461,13 @@
                                   ["Card from grip" "Trash"]
                                   ["Trash"]))
                   :player :runner
-                  :effect (req (if (= target "Trash")
-                                 (do
-                                   (trash state :runner card)
-                                   (system-msg state :runner "trashes Mystic Maemi"))
+                  :effect (req (clear-wait-prompt state :corp)
+                               (if (= target "Trash")
+                                 (do (trash state :runner card)
+                                     (system-msg state :runner "trashes Mystic Maemi"))
                                  (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :ability})
                                                      card [:randomly-trash-from-hand 1])
-                                           (system-msg state :runner (str (build-spend-msg async-result "avoid" "trashing Mystic Maemi")))
-                                           (clear-wait-prompt state :corp))))}
+                                           (system-msg state :runner (str (build-spend-msg async-result "avoid" "trashing Mystic Maemi"))))))}
                  card nil))
        ;; companion-builder: ability
        {:msg "take 1 [Credits]"
@@ -1506,10 +1505,10 @@
                                 card nil))}}
     ; Normally this should be (req true), but having pay-credits prompts on
     ; literally every interaction would get tiresome. Therefore Net Mercur will
-    ; only ask for payments during a run, traces, and psi games
+    ; only ask for payments during a run, traces, psi games, and prevention abilities
     :interactions {:pay-credits {:req (req (or run
-                                               (= :psi (:source-type eid))
-                                               (= :trace (:source-type eid))))
+                                               (#{:psi :trace} (:source-type eid))
+                                               (#{:net :meat :brain :tag} (get-in @state [:prevent :current]))))
                                  :type :credit}}}
 
    "Network Exchange"
@@ -2123,7 +2122,9 @@
 
    "Technical Writer"
    {:events {:runner-install {:silent (req true)
-                              :req (req (some #(= % (:type target)) '("Hardware" "Program")))
+                              :req (req (and (or (hardware? target)
+                                                 (program? target))
+                                             (not (facedown? target))))
                               :effect (effect (add-counter :runner card :credit 1)
                                               (system-msg (str "places 1 [Credits] on Technical Writer")))}}
     :abilities [{:cost [:click 1 :trash]

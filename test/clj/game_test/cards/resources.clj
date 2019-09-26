@@ -2305,7 +2305,25 @@
                            (card-ability state :runner refr 1)
                            (click-card state :runner cl))
         (click-prompt state :runner "Place 1 [Credits]")
-        (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")))))
+        (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur"))))
+  (testing "Prevention prompt. Issue #4464"
+    (do-game
+      (new-game {:runner {:hand ["Feedback Filter" "Net Mercur"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Feedback Filter")
+      (play-from-hand state :runner "Net Mercur")
+      (let [nm (get-resource state 0)
+            ff (get-hardware state 0)]
+        (core/add-counter state :runner (refresh nm) :credit 4)
+        (core/damage state :corp :net 2)
+        (card-ability state :runner ff 0)
+        (click-card state :runner nm)
+        (click-card state :runner nm)
+        (click-card state :runner nm)
+        (card-ability state :runner ff 0)
+        (click-prompt state :runner "Done")
+        (is (= 1 (get-counters (refresh nm) :credit)) "Net Mercur has lost 3 credits")))))
 
 (deftest network-exchange
   ;; ICE install costs 1 more except for inner most
@@ -3337,25 +3355,42 @@
 
 (deftest technical-writer
   ;; Technical Writer - Gain 1c per program/hardware install; click/trash to take all credits
-  (do-game
-    (new-game {:runner {:deck ["Technical Writer" (qty "Faerie" 2)
-                               "Vigil" "Same Old Thing"]}})
-    (take-credits state :corp)
-    (core/gain state :runner :click 2)
-    (play-from-hand state :runner "Technical Writer")
-    (let [tw (get-resource state 0)]
-      (play-from-hand state :runner "Faerie")
-      (is (= 1 (get-counters (refresh tw) :credit)) "Tech Writer gained 1c")
-      (play-from-hand state :runner "Faerie")
-      (is (= 2 (get-counters (refresh tw) :credit)) "Tech Writer gained 1c")
-      (play-from-hand state :runner "Vigil")
-      (is (= 3 (get-counters (refresh tw) :credit)) "Tech Writer gained 1c")
-      (play-from-hand state :runner "Same Old Thing")
-      (is (= 3 (get-counters (refresh tw) :credit)) "No credit gained for resource install")
-      (card-ability state :runner tw 0)
-      (is (= 6 (:credit (get-runner))) "Gained 3 credits")
-      (is (zero? (:click (get-runner))) "Spent 1 click")
-      (is (= 1 (count (:discard (get-runner)))) "Technical Writer trashed"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Technical Writer" (qty "Faerie" 2)
+                                 "Vigil" "Same Old Thing"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :click 2)
+      (play-from-hand state :runner "Technical Writer")
+      (let [tw (get-resource state 0)]
+        (play-from-hand state :runner "Faerie")
+        (is (= 1 (get-counters (refresh tw) :credit)) "Tech Writer gained 1c")
+        (play-from-hand state :runner "Faerie")
+        (is (= 2 (get-counters (refresh tw) :credit)) "Tech Writer gained 1c")
+        (play-from-hand state :runner "Vigil")
+        (is (= 3 (get-counters (refresh tw) :credit)) "Tech Writer gained 1c")
+        (play-from-hand state :runner "Same Old Thing")
+        (is (= 3 (get-counters (refresh tw) :credit)) "No credit gained for resource install")
+        (card-ability state :runner tw 0)
+        (is (= 6 (:credit (get-runner))) "Gained 3 credits")
+        (is (zero? (:click (get-runner))) "Spent 1 click")
+        (is (= 1 (count (:discard (get-runner)))) "Technical Writer trashed"))))
+  (testing "Interaction with facedown cards. Issue #4498"
+    (do-game
+      (new-game {:runner {:hand ["Technical Writer" "Aesop's Pawnshop" "Harbinger"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Technical Writer")
+      (play-from-hand state :runner "Aesop's Pawnshop")
+      (play-from-hand state :runner "Harbinger")
+      (let [tw (get-resource state 0)]
+        (is (= 1 (get-counters (refresh tw) :credit)) "Tech Writer gained 1c")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (card-ability state :runner (get-resource state 1) 0)
+        (click-card state :runner (get-program state 0))
+        (is (= 1 (count (get-runner-facedown state))) "Harbinger is facedown")
+        (is (= 1 (get-counters (refresh tw) :credit)) "Tech Writer gained 0c from Harbinger installing facedown")))))
 
 (deftest temujin-contract
   ;; Temüjin Contract

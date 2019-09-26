@@ -549,6 +549,8 @@
                                (qty "Hedge Fund" 2)
                                (qty "Crisium Grid" 2)
                                (qty "Ice Wall" 2)]}})
+      (take-credits state :corp)
+      (take-credits state :runner)
       (play-from-hand state :corp "Digital Rights Management")
       (is (= 2 (-> (get-corp) :prompt first :choices count)) "Only Beale and 'None' option displayed")
       (let [cards-in-hand (count (:hand (get-corp)))]
@@ -570,6 +572,8 @@
     (do-game
       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      (take-credits state :corp)
+      (take-credits state :runner)
       (play-from-hand state :corp "Digital Rights Management")
       (click-prompt state :corp "Project Beale")
       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
@@ -579,6 +583,8 @@
     (do-game
       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      (take-credits state :corp)
+      (take-credits state :runner)
       (play-from-hand state :corp "Digital Rights Management")
       (click-prompt state :corp "Project Beale")
       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
@@ -596,6 +602,8 @@
     (do-game
       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Beale" (qty "Hedge Fund" 2)]
                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      (take-credits state :corp)
+      (take-credits state :runner)
       (core/gain state :corp :click 3)
       (play-from-hand state :corp "Project Beale" "New remote")
       (let [beale (get-content state :remote1 0)]
@@ -610,6 +618,8 @@
     ; (do-game
       ; (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Vitruvius" (qty "Hedge Fund" 2)]
                         ; :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      ; (take-credits state :corp)
+      ; (take-credits state :runner)
       ; (play-from-hand state :corp "Digital Rights Management")
       ; (click-prompt state :corp "None")
       ; (play-and-score state "Project Vitruvius")
@@ -1280,6 +1290,28 @@
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
     (is (= 4 (count-tags state)) "Runner should gain 4 tags from losing Hard-Hitting News trace")))
+
+(deftest hasty-relocation
+  ;; Hasty Relocation
+  (do-game
+    (new-game {:corp {:hand ["Hasty Relocation"
+                             "Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                             "DNA Tracker" "Excalibur" "Fire Wall"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Excalibur" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+      (is (empty? (:discard (get-corp))) "Archives starts empty")
+      (play-from-hand state :corp "Hasty Relocation")
+      (is (= "Accelerated Beta Test" (-> (get-corp) :discard first :title)) "ABT is in Archives")
+      (is (= ["Brainstorm" "Chiyashi" "DNA Tracker"] (prompt-titles :corp)) "Next 3 cards are in HQ")
+      (click-prompt state :corp "Brainstorm")
+      (click-prompt state :corp "Chiyashi")
+      (click-prompt state :corp "DNA Tracker")
+      (click-prompt state :corp "Done")
+      (is (= "DNA Tracker" (-> (get-corp) :deck first :title)) "DNA Tracker is now on top of R&D")))
 
 (deftest hatchet-job
   ;; Hatchet Job - Win trace to add installed non-virtual to grip

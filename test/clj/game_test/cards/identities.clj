@@ -104,7 +104,17 @@
       (click-prompt state :corp "No")
       (let [log (-> @state :log last :text)]
         (is (= log "Runner exposes PAD Campaign in Server 2.")))
-      (is (prompt-is-type? state :corp :select) "Corp should still have select prompt"))))
+      (is (prompt-is-type? state :corp :select) "Corp should still have select prompt")))
+  (testing "interation with 'install and rez' effects. Issue #4485"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Building Blocks" "Ice Wall"]
+                        :credits 10}
+                 :runner {:id "419: Amoral Scammer"}})
+      (play-from-hand state :corp "Building Blocks")
+      (click-card state :corp "Ice Wall")
+      (click-prompt state :corp "HQ")
+      (is (empty? (:prompt (get-runner))) "419 doesn't trigger on installed and rezzed cards"))))
 
 (deftest acme-consulting-the-truth-you-need
   (testing "Tag gain when rezzing outermost ice"

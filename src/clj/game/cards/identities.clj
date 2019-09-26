@@ -43,7 +43,8 @@
              {:async true
               :req (req (and (first-event? state :corp :corp-install)
                              (pos? (:turn @state))
-                             (not (rezzed? target))))
+                             (not (rezzed? target))
+                             (not (#{:rezzed-no-cost :rezzed-no-rez-cost :rezzed :faceup} (second targets)))))
               :effect
               (req (show-wait-prompt state :corp "Runner to use 419: Amoral Scammer")
                    (let [itarget target]

@@ -270,6 +270,7 @@
          {:async true
           :effect pay-rest}
          {:async true
+          :priority 12
           :prompt (str "Select a credit providing card ("
                        counter-count (when (and target-count (pos? target-count))
                                        (str " of " target-count))

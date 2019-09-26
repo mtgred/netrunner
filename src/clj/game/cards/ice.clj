@@ -25,7 +25,8 @@
                        :subroutines
                        (into []))
          new-card (assoc new-card :subroutines new-subs)]
-     (update! state :corp new-card))))
+     (update! state :corp new-card)
+     (trigger-event state side :subroutines-changed (get-card state new-card)))))
 
 (defn reset-printed-subs
   ([state side card total sub] (reset-printed-subs state side card total sub {:printed true}))
@@ -38,7 +39,8 @@
                        (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
                        :subroutines)
          new-card (assoc new-card :subroutines new-subs)]
-     (update! state :corp new-card))))
+     (update! state :corp new-card)
+     (trigger-event state side :subroutines-changed (get-card state new-card)))))
 
 ;;; Runner abilites for breaking subs
 (defn runner-pay-or-break
@@ -86,6 +88,17 @@
    :effect (req (if (= "End the run" target)
                   (end-run state :corp eid)
                   (pay-sync state :runner eid card [:credit amount])))})
+
+(defn end-the-run-unless-corp-pays
+  [amount]
+  {:async true
+   :label (str "End the run unless the Corp pays " amount " [Credits]")
+   :prompt (str "End the run or pay " amount " [Credits]?")
+   :choices ["End the run"
+             (str "Pay " amount " [Credits]")]
+   :effect (req (if (= "End the run" target)
+                  (end-run state :corp eid)
+                  (pay-sync state :corp eid card [:credit amount])))})
 
 (defn end-the-run-unless-runner
   [label prompt ability]
@@ -2106,12 +2119,13 @@
                :derez ability}})
 
    "Nightdancer"
-   {:subroutines [{:label (str "The Runner loses [Click], if able. "
-                               "You have an additional [Click] to spend during your next turn.")
-                   :msg (str "force the runner to lose a [Click], if able. "
-                             "Corp gains an additional [Click] to spend during their next turn")
-                   :effect (req (lose state :runner :click 1)
-                                (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]}
+   (let [sub {:label (str "The Runner loses [Click], if able. "
+                          "You have an additional [Click] to spend during your next turn.")
+              :msg (str "force the runner to lose a [Click], if able. "
+                        "Corp gains an additional [Click] to spend during their next turn")
+              :effect (req (lose state :runner :click 1)
+                           (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]
+     {:subroutines [sub sub]})
 
    "Oduduwa"
    {:implementation "Encounter effect is manual"
@@ -2399,7 +2413,8 @@
                                   (trash state side card {:unpreventable true})))}]}
 
    "Sandstone"
-   {:subroutines [end-the-run]
+   {:implementation "Encounter effect is manual"
+    :subroutines [end-the-run]
     :strength-bonus (req (- (get-counters card :virus)))
     :abilities [{:label "Place one virus counter"
                  :req (req (same-card? current-ice card))
@@ -2819,7 +2834,7 @@
                                                      (system-msg state side "loses [Click]"))))})]}
 
    "Tsurugi"
-   {:subroutines [(end-the-run-unless-runner-pays 1)
+   {:subroutines [(end-the-run-unless-corp-pays 1)
                   (do-net-damage 1)
                   (do-net-damage 1)
                   (do-net-damage 1)]}
