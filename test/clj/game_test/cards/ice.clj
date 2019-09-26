@@ -2599,6 +2599,21 @@
         (click-prompt state :runner "End the run")
         (is (not (:run @state)) "Run is ended")))))
 
+(deftest tsurugi
+  ;; Tsurugi
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Tsurugi"]
+                      :credits 10}})
+    (play-from-hand state :corp "Tsurugi" "HQ")
+    (take-credits state :corp)
+    (let [tsurugi (get-ice state :hq 0)]
+      (core/rez state :corp tsurugi)
+      (run-on state :hq)
+      (card-subroutine state :corp tsurugi 0)
+      (is (seq (:prompt (get-corp))) "Corp is prompted to pay")
+      (is (empty? (:prompt (get-runner))) "Runner is not prompted to pay"))))
+
 (deftest turing
   ;; Turing - Strength boosted when protecting a remote server
   (do-game

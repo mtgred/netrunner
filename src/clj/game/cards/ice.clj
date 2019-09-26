@@ -89,6 +89,17 @@
                   (end-run state :corp eid)
                   (pay-sync state :runner eid [:credit amount])))})
 
+(defn end-the-run-unless-corp-pays
+  [amount]
+  {:async true
+   :label (str "End the run unless the Corp pays " amount " [Credits]")
+   :prompt (str "End the run or pay " amount " [Credits]?")
+   :choices ["End the run"
+             (str "Pay " amount " [Credits]")]
+   :effect (req (if (= "End the run" target)
+                  (end-run state :corp eid)
+                  (pay-sync state :corp eid card [:credit amount])))})
+
 (defn end-the-run-unless-runner
   [label prompt ability]
   {:player :runner
@@ -2820,7 +2831,7 @@
                                                      (system-msg state side "loses [Click]"))))})]}
 
    "Tsurugi"
-   {:subroutines [(end-the-run-unless-runner-pays 1)
+   {:subroutines [(end-the-run-unless-corp-pays 1)
                   (do-net-damage 1)
                   (do-net-damage 1)
                   (do-net-damage 1)]}
