@@ -2859,7 +2859,7 @@
                    :options {:start-as :runner}})
         (play-from-hand state :runner "Rebirth")
         (click-prompt state :runner chaos)
-        (is (= :full (get-in (get-runner) [:identity :implementation])) "Implementation note kept as `:full`"))))
+        (is (= :full (get-in (get-runner) [:identity :implementation])) "Implementation note kept as `:full`")))
   (testing "Rebirth into Kate twice"
     ;; Rebirth - Kate does not give discount after rebirth if Hardware or Program already installed
     (testing "Installing Hardware before does prevent discount"
@@ -2921,7 +2921,7 @@
         (is (= reina (get-in (get-runner) [:identity :title])) "Rebirthed into Reina")
         (is (changes-credits (get-corp) -2
                              (core/rez state :corp (get-ice state :hq 0)))
-            "Additional cost from Reina applied for 1st ice rez")))))
+            "Additional cost from Reina applied for 1st ice rez"))))))
 
 (deftest reboot
   ;; Reboot - run on Archives, install 5 cards from head facedown

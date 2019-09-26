@@ -41,5 +41,4 @@
         (core/change state :corp {:key :agenda-point :delta -1})
         (is (zero? (get-in @state [:corp :agenda-point])) "Corp has lost 1 agenda point")
         (core/change state :corp {:key :agenda-point :delta -1})
-        (is (= -1 (get-in @state [:corp :agenda-point])) "Corp can go below zero agenda points"))
-      )))
+        (is (= -1 (get-in @state [:corp :agenda-point])) "Corp can go below zero agenda points")))))
