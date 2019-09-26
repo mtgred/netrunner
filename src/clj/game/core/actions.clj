@@ -50,7 +50,7 @@
   [state side args]
   (when (pay state side nil :click 1 {:action :corp-click-credit})
     (system-msg state side "spends [Click] to gain 1 [Credits]")
-    (gain-credits state side 1 (keyword (str (name side) "-click-credit")))
+    (gain-credits state side 1 (if (= :corp side) :corp-click-credit :runner-click-credit))
     (swap! state update-in [:stats side :click :credit] (fnil inc 0))
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
     (play-sfx state side "click-credit")))

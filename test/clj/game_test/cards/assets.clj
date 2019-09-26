@@ -3470,33 +3470,59 @@
 
 (deftest sandburg
   ;; Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c
-  (do-game
-    (new-game {:corp {:deck ["Sandburg" (qty "Ice Wall" 2) (qty "Hedge Fund" 3)]}})
-    (core/gain state :corp :click 3 :credit 3)
-    (play-from-hand state :corp "Sandburg" "New remote")
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "R&D")
-    (let [sb (get-content state :remote1 0)
-          iwall1 (get-ice state :hq 0)
-          iwall2 (get-ice state :rd 0)]
-      (core/rez state :corp iwall1)
-      (core/rez state :corp iwall2)
-      (core/rez state :corp sb)
-      (is (= 6 (:credit (get-corp))))
-      (play-from-hand state :corp "Hedge Fund")
-      (is (= 10 (:credit (get-corp))))
-      (is (= 3 (:current-strength (refresh iwall1))) "Strength boosted by 2")
-      (is (= 3 (:current-strength (refresh iwall2))) "Strength boosted by 2")
-      (play-from-hand state :corp "Hedge Fund")
-      (play-from-hand state :corp "Hedge Fund")
-      (is (= 18 (:credit (get-corp))))
-      (is (= 4 (:current-strength (refresh iwall1))) "Strength boosted by 3")
-      (is (= 4 (:current-strength (refresh iwall2))) "Strength boosted by 3")
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "Pay 4 [Credits] to trash")
-      (is (= 1 (:current-strength (refresh iwall1))) "Strength back to default")
-      (is (= 1 (:current-strength (refresh iwall2))) "Strength back to default"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Sandburg" (qty "Ice Wall" 2) (qty "Hedge Fund" 3)]}})
+      (core/gain state :corp :click 3 :credit 3)
+      (play-from-hand state :corp "Sandburg" "New remote")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (let [sb (get-content state :remote1 0)
+            iwall1 (get-ice state :hq 0)
+            iwall2 (get-ice state :rd 0)]
+        (core/rez state :corp iwall1)
+        (core/rez state :corp iwall2)
+        (core/rez state :corp sb)
+        (is (= 6 (:credit (get-corp))))
+        (play-from-hand state :corp "Hedge Fund")
+        (is (= 10 (:credit (get-corp))))
+        (is (= 3 (:current-strength (refresh iwall1))) "Strength boosted by 2")
+        (is (= 3 (:current-strength (refresh iwall2))) "Strength boosted by 2")
+        (play-from-hand state :corp "Hedge Fund")
+        (play-from-hand state :corp "Hedge Fund")
+        (is (= 18 (:credit (get-corp))))
+        (is (= 4 (:current-strength (refresh iwall1))) "Strength boosted by 3")
+        (is (= 4 (:current-strength (refresh iwall2))) "Strength boosted by 3")
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Pay 4 [Credits] to trash")
+        (is (= 1 (:current-strength (refresh iwall1))) "Strength back to default")
+        (is (= 1 (:current-strength (refresh iwall2))) "Strength back to default"))))
+  (testing "Changes on rez"
+    (do-game
+      (new-game {:corp {:hand ["Sandburg" (qty "Ice Wall" 2) "Mlinzi" "Hedge Fund"]
+                        :deck [(qty "Hedge Fund" 3)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Sandburg" "New remote")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Mlinzi" "Archives")
+      (let [sb (get-content state :remote1 0)
+            iwall1 (get-ice state :hq 0)
+            iwall2 (get-ice state :rd 0)
+            mlinzi (get-ice state :archives 0)]
+        (core/rez state :corp iwall1)
+        (core/rez state :corp iwall2)
+        (core/rez state :corp sb)
+        (is (= 8 (:credit (get-corp))))
+        (play-from-hand state :corp "Hedge Fund")
+        (is (= 3 (:current-strength (refresh iwall1))) "Strength boosted by 2")
+        (is (= 12 (:credit (get-corp))))
+        (core/rez state :corp mlinzi)
+        (is (= 5 (:credit (get-corp))))
+        (is (= 1 (:current-strength (refresh iwall1))) "Strength back to base")))))
 
 (deftest sealed-vault
   ;; Sealed Vault - Store credits for 1c, retrieve credits by trashing or spending click

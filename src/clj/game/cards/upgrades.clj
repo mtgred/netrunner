@@ -1116,7 +1116,7 @@
                                                :prompt "How many credits to spend?"
                                                :effect (req (clear-wait-prompt state :runner)
                                                             (let [spent (str->int target)]
-                                                              (deduct state :corp [:credit spent])
+                                                              (lose state :corp :credit spent)
                                                               (add-counter state :corp card :power spent)
                                                               (system-msg state :corp (str "places " (quantify spent "power counter") " on Reduced Service"))
                                                               (effect-completed state side eid)))}

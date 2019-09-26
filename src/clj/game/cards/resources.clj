@@ -114,8 +114,8 @@
                                          (effect-completed state :runner eid)))}}}
 
    "Adjusted Chronotype"
-   {:events {:runner-loss {:req (req (and (some #{:click} target)
-                                          (let [click-losses (count (filter #(= :click %) (mapcat first (turn-events state side :runner-loss))))]
+   {:events {:runner-lose {:req (req (and (some #{:click} target)
+                                          (let [click-losses (count (filter #(= :click %) (mapcat first (turn-events state side :runner-lose))))]
                                             (or (= 1 click-losses)
                                                 (and (= 2 click-losses)
                                                      (has-flag? state side :persistent :genetics-trigger-twice))))))
