@@ -1505,10 +1505,10 @@
                                 card nil))}}
     ; Normally this should be (req true), but having pay-credits prompts on
     ; literally every interaction would get tiresome. Therefore Net Mercur will
-    ; only ask for payments during a run, traces, and psi games
+    ; only ask for payments during a run, traces, psi games, and prevention abilities
     :interactions {:pay-credits {:req (req (or run
-                                               (= :psi (:source-type eid))
-                                               (= :trace (:source-type eid))))
+                                               (#{:psi :trace} (:source-type eid))
+                                               (#{:net :meat :brain :tag} (get-in @state [:prevent :current]))))
                                  :type :credit}}}
 
    "Network Exchange"

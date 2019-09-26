@@ -2305,7 +2305,25 @@
                            (card-ability state :runner refr 1)
                            (click-card state :runner cl))
         (click-prompt state :runner "Place 1 [Credits]")
-        (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")))))
+        (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur"))))
+  (testing "Prevention prompt. Issue #4464"
+    (do-game
+      (new-game {:runner {:hand ["Feedback Filter" "Net Mercur"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Feedback Filter")
+      (play-from-hand state :runner "Net Mercur")
+      (let [nm (get-resource state 0)
+            ff (get-hardware state 0)]
+        (core/add-counter state :runner (refresh nm) :credit 4)
+        (core/damage state :corp :net 2)
+        (card-ability state :runner ff 0)
+        (click-card state :runner nm)
+        (click-card state :runner nm)
+        (click-card state :runner nm)
+        (card-ability state :runner ff 0)
+        (click-prompt state :runner "Done")
+        (is (= 1 (get-counters (refresh nm) :credit)) "Net Mercur has lost 3 credits")))))
 
 (deftest network-exchange
   ;; ICE install costs 1 more except for inner most
