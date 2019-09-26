@@ -264,6 +264,36 @@
     (when card
       (swap! state update-in [side :hand] #(concat % (zone :hand [card]))))))
 
+(defn command-host
+  [state side]
+  (let [f (if (= :corp side) corp? runner?)]
+    (resolve-ability
+      state side
+      {:prompt "Select the card to be hosted"
+       :choices {:req #(and (f %)
+                            (installed? %))}
+       :async true
+       :effect (effect
+                 (continue-ability
+                   (let [h1 target]
+                     {:prompt "Select the card to host the first card"
+                      :choices {:req #(and (f %)
+                                           (installed? %)
+                                           (not (same-card? % h1)))}
+                      :effect (effect (host target h1 nil))})
+                   nil nil))}
+      nil nil)))
+
+(defn command-trash
+  [state side]
+  (let [f (if (= :corp side) corp? runner?)]
+    (resolve-ability
+      state side
+      {:prompt "Select a card to trash"
+       :choices {:req #(f %)}
+       :effect (effect (trash eid target {:unpreventable true}))}
+      nil nil)))
+
 (defn parse-command [text]
   (let [[command & args] (split text #" ")
         value (if-let [n (string->num (first args))] n 1)
@@ -296,6 +326,7 @@
           "/error"      show-error-toast
           "/facedown"   #(when (= %2 :runner) (command-facedown %1 %2))
           "/handsize"   #(swap! %1 assoc-in [%2 :hand-size :mod] (- value (get-in @%1 [%2 :hand-size :base])))
+          "/host"       command-host
           "/install-ice" command-install-ice
           "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
           "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
@@ -368,6 +399,7 @@
                                                         (map->Card {:title "/trace command" :side %2})
                                                         {:base (max 0 value)
                                                          :msg "resolve successful trace effect"}))
+          "/trash"      command-trash
           "/undo-click" #(command-undo-click %1 %2)
           "/undo-turn"  #(command-undo-turn %1 %2)
           nil)))))
