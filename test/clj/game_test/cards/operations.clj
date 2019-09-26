@@ -549,6 +549,8 @@
                                (qty "Hedge Fund" 2)
                                (qty "Crisium Grid" 2)
                                (qty "Ice Wall" 2)]}})
+      (take-credits state :corp)
+      (take-credits state :runner)
       (play-from-hand state :corp "Digital Rights Management")
       (is (= 2 (-> (get-corp) :prompt first :choices count)) "Only Beale and 'None' option displayed")
       (let [cards-in-hand (count (:hand (get-corp)))]
@@ -570,6 +572,8 @@
     (do-game
       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      (take-credits state :corp)
+      (take-credits state :runner)
       (play-from-hand state :corp "Digital Rights Management")
       (click-prompt state :corp "Project Beale")
       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
@@ -579,6 +583,8 @@
     (do-game
       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      (take-credits state :corp)
+      (take-credits state :runner)
       (play-from-hand state :corp "Digital Rights Management")
       (click-prompt state :corp "Project Beale")
       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
@@ -596,6 +602,8 @@
     (do-game
       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Beale" (qty "Hedge Fund" 2)]
                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      (take-credits state :corp)
+      (take-credits state :runner)
       (core/gain state :corp :click 3)
       (play-from-hand state :corp "Project Beale" "New remote")
       (let [beale (get-content state :remote1 0)]
@@ -610,6 +618,8 @@
     ; (do-game
       ; (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Vitruvius" (qty "Hedge Fund" 2)]
                         ; :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+      ; (take-credits state :corp)
+      ; (take-credits state :runner)
       ; (play-from-hand state :corp "Digital Rights Management")
       ; (click-prompt state :corp "None")
       ; (play-and-score state "Project Vitruvius")

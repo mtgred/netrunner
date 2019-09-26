@@ -443,7 +443,8 @@
                           :effect (effect (damage-bonus :brain 1))}}}
 
    "Digital Rights Management"
-   {:req (req (not (in-coll? (get-in @state [:runner :register-last-turn :successful-run]) :hq)))
+   {:req (req (and (< 1 (:turn @state))
+                   (not (in-coll? (get-in @state [:runner :register-last-turn :successful-run]) :hq))))
     :prompt "Choose an Agenda"
     :implementation "Does not prevent scoring agendas installed later in the turn"
     ; ToDo: When floating triggers are implemented, this should be an effect that listens to :corp-install as Clot does
