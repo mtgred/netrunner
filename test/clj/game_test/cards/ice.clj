@@ -1493,8 +1493,8 @@
   ;; Mlinzi - take X net damage or trash the top X+1 cards from the Stack
   (do-game
     (new-game {:corp {:deck ["Mlinzi"]}
-               :runner {:deck [(qty "Sure Gamble" 3)]}})
-    (starting-hand state :runner ["Sure Gamble"])
+               :runner {:hand ["Sure Gamble"]
+                        :deck [(qty "Sure Gamble" 2)]}})
     (play-from-hand state :corp "Mlinzi" "HQ")
     (take-credits state :corp)
     (let [ml (get-ice state :hq 0)]
@@ -1509,7 +1509,10 @@
       (is (= 2 (count (:deck (get-runner)))) "Runner has 2 cards in stack")
       (click-prompt state :runner "Trash the top 2 cards of the stack")
       (is (= 3 (count (:discard (get-runner)))) "Runner trashed 2 cards")
-      (is (empty? (:deck (get-runner))) "Runner trashed card from stack"))))
+      (is (empty? (:deck (get-runner))) "Runner trashed card from stack")
+      (card-subroutine state :corp (refresh ml) 0)
+      (is (= ["Take 1 net damage"] (-> (get-runner) :prompt first :choices))
+          "Runner can't choose to trash from the stack as the stack doesn't have enough cards in it"))))
 
 (deftest mother-goddess
   ;; Mother Goddess - Gains other ice subtypes
