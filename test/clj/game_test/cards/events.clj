@@ -1123,7 +1123,8 @@
       (run-successful state)
       (click-prompt state :runner "Steal")
       (click-prompt state :runner "No action")
-      (is (= 4 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 in R&D, and 1 in HQ")))
+      (is (= 4 (-> (get-runner) :register :last-run core/total-cards-accessed))
+          "Runner should access 2 cards in Archives, 1 in R&D, and 1 in HQ")))
   (testing "with The Turning Wheel counters"
     (do-game
       (new-game {:corp {:deck ["Hostile Takeover" (qty "Ice Wall" 100)]}
@@ -1213,7 +1214,19 @@
         (click-prompt state :runner "Card from deck")
         (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
       (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
-      (is (= 7 (-> (get-runner) :register :last-run core/total-cards-accessed))))))
+      (is (= 7 (-> (get-runner) :register :last-run core/total-cards-accessed)))))
+  (testing "interaction with no cards in archives. Issue #4473"
+    (do-game
+      (new-game {:corp {:deck ["Hostile Takeover"]
+                        :hand ["Hostile Takeover"]}
+                 :runner {:hand ["Divide and Conquer"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Divide and Conquer")
+      (run-successful state)
+      (is (seq (:prompt (get-runner))) "Even with no cards in Archives, there's a prompt for accessing R&D")
+      (click-prompt state :runner "Steal")
+      (is (seq (:prompt (get-runner))) "Even with no cards in Archives, there's a prompt for accessing HQ")
+      (click-prompt state :runner "Steal"))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade

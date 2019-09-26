@@ -776,7 +776,8 @@
                                                                   (set (get-in @state [:corp :servers :archives :content]))
                                                                   #{}))
                                         card nil))
-                    (effect-completed state side eid))))})
+                    (do (system-msg state side "accesses no cards in Archives")
+                        (effect-completed state side eid)))))})
 
 (defn get-all-hosted [hosts]
   (let [hosted-cards (mapcat :hosted hosts)]
@@ -831,14 +832,12 @@
                ;; Make `:did-access` true when reaching the access step (no replacement)
                (when (:run @state)
                  (swap! state assoc-in [:run :did-access] true))
-               (if (or (zero? n)
-                       (safe-zero? (get-in @state [:run :max-access])))
-                 (do (system-msg state side "accessed no cards during the run")
-                     (effect-completed state side eid))
-                 (do (swap! state assoc-in [:runner :register :accessed-cards] true)
-                     (wait-for (resolve-ability state side (choose-access cards server args) nil nil)
-                               (wait-for (trigger-event-sync state side :end-access-phase {:from-server (first server)})
-                                         (effect-completed state side eid)))))))))
+               (when-not (or (zero? n)
+                             (safe-zero? (get-in @state [:run :max-access])))
+                 (swap! state assoc-in [:runner :register :accessed-cards] true))
+               (wait-for (resolve-ability state side (choose-access cards server args) nil nil)
+                         (wait-for (trigger-event-sync state side :end-access-phase {:from-server (first server)})
+                                   (effect-completed state side eid)))))))
 
 ;;; Ending runs.
 (defn register-successful-run
