@@ -1461,14 +1461,13 @@
                                   ["Card from grip" "Trash"]
                                   ["Trash"]))
                   :player :runner
-                  :effect (req (if (= target "Trash")
-                                 (do
-                                   (trash state :runner card)
-                                   (system-msg state :runner "trashes Mystic Maemi"))
+                  :effect (req (clear-wait-prompt state :corp)
+                               (if (= target "Trash")
+                                 (do (trash state :runner card)
+                                     (system-msg state :runner "trashes Mystic Maemi"))
                                  (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :ability})
                                                      card [:randomly-trash-from-hand 1])
-                                           (system-msg state :runner (str (build-spend-msg async-result "avoid" "trashing Mystic Maemi")))
-                                           (clear-wait-prompt state :corp))))}
+                                           (system-msg state :runner (str (build-spend-msg async-result "avoid" "trashing Mystic Maemi"))))))}
                  card nil))
        ;; companion-builder: ability
        {:msg "take 1 [Credits]"
