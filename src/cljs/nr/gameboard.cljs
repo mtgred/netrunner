@@ -1043,6 +1043,8 @@
 (defn run-arrow []
   [:div.run-arrow [:div]])
 
+(enable-console-print!)
+
 (defn server-view [{:keys [server central-view run]} opts]
   (let [content (:content server)
         ices (:ices server)
@@ -1053,8 +1055,11 @@
     [:div.server
      [:div.ices {:style {:width (when (pos? max-hosted)
                                   (+ 84 3 (* 42 (dec max-hosted))))}}
-      (when-let [run-card (:card (:run-effect run))]
-        [:div.run-card [card-img run-card]])
+      (when-let [run-cards (seq (filter :card (:run-effects run)))]
+        [:div
+         (doall (for [card (map :card (reverse run-cards))]
+                  [:div.run-card {:key (:cid card)}
+                   [card-img card]]))])
       (doall
         (for [ice (reverse ices)]
           [:div.ice {:key (:cid ice)

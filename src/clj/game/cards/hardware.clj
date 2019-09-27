@@ -1187,8 +1187,9 @@
                         {:card card
                          :replace-access
                          {:prompt "Choose one faceup card to add to the top of R&D"
-                          :choices (req (filter #(:seen %) (:discard corp)))
-                          :msg (msg "add " (card-str state target) " to the top of R&D")
+                          :req (req (seq (filter :seen (:discard corp))))
+                          :choices (req (filter :seen (:discard corp)))
+                          :msg (msg "add " (:title target) " to the top of R&D")
                           :effect (effect (move :corp target :deck {:front true}))}}))}}}
 
    "Reflection"
@@ -1484,8 +1485,9 @@
                   {:optional
                    {:prompt "Use Top Hat to access a single card?"
                     :yes-ability
-                    {:prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
-                     :choices (take (count (:deck corp)) (range 1 6))
+                    {:req (req (pos? (count (:deck corp))))
+                     :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
+                     :choices (map str (take (count (:deck corp)) (range 1 6)))
                      :msg (msg "only access the card at position " target " of R&D")
                      :effect (effect
                                (add-run-effect
@@ -1494,7 +1496,7 @@
                                     :replace-access
                                     {:mandatory true
                                      :effect (req (when (empty? (get-cards-to-access state))
-                                                    (access-card state side eid (nth (:deck corp) (dec t)) "an unseen card")))}})))}}}
+                                                    (access-card state side eid (nth (:deck corp) (dec (str->int t))) "an unseen card")))}})))}}}
                   card nil))}}}
 
    "Turntable"

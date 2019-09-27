@@ -776,7 +776,7 @@
                                                                   (set (get-in @state [:corp :servers :archives :content]))
                                                                   #{}))
                                         card nil))
-                    (do (system-msg state side "accesses no cards in Archives")
+                    (do (system-msg state side (str "accesses " archives-count " cards in Archives"))
                         (effect-completed state side eid)))))})
 
 (defn get-all-hosted [hosts]
@@ -809,12 +809,12 @@
 (defn set-cards-to-access
   "Currently only used with Ash 2X"
   [state side & cards]
-  (swap! state update :cards-to-access concat cards))
+  (swap! state update-in [:run :cards-to-access] concat cards))
 
 (defn get-cards-to-access
   "Currently only used with do-access below and Top Hat. It's hacky but whatever"
   [state]
-  (seq (filter identity (map #(get-card state %) (get @state :cards-to-access)))))
+  (seq (filter identity (map #(get-card state %) (get-in @state [:run :cards-to-access])))))
 
 (defn do-access
   "Starts the access routines for the run's server."
@@ -896,7 +896,9 @@
 
                     ;; One mandatory replace-access effect
                     (= 1 (count mandatory-run-effects))
-                    (replace-access state :runner (:replace-access (first mandatory-run-effects)) (:card (first mandatory-run-effects)))
+                    (let [chosen (first mandatory-run-effects)]
+                      (system-msg state :runner (str "must use the replacement effect from " (:title (:card chosen))))
+                      (replace-access state :runner (:replace-access chosen) (:card chosen)))
 
                     ;; Multiple mandatory replace-access effects
                     (pos? (count mandatory-run-effects))
@@ -905,6 +907,8 @@
                       {:prompt "Choose a mandatory replacement effect"
                        :choices (mapv #(get-in % [:card :title]) mandatory-run-effects)
                        :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) mandatory-run-effects)]
+                                      (system-msg state :runner
+                                                  (str "chooses to use the replacement effect from " (:title (:card chosen))))
                                       (replace-access state :runner (:replace-access chosen) (:card chosen))))}
                       nil nil)
 
@@ -915,9 +919,12 @@
                       {:prompt "Use a replacement effect instead of accessing cards?"
                        :choices (conj (mapv #(get-in % [:card :title]) run-effects) "Access cards")
                        :effect (req (if-let [chosen (some #(when (= target (get-in % [:card :title])) %) run-effects)]
-                                      (replace-access state :runner (:replace-access chosen) (:card chosen))
-                                      (wait-for (do-access state :runner server)
-                                                (handle-end-run state :runner))))}
+                                      (do (system-msg state :runner
+                                                      (str "chooses to use the replacement effect from " (:title (:card chosen))))
+                                          (replace-access state :runner (:replace-access chosen) (:card chosen)))
+                                      (do (system-msg state :runner "chooses to access cards instead of use a replacement effect")
+                                          (wait-for (do-access state :runner server)
+                                                    (handle-end-run state :runner)))))}
                       nil nil)
 
                     ;; No replace-access effects
