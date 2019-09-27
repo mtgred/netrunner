@@ -209,11 +209,12 @@
         (is (= "Adonis Campaign" (:title (get-content state :remote4 0)))
             "Adonis installed by Team Sponsorship")
         (is (nil? (find-card "Adonis Campaign" (:discard (get-corp)))) "No Adonis in discard"))))
-  (testing "with Gang Sign. Issue #4487"
+  (testing "with Gang Sign and Leela. Issue #4487"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Amani Senai" "Hostile Takeover" "Hostile Takeover"]}
-                 :runner {:hand ["Gang Sign"]}})
+                 :runner {:id "Leela Patel: Trained Pragmatist"
+                          :hand ["Gang Sign"]}})
       (play-from-hand state :corp "Amani Senai" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
@@ -225,6 +226,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (click-card state :corp "Gang Sign")
+      (click-prompt state :runner "Done") ; Leela trigger, no Gang Sign prompt
       (is (empty? (:prompt (get-runner))) "Runner doesn't get an access prompt"))))
 
 (deftest anson-rose
