@@ -1307,7 +1307,6 @@
         (run-empty-server state "Server 1")
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 1 credit from Fencer Fueno"
-                           (click-card state :runner pad)
                            (click-prompt state :runner "Pay to access")
                            (click-card state :runner ff) ; pay Gagarin credit
                            (click-prompt state :runner "Pay 4 [Credits] to trash")
