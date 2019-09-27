@@ -62,6 +62,7 @@
   (swap! app-state assoc-in [:options :background] (:background @s))
   (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
   (swap! app-state assoc-in [:options :stacked-servers] (:stacked-servers @s))
+  (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
   (swap! app-state assoc-in [:options :blocked-users] (:blocked-users @s))
   (swap! app-state assoc-in [:options :alt-arts] (:alt-arts @s))
   (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
@@ -70,6 +71,7 @@
   (.setItem js/localStorage "lobby_sounds" (:lobby-sounds @s))
   (.setItem js/localStorage "sounds_volume" (:volume @s))
   (.setItem js/localStorage "stacked-servers" (:stacked-servers @s))
+  (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
   (post-options url (partial post-response s)))
 
 (defn add-user-to-block-list
@@ -134,6 +136,7 @@
                    :show-alt-art (get-in @app-state [:options :show-alt-art])
                    :all-art-select ""
                    :stacked-servers (get-in @app-state [:options :stacked-servers])
+                   :runner-board-order (get-in @app-state [:options :runner-board-order])
                    :gamestats (get-in @app-state [:options :gamestats])
                    :deckstats (get-in @app-state [:options :deckstats])
                    :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
@@ -177,13 +180,20 @@
                     :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
 
          [:section
-          [:h3 "Server Stacking"]
+          [:h3 "Layout options"]
           [:div
            [:label [:input {:type "checkbox"
                             :value true
                             :checked (:stacked-servers @s)
                             :on-change #(swap! s assoc-in [:stacked-servers] (.. % -target -checked))}]
-            "Server stacking is on by default"]]]
+            "Server stacking is on by default"]]
+
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:runner-board-order @s)
+                            :on-change #(swap! s assoc-in [:runner-board-order] (.. % -target -checked))}]
+            "Runner rig layout is jnet-classic (Top to bottom: Programs, Hardware, Resources)"]]]
 
          [:section
           [:h3  "Game board background"]
