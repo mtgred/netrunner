@@ -258,7 +258,7 @@
       (do (system-say state side (str (:title current) " is removed from the game."))
           (move state (other-side side) current :rfg))
       (do (system-say state side (str (:title current) " is trashed."))
-          (trash state side current)))))
+          (trash state (to-keyword (:side current)) current)))))
 
 ;;; Functions for icons associated with special cards - e.g. Femme Fatale
 (defn add-icon
