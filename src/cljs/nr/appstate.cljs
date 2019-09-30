@@ -14,6 +14,7 @@
            :options (merge {:background "lobby-bg"
                             :show-alt-art true
                             :stacked-servers (= (get-local-value "stacked-servers" "true") "true")
+                            :runner-board-order (= (get-local-value "runner-board-order" "true") "true")
                             :deckstats "always"
                             :gamestats "always"
                             :sounds (= (get-local-value "sounds" "true") "true")

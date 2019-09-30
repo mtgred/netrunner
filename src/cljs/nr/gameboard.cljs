@@ -112,8 +112,11 @@
   (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state)
                                             :mute-state mute-state}]))
 
-(defn stack-servers [ss-state]
-  (swap! app-state assoc-in [:options :stacked-servers] ss-state))
+(defn stack-servers []
+  (swap! app-state update-in [:options :stacked-servers] not))
+
+(defn flip-runner-board []
+  (swap! app-state update-in [:options :runner-board-order] not))
 
 (defn concede []
   (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}]))
@@ -1185,11 +1188,15 @@
         centrals [:div.runner-centrals
                     [discard-view-runner player-side discard]
                     [deck-view :runner player-side identity deck]
-                    [identity-view identity]]]
+                    [identity-view identity]]
+        runner-f (if (and (not is-me)
+                          (not (get-in @app-state [:options :runner-board-order])))
+                   reverse
+                   seq)]
     [:div.runner-board {:class (if is-me "me" "opponent")}
      (when-not is-me centrals)
      (doall
-       (for [zone [:program :hardware :resource :facedown]]
+       (for [zone (runner-f [:program :hardware :resource :facedown])]
          ^{:key zone}
          [:div
           (doall (for [c (zone @rig)]
