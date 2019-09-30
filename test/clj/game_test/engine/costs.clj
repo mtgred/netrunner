@@ -113,6 +113,7 @@
       (run-on state :hq)
       (let [cor (get-program state 0)
             hive (get-ice state :hq 0)]
+        (core/rez state :corp hive)
         (is (= 2 (:current-strength (refresh cor))) "Corroder starts at 2 strength")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
         (is (= 3 (:current-strength (refresh cor))) "Corroder now at 3 strength")
@@ -128,6 +129,7 @@
       (run-on state :hq)
       (let [cor (get-program state 0)
             hive (get-ice state :hq 0)]
+        (core/rez state :corp hive)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
         (is (= 3 (:current-strength (refresh cor))) "Corroder now at 3 strength")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
@@ -143,6 +145,7 @@
       (run-on state :hq)
       (let [cor (get-program state 0)
             hive (get-ice state :hq 0)]
+        (core/rez state :corp hive)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
         (is (= 3 (:current-strength (refresh cor))) "Corroder is now at 3 strength")
         (card-ability state :runner (refresh cor) 0)

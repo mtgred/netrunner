@@ -332,6 +332,7 @@
    (let [cost (if (number? cost) [:credit cost] cost)
          args (assoc args :subtype subtype)]
      {:req (req (and current-ice
+                     (rezzed? current-ice)
                      (seq (remove :broken (:subroutines current-ice)))
                      ;; `req` returns a function, so we have to call it,
                      ;; not just use the return value
