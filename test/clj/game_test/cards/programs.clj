@@ -2632,7 +2632,8 @@
 (deftest snowball
   (testing "Strength boost until end of run when used to break a subroutine"
     (do-game
-      (new-game {:corp {:deck ["Spiderweb" "Fire Wall" "Hedge Fund"]}
+      (new-game {:corp {:deck ["Spiderweb" "Fire Wall" "Hedge Fund"]
+                        :credits 20}
                  :runner {:deck ["Snowball"]}})
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Fire Wall" "HQ")
