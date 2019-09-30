@@ -497,11 +497,15 @@
 
 (defmethod choose-access :remote [cards server args]
   {:async true
-   :effect (req (if (and (>= 1 (count cards))
-                         (not (any-flag-fn? state :runner :slow-remote-access true
-                                            (concat (all-active state :runner) (all-active state :corp)))))
+   :effect (req (cond
+                  ;; Only 1 card
+                  (= 1 (count cards))
                   (access-card state side eid (first cards))
-                  (continue-ability state side (access-helper-remote cards) card nil)))})
+                  ;; Normal access
+                  (pos? (count cards))
+                  (continue-ability state side (access-helper-remote cards) card nil)
+                  :else
+                  (effect-completed state side eid)))})
 
 (defn access-helper-hq-or-rd
   "Shows a prompt to access card(s) from the given zone.
@@ -594,20 +598,24 @@
 
 (defmethod choose-access :rd [cards server {:keys [no-root] :as args}]
   {:async true
-   :effect (req (if (pos? (count cards))
-                  (if (= 1 (count cards))
-                    (access-card state side eid (first cards) "an unseen card")
-                    (let [from-rd (access-count state side :rd-access)]
-                      (continue-ability state side (access-helper-hq-or-rd
-                                                     state :rd "deck" from-rd
-                                                     ;; access the first card in deck that has not been accessed.
-                                                     (fn [already-accessed] (first (drop-while already-accessed
-                                                                                               (access-cards-from-rd state))))
-                                                     (fn [_] "an unseen card")
-                                                     (if no-root
-                                                       (set (get-in @state [:corp :servers :rd :content]))
-                                                       #{}))
-                                        card nil)))
+   :effect (req (cond
+                  ;; Only 1 card
+                  (= 1 (count cards))
+                  (access-card state side eid (first cards) "an unseen card")
+                  ;; Normal access
+                  (pos? (count cards))
+                  (let [from-rd (access-count state side :rd-access)]
+                    (continue-ability state side (access-helper-hq-or-rd
+                                                   state :rd "deck" from-rd
+                                                   ;; access the first card in deck that has not been accessed.
+                                                   (fn [already-accessed] (first (drop-while already-accessed
+                                                                                             (access-cards-from-rd state))))
+                                                   (fn [_] "an unseen card")
+                                                   (if no-root
+                                                     (set (get-in @state [:corp :servers :rd :content]))
+                                                     #{}))
+                                      card nil))
+                  :else
                   (effect-completed state side eid)))})
 
 (defn access-helper-hq
@@ -624,8 +632,7 @@
    :effect (req (let [cards-count (count cards)]
                   (cond
                     ;; Only 1 card
-                    (and (= 1 cards-count)
-                         (not (any-flag-fn? state :runner :slow-hq-access true)))
+                    (= 1 cards-count)
                     (access-card state side eid (first cards))
                     ;; Corp chooses accessed cards
                     (and (pos? cards-count)

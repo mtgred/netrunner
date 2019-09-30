@@ -460,8 +460,7 @@
                               :effect (effect (gain-credits 2))}}}
 
    "Gagarin Deep Space: Expanding the Horizon"
-   {:flags {:slow-remote-access (req (not (:disabled card)))}
-    :events {:pre-access-card {:req (req (is-remote? (second (:zone target))))
+   {:events {:pre-access-card {:req (req (is-remote? (second (:zone target))))
                                :effect (effect (access-cost-bonus [:credit 1]))
                                :msg "make the Runner spend 1 [Credits] to access"}}}
 
@@ -809,11 +808,12 @@
    "Leela Patel: Trained Pragmatist"
    (let [leela {:interactive (req true)
                 :prompt "Select an unrezzed card to return to HQ"
-                :choices {:req #(and (not (rezzed? %)) (installed? %) (corp? %))}
+                :choices {:req #(and (not (rezzed? %))
+                                     (installed? %)
+                                     (corp? %))}
                 :msg (msg "add " (card-str state target) " to HQ")
                 :effect (effect (move :corp target :hand))}]
-     {:flags {:slow-hq-access (req true)}
-      :events {:agenda-scored leela
+     {:events {:agenda-scored leela
                :agenda-stolen leela}})
 
    "Liza Talking Thunder: Prominent Legislator"
