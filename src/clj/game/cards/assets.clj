@@ -551,7 +551,6 @@
                   :msg "gain 3 [Credits]"
                   :effect (effect (gain-credits :corp 3))}]
      {:rez-req (req (= (:active-player @state) :corp))
-      :flags {:corp-phase-12 (req true)}
       :events {:successful-run {:req (req this-server)
                                 :effect (effect (gain-credits :runner 2)
                                                 (system-msg :runner (str "gains 2 [Credits] for a successful run "
