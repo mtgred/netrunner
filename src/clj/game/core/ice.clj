@@ -469,6 +469,6 @@
 (let [events (for [event [:run :approach-ice :pass-ice :run-ends
                           :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
                           :subroutines-changed]]
-               (assoc breaker-auto-pump :type event))]
+               (assoc breaker-auto-pump :event event))]
   (defn auto-icebreaker [cdef]
     (assoc cdef :events (apply conj events (:events cdef)))))

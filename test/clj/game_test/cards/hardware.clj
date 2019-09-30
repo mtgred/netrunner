@@ -668,7 +668,7 @@
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand [(qty "Fire Wall" 2)]
-                      :credits 10}
+                      :credits 20}
                :runner {:hand ["Corroder" "Bukhgalter" "Gebrselassie"]
                         :credits 20}})
     (play-from-hand state :corp "Fire Wall" "HQ")

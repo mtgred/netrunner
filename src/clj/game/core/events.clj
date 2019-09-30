@@ -117,7 +117,7 @@
               (and (< 1 (count handlers))
                    (not (and cancel-fn (cancel-fn state)))))
             (choose-handler [handlers]
-              (let [handlers (filter #(get-card state (:card %)) handlers)
+              (let [handlers (filter #(card-for-ability state %) handlers)
                     non-silent (filter #(let [silent-fn (:silent (:ability %))]
                                           (not (and silent-fn
                                                     (silent-fn state side (make-eid state) (:card %) event-targets))))
