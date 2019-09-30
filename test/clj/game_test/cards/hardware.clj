@@ -2217,7 +2217,7 @@
       (click-prompt state :runner "4") ;select ABT
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))) "Runner stole DNN")))
-  (testing "Ash interaction, currently not accurate"
+  (testing "Ash interaction"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Neural Net" "Ash 2X3ZB9CY"]}
                  :runner {:deck ["Top Hat"]}})
