@@ -1366,18 +1366,37 @@
 
 (deftest kabonesa-wu-netspace-thrillseeker
   ;; Kabonesa Wu
-  (do-game
-    (new-game {:options {:start-as :runner}
-               :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
-                        :deck ["Cache" "Gordian Blade"]
-                        :hand ["Sure Gamble"]}})
-    (card-ability state :runner (:identity (get-runner)) 0)
-    (is (= [(find-card "Gordian Blade" (:deck (get-runner))) "Cancel"] (:choices (prompt-map :runner))) "Cache shouldn't be in the prompt")
-    (click-prompt state :runner "Gordian Blade")
-    (is (= 2 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")
-    (take-credits state :runner)
-    (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
-    (is (= "Gordian Blade" (-> @state :runner :rfg first :title)) "Kabonesa Wu should rfg card installed with ability")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
+                          :deck ["Cache" "Gordian Blade"]
+                          :hand ["Sure Gamble"]}})
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (is (= [(find-card "Gordian Blade" (:deck (get-runner))) "Cancel"] (:choices (prompt-map :runner))) "Cache shouldn't be in the prompt")
+      (click-prompt state :runner "Gordian Blade")
+      (is (some? (get-program state 0)) "Gordian Blade should be installed")
+      (is (= 2 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")
+      (take-credits state :runner)
+      (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
+      (is (= "Gordian Blade" (-> (get-runner) :rfg last :title)) "Kabonesa Wu should rfg card installed with ability")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
+                          :deck ["Cache" "Gordian Blade"]
+                          :hand ["Sure Gamble" "Rebirth"]}})
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (is (= [(find-card "Gordian Blade" (:deck (get-runner))) "Cancel"] (:choices (prompt-map :runner))) "Cache shouldn't be in the prompt")
+      (click-prompt state :runner "Gordian Blade")
+      (is (some? (get-program state 0)) "Gordian Blade should be installed")
+      (play-from-hand state :runner "Rebirth")
+      (click-prompt state :runner "Lat: Ethical Freelancer")
+      (is (= "Lat: Ethical Freelancer" (:title (:identity (get-runner)))) "Runner is now Lat")
+      (take-credits state :runner)
+      (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
+      (is (= "Gordian Blade" (-> (get-runner) :rfg last :title))
+          "Kabonesa Wu should rfg card installed with ability even tho runner is now a different identity"))))
 
 (deftest kate-mac-mccaffrey-digital-tinker
   ;; Kate 'Mac' McCaffrey
@@ -1717,25 +1736,23 @@
       (run-on state "HQ")
       (let [iwall (get-ice state :hq 0)
             nasir (get-in @state [:runner :identity])]
+        (is (= 5 (:credit (get-runner))))
         (core/rez state :corp iwall)
-        (is (= 5 (:credit (get-runner))) "Nasir Ability does not trigger automatically")
-        (card-ability state :runner nasir 0)
         (is (= 1 (:credit (get-runner))) "Credits at 1 after Nasir ability trigger"))))
   (testing "with Xanadu"
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}
                  :runner {:id "Nasir Meidan: Cyber Explorer"
-                          :deck ["Xanadu"]}})
+                          :deck ["Xanadu"]
+                          :credits 6}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
-      (swap! state assoc-in [:runner :credit] 6)
       (play-from-hand state :runner "Xanadu")
       (run-on state "HQ")
-      (let [iwall (get-in @state [:corp :servers :hq :ices 0])
+      (let [iwall (get-ice state :hq 0)
             nasir (get-in @state [:runner :identity])]
-        (core/rez state :corp iwall)
         (is (= 3 (:credit (get-runner))) "Pay 3 to install Xanadu")
-        (card-ability state :runner nasir 0)
+        (core/rez state :corp iwall)
         (is (= 2 (:credit (get-runner))) "Gain 1 more credit due to Xanadu")))))
 
 (deftest nathaniel-gnat-hall-one-of-a-kind

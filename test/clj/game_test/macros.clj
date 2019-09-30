@@ -1,5 +1,6 @@
 (ns game-test.macros
   (:require [game.core :as core]
+            [game.core.card :refer [get-card]]
             [game.utils :refer [side-str]]
             [clojure.test :refer :all]
             [clojure.string :refer [join]]
@@ -15,7 +16,7 @@
          ~'refresh (fn [card#]
                      ;; ;; uncommenting the below two assertions causes a looot of tests to fail
                      ;; (is ~'card "card passed to refresh should not be nil")
-                     (let [~'ret (core/get-card ~'state card#)]
+                     (let [~'ret (get-card ~'state card#)]
                        ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
          ~'prompt-map (fn [side#] (-> @~'state side# :prompt first))

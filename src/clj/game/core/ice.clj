@@ -157,38 +157,41 @@
      (effect-completed state side eid))))
 
 ;;; Ice strength functions
-(defn ice-strength-bonus
-  "Increase the strength of the given ice by n. Negative values cause a decrease."
-  [state side n ice]
-  ;; apply the strength bonus if the bonus is positive, or if the ice doesn't have the "can't lower strength" flag
-  (when (or (pos? n) (not (card-flag? ice :cannot-lower-strength true)))
-    (swap! state update-in [:bonus :ice-strength] (fnil + 0) n)))
+(defn get-strength
+  [card]
+  (or (:current-strength card)
+      (:strength card)))
+
+(defn sum-ice-strength-effects
+  "Sums the results from get-effects."
+  [state side ice]
+  (let [can-lower? (not (card-flag? ice :cannot-lower-strength true))]
+    (reduce + (filter #(and % (or can-lower? (pos? %))) (get-effects state side ice :ice-strength nil)))))
 
 (defn ice-strength
   "Gets the modified strength of the given ice."
-  [state side card]
-  (let [strength (:strength card 0)]
-    (+ (if-let [strfun (:strength-bonus (card-def card))]
-         (+ strength (strfun state side (make-eid state) card nil))
-         strength)
-       (get-in @state [:bonus :ice-strength] 0))))
+  [state side {:keys [strength] :as ice}]
+  (when (ice? ice)
+    (->> [strength
+          (when-let [strfun (:strength-bonus (card-def ice))]
+            (strfun state side nil ice nil))
+          (sum-ice-strength-effects state side ice)]
+         (reduce (fnil + 0 0)))))
 
 (defn update-ice-strength
   "Updates the given ice's strength by triggering strength events and updating the card."
   [state side ice]
   (let [ice (get-card state ice)
-        oldstren (or (:current-strength ice) (:strength ice))]
+        oldstren (get-strength ice)]
     (when (rezzed? ice)
-      (swap! state update-in [:bonus] dissoc :ice-strength)
-      (wait-for (trigger-event-simult state side :pre-ice-strength nil ice)
-                (update! state side (assoc ice :current-strength (ice-strength state side ice)))
-                (trigger-event state side :ice-strength-changed (get-card state ice) oldstren)
-                (swap! state update-in [:bonus] dissoc :ice-strength)))))
+      (update! state side (assoc ice :current-strength (ice-strength state side ice)))
+      (trigger-event state side :ice-strength-changed (get-card state ice) oldstren))))
 
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."
   [state side server]
-  (doseq [ice (:ices server)] (update-ice-strength state side ice)))
+  (doseq [ice (:ices server)]
+    (update-ice-strength state side ice)))
 
 (defn update-all-ice
   "Updates all installed ice."
@@ -196,46 +199,61 @@
   (doseq [server (get-in @state [:corp :servers])]
     (update-ice-in-server state side (second server))))
 
+(defn pump-ice
+  "Change a piece of ice's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
+  ([state side card n] (pump-ice state side card n :end-of-encounter))
+  ([state side card n duration]
+   (register-floating-effect
+     state side card
+     {:type :ice-strength
+      :duration duration
+      :req (req (same-card? card target))
+      :value n})
+   (update-ice-strength state side (get-card state card))))
 
-;;; Icebreaker functions.
-(defn breaker-strength-bonus
-  "Increase the strength of the breaker by n. Negative values cause a decrease."
-  [state side n]
-  (swap! state update-in [:bonus :breaker-strength] (fnil #(+ % n) 0)))
 
+;;; Icebreaker functions
 (defn breaker-strength
   "Gets the modified strength of the given breaker."
   [state side {:keys [strength] :as card}]
   (when-not (nil? strength)
-    ;; A breaker's current strength is the sum of its native strength,
-    ;; the bonus reported by its :strength-bonus function,
-    ;; the effects of per-encounter and per-run strength pumps,
-    ;; and miscellaneous increases registered by third parties (Dinosaurus, others).
-    (+ (if-let [strfun (:strength-bonus (card-def card))]
-         (+ strength (strfun state side (make-eid state) card nil))
-         strength)
-       (get-in card [:pump :encounter] 0)
-       (get-in card [:pump :all-run] 0)
-       (get-in card [:pump :all-turn] 0)
-       (get-in @state [:bonus :breaker-strength] 0))))
+    (->> [strength
+          (when-let [strfun (:strength-bonus (card-def card))]
+            (strfun state side (make-eid state) card nil))
+          (sum-effects state side card :breaker-strength)]
+         (reduce (fnil + 0 0)))))
 
 (defn update-breaker-strength
   "Updates a breaker's current strength by triggering updates and applying their effects."
   [state side breaker]
   (let [breaker (get-card state breaker)
-        oldstren (or (:current-strength breaker) (:strength breaker))]
-    (swap! state update-in [:bonus] dissoc :breaker-strength)
-    (trigger-event state side :pre-breaker-strength breaker)
+        oldstren (get-strength breaker)]
     (update! state side (assoc (get-card state breaker) :current-strength (breaker-strength state side breaker)))
     (trigger-event state side :breaker-strength-changed (get-card state breaker) oldstren)))
 
+(defn update-all-icebreakers
+  [state side]
+  (doseq [icebreaker (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
+    (update-breaker-strength state side icebreaker)))
+
 (defn pump
-  "Increase a breaker's strength by n for the given duration of :encounter, :all-run or :all-turn"
-  ([state side card n] (pump state side card n :encounter))
+  "Change a breaker's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
+  ([state side card n] (pump state side card n :end-of-encounter))
   ([state side card n duration]
-   (update! state side (update-in (get-card state card) [:pump duration] (fnil #(+ % n) 0)))
+   (register-floating-effect
+     state side (get-card state card)
+     {:type :breaker-strength
+      :duration duration
+      :req (req (same-card? card target))
+      :value n})
    (update-breaker-strength state side (get-card state card))
-   (trigger-event state side :pump-breaker n card)))
+   (trigger-event state side :pump-breaker (get-card state card) n)))
+
+(defn pump-all-icebreakers
+  ([state side n] (pump-all-icebreakers state side n :end-of-encounter))
+  ([state side n duration]
+   (doseq [icebreaker (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
+     (pump state side icebreaker n duration))))
 
 ;;; Others
 (defn ice-index
@@ -243,11 +261,6 @@
   is the innermost ice."
   [state ice]
   (first (keep-indexed #(when (same-card? %2 ice) %1) (get-in @state (cons :corp (:zone ice))))))
-
-(defn get-strength
-  [card]
-  (or (:current-strength card)
-      (:strength card)))
 
 ;; Break abilities
 (defn- break-subroutines-impl
@@ -361,14 +374,14 @@
 (defn strength-pump
   "Creates a strength pump ability.
   Cost can be a credit amount or a list of costs e.g. [:credit 2]."
-  ([cost strength] (strength-pump cost strength :encounter nil))
+  ([cost strength] (strength-pump cost strength :end-of-encounter nil))
   ([cost strength duration] (strength-pump cost strength duration nil))
   ([cost strength duration args]
    (let [cost (if (number? cost) [:credit cost] cost)
          duration-string (cond
-                           (= duration :all-run)
+                           (= duration :end-of-run)
                            " for the remainder of the run"
-                           (= duration :all-turn)
+                           (= duration :end-of-turn)
                            " for the remainder of the turn")]
      {:label (str (or (:label args)
                       (str "add " strength " strength"
@@ -453,14 +466,9 @@
 ;; hooks up breaker-auto-pump to the necessary events.
 ;; IMPORTANT: Events on cdef take precedence, and should call
 ;; (:effect breaker-auto-pump) themselves.
-(defn auto-icebreaker [cdef]
-  (assoc cdef
-         :events (merge {:run breaker-auto-pump
-                         :pass-ice breaker-auto-pump
-                         :run-ends breaker-auto-pump
-                         :ice-strength-changed breaker-auto-pump
-                         :ice-subtype-changed breaker-auto-pump
-                         :breaker-strength-changed breaker-auto-pump
-                         :approach-ice breaker-auto-pump
-                         :subroutines-changed breaker-auto-pump}
-                        (:events cdef))))
+(let [events (for [event [:run :approach-ice :pass-ice :run-ends
+                          :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
+                          :subroutines-changed]]
+               (assoc breaker-auto-pump :event event))]
+  (defn auto-icebreaker [cdef]
+    (assoc cdef :events (apply conj events (:events cdef)))))

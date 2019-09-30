@@ -99,28 +99,30 @@
   ;; Alias
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand [(qty "Ice Wall" 2)]}
-               :runner {:hand ["Breach"]
+                      :hand [(qty "Zed 1.0" 2)]}
+               :runner {:hand ["Alias"]
                         :credits 10}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Zed 1.0" "HQ")
+    (play-from-hand state :corp "Zed 1.0" "New remote")
     (take-credits state :corp)
-    (play-from-hand state :runner "Breach")
-    (let [breach (get-program state 0)
-          iw1 (get-ice state :hq 0)
-          iw2 (get-ice state :remote1 0)]
-      (core/rez state :corp (refresh iw1))
-      (core/rez state :corp (refresh iw2))
-      (is (= 2 (core/get-strength (refresh breach))) "Starts with 2 strength")
-      (card-ability state :runner (refresh breach) 1)
-      (is (= 6 (core/get-strength (refresh breach))) "Can gain strength outside of a run")
+    (play-from-hand state :runner "Alias")
+    (let [alias (get-program state 0)
+          zed1 (get-ice state :hq 0)
+          zed2 (get-ice state :remote1 0)]
+      (core/rez state :corp (refresh zed1))
+      (core/rez state :corp (refresh zed2))
+      (is (= 1 (core/get-strength (refresh alias))) "Starts with 2 strength")
+      (card-ability state :runner (refresh alias) 1)
+      (is (= 4 (core/get-strength (refresh alias))) "Can gain strength outside of a run")
       (run-on state :hq)
-      (card-ability state :runner (refresh breach) 0)
-      (click-prompt state :runner "End the run")
-      (is (= 1 (count (filter :broken (:subroutines (refresh iw1))))) "The subroutine is broken")
+      (card-ability state :runner (refresh alias) 0)
+      (click-prompt state :runner "Do 1 brain damage")
+      (click-prompt state :runner "Done")
+      (is (= 1 (count (filter :broken (:subroutines (refresh zed1))))) "The subroutine is broken")
       (run-jack-out state)
+      (is (= 1 (core/get-strength (refresh alias))) "Drops back down to base strength on run end")
       (run-on state :remote1)
-      (card-ability state :runner (refresh breach) 0)
+      (card-ability state :runner (refresh alias) 0)
       (is (empty? (:prompt (get-runner))) "No break prompt because we're running a remote"))))
 
 (deftest amina
@@ -518,6 +520,7 @@
         (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon, +1 from installing onto Scheherazade"))
       (is (zero? (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
       (take-credits state :runner)
+      (click-prompt state :runner "Chameleon")
       (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2")))
   (testing "Can break subroutines only on chosen subtype"
     (do-game
@@ -1106,6 +1109,30 @@
         (run-continue state)
         (run-successful state)
         (is (empty? (:prompt (get-runner))) "No prompt for accessing cards")))))
+
+(deftest engolo
+  ;; Engolo
+  (testing "Subtype is removed when Engolo is trashed mid-encounter. Issue #4039"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rototurret"]}
+                 :runner {:hand ["Engolo"]
+                          :credits 10}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Engolo")
+      (let [roto (get-ice state :hq 0)
+            engolo (get-program state 0)]
+        (core/rez state :corp roto)
+        (run-on state :hq)
+        (card-ability state :runner engolo 2)
+        (is (has-subtype? (refresh roto) "Code Gate"))
+        (card-subroutine state :corp roto 0)
+        (click-card state :corp engolo)
+        (core/no-action state :corp nil)
+        (run-continue state)
+        (is (nil? (refresh engolo)) "Engolo is trashed")
+        (is (not (has-subtype? (refresh roto) "Code Gate")) "Rototurret loses subtype even when Engolo is trashed")))))
 
 (deftest equivocation
   ;; Equivocation - interactions with other successful-run events.
@@ -2791,7 +2818,7 @@
         (core/rez state :corp architect-rezzed)
         (take-credits state :corp)
         (play-from-hand state :runner "Trypano")
-        (click-card state :runner (game.core/get-card state architect-rezzed))
+        (click-card state :runner (get-card state architect-rezzed))
         (play-from-hand state :runner "Trypano")
         (click-card state :runner architect-unrezzed)
         (is (= 2 (core/available-mu state)) "Trypano consumes 1 MU"))

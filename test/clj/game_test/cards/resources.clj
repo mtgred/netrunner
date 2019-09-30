@@ -592,7 +592,28 @@
         (click-prompt state :runner "No action")
         (is (= 2 (count (:hand (get-runner)))) "Runner did draw cards from Obelus after all accesses are done")
         (is (= 1 (count (:discard (get-runner)))) "Counter Surveillance trashed")
-        (is (zero? (:credit (get-runner))) "Runner has no credits")))))
+        (is (zero? (:credit (get-runner))) "Runner has no credits"))))
+  (testing "Interaction with By Any Means. Issue #3377"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Blue Level Clearance" "Red Level Clearance"]}
+                 :runner {:hand [(qty "Sure Gamble" 2) "Counter Surveillance" "By Any Means"]
+                          :tags 2}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "By Any Means")
+      (play-from-hand state :runner "Counter Surveillance")
+      (is (= 2 (:credit (get-runner))) "Runner has 4 credits")
+      (let [cs (get-resource state 0)]
+        (card-ability state :runner cs 0)
+        (click-prompt state :runner "HQ")
+        (run-successful state)
+        (is (= [:hq] (get-in @state [:runner :register :successful-run])))
+        (click-prompt state :runner "Card from hand")
+        (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
+        (click-prompt state :runner "Card from hand")
+        (is (second-last-log-contains? state "Runner uses By Any Means to trash"))
+        (is (= 4 (count (:discard (get-runner)))) "Counter Surveillance trashed")
+        (is (zero? (:credit (get-runner))) "Runner has 2 credits")))))
 
 (deftest crash-space
   ;; Crash Space
@@ -1693,13 +1714,10 @@
         (is (= 11 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
         (core/rez state :corp pw1)
         (is (= 10 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
-        (is (second-last-log-contains? state "increase the rez cost by 1 \\[Credit\\]") "Hernando Cortez use was logged")
         (core/rez state :corp pw2)
         (is (= 9 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
-        (is (second-last-log-contains? state "increase the rez cost by 1 \\[Credit\\]") "Hernando Cortez use was logged")
         (core/rez state :corp pw3)
-        (is (= 9 (:credit (get-corp))) "Paid 0 to rez Paper Wall")
-        (is (not (second-last-log-contains? state "increase the rez cost by 1 \\[Credit\\]")) "Hernando Cortez use was not logged"))))
+        (is (= 9 (:credit (get-corp))) "Paid 0 to rez Paper Wall"))))
   (testing "Rezzing a three subroutine ICE"
     (do-game
       (new-game {:corp {:deck [(qty "Ichi 1.0" 2) "Launch Campaign"]}
@@ -1723,10 +1741,8 @@
         (is (= 13 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
         (core/rez state :corp ichi1)
         (is (= 5 (:credit (get-corp))) "Paid 8 instead of 5 to rez Ichi 1.0")
-        (is (second-last-log-contains? state "increase the rez cost by 3 \\[Credit\\]") "Hernando Cortez use was logged")
         (core/rez state :corp ichi2)
-        (is (= 0 (:credit (get-corp))) "Paid 5 to rez Ichi 1.0")
-        (is (not (second-last-log-contains? state "increase the rez cost by 3 \\[Credit\\]")) "Hernando Cortez use was not logged"))))
+        (is (= 0 (:credit (get-corp))) "Paid 5 to rez Ichi 1.0"))))
   (testing "Rezzing a zero subroutine ICE"
     (do-game
       (new-game {:corp {:deck ["Tour Guide" "NEXT Silver" "Launch Campaign"]}
@@ -1750,10 +1766,8 @@
         (is (= 12 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ICE")
         (core/rez state :corp tour-guide)
         (is (= 10 (:credit (get-corp))) "Paid 2 to rez Tour Guide")
-        (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged")
         (core/rez state :corp next-silver)
-        (is (= 7 (:credit (get-corp))) "Paid 3 to rez NEXT Silver")
-        (is (second-last-log-contains? state "increase the rez cost by 0 \\[Credit\\]") "Hernando Cortez use was logged"))))
+        (is (= 7 (:credit (get-corp))) "Paid 3 to rez NEXT Silver"))))
   (testing "interactions with non-rez abilities, such as Blue Sun. Issue #4000"
     (do-game
       (new-game {:corp {:id "Blue Sun: Powering the Future"
@@ -2159,6 +2173,7 @@
       (is (= 3 (count (:hosted (refresh lib)))) "3 programs hosted")
       (is (zero? (count (:discard (get-runner)))) "Nothing in archives yet")
       (take-credits state :runner)
+      (click-prompt state :runner "Chameleon") ; Simultaneous resolution
       (is (zero? (count (:hosted (refresh lib)))) "All programs trashed when turn ends")
       (is (= 2 (count (:hand (get-runner)))) "Darwin never got played, Chameleon returned to hand")
       (is (= 2 (count (:discard (get-runner)))) "Femme Fatale and Study Guide trashed"))))
@@ -2838,8 +2853,8 @@
       (is (= 3 (core/available-mu state)) "Corrder cost 1 mu")
       (is (= 5 (:credit (get-runner))) "Starting with 5 credits")
       (card-ability state :runner rosetta 0)
-      (click-prompt state :runner (find-card "Gordian Blade" (:deck (get-runner))))
       (click-card state :runner corroder)
+      (click-prompt state :runner (find-card "Gordian Blade" (:deck (get-runner))))
       (is (= 3 (core/available-mu state)) "Gordian cost 1 mu, Corroder freed")
       (is (= 3 (:credit (get-runner))) "Ending with 3 credits")
       (is (= 1 (count (:rfg (get-runner)))) "Corroder removed from game")
@@ -3112,20 +3127,20 @@
         (is (= 3 (core/available-mu state)) "Gordian cost 1 mu"))))
   (testing "Can't afford install"
     (do-game
-      (new-game {:runner {:deck ["Street Peddler" (qty "Gordian Blade" 3)]}})
+      (new-game {:runner {:deck [(qty "Gordian Blade" 3)]
+                          :hand ["Street Peddler"]
+                          :credits 0}})
       (take-credits state :corp)
-      (starting-hand state :runner ["Street Peddler"])
       (play-from-hand state :runner "Street Peddler")
       (let [sp (get-resource state 0)]
         (card-ability state :runner sp 0)
-        (core/lose state :runner :credit 3)
-        (is (= 2 (count (:choices (first (:prompt (get-runner))))))
-            "1 card and 1 cancel option on Street Peddler")
-        (click-prompt state :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
+        (is (= ["Cancel"] (:choices (first (:prompt (get-runner))))) "1 cancel option on Street Peddler")
+        (click-prompt state :runner "Cancel") ; choose to install Gordian
         (is (zero? (count (get-program state)))
             "Gordian Blade was not installed")
-        (is (and (:installed (refresh sp)) (= 3 (count (:hosted (refresh sp))))
-                 "Street Peddler still installed with 3 hosted cards")))))
+        (is (and (:installed (refresh sp))
+                 (= 3 (count (:hosted (refresh sp)))))
+            "Street Peddler still installed with 3 hosted cards"))))
   (testing "Interaction with Kate discount"
     (do-game
       (new-game {:runner {:id "Kate \"Mac\" McCaffrey: Digital Tinker"

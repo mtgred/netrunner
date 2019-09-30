@@ -45,7 +45,7 @@
       (play-from-hand state :runner "New Angeles City Hall")
       (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
       (let [nach (get-resource state 0)]
-        (play-run-event state (first (get-in @state [:runner :hand])) :hq)
+        (play-run-event state "Account Siphon" :hq)
         (click-prompt state :runner "Account Siphon")
         (is (= 4 (:credit (get-runner))) "Runner still has 4 credits due to BP")
         (card-ability state :runner nach 0)
@@ -541,30 +541,45 @@
       (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
   (testing "Effect persists when moved from discard"
     (do-game
-     (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"}
-                :runner {:deck [(qty "By Any Means" 2)]}})
-     (take-credits state :corp)
-     (play-from-hand state :runner "By Any Means")
-     (card-ability state :corp (get-in @state [:corp :identity]) 0)
-     (click-prompt state :corp (find-card "By Any Means" (:discard (get-runner))))
-     (is (= 1 (count (get-in @state [:runner :rfg]))) "By Any Means RFGed")
-     (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
-     (is (= 1 (count (:hand (get-runner)))) "No damage yet")
-     (run-empty-server state "HQ")
-     (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
-     (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
+      (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"
+                        :hand ["Hedge Fund"]}
+                 :runner {:deck [(qty "By Any Means" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "By Any Means")
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (click-prompt state :corp (find-card "By Any Means" (:discard (get-runner))))
+      (is (= 1 (count (get-in @state [:runner :rfg]))) "By Any Means RFGed")
+      (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
+      (is (= 1 (count (:hand (get-runner)))) "No damage yet")
+      (run-empty-server state "HQ")
+      (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
+      (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
   (testing "Effect does not persist between turns"
     (do-game
-     (new-game {:runner {:deck [(qty "By Any Means" 2)]}})
-     (take-credits state :corp)
-     (play-from-hand state :runner "By Any Means")
-     (take-credits state :runner)
-     (take-credits state :corp)
-     (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
-     (is (= 1 (count (:hand (get-runner)))) "No damage yet")
-     (run-empty-server state "HQ")
-     (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
-     (is (= 1 (count (:hand (get-runner)))) "No damage"))))
+      (new-game {:runner {:deck [(qty "By Any Means" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "By Any Means")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
+      (is (= 1 (count (:hand (get-runner)))) "No damage yet")
+      (run-empty-server state "HQ")
+      (is (zero? (count (:discard (get-corp)))) "Nothing trashed")
+      (is (= 1 (count (:hand (get-runner)))) "No damage")))
+  (testing "Effect persists when moved from discard. Issue #3341"
+    (do-game
+      (new-game {:corp {:hand ["Hedge Fund"]}
+                 :runner {:hand [(qty "By Any Means" 2) "Levy AR Lab Access"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "By Any Means")
+      (play-from-hand state :runner "Levy AR Lab Access")
+      (is (= ["By Any Means" "By Any Means"] (->> (get-runner) :hand (mapv :title))) "By Any Means back in the grip")
+      (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
+      (is (= 2 (count (:hand (get-runner)))) "No damage yet")
+      (run-empty-server state "HQ")
+      (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
+      (is (= 1 (count (:hand (get-runner)))) "Took 1 meat damage"))))
 
 (deftest careful-planning
   ;; Careful Planning - Prevent card in/protecting remote server from being rezzed this turn
@@ -1729,6 +1744,7 @@
     (core/gain state :runner :credit 1)
     (is (= 6 (:credit (get-runner))) "Runner starts with 6 credits")
     (play-from-hand state :runner "High-Stakes Job")
+    (is (= 1 (-> (get-runner) :prompt first :choices count)) "Only has 1 server to choose from")
     (click-prompt state :runner "HQ")
     (run-successful state)
     (is (= 12 (:credit (get-runner))) "Runner gains 12 credits")))
@@ -3425,31 +3441,31 @@
           c2  (get-program state 1)]
       (run-empty-server state "R&D") ;; Check that System Seizure triggers even if another run has been made
       (run-on state "HQ") ;; Check that System Seizure only keeps strength on one of the breakers
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength")
       (card-ability state :runner c1 1)
       (card-ability state :runner c2 1)
-      (is (= 3 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 3 strength")
-      (is (= 3 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 3 strength")
+      (is (= 3 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 3 strength")
+      (is (= 3 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 3 strength")
       (run-continue state)
-      (is (= 3 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 3 strength")
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (is (= 3 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 3 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength")
       (run-successful state)
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength")
       (run-on state "HQ") ;; Check that System Seizure does not keep strength on 2nd run
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength")
       (card-ability state :runner c1 1)
       (card-ability state :runner c2 1)
-      (is (= 3 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 3 strength")
-      (is (= 3 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 3 strength")
+      (is (= 3 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 3 strength")
+      (is (= 3 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 3 strength")
       (run-continue state)
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength")
       (run-successful state)
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
-      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength"))))
+      (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength"))))
 
 (deftest test-run
   ;; Test Run

@@ -258,13 +258,13 @@
     (play-from-hand state :runner "Comet")
     (let [comet (get-hardware state 0)]
       (play-from-hand state :runner "Easy Mark")
-      (is (true? (:comet-event (core/get-card state comet)))) ; Comet ability enabled
+      (is (true? (:comet-event (get-card state comet)))) ; Comet ability enabled
       (card-ability state :runner comet 0)
       (is (= (:cid comet) (-> @state :runner :prompt first :card :cid)))
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (= 7 (:credit (get-runner))))
       (is (= 2 (:click (get-runner))))
-      (is (nil? (:comet-event (core/get-card state comet))) "Comet ability disabled"))))
+      (is (nil? (:comet-event (get-card state comet))) "Comet ability disabled"))))
 
 (deftest cortez-chip
   ;; Cortez Chip - Trash to add 2 credits to rez cost of an ICE until end of turn
@@ -662,6 +662,44 @@
       (click-card state :runner aum)
       (is (= 2 (get-counters (refresh aum) :virus)) "Aumakua gained 1 counter")
       (is (zero? (get-counters (refresh fc) :virus)) "Friday Chip lost 1 counter"))))
+
+(deftest gebrselassie
+  ;; Gebrselassie
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "Fire Wall" 2)]
+                      :credits 20}
+               :runner {:hand ["Corroder" "Bukhgalter" "Gebrselassie"]
+                        :credits 20}})
+    (play-from-hand state :corp "Fire Wall" "HQ")
+    (play-from-hand state :corp "Fire Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (core/rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (core/gain state :runner :click 5)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Bukhgalter")
+    (play-from-hand state :runner "Gebrselassie")
+    (let [cor (get-program state 0)
+          bukh (get-program state 1)
+          geb (get-hardware state 0)]
+      (card-ability state :runner geb 0)
+      (click-card state :runner cor)
+      (run-on state :hq)
+      (is (= 2 (:current-strength (refresh cor))) "Corroder starts with 2 strength")
+      (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter starts with 1 strength")
+      (card-ability state :runner cor 1)
+      (card-ability state :runner cor 1)
+      (card-ability state :runner cor 1)
+      (is (= 5 (:current-strength (refresh cor))) "Corroder has 5 strength")
+      (card-ability state :runner bukh 1)
+      (is (= 2 (:current-strength (refresh bukh))) "Bukhgalter has 2 strength")
+      (card-ability state :runner cor 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (is (= 5 (:current-strength (refresh cor))) "Corroder still has 5 strength")
+      (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter has reset to 1")
+      (run-jack-out state))))
 
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
@@ -1457,34 +1495,7 @@
 
 (deftest patchwork
   ;; Patchwork
-  (testing "Play event"
-    (do-game
-      (new-game {:runner {:deck ["Patchwork" (qty "Sure Gamble" 2) "Easy Mark"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 4)
-      (play-from-hand state :runner "Patchwork")
-      (card-ability state :runner (get-hardware state 0) 0)
-      (play-from-hand state :runner "Sure Gamble")
-      (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
-      (is (empty? (:discard (get-runner))) "Sure Gamble is not in heap yet")
-      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
-      (is (= 11 (:credit (get-runner))) "Runner was only charge 3 credits to play Sure Gamble")
-      (is (= 2 (count (:discard (get-runner)))) "2 cards now in heap")
-      (play-from-hand state :runner "Sure Gamble")
-      (is (= 15 (:credit (get-runner))) "Patchwork is once-per-turn")))
-  (testing "Install a card"
-    (do-game
-      (new-game {:runner {:deck ["Patchwork" "Easy Mark" "Cyberfeeder"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 4)
-      (play-from-hand state :runner "Patchwork")
-      (card-ability state :runner (get-hardware state 0) 0)
-      (play-from-hand state :runner "Cyberfeeder")
-      (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
-      (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
-      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
-      (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder")))
-  (testing "Play event with pay-credits prompt"
+  (testing "Play an event"
     (do-game
       (new-game {:runner {:deck ["Patchwork" (qty "Sure Gamble" 2) "Easy Mark"]}})
       (take-credits state :corp)
@@ -1497,7 +1508,7 @@
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (not-empty (:discard (get-runner))) "Easy Mark is in heap")
       (is (= 11 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble")))
-  (testing "Install a card with pay-credits prompt"
+  (testing "Install a card"
     (do-game
       (new-game {:runner {:deck ["Patchwork" "Easy Mark" "Cyberfeeder"]}})
       (take-credits state :corp)

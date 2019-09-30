@@ -705,7 +705,7 @@
        (core/rez state :corp (refresh css))
        (is (= 2 (get-counters (refresh css) :power)) "Still 2 counters on Cold Site Server")
        (play-from-hand state :runner "Dirty Laundry")
-       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
+       (is (not (some #{"HQ"} (-> (get-runner) :prompt first :choices)))
            "Runner should not get to choose HQ due to increased cost")
        (click-prompt state :runner "R&D")
        (run-jack-out state)
@@ -1196,11 +1196,12 @@
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
   (testing "Single draws"
     (do-game
-      (new-game {:corp {:deck ["Jinja City Grid" (qty "Vanilla" 3) (qty "Ice Wall" 3)]}})
-      (starting-hand state :corp ["Jinja City Grid"])
+      (new-game {:corp {:deck [(qty "Vanilla" 3) (qty "Ice Wall" 3)]
+                        :hand ["Jinja City Grid"]}})
       (core/gain state :corp :click 6)
       (play-from-hand state :corp "Jinja City Grid" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
+      (is (= 4 (:credit (get-corp))) "Starts with 4 credits")
       (dotimes [n 5]
         (core/click-draw state :corp 1)
         (click-prompt state :corp (-> (get-corp) :prompt first :choices first))
@@ -2069,7 +2070,7 @@
                             (click-prompt state :corp "4")))
        (is (= 4 (get-counters (refresh rs) :power)) "4 counters placed on Reduced Service")
        (play-from-hand state :runner "Dirty Laundry")
-       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
+       (is (not (some #{"HQ"} (-> (get-runner) :prompt first :choices)))
            "Runner should not get to choose HQ due to increased cost")
        (click-prompt state :runner "Archives")
        (is (= 4 (get-counters (refresh rs) :power)) "No counter removed by only making a run")

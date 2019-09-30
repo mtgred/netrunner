@@ -236,3 +236,44 @@
     (if (:host card)
       (update-in card [:host] assoc-host-zones)
       card)))
+
+(declare get-card-hosted)
+
+(defn- to-keyword [string]
+  (if (string? string)
+    (keyword (lower-case string))
+    string))
+
+(defn get-card
+  "Returns the most recent copy of the card from the current state, as identified
+  by the argument's :zone and :cid."
+  [state {:keys [cid zone side host type] :as card}]
+  (when card
+    (if (= type "Identity")
+      (get-in @state [(to-keyword side) :identity])
+      (if zone
+        (if host
+          (get-card-hosted state card)
+          (some #(when (= cid (:cid %)) %)
+                (let [zones (map to-keyword zone)]
+                  (if (= (first zones) :scored)
+                    (into (get-in @state [:corp :scored]) (get-in @state [:runner :scored]))
+                    (get-in @state (cons (to-keyword side) zones))))))
+        card))))
+
+(defn- same-card?
+  "Checks if the two cards are the same by :cid. Alternatively specify 1-function to use to check the card"
+  ([card1 card2] (same-card? :cid card1 card2))
+  ([func card1 card2]
+    (= (func card1) (func card2))))
+
+(defn get-card-hosted
+  "Finds the current version of the given card by finding its host."
+  [state {:keys [cid zone side host] :as card}]
+  (let [root-host (get-card state (get-nested-host card))
+        helper (fn search [card target]
+                 (when-not (nil? card)
+                   (if-let [c (some #(when (same-card? % target) %) (:hosted card))]
+                     c
+                     (some #(when-let [s (search % target)] s) (:hosted card)))))]
+    (helper root-host card)))

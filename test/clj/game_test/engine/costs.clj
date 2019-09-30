@@ -168,5 +168,5 @@
        (is (= 1 (:click (get-runner))))
        (play-from-hand state :runner "Dirty Laundry")
        (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner should only get choice of Archives or R&D")
-       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
+       (is (not (some #{"HQ"} (-> (get-runner) :prompt first :choices)))
            "Runner should only get choice of Archives or R&D")))))

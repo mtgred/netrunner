@@ -33,7 +33,8 @@
 (def corp-rez-toast
   "Effect to be placed with `:runner-turn-ends` to remind players of 'when turn begins'
   triggers"
-  {:effect (req (toast state :corp "Reminder: You have unrezzed cards with \"when turn begins\" abilities." "info"))})
+  {:event :runner-turn-ends
+   :effect (req (toast state :corp "Reminder: You have unrezzed cards with \"when turn begins\" abilities." "info"))})
 
 (declare reorder-final) ; forward reference since reorder-choice and reorder-final are mutually recursive
 
@@ -107,7 +108,7 @@
     (doseq [newcard [a-new b-new]]
       (unregister-events state side newcard)
       (when (rezzed? newcard)
-        (register-events state side (:events (card-def newcard)) newcard))
+        (register-events state side newcard))
       (doseq [h (:hosted newcard)]
         (let [newh (-> h
                        (assoc-in [:zone] '(:onhost))
@@ -115,7 +116,7 @@
           (update! state side newh)
           (unregister-events state side h)
           (when (rezzed? h)
-            (register-events state side (:events (card-def newh)) newh)))))
+            (register-events state side newh)))))
     (update-ice-strength state side a-new)
     (update-ice-strength state side b-new)))
 
@@ -140,7 +141,7 @@
                        (assoc-in [:host :zone] (:zone newcard)))]
           (update! state side newh)
           (unregister-events state side h)
-          (register-events state side (:events (card-def newh)) newh))))))
+          (register-events state side newh))))))
 
 (defn do-net-damage
   "Do specified amount of net-damage."
@@ -169,11 +170,12 @@
 (defn trash-on-empty
   "Used in :event maps for effects like Daily Casts"
   [counter-type]
-  {:counter-added {:req (req (and (same-card? card target)
-                                  (not (pos? (get-counters card counter-type)))))
-                   :async true
-                   :effect (effect (system-msg (str "trashes " (:title card)))
-                                   (trash eid card {:unpreventable true}))}})
+  {:event :counter-added
+   :req (req (and (same-card? card target)
+                  (not (pos? (get-counters card counter-type)))))
+   :async true
+   :effect (effect (system-msg (str "trashes " (:title card)))
+                   (trash eid card {:unpreventable true}))})
 
 (defn pick-virus-counters-to-spend
   "Pick virus counters to spend. For use with Freedom Khumalo and virus breakers, and any other relevant cards.
