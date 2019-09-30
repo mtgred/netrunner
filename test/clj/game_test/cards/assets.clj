@@ -1006,7 +1006,6 @@
       (is (= 5 (:credit (get-runner))) "No successful runs on Daily Quest server")
       (is (= 6 (:credit (get-corp))))
       (take-credits state :runner)
-      (core/end-phase-12 state :corp nil)
       (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server")))
   (testing "Corp gains credits on no successful runs last turn when hosted on Rec Studio. Issue #4193"
     (do-game
@@ -1028,7 +1027,6 @@
           (is (= 5 (:credit (get-runner))) "No successful runs on Daily Quest server")
           (is (= 3 (:credit (get-corp))))
           (take-credits state :runner)
-          (core/end-phase-12 state :corp nil)
           (is (= 6 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server")))))
   (testing "Corp gains credits when there were no runs last turn. Issue #4447"
     (do-game
@@ -1039,7 +1037,6 @@
       (take-credits state :corp)
       (is (= 6 (:credit (get-corp))))
       (take-credits state :runner)
-      (core/end-phase-12 state :corp nil)
       (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))
 
 (deftest dedicated-response-team
