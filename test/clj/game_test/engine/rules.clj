@@ -852,3 +852,17 @@
       (core/score state :corp {:card (refresh ht)})
       (is (nil? (refresh ht)) "Hostile Takeover is scored because it's the Corp's turn again")
       (is (= "Hostile Takeover" (:title (get-scored state :corp 0)))))))
+
+(deftest clearing-currents
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Hostile Infrastructure" "Surveillance Sweep" "Hostile Takeover"]
+                      :credits 10}
+               :runner {:id "Leela Patel: Trained Pragmatist"
+                        :hand ["Corporate \"Grant\"" (qty "Sure Gamble" 2)]}})
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Surveillance Sweep")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corporate \"Grant\"")
+    (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage from clearing current")))
