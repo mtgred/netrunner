@@ -16,22 +16,36 @@
                    (build-spend-msg cost-str "play"))]
     (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
     (play-sfx state side "play-instant")
-    (if (has-subtype? card "Current")
-      (do (doseq [s [:corp :runner]]
-            (remove-old-current state side s))
-          (let [c (some #(when (same-card? % card) %) (get-in @state [side :play-area]))
-                moved-card (move state side c :current)]
-            (card-init state side eid moved-card {:resolve-effect true
-                                                  :init-data true})))
-      (do (let [ability (-> card card-def (dissoc :req) (assoc :eid eid))]
-            ;; Resolve ability, removing :req as that has already been checked.
-            (resolve-ability state side ability card nil))
-          (when-let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))]
-            (move state side c :discard))
-          (when (has-subtype? card "Terminal")
-            (lose state side :click (-> @state side :click))
-            (swap! state assoc-in [:corp :register :terminal] true))))
-    (trigger-event state side (if (= side :corp) :play-operation :play-event) card)))
+    (when (has-subtype? card "Current")
+      (doseq [s [:corp :runner]]
+        (remove-old-current state side s))
+      (let [c (some #(when (same-card? % card) %) (get-in @state [side :play-area]))]
+        (move state side c :current)))
+    ;; Select the "on the table" version of the card
+    (let [cdef (card-def card)
+          card (some #(when (same-card? % card) %) (concat (get-in @state [side :play-area]) (get-in @state [side :current])))]
+      (when card
+        (card-init state side (if (:rfg-instead-of-trashing cdef)
+                                (assoc card :rfg-instead-of-trashing true)
+                                card)
+                   {:resolve-effect false :init-data true}))
+      (let [card (get-card state card)]
+        (wait-for (trigger-event-sync state side (if (= side :corp) :play-operation :play-event) card)
+                  ;; Resolve ability, removing :req as that has already been checked
+                  (wait-for (resolve-ability state side (dissoc cdef :req) card nil)
+                            (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
+                                  zone (if (:rfg-instead-of-trashing c) :rfg :discard)]
+                              (when c
+                                (move state side c zone)
+                                (unregister-events state side card)
+                                (unregister-constant-effects state side card)
+                                (when (= zone :rfg)
+                                  (system-msg state side
+                                              (str " removes " (:title c) " from the game instead of trashing it")))))
+                            (when (has-subtype? card "Terminal")
+                              (lose state side :click (-> @state side :click))
+                              (swap! state assoc-in [:corp :register :terminal] true))
+                            (effect-completed state side eid)))))))
 
 (defn play-instant
   "Plays an Event or Operation."

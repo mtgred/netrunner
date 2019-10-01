@@ -88,19 +88,15 @@
       (play-from-hand state :corp "Cerebral Overwriter" "New remote")
       (core/gain state :corp :credit 1)
       (play-from-hand state :corp "Accelerated Diagnostics")
-      (let [playarea (get-in @state [:corp :play-area])
-            hf (find-card "Hedge Fund" playarea)
-            ss (find-card "Shipment from SanSan" playarea)
-            bc (find-card "Back Channels" playarea)
-            co (get-content state :remote1 0)]
-        (is (= 3 (count playarea)) "3 cards in play area")
-        (click-card state :corp ss)
+      (click-prompt state :corp "OK")
+      (let [co (get-content state :remote1 0)]
+        (click-prompt state :corp "Shipment from SanSan")
         (click-prompt state :corp "2")
         (click-card state :corp co)
         (is (= 2 (get-counters (refresh co) :advancement)) "Cerebral Overwriter gained 2 advancements")
-        (click-card state :corp hf)
+        (click-prompt state :corp "Hedge Fund")
         (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund")
-        (click-card state :corp bc)
+        (click-prompt state :corp "Back Channels")
         (click-card state :corp (refresh co))
         (is (= 15 (:credit (get-corp))) "Corp gained 6 credits for Back Channels"))))
   (testing "Interaction with Current"
@@ -112,30 +108,26 @@
       (play-from-hand state :corp "Cerebral Overwriter" "New remote")
       (core/gain state :corp :credit 3)
       (play-from-hand state :corp "Accelerated Diagnostics")
-      (let [playarea (get-in @state [:corp :play-area])
-            hf (find-card "Hedge Fund" playarea)
-            ss (find-card "Shipment from SanSan" playarea)
-            elp (find-card "Enhanced Login Protocol" playarea)
-            co (get-content state :remote1 0)]
-        (is (= 3 (count playarea)) "3 cards in play area")
-        (click-card state :corp elp)
+      (click-prompt state :corp "OK")
+      (let [co (get-content state :remote1 0)]
+        (click-prompt state :corp "Enhanced Login Protocol")
         (is (= "Enhanced Login Protocol" (:title (first (get-in @state [:corp :current]))))
             "Enhanced Login Protocol active in Current area")
-        (click-card state :corp ss)
+        (click-prompt state :corp "Shipment from SanSan")
         (click-prompt state :corp "2")
         (click-card state :corp co)
         (is (= 2 (get-counters (refresh co) :advancement)) "Cerebral Overwriter gained 2 advancements")
-        (click-card state :corp hf)
+        (click-prompt state :corp "Hedge Fund")
         (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund")))))
 
 (deftest an-offer-you-can-t-refuse
   ;; An Offer You Can't Refuse - exact card added to score area, not the last discarded one
   (do-game
-    (new-game {:corp {:deck ["Celebrity Gift" "An Offer You Can't Refuse"]}})
+    (new-game {:corp {:hand ["An Offer You Can't Refuse"]
+                      :discard ["Celebrity Gift"]}})
     (play-from-hand state :corp "An Offer You Can't Refuse")
     (click-prompt state :corp "R&D")
-    (core/move state :corp (find-card "Celebrity Gift" (:hand (get-corp))) :discard)
-    (is (= 2 (count (:discard (get-corp)))))
+    (is (= 1 (count (:discard (get-corp)))))
     (click-prompt state :runner "No")
     (is (= 1 (:agenda-point (get-corp))) "An Offer the Runner refused")
     (is (= 1 (count (:scored (get-corp)))))
@@ -162,7 +154,7 @@
       (click-card state :corp (find-card "Hostile Takeover" (:discard (get-corp))))
       (is (= (+ 4 credits) (:credit (get-corp))) "Corp should gain 4 [Credits] for two revealed agendas")
       (is (= (dec hand) (-> (get-corp) :hand count)) "One card from HQ is shuffled into R&D")
-      (is (= (dec discard) (-> (get-corp) :discard count)) "One card from Archives should be shuffled into R&D")
+      (is (= (+ -1 1 discard) (-> (get-corp) :discard count)) "One card from Archives should be shuffled into R&D, AA enters")
       (is (= (+ 2 deck) (-> (get-corp) :deck count)) "Corp should draw two cards and shuffle two cards into R&D"))))
 
 (deftest biased-reporting
@@ -638,26 +630,28 @@
 
 (deftest distract-the-masses
   (do-game
-    (new-game {:corp {:deck [(qty "Distract the Masses" 2) (qty "Hedge Fund" 3)]}})
-    (starting-hand state :corp ["Hedge Fund" "Hedge Fund" "Hedge Fund" "Distract the Masses" "Distract the Masses"])
+    (new-game {:corp {:hand ["Distract the Masses" (qty "Hedge Fund" 3)]}})
     (play-from-hand state :corp "Distract the Masses")
     (click-card state :corp (first (:hand (get-corp))))
-    (click-card state :corp (fnext (:hand (get-corp))))
+    (click-card state :corp (last (:hand (get-corp))))
     (click-card state :corp (first (:discard (get-corp))))
     (click-prompt state :corp "Done")
     (is (= 1 (count (:discard (get-corp)))) "1 card still discarded")
     (is (= 1 (count (:deck (get-corp)))) "1 card shuffled into R&D")
     (is (= 1 (count (:rfg (get-corp)))) "Distract the Masses removed from game")
-    (is (= 7 (:credit (get-runner))) "Runner gained 2 credits")
+    (is (= 7 (:credit (get-runner))) "Runner gained 2 credits"))
+  (do-game
+    (new-game {:corp {:hand ["Distract the Masses" "Hedge Fund"]
+                      :discard ["Hedge Fund"]}})
     (play-from-hand state :corp "Distract the Masses")
     (click-card state :corp (first (:hand (get-corp))))
     (click-prompt state :corp "Done")
     (click-card state :corp (first (:discard (get-corp))))
-    (click-card state :corp (fnext (:discard (get-corp))))
+    (click-card state :corp (last (:discard (get-corp))))
     (is (zero? (count (:discard (get-corp)))) "No cards left in archives")
-    (is (= 3 (count (:deck (get-corp)))) "2 more cards shuffled into R&D")
-    (is (= 2 (count (:rfg (get-corp)))) "Distract the Masses removed from game")
-    (is (= 9 (:credit (get-runner))) "Runner gained 2 credits")))
+    (is (= 2 (count (:deck (get-corp)))) "2 more cards shuffled into R&D")
+    (is (= 1 (count (:rfg (get-corp)))) "Distract the Masses removed from game")
+    (is (= 7 (:credit (get-runner))) "Runner gained 2 credits")))
 
 (deftest diversified-portfolio
   (do-game
@@ -1285,11 +1279,11 @@
     (take-credits state :runner)
     (is (= 3 (:click (get-corp))) "Corp should start with 3 clicks")
     (play-from-hand state :corp "Hard-Hitting News")
-    (is (zero? (:click (get-corp))) "Playing Hard-Hitting News should lose all remaining clicks")
     (is (zero? (count-tags state)) "Runner should start with 0 tags")
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
-    (is (= 4 (count-tags state)) "Runner should gain 4 tags from losing Hard-Hitting News trace")))
+    (is (= 4 (count-tags state)) "Runner should gain 4 tags from losing Hard-Hitting News trace")
+    (is (zero? (:click (get-corp))) "Playing Hard-Hitting News should lose all remaining clicks")))
 
 (deftest hasty-relocation
   ;; Hasty Relocation
@@ -1830,7 +1824,7 @@
       (core/move state :corp (find-card "Hive" (:hand (get-corp))) :deck)
       (play-from-hand state :corp "Power Shutdown")
       (click-prompt state :corp "2")
-      (is (= 3 (count (:discard (get-corp)))) "2 cards trashed from R&D")
+      (is (= 2 (count (:discard (get-corp)))) "2 cards trashed from R&D")
       (is (= 1 (count (:deck (get-corp)))) "1 card remaining in R&D")
       (click-card state :runner (get-hardware state 0)) ; try targeting Grimoire
       (is (empty? (:discard (get-runner))) "Grimoire too expensive to be targeted")
@@ -1874,11 +1868,12 @@
   ;; Preemptive Action - Shuffles cards into R&D and removes itself from game
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Subliminal Messaging" 3)
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)
                                "Preemptive Action"]}})
-      (play-from-hand state :corp "Subliminal Messaging")
-      (play-from-hand state :corp "Subliminal Messaging")
-      (play-from-hand state :corp "Subliminal Messaging")
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Preemptive Action")
       (click-card state :corp (first (:discard (get-corp))))
       (click-card state :corp (second (:discard (get-corp))))
@@ -1887,22 +1882,24 @@
       (is (= 1 (count (:rfg (get-corp)))))))
   (testing "forces you to take 3 if there are three, and removes itself from game"
     (do-game
-      (new-game {:corp {:deck [(qty "Subliminal Messaging" 3)
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)
                                (qty "Preemptive Action" 1)]}})
-      (play-from-hand state :corp "Subliminal Messaging")
-      (play-from-hand state :corp "Subliminal Messaging")
-      (play-from-hand state :corp "Subliminal Messaging")
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Preemptive Action")
-      (click-card state :corp (first (:discard (get-corp))))
-      (click-card state :corp (last (:discard (get-corp))))
       (is (= 3 (count (:discard (get-corp)))))
+      (click-card state :corp (first (:discard (get-corp))))
+      (click-card state :corp (second (:discard (get-corp))))
+      (click-card state :corp (last (:discard (get-corp))))
       (is (= 1 (count (:rfg (get-corp)))))))
   (testing "Shuffles all archives cards into R&D if Archives has less than 3 cards, and removes itself from game"
     (do-game
-      (new-game {:corp {:deck [(qty "Subliminal Messaging" 2)
+      (new-game {:corp {:deck [(qty "Hedge Fund" 2)
                                (qty "Preemptive Action" 1)]}})
-      (play-from-hand state :corp "Subliminal Messaging")
-      (play-from-hand state :corp "Subliminal Messaging")
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Preemptive Action")
       (click-card state :corp (first (:discard (get-corp))))
       (click-card state :corp (last (:discard (get-corp))))
@@ -2586,8 +2583,7 @@
       (let [jhow (get-content state :remote1 0)]
         (core/rez state :corp jhow)
         (card-ability state :corp jhow 1)
-        (click-card state :corp (find-card "Subliminal Messaging" (:discard (get-corp))))
-        (click-prompt state :corp "Done")
+        (click-card state :corp "Subliminal Messaging")
         (is (zero? (count (:discard (get-corp)))))
         (is (= 1 (count (:rfg (get-corp))))))
       (take-credits state :runner)
@@ -3036,8 +3032,8 @@
     (play-from-hand state :corp "Under the Bus")
     (click-card state :corp (get-resource state 0))
     (is (empty? (get-resource state)) "Runner has no resource installed")
-    (is (= 2 (count (:discard (get-runner)))) "Runner has 2 trashed card")
-    (is (= 1 (count-bad-pub state)) "Corp takes 1 bad pub"))) )
+    (is (= 2 (count (:discard (get-runner)))) "Runner has 2 trashed cards")
+    (is (= 1 (count-bad-pub state)) "Corp takes 1 bad pub"))))
 
 (deftest wake-up-call
   ;; Wake Up Call

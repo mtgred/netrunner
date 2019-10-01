@@ -526,7 +526,7 @@
   ([state side eid card n all?]
    (continue-ability state side
                     {:show-discard  true
-                     :choices {:max n
+                     :choices {:max (min (-> @state :corp :discard count) n)
                                :req #(and (corp? %)
                                           (in-discard? %))
                                :all all?}
@@ -542,10 +542,3 @@
                                   (shuffle! state side :deck))
                      :cancel-effect (req (shuffle! state side :deck))}
                     card nil)))
-
-(defn rfg-and-shuffle-rd-effect
-  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))
-  ([state side card n all?] (rfg-and-shuffle-rd-effect state side (make-eid state) card n all?))
-  ([state side eid card n all?]
-   (move state side card :rfg)
-   (shuffle-into-rd-effect state side eid card n all?)))
