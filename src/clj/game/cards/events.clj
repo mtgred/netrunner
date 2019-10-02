@@ -1476,19 +1476,23 @@
    (cutlery "Barrier")
 
    "Kraken"
-   {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
+   {:async true
+    :req (req (:stole-agenda runner-reg))
+    :prompt "Choose a server"
+    :choices (req servers)
     :msg (msg "force the Corp to trash an ICE protecting " target)
-    :effect (req (let [serv (rest (server->zone state target))
-                       servname target]
-                   (resolve-ability
-                     state :corp
-                     {:prompt (msg "Select a piece of ICE in " target " to trash")
-                      :choices {:req #(and (= (last (:zone %)) :ices)
-                                           (= serv (rest (butlast (:zone %)))))}
-                      :effect (req (trash state :corp target)
-                                   (system-msg state side (str "trashes "
-                                                               (card-str state target))))}
-                     card nil)))}
+    :effect (effect
+              (continue-ability
+                (let [serv (second (server->zone state target))
+                      servname target]
+                  {:player :corp
+                   :async true
+                   :prompt (msg "Select a piece of ICE in " target " to trash")
+                   :choices {:req #(and (ice? %)
+                                        (= serv (second (:zone %))))}
+                   :effect (effect (system-msg (str "trashes " (card-str state target)))
+                                   (trash :corp eid target nil))})
+                card nil))}
 
    "Labor Rights"
    {:req (req (pos? (+ (count (:deck runner)) (count (:discard runner)))))
@@ -1528,8 +1532,9 @@
     :makes-run true
     :prompt "Choose a server"
     :choices (req runnable-servers)
-    :msg (msg "make a run on " target (when (<= (count (filter program? (all-active-installed state :runner))) 3)
-                                        ", adding +2 strength to all icebreakers"))
+    :msg (msg "make a run on " target
+              (when (<= (count (filter program? (all-active-installed state :runner))) 3)
+                ", adding +2 strength to all icebreakers"))
     :effect (req (when (<= (count (filter program? (all-active-installed state :runner))) 3)
                    (pump-all-icebreakers state side 2 :end-of-run))
                  (make-run state side eid target nil card))}
@@ -1650,7 +1655,8 @@
                            (when (:successful run)
                              (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
                              (gain state :runner :click 1)
-                             (move state :runner card :hand)))}]}
+                             (move state :runner card :hand)
+                             (unregister-events state side card)))}]}
 
    "Mars for Martians"
    (letfn [(count-clan [state] (count (filter #(and (has-subtype? % "Clan") (resource? %))
@@ -1662,13 +1668,26 @@
                              (effect-completed state side eid)))})
 
    "Mass Install"
-   (let [mhelper (fn mi [n] {:prompt "Select a program to install"
-                             :choices {:req #(and (program? %)
-                                                  (in-hand? %))}
-                             :effect (req (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)
-                                          (when (< n 3)
-                                            (resolve-ability state side (mi (inc n)) card nil)))})]
-     {:effect (effect (resolve-ability (mhelper 1) card nil))})
+   (letfn [(mhelper [n]
+             (when (< n 3)
+               {:async true
+                :req (req (some #(and (program? %)
+                                      (can-pay? state side eid card nil
+                                                [:credit (install-cost state side %)]))
+                                (:hand runner)))
+                :prompt "Select a program to install"
+                :choices {:five (req (and (program? target)
+                                          (in-hand? target)
+                                          (can-pay? state side eid card nil
+                                                    [:credit (install-cost state side target)])))}
+                :effect (req (wait-for (runner-install state side target nil)
+                                       (continue-ability state side (mhelper (inc n)) card nil)))}))]
+     {:async true
+      :req (req (some #(and (program? %)
+                            (can-pay? state side eid card nil
+                                      [:credit (install-cost state side %)]))
+                      (:hand runner)))
+      :effect (effect (continue-ability (mhelper 0) card nil))})
 
    "Mining Accident"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
@@ -1729,7 +1748,9 @@
                                  :type :recurring}}}
 
    "Networking"
-   {:msg "remove 1 tag"
+   {:async true
+    :req (req (pos? (count-tags state)))
+    :msg "remove 1 tag"
     :effect (effect (lose-tags 1)
                     (continue-ability
                       {:optional
@@ -1737,7 +1758,7 @@
                         :yes-ability
                         {:cost [:credit 1]
                          :msg "add it to their Grip"
-                         :effect (effect (move (last (:discard runner)) :hand))}}}
+                         :effect (effect (move card :hand))}}}
                       card nil))}
 
    "Notoriety"
@@ -1818,8 +1839,10 @@
                         (unregister-events state side card {:events [{:event :runner-phase-12}]})))})
 
    "Paper Tripping"
-   {:msg "remove all tags"
-    :effect (effect (lose-tags :all))}
+   {:async true
+    :req (req (pos? (count-tags state)))
+    :msg "remove all tags"
+    :effect (effect (lose-tags eid :all))}
 
    "Peace in Our Time"
    {:req (req (not (:scored-agenda corp-reg)))
@@ -1829,12 +1852,17 @@
                     (register-turn-flag! card :can-run nil))}
 
    "Planned Assault"
-   {:msg (msg "play " (:title target))
-    :choices (req (cancellable (filter #(and (has-subtype? % "Run")
-                                             (<= (:cost %) (:credit runner))) (:deck runner)) :sorted))
-    :prompt "Choose a Run event" :effect (effect (trigger-event :searched-stack nil)
-                                                 (shuffle! :deck)
-                                                 (play-instant target {:no-additional-cost true}))}
+   {:async true
+    :prompt "Choose a Run event"
+    :choices (req (sort-by :title
+                           (filter #(and (has-subtype? % "Run")
+                                         (can-pay? state side eid card nil
+                                                   [:credit (play-cost state side %)]))
+                                   (:deck runner))))
+    :msg (msg "play " (:title target))
+    :effect (effect (trigger-event :searched-stack nil)
+                    (shuffle! :deck)
+                    (play-instant eid target {:no-additional-cost true}))}
 
    "Political Graffiti"
    (let [update-agenda-points (fn [state side target amount]
@@ -1869,8 +1897,7 @@
     :effect (effect (lose :corp :click-per-turn 1))
     :events [{:event :corp-turn-ends
               :duration :until-corp-turn-ends
-              :effect (effect (gain :corp :click-per-turn 1)
-                              (unregister-floating-events :until-corp-turn-ends))}]}
+              :effect (effect (gain :corp :click-per-turn 1))}]}
 
    "Power Nap"
    {:effect (effect (gain-credits (+ 2 (count (filter #(has-subtype? % "Double")
@@ -1899,20 +1926,14 @@
                                 (rezzed? last-ice)
                                 (<= (get-strength last-ice) (count (all-installed state :runner))))))
                  :async true
-                 :msg (msg "trash " (card-str state (nth run-ices run-position)))
-                 :effect
-                 (effect
-                   (show-wait-prompt :corp "Runner to use Prey")
-                   (continue-ability
-                     (let [strength (get-strength (nth run-ices run-position))]
-                       {:prompt (str "Select " strength " installed cards")
-                        :choices {:req #(and (runner? %)
-                                             (installed? %))
-                                  :max strength
-                                  :all true}
-                        :effect (effect (clear-wait-prompt :runner)
-                                        (trash eid (nth run-ices run-position) nil))})
-                     card nil))}]}
+                 :effect (effect
+                           (continue-ability
+                             (let [last-ice (nth run-ices run-position)]
+                               {:async true
+                                :cost [:installed (get-strength last-ice)]
+                                :msg (msg "trash " (card-str state last-ice))
+                                :effect (effect (trash eid last-ice nil))})
+                             card nil))}]}
 
    "Process Automation"
    {:msg "gain 2 [Credits] and draw 1 card"
@@ -1933,8 +1954,7 @@
               :choices ["Even" "Odd"]
               :async true
               :effect (req (let [correct-guess ((if (= target "Even") even? odd?) spent)]
-                             (clear-wait-prompt state :runner)
-                             (lose state :runner :credit spent)
+                             (clear-wait-prompt state :runner) (lose state :runner :credit spent)
                              (system-msg state :runner (str "spends " spent " [Credit]"))
                              (system-msg state :corp (str (if correct-guess " " " in")
                                                           "correctly guesses " (lower-case target)))
@@ -2202,9 +2222,10 @@
              (map :cid (filter #(and (rezzed? %)
                                      (ice? %))
                                ice)))]
-     {:prompt "Choose a server"
-      :choices (req runnable-servers)
+     {:async true
       :makes-run true
+      :prompt "Choose a server"
+      :choices (req runnable-servers)
       :effect (effect (update! (assoc-in card [:special :run-amok] (get-rezzed-cids (all-installed state :corp))))
                       (make-run eid target nil (get-card state card)))
       :events [{:event :run-ends
@@ -2237,36 +2258,49 @@
                     (make-run eid target nil card))}
 
    "Satellite Uplink"
-   {:choices {:max 2 :req installed?}
-    :async true
-    :effect (req (let [[card1 card2] targets]
-                   (wait-for (expose state side card1)
-                             (expose state side eid card2))))}
+   {:async true
+    :req (req (some #(not (rezzed? %)) (all-installed state :corp)))
+    :choices {:max 2
+              :req #(and (corp? %)
+                         (installed? %)
+                         (not (rezzed? %)))}
+    :effect (req (if (pos? (count targets))
+                   (wait-for (expose state side target)
+                             (if (= 2 (count targets))
+                               (expose state side eid (second targets))
+                               (effect-completed state side eid)))
+                   (effect-completed state side eid)))}
 
    "Scavenge"
-   {:prompt "Select an installed program to trash"
+   {:async true
+    :req (req (some #(and (program? %)
+                          (installed? %))
+                    (all-active-installed state :runner)))
+    :prompt "Select an installed program to trash"
     :choices {:req #(and (program? %)
                          (installed? %))}
     :effect (req (let [trashed target
                        tcost (:cost trashed)]
-                   (trash state side trashed)
-                   (continue-ability
-                     state side
-                     {:prompt "Select a program to install from your Grip or Heap"
-                      :show-discard true
-                      :choices
-                      {:five (req (and (program? target)
-                                       (or (in-hand? target)
-                                           (in-discard? target))
-                                       (can-pay? state side eid card nil
-                                                 [:credit (install-cost state side target
-                                                                        {:cost-bonus (- tcost)})])))}
-                      :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
-                                                      target {:cost-bonus (- tcost)}))
-                      :msg (msg "trash " (:title trashed)
-                                " and install " (:title target)
-                                ", lowering the cost by " tcost " [Credits]")}
-                     card nil)))}
+                   (wait-for
+                     (trash state side target {:unpreventable true})
+                     (continue-ability
+                       state side
+                       {:async true
+                        :prompt "Select a program to install from your Grip or Heap"
+                        :show-discard true
+                        :choices
+                        {:five (req (and (program? target)
+                                         (or (in-hand? target)
+                                             (in-discard? target))
+                                         (can-pay? state side eid card nil
+                                                   [:credit (install-cost state side target
+                                                                          {:cost-bonus (- tcost)})])))}
+                        :msg (msg "trash " (:title trashed)
+                                  " and install " (:title target)
+                                  ", lowering the cost by " tcost " [Credits]")
+                        :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
+                                                        target {:cost-bonus (- tcost)}))}
+                       card nil))))}
 
    "Scrubbed"
    {:implementation "Encounter effect is manual"
@@ -2346,11 +2380,11 @@
 
    "Special Order"
    {:prompt "Choose an Icebreaker"
+    :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))
+    :msg (msg "add " (:title target) " to their grip and shuffle their stack")
     :effect (effect (trigger-event :searched-stack nil)
                     (shuffle! :deck)
-                    (system-msg (str "adds " (:title target) " to their Grip and shuffles their Stack"))
-                    (move target :hand))
-    :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))}
+                    (move target :hand))}
 
    "Spooned"
    (cutlery "Code Gate")
@@ -2559,9 +2593,13 @@
                              state side (count (filter #(= (:title %) (:title target)) (:scored corp)))))}]}
 
    "Uninstall"
-   {:choices {:req #(and (installed? %)
+   {:req (req (some #(or (hardware? %)
+                         (program? %))
+                    (all-active-installed state :runner)))
+    :choices {:req #(and (installed? %)
                          (not (facedown? %))
-                         (#{"Program" "Hardware"} (:type %)))}
+                         (or (hardware? %)
+                             (program? %)))}
     :msg (msg "move " (:title target) " to their Grip")
     :effect (effect (move target :hand))}
 

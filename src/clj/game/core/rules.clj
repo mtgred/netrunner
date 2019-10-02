@@ -2,7 +2,7 @@
 
 (declare can-run? can-trash? card-init card-str cards-can-prevent? close-access-prompt enforce-msg
          gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? play-sfx
-         prevent-draw remove-old-current system-say system-msg steal-trigger-events
+         prevent-draw remove-old-current should-trigger? system-say system-msg steal-trigger-events
          trash-cards untrashable-while-rezzed? update-all-ice untrashable-while-resources? win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
@@ -55,7 +55,7 @@
                              (play-instant state side (make-eid state) eid? card?)))
   ([state side eid card {:keys [targets ignore-cost base-cost no-additional-cost]}]
    (let [eid (eid-set-defaults eid :source nil :source-type :play)
-         {:keys [req makes-run]} (card-def card)
+         cdef (card-def card)
          cost (play-cost state side card)
          additional-costs (play-additional-cost-bonus state side card)
          costs (merge-costs
@@ -73,14 +73,14 @@
          eid (if-not eid (make-eid state) eid)]
      ;; ensure the instant can be played
      (if (and ;; req is satisfied
-              (if req (req state side eid card targets) true)
+              (should-trigger? state side eid card targets cdef)
               ;; The zone isn't locked
               (empty? (get-in @state [side :locked (-> card :zone first)]))
               ;; This is a current, and currents can be played
               (not (and (has-subtype? card "Current")
                         (get-in @state [side :register :cannot-play-current])))
               ;; This is a run event or makes a run, and running is allowed
-              (not (and (or makes-run
+              (not (and (or (:makes-run cdef)
                             (has-subtype? card "Run"))
                         (not (can-run? state :runner))))
               ;; if priority, have not spent a click

@@ -239,6 +239,8 @@
                (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
                (unregister-floating-effects state side :end-of-turn)
                (unregister-floating-events state side :end-of-turn)
+               (unregister-floating-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+               (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended
                  (when (= :this-turn (installed? card))
