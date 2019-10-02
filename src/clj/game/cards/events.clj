@@ -418,9 +418,10 @@
     :leave-play (req (swap! state update-in [:corp :bad-publicity :additional] dec))}
 
    "Credit Crash"
-   {:prompt "Choose a server"
-    :choices (req runnable-servers)
+   {:async true
     :makes-run true
+    :prompt "Choose a server"
+    :choices (req runnable-servers)
     :effect (effect (make-run eid target nil card))
     :events [{:event :pre-access-card
               :once :per-run
@@ -616,16 +617,16 @@
     :async true
     :makes-run true
     :effect (effect (make-run eid target nil card))
-    :abilities [{:label "Install a program using Diana's Hunt?"
+    :abilities [{:label "Install a program using Diana's Hunt"
                  :async true
+                 :req (req current-ice)
                  :effect
                  (effect
                    (continue-ability
                      {:prompt "Choose a program in your grip to install"
                       :choices {:req #(and (in-hand? %)
                                            (program? %)
-                                           (runner-can-install? state side % false)
-                                           (can-pay? state side eid card nil [:credit (install-cost state side %)]))}
+                                           (runner-can-install? state side % false))}
                       :msg (msg "install " (:title target) ", ignoring all costs")
                       :effect (req (let [diana-card (assoc-in target [:special :diana-installed] true)]
                                      (update! state side (update-in card [:special :diana] conj diana-card))
@@ -814,18 +815,23 @@
     :leave-play (effect (enable-identity :corp))}
 
    "En Passant"
-   {:req (req (:successful-run runner-reg))
-    :effect (req (let [runtgt (first (flatten (turn-events state side :run)))
-                       serv (zone->name runtgt)]
-                   (resolve-ability
-                     state side
-                     {:prompt (msg "Choose an unrezzed piece of ICE protecting " serv " that you passed on your last run")
-                      :choices {:req #(and (ice? %)
-                                           (not (rezzed? %)))}
-                      :msg (msg "trash " (card-str state target))
-                      :effect (req (trash state side target)
-                                   (swap! state assoc-in [:runner :register :trashed-card] true))}
-                     card nil)))}
+   {:async true
+    :req (req (let [server (first (flatten (turn-events state side :run)))]
+                (and (:successful-run runner-reg)
+                     (seq (filter (complement rezzed?) (get-in @state (concat [:corp :servers] [server] [:ices])))))))
+    :effect (effect
+              (continue-ability
+                (let [server (first (flatten (turn-events state side :run)))]
+                  {:async true
+                   :prompt (str "Choose an unrezzed piece of ICE protecting "
+                                (zone->name server) " that you passed on your last run")
+                   :choices {:req #(and (ice? %)
+                                        (not (rezzed? %))
+                                        (= server (second (:zone %))))}
+                   :msg (msg "trash " (card-str state target))
+                   :effect (req (swap! state assoc-in [:runner :register :trashed-card] true)
+                                (trash state side eid target nil))})
+                card nil))}
 
    "Encore"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
@@ -888,7 +894,7 @@
                            (effect-completed state side eid)))}
 
    "Executive Wiretaps"
-   {:msg (msg "reveal cards in HQ: " (join ", " (map :title (:hand corp))))
+   {:msg (msg "reveal cards in HQ: " (join ", " (sort (map :title (:hand corp)))))
     :effect (effect (reveal (:hand corp)))}
 
    "Exploit"
@@ -972,14 +978,16 @@
                   :msg "force the Corp to trash the top card of R&D"
                   :effect (effect (mill :corp)
                                   (continue-ability
-                                    {:prompt "Reveal how many copies of Fear the Masses?"
-                                     :choices {:req #(and (in-hand? %)
-                                                          (same-card? :title card %))}
-                                     :msg (msg "reveal " (count targets) " copies of Fear the Masses,"
-                                               " forcing the Corp to trash " (count targets)
-                                               " additional cards from the top of R&D")
-                                     :effect (effect (reveal targets)
-                                                     (mill :corp (count targets)))}
+                                    (let [n (count (filter #(same-card? :title card %) (:hand runner)))]
+                                      {:prompt "Reveal how many copies of Fear the Masses?"
+                                       :choices {:req #(and (in-hand? %)
+                                                            (same-card? :title card %))
+                                                 :max n}
+                                       :msg (msg "reveal " (count targets) " copies of Fear the Masses,"
+                                                 " forcing the Corp to trash " (count targets)
+                                                 " additional cards from the top of R&D")
+                                       :effect (effect (reveal targets)
+                                                       (mill :corp (count targets)))})
                                     card nil))}}
                 card))}
 
@@ -1274,7 +1282,8 @@
     :choices ["Gain 2 [Credits]" "Expose a card"]
     :effect (effect (continue-ability
                       (if (= target "Expose a card")
-                        {:choices {:req installed?}
+                        {:choices {:req #(and (installed? %)
+                                              (not (rezzed? %)))}
                          :async true
                          :effect (effect (expose eid target))}
                         {:msg "gain 2 [Credits]"

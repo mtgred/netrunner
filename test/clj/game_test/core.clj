@@ -255,8 +255,10 @@
   the server to install into with a string."
   ([state side title] (play-from-hand state side title nil))
   ([state side title server]
-   (core/play state side {:card (find-card title (get-in @state [side :hand]))
-                          :server server})))
+   (let [card (find-card title (get-in @state [side :hand]))]
+     (is (some? card) (str title " is in the hand"))
+     (core/play state side {:card (find-card title (get-in @state [side :hand]))
+                            :server server}))))
 
 
 ;;; Run functions
@@ -310,6 +312,10 @@
   (run-on state server)
   (run-successful state))
 
+(defn get-run-event
+  ([state] (get-in @state [:runner :play-area]))
+  ([state pos]
+   (get-in @state [:runner :play-area pos])))
 
 ;;; Misc functions
 (defn score-agenda
