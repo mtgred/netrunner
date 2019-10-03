@@ -156,15 +156,6 @@
         (click-card state :runner "Ice Wall")
         (click-prompt state :corp "No")))))
 
-(deftest box-e
-  ;; Box-E - +2 MU, +2 max hand size
-  (do-game
-    (new-game {:runner {:deck ["Box-E"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Box-E")
-    (is (= 6 (core/available-mu state)))
-    (is (= 7 (hand-size :runner)))))
-
 (deftest bookmark
   ;; Bookmark
   (do-game
@@ -181,6 +172,15 @@
     (card-ability state :runner bm 2)
     (is (nil? (refresh bm)) "Bookmark is now trashed")
     (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip"))))
+
+(deftest box-e
+  ;; Box-E - +2 MU, +2 max hand size
+  (do-game
+    (new-game {:runner {:deck ["Box-E"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Box-E")
+    (is (= 6 (core/available-mu state)))
+    (is (= 7 (hand-size :runner)))))
 
 (deftest brain-chip
   ;; Brain Chip handsize and memory limit
@@ -310,6 +310,14 @@
                            (card-ability state :runner co 1)
                            (click-card state :runner cyb))))))
 
+(deftest cybersolutions-mem-chip
+  ;; CyberSolutions Mem Chip- Gain 2 memory
+  (do-game
+    (new-game {:runner {:deck [(qty "CyberSolutions Mem Chip" 3)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "CyberSolutions Mem Chip")
+    (is (= 6 (core/available-mu state)) "Gain 2 memory")))
+
 (deftest cybsoft-macrodrive
   ;; Cybsoft MacroDrive
   (testing "Pay-credits prompt"
@@ -322,14 +330,6 @@
         (changes-val-macro -1 (:credit (get-runner))
                            "Used 1 credit from Cybsoft MacroDrive"
                            (click-card state :runner cyb))))))
-
-(deftest cybersolutions-mem-chip
-  ;; CyberSolutions Mem Chip- Gain 2 memory
-  (do-game
-    (new-game {:runner {:deck [(qty "CyberSolutions Mem Chip" 3)]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "CyberSolutions Mem Chip")
-    (is (= 6 (core/available-mu state)) "Gain 2 memory")))
 
 (deftest daredevil
   ;; Daredevil
@@ -986,7 +986,6 @@
        (click-prompt state :runner "Done")
        (is (:run @state) "Run prevented from ending")))))
 
-
 (deftest mache
   ;; Mâché
   (testing "Basic test"
@@ -1551,19 +1550,6 @@
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-hardware state)) "Plascrete depleted and trashed"))))
 
-(deftest public-terminal
-  ;; Public Terminal
-  (testing "Pay-credits prompt"
-    (do-game
-      (new-game {:runner {:deck ["Public Terminal" "Dirty Laundry"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Public Terminal")
-      (let [pt (get-hardware state 0)]
-        (changes-val-macro -1 (:credit (get-runner))
-                           "Used 1 credit from Public Terminal"
-                           (play-from-hand state :runner "Dirty Laundry")
-                           (click-card state :runner pt))))))
-
 (deftest prepaid-voicepad
   ;; Prepaid VoicePAD
   (testing "Pay-credits prompt"
@@ -1576,6 +1562,19 @@
                            "Used 1 credit from "
                            (play-from-hand state :runner "Dirty Laundry")
                            (click-card state :runner ppvp))))))
+
+(deftest public-terminal
+  ;; Public Terminal
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Public Terminal" "Dirty Laundry"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Public Terminal")
+      (let [pt (get-hardware state 0)]
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 1 credit from Public Terminal"
+                           (play-from-hand state :runner "Dirty Laundry")
+                           (click-card state :runner pt))))))
 
 (deftest rabbit-hole
   ;; Rabbit Hole - +1 link, optionally search Stack to install more copies
