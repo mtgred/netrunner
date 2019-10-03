@@ -962,7 +962,8 @@
            (map-indexed (fn [i card]
                           [:div.card-wrapper {:key i
                                               :style {:left (when (> size 1) (* (/ 128 size) i))}}
-                           (if (this-user? @user)
+                           (if (or (:seen card)
+                                   (this-user? @user))
                              [card-view card]
                              [facedown-card (:side card)])])
                         @cards))
@@ -1722,8 +1723,8 @@
                     [starting-timestamp]
                     [rfg-view op-rfg "Removed from the game" true]
                     [rfg-view me-rfg "Removed from the game" true]
-                    [play-area-view op-user "Temporary Zone" op-play-area]
-                    [play-area-view me-user "Temporary Zone" me-play-area]
+                    [play-area-view op-user "Play Area" op-play-area]
+                    [play-area-view me-user "Play Area" me-play-area]
                     [rfg-view op-current "Current" false]
                     [rfg-view me-current "Current" false]])
                  (when-not (= @side :spectator)
