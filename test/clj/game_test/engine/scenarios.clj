@@ -165,13 +165,13 @@
   ;; Gain 1c on start of turn or agenda steal
   (letfn [(companion-test [card]
             (do-game
-              (new-game {:corp {:hand ["Hostile Takeover"]}
+              (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                                :hand ["Hostile Takeover"]}
                          :runner {:hand [card]}})
-              (play-from-hand state :corp "PAD Campaign" "New remote")
               (take-credits state :corp)
               (play-from-hand state :runner card)
               (let [cc (get-resource state 0)
-                    counters (get-counters (refresh cc) :credit)] ;; cc for companion card
+                    counters (get-counters (refresh cc) :credit)]
                 (is (zero? (get-counters (refresh cc) :credit)) "Companion starts with 0 credits")
                 (run-empty-server state "HQ")
                 (click-prompt state :runner "Steal")

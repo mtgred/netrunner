@@ -1249,7 +1249,7 @@
   ;; Khondi Plaza
   (testing "Pay-credits prompt"
     (do-game
-      (new-game {:corp {:hand ["Khondi Plaza" "Enigma" (qty "PAD Campaign" 3)]}})
+      (new-game {:corp {:hand ["Khondi Plaza" "Ice Wall" "Enigma" (qty "PAD Campaign" 3)]}})
       (core/gain state :corp :click 10)
       (play-from-hand state :corp "Khondi Plaza" "New remote")
       (play-from-hand state :corp "Enigma" "Server 1")
