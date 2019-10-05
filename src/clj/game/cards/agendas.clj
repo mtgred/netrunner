@@ -1219,6 +1219,7 @@
     :silent (req true)
     :abilities [{:cost [:agenda 1]
                  :msg (msg "place 1 advancement token on " (card-str state target))
+                 :label "Place 1 advancement token on an installed card"
                  :choices {:req installed?}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
