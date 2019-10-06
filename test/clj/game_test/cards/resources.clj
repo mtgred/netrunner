@@ -2173,7 +2173,29 @@
         (dotimes [_ 5]
           (click-card state :runner "Miss Bones"))
         (is (= 7 (get-counters (refresh mb) :credit)) "Miss Bones loses 5 credits")
-        (is (nil? (refresh bs)) "Broadcast Square has been trashed")))))
+        (is (nil? (refresh bs)) "Broadcast Square has been trashed"))))
+  (testing "Can be used outside of a trash-prompt to gain credits manually"
+    (do-game
+      (new-game {:runner {:hand ["Miss Bones"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Miss Bones")
+      (let [mb (get-resource state 0)]
+        (card-ability state :runner mb 0)
+        (click-prompt state :runner "5")
+        (is (= 7 (get-counters (refresh mb) :credit)) "Miss Bones loses 5 credits")
+        (is (= 8 (get-in @state [:runner :credit]))))))
+  (testing "Can't take more credits than there are on Miss Bones"
+    (do-game
+      (new-game {:runner {:hand ["Miss Bones"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Miss Bones")
+      (let [mb (get-resource state 0)
+            runner-prompt #(first (get-in % [:runner :prompt]))]
+        (card-ability state :runner mb 0)
+        (is (= 12 (get-in (runner-prompt @state) [:choices :number])) "Can take up to 12 credits from a newly installed Miss Bones")
+        (click-prompt state :runner "5")
+        (card-ability state :runner mb 0)
+        (is (= 7 (get-in (runner-prompt @state) [:choices :number])) "Number of credits that may be taken is reduced after taking money from Miss Bones")))))
 
 (deftest muertos-gang-member
   ;; Muertos Gang Member - Install and Trash

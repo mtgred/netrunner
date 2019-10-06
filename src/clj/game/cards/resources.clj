@@ -1431,9 +1431,11 @@
     :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
                                                 (installed? target)))
                                  :type :credit}}
-    :abilities [{:msg "gain 1 [Credits] for trashing installed cards"
-                 :effect (effect (gain-credits 1)
-                                 (add-counter card :credit -1))}]
+    :abilities [{:prompt "Choose how many credits to take from Miss Bones"
+                 :choices {:number (req (get-counters card :credit))}
+                 :msg (msg "gain " target " [Credits] for trashing installed cards")
+                 :effect (effect (gain-credits target)
+                                 (add-counter card :credit (* -1 target)))}]
     :events [(trash-on-empty :credit)]}
 
    "Motivation"
