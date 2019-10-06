@@ -258,11 +258,12 @@
   (when-let [current (first (get-in @state [current-side :current]))] ; trash old current
     (trigger-event state side :trash-current current)
     (unregister-constant-effects state side current)
-    (if (get-in current [:special :rfg-when-trashed])
-      (do (system-say state side (str (:title current) " is removed from the game."))
-          (move state (other-side side) current :rfg))
-      (do (system-say state side (str (:title current) " is trashed."))
-          (trash state (to-keyword (:side current)) current)))))
+    (let [current (get-card state current)]
+      (if (get-in current [:special :rfg-when-trashed])
+        (do (system-say state side (str (:title current) " is removed from the game."))
+            (move state (other-side side) current :rfg))
+        (do (system-say state side (str (:title current) " is trashed."))
+            (trash state (to-keyword (:side current)) current))))))
 
 ;;; Functions for icons associated with special cards - e.g. Femme Fatale
 (defn add-icon

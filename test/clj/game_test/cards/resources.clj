@@ -292,29 +292,6 @@
     (run-empty-server state :hq)
     (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
 
-(deftest ^:skip-card-coverage companions
-  ;; Fencer Fueno, Mystic Maemi, Trickster Taka:
-  ;; Gain 1c on start of turn or agenda steal
-  (letfn [(companion-test [card]
-            (do-game
-              (new-game {:corp {:hand ["Hostile Takeover"]}
-                         :runner {:hand [card]}})
-              (play-from-hand state :corp "PAD Campaign" "New remote")
-              (take-credits state :corp)
-              (play-from-hand state :runner card)
-              (let [cc (get-resource state 0)
-                    counters (get-counters (refresh cc) :credit)] ;; cc for companion card
-                (is (zero? (get-counters (refresh cc) :credit)) "Companion starts with 0 credits")
-                (run-empty-server state "HQ")
-                (click-prompt state :runner "Steal")
-                (is (= (inc counters) (get-counters (refresh cc) :credit)) "Companion gains 1c for stealing agenda")
-                (run-empty-server state "Archives")
-                (is (= (inc counters) (get-counters (refresh cc) :credit)) "Companion doesn't gain 1c when no agenda stolen"))))]
-    (doall (map companion-test
-                ["Fencer Fueno"
-                 "Trickster Taka"
-                 "Mystic Maemi"]))))
-
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
   (do-game
@@ -2594,17 +2571,17 @@
   ;; Paige Piper
   (testing "interaction with Frantic Coding. Issue #2190"
     (do-game
-      (new-game {:runner {:deck ["Paige Piper" (qty "Frantic Coding" 2) (qty "Sure Gamble" 3)
-                                 (qty "Gordian Blade" 2) "Ninja" (qty "Bank Job" 3) (qty "Indexing" 2)]}})
+      (new-game {:runner {:hand ["Paige Piper" "Frantic Coding" "Frantic Coding"]
+                          :deck [(qty "Sure Gamble" 3) (qty "Gordian Blade" 2)
+                                 "Ninja" (qty "Bank Job" 3) (qty "Indexing" 2)]}})
       (take-credits state :corp)
-      (starting-hand state :runner ["Paige Piper" "Frantic Coding" "Frantic Coding"])
       (play-from-hand state :runner "Paige Piper")
       (click-prompt state :runner "No")
       (take-credits state :runner) ; now 8 credits
       (take-credits state :corp)
       (play-from-hand state :runner "Frantic Coding")
       (click-prompt state :runner "OK")
-      (click-prompt state :runner (find-card "Gordian Blade" (:deck (get-runner))))
+      (click-prompt state :runner "Gordian Blade")
       (is (= 1 (count (get-program state))) "Installed Gordian Blade")
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "0")
@@ -2613,7 +2590,7 @@
       ;; a second Frantic Coding will not trigger Paige (once per turn)
       (play-from-hand state :runner "Frantic Coding")
       (click-prompt state :runner "OK")
-      (click-prompt state :runner (find-card "Ninja" (:deck (get-runner))))
+      (click-prompt state :runner "Ninja")
       (is (= 2 (count (get-program state))) "Installed Ninja")
       (is (= 11 (count (:discard (get-runner)))) "11 cards in heap")
       (is (= 2 (:credit (get-runner))) "No charge to install Ninja"))))
@@ -3916,6 +3893,27 @@
                            (click-card state :runner rara))
         (is (= 0 (count (:hand (get-runner)))) "Installed Darwin")))))
 
+(deftest tri-maf-contact
+  ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
+  (do-game
+    (new-game {:runner {:deck ["Tri-maf Contact" (qty "Cache" 3) "Shiv"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tri-maf Contact")
+    (let [tmc (get-resource state 0)]
+      (card-ability state :runner tmc 0)
+      (is (= 5 (:credit (get-runner))) "Gained 2c")
+      (is (= 2 (:click (get-runner))) "Spent 1 click")
+      (card-ability state :runner tmc 0)
+      (is (= 5 (:credit (get-runner))) "No credits gained; already used this turn")
+      (core/move state :runner tmc :hand)
+      (is (= 5 (count (:hand (get-runner)))) "No meat damage")
+      (play-from-hand state :runner "Tri-maf Contact")
+      (core/gain-tags state :runner 1)
+      (take-credits state :runner)
+      (core/trash-resource state :corp nil)
+      (click-card state :corp (get-resource state 0))
+      (is (= 4 (count (:discard (get-runner)))) "Took 3 meat damage"))))
+
 (deftest trickster-taka
   ;; Trickster Taka - Companion, credits spendable on programs during runs (not during access)
   (testing "Basic test"
@@ -3988,27 +3986,6 @@
                            (run-on state :hq)
                            (card-ability state :runner refr 1)
                            (click-card state :runner refr))))))
-
-(deftest tri-maf-contact
-  ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
-  (do-game
-    (new-game {:runner {:deck ["Tri-maf Contact" (qty "Cache" 3) "Shiv"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Tri-maf Contact")
-    (let [tmc (get-resource state 0)]
-      (card-ability state :runner tmc 0)
-      (is (= 5 (:credit (get-runner))) "Gained 2c")
-      (is (= 2 (:click (get-runner))) "Spent 1 click")
-      (card-ability state :runner tmc 0)
-      (is (= 5 (:credit (get-runner))) "No credits gained; already used this turn")
-      (core/move state :runner tmc :hand)
-      (is (= 5 (count (:hand (get-runner)))) "No meat damage")
-      (play-from-hand state :runner "Tri-maf Contact")
-      (core/gain-tags state :runner 1)
-      (take-credits state :runner)
-      (core/trash-resource state :corp nil)
-      (click-card state :corp (get-resource state 0))
-      (is (= 4 (count (:discard (get-runner)))) "Took 3 meat damage"))))
 
 (deftest virus-breeding-ground
   ;; Virus Breeding Ground - Gain counters

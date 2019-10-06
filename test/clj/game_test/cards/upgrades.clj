@@ -678,7 +678,6 @@
      (core/gain state :corp :credit 10 :click 10)
      (play-from-hand state :corp "Cold Site Server" "HQ")
      (play-from-hand state :corp "Test Ground" "New remote")
-
      (let [css (get-content state :hq 0)
            tg (get-content state :remote1 0)]
        (core/rez state :corp (refresh css))
@@ -1250,7 +1249,7 @@
   ;; Khondi Plaza
   (testing "Pay-credits prompt"
     (do-game
-      (new-game {:corp {:hand ["Khondi Plaza" "Enigma" (qty "PAD Campaign" 3)]}})
+      (new-game {:corp {:hand ["Khondi Plaza" "Ice Wall" "Enigma" (qty "PAD Campaign" 3)]}})
       (core/gain state :corp :click 10)
       (play-from-hand state :corp "Khondi Plaza" "New remote")
       (play-from-hand state :corp "Enigma" "Server 1")
@@ -1264,7 +1263,6 @@
                            "Used 3 credits from Khondi Plaza"
                            (core/rez state :corp en)
                            (dotimes [c 3] (click-card state :corp kh)))))))
-
 
 (deftest la-costa-grid
   (testing "La Costa Grid cannot be installed in a central server"

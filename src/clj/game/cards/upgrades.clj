@@ -203,8 +203,11 @@
                  :msg (msg "play " (:title target) " from Archives, ignoring all costs, and removes it from the game")
                  :choices (req (cancellable (filter #(and (operation? %)
                                                           (has-subtype? % "Transaction")) (:discard corp)) :sorted))
-                 :effect (effect (play-instant nil (assoc-in target [:special :rfg-when-trashed] true) {:ignore-cost true})
-                                 (move target :rfg))}]}
+                 :async true
+                 :effect (effect (play-instant eid (-> target
+                                                       (assoc :rfg-instead-of-trashing true)
+                                                       (assoc-in [:special :rfg-when-trashed] true))
+                                               {:ignore-cost true}))}]}
 
    "Calibration Testing"
    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))

@@ -444,22 +444,6 @@
     (click-prompt state :runner (find-card "Bank Job" (:hosted (:identity (get-runner)))))
     (is (= 3 (count (get-in @state [:runner :hand]))) "There are 3 cards in the runner's Grip")))
 
-(deftest azmari-edtech-shaping-the-future
-  ;; Azmari EdTech: Shaping the Future
-  (testing "Don't gain credits when installing facedown #4477"
-    (do-game
-      (new-game {:corp {:id "Azmari EdTech: Shaping the Future"
-                        :deck [(qty "Hedge Fund" 5)]
-                        :hand [(qty "Hedge Fund" 5)]}
-                 :runner {:id "Apex: Invasive Predator"
-                          :hand ["Sure Gamble"]}})
-      (take-credits state :corp)
-      (click-prompt state :corp "Event")
-      (core/end-phase-12 state :runner nil)
-      (let [credits (:credit (get-corp))]
-        (click-card state :runner "Sure Gamble")
-        (is (= credits (:credit (get-corp))) "Corp gains no credits from facedown install"))) ))
-
 (deftest az-mccaffrey-mechanical-prodigy
   ;; Az McCaffrey: Mechanical Prodigy
   (do-game
@@ -478,6 +462,22 @@
       (play-from-hand state :runner "HQ Interface")
       (is (= 1 (count (get-hardware state))) "One installed hardware")
       (is (= (- creds 3) (:credit (get-runner))) "Az discount was applied"))))
+
+(deftest azmari-edtech-shaping-the-future
+  ;; Azmari EdTech: Shaping the Future
+  (testing "Don't gain credits when installing facedown #4477"
+    (do-game
+      (new-game {:corp {:id "Azmari EdTech: Shaping the Future"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 5)]}
+                 :runner {:id "Apex: Invasive Predator"
+                          :hand ["Sure Gamble"]}})
+      (take-credits state :corp)
+      (click-prompt state :corp "Event")
+      (core/end-phase-12 state :runner nil)
+      (let [credits (:credit (get-corp))]
+        (click-card state :runner "Sure Gamble")
+        (is (= credits (:credit (get-corp))) "Corp gains no credits from facedown install"))) ))
 
 (deftest blue-sun-powering-the-future
   ;; Blue Sun - Pick up cards at start of turn
@@ -632,6 +632,21 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
       (is (= 2 (count (:discard (get-corp)))) "One more card trashed from HQ, by Maw"))))
+
+(deftest ele-smoke-scovak-cynosure-of-the-net
+  ;; Ele "Smoke" Scovak: Cynosure of the Net
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:id "Ele \"Smoke\" Scovak: Cynosure of the Net"
+                          :deck ["Refractor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Refractor")
+      (let [smoke (get-in @state [:runner :identity])
+            refr (get-program state 0)]
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Smoke"
+                           (card-ability state :runner refr 1)
+                           (click-card state :runner smoke))))))
 
 (deftest exile-streethawk
   ;; Exile
@@ -1605,34 +1620,6 @@
     (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
     (is (= 1 (count-tags state)) "Took 1 tag from successful run on Archives")))
 
-(deftest nbn-making-news
-  ;; NBN: Making News
-  (testing "Pay credits, and not refilling on disabled. Issue #2439"
-    (do-game
-      (new-game {:corp {:id "NBN: Making News"
-                        :deck [(qty "Hedge Fund" 5)]
-                        :hand ["Snatch and Grab" "Scarcity of Resources"]}
-                 :runner {:hand ["Employee Strike"]}})
-      (let [nbn-mn (:identity (get-corp))]
-        (play-from-hand state :corp "Snatch and Grab")
-        (is (= (+ (:credit (get-corp)) (get-counters (refresh nbn-mn) :recurring))
-               (:choices (prompt-map :corp))) "7 total available credits for the trace")
-        (click-prompt state :corp "7")
-        (click-card state :corp nbn-mn)
-        (click-card state :corp nbn-mn)
-        (is (zero? (get-counters (refresh nbn-mn) :recurring)) "Has used recurring credit")
-        (is (= 10 (:strength (prompt-map :runner))) "Current trace strength should be 10")
-        (click-prompt state :runner "0")
-        (click-prompt state :corp "Done")
-        (take-credits state :corp)
-        (play-from-hand state :runner "Employee Strike")
-        (take-credits state :runner)
-        (is (zero? (get-counters (refresh nbn-mn) :recurring)) "Making News doesn't get recurring credits cuz it's disabled")
-        (play-from-hand state :corp "Scarcity of Resources")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (is (= 2 (get-counters (refresh nbn-mn) :recurring)) "Recurring credits refill once MN isn't disabled anymore")))))
-
 (deftest maxx-maximum-punk-rock
   ;; MaxX
   (testing "Basic test"
@@ -1851,6 +1838,34 @@
       (click-prompt state :runner "Pay 2 [Credits] to trash")
       (is (seq (:prompt (get-corp))) "Corp should have a Trace prompt")
       (click-prompt state :corp "No"))))
+
+(deftest nbn-making-news
+  ;; NBN: Making News
+  (testing "Pay credits, and not refilling on disabled. Issue #2439"
+    (do-game
+      (new-game {:corp {:id "NBN: Making News"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Snatch and Grab" "Scarcity of Resources"]}
+                 :runner {:hand ["Employee Strike"]}})
+      (let [nbn-mn (:identity (get-corp))]
+        (play-from-hand state :corp "Snatch and Grab")
+        (is (= (+ (:credit (get-corp)) (get-counters (refresh nbn-mn) :recurring))
+               (:choices (prompt-map :corp))) "7 total available credits for the trace")
+        (click-prompt state :corp "7")
+        (click-card state :corp nbn-mn)
+        (click-card state :corp nbn-mn)
+        (is (zero? (get-counters (refresh nbn-mn) :recurring)) "Has used recurring credit")
+        (is (= 10 (:strength (prompt-map :runner))) "Current trace strength should be 10")
+        (click-prompt state :runner "0")
+        (click-prompt state :corp "Done")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Employee Strike")
+        (take-credits state :runner)
+        (is (zero? (get-counters (refresh nbn-mn) :recurring)) "Making News doesn't get recurring credits cuz it's disabled")
+        (play-from-hand state :corp "Scarcity of Resources")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 2 (get-counters (refresh nbn-mn) :recurring)) "Recurring credits refill once MN isn't disabled anymore")))))
 
 (deftest new-angeles-sol-your-news
   ;; New Angeles Sol - interaction with runner stealing agendas
@@ -2282,21 +2297,6 @@
     (is (= 1 (count (get-in @state [:runner :rfg]))) "One card RFGed")
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
     (is (empty? (:prompt (get-corp))) "Cannot use Skorpios twice")))
-
-(deftest ele-smoke-scovak-cynosure-of-the-net
-  ;; Ele "Smoke" Scovak: Cynosure of the Net
-  (testing "Pay-credits prompt"
-    (do-game
-      (new-game {:runner {:id "Ele \"Smoke\" Scovak: Cynosure of the Net"
-                          :deck ["Refractor"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Refractor")
-      (let [smoke (get-in @state [:runner :identity])
-            refr (get-program state 0)]
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Used 1 credit from Smoke"
-                           (card-ability state :runner refr 1)
-                           (click-card state :runner smoke))))))
 
 (deftest spark-agency-worldswide-reach
   ;; Spark Agency - Rezzing advertisements

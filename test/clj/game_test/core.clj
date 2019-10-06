@@ -250,13 +250,19 @@
      (when (string? x)
        (find-card x (get-in @state [side :scored]))))))
 
-(defn play-from-hand
+(defn get-rfg
+  ([state side] (get-in @state [side :rfg]))
+  ([state side pos]
+   (get-in @state [side :rfg pos])))
+
+(defmacro play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate
   the server to install into with a string."
-  ([state side title] (play-from-hand state side title nil))
-  ([state side title server]
-   (core/play state side {:card (find-card title (get-in @state [side :hand]))
-                          :server server})))
+  [state side title & server]
+  `(let [card# (find-card ~title (get-in @~state [~side :hand]))]
+     (is (some? card#) (str ~title " is in the hand"))
+     (core/play ~state ~side {:card card#
+                              :server ~(first server)})))
 
 
 ;;; Run functions
@@ -310,6 +316,10 @@
   (run-on state server)
   (run-successful state))
 
+(defn get-run-event
+  ([state] (get-in @state [:runner :play-area]))
+  ([state pos]
+   (get-in @state [:runner :play-area pos])))
 
 ;;; Misc functions
 (defn score-agenda

@@ -159,3 +159,27 @@
           (click-prompt state :corp "1 [Credits]")
           (click-prompt state :runner "2 [Credits]")
           (is (not (:run @state)) "Corp won Caprice psi game and ended the run"))))))
+
+(deftest companions
+  ;; Fencer Fueno, Mystic Maemi, Trickster Taka:
+  ;; Gain 1c on start of turn or agenda steal
+  (letfn [(companion-test [card]
+            (do-game
+              (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                                :hand ["Hostile Takeover"]}
+                         :runner {:hand [card]}})
+              (take-credits state :corp)
+              (play-from-hand state :runner card)
+              (let [cc (get-resource state 0)
+                    counters (get-counters (refresh cc) :credit)]
+                (is (zero? (get-counters (refresh cc) :credit)) "Companion starts with 0 credits")
+                (run-empty-server state "HQ")
+                (click-prompt state :runner "Steal")
+                (is (= (inc counters) (get-counters (refresh cc) :credit)) "Companion gains 1c for stealing agenda")
+                (run-empty-server state "Archives")
+                (is (= (inc counters) (get-counters (refresh cc) :credit)) "Companion doesn't gain 1c when no agenda stolen"))))]
+    (doall (map companion-test
+                ["Fencer Fueno"
+                 "Trickster Taka"
+                 "Mystic Maemi"]))))
+

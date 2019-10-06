@@ -7,6 +7,20 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(deftest afshar
+  ;; Afshar
+  (do-game
+    (new-game {:corp {:hand ["Afshar"]}})
+    (play-from-hand state :corp "Afshar" "HQ")
+    (let [afshar (get-ice state :hq 0)]
+      (core/rez state :corp afshar)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (card-subroutine state :corp afshar 0)
+      (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits")
+      (card-subroutine state :corp afshar 1)
+      (is (not (:run @state)) "Run is ended"))))
+
 (deftest aimor
   ;; Aimor - trash the top 3 cards of the stack, trash Aimor
   (do-game
@@ -73,20 +87,6 @@
         (core/trash state :corp (get-in @state [:corp :hand 0]))
         (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
         (is (= (get-in @state [:corp :discard 1 :title]) "Architect"))))))
-
-(deftest afshar
-  ;; Afshar
-  (do-game
-    (new-game {:corp {:hand ["Afshar"]}})
-    (play-from-hand state :corp "Afshar" "HQ")
-    (let [afshar (get-ice state :hq 0)]
-      (core/rez state :corp afshar)
-      (take-credits state :corp)
-      (run-on state "HQ")
-      (card-subroutine state :corp afshar 0)
-      (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits")
-      (card-subroutine state :corp afshar 1)
-      (is (not (:run @state)) "Run is ended"))))
 
 (deftest ashigaru
   ;; Ashigaru
@@ -300,7 +300,7 @@
       (take-credits state :corp)
       (is (not (has-subtype? (refresh ch) "Barrier")) "Chimera does not have Barrier"))))
 
-(deftest congratulations!
+(deftest congratulations
   ;; Congratulations!
   (do-game
     (new-game {:corp {:deck ["Congratulations!"]}})
@@ -905,19 +905,6 @@
       (core/lose-tags state :runner 2)
       (is (zero? (count (:subroutines (refresh io))))))))
 
-(deftest ireress
-  ;; Information Overload
-  ;; TODO: This is a bad test cuz losing bp isn't consistent
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Ireress" "Hostile Takeover"]}})
-    (play-from-hand state :corp "Ireress" "HQ")
-    (let [irs (get-ice state :hq 0)]
-      (core/rez state :corp irs)
-      (is (zero? (count (:subroutines (refresh irs)))))
-      (play-and-score state "Hostile Takeover")
-      (is (= 1 (count (:subroutines (refresh irs))))))))
-
 (deftest iq
   ;; IQ - Rez cost and strength equal to cards in HQ
   (do-game
@@ -936,6 +923,19 @@
                  (= 3 (:current-strength (refresh iq1)))
                  (= 3 (:current-strength (refresh iq2)))
                  (= 2 (:credit (get-corp)))) "3 cards in HQ: paid 3 to rez, both have 3 strength")))))
+
+(deftest ireress
+  ;; Information Overload
+  ;; TODO: This is a bad test cuz losing bp isn't consistent
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ireress" "Hostile Takeover"]}})
+    (play-from-hand state :corp "Ireress" "HQ")
+    (let [irs (get-ice state :hq 0)]
+      (core/rez state :corp irs)
+      (is (zero? (count (:subroutines (refresh irs)))))
+      (play-and-score state "Hostile Takeover")
+      (is (= 1 (count (:subroutines (refresh irs))))))))
 
 (deftest it-s-a-trap
   ;; It's a Trap! - 2 net dmg on expose, self-trash and make Runner trash installed card
@@ -1975,6 +1975,28 @@
       (click-prompt state :corp "Server 2")
       (is (= (first (get-in @state [:run :server])) :remote2) "Is running on server 2"))))
 
+(deftest sandman
+  ;; Sandman - add an installed runner card to the grip
+  (do-game
+    (new-game {:corp {:deck ["Sandman"]}
+               :runner {:deck ["Inti" "Scrubber"]}})
+    (play-from-hand state :corp "Sandman" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Inti")
+    (play-from-hand state :runner "Scrubber")
+    (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
+    (run-on state "HQ")
+    (let [sand (get-ice state :hq 0)]
+      (core/rez state :corp (refresh sand))
+      (card-subroutine state :corp (refresh sand) 0)
+      (click-card state :corp (find-card "Inti" (get-in (get-runner) [:rig :program])))
+      (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+      (card-subroutine state :corp (refresh sand) 0)
+      (click-card state :corp (find-card "Scrubber" (get-in (get-runner) [:rig :resource])))
+      (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+      (card-subroutine state :corp (refresh sand) 0)
+      (is (empty? (:prompt (get-corp))) "Sandman doesn't fire if no installed cards"))))
+
 (deftest sandstone
   ;; Sandstone - gain virus counter on run reducing strength by 1
   (do-game
@@ -1998,28 +2020,6 @@
      (play-from-hand state :runner "Parasite")
      (click-card state :runner (refresh snd))
      (is (= "Sandstone" (-> (get-corp) :discard first :title)) "Sandstone instantly trashed by Parasite"))))
-
-(deftest sandman
-  ;; Sandman - add an installed runner card to the grip
-  (do-game
-    (new-game {:corp {:deck ["Sandman"]}
-               :runner {:deck ["Inti" "Scrubber"]}})
-    (play-from-hand state :corp "Sandman" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Inti")
-    (play-from-hand state :runner "Scrubber")
-    (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
-    (run-on state "HQ")
-    (let [sand (get-ice state :hq 0)]
-      (core/rez state :corp (refresh sand))
-      (card-subroutine state :corp (refresh sand) 0)
-      (click-card state :corp (find-card "Inti" (get-in (get-runner) [:rig :program])))
-      (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
-      (card-subroutine state :corp (refresh sand) 0)
-      (click-card state :corp (find-card "Scrubber" (get-in (get-runner) [:rig :resource])))
-      (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
-      (card-subroutine state :corp (refresh sand) 0)
-      (is (empty? (:prompt (get-corp))) "Sandman doesn't fire if no installed cards"))))
 
 (deftest sapper
   ;; Sapper

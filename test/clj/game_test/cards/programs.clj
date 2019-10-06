@@ -2499,8 +2499,6 @@
       (click-prompt state :runner "Make the Runner lose 2 [Credits]")
       (click-prompt state :runner "End the run")
       (is (:broken (first (:subroutines (refresh afshar)))) "Broke a code gate subroutine"))))
-
-
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
   (do-game
@@ -2944,20 +2942,6 @@
       (is (zero? (get-counters (refresh upya) :power)) "3 counters spent")
       (is (= 5 (:click (get-runner))) "Gained 2 clicks"))))
 
-(deftest wari
-  (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}
-               :runner {:deck ["Wari"]}})
-    (play-from-hand state :corp "Ice Wall" "R&D")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Wari")
-    (run-empty-server state "HQ")
-    (click-prompt state :runner "Yes")
-    (click-prompt state :runner "Barrier")
-    (click-card state :runner (get-ice state :rd 0))
-    (is (= 1 (count (:discard (get-runner)))) "Wari in heap")
-    (is (seq (get-in @state [:runner :prompt])) "Runner is currently accessing Ice Wall")))
-
 (deftest utae
   ;; Utae
   (do-game
@@ -2996,6 +2980,20 @@
         (click-prompt state :runner "Done")
         (is (= (dec credits) (:credit (get-runner)))))
       (is (= 3 (:credit (get-runner))) "Able to use ability now"))))
+
+(deftest wari
+  (do-game
+    (new-game {:corp {:deck ["Ice Wall"]}
+               :runner {:deck ["Wari"]}})
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Wari")
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Barrier")
+    (click-card state :runner (get-ice state :rd 0))
+    (is (= 1 (count (:discard (get-runner)))) "Wari in heap")
+    (is (seq (get-in @state [:runner :prompt])) "Runner is currently accessing Ice Wall")))
 
 (deftest wyrm
   ;; Wyrm reduces strength of ice
