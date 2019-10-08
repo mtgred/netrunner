@@ -1212,18 +1212,19 @@
       (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
   (testing "Drawing non-ice on runner's turn"
     (do-game
-      (new-game {:corp {:deck ["Jinja City Grid" (qty "Hedge Fund" 3)]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                        :hand ["Jinja City Grid"]}
                  :runner {:id "Laramy Fisk: Savvy Investor"
                           :deck ["Eden Shard"]}})
-      (starting-hand state :corp ["Jinja City Grid"])
       (play-from-hand state :corp "Jinja City Grid" "HQ")
       (core/rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (run-empty-server state :rd)
+      (click-prompt state :runner "Eden Shard")
+      (click-prompt state :runner "Yes")
       (click-prompt state :runner "Yes")
       (is (= :bogus (-> (get-corp) :prompt first :prompt-type)) "Corp has a bogus prompt to fake out the runner")
-      (click-prompt state :corp "Carry on!")
-      (click-prompt state :runner "No action"))))
+      (click-prompt state :corp "Carry on!"))))
 
 (deftest keegan-lane
   ;; Keegan Lane - Trash self and remove 1 Runner tag to trash a program

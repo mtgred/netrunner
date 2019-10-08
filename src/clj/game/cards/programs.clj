@@ -51,11 +51,13 @@
   "Install-from-heap ability for conspiracy breakers
   (Conspiracy suite: Black Orchestra, MKUltra, Paperclip)"
   [title ice-type abilities]
-  (let [install-prompt {:req (req (and (in-discard? card)
+  (let [install-prompt {:async true
+                        :location :discard
+                        :req (req (and (in-discard? card)
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice ice-type)
-                                       (not (install-locked? state :runner))))
-                        :async true
+                                       (not (install-locked? state :runner))
+                                       (can-pay? state :runner eid card nil [:credit (install-cost state side card)])))
                         :effect (effect
                                   (continue-ability
                                     {:optional
@@ -63,23 +65,15 @@
                                                      (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
                                       :player :runner
                                       :prompt (str "Install " title "?")
-                                      :yes-ability {:effect (effect (unregister-events card)
-                                                                    (runner-install :runner card))}
+                                      :yes-ability {:async true
+                                                    :effect (effect (runner-install :runner eid card nil))}
                                       ;; Add a register to note that the player was already asked about installing,
                                       ;; to prevent multiple copies from prompting multiple times.
                                       :no-ability {:effect (req (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
-                                    card targets))}
-        heap-event (req (when (in-discard? card)
-                          (unregister-events state side card)
-                          (register-events
-                            state side (assoc card :zone [:discard])
-                            [(assoc install-prompt :event :rez)
-                             (assoc install-prompt :event :approach-ice)
-                             (assoc install-prompt :event :run)])))]
-    {:move-zone heap-event
-     :events [{:event :rez}
-              {:event :approach-ice}
-              {:event :run}]
+                                    card targets))}]
+    {:events [(assoc install-prompt :event :rez)
+              (assoc install-prompt :event :approach-ice)
+              (assoc install-prompt :event :run)]
      :abilities abilities}))
 
 (defn- pump-and-break
@@ -727,7 +721,7 @@
               :req (req (when-let [drawn (-> @state :runner :register :most-recent-drawn first)]
                           (= [:hand] (or (:zone drawn)
                                          (:previous-zone drawn)))))
-              :effect (effect (update-breaker-strength card))} ]
+              :effect (effect (update-breaker-strength card))}]
     :strength-bonus (req (- (count (:hand runner))))}
 
    "Creeper"
@@ -1054,7 +1048,7 @@
     :events [{:event :ice-strength-changed
               :effect (req (unregister-events state side card)
                            (when (get-in card [:special :installing])
-                             (update! state side (assoc (:host (get-card state card)) :subtype (combine-subtypes false(-> card :host :subtype) "Barrier" "Code Gate" "Sentry")))
+                             (update! state side (assoc (:host (get-card state card)) :subtype (combine-subtypes false (-> card :host :subtype) "Barrier" "Code Gate" "Sentry")))
                              (update! state side (update-in card [:special] dissoc :installing))
                              (trigger-event state side :runner-install card))
                            (continue state side nil))}]}
@@ -1695,7 +1689,9 @@
 
    "Paintbrush"
    {:abilities [{:cost [:click 1]
-                 :choices {:req #(and (installed? %) (ice? %) (rezzed? %))}
+                 :choices {:req #(and (installed? %)
+                                      (ice? %)
+                                      (rezzed? %))}
                  :effect (req (let [ice target
                                     stypes (:subtype ice)]
                                 (continue-ability

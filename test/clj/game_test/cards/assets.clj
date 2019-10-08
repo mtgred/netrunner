@@ -1673,14 +1673,12 @@
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Genetics Pavilion"]}
-                 :runner {:deck ["Diesel" (qty "Sure Gamble" 3) "Sports Hopper"]}})
+                 :runner {:deck [(qty "Sure Gamble" 3)]
+                          :hand ["Diesel" "Sports Hopper"]}})
       (play-from-hand state :corp "Genetics Pavilion" "New remote")
       (let [gp (get-content state :remote1 0)]
         (take-credits state :corp)
         (core/rez state :corp gp)
-        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
         (play-from-hand state :runner "Sports Hopper")
         (play-from-hand state :runner "Diesel")
         (is (= 2 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
@@ -1691,18 +1689,22 @@
           (card-ability state :runner hopper 0)
           (is (= 3 (count (:hand (get-runner)))) "Able to draw 3 cards during Corp's turn")
           (core/derez state :corp (refresh gp))
-          (take-credits state :corp)
-          (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-          (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-          (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-          (core/move state :runner (find-card "Diesel" (:discard (get-runner))) :hand)
-          (is (= 1 (count (:hand (get-runner)))))
-          (play-from-hand state :runner "Diesel")
-          (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards with Diesel")
-          (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-          (core/rez state :corp (refresh gp))
-          (core/draw state :runner)
-          (is (= 2 (count (:hand (get-runner)))) "No card drawn; GP counts cards drawn prior to rez")))))
+          (take-credits state :corp)))))
+  (testing "Disables further draws after drawing"
+    (do-game
+      (new-game {:corp {:deck ["Genetics Pavilion"]}
+                 :runner {:deck [(qty "Sure Gamble" 3)]
+                          :hand ["Diesel"]}})
+      (play-from-hand state :corp "Genetics Pavilion" "New remote")
+      (let [gp (get-content state :remote1 0)]
+        (take-credits state :corp)
+        (is (= 1 (count (:hand (get-runner)))))
+        (play-from-hand state :runner "Diesel")
+        (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards with Diesel")
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/rez state :corp (refresh gp))
+        (core/draw state :runner)
+        (is (= 2 (count (:hand (get-runner)))) "No card drawn; GP counts cards drawn prior to rez"))))
   (testing "vs Fisk Investment Seminar"
     (do-game
       (new-game {:corp {:deck ["Genetics Pavilion" (qty "Hedge Fund" 3)]}
