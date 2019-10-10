@@ -1110,6 +1110,22 @@
         (run-successful state)
         (is (empty? (:prompt (get-runner))) "No prompt for accessing cards")))))
 
+(deftest egret
+  ;; Egret
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Mother Goddess"]}
+               :runner {:hand [(qty "Egret" 2)]}})
+    (play-from-hand state :corp "Mother Goddess" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (let [mg (get-ice state :hq 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Egret")
+      (click-card state :runner mg)
+      (is (has-subtype? (refresh mg) "Barrier"))
+      (is (has-subtype? (refresh mg) "Code Gate"))
+      (is (has-subtype? (refresh mg) "Sentry")))))
+
 (deftest engolo
   ;; Engolo
   (testing "Subtype is removed when Engolo is trashed mid-encounter. Issue #4039"

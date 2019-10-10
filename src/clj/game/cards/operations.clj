@@ -1917,30 +1917,22 @@
       :effect (effect (continue-ability (sc 1 card) card nil))})
 
    "Subliminal Messaging"
-   (let [subliminal [{:event :corp-phase-12
-                      :async true
-                      :effect
-                      (effect
-                        (continue-ability
-                          (when (not-last-turn? state :runner :made-run)
-                            {:optional
-                             {:prompt "Add Subliminal Messaging to HQ?"
-                              :yes-ability
-                              {:msg "add Subliminal Messaging to HQ"
-                               :effect (effect (move card :hand)
-                                               (unregister-events card {:events [{:event :corp-phase-12}]}))}}})
-                          card nil))}]]
-     {:msg "gain 1 [Credits]"
-      :effect (effect (gain-credits 1)
-                      (continue-ability
-                        {:once :per-turn
-                         :once-key :subliminal-messaging
-                         :msg "gain [Click]"
-                         :effect (effect (gain :corp :click 1))}
-                        card nil))
-      :move-zone (req (if (in-discard? card)
-                        (register-events state side (assoc card :zone '(:discard)) subliminal)
-                        (unregister-events state side card {:events [{:event :corp-phase-12}]})))})
+   {:msg "gain 1 [Credits]"
+    :effect (effect (gain-credits 1)
+                    (continue-ability
+                      {:once :per-turn
+                       :once-key :subliminal-messaging
+                       :msg "gain [Click]"
+                       :effect (effect (gain :corp :click 1))}
+                      card nil))
+    :events [{:event :corp-phase-12
+              :location :discard
+              :optional
+              {:req (req (not-last-turn? state :runner :made-run))
+               :prompt "Add Subliminal Messaging to HQ?"
+               :yes-ability
+               {:msg "add Subliminal Messaging to HQ"
+                :effect (effect (move card :hand))}}}]}
 
    "Success"
    {:additional-cost [:forfeit]

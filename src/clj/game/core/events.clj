@@ -4,21 +4,32 @@
          register-suppress resolve-ability
          trigger-suppress unregister-suppress)
 
+(defn default-locations
+  [card]
+  (case (to-keyword (:type card))
+    :agenda [:scored]
+    (:asset :ice :upgrade) [:servers]
+    (:event :operation) [:current :play-area]
+    (:hardware :program :resource) [:rig]
+    (:identity :fake-identity) [:identity]))
+
 ; Functions for registering and dispatching events.
 (defn register-events
   "Registers each event handler defined in the given card definition.
   Also registers any suppression events."
-  ([state side card] (register-events state side card (:events (card-def card))))
+  ([state side card] (register-events state side card nil))
   ([state side card events]
-   (when events
-     (let [abilities
-           (->> (for [ability events]
-                  {:event (:event ability)
-                   :duration (or (:duration ability) :while-installed)
-                   :ability (dissoc ability :event :duration)
-                   :card card
-                   :uuid (uuid/v1)})
-                (into []))]
+   (let [events (or (seq events) (remove :location (:events (card-def card))))
+         abilities
+         (->> (for [ability events]
+                {:event (:event ability)
+                 :location (or (:location ability) (default-locations card))
+                 :duration (or (:duration ability) :while-installed)
+                 :ability (dissoc ability :event :duration)
+                 :card card
+                 :uuid (uuid/v1)})
+              (into []))]
+     (when (seq abilities)
        (swap! state update :events
               #(apply conj % abilities))))
    (register-suppress state side card)))
@@ -26,11 +37,14 @@
 (defn unregister-events
   "Removes all event handlers defined for the given card.
   Optionally input a partial card-definition map to remove only some handlers"
-  ([state side card] (unregister-events state side card (card-def card)))
+  ([state side card] (unregister-events state side card nil))
   ([state side card cdef]
    ;; Combine normal events and derezzed events. Any merge conflicts should not matter
    ;; as they should cause all relevant events to be removed anyway.
-   (let [abilities (map :event (concat (:events cdef) (:derezzed-events cdef)))]
+   (let [events (or (seq (concat (:events cdef) (:derezzed-events cdef)))
+                    (let [cdef (card-def card)]
+                      (remove :location (concat (:events cdef) (:derezzed-events cdef)))))
+         abilities (map :event events)]
      (swap! state assoc :events
             (->> (:events @state)
                  (remove #(and (same-card? card (:card %))

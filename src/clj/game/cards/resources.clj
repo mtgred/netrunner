@@ -21,24 +21,25 @@
 
 (defn- shard-constructor
   "Function for constructing a Shard card"
-  ([target-server message effect-fn] (shard-constructor target-server message nil effect-fn))
-  ([target-server message ability-options effect-fn]
-   (letfn [(can-install-shard? [state run] (and run
-                                                (= (:server run) [target-server])
-                                                (zero? (:position run))
-                                                (not (:access @state))))]
-     {:implementation "Click Shard to install when last ICE is passed, but before hitting Successful Run button"
-      :abilities [(merge {:effect (effect (effect-fn eid card target))
-                          :cost [:trash]
-                          :msg message}
-                    ability-options)]
-      :install-cost-bonus (req (when (can-install-shard? state run)
-                                 (- INFINITY)))
-      :effect (req (when (can-install-shard? state run)
-                     (wait-for (register-successful-run state side (:server run))
-                               (do (clear-wait-prompt state :corp)
-                                   (swap! state update-in [:runner :prompt] rest)
-                                   (handle-end-run state side)))))})))
+  [title target-server message effect-fn]
+  {:events [{:event :successful-run
+             :location :hand
+             :req (req (and run (= (:server run) [target-server])))
+             :optional
+             {:prompt (str "Install " title "?")
+              :yes-ability
+              {:effect (effect
+                         (add-run-effect
+                           {:card card
+                            :replace-access
+                            {:mandatory true
+                             :async true
+                             :msg (str "install " title ", ignoring all costs")
+                             :effect (effect (runner-install eid card {:ignore-all-cost true}))}}))}}}]
+   :abilities [{:async true
+                :cost [:trash]
+                :msg message
+                :effect (effect (effect-fn eid card target))}]})
 
 (defn- trash-when-tagged-contructor
   "Constructor for a 'trash when tagged' card. Does not overwrite `:effect` key."
@@ -595,48 +596,43 @@
                  :effect (effect (damage-prevent :meat 3))}]}
 
    "Crowdfunding"
-   (let [ability {:once :per-turn
+   (let [ability {:async true
+                  :once :per-turn
                   :label "Take 1 [Credits] (start of turn)"
                   :msg "gain 1 [Credits]"
                   :req (req (:runner-phase-12 @state))
-                  :async true
                   :effect (req (add-counter state side card :credit -1)
                                (gain-credits state :runner 1)
                                (if (not (pos? (get-counters (get-card state card) :credit)))
-                                 (do (trash state :runner card {:unpreventable true})
-                                     (system-msg state :runner (str "trashes Crowdfunding"
-                                                                    (when (not (empty? (:deck runner)))
-                                                                      " and draws 1 card")))
-                                     (draw state :runner eid 1 nil))
-                                 (effect-completed state side eid)))}
-         install-prompt {:req (req (and (in-discard? card)
-                                        (not (install-locked? state :runner))))
-                         :async true
-                         :effect (req (continue-ability
-                                        state side
-                                        {:optional {:req (req (and (>= (count (get-in @state [:runner :register :successful-run])) 3)
-                                                                   (not (get-in @state [:runner :register :crowdfunding-prompt]))))
-                                                    :player :runner
-                                                    :prompt "Install Crowdfunding?"
-                                                    :yes-ability {:effect (effect (unregister-events card)
-                                                                                  (runner-install :runner (assoc eid :source card :source-type :runner-install) card {:ignore-all-cost true}))}
-                                                    ;; Add a register to note that the player was already asked about installing,
-                                                    ;; to prevent multiple copies from prompting multiple times.
-                                                    :no-ability {:effect (req (swap! state assoc-in [:runner :register :crowdfunding-prompt] true))}}}
-                                        card nil))}
-         heap-event (req (when (in-discard? card)
-                           (unregister-events state side card)
-                           (register-events
-                             state side (assoc card :zone [:discard])
-                             [(assoc install-prompt :event :runner-turn-ends)])))]
+                                 (wait-for (trash state :runner card {:unpreventable true})
+                                           (system-msg state :runner (str "trashes Crowdfunding"
+                                                                          (when (not (empty? (:deck runner)))
+                                                                            " and draws 1 card")))
+                                           (draw state :runner eid 1 nil))
+                                 (effect-completed state side eid)))}]
      {:data {:counter {:credit 3}}
       :flags {:drip-economy true
               :runner-turn-draw (req (= 1 (get-counters (get-card state card) :credit)))
               :runner-phase-12 (req (= 1 (get-counters (get-card state card) :credit)))}
       :abilities [ability]
-      :move-zone heap-event
       :events [(assoc ability :event :runner-turn-begins)
-               {:event :runner-turn-ends}]})
+               {:event :runner-turn-ends
+                :async true
+                :location :discard
+                :req (req (not (install-locked? state :runner)))
+                :effect (effect
+                          (continue-ability
+                            {:optional
+                             {:req (req (and (<= 3 (count (get-in @state [:runner :register :successful-run])))
+                                             (not (get-in @state [:runner :register :crowdfunding-prompt]))))
+                              :player :runner
+                              :prompt "Install Crowdfunding?"
+                              :yes-ability {:effect (effect (runner-install :runner (assoc eid :source card :source-type :runner-install)
+                                                                            card {:ignore-all-cost true}))}
+                              ;; Add a register to note that the player was already asked about installing,
+                              ;; to prevent multiple copies from prompting multiple times.
+                              :no-ability {:effect (req (swap! state assoc-in [:runner :register :crowdfunding-prompt] true))}}}
+                            card nil))}]})
 
    "Crypt"
    {:events [{:event :successful-run
@@ -910,7 +906,7 @@
       :abilities [ability]})
 
    "Eden Shard"
-   (shard-constructor :rd "force the Corp to draw 2 cards" (req (draw state :corp eid 2 nil)))
+   (shard-constructor "Eden Shard" :rd "force the Corp to draw 2 cards" (effect (draw :corp eid 2 nil)))
 
    "Emptied Mind"
    (let [ability {:req (req (zero? (count (:hand runner))))
@@ -1105,7 +1101,7 @@
                                card nil)))}]}
 
    "Hades Shard"
-   (shard-constructor :archives "access all cards in Archives" {:async true}
+   (shard-constructor "Hades Shard" :archives "access all cards in Archives"
                       (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                            (wait-for (trigger-event-sync state side :pre-access :archives)
                                      (resolve-ability state :runner
@@ -2537,8 +2533,8 @@
       :events [(assoc ability :event :runner-turn-begins)]})
 
    "Utopia Shard"
-   (shard-constructor :hq "force the Corp to discard 2 cards from HQ at random"
-                      (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))))
+   (shard-constructor "Utopia Shard" :hq "force the Corp to discard 2 cards from HQ at random"
+                      (effect (trash-cards :corp eid (take 2 (shuffle (:hand corp))) nil)))
 
    "Virus Breeding Ground"
    {:events [{:event :runner-turn-begins
