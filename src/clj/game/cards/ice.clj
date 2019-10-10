@@ -446,6 +446,7 @@
    {:flags {:untrashable-while-rezzed true}
     :subroutines [{:label "Look at the top 5 cards of R&D"
                    :prompt "Choose a card to install"
+                   :async true
                    :priority true
                    :activatemsg "uses Architect to look at the top 5 cards of R&D"
                    :req (req (and (not (string? target))
@@ -455,15 +456,16 @@
                    :effect (effect (system-msg (str "chooses the card in position "
                                                     (+ 1 (.indexOf (take 5 (:deck corp)) target))
                                                     " from R&D (top is 1)"))
-                                   (corp-install (move state side target :play-area) nil {:ignore-all-cost true}))}
+                                   (corp-install eid (move state side target :play-area) nil {:ignore-all-cost true}))}
                   {:label "Install a card from HQ or Archives"
                    :prompt "Select a card to install from Archives or HQ"
                    :show-discard true
                    :priority true
+                   :async true
                    :choices {:req #(and (not (operation? %))
                                         (#{[:hand] [:discard]} (:zone %))
                                         (corp? %))}
-                   :effect (effect (corp-install target nil))
+                   :effect (effect (corp-install eid target nil nil))
                    :msg (msg (corp-install-msg target))}]}
 
    "Ashigaru"
