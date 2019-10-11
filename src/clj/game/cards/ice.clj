@@ -302,13 +302,15 @@
       (effect
         (continue-ability
           (when (< 1 (count (filter pred (all-active-installed state :corp))))
-            {:prompt "Select the ice"
+            {:async true
+             :prompt "Select the ice"
              :choices {:req pred
                        :all true}
              :effect (effect
                        (continue-ability
                          (let [ice target]
-                           {:prompt "Select the subroutine"
+                           {:async true
+                            :prompt "Select the subroutine"
                             :choices (req (unbroken-subroutines-choice ice))
                             :msg (msg "resolve the subroutine (\"[subroutine] "
                                       target "\") from " (:title ice))
@@ -569,7 +571,7 @@
                                        {:prompt (str "Choose a location to install " (:title target))
                                         :choices (req (remove #(= this %) (corp-install-list state nice)))
                                         :async true
-                                        :effect (effect (corp-install nice target eid {:ignore-all-cost true}))}
+                                        :effect (effect (corp-install eid nice target {:ignore-all-cost true}))}
                                        card nil)))}
      {:label "Install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs"
       :prompt "Choose ICE to install from HQ in this server"
@@ -813,7 +815,7 @@
                                         (in-discard? %)
                                         (corp? %))}
                    :msg (msg (corp-install-msg target))
-                   :effect (effect (corp-install eid target nil))}]
+                   :effect (effect (corp-install eid target nil nil))}]
     :strength-bonus (req (if (= (second (:zone card)) :archives) 3 0))}
 
    "Curtain Wall"
@@ -946,8 +948,9 @@
     :runner-abilities [(bioroid-break 1 1)]}
 
    "Eli 2.0"
-   {:subroutines [{:msg "draw 1 card"
-                   :effect (effect (draw))}
+   {:subroutines [{:async true
+                   :msg "draw 1 card"
+                   :effect (effect (draw eid 1 nil))}
                   end-the-run
                   end-the-run]
     :runner-abilities [(bioroid-break 2 2)]}
@@ -1012,14 +1015,16 @@
                   end-the-run]}
 
    "Errand Boy"
-   (let [sub {:label "Draw a card or gain 1 [Credits]"
+   (let [sub {:async true
+              :label "Draw a card or gain 1 [Credits]"
               :prompt "Choose one:"
               :choices ["Gain 1 [Credits]" "Draw 1 card"]
               :msg (req (if (= target "Gain 1 [Credits]")
                           "gain 1 [Credits]"
                           "draw 1 card"))
               :effect (req (if (= target "Gain 1 [Credits]")
-                                   (gain-credits state :corp 1)
+                                   (do (gain-credits state :corp 1)
+                                       (effect-completed state side eid))
                                    (draw state :corp eid 1 nil)))}]
      {:subroutines [sub sub sub]})
 
@@ -1154,13 +1159,13 @@
    (grail-ice end-the-run)
 
    "Gatekeeper"
-   (let [draw {:async true
-               :prompt "Draw how many cards?"
-               :choices {:number (req 3)
-                         :max (req 3)
-                         :default (req 1)}
-               :msg (msg "draw " target "cards")
-               :effect (effect (draw eid target nil))}
+   (let [draw-ab {:async true
+                  :prompt "Draw how many cards?"
+                  :choices {:number (req 3)
+                            :max (req 3)
+                            :default (req 1)}
+                  :msg (msg "draw " target "cards")
+                  :effect (effect (draw eid target nil))}
          reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas"
                              :show-discard true
                              :choices {:req #(and (corp? %)
@@ -1178,7 +1183,7 @@
                                        " to R&D")}
          draw-reveal-shuffle {:async true
                               :label "Draw cards, reveal and shuffle agendas"
-                              :effect (req (wait-for (resolve-ability state side draw card nil)
+                              :effect (req (wait-for (resolve-ability state side draw-ab card nil)
                                                      (continue-ability state side reveal-and-shuffle card nil)))}]
      {:strength-bonus (req (if (= :this-turn (:rezzed card)) 6 0))
       :subroutines [draw-reveal-shuffle
@@ -2702,8 +2707,9 @@
    {:subroutines [{:label "force the Runner to lose 1 [Click], if able"
                    :msg "force the Runner to lose 1 [Click]"
                    :effect runner-loses-click}
-                  {:msg "draw 1 card"
-                   :effect (effect (draw))}
+                  {:async true
+                   :msg "draw 1 card"
+                   :effect (effect (draw eid 1 nil))}
                   {:req (req (pos? (count (:hand corp))))
                    :prompt "Choose a card in HQ to move to the top of R&D"
                    :choices {:req #(and (in-hand? %) (corp? %))}
