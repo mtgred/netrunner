@@ -507,9 +507,13 @@
     (play-sfx state side "virus-purge")))
 
 (defn get-rez-cost
-  [state side card {:keys [ignore-cost cost-bonus] :as args}]
-  (if (= :all-costs ignore-cost)
+  [state side card {:keys [ignore-cost alternative-cost cost-bonus] :as args}]
+  (cond
+    (= :all-costs ignore-cost)
     [:credit 0]
+    alternative-cost
+    alternative-cost
+    :else
     (let [cost (rez-cost state side card {:cost-bonus cost-bonus})
           additional-costs (rez-additional-cost-bonus state side card)]
       (concat
@@ -524,12 +528,12 @@
   ([state side card args]
    (rez state side (make-eid state) card args))
   ([state side eid {:keys [disabled] :as card}
-    {:keys [ignore-cost no-warning force declined-alternative-cost paid-alt no-msg
+    {:keys [ignore-cost no-warning force declined-alternative-cost alternative-cost no-msg
             cost-bonus] :as args}]
    (let [eid (eid-set-defaults eid :source nil :source-type :rez)
          card (get-card state card)
          alternative-cost (when (and card
-                                     (not paid-alt)
+                                     (not alternative-cost)
                                      (not declined-alternative-cost))
                             (:alternative-cost (card-def card)))]
      (if (and card
@@ -546,10 +550,9 @@
            state side
            {:optional
             {:prompt "Pay the alternative Rez cost?"
-             :yes-ability {:cost alternative-cost
-                           :async true
+             :yes-ability {:async true
                            :effect (effect (rez eid card (merge args {:ignore-cost true
-                                                                      :paid-alt true})))}
+                                                                      :alternative-cost alternative-cost})))}
              :no-ability {:async true
                           :effect (effect (rez eid card (merge args {:declined-alternative-cost true})))}}}
            card nil)
@@ -571,7 +574,7 @@
                                          (str (build-spend-msg cost-str "rez" "rezzes")
                                               (:title card)
                                               (cond
-                                                paid-alt " by paying its alternative cost"
+                                                (:alternative-cost args) " by paying its alternative cost"
                                                 ignore-cost " at no cost"))))
                            (when (and (not no-warning) (:corp-phase-12 @state))
                              (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
