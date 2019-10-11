@@ -64,6 +64,7 @@
                                (effect-completed state side eid)))))
     :events [{:event :unsuccessful-run-ends
               :optional {:req (req (not (:run-again card)))
+                         :player :runner
                          :prompt "Make another run on the same server?"
                          :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}]}
 
