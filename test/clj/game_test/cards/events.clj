@@ -58,28 +58,53 @@
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
 
 (deftest always-have-a-backup-plan
-  (do-game
-   (new-game {:runner {:deck ["Always Have a Backup Plan"]}
-              :corp {:deck ["Cold Site Server"]}})
-   (play-from-hand state :corp "Cold Site Server" "Archives")
-   (core/rez state :corp (get-content state :archives 0))
-   (card-ability state :corp (get-content state :archives 0) 0)
-   (is (= 1 (get-counters (get-content state :archives 0) :power)))
-   (take-credits state :corp)
-   (is (= 5 (:credit (get-runner))))
-   (play-from-hand state :runner "Always Have a Backup Plan")
-   (is (= 3 (:credit (get-runner))))
-   (is (= 3 (:click (get-runner))))
-   (click-prompt state :runner "Archives")
-   (is (= [:archives] (:server (:run @state))) "Running on Archives")
-   (is (= 2 (:credit (get-runner))) "Initiating run cost 1 click, 1 cred + event play cost")
-   (is (= 2 (:click (get-runner))) "Initiating run cost 1 click, 1 cred + event play cost")
-   (run-jack-out state)
-   (is (not (:run @state)) "Run ended")
-   (click-prompt state :runner "Yes")
-   (is (= [:archives] (:server (:run @state))) "Running on Archives again")
-   (is (= 2 (:click (get-runner))) "Initiating 2nd run free")
-   (is (= 2 (:credit (get-runner))) "Initiating 2nd run free")))
+  (testing "Jacking out correctly triggers AHBP"
+    (do-game
+      (new-game {:runner {:deck ["Always Have a Backup Plan"]}})
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-runner))))
+      (play-from-hand state :runner "Always Have a Backup Plan")
+      (click-prompt state :runner "Archives")
+      (is (= [:archives] (:server (:run @state))) "Running on Archives")
+      (run-jack-out state)
+      (is (not (:run @state)) "Run ended")
+      (click-prompt state :runner "Yes")
+      (is (= [:archives] (:server (:run @state))) "Running on Archives again")))
+  (testing "Corp ending the run correctly triggers AHBP"
+    (do-game
+      (new-game {:runner {:deck ["Always Have a Backup Plan"]}})
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-runner))))
+      (play-from-hand state :runner "Always Have a Backup Plan")
+      (click-prompt state :runner "Archives")
+      (is (= [:archives] (:server (:run @state))) "Running on Archives")
+      (core/end-run state :corp)
+      (is (not (:run @state)) "Run ended")
+      (click-prompt state :runner "Yes")
+      (is (= [:archives] (:server (:run @state))) "Running on Archives again")))
+  (testing "Extra costs are paid only on the first run"
+    (do-game
+      (new-game {:runner {:deck ["Always Have a Backup Plan"]}
+                 :corp {:deck ["Cold Site Server"]}})
+      (play-from-hand state :corp "Cold Site Server" "Archives")
+      (core/rez state :corp (get-content state :archives 0))
+      (card-ability state :corp (get-content state :archives 0) 0)
+      (is (= 1 (get-counters (get-content state :archives 0) :power)))
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-runner))))
+      (play-from-hand state :runner "Always Have a Backup Plan")
+      (is (= 3 (:credit (get-runner))))
+      (is (= 3 (:click (get-runner))))
+      (click-prompt state :runner "Archives")
+      (is (= [:archives] (:server (:run @state))) "Running on Archives")
+      (is (= 2 (:credit (get-runner))) "Initiating run cost 1 click, 1 cred + event play cost")
+      (is (= 2 (:click (get-runner))) "Initiating run cost 1 click, 1 cred + event play cost")
+      (run-jack-out state)
+      (is (not (:run @state)) "Run ended")
+      (click-prompt state :runner "Yes")
+      (is (= [:archives] (:server (:run @state))) "Running on Archives again")
+      (is (= 2 (:click (get-runner))) "Initiating 2nd run free")
+      (is (= 2 (:credit (get-runner))) "Initiating 2nd run free"))))
 
 (deftest amped-up
   ;; Amped Up - Gain 3 clicks and take 1 unpreventable brain damage
