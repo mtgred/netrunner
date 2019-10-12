@@ -125,7 +125,7 @@
                                        (when (card-flag? c :has-events-when-stolen true)
                                          (register-events state side c))
                                        (remove-old-current state side :corp))}
-          :card-ability (ability-as-handler c (:stolen (card-def c)))}
+          :card-abilities (ability-as-handler c (:stolen (card-def c)))}
          c)
        (access-end state side eid card)))))
 
@@ -368,7 +368,7 @@
     (swap! state assoc-in [:runner :register :accessed-cards] true)
     (msg-handle-access state side c title cost-msg)
     (wait-for (trigger-event-simult state side :access
-                                    {:card-ability access-effect
+                                    {:card-abilities access-effect
                                      ;; Cancel other access handlers if the card moves zones because of a handler
                                      :cancel-fn (fn [state] (not (get-card state c)))}
                                     c)

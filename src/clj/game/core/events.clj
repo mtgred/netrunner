@@ -219,7 +219,7 @@
                  process, likely because an event handler caused a change to the game state that cancels future handlers.
                  (Film Critic)
   targets:       a varargs list of targets to the event, as usual"
-  [state side eid event {:keys [first-ability card-ability after-active-player cancel-fn] :as options} & targets]
+  [state side eid event {:keys [first-ability card-abilities after-active-player cancel-fn] :as options} & targets]
   (if (nil? event)
     (effect-completed state side eid)
     (do (swap! state update-in [:turn-events] #(cons [event targets] %))
@@ -230,23 +230,21 @@
               is-player (fn [player ability] (or (= player (get-side ability)) (= player (get-ability-side ability))))
               get-handlers (fn [player-side]
                              ;; prepare the list of the given player's handlers for this event.
-                             ;; Gather all registered handlers from the state, then append the card-ability if appropriate,
+                             ;; Gather all registered handlers from the state, then append the card-abilities if appropriate,
                              ;; then filter to remove suppressed handlers and those whose req is false.
                              ;; This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
                              ;; http://nisei.net/files/Comprehensive_Rules_1.1.pdf
                              (let [abis (->> (:events @state)
                                              (filter #(= event (:event %)))
-                                             (filter (partial is-player player-side)))
-                                   abis (if (= player-side (get-side card-ability))
-                                          (cons card-ability abis)
-                                          abis)]
-                               (filter (fn [ability]
-                                         (let [card (card-for-ability state ability)]
-                                           (and (not (apply trigger-suppress state side event card targets))
-                                                (can-trigger? state side (:ability ability) card targets))))
-                                       abis)))
-              active-player-events (doall (get-handlers active-player))
-              opponent-events (doall (get-handlers opponent))]
+                                             (concat (flatten [card-abilities]))
+                                             (filter (partial is-player player-side))) ]
+                               (filterv (fn [ability]
+                                          (let [card (card-for-ability state ability)]
+                                            (and (not (apply trigger-suppress state side event card targets))
+                                                 (can-trigger? state side (:ability ability) card targets))))
+                                        abis)))
+              active-player-events (get-handlers active-player)
+              opponent-events (get-handlers opponent)]
           (wait-for (resolve-ability state side (make-eid state eid) first-ability nil nil)
                     (show-wait-prompt state opponent
                                       (str (side-str active-player) " to resolve " (event-title event) " triggers")

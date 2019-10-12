@@ -637,7 +637,7 @@
                                                                          (when (:disable-id (card-def current))
                                                                            (swap! state assoc-in [:corp :disable-id] true)))
                                                                        (remove-old-current state side :runner))}
-                                          :card-ability (card-as-handler c)
+                                          :card-abilities (card-as-handler c)
                                           :after-active-player {:effect (req (let [c (get-card state c)
                                                                                    points (or (get-agenda-points state :corp c) points)]
                                                                                (set-prop state :corp (get-card state moved-card) :advance-counter 0)

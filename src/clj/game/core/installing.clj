@@ -442,7 +442,7 @@
                              (update-breaker-strength state side installed-card))
                            (trigger-event-simult state side eid :runner-install
                                                  (when-not facedown
-                                                   {:card-ability (card-as-handler (get-card state installed-card))})
+                                                   {:card-abilities (card-as-handler (get-card state installed-card))})
                                                  (get-card state installed-card)))
                          (effect-completed state side eid))))))
        (effect-completed state side eid)))))
