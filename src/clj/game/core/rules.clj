@@ -515,11 +515,6 @@
                  (wait-for (prevent-trash state side (get-card? state (first cs)) eid args)
                            (preventrec (rest cs)))
                  (let [trashlist (get-in @state [:trash :trash-list eid])
-                       moved-cards (->> trashlist
-                                        (map #(get-card? state %))
-                                        (filter identity)
-                                        (map #(move state (to-keyword (:side %)) % :discard {:keep-server-alive keep-server-alive}))
-                                        (into []))
                        get-trash-effect (fn [card]
                                           (when (and card
                                                      (not (:disabled card))
@@ -531,10 +526,12 @@
                                                          (and (:when-inactive (:trash-effect (card-def card)))
                                                               (not host-trashed))))
                                             (:trash-effect (card-def card))))
-                       card-abilities (->> moved-cards
-                                           (map get-trash-effect)
-                                           (filter identity)
-                                           (into []))
+                       moved-cards (->> trashlist
+                                        (map #(get-card? state %))
+                                        (filter identity)
+                                        (map (juxt #(move state (to-keyword (:side %)) % :discard {:keep-server-alive keep-server-alive})
+                                                   get-trash-effect))
+                                        (into []))
                        ]
                    (swap! state update-in [:trash :trash-list] dissoc eid)
                    (when (seq (remove #{side} (map #(to-keyword (:side %)) trashlist)))
@@ -542,7 +539,7 @@
                    (apply trigger-event-simult state side eid
                           (when-not suppress-event
                             (if (= side :corp) :corp-trash :runner-trash))
-                          {:card-abilities card-abilities}
+                          {:card-abilities (map #(apply ability-as-handler %) moved-cards)}
                           (first trashlist) cause (rest trashlist)))))]
        (preventrec cards)))))
 

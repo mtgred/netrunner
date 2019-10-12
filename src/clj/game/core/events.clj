@@ -234,15 +234,16 @@
                              ;; then filter to remove suppressed handlers and those whose req is false.
                              ;; This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
                              ;; http://nisei.net/files/Comprehensive_Rules_1.1.pdf
-                             (let [abis (->> (:events @state)
-                                             (filter #(= event (:event %)))
-                                             (concat (flatten [card-abilities]))
-                                             (filter (partial is-player player-side))) ]
-                               (filterv (fn [ability]
-                                          (let [card (card-for-ability state ability)]
-                                            (and (not (apply trigger-suppress state side event card targets))
-                                                 (can-trigger? state side (:ability ability) card targets))))
-                                        abis)))
+                             (->> (:events @state)
+                                  (filter #(= event (:event %)))
+                                  (concat (flatten [card-abilities]))
+                                  (filter identity)
+                                  (filter (partial is-player player-side))
+                                  (filter (fn [ability]
+                                            (let [card (card-for-ability state ability)]
+                                              (and (not (apply trigger-suppress state side event card targets))
+                                                   (can-trigger? state side (:ability ability) card targets)))))
+                                  (into [])))
               active-player-events (get-handlers active-player)
               opponent-events (get-handlers opponent)]
           (wait-for (resolve-ability state side (make-eid state eid) first-ability nil nil)
