@@ -1,13 +1,11 @@
 (ns tasks.nrdb
   "NetrunnerDB import tasks"
   (:require [org.httpkit.client :as http]
-            [web.db :refer [db] :as webdb]
+            [web.db :as webdb]
             [monger.collection :as mc]
             [monger.operators :refer [$exists $inc $currentDate]]
             [throttler.core :refer [throttle-fn]]
-            [clojure.string :as string]
             [clojure.java.io :as io]
-            [clojure.pprint :as pprint]
             [clojure.edn :as edn]))
 
 (def ^:const base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-cards-edn/master/edn/raw_data.edn")
@@ -31,8 +29,8 @@
 
 (defn replace-collection
   [col data]
-  (mc/remove db col)
-  (mc/insert-batch db col data))
+  (mc/remove webdb/db col)
+  (mc/insert-batch webdb/db col data))
 
 (defn- card-image-file
   "Returns the path to a card's image as a File"
@@ -97,7 +95,7 @@
 (defn update-config
   "Store import meta info in the db"
   []
-  (mc/update db "config"
+  (mc/update webdb/db "config"
              {:cards-version {$exists true}}
              {$inc {:cards-version 1}
               $currentDate {:last-updated true}}

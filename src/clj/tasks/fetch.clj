@@ -1,10 +1,7 @@
 (ns tasks.fetch
   "NetrunnerDB import tasks"
-  (:require [web.db :refer [db] :as webdb]
-            [clojure.string :as string]
-            [clojure.java.io :as io]
-            [tasks.nrdb :refer :all]
-            [tasks.altart :refer [add-art]]
+  (:require [clojure.java.io :as io]
+            [tasks.nrdb :refer [fetch-data]]
             [clojure.string :as string]
             [clojure.tools.cli :refer [parse-opts]]))
 
