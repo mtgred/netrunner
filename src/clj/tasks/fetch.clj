@@ -7,7 +7,8 @@
 
 (defn usage
   [options-summary]
-  (->> ["Usage: lein fetch [options]"
+  (->> [""
+        "Usage: lein fetch [options]"
         ""
         "Options:"
         options-summary]
@@ -44,5 +45,5 @@
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
     (if (or errors
             arguments)
-      (exit 1 (string/join \newline (conj errors "" (usage summary))))
+      (exit 1 (string/join \newline (conj errors (usage summary))))
       (fetch-data options))))
