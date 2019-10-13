@@ -283,6 +283,7 @@
                  :async true
                  :effect (effect (draw eid 2 nil))}]
     :trash-effect {:async true
+                   :interactive (req true)
                    :req (req (= :servers (first (:previous-zone card))))
                    :effect (effect (show-wait-prompt :runner "Corp to use Calvin B4L3Y")
                                    (continue-ability :corp
@@ -1119,6 +1120,7 @@
       :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
       :trash-effect {:req (req (= :servers (first (:previous-zone card))))
                      :async true
+                     :interactive (req true)
                      :effect (effect (show-wait-prompt :runner "Corp to use Marilyn Campaign")
                                      (continue-ability
                                        :corp
