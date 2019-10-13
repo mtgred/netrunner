@@ -24,6 +24,40 @@
         (= 200 status) (edn/read-string body)
         :else (throw (Exception. (str "Failed to download file, status " status)))))))
 
+(defn write-to-file
+  [col data]
+  (let [filename (str "newfetch/data/" col ".edn")]
+    (io/make-parents filename)
+    (spit filename data)
+    (println (str "Wrote " filename " to disk"))))
+
+(defn write-to-db
+  [col data]
+  (mc/remove db col)
+  (mc/insert-batch db col data)
+  (println (str "Imported " col " into database")))
+
+(defn fetch-edn
+  [{:keys [db local]}]
+  (let [edn (download-edn-data local)]
+    (doseq [[k v] edn
+            :let [col (name k)]]
+      (write-to-file col v))
+    (when db
+      (webdb/connect)
+      (try
+        (doseq [[k v] edn
+                :let [col (name k)]]
+          (write-to-db col v))
+        (finally (webdb/disconnect))))
+    (println (count (:cycles edn)) "cycles imported")
+    (println (count (:sets edn)) "sets imported")
+    (println (count (:mwls edn)) "MWL versions imported")
+    (println (count (:cards edn)) "cards imported")))
+
+(defn fetch-images
+  [{:keys []}])
+
 (defn replace-collection
   "Remove existing collection and insert new data"
   [collection data]
