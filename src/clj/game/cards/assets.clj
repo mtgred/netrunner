@@ -843,31 +843,23 @@
              :effect (effect (lose-credits :runner 1))}}
 
    "Hostile Infrastructure"
-   {:trash-effect {:async true
-                   :req (req (and (= side :runner)
-                                  (some corp? targets)))
-                   :msg (msg (str "do " (count (filter corp? targets))
-                                  " net damage"))
-                   :effect (req (letfn [(do-damage [t]
-                                          (if (seq t)
-                                            (wait-for (damage state :corp :net 1 {:card card})
-                                                      (do-damage (rest t)))
-                                            (effect-completed state side eid)))]
-                                  (do-damage (filter corp? targets))))}
-    :events [{:event :runner-trash
-              :async true
-              :req (req (some corp? targets))
-              :msg (msg (str "do " (count (filter corp? targets))
-                             " net damage"))
-              :effect (req (letfn [(do-damage [t]
-                                     (if (seq t)
-                                       (wait-for (damage state :corp :net 1 {:card card})
-                                                 (do-damage (rest t)))
-                                       (effect-completed state side eid)))]
-                             (do-damage (filter corp? targets))))}]
-    :abilities [{:msg "do 1 net damage"
-                 :async true
-                 :effect (effect (damage eid :net 1 {:card card}))}]}
+   (let [ability
+         {:async true
+          :req (req (and (= side :runner)
+                         (some corp? targets)))
+          :msg (msg (str "do " (count (filter corp? targets))
+                         " net damage"))
+          :effect (req (letfn [(do-damage [t]
+                                 (if (seq t)
+                                   (wait-for (damage state :corp :net 1 {:card card})
+                                             (do-damage (rest t)))
+                                   (effect-completed state side eid)))]
+                         (do-damage (filter corp? targets))))}]
+     {:trash-effect ability
+      :events [(assoc ability :event :runner-trash)]
+      :abilities [{:msg "do 1 net damage"
+                   :async true
+                   :effect (effect (damage eid :net 1 {:card card}))}]})
 
    "Hyoubu Research Facility"
    {:events [{:event :reveal-spent-credits
@@ -1270,21 +1262,20 @@
     :implementation "Errata from FAQ 3.1: should be unique"}
 
    "Nanoetching Matrix"
-   {:events [{:event :runner-trash
-              :req (req (same-card? card target))
-              :effect (effect (show-wait-prompt :runner "Corp to use Nanoetching Matrix")
-                              (continue-ability
-                                :corp
-                                {:optional
-                                 {:prompt "Gain 2 [credits]?"
-                                  :yes-ability {:msg (msg "gain 2 [Credits]")
-                                                :effect (effect (gain-credits :corp 2))}
-                                  :end-effect (effect (clear-wait-prompt :runner))}}
-                                card nil))}]
-    :abilities [{:cost [:click 1]
+   {:abilities [{:cost [:click 1]
                  :once :per-turn
                  :msg "gain 2 [Credits]"
-                 :effect (effect (gain-credits 2))}]}
+                 :effect (effect (gain-credits 2))}]
+    :trash-effect {:req (req (= :runner side))
+                   :effect (effect (show-wait-prompt :runner "Corp to use Nanoetching Matrix")
+                                   (continue-ability
+                                     :corp
+                                     {:optional
+                                      {:prompt "Gain 2 [credits]?"
+                                       :yes-ability {:msg (msg "gain 2 [Credits]")
+                                                     :effect (effect (gain-credits :corp 2))}
+                                       :end-effect (effect (clear-wait-prompt :runner))}}
+                                     card nil))}}
 
    "NASX"
    (let [ability {:msg "gain 1 [Credits]"
@@ -1673,26 +1664,24 @@
      {:effect (effect (add-counter card :power 3))
       :derezzed-events [corp-rez-toast]
       :events [(trash-on-empty :power)
-               (assoc ability :event :corp-turn-begins)
-               {:event :corp-trash
-                :req (req (and (same-card? card target)
-                               (installed? target)
-                               (zero? (get-counters card :power))))
-                :prompt "Remove 1 bad publicity or gain 5 [Credits]?"
-                :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
-                :msg (msg (if (= target "Remove 1 bad publicity")
-                            "remove 1 bad publicity" "gain 5 [Credits]"))
-                :effect (req (if (= target "Remove 1 bad publicity")
-                               (lose-bad-publicity state side 1)
-                               (gain-credits state side 5)))}]
-      :ability [ability]})
+               (assoc ability :event :corp-turn-begins)]
+      :ability [ability]
+      :trash-effect {:req (req (zero? (get-counters card :power)))
+                     :prompt "Remove 1 bad publicity or gain 5 [Credits]?"
+                     :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
+                     :msg (msg (if (= target "Remove 1 bad publicity")
+                                 "remove 1 bad publicity" "gain 5 [Credits]"))
+                     :effect (req (if (= target "Remove 1 bad publicity")
+                                    (lose-bad-publicity state side 1)
+                                    (gain-credits state side 5)))}})
 
    "Ronald Five"
-   {:events [{:event :runner-trash
-              :req (req (and (= (:side target) "Corp")
-                             (pos? (:click runner))))
-              :msg "force the runner to lose 1 [Click]"
-              :effect (effect (lose :runner :click 1))}]}
+   (let [ability {:req (req (and (some corp? targets)
+                                 (pos? (:click runner))))
+                  :msg "force the runner to lose 1 [Click]"
+                  :effect (effect (lose :runner :click 1))}]
+     {:events [(assoc ability :event :runner-trash)]
+      :trash-effect ability})
 
    "Ronin"
    {:advanceable :always

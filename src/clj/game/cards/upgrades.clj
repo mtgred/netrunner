@@ -1084,7 +1084,8 @@
               :msg "prevent the Runner from jacking out unless they trash an installed program"
               :effect (effect (prevent-jack-out))}
              {:event :runner-trash
-              :req (req (and this-server (program? target)))
+              :req (req (and this-server
+                             (some program? targets)))
               :effect (req (swap! state update-in [:run] dissoc :cannot-jack-out))}]}
 
    "Prisec"

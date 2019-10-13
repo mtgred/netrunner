@@ -1243,10 +1243,11 @@
                                   (break-subroutine! state (get-card state current-ice) sub))))}]}
 
    "Gravedigger"
-   (let [e {:req (req (and (installed? target)
-                           (corp? target)))
+   (let [e {:req (req (some #(and (installed? %)
+                                  (corp? %))
+                            targets))
             :msg (msg "place 1 virus counter on " (:title card))
-            :effect (effect (add-counter :runner card :virus 1 nil))}]
+            :effect (effect (add-counter :runner card :virus 1))}]
      {:events [(assoc e :event :runner-trash)
                (assoc e :event :corp-trash)]
       :abilities [{:cost [:click 1 :virus 1]
@@ -1955,11 +1956,11 @@
 
    "Reaver"
    {:events [{:event :runner-trash
+              :async true
               :req (req (and (first-installed-trash? state side)
                              (installed? target)))
-              :async true
-              :effect (effect (draw :runner eid 1 nil))
-              :msg "draw 1 card"}]}
+              :msg "draw 1 card"
+              :effect (effect (draw :runner eid 1 nil))}]}
 
    "Refractor"
    (auto-icebreaker {:implementation "Stealth credit restriction not enforced"

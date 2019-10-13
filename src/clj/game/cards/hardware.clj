@@ -337,7 +337,7 @@
                         :value -1}]
     :events [{:event :runner-trash
               :once :per-turn
-              :req (req (corp? target))
+              :req (req (some corp? targets))
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits 1))}]}
 
@@ -776,7 +776,7 @@
                  :effect (effect (draw :runner eid 1 nil))}]
     :events [{:event :runner-trash
               :once :per-turn
-              :req (req (and (corp? target)
+              :req (req (and (some corp? targets)
                              (:access @state)
                              (:trash target)))
               :effect (effect (system-msg (str "places " (:trash target) " power counters on Mâché"))
@@ -1141,9 +1141,10 @@
 
    "Q-Coherence Chip"
    {:in-play [:memory 1]
-    :events (let [e {:req (req (= (last (:zone target)) :program))
-                     :effect (effect (trash card)
-                                     (system-msg (str "trashes Q-Coherence Chip")))}]
+    :events (let [e {:async true
+                     :req (req (some program? targets))
+                     :effect (effect (system-msg (str "trashes Q-Coherence Chip"))
+                                     (trash eid card nil))}]
               [(assoc e :event :runner-trash)
                (assoc e :event :corp-trash)])}
 
@@ -1183,9 +1184,10 @@
    "Ramujan-reliant 550 BMI"
    {:interactions {:prevent [{:type #{:net :brain}
                               :req (req true)}]}
-    :abilities [{:req (req (not-empty (:deck runner)))
+    :abilities [{:async true
+                 :req (req (not-empty (:deck runner)))
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
-                                (resolve-ability
+                                (continue-ability
                                   state side
                                   {:prompt "Choose how much damage to prevent"
                                    :priority 50

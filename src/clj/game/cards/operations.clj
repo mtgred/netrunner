@@ -421,7 +421,7 @@
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits :corp 1))}
              {:event :runner-trash
-              :req (req (installed? target))
+              :req (req (some installed? targets))
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits :corp 1))}]}
 

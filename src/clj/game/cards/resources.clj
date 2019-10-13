@@ -2185,7 +2185,8 @@
 
    "Tech Trader"
    {:events [{:event :runner-trash
-              :req (req (and (= side :runner) (= (second targets) :ability-cost)))
+              :req (req (and (= side :runner)
+                             (= (second targets) :ability-cost)))
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits 1))}]}
 
@@ -2556,9 +2557,9 @@
    {:events [{:event :runner-trash
               :req (req (and (first-installed-trash-own? state :runner)
                              (installed? target)
-                             (= (:side target) "Runner")))
-              :effect (effect (gain-credits 1))
-              :msg "gain 1 [Credits]"}]}
+                             (runner? target)))
+              :msg "gain 1 [Credits]"
+              :effect (effect (gain-credits 1))}]}
 
    "Whistleblower"
    (letfn [(steal-events [named-agenda]
