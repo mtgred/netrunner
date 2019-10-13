@@ -40,11 +40,6 @@
   [options-summary]
   (->> ["Usage: lein fetch [options] target"
         ""
-        "Targets:"
-        "  edn     Fetch edn data (card definitions, format info, etc.) from GitHub or a local path"
-        "  images  Fetch card images from NetrunnerDB"
-        "  all     Fetch edn data and images (default)"
-        ""
         "Options:"
         options-summary]
        (string/join \newline)))
@@ -59,9 +54,16 @@
    ["-d" "--db" "Load card data into the database"
     :id :db
     :default true]
-   ["-n" "--no-db" "Do not load card data into the database"
+   ["-n" "--no-db" "Do not load edn data into the database"
     :id :db
-    :parse-fn not]])
+    :parse-fn not]
+   ["-i" "--card-images" "Fetch card images from NetrunnerDB"
+    :id :card-images
+    :default true]
+   ["-j" "--no-card-images" "Do not fetch card images from NetrunnerDB"
+    :id :card-images
+    :parse-fn not]
+   ])
 
 (defn validate-args
   [args]
@@ -79,9 +81,4 @@
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
     (if errors
       (exit 1 (string/join \newline (conj errors "" (usage summary))))
-      (case (first arguments)
-        "edn" (fetch-edn options)
-        "images" (fetch-images options)
-        (do
-          (fetch-edn options)
-          (fetch-images options))))))
+      (new-fetch-data options))))

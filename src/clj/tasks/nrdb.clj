@@ -17,7 +17,7 @@
 (defn download-edn-data
   [localpath]
   (if localpath
-    ((comp edn/read-string slurp) (str localpath "edn/raw_data.edn"))
+    ((comp edn/read-string slurp) (str localpath "/edn/raw_data.edn"))
     (let [{:keys [status body error] :as resp} @(http/get base-url)]
       (cond
         error (throw (Exception. (str "Failed to download file " error)))
@@ -26,7 +26,7 @@
 
 (defn write-to-file
   [col data]
-  (let [filename (str "newfetch/data/" col ".edn")]
+  (let [filename (str "data/" col ".edn")]
     (io/make-parents filename)
     (spit filename data)
     (println (str "Wrote " filename " to disk"))))
@@ -36,33 +36,6 @@
   (mc/remove db col)
   (mc/insert-batch db col data)
   (println (str "Imported " col " into database")))
-
-(defn fetch-edn
-  [{:keys [db local]}]
-  (let [edn (download-edn-data local)]
-    (doseq [[k v] edn
-            :let [col (name k)]]
-      (write-to-file col v))
-    (when db
-      (webdb/connect)
-      (try
-        (doseq [[k v] edn
-                :let [col (name k)]]
-          (write-to-db col v))
-        (finally (webdb/disconnect))))
-    (println (count (:cycles edn)) "cycles imported")
-    (println (count (:sets edn)) "sets imported")
-    (println (count (:mwls edn)) "MWL versions imported")
-    (println (count (:cards edn)) "cards imported")))
-
-(defn fetch-images
-  [{:keys []}])
-
-(defn replace-collection
-  "Remove existing collection and insert new data"
-  [collection data]
-  (mc/remove db collection)
-  (mc/insert-batch db collection data))
 
 (defn- card-image-file
   "Returns the path to a card's image as a File"
@@ -99,6 +72,33 @@
             (:status @resp)))
         (println "Finished downloading card art")))))
 
+(defn new-fetch-data
+  [{:keys [card-images db local]}]
+  (let [edn (download-edn-data local)]
+    (doseq [[k v] edn
+            :let [col (name k)]]
+      (write-to-file col v))
+    (when db
+      (webdb/connect)
+      (try
+        (doseq [[k v] edn
+                :let [col (name k)]]
+          (write-to-db col v))
+        (finally (webdb/disconnect))))
+    (println (count (:cycles edn)) "cycles imported")
+    (println (count (:sets edn)) "sets imported")
+    (println (count (:mwls edn)) "MWL versions imported")
+    (println (count (:cards edn)) "cards imported")
+    (println (str "Download card images? " card-images))
+    (when card-images
+      (download-card-images (:cards edn)))))
+
+(defn replace-collection
+  "Remove existing collection and insert new data"
+  [collection data]
+  (mc/remove db collection)
+  (mc/insert-batch db collection data))
+
 (defn fetch-data
   "Find the NRDB card edn files and import them."
   [localpath download-images]
@@ -117,6 +117,7 @@
                   filename (str "data/" collection ".edn")]]
       (println (str "Writing " filename))
       (io/make-parents filename)
+
       (spit filename v)
       (replace-collection collection v))
     (when download-images
