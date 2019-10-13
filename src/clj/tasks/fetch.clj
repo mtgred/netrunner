@@ -7,7 +7,7 @@
 
 (defn usage
   [options-summary]
-  (->> ["Usage: lein fetch [options] target"
+  (->> ["Usage: lein fetch [options]"
         ""
         "Options:"
         options-summary]
@@ -20,13 +20,13 @@
                     io/file
                     .exists)
                "Could not find local data file"]]
-   ["-d" "--db" "Load card data into the database"
+   ["-d" "--db" "Load card data into the database (default)"
     :id :db
     :default true]
    ["-n" "--no-db" "Do not load edn data into the database"
     :id :db
     :parse-fn not]
-   ["-i" "--card-images" "Fetch card images from NetrunnerDB"
+   ["-i" "--card-images" "Fetch card images from NetrunnerDB (default)"
     :id :card-images
     :default true]
    ["-j" "--no-card-images" "Do not fetch card images from NetrunnerDB"
@@ -42,6 +42,7 @@
 (defn command
   [& args]
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
-    (if errors
+    (if (or errors
+            arguments)
       (exit 1 (string/join \newline (conj errors "" (usage summary))))
       (fetch-data options))))
