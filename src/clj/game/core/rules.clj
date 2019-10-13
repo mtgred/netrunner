@@ -511,7 +511,7 @@
    (let [num-cards (< 1 (count cards))]
      (letfn [(get-card? [s c] (if num-cards (get-card s c) c))
              (preventrec [cs]
-               (if (not-empty cs)
+               (if (seq cs)
                  (wait-for (prevent-trash state side (get-card? state (first cs)) eid args)
                            (preventrec (rest cs)))
                  (let [trashlist (get-in @state [:trash :trash-list eid])
@@ -531,8 +531,7 @@
                                         (filter identity)
                                         (map (juxt #(move state (to-keyword (:side %)) % :discard {:keep-server-alive keep-server-alive})
                                                    get-trash-effect))
-                                        (into []))
-                       ]
+                                        (into []))]
                    (swap! state update-in [:trash :trash-list] dissoc eid)
                    (when (seq (remove #{side} (map #(to-keyword (:side %)) trashlist)))
                      (swap! state assoc-in [side :register :trashed-card] true))

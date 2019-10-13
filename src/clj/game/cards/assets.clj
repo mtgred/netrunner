@@ -282,8 +282,8 @@
                  :once :per-turn
                  :async true
                  :effect (effect (draw eid 2 nil))}]
-    :trash-effect {:req (req (= :servers (first (:previous-zone card))))
-                   :async true
+    :trash-effect {:async true
+                   :req (req (= :servers (first (:previous-zone card))))
                    :effect (effect (show-wait-prompt :runner "Corp to use Calvin B4L3Y")
                                    (continue-ability :corp
                                      {:optional
@@ -584,7 +584,8 @@
    "Director Haas"
    {:in-play [:click-per-turn 1]
     :trash-effect {:when-inactive true
-                   :req (req (:access @state))
+                   :req (req (and (= side :runner)
+                                  (:access @state)))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :async true
                    :effect (req (as-agenda state :runner eid card 2))}}
@@ -842,13 +843,24 @@
              :effect (effect (lose-credits :runner 1))}}
 
    "Hostile Infrastructure"
-   {:events [{:event :runner-trash
+   {:trash-effect {:async true
+                   :req (req (and (= side :runner)
+                                  (some corp? targets)))
+                   :msg (msg (str "do " (count (filter corp? targets))
+                                  " net damage"))
+                   :effect (req (letfn [(do-damage [t]
+                                          (if (seq t)
+                                            (wait-for (damage state :corp :net 1 {:card card})
+                                                      (do-damage (rest t)))
+                                            (effect-completed state side eid)))]
+                                  (do-damage (filter corp? targets))))}
+    :events [{:event :runner-trash
               :async true
               :req (req (some corp? targets))
               :msg (msg (str "do " (count (filter corp? targets))
                              " net damage"))
               :effect (req (letfn [(do-damage [t]
-                                     (if-not (empty? t)
+                                     (if (seq t)
                                        (wait-for (damage state :corp :net 1 {:card card})
                                                  (do-damage (rest t)))
                                        (effect-completed state side eid)))]
@@ -896,8 +908,8 @@
       :abilities [ability]
       :trash-effect {:req (req (and (= :servers (first (:previous-zone card)))
                                     (= side :runner)))
-                     :effect (effect (gain-bad-publicity :corp 1)
-                                     (system-msg :corp (str "takes 1 bad publicity from Illegal Arms Factory")))}})
+                     :msg "take 1 bad publicity"
+                     :effect (effect (gain-bad-publicity :corp 1))}})
 
    "Indian Union Stock Exchange"
    (let [iuse {:req (req (not= (:faction target) (:faction (:identity corp))))
@@ -948,7 +960,6 @@
          cleanup (effect (update! (dissoc card :seen-this-turn)))]
      {:abilities [ability]
       :leave-play cleanup
-      :trash-effect {:effect cleanup}
       :events [{:event :corp-spent-click
                 :effect (req (when-not target
                                (print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
@@ -1126,8 +1137,7 @@
                                          :player :corp
                                          :yes-ability {:msg "shuffle it back into R&D"
                                                        :effect (effect (move :corp card :deck)
-                                                                       (shuffle! :corp :deck)
-                                                                       (effect-completed eid))}
+                                                                       (shuffle! :corp :deck))}
                                          :end-effect (effect (clear-wait-prompt :runner))}}
                                        card nil))}})
 
@@ -2030,7 +2040,8 @@
      {:effect (effect (lose :runner :agenda-point (count (:scored runner))))
       :leave-play (effect (gain :runner :agenda-point (count (:scored runner))))
       :trash-effect {:when-inactive true
-                     :req (req (:access @state))
+                     :req (req (and (:access @state)
+                                    (= :runner side)))
                      :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                      :async true
                      :effect (req (as-agenda state :runner eid card 2))}
@@ -2119,7 +2130,8 @@
    {:effect (req (lose state :runner :click-per-turn 1))
     :leave-play (req (gain state :runner :click-per-turn 1))
     :trash-effect {:when-inactive true
-                   :req (req (:access @state))
+                   :req (req (and (:access @state)
+                                  (= side :runner)))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :async true
                    :effect (req (as-agenda state :runner eid card 2))}}

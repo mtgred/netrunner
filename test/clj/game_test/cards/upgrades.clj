@@ -2489,9 +2489,8 @@
       (let [vg (get-content state :remote1 0)]
         (core/rez state :corp vg)
         (card-ability state :corp vg 0)
-        (card-ability state :corp vg 0) ; only need the run to exist for test, just pretending the Runner has broken all subs on 2 ice
+        (card-ability state :corp vg 0)
         (is (= 3 (hand-size :runner)) "Runner max hand size reduced by 2")
-        (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
         (run-successful state)
         (click-prompt state :runner "Pay 3 [Credits] to trash") ; pay to trash
         (take-credits state :runner 3)
@@ -2520,8 +2519,7 @@
         (click-card state :runner cor)
         (click-card state :runner mem)
         (is (= 2 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards"))))
-  (testing "Trashing from central triggers Warroid in root"
-    ;; Regression test for #3725
+  (testing "Trashing from central triggers Warroid in root. Issue #3725"
     (do-game
       (new-game {:corp {:deck ["Warroid Tracker" (qty "Hedge Fund" 3)]}
                  :runner {:deck ["Clan Vengeance" "Corroder" "Dyson Mem Chip"]}})
@@ -2589,4 +2587,29 @@
         (click-card state :runner "Corroder")
         (click-card state :runner "Dyson Mem Chip")
         (click-prompt state :runner "Done")
-        (is (= 2 (count (:discard (get-runner)))) "Runner trashes 2 cards to Warriod Tracker")))))
+        (is (= 2 (count (:discard (get-runner)))) "Runner trashes 2 cards to Warriod Tracker"))))
+  (testing "Trashing Warroid starts trace"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Warroid Tracker" "PAD Campaign"]
+                        :credits 15}
+                 :runner {:hand ["Singularity" (qty "Self-modifying Code" 5)]
+                          :credits 15}})
+      (play-from-hand state :corp "Warroid Tracker" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "Remote 1")
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (dotimes [_ 5]
+        (play-from-hand state :runner "Self-modifying Code"))
+      (core/rez state :corp (get-content state :remote1 0))
+      (play-from-hand state :runner "Singularity")
+      (click-prompt state :runner "Server 1")
+      (run-successful state)
+      (is (= 2 (-> (get-corp) :discard count)) "Corp has both cards in discard")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0") ; Corp wins trace
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should start with only Singularity in heap")
+      (dotimes [_ 4]
+        (click-card state :runner (get-program state 0)))
+      (is (empty? (:prompt (get-corp))) "Warroid Tracker can't trash anything else")
+      (is (= 5 (-> (get-runner) :discard count)) "Runner should trash 4 installed cards"))))
