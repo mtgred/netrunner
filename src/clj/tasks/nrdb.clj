@@ -25,17 +25,14 @@
         :else (throw (Exception. (str "Failed to download file, status " status)))))))
 
 (defn write-to-file
-  [col data]
-  (let [filename (str "data/" col ".edn")]
-    (io/make-parents filename)
-    (spit filename data)
-    (println (str "Wrote " filename " to disk"))))
+  [filename data]
+  (io/make-parents filename)
+  (spit filename data))
 
-(defn write-to-db
+(defn replace-collection
   [col data]
   (mc/remove db col)
-  (mc/insert-batch db col data)
-  (println (str "Imported " col " into database")))
+  (mc/insert-batch db col data))
 
 (defn- card-image-file
   "Returns the path to a card's image as a File"
@@ -63,66 +60,39 @@
   (let [img-dir (io/file "resources" "public" "img" "cards")]
     (io/make-parents img-dir)
     (let [missing-cards (remove #(.exists (card-image-file %)) cards)
+          total (count cards)
           missing (count missing-cards)]
-      (when (pos? missing)
-        (println "Downloading art for" missing "cards...")
-        (let [futures (doall (map download-card-image-throttled missing-cards))]
-          (doseq [resp futures]
-            ; wait for all the GETs to complete
-            (:status @resp)))
-        (println "Finished downloading card art")))))
+      (if (pos? missing)
+        (do
+          (println "Have art for" (str (- total missing) "/" total) "cards. Downloading" missing "missing images...")
+          (let [futures (doall (map download-card-image-throttled missing-cards))]
+            (doseq [resp futures]
+              ; wait for all the GETs to complete
+              (:status @resp)))
+          (println "Finished downloading card art"))
+        (println "All" total "card images exist, skipping download")))))
 
-(defn new-fetch-data
+(defn fetch-data
   [{:keys [card-images db local]}]
   (let [edn (download-edn-data local)]
-    (doseq [[k v] edn
-            :let [col (name k)]]
-      (write-to-file col v))
+    (doseq [[k data] edn
+            :let [filename (str "data/" (name k) ".edn")]]
+      (write-to-file filename data)
+      (println (str "Wrote data/" filename ".edn to disk")))
     (when db
       (webdb/connect)
       (try
-        (doseq [[k v] edn
+        (doseq [[k data] edn
                 :let [col (name k)]]
-          (write-to-db col v))
+          (replace-collection col data)
+          (println (str "Imported " col " into database")))
         (finally (webdb/disconnect))))
     (println (count (:cycles edn)) "cycles imported")
     (println (count (:sets edn)) "sets imported")
     (println (count (:mwls edn)) "MWL versions imported")
     (println (count (:cards edn)) "cards imported")
-    (println (str "Download card images? " card-images))
     (when card-images
       (download-card-images (:cards edn)))))
-
-(defn replace-collection
-  "Remove existing collection and insert new data"
-  [collection data]
-  (mc/remove db collection)
-  (mc/insert-batch db collection data))
-
-(defn fetch-data
-  "Find the NRDB card edn files and import them."
-  [localpath download-images]
-  (let [data (download-edn-data localpath)
-        cards (:cards data)]
-
-    (println "Writing cards")
-    (let [filename (str "data/cards.edn")]
-      (io/make-parents filename)
-      (spit filename cards))
-    (replace-collection "cards" cards)
-
-    (doseq [[k v] data
-            :when (not= "cards" (name k))
-            :let [collection (name k)
-                  filename (str "data/" collection ".edn")]]
-      (println (str "Writing " filename))
-      (io/make-parents filename)
-
-      (spit filename v)
-      (replace-collection collection v))
-    (when download-images
-      (download-card-images cards))
-    data))
 
 (defn update-config
   "Store import meta info in the db"

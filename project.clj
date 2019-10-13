@@ -54,7 +54,7 @@
                    :plugins [[lein-figwheel "0.5.16"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
-  :aliases {"fetch" ["run" "-m" "tasks.fetch/fetch"]
+  :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "add-art" ["run" "-m" "tasks.altart/add-art"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]

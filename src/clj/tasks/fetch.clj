@@ -8,34 +8,6 @@
             [clojure.string :as string]
             [clojure.tools.cli :refer [parse-opts]]))
 
-(defn fetch-with-db
-  "Import data from NRDB. Assumes the database is already open. See `fetch` for arguments."
-  [& args]
-  (let [localpath (first (remove #(string/starts-with? % "--") args))
-        download-images (not (some #{"--no-card-images"} args))
-        data (fetch-data localpath download-images)]
-    (println (count (:cycles data)) "cycles imported")
-    (println (count (:sets data)) "sets imported")
-    (println (count (:mwls data)) "MWL versions imported")
-    (println (count (:cards data)) "cards imported")
-    (add-art false)
-    (update-config)))
-
-(defn fetch
-  "Import data from NetrunnerDB.
-  Can accept `--local <path>` to use the `netrunner-card-json` project locally,
-  otherwise pulls data from NRDB.
-  Specifying `--no-card-images` will not attempt to download images for cards."
-  [& args]
-
-  (webdb/connect)
-  (try
-    (apply fetch-with-db args)
-    (catch Exception e (do
-                         (println "Import data failed:" (.getMessage e))
-                         (.printStackTrace e)))
-    (finally (webdb/disconnect))))
-
 (defn usage
   [options-summary]
   (->> ["Usage: lein fetch [options] target"
@@ -65,12 +37,6 @@
     :parse-fn not]
    ])
 
-(defn validate-args
-  [args]
-  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
-    (cond
-      errors {:exit-message (string/join \newline errors)})))
-
 (defn exit [status msg]
   (binding [*out* *err*]
     (println msg))
@@ -81,4 +47,4 @@
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
     (if errors
       (exit 1 (string/join \newline (conj errors "" (usage summary))))
-      (new-fetch-data options))))
+      (fetch-data options))))
