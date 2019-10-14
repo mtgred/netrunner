@@ -779,8 +779,8 @@
               :req (req (and (some corp? targets)
                              (:access @state)
                              (:trash target)))
-              :effect (effect (system-msg (str "places " (:trash target) " power counters on Mâché"))
-                              (add-counter card :power (:trash target)))}]}
+              :effect (effect (system-msg (str "places " (trash-cost state side target) " power counters on Mâché"))
+                              (add-counter card :power (trash-cost state side target)))}]}
 
    "Masterwork (v37)"
    {:in-play [:memory 1]
@@ -1142,6 +1142,7 @@
    "Q-Coherence Chip"
    {:in-play [:memory 1]
     :events (let [e {:async true
+                     :interactive (req true)
                      :req (req (some program? targets))
                      :effect (effect (system-msg (str "trashes Q-Coherence Chip"))
                                      (trash eid card nil))}]

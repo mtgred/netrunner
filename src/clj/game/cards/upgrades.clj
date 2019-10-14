@@ -1038,6 +1038,7 @@
 
    "Overseer Matrix"
    (let [om {:async true
+             :interactive (req true)
              :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
                              (continue-ability
                                {:optional
@@ -1406,6 +1407,7 @@
    (letfn [(wt [n]
              {:prompt "Choose an installed card to trash due to Warroid Tracker"
               :async true
+              :interactive (req true)
               :player :runner
               :choices {:req #(and (runner? %)
                                    (installed? %))}

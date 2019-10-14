@@ -1957,6 +1957,7 @@
    "Reaver"
    {:events [{:event :runner-trash
               :async true
+              :interactive (req true)
               :req (req (and (first-installed-trash? state side)
                              (installed? target)))
               :msg "draw 1 card"

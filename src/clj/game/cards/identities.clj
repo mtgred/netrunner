@@ -210,6 +210,7 @@
    "Armand \"Geist\" Walker: Tech Lord"
    {:events [{:event :runner-trash
               :async true
+              :interactive (req true)
               :req (req (and (= side :runner) (= (second targets) :ability-cost)))
               :msg "draw a card"
               :effect (effect (draw eid 1 nil))}]}
@@ -938,6 +939,7 @@
    "NBN: Controlling the Message"
    {:events [{:event :runner-trash
               :async true
+              :interactive (req true)
               :req (req (and (= 1 (count (filter #(and (installed? (first %)) (corp? (first %)))
                                                  (turn-events state side :runner-trash))))
                              (corp? target)
@@ -1444,6 +1446,7 @@
    {:events [{:event :pre-start-game
               :effect draft-points-target}
              {:event :runner-trash
+              :interactive (req true)
               :req (req (and (has-most-faction? state :runner "Anarch")
                              (some corp? targets)
                              (pos? (count (:discard runner)))))
