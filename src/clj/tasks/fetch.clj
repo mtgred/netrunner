@@ -44,6 +44,6 @@
   [& args]
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
     (if (or errors
-            arguments)
+            (not-empty arguments))
       (exit 1 (string/join \newline (conj errors (usage summary))))
       (fetch-data options))))
