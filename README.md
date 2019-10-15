@@ -20,7 +20,8 @@ http://www.jinteki.net
 ## Development
 ### Quickstart
 
-Install [Leiningen](https://leiningen.org/) and [NodeJS](https://nodejs.org/en/download/package-manager/#macos).
+Install [Leiningen](https://leiningen.org/), [NodeJS](https://nodejs.org/en/download/package-manager/#macos) and
+[MongoDB](https://docs.mongodb.com/manual/installation/).
 
 This project runs on Java 8. If you're on OSX or Linux, we recommend using
 [jenv](https://github.com/jenv/jenv/blob/master/README.md) to manage your java environment.
@@ -29,10 +30,6 @@ You can check your setup by running
 
     $ lein version # Your exact version numbers below may vary, but we expect Java 1.8.X
     Leiningen 2.9.1 on Java 1.8.0_222 OpenJDK 64-Bit Server VM
-
-A quick way to get a MongoDB database set up is using [Docker](https://www.docker.com/):
-
-    $ docker run -d -p 27017:27017 --name netrunner -v netrunner-data:/data/db mongo
 
 Populate the database using:
 
