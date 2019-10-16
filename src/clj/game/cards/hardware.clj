@@ -701,10 +701,12 @@
                                                     (effect-completed state side eid)))}}}]}
 
    "Hippo"
-   {:implementation "Subroutine and first encounter requirements not enforced"
+   {:implementation "First encounter requirements not enforced"
     :abilities [{:label "Remove Hippo from the game: trash outermost piece of ICE if all subroutines were broken"
                  :req (req (and run
-                                (pos? (count run-ices))))
+                                (pos? (count run-ices))
+                                (rezzed? current-ice)
+                                (empty? (remove :broken (:subroutines current-ice)))))
                  :async true
                  :effect (req (let [ice (last run-ices)]
                                 (system-msg

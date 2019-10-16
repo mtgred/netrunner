@@ -222,7 +222,9 @@
                    {:label (str "Derez " ice-type " being encountered")
                     :cost [:credit 2 :return-to-hand]
                     :req (req (and (rezzed? current-ice)
-                                   (has-subtype? current-ice ice-type)))
+                                   (has-subtype? current-ice ice-type)
+                                   (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                   (empty? (remove :broken (:subroutines current-ice)))))
                     :msg (msg "derez " (:title current-ice))
                     :effect (effect (derez current-ice))}]})))
 
