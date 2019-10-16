@@ -458,16 +458,16 @@
                    :effect (effect (system-msg (str "chooses the card in position "
                                                     (+ 1 (.indexOf (take 5 (:deck corp)) target))
                                                     " from R&D (top is 1)"))
-                                   (corp-install eid (move state side target :play-area) nil {:ignore-all-cost true}))}
+                                   (corp-install eid target nil {:ignore-all-cost true}))}
                   {:label "Install a card from HQ or Archives"
                    :prompt "Select a card to install from Archives or HQ"
                    :show-discard true
                    :priority true
-                   :async true
                    :choices {:req #(and (corp? %)
                                         (not (operation? %))
                                         (or (in-hand? %)
                                             (in-discard? %)))}
+                   :async true
                    :effect (effect (corp-install eid target nil nil))
                    :msg (msg (corp-install-msg target))}]}
 
@@ -1915,7 +1915,7 @@
                    :choices {:req #(and (ice? %)
                                         (in-hand? %))}
                    :prompt "Choose an ICE to install from HQ"
-                   :effect (req (corp-install state side eid target (zone->name (first (:server run))) {:ignore-all-cost true}))}]}
+                   :effect (effect (corp-install eid target (zone->name (first (:server run))) {:ignore-all-cost true}))}]}
 
    "Mirāju"
    {:abilities [{:label "Runner broke subroutine: Redirect run to Archives"
@@ -2086,6 +2086,7 @@
               :choices {:req #(and (not (operation? %))
                                    (in-hand? %)
                                    (corp? %))}
+              :async true
               :effect (effect (corp-install eid target nil nil))
               :msg (msg (corp-install-msg target))}
          ability {:req (req (and (ice? target)

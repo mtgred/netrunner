@@ -427,7 +427,8 @@
                      :choices {:req #(and (has-subtype? % "Icebreaker")
                                           (not (has-subtype? % "AI"))
                                           (in-hand? %))}
-                     :effect (effect (runner-install target {:host-card card}))}
+                     :async true
+                     :effect (effect (runner-install eid target {:host-card card}))}
          host-free {:label "Host an installed non-AI icebreaker on Baba Yaga"
                     :prompt "Choose an installed non-AI icebreaker to host on Baba Yaga"
                     :choices {:req #(and (has-subtype? % "Icebreaker")
@@ -783,11 +784,12 @@
                      (continue-ability state side (custsec-host from) card nil)))
       :abilities [{:cost [:click 1]
                    :prompt "Choose a program hosted on Customized Secretary to install"
-                   :choices (req (cancellable (filter #(can-pay? state side eid card nil :credit (:cost %))
+                   :choices (req (cancellable (filter #(can-pay? state side eid card nil [:credit (install-cost state side %)])
                                                       (:hosted card))))
                    :msg (msg "install " (:title target))
-                   :effect (req (when (can-pay? state side eid card nil :credit (:cost target))
-                                  (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))}]})
+                   :effect (req (if (can-pay? state side eid card nil [:credit (install-cost state side target)])
+                                  (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
+                                  (effect-completed state side eid)))}]})
 
    "Cyber-Cypher"
    (auto-icebreaker {:prompt "Choose a server"
@@ -871,18 +873,22 @@
    {:events [{:event :successful-run
               :silent (req true)
               :effect (effect (add-counter card :power 1))}]
-    :abilities [{:effect
-                 (req (let [c card]
-                        (resolve-ability state side
-                                         {:prompt "Choose a card to install from your Grip"
-                                          :choices {:req #(and (<= (:cost %) (get-counters c :power))
-                                                               (#{"Hardware" "Program" "Resource"} (:type %))
-                                                               (in-hand? %))}
-                                          :req (req (not (install-locked? state side)))
-                                          :msg (msg "install " (:title target) " at no cost")
-                                          :cost [:trash]
-                                          :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:ignore-install-cost true}))}
-                                         card nil)))}]}
+    :abilities [{:prompt "Choose a card to install from your Grip"
+                 :choices {:five (req (and (in-hand? target)
+                                           (or (hardware? target)
+                                               (program? target)
+                                               (resource? target))
+                                           (<= (install-cost state side target) (get-counters card :power))))}
+                 :req (req (and (not (install-locked? state side))
+                                (some #(and (or (hardware? %)
+                                                (program? %)
+                                                (resource? %))
+                                            (<= (install-cost state side %) (get-counters card :power)))
+                                      (:hand runner))))
+                 :msg (msg "install " (:title target) " at no cost")
+                 :cost [:trash]
+                 :async true
+                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:ignore-install-cost true}))}]}
 
    "Deep Thought"
    {:events [{:event :successful-run
@@ -925,11 +931,12 @@
                  :msg (msg (str "host " (:title target)
                                 (when (-> target :cost pos?)
                                   ", lowering its cost by 1 [Credit]")))
-                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
-                                                 target {:host-card card
+                 :async true
+                 :effect (effect (update! (assoc-in card [:special :dheg-prog] (:cid target)))
+                                 (runner-install (assoc eid :source (get-card state card) :source-type :runner-install)
+                                                 target {:host-card (get-card state card)
                                                          :no-mu true
-                                                         :cost-bonus -1})
-                                 (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
+                                                         :cost-bonus -1}))}
                 {:label "Host an installed program on Dhegdheer with [Credit] discount"
                  :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer with [Credit] discount"
@@ -1001,7 +1008,8 @@
                                  (shuffle! :deck)
                                  (move target :hand))}
                 {:label "Install a non-Icebreaker program on Djinn"
-                 :effect (effect (resolve-ability
+                 :async true
+                 :effect (effect (continue-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a non-Icebreaker program in your Grip to install on Djinn"
                                     :choices {:req #(and (program? %)
@@ -1009,10 +1017,12 @@
                                                          (not (has-subtype? % "Icebreaker"))
                                                          (in-hand? %))}
                                     :msg (msg "install and host " (:title target))
-                                    :effect (effect (runner-install target {:host-card card :no-mu true})
-                                                    (update! (assoc (get-card state card)
-                                                                    :hosted-programs
-                                                                    (cons (:cid target) (:hosted-programs card)))))}
+                                    :async true
+                                    :effect (req (wait-for (runner-install state side target {:host-card card :no-mu true})
+                                                           (update! state side (assoc (get-card state card)
+                                                                                      :hosted-programs
+                                                                                      (cons (:cid target) (:hosted-programs card))))
+                                                           (effect-completed state side eid)))}
                                    card nil))}
                 {:label "Host an installed non-Icebreaker program on Djinn"
                  :prompt "Choose an installed non-Icebreaker program to host on Djinn"
@@ -1451,18 +1461,21 @@
    "Leprechaun"
    {:abilities [{:label "Install a program on Leprechaun"
                  :req (req (< (count (get-in card [:special :hosted-programs])) 2))
-                 :effect (effect (resolve-ability
+                 :async true
+                 :effect (effect (continue-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program in your Grip to install on Leprechaun"
                                     :choices {:req #(and (program? %)
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target))
-                                    :effect (effect (runner-install target {:host-card card :no-mu true})
-                                                    (update! (assoc-in (get-card state card)
-                                                                       [:special :hosted-programs]
-                                                                       (cons (:cid target)
-                                                                             (get-in card [:special :hosted-programs])))))}
+                                    :async true
+                                    :effect (req (wait-for (runner-install state side target {:host-card card :no-mu true})
+                                                           (update! state side (assoc-in (get-card state card)
+                                                                                         [:special :hosted-programs]
+                                                                                         (cons (:cid target)
+                                                                                               (get-in card [:special :hosted-programs]))))
+                                                           (effect-completed state side eid)))}
                                    card nil))}
                 {:label "Host an installed program on Leprechaun"
                  :req (req (< (count (get-in card [:special :hosted-programs])) 2))
@@ -1802,8 +1815,10 @@
                  :msg (msg "host it on " (card-str state target))
                  :effect (effect (host target card))}
                 {:label "Trash Pawn and install a Caïssa from your Grip or Heap, ignoring all costs"
+                 :async true
                  :effect (req (let [this-pawn (:cid card)]
-                                (resolve-ability
+                                (trash state side card)
+                                (continue-ability
                                   state side
                                   {:prompt "Choose a Caïssa program to install from your Grip or Heap"
                                    :show-discard true
@@ -1811,9 +1826,9 @@
                                                         (not= (:cid %) this-pawn)
                                                         (#{[:hand] [:discard]} (:zone %)))}
                                    :msg (msg "install " (:title target))
-                                   :effect (effect (runner-install target {:ignore-all-cost true}))}
-                                  card nil)
-                                (trash state side card)))}]}
+                                   :async true
+                                   :effect (effect (runner-install eid target {:ignore-all-cost true}))}
+                                  card nil)))}]}
 
    "Peacock"
    (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
@@ -1903,17 +1918,20 @@
    "Progenitor"
    {:abilities [{:label "Install a virus program on Progenitor"
                  :req (req (empty? (:hosted card)))
-                 :effect (effect (resolve-ability
+                 :async true
+                 :effect (effect (continue-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a Virus program to install on Progenitor"
                                     :choices {:req #(and (program? %)
                                                          (has-subtype? % "Virus")
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target))
-                                    :effect (effect (runner-install target {:host-card card :no-mu true})
-                                                    (update! (assoc (get-card state card)
-                                                                    :hosted-programs
-                                                                    (cons (:cid target) (:hosted-programs card)))))}
+                                    :async true
+                                    :effect (req (wait-for (runner-install state side target {:host-card card :no-mu true})
+                                                           (update! state side (assoc (get-card state card)
+                                                                                      :hosted-programs
+                                                                                      (cons (:cid target) (:hosted-programs card))))
+                                                           (effect-completed state side eid)))}
                                    card nil))}
                 {:label "Host an installed virus on Progenitor"
                  :req (req (empty? (:hosted card)))
@@ -2088,10 +2106,12 @@
                  :prompt "Choose a program to install from your grip"
                  :choices {:req #(and (program? %)
                                       (in-hand? %))}
+                 :async true
                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]}
 
    "Scheherazade"
    {:abilities [{:label "Install and host a program from Grip"
+                 :async true
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program to install on Scheherazade from your grip"
@@ -2099,7 +2119,9 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) " and gain 1 [Credits]")
-                                    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:host-card card}) (gain-credits 1))}
+                                    :async true
+                                    :effect (effect (gain-credits 1)
+                                                    (runner-install (assoc eid :source card :source-type :runner-install) target {:host-card card}))}
                                    card nil))}
                 {:label "Host an installed program"
                  :prompt "Choose a program to host on Scheherazade" :priority 2
@@ -2112,6 +2134,7 @@
    "Self-modifying Code"
    {:abilities [{:req (req (not (install-locked? state side)))
                  :cost [:trash]
+                 :async true
                  :effect (effect (continue-ability
                                    {:prompt "Choose a program to install"
                                     :msg (req (if (not= target "No install")
@@ -2123,10 +2146,12 @@
                                                                                        (:deck runner))))
                                                           "No install")))
                                     :cost [:credit 2]
+                                    :async true
                                     :effect (req (trigger-event state side :searched-stack nil)
                                                  (shuffle! state side :deck)
-                                                 (when (not= target "No install")
-                                                   (runner-install state side (make-eid state {:source card :source-type :runner-install}) target nil)))}
+                                                 (if (not= target "No install")
+                                                   (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
+                                                   (effect-completed state side eid)))}
                                    card nil))}]}
 
    "Sharpshooter"

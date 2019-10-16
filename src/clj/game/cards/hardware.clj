@@ -354,8 +354,9 @@
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (in-hand? %))}
-                 :effect (effect (runner-install target {:host-card card :no-mu true})
-                                 (update! (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}
+                 :async true
+                 :effect (effect (update! (assoc-in (get-card state card) [:special :dino-breaker] (:cid target)))
+                                 (runner-install eid target {:host-card card :no-mu true}))}
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
                  :prompt "Select an installed non-AI icebreaker to host on Dinosaurus"
@@ -507,8 +508,9 @@
                    :prompt "Select a program in your Grip to install on Flame-out"
                    :choices {:req #(and (program? %)
                                         (in-hand? %))}
-                   :effect (effect (runner-install target {:host-card card})
-                                   (update! (assoc-in (get-card state card) [:special :flame-out] (:cid target))))}
+                   :async true
+                   :effect (effect (update! (assoc-in (get-card state card) [:special :flame-out] (:cid target)))
+                                   (runner-install eid target {:host-card card}))}
                   {:label "Host an installed program on Flame-out"
                    :req (req (empty? (:hosted card)))
                    :prompt "Select an installed program to host on Flame-out"
@@ -935,39 +937,42 @@
               :effect (effect (pump target 1 :end-of-run))}]}
 
    "NetChip"
-   {:abilities [{:label "Install a program on NetChip"
+   {:abilities [{:async true
+                 :label "Install a program on NetChip"
                  :req (req (empty? (:hosted card)))
-                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
-                                (resolve-ability
-                                  state side
-                                  {:cost [:click 1]
-                                   :prompt "Select a program in your Grip to install on NetChip"
-                                   :choices {:req #(and (program? %)
-                                                        (runner-can-install? state side % false)
-                                                        (<= (:memoryunits %) n)
-                                                        (in-hand? %))}
-                                   :msg (msg "host " (:title target))
-                                   :effect (effect (runner-install target {:host-card card :no-mu true})
-                                                   (update! (assoc (get-card state card)
-                                                                   :hosted-programs
-                                                                   (cons (:cid target) (:hosted-programs card)))))}
-                                  card nil)))}
-                {:label "Host an installed program on NetChip"
+                 :effect (effect
+                           (continue-ability
+                             (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
+                               {:async true
+                                :cost [:click 1]
+                                :prompt "Select a program in your Grip to install on NetChip"
+                                :choices {:req #(and (program? %)
+                                                     (runner-can-install? state side % false)
+                                                     (<= (:memoryunits %) n)
+                                                     (in-hand? %))}
+                                :msg (msg "host " (:title target))
+                                :effect (effect (update! (assoc (get-card state card)
+                                                                :hosted-programs
+                                                                (cons (:cid target) (:hosted-programs card))))
+                                                (runner-install eid target {:host-card card :no-mu true}))})
+                             card nil))}
+                {:async true
+                 :label "Host an installed program on NetChip"
                  :req (req (empty? (:hosted card)))
-                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
-                                (resolve-ability
-                                  state side
-                                  {:prompt "Select an installed program to host on NetChip"
-                                   :choices {:req #(and (program? %)
-                                                        (<= (:memoryunits %) n)
-                                                        (installed? %))}
-                                   :msg (msg "host " (:title target))
-                                   :effect (effect (host card target)
-                                                   (free-mu (:memoryunits target))
-                                                   (update! (assoc (get-card state card)
-                                                                   :hosted-programs
-                                                                   (cons (:cid target) (:hosted-programs card)))))}
-                                  card nil)))}]
+                 :effect (effect
+                           (continue-ability
+                             (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
+                               {:prompt "Select an installed program to host on NetChip"
+                                :choices {:req #(and (program? %)
+                                                     (<= (:memoryunits %) n)
+                                                     (installed? %))}
+                                :msg (msg "host " (:title target))
+                                :effect (effect (host card target)
+                                                (free-mu (:memoryunits target))
+                                                (update! (assoc (get-card state card)
+                                                                :hosted-programs
+                                                                (cons (:cid target) (:hosted-programs card)))))})
+                             card nil))}]
     :events [{:event :card-moved
               :req (req (some #{(:cid target)} (:hosted-programs card)))
               :effect (effect (update! (assoc card
@@ -997,7 +1002,8 @@
 
    "Omni-drive"
    {:recurring 1
-    :abilities [{:label "Install and host a program of 1[Memory Unit] or less on Omni-drive"
+    :abilities [{:async true
+                 :label "Install and host a program of 1[Memory Unit] or less on Omni-drive"
                  :req (req (empty? (:hosted card)))
                  :cost [:click 1]
                  :prompt "Select a program of 1[Memory Unit] or less to install on Omni-drive from your grip"
@@ -1005,8 +1011,8 @@
                                       (<= (:memoryunits %) 1)
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (runner-install target {:host-card card :no-mu true})
-                                 (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}
+                 :effect (effect (update! (assoc (get-card state card) :Omnidrive-prog (:cid target)))
+                                 (runner-install eid target {:host-card card :no-mu true}))}
                 {:label "Host an installed program of 1[Memory Unit] or less on Omni-drive"
                  :prompt "Select an installed program of 1[Memory Unit] or less to host on Omni-drive"
                  :choices {:req #(and (program? %)
@@ -1174,15 +1180,15 @@
 
    "Rabbit Hole"
    {:in-play [:link 1]
-    :effect
-    (effect (resolve-ability
-              {:optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
-                          :prompt "Install another Rabbit Hole?" :msg "install another Rabbit Hole"
-                          :yes-ability {:effect (req (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
-                                                                        (:deck runner))]
-                                                       (trigger-event state side :searched-stack nil)
-                                                       (shuffle! state :runner :deck)
-                                                       (runner-install state side c)))}}} card nil))}
+    :optional {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
+               :prompt "Install another Rabbit Hole?"
+               :msg "install another Rabbit Hole"
+               :yes-ability {:async true
+                             :effect (req (trigger-event state side :searched-stack nil)
+                                          (shuffle! state :runner :deck)
+                                          (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
+                                                             (:deck runner))]
+                                            (runner-install state side eid c nil)))}}}
 
    "Ramujan-reliant 550 BMI"
    {:interactions {:prevent [{:type #{:net :brain}

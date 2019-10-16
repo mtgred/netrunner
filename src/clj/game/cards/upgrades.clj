@@ -74,7 +74,8 @@
                                       (has-subtype? % "Bioroid")
                                       (in-hand? %))}
                  :msg "host a piece of Bioroid ICE"
-                 :effect (req (corp-install state side target card {:ignore-all-cost true}))}
+                 :async true
+                 :effect (req (corp-install state side eid target card {:ignore-all-cost true}))}
                 {:req (req (and this-server
                                 (zero? (get-in @state [:run :position]))
                                 (some #(can-pay? state side eid card nil

@@ -131,6 +131,7 @@
     :effect (effect (continue-ability
                       {:prompt "Install a card?"
                        :choices (filter corp-installable-type? (take 5 (:deck corp)))
+                       :async true
                        :effect (effect (corp-install eid target nil
                                                      {:ignore-all-cost true
                                                       :install-state :rezzed-no-rez-cost}))
@@ -437,16 +438,16 @@
               :choices {:req #(and (corp? %)
                                    (not (operation? %))
                                    (#{[:hand] [:discard]} (:zone %)))}
-              :effect (req (corp-install state side target server-name {:ignore-all-cost true})
-                           (if (< n 2)
-                             (continue-ability state side
-                                               (install-ability (last (get-remote-names state)) (inc n))
-                                               card nil)
-                             (effect-completed state side eid)))
               :msg (msg (corp-install-msg target)
                         (when (zero? n)
                           ", creating a new remote server")
-                        ", ignoring all install costs")})]
+                        ", ignoring all install costs")
+              :async true
+              :effect (req (wait-for (corp-install state side target server-name {:ignore-all-cost true})
+                                     (continue-ability state side
+                                                       (when (< n 2)
+                                                         (install-ability (last (get-remote-names state)) (inc n)))
+                                                       card nil)))})]
      {:optional {:prompt "Install cards in a new remote server?"
                  :yes-ability (install-ability "New remote" 0)}})
 
@@ -781,6 +782,7 @@
                          (#{[:hand] [:discard]} (:zone %))
                          (corp? %))}
     :msg (msg "install and rez " (:title target) ", ignoring all costs")
+    :async true
     :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost}))}
 
    "Mandatory Seed Replacement"
@@ -887,13 +889,13 @@
                                                   (corp? %)
                                                   (in-hand? %))}
                              :msg (msg "install a card from HQ"
-                                       (when (>= (get-counters (get-card state card) :advancement) 5)
+                                       (when (<= 5 (get-counters (get-card state card) :advancement))
                                          " and rez it, ignoring all costs"))
-                             :effect (req (if (>= (get-counters (get-card state card) :advancement) 5)
-                                            (do (corp-install state side target "New remote"
-                                                              {:install-state :rezzed-no-cost})
-                                                (trigger-event state side :rez target))
-                                            (corp-install state side target "New remote")))}}}]}
+                             :async true
+                             :effect (effect (corp-install
+                                               eid target "New remote"
+                                               (when (<= 5 (get-counters (get-card state card) :advancement))
+                                                 {:install-state :rezzed-no-cost})))}}}]}
 
    "NEXT Wave 2"
    {:not-when-scored true
@@ -1237,24 +1239,28 @@
     :optional {:prompt "Search R&D for a piece of ice to install protecting a remote server?"
                :yes-ability
                {:async true
-                :effect (req (when (not-empty (filter ice? (:deck corp)))
-                               (continue-ability
-                                 state side
-                                 {:async true
-                                  :prompt "Choose a piece of ice"
-                                  :choices (req (filter ice? (:deck corp)))
-                                  :effect (req (let [chosen-ice target]
-                                                 (continue-ability
-                                                   state side
-                                                   {:async true
-                                                    :prompt (str "Select a server to install " (:title chosen-ice) " on")
-                                                    :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
-                                                                     (corp-install-list state chosen-ice))
-                                                    :effect (effect (shuffle! :deck)
-                                                                    (corp-install eid chosen-ice target
-                                                                                  {:install-state :rezzed-no-rez-cost}))}
-                                                   card nil)))}
-                                 card nil)))}}}
+                :effect (effect
+                          (continue-ability
+                            (if (not-empty (filter ice? (:deck corp)))
+                              {:async true
+                               :prompt "Choose a piece of ice"
+                               :choices (req (filter ice? (:deck corp)))
+                               :effect (effect
+                                         (continue-ability
+                                           (let [chosen-ice target]
+                                             {:async true
+                                              :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                              :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
+                                                               (corp-install-list state chosen-ice))
+                                              :effect (effect (shuffle! :deck)
+                                                              (corp-install eid chosen-ice target
+                                                                            {:install-state :rezzed-no-rez-cost}))})
+                                           card nil))}
+                              {:prompt "You have no ice in R&D"
+                               :choices ["Carry on!"]
+                               :prompt-type :bogus
+                               :effect (effect (shuffle! :deck))})
+                            card nil))}}}
 
    "Research Grant"
    {:interactive (req true)
@@ -1392,21 +1398,20 @@
                :effect (effect (damage eid :net (inc (count-opp-stings state :runner)) {:card card}))}})
 
    "Successful Field Test"
-   (letfn [(sft [n max] {:prompt "Select a card in HQ to install with Successful Field Test"
-                         :priority -1
-                         :async true
-                         :choices {:req #(and (corp? %)
-                                              (not (operation? %))
-                                              (in-hand? %))}
-                         :effect (req (wait-for
-                                        (corp-install state side target nil {:ignore-all-cost true})
-                                        (if (< n max)
-                                          (continue-ability state side (sft (inc n) max) card nil)
-                                          (effect-completed state side eid))))})]
+   (letfn [(sft [n max-ops]
+             {:prompt "Select a card in HQ to install with Successful Field Test"
+              :priority -1
+              :async true
+              :choices {:req #(and (corp? %)
+                                   (not (operation? %))
+                                   (in-hand? %))}
+              :effect (req (wait-for
+                             (corp-install state side target nil {:ignore-all-cost true})
+                             (continue-ability state side (when (< n max-ops) (sft (inc n) max-ops)) card nil)))})]
      {:async true
       :msg "install cards from HQ, ignoring all costs"
-      :effect (req (let [max (count (filter (complement operation?) (:hand corp)))]
-                     (continue-ability state side (sft 1 max) card nil)))})
+      :effect (req (let [max-ops (count (filter (complement operation?) (:hand corp)))]
+                     (continue-ability state side (sft 1 max-ops) card nil)))})
 
    "Superior Cyberwalls"
    (ice-boost-agenda "Barrier")
@@ -1460,11 +1465,13 @@
                              (:title target)
                              "ICE")
                            " from " (zone->name (:zone target)))
+                 :async true
                  :effect (effect
                            (continue-ability
                              (let [chosen-ice target]
                                {:prompt "Choose a server"
                                 :choices (req servers)
+                                :async true
                                 :effect (effect
                                           (continue-ability
                                             (let [chosen-server target
@@ -1472,14 +1479,17 @@
                                                                          (conj (server->zone state target) :ices)))]
                                               {:prompt "Which position to install in? (0 is innermost)"
                                                :choices (vec (reverse (map str (range (inc num-ice)))))
-                                               :effect (req (corp-install state side chosen-ice chosen-server
-                                                                          {:ignore-all-cost true :index (Integer/parseInt target)})
-                                                            (if (and run
-                                                                     (= (zone->name (first (:server run)))
-                                                                        chosen-server))
-                                                              (let [curr-pos (get-in @state [:run :position])]
-                                                                (if (>= curr-pos (Integer/parseInt target))
-                                                                  (swap! state assoc-in [:run :position] (inc curr-pos))))))})
+                                               :async true
+                                               :effect (req (wait-for (corp-install
+                                                                        state side chosen-ice chosen-server
+                                                                        {:ignore-all-cost true :index (Integer/parseInt target)})
+                                                                      (when (and run
+                                                                                 (= (zone->name (first (:server run)))
+                                                                                    chosen-server))
+                                                                        (let [curr-pos (get-in @state [:run :position])]
+                                                                          (when (>= curr-pos (Integer/parseInt target))
+                                                                            (swap! state assoc-in [:run :position] (inc curr-pos)))))
+                                                                      (effect-completed state side eid)))})
                                             card nil))})
                              card nil))}]}
 
