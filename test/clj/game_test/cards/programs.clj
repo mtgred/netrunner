@@ -1942,6 +1942,26 @@
         (run-jack-out state)
         (is (= 1 (:current-strength (refresh nanotk))) "Back to default strength")))))
 
+(deftest nfr
+  ;; Nfr
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Nfr"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Nfr")
+      (let [nfr (get-program state 0)
+            icew (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp (refresh icew))
+        (card-ability state :runner (refresh nfr) 1)
+        (click-prompt state :runner "End the run")
+        (changes-val-macro 1 (get-counters (refresh nfr) :power)
+                           "Got 1 token"
+                           (run-continue state))))))
+
 (deftest nyashia
   ;; Nyashia
   (do-game
@@ -2579,6 +2599,7 @@
       (click-prompt state :runner "Make the Runner lose 2 [Credits]")
       (click-prompt state :runner "End the run")
       (is (:broken (first (:subroutines (refresh afshar)))) "Broke a code gate subroutine"))))
+
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
   (do-game
@@ -2829,6 +2850,27 @@
       (is (= 2 (:credit (get-runner))) "Paid 2c")
       (is (= 2 (get-counters (refresh sg) :power)) "Has 2 power counters")
       (is (= 2 (:current-strength (refresh sg))) "2 strength"))))
+
+(deftest sunya
+  ;; Sūnya
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Sūnya"]}
+                 :corp {:deck ["Rototurret"]}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Sūnya")
+      (let [sunya (get-program state 0)
+            roto (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp (refresh roto))
+        (card-ability state :runner (refresh sunya) 1)
+        (click-prompt state :runner "Trash a program")
+        (click-prompt state :runner "End the run")
+        (changes-val-macro 1 (get-counters (refresh sunya) :power)
+                           "Got 1 token"
+                           (run-continue state))))))
 
 (deftest surfer
   ;; Surfer - Swap position with ice before or after when encountering a Barrier ICE

@@ -1645,14 +1645,19 @@
                  :effect (effect (damage-prevent :net 1))}]}
 
    "Nfr"
-   {:implementation "Adding power counter is manual"
-    :abilities [{:label "Place 1 power counter on Nfr"
-                 :msg "place 1 power counter on it"
-                 :ability-type :manual-state
-                 :effect (effect (add-counter card :power 1)
-                                 (update-breaker-strength card))}
-                (break-sub 1 1 "Barrier")]
-    :strength-bonus (req (get-counters card :power))}
+   (let [add-token-abi {:label "Place 1 power counter on Nfr"
+                        :msg "place 1 power counter on it"
+                        :ability-type :manual-state
+                        :effect (effect (add-counter card :power 1)
+                                        (update-breaker-strength card))}]
+     {:abilities [add-token-abi
+                  (break-sub 1 1 "Barrier")]
+      :strength-bonus (req (get-counters card :power))
+      :events [(assoc add-token-abi
+                      :event :pass-ice
+                      :req (req (and (rezzed? current-ice)
+                                     (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                     (empty? (remove :broken (:subroutines current-ice))))))]})
 
    "Ninja"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
@@ -2237,14 +2242,19 @@
     :strength-bonus (req (get-counters card :power))}
 
    "Sūnya"
-   {:implementation "Adding power counter is manual"
-    :abilities [{:label "Place 1 power counter on Sūnya"
-                 :ability-type :manual-state
-                 :effect (effect (add-counter card :power 1)
-                                 (system-msg (str "places 1 power counter on Sūnya"))
-                                 (update-breaker-strength card))}
-                (break-sub 2 1 "Sentry")]
-    :strength-bonus (req (get-counters card :power))}
+   (let [add-token-abi {:label "Place 1 power counter on Sūnya"
+                        :msg "place 1 power counter on it"
+                        :ability-type :manual-state
+                        :effect (effect (add-counter card :power 1)
+                                        (update-breaker-strength card))}]
+     {:abilities [add-token-abi
+                  (break-sub 2 1 "Sentry")]
+      :strength-bonus (req (get-counters card :power))
+      :events [(assoc add-token-abi
+                      :event :pass-ice
+                      :req (req (and (rezzed? current-ice)
+                                     (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                     (empty? (remove :broken (:subroutines current-ice))))))]})
 
    "Surfer"
    (letfn [(surf [state cice]
