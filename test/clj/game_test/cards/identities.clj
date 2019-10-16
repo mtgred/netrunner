@@ -2400,6 +2400,22 @@
       (take-credits state :corp)
       (is (empty? (:prompt (get-corp))) "Not prompted when all ice advanced"))))
 
+(deftest steve-cambridge-master-grifter
+  ;; Steve
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Hedge Fund"]}
+               :runner {:id "Steve Cambridge: Master Grifter"
+                        :discard ["Sure Gamble" "Easy Mark"]}})
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-card state :runner "Sure Gamble")
+    (click-card state :runner "Easy Mark")
+    (click-prompt state :corp "Sure Gamble")
+    (click-prompt state :runner "No action")
+    (is (= "Easy Mark" (-> (get-runner) :hand first :title)) "Easy Mark should be in the hand")
+    (is (= "Sure Gamble" (-> (get-runner) :rfg first :title)) "Sure Gamble should be removed from game")))
+
 (deftest strategic-innovations-future-forward
   ;; Strategic Innovations: Future Forward
   (do-game
