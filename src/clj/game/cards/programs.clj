@@ -1243,10 +1243,11 @@
                                   (break-subroutine! state (get-card state current-ice) sub))))}]}
 
    "Gravedigger"
-   (let [e {:req (req (and (installed? target)
-                           (corp? target)))
+   (let [e {:req (req (some #(and (installed? %)
+                                  (corp? %))
+                            targets))
             :msg (msg "place 1 virus counter on " (:title card))
-            :effect (effect (add-counter :runner card :virus 1 nil))}]
+            :effect (effect (add-counter :runner card :virus 1))}]
      {:events [(assoc e :event :runner-trash)
                (assoc e :event :corp-trash)]
       :abilities [{:cost [:click 1 :virus 1]
@@ -1264,7 +1265,8 @@
 
    "Harbinger"
    {:trash-effect
-    {:req (req (not-any? #{:facedown :hand} (:previous-zone card)))
+    {:async true
+     :req (req (not-any? #{:facedown :hand} (:previous-zone card)))
      :effect (req (let [lock (get-in @state [:runner :locked :discard])]
                     (swap! state assoc-in [:runner :locked] nil)
                     (runner-install state :runner (assoc eid :source card :source-type :runner-install) card {:facedown true})
@@ -1287,40 +1289,34 @@
                                 card nil))}]}
 
    "Hivemind"
-   (let [update-programs (req (let [virus-programs (->> (all-installed state :runner)
-                                                        (filter #(and (program? %)
-                                                                      (has-subtype? % "Virus")
-                                                                      (not (facedown? %)))))]
-                                (doseq [p virus-programs]
-                                  (update-breaker-strength state side p))))]
-     {:data {:counter {:virus 1}}
-      :effect update-programs
-      :trash-effect {:effect update-programs}
-      :events [{:event :counter-added
-                :req (req (same-card? target card))
-                :effect update-programs}]
-      :abilities [{:req (req (pos? (get-counters card :virus)))
-                   :priority true
-                   :prompt "Move a virus counter to which card?"
-                   :choices {:req #(has-subtype? % "Virus")}
-                   :effect (req (let [abilities (:abilities (card-def target))
-                                      virus target]
-                                  (add-counter state :runner virus :virus 1)
-                                  (add-counter state :runner card :virus -1)
-                                  (if (= (count abilities) 1)
-                                    (do (swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
-                                        (resolve-ability state side (first abilities) (get-card state virus) nil))
-                                    (resolve-ability
-                                      state side
-                                      {:prompt "Choose an ability to trigger"
-                                       :choices (vec (map :msg abilities))
-                                       :effect (req (swap! state update-in [side :prompt] rest)
-                                                    (resolve-ability
-                                                      state side
-                                                      (first (filter #(= (:msg %) target) abilities))
-                                                      card nil))}
-                                      (get-card state virus) nil))))
-                   :msg (msg "trigger an ability on " (:title target))}]})
+   {:data {:counter {:virus 1}}
+    :effect (effect (update-all-icebreakers))
+    :trash-effect {:effect (effect (update-all-icebreakers))}
+    :events [{:event :counter-added
+              :req (req (same-card? target card))
+              :effect (effect (update-all-icebreakers))}]
+    :abilities [{:req (req (pos? (get-counters card :virus)))
+                 :priority true
+                 :prompt "Move a virus counter to which card?"
+                 :choices {:req #(has-subtype? % "Virus")}
+                 :effect (req (let [abilities (:abilities (card-def target))
+                                    virus target]
+                                (add-counter state :runner virus :virus 1)
+                                (add-counter state :runner card :virus -1)
+                                (if (= (count abilities) 1)
+                                  (do (swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
+                                      (resolve-ability state side (first abilities) (get-card state virus) nil))
+                                  (resolve-ability
+                                    state side
+                                    {:prompt "Choose an ability to trigger"
+                                     :choices (vec (map :msg abilities))
+                                     :effect (req (swap! state update-in [side :prompt] rest)
+                                                  (resolve-ability
+                                                    state side
+                                                    (first (filter #(= (:msg %) target) abilities))
+                                                    card nil))}
+                                    (get-card state virus) nil))))
+                 :msg (msg "trigger an ability on " (:title target))}]}
 
    "Houdini"
    {:abilities [(break-sub 1 1 "Code Gate")
@@ -1960,11 +1956,12 @@
 
    "Reaver"
    {:events [{:event :runner-trash
+              :async true
+              :interactive (req true)
               :req (req (and (first-installed-trash? state side)
                              (installed? target)))
-              :async true
-              :effect (effect (draw :runner eid 1 nil))
-              :msg "draw 1 card"}]}
+              :msg "draw 1 card"
+              :effect (effect (draw :runner eid 1 nil))}]}
 
    "Refractor"
    (auto-icebreaker {:implementation "Stealth credit restriction not enforced"

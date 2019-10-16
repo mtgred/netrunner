@@ -2540,10 +2540,6 @@
                         :deck [(qty "Hedge Fund" 3)]}})
       (let [bon (get-in @state [:corp :identity])]
         (card-ability state :corp bon 0)
-        (click-prompt state :corp "Cancel")
-        (is (zero? (count (:discard (get-runner)))) "Runner took no meat damage from BoN")
-        (card-ability state :corp bon 0)
-        (click-prompt state :corp "Yes")
         (is (= 1 (count (:discard (get-runner)))) "Runner took 1 meat damage from BoN")
         (card-ability state :corp bon 0)
         (is (= 1 (count (:discard (get-runner)))) "Runner took only 1 meat damage from BoN total")
@@ -2558,7 +2554,6 @@
         (score-agenda state :corp clean)
         (let [bon (get-in @state [:corp :identity])]
           (card-ability state :corp bon 0)
-          (click-prompt state :corp "Yes")
           (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from BoN/Cleaners combo"))))))
 
 (deftest whizzard-master-gamer

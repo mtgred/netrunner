@@ -117,8 +117,9 @@
    {:events [{:event :runner-trash
               :once :per-turn
               :async true
+              :interactive (req true)
               :req (req (some corp? targets))
-              :msg "give the Runner a tag for trashing a Corp card"
+              :msg "give the Runner a tag"
               :effect (effect (gain-tags eid 1))}]}
 
    "Architect Deployment Test"

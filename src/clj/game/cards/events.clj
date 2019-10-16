@@ -1205,8 +1205,9 @@
     :effect (effect (draw eid 3 nil))
     :trash-effect {:when-inactive true
                    :async true
-                   :req (req (#{:meat :net} target))
-                   :effect (effect (draw :runner eid 3 nil)) :msg "draw 3 cards"}}
+                   :req (req (some #{:meat :net} targets))
+                   :msg "draw 3 cards"
+                   :effect (effect (draw :runner eid 3 nil))}}
 
    "Immolation Script"
    {:async true

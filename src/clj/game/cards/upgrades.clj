@@ -127,22 +127,21 @@
                                 (continue-ability state side (dome card) card nil))}]})
 
    "Ben Musashi"
-   (let [bm {:req (req (or (in-same-server? card target)
-                           (from-same-server? card target)))
-             :effect (effect (steal-cost-bonus [:net 2]))}]
-     {:trash-effect
-      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-       :effect (effect (register-events
-                         (assoc card :zone '(:discard))
-                         [(assoc bm
-                                 :event :pre-steal-cost
-                                 :req (req (or (= (:zone target) (:previous-zone card))
-                                               (= (central->zone (:zone target))
-                                                  (butlast (:previous-zone card))))))
-                          {:event :run-ends
-                           :effect (effect (unregister-events card))}]))}
-      :events [(assoc bm :event :pre-steal-cost)
-               {:event :run-ends}]})
+   {:trash-effect
+    {:req (req (and (= :servers (first (:previous-zone card)))
+                    (:run @state)))
+     :effect (effect (register-events
+                       card
+                       [{:event :pre-steal-cost
+                         :duration :end-of-run
+                         :req (req (or (= (:zone target) (:previous-zone card))
+                                       (= (central->zone (:zone target))
+                                          (butlast (:previous-zone card)))))
+                         :effect (effect (steal-cost-bonus [:net 2]))}]))}
+    :events [{:event :pre-steal-cost
+              :req (req (or (in-same-server? card target)
+                            (from-same-server? card target)))
+              :effect (effect (steal-cost-bonus [:net 2]))}]}
 
    "Bernice Mai"
    {:events [{:event :successful-run
@@ -915,17 +914,15 @@
       :trash-effect                     ; if there is a run, mark mwanza effects to remain active until the end of the run
       {:req (req (:run @state))
        :effect (effect (register-events
-                         (assoc card :zone '(:discard))
+                         card
                          [(assoc boost-access-by-3
                                  :event :pre-access
+                                 :duration :end-of-run
                                  :req (req (= target (second (:previous-zone card)))))
                           (assoc gain-creds-and-clear
                                  :event :end-access-phase
-                                 :req (req (= (:from-server target) (second (:previous-zone card)))))
-                          {:event :unsuccessful-run-ends
-                           :effect (effect (unregister-events card))}
-                          {:event :successful-run-ends
-                           :effect (effect (unregister-events card))}]))}})
+                                 :duration :end-of-run
+                                 :req (req (= (:from-server target) (second (:previous-zone card)))))]))}})
 
    "NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
@@ -1009,70 +1006,75 @@
     :leave-play (req (enable-run-on-server state card (second (:zone card))))}
 
    "Old Hollywood Grid"
-   (let [ohg {:req (req (or (in-same-server? card target)
-                            (from-same-server? card target)))
-              :effect (req (register-persistent-flag!
-                             state side
-                             card :can-steal
-                             (fn [state _ card]
-                               (if-not (some #(= (:title %) (:title card)) (:scored runner))
-                                 ((constantly false)
-                                  (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
-                                 true))))}]
-     {:trash-effect
-      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-       :effect (req (register-events
-                      state side (assoc card :zone '(:discard))
-                      [(assoc ohg
-                              :event :pre-steal-cost
-                              :req (req (or (= (:zone (get-nested-host target))
-                                               (:previous-zone card))
-                                            (= (central->zone (:zone target))
-                                               (butlast (:previous-zone card))))))
-                       {:event :run-ends
-                        :effect (req (unregister-events state side (find-latest state card))
-                                     (clear-persistent-flag! state side card :can-steal))}]))}
-      :events [(assoc ohg :event :pre-steal-cost)
-               {:event :access
-                :effect (req (clear-persistent-flag! state side card :can-steal))}
-               {:event :run-ends}]})
-
-   "Overseer Matrix"
-   (let [om {:req (req (in-same-server? card target))
-             :async true
-             :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
-                             (continue-ability
-                               {:optional
-                                {:prompt "Pay 1 [Credits] to use Overseer Matrix ability?"
-                                 :player :corp
-                                 :end-effect (effect (clear-wait-prompt :runner)
-                                                     (effect-completed eid))
-                                 :yes-ability {:cost [:credit 1]
-                                               :msg "give the Runner 1 tag"
-                                               :async true
-                                               :effect (req (gain-tags state :corp eid 1))}}}
-                               card nil))}]
+   (let [ohg {:effect (effect
+                        (register-persistent-flag!
+                          card :can-steal
+                          (fn [state _ card]
+                            (if-not (some #(= (:title %) (:title card)) (:scored runner))
+                              ((constantly false)
+                               (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
+                              true))))}]
      {:trash-effect
       {:req (req (and (= :servers (first (:previous-zone card)))
                       (:run @state)))
        :effect (effect (register-events
-                         (assoc card :zone '(:discard))
-                         [(assoc om
-                                 :event :runner-trash
+                         card
+                         [(assoc ohg
+                                 :event :pre-steal-cost
+                                 :duration :end-of-run
                                  :req (req (or (= (:zone (get-nested-host target))
                                                   (:previous-zone card))
                                                (= (central->zone (:zone target))
                                                   (butlast (:previous-zone card))))))
                           {:event :run-ends
-                           :effect (effect (unregister-events card))}]))}
-      :events [{:event :run-ends}
-               (assoc om :event :runner-trash)]})
+                           :duration :end-of-run
+                           :effect (req (clear-persistent-flag! state side card :can-steal))}]))}
+      :events [(assoc ohg
+                      :event :pre-steal-cost
+                      :req (req (or (in-same-server? card target)
+                                    (from-same-server? card target))))
+               {:event :access
+                :effect (req (clear-persistent-flag! state side card :can-steal))}]})
+
+   "Overseer Matrix"
+   (let [om {:async true
+             :interactive (req true)
+             :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
+                             (continue-ability
+                               {:optional
+                                {:prompt "Pay 1 [Credits] to use Overseer Matrix ability?"
+                                 :player :corp
+                                 :yes-ability {:cost [:credit 1]
+                                               :msg "give the Runner 1 tag"
+                                               :async true
+                                               :effect (req (gain-tags state :corp eid 1))}
+                                 :end-effect (effect (clear-wait-prompt :runner))}}
+                               card nil))}]
+     {:trash-effect
+      {:async true
+       :req (req (and (= :servers (first (:previous-zone card)))
+                      (:run @state)))
+       :effect (effect (register-events
+                         card
+                         [(assoc om
+                                 :event :runner-trash
+                                 :duration :end-of-run
+                                 :req (req (or (= (:zone (get-nested-host target))
+                                                  (:previous-zone card))
+                                               (= (central->zone (:zone target))
+                                                  (butlast (:previous-zone card))))))])
+                       (continue-ability om card nil))}
+      :events [(assoc om
+                      :event :runner-trash
+                      :req (req (in-same-server? card target)))]})
 
    "Panic Button"
    {:init {:root "HQ"}
     :install-req (req (filter #{"HQ"} targets))
-    :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
-                 :req (req (and run (= (first (:server run)) :hq)))}]}
+    :abilities [{:cost [:credit 1]
+                 :msg "draw 1 card"
+                 :req (req (and run (= (first (:server run)) :hq)))
+                 :effect (effect (draw))}]}
 
    "Port Anson Grid"
    {:msg "prevent the Runner from jacking out unless they trash an installed program"
@@ -1083,7 +1085,8 @@
               :msg "prevent the Runner from jacking out unless they trash an installed program"
               :effect (effect (prevent-jack-out))}
              {:event :runner-trash
-              :req (req (and this-server (program? target)))
+              :req (req (and this-server
+                             (some program? targets)))
               :effect (req (swap! state update-in [:run] dissoc :cannot-jack-out))}]}
 
    "Prisec"
@@ -1103,26 +1106,26 @@
 
    "Product Placement"
    {:flags {:rd-reveal (req true)}
-    :access {:req (req (not= (first (:zone card)) :discard))
-             :msg "gain 2 [Credits]" :effect (effect (gain-credits :corp 2))}}
+    :access {:req (req (not (in-discard? card)))
+             :msg "gain 2 [Credits]"
+             :effect (effect (gain-credits :corp 2))}}
 
    "Red Herrings"
-   (let [ab {:req (req (or (in-same-server? card target)
-                           (from-same-server? card target)))
-             :effect (effect (steal-cost-bonus [:credit 5]))}]
-     {:trash-effect
-      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-       :effect (effect (register-events
-                         (assoc card :zone '(:discard))
-                         [(assoc ab
-                                 :event :pre-steal-cost
-                                 :req (req (or (= (:zone target) (:previous-zone card))
-                                               (= (central->zone (:zone target))
-                                                  (butlast (:previous-zone card))))))
-                          {:event :run-ends
-                           :effect (effect (unregister-events card))}]))}
-      :events [(assoc ab :event :pre-steal-cost)
-               {:event :run-ends}]})
+   {:trash-effect
+    {:req (req (and (= :servers (first (:previous-zone card)))
+                    (:run @state)))
+     :effect (effect (register-events
+                       card
+                       [{:event :pre-steal-cost
+                         :duration :end-of-run
+                         :req (req (or (= (:zone target) (:previous-zone card))
+                                       (= (central->zone (:zone target))
+                                          (butlast (:previous-zone card)))))
+                         :effect (effect (steal-cost-bonus [:credit 5]))}]))}
+    :events [{:event :pre-steal-cost
+              :req (req (or (in-same-server? card target)
+                            (from-same-server? card target)))
+              :effect (effect (steal-cost-bonus [:credit 5]))}]}
 
    "Reduced Service"
    {:constant-effects [{:type :run-additional-cost
@@ -1223,12 +1226,11 @@
    {:abilities [{:label "Cards cannot be installed until the end of the run"
                  :msg (msg "prevent cards being installed until the end of the run")
                  :req (req this-server)
-                 :cost [:trash]}]
-    :trash-effect {:effect (effect (register-run-flag! card :corp-lock-install (constantly true))
-                                   (register-run-flag! card :runner-lock-install (constantly true))
-                                   (toast :runner "Cannot install until the end of the run")
-                                   (toast :corp "Cannot install until the end of the run"))}
-    :events [{:event :run-ends}]}
+                 :cost [:trash]
+                 :effect (effect (register-run-flag! card :corp-lock-install (constantly true))
+                                 (register-run-flag! card :runner-lock-install (constantly true))
+                                 (toast :runner "Cannot install until the end of the run")
+                                 (toast :corp "Cannot install until the end of the run"))}]}
 
    "Simone Diego"
    {:recurring 2
@@ -1237,22 +1239,20 @@
                                  :type :recurring}}}
 
    "Strongbox"
-   (let [ab {:req (req (or (in-same-server? card target)
-                           (from-same-server? card target)))
-             :effect (effect (steal-cost-bonus [:click 1]))}]
-     {:trash-effect
-      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-       :effect (effect (register-events
-                         (assoc card :zone '(:discard))
-                         [(assoc ab
-                                 :event :pre-steal-cost
-                                 :req (req (or (= (:zone target) (:previous-zone card))
-                                               (= (central->zone (:zone target))
-                                                  (butlast (:previous-zone card))))))
-                          {:event :run-ends
-                           :effect (effect (unregister-events card))}]))}
-      :events [(assoc ab :event :pre-steal-cost)
-               {:event :run-ends}]})
+   {:trash-effect
+    {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
+     :effect (effect (register-events
+                       card
+                       [{:event :pre-steal-cost
+                         :duration :end-of-run
+                         :req (req (or (= (:zone target) (:previous-zone card))
+                                       (= (central->zone (:zone target))
+                                          (butlast (:previous-zone card)))))
+                         :effect (effect (steal-cost-bonus [:click 1]))}]))}
+    :events [{:event :pre-steal-cost
+              :req (req (or (in-same-server? card target)
+                            (from-same-server? card target)))
+              :effect (effect (steal-cost-bonus [:click 1]))}]}
 
    "Surat City Grid"
    {:events [{:event :rez
@@ -1395,40 +1395,54 @@
     :abilities [{:req (req this-server)
                  :label "Reduce Runner's maximum hand size by 1 until start of next Corp turn"
                  :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
-                 :effect (req (update! state side (assoc card :times-used (inc (get card :times-used 0))))
-                              (change-hand-size state :runner -1))}]
-    :trash-effect {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-                   :effect (req (when-let [n (:times-used card)]
-                                  (register-events
-                                    state side (assoc card :zone '(:discard))
-                                    [{:event :corp-turn-begins
-                                      :msg (msg "increase the Runner's maximum hand size by " n)
-                                      :effect (effect (change-hand-size :runner n)
-                                                      (unregister-events card)
-                                                      (update! (dissoc card :times-used)))}])))}
-    :events [{:event :corp-turn-begins
-              :req (req (:times-used card))
-              :msg (msg "increase the Runner's maximum hand size by "
-                        (:times-used card))
-              :effect (effect (change-hand-size :runner (:times-used card))
-                              (update! (dissoc card :times-used)))}]}
+                 :effect (req (change-hand-size state :runner -1)
+                              (register-events
+                                state side card
+                                [{:event :corp-turn-begins
+                                  :duration :until-corp-turn-begins
+                                  :msg "increase the Runner's maximum hand size by 1"
+                                  :effect (effect (change-hand-size :runner 1))}]))}]}
 
    "Warroid Tracker"
    (letfn [(wt [n]
              {:prompt "Choose an installed card to trash due to Warroid Tracker"
               :async true
+              :interactive (req true)
               :player :runner
-              :choices {:req #(and (installed? %) (runner? %))}
-              :effect (req (system-msg state :corp (str "uses Warriod Tracker to force the Runner to trash " (card-str state target)))
-                           (trash state side target {:unpreventable true})
-                           (if (pos? (dec n))
-                             (continue-ability state side (wt (dec n)) card nil)
-                             (do (clear-wait-prompt state :corp)
-                                 (effect-completed state side eid)))
-                           ;; this ends-the-run if WT is the only card and is trashed, and trashes at least one runner card
-                           (when (zero? (count (cards-to-access state side (get-in @state [:run :server]))))
-                             (handle-end-run state side)))})]
-     {:implementation "Does not handle UFAQ interaction with Singularity"
+              :choices {:req #(and (runner? %)
+                                   (installed? %))}
+              :msg (msg "force the Runner to trash " (card-str state target))
+              :effect (req (wait-for (trash state :runner target {:unpreventable true})
+                                     (if (pos? (dec n))
+                                       (continue-ability state side (wt (dec n)) card nil)
+                                       (do (clear-wait-prompt state :corp)
+                                           (effect-completed state side eid)))
+                                     ;; this ends-the-run if WT is the only card and is trashed, and trashes at least one runner card
+                                     (when (zero? (count (cards-to-access state side (get-in @state [:run :server]))))
+                                       (handle-end-run state side))))})
+           (ability [x]
+             {:trace {:base 4
+                      :successful
+                      {:async true
+                       :msg (msg (let [n (min (* x 2) (count (all-installed state :runner)))]
+                                   (str "to force the runner to trash "
+                                        (quantify n "installed card")
+                                        (when (not (pos? n))
+                                          "but there are no installed cards to trash"))))
+                       :effect (req (let [n (min (* x 2) (count (all-installed state :runner)))]
+                                      (if (pos? n)
+                                        (do (show-wait-prompt state :corp "Runner to choose cards to trash")
+                                            (continue-ability state side (wt n) card nil))
+                                        (effect-completed state side eid))))}}})]
+     {:trash-effect
+      {:async true
+       :req (req (and (corp? target)
+                      (let [target-zone (:zone target)
+                            target-zone (or (central->zone target-zone) target-zone)
+                            warroid-zone (:previous-zone card)]
+                        (= (second warroid-zone)
+                           (second target-zone)))))
+       :effect (effect (continue-ability (ability (count (filter :cid targets))) card nil))}
       :events [{:event :runner-trash
                 :async true
                 :req (req (and (corp? target)
@@ -1437,22 +1451,7 @@
                                      warroid-zone (:zone card)]
                                  (= (second warroid-zone)
                                     (second target-zone)))))
-                :trace {:base 4
-                        :successful
-                        {:async true
-                         :effect
-                         (req (let [n (min 2 (count (all-installed state :runner)))]
-                                (system-msg
-                                  state side
-                                  (str "uses Warroid Tracker "
-                                       (if (pos? n)
-                                         (str "to force the runner to trash "
-                                              (quantify n "installed card"))
-                                         "but there are no installed cards to trash")))
-                                (if (pos? n)
-                                  (do (show-wait-prompt state :corp "Runner to choose cards to trash")
-                                      (continue-ability state side (wt n) card nil))
-                                  (effect-completed state side eid))))}}}]})
+                :effect (effect (continue-ability (ability (count (filter :cid targets))) card nil))}]})
 
    "Will-o'-the-Wisp"
    {:events [{:event :successful-run

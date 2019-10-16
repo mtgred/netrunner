@@ -209,9 +209,10 @@
 
    "Armand \"Geist\" Walker: Tech Lord"
    {:events [{:event :runner-trash
+              :async true
+              :interactive (req true)
               :req (req (and (= side :runner) (= (second targets) :ability-cost)))
               :msg "draw a card"
-              :async true
               :effect (effect (draw eid 1 nil))}]}
 
    "Asa Group: Security Through Vigilance"
@@ -938,6 +939,7 @@
    "NBN: Controlling the Message"
    {:events [{:event :runner-trash
               :async true
+              :interactive (req true)
               :req (req (and (= 1 (count (filter #(and (installed? (first %)) (corp? (first %)))
                                                  (turn-events state side :runner-trash))))
                              (corp? target)
@@ -1421,21 +1423,18 @@
                                  :type :recurring}}}
 
    "Weyland Consortium: Builder of Nations"
-   {:implementation "Damage triggered manually"
-    :abilities [{:label "Do 1 meat damage"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:async true
+                 :label "Do 1 meat damage"
                  :once :per-turn
-                 :prompt "Do a meat damage from identity ability?"
-                 :choices (cancellable ["Yes"])
-                 :async true
-                 :effect (req (when (= target "Yes")
-                                (damage state side eid :meat 1 {:card card})
-                                (system-msg state side "uses Weyland Consortium: Builder of Nations to do 1 meat damage")))}]}
+                 :msg "do 1 meat damage"
+                 :effect (effect (damage eid :meat 1 {:card card}))}]}
 
    "Weyland Consortium: Building a Better World"
    {:events [{:event :play-operation
+              :req (req (has-subtype? target "Transaction"))
               :msg "gain 1 [Credits]"
-              :effect (effect (gain-credits 1))
-              :req (req (has-subtype? target "Transaction"))}]}
+              :effect (effect (gain-credits 1))}]}
 
    "Whizzard: Master Gamer"
    {:recurring 3
@@ -1447,9 +1446,11 @@
    {:events [{:event :pre-start-game
               :effect draft-points-target}
              {:event :runner-trash
+              :interactive (req true)
               :req (req (and (has-most-faction? state :runner "Anarch")
-                             (corp? target)
+                             (some corp? targets)
                              (pos? (count (:discard runner)))))
               :msg (msg "shuffle " (:title (last (:discard runner))) " into their Stack")
               :effect (effect (move :runner (last (:discard runner)) :deck)
-                              (shuffle! :runner :deck))}]}})
+                              (shuffle! :runner :deck)
+                              (trigger-event :searched-stack nil))}]}})

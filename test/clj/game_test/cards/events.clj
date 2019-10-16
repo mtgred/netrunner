@@ -2290,7 +2290,8 @@
   ;; I've Had Worse - Draw 3 cards when lost to net/meat damage; don't trigger if flatlined
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Scorched Earth" 3) (qty "Pup" 3)]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Scorched Earth" 3) (qty "Pup" 3)]}
                  :runner {:deck [(qty "I've Had Worse" 2) (qty "Sure Gamble" 3) (qty "Imp" 2)]}})
       (core/gain state :runner :tag 1)
       (core/gain state :corp :credit 5)

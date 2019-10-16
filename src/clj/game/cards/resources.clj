@@ -2185,7 +2185,8 @@
 
    "Tech Trader"
    {:events [{:event :runner-trash
-              :req (req (and (= side :runner) (= (second targets) :ability-cost)))
+              :req (req (and (= side :runner)
+                             (= (second targets) :ability-cost)))
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits 1))}]}
 
@@ -2275,14 +2276,14 @@
     :effect (req (swap! state assoc-in [:corp :cannot-win-on-points] true))
     :events [{:event :runner-turn-begins
               :effect (req (if (>= (get-counters card :power) 2)
-                             (do (move state side (dissoc card :counter) :rfg)
-                                 (swap! state update-in [:corp] dissoc :cannot-win-on-points)
+                             (do (move state side card :rfg)
+                                 (swap! state update :corp dissoc :cannot-win-on-points)
                                  (system-msg state side "removes The Black File from the game")
                                  (gain-agenda-point state :corp 0))
                              (add-counter state side card :power 1)))}]
-    :trash-effect {:effect (req (swap! state update-in [:corp] dissoc :cannot-win-on-points)
+    :trash-effect {:effect (req (swap! state update :corp dissoc :cannot-win-on-points)
                                 (gain-agenda-point state :corp 0))}
-    :leave-play (req (swap! state update-in [:corp] dissoc :cannot-win-on-points)
+    :leave-play (req (swap! state update :corp dissoc :cannot-win-on-points)
                      (gain-agenda-point state :corp 0))}
 
    "The Class Act"
@@ -2509,9 +2510,12 @@
                                   :type :credit}})
 
    "Tri-maf Contact"
-   {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
+   {:abilities [{:cost [:click 1]
+                 :msg "gain 2 [Credits]"
+                 :once :per-turn
                  :effect (effect (gain-credits 2))}]
-    :trash-effect {:effect (effect (damage eid :meat 3 {:unboostable true :card card}))}}
+    :trash-effect {:async true
+                   :effect (effect (damage eid :meat 3 {:unboostable true :card card}))}}
 
    "Tyson Observatory"
    {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
@@ -2553,9 +2557,9 @@
    {:events [{:event :runner-trash
               :req (req (and (first-installed-trash-own? state :runner)
                              (installed? target)
-                             (= (:side target) "Runner")))
-              :effect (effect (gain-credits 1))
-              :msg "gain 1 [Credits]"}]}
+                             (runner? target)))
+              :msg "gain 1 [Credits]"
+              :effect (effect (gain-credits 1))}]}
 
    "Whistleblower"
    (letfn [(steal-events [named-agenda]
