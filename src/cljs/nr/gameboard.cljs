@@ -195,7 +195,8 @@
                 (swap! c-state assoc :runner-abilities true))))
 
         ;; Trigger first (and only) ability / action
-        (= c 1)
+        (and (= c 1)
+             (= side card-side))
         (if (= (count abilities) 1)
           (send-command "ability" {:card card :ability 0})
           (send-command (first actions) {:card card}))))))

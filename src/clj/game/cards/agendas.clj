@@ -392,10 +392,10 @@
              :effect (effect (gain-bad-publicity :corp 1))}}
 
    "Corporate Sales Team"
-   (let [e {:effect (req (when (pos? (get-counters card :credit))
-                           (gain-credits state :corp 1)
-                           (system-msg state :corp (str "uses Corporate Sales Team to gain 1 [Credits]"))
-                           (add-counter state side card :credit -1)))}]
+   (let [e {:req (req (pos? (get-counters card :credit)))
+            :msg "gain 1 [Credits]"
+            :effect (req (gain-credits state :corp 1)
+                         (add-counter state side card :credit -1))}]
      {:effect (effect (add-counter card :credit 10))
       :silent (req true)
       :events [(assoc e :event :runner-turn-begins)

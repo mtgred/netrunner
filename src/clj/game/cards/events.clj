@@ -461,7 +461,7 @@
     :async true
     :effect (req (wait-for (runner-install state :runner (make-eid state {:source card :source-type :runner-install})
                                            target {:cost-bonus -8})
-                           (gain-tags state eid :runner 1)))}
+                           (gain-tags state :runner eid 1)))}
 
    "Cyber Threat"
    {:prompt "Choose a server"

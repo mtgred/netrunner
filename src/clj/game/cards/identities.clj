@@ -1263,45 +1263,33 @@
    {:events [{:event :successful-run
               :req (req (and (= target :hq)
                              (first-successful-run-on-server? state :hq)
-                             (if (pos? (count (->> @state :run :run-effects #(map :card))))
-                               (> (count (:discard runner)) 2)
-                               (> (count (:discard runner)) 1))))
+                             (<= 2 (count (:discard runner)))))
               :interactive (req true)
               :async true
-              :effect (effect (continue-ability
-                                {:async true
-                                 :prompt "Select 2 cards in your Heap"
-                                 :show-discard true
-                                 :choices {:max 2
-                                           :req #(and (in-discard? %)
-                                                      (runner? %)
-                                                      (not (some (fn [c] (same-card? % (:card c))) (:run-effects run))))}
-                                 :cancel-effect (req (effect-completed state side eid))
-                                 :effect (req (let [c1 (first targets)
-                                                    c2 (second targets)]
-                                                (show-wait-prompt state :runner "Corp to choose which card to remove from the game")
-                                                (continue-ability
-                                                  state :corp
-                                                  {:prompt "Choose which card to remove from the game"
-                                                   :player :corp
-                                                   :choices [c1 c2]
-                                                   :effect (req (if (= target c1)
-                                                                  (do (move state :runner c1 :rfg)
-                                                                      (move state :runner c2 :hand)
-                                                                      (system-msg state :runner
-                                                                                  (str "uses Steve Cambridge: Master Grifter"
-                                                                                       " to add " (:title c2) " to their Grip."
-                                                                                       " Corp removes " (:title c1) " from the game")))
-                                                                  (do (move state :runner c2 :rfg)
-                                                                      (move state :runner c1 :hand)
-                                                                      (system-msg state :runner
-                                                                                  (str "uses Steve Cambridge: Master Grifter"
-                                                                                       " to add " (:title c1) " to their Grip."
-                                                                                       " Corp removes " (:title c2) " from the game"))))
-                                                                (clear-wait-prompt state :runner)
-                                                                (effect-completed state side eid))}
-                                                  card nil)))}
-                                card nil))}]}
+              :prompt "Select 2 cards in your Heap"
+              :show-discard true
+              :choices {:max 2
+                        :req #(and (in-discard? %)
+                                   (runner? %))}
+              :effect (req (let [c1 (first targets)
+                                 c2 (second targets)]
+                             (show-wait-prompt state :runner "Corp to choose which card to remove from the game")
+                             (continue-ability
+                               state :corp
+                               {:prompt "Choose which card to remove from the game"
+                                :player :corp
+                                :choices [c1 c2]
+                                :effect (req (let [[chosen other] (if (= target c1)
+                                                                    [c1 c2]
+                                                                    [c2 c1])]
+                                               (move state :runner chosen :rfg)
+                                               (move state :runner other :hand)
+                                               (system-msg state :runner
+                                                           (str "uses Steve Cambridge: Master Grifter"
+                                                                " to add " (:title other) " to their grip."
+                                                                " Corp removes " (:title chosen) " from the game")))
+                                             (clear-wait-prompt state :runner))}
+                               card nil)))}]}
 
    "Strategic Innovations: Future Forward"
    {:events [{:event :pre-start-game
@@ -1311,8 +1299,11 @@
                              (has-most-faction? state :corp "Haas-Bioroid")
                              (pos? (count (:discard corp)))))
               :prompt "Select a card in Archives to shuffle into R&D"
-              :choices {:req #(and (corp? %) (in-discard? %))}
-              :player :corp :show-discard true :priority true
+              :choices {:req #(and (corp? %)
+                                   (in-discard? %))}
+              :player :corp
+              :show-discard true
+              :priority true
               :msg (msg "shuffle " (if (:seen target) (:title target) "a card")
                         " into R&D")
               :effect (effect (move :corp target :deck)

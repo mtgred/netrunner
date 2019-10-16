@@ -1373,7 +1373,7 @@
              {:prompt "Select a remote server"
               :choices (req (conj (vec (get-remote-names state)) "New remote"))
               :async true
-              :effect (effect (corp-install (assoc chosen :advance-counter 3) target {:ignore-all-cost true}))})]
+              :effect (effect (corp-install eid (assoc chosen :advance-counter 3) target {:ignore-all-cost true}))})]
      {:async true
       :prompt "Choose a piece of ICE in HQ to install"
       :choices {:req #(and (in-hand? %) (corp? %) (ice? %))}
@@ -2081,8 +2081,7 @@
     :choices {:req #(pos? (get-counters % :advancement))}
     :effect (effect
               (continue-ability
-                (let [fr target
-                      tol card]
+                (let [fr target]
                   {:async true
                    :prompt "Move how many advancement tokens?"
                    :choices (take (inc (get-counters fr :advancement)) ["0" "1" "2"])
@@ -2096,7 +2095,7 @@
                                             (card-str state fr) " to " (card-str state target))
                                   :effect (effect (add-prop :corp target :advance-counter c {:placed true})
                                                   (add-prop :corp fr :advance-counter (- c) {:placed true}))})
-                               tol nil))})
+                               card nil))})
                 card nil))}
 
    "Trojan Horse"

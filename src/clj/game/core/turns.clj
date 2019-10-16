@@ -170,6 +170,9 @@
 (defn start-turn
   "Start turn."
   [state side args]
+  ; Don't clear :turn-events until the player clicks "Start Turn"
+  ; Fix for Hayley triggers
+  (swap! state assoc :turn-events nil)
 
   ; Functions to set up state for undo-turn functionality
   (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
@@ -269,7 +272,6 @@
                (swap! state update-in [side :register] dissoc :cannot-draw)
                (swap! state update-in [side :register] dissoc :drawn-this-turn)
                (clear-turn-register! state)
-               (swap! state assoc :turn-events nil)
                (when-let [extra-turns (get-in @state [side :extra-turns])]
                  (when (pos? extra-turns)
                    (start-turn state side nil)

@@ -3793,24 +3793,49 @@
       (is (= 5 (:credit (get-corp))) "Transparency initiative didn't fire"))))
 
 (deftest trick-of-light
-  ;; NGO Front
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Trick of Light" "Ice Wall" "NGO Front"]
-                      :credits 10}})
-    (core/gain state :corp :click 5)
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (let [ngo (get-content state :remote1 0)
-          iw (get-ice state :hq 0)]
-      (advance state (refresh ngo) 2)
-      (is (= 2 (get-counters (refresh ngo) :advancement)) "NGO Front should have 2 counters")
-      (play-from-hand state :corp "Trick of Light")
-      (click-card state :corp ngo)
-      (click-prompt state :corp "2")
-      (click-card state :corp "Ice Wall")
-      (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall is now advanced")
-      (is (zero? (get-counters (refresh ngo) :advancement)) "NGO Front should have 0 counters"))))
+  ;; Trick of Light
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Trick of Light" "Ice Wall" "NGO Front"]
+                        :credits 10}})
+      (core/gain state :corp :click 5)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [ngo (get-content state :remote1 0)
+            iw (get-ice state :hq 0)]
+        (advance state (refresh ngo) 2)
+        (is (= 2 (get-counters (refresh ngo) :advancement)) "NGO Front should have 2 counters")
+        (play-from-hand state :corp "Trick of Light")
+        (click-card state :corp ngo)
+        (click-prompt state :corp "2")
+        (click-card state :corp "Ice Wall")
+        (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall is now advanced")
+        (is (zero? (get-counters (refresh ngo) :advancement)) "NGO Front should have 0 counters"))))
+  (testing "Playing 2 Trick of Lights. Issue #4565"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Trick of Light" 2) "Ice Wall" "NGO Front"]
+                        :credits 10}})
+      (core/gain state :corp :click 5)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [ngo (get-content state :remote1 0)
+            iw (get-ice state :hq 0)]
+        (advance state (refresh ngo) 2)
+        (is (= 2 (get-counters (refresh ngo) :advancement)) "NGO Front should have 2 counters")
+        (play-from-hand state :corp "Trick of Light")
+        (click-card state :corp (refresh ngo))
+        (click-prompt state :corp "2")
+        (click-card state :corp (refresh iw))
+        (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall is now advanced")
+        (is (zero? (get-counters (refresh ngo) :advancement)) "NGO Front should have 0 counters")
+        (play-from-hand state :corp "Trick of Light")
+        (click-card state :corp (refresh iw))
+        (click-prompt state :corp "2")
+        (click-card state :corp (refresh ngo))
+        (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall should have 0 counters")
+        (is (= 2 (get-counters (refresh ngo) :advancement)) "NGO Front should have 2 counters")))))
 
 (deftest trojan-horse
   ;; Trojan Horse

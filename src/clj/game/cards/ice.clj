@@ -2565,28 +2565,34 @@
                    :effect (req (do-access state :runner eid [:rd] {:no-root true}))}]}
 
    "Slot Machine"
-   (letfn [(name-builder [card] (str (:title card) " (" (:type card) ")"))
-           (top-3 [state] (take 3 (get-in @state [:runner :deck])))
-           (top-3-names [state] (map name-builder (top-3 state)))
-           (top-3-types [state] (->> (top-3 state) (map :type) (into #{}) count))]
+   (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))
+           (name-builder [card] (str (:title card) " (" (:type card) ")"))
+           (top-3-names [card] (map name-builder (get-in card [:special :top-3])))
+           (top-3-types [card] (->> (get-in card [:special :top-3]) (map :type) (into #{}) count))]
      {:implementation "Encounter effect is manual"
       :abilities [{:label "Roll them bones"
                    :req (req (same-card? current-ice card))
                    :effect (effect (move :runner (first (:deck runner)) :deck)
-                                   (reveal (take 3 (:deck runner)))
+                                   (reveal (top-3 state))
+                                   (update! (assoc-in card [:special :top-3] (top-3 state)))
                                    (system-msg (str "uses Slot Machine to put the top card of the stack to the bottom,"
                                                     " then reveal the top 3 cards in the stack: "
-                                                    (join ", " (top-3-names state)))))}]
+                                                    (join ", " (top-3-names (get-card state card))))))}]
+      :events (into []
+                (for [event [:run :approach-ice :pass-ice :run-ends]]
+                  {:event event
+                   :req (req (get-in card [:special :top-3]))
+                   :effect (effect (update! (dissoc-in card [:special :top-3])))}))
       :subroutines [{:label "Runner loses 3 [Credits]"
                      :msg "force the Runner to lose 3 [Credits]"
                      :effect (effect (lose-credits :runner 3))}
                     {:label "Gain 3 [Credits]"
-                     :effect (req (let [unique-types (top-3-types state)]
+                     :effect (req (let [unique-types (top-3-types (get-card state card))]
                                     (when (>= 2 unique-types)
                                       (system-msg state :corp (str "uses Slot Machine to gain 3 [Credits]"))
                                       (gain-credits state :corp 3))))}
                     {:label "Place 3 advancement tokens"
-                     :effect (req (let [unique-types (top-3-types state)]
+                     :effect (req (let [unique-types (top-3-types (get-card state card))]
                                     (when (= 1 unique-types)
                                       (continue-ability
                                         state side
