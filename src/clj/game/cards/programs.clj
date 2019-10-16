@@ -344,13 +344,15 @@
 
    "Amina"
    (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
-                                 (strength-pump 2 3)
-                                 {:once :per-turn
-                                  :label "Corp loses 1 [Credits]"
-                                  :req (req (and (has-subtype? current-ice "Code Gate")
-                                                 (rezzed? current-ice)))
-                                  :msg (msg "make the Corp lose 1 [Credits]")
-                                  :effect (effect (lose-credits :corp 1))}]})
+                                 (strength-pump 2 3)]
+                     :events [{:once :per-turn
+                               :label "Corp loses 1 [Credits]"
+                               :msg (msg "make the Corp lose 1 [Credits]")
+                               :effect (effect (lose-credits :corp 1))
+                               :event :pass-ice
+                               :req (req (and (rezzed? current-ice)
+                                              (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                              (empty? (remove :broken (:subroutines current-ice)))))}]})
 
    "Analog Dreamers"
    {:abilities [{:cost [:click 1]
