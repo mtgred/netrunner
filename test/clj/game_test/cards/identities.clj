@@ -1607,7 +1607,30 @@
       (click-prompt state :runner "Steal")
       (click-card state :runner (get-content state :archives 0))
       (is (not (get-content state :archives 0)) "Upgrade returned to hand")
-      (is (not (:run @state)) "Run ended, no more accesses"))))
+      (is (not (:run @state)) "Run ended, no more accesses")))
+  (testing ""
+    (do-game
+      (new-game {:corp {:id "Titan Transnational: Investing In Your Future"
+                        :deck ["Project Atlas"
+                               "Hostile Takeover"
+                               "Geothermal Fracking"
+                               "Merger"]}
+                 :runner {:id "Leela Patel: Trained Pragmatist"
+                          :deck ["Gang Sign"]}})
+      (play-from-hand state :corp "Project Atlas" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (play-from-hand state :corp "Geothermal Fracking" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gang Sign")
+      (take-credits state :runner)
+      (score-agenda state :corp (get-content state :remote1 0))
+      ;; Simultaneous prompt: Leela or Gang Sign
+      (click-prompt state :runner "Gang Sign")
+      (click-prompt state :runner "Card from hand")
+      (click-prompt state :runner "Steal")
+      (click-card state :runner (get-content state :remote2 0)) ; Bounce from Gang Sign steal
+      (click-card state :runner (get-content state :remote3 0)) ; Bounce from Hostile score
+      (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand now"))))
 
 (deftest liza-talking-thunder-prominent-legislator
   ;; Liza Talking Thunder: Prominent Legislator
