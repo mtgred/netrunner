@@ -62,9 +62,8 @@
                                      (has-subtype? % "Advertisement")
                                      (or (in-hand? %)
                                          (in-discard? %)))}
-                :effect (req (wait-for
-                               (corp-install state side target nil {:install-state :rezzed})
-                               (continue-ability state side (ab (inc n) total) card nil)))}))]
+                :effect (req (wait-for (corp-install state side target nil {:install-state :rezzed})
+                                       (continue-ability state side (ab (inc n) total) card nil)))}))]
      {:async true
       :req (req (some #(has-subtype? % "Advertisement")
                       (concat (:discard corp) (:hand corp))))
@@ -471,13 +470,14 @@
                    (continue-ability state side
                                      {:prompt "You may install a card in HQ"
                                       :choices {:req #(and (in-hand? %) (corp? %) (not (operation? %)))}
-                                      :effect (req (wait-for (resolve-ability state side
-                                                                              (let [card-to-install target]
-                                                                                {:prompt (str "Choose a location to install " (:title target))
-                                                                                 :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state target))
-                                                                                 :async true
-                                                                                 :effect (effect (corp-install eid card-to-install target nil))})
-                                                                              target nil)
+                                      :effect (req (wait-for (resolve-ability
+                                                               state side
+                                                               (let [card-to-install target]
+                                                                 {:prompt (str "Choose a location to install " (:title target))
+                                                                  :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state target))
+                                                                  :async true
+                                                                  :effect (effect (corp-install eid card-to-install target nil))})
+                                                               target nil)
                                                              (end-effect state side eid card targets)))
                                       :cancel-effect (effect (system-msg "does not use Digital Rights Management to install a card")
                                                              (end-effect eid card targets))}
@@ -985,13 +985,14 @@
     :effect (effect (trash target))}
 
    "Interns"
-   {:prompt "Select a card to install from Archives or HQ"
+   {:async true
+    :prompt "Select a card to install from Archives or HQ"
     :show-discard true
     :not-distinct true
     :choices {:req #(and (not (operation? %))
                          (corp? %)
                          (#{[:hand] [:discard]} (:zone %)))}
-    :effect (effect (corp-install target nil {:ignore-install-cost true}))
+    :effect (effect (corp-install eid target nil {:ignore-install-cost true}))
     :msg (msg (corp-install-msg target))}
 
    "Invasion of Privacy"
@@ -1414,19 +1415,21 @@
              (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %))
                                          cards)]
                {:prompt "Select an agenda, asset, or upgrade to install"
-                :choices (cons "None" allowed-cards)
+                :choices (conj (vec allowed-cards) "None")
                 :async true
-                :effect (req (if-not (or (= target "None") (ice? target) (operation? target))
-                               (continue-ability state side (install-card target) card nil)
-                               (system-msg state side "does not install an asset, agenda, or upgrade"))
-                             (effect-completed state side eid)
-                             (clear-wait-prompt state :runner))}))
+                :effect (req (if (or (= target "None")
+                                     (ice? target)
+                                     (operation? target))
+                               (do (clear-wait-prompt state :runner)
+                                   (system-msg state side "does not install an asset, agenda, or upgrade")
+                                   (effect-completed state side eid))
+                               (continue-ability state side (install-card target) card nil)))}))
            (install-card [chosen]
              {:prompt "Select a remote server"
               :choices (req (conj (vec (get-remote-names state)) "New remote"))
               :async true
               :effect (effect (clear-wait-prompt :runner)
-                              (corp-install (move state side chosen :play-area) target))})]
+                              (corp-install eid chosen target nil))})]
      {:msg "look at the top 5 cards of R&D"
       :async true
       :effect (req (show-wait-prompt state :runner "Corp to look at the top cards of R&D")
@@ -2120,13 +2123,17 @@
    {:async true
     :effect (req (gain-credits state side 10)
                  (wait-for (draw state side 4 nil)
-                           (continue-ability state side
-                                             {:prompt "Choose a card in HQ to install"
-                                              :choices {:req #(and (in-hand? %) (corp? %) (not (operation? %)))}
-                                              :msg "gain 10 [Credits], draw 4 cards, and install 1 card from HQ"
-                                              :cancel-effect (req (effect-completed state side eid))
-                                              :effect (effect (corp-install target nil))}
-                                             card nil)))}
+                           (continue-ability
+                             state side
+                             {:async true
+                              :prompt "Choose a card in HQ to install"
+                              :choices {:req #(and (in-hand? %)
+                                                   (corp? %)
+                                                   (not (operation? %)))}
+                              :msg "gain 10 [Credits], draw 4 cards, and install 1 card from HQ"
+                              :cancel-effect (req (effect-completed state side eid))
+                              :effect (effect (corp-install eid target nil nil))}
+                             card nil)))}
 
    "Under the Bus"
    {:req (req (and (last-turn? state :runner :accessed-cards)

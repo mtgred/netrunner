@@ -216,7 +216,7 @@
                  :choices (req (cancellable (filter #(not (event? %)) (:deck runner)) :sorted))
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
-                                 (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]}
+                                 (runner-install eid target nil))}]}
 
    "Assimilator"
    {:abilities [{:label "Turn a facedown card faceup"
@@ -291,10 +291,9 @@
                                       :msg (msg "install another copy of " hw)
                                       :yes-ability
                                       {:async true
-                                       :effect (req (if-let [c (some #(when (= (:title %) hw) %)
-                                                                     (:hand runner))]
-                                                      (runner-install state side (make-eid state {:source card :source-type :runner-install})
-                                                                      c nil)))}}})
+                                       :effect (req (if-let [c (some #(when (= (:title %) hw) %) (:hand runner))]
+                                                      (runner-install state side eid c nil)
+                                                      (effect-completed state side eid)))}}})
                                   card nil))}]})
 
    "Beach Party"
@@ -429,16 +428,17 @@
                  :label "Install a program from your Grip"
                  :prompt "Select a program to install from your Grip"
                  :choices
-                 {:five (req (and (program? target)
+                 {:async true
+                  :five (req (and (program? target)
                                   (in-hand? target)
                                   (can-pay? state :runner eid card nil
                                             [:credit (install-cost state side target
                                                                    {:cost-bonus (- (get-counters card :power))})])))}
                  :msg (msg "install " (:title target))
-                 :effect (req (runner-install state side (make-eid state {:source card :source-type :runner-install})
-                                              target {:cost-bonus (- (get-counters card :power))})
-                              (when (pos? (get-counters card :power))
-                                (add-counter state side card :power -1)))}]}
+                 :effect (req (wait-for (runner-install state side target {:cost-bonus (- (get-counters card :power))})
+                                        (when (pos? (get-counters card :power))
+                                          (add-counter state side card :power -1))
+                                        (effect-completed state side eid)))}]}
 
    "Chrome Parlor"
    {:events [{:event :pre-damage
@@ -627,8 +627,8 @@
                                              (not (get-in @state [:runner :register :crowdfunding-prompt]))))
                               :player :runner
                               :prompt "Install Crowdfunding?"
-                              :yes-ability {:effect (effect (runner-install :runner (assoc eid :source card :source-type :runner-install)
-                                                                            card {:ignore-all-cost true}))}
+                              :yes-ability {:async true
+                                            :effect (effect (runner-install :runner eid card {:ignore-all-cost true}))}
                               ;; Add a register to note that the player was already asked about installing,
                               ;; to prevent multiple copies from prompting multiple times.
                               :no-ability {:effect (req (swap! state assoc-in [:runner :register :crowdfunding-prompt] true))}}}
@@ -642,7 +642,8 @@
                          :autoresolve (get-autoresolve :auto-add)
                          :yes-ability {:effect (effect (add-counter card :virus 1)
                                                        (system-msg "places a virus counter on Crypt"))}}}]
-    :abilities [{:label "[Click]install a virus program from the stack"
+    :abilities [{:async true
+                 :label "Install a virus program from the stack"
                  :prompt "Choose a virus"
                  :msg (msg "install " (:title target) " from the stack")
                  :choices (req (cancellable (filter #(and (program? %)
@@ -651,7 +652,7 @@
                  :cost [:click 1 :virus 3 :trash]
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
-                                 (runner-install target))}
+                                 (runner-install eid target nil))}
                 (set-autoresolve :auto-add "adding virus counters to Crypt")]}
 
    "Cybertrooper Talut"
@@ -1134,11 +1135,17 @@
    {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ICE"
                  :msg "prevent a \"when encountered\" ability on a piece of ICE"
                  :once :per-turn}
-                {:label "Install the top 3 cards of your Stack facedown"
-                 :msg "install the top 3 cards of their Stack facedown"
-                 :cost [:trash]
-                 :effect (req (doseq [c (take 3 (get-in @state [:runner :deck]))]
-                                (runner-install state side (make-eid state {:source card :source-type :runner-install}) c {:facedown true})))}]}
+                (letfn [(ri [cards]
+                          {:async true
+                           :effect (req (if (seq cards)
+                                          (wait-for (runner-install state side (first cards) {:facedown true})
+                                                    (continue-ability state side (ri (rest cards)) card nil))
+                                          (effect-completed state side eid)))})]
+                  {:async true
+                   :label "Install the top 3 cards of your Stack facedown"
+                   :msg "install the top 3 cards of their Stack facedown"
+                   :cost [:trash]
+                   :effect (effect (continue-ability (ri (take 3 (get-in @state [:runner :deck]))) card nil))})]}
 
    "Ice Analyzer"
    {:implementation "Credit use restriction is not enforced"
@@ -1393,16 +1400,15 @@
                  :effect (effect (lose :click (:click runner)))}]}
 
    "London Library"
-   {:abilities [{:label "Install a non-virus program on London Library"
+   {:abilities [{:async true
+                 :label "Install a non-virus program on London Library"
                  :cost [:click 1]
                  :prompt "Select a non-virus program to install on London Library from your grip"
                  :choices {:req #(and (program? %)
                                       (not (has-subtype? % "Virus"))
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target
-                                                 {:host-card card
-                                                  :ignore-install-cost true}))}
+                 :effect (effect (runner-install eid target {:host-card card :ignore-install-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip"
                  :cost [:click 1]
                  :choices {:req #(:host %)} ;TODO: this seems to allow all hosted cards to be bounced
@@ -1608,23 +1614,23 @@
 
    "Off-Campus Apartment"
    {:flags {:runner-install-draw true}
-    :abilities [{:label "Install and host a connection on Off-Campus Apartment"
-                 :effect (effect (resolve-ability
-                                   {:cost [:click 1]
-                                    :prompt "Select a connection in your Grip to install on Off-Campus Apartment"
-                                    :choices {:req #(and (has-subtype? % "Connection")
-                                                         (can-pay? state side eid card nil :credit (:cost %))
-                                                         (in-hand? %))}
-                                    :msg (msg "host " (:title target) " and draw 1 card")
-                                    :effect (effect (runner-install target {:host-card card}))}
-                                   card nil))}
+    :abilities [{:async true
+                 :label "Install and host a connection on Off-Campus Apartment"
+                 :cost [:click 1]
+                 :prompt "Select a connection in your Grip to install on Off-Campus Apartment"
+                 :choices {:five (req (and (has-subtype? target "Connection")
+                                           (can-pay? state side eid card nil [:credit (install-cost state side target)])
+                                           (in-hand? target)))}
+                 :msg (msg "host " (:title target) " and draw 1 card")
+                 :effect (effect (runner-install eid target {:host-card card}))}
                 {:label "Host an installed connection"
                  :prompt "Select a connection to host on Off-Campus Apartment"
                  :choices {:req #(and (has-subtype? % "Connection")
                                       (installed? %))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :async true
-                 :effect (effect (host card target) (draw eid 1 nil))}]
+                 :effect (effect (host card target)
+                                 (draw eid 1 nil))}]
     :events [{:event :runner-install
               :req (req (same-card? card (:host target)))
               :async true
@@ -1757,44 +1763,58 @@
 
    "Personal Workshop"
    (let [remove-counter
-         {:req (req (not (empty? (:hosted card))))
+         {:async true
+          :req (req (not (empty? (:hosted card))))
           :once :per-turn
           :msg (msg "remove 1 counter from " (:title target))
           :choices {:req #(:host %)}
           :effect (req (if (not (pos? (get-counters (get-card state target) :power)))
-                         (runner-install state side (dissoc target :counter) {:ignore-all-cost true})
-                         (add-counter state side target :power -1)))}]
+                         (runner-install state side eid (dissoc target :counter) {:ignore-all-cost true})
+                         (do (add-counter state side target :power -1)
+                             (effect-completed state side eid))))}]
      {:flags {:drip-economy true}
-      :abilities [{:label "Host a program or piece of hardware" :cost [:click 1]
+      :abilities [{:async true
+                   :label "Host a program or piece of hardware"
+                   :cost [:click 1]
                    :prompt "Select a card to host on Personal Workshop"
-                   :choices {:req #(and (#{"Program" "Hardware"} (:type %))
+                   :choices {:req #(and (or (program? %)
+                                            (hardware? %))
                                         (in-hand? %)
                                         (runner? %))}
                    :effect (req (if (not (pos? (:cost target)))
                                   (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
-                                  (host state side card
-                                        (assoc target :counter {:power (:cost target)}))))
+                                  (do (host state side card
+                                            (assoc target :counter {:power (:cost target)}))
+                                      (effect-completed state side eid))))
                    :msg (msg "host " (:title target) "")}
                   (assoc remove-counter
                          :label "Remove 1 counter from a hosted card (start of turn)"
                          :cost [:credit 1])
-                  {:label "X[Credit]: Remove counters from a hosted card"
+                  {:async true
+                   :label "X[Credit]: Remove counters from a hosted card"
                    :choices {:req #(:host %)}
                    :req (req (not (empty? (:hosted card))))
-                   :effect (req (let [paydowntarget target
-                                      num-counters (get-counters (get-card state paydowntarget) :power)]
-                                  (resolve-ability
-                                    state side
-                                    {:prompt "How many counters to remove?"
-                                     :choices {:number (req (min num-counters
-                                                                 (total-available-credits state :runner eid card)))}
-                                     :msg (msg "remove " target " counters from " (:title paydowntarget))
-                                     :effect (req (do
-                                                    (lose-credits state side target)
-                                                    (if (= num-counters target)
-                                                      (runner-install state side (assoc eid :source card :source-type :runner-install) (dissoc paydowntarget :counter) {:ignore-all-cost true})
-                                                      (add-counter state side paydowntarget :power (- target)))))}
-                                    card nil)))}]
+                   :effect (effect
+                             (continue-ability
+                               (let [paydowntarget target
+                                     num-counters (get-counters (get-card state paydowntarget) :power)]
+                                 {:async true
+                                  :prompt "How many counters to remove?"
+                                  :choices {:number (req (min num-counters
+                                                              (total-available-credits state :runner eid card)))}
+                                  :effect (req (wait-for
+                                                 (pay-sync state :runner card [:credit target])
+                                                 (if-let [cost-str async-result]
+                                                   (do (system-msg state side
+                                                                   (str (build-spend-msg cost-str "use") (:title card)
+                                                                        " to remove " target
+                                                                        " counters from " (:title paydowntarget)))
+                                                       (if (= num-counters target)
+                                                         (runner-install state side (assoc eid :source card :source-type :runner-install) (dissoc paydowntarget :counter) {:ignore-all-cost true})
+                                                         (do (add-counter state side paydowntarget :power (- target))
+                                                             (effect-completed state side eid))))
+                                                   (effect-completed state side eid))))})
+                               card nil))}]
       :events [(assoc remove-counter :event :runner-turn-begins)]})
 
    "Political Operative"
@@ -1877,8 +1897,9 @@
                        (str "search the heap, but does not find anything to install")
                        (str "install " (:title target) " from the heap")))
            :async true
-           :effect (req (when (not= target "No install")
-                          (runner-install state :runner (assoc eid :source card :source-type :runner-install) target nil)))}
+           :effect (req (if (not= target "No install")
+                          (runner-install state :runner (assoc eid :source card :source-type :runner-install) target nil)
+                          (effect-completed state side eid)))}
           card nil))}]}
 
    "Rogue Trading"
@@ -2131,7 +2152,8 @@
    {:interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
     :effect (req (doseq [c (take 3 (:deck runner))]
                    (host state side (get-card state card) c {:facedown true})))
-    :abilities [{:req (req (not (install-locked? state side)))
+    :abilities [{:async true
+                 :req (req (not (install-locked? state side)))
                  :prompt "Choose a card on Street Peddler to install"
                  :choices (req (cancellable
                                  (filter #(and (not (event? %))
@@ -2266,6 +2288,7 @@
                                             [:credit (install-cost state side target {:cost-bonus -1})])))}
                  :once :per-turn
                  :once-key :artist-install
+                 :async true
                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
                                                  target {:no-msg true
                                                          :cost-bonus -1}))

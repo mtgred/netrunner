@@ -117,10 +117,10 @@
               :req (req (= side :runner))
               :async true
               :effect (req (show-wait-prompt state :corp "Runner to choose starting directives")
-                           (let [is-directive? #(has-subtype? % "Directive")
-                                 directives (filter is-directive? (server-cards))
-                                 directives (map make-card directives)
-                                 directives (zone :play-area directives)]
+                           (let [directives (->> (server-cards)
+                                                 (filter #(has-subtype? % "Directive"))
+                                                 (map make-card)
+                                                 (zone :play-area))]
                              ;; Add directives to :play-area - assumed to be empty
                              (swap! state assoc-in [:runner :play-area] directives)
                              (continue-ability state side
@@ -190,6 +190,7 @@
                                        (in-hand? %))}
                   :req (req (and (pos? (count (:hand runner)))
                                  (:runner-phase-12 @state)))
+                  :async true
                   :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:facedown true}))}]
      {:events [(assoc ability :event :runner-turn-begins)]
       :flags {:runner-phase-12 (req true)}
@@ -234,6 +235,7 @@
                                                      (not (agenda? %))
                                                      (or (is-remote? z)
                                                          (ice? %)))}
+                                :async true
                                 :effect (effect (corp-install eid target (zone->name z) nil))}
                                card nil)))}]}
 
@@ -582,6 +584,7 @@
                             :choices {:req #(and (is-type? % card-type)
                                                  (in-hand? %))}
                             :msg (msg "install " (:title target))
+                            :async true
                             :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
                            :end-effect (effect (clear-wait-prompt :corp))}}
                          {:prompt (str "You have no " card-type "s in hand")
@@ -760,11 +763,9 @@
                                                          [:credit (install-cost state side % {:cost-bonus -1})]))
                                          (:deck runner))))
                  :msg (msg "install " (:title target) " from the stack, lowering the cost by 1 [Credit]")
+                 :async true
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
-                                 (runner-install (assoc eid :source card :source-type :runner-install)
-                                                 (assoc-in target [:special :kabonesa] true)
-                                                 {:cost-bonus -1})
                                  (register-events
                                    card
                                    [{:event :runner-turn-ends
@@ -772,7 +773,10 @@
                                      :req (req (some #(get-in % [:special :kabonesa]) (all-installed state :runner)))
                                      :msg (msg "remove " (:title target) " from the game")
                                      :effect (req (doseq [program (filter #(get-in % [:special :kabonesa]) (all-installed state :runner))]
-                                                    (move state side program :rfg)))}]))}]}
+                                                    (move state side program :rfg)))}])
+                                 (runner-install (assoc eid :source card :source-type :runner-install)
+                                                 (assoc-in target [:special :kabonesa] true)
+                                                 {:cost-bonus -1}))}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
    ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
@@ -905,7 +909,8 @@
                   :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
                   :choices {:req #(and (ice? %)
                                        (in-hand? %))}
-                  :effect (req (corp-install state side target (zone->name (first (:server run)))
+                  :async true
+                  :effect (req (corp-install state side eid target (zone->name (first (:server run)))
                                              {:ignore-all-cost true
                                               :front true})
                                (swap! state assoc-in [:run :position] 1))}]
@@ -998,19 +1003,20 @@
                (assoc nasol :event :agenda-stolen)]})
 
    "NEXT Design: Guarding the Net"
-   (let [ndhelper (fn nd [n] {:prompt (msg "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
+   (let [ndhelper (fn nd [n] {:prompt (str "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
                                            "Select a piece of ICE in HQ to install:")
                               :choices {:req #(and (corp? %)
                                                    (ice? %)
                                                    (in-hand? %))}
-                              :effect (req (corp-install state side target nil)
-                                           (when (< n 3)
-                                             (resolve-ability state side (nd (inc n)) card nil)))})]
+                              :effect (req (wait-for (corp-install state side target nil nil)
+                                                     (continue-ability state side (when (< n 3) (nd (inc n))) card nil)))})]
      {:events [{:event :pre-first-turn
                 :req (req (= side :corp))
                 :msg "install up to 3 pieces of ICE and draw back up to 5 cards"
-                :effect (effect (resolve-ability (ndhelper 1) card nil)
-                                (update! (assoc card :fill-hq true)))}]
+                :async true
+                :effect (req (wait-for (resolve-ability state side (ndhelper 1) card nil)
+                                       (update! state side (assoc card :fill-hq true))
+                                       (effect-completed state side eid)))}]
       :abilities [{:req (req (:fill-hq card))
                    :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
                    :effect (req (draw state side (- 5 (count (:hand corp))))

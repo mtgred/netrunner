@@ -90,7 +90,7 @@
                                       (corp? %))}
                  :msg (msg (corp-install-msg target))
                  :cost [:trash]
-                 :effect (req (corp-install state side eid target nil nil))}]}
+                 :effect (effect (corp-install eid target nil nil))}]}
 
    "Aggressive Secretary"
    (advance-ambush 2 {:req (req (pos? (get-counters (get-card state card) :advancement)))
@@ -247,7 +247,8 @@
                                       (in-hand? %)
                                       (corp? %))}
                  :cost [:trash]
-                 :effect (effect (corp-install target nil))
+                 :async true
+                 :effect (effect (corp-install eid target nil nil))
                  :msg (msg (corp-install-msg target))}]}
 
    "Blacklist"
@@ -776,7 +777,8 @@
                                       (in-hand? %)
                                       (corp? %))}
                  :msg "install and host an asset or agenda"
-                 :effect (req (corp-install state side target card))}
+                 :async true
+                 :effect (effect (corp-install eid target card nil))}
                 {:label "Install a previously-installed asset or agenda on Full Immersion RecStudio (fixes only)"
                  :req (req (< (count (:hosted card)) 2))
                  :prompt "Select an installed asset or agenda to host on Full Immersion RecStudio"
@@ -1211,11 +1213,12 @@
                            " from R&D and "
                            (if (= (:type target) "Operation") "play" "install")
                            " it")
+                 :async true
                  :effect (req (reveal state side target)
                               (shuffle! state side :deck)
-                              (if (= (:type target) "Operation")
-                                (play-instant state side target)
-                                (corp-install state side target nil nil)))}]}
+                              (if (operation? target)
+                                (play-instant state side eid target nil)
+                                (corp-install state side eid target nil nil)))}]}
 
    "Mumbad Construction Co."
    {:derezzed-events [corp-rez-toast]
@@ -1961,10 +1964,13 @@
     :abilities [{:label "Install an asset from R&D"
                  :prompt "Choose an asset to install"
                  :msg (msg "install " (:title target))
+                 :req (req (seq (filter asset? (:deck corp))))
                  :choices (req (filter asset? (:deck corp)))
-                 :effect (effect (trash card)
-                                 (shuffle! :deck)
-                                 (corp-install target nil))}]}
+                 :async true
+                 :effect (req (wait-for (trash state side card nil)
+                                        (reveal state side target)
+                                        (shuffle! state side :deck)
+                                        (corp-install state side eid target nil nil)))}]}
 
    "TechnoCo"
    (letfn [(is-techno-target [card]
@@ -2196,9 +2202,10 @@
                                       (in-hand? %)
                                       (corp? %))}
                  :msg (msg "host " (:title target))
-                 :effect (req (corp-install state side target card) ;; install target onto card
-                              (rez state side eid (last (:hosted (get-card state card)))
-                                   {:cost-bonus -2}))}]}
+                 :async true
+                 :effect (req (wait-for (corp-install state side target card nil) ;; install target onto card
+                                        (rez state side eid (last (:hosted (get-card state card)))
+                                             {:cost-bonus -2})))}]}
 
    "Zaibatsu Loyalty"
    {:interactions {:prevent [{:type #{:expose}
