@@ -3703,6 +3703,8 @@
       (run-on state :hq)
       (let [iw (get-ice state :hq 0)]
         (core/rez state :corp (refresh iw))
+        (card-ability state :runner (get-program state 0) 0)
+        (click-prompt state :runner "End the run")
         (card-ability state :runner (get-hardware state 0) 0)
         (is (empty? (get-ice state :hq)) "Ice Wall is gone"))
       (core/jack-out state :runner nil)

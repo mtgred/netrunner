@@ -831,14 +831,17 @@
   (testing "Single ice"
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}
-                 :runner {:deck ["Hippo"]}})
+                 :runner {:deck ["Corroder" "Hippo"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
       (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
       (is (not-empty (get-hardware state)) "Hippo installed")
       (is (= 1 (count (get-ice state :hq))) "Ice Wall installed")
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
       (card-ability state :runner (get-hardware state 0) 0)
       (is (empty? (get-ice state :hq)) "Ice Wall removed")
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall trashed")
@@ -847,16 +850,20 @@
   (testing "Multiple ice"
     (do-game
       (new-game {:corp {:deck ["Ice Wall" "Enigma"]}
-                 :runner {:deck ["Hippo"]}})
+                 :runner {:deck ["Corroder" "Hippo"]}})
       (play-from-hand state :corp "Enigma" "HQ")
       (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
       (take-credits state :corp)
       (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
       (is (not-empty (get-hardware state)) "Hippo installed")
       (is (= 2 (count (get-ice state :hq))) "2 ice installed")
       (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall outermost")
       (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma innermost")
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
       (card-ability state :runner (get-hardware state 0) 0)
       (is (= 1 (count (get-ice state :hq))) "Ice removed")
       (is (= 1 (count (:discard (get-corp)))) "Ice trashed")

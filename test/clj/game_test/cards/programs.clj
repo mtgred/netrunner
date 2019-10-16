@@ -2250,7 +2250,7 @@
     (play-from-hand state :corp "Bandwidth" "Archives")
     (play-from-hand state :corp "Paper Wall" "Archives")
     (take-credits state :corp)
-    (core/gain state :runner :credit 2)
+    (core/gain state :runner :credit 20)
     (play-from-hand state :runner "Peregrine")
     (let [bw1 (get-ice state :archives 0)
           pw (get-ice state :archives 2)
@@ -2258,14 +2258,25 @@
       (run-on state "Archives")
       (core/rez state :corp pw)
       (core/rez state :corp bw1)
-      (card-ability state :runner per 2)
-      (is (and (= 2 (:credit (get-runner))) (empty? (:hand (get-runner)))) "Can't use Peregrine on a barrier")
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Can't use Peregrine on a barrier"
+                         (card-ability state :runner per 2))
       (run-continue state)
-      (card-ability state :runner per 2)
-      (is (and (= 2 (:credit (get-runner))) (empty? (:hand (get-runner)))) "Can't use Peregrine on unrezzed code gate")
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Can't use Peregrine on an unrezzed code gate"
+                         (card-ability state :runner per 2))
       (run-continue state)
-      (card-ability state :runner per 2)
-      (is (zero? (:credit (get-runner))) "Spent 2 credits")
+      (changes-val-macro -3 (:credit (get-runner))
+                         "Paid 3 to pump strength"
+                         (card-ability state :runner per 1))
+      (changes-val-macro -1 (:credit (get-runner))
+                         "Paid 1 to break sub"
+                         (card-ability state :runner per 0)
+                         (click-prompt state :runner "Give the Runner 1 tag"))
+      (changes-val-macro -2 (:credit (get-runner))
+                         "Paid 2 to derez Bandwidth"
+                         (card-ability state :runner per 2)
+                         (run-continue state))
       (is (= 1 (count (:hand (get-runner)))) "Peregrine returned to grip")
       (is (not (rezzed? (refresh bw1))) "Bandwidth derezzed"))))
 
