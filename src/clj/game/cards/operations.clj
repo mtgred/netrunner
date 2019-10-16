@@ -2081,8 +2081,7 @@
     :choices {:req #(pos? (get-counters % :advancement))}
     :effect (effect
               (continue-ability
-                (let [fr target
-                      tol card]
+                (let [fr target]
                   {:async true
                    :prompt "Move how many advancement tokens?"
                    :choices (take (inc (get-counters fr :advancement)) ["0" "1" "2"])
@@ -2096,7 +2095,7 @@
                                             (card-str state fr) " to " (card-str state target))
                                   :effect (effect (add-prop :corp target :advance-counter c {:placed true})
                                                   (add-prop :corp fr :advance-counter (- c) {:placed true}))})
-                               tol nil))})
+                               card nil))})
                 card nil))}
 
    "Trojan Horse"
