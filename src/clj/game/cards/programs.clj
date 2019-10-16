@@ -555,7 +555,8 @@
                              :cost [:credit 2]}}}]}
 
    "Bukhgalter"
-   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
+   (auto-icebreaker {:implementation "Credit gain is manual"
+                     :abilities [(break-sub 1 1 "Sentry")
                                  (strength-pump 1 1)
                                  {:once :per-turn
                                   :label "Gain 2 [Credits]"
