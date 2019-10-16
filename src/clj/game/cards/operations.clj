@@ -1373,7 +1373,7 @@
              {:prompt "Select a remote server"
               :choices (req (conj (vec (get-remote-names state)) "New remote"))
               :async true
-              :effect (effect (corp-install (assoc chosen :advance-counter 3) target {:ignore-all-cost true}))})]
+              :effect (effect (corp-install eid (assoc chosen :advance-counter 3) target {:ignore-all-cost true}))})]
      {:async true
       :prompt "Choose a piece of ICE in HQ to install"
       :choices {:req #(and (in-hand? %) (corp? %) (ice? %))}
