@@ -282,6 +282,27 @@
       (core/rez state :corp quan)
       (is (= 4 (:credit (get-corp))) "Paid 3c instead of 1c to rez Quandary"))))
 
+(deftest cyberdelia
+  ;; Cyberdelia
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Corroder" "Cyberdelia"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Cyberdelia")
+      (let [corr (get-program state 0)
+            icew (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp (refresh icew))
+        (card-ability state :runner (refresh corr) 0)
+        (click-prompt state :runner "End the run")
+        (changes-val-macro 1 (:credit (get-runner))
+                           "Got 1 credit from Cyberdelia"
+                           (run-continue state))))))
+
 (deftest cyberfeeder
   ;; Cyberfeeder
   (testing "Pay-credits prompt on install"
