@@ -356,6 +356,7 @@
     :effect (effect (make-run eid target nil card))
     :interactions {:pay-credits {:type :credit}}
     :events [{:event :run-ends
+              :player :runner
               :prompt "Choose a program that was used during the run to trash "
               :choices {:req program?}
               :msg (msg "trash " (:title target))
@@ -390,8 +391,8 @@
       :events [{:event :run-ends
                 :effect (req (when-let [compile-installed (some #(when (get-in % [:special :compile-installed]) %)
                                                                 (all-installed state :runner))]
-                               (system-msg state side (str "moved " (:title compile-installed)
-                                                           " to the bottom of the Stack at the end of the run from Compile"))
+                               (system-msg state :runner (str "moved " (:title compile-installed)
+                                                              " to the bottom of the Stack at the end of the run from Compile"))
                                (move state :runner compile-installed :deck)))}]})
 
    "Contaminate"
@@ -635,10 +636,10 @@
                      card nil))}]
     :events [{:event :run-ends
               :effect (req (doseq [c (get-in card [:special :diana])]
-                             (let [installed (find-cid (:cid c) (all-installed state side))]
+                             (let [installed (find-cid (:cid c) (all-installed state :runner))]
                                (when (get-in installed [:special :diana-installed])
-                                 (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
-                                 (trash state side installed {:unpreventable true})))))}]}
+                                 (system-msg state :runner (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
+                                 (trash state :runner installed {:unpreventable true})))))}]}
 
    "Diesel"
    {:msg "draw 3 cards"
@@ -1561,7 +1562,7 @@
                                (doseq [ice diff]
                                  (derez state :runner ice))
                                (when-not (empty? diff)
-                                 (system-msg state side (str "uses Leave No Trace to derez " (join ", " (map :title diff)))))))}]})
+                                 (system-msg state :runner (str "uses Leave No Trace to derez " (join ", " (map :title diff)))))))}]})
 
    "Legwork"
    {:async true
@@ -2236,7 +2237,7 @@
                                    diff-cid (seq (clojure.set/difference new old))
                                    diff (map #(find-cid % (all-installed state :corp)) diff-cid)]
                                (continue-ability
-                                 state side
+                                 state :runner
                                  (when (seq diff)
                                    {:async true
                                     :prompt "Select an ice to trash"
