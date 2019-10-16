@@ -32,8 +32,7 @@
     :default true]
    ["-j" "--no-card-images" "Do not fetch card images from NetrunnerDB"
     :id :card-images
-    :parse-fn not]
-   ])
+    :parse-fn not]])
 
 (defn exit [status msg]
   (binding [*out* *err*]
