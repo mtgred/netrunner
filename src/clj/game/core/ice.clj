@@ -67,21 +67,30 @@
 
 (defn break-subroutine
   "Marks a given subroutine as broken"
-  [ice sub]
-  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (assoc sub :broken true))))
+  ([ice sub] (break-subroutine ice sub nil))
+  ([ice sub breaker]
+   (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (if breaker
+                                                                    (assoc sub :broken true :breaker (:cid breaker))
+                                                                    (assoc sub :broken true))))))
 
 (defn break-subroutine!
   "Marks a given subroutine as broken, update!s state"
-  [state ice sub]
-  (update! state :corp (break-subroutine ice sub)))
+  ([state ice sub] (break-subroutine! state ice sub nil))
+  ([state ice sub breaker]
+   (update! state :corp (break-subroutine ice sub breaker))))
 
 (defn break-all-subroutines
-  [ice]
-  (reduce break-subroutine ice (:subroutines ice)))
+  ([ice]
+   (break-all-subroutines ice nil))
+  ([ice breaker]
+   (if breaker
+     (reduce #(break-subroutine %1 %2 breaker) ice (:subroutines ice))
+     (reduce break-subroutine ice (:subroutines ice)))))
 
 (defn break-all-subroutines!
-  [state ice]
-  (update! state :corp (break-all-subroutines ice)))
+  ([state ice] (break-all-subroutines! state ice nil))
+  ([state ice breaker]
+   (update! state :corp (break-all-subroutines ice breaker))))
 
 (defn reset-sub
   [ice sub]
@@ -309,8 +318,8 @@
      :cost cost}))
 
 (defn break-subroutines
-  ([ice cost n] (break-subroutines ice cost n nil))
-  ([ice cost n args]
+  ([ice breaker cost n] (break-subroutines ice breaker cost n nil))
+  ([ice breaker cost n args]
    (let [args (merge {:repeatable true
                       :all false}
                      args)]
@@ -321,7 +330,7 @@
                                (wait-for (resolve-ability state side (make-eid state {:source-type :ability})
                                                           (break-subroutines-pay ice cost broken-subs args) card nil)
                                          (doseq [sub broken-subs]
-                                           (break-subroutine! state (get-card state ice) sub)
+                                           (break-subroutine! state (get-card state ice) sub breaker)
                                            (resolve-ability state side (make-eid state {:source card :source-type :ability})
                                                             (:additional-ability args)
                                                             card nil))
@@ -332,7 +341,7 @@
                                                     (seq broken-subs)
                                                     (pos? (count (unbroken-subroutines-choice ice)))
                                                     (can-pay? state side eid (get-card state card) nil cost))
-                                             (continue-ability state side (break-subroutines ice cost n args) card nil)
+                                             (continue-ability state side (break-subroutines ice breaker cost n args) card nil)
                                              (effect-completed state side eid)))))))})))
 
 (defn break-sub
@@ -368,7 +377,7 @@
                            (when subtype (str " " subtype))
                            (pluralize " subroutine" n))))
       :effect (effect (continue-ability
-                        (break-subroutines current-ice cost n args)
+                        (break-subroutines current-ice card cost n args)
                         card nil))})))
 
 (defn strength-pump

@@ -437,21 +437,70 @@
 
 (deftest bukhgalter
   ;; Bukhgalter ability
-  (do-game
-    (new-game {:runner {:deck ["Bukhgalter"]}
-               :corp {:deck ["Pup"]}})
-    (play-from-hand state :corp "Pup" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Bukhgalter")
-    (let [bukhgalter (get-program state 0)
-          pup (get-ice state :hq 0)]
-      (run-on state :hq)
-      (core/rez state :corp (refresh pup))
-      (is (= 2 (:credit (get-runner))))
-      (card-ability state :runner (refresh bukhgalter) 2)
-      (is (= 4 (:credit (get-runner))) "Gained 2 credits")
-      (card-ability state :runner (refresh bukhgalter) 2)
-      (is (= 4 (:credit (get-runner))) "Can only use ability once per turn"))))
+  (testing "2c for breaking subs only with Bukhgalter"
+    (do-game
+      (new-game {:runner {:deck ["Bukhgalter" "Mimic"]}
+                 :corp {:deck ["Pup"]}})
+      (play-from-hand state :corp "Pup" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20 :click 1)
+      (play-from-hand state :runner "Bukhgalter")
+      (play-from-hand state :runner "Mimic")
+      (let [bukhgalter (get-program state 0)
+            mimic (get-program state 1)
+            pup (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp (refresh pup))
+        (card-ability state :runner (refresh mimic) 0)
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (changes-val-macro 0 (:credit (get-runner))
+                           "No credit gain from Bukhgalter for breaking with only Mimic"
+                           (run-continue state))
+        (run-jack-out state)
+        (run-on state :hq)
+        (card-ability state :runner (refresh bukhgalter) 0)
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (click-prompt state :runner "Done")
+        (card-ability state :runner (refresh mimic) 0)
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (changes-val-macro 0 (:credit (get-runner))
+                           "No credit gain from Bukhgalter"
+                           (run-continue state))
+        (run-jack-out state)
+        (run-on state :hq)
+        (card-ability state :runner (refresh bukhgalter) 0)
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (changes-val-macro 2 (:credit (get-runner))
+                           "2 credits gained from Bukhgalter"
+                           (run-continue state)))))
+  (testing "gaining 2c only once per turn"
+    (do-game
+      (new-game {:runner {:deck ["Bukhgalter" "Mimic"]}
+                 :corp {:deck ["Pup"]}})
+      (play-from-hand state :corp "Pup" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Bukhgalter")
+      (let [bukhgalter (get-program state 0)
+            pup (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp (refresh pup))
+        (card-ability state :runner (refresh bukhgalter) 0)
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (changes-val-macro 2 (:credit (get-runner))
+                           "2 credits gained from Bukhgalter"
+                           (run-continue state))
+        (run-jack-out state)
+        (run-on state :hq)
+        (card-ability state :runner (refresh bukhgalter) 0)
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (changes-val-macro 0 (:credit (get-runner))
+                           "No credits gained from Bukhgalter"
+                           (run-continue state))))))
 
 (deftest cerberus-rex-h2
   ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter

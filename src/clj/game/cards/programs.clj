@@ -557,13 +557,15 @@
 
    "Bukhgalter"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
-                                 (strength-pump 1 1)
-                                 {:once :per-turn
-                                  :label "Gain 2 [Credits]"
-                                  :req (req (and (has-subtype? current-ice "Sentry")
-                                                 (rezzed? current-ice)))
-                                  :msg (msg "gain 2 [Credits]")
-                                  :effect (effect (gain-credits :runner 2))}]})
+                                 (strength-pump 1 1)]
+                     :events [{:once :per-turn
+                               :label "Gain 2 [Credits]"
+                               :msg (msg "gain 2 [Credits]")
+                               :effect (effect (gain-credits :runner 2))
+                               :event :pass-ice
+                               :req (req (and (rezzed? current-ice)
+                                              (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                              (empty? (remove :broken (:subroutines current-ice)))))}]})
 
    "Cache"
    {:abilities [{:cost [:virus 1]
