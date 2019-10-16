@@ -527,6 +527,7 @@
       :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                   (same-card? card (:host target))
                                                   (pos? (get-counters card :credit))))
+                                   :custom-amount 1
                                    :custom (req (add-counter state side card :credit -1)
                                                 (register-events
                                                   state side (get-card state card)
@@ -1071,6 +1072,7 @@
                                                  (not (get-in card [:special :patchwork]))
                                                  ;; Check if Patchwork can trigger
                                                  (can-trigger? state side patchwork-ability card targets)))
+                                  :custom-amount 2
                                   :custom (req (let [cost-type (str (when (= :play (:source-type eid)) "play")
                                                                     (when (= :runner-install (:source-type eid)) "install"))
                                                      patchwork card

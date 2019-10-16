@@ -1529,7 +1529,20 @@
       (click-card state :runner (get-hardware state 0))
       (click-card state :runner (find-card "Cyberfeeder" (:hand (get-runner))))
       (is (= 2 (count (:hand (get-runner)))) "Cyberfeeder is still in hand")
-      (is (not-empty (:prompt (get-runner))) "Prompt still open"))))
+      (is (not-empty (:prompt (get-runner))) "Prompt still open")))
+  (testing "Used when runner credit pool is under printed cost. Issue #4563"
+    (do-game
+      (new-game {:runner {:deck ["Patchwork" "Sure Gamble" "Easy Mark"]
+                          :credits 7}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Patchwork")
+      (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
+      (play-from-hand state :runner "Sure Gamble")
+      (click-card state :runner (get-hardware state 0))
+      (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
+      (click-card state :runner "Easy Mark")
+      (is (not-empty (:discard (get-runner))) "Easy Mark is in heap")
+      (is (= 9 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble"))))
 
 (deftest plascrete-carapace
   ;; Plascrete Carapace - Prevent meat damage

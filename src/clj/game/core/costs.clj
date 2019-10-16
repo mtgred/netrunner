@@ -147,7 +147,8 @@
   (+ (get-in @state [side :credit])
      (->> (eligible-pay-credit-cards state side eid card)
           (map #(+ (get-counters % :recurring)
-                   (get-counters % :credit)))
+                   (get-counters % :credit)
+                   (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
           (reduce +))))
 
 (defn- can-pay-impl
