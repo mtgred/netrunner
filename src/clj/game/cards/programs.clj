@@ -2277,21 +2277,26 @@
                                  (strength-pump 1 7 :end-of-encounter {:label "add 7 strength (using 1 stealth [Credits])"})]})
 
    "Takobi"
-   {:implementation "Adding power counter is manual"
-    :abilities [{:label "Add 1 power counter"
-                 :effect (effect (add-counter card :power 1)
-                                 (system-msg "adds a power counter to Takobi"))}
-                {:req (req (and (:run @state)
-                                (rezzed? current-ice)
-                                (>= (get-counters card :power) 2)))
-                 :cost [:power 2]
-                 :label "Increase non-AI icebreaker strength by +3 until end of encounter"
-                 :prompt "Choose an installed non-AI icebreaker"
-                 :choices {:req #(and (has-subtype? % "Icebreaker")
-                                      (not (has-subtype? % "AI"))
-                                      (installed? %))}
-                 :msg (msg "add +3 strength to " (:title target) " for remainder of encounter")
-                 :effect (effect (pump target 3))}]}
+   (let [add-counter-abi
+         {:label "Add 1 power counter"
+          :effect (effect (add-counter card :power 1)
+                          (system-msg "adds a power counter to Takobi"))}]
+     {:implementation "Adding power counter is manual"
+      :events [(assoc add-counter-abi
+                      :event :pass-ice
+                      :req (req (empty? (remove :broken (:subroutines current-ice)))))]
+      :abilities [add-counter-abi
+                  {:req (req (and (:run @state)
+                                  (rezzed? current-ice)
+                                  (>= (get-counters card :power) 2)))
+                   :cost [:power 2]
+                   :label "Increase non-AI icebreaker strength by +3 until end of encounter"
+                   :prompt "Choose an installed non-AI icebreaker"
+                   :choices {:req #(and (has-subtype? % "Icebreaker")
+                                        (not (has-subtype? % "AI"))
+                                        (installed? %))}
+                   :msg (msg "add +3 strength to " (:title target) " for remainder of encounter")
+                   :effect (effect (pump target 3))}]})
 
    "Tapwrm"
    (let [ability {:label "Gain [Credits] (start of turn)"
