@@ -188,6 +188,23 @@
             "1 subroutine gained because 2 face up Transactions are in Archives")
         (is (= 5 (count (:discard (get-corp)))) "5 cards in discard pile")))))
 
+(deftest bloom
+  ;; Bloom
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Bloom" "Enigma" "Ice Wall"]
+                      :credits 10}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (play-from-hand state :corp "Bloom" "HQ")
+    (take-credits state :corp)
+    (let [bloom (get-ice state :hq 1)]
+      (core/rez state :corp bloom)
+      (run-on state :hq)
+      (card-subroutine state :corp bloom 1)
+      (click-card state :corp "Ice Wall")
+      (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is now installed at position 1")
+      (is (= 3 (get-in @state [:run :position])) "Runner has been moved back to accomodate"))))
+
 (deftest border-control
   ;; Border Control
   (do-game
