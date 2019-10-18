@@ -92,6 +92,24 @@
   ([state ice breaker]
    (update! state :corp (break-all-subroutines ice breaker))))
 
+(defn dont-resolve-subroutine
+  "Marks a given subroutine as not resolving (e.g. Mass-Driver)"
+  [ice sub]
+  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (assoc sub :resolve false))))
+
+(defn dont-resolve-subroutine!
+  "Marks a given subroutine as not resolving (e.g. Mass-Driver), update!s state"
+  [state ice sub]
+  (update! state :corp (dont-resolve-subroutine ice sub)))
+
+(defn dont-resolve-all-subroutines
+  [ice]
+  (reduce dont-resolve-subroutine ice (:subroutines ice)))
+
+(defn dont-resolve-all-subroutines!
+  [state ice]
+  (update! state :corp (dont-resolve-all-subroutines ice)))
+
 (defn reset-sub
   [ice sub]
   (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (dissoc sub :broken :fired))))
@@ -113,7 +131,7 @@
 (defn unbroken-subroutines-choice
   "Takes an ice, returns the ubroken subroutines for a choices prompt"
   [ice]
-  (for [sub (remove :broken (:subroutines ice))]
+  (for [sub (remove #(or (:broken %) (= false (:resolve %))) (:subroutines ice))]
     (make-label (:sub-effect sub))))
 
 (defn resolve-subroutine
@@ -154,7 +172,7 @@
                               :source-type :subroutine})]
      (resolve-unbroken-subs! state side eid ice)))
   ([state side eid ice]
-   (if-let [subroutines (remove :broken (:subroutines ice))]
+   (if-let [subroutines (remove #(or (:broken %) (= false (:resolve %))) (:subroutines ice))]
      (wait-for (resolve-next-unbroken-sub state side (make-eid state eid) ice subroutines)
                (system-msg state :corp (str "resolves " (quantify (count async-result) "unbroken subroutine")
                                             " on " (:title ice)

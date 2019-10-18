@@ -1544,9 +1544,26 @@
                                :effect (effect (update! (assoc-in card [:counter :power] 0)))}]})
 
    "Mass-Driver"
-   (auto-icebreaker {:implementation "Prevention of subroutine resolution on next ICE is manual"
-                     :abilities [(break-sub 2 1 "Code Gate")
-                                 (strength-pump 1 1)]})
+   (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
+                                 (strength-pump 1 1)]
+                     :events [{:event :pass-ice
+                               :msg (msg "prevent the first 3 subroutines from resolving on the next encountered ice")
+                               :req (req (and (rezzed? current-ice)
+                                              (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                              (empty? (remove :broken (:subroutines current-ice)))))
+                               :effect (req (let [broken-ice current-ice
+                                                  driver-effect {:duration :end-of-run
+                                                                 :req (req (and (rezzed? current-ice)
+                                                                                (not= current-ice broken-ice))) ; current-ice not the one Mass-Driver was used on
+                                                                 :effect (req (let [target-ice current-ice]
+                                                                                (unregister-floating-events-for-card state side card :end-of-run)
+                                                                                (system-msg state side "is preventing stuff now")
+                                                                                (doseq [sub (take 3 (:subroutines current-ice))]
+                                                                                  (dont-resolve-subroutine! state (get-card state current-ice) sub))
+                                                                                ))
+                                                                 }]
+                                              (register-events state side card [(assoc driver-effect :event :approach-ice) ;should be encounter-ice but Corps are not hitting "No action" often
+                                                                                (assoc driver-effect :event :rez)])))}]})
 
    "Maven"
    {:abilities [(break-sub 2 1)]

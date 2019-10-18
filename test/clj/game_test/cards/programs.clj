@@ -1854,6 +1854,29 @@
       (take-credits state :runner)
       (is (zero? (get-counters (refresh mam) :power)) "All power counters removed"))))
 
+(deftest mass-driver
+  ;; Mass-Driver
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Enigma" "Endless EULA"]}
+                 :runner {:deck ["Mass-Driver"]}})
+      (play-from-hand state :corp "Endless EULA" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (core/gain state :corp :credit 20)
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Mass-Driver")
+      (let [eula (get-ice state :hq 0)
+            enigma (get-ice state :hq 1)
+            massdriver (get-program state 0)]
+        (run-on state :hq)
+        (core/rez state :corp enigma)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh massdriver)})
+        (run-continue state)
+        (core/rez state :corp eula)
+        (core/resolve-unbroken-subs! state :corp (refresh eula))
+        (dotimes [_ 3] (click-prompt state :runner "Pay 1 [Credits]")))))) ; only resolve 3 subs
+
 (deftest multithreader
   ;; Multithreader
   (testing "Pay-credits prompt"
