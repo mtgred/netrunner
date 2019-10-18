@@ -1999,16 +1999,20 @@
 (deftest forked
   ;; Forked
   (do-game
-    (new-game {:corp {:hand ["Hunter"]}
-               :runner {:hand ["Forked"]}})
-    (play-from-hand state :corp "Hunter" "HQ")
+    (new-game {:corp {:hand ["Rototurret"]}
+               :runner {:hand ["Forked" "Mimic"]}})
+    (play-from-hand state :corp "Rototurret" "HQ")
     (core/rez state :corp (get-ice state :hq 0))
     (take-credits state :corp)
+    (core/gain state :runner :credit 2)
+    (play-from-hand state :runner "Mimic")
     (play-from-hand state :runner "Forked")
     (click-prompt state :runner "HQ")
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "Trash a program")
+    (click-prompt state :runner "End the run")
     (run-continue state)
-    (card-ability state :runner (-> (get-runner) :play-area first) 0)
-    (is (= 1 (count (:discard (get-corp)))) "Hunter is trashed")
+    (is (= 1 (count (:discard (get-corp)))) "Rototurret is trashed")
     (run-successful state)))
 
 (deftest frame-job
@@ -2786,14 +2790,16 @@
   ;; Knifed - Make a run, trash a barrier if all subs broken
   (do-game
     (new-game {:corp {:deck ["Ice Wall"]}
-               :runner {:deck ["Knifed"]}})
+               :runner {:deck ["Knifed" "Corroder"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (core/rez state :corp (get-ice state :hq 0))
     (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "Knifed")
     (click-prompt state :runner "HQ")
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
     (run-continue state)
-    (card-ability state :runner (-> (get-runner) :play-area first) 0)
     (is (= 1 (count (:discard (get-corp)))) "Ice Wall is trashed")
     (run-successful state)))
 
@@ -4301,14 +4307,18 @@
   ;; Spooned
   (do-game
     (new-game {:corp {:deck ["Enigma"]}
-               :runner {:deck ["Spooned"]}})
+               :runner {:deck ["Spooned" "Gordian Blade"]}})
     (play-from-hand state :corp "Enigma" "HQ")
     (core/rez state :corp (get-ice state :hq 0))
     (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Gordian Blade")
     (play-from-hand state :runner "Spooned")
     (click-prompt state :runner "HQ")
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
+    (click-prompt state :runner "End the run")
     (run-continue state)
-    (card-ability state :runner (-> (get-runner) :play-area first) 0)
     (is (= 1 (count (:discard (get-corp)))) "Enigma is trashed")
     (run-successful state)))
 

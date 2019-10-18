@@ -1875,7 +1875,31 @@
         (run-continue state)
         (core/rez state :corp eula)
         (core/resolve-unbroken-subs! state :corp (refresh eula))
-        (dotimes [_ 3] (click-prompt state :runner "Pay 1 [Credits]")))))) ; only resolve 3 subs
+        (dotimes [_ 3] (click-prompt state :runner "Pay 1 [Credits]")) ; only resolve 3 subs
+        (is (empty? (:prompt (get-runner))) "No more prompts open"))))
+  (testing "Interaction with Spooned"
+    (do-game
+      (new-game {:corp {:deck ["Enigma" "Endless EULA"]}
+                 :runner {:deck ["Mass-Driver" "Spooned"]}})
+      (play-from-hand state :corp "Endless EULA" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (core/gain state :corp :credit 20)
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Mass-Driver")
+      (let [eula (get-ice state :hq 0)
+            enigma (get-ice state :hq 1)
+            massdriver (get-program state 0)]
+        (play-from-hand state :runner "Spooned")
+        (click-prompt state :runner "HQ")
+        (core/rez state :corp enigma)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh massdriver)})
+        (run-continue state)
+        (is (= 1 (count (:discard (get-corp)))) "Enigma is trashed")
+        (core/rez state :corp eula)
+        (core/resolve-unbroken-subs! state :corp (refresh eula))
+        (dotimes [_ 3] (click-prompt state :runner "Pay 1 [Credits]")) ; only resolve 3 subs
+        (is (empty? (:prompt (get-runner))) "No more prompts open")))))
 
 (deftest multithreader
   ;; Multithreader
