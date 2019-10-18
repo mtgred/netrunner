@@ -216,7 +216,7 @@
        (continue-ability
          state side
          {:prompt (str "Discard down to " (quantify max-hand-size "card"))
-          :choices {:req in-hand?
+          :choices {:card in-hand?
                     :max (- cur-hand-size max-hand-size)
                     :all true}
           :effect (req (system-msg state side

@@ -279,13 +279,13 @@
   (let [card (get-card state card)
         prompt (first (get-in @state [side :selected]))
         ability (:ability prompt)
-        five (:five prompt)
-        r (:req prompt)
+        card-req (:req prompt)
+        card-condition (:card prompt)
         cid (:not-self prompt)]
     (when (and (not= (:cid card) cid)
                (cond
-                 r (r card)
-                 five (five state side (:eid ability) (:card ability) [card])
+                 card-condition (card-condition card)
+                 card-req (card-req state side (:eid ability) (:card ability) [card])
                  :else true))
       (let [c (update-in card [:selected] not)]
         (update! state side c)
@@ -487,11 +487,11 @@
     (when-let [cost-str (pay state side nil :click 1 :credit trash-cost {:action :corp-trash-resource})]
       (resolve-ability state side
                        {:prompt  "Choose a resource to trash"
-                        :choices {:req (fn [card]
-                                         (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
-                                                  (> (count (filter resource? (all-active-installed state :runner))) 1))
-                                           (and (resource? card) (not (untrashable-while-resources? card)))
-                                           (resource? card)))}
+                        :choices {:card (fn [card]
+                                          (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
+                                                   (> (count (filter resource? (all-active-installed state :runner))) 1))
+                                            (and (resource? card) (not (untrashable-while-resources? card)))
+                                            (resource? card)))}
                         :cancel-effect (effect (gain :credit trash-cost :click 1))
                         :effect  (effect (trash target)
                                          (system-msg (str (build-spend-msg cost-str "trash")

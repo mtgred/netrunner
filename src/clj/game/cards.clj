@@ -3,31 +3,31 @@
 (def trash-program {:prompt "Select a program to trash"
                     :label "Trash a program"
                     :msg (msg "trash " (:title target))
-                    :choices {:req #(and (installed? %)
-                                         (program? %))}
+                    :choices {:card #(and (installed? %)
+                                          (program? %))}
                     :effect (effect (trash target {:cause :subroutine})
                                     (clear-wait-prompt :runner))})
 
 (def trash-hardware {:prompt "Select a piece of hardware to trash"
                      :label "Trash a piece of hardware"
                      :msg (msg "trash " (:title target))
-                     :choices {:req #(and (installed? %)
-                                          (hardware? %))}
+                     :choices {:card #(and (installed? %)
+                                           (hardware? %))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-resource-sub {:prompt "Select a resource to trash"
                          :label "Trash a resource"
                          :msg (msg "trash " (:title target))
-                         :choices {:req #(and (installed? %)
-                                              (resource? %))}
+                         :choices {:card #(and (installed? %)
+                                               (resource? %))}
                          :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-installed {:prompt "Select an installed card to trash"
                       :player :runner
                       :label "Force the Runner to trash an installed card"
                       :msg (msg "force the Runner to trash " (:title target))
-                      :choices {:req #(and (installed? %)
-                                           (runner? %))}
+                      :choices {:card #(and (installed? %)
+                                            (runner? %))}
                       :effect (effect (trash target {:cause :subroutine}))})
 
 (def corp-rez-toast
@@ -191,8 +191,8 @@
                  counter-count (when (and target-count (pos? target-count))
                                  (str " of " target-count))
                  " virus counters)")
-    :choices {:req #(and (installed? %)
-                         (pos? (get-counters % :virus)))}
+    :choices {:card #(and (installed? %)
+                          (pos? (get-counters % :virus)))}
     :effect (req (add-counter state :runner target :virus -1)
                  (let [selected-cards (update selected-cards (:cid target)
                                               ;; Store card reference and number of counters picked
@@ -277,7 +277,7 @@
                        counter-count (when (and target-count (pos? target-count))
                                        (str " of " target-count))
                        " credits)")
-          :choices {:req #(in-coll? (map :cid provider-cards) (:cid %))}
+          :choices {:card #(in-coll? (map :cid provider-cards) (:cid %))}
           :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
                              pay-credits-custom (when (= :custom pay-credits-type)
                                                   (-> target card-def :interactions :pay-credits :custom))

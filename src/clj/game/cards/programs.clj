@@ -30,7 +30,8 @@
                   :label "Swap with a deva program from your Grip"
                   :cost [:credit 2]
                   :prompt (str "Select a deva program in your Grip to swap with " card-name)
-                  :choices {:req #(and in-hand? (has-subtype? % "Deva"))}
+                  :choices {:card #(and (in-hand? %)
+                                        (has-subtype? % "Deva"))}
                   :msg (msg "swap in " (:title target) " from their Grip")
                   :effect (req (if-let [hostcard (:host card)]
                                  (let [hosted (host state side (get-card state hostcard) target)]
@@ -325,9 +326,9 @@
                                      {:req (req (= target :rd))
                                       :replace-access
                                       {:prompt "Choose a card to shuffle into R&D"
-                                       :choices {:req #(and (not (ice? %))
-                                                            (not (rezzed? %))
-                                                            (zero? (get-counters % :advancement)))}
+                                       :choices {:card #(and (not (ice? %))
+                                                             (not (rezzed? %))
+                                                             (zero? (get-counters % :advancement)))}
                                        :msg (msg "shuffle " (card-str state target) " into R&D")
                                        :effect (effect (move :corp target :deck)
                                                        (shuffle! :corp :deck))}}
@@ -388,16 +389,16 @@
    (let [host-click {:cost [:click 1]
                      :label "Install a non-AI icebreaker on Baba Yaga"
                      :prompt "Choose a non-AI icebreaker in your Grip to install on Baba Yaga"
-                     :choices {:req #(and (has-subtype? % "Icebreaker")
-                                          (not (has-subtype? % "AI"))
-                                          (in-hand? %))}
+                     :choices {:card #(and (has-subtype? % "Icebreaker")
+                                           (not (has-subtype? % "AI"))
+                                           (in-hand? %))}
                      :async true
                      :effect (effect (runner-install eid target {:host-card card}))}
          host-free {:label "Host an installed non-AI icebreaker on Baba Yaga"
                     :prompt "Choose an installed non-AI icebreaker to host on Baba Yaga"
-                    :choices {:req #(and (has-subtype? % "Icebreaker")
-                                         (not (has-subtype? % "AI"))
-                                         (installed? %))}
+                    :choices {:card #(and (has-subtype? % "Icebreaker")
+                                          (not (has-subtype? % "AI"))
+                                          (installed? %))}
                     :effect (req (when (host state side card target)
                                    (gain :memory (:memoryunits target))))}
          gain-abis (req (let [new-abis (mapcat (fn [c] (map-indexed #(assoc %2
@@ -449,20 +450,20 @@
                                   state side
                                   {:prompt (msg "Host Bishop on a piece of ICE protecting "
                                                 (if hosted? (if remote? "a central" "a remote") "any") " server")
-                                   :choices {:req #(if hosted?
-                                                     (and (if remote?
-                                                            (is-central? (second (:zone %)))
-                                                            (is-remote? (second (:zone %))))
-                                                          (ice? %)
-                                                          (can-host? %)
-                                                          (= (last (:zone %)) :ices)
-                                                          (not-any? (fn [c] (has-subtype? c "Caïssa"))
-                                                                    (:hosted %)))
-                                                     (and (ice? %)
-                                                          (can-host? %)
-                                                          (= (last (:zone %)) :ices)
-                                                          (not-any? (fn [c] (has-subtype? c "Caïssa"))
-                                                                    (:hosted %))))}
+                                   :choices {:card #(if hosted?
+                                                      (and (if remote?
+                                                             (is-central? (second (:zone %)))
+                                                             (is-remote? (second (:zone %))))
+                                                           (ice? %)
+                                                           (can-host? %)
+                                                           (= (last (:zone %)) :ices)
+                                                           (not-any? (fn [c] (has-subtype? c "Caïssa"))
+                                                                     (:hosted %)))
+                                                      (and (ice? %)
+                                                           (can-host? %)
+                                                           (= (last (:zone %)) :ices)
+                                                           (not-any? (fn [c] (has-subtype? c "Caïssa"))
+                                                                     (:hosted %))))}
                                    :msg (msg "host it on " (card-str state target))
                                    :effect (effect (host target card))}
                                   card nil)))}]
@@ -495,10 +496,10 @@
                      :events (let [put-back {:req (req (get-in card [:special :brahman-used]))
                                              :player :runner ; Needed for when the run is ended by the Corp
                                              :prompt "Choose a non-virus program to put on top of your stack."
-                                             :choices {:req #(and (installed? %)
-                                                                  (program? %)
-                                                                  (not (facedown? %))
-                                                                  (not (has-subtype? % "Virus")))}
+                                             :choices {:card #(and (installed? %)
+                                                                   (program? %)
+                                                                   (not (facedown? %))
+                                                                   (not (has-subtype? % "Virus")))}
                                              :msg (msg "add " (:title target) " to the top of the Stack")
                                              :effect (effect (update! (dissoc-in card [:special :brahman-used]))
                                                              (move target :deck {:front true}))}]
@@ -580,7 +581,7 @@
 
    "Chisel"
    {:implementation "Encounter effect is manual."
-    :hosting {:req (every-pred ice? can-host?)}
+    :hosting {:card (every-pred ice? can-host?)}
     :abilities [{:req (req (and (same-card? current-ice (:host card))
                                 (rezzed? current-ice)))
                  :effect (req (if (not (pos? (get-strength current-ice)))
@@ -660,9 +661,9 @@
                                 (resolve-ability
                                   state side
                                   {:prompt (msg "Choose a rezzed copy of " icename)
-                                   :choices {:req #(and (rezzed? %)
-                                                        (ice? %)
-                                                        (= (:title %) icename))}
+                                   :choices {:card #(and (rezzed? %)
+                                                         (ice? %)
+                                                         (= (:title %) icename))}
                                    :msg "redirect the run"
                                    :cost [:trash]
                                    :effect (req (let [dest (second (:zone target))
@@ -822,11 +823,11 @@
               :silent (req true)
               :effect (effect (add-counter card :power 1))}]
     :abilities [{:prompt "Choose a card to install from your Grip"
-                 :choices {:five (req (and (in-hand? target)
-                                           (or (hardware? target)
-                                               (program? target)
-                                               (resource? target))
-                                           (<= (install-cost state side target) (get-counters card :power))))}
+                 :choices {:req (req (and (in-hand? target)
+                                          (or (hardware? target)
+                                              (program? target)
+                                              (resource? target))
+                                          (<= (install-cost state side target) (get-counters card :power))))}
                  :req (req (and (not (install-locked? state side))
                                 (some #(and (or (hardware? %)
                                                 (program? %)
@@ -871,11 +872,11 @@
                  :label "Install a program on Dhegdheer"
                  :prompt "Choose a program in your Grip to install on Dhegdheer"
                  :choices
-                 {:five (req (and (program? target)
-                                  (runner-can-install? state side target false)
-                                  (in-hand? target)
-                                  (can-pay? state side eid card nil
-                                            [:credit (install-cost state side target {:cost-bonus -1})])))}
+                 {:req (req (and (program? target)
+                                 (runner-can-install? state side target false)
+                                 (in-hand? target)
+                                 (can-pay? state side eid card nil
+                                           [:credit (install-cost state side target {:cost-bonus -1})])))}
                  :msg (msg (str "host " (:title target)
                                 (when (-> target :cost pos?)
                                   ", lowering its cost by 1 [Credit]")))
@@ -888,8 +889,8 @@
                 {:label "Host an installed program on Dhegdheer with [Credit] discount"
                  :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer with [Credit] discount"
-                 :choices {:req #(and (program? %)
-                                      (installed? %))}
+                 :choices {:card #(and (program? %)
+                                       (installed? %))}
                  :msg (msg (str "host " (:title target)
                                 (when (-> target :cost pos?)
                                   ", lowering its cost by 1 [Credit]")))
@@ -902,8 +903,8 @@
                 {:label "Host an installed program on Dhegdheer"
                  :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer"
-                 :choices {:req #(and (program? %)
-                                      (installed? %))}
+                 :choices {:card #(and (program? %)
+                                       (installed? %))}
                  :msg (msg (str "host " (:title target)
                                 (when (-> target :cost pos?)
                                   ", lowering its cost by 1 [Credit]")))
@@ -960,10 +961,10 @@
                  :effect (effect (continue-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a non-Icebreaker program in your Grip to install on Djinn"
-                                    :choices {:req #(and (program? %)
-                                                         (runner-can-install? state side % false)
-                                                         (not (has-subtype? % "Icebreaker"))
-                                                         (in-hand? %))}
+                                    :choices {:card #(and (program? %)
+                                                          (runner-can-install? state side % false)
+                                                          (not (has-subtype? % "Icebreaker"))
+                                                          (in-hand? %))}
                                     :msg (msg "install and host " (:title target))
                                     :async true
                                     :effect (req (wait-for (runner-install state side target {:host-card card :no-mu true})
@@ -974,9 +975,9 @@
                                    card nil))}
                 {:label "Host an installed non-Icebreaker program on Djinn"
                  :prompt "Choose an installed non-Icebreaker program to host on Djinn"
-                 :choices {:req #(and (program? %)
-                                      (not (has-subtype? % "Icebreaker"))
-                                      (installed? %))}
+                 :choices {:card #(and (program? %)
+                                       (not (has-subtype? % "Icebreaker"))
+                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
                                  (free-mu (:memoryunits target))
@@ -996,7 +997,9 @@
 
    "Egret"
    {:implementation "Added subtypes don't get removed when Egret is moved/trashed"
-    :hosting {:req #(and (ice? %) (can-host? %) (rezzed? %))}
+    :hosting {:card #(and (ice? %)
+                          (can-host? %)
+                          (rezzed? %))}
     :msg (msg "make " (card-str state (:host card)) " gain Barrier, Code Gate and Sentry subtypes")
     :effect (req (when-let [h (:host card)]
                    (update! state side (assoc-in card [:special :installing] true))
@@ -1106,7 +1109,7 @@
 
    "Femme Fatale"
    (auto-icebreaker {:prompt "Select a piece of ICE to target for bypassing"
-                     :choices {:req ice?}
+                     :choices {:card ice?}
                      :leave-play (req (remove-icon state side card))
                      :effect (req (let [ice target]
                                     (add-icon state side card ice "F" "blue")
@@ -1256,7 +1259,7 @@
     :abilities [{:req (req (pos? (get-counters card :virus)))
                  :priority true
                  :prompt "Move a virus counter to which card?"
-                 :choices {:req #(has-subtype? % "Virus")}
+                 :choices {:card #(has-subtype? % "Virus")}
                  :effect (req (let [abilities (:abilities (card-def target))
                                     virus target]
                                 (add-counter state :runner virus :virus 1)
@@ -1291,9 +1294,9 @@
    (auto-icebreaker {:abilities [{:label "Host Ika on a piece of ICE"
                                   :prompt (msg "Host Ika on a piece of ICE")
                                   :cost [:credit 2]
-                                  :choices {:req #(and (ice? %)
-                                                       (installed? %)
-                                                       (can-host? %))}
+                                  :choices {:card #(and (ice? %)
+                                                        (installed? %)
+                                                        (can-host? %))}
                                   :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))}
                                  (break-sub 1 2 "Sentry")
@@ -1315,8 +1318,8 @@
               :effect (effect (add-counter card :virus 1))}]
     :abilities [{:cost [:click 1 :trash]
                  :msg (msg "move " (get-counters card :virus) " virus counter to " (:title target))
-                 :choices {:req #(and (installed? %)
-                                      (has-subtype? % "Virus"))}
+                 :choices {:card #(and (installed? %)
+                                       (has-subtype? % "Virus"))}
                  :effect (effect (add-counter target :virus (get-counters card :virus)))}]}
 
    "Inti"
@@ -1329,7 +1332,9 @@
                                   :once :per-turn
                                   :req (req (:run @state))
                                   :prompt "Select the Code Gate you just passed and another piece of ICE to swap positions"
-                                  :choices {:req #(and (installed? %) (ice? %)) :max 2}
+                                  :choices {:card #(and (installed? %)
+                                                        (ice? %))
+                                            :max 2}
                                   :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
                                   :effect (req (when (= (count targets) 2)
                                                  (swap-ice state side (first targets) (second targets))))}
@@ -1370,24 +1375,25 @@
                                     {:prompt (msg "Host Knight on a piece of ICE"
                                                   (when hosted " not before or after the current host ICE"))
                                      :cost [:click 1]
-                                     :choices {:req #(if hosted
-                                                       (and (or (when (= (:zone %) (:zone (:host k)))
-                                                                  (not= 1 (abs (- (ice-index state %) icepos))))
-                                                                (not= (:zone %) (:zone (:host k))))
-                                                            (ice? %)
-                                                            (can-host? %)
-                                                            (installed? %)
-                                                            (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
-                                                       (and (ice? %)
-                                                            (installed? %)
-                                                            (can-host? %)
-                                                            (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
+                                     :choices {:card #(if hosted
+                                                        (and (or (when (= (:zone %) (:zone (:host k)))
+                                                                   (not= 1 (abs (- (ice-index state %) icepos))))
+                                                                 (not= (:zone %) (:zone (:host k))))
+                                                             (ice? %)
+                                                             (can-host? %)
+                                                             (installed? %)
+                                                             (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
+                                                        (and (ice? %)
+                                                             (installed? %)
+                                                             (can-host? %)
+                                                             (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
                                      :msg (msg "host it on " (card-str state target))
                                      :effect (effect (host target card))} card nil)))}
                   (break-sub 2 1 "All" {:req knight-req})]})
 
    "Kyuban"
-   {:hosting {:req #(and (ice? %) (can-host? %))}
+   {:hosting {:card #(and (ice? %)
+                          (can-host? %))}
     :events [{:event :pass-ice
               :req (req (same-card? target (:host card)))
               :msg "gain 2 [Credits]"
@@ -1413,9 +1419,9 @@
                  :effect (effect (continue-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program in your Grip to install on Leprechaun"
-                                    :choices {:req #(and (program? %)
-                                                         (runner-can-install? state side % false)
-                                                         (in-hand? %))}
+                                    :choices {:card #(and (program? %)
+                                                          (runner-can-install? state side % false)
+                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target))
                                     :async true
                                     :effect (req (wait-for (runner-install state side target {:host-card card :no-mu true})
@@ -1428,8 +1434,8 @@
                 {:label "Host an installed program on Leprechaun"
                  :req (req (< (count (get-in card [:special :hosted-programs])) 2))
                  :prompt "Choose an installed program to host on Leprechaun"
-                 :choices {:req #(and (program? %)
-                                      (installed? %))}
+                 :choices {:card #(and (program? %)
+                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (free-mu (:memoryunits target))
                                  (update-breaker-strength target)
@@ -1659,9 +1665,9 @@
 
    "Paintbrush"
    {:abilities [{:cost [:click 1]
-                 :choices {:req #(and (installed? %)
-                                      (ice? %)
-                                      (rezzed? %))}
+                 :choices {:card #(and (installed? %)
+                                       (ice? %)
+                                       (rezzed? %))}
                  :effect (req (let [ice target
                                     stypes (:subtype ice)]
                                 (continue-ability
@@ -1720,7 +1726,9 @@
                                           card nil))}])
 
    "Parasite"
-   {:hosting {:req #(and (ice? %) (can-host? %) (rezzed? %))}
+   {:hosting {:card #(and (ice? %)
+                          (can-host? %)
+                          (rezzed? %))}
     :effect (req (when-let [h (:host card)]
                    (update! state side (assoc-in card [:special :installing] true))
                    (update-ice-strength state side h)
@@ -1761,18 +1769,18 @@
     :abilities [{:label "Host Pawn on the outermost ICE of a central server"
                  :cost [:click 1]
                  :prompt "Host Pawn on the outermost ICE of a central server"
-                 :choices {:req #(and (ice? %)
-                                      (can-host? %)
-                                      (= (last (:zone %)) :ices)
-                                      (is-central? (second (:zone %))))}
+                 :choices {:card #(and (ice? %)
+                                       (can-host? %)
+                                       (= (last (:zone %)) :ices)
+                                       (is-central? (second (:zone %))))}
                  :msg (msg "host it on " (card-str state target))
                  :effect (effect (host target card))}
                 {:label "Advance to next ICE"
                  :prompt "Choose the next innermost ICE to host Pawn on it"
-                 :choices {:req #(and (ice? %)
-                                      (can-host? %)
-                                      (= (last (:zone %)) :ices)
-                                      (is-central? (second (:zone %))))}
+                 :choices {:card #(and (ice? %)
+                                       (can-host? %)
+                                       (= (last (:zone %)) :ices)
+                                       (is-central? (second (:zone %))))}
                  :msg (msg "host it on " (card-str state target))
                  :effect (effect (host target card))}
                 {:label "Trash Pawn and install a Caïssa from your Grip or Heap, ignoring all costs"
@@ -1783,9 +1791,9 @@
                                   state side
                                   {:prompt "Choose a Caïssa program to install from your Grip or Heap"
                                    :show-discard true
-                                   :choices {:req #(and (has-subtype? % "Caïssa")
-                                                        (not= (:cid %) this-pawn)
-                                                        (#{[:hand] [:discard]} (:zone %)))}
+                                   :choices {:card #(and (has-subtype? % "Caïssa")
+                                                         (not= (:cid %) this-pawn)
+                                                         (#{[:hand] [:discard]} (:zone %)))}
                                    :msg (msg "install " (:title target))
                                    :async true
                                    :effect (effect (runner-install eid target {:ignore-all-cost true}))}
@@ -1883,9 +1891,9 @@
                  :effect (effect (continue-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a Virus program to install on Progenitor"
-                                    :choices {:req #(and (program? %)
-                                                         (has-subtype? % "Virus")
-                                                         (in-hand? %))}
+                                    :choices {:card #(and (program? %)
+                                                          (has-subtype? % "Virus")
+                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target))
                                     :async true
                                     :effect (req (wait-for (runner-install state side target {:host-card card :no-mu true})
@@ -1897,9 +1905,9 @@
                 {:label "Host an installed virus on Progenitor"
                  :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed virus program to host on Progenitor"
-                 :choices {:req #(and (program? %)
-                                      (has-subtype? % "Virus")
-                                      (installed? %))}
+                 :choices {:card #(and (program? %)
+                                       (has-subtype? % "Virus")
+                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
                                  (free-mu (:memoryunits target))
@@ -2014,17 +2022,17 @@
                                              (msg "Host Rook on a piece of ICE protecting this server or at position "
                                                   icepos " of a different server")
                                              (msg "Host Rook on a piece of ICE protecting any server"))
-                                   :choices {:req #(if hosted?
-                                                     (and (or (= (:zone %) (:zone (:host r)))
-                                                              (= (ice-index state %) icepos))
-                                                          (= (last (:zone %)) :ices)
-                                                          (ice? %)
-                                                          (can-host? %)
-                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
-                                                     (and (ice? %)
-                                                          (can-host? %)
-                                                          (= (last (:zone %)) :ices)
-                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
+                                   :choices {:card #(if hosted?
+                                                      (and (or (= (:zone %) (:zone (:host r)))
+                                                               (= (ice-index state %) icepos))
+                                                           (= (last (:zone %)) :ices)
+                                                           (ice? %)
+                                                           (can-host? %)
+                                                           (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
+                                                      (and (ice? %)
+                                                           (can-host? %)
+                                                           (= (last (:zone %)) :ices)
+                                                           (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
                                    :msg (msg "host it on " (card-str state target))
                                    :effect (effect (host target card))} card nil)))}]
     :constant-effects [{:type :rez-cost
@@ -2065,8 +2073,8 @@
                  :req (req (not (install-locked? state side)))
                  :msg (msg "install " (:title target))
                  :prompt "Choose a program to install from your grip"
-                 :choices {:req #(and (program? %)
-                                      (in-hand? %))}
+                 :choices {:card #(and (program? %)
+                                       (in-hand? %))}
                  :async true
                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]}
 
@@ -2076,9 +2084,9 @@
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program to install on Scheherazade from your grip"
-                                    :choices {:req #(and (program? %)
-                                                         (runner-can-install? state side % false)
-                                                         (in-hand? %))}
+                                    :choices {:card #(and (program? %)
+                                                          (runner-can-install? state side % false)
+                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) " and gain 1 [Credits]")
                                     :async true
                                     :effect (effect (gain-credits 1)
@@ -2086,8 +2094,8 @@
                                    card nil))}
                 {:label "Host an installed program"
                  :prompt "Choose a program to host on Scheherazade" :priority 2
-                 :choices {:req #(and (program? %)
-                                      (installed? %))}
+                 :choices {:card #(and (program? %)
+                                       (installed? %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
                  :effect (req (when (host state side card target)
                                 (gain-credits state side 1)))}]}
@@ -2211,10 +2219,10 @@
    "Surfer"
    (letfn [(surf [state cice]
              {:prompt (msg "Choose an ICE before or after " (:title cice))
-              :choices {:req #(and (ice? %)
-                                   (= (:zone %) (:zone cice))
-                                   (= 1 (abs (- (ice-index state %)
-                                                (ice-index state cice)))))}
+              :choices {:card #(and (ice? %)
+                                    (= (:zone %) (:zone cice))
+                                    (= 1 (abs (- (ice-index state %)
+                                                 (ice-index state cice)))))}
               :effect (req (let [tgtndx (ice-index state target)
                                  cidx (ice-index state cice)]
                              (system-msg state :runner (str "uses Surfer to swap "
@@ -2257,9 +2265,9 @@
                    :cost [:power 2]
                    :label "Increase non-AI icebreaker strength by +3 until end of encounter"
                    :prompt "Choose an installed non-AI icebreaker"
-                   :choices {:req #(and (has-subtype? % "Icebreaker")
-                                        (not (has-subtype? % "AI"))
-                                        (installed? %))}
+                   :choices {:card #(and (has-subtype? % "Icebreaker")
+                                         (not (has-subtype? % "AI"))
+                                         (installed? %))}
                    :msg (msg "add +3 strength to " (:title target) " for remainder of encounter")
                    :effect (effect (pump target 3))}]})
 
@@ -2305,8 +2313,8 @@
                       :show-discard true
                       :choices {:max (min (get-counters card :power) (count (:discard runner)))
                                 :all true
-                                :req #(and (runner? %)
-                                           (in-discard? %))}
+                                :card #(and (runner? %)
+                                            (in-discard? %))}
                       :msg (msg "shuffle " (join ", " (map :title targets))
                                 " into their Stack")
                       :effect (req (doseq [c targets] (move state side c :deck))
@@ -2322,7 +2330,8 @@
                                  (unregister-events state side card)
                                  (trash state :runner eid h nil))
                              (effect-completed state side eid))))]
-     {:hosting {:req #(and (ice? %) (can-host? %))}
+     {:hosting {:card #(and (ice? %)
+                            (can-host? %))}
       :effect trash-if-5
       :abilities [(set-autoresolve :auto-accept "add virus counter to Trypano")]
       :events [{:event :runner-turn-begins
@@ -2397,7 +2406,8 @@
                                                        (expose-and-maybe-bounce target)
                                                        card nil)))})
            (expose-and-maybe-bounce [chosen-subtype]
-             {:choices {:req #(and (ice? %) (not (rezzed? %)))}
+             {:choices {:card #(and (ice? %)
+                                    (not (rezzed? %)))}
               :async true
               :msg (str "name " chosen-subtype)
               :effect (req (wait-for (expose state side target)

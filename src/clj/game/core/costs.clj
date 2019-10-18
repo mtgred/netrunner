@@ -373,7 +373,7 @@
                     {:prompt "Choose an Agenda to forfeit"
                      :async true
                      :choices {:max amount
-                               :req #(is-scored? state side %)}
+                               :card #(is-scored? state side %)}
                      :effect (req (wait-for (forfeit state side target {:msg false})
                                             (complete-with-result
                                               state side eid
@@ -420,7 +420,7 @@
     {:prompt (str "Choose " (quantify amount card-type) " to remove from the game")
      :choices {:all true
                :max amount
-               :req select-fn}
+               :card select-fn}
      :async true
      :effect (req (doseq [t targets]
                     (move state side (assoc-in t [:persistent :from-cid] (:cid card)) :rfg))
@@ -439,7 +439,7 @@
                      {:prompt (str "Choose " (quantify amount card-type) " to trash")
                       :choices {:all true
                                 :max amount
-                                :req select-fn}
+                                :card select-fn}
                       :async true
                       :priority 11
                       :effect (req (wait-for (trash-cards state side targets (merge args {:unpreventable true}))
@@ -476,7 +476,7 @@
                       {:prompt (str "Choose " (quantify amount (str "card in " hand)) " to trash")
                        :choices {:all true
                                  :max amount
-                                 :req select-fn}
+                                 :card select-fn}
                        :async true
                        :effect (req (wait-for (trash-cards state side targets {:unpreventable true :seen false})
                                               (complete-with-result
@@ -517,8 +517,8 @@
      :async true
      :choices {:all true
                :max amount
-               :req #(and (is-type? % (capitalize card-type))
-                          (in-hand? %))}
+               :card #(and (is-type? % (capitalize card-type))
+                           (in-hand? %))}
      :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                             (complete-with-result
                               state side eid
@@ -534,8 +534,8 @@
                     {:prompt (str "Choose " (quantify amount "card") " to shuffle into the stack")
                      :choices {:max amount
                                :all true
-                               :req #(and (installed? %)
-                                          (runner? %))}
+                               :card #(and (installed? %)
+                                           (runner? %))}
                      :async true
                      :effect (req (doseq [c targets]
                                     (move state :runner c :deck))
@@ -552,9 +552,9 @@
   (continue-ability
     state side
     {:prompt "Select an agenda with a counter"
-     :choices {:req #(and (agenda? %)
-                          (is-scored? state side %)
-                          (pos? (get-counters % :agenda)))}
+     :choices {:card #(and (agenda? %)
+                           (is-scored? state side %)
+                           (pos? (get-counters % :agenda)))}
      :effect (effect (add-counter target :agenda -1)
                      (trigger-event :agenda-counter-spent (get-card state target))
                      (complete-with-result
