@@ -158,47 +158,13 @@
   "Spends virus counters from any card to pump/break, gains virus counters for successful runs
   (Khumalo suite: Musaazi, Yusuf)"
   [ice-type]
-  (let [type-subroutine (str ice-type " subroutine")
-        add-strength (fn [state card message n]
-                       (dotimes [_ n]
-                         (pump state :runner (get-card state card) 1))
-                       (system-msg state :runner
-                                   (str "spends " message
-                                        " to add " n
-                                        " strength")))]
+  (auto-icebreaker
     {:events [{:event :successful-run
                :silent (req true)
                :effect (effect (system-msg (str "adds 1 virus counter to " (:title card)))
                                (add-counter card :virus 1))}]
-     :abilities [{:label (str "Break one or more " type-subroutine "s")
-                  :effect (req (wait-for (resolve-ability
-                                           state side (pick-virus-counters-to-spend) card nil)
-                                         (when-let* [message (:msg async-result)
-                                                     n (:number async-result)]
-                                           (break-subroutines current-ice nil n {:repeatable false})
-                                           (system-msg state :runner
-                                                       (str "spends " message
-                                                            " to break "
-                                                            (quantify n type-subroutine))))))}
-                 {:label "Match strength of currently encountered ice"
-                  :req (req (and current-ice
-                                 (> (ice-strength state side current-ice)
-                                    (get-strength card))))
-                  :effect (req (wait-for (resolve-ability
-                                           state side
-                                           (pick-virus-counters-to-spend
-                                             (- (ice-strength state side current-ice)
-                                                (get-strength card)))
-                                           card nil)
-                                         (when-let* [message (:msg async-result)
-                                                     n (:number async-result)]
-                                           (add-strength state card message n))))}
-                 {:label "Add strength"
-                  :effect (req (wait-for (resolve-ability
-                                           state side (pick-virus-counters-to-spend) card nil)
-                                         (when-let* [message (:msg async-result)
-                                                     n (:number async-result)]
-                                           (add-strength state card message n))))}]}))
+     :abilities [(break-sub [:any-virus-counter 1] 1 ice-type)
+                 (strength-pump [:any-virus-counter 1] 1)]}))
 
 (defn- central-only
   "Break ability cannot be used on remote servers
