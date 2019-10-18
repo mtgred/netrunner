@@ -873,19 +873,16 @@
    {:abilities [{:cost [:click 4] :async true :effect (effect (draw eid 10 nil)) :msg "draw 10 cards"}]}
 
    "Dummy Box"
-   (letfn [(dummy-prevent [type] {:msg (str "prevent a " type " from being trashed")
-                                  :async true
-                                  :priority 15
-                                  :prompt (str "Choose a " type " in your Grip")
-                                  :choices {:req #(and (is-type? % (capitalize type))
-                                                       (in-hand? %))}
-                                  :effect (effect (move target :discard)
-                                                  (trash-prevent (keyword type) 1))})]
+   (letfn [(dummy-prevent [card-type]
+             {:msg (str "prevent a " card-type " from being trashed")
+              :async true
+              :cost [(keyword (str "trash-" card-type "-from-hand")) 1]
+              :effect (effect (trash-prevent (keyword card-type) 1))})]
      {:interactions {:prevent [{:type #{:trash-hardware :trash-resource :trash-program}
                                 :req (req (not= :purge (:cause target)))}]}
       :abilities [(dummy-prevent "hardware")
-                  (dummy-prevent "resource")
-                  (dummy-prevent "program")]})
+                  (dummy-prevent "program")
+                  (dummy-prevent "resource")]})
 
    "Earthrise Hotel"
    (let [ability {:msg "draw 2 cards"
@@ -1822,6 +1819,7 @@
     :abilities [{:effect
                  (effect
                    (continue-ability
+                     ;; TODO: Convert this to a cost
                      {:prompt "Select a rezzed card with a trash cost"
                       :choices {:req #(and (:trash %)
                                            (rezzed? %)

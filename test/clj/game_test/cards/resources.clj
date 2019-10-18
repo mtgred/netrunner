@@ -1096,7 +1096,7 @@
       (take-credits state :runner)
       (core/trash state :runner (get-program state 0))
       (is (not-empty (:prompt (get-runner))) "Dummy Box prompting to prevent program trash")
-      (card-ability state :runner (get-resource state 0) 2)
+      (card-ability state :runner (get-resource state 0) 1)
       (click-card state :runner (find-card "Clot" (:hand (get-runner))))
       (click-prompt state :runner "Done")
       (is (= 1 (count (:discard (get-runner)))) "Clot trashed")

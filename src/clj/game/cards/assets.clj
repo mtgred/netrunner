@@ -1744,7 +1744,7 @@
                  :effect (effect (gain-credits target))}]}
 
    "Security Subcontract"
-   {:abilities [{:cost [:click 1 :ice]
+   {:abilities [{:cost [:click 1 :ice 1]
                  :msg "gain 4 [Credits]"
                  :label "Gain 4 [Credits]"
                  :effect (effect (gain-credits 4))}]}
