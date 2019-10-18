@@ -615,6 +615,7 @@
            (render-icons (str " [Subroutine]" " " (:label sub)))]
           [:span.float-right
            (cond (:broken sub) banned-span
+                 (= false (:resolve sub)) "❗"
                  (:fired sub) "✅")]])
        subroutines)]))
 
@@ -681,6 +682,7 @@
                (render-icons (str " [Subroutine]" " " (:label sub)))]
               [:span.float-right
                (cond (:broken sub) banned-span
+                     (= false (:resolve sub)) "❗"
                      (:fired sub) "✅")]])
            subroutines))])))
 

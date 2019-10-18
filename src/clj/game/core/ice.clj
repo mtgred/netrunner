@@ -112,7 +112,7 @@
 
 (defn reset-sub
   [ice sub]
-  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (dissoc sub :broken :fired))))
+  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (dissoc sub :broken :fired :resolve))))
 
 (defn reset-sub!
   [state ice sub]
