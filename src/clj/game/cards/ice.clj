@@ -742,16 +742,21 @@
                    :msg (msg "give +2 strength to the next ICE the Runner encounters")
                    :effect (effect (register-events card [{:event :approach-ice ;should be encounter-ice but Corps are not hitting "No action" often
                                                            :duration :end-of-run
-                                                           :req (req (not= current-ice card)) ; current-ice not chum
-                                                           :effect (req (let [target-ice current-ice]
+                                                           :req (req (and (rezzed? current-ice)
+                                                                          (not= current-ice card))) ; current-ice not chum
+                                                           :effect (req (let [target-ice current-ice
+                                                                              damage-event (merge (do-net-damage 3) {:duration :end-of-run
+                                                                                                                     :req (req (not-empty (remove :broken (:subroutines target-ice))))})]
                                                                           (register-floating-effect state side card
                                                                                                     {:type :ice-strength
                                                                                                      :duration :end-of-run
                                                                                                      :value 2
                                                                                                      :req (req (= target target-ice))})
                                                                           (update-all-ice state side)
-                                                                          (unregister-floating-events-for-card state side card :end-of-run)))}]))}
-                  (do-net-damage 3)]}
+                                                                          (unregister-floating-events-for-card state side card :end-of-run)
+                                                                          (register-events state side card [(merge damage-event {:event :pass-ice})
+                                                                                                            (merge damage-event {:event :jack-out})
+                                                                                                            (merge damage-event {:event :run-ends})])))}]))}]}
 
    "Clairvoyant Monitor"
    {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"

@@ -317,19 +317,21 @@
       (take-credits state :corp)
       (is (not (has-subtype? (refresh ch) "Barrier")) "Chimera does not have Barrier"))))
 
-(deftest ^:test-refresh/focus chum
+(deftest chum
   ;; Chum
   (testing "+2 strength"
     (do-game
-      (new-game {:corp {:deck ["Chum" "Enigma" "Ice Wall"]}
+      (new-game {:corp {:deck ["Chum" (qty "Enigma" 2) "Ice Wall"]}
                  :runner {:deck ["Corroder"]}})
+      (core/gain state :corp :click 1 :credit 6)
       (play-from-hand state :corp "Enigma" "HQ")
       (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
       (play-from-hand state :corp "Chum" "HQ")
-      (core/gain state :corp :credit 3)
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
-      (let [chum (get-ice state :hq 2)
+      (let [chum (get-ice state :hq 3)
+            unrezzed-enigma (get-ice state :hq 2)
             icewall (get-ice state :hq 1)
             enigma (get-ice state :hq 0)
             corroder (get-program state 0)]
@@ -342,6 +344,8 @@
         (is (= 4 (:current-strength (refresh chum))) "Chum stays at 4 strength")
         (is (= 1 (:current-strength (refresh icewall))) "Ice Wall still at 1 strength")
         (run-continue state)
+        (is (= 1 (:current-strength (refresh icewall))) "Ice Wall still at 1 strength while passing unrezzed ice")
+        (run-continue state)
         (is (= 3 (:current-strength (refresh icewall))) "Ice Wall now at 3 strength")
         (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength before encounter")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
@@ -349,8 +353,55 @@
         (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
         (run-jack-out state)
         (run-on state :hq)
-        (is (= 4 (:current-strength (refresh chum))) "Chum stays at 4 strength")))))
-
+        (is (= 4 (:current-strength (refresh chum))) "Chum stays at 4 strength"))))
+  (testing "Net damage from ice ending the run"
+    (do-game
+      (new-game {:corp {:deck ["Chum" "Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Chum" "HQ")
+      (take-credits state :corp)
+      (let [chum (get-ice state :hq 1)
+            icewall (get-ice state :hq 0)]
+        (core/rez state :corp chum)
+        (core/rez state :corp icewall)
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh chum) 0)
+        (run-continue state)
+        (changes-val-macro -3 (count (:hand (get-runner)))
+                           "3 Damage from Ice Wall ending the run"
+                           (card-subroutine state :corp (refresh icewall) 0)))))
+  (testing "Net damage from passing without breaking"
+    (do-game
+      (new-game {:corp {:deck ["Chum" "Pachinko"]}})
+      (play-from-hand state :corp "Pachinko" "HQ")
+      (play-from-hand state :corp "Chum" "HQ")
+      (take-credits state :corp)
+      (let [chum (get-ice state :hq 1)
+            pachinko (get-ice state :hq 0)]
+        (core/rez state :corp chum)
+        (core/rez state :corp pachinko)
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh chum) 0)
+        (run-continue state)
+        (changes-val-macro -3 (count (:hand (get-runner)))
+                           "3 Damage from passing an unbroken ice"
+                           (run-continue state)))))
+  (testing "Net damage from Runner pressing jack out button after encountering next ice"
+    (do-game
+      (new-game {:corp {:deck ["Chum" "Pachinko"]}})
+      (play-from-hand state :corp "Pachinko" "HQ")
+      (play-from-hand state :corp "Chum" "HQ")
+      (take-credits state :corp)
+      (let [chum (get-ice state :hq 1)
+            pachinko (get-ice state :hq 0)]
+        (core/rez state :corp chum)
+        (core/rez state :corp pachinko)
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh chum) 0)
+        (run-continue state)
+        (changes-val-macro -3 (count (:hand (get-runner)))
+                           "3 Damage from pressing jack out button after encountering Pachinko"
+                           (run-jack-out state))))))
 
 (deftest congratulations
   ;; Congratulations!
