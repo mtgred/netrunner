@@ -1557,7 +1557,6 @@
                                                                                 (not= current-ice broken-ice))) ; current-ice not the one Mass-Driver was used on
                                                                  :effect (req (let [target-ice current-ice]
                                                                                 (unregister-floating-events-for-card state side card :end-of-run)
-                                                                                (system-msg state side "is preventing stuff now")
                                                                                 (doseq [sub (take 3 (:subroutines current-ice))]
                                                                                   (dont-resolve-subroutine! state (get-card state current-ice) sub))
                                                                                 ))
