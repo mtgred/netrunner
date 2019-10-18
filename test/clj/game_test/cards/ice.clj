@@ -540,18 +540,41 @@
 
 (deftest endless-eula
   ;; Endless EULA
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Endless EULA"]}
-               :runner {:credits 10}})
-    (play-from-hand state :corp "Endless EULA" "HQ")
-    (take-credits state :corp)
-    (let [eula (get-ice state :hq 0)
-          credits (:credit (get-runner))]
-      (core/rez state :corp eula)
-      (run-on state "HQ")
-      (card-side-ability state :runner eula 0)
-      (is (= (- credits 6) (:credit (get-runner))) "Runner should lose 6 credits"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Endless EULA"]}
+                 :runner {:credits 10}})
+      (play-from-hand state :corp "Endless EULA" "HQ")
+      (take-credits state :corp)
+      (let [eula (get-ice state :hq 0)
+            credits (:credit (get-runner))]
+        (core/rez state :corp eula)
+        (run-on state "HQ")
+        (card-side-ability state :runner eula 0)
+        (is (= (- credits 6) (:credit (get-runner))) "Runner should lose 6 credits"))))
+  (testing "Testing interaction with subs not resolving (Mass-Driver)"
+    (do-game
+      (new-game {:corp {:deck ["Enigma" "Endless EULA"]}
+                 :runner {:deck ["Mass-Driver"]}})
+      (play-from-hand state :corp "Endless EULA" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (core/gain state :corp :credit 20)
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Mass-Driver")
+      (let [eula (get-ice state :hq 0)
+            enigma (get-ice state :hq 1)
+            massdriver (get-program state 0)
+            credits (:credit (get-runner))]
+        (run-on state :hq)
+        (core/rez state :corp enigma)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh massdriver)})
+        (run-continue state)
+        (core/rez state :corp eula)
+        (changes-val-macro -3 (:credit (get-runner))
+                           "Runner should only lose 3 credits"
+                           (card-side-ability state :runner eula 0))))))
 
 (deftest enigma
   ;; Enigma - Force Runner to lose 1 click if able

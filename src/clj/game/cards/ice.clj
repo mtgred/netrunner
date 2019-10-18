@@ -992,11 +992,11 @@
      {:subroutines [sub sub
                     sub sub
                     sub sub]
-      :runner-abilities [{:req (req (<= (count (remove :broken (:subroutines card)))
+      :runner-abilities [{:req (req (<= (count (remove #(or (:broken %) (= false (:resolve %))) (:subroutines card)))
                                         (total-available-credits state :runner eid card)))
                           :async true
                           :label "Pay for all unbroken subs"
-                          :effect (req (let [unbroken-subs (remove :broken (:subroutines card))
+                          :effect (req (let [unbroken-subs (remove #(or (:broken %) (= false (:resolve %))) (:subroutines card))
                                              eid (assoc eid :source-type :subroutine)]
                                          (->> unbroken-subs
                                               (reduce resolve-subroutine card)
