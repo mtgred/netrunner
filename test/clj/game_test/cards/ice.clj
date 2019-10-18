@@ -362,11 +362,11 @@
       (take-credits state :corp)
       (let [chum (get-ice state :hq 1)
             icewall (get-ice state :hq 0)]
-        (core/rez state :corp chum)
-        (core/rez state :corp icewall)
         (run-on state :hq)
+        (core/rez state :corp chum)
         (card-subroutine state :corp (refresh chum) 0)
         (run-continue state)
+        (core/rez state :corp icewall)
         (changes-val-macro -3 (count (:hand (get-runner)))
                            "3 Damage from Ice Wall ending the run"
                            (card-subroutine state :corp (refresh icewall) 0)))))
