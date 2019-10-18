@@ -317,6 +317,41 @@
       (take-credits state :corp)
       (is (not (has-subtype? (refresh ch) "Barrier")) "Chimera does not have Barrier"))))
 
+(deftest ^:test-refresh/focus chum
+  ;; Chum
+  (testing "+2 strength"
+    (do-game
+      (new-game {:corp {:deck ["Chum" "Enigma" "Ice Wall"]}
+                 :runner {:deck ["Corroder"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Chum" "HQ")
+      (core/gain state :corp :credit 3)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [chum (get-ice state :hq 2)
+            icewall (get-ice state :hq 1)
+            enigma (get-ice state :hq 0)
+            corroder (get-program state 0)]
+        (core/rez state :corp chum)
+        (core/rez state :corp icewall)
+        (core/rez state :corp enigma)
+        (run-on state :hq)
+        (is (= 4 (:current-strength (refresh chum))) "Chum is at 4 strength")
+        (card-subroutine state :corp (refresh chum) 0)
+        (is (= 4 (:current-strength (refresh chum))) "Chum stays at 4 strength")
+        (is (= 1 (:current-strength (refresh icewall))) "Ice Wall still at 1 strength")
+        (run-continue state)
+        (is (= 3 (:current-strength (refresh icewall))) "Ice Wall now at 3 strength")
+        (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength before encounter")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+        (run-continue state)
+        (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
+        (run-jack-out state)
+        (run-on state :hq)
+        (is (= 4 (:current-strength (refresh chum))) "Chum stays at 4 strength")))))
+
+
 (deftest congratulations
   ;; Congratulations!
   (do-game

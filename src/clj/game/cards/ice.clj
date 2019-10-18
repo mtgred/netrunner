@@ -5,6 +5,7 @@
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
             [game.core.toasts :refer [toast]]
+            [game.core.effects :refer :all]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
@@ -738,10 +739,18 @@
    "Chum"
    {:subroutines [{:label "Give +2 strength to next ICE Runner encounters"
                    :req (req this-server)
-                   :prompt "Select the ICE the Runner is encountering"
-                   :choices {:req #(and (rezzed? %) (ice? %))}
-                   :msg (msg "give " (:title target) " +2 strength")
-                   :effect (effect (pump-ice target 2))}
+                   :msg (msg "give +2 strength to the next ICE the Runner encounters")
+                   :effect (effect (register-events card [{:event :approach-ice ;should be encounter-ice but Corps are not hitting "No action" often
+                                                           :duration :end-of-run
+                                                           :req (req (not= current-ice card)) ; current-ice not chum
+                                                           :effect (req (let [target-ice current-ice]
+                                                                          (register-floating-effect state side card
+                                                                                                    {:type :ice-strength
+                                                                                                     :duration :end-of-run
+                                                                                                     :value 2
+                                                                                                     :req (req (= target target-ice))})
+                                                                          (update-all-ice state side)
+                                                                          (unregister-floating-events-for-card state side card :end-of-run)))}]))}
                   (do-net-damage 3)]}
 
    "Clairvoyant Monitor"
