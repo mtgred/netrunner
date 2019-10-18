@@ -2297,8 +2297,7 @@
          {:label "Add 1 power counter"
           :effect (effect (add-counter card :power 1)
                           (system-msg "adds a power counter to Takobi"))}]
-     {:implementation "Adding power counter is manual"
-      :events [(assoc add-counter-abi
+     {:events [(assoc add-counter-abi
                       :event :pass-ice
                       :req (req (empty? (remove :broken (:subroutines current-ice)))))]
       :abilities [add-counter-abi
