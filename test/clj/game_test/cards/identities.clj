@@ -374,7 +374,15 @@
       (core/end-phase-12 state :runner nil)
       (let [credits (:credit (get-runner))]
         (click-card state :runner "Sure Gamble")
-        (is (= credits (:credit (get-runner))))))))
+        (is (= credits (:credit (get-runner)))))))
+  (testing "Spec Work cannot be installed facedown #4574"
+    (do-game
+      (new-game {:runner {:id "Apex: Invasive Predator"
+                          :deck ["Spec Work" "Sure Gamble" "Cache"]}})
+      (take-credits state :corp)
+      (core/end-phase-12 state :runner nil)
+      (click-card state :runner "Spec Work")
+      (is (= 1 (count (get-runner-facedown state))) "Spec Work installed facedown"))))
 
 (deftest asa-group-security-through-vigilance
   (testing "Asa Group should not allow installing operations"
