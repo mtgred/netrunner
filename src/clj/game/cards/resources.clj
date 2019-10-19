@@ -80,6 +80,7 @@
   (let [selector (resolve f)
         descriptor (str f)]
     {:abilities [{:req (req (and current-ice
+                                 (rezzed? current-ice)
                                  (not (:broken (selector (:subroutines current-ice))))))
                   :cost [:trash]
                   :label (str "Break the " descriptor " subroutine")
