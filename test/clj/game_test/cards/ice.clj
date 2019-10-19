@@ -38,6 +38,40 @@
       (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck"))
     (is (zero? (count (get-in @state [:corp :servers :hq :ices]))) "Aimor trashed")))
 
+(deftest anansi
+  ;; Anansi
+  (testing "3 net damage when bypassing"
+    (do-game
+      (new-game {:corp {:deck ["Anansi"]}
+                 :runner {:deck [(qty "Sure Gamble" 4) "Inside Job"]}})
+      (play-from-hand state :corp "Anansi" "HQ")
+      (core/gain state :corp :credit 8)
+      (take-credits state :corp)
+      (let [anansi (get-ice state :hq 0)]
+        (play-from-hand state :runner "Inside Job")
+        (click-prompt state :runner "HQ")
+        (core/rez state :corp anansi)
+        (changes-val-macro -3 (count (:hand (get-runner)))
+                           "3 net damage from passing Anansi"
+                           (run-continue state)))))
+  (testing "no net damage when breaking all subs"
+    (do-game
+      (new-game {:corp {:deck ["Anansi"]}
+                 :runner {:deck [(qty "Sure Gamble" 4) "Mongoose"]}})
+      (play-from-hand state :corp "Anansi" "HQ")
+      (core/gain state :corp :credit 8)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mongoose")
+      (core/gain state :runner :credit 7)
+      (let [anansi (get-ice state :hq 0)
+            mongoose (get-program state 0)]
+        (run-on state :hq)
+        (core/rez state :corp anansi)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mongoose)})
+        (changes-val-macro 0 (count (:hand (get-runner)))
+                           "3 net damage from passing Anansi"
+                           (run-continue state))))))
+
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (testing "Basic test of subroutine"

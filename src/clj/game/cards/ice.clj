@@ -376,8 +376,7 @@
                                                                                (clear-wait-prompt :corp)
                                                                                (draw eid 1 nil))}}}
                                                      card nil))}]
-     {:implementation "Encounter-ends effect is manually triggered."
-      :subroutines [{:msg "rearrange the top 5 cards of R&D"
+     {:subroutines [{:msg "rearrange the top 5 cards of R&D"
                      :async true
                      :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
                                   (let [from (take 5 (:deck corp))]
@@ -392,7 +391,12 @@
                      :effect (req (wait-for (resolve-ability state side corp-draw card nil)
                                             (continue-ability state :runner runner-draw card nil)))}
                     (do-net-damage 1)]
-      :abilities [(do-net-damage 3)]})
+      :events (let [damage-event (assoc (do-net-damage 3)
+                                        :req (req (and (= target card)
+                                                       (not-empty (remove :broken (:subroutines target))))))]
+                [(assoc damage-event :event :pass-ice)
+                 (assoc damage-event :event :jack-out)
+                 (assoc damage-event :event :run-ends)])})
 
    "Archangel"
    {:flags {:rd-reveal (req true)}
