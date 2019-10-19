@@ -1555,6 +1555,7 @@
                                    {:card card
                                     :replace-access
                                     {:mandatory true
+                                     :async true
                                      :effect (req (when (empty? (get-cards-to-access state))
                                                     (access-card state side eid (nth (:deck corp) (dec (str->int t))) "an unseen card")))}})))}}}
                   card nil))}]}
