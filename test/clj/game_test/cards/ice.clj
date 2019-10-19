@@ -401,7 +401,27 @@
         (run-continue state)
         (changes-val-macro -3 (count (:hand (get-runner)))
                            "3 Damage from pressing jack out button after encountering Pachinko"
-                           (run-jack-out state))))))
+                           (run-jack-out state)))))
+  (testing "Net damage from ice ending the run"
+    (do-game
+      (new-game {:corp {:deck ["Chum" "Ice Wall"]}
+                 :runner {:deck ["Corroder" (qty "Sure Gamble" 4)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Chum" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [chum (get-ice state :hq 1)
+            icewall (get-ice state :hq 0)
+            corroder (get-program state 0)]
+        (run-on state :hq)
+        (core/rez state :corp chum)
+        (card-subroutine state :corp (refresh chum) 0)
+        (run-continue state)
+        (core/rez state :corp icewall)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+        (changes-val-macro 0 (count (:hand (get-runner)))
+                           "No Damage from Ice Wall ending the run"
+                           (run-continue state))))))
 
 (deftest congratulations
   ;; Congratulations!

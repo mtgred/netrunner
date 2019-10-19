@@ -745,7 +745,7 @@
                                                                   (not= current-ice card))) ; current-ice not chum
                                                    :effect (req (let [target-ice current-ice
                                                                       damage-event (merge (do-net-damage 3) {:duration :end-of-run
-                                                                                                             :req (req (not-empty (remove :broken (:subroutines target-ice))))})]
+                                                                                                             :req (req (not-empty (remove :broken (:subroutines (get-card state target-ice)))))})]
                                                                   (register-floating-effect state side card
                                                                                             {:type :ice-strength
                                                                                              :duration :end-of-run
