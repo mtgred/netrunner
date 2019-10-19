@@ -192,7 +192,8 @@
                                  (:runner-phase-12 @state)))
                   :async true
                   :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:facedown true}))}]
-     {:events [(assoc ability :event :runner-turn-begins)]
+     {:implementation "Install restriction not enforced"
+      :events [(assoc ability :event :runner-turn-begins)]
       :flags {:runner-phase-12 (req true)}
       :abilities [ability]})
 
