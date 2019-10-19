@@ -1558,9 +1558,7 @@
                                                                  :effect (req (let [target-ice current-ice]
                                                                                 (unregister-floating-events-for-card state side card :end-of-run)
                                                                                 (doseq [sub (take 3 (:subroutines current-ice))]
-                                                                                  (dont-resolve-subroutine! state (get-card state current-ice) sub))
-                                                                                ))
-                                                                 }]
+                                                                                  (dont-resolve-subroutine! state (get-card state current-ice) sub))))}]
                                               (register-events state side card [(assoc driver-effect :event :approach-ice) ;should be encounter-ice but Corps are not hitting "No action" often
                                                                                 (assoc driver-effect :event :rez)])))}]})
 
