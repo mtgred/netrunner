@@ -1051,7 +1051,19 @@
       (is (= 2 (count (:hand (get-runner)))) "Installed Corroder and Cache.")
       (play-from-hand state :runner "Fan Site")
       (is (empty? (:prompt (get-corp))) "No Hayley wait prompt if not first install this turn.")
-      (is (empty? (:prompt (get-runner))) "No Hayley prompt if not first install this turn."))))
+      (is (empty? (:prompt (get-runner))) "No Hayley prompt if not first install this turn.")))
+  (testing "Facedown installs do not prompt for Hayley install"
+    (do-game
+      (new-game {:runner {:id "Hayley Kaplan: Universal Scholar"
+                          :hand ["Hunting Grounds"]
+                          :deck ["Sure Gamble" "Astrolabe" "Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (click-prompt state :runner "Carry on!")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner (get-resource state 0) 1)
+      (is (empty? (:prompt (get-corp))) "No Hayley wait prompt for facedown installs."))))
 
 (deftest hyoubu-institute-absolute-clarity
   (testing "ID abilities"

@@ -568,7 +568,8 @@
    {:events [{:event :runner-install
               :silent (req (not (and (first-event? state side :runner-install)
                                      (some #(is-type? % (:type target)) (:hand runner)))))
-              :req (req (first-event? state side :runner-install))
+              :req (req (and (first-event? state side :runner-install)
+                             (not (:facedown target))))
               :once :per-turn
               :async true
               :effect
