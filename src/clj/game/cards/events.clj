@@ -22,12 +22,12 @@
    :events [{:event :pass-ice
              :once :per-run
              :async true
-             :msg (msg "trash " (card-str state current-ice))
+             :msg (msg "trash " (card-str state target))
              :req (req (and run
-                            (has-subtype? current-ice subtype)
-                            (rezzed? current-ice)
-                            (empty? (remove :broken (:subroutines current-ice)))))
-             :effect (effect (trash eid current-ice nil))}]})
+                            (has-subtype? target subtype)
+                            (rezzed? target)
+                            (empty? (remove :broken (:subroutines target)))))
+             :effect (effect (trash eid target nil))}]})
 
 ;; Card definitions
 (def card-definitions
