@@ -1,13 +1,11 @@
 (ns tasks.nrdb
   "NetrunnerDB import tasks"
   (:require [org.httpkit.client :as http]
-            [web.db :refer [db] :as webdb]
+            [web.db :as webdb]
             [monger.collection :as mc]
             [monger.operators :refer [$exists $inc $currentDate]]
             [throttler.core :refer [throttle-fn]]
-            [clojure.string :as string]
             [clojure.java.io :as io]
-            [clojure.pprint :as pprint]
             [clojure.edn :as edn]))
 
 (def ^:const base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-cards-edn/master/edn/raw_data.edn")
@@ -17,18 +15,22 @@
 (defn download-edn-data
   [localpath]
   (if localpath
-    ((comp edn/read-string slurp) (str localpath "edn/raw_data.edn"))
+    ((comp edn/read-string slurp) (str localpath "/edn/raw_data.edn"))
     (let [{:keys [status body error] :as resp} @(http/get base-url)]
       (cond
         error (throw (Exception. (str "Failed to download file " error)))
         (= 200 status) (edn/read-string body)
         :else (throw (Exception. (str "Failed to download file, status " status)))))))
 
+(defn write-to-file
+  [filename data]
+  (io/make-parents filename)
+  (spit filename data))
+
 (defn replace-collection
-  "Remove existing collection and insert new data"
-  [collection data]
-  (mc/remove db collection)
-  (mc/insert-batch db collection data))
+  [col data]
+  (mc/remove webdb/db col)
+  (mc/insert-batch webdb/db col data))
 
 (defn- card-image-file
   "Returns the path to a card's image as a File"
@@ -56,43 +58,44 @@
   (let [img-dir (io/file "resources" "public" "img" "cards")]
     (io/make-parents img-dir)
     (let [missing-cards (remove #(.exists (card-image-file %)) cards)
+          total (count cards)
           missing (count missing-cards)]
-      (when (pos? missing)
-        (println "Downloading art for" missing "cards...")
-        (let [futures (doall (map download-card-image-throttled missing-cards))]
-          (doseq [resp futures]
-            ; wait for all the GETs to complete
-            (:status @resp)))
-        (println "Finished downloading card art")))))
+      (if (pos? missing)
+        (do
+          (println "Have art for" (str (- total missing) "/" total) "cards. Downloading" missing "missing images...")
+          (let [futures (doall (map download-card-image-throttled missing-cards))]
+            (doseq [resp futures]
+              ; wait for all the GETs to complete
+              (:status @resp)))
+          (println "Finished downloading card art"))
+        (println "All" total "card images exist, skipping download")))))
 
 (defn fetch-data
-  "Find the NRDB card edn files and import them."
-  [localpath download-images]
-  (let [data (download-edn-data localpath)
-        cards (:cards data)]
-
-    (println "Writing cards")
-    (let [filename (str "data/cards.edn")]
-      (io/make-parents filename)
-      (spit filename cards))
-    (replace-collection "cards" cards)
-
-    (doseq [[k v] data
-            :when (not= "cards" (name k))
-            :let [collection (name k)
-                  filename (str "data/" collection ".edn")]]
-      (println (str "Writing " filename))
-      (io/make-parents filename)
-      (spit filename v)
-      (replace-collection collection v))
-    (when download-images
-      (download-card-images cards))
-    data))
+  [{:keys [card-images db local]}]
+  (let [edn (download-edn-data local)]
+    (doseq [[k data] edn
+            :let [filename (str "data/" (name k) ".edn")]]
+      (write-to-file filename data)
+      (println (str "Wrote data/" filename ".edn to disk")))
+    (when db
+      (webdb/connect)
+      (try
+        (doseq [[k data] edn
+                :let [col (name k)]]
+          (replace-collection col data)
+          (println (str "Imported " col " into database")))
+        (finally (webdb/disconnect))))
+    (println (count (:cycles edn)) "cycles imported")
+    (println (count (:sets edn)) "sets imported")
+    (println (count (:mwls edn)) "MWL versions imported")
+    (println (count (:cards edn)) "cards imported")
+    (when card-images
+      (download-card-images (:cards edn)))))
 
 (defn update-config
   "Store import meta info in the db"
   []
-  (mc/update db "config"
+  (mc/update webdb/db "config"
              {:cards-version {$exists true}}
              {$inc {:cards-version 1}
               $currentDate {:last-updated true}}

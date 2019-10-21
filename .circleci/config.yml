@@ -4,7 +4,6 @@ jobs:
   build:
     docker:
       - image: circleci/clojure:lein-2.7.1
-      - image: mongo:3.4.4
     environment:
       LEIN_ROOT: nbd
       JVM_OPTS: -Xmx3200m
@@ -18,4 +17,4 @@ jobs:
             - ~/project/.m2
             - ~/project/.lein
           key: lein-deps-{{ checksum "project.clj" }}
-      - run: lein do fetch --no-card-images, eftest
+      - run: lein do fetch --no-db --no-card-images, eftest
