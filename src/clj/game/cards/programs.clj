@@ -222,7 +222,9 @@
                    {:label (str "Derez " ice-type " being encountered")
                     :cost [:credit 2 :return-to-hand]
                     :req (req (and (rezzed? current-ice)
-                                   (has-subtype? current-ice ice-type)))
+                                   (has-subtype? current-ice ice-type)
+                                   (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                   (empty? (remove :broken (:subroutines current-ice)))))
                     :msg (msg "derez " (:title current-ice))
                     :effect (effect (derez current-ice))}]})))
 
@@ -344,13 +346,15 @@
 
    "Amina"
    (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
-                                 (strength-pump 2 3)
-                                 {:once :per-turn
-                                  :label "Corp loses 1 [Credits]"
-                                  :req (req (and (has-subtype? current-ice "Code Gate")
-                                                 (rezzed? current-ice)))
-                                  :msg (msg "make the Corp lose 1 [Credits]")
-                                  :effect (effect (lose-credits :corp 1))}]})
+                                 (strength-pump 2 3)]
+                     :events [{:once :per-turn
+                               :label "Corp loses 1 [Credits]"
+                               :msg (msg "make the Corp lose 1 [Credits]")
+                               :effect (effect (lose-credits :corp 1))
+                               :event :pass-ice
+                               :req (req (and (rezzed? current-ice)
+                                              (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                              (empty? (remove :broken (:subroutines current-ice)))))}]})
 
    "Analog Dreamers"
    {:abilities [{:cost [:click 1]
@@ -557,13 +561,15 @@
 
    "Bukhgalter"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
-                                 (strength-pump 1 1)
-                                 {:once :per-turn
-                                  :label "Gain 2 [Credits]"
-                                  :req (req (and (has-subtype? current-ice "Sentry")
-                                                 (rezzed? current-ice)))
-                                  :msg (msg "gain 2 [Credits]")
-                                  :effect (effect (gain-credits :runner 2))}]})
+                                 (strength-pump 1 1)]
+                     :events [{:once :per-turn
+                               :label "Gain 2 [Credits]"
+                               :msg (msg "gain 2 [Credits]")
+                               :effect (effect (gain-credits :runner 2))
+                               :event :pass-ice
+                               :req (req (and (rezzed? current-ice)
+                                              (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                              (empty? (remove :broken (:subroutines current-ice)))))}]})
 
    "Cache"
    {:abilities [{:cost [:virus 1]
@@ -1538,9 +1544,23 @@
                                :effect (effect (update! (assoc-in card [:counter :power] 0)))}]})
 
    "Mass-Driver"
-   (auto-icebreaker {:implementation "Prevention of subroutine resolution on next ICE is manual"
-                     :abilities [(break-sub 2 1 "Code Gate")
-                                 (strength-pump 1 1)]})
+   (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
+                                 (strength-pump 1 1)]
+                     :events [{:event :pass-ice
+                               :msg (msg "prevent the first 3 subroutines from resolving on the next encountered ice")
+                               :req (req (and (rezzed? current-ice)
+                                              (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                              (empty? (remove :broken (:subroutines current-ice)))))
+                               :effect (req (let [broken-ice current-ice
+                                                  driver-effect {:duration :end-of-run
+                                                                 :req (req (and (rezzed? current-ice)
+                                                                                (not= current-ice broken-ice))) ; current-ice not the one Mass-Driver was used on
+                                                                 :effect (req (let [target-ice current-ice]
+                                                                                (unregister-floating-events-for-card state side card :end-of-run)
+                                                                                (doseq [sub (take 3 (:subroutines current-ice))]
+                                                                                  (dont-resolve-subroutine! state (get-card state current-ice) sub))))}]
+                                              (register-events state side card [(assoc driver-effect :event :approach-ice) ;should be encounter-ice but Corps are not hitting "No action" often
+                                                                                (assoc driver-effect :event :rez)])))}]})
 
    "Maven"
    {:abilities [(break-sub 2 1)]
@@ -1641,14 +1661,19 @@
                  :effect (effect (damage-prevent :net 1))}]}
 
    "Nfr"
-   {:implementation "Adding power counter is manual"
-    :abilities [{:label "Place 1 power counter on Nfr"
-                 :msg "place 1 power counter on it"
-                 :ability-type :manual-state
-                 :effect (effect (add-counter card :power 1)
-                                 (update-breaker-strength card))}
-                (break-sub 1 1 "Barrier")]
-    :strength-bonus (req (get-counters card :power))}
+   (let [add-token-abi {:label "Place 1 power counter on Nfr"
+                        :msg "place 1 power counter on it"
+                        :ability-type :manual-state
+                        :effect (effect (add-counter card :power 1)
+                                        (update-breaker-strength card))}]
+     {:abilities [add-token-abi
+                  (break-sub 1 1 "Barrier")]
+      :strength-bonus (req (get-counters card :power))
+      :events [(assoc add-token-abi
+                      :event :pass-ice
+                      :req (req (and (rezzed? current-ice)
+                                     (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                     (empty? (remove :broken (:subroutines current-ice))))))]})
 
    "Ninja"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
@@ -2233,14 +2258,19 @@
     :strength-bonus (req (get-counters card :power))}
 
    "Sūnya"
-   {:implementation "Adding power counter is manual"
-    :abilities [{:label "Place 1 power counter on Sūnya"
-                 :ability-type :manual-state
-                 :effect (effect (add-counter card :power 1)
-                                 (system-msg (str "places 1 power counter on Sūnya"))
-                                 (update-breaker-strength card))}
-                (break-sub 2 1 "Sentry")]
-    :strength-bonus (req (get-counters card :power))}
+   (let [add-token-abi {:label "Place 1 power counter on Sūnya"
+                        :msg "place 1 power counter on it"
+                        :ability-type :manual-state
+                        :effect (effect (add-counter card :power 1)
+                                        (update-breaker-strength card))}]
+     {:abilities [add-token-abi
+                  (break-sub 2 1 "Sentry")]
+      :strength-bonus (req (get-counters card :power))
+      :events [(assoc add-token-abi
+                      :event :pass-ice
+                      :req (req (and (rezzed? current-ice)
+                                     (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
+                                     (empty? (remove :broken (:subroutines current-ice))))))]})
 
    "Surfer"
    (letfn [(surf [state cice]
@@ -2277,21 +2307,25 @@
                                  (strength-pump 1 7 :end-of-encounter {:label "add 7 strength (using 1 stealth [Credits])"})]})
 
    "Takobi"
-   {:implementation "Adding power counter is manual"
-    :abilities [{:label "Add 1 power counter"
-                 :effect (effect (add-counter card :power 1)
-                                 (system-msg "adds a power counter to Takobi"))}
-                {:req (req (and (:run @state)
-                                (rezzed? current-ice)
-                                (>= (get-counters card :power) 2)))
-                 :cost [:power 2]
-                 :label "Increase non-AI icebreaker strength by +3 until end of encounter"
-                 :prompt "Choose an installed non-AI icebreaker"
-                 :choices {:req #(and (has-subtype? % "Icebreaker")
-                                      (not (has-subtype? % "AI"))
-                                      (installed? %))}
-                 :msg (msg "add +3 strength to " (:title target) " for remainder of encounter")
-                 :effect (effect (pump target 3))}]}
+   (let [add-counter-abi
+         {:label "Add 1 power counter"
+          :effect (effect (add-counter card :power 1)
+                          (system-msg "adds a power counter to Takobi"))}]
+     {:events [(assoc add-counter-abi
+                      :event :pass-ice
+                      :req (req (empty? (remove :broken (:subroutines current-ice)))))]
+      :abilities [add-counter-abi
+                  {:req (req (and (:run @state)
+                                  (rezzed? current-ice)
+                                  (>= (get-counters card :power) 2)))
+                   :cost [:power 2]
+                   :label "Increase non-AI icebreaker strength by +3 until end of encounter"
+                   :prompt "Choose an installed non-AI icebreaker"
+                   :choices {:req #(and (has-subtype? % "Icebreaker")
+                                        (not (has-subtype? % "AI"))
+                                        (installed? %))}
+                   :msg (msg "add +3 strength to " (:title target) " for remainder of encounter")
+                   :effect (effect (pump target 3))}]})
 
    "Tapwrm"
    (let [ability {:label "Gain [Credits] (start of turn)"

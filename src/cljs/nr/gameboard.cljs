@@ -609,9 +609,12 @@
        (fn [i sub]
          [:span {:style {:display "block"}
                  :key i}
-          [:span (when (:broken sub)
-                   {:class :disabled
-                    :style {:font-style :italic}})
+          [:span (cond (:broken sub)
+                       {:class :disabled
+                        :style {:font-style :italic}}
+                       (= false (:resolve sub))
+                       {:class :dont-resolve
+                        :style {:text-decoration :line-through}})
            (render-icons (str " [Subroutine]" " " (:label sub)))]
           [:span.float-right
            (cond (:broken sub) banned-span
@@ -675,9 +678,12 @@
              [:div {:key i
                     :on-click #(send-command "subroutine" {:card card
                                                            :subroutine i})}
-              [:span (when (:broken sub)
-                       {:class :disabled
-                        :style {:font-style :italic}})
+              [:span (cond (:broken sub)
+                           {:class :disabled
+                            :style {:font-style :italic}}
+                           (= false (:resolve sub))
+                           {:class :dont-resolve
+                            :style {:text-decoration :line-through}})
                (render-icons (str " [Subroutine]" " " (:label sub)))]
               [:span.float-right
                (cond (:broken sub) banned-span

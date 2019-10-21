@@ -408,7 +408,7 @@
                 (dotimes [n times-pump]
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
                 (doseq [sub (remove :broken (:subroutines current-ice))]
-                  (break-subroutine! state (get-card state current-ice) sub)
+                  (break-subroutine! state (get-card state current-ice) sub card)
                   (resolve-ability state side (make-eid state {:source card :source-type :ability})
                                    (:additional-ability break-ability) (get-card state card) nil))
                 (system-msg state side (if (pos? times-pump)

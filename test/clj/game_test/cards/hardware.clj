@@ -282,6 +282,27 @@
       (core/rez state :corp quan)
       (is (= 4 (:credit (get-corp))) "Paid 3c instead of 1c to rez Quandary"))))
 
+(deftest cyberdelia
+  ;; Cyberdelia
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Corroder" "Cyberdelia"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Cyberdelia")
+      (let [corr (get-program state 0)
+            icew (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp (refresh icew))
+        (card-ability state :runner (refresh corr) 0)
+        (click-prompt state :runner "End the run")
+        (changes-val-macro 1 (:credit (get-runner))
+                           "Got 1 credit from Cyberdelia"
+                           (run-continue state))))))
+
 (deftest cyberfeeder
   ;; Cyberfeeder
   (testing "Pay-credits prompt on install"
@@ -810,14 +831,17 @@
   (testing "Single ice"
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}
-                 :runner {:deck ["Hippo"]}})
+                 :runner {:deck ["Corroder" "Hippo"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
       (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
       (is (not-empty (get-hardware state)) "Hippo installed")
       (is (= 1 (count (get-ice state :hq))) "Ice Wall installed")
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
       (card-ability state :runner (get-hardware state 0) 0)
       (is (empty? (get-ice state :hq)) "Ice Wall removed")
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall trashed")
@@ -826,16 +850,20 @@
   (testing "Multiple ice"
     (do-game
       (new-game {:corp {:deck ["Ice Wall" "Enigma"]}
-                 :runner {:deck ["Hippo"]}})
+                 :runner {:deck ["Corroder" "Hippo"]}})
       (play-from-hand state :corp "Enigma" "HQ")
       (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
       (take-credits state :corp)
       (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
       (is (not-empty (get-hardware state)) "Hippo installed")
       (is (= 2 (count (get-ice state :hq))) "2 ice installed")
       (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall outermost")
       (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma innermost")
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
       (card-ability state :runner (get-hardware state 0) 0)
       (is (= 1 (count (get-ice state :hq))) "Ice removed")
       (is (= 1 (count (:discard (get-corp)))) "Ice trashed")

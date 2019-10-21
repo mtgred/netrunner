@@ -62,6 +62,15 @@
                 (remove #(= duration (:duration %)))
                 (into [])))))
 
+(defn unregister-floating-events-for-card
+  "Removes all event handlers with a non-persistent duration on a single card"
+  [state side card duration]
+  (swap! state assoc :events
+         (->> (:events @state)
+              (remove #(and (same-card? card (:card %))
+                            (= duration (:duration %))))
+              (into []))))
+
 (defn card-for-ability
   [state ability]
   (if (= :while-installed (:duration ability))

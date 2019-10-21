@@ -266,11 +266,13 @@
                                       :value [:credit 2]})))}]}
 
    "Cyberdelia"
-   {:implementation "Credit gain is manually triggered."
-    :in-play [:memory 1]
-    :abilities [{:msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
-                 :once :per-turn
-                 :effect (effect (gain-credits 1))}]}
+   {:in-play [:memory 1]
+    :events [{:once :per-turn
+              :msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
+              :effect (effect (gain-credits 1))
+              :event :pass-ice
+              :req (req (and (rezzed? current-ice)
+                             (empty? (remove :broken (:subroutines current-ice)))))}]}
 
    "Cyberfeeder"
    {:recurring 1
@@ -699,10 +701,12 @@
                                                     (effect-completed state side eid)))}}}]}
 
    "Hippo"
-   {:implementation "Subroutine and first encounter requirements not enforced"
+   {:implementation "First encounter requirements not enforced"
     :abilities [{:label "Remove Hippo from the game: trash outermost piece of ICE if all subroutines were broken"
                  :req (req (and run
-                                (pos? (count run-ices))))
+                                (pos? (count run-ices))
+                                (rezzed? current-ice)
+                                (empty? (remove :broken (:subroutines current-ice)))))
                  :async true
                  :effect (req (let [ice (last run-ices)]
                                 (system-msg

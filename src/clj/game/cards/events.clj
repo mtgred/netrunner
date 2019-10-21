@@ -14,21 +14,20 @@
 
 (defn- cutlery
   [subtype]
-  {:implementation "Ice trash is manual"
-   :async true
+  {:async true
    :makes-run true
    :prompt "Choose a server:"
    :choices (req runnable-servers)
-   :effect (effect (toast "Click this card to trash the passed ice")
-                   (make-run eid target nil card))
-   :abilities [{:label (str "Trash " subtype " ice")
-                :once :per-run
-                :req (req (and run
-                               (has-subtype? (nth run-ices run-position) subtype)
-                               (rezzed? (nth run-ices run-position))))
-                :async true
-                :msg (msg "trash " (card-str state (nth run-ices run-position)))
-                :effect (effect (trash eid (nth run-ices run-position) nil))}]})
+   :effect (effect (make-run eid target nil card))
+   :events [{:event :pass-ice
+             :once :per-run
+             :async true
+             :msg (msg "trash " (card-str state target))
+             :req (req (and run
+                            (has-subtype? target subtype)
+                            (rezzed? target)
+                            (empty? (remove :broken (:subroutines target)))))
+             :effect (effect (trash eid target nil))}]})
 
 ;; Card definitions
 (def card-definitions

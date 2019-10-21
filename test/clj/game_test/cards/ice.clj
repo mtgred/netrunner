@@ -38,6 +38,40 @@
       (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck"))
     (is (zero? (count (get-in @state [:corp :servers :hq :ices]))) "Aimor trashed")))
 
+(deftest anansi
+  ;; Anansi
+  (testing "3 net damage when bypassing"
+    (do-game
+      (new-game {:corp {:deck ["Anansi"]}
+                 :runner {:deck [(qty "Sure Gamble" 4) "Inside Job"]}})
+      (play-from-hand state :corp "Anansi" "HQ")
+      (core/gain state :corp :credit 8)
+      (take-credits state :corp)
+      (let [anansi (get-ice state :hq 0)]
+        (play-from-hand state :runner "Inside Job")
+        (click-prompt state :runner "HQ")
+        (core/rez state :corp anansi)
+        (changes-val-macro -3 (count (:hand (get-runner)))
+                           "3 net damage from passing Anansi"
+                           (run-continue state)))))
+  (testing "no net damage when breaking all subs"
+    (do-game
+      (new-game {:corp {:deck ["Anansi"]}
+                 :runner {:deck [(qty "Sure Gamble" 4) "Mongoose"]}})
+      (play-from-hand state :corp "Anansi" "HQ")
+      (core/gain state :corp :credit 8)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mongoose")
+      (core/gain state :runner :credit 7)
+      (let [anansi (get-ice state :hq 0)
+            mongoose (get-program state 0)]
+        (run-on state :hq)
+        (core/rez state :corp anansi)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mongoose)})
+        (changes-val-macro 0 (count (:hand (get-runner)))
+                           "3 net damage from passing Anansi"
+                           (run-continue state))))))
+
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (testing "Basic test of subroutine"
@@ -317,6 +351,112 @@
       (take-credits state :corp)
       (is (not (has-subtype? (refresh ch) "Barrier")) "Chimera does not have Barrier"))))
 
+(deftest chum
+  ;; Chum
+  (testing "+2 strength"
+    (do-game
+      (new-game {:corp {:deck ["Chum" (qty "Enigma" 2) "Ice Wall"]}
+                 :runner {:deck ["Corroder"]}})
+      (core/gain state :corp :click 1 :credit 6)
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Chum" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [chum (get-ice state :hq 3)
+            unrezzed-enigma (get-ice state :hq 2)
+            icewall (get-ice state :hq 1)
+            enigma (get-ice state :hq 0)
+            corroder (get-program state 0)]
+        (core/rez state :corp chum)
+        (core/rez state :corp icewall)
+        (core/rez state :corp enigma)
+        (run-on state :hq)
+        (is (= 4 (:current-strength (refresh chum))) "Chum is at 4 strength")
+        (card-subroutine state :corp (refresh chum) 0)
+        (is (= 4 (:current-strength (refresh chum))) "Chum stays at 4 strength")
+        (is (= 1 (:current-strength (refresh icewall))) "Ice Wall still at 1 strength")
+        (run-continue state)
+        (is (= 1 (:current-strength (refresh icewall))) "Ice Wall still at 1 strength while passing unrezzed ice")
+        (run-continue state)
+        (is (= 3 (:current-strength (refresh icewall))) "Ice Wall now at 3 strength")
+        (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength before encounter")
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+        (run-continue state)
+        (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
+        (run-jack-out state)
+        (run-on state :hq)
+        (is (= 4 (:current-strength (refresh chum))) "Chum stays at 4 strength"))))
+  (testing "Net damage from ice ending the run"
+    (do-game
+      (new-game {:corp {:deck ["Chum" "Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Chum" "HQ")
+      (take-credits state :corp)
+      (let [chum (get-ice state :hq 1)
+            icewall (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp chum)
+        (card-subroutine state :corp (refresh chum) 0)
+        (run-continue state)
+        (core/rez state :corp icewall)
+        (changes-val-macro -3 (count (:hand (get-runner)))
+                           "3 Damage from Ice Wall ending the run"
+                           (card-subroutine state :corp (refresh icewall) 0)))))
+  (testing "Net damage from passing without breaking"
+    (do-game
+      (new-game {:corp {:deck ["Chum" "Pachinko"]}})
+      (play-from-hand state :corp "Pachinko" "HQ")
+      (play-from-hand state :corp "Chum" "HQ")
+      (take-credits state :corp)
+      (let [chum (get-ice state :hq 1)
+            pachinko (get-ice state :hq 0)]
+        (core/rez state :corp chum)
+        (core/rez state :corp pachinko)
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh chum) 0)
+        (run-continue state)
+        (changes-val-macro -3 (count (:hand (get-runner)))
+                           "3 Damage from passing an unbroken ice"
+                           (run-continue state)))))
+  (testing "Net damage from Runner pressing jack out button after encountering next ice"
+    (do-game
+      (new-game {:corp {:deck ["Chum" "Pachinko"]}})
+      (play-from-hand state :corp "Pachinko" "HQ")
+      (play-from-hand state :corp "Chum" "HQ")
+      (take-credits state :corp)
+      (let [chum (get-ice state :hq 1)
+            pachinko (get-ice state :hq 0)]
+        (core/rez state :corp chum)
+        (core/rez state :corp pachinko)
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh chum) 0)
+        (run-continue state)
+        (changes-val-macro -3 (count (:hand (get-runner)))
+                           "3 Damage from pressing jack out button after encountering Pachinko"
+                           (run-jack-out state)))))
+  (testing "Net damage from ice ending the run"
+    (do-game
+      (new-game {:corp {:deck ["Chum" "Ice Wall"]}
+                 :runner {:deck ["Corroder" (qty "Sure Gamble" 4)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Chum" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [chum (get-ice state :hq 1)
+            icewall (get-ice state :hq 0)
+            corroder (get-program state 0)]
+        (run-on state :hq)
+        (core/rez state :corp chum)
+        (card-subroutine state :corp (refresh chum) 0)
+        (run-continue state)
+        (core/rez state :corp icewall)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+        (changes-val-macro 0 (count (:hand (get-runner)))
+                           "No Damage from Ice Wall ending the run"
+                           (run-continue state))))))
+
 (deftest congratulations
   ;; Congratulations!
   (do-game
@@ -454,18 +594,41 @@
 
 (deftest endless-eula
   ;; Endless EULA
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Endless EULA"]}
-               :runner {:credits 10}})
-    (play-from-hand state :corp "Endless EULA" "HQ")
-    (take-credits state :corp)
-    (let [eula (get-ice state :hq 0)
-          credits (:credit (get-runner))]
-      (core/rez state :corp eula)
-      (run-on state "HQ")
-      (card-side-ability state :runner eula 0)
-      (is (= (- credits 6) (:credit (get-runner))) "Runner should lose 6 credits"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Endless EULA"]}
+                 :runner {:credits 10}})
+      (play-from-hand state :corp "Endless EULA" "HQ")
+      (take-credits state :corp)
+      (let [eula (get-ice state :hq 0)
+            credits (:credit (get-runner))]
+        (core/rez state :corp eula)
+        (run-on state "HQ")
+        (card-side-ability state :runner eula 0)
+        (is (= (- credits 6) (:credit (get-runner))) "Runner should lose 6 credits"))))
+  (testing "Testing interaction with subs not resolving (Mass-Driver)"
+    (do-game
+      (new-game {:corp {:deck ["Enigma" "Endless EULA"]}
+                 :runner {:deck ["Mass-Driver"]}})
+      (play-from-hand state :corp "Endless EULA" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (core/gain state :corp :credit 20)
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Mass-Driver")
+      (let [eula (get-ice state :hq 0)
+            enigma (get-ice state :hq 1)
+            massdriver (get-program state 0)
+            credits (:credit (get-runner))]
+        (run-on state :hq)
+        (core/rez state :corp enigma)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh massdriver)})
+        (run-continue state)
+        (core/rez state :corp eula)
+        (changes-val-macro -3 (:credit (get-runner))
+                           "Runner should only lose 3 credits"
+                           (card-side-ability state :runner eula 0))))))
 
 (deftest enigma
   ;; Enigma - Force Runner to lose 1 click if able

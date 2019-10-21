@@ -5,6 +5,7 @@
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
             [game.core.toasts :refer [toast]]
+            [game.core.effects :refer :all]
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability when-let*]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
@@ -375,8 +376,7 @@
                                                                                (clear-wait-prompt :corp)
                                                                                (draw eid 1 nil))}}}
                                                      card nil))}]
-     {:implementation "Encounter-ends effect is manually triggered."
-      :subroutines [{:msg "rearrange the top 5 cards of R&D"
+     {:subroutines [{:msg "rearrange the top 5 cards of R&D"
                      :async true
                      :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
                                   (let [from (take 5 (:deck corp))]
@@ -391,7 +391,12 @@
                      :effect (req (wait-for (resolve-ability state side corp-draw card nil)
                                             (continue-ability state :runner runner-draw card nil)))}
                     (do-net-damage 1)]
-      :abilities [(do-net-damage 3)]})
+      :events (let [damage-event (assoc (do-net-damage 3)
+                                        :req (req (and (= target card)
+                                                       (not-empty (remove :broken (:subroutines target))))))]
+                [(assoc damage-event :event :pass-ice)
+                 (assoc damage-event :event :jack-out)
+                 (assoc damage-event :event :run-ends)])})
 
    "Archangel"
    {:flags {:rd-reveal (req true)}
@@ -738,11 +743,25 @@
    "Chum"
    {:subroutines [{:label "Give +2 strength to next ICE Runner encounters"
                    :req (req this-server)
-                   :prompt "Select the ICE the Runner is encountering"
-                   :choices {:req #(and (rezzed? %) (ice? %))}
-                   :msg (msg "give " (:title target) " +2 strength")
-                   :effect (effect (pump-ice target 2))}
-                  (do-net-damage 3)]}
+                   :msg (msg "give +2 strength to the next ICE the Runner encounters")
+                   :effect (req (let [chum-effect {:duration :end-of-run
+                                                   :req (req (and (rezzed? current-ice)
+                                                                  (not= current-ice card))) ; current-ice not chum
+                                                   :effect (req (let [target-ice current-ice
+                                                                      damage-event (merge (do-net-damage 3) {:duration :end-of-run
+                                                                                                             :req (req (not-empty (remove :broken (:subroutines (get-card state target-ice)))))})]
+                                                                  (register-floating-effect state side card
+                                                                                            {:type :ice-strength
+                                                                                             :duration :end-of-run
+                                                                                             :value 2
+                                                                                             :req (req (= target target-ice))})
+                                                                  (update-all-ice state side)
+                                                                  (unregister-floating-events-for-card state side card :end-of-run)
+                                                                  (register-events state side card [(merge damage-event {:event :pass-ice})
+                                                                                                    (merge damage-event {:event :jack-out})
+                                                                                                    (merge damage-event {:event :run-ends})])))}]
+                                  (register-events state side card [(assoc chum-effect :event :approach-ice) ;should be encounter-ice but Corps are not hitting "No action" often
+                                                                    (assoc chum-effect :event :rez)])))}]}
 
    "Clairvoyant Monitor"
    {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"
@@ -977,11 +996,11 @@
      {:subroutines [sub sub
                     sub sub
                     sub sub]
-      :runner-abilities [{:req (req (<= (count (remove :broken (:subroutines card)))
+      :runner-abilities [{:req (req (<= (count (remove #(or (:broken %) (= false (:resolve %))) (:subroutines card)))
                                         (total-available-credits state :runner eid card)))
                           :async true
                           :label "Pay for all unbroken subs"
-                          :effect (req (let [unbroken-subs (remove :broken (:subroutines card))
+                          :effect (req (let [unbroken-subs (remove #(or (:broken %) (= false (:resolve %))) (:subroutines card))
                                              eid (assoc eid :source-type :subroutine)]
                                          (->> unbroken-subs
                                               (reduce resolve-subroutine card)
