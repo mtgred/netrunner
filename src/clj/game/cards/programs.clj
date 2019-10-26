@@ -803,24 +803,12 @@
                      :choices (req servers)
                      :effect (effect (update! (assoc card :server-target target)))
                      :leave-play (effect (update! (dissoc card :server-target)))
-                     :abilities [(merge
-                                   (break-sub 1 1 "Code Gate")
-                                   {:req (req (if (:server-target card)
-                                                (#{(last (server->zone state (:server-target card)))} (first (:server run)))
-                                                true))
-                                    :effect (effect
-                                              (continue-ability
-                                                (break-sub nil 1 "Code Gate")
-                                                card nil))})
-                                 (merge
-                                   (strength-pump 1 1)
-                                   {:req (req (if (:server-target card)
-                                                (#{(last (server->zone state (:server-target card)))} (first (:server run)))
-                                                true))
-                                    :effect (effect
-                                              (continue-ability
-                                                (strength-pump nil 1)
-                                                card nil))})]})
+                     :abilities [(break-sub 1 1 "Code Gate" {:req (req (if (:server-target card)
+                                                                         (#{(last (server->zone state (:server-target card)))} (first (:server run)))
+                                                                         true))})
+                                 (strength-pump 1 1 :encounter {:req (req (if (:server-target card)
+                                                                            (#{(last (server->zone state (:server-target card)))} (first (:server run)))
+                                                                            true))})]})
 
    "D4v1d"
    (let [david-req (req (<= 5 (get-strength current-ice)))]
