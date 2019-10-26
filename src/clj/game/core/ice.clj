@@ -366,6 +366,7 @@
 (defn break-sub
   "Creates a break subroutine ability.
   If n = 0 then any number of subs are broken.
+  :label can be used to add a non-standard label to the ability
   :additional-ability is a non-async ability that is called after using the break ability.
   :req will be added to the standard checks for encountering a piece of ice and strengths of the ice and breaker.
   :ignore-strength can be used to skip the strength check."
