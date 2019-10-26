@@ -336,7 +336,7 @@
 
    "Alpha"
    (auto-icebreaker {:abilities [(break-sub 1 1 {:req (req (= (:position run) (count run-ices)))})
-                                 (strength-pump 1 1 :encounter {:req (req (= (:position run) (count run-ices)))})]})
+                                 (strength-pump 1 1 :end-of-encounter {:req (req (= (:position run) (count run-ices)))})]})
 
    "Amina"
    (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
@@ -800,9 +800,9 @@
                      :abilities [(break-sub 1 1 "Code Gate" {:req (req (if (:server-target card)
                                                                          (#{(last (server->zone state (:server-target card)))} (first (:server run)))
                                                                          true))})
-                                 (strength-pump 1 1 :encounter {:req (req (if (:server-target card)
-                                                                            (#{(last (server->zone state (:server-target card)))} (first (:server run)))
-                                                                            true))})]})
+                                 (strength-pump 1 1 :end-of-encounter {:req (req (if (:server-target card)
+                                                                                   (#{(last (server->zone state (:server-target card)))} (first (:server run)))
+                                                                                   true))})]})
 
    "D4v1d"
    (let [david-req (req (<= 5 (get-strength current-ice)))]
@@ -1676,7 +1676,7 @@
 
    "Omega"
    (auto-icebreaker {:abilities [(break-sub 1 1 {:req (req (= 1 (:position run)))})
-                                 (strength-pump 1 1 :encounter {:req (req (= 1 (:position run)))})]})
+                                 (strength-pump 1 1 :end-of-encounter {:req (req (= 1 (:position run)))})]})
 
    "Origami"
    {:effect (effect (gain :hand-size
