@@ -365,34 +365,37 @@
 (defn break-sub
   "Creates a break subroutine ability.
   If n = 0 then any number of subs are broken.
-  :additional-ability is a non-async ability that is called after using the break ability."
+  :additional-ability is a non-async ability that is called after using the break ability.
+  :req will be added to the standard checks for encountering a piece of ice and strengths of the ice and breaker.
+  :ignore-strength can be used to skip the strength check."
   ([cost n] (break-sub cost n nil nil))
   ([cost n subtype] (break-sub cost n subtype nil))
   ([cost n subtype args]
    (let [cost (if (number? cost) [:credit cost] cost)
-         args (assoc args :subtype subtype)]
+         subtype (or subtype "All")
+         args (assoc args :subtype subtype)
+         break-req (or (:req args) (req true))
+         ignore-strength (or (:ignore-strength args) false)]
      {:req (req (and current-ice
-                     (rezzed? current-ice)
+                     (if subtype
+                       (or (= subtype "All")
+                           (has-subtype? current-ice subtype)))
                      (seq (remove :broken (:subroutines current-ice)))
-                     ;; `req` returns a function, so we have to call it,
-                     ;; not just use the return value
-                     (if-let [break-req (:req args)]
-                       (break-req state side eid card targets)
-                       (and (<= (get-strength current-ice) (get-strength card))
-                            (if subtype
-                              (or (= subtype "All")
-                                  (has-subtype? current-ice subtype))
-                              true)))))
-      :additional-ability (:additional-ability args)
+                     (if ignore-strength
+                       true
+                       (<= (get-strength current-ice) (get-strength card)))
+                     (break-req state side eid card targets)))
+      :break-req break-req
       :break n
       :breaks subtype
       :break-cost cost
+      :additional-ability (:additional-ability args)
       :label (str (when cost (str (build-cost-label cost) ": "))
                   (or (:label args)
                       (str "break "
                            (when (< 1 n) "up to ")
                            (if (pos? n) n "any number of")
-                           (when subtype (str " " subtype))
+                           (when (not= "All" subtype) (str " " subtype))
                            (pluralize " subroutine" n))))
       :effect (effect (continue-ability
                         (break-subroutines current-ice card cost n args)
@@ -435,7 +438,10 @@
                                         (get-in @state [:run :ended]))
                             (get-card state current-ice))
               ;; match strength
-              pump-ability (some #(when (:pump %) %) abs)
+              can-pump (fn [ability]
+                         (when (:pump ability)
+                           ((:req ability) state side eid card nil)))
+              pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
               strength-diff (when (and current-ice
                                        (get-strength current-ice)
                                        (get-strength card))
@@ -448,11 +454,9 @@
                                 (repeat times-pump (:cost pump-ability)))
               ;; break all subs
               can-break (fn [ability]
-                          (if-let [subtype (:breaks ability)]
-                            (or (= subtype "All")
-                                (has-subtype? current-ice subtype))
-                            false))
-              break-ability (some #(when (can-break %) %) abs)
+                          (when (:break-req ability)
+                            ((:break-req ability) state side eid card nil)))
+              break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
               subs-broken-at-once (when break-ability
                                     (:break break-ability 1))
               unbroken-subs (count (remove :broken (:subroutines current-ice)))
