@@ -375,18 +375,20 @@
    (let [cost (if (number? cost) [:credit cost] cost)
          subtype (or subtype "All")
          args (assoc args :subtype subtype)
-         break-req (or (:req args) (req true))
+         break-req (req (and current-ice
+                             (rezzed? current-ice)
+                             (if subtype
+                               (or (= subtype "All")
+                                   (has-subtype? current-ice subtype)))
+                             (seq (remove :broken (:subroutines current-ice)))
+                             (if (:req args)
+                               ((:req args) state side eid card targets)
+                               true)))
          ignore-strength (or (:ignore-strength args) false)]
-     {:req (req (and current-ice
-                     (rezzed? current-ice)
-                     (if subtype
-                       (or (= subtype "All")
-                           (has-subtype? current-ice subtype)))
-                     (seq (remove :broken (:subroutines current-ice)))
+     {:req (req (and (break-req state side eid card targets)
                      (if ignore-strength
                        true
-                       (<= (get-strength current-ice) (get-strength card)))
-                     (break-req state side eid card targets)))
+                       (<= (get-strength current-ice) (get-strength card)))))
       :break-req break-req
       :break n
       :breaks subtype
