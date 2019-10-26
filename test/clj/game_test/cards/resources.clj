@@ -1395,7 +1395,20 @@
         (is (= 1 (count (:hosted (refresh fc)))) "MCA Informant hosted on FC")
         (take-credits state :corp)
         (card-ability state :runner fc 0)
-        (is (= 1 (count (:hosted (refresh fc)))) "MCA Informant still hosted on FC")))))
+        (is (= 1 (count (:hosted (refresh fc)))) "MCA Informant still hosted on FC"))))
+  (testing "remove hosted advancement tokens"
+    (do-game
+      (new-game {:corp {:deck ["Priority Requisition"]}
+                 :runner {:deck ["Film Critic"]}})
+      (play-from-hand state :corp "Priority Requisition" "New remote")
+      (let [prireq (get-content state :remote1 0)]
+        (dotimes [_ 2] (core/advance state :corp {:card (refresh prireq)}))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Film Critic")
+        (run-empty-server state :remote1)
+        (is (= 2 (get-counters (refresh prireq) :advancement)) "Two advancement tokens on Pri Req")
+        (click-prompt state :runner "Yes")
+        (is (= 0 (get-counters (refresh prireq) :advancement)) "No more counters on the Pri Req")))))
 
 (deftest find-the-truth
   ;; Find the Truth
