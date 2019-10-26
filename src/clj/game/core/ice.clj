@@ -368,8 +368,7 @@
   If n = 0 then any number of subs are broken.
   :label can be used to add a non-standard label to the ability
   :additional-ability is a non-async ability that is called after using the break ability.
-  :req will be added to the standard checks for encountering a piece of ice and strengths of the ice and breaker.
-  :ignore-strength can be used to skip the strength check."
+  :req will be added to the standard checks for encountering a piece of ice and strengths of the ice and breaker."
   ([cost n] (break-sub cost n nil nil))
   ([cost n subtype] (break-sub cost n subtype nil))
   ([cost n subtype args]
@@ -385,11 +384,11 @@
                              (if (:req args)
                                ((:req args) state side eid card targets)
                                true)))
-         ignore-strength (or (:ignore-strength args) false)]
+         strength-req (req (if (has-subtype? card "Icebreaker")
+                             (<= (get-strength current-ice) (get-strength card))
+                             true))]
      {:req (req (and (break-req state side eid card targets)
-                     (if ignore-strength
-                       true
-                       (<= (get-strength current-ice) (get-strength card)))))
+                     (strength-req state side eid card targets)))
       :break-req break-req
       :break n
       :breaks subtype
