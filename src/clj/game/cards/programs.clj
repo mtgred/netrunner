@@ -2428,24 +2428,23 @@
                  :effect (effect (gain :click 2))}]}
 
    "Utae"
-   (auto-icebreaker {:abilities [{:label "X [Credits]: Break X Code Gate subroutines"
-                                  :once :per-run
-                                  :req (req (pos? (total-available-credits state :runner eid card)))
-                                  :prompt "How many credits?"
-                                  :choices {:number (req (total-available-credits state :runner eid card))}
-                                  :effect (effect
-                                            (continue-ability
-                                              (when (pos? target)
-                                                (break-sub target target "Code Gate"))
-                                              card nil))}
-                                 {:label "Break 1 Code Gate subroutine (Virtual restriction)"
-                                  :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
-                                                                 (all-active-installed state :runner)))))
-                                  :effect (effect
-                                            (continue-ability
-                                              (break-sub 1 1 "Code Gate")
-                                              card nil))}
-                                 (strength-pump 1 1)]})
+   (let [break-req (:break-req (break-sub 1 1 "Code Gate"))]
+     (auto-icebreaker {:abilities [{:label "X [Credits]: Break X Code Gate subroutines"
+                                    :once :per-run
+                                    :req (req (and (break-req state side eid card targets)
+                                                   (<= (get-strength current-ice) (get-strength card))))
+                                    ; no break-req to not enable auto-pumping
+                                    :prompt "How many credits?"
+                                    :choices {:number (req (total-available-credits state :runner eid card))}
+                                    :effect (effect
+                                              (continue-ability
+                                                (when (pos? target)
+                                                  (break-sub target target "Code Gate"))
+                                                card nil))}
+                                   (break-sub 1 1 "Code Gate" {:label "Break 1 Code Gate subroutine (Virtual restriction)"
+                                                               :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
+                                                                                              (all-active-installed state :runner)))))})
+                                   (strength-pump 1 1)]}))
 
    "Vamadeva"
    (swap-with-in-hand "Vamadeva"
