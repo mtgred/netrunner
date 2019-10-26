@@ -335,14 +335,8 @@
                  (strength-pump 2 3))
 
    "Alpha"
-   (auto-icebreaker {:abilities [(merge
-                                   (break-sub 1 1)
-                                   {:req (req (= (:position run) (count run-ices)))
-                                    :effect (effect (continue-ability (break-sub 1 1) card nil))})
-                                 (merge
-                                   (strength-pump 1 1)
-                                   {:req (req (= (:position run) (count run-ices)))
-                                    :effect (effect (continue-ability (strength-pump 1 1) card nil))})]})
+   (auto-icebreaker {:abilities [(break-sub 1 1 {:req (req (= (:position run) (count run-ices)))})
+                                 (strength-pump 1 1 :encounter {:req (req (= (:position run) (count run-ices)))})]})
 
    "Amina"
    (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
@@ -1681,14 +1675,8 @@
     :abilities [(set-autoresolve :auto-nyashia "Nyashia")]}
 
    "Omega"
-   (auto-icebreaker {:abilities [(merge
-                                   (break-sub 1 1)
-                                   {:req (req (= 1 (:position run)))
-                                    :effect (effect (continue-ability (break-sub 1 1) card nil))})
-                                 (merge
-                                   (strength-pump 1 1)
-                                   {:req (req (= 1 (:position run)))
-                                    :effect (effect (continue-ability (strength-pump 1 1) card nil))})]})
+   (auto-icebreaker {:abilities [(break-sub 1 1 {:req (req (= 1 (:position run)))})
+                                 (strength-pump 1 1 :encounter {:req (req (= 1 (:position run)))})]})
 
    "Origami"
    {:effect (effect (gain :hand-size
