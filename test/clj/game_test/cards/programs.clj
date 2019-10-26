@@ -2849,13 +2849,13 @@
       (play-from-hand state :corp "Spiderweb" "HQ")
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
+      (core/gain state :corp :credit 1)
       (play-from-hand state :runner "Snowball")
       (let [sp (get-ice state :hq 1)
             fw (get-ice state :hq 0)
             snow (get-program state 0)]
         (run-on state "HQ")
         (core/rez state :corp sp)
-        (core/rez state :corp fw)
         (card-ability state :runner snow 1) ; match strength
         (is (= 2 (:current-strength (refresh snow))))
         (card-ability state :runner snow 0) ; strength matched, break a sub
@@ -2864,6 +2864,7 @@
         (click-prompt state :runner "End the run")
         (is (= 5 (:current-strength (refresh snow))) "Broke 3 subs, gained 3 more strength")
         (run-continue state)
+        (core/rez state :corp fw)
         (is (= 4 (:current-strength (refresh snow))) "Has +3 strength until end of run; lost 1 per-encounter boost")
         (card-ability state :runner snow 1) ; match strength
         (is (= 5 (:current-strength (refresh snow))) "Matched strength, gained 1")
