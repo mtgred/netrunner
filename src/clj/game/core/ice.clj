@@ -343,7 +343,7 @@
                       :all false}
                      args)]
      {:async true
-      :effect (req (wait-for (resolve-ability state side (break-subroutines-impl ice n '() args) card nil)
+      :effect (req (wait-for (resolve-ability state side (break-subroutines-impl ice (if (zero? n) (count (:subroutines current-ice)) n) '() args) card nil)
                              (let [broken-subs (:broken-subs async-result)
                                    early-exit (:early-exit async-result)]
                                (wait-for (resolve-ability state side (make-eid state {:source-type :ability})

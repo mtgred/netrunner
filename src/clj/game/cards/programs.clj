@@ -822,13 +822,7 @@
 
    "Dai V"
    (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
-                     :abilities [(merge
-                                   (dissoc (break-sub 2 0) :req)
-                                   {:effect
-                                    (effect
-                                      (continue-ability
-                                        (break-sub 2 (count (:subroutines current-ice)) "All" {:all true})
-                                        card nil))})
+                     :abilities [(break-sub 2 0 "All" {:all true})
                                  (strength-pump 1 1)]})
 
    "Darwin"

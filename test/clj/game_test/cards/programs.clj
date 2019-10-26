@@ -968,6 +968,34 @@
         (card-ability state :runner d4 0)
         (is (empty? (:prompt (get-runner))) "No prompt for breaking 1 strength Ice Wall")))))
 
+(deftest dai-v
+  ;; Dai V
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Enigma"]}
+                 :runner {:deck [(qty "Cloak" 2) "Dai V"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Dai V")
+      (run-on state :hq)
+      (let [enig (get-ice state :hq 0)
+            cl1 (get-program state 0)
+            cl2 (get-program state 1)
+            daiv (get-program state 2)]
+        (core/rez state :corp enig)
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 1 credit to pump and 2 credits from Cloaks to break"
+                           (card-ability state :runner daiv 1)
+                           (click-prompt state :runner "Done")
+                           (card-ability state :runner daiv 0)
+                           (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
+                           (click-prompt state :runner "End the run")
+                           (click-card state :runner cl1)
+                           (click-card state :runner cl2))))))
+
 (deftest darwin
   ;; Darwin - starts at 0 strength
   (do-game
