@@ -1616,6 +1616,16 @@
                                             card nil))}}
     :abilities [(set-autoresolve :auto-nyashia "Nyashia")]}
 
+   "Odore"
+   (auto-icebreaker {:abilities [(break-sub 2 0 "Sentry"
+                                            {:req (req (> 3 (count (filter #(has-subtype? % "Virtual")
+                                                                           (all-active-installed state :runner)))))})
+                                 (break-sub 0 1 "Sentry"
+                                            {:label "Break 1 Sentry subroutine (Virtual restriction)"
+                                             :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
+                                                                            (all-active-installed state :runner)))))})
+                                 (strength-pump 3 3)]})
+
    "Omega"
    (auto-icebreaker {:abilities [(merge
                                    (break-sub 1 1)

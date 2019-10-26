@@ -1848,6 +1848,47 @@
     (is (= 2 (+ (get-in @state [:runner :rd-access])
                 (core/access-bonus-count (:run @state) :rd))))))
 
+(deftest odore
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Cobra"]}
+                 :runner {:deck ["Odore" (qty "Logic Bomb" 3)]}})
+      (play-from-hand state :corp "Cobra" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Odore")
+      (let [odore (get-program state 0)
+            cobra (get-ice state :hq 0)]
+        (core/gain state :runner :click 2 :credit 20)
+        (run-on state "HQ")
+        (core/rez state :corp cobra)
+        (changes-val-macro -5 (:credit (get-runner))
+                           "Paid 3 to pump and 2 to break"
+                           (card-ability state :runner odore 2)
+                           (card-ability state :runner odore 0)
+                           (click-prompt state :runner "Trash a program")
+                           (click-prompt state :runner "Do 2 net damage")))))
+  (testing "auto-pump-and-break with and without 3 virtual resources"
+    (do-game
+      (new-game {:corp {:deck ["Cobra"]}
+                 :runner {:deck ["Odore" (qty "Logic Bomb" 3)]}})
+      (play-from-hand state :corp "Cobra" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Odore")
+      (let [odore (get-program state 0)
+            cobra (get-ice state :hq 0)]
+        (core/gain state :runner :click 2 :credit 20)
+        (run-on state "HQ")
+        (core/rez state :corp cobra)
+        (changes-val-macro -5 (:credit (get-runner))
+                           "Paid 3 to pump and 2 to break"
+                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)}))
+        (run-jack-out state)
+        (dotimes [_ 3] (play-from-hand state :runner "Logic Bomb"))
+        (run-on state "HQ")
+        (changes-val-macro -3 (:credit (get-runner))
+                           "Paid 3 to pump and 0 to break"
+                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)}))))))
+
 (deftest origami
   ;; Origami - Increases Runner max hand size
   (do-game
