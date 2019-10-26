@@ -158,20 +158,38 @@
 
 (deftest bookmark
   ;; Bookmark
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
-               :runner {:hand ["Bookmark" "Sure Gamble" "Daily Casts" "Brain Chip"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Bookmark")
-    (let [bm (get-hardware state 0)]
-    (card-ability state :runner bm 0)
-    (click-card state :runner "Sure Gamble")
-    (click-card state :runner "Daily Casts")
-    (click-card state :runner "Brain Chip")
-    (is (= 3 (count (:hosted (refresh bm)))) "Bookmark can host cards of any type")
-    (card-ability state :runner bm 2)
-    (is (nil? (refresh bm)) "Bookmark is now trashed")
-    (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip"))))
+  (testing "Click ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
+                 :runner {:hand ["Bookmark" "Sure Gamble" "Daily Casts" "Brain Chip"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bookmark")
+      (let [bm (get-hardware state 0)]
+        (card-ability state :runner bm 0)
+        (click-card state :runner "Sure Gamble")
+        (click-card state :runner "Daily Casts")
+        (click-card state :runner "Brain Chip")
+        (is (= 3 (count (:hosted (refresh bm)))) "Bookmark can host cards of any type")
+        (card-ability state :runner bm 1)
+        (is (not (nil? (refresh bm))) "Bookmark is still installed")
+        (is (= 0 (count (:discard (get-runner)))) "Nothing moved to the heap")
+        (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip"))))
+  (testing "Trash ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
+                 :runner {:hand ["Bookmark" "Sure Gamble" "Daily Casts" "Brain Chip"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bookmark")
+      (let [bm (get-hardware state 0)]
+        (card-ability state :runner bm 0)
+        (click-card state :runner "Sure Gamble")
+        (click-card state :runner "Daily Casts")
+        (click-card state :runner "Brain Chip")
+        (is (= 3 (count (:hosted (refresh bm)))) "Bookmark can host cards of any type")
+        (card-ability state :runner bm 2)
+        (is (nil? (refresh bm)) "Bookmark is now trashed")
+        (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip")
+        (is (= 1 (count (:discard (get-runner)))) "Bookmark is only card in heap")))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size

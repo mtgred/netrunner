@@ -144,7 +144,7 @@
                                 state side
                                 {:cost [:trash]
                                  :msg "add all hosted cards to their Grip"}
-                                card nil))}]}
+                                (get-card state card) nil))}]}
 
    "Box-E"
    {:in-play [:memory 2 :hand-size 2]}
