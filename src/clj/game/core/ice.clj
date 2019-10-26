@@ -378,6 +378,7 @@
          break-req (or (:req args) (req true))
          ignore-strength (or (:ignore-strength args) false)]
      {:req (req (and current-ice
+                     (rezzed? current-ice)
                      (if subtype
                        (or (= subtype "All")
                            (has-subtype? current-ice subtype)))
