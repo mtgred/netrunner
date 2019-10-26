@@ -724,7 +724,7 @@
     (play-from-hand state :runner "Corporate \"Grant\"")
     (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage from clearing current")))
 
-(deftest ^:test-refresh/focus simultaneous-trash-effects
+(deftest simultaneous-trash-effects
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Hostile Infrastructure" "Marilyn Campaign" "Calvin B4L3Y"]
