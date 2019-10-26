@@ -321,7 +321,8 @@
   ([ice broken-subs args]
    (str "break " (quantify (count broken-subs)
                            (str (when-let [subtype (:subtype args)]
-                                  (str subtype " "))
+                                  (when (not= "All" subtype)
+                                    (str subtype " ")))
                                 "subroutine"))
         " on " (:title ice)
         " (\"[subroutine] "
