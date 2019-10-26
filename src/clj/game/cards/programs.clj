@@ -825,7 +825,7 @@
    "D4v1d"
    (let [david-req (req (<= 5 (get-strength current-ice)))]
      {:data {:counter {:power 3}}
-      :abilities [(break-sub [:power 1] 1 "All" {:req david-req})]})
+      :abilities [(break-sub [:power 1] 1 "All" {:req david-req :ignore-strength true})]})
 
    "Dagger"
    (auto-icebreaker {:implementation "Stealth credit restriction not enforced"

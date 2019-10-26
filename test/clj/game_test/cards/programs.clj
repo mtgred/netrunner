@@ -943,6 +943,31 @@
       (is (zero? (count (filter :broken (:subroutines (get-ice state :rd 0))))) "No subs are broken")
       (is (empty? (:prompt (get-runner))) "Can't break subs on a different server"))))
 
+(deftest d4v1d
+  ;; D4v1d
+  (testing "Can break 5+ strength ice"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "Hadrian's Wall"]}
+                 :runner {:deck ["D4v1d"]}})
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Hadrian's Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "D4v1d")
+      (let [had (get-ice state :hq 1)
+            iw (get-ice state :hq 0)
+            d4 (get-program state 0)]
+        (is (= 3 (get-counters d4 :power)) "D4v1d installed with 3 power tokens")
+        (run-on state :hq)
+        (core/rez state :corp had)
+        (card-ability state :runner d4 0)
+        (dotimes [_ 2] (click-prompt state :runner "End the run"))
+        (is (= 1 (get-counters (refresh d4) :power)) "Used 2 power tokens from D4v1d to break")
+        (run-continue state)
+        (core/rez state :corp iw)
+        (card-ability state :runner d4 0)
+        (is (empty? (:prompt (get-runner))) "No prompt for breaking 1 strength Ice Wall")))))
+
 (deftest darwin
   ;; Darwin - starts at 0 strength
   (do-game
