@@ -1559,19 +1559,21 @@
                                 card nil))}]}
 
    "Vulnerability Audit"
-   (let [reg-no-score-flag
-         (effect (register-turn-flag! card :can-score
-                                      (fn [state side other-card]
-                                        (if (same-card? other-card card)
-                                          ((constantly false) (toast state :corp "Cannot score Vulnerability Audit the turn it was installed." "warning"))
-                                          true))))]
-     {:derezzed-events [{:event :pre-agenda-scored
-                         :req (req (and (same-card? target card)
-                                        (let [agenda-cids (map #(:cid (first %))
-                                                               (filter #(agenda? (first %))
-                                                                       (turn-events state :corp :corp-install)))]
-                                          (contains? (into #{} agenda-cids) (:cid card)))))
-                         :effect reg-no-score-flag}]})
+   {:derezzed-events
+    [{:event :pre-agenda-scored
+      :req (req (and (same-card? target card)
+                     (let [agenda-cids (->> (turn-events state :corp :corp-install)
+                                            (filter #(agenda? (first %)))
+                                            (map #(:cid (first %)))
+                                            (into #{}))]
+                       (contains? agenda-cids (:cid card)))))
+      :effect (effect (register-turn-flag!
+                        card :can-score
+                        (fn [state side other-card]
+                          (if (same-card? other-card card)
+                            ((constantly false)
+                             (toast state :corp "Cannot score Vulnerability Audit the turn it was installed." "warning"))
+                            true))))}]}
 
    "Vulcan Coverup"
    {:interactive (req true)

@@ -299,6 +299,7 @@
   "Checks if the corp can score cards"
   [state side card]
   (and
+    (some? card)
     ;; The agenda has enough agenda counters to legally score
     (<= (or (:current-cost card)
             (:advancementcost card))

@@ -598,7 +598,7 @@
     (let [cdef (card-def card)]
       (when-let [derez-effect (:derez-effect cdef)]
         (resolve-ability state side derez-effect (get-card state card) nil))
-      (register-events state side card (:derezzed-events cdef)))
+      (register-events state side card (map #(assoc % :condition :derezzed) (:derezzed-events cdef))))
     (unregister-constant-effects state side card)
     (trigger-event state side :derez card side)))
 

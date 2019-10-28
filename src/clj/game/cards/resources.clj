@@ -484,34 +484,30 @@
                               (trash :corp eid target {:unpreventable true}))
               :cancel-effect (effect (system-msg (str "does not trash a piece of ice protecting " (zone->name chosen-server)))
                                      (register-events
-                                       :runner (assoc card :zone [:rfg])
+                                       :runner card
                                        [{:event :pre-access
+                                         :duration :until-runner-turn-ends
                                          :req (req (#{:hq :rd} target))
                                          :once :per-turn
                                          :msg (msg "access 2 additional cards from " (zone->name target))
-                                         :effect (effect (access-bonus :runner target 2))}
-                                        {:event :runner-turn-ends
-                                         :effect (effect (unregister-events card {:events [{:event :pre-access}
-                                                                                           {:event :runner-turn-ends}]}))}])
-                                     (effect-completed eid))})]
-     {:events [{:event :pre-access}
-               {:event :runner-turn-ends}
-               {:event :runner-turn-begins
+                                         :effect (effect (access-bonus :runner target 2))}]))})]
+     {:events [{:event :runner-turn-begins
                 :async true
-                :effect (effect (move card :rfg)
-                          (continue-ability
-                            (if (pos? (count (iced-servers state)))
-                              {:prompt (msg  "Choose a server")
-                               :choices (req (iced-servers state))
-                               :msg (msg "choose " (zone->name (unknown->kw target))
-                                         " and removes Climactic Showdown from the game")
-                               :effect (effect (continue-ability
-                                                 :corp
-                                                 (trash-or-bonus (rest (server->zone state target)))
-                                                 card nil))}
-                              {:msg (str "choose a server protected by ice but cannot"
-                                         " and removes Climactic Showdown from the game")})
-                            card nil))}]})
+                :effect (req (let [card (move state side card :rfg)]
+                               (continue-ability
+                                 state side
+                                 (if (pos? (count (iced-servers state)))
+                                   {:prompt (msg  "Choose a server")
+                                    :choices (req (iced-servers state))
+                                    :msg (msg "choose " (zone->name (unknown->kw target))
+                                              " and removes Climactic Showdown from the game")
+                                    :effect (effect (continue-ability
+                                                      :corp
+                                                      (trash-or-bonus (rest (server->zone state target)))
+                                                      card nil))}
+                                   {:msg (str "choose a server protected by ice but cannot"
+                                              " and removes Climactic Showdown from the game")})
+                                 card nil)))}]})
 
    "Compromised Employee"
    {:recurring 1

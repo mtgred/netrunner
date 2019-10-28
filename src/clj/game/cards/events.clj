@@ -1819,12 +1819,14 @@
                           :effect
                           (req (let [card (some #(when (= "Out of the Ashes" (:title %)) %) (:discard runner))]
                                  (move state side card :rfg)
-                                 (unregister-events state side card)
+                                 (unregister-events state side card {:events [{:event :runner-phase-12}]})
                                  (wait-for (resolve-ability state side ashes-run card nil)
                                            (if (< 1 n)
                                              (continue-ability state side (ashes-recur (dec n)) card nil)
                                              (effect-completed state side eid)))))}}})
          ashes-flag [{:event :runner-phase-12
+                      :location :discard
+                      :condition :in-discard
                       :priority -1
                       :once :per-turn
                       :once-key :out-of-ashes
@@ -1838,7 +1840,7 @@
       :choices (req runnable-servers)
       :effect (effect (make-run eid target nil card))
       :move-zone (req (if (in-discard? card)
-                        (register-events state side (assoc card :zone [:discard]) ashes-flag)
+                        (register-events state side card ashes-flag)
                         (unregister-events state side card {:events [{:event :runner-phase-12}]})))})
 
    "Paper Tripping"

@@ -748,3 +748,20 @@
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "Calvin B4L3Y")
     (click-prompt state :corp "Yes")))
+
+(deftest events-after-derez
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Kakugo"]}
+               :runner {:hand ["Saker"]
+                        :credits 10}})
+    (play-from-hand state :corp "Kakugo" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Saker")
+    (run-on state "HQ")
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (card-ability state :runner (get-program state 0) 2)
+    (run-continue state)
+    (is (= 1 (-> (get-runner) :hand count)) "Saker is still in hand")))
