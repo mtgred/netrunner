@@ -189,7 +189,8 @@
 
   (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
         start-cards (filter #(card-flag-fn? state side % phase true)
-                            (all-active state side))
+                            (concat (all-active state side)
+                                    (remove facedown? (all-installed state side))))
         extra-clicks (get-in @state [side :extra-click-temp] 0)]
     (gain state side :click (get-in @state [side :click-per-turn]))
     (cond

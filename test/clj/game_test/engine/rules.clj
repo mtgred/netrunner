@@ -750,6 +750,8 @@
     (click-prompt state :corp "Yes")))
 
 (deftest events-after-derez
+  ;; If a card has an event triggered but an earlier event derezzed the card,
+  ;; the event should not happen, as the event is only pending.
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Kakugo"]}
@@ -765,3 +767,19 @@
     (card-ability state :runner (get-program state 0) 2)
     (run-continue state)
     (is (= 1 (-> (get-runner) :hand count)) "Saker is still in hand")))
+
+(deftest start-of-turn-phase-12
+  ;; :corp-phase-12 and :runner-phase-12 should look at derezzed cards as well
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Rashida Jaheem"]}
+               :runner {:hand ["Security Testing"]}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (take-credits state :corp)
+    (core/runner-install state :runner (find-card "Security Testing" (:hand (get-runner))) {:facedown true})
+    (take-credits state :runner)
+    (is (:corp-phase-12 @state) "Facedown corp cards can be rezzed so trigger phase 1.2")
+    (core/end-phase-12 state :corp nil)
+    (take-credits state :corp)
+    (is (not (:runner-phase-12 @state)) "Facedown runner cards can't be turned faceup")
+    (core/end-phase-12 state :runner nil)))

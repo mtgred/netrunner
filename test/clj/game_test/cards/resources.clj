@@ -2594,34 +2594,58 @@
 
 (deftest pad-tap
   ;; PAD Tap
-  (do-game
-    (new-game {:corp {:deck ["Melange Mining Corp."]}
-               :runner {:deck ["PAD Tap"]}})
-    (play-from-hand state :corp "Melange Mining Corp." "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "PAD Tap")
-    (let [mel (get-content state :remote1 0)
-          tap (get-resource state 0)]
-      (take-credits state :runner)
-      (let [credits (:credit (get-runner))]
-        (core/click-credit state :corp nil)
-        (is (zero? (-> (get-runner) :prompt count)) "Runner should have no prompts from PAD Tap")
-        (is (= credits (:credit (get-runner))) "Runner shouldn't gain PAD Tap credits from clicking for a credit"))
-      (let [credits (:credit (get-runner))]
-        (core/rez state :corp mel)
-        (core/gain state :corp :click 10)
-        (card-ability state :corp mel 0)
-        (is (= (inc credits) (:credit (get-runner))) "Runner should gain 1 credit from PAD Tap triggering from Melange Mining Corp. ability")
-        (card-ability state :corp mel 0) ;; Triggering Melange a second time
-        (is (zero? (-> (get-runner) :prompt count)) "Runner should have no prompts from PAD Tap"))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Melange Mining Corp."]}
+                 :runner {:deck ["PAD Tap"]}})
+      (play-from-hand state :corp "Melange Mining Corp." "New remote")
       (take-credits state :corp)
-      (take-credits state :runner)
-      (is (zero? (-> (get-runner) :discard count)) "Runner should have 0 cards in Heap")
-      (let [credits (:credit (get-corp))
-            clicks (:click (get-corp))]
-        (card-side-ability state :corp tap 0)
-        (is (= (- credits 3) (:credit (get-corp))) "PAD Tap ability should cost Corp 3 credits")
-        (is (= (dec clicks) (:click (get-corp))) "PAD Tap ability should cost Corp 1 click")))))
+      (play-from-hand state :runner "PAD Tap")
+      (let [mel (get-content state :remote1 0)
+            tap (get-resource state 0)]
+        (take-credits state :runner)
+        (let [credits (:credit (get-runner))]
+          (core/click-credit state :corp nil)
+          (is (zero? (-> (get-runner) :prompt count)) "Runner should have no prompts from PAD Tap")
+          (is (= credits (:credit (get-runner))) "Runner shouldn't gain PAD Tap credits from clicking for a credit"))
+        (let [credits (:credit (get-runner))]
+          (core/rez state :corp mel)
+          (core/gain state :corp :click 10)
+          (card-ability state :corp mel 0)
+          (is (= (inc credits) (:credit (get-runner))) "Runner should gain 1 credit from PAD Tap triggering from Melange Mining Corp. ability")
+          (card-ability state :corp mel 0) ;; Triggering Melange a second time
+          (is (zero? (-> (get-runner) :prompt count)) "Runner should have no prompts from PAD Tap"))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (zero? (-> (get-runner) :discard count)) "Runner should have 0 cards in Heap")
+        (let [credits (:credit (get-corp))
+              clicks (:click (get-corp))]
+          (card-side-ability state :corp tap 0)
+          (is (= (- credits 3) (:credit (get-corp))) "PAD Tap ability should cost Corp 3 credits")
+          (is (= (dec clicks) (:click (get-corp))) "PAD Tap ability should cost Corp 1 click")))))
+  (testing "Only pays out once per turn. Issue #4593"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rashida Jaheem"]}
+                 :runner {:hand ["PAD Tap"]}})
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "PAD Tap")
+      ;; Manually ending the turn to trigger Rashida early
+      (dotimes [i (get-in @state [:runner :click])]
+        (core/click-credit state :runner nil))
+      (core/end-turn state :runner nil)
+      (let [credits (:credit (get-runner))]
+        (core/rez state :corp (get-content state :remote1 0))
+        (card-ability state :corp (get-content state :remote1 0) 0)
+        (is (empty? (:prompt (get-corp))) "No optional prompt as we've not started the turn yet")
+        (core/start-turn state :corp nil)
+        (card-ability state :corp (get-content state :remote1 0) 0)
+        (click-prompt state :corp "Yes")
+        (is (= (inc credits) (:credit (get-runner))) "Runner should gain 1 from PAD Tap"))
+      (let [credits (:credit (get-runner))]
+        (play-from-hand state :corp "Hedge Fund")
+        (is (= credits (:credit (get-runner))) "Runner should gain 1 from PAD Tap")))))
 
 (deftest paige-piper
   ;; Paige Piper
