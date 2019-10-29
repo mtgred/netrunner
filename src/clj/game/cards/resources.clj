@@ -982,6 +982,7 @@
            (host-agenda? [agenda]
              {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
                          :yes-ability {:effect (req (host state side card (move state side agenda :play-area))
+                                                    (update! state side (dissoc (get-card state agenda) :counter))
                                                     (access-end state side eid agenda)
                                                     (when-not (:run @state)
                                                       (swap! state dissoc :access)))
