@@ -1446,6 +1446,8 @@
    {:in-play [:memory 2 :hand-size 1]
     :events [{:event :runner-turn-ends
               :req (req (= (:credit runner) (:credit corp)))
+              :interactive (get-autoresolve :autofire (complement never?))
+              :silent (get-autoresolve :autofire never?)
               :async true
               :effect (req (show-wait-prompt
                              state :corp
@@ -1455,6 +1457,7 @@
                              {:optional
                               {:prompt "Gain credits from Supercorridor?"
                                :player :runner
+                               :autoresolve (get-autoresolve :auto-fire)
                                :yes-ability {:msg "gain 2 [Credits]"
                                              :effect (req (gain-credits state :runner 2)
                                                           (clear-wait-prompt state :corp))}
@@ -1462,7 +1465,8 @@
                                                            state :runner
                                                            "chooses not to gain 2 [Credits] from Supercorridor")
                                                          (clear-wait-prompt state :corp))}}}
-                             card nil))}]}
+                             card nil))}]
+    :abilities [(set-autoresolve :auto-fire "Supercorridor")]}
 
    "Swift"
    {:in-play [:memory 1]
