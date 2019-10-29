@@ -110,7 +110,7 @@
 (defn command-adv-counter [state side value]
   (resolve-ability state side
                    {:effect (effect (set-adv-counter target value))
-                    :choices {:req (fn [t] (same-side? (:side t) side))}}
+                    :choices {:card (fn [t] (same-side? (:side t) side))}}
                    (map->Card {:title "/adv-counter command"}) nil))
 
 (defn command-counter-smart [state side args]
@@ -137,14 +137,14 @@
                       (do (set-prop state side target :counter (merge (:counter target) {counter-type value}))
                           (system-msg state side (str "sets " (name counter-type) " counters to " value " on "
                                                       (card-str state target)))))))
-     :choices {:req (fn [t] (same-side? (:side t) side))}}
+     :choices {:card (fn [t] (same-side? (:side t) side))}}
     (map->Card {:title "/counter command"}) nil))
 
 (defn command-facedown [state side]
   (resolve-ability state side
                    {:prompt "Select a card to install facedown"
-                    :choices {:req #(and (runner? %)
-                                         (in-hand? %))}
+                    :choices {:card #(and (runner? %)
+                                          (in-hand? %))}
                     :effect (effect (runner-install target {:facedown true}))}
                    (map->Card {:title "/faceup command"}) nil))
 
@@ -173,7 +173,7 @@
                        {:effect (effect (set-prop target :counter (merge (:counter target) {counter-type value}))
                                         (system-msg (str "sets " (name counter-type) " counters to " value " on "
                                                          (card-str state target))))
-                        :choices {:req (fn [t] (same-side? (:side t) side))}}
+                        :choices {:card (fn [t] (same-side? (:side t) side))}}
                        (map->Card {:title "/counter command"}) nil)))))
 
 (defn command-rezall [state side value]
@@ -220,8 +220,8 @@
     (resolve-ability
       state side
       {:prompt "Select a piece of ice to install"
-       :choices {:req #(and (ice? %)
-                            (#{[:hand]} (:zone %)))}
+       :choices {:card #(and (ice? %)
+                             (#{[:hand]} (:zone %)))}
        :effect (effect
                  (continue-ability
                    (let [chosen-ice target]
@@ -270,16 +270,16 @@
     (resolve-ability
       state side
       {:prompt "Select the card to be hosted"
-       :choices {:req #(and (f %)
-                            (installed? %))}
+       :choices {:card #(and (f %)
+                             (installed? %))}
        :async true
        :effect (effect
                  (continue-ability
                    (let [h1 target]
                      {:prompt "Select the card to host the first card"
-                      :choices {:req #(and (f %)
-                                           (installed? %)
-                                           (not (same-card? % h1)))}
+                      :choices {:card #(and (f %)
+                                            (installed? %)
+                                            (not (same-card? % h1)))}
                       :effect (effect (host target h1 nil))})
                    nil nil))}
       nil nil)))
@@ -290,7 +290,7 @@
     (resolve-ability
       state side
       {:prompt "Select a card to trash"
-       :choices {:req #(f %)}
+       :choices {:card #(f %)}
        :effect (effect (trash eid target {:unpreventable true}))}
       nil nil)))
 
@@ -311,7 +311,7 @@
                                           {:effect (effect (system-msg (str "shows card-info of "
                                                                             (card-str state target)
                                                                             ": " (get-card state target))))
-                                           :choices {:req (fn [t] (same-side? (:side t) %2))}}
+                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                           (map->Card {:title "/card-info command"}) nil)
           "/clear-win"  clear-win
           "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
@@ -336,20 +336,20 @@
           "/move-bottom"  #(resolve-ability %1 %2
                                             {:prompt "Select a card in hand to put on the bottom of your deck"
                                              :effect (effect (move target :deck))
-                                             :choices {:req (fn [t] (and (same-side? (:side t) %2)
-                                                                         (in-hand? t)))}}
+                                             :choices {:card (fn [t] (and (same-side? (:side t) %2)
+                                                                          (in-hand? t)))}}
                                             (map->Card {:title "/move-bottom command"}) nil)
           "/move-deck"   #(resolve-ability %1 %2
                                            {:prompt "Select a card to move to the top of your deck"
                                             :effect (req (let [c (deactivate %1 %2 target)]
                                                            (move %1 %2 c :deck {:front true})))
-                                            :choices {:req (fn [t] (same-side? (:side t) %2))}}
+                                            :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                            (map->Card {:title "/move-deck command"}) nil)
           "/move-hand"  #(resolve-ability %1 %2
                                           {:prompt "Select a card to move to your hand"
                                            :effect (req (let [c (deactivate %1 %2 target)]
                                                           (move %1 %2 c :hand)))
-                                           :choices {:req (fn [t] (same-side? (:side t) %2))}}
+                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                           (map->Card {:title "/move-hand command"}) nil)
           "/peek"       #(command-peek %1 %2 value)
           "/psi"        #(when (= %2 :corp) (psi-game %1 %2
@@ -359,14 +359,14 @@
           "/rez"        #(when (= %2 :corp)
                            (resolve-ability %1 %2
                                             {:effect (effect (rez target {:ignore-cost :all-costs :force true}))
-                                             :choices {:req (fn [t] (same-side? (:side t) %2))}}
+                                             :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                             (map->Card {:title "/rez command"}) nil))
           "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2 value))
           "/rfg"        #(resolve-ability %1 %2
                                           {:prompt "Select a card to remove from the game"
                                            :effect (req (let [c (deactivate %1 %2 target)]
                                                           (move %1 %2 c :rfg)))
-                                           :choices {:req (fn [t] (same-side? (:side t) %2))}}
+                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                           (map->Card {:title "/rfg command"}) nil)
           "/roll"       #(command-roll %1 %2 value)
           "/summon"     #(command-summon %1 %2 args)
@@ -376,8 +376,8 @@
                              {:prompt "Select two installed ice to swap"
                               :choices {:max 2
                                         :all true
-                                        :req (fn [c] (and (installed? c)
-                                                          (ice? c)))}
+                                        :card (fn [c] (and (installed? c)
+                                                           (ice? c)))}
                               :effect (effect (swap-ice (first targets) (second targets)))}
                              (map->Card {:title "/swap-ice command"}) nil))
           "/swap-installed" #(when (= %2 :corp)
@@ -386,9 +386,9 @@
                                  {:prompt "Select two installed non-ice to swap"
                                   :choices {:max 2
                                             :all true
-                                            :req (fn [c] (and (installed? c)
-                                                              (corp? c)
-                                                              (not (ice? c))))}
+                                            :card (fn [c] (and (installed? c)
+                                                               (corp? c)
+                                                               (not (ice? c))))}
                                   :effect (effect (swap-installed (first targets) (second targets)))}
                                  (map->Card {:title "/swap-installed command"}) nil))
           "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (max 0 value))

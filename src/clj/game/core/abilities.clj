@@ -58,9 +58,9 @@
       * the keyword :counter -- user chooses an integer up to the :counter value of the given card.
       * a map containing the keyword :number with a value of a 4-argument function returning an integer -- user
         chooses an integer up to the value of the map.
-      * a map containing the keyword :req with a value of a 1-argument function returning true or false. Triggers a
-        'select' prompt with targeting cursor; only cards that cause the 1-argument function to return true will
-        be allowed.
+      * a map containing either: 1) the keyword :card with a value of a 1-argument function returning true or false,
+        or 2) the keyword :req with a value of the req 5-fn returning true or false. Triggers a 'select' prompt
+        with targeting cursor; only cards that cause the 1-argument function to return true will be allowed.
   :prompt -- a string or 4-argument function returning a string to display in the prompt menu.
   :priority -- a numeric value, or true (equivalent to 1). Prompts are inserted into the prompt queue and sorted base
                on priority, with higher priorities coming first. The sort is stable, so if two prompts have the same
@@ -215,7 +215,7 @@
        (prompt! state s card prompt choices ab args)
        ;; a select prompt
        (or (:req choices)
-           (:five choices))
+           (:card choices))
        (show-select state s card ability update! resolve-ability args)
        ;; a :number prompt
        (:number choices)
@@ -527,8 +527,8 @@
    (continue-ability state side
                     {:show-discard  true
                      :choices {:max (min (-> @state :corp :discard count) n)
-                               :req #(and (corp? %)
-                                          (in-discard? %))
+                               :card #(and (corp? %)
+                                           (in-discard? %))
                                :all all?}
                      :msg (msg "shuffle "
                                (let [seen (filter :seen targets)

@@ -496,7 +496,7 @@
 
 (defn access-helper-remote [cards]
   {:prompt "Click a card to access it. You must access all cards in this server."
-   :choices {:req #(some (fn [c] (same-card? % c)) cards)}
+   :choices {:card #(some (fn [c] (same-card? % c)) cards)}
    :async true
    :effect (req (wait-for (access-card state side target)
                           (if (< 1 (count cards))
@@ -558,8 +558,8 @@
                           state side
                           {:async true
                            :prompt (str "Choose an upgrade in " server-name " to access.")
-                           :choices {:req #(and (= (second (:zone %)) chosen-zone)
-                                                (complement already-accessed))}
+                           :choices {:card #(and (= (second (:zone %)) chosen-zone)
+                                                 (complement already-accessed))}
                            :effect (req (wait-for (access-card state side target)
                                                   (continue-ability
                                                     state side
@@ -650,7 +650,7 @@
                         (continue-ability
                           state :corp
                           {:prompt (msg "Select " (access-count state side :hq-access) " cards in HQ for the Runner to access")
-                           :choices {:req #(and (in-hand? %) (corp? %))
+                           :choices {:card #(and (in-hand? %) (corp? %))
                                      :all true
                                      :max (req (access-count state side :hq-access))}
                            :async true
@@ -757,8 +757,8 @@
                           state side
                           {:async true
                            :prompt "Choose an upgrade in Archives to access."
-                           :choices {:req #(and (= (second (:zone %)) :archives)
-                                                (not (already-accessed %)))}
+                           :choices {:card #(and (= (second (:zone %)) :archives)
+                                                 (not (already-accessed %)))}
                            :effect (req (let [already-accessed (conj already-accessed target)]
                                           (wait-for (access-card state side target)
                                                     (if (must-continue? already-accessed)

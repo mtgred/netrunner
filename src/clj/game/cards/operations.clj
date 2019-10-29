@@ -20,9 +20,9 @@
     :effect (req (continue-ability
                    state side
                    {:prompt "Select an agenda in your score area to trigger its \"when scored\" ability"
-                    :choices {:req #(and (agenda? %)
-                                         (when-scored? %)
-                                         (is-scored? state :corp %))}
+                    :choices {:card #(and (agenda? %)
+                                          (when-scored? %)
+                                          (is-scored? state :corp %))}
                     :msg (msg "trigger the \"when scored\" ability of " (:title target))
                     :async true
                     :effect (effect (continue-ability (card-def target) target nil)
@@ -58,10 +58,10 @@
                {:async true
                 :show-discard true
                 :prompt "Select an Advertisement to install and rez"
-                :choices {:req #(and (corp? %)
-                                     (has-subtype? % "Advertisement")
-                                     (or (in-hand? %)
-                                         (in-discard? %)))}
+                :choices {:card #(and (corp? %)
+                                      (has-subtype? % "Advertisement")
+                                      (or (in-hand? %)
+                                          (in-discard? %)))}
                 :effect (req (wait-for (corp-install state side target nil {:install-state :rezzed})
                                        (continue-ability state side (ab (inc n) total) card nil)))}))]
      {:async true
@@ -113,9 +113,9 @@
                      state side
                      {:prompt "Select a card from Archives to add to HQ"
                       :show-discard true
-                      :choices {:req #(and (not= (:cid %) cid)
-                                           (corp? %)
-                                           (in-discard? %))}
+                      :choices {:card #(and (not= (:cid %) cid)
+                                            (corp? %)
+                                            (in-discard? %))}
                       :effect (effect (move target :hand)
                                       (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
                      card nil)))}
@@ -137,10 +137,10 @@
                              state side
                              {:prompt "Choose up to 2 agendas in HQ or Archives"
                               :choices {:max 2
-                                        :req #(and (corp? %)
-                                                   (agenda? %)
-                                                   (or (in-hand? %)
-                                                       (in-discard? %)))}
+                                        :card #(and (corp? %)
+                                                    (agenda? %)
+                                                    (or (in-hand? %)
+                                                        (in-discard? %)))}
                               :effect (req (gain-credits state side (* 2 (count targets)))
                                            (doseq [c targets]
                                              (move state :corp c :deck))
@@ -166,7 +166,7 @@
              (if (< n 2)
                {:prompt "Choose a card on which to place an advancement"
                 :async true
-                :choices {:req can-be-advanced?
+                :choices {:card can-be-advanced?
                           :all true}
                 :msg (msg "place an advancement token on " (card-str state target))
                 :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
@@ -181,8 +181,8 @@
    "Back Channels"
    {:async true
     :prompt "Select an installed card in a server to trash"
-    :choices {:req #(and (= (last (:zone %)) :content)
-                         (is-remote? (second (:zone %))))}
+    :choices {:card #(and (= (last (:zone %)) :content)
+                          (is-remote? (second (:zone %))))}
     :effect (effect (gain-credits (* 3 (get-counters target :advancement)))
                     (trash eid target nil))
     :msg (msg "trash " (card-str state target) " and gain "
@@ -216,9 +216,9 @@
                 (let [t (count-tags state)]
                   {:async true
                    :prompt (msg "Choose a Runner card with an install cost of " t " or less to trash")
-                   :choices {:req #(and (runner? %)
-                                        (installed? %)
-                                        (<= (:cost %) t))}
+                   :choices {:card #(and (runner? %)
+                                         (installed? %)
+                                         (<= (:cost %) t))}
                    :msg (msg "trash " (:title target))
                    :effect (effect (trash eid target nil))})
                 card nil))}
@@ -238,7 +238,8 @@
                          state :runner
                          {:prompt (msg "Choose any number of cards of type " t " to trash")
                           :choices {:max n
-                                    :req #(and (installed? %) (is-type? % t))}
+                                    :card #(and (installed? %)
+                                                (is-type? % t))}
                           :effect (req (doseq [c targets]
                                          (trash state :runner c {:unpreventable true}))
                                        (gain-credits state :runner (count targets))
@@ -268,10 +269,10 @@
                           (has-subtype? % "Bioroid")
                           (not (rezzed? %)))
                     (all-installed state :corp)))
-    :choices {:req #(and (ice? %)
-                         (has-subtype? % "Bioroid")
-                         (installed? %)
-                         (not (rezzed? %)))}
+    :choices {:card #(and (ice? %)
+                          (has-subtype? % "Bioroid")
+                          (installed? %)
+                          (not (rezzed? %)))}
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
     :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
                            (host state side (get-card state target) (assoc card :seen true :condition true))
@@ -296,9 +297,9 @@
    "Building Blocks"
    {:req (req (pos? (count (filter #(has-subtype? % "Barrier") (:hand corp)))))
     :prompt "Select a Barrier to install and rez"
-    :choices {:req #(and (corp? %)
-                         (has-subtype? % "Barrier")
-                         (in-hand? %))}
+    :choices {:card #(and (corp? %)
+                          (has-subtype? % "Barrier")
+                          (in-hand? %))}
     :async true
     :msg (msg "reveal " (:title target))
     :effect (effect (reveal target)
@@ -306,8 +307,8 @@
                                                   :install-state :rezzed-no-cost}))}
 
    "Casting Call"
-   {:choices {:req #(and (agenda? %)
-                         (in-hand? %))}
+   {:choices {:card #(and (agenda? %)
+                          (in-hand? %))}
     :async true
     :effect (effect
               (continue-ability
@@ -332,8 +333,8 @@
 
    "Celebrity Gift"
    {:choices {:max 5
-              :req #(and (corp? %)
-                         (in-hand? %))}
+              :card #(and (corp? %)
+                          (in-hand? %))}
     :msg (msg "reveal " (join ", " (map :title (sort-by :title targets))) " and gain " (* 2 (count targets)) " [Credits]")
     :effect (effect (reveal targets) (gain-credits (* 2 (count targets))))}
 
@@ -365,7 +366,7 @@
 
    "Commercialization"
    {:msg (msg "gain " (get-counters target :advancement) " [Credits]")
-    :choices {:req ice?}
+    :choices {:card ice?}
     :effect (effect (gain-credits (get-counters target :advancement)))}
 
    "Complete Image"
@@ -427,12 +428,12 @@
 
    "Dedication Ceremony"
    {:prompt "Select a faceup card"
-    :choices {:req #(or (and (corp? %)
-                             (rezzed? %))
-                        (and (runner? %)
-                             (or (installed? %)
-                                 (:host %))
-                             (not (facedown? %))))}
+    :choices {:card #(or (and (corp? %)
+                              (rezzed? %))
+                         (and (runner? %)
+                              (or (installed? %)
+                                  (:host %))
+                              (not (facedown? %))))}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
     :effect (effect (add-prop target :advance-counter 3 {:placed true})
                     (register-turn-flag!
@@ -470,7 +471,9 @@
                    (shuffle! state side :deck)
                    (continue-ability state side
                                      {:prompt "You may install a card in HQ"
-                                      :choices {:req #(and (in-hand? %) (corp? %) (not (operation? %)))}
+                                      :choices {:card #(and (in-hand? %)
+                                                            (corp? %)
+                                                            (not (operation? %)))}
                                       :effect (req (wait-for (resolve-ability
                                                                state side
                                                                (let [card-to-install target]
@@ -490,8 +493,8 @@
          trash-from-hq {:async true
                         :prompt "Select up to 2 cards in HQ to trash"
                         :choices {:max 2
-                                  :req #(and (corp? %)
-                                             (in-hand? %))}
+                                  :card #(and (corp? %)
+                                              (in-hand? %))}
                         :msg (msg "trash " (quantify (count targets) "card") " from HQ")
                         :effect (req (wait-for
                                        (trash-cards state side targets nil)
@@ -515,8 +518,8 @@
    "Divert Power"
    {:async true
     :prompt "Select any number of cards to derez"
-    :choices {:req #(and (installed? %)
-                         (rezzed? %))
+    :choices {:card #(and (installed? %)
+                          (rezzed? %))
               :max (req (count (filter rezzed? (all-installed state :corp))))}
     :effect (req (doseq [c targets]
                    (derez state side c))
@@ -525,10 +528,10 @@
                      state side
                      {:async true
                       :prompt "Select a card to rez"
-                      :choices {:req #(and (installed? %)
-                                           (corp? %)
-                                           (not (rezzed? %))
-                                           (not (agenda? %)))}
+                      :choices {:card #(and (installed? %)
+                                            (corp? %)
+                                            (not (rezzed? %))
+                                            (not (agenda? %)))}
                       :effect (effect (rez eid target {:cost-bonus discount}))}
                      card nil)))}
 
@@ -546,8 +549,8 @@
 
    "Eavesdrop"
    {:implementation "On encounter effect is manual"
-    :choices {:req #(and (ice? %)
-                         (installed? %))}
+    :choices {:card #(and (ice? %)
+                          (installed? %))}
     :msg (msg "give " (card-str state target {:visible false}) " additional text")
     :effect (effect (host target (assoc card :seen true :condition true)))
     :leave-play (req (remove-extra-subs! state :corp (:cid card) (:host card)))
@@ -587,9 +590,9 @@
                             (continue-ability
                               state side
                               {:prompt "Select an installed card not matching the faction of the Runner's identity"
-                               :choices {:req #(and (installed? %)
-                                                    (not= f (:faction %))
-                                                    (runner? %))}
+                               :choices {:card #(and (installed? %)
+                                                     (not= f (:faction %))
+                                                     (runner? %))}
                                :msg (msg "trash " (:title target))
                                :effect (effect (trash target))}
                               card nil)))}}}
@@ -610,14 +613,14 @@
               (continue-ability
                 state side
                 {:prompt "Select a stolen agenda in the Runner's score area to swap"
-                 :choices {:req #(in-runner-scored? state side %)}
+                 :choices {:card #(in-runner-scored? state side %)}
                  :async true
                  :effect (req
                            (let [stolen target]
                              (continue-ability
                                state side
                                {:prompt (msg "Select a scored agenda to swap for " (:title stolen))
-                                :choices {:req #(in-corp-scored? state side %)}
+                                :choices {:card #(in-corp-scored? state side %)}
                                 :effect (req (let [scored target]
                                                (swap-agendas state side scored stolen)
                                                (system-msg state side (str "uses Exchange of Information to swap "
@@ -641,10 +644,10 @@
                install-cards (fn install-cards
                                [server n]
                                {:prompt "Select a card to install"
-                                :choices {:req #(and (corp? %)
-                                                     (not (operation? %))
-                                                     (in-hand? %)
-                                                     (seq (filter (fn [c] (= server c)) (corp-install-list state %))))}
+                                :choices {:card #(and (corp? %)
+                                                      (not (operation? %))
+                                                      (in-hand? %)
+                                                      (seq (filter (fn [c] (= server c)) (corp-install-list state %))))}
                                 :effect (req (wait-for
                                                (corp-install state side target server nil)
                                                (let [server (if (= "New remote" server)
@@ -686,7 +689,8 @@
                                               (if (= target "Yes")
                                                 {:player :runner
                                                  :prompt "Select a resource to trash"
-                                                 :choices {:req #(and (resource? %) (installed? %))}
+                                                 :choices {:card #(and (resource? %)
+                                                                       (installed? %))}
                                                  :effect (req (trash state side target {:unpreventable true})
                                                               (system-msg state :runner
                                                                           (str "trashes " (:title target)
@@ -726,7 +730,7 @@
                                                state :corp
                                                {:msg (msg "place " (quantify c " advancement token") " on "
                                                           (card-str state target))
-                                                :choices {:req installed?}
+                                                :choices {:card installed?}
                                                 :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                                card nil))
                                          (effect-completed state side eid))))}
@@ -737,9 +741,9 @@
    {:trace {:base 7
             :successful {:prompt "Select 1 card to trash"
                          :not-distinct true
-                         :choices {:req #(and (installed? %)
-                                              (or (has-subtype? % "Virtual")
-                                                  (has-subtype? % "Link")))}
+                         :choices {:card #(and (installed? %)
+                                               (or (has-subtype? % "Virtual")
+                                                   (has-subtype? % "Link")))}
                          :msg "trash 1 virtual resource or link"
                          :effect (effect (trash target)
                                          (system-msg (str "trashes " (:title target))))}}}
@@ -748,8 +752,8 @@
    {:req (req tagged)
     :msg (msg "trash " (join ", " (map :title (sort-by :title targets))))
     :choices {:max 2
-              :req #(and (installed? %)
-                         (resource? %))}
+              :card #(and (installed? %)
+                          (resource? %))}
     :effect (effect (trash-cards :runner targets))}
 
    "Friends in High Places"
@@ -757,9 +761,9 @@
                               :priority -1
                               :async true
                               :show-discard true
-                              :choices {:req #(and (corp? %)
-                                                   (not (operation? %))
-                                                   (in-discard? %))}
+                              :choices {:card #(and (corp? %)
+                                                    (not (operation? %))
+                                                    (in-discard? %))}
                               :effect (req (wait-for
                                              (corp-install state side target nil nil)
                                              (do (system-msg state side (str "uses Friends in High Places to "
@@ -819,9 +823,9 @@
                         :req (req (<= 3 (:credit runner)))
                         :prompt (msg "Prevent any " typemsg " from being trashed? Pay 3 [Credits] per card.")
                         :choices {:max (req (min numtargets (quot (:credit runner) 3)))
-                                  :req #(and (installed? %)
-                                             (is-type? % type)
-                                             (not (has-subtype? % "Icebreaker")))}
+                                  :card #(and (installed? %)
+                                              (is-type? % type)
+                                              (not (has-subtype? % "Icebreaker")))}
                         :effect (req (pay state :runner card :credit (* 3 (count targets)))
                                      (system-msg
                                        state :runner
@@ -853,8 +857,8 @@
    {:req (req (last-turn? state :runner :trashed-card))
     :async true
     :prompt "Choose an installed Corp card"
-    :choices {:req #(and (corp? %)
-                         (installed? %))}
+    :choices {:card #(and (corp? %)
+                          (installed? %))}
     :effect (effect (show-wait-prompt :corp "Runner to resolve Hangeki")
                     (continue-ability
                       {:optional
@@ -912,9 +916,9 @@
 
    "Hatchet Job"
    {:trace {:base 5
-            :successful {:choices {:req #(and (installed? %)
-                                              (runner? %)
-                                              (not (has-subtype? % "Virtual")))}
+            :successful {:choices {:card #(and (installed? %)
+                                               (runner? %)
+                                               (not (has-subtype? % "Virtual")))}
                          :msg "add an installed non-virtual card to the Runner's grip"
                          :effect (effect (move :runner target :hand true))}}}
 
@@ -925,8 +929,8 @@
    {:req (req (last-turn? state :runner :installed-resource))
     :trace {:base 2
             :successful {:msg "add a Resource to the top of the Stack"
-                         :choices {:req #(and (installed? %)
-                                              (resource? %))}
+                         :choices {:card #(and (installed? %)
+                                               (resource? %))}
                          :effect (effect (move :runner target :deck {:front true})
                                          (system-msg (str "adds " (:title target) " to the top of the Stack")))}
             :unsuccessful {:msg "take 1 bad publicity"
@@ -941,8 +945,8 @@
                                                                    (concat (all-installed state :corp)
                                                                            (all-installed state :runner))))))
                                    :all true
-                                   :req #(and (installed? %)
-                                              (not (program? %)))}
+                                   :card #(and (installed? %)
+                                               (not (program? %)))}
                          :msg (msg "trash " (join ", " (map :title (sort-by :title targets))))
                          :effect (req (doseq [c targets]
                                         (trash state side c)))}
@@ -954,8 +958,8 @@
     :effect (req (wait-for (draw state side 3 nil)
                            (continue-ability state side
                                              {:prompt "Select a card in HQ to put on top of R&D"
-                                              :choices {:req #(and (corp? %)
-                                                                   (in-hand? %))}
+                                              :choices {:card #(and (corp? %)
+                                                                    (in-hand? %))}
                                               :msg "draw 3 cards and add 1 card from HQ to the top of R&D"
                                               :effect (effect (move target :deck {:front true}))}
                                              card nil)))}
@@ -972,8 +976,8 @@
               :player :runner
               :once :per-turn
               :prompt "Select a card from your Grip to trash for Housekeeping"
-              :choices {:req #(and (runner? %)
-                                   (in-hand? %))}
+              :choices {:card #(and (runner? %)
+                                    (in-hand? %))}
               :msg (msg "force the Runner to trash " (:title target) " from their Grip")
               :effect (effect (trash target {:unpreventable true}))}]}
 
@@ -981,7 +985,7 @@
    {:req (req (last-turn? state :runner :stole-agenda))
     :async true
     :prompt "Choose a card to trash"
-    :choices {:req installed?}
+    :choices {:card installed?}
     :msg (msg "trash " (card-str state target))
     :effect (effect (trash target))}
 
@@ -990,9 +994,9 @@
     :prompt "Select a card to install from Archives or HQ"
     :show-discard true
     :not-distinct true
-    :choices {:req #(and (not (operation? %))
-                         (corp? %)
-                         (#{[:hand] [:discard]} (:zone %)))}
+    :choices {:card #(and (not (operation? %))
+                          (corp? %)
+                          (#{[:hand] [:discard]} (:zone %)))}
     :effect (effect (corp-install eid target nil {:ignore-install-cost true}))
     :msg (msg (corp-install-msg target))}
 
@@ -1055,9 +1059,9 @@
     :effect (effect (gain-credits 4)
                     (continue-ability {:player :corp
                                        :prompt "Select a card to install"
-                                       :choices {:req #(and (corp? %)
-                                                            (not (operation? %))
-                                                            (in-hand? %))}
+                                       :choices {:card #(and (corp? %)
+                                                             (not (operation? %))
+                                                             (in-hand? %))}
                                        :async true
                                        :msg (msg (corp-install-msg target))
                                        :effect (effect (corp-install eid target nil nil))}
@@ -1074,8 +1078,8 @@
                      {:async true
                       :prompt "Select any number of rezzed cards to trash"
                       :choices {:max n
-                                :req #(and (rezzed? %)
-                                           (not (agenda? %)))}
+                                :card #(and (rezzed? %)
+                                            (not (agenda? %)))}
                       :msg (msg "trash " (join ", " (map :title targets))
                                 " and gain " (* (count targets) 3) " [Credits]")
                       :effect (req (wait-for (trash-cards state side targets nil)
@@ -1136,9 +1140,9 @@
    {:req (req (not-empty (filter #(has-subtype? % "Connection")
                                  (all-active-installed state :runner))))
     :prompt "Choose a connection to host MCA Informant on"
-    :choices {:req #(and (runner? %)
-                         (has-subtype? % "Connection")
-                         (installed? %))}
+    :choices {:card #(and (runner? %)
+                          (has-subtype? % "Connection")
+                          (installed? %))}
     :msg (msg "host it on " (card-str state target) ". The Runner has an additional tag")
     :effect (req (host state side (get-card state target) (assoc card :seen true))
                  (swap! state update-in [:runner :tag :additional] inc)
@@ -1161,8 +1165,8 @@
     (effect
       (continue-ability
         {:prompt "Select an agenda in the runner's score area"
-         :choices {:req #(and (agenda? %)
-                              (is-scored? state :runner %))}
+         :choices {:card #(and (agenda? %)
+                               (is-scored? state :runner %))}
          :effect (req (update! state side (assoc card :title (:title target)))
                       ;; TODO: Move reverting the name back to here when we move
                       ;; abilities into the card object and stop relying on `card-def`.
@@ -1189,9 +1193,9 @@
 
    "Mushin No Shin"
    {:prompt "Select a card to install from HQ"
-    :choices {:req #(and (not (operation? %))
-                         (corp? %)
-                         (in-hand? %))}
+    :choices {:card #(and (not (operation? %))
+                          (corp? %)
+                          (in-hand? %))}
     :async true
     :effect (req (wait-for (corp-install state side target "New remote" nil)
                            (let [target (find-latest state target)]
@@ -1217,8 +1221,8 @@
                           (rezzed? %))
                     (all-installed state :corp)))
     :prompt "Select a rezzed piece of ice to trash"
-    :choices {:req #(and (ice? %)
-                         (rezzed? %))}
+    :choices {:card #(and (ice? %)
+                          (rezzed? %))}
     :async true
     :effect (req (let [i (ice-index state target)
                        [revealed-cards r] (split-with (complement ice?) (get-in @state [:corp :deck]))
@@ -1277,21 +1281,23 @@
     :req (req (and (pos? (count-tags state))
                    (< (:credit runner) 6)))
     :prompt "Select an installed card to trash"
-    :choices {:req #(and (runner? %)
-                         (installed? %))}
+    :choices {:card #(and (runner? %)
+                          (installed? %))}
     :msg (msg "remove 1 Runner tag and trash " (card-str state target))
     :effect (effect (trash eid target nil))}
 
    "Oversight AI"
    {:implementation "Trashing ICE is manual"
-    :choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
+    :choices {:card #(and (ice? %)
+                          (not (rezzed? %))
+                          (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:ignore-cost :all-costs})
                     (host (get-card state target) (assoc card :seen true :condition true)))}
 
    "Patch"
-   {:choices {:req #(and (ice? %)
-                         (rezzed? %))}
+   {:choices {:card #(and (ice? %)
+                          (rezzed? %))}
     :msg (msg "give +2 strength to " (card-str state target))
     :effect (req (let [card (host state side target (assoc card :seen true :condition true))]
                    (update-ice-strength state side (get-card state target))))
@@ -1322,8 +1328,8 @@
                          :effect (req (let [max-cost (- target (second targets))]
                                         (continue-ability
                                           state side
-                                          {:choices {:req #(and (hardware? %)
-                                                                (<= (:cost %) max-cost))}
+                                          {:choices {:card #(and (hardware? %)
+                                                                 (<= (:cost %) max-cost))}
                                            :msg (msg "trash " (:title target))
                                            :effect (effect (trash target))}
                                           card nil))
@@ -1344,8 +1350,8 @@
                  (let [n target]
                    (continue-ability state :runner
                                      {:prompt "Select a Program or piece of Hardware to trash"
-                                      :choices {:req #(and (#{"Hardware" "Program"} (:type %))
-                                                           (<= (:cost %) n))}
+                                      :choices {:card #(and (#{"Hardware" "Program"} (:type %))
+                                                            (<= (:cost %) n))}
                                       :msg (msg "trash " (:title target))
                                       :effect (effect (trash target))}
                                      card nil)))}
@@ -1378,7 +1384,9 @@
               :effect (effect (corp-install eid (assoc chosen :advance-counter 3) target {:ignore-all-cost true}))})]
      {:async true
       :prompt "Choose a piece of ICE in HQ to install"
-      :choices {:req #(and (in-hand? %) (corp? %) (ice? %))}
+      :choices {:card #(and (in-hand? %)
+                         (corp? %)
+                         (ice? %))}
       :msg "install an ICE from HQ and place 3 advancements on it"
       :cancel-effect (req (effect-completed state side eid))
       :effect (effect (continue-ability (install-card target) card nil))})
@@ -1386,9 +1394,9 @@
    "Product Recall"
    {:async true
     :prompt "Select a rezzed asset or upgrade to trash"
-    :choices {:req #(and (rezzed? %)
-                         (or (asset? %)
-                             (upgrade? %)))}
+    :choices {:card #(and (rezzed? %)
+                          (or (asset? %)
+                              (upgrade? %)))}
     :msg (msg "trash " (card-str state target)
               " and gain " (trash-cost state side target) " [Credits]")
     :effect (req (wait-for (trash state side target {:unpreventable true})
@@ -1406,7 +1414,7 @@
                          (continue-ability
                            state side
                            {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
-                            :choices {:req can-be-advanced?}
+                            :choices {:card can-be-advanced?}
                             :effect (effect (add-prop target :advance-counter c {:placed true}))}
                            card nil))
                      (effect-completed state side eid))))}
@@ -1446,9 +1454,9 @@
    "Reclamation Order"
    {:prompt "Select a card from Archives"
     :show-discard true
-    :choices {:req #(and (corp? %)
-                         (not= (:title %) "Reclamation Order")
-                         (in-discard? %))}
+    :choices {:card #(and (corp? %)
+                          (not= (:title %) "Reclamation Order")
+                          (in-discard? %))}
     :msg (msg "name " (:title target))
     :effect (req (let [title (:title target)
                        cards (filter #(= title (:title %)) (:discard corp))
@@ -1503,9 +1511,9 @@
                :effect (effect (gain :click 1))}
               {:prompt "Choose a non-agenda to install"
                :msg "install a non-agenda from hand"
-               :choices {:req #(and (not (agenda? %))
-                                    (not (operation? %))
-                                    (in-hand? %))}
+               :choices {:card #(and (not (agenda? %))
+                                     (not (operation? %))
+                                     (in-hand? %))}
                :async true
                :effect (effect (corp-install eid target nil nil))}]
          can-install? (fn [hand]
@@ -1538,7 +1546,7 @@
    {:async true
     :req (req (some #(can-be-advanced? %) (all-installed state :corp)))
     :prompt "Select an installed card that can be advanced"
-    :choices {:req can-be-advanced?}
+    :choices {:card can-be-advanced?}
     :effect (req (let [installed (get-all-installed state)
                        total-adv (reduce + (map #(get-counters % :advancement) installed))]
                    (doseq [c installed]
@@ -1553,17 +1561,17 @@
    (letfn [(replant [n]
              {:prompt "Select a card to install with Replanting"
               :async true
-              :choices {:req #(and (corp? %)
-                                   (not (operation? %))
-                                   (in-hand? %))}
+              :choices {:card #(and (corp? %)
+                                    (not (operation? %))
+                                    (in-hand? %))}
               :effect (req (wait-for (corp-install state side target nil {:ignore-all-cost true})
                                      (if (< n 2)
                                        (continue-ability state side (replant (inc n)) card nil)
                                        (effect-completed state side eid))))})]
      {:async true
       :prompt "Select an installed card to add to HQ"
-      :choices {:req #(and (corp? %)
-                           (installed? %))}
+      :choices {:card #(and (corp? %)
+                            (installed? %))}
       :msg (msg "add " (card-str state target) " to HQ, then install 2 cards ignoring all costs")
       :effect (req (move state side target :hand)
                    (resolve-ability state side (replant 1) card nil))})
@@ -1575,9 +1583,9 @@
                        :priority -1
                        :async true
                        :show-discard true
-                       :choices {:req #(and (corp? %)
-                                            (not (operation? %))
-                                            (in-discard? %))}
+                       :choices {:card #(and (corp? %)
+                                             (not (operation? %))
+                                             (in-discard? %))}
                        :effect (req (wait-for
                                       (corp-install state side target nil {:install-state :rezzed})
                                       (do (system-msg state side (str "uses Restore to "
@@ -1594,9 +1602,9 @@
    {:async true
     :prompt "Select a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (:title target) " to remove 2 bad publicity")
-    :choices {:req #(or (has-subtype? % "Clone")
-                        (has-subtype? % "Executive")
-                        (has-subtype? % "Sysop"))}
+    :choices {:card #(or (has-subtype? % "Clone")
+                         (has-subtype? % "Executive")
+                         (has-subtype? % "Sysop"))}
     :effect (req (lose-bad-publicity state side 2)
                  (when (facedown? target)
                    (reveal state side target))
@@ -1613,8 +1621,8 @@
                      state side
                      {:prompt (msg "Select up to " n " cards in HQ to trash with Reuse")
                       :choices {:max n
-                                :req #(and (corp? %)
-                                           (in-hand? %))}
+                                :card #(and (corp? %)
+                                            (in-hand? %))}
                       :msg (msg (let [m (count targets)]
                                   (str "trash " (quantify m "card")
                                        " and gain " (* 2 m) " [Credits]")))
@@ -1642,8 +1650,8 @@
 
    "Rework"
    {:prompt "Select a card from HQ to shuffle into R&D"
-    :choices {:req #(and (corp? %)
-                         (in-hand? %))}
+    :choices {:card #(and (corp? %)
+                          (in-hand? %))}
     :msg "shuffle a card from HQ into R&D"
     :effect (effect (move target :deck)
                     (shuffle! :deck))}
@@ -1680,8 +1688,8 @@
               :effect (effect (gain-credits :corp 1))}]}
 
    "Rover Algorithm"
-   {:choices {:req #(and (ice? %)
-                         (rezzed? %))}
+   {:choices {:card #(and (ice? %)
+                          (rezzed? %))}
     :msg (msg "host it as a condition counter on " (card-str state target))
     :effect (effect (host target (assoc card :installed true :seen true :condition true))
                     (update-ice-strength (get-card state target)))
@@ -1765,8 +1773,8 @@
    "Self-Growth Program"
    {:req (req tagged)
     :prompt "Select two installed Runner cards"
-    :choices {:req #(and (installed? %)
-                         (runner? %))
+    :choices {:card #(and (installed? %)
+                          (runner? %))
               :max 2}
     :msg (msg (str "move " (join ", " (map :title targets)) " to the Runner's grip"))
     :effect (req (doseq [c targets]
@@ -1780,9 +1788,9 @@
 
    "Shipment from Kaguya"
    {:choices {:max 2
-              :req #(and (corp? %)
-                         (installed? %)
-                         (can-be-advanced? %))}
+              :card #(and (corp? %)
+                          (installed? %)
+                          (can-be-advanced? %))}
     :msg (msg "place 1 advancement token on " (count targets) " cards")
     :effect (req (doseq [t targets]
                    (add-prop state :corp t :advance-counter 1 {:placed true})))}
@@ -1792,9 +1800,9 @@
              (when (< n 3)
                {:async true
                 :prompt "Select a card to install with Shipment from MirrorMorph"
-                :choices {:req #(and (corp? %)
-                                     (not (operation? %))
-                                     (in-hand? %))}
+                :choices {:card #(and (corp? %)
+                                      (not (operation? %))
+                                      (in-hand? %))}
                 :effect (req (wait-for (corp-install state side target nil nil)
                                        (continue-ability state side (shelper (inc n)) card nil)))}))]
      {:async true
@@ -1807,15 +1815,15 @@
     :effect (req (let [c (str->int target)]
                    (continue-ability
                      state side
-                     {:choices {:req can-be-advanced?}
+                     {:choices {:card can-be-advanced?}
                       :msg (msg "place " c " advancement tokens on " (card-str state target))
                       :effect (effect (add-prop :corp target :advance-counter c {:placed true}))}
                      card nil)))}
 
    "Shipment from Tennin"
    {:req (req (not-last-turn? state :runner :successful-run))
-    :choices {:req #(and (corp? %)
-                         (installed? %))}
+    :choices {:card #(and (corp? %)
+                          (installed? %))}
     :msg (msg "place 2 advancement tokens on " (card-str state target))
     :effect (effect (add-prop target :advance-counter 2 {:placed true}))}
 
@@ -1826,8 +1834,8 @@
                 :effect (req (wait-for (rez state side (first ice) {:ignore-cost :all-costs})
                                        (continue-ability state side (rez-helper (rest ice)) card nil)))}))]
      {:req (req tagged)
-      :choices {:req #(and (ice? %)
-                        (not (rezzed? %)))
+      :choices {:card #(and (ice? %)
+                         (not (rezzed? %)))
                 :max (req (min (count-tags state)
                                (reduce (fn [c server]
                                          (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
@@ -1838,7 +1846,7 @@
    {:trace {:base 3
             :successful
             {:msg "trash a connection"
-             :choices {:req #(has-subtype? % "Connection")}
+             :choices {:card #(has-subtype? % "Connection")}
              :async true
              :effect (req (let [c target]
                             (show-wait-prompt state :corp "Runner to decide if they will take 1 tag")
@@ -1864,8 +1872,8 @@
    "Special Report"
    {:prompt "Select any number of cards in HQ to shuffle into R&D"
     :choices {:max (req (count (:hand corp)))
-              :req #(and (corp? %)
-                         (in-hand? %))}
+              :card #(and (corp? %)
+                          (in-hand? %))}
     :msg (msg "shuffle " (count targets) " cards in HQ into R&D and draw " (count targets) " cards")
     :async true
     :effect (req (doseq [c targets]
@@ -1893,8 +1901,8 @@
      {:sub-effect {:label "End the run"
                    :msg "end the run"
                    :effect (effect (end-run eid card))}
-      :choices {:req #(and (ice? %)
-                           (rezzed? %))}
+      :choices {:card #(and (ice? %)
+                            (rezzed? %))}
       :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
       :effect (req (update! state side (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))
                    (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
@@ -1908,9 +1916,9 @@
    "Subcontract"
    (letfn [(sc [i sccard]
              {:prompt "Select an operation in HQ to play"
-              :choices {:req #(and (corp? %)
-                                   (operation? %)
-                                   (in-hand? %))}
+              :choices {:card #(and (corp? %)
+                                    (operation? %)
+                                    (in-hand? %))}
               :async true
               :msg (msg "play " (:title target))
               :effect (req (wait-for (play-instant state side target)
@@ -1942,7 +1950,7 @@
    "Success"
    {:additional-cost [:forfeit]
     :effect (req (resolve-ability state side
-                                  {:choices {:req can-be-advanced?}
+                                  {:choices {:card can-be-advanced?}
                                    :msg (msg "advance " (card-str state target) " "
                                              (advancement-cost state side (last (:rfg corp))) " times")
                                    :effect (req (dotimes [_ (advancement-cost state side (last (:rfg corp)))]
@@ -1956,7 +1964,8 @@
    "Sunset"
    (letfn [(sun [serv]
              {:prompt "Select two pieces of ICE to swap positions"
-              :choices {:req #(and (= serv (rest (butlast (:zone %)))) (ice? %))
+              :choices {:card #(and (= serv (rest (butlast (:zone %))))
+                                    (ice? %))
                         :max 2}
               :async true
               :effect (req (if (= (count targets) 2)
@@ -2013,8 +2022,8 @@
    "Threat Assessment"
    {:req (req (last-turn? state :runner :trashed-card))
     :prompt "Select an installed Runner card"
-    :choices {:req #(and (runner? %)
-                         (installed? %))}
+    :choices {:card #(and (runner? %)
+                          (installed? %))}
     :rfg-instead-of-trashing true
     :async true
     :effect (effect (show-wait-prompt "Runner to resolve Threat Assessment")
@@ -2058,9 +2067,9 @@
     :effect (effect (damage eid :meat 2 {:card card}))}
 
    "Transparency Initiative"
-   {:choices {:req #(and (agenda? %)
-                         (installed? %)
-                         (not (faceup? %)))}
+   {:choices {:card #(and (agenda? %)
+                          (installed? %)
+                          (not (faceup? %)))}
     :effect (effect (update! (assoc target
                                     :seen true
                                     :rezzed true
@@ -2081,8 +2090,8 @@
     :req (req (let [advanceable (some can-be-advanced? (get-all-installed state))
                     advanced (some #(get-counters % :advancement) (get-all-installed state))]
                 (and advanceable advanced)))
-    :choices {:req #(and (pos? (get-counters % :advancement))
-                         (installed? %))}
+    :choices {:card #(and (pos? (get-counters % :advancement))
+                          (installed? %))}
     :effect (effect
               (continue-ability
                 (let [fr target]
@@ -2093,8 +2102,8 @@
                              (continue-ability
                                (let [c (str->int target)]
                                  {:prompt "Move to where?"
-                                  :choices {:req #(and (not (same-card? fr %))
-                                                       (can-be-advanced? %))}
+                                  :choices {:card #(and (not (same-card? fr %))
+                                                        (can-be-advanced? %))}
                                   :msg (msg "move " c " advancement tokens from "
                                             (card-str state fr) " to " (card-str state target))
                                   :effect (effect (add-prop :corp target :advance-counter c {:placed true})
@@ -2113,9 +2122,9 @@
                                           {:async true
                                            :prompt (str "Select a program with an install cost of no more than "
                                                         exceed "[Credits]")
-                                           :choices {:req #(and (program? %)
-                                                                (installed? %)
-                                                                (>= exceed (:cost %)))}
+                                           :choices {:card #(and (program? %)
+                                                                 (installed? %)
+                                                                 (>= exceed (:cost %)))}
                                            :msg (msg "trash " (card-str state target))
                                            :effect (effect (trash eid target nil))}
                                           card nil)))}}}
@@ -2128,9 +2137,9 @@
                              state side
                              {:async true
                               :prompt "Choose a card in HQ to install"
-                              :choices {:req #(and (in-hand? %)
-                                                   (corp? %)
-                                                   (not (operation? %)))}
+                              :choices {:card #(and (in-hand? %)
+                                                    (corp? %)
+                                                    (not (operation? %)))}
                               :msg "gain 10 [Credits], draw 4 cards, and install 1 card from HQ"
                               :cancel-effect (req (effect-completed state side eid))
                               :effect (effect (corp-install eid target nil nil))}
@@ -2143,10 +2152,10 @@
                                       (has-subtype? % "Connection"))
                                 (all-active-installed state :runner)))))
     :prompt "Choose a connection to trash"
-    :choices {:req #(and (runner? %)
-                         (resource? %)
-                         (has-subtype? % "Connection")
-                         (installed? %))}
+    :choices {:card #(and (runner? %)
+                          (resource? %)
+                          (has-subtype? % "Connection")
+                          (installed? %))}
     :msg (msg "trash " (:title target) " and take 1 bad publicity")
     :async true
     :effect (req (wait-for (trash state side target nil)
@@ -2163,8 +2172,8 @@
     :psi {:not-equal {:player :corp
                       :async true
                       :prompt "Select a resource to trash"
-                      :choices {:req #(and (installed? %)
-                                           (resource? %))}
+                      :choices {:card #(and (installed? %)
+                                            (resource? %))}
                       :msg (msg "trash " (:title target))
                       :effect (effect (trash eid target nil))}}}
 
@@ -2173,9 +2182,9 @@
     :rfg-instead-of-trashing true
     :req (req (last-turn? state :runner :trashed-card))
     :prompt "Select a piece of hardware or non-virtual resource"
-    :choices {:req #(or (hardware? %)
-                        (and (resource? %)
-                             (not (has-subtype? % "Virtual"))))}
+    :choices {:card #(or (hardware? %)
+                         (and (resource? %)
+                              (not (has-subtype? % "Virtual"))))}
     :effect (effect (show-wait-prompt "Runner to resolve Wake Up Call")
                     (continue-ability
                       :runner
@@ -2196,9 +2205,9 @@
 
    "Wetwork Refit"
    (let [new-sub {:label "[Wetwork Refit] Do 1 brain damage"}]
-     {:choices {:req #(and (ice? %)
-                           (has-subtype? % "Bioroid")
-                           (rezzed? %))}
+     {:choices {:card #(and (ice? %)
+                            (has-subtype? % "Bioroid")
+                            (rezzed? %))}
       :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 brain damage\" before all its other subroutines")
       :sub-effect (do-brain-damage 1)
       :effect (req (add-extra-sub! state :corp target new-sub (:cid card) {:front true})
