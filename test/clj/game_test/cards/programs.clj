@@ -943,6 +943,59 @@
       (is (zero? (count (filter :broken (:subroutines (get-ice state :rd 0))))) "No subs are broken")
       (is (empty? (:prompt (get-runner))) "Can't break subs on a different server"))))
 
+(deftest d4v1d
+  ;; D4v1d
+  (testing "Can break 5+ strength ice"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall" "Hadrian's Wall"]}
+                 :runner {:deck ["D4v1d"]}})
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Hadrian's Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "D4v1d")
+      (let [had (get-ice state :hq 1)
+            iw (get-ice state :hq 0)
+            d4 (get-program state 0)]
+        (is (= 3 (get-counters d4 :power)) "D4v1d installed with 3 power tokens")
+        (run-on state :hq)
+        (core/rez state :corp had)
+        (card-ability state :runner d4 0)
+        (dotimes [_ 2] (click-prompt state :runner "End the run"))
+        (is (= 1 (get-counters (refresh d4) :power)) "Used 2 power tokens from D4v1d to break")
+        (run-continue state)
+        (core/rez state :corp iw)
+        (card-ability state :runner d4 0)
+        (is (empty? (:prompt (get-runner))) "No prompt for breaking 1 strength Ice Wall")))))
+
+(deftest dai-v
+  ;; Dai V
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Enigma"]}
+                 :runner {:deck [(qty "Cloak" 2) "Dai V"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Dai V")
+      (run-on state :hq)
+      (let [enig (get-ice state :hq 0)
+            cl1 (get-program state 0)
+            cl2 (get-program state 1)
+            daiv (get-program state 2)]
+        (core/rez state :corp enig)
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 1 credit to pump and 2 credits from Cloaks to break"
+                           (card-ability state :runner daiv 1)
+                           (click-prompt state :runner "Done")
+                           (card-ability state :runner daiv 0)
+                           (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
+                           (click-prompt state :runner "End the run")
+                           (click-card state :runner cl1)
+                           (click-card state :runner cl2))))))
+
 (deftest darwin
   ;; Darwin - starts at 0 strength
   (do-game
@@ -2825,13 +2878,13 @@
       (play-from-hand state :corp "Spiderweb" "HQ")
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
+      (core/gain state :corp :credit 1)
       (play-from-hand state :runner "Snowball")
       (let [sp (get-ice state :hq 1)
             fw (get-ice state :hq 0)
             snow (get-program state 0)]
         (run-on state "HQ")
         (core/rez state :corp sp)
-        (core/rez state :corp fw)
         (card-ability state :runner snow 1) ; match strength
         (is (= 2 (:current-strength (refresh snow))))
         (card-ability state :runner snow 0) ; strength matched, break a sub
@@ -2840,6 +2893,7 @@
         (click-prompt state :runner "End the run")
         (is (= 5 (:current-strength (refresh snow))) "Broke 3 subs, gained 3 more strength")
         (run-continue state)
+        (core/rez state :corp fw)
         (is (= 4 (:current-strength (refresh snow))) "Has +3 strength until end of run; lost 1 per-encounter boost")
         (card-ability state :runner snow 1) ; match strength
         (is (= 5 (:current-strength (refresh snow))) "Matched strength, gained 1")

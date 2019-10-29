@@ -371,7 +371,10 @@
         in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
         current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
         ;; match strength
-        pump-ability (some #(when (:pump %) %) (:abilities (card-def card)))
+        can-pump (fn [ability]
+                   (when (:pump ability)
+                     ((:req ability) state side eid card nil)))
+        pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
         strength-diff (when (and current-ice
                                  (get-strength current-ice)
                                  (get-strength card))
@@ -384,10 +387,8 @@
                           (repeat times-pump (:cost pump-ability)))
         ;; break all subs
         can-break (fn [ability]
-                    (if-let [subtype (:breaks ability)]
-                      (or (= subtype "All")
-                          (has-subtype? current-ice subtype))
-                      false))
+                    (when (:break-req ability)
+                      ((:break-req ability) state side eid card nil)))
         break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
         subs-broken-at-once (when break-ability
                               (:break break-ability 1))

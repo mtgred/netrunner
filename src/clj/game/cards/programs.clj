@@ -301,14 +301,8 @@
                  (strength-pump 2 3))
 
    "Alpha"
-   (auto-icebreaker {:abilities [(merge
-                                   (break-sub 1 1)
-                                   {:req (req (= (:position run) (count run-ices)))
-                                    :effect (effect (continue-ability (break-sub 1 1) card nil))})
-                                 (merge
-                                   (strength-pump 1 1)
-                                   {:req (req (= (:position run) (count run-ices)))
-                                    :effect (effect (continue-ability (strength-pump 1 1) card nil))})]})
+   (auto-icebreaker {:abilities [(break-sub 1 1 {:req (req (= (:position run) (count run-ices)))})
+                                 (strength-pump 1 1 :end-of-encounter {:req (req (= (:position run) (count run-ices)))})]})
 
    "Amina"
    (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
@@ -769,24 +763,12 @@
                      :choices (req servers)
                      :effect (effect (update! (assoc card :server-target target)))
                      :leave-play (effect (update! (dissoc card :server-target)))
-                     :abilities [(merge
-                                   (break-sub 1 1 "Code Gate")
-                                   {:req (req (if (:server-target card)
-                                                (#{(last (server->zone state (:server-target card)))} (first (:server run)))
-                                                true))
-                                    :effect (effect
-                                              (continue-ability
-                                                (break-sub nil 1 "Code Gate")
-                                                card nil))})
-                                 (merge
-                                   (strength-pump 1 1)
-                                   {:req (req (if (:server-target card)
-                                                (#{(last (server->zone state (:server-target card)))} (first (:server run)))
-                                                true))
-                                    :effect (effect
-                                              (continue-ability
-                                                (strength-pump nil 1)
-                                                card nil))})]})
+                     :abilities [(break-sub 1 1 "Code Gate" {:req (req (if (:server-target card)
+                                                                         (#{(last (server->zone state (:server-target card)))} (first (:server run)))
+                                                                         true))})
+                                 (strength-pump 1 1 :end-of-encounter {:req (req (if (:server-target card)
+                                                                                   (#{(last (server->zone state (:server-target card)))} (first (:server run)))
+                                                                                   true))})]})
 
    "D4v1d"
    (let [david-req (req (<= 5 (get-strength current-ice)))]
@@ -800,13 +782,7 @@
 
    "Dai V"
    (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
-                     :abilities [(merge
-                                   (dissoc (break-sub 2 0) :req)
-                                   {:effect
-                                    (effect
-                                      (continue-ability
-                                        (break-sub 2 (count (:subroutines current-ice)) "All" {:all true})
-                                        card nil))})
+                     :abilities [(break-sub 2 0 "All" {:all true})
                                  (strength-pump 1 1)]})
 
    "Darwin"
@@ -1665,14 +1641,8 @@
     :abilities [(set-autoresolve :auto-nyashia "Nyashia")]}
 
    "Omega"
-   (auto-icebreaker {:abilities [(merge
-                                   (break-sub 1 1)
-                                   {:req (req (= 1 (:position run)))
-                                    :effect (effect (continue-ability (break-sub 1 1) card nil))})
-                                 (merge
-                                   (strength-pump 1 1)
-                                   {:req (req (= 1 (:position run)))
-                                    :effect (effect (continue-ability (strength-pump 1 1) card nil))})]})
+   (auto-icebreaker {:abilities [(break-sub 1 1 {:req (req (= 1 (:position run)))})
+                                 (strength-pump 1 1 :end-of-encounter {:req (req (= 1 (:position run)))})]})
 
    "Origami"
    {:effect (effect (gain :hand-size
@@ -2394,24 +2364,23 @@
                  :effect (effect (gain :click 2))}]}
 
    "Utae"
-   (auto-icebreaker {:abilities [{:label "X [Credits]: Break X Code Gate subroutines"
-                                  :once :per-run
-                                  :req (req (pos? (total-available-credits state :runner eid card)))
-                                  :prompt "How many credits?"
-                                  :choices {:number (req (total-available-credits state :runner eid card))}
-                                  :effect (effect
-                                            (continue-ability
-                                              (when (pos? target)
-                                                (break-sub target target "Code Gate"))
-                                              card nil))}
-                                 {:label "Break 1 Code Gate subroutine (Virtual restriction)"
-                                  :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
-                                                                 (all-active-installed state :runner)))))
-                                  :effect (effect
-                                            (continue-ability
-                                              (break-sub 1 1 "Code Gate")
-                                              card nil))}
-                                 (strength-pump 1 1)]})
+   (let [break-req (:break-req (break-sub 1 1 "Code Gate"))]
+     (auto-icebreaker {:abilities [{:label "X [Credits]: Break X Code Gate subroutines"
+                                    :once :per-run
+                                    :req (req (and (break-req state side eid card targets)
+                                                   (<= (get-strength current-ice) (get-strength card))))
+                                    ; no break-req to not enable auto-pumping
+                                    :prompt "How many credits?"
+                                    :choices {:number (req (total-available-credits state :runner eid card))}
+                                    :effect (effect
+                                              (continue-ability
+                                                (when (pos? target)
+                                                  (break-sub target target "Code Gate"))
+                                                card nil))}
+                                   (break-sub 1 1 "Code Gate" {:label "Break 1 Code Gate subroutine (Virtual restriction)"
+                                                               :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
+                                                                                              (all-active-installed state :runner)))))})
+                                   (strength-pump 1 1)]}))
 
    "Vamadeva"
    (swap-with-in-hand "Vamadeva"
