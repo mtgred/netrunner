@@ -3,7 +3,8 @@
 (declare forfeit prompt! damage mill is-scored? system-msg
          unknown->kw discard-from-hand card-str trash trash-cards
          all-installed-runner-type pick-credit-providing-cards all-active
-         eligible-pay-credit-cards lose-tags)
+         eligible-pay-credit-cards lose-tags number-of-virus-counters
+         pick-virus-counters-to-spend)
 
 (defn- deduct
   "Deduct the value from the player's attribute."
@@ -177,11 +178,15 @@
       (:net :meat :brain) (<= amount (count (get-in @state [:runner :hand])))
       :trash-from-deck (<= 0 (- (count (get-in @state [side :deck])) amount))
       (:trash-from-hand :randomly-trash-from-hand) (<= 0 (- (count (get-in @state [side :hand])) amount))
-      :trash-program-from-grip (<= 0 (- (count (filter program? (get-in @state [:runner :hand]))) amount))
+      :trash-hardware-from-hand (<= 0 (- (count (filter hardware? (get-in @state [:runner :hand]))) amount))
+      :trash-program-from-hand (<= 0 (- (count (filter program? (get-in @state [:runner :hand]))) amount))
+      :trash-resource-from-hand (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) amount))
       :trash-entire-hand true
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
       :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
       (:advancement :agenda :power :virus) (<= 0 (- (get-counters card cost-type) amount))
+      :any-virus-counter (or (<= 0 (- (get-counters card :virus) amount))
+                             (<= 0 (- (number-of-virus-counters state) amount)))
       ;; default to cannot afford
       false)))
 
@@ -233,13 +238,16 @@
       :trash-from-hand (str "trash " (quantify amount "card") " from your hand")
       :randomly-trash-from-hand (str "trash " (quantify amount "card") " randomly from your hand")
       :trash-entire-hand "trash all cards in your hand"
-      :trash-program-from-grip "trash a program in your graip"
+      :trash-hardware-from-hand (str "trash " (quantify amount "piece") " of hardware in your hand")
+      :trash-program-from-hand (str "trash " (quantify amount "program") " in your hand")
+      :trash-resource-from-hand (str "trash " (quantify amount "resource") " in your hand")
       (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
+      :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
+      :any-agenda-counter "any agenda counter"
+      :any-virus-counter (str "any " (quantify amount "virus counter"))
       (:advancement :agenda :power :virus) (if (< 1 amount)
                                              (quantify amount (str "hosted " (name cost-type) " counter"))
                                              (str "hosted " (name cost-type) " counter"))
-      :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
-      :any-agenda-counter "any agenda counter"
       (str (quantify amount (name cost-type))))))
 
 (defn build-cost-label
@@ -500,15 +508,16 @@
                                (pos? (count cards)))
                       (str " (" (join ", " (map :title cards)) ")")))))))
 
-(defn pay-trash-program-from-grip
-  [state side eid amount]
+(defn pay-trash-type-from-hand
+  [state side eid card-type amount]
   (continue-ability
     state side
-    {:prompt "Choose a program to trash from your grip"
+    {:prompt (str "Choose a " card-type " to trash from your grip")
+     :priority 11
      :async true
      :choices {:all true
                :max amount
-               :req #(and (program? %)
+               :req #(and (is-type? % (capitalize card-type))
                           (in-hand? %))}
      :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                             (complete-with-result
@@ -520,7 +529,7 @@
 
 (defn pay-shuffle-installed-to-stack
   "Shuffle installed runner cards into the stack as part of paying for a card or ability"
-  [state side eid card amount]
+  [state side eid amount]
   (continue-ability state :runner
                     {:prompt (str "Choose " (quantify amount "card") " to shuffle into the stack")
                      :choices {:max amount
@@ -536,10 +545,10 @@
                                     (str "shuffles " (quantify amount "card")
                                          " (" (join ", " (map :title targets)) ")"
                                          " into their stack")))}
-                    card nil))
+                    nil nil))
 
 (defn pay-any-agenda-counter
-  [state side eid]
+  [state side eid amount]
   (continue-ability
     state side
     {:prompt "Select an agenda with a counter"
@@ -551,6 +560,12 @@
                      (complete-with-result
                        eid (str "spends an agenda counter from on " (:title target))))}
     nil nil))
+
+(defn pay-any-virus-counter
+  "Spending virus counters from any card (Yusuf and Musaazi)"
+  [state side eid amount]
+  (wait-for (resolve-ability state side (pick-virus-counters-to-spend amount) nil nil)
+            (complete-with-result state side eid (str "spends " (:msg async-result)))))
 
 (defn pay-counter
   [state side eid card counter amount]
@@ -610,28 +625,29 @@
                                 :plural "rezzed ICE"})
 
      ;; Suffer damage
-     :net (pay-damage state side eid :net amount)
-     :meat (pay-damage state side eid :meat amount)
-     :brain (pay-damage state side eid :brain amount)
+     (:net :meat :brain)
+     (pay-damage state side eid cost-type amount)
 
      ;; Discard cards from deck or hand
      :trash-from-deck (pay-trash-from-deck state side eid amount)
      :trash-from-hand (pay-trash-from-hand state side eid amount)
      :randomly-trash-from-hand (pay-randomly-trash-from-hand state side eid amount)
      :trash-entire-hand (pay-trash-entire-hand state side eid)
-     :trash-program-from-grip (pay-trash-program-from-grip state side eid amount)
+
+     ;; Trash cards of specific types from hand
+     :trash-hardware-from-hand (pay-trash-type-from-hand state side eid "hardware" amount)
+     :trash-program-from-hand (pay-trash-type-from-hand state side eid "program" amount)
+     :trash-resource-from-hand (pay-trash-type-from-hand state side eid "resource" amount)
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
-     :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card amount)
+     :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid amount)
 
-     ;; Spend an agenda counter on another card
-     :any-agenda-counter (pay-any-agenda-counter state side eid)
+     ;; Spend a counter on another card
+     :any-agenda-counter (pay-any-agenda-counter state side eid amount)
+     :any-virus-counter (pay-any-virus-counter state side eid amount)
 
      ;; Counter costs
-     :advancement (pay-counter state side eid card :advancement amount)
-     :agenda (pay-counter state side eid card :agenda amount)
-     :power (pay-counter state side eid card :power amount)
-     :virus (pay-counter state side eid card :virus amount)
+     (:advancement :agenda :power :virus) (pay-counter state side eid card cost-type amount)
 
      ;; Else
      (do

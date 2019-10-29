@@ -1942,11 +1942,12 @@
       (is (= 2 (:current-strength (refresh musaazi))) "Musaazi strength 2")
       (is (empty? (:prompt (get-runner))) "No prompt open")
       (card-ability state :runner musaazi 0)
+      (click-prompt state :runner "Trash a program")
       (click-card state :runner musaazi)
+      (click-prompt state :runner "Resolve a Grail ICE subroutine from HQ")
       (click-card state :runner imp)
-      (click-prompt state :runner "Done")
-      (is (zero?(get-counters (refresh imp) :virus)) "Imp lost its final virus counter")
-      (is (zero?(get-counters (refresh imp) :virus)) "Musaazi lost its virus counter"))))
+      (is (zero? (get-counters (refresh imp) :virus)) "Imp lost its final virus counter")
+      (is (zero? (get-counters (refresh imp) :virus)) "Musaazi lost its virus counter"))))
 
 (deftest na-not-k
   ;; Na'Not'K - Strength adjusts accordingly when ice installed during run
@@ -3240,37 +3241,15 @@
         (is (= 3 (get-counters (refresh cache) :virus)) "Initial Cache virus counters")
         (run-on state "HQ")
         (core/rez state :corp fire-wall)
-        (card-ability state :runner yusuf 1) ; match strength
+        (card-ability state :runner yusuf 1)
         (click-card state :runner cache)
+        (card-ability state :runner yusuf 1)
         (click-card state :runner yusuf)
         (is (= 2 (get-counters (refresh cache) :virus)) "Cache lost 1 virus counter to pump")
         (is (= 5 (:current-strength (refresh yusuf))) "Yusuf strength 5")
-        (is (zero?(get-counters (refresh yusuf) :virus)) "Yusuf lost 1 virus counter to pump")
+        (is (zero? (get-counters (refresh yusuf) :virus)) "Yusuf lost 1 virus counter to pump")
         (is (empty? (:prompt (get-runner))) "No prompt open")
         (card-ability state :runner yusuf 0)
+        (click-prompt state :runner "End the run")
         (click-card state :runner cache)
-        (click-prompt state :runner "Done")
-        (is (= 1 (get-counters (refresh cache) :virus)) "Cache lost its final virus counter"))))
-  (testing "Yusuf add strength test"
-    (do-game
-      (new-game {:corp {:deck ["Fire Wall"]}
-                 :runner {:deck ["Yusuf" "Cache"]}})
-      (play-from-hand state :corp "Fire Wall" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Yusuf")
-      (play-from-hand state :runner "Cache")
-      (let [fire-wall (get-ice state :hq 0)
-            yusuf (get-program state 0)
-            cache (get-program state 1)]
-        (run-empty-server state "Archives")
-        (is (= 1 (get-counters (refresh yusuf) :virus)) "Yusuf has 1 virus counter")
-        (is (= 3 (:current-strength (refresh yusuf))) "Initial Yusuf strength")
-        (is (= 3 (get-counters (refresh cache) :virus)) "Initial Cache virus counters")
-        (run-on state "HQ")
-        (core/rez state :corp fire-wall)
-        (card-ability state :runner yusuf 2) ; add strength
-        (click-card state :runner cache)
-        (click-prompt state :runner "Done")
-        (is (= 2 (get-counters (refresh cache) :virus)) "Cache lost 1 virus counter to pump")
-        (is (= 4 (:current-strength (refresh yusuf))) "Yusuf strength 4")
-        (is (empty? (:prompt (get-runner))) "No prompt open")))))
+        (is (= 1 (get-counters (refresh cache) :virus)) "Cache lost its final virus counter")))))
