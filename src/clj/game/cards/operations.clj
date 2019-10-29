@@ -2076,12 +2076,11 @@
 
    "Trick of Light"
    {:async true
-    :req (req (let [can-be-advanced (some #(when (can-be-advanced? %) %)
-                                          (all-installed state :corp))]
-                (some #(and (not (same-card? can-be-advanced %))
-                            (pos? (get-counters % :advancement)))
-                      (all-installed state :corp))))
-    :choices {:req #(pos? (get-counters % :advancement))}
+    :req (req (let [advanceable (some can-be-advanced? (get-all-installed state))
+                    advanced (some #(get-counters % :advancement) (get-all-installed state))]
+                (and advanceable advanced)))
+    :choices {:req #(and (pos? (get-counters % :advancement))
+                         (installed? %))}
     :effect (effect
               (continue-ability
                 (let [fr target]
