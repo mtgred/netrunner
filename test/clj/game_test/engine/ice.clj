@@ -30,3 +30,21 @@
         (core/rez state :corp p2)
         (is (= "2 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities first :label)))
         (is (= 2 (count (:subroutines (refresh tg)))))))))
+
+(deftest bioroid-break-abilities
+  ;; The click-to-break ablities on bioroids shouldn't create an undo-click
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Eli 1.0"]}})
+    (play-from-hand state :corp "Eli 1.0" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [undo-click (:click-state @state)
+          clicks (:click (get-runner))]
+      (card-side-ability state :runner (get-ice state :hq 0) 0)
+      (click-prompt state :runner "End the run")
+      (is (= (dec clicks) (:click (get-runner))) "Runner has spent 1 click on the bioroid-break ability")
+      (core/command-undo-click state :runner)
+      (is (= (inc clicks) (:click (get-runner))) "Runner regains clicks spent on break ability and run")
+      (is (not (:run @state)) "Undoing a click resets to before the run began"))))

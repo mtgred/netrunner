@@ -344,9 +344,9 @@
       (complete-with-result state side eid (str "pays 0 [Credits]")))))
 
 (defn pay-clicks
-  [state side eid action costs cost-type amount]
-  (let [a (first (keep :action action))]
-    (when (not= a :steal-cost)
+  [state side eid actions costs cost-type amount]
+  (let [a (keep :action actions)]
+    (when (not (some #{:steal-cost :bioroid-cost} a))
       ;; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
       (swap! state assoc :click-state (dissoc @state :log)))
     (lose state side :click amount)
@@ -585,12 +585,12 @@
 
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"
-  ([state side card action costs cost] (cost-handler state side (make-eid state) card action costs cost))
-  ([state side eid card action costs [cost-type amount]]
+  ([state side card actions costs cost] (cost-handler state side (make-eid state) card actions costs cost))
+  ([state side eid card actions costs [cost-type amount]]
    (case cost-type
      ; Symbols
      :credit (pay-credits state side eid card amount)
-     :click (pay-clicks state side eid action costs cost-type amount)
+     :click (pay-clicks state side eid actions costs cost-type amount)
      :trash (pay-trash state side eid card amount)
 
      ; Forfeit an agenda
@@ -659,29 +659,32 @@
   args format as follows with each being optional ([:click 1 :credit 0] [:forfeit] {:action :corp-click-credit})
   The map with :action was added for Jeeves so we can log what each click was used on"
   [state side card & args]
-  (let [raw-costs (not-empty (remove map? args))
-        action (not-empty (filter map? args))]
+  (let [args (flatten args)
+        raw-costs (remove map? args)
+        actions (filter map? args)
+        eid (make-eid state)]
     (when-let [costs (can-pay? state side (:title card) raw-costs)]
         (->> costs
-             (map (partial cost-handler state side (make-eid state) card action costs))
+             (map (partial cost-handler state side eid card actions costs))
              (filter some?)
              (interpose " and ")
              (apply str)))))
 
 (defn- pay-sync-next
-  [state side eid costs card action msgs]
+  [state side eid costs card actions msgs]
   (if (empty? costs)
     (complete-with-result state side eid msgs)
-    (wait-for (cost-handler state side (make-eid state eid) card action costs (first costs))
-              (pay-sync-next state side eid (rest costs) card action (conj msgs async-result)))))
+    (wait-for (cost-handler state side (make-eid state eid) card actions costs (first costs))
+              (pay-sync-next state side eid (rest costs) card actions (conj msgs async-result)))))
 
 (defn pay-sync
   "Same as pay, but awaitable."
   [state side eid card & args]
-  (let [raw-costs (not-empty (remove map? args))
-        action (not-empty (filter map? args))]
+  (let [args (flatten args)
+        raw-costs (remove map? args)
+        actions (filter map? args)]
     (if-let [costs (can-pay? state side eid card (:title card) raw-costs)]
-      (wait-for (pay-sync-next state side (make-eid state eid) costs card action [])
+      (wait-for (pay-sync-next state side (make-eid state eid) costs card actions [])
                 (complete-with-result state side eid (->> async-result
                                                           (filter some?)
                                                           (join " and "))))

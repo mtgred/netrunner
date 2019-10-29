@@ -60,7 +60,7 @@
 
 (defn bioroid-break
   [cost qty]
-  (break-sub [:click cost] qty))
+  (break-sub [:click cost {:action :bioroid-cost}] qty))
 
 ;;; General subroutines
 (def end-the-run
