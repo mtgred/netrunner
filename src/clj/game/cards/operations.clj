@@ -324,6 +324,7 @@
                                   (system-msg state side (str "hosts Casting Call on " (:title agenda)))))})
                 card nil))
     :events [{:event :access
+              :condition :hosted
               :async true
               :req (req (same-card? target (:host card)))
               :msg "give the Runner 2 tags"
@@ -1688,6 +1689,7 @@
                         :req (req (same-card? target (:host card)))
                         :value (req (get-counters card :power))}]
     :events [{:event :pass-ice
+              :condition :hosted
               :req (req (same-card? target (:host card)))
               :effect (effect (add-counter card :power 1))}]}
 

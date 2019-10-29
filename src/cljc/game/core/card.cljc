@@ -78,6 +78,11 @@
   [card]
   (= (:zone card) [:current]))
 
+(defn in-scored?
+  "Checks if the specified card is in _a_ score area (don't know which one)."
+  [card]
+  (= (:zone card) [:scored]))
+
 (defn- card-is?
   "Checks the property of the card to see if it is equal to the given value,
   as either a string or a keyword"
@@ -198,7 +203,9 @@
   "Checks if the card is active and should receive game events/triggers."
   [card]
   (or (identity? card)
+      (in-play-area? card)
       (in-current? card)
+      (in-scored? card)
       (and (corp? card)
            (installed? card)
            (rezzed? card))

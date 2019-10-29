@@ -247,7 +247,7 @@
                     (event state side eid nil))
                   (when-let [dre (:derezzed-events cdef)]
                     (when-not (:rezzed (get-card state moved-card))
-                      (register-events state side moved-card dre))))))))
+                      (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))))))))
 
 (defn- corp-install-pay
   "Used by corp-install to pay install costs, code continues in corp-install-continue"
