@@ -112,10 +112,11 @@
   (Greek/Philosopher suite: Adept, Sage, Savant)"
   [first-qty first-type second-qty second-type]
   {:cost [:credit 2]
-   :req (req (or (and (has-subtype? current-ice first-type)
-                      (<= first-qty (count (remove :broken (:subroutines current-ice)))))
-                 (and (has-subtype? current-ice second-type)
-                      (<= second-qty (count (remove :broken (:subroutines current-ice)))))))
+   :req (req (and (rezzed? current-ice)
+               (or (and (has-subtype? current-ice first-type)
+                        (<= first-qty (count (remove :broken (:subroutines current-ice)))))
+                   (and (has-subtype? current-ice second-type)
+                        (<= second-qty (count (remove :broken (:subroutines current-ice))))))))
    :label (str "break "
                (quantify first-qty (str first-type " subroutine")) " or "
                (quantify second-qty (str second-type " subroutine")))
@@ -1178,6 +1179,7 @@
    "Grappling Hook"
    {:abilities [{:label "break all but 1 subroutine"
                  :req (req (and current-ice
+                                (rezzed? current-ice)
                                 (< 1 (count (remove :broken (:subroutines current-ice))))))
                  :cost [:trash]
                  :prompt "Select the subroutine to NOT break"
