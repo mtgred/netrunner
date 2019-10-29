@@ -362,7 +362,7 @@
 (defn- runner-get-cost
   "Get the total install cost for specified card"
   [state side card {:keys [base-cost ignore-install-cost ignore-all-cost facedown cost-bonus] :as params}]
-  (if ignore-all-cost
+  (if (or ignore-all-cost facedown)
     [:credit 0]
     (let [cost (install-cost state side card {:cost-bonus cost-bonus} {:facedown facedown})
           additional-costs (install-additional-cost-bonus state side card)]

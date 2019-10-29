@@ -374,7 +374,15 @@
       (core/end-phase-12 state :runner nil)
       (let [credits (:credit (get-runner))]
         (click-card state :runner "Sure Gamble")
-        (is (= credits (:credit (get-runner))))))))
+        (is (= credits (:credit (get-runner)))))))
+  (testing "Spec Work cannot be installed facedown #4574"
+    (do-game
+      (new-game {:runner {:id "Apex: Invasive Predator"
+                          :deck ["Spec Work" "Sure Gamble" "Cache"]}})
+      (take-credits state :corp)
+      (core/end-phase-12 state :runner nil)
+      (click-card state :runner "Spec Work")
+      (is (= 1 (count (get-runner-facedown state))) "Spec Work installed facedown"))))
 
 (deftest asa-group-security-through-vigilance
   (testing "Asa Group should not allow installing operations"
@@ -1043,7 +1051,19 @@
       (is (= 2 (count (:hand (get-runner)))) "Installed Corroder and Cache.")
       (play-from-hand state :runner "Fan Site")
       (is (empty? (:prompt (get-corp))) "No Hayley wait prompt if not first install this turn.")
-      (is (empty? (:prompt (get-runner))) "No Hayley prompt if not first install this turn."))))
+      (is (empty? (:prompt (get-runner))) "No Hayley prompt if not first install this turn.")))
+  (testing "Facedown installs do not prompt for Hayley install"
+    (do-game
+      (new-game {:runner {:id "Hayley Kaplan: Universal Scholar"
+                          :hand ["Hunting Grounds"]
+                          :deck ["Sure Gamble" "Astrolabe" "Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (click-prompt state :runner "Carry on!")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner (get-resource state 0) 1)
+      (is (empty? (:prompt (get-corp))) "No Hayley wait prompt for facedown installs."))))
 
 (deftest hyoubu-institute-absolute-clarity
   (testing "ID abilities"
