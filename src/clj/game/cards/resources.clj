@@ -876,7 +876,8 @@
               :cost [(keyword (str "trash-" card-type "-from-hand")) 1]
               :effect (effect (trash-prevent (keyword card-type) 1))})]
      {:interactions {:prevent [{:type #{:trash-hardware :trash-resource :trash-program}
-                                :req (req (not= :purge (:cause target)))}]}
+                                :req (req (and (installed? (:prevent-target target))
+                                               (not= :purge (:cause target))))}]}
       :abilities [(dummy-prevent "hardware")
                   (dummy-prevent "program")
                   (dummy-prevent "resource")]})

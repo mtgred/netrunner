@@ -1111,7 +1111,25 @@
       (play-from-hand state :runner "Clot")
       (take-credits state :runner)
       (core/purge state :corp)
-      (is (empty? (:prompt (get-runner))) "Dummy Box not prompting to prevent purge trash"))))
+      (is (empty? (:prompt (get-runner))) "Dummy Box not prompting to prevent purge trash")))
+  (testing "don't prevent trashing from hand"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Merger" "Ibrahim Salem"]
+                        :credits 10}
+                 :runner {:hand ["Dummy Box" "Cache"]}})
+      (core/gain state :corp :click 5)
+      (play-and-score state "Merger")
+      (play-from-hand state :corp "Ibrahim Salem" "New remote")
+      (core/rez state :corp (get-content state :remote2 0))
+      (click-card state :corp "Merger")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dummy Box")
+      (take-credits state :runner)
+      (card-ability state :corp (get-content state :remote2 0) 0)
+      (click-prompt state :corp "Program")
+      (click-prompt state :corp "Cache")
+      (is (empty? (:prompt (get-runner))) "Dummy Box not prompting to prevent trashing from hand"))))
 
 (deftest earthrise-hotel
   ;; Earthrise Hotel
