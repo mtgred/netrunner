@@ -2311,7 +2311,42 @@
         (click-prompt state :runner "1") ; Top Hat
         (click-prompt state :corp "0") ; init Ash trace
         (click-prompt state :runner "0") ; lose Ash trace
-        (is (empty? (:prompt (get-runner))) "Can't trash Ash")))))
+        (is (empty? (:prompt (get-runner))) "Can't trash Ash"))))
+  (testing "Mad Dash interaction issue #4542"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Neural Net"]}
+                 :runner {:deck ["Top Hat" (qty "Mad Dash" 4)]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Dedicated Neural Net" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 3)) "Dedicated Neural Net"))
+      ;; R&D is now from top to bottom: A B C D
+      (take-credits state :corp)
+      (core/gain state :runner :click 100)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Top Hat")
+      ;; Not stealing agenda
+      (play-from-hand state :runner "Mad Dash")
+      (click-prompt state :runner "R&D")
+      (run-successful state)
+      (click-prompt state :runner "Yes") ; Top Hat activation
+      (is (= 0 (count (:discard (get-runner)))) "No damage yet")
+      (click-prompt state :runner "2") ; Top Hat - accessing Brainstorm
+      (click-prompt state :runner "No Action")
+      (is (= 2 (count (:discard (get-runner)))) "Now the meat damage fires")
+      ;; Stealing agenda
+      (play-from-hand state :runner "Mad Dash")
+      (click-prompt state :runner "R&D")
+      (run-successful state)
+      (click-prompt state :runner "Yes") ; Top Hat activation
+      (click-prompt state :runner "1") ; Top Hat - accessing Accelerated Beta Test
+      (click-prompt state :runner "Steal")
+      (is (= 3 (:agenda-point (get-runner))) "Runner got 3 points")
+      (is (= 2 (count (:scored (get-runner)))) "Runner got 2 cards in score area"))))
 
 (deftest turntable
   ;; Turntable - Swap a stolen agenda for a scored agenda

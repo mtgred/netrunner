@@ -1563,8 +1563,10 @@
                                    {:card card
                                     :replace-access
                                     {:mandatory true
-                                     :effect (req (when (empty? (get-cards-to-access state))
-                                                    (access-card state side eid (nth (:deck corp) (dec (str->int t))) "an unseen card")))}})))}}}
+                                     :async true
+                                     :effect (req (if (empty? (get-cards-to-access state))
+                                                    (access-card state side eid (nth (:deck corp) (dec (str->int t))) "an unseen card")
+                                                    (effect-completed state side eid)))}})))}}}
                   card nil))}]}
 
    "Turntable"
