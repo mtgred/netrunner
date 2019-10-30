@@ -2102,6 +2102,44 @@
       (is (= 2 (count (:subroutines (get-ice state :hq 0)))) "Ice Wall gains 1 subroutine")
       (is (zero? (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 0 agenda counters"))))
 
+(deftest project-vacheron
+  ;; Project Vacheron
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Project Vacheron"]}})
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (is (= 0 (:agenda-point (get-runner))) "Runner should have 0 agenda points")
+      (click-prompt state :runner "Steal")
+      (is (= 0 (:agenda-point (get-runner))) "Runner should still have 0 agenda points")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Vacheron should have 4 agenda tokens")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 0 (:agenda-point (get-runner))) "Runner should still have 0 agenda points")
+      (is (= 3 (get-counters (get-scored state :runner 0) :agenda)) "Vacheron should have 3 agenda tokens")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 0 (:agenda-point (get-runner))) "Runner should still have 0 agenda points")
+      (is (= 2 (get-counters (get-scored state :runner 0) :agenda)) "Vacheron should have 2 agenda tokens")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 0 (:agenda-point (get-runner))) "Runner should still have 0 agenda points")
+      (is (= 1 (get-counters (get-scored state :runner 0) :agenda)) "Vacheron should have 1 agenda tokens")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 3 (:agenda-point (get-runner))) "Runner should now have 3 agenda points")
+      (is (= 0 (get-counters (get-scored state :runner 0) :agenda)) "Vacheron should have 0 agenda tokens")))
+  (testing "Still adding agenda tokens when using Film Critic"
+    (do-game
+      (new-game {:corp {:deck ["Project Vacheron"]}
+                 :runner {:deck ["Film Critic"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Film Critic")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Yes") ;host on Film Critic
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Vacheron should have 4 agenda tokens"))))
+
 (deftest project-vitruvius
   ;; Project Vitruvius
   (do-game

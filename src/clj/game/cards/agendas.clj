@@ -1068,6 +1068,33 @@
                                                   (:cid card) {:back true})
                                   (update! (update-in card [:special :kusanagi] #(conj % target))))}]}
 
+   "Project Vacheron"
+   (let [vacheron-ability
+         {:msg (msg "add 4 agenda counters on " (:title card))
+          :effect (effect (add-counter (get-card state card) :agenda 4)
+                          (update! (assoc-in (get-card state card) [:special :vacheron] true)))}]
+     {:agendapoints-runner (req (if (and (get-in card [:special :vacheron])
+                                         (zero? (get-counters card :agenda))) 3 0))
+      :stolen vacheron-ability
+      :events [(assoc vacheron-ability :event :agenda-stolen :req (req (not= (first (:zone card)) :discard)))
+               (assoc vacheron-ability :event :as-agenda)
+               {:event :runner-turn-begins
+                :req (req (pos? (get-counters card :agenda)))
+                :msg (msg (str "remove "
+                               (if (= 1 (get-counters card :agenda))
+                                 "the final"
+                                 "1")
+                               " agenda token from " (:title card)))
+                :effect (req (when (pos? (get-counters card :agenda))
+                               (add-counter state side card :agenda -1))
+                             (when (= 0 (get-counters (get-card state card) :agenda))
+                               (let [points (get-agenda-points state :runner (assoc-in card [:counter :agenda] 0))]
+                                 (system-msg state :runner
+                                             (str "gains " (quantify points "agenda point")
+                                                  " from " (:title card)))
+                                 (gain-agenda-point state :runner points))))}]
+      :flags {:has-events-when-stolen true}})
+
    "Project Vitruvius"
    {:silent (req true)
     :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))
