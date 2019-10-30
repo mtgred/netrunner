@@ -950,21 +950,22 @@
                  :effect (effect (shuffle-into-rd-effect card 3))}]}
 
    "Jeeves Model Bioroids"
-   (let [jeeves (effect (gain :click 1))
-         ability {:label "Gain [Click]"
+   (let [ability {:label "Gain [Click]"
                   :msg "gain [Click]"
                   :once :per-turn
-                  :effect jeeves}
+                  :effect (effect (gain :click 1))}
          cleanup (effect (update! (dissoc card :seen-this-turn)))]
      {:abilities [ability]
       :leave-play cleanup
       :events [{:event :corp-spent-click
-                :effect (req (when-not target
-                               (print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
-                             (update! state side (update-in card [:seen-this-turn (or target :this-is-a-hack)]
-                                                            (fnil + 0) (second targets)))
-                             (when (>= (get-in (get-card state card) [:seen-this-turn (or target :this-is-a-hack)]) 3)
-                               (resolve-ability state side ability card nil)))}
+                :effect (req (let [target (or (first (filter number? target))
+                                              (first target))]
+                               (when-not target
+                                 (print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
+                               (update! state side (update-in card [:seen-this-turn (or target :this-is-a-hack)]
+                                                              (fnil + 0) (second targets)))
+                               (when (>= (get-in (get-card state card) [:seen-this-turn (or target :this-is-a-hack)]) 3)
+                                 (resolve-ability state side ability card nil))))}
                {:event :corp-turn-ends
                 :effect cleanup}]})
 
