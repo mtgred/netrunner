@@ -553,7 +553,6 @@
                           (installed? %))}
     :msg (msg "give " (card-str state target {:visible false}) " additional text")
     :effect (effect (host target (assoc card :seen true :condition true)))
-    :leave-play (req (remove-extra-subs! state :corp (:cid card) (:host card)))
     :abilities [{:label "Give the Runner 1 tag"
                  :trace {:base 3
                          :successful {:msg "give the Runner 1 tag"
@@ -1908,7 +1907,7 @@
                    (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
                    (update-ice-strength state side target)
                    (host state side (get-card state target) (assoc card :seen true :condition true)))
-      :leave-play (req (remove-extra-subs! state :corp (:cid card) (:host card)))
+      :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
       :events [{:event :rez
                 :req (req (same-card? target (:host card)))
                 :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card)))}]})

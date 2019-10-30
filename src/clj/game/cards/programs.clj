@@ -303,7 +303,7 @@
                  (strength-pump 2 3))
 
    "Alpha"
-   (auto-icebreaker {:abilities [(break-sub 1 1 {:req (req (= (:position run) (count run-ices)))})
+   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:req (req (= (:position run) (count run-ices)))})
                                  (strength-pump 1 1 :end-of-encounter {:req (req (= (:position run) (count run-ices)))})]})
 
    "Amina"
@@ -572,13 +572,9 @@
               :msg "add itself to Grip"
               :interactive (req true)
               :effect (effect (move card :hand))}]
-    :abilities [(merge
-                  (break-sub 1 1 "All" {:req (req (and (<= (get-strength current-ice) (get-strength card))
-                                                       (has-subtype? current-ice (:subtype-target card))))})
-                  {:effect (effect
-                             (continue-ability
-                               (break-sub 1 1 (:subtype-target card))
-                               card nil))})]}
+    :abilities [(break-sub 1 1 "All" {:req (req (if-let [subtype (:subtype-target card)]
+                                                  (has-subtype? current-ice subtype)
+                                                  true))})]}
 
    "Chisel"
    {:implementation "Encounter effect is manual."
@@ -1649,7 +1645,7 @@
     :abilities [(set-autoresolve :auto-nyashia "Nyashia")]}
 
    "Omega"
-   (auto-icebreaker {:abilities [(break-sub 1 1 {:req (req (= 1 (:position run)))})
+   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:req (req (= 1 (:position run)))})
                                  (strength-pump 1 1 :end-of-encounter {:req (req (= 1 (:position run)))})]})
 
    "Origami"
