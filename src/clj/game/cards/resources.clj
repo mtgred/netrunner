@@ -1694,10 +1694,11 @@
                              (= 1 (->> (turn-events state :corp :corp-credit-gain)
                                        (remove #(= (first %) :corp-click-credit))
                                        count))))
+              :once :per-turn
               :msg "gain 1 [Credits]"
               :effect (effect (gain-credits :runner 1))}]
     :corp-abilities [{:label "Trash PAD Tap"
-                      :cost [:credit 3 :click 1]
+                      :cost [:click 1 :credit 3]
                       :req (req (= :corp side))
                       :effect (effect (system-msg :corp "spends [Click] and 3 [Credits] to trash PAD Tap")
                                       (trash :corp card))}]}

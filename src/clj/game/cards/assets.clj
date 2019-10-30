@@ -1612,6 +1612,7 @@
    (let [ability {:once :per-turn
                   :async true
                   :label "Gain 3 [Credits] and draw 3 cards (start of turn)"
+                  :req (req (:corp-phase-12 @state))
                   :effect (effect (continue-ability
                                     {:optional
                                      {:prompt "Trash Rashida Jaheem to gain 3 [Credits] and draw 3 cards?"

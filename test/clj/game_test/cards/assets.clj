@@ -957,7 +957,24 @@
       (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
       (click-card state :corp (find-card "Resistor" (:hand (get-corp))))
       (is (empty? (:prompt (get-runner))) "Runner prompt cleared")
-      (is (= 3 (count (:hand (get-corp))))))))
+      (is (= 3 (count (:hand (get-corp)))))))
+  (testing "Interaction with Rashida and Start of Turn effects. Issue #4582"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Daily Business Show" "Rashida Jaheem"]}})
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (take-credits state :corp)
+      (core/rez state :corp (get-content state :remote1 0)) ;; DBS
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp has opportunity to use Rashida")
+      (core/rez state :corp (get-content state :remote2 0)) ;; RJ
+      (card-ability state :corp (get-content state :remote2 0) 0)
+      (click-prompt state :corp "Yes")
+      (is (nil? (get-content state :remote2 0)) "Rashida is trashed")
+      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (core/end-phase-12 state :corp nil)
+      (is (empty? (:prompt (get-corp))) "DBS doesn't trigger on mandatory draw"))))
 
 (deftest daily-quest
   ;; Daily Quest
