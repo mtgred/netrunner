@@ -2430,18 +2430,46 @@
 
 (deftest marked-accounts
   ;; Marked Accounts
-  (do-game
-    (new-game {:corp {:deck ["Marked Accounts"]}})
-    (play-from-hand state :corp "Marked Accounts" "New remote")
-    (let [ma (get-content state :remote1 0)]
-      (core/rez state :corp ma)
-      (is (zero? (get-counters (refresh ma) :credit)) "Marked Accounts should start with 0 credits on it")
-      (card-ability state :corp ma 1)
-      (is (= 3 (get-counters (refresh ma) :credit)) "Marked Accounts should gain 3 credits when ability is used")
-      (take-credits state :corp)
-      (let [credits (:credit (get-corp))]
-        (take-credits state :runner)
-        (is (= (inc credits) (:credit (get-corp))) "Should gain 1 credit at beginning of turn from Marked Accounts")))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Marked Accounts"]}})
+      (play-from-hand state :corp "Marked Accounts" "New remote")
+      (let [ma (get-content state :remote1 0)]
+        (core/rez state :corp ma)
+        (is (zero? (get-counters (refresh ma) :credit)) "Marked Accounts should start with 0 credits on it")
+        (card-ability state :corp ma 1)
+        (is (= 3 (get-counters (refresh ma) :credit)) "Marked Accounts should gain 3 credits when ability is used")
+        (take-credits state :corp)
+        (let [credits (:credit (get-corp))]
+          (take-credits state :runner)
+          (is (= (inc credits) (:credit (get-corp))) "Should gain 1 credit at beginning of turn from Marked Accounts")))))
+  (testing "Marked Accounts can go negative #4599"
+    (do-game
+      (new-game {:corp {:hand [(qty "Marked Accounts" 2)]
+                        :deck [(qty "Hedge Fund" 5)]}})
+      (play-from-hand state :corp "Marked Accounts" "New remote")
+      (play-from-hand state :corp "Marked Accounts" "New remote")
+      (let [ma1 (get-content state :remote1 0)
+            ma2 (get-content state :remote2 0)
+            take-credits-both (fn [state] (doseq [side [:corp :runner]] (take-credits state side)))]
+        (core/rez state :corp ma1)
+        (core/rez state :corp ma2)
+        (is (zero? (get-counters (refresh ma1) :credit)) "First Marked Accounts should start with 0 credits on it")
+        (is (zero? (get-counters (refresh ma2) :credit)) "Second Marked Accounts should start with 0 credits on it")
+        (card-ability state :corp ma2 1)
+        (is (= 3 (get-counters (refresh ma2) :credit)) "Second Marked Accounts should gain 3 credits when ability is used")
+        (take-credits-both state)
+        (is (= 6 (:credit (get-corp))) "Took 1c from second Marked Accounts, but none from first Marked Accounts")
+        (is (zero? (get-counters (refresh ma1) :credit)) "Still no credits on first Marked Accounts")
+        (is (= 2 (get-counters (refresh ma2) :credit)) "Two credits left on second Marked Accounts")
+        (dotimes [_ 2] (take-credits-both state))
+        (is (zero? (get-counters (refresh ma1) :credit)) "Still no credits on first Marked Accounts")
+        (is (zero? (get-counters (refresh ma2) :credit)) "No credits left on second Marked Accounts")
+        (is (= 14 (:credit (get-corp))) "Took 3c from second Marked Accounts in total and 6c by clicking")
+        (card-ability state :corp ma1 1)
+        (is (= 3 (get-counters (refresh ma1) :credit)) "First Marked Accounts should gain 3 credits when ability is used")
+        (card-ability state :corp ma2 1)
+        (is (= 3 (get-counters (refresh ma2) :credit)) "Second Marked Accounts should gain 3 credits when ability is used")))))
 
 (deftest mca-austerity-policy
   (do-game

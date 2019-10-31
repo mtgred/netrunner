@@ -1154,6 +1154,7 @@
    (let [ability {:msg "take 1 [Credits]"
                   :label "Take 1 [Credits] (start of turn)"
                   :once :per-turn
+                  :req (req (pos? (get-counters card :credit)))
                   :effect (effect (add-counter card :credit -1)
                                   (gain-credits 1))}]
      {:abilities [ability
