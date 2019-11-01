@@ -379,9 +379,10 @@
 
    "Daredevil"
    {:in-play [:memory 2]
-    :events [{:event :run-big
+    :events [{:event :run
               :once :per-turn
-              :req (req (first-event? state side :run-big))
+              :req (req (and (<= 2 run-position)
+                             (first-event? state side :run #(<= 2 (second %)))))
               :msg "draw two cards"
               :async true
               :effect (effect (draw eid 2 nil))}]}

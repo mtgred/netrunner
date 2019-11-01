@@ -1278,21 +1278,53 @@
         (card-subroutine state :corp hydra 2)
         (is (not (:run @state)) "Hydra sub 3 ended the run when Runner is tagged")))))
 
-(deftest ice-wall
+(deftest ^:test-refresh/focus ice-wall
   ;; Ice Wall
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Ice Wall"]}})
-    (play-from-hand state :corp "Ice Wall" "New remote")
-    (let [iw (get-ice state :remote1 0)]
-      (core/rez state :corp iw)
-      (advance state iw 1)
-      (is (= 2 (core/get-strength (refresh iw))))
-      (take-credits state :corp)
-      (run-on state :remote1)
-      (is (:run @state))
-      (card-subroutine state :corp iw 0)
-      (is (nil? (:run @state))))))
+  (testing "basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (core/rez state :corp iw)
+        (advance state iw 1)
+        (is (= 2 (core/get-strength (refresh iw))))
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (is (:run @state))
+        (click-prompt state :runner "Continue the run")
+        (click-prompt state :corp "Done")
+        (click-prompt state :runner "Done")
+        (click-prompt state :corp "Done")
+        (click-prompt state :runner "Done")
+        (is (nil? (:run @state))))))
+  (testing "testing with a breaker"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Corroder"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (let [iw (get-ice state :rd 0)]
+        (core/rez state :corp iw)
+        (advance state iw 1)
+        (is (= 2 (core/get-strength (refresh iw))))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (run-on state :rd)
+        (is (:run @state))
+        (click-prompt state :runner "Continue the run")
+        (click-prompt state :corp "Done")
+        (click-prompt state :runner "Done")
+        (click-prompt state :corp "Done")
+        (card-ability state :runner (get-program state 0) 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "Done")
+        (click-prompt state :runner "Continue the run")
+        (click-prompt state :corp "Done")
+        (click-prompt state :runner "Done")
+        (click-prompt state :runner "Continue")
+        (click-prompt state :runner "No action")
+        (is (nil? (:run @state)))))))
 
 (deftest information-overload
   ;; Information Overload
