@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare set-prop all-active-installed run-costs)
+(declare set-prop all-active-installed)
 
 (defn get-zones [state]
   (keys (get-in @state [:corp :servers])))
@@ -9,14 +9,16 @@
   (filter is-remote? (get-zones state)))
 
 (defn get-runnable-zones
-  ([state] (get-runnable-zones state (get-zones state) nil))
-  ([state zones] (get-runnable-zones state zones nil))
-  ([state zones {:keys [ignore-costs]}]
+  ([state] (get-runnable-zones state :runner (make-eid state) nil nil))
+  ([state side] (get-runnable-zones state side (make-eid state) nil nil))
+  ([state side card] (get-runnable-zones state side (make-eid state) card nil))
+  ([state side card args] (get-runnable-zones state side (make-eid state) card args))
+  ([state side eid card {:keys [zones ignore-costs] :as args}]
    (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))
-         permitted-zones (remove (set restricted-zones) zones)]
+         permitted-zones (remove (set restricted-zones) (or zones (get-zones state)))]
      (if ignore-costs
        permitted-zones
-       (filter #(can-pay? state :runner nil (run-costs state % nil))
+       (filter #(can-pay? state :runner eid (total-run-cost state side card {:server (unknown->kw %)}))
                permitted-zones)))))
 
 (defn get-remotes [state]
@@ -72,7 +74,7 @@
       (->> (split name-or-kw-or-zone #" ") last (str "remote") keyword))
 
     :else
-    (last name-or-kw-or-zone)))
+    (second name-or-kw-or-zone)))
 
 (defn same-server?
   "True if the two cards are IN or PROTECTING the same server."
@@ -240,9 +242,10 @@
           abilities (:abilities (card-def new-scored))
           new-scored (merge new-scored {:abilities abilities})]
       (update! state :corp new-scored)
-      (when-let [events (:events (card-def new-scored))]
-        (unregister-events state side new-scored)
-        (register-events state side events new-scored))
+      (unregister-events state side new-scored)
+      (register-events state side new-scored)
+      (unregister-constant-effects state side new-scored)
+      (register-constant-effects state side new-scored)
       (resolve-ability state side (:swapped (card-def new-scored)) new-scored nil))
     ;; Set up abilities and events for new stolen agenda
     (when-not (card-flag? scored :has-events-when-stolen true)
@@ -254,11 +257,13 @@
   [state side current-side]
   (when-let [current (first (get-in @state [current-side :current]))] ; trash old current
     (trigger-event state side :trash-current current)
-    (if (get-in current [:special :rfg-when-trashed])
-      (do (system-say state side (str (:title current) " is removed from the game."))
-          (move state (other-side side) current :rfg))
-      (do (system-say state side (str (:title current) " is trashed."))
-          (trash state side current)))))
+    (unregister-constant-effects state side current)
+    (let [current (get-card state current)]
+      (if (get-in current [:special :rfg-when-trashed])
+        (do (system-say state side (str (:title current) " is removed from the game."))
+            (move state (other-side side) current :rfg))
+        (do (system-say state side (str (:title current) " is trashed."))
+            (trash state (to-keyword (:side current)) current))))))
 
 ;;; Functions for icons associated with special cards - e.g. Femme Fatale
 (defn add-icon

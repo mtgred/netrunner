@@ -3,37 +3,38 @@
 (def trash-program {:prompt "Select a program to trash"
                     :label "Trash a program"
                     :msg (msg "trash " (:title target))
-                    :choices {:req #(and (installed? %)
-                                         (program? %))}
+                    :choices {:card #(and (installed? %)
+                                          (program? %))}
                     :effect (effect (trash target {:cause :subroutine})
                                     (clear-wait-prompt :runner))})
 
 (def trash-hardware {:prompt "Select a piece of hardware to trash"
                      :label "Trash a piece of hardware"
                      :msg (msg "trash " (:title target))
-                     :choices {:req #(and (installed? %)
-                                          (hardware? %))}
+                     :choices {:card #(and (installed? %)
+                                           (hardware? %))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-resource-sub {:prompt "Select a resource to trash"
                          :label "Trash a resource"
                          :msg (msg "trash " (:title target))
-                         :choices {:req #(and (installed? %)
-                                              (resource? %))}
+                         :choices {:card #(and (installed? %)
+                                               (resource? %))}
                          :effect (effect (trash target {:cause :subroutine}))})
 
 (def trash-installed {:prompt "Select an installed card to trash"
                       :player :runner
                       :label "Force the Runner to trash an installed card"
                       :msg (msg "force the Runner to trash " (:title target))
-                      :choices {:req #(and (installed? %)
-                                           (runner? %))}
+                      :choices {:card #(and (installed? %)
+                                            (runner? %))}
                       :effect (effect (trash target {:cause :subroutine}))})
 
 (def corp-rez-toast
   "Effect to be placed with `:runner-turn-ends` to remind players of 'when turn begins'
   triggers"
-  {:effect (req (toast state :corp "Reminder: You have unrezzed cards with \"when turn begins\" abilities." "info"))})
+  {:event :runner-turn-ends
+   :effect (req (toast state :corp "Reminder: You have unrezzed cards with \"when turn begins\" abilities." "info"))})
 
 (declare reorder-final) ; forward reference since reorder-choice and reorder-final are mutually recursive
 
@@ -107,7 +108,7 @@
     (doseq [newcard [a-new b-new]]
       (unregister-events state side newcard)
       (when (rezzed? newcard)
-        (register-events state side (:events (card-def newcard)) newcard))
+        (register-events state side newcard))
       (doseq [h (:hosted newcard)]
         (let [newh (-> h
                        (assoc-in [:zone] '(:onhost))
@@ -115,7 +116,7 @@
           (update! state side newh)
           (unregister-events state side h)
           (when (rezzed? h)
-            (register-events state side (:events (card-def newh)) newh)))))
+            (register-events state side newh)))))
     (update-ice-strength state side a-new)
     (update-ice-strength state side b-new)))
 
@@ -140,7 +141,7 @@
                        (assoc-in [:host :zone] (:zone newcard)))]
           (update! state side newh)
           (unregister-events state side h)
-          (register-events state side (:events (card-def newh)) newh))))))
+          (register-events state side newh))))))
 
 (defn do-net-damage
   "Do specified amount of net-damage."
@@ -169,11 +170,12 @@
 (defn trash-on-empty
   "Used in :event maps for effects like Daily Casts"
   [counter-type]
-  {:counter-added {:req (req (and (same-card? card target)
-                                  (not (pos? (get-counters card counter-type)))))
-                   :async true
-                   :effect (effect (system-msg (str "trashes " (:title card)))
-                                   (trash eid card {:unpreventable true}))}})
+  {:event :counter-added
+   :req (req (and (same-card? card target)
+                  (not (pos? (get-counters card counter-type)))))
+   :async true
+   :effect (effect (system-msg (str "trashes " (:title card)))
+                   (trash eid card {:unpreventable true}))})
 
 (defn pick-virus-counters-to-spend
   "Pick virus counters to spend. For use with Freedom Khumalo and virus breakers, and any other relevant cards.
@@ -182,15 +184,15 @@
   n is the number of virus counters selected, msg is the msg string of all the cards and the virus counters taken from each.
   If called with no arguments, allows user to select as many counters as they like until 'Cancel' is pressed."
   ([] (pick-virus-counters-to-spend nil (hash-map) 0))
-  ([target-count] (pick-virus-counters-to-spend target-count (hash-map) 0 ))
+  ([target-count] (pick-virus-counters-to-spend target-count (hash-map) 0))
   ([target-count selected-cards counter-count]
    {:async true
     :prompt (str "Select a card with virus counters ("
                  counter-count (when (and target-count (pos? target-count))
                                  (str " of " target-count))
                  " virus counters)")
-    :choices {:req #(and (installed? %)
-                         (pos? (get-counters % :virus)))}
+    :choices {:card #(and (installed? %)
+                          (pos? (get-counters % :virus)))}
     :effect (req (add-counter state :runner target :virus -1)
                  (let [selected-cards (update selected-cards (:cid target)
                                               ;; Store card reference and number of counters picked
@@ -201,20 +203,20 @@
                      (continue-ability state side
                                        (pick-virus-counters-to-spend target-count selected-cards counter-count)
                                        card nil)
-                     (let [msg (join ", " (map #(let [{:keys [card number]} %
-                                                      title (:title card)]
-                                                  (str (quantify number "virus counter") " from " title))
-                                               (vals selected-cards)))]
-                       (effect-completed state side (make-result eid {:number counter-count :msg msg}))))))
+                     (let [message (join ", " (map #(let [{:keys [card number]} %
+                                                          title (:title card)]
+                                                      (str (quantify number "virus counter") " from " title))
+                                                   (vals selected-cards)))]
+                       (effect-completed state side (make-result eid {:number counter-count :msg message}))))))
     :cancel-effect (if target-count
                      (req (doseq [{:keys [card number]} (vals selected-cards)]
                             (add-counter state :runner (get-card state card) :virus number))
                           (effect-completed state side (make-result eid :cancel)))
-                     (req (let [msg (join ", " (map #(let [{:keys [card number]} %
-                                                      title (:title card)]
-                                                  (str (quantify number "virus counter") " from " title))
-                                               (vals selected-cards)))]
-                           (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
+                     (req (let [message (join ", " (map #(let [{:keys [card number]} %
+                                                               title (:title card)]
+                                                           (str (quantify number "virus counter") " from " title))
+                                                        (vals selected-cards)))]
+                           (effect-completed state side (make-result eid {:number counter-count :msg message})))))}))
 
 (defn pick-credit-triggers
   [state side eid selected-cards counter-count message]
@@ -253,8 +255,8 @@
                                    remainder-str
                                    (when (and card-strs remainder-str)
                                      " from their credit pool"))]
-                  (deduct state side [:credit remainder])
-                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) target-count)
+                  (lose state side :credit remainder)
+                  (swap! state update-in [:stats side :spent :credit] (fnil + 0) (- target-count remainder))
                   (let [cards (filter #(has-subtype? % "Stealth") (map :card (vals selected-cards)))]
                     (wait-for (trigger-stealth-cards state side cards)
                               ; Now we trigger all of the :counter-added events we'd neglected previously
@@ -270,11 +272,12 @@
          {:async true
           :effect pay-rest}
          {:async true
+          :priority 12
           :prompt (str "Select a credit providing card ("
                        counter-count (when (and target-count (pos? target-count))
                                        (str " of " target-count))
                        " credits)")
-          :choices {:req #(in-coll? (map :cid provider-cards) (:cid %))}
+          :choices {:card #(in-coll? (map :cid provider-cards) (:cid %))}
           :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
                              pay-credits-custom (when (= :custom pay-credits-type)
                                                   (-> target card-def :interactions :pay-credits :custom))

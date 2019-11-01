@@ -9,7 +9,7 @@
             [nr.cardbrowser :refer [card-browser]]
             [nr.chat :refer [chat]]
             [nr.deckbuilder :refer [deck-builder]]
-            [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers]]
+            [nr.gameboard :refer [concede gameboard game-state mute-spectators stack-servers flip-runner-board]]
             [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game player-view]]
             [nr.help :refer [help]]
             [nr.news :refer [news news-state]]
@@ -63,8 +63,11 @@
             (when is-player
               [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
                (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])
-            [:a.stack-servers-button {:on-click #(stack-servers (not (get-in @app-state [:options :stacked-servers] false)))}
-             (if (get-in @app-state [:options :stacked-servers]) "Unstack servers" "Stack servers")]]))
+            [:a.stack-servers-button {:on-click #(stack-servers)}
+             (if (get-in @app-state [:options :stacked-servers]) "Unstack servers" "Stack servers")]
+            (when (= :corp (:side @game-state))
+              [:a.stack-servers-button {:on-click #(flip-runner-board)}
+               (if (get-in @app-state [:options :runner-board-order]) "Rig layout: IRL" "Rig layout: jnet")])]))
        (when (not (nil? @gameid))
          [:div.float-right [:a {:on-click #(leave-game)} "Leave game"]]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]

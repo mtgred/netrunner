@@ -156,6 +156,10 @@
   ([state side eid args]
    (turn-message state side true)
    (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)
+             (unregister-floating-effects state side :start-of-turn)
+             (unregister-floating-events state side :start-of-turn)
+             (unregister-floating-effects state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
+             (unregister-floating-events state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
              (when (= side :corp)
                (wait-for (draw state side 1 nil)
                          (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
@@ -166,6 +170,9 @@
 (defn start-turn
   "Start turn."
   [state side args]
+  ; Don't clear :turn-events until the player clicks "Start Turn"
+  ; Fix for Hayley triggers
+  (swap! state assoc :turn-events nil)
 
   ; Functions to set up state for undo-turn functionality
   (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
@@ -182,7 +189,8 @@
 
   (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
         start-cards (filter #(card-flag-fn? state side % phase true)
-                            (all-active state side))
+                            (concat (all-active state side)
+                                    (remove facedown? (all-installed state side))))
         extra-clicks (get-in @state [side :extra-click-temp] 0)]
     (gain state side :click (get-in @state [side :click-per-turn]))
     (cond
@@ -209,7 +217,7 @@
        (continue-ability
          state side
          {:prompt (str "Discard down to " (quantify max-hand-size "card"))
-          :choices {:req in-hand?
+          :choices {:card in-hand?
                     :max (- cur-hand-size max-hand-size)
                     :all true}
           :effect (req (system-msg state side
@@ -234,9 +242,13 @@
      (when (and (= side :runner)
                 (neg? (hand-size state side)))
        (flatline state))
-     (wait-for (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil)
+     (wait-for (trigger-event-simult state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil nil)
                (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
                (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
+               (unregister-floating-effects state side :end-of-turn)
+               (unregister-floating-events state side :end-of-turn)
+               (unregister-floating-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+               (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended
                  (when (= :this-turn (installed? card))
@@ -248,7 +260,6 @@
                  ;; Remove all-turn strength from icebreakers.
                  ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
                  (when (has-subtype? card "Icebreaker")
-                   (update! state side (update-in (get-card state card) [:pump] dissoc :all-turn))
                    (update-breaker-strength state :runner (get-card state card))))
                (doseq [card (all-installed state :corp)]
                  ;; Clear :this-turn flags as turn has ended
@@ -262,7 +273,6 @@
                (swap! state update-in [side :register] dissoc :cannot-draw)
                (swap! state update-in [side :register] dissoc :drawn-this-turn)
                (clear-turn-register! state)
-               (swap! state assoc :turn-events nil)
                (when-let [extra-turns (get-in @state [side :extra-turns])]
                  (when (pos? extra-turns)
                    (start-turn state side nil)

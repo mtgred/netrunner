@@ -18,24 +18,14 @@
     (when-let [hosted-lost (:hosted-lost (card-def host-card))]
       (hosted-lost state side (make-eid state) (get-card state host-card) (dissoc card :host)))))
 
-(defn get-card-hosted
-  "Finds the current version of the given card by finding its host."
-  [state {:keys [cid zone side host] :as card}]
-  (let [root-host (get-card state (get-nested-host card))
-        helper (fn search [card target]
-                 (when-not (nil? card)
-                   (if-let [c (some #(when (same-card? % target) %) (:hosted card))]
-                     c
-                     (some #(when-let [s (search % target)] s) (:hosted card)))))]
-    (helper root-host card)))
-
 (defn host
   "Host the target onto the card."
   ([state side card target] (host state side card target nil))
   ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown] :as options}]
    (when (not= cid (:cid card))
      (when installed
-       (unregister-events state side target))
+       (unregister-events state side target)
+       (unregister-constant-effects state side target))
      (doseq [s [:runner :corp]]
        (if host
          (when-let [host-card (get-card state host)]
@@ -55,25 +45,25 @@
            cdef (card-def card)
            tdef (card-def c)]
        (update! state side (update-in card [:hosted] #(conj % c)))
-
-       ;; events should be registered for: runner cards that are installed; corp cards that are Operations, or are installed and rezzed
+       ;; events should be registered for:
+       ;; * runner cards that are installed;
+       ;; * corp cards that are Operations, or are installed and rezzed
        (when (or (operation? target)
                  (and (event? target) (not facedown))
                  (and installed (runner? target))
                  (and installed (corp? target) (rezzed? target)))
-         (when-let [events (:events tdef)]
-           (register-events state side events c))
+         (register-events state side c)
+         (register-constant-effects state side c)
          (when (or (:recurring tdef)
                    (:prevent tdef)
                    (:corp-abilities tdef)
                    (:runner-abilities tdef))
            (card-init state side c {:resolve-effect false
                                     :init-data true})))
-
-       (when-let [events (:events tdef)]
+       (when (:events tdef)
          (when (and installed (:recurring tdef))
            (unregister-events state side target)
-           (register-events state side events c)))
+           (register-events state side c)))
        (when-let [hosted-gained (:hosted-gained cdef)]
          (hosted-gained state side (make-eid state) (get-card state card) [c]))
        c))))

@@ -678,7 +678,6 @@
      (core/gain state :corp :credit 10 :click 10)
      (play-from-hand state :corp "Cold Site Server" "HQ")
      (play-from-hand state :corp "Test Ground" "New remote")
-
      (let [css (get-content state :hq 0)
            tg (get-content state :remote1 0)]
        (core/rez state :corp (refresh css))
@@ -705,7 +704,7 @@
        (core/rez state :corp (refresh css))
        (is (= 2 (get-counters (refresh css) :power)) "Still 2 counters on Cold Site Server")
        (play-from-hand state :runner "Dirty Laundry")
-       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
+       (is (not (some #{"HQ"} (-> (get-runner) :prompt first :choices)))
            "Runner should not get to choose HQ due to increased cost")
        (click-prompt state :runner "R&D")
        (run-jack-out state)
@@ -1196,11 +1195,12 @@
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
   (testing "Single draws"
     (do-game
-      (new-game {:corp {:deck ["Jinja City Grid" (qty "Vanilla" 3) (qty "Ice Wall" 3)]}})
-      (starting-hand state :corp ["Jinja City Grid"])
+      (new-game {:corp {:deck [(qty "Vanilla" 3) (qty "Ice Wall" 3)]
+                        :hand ["Jinja City Grid"]}})
       (core/gain state :corp :click 6)
       (play-from-hand state :corp "Jinja City Grid" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
+      (is (= 4 (:credit (get-corp))) "Starts with 4 credits")
       (dotimes [n 5]
         (core/click-draw state :corp 1)
         (click-prompt state :corp (-> (get-corp) :prompt first :choices first))
@@ -1212,18 +1212,19 @@
       (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
   (testing "Drawing non-ice on runner's turn"
     (do-game
-      (new-game {:corp {:deck ["Jinja City Grid" (qty "Hedge Fund" 3)]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                        :hand ["Jinja City Grid"]}
                  :runner {:id "Laramy Fisk: Savvy Investor"
                           :deck ["Eden Shard"]}})
-      (starting-hand state :corp ["Jinja City Grid"])
       (play-from-hand state :corp "Jinja City Grid" "HQ")
       (core/rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
       (run-empty-server state :rd)
+      (click-prompt state :runner "Eden Shard")
+      (click-prompt state :runner "Yes")
       (click-prompt state :runner "Yes")
       (is (= :bogus (-> (get-corp) :prompt first :prompt-type)) "Corp has a bogus prompt to fake out the runner")
-      (click-prompt state :corp "Carry on!")
-      (click-prompt state :runner "No action"))))
+      (click-prompt state :corp "Carry on!"))))
 
 (deftest keegan-lane
   ;; Keegan Lane - Trash self and remove 1 Runner tag to trash a program
@@ -1249,7 +1250,7 @@
   ;; Khondi Plaza
   (testing "Pay-credits prompt"
     (do-game
-      (new-game {:corp {:hand ["Khondi Plaza" "Enigma" (qty "PAD Campaign" 3)]}})
+      (new-game {:corp {:hand ["Khondi Plaza" "Ice Wall" "Enigma" (qty "PAD Campaign" 3)]}})
       (core/gain state :corp :click 10)
       (play-from-hand state :corp "Khondi Plaza" "New remote")
       (play-from-hand state :corp "Enigma" "Server 1")
@@ -1263,7 +1264,6 @@
                            "Used 3 credits from Khondi Plaza"
                            (core/rez state :corp en)
                            (dotimes [c 3] (click-card state :corp kh)))))))
-
 
 (deftest la-costa-grid
   (testing "La Costa Grid cannot be installed in a central server"
@@ -1338,7 +1338,6 @@
         (card-ability state :corp recstudio 0)
         (click-card state :corp (first (:hand (get-corp))))
         (let [[beale] (:hosted (refresh recstudio))]
-          (println (game.utils/zone->name (second (:zone beale))))
           (core/rez state :corp la-costa)
           (take-credits state :corp)
           (take-credits state :runner)
@@ -2070,7 +2069,7 @@
                             (click-prompt state :corp "4")))
        (is (= 4 (get-counters (refresh rs) :power)) "4 counters placed on Reduced Service")
        (play-from-hand state :runner "Dirty Laundry")
-       (is (not (contains? (-> (get-runner) :prompt first :choices vec) "HQ"))
+       (is (not (some #{"HQ"} (-> (get-runner) :prompt first :choices)))
            "Runner should not get to choose HQ due to increased cost")
        (click-prompt state :runner "Archives")
        (is (= 4 (get-counters (refresh rs) :power)) "No counter removed by only making a run")
@@ -2490,9 +2489,8 @@
       (let [vg (get-content state :remote1 0)]
         (core/rez state :corp vg)
         (card-ability state :corp vg 0)
-        (card-ability state :corp vg 0) ; only need the run to exist for test, just pretending the Runner has broken all subs on 2 ice
+        (card-ability state :corp vg 0)
         (is (= 3 (hand-size :runner)) "Runner max hand size reduced by 2")
-        (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
         (run-successful state)
         (click-prompt state :runner "Pay 3 [Credits] to trash") ; pay to trash
         (take-credits state :runner 3)
@@ -2521,8 +2519,7 @@
         (click-card state :runner cor)
         (click-card state :runner mem)
         (is (= 2 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards"))))
-  (testing "Trashing from central triggers Warroid in root"
-    ;; Regression test for #3725
+  (testing "Trashing from central triggers Warroid in root. Issue #3725"
     (do-game
       (new-game {:corp {:deck ["Warroid Tracker" (qty "Hedge Fund" 3)]}
                  :runner {:deck ["Clan Vengeance" "Corroder" "Dyson Mem Chip"]}})
@@ -2590,4 +2587,29 @@
         (click-card state :runner "Corroder")
         (click-card state :runner "Dyson Mem Chip")
         (click-prompt state :runner "Done")
-        (is (= 2 (count (:discard (get-runner)))) "Runner trashes 2 cards to Warriod Tracker")))))
+        (is (= 2 (count (:discard (get-runner)))) "Runner trashes 2 cards to Warriod Tracker"))))
+  (testing "Trashing Warroid starts trace"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Warroid Tracker" "PAD Campaign"]
+                        :credits 15}
+                 :runner {:hand ["Singularity" (qty "Self-modifying Code" 5)]
+                          :credits 15}})
+      (play-from-hand state :corp "Warroid Tracker" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "Remote 1")
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (dotimes [_ 5]
+        (play-from-hand state :runner "Self-modifying Code"))
+      (core/rez state :corp (get-content state :remote1 0))
+      (play-from-hand state :runner "Singularity")
+      (click-prompt state :runner "Server 1")
+      (run-successful state)
+      (is (= 2 (-> (get-corp) :discard count)) "Corp has both cards in discard")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0") ; Corp wins trace
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should start with only Singularity in heap")
+      (dotimes [_ 4]
+        (click-card state :runner (get-program state 0)))
+      (is (empty? (:prompt (get-corp))) "Warroid Tracker can't trash anything else")
+      (is (= 5 (-> (get-runner) :discard count)) "Runner should trash 4 installed cards"))))

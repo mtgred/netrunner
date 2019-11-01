@@ -109,6 +109,7 @@
            m (get-in ability [:choices :max])]
        (swap! state update-in [side :selected]
               #(conj (vec %) {:ability (dissoc ability :choices)
+                              :card (get-in ability [:choices :card])
                               :req (get-in ability [:choices :req])
                               :not-self (when (get-in ability [:choices :not-self]) (:cid card))
                               :max m
