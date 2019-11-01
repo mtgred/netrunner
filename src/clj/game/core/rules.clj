@@ -600,13 +600,14 @@
   ([state side eid card n] (as-agenda state side eid card n nil))
   ([state side eid card n {:keys [register-events]}]
    (let [card (move state side (assoc (deactivate state side card) :agendapoints n) :scored)]
-     (card-init state side (get-card state card))
-     (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
-               (do (gain-agenda-point state side n)
-                   (if register-events
-                     (wait-for (card-init state side (find-latest state card) {:resolve-effect false})
-                               (resolve-ability state side eid (:swapped (card-def card)) (find-latest state card) nil))
-                     (effect-completed state side eid)))))))
+     (if register-events
+       (wait-for (card-init state side card {:resolve-effect false})
+                 (wait-for (resolve-ability state side eid (:swapped (card-def card)) card nil)
+                           (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
+                                     (gain-agenda-point state side n))))
+       (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
+                 (gain-agenda-point state side n)
+                 (effect-completed state side eid))))))
 
 (defn forfeit
   "Forfeits the given agenda to the :rfg zone."
