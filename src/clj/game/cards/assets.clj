@@ -2149,8 +2149,8 @@
                :msg (msg "place 1 advancement token on " (card-str state target))
                :prompt "Choose a piece of ice on which to place an advancement"
                :async true
-               :choices {:req #(and (ice? %)
-                                    (installed? %))}
+               :choices {:card #(and (ice? %)
+                                     (installed? %))}
                :cancel-effect (effect (effect-completed eid))
                :effect (effect (add-prop target :advance-counter 1 {:placed true})
                                (effect-completed eid))}
@@ -2173,8 +2173,8 @@
                   :effect (effect (continue-ability (choice all (if (< 1 (count (filter asset? (all-active-installed state :corp))))
                                                                   1
                                                                   3)) card nil))}]
-     {:derezzed-events {:runner-turn-ends corp-rez-toast}
-      :events {:corp-turn-begins ability}
+     {:derezzed-events [(assoc corp-rez-toast :event :runner-turn-ends)]
+      :events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
    "Warden Fatuma"

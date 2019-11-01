@@ -1729,9 +1729,9 @@
             :successful
             {:async true
              :prompt "Choose an installed virtual or chip card to remove from game"
-             :choices {:req #(and (installed? %)
-                                  (or (has-subtype? % "Virtual")
-                                      (has-subtype? % "Chip")))}
+             :choices {:card #(and (installed? %)
+                                   (or (has-subtype? % "Virtual")
+                                       (has-subtype? % "Chip")))}
              :msg (msg "remove " (card-str state target) " from game")
              :effect (req (move state :runner target :rfg))}}}
 

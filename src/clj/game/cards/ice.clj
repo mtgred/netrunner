@@ -191,8 +191,8 @@
    :req (req (not-empty (all-installed state :runner)))
    :effect (effect (show-wait-prompt :runner (str "Corp to select " (:title card) " target"))
                    (continue-ability
-                     {:choices {:req #(and (installed? %)
-                                           (runner? %))}
+                     {:choices {:card #(and (installed? %)
+                                            (runner? %))}
                       :msg "add 1 installed card to the Runner's Grip"
                       :effect (effect (clear-wait-prompt :runner)
                                       (move :runner target :hand true)

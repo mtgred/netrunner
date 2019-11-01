@@ -429,9 +429,10 @@
                                   :yes-ability {:msg (msg "purge virus counters")
                                                 :effect (effect (purge))}}}
                       card nil))
-    :events {:purge {:once :per-turn
-                     :msg "gain 4 [Credits]"
-                     :effect (req (gain-credits state :corp 4))}}}
+    :events [{:event :purge
+              :once :per-turn
+              :msg "gain 4 [Credits]"
+              :effect (req (gain-credits state :corp 4))}]}
 
    "Dedicated Neural Net"
    {:events [{:event :successful-run
@@ -1518,15 +1519,15 @@
                    :req (req run)
                    :msg "prevent this run from becoming successful"
                    :effect (effect (update! (assoc-in card [:special :transport-monopoly] true)))}]
-      :suppress {:pre-successful-run suppress-event
-                 :successful-run suppress-event}
-      :events {:pre-successful-run
-               {:silent (req true)
+      :suppress [(assoc suppress-event :event :pre-successful-run)
+                 (assoc suppress-event :event :successful-run)]
+      :events [{:event :pre-successful-run
+                :silent (req true)
                 :req (req (get-in card [:special :transport-monopoly]))
                 :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
                              (swap! state update-in [:run] dissoc :successful)
                              (swap! state update-in [:runner :register :successful-run] #(next %))
-                             (update! state side (dissoc-in card [:special :transport-monopoly])))}}})
+                             (update! state side (dissoc-in card [:special :transport-monopoly])))}]})
 
    "Underway Renovation"
    (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]

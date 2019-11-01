@@ -55,14 +55,15 @@
    {:in-play [:memory 1]}
 
    "Aniccam"
-   {:events {:card-moved {:msg "draw 1 card"
-                          :req (req (letfn [(event-moved-to-discard? [[old-card new-card]]
-                                              (and (is-type? new-card "Event")
-                                                   (in-discard? new-card)))]
-                                      (and (event-moved-to-discard? targets)
-                                           (first-event? state side :card-moved event-moved-to-discard?))))
-                          :async true
-                          :effect (effect (draw :runner eid 1 nil))}}}
+   {:events [{:event :card-moved
+              :msg "draw 1 card"
+              :req (req (letfn [(event-moved-to-discard? [[old-card new-card]]
+                                  (and (is-type? new-card "Event")
+                                       (in-discard? new-card)))]
+                          (and (event-moved-to-discard? targets)
+                            (first-event? state side :card-moved event-moved-to-discard?))))
+              :async true
+              :effect (effect (draw :runner eid 1 nil))}]}
 
    "Archives Interface"
    {:events
@@ -196,21 +197,22 @@
          :effect (req (when-not (= "No action" target)
                         (register-events
                           state side
+                          (assoc target :zone [:discard])
                           (let [trashed-card target]
-                            {:card-moved {:req (req (let [moved-card (second targets)]
-                                                      (same-card? moved-card trashed-card)))
-                                          :effect (req (let [moved-card (second targets)]
-                                                         (unregister-events state side moved-card {:effects {:card-moved nil}})
-                                                         (move state side moved-card :deck)))}})
-                          (assoc target :zone [:discard]))))}]
-    {:events {:runner-trash triggered-ability
-              :corp-trash triggered-ability}
+                            [{:event :card-moved
+                              :req (req (let [moved-card (second targets)]
+                                          (same-card? moved-card trashed-card)))
+                              :effect (req (let [moved-card (second targets)]
+                                             (unregister-events state side moved-card {:effects {:card-moved nil}})
+                                             (move state side moved-card :deck)))}]))))}]
+    {:events [(assoc triggered-ability :event :runner-trash)
+              (assoc triggered-ability :event :corp-trash)]
      :abilities [{:label "Remove Buffer Drive from the game to add a card from the Heap to the bottom of the Stack"
                   :msg "add a card from the Heap to the bottom of the Stack"
                   :cost [:remove-from-game]
                   :show-discard true
-                  :choices {:req #(and (runner? %)
-                                       (in-discard? %))}
+                  :choices {:card #(and (runner? %)
+                                        (in-discard? %))}
                   :effect (req (move state side target :deck))}]})
 
    "Capstone"
