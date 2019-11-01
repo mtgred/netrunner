@@ -6,15 +6,25 @@
          get-remote-names card-name can-access-loud can-steal?
          prevent-jack-out card-flag? can-run?)
 
-(defn clear-run-costs
-  [state]
-  (swap! state update-in [:bonus] dissoc :run-cost))
-
 (defn add-run-effect
   [state side run-effect]
   (swap! state update-in [:run :run-effects] conj run-effect))
 
-;;; Steps in the run sequence
+(defn total-run-cost
+  ([state side card] (total-run-cost state side card nil))
+  ([state side card {:keys [click-run ignore-costs] :as args}]
+   (let [cost (let [cost (run-cost state side card nil args)]
+                (when (and (pos? cost)
+                           (not ignore-costs))
+                  [:credit cost]))
+         additional-costs (run-additional-cost-bonus state side card args)
+         click-run-cost (when click-run [:click 1])]
+     (when-not ignore-costs
+       (merge-costs
+         [click-run-cost
+          cost
+          additional-costs])))))
+
 (defn make-run
   "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
   ([state side server] (make-run state side (make-eid state) server nil nil nil))
@@ -22,47 +32,46 @@
   ([state side server run-effect card] (make-run state side (make-eid state) server run-effect card nil))
   ([state side eid server run-effect card] (make-run state side eid server run-effect card nil))
   ([state side eid server run-effect card {:keys [click-run ignore-costs] :as args}]
-   (clear-run-costs state)
-   (wait-for (trigger-event-simult state :runner :pre-init-run nil server card args)
-             (let [all-run-costs (when-not ignore-costs (run-costs state server args))]
-               (if (and (can-run? state :runner)
-                        (can-run-server? state server)
-                        (can-pay? state :runner (make-eid state eid) card "a run" all-run-costs))
-                 (do (when click-run
-                       (swap! state assoc-in [:runner :register :click-type] :run)
-                       (swap! state assoc-in [:runner :register :made-click-run] true)
-                       (play-sfx state side "click-run"))
-                     (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :make-run}) nil all-run-costs)
-                               (if-let [cost-str async-result]
-                                 (do
-                                   (when click-run
-                                     (system-msg state :runner (str (build-spend-msg cost-str "make a run on" "makes a run on")
-                                                                    (zone->name (unknown->kw server))
-                                                                    (when ignore-costs ", ignoring all costs"))))
-                                   (let [s [(if (keyword? server) server (last (server->zone state server)))]
-                                         ices (get-in @state (concat [:corp :servers] s [:ices]))
-                                         n (count ices)]
-                                     ;; s is a keyword for the server, like :hq or :remote1
-                                     (swap! state assoc :per-run nil
-                                            :run {:server s
-                                                  :position n
-                                                  :access-bonus []
-                                                  :eid eid})
-                                     (when (or run-effect card)
-                                       (add-run-effect state side (assoc run-effect :card card)))
-                                     (trigger-event state side :begin-run :server s)
-                                     (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
-                                     (swap! state assoc-in [:runner :next-run-credit] 0)
-                                     (gain-run-credits state side (+ (count-bad-pub state)))
-                                     (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
-                                     (update-all-ice state :corp)
-                                     (swap! state update-in [:stats side :runs :started] (fnil inc 0))
-                                     (wait-for (trigger-event-simult state :runner :run nil s)
-                                               (when (>= n 2) (trigger-event state :runner :run-big s n))
-                                               (when (zero? n)
-                                                 (trigger-event-simult state :runner (make-eid state) :approach-server nil)))))
-                                 (effect-completed state side eid))))
-                 (effect-completed state side eid))))))
+   (let [cost-args (assoc args :server (unknown->kw server))
+         costs (total-run-cost state side card cost-args)]
+     (if (and (can-run? state :runner)
+              (can-run-server? state server)
+              (can-pay? state :runner (make-eid state eid) card "a run" costs))
+       (do (when click-run
+             (swap! state assoc-in [:runner :register :click-type] :run)
+             (swap! state assoc-in [:runner :register :made-click-run] true)
+             (play-sfx state side "click-run"))
+           (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :make-run}) nil costs)
+                     (if-let [cost-str async-result]
+                       (do
+                         (when click-run
+                           (system-msg state :runner (str (build-spend-msg cost-str "make a run on" "makes a run on")
+                                                          (zone->name (unknown->kw server))
+                                                          (when ignore-costs ", ignoring all costs"))))
+                         (let [s [(if (keyword? server) server (last (server->zone state server)))]
+                               ices (get-in @state (concat [:corp :servers] s [:ices]))
+                               n (count ices)]
+                           ;; s is a keyword for the server, like :hq or :remote1
+                           (swap! state assoc :per-run nil
+                                  :run {:server s
+                                        :position n
+                                        :access-bonus []
+                                        :eid eid})
+                           (when (or run-effect card)
+                             (add-run-effect state side (assoc run-effect :card card)))
+                           (trigger-event state side :begin-run :server s)
+                           (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
+                           (swap! state assoc-in [:runner :next-run-credit] 0)
+                           (gain-run-credits state side (+ (count-bad-pub state)))
+                           (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
+                           (update-all-ice state :corp)
+                           (swap! state update-in [:stats side :runs :started] (fnil inc 0))
+                           (wait-for (trigger-event-simult state :runner :run nil s cost-args)
+                                     (when (>= n 2) (trigger-event state :runner :run-big s n))
+                                     (when (zero? n)
+                                       (trigger-event-simult state :runner (make-eid state) :approach-server nil)))))
+                       (effect-completed state side eid))))
+       (effect-completed state side eid)))))
 
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."
@@ -114,9 +123,9 @@
                                        (when (:run @state)
                                          (swap! state assoc-in [:run :did-steal] true))
                                        (when (card-flag? c :has-events-when-stolen true)
-                                         (register-events state side (:events (card-def c)) c))
+                                         (register-events state side c))
                                        (remove-old-current state side :corp))}
-          :card-ability (ability-as-handler c (:stolen (card-def c)))}
+          :card-abilities (ability-as-handler c (:stolen (card-def c)))}
          c)
        (access-end state side eid card)))))
 
@@ -359,7 +368,7 @@
     (swap! state assoc-in [:runner :register :accessed-cards] true)
     (msg-handle-access state side c title cost-msg)
     (wait-for (trigger-event-simult state side :access
-                                    {:card-ability access-effect
+                                    {:card-abilities access-effect
                                      ;; Cancel other access handlers if the card moves zones because of a handler
                                      :cancel-fn (fn [state] (not (get-card state c)))}
                                     c)
@@ -487,7 +496,7 @@
 
 (defn access-helper-remote [cards]
   {:prompt "Click a card to access it. You must access all cards in this server."
-   :choices {:req #(some (fn [c] (same-card? % c)) cards)}
+   :choices {:card #(some (fn [c] (same-card? % c)) cards)}
    :async true
    :effect (req (wait-for (access-card state side target)
                           (if (< 1 (count cards))
@@ -497,11 +506,15 @@
 
 (defmethod choose-access :remote [cards server args]
   {:async true
-   :effect (req (if (and (>= 1 (count cards))
-                         (not (any-flag-fn? state :runner :slow-remote-access true
-                                            (concat (all-active state :runner) (all-active state :corp)))))
+   :effect (req (cond
+                  ;; Only 1 card
+                  (= 1 (count cards))
                   (access-card state side eid (first cards))
-                  (continue-ability state side (access-helper-remote cards) card nil)))})
+                  ;; Normal access
+                  (pos? (count cards))
+                  (continue-ability state side (access-helper-remote cards) card nil)
+                  :else
+                  (effect-completed state side eid)))})
 
 (defn access-helper-hq-or-rd
   "Shows a prompt to access card(s) from the given zone.
@@ -545,8 +558,8 @@
                           state side
                           {:async true
                            :prompt (str "Choose an upgrade in " server-name " to access.")
-                           :choices {:req #(and (= (second (:zone %)) chosen-zone)
-                                                (complement already-accessed))}
+                           :choices {:card #(and (= (second (:zone %)) chosen-zone)
+                                                 (complement already-accessed))}
                            :effect (req (wait-for (access-card state side target)
                                                   (continue-ability
                                                     state side
@@ -594,20 +607,24 @@
 
 (defmethod choose-access :rd [cards server {:keys [no-root] :as args}]
   {:async true
-   :effect (req (if (pos? (count cards))
-                  (if (= 1 (count cards))
-                    (access-card state side eid (first cards) "an unseen card")
-                    (let [from-rd (access-count state side :rd-access)]
-                      (continue-ability state side (access-helper-hq-or-rd
-                                                     state :rd "deck" from-rd
-                                                     ;; access the first card in deck that has not been accessed.
-                                                     (fn [already-accessed] (first (drop-while already-accessed
-                                                                                               (access-cards-from-rd state))))
-                                                     (fn [_] "an unseen card")
-                                                     (if no-root
-                                                       (set (get-in @state [:corp :servers :rd :content]))
-                                                       #{}))
-                                        card nil)))
+   :effect (req (cond
+                  ;; Only 1 card
+                  (= 1 (count cards))
+                  (access-card state side eid (first cards) "an unseen card")
+                  ;; Normal access
+                  (pos? (count cards))
+                  (let [from-rd (access-count state side :rd-access)]
+                    (continue-ability state side (access-helper-hq-or-rd
+                                                   state :rd "deck" from-rd
+                                                   ;; access the first card in deck that has not been accessed.
+                                                   (fn [already-accessed] (first (drop-while already-accessed
+                                                                                             (access-cards-from-rd state))))
+                                                   (fn [_] "an unseen card")
+                                                   (if no-root
+                                                     (set (get-in @state [:corp :servers :rd :content]))
+                                                     #{}))
+                                      card nil))
+                  :else
                   (effect-completed state side eid)))})
 
 (defn access-helper-hq
@@ -624,8 +641,7 @@
    :effect (req (let [cards-count (count cards)]
                   (cond
                     ;; Only 1 card
-                    (and (= 1 cards-count)
-                         (not (any-flag-fn? state :runner :slow-hq-access true)))
+                    (= 1 cards-count)
                     (access-card state side eid (first cards))
                     ;; Corp chooses accessed cards
                     (and (pos? cards-count)
@@ -634,7 +650,7 @@
                         (continue-ability
                           state :corp
                           {:prompt (msg "Select " (access-count state side :hq-access) " cards in HQ for the Runner to access")
-                           :choices {:req #(and (in-hand? %) (corp? %))
+                           :choices {:card #(and (in-hand? %) (corp? %))
                                      :all true
                                      :max (req (access-count state side :hq-access))}
                            :async true
@@ -741,8 +757,8 @@
                           state side
                           {:async true
                            :prompt "Choose an upgrade in Archives to access."
-                           :choices {:req #(and (= (second (:zone %)) :archives)
-                                                (not (already-accessed %)))}
+                           :choices {:card #(and (= (second (:zone %)) :archives)
+                                                 (not (already-accessed %)))}
                            :effect (req (let [already-accessed (conj already-accessed target)]
                                           (wait-for (access-card state side target)
                                                     (if (must-continue? already-accessed)
@@ -776,7 +792,8 @@
                                                                   (set (get-in @state [:corp :servers :archives :content]))
                                                                   #{}))
                                         card nil))
-                    (effect-completed state side eid))))})
+                    (do (system-msg state side (str "accesses " archives-count " cards in Archives"))
+                        (effect-completed state side eid)))))})
 
 (defn get-all-hosted [hosts]
   (let [hosted-cards (mapcat :hosted hosts)]
@@ -808,12 +825,12 @@
 (defn set-cards-to-access
   "Currently only used with Ash 2X"
   [state side & cards]
-  (swap! state update :cards-to-access concat cards))
+  (swap! state update-in [:run :cards-to-access] concat cards))
 
 (defn get-cards-to-access
   "Currently only used with do-access below and Top Hat. It's hacky but whatever"
   [state]
-  (seq (filter identity (map #(get-card state %) (get @state :cards-to-access)))))
+  (seq (filter identity (map #(get-card state %) (get-in @state [:run :cards-to-access])))))
 
 (defn do-access
   "Starts the access routines for the run's server."
@@ -831,14 +848,12 @@
                ;; Make `:did-access` true when reaching the access step (no replacement)
                (when (:run @state)
                  (swap! state assoc-in [:run :did-access] true))
-               (if (or (zero? n)
-                       (safe-zero? (get-in @state [:run :max-access])))
-                 (do (system-msg state side "accessed no cards during the run")
-                     (effect-completed state side eid))
-                 (do (swap! state assoc-in [:runner :register :accessed-cards] true)
-                     (wait-for (resolve-ability state side (choose-access cards server args) nil nil)
-                               (wait-for (trigger-event-sync state side :end-access-phase {:from-server (first server)})
-                                         (effect-completed state side eid)))))))))
+               (when-not (or (zero? n)
+                             (safe-zero? (get-in @state [:run :max-access])))
+                 (swap! state assoc-in [:runner :register :accessed-cards] true))
+               (wait-for (resolve-ability state side (choose-access cards server args) nil nil)
+                         (wait-for (trigger-event-sync state side :end-access-phase {:from-server (first server)})
+                                   (effect-completed state side eid)))))))
 
 ;;; Ending runs.
 (defn register-successful-run
@@ -897,7 +912,9 @@
 
                     ;; One mandatory replace-access effect
                     (= 1 (count mandatory-run-effects))
-                    (replace-access state :runner (:replace-access (first mandatory-run-effects)) (:card (first mandatory-run-effects)))
+                    (let [chosen (first mandatory-run-effects)]
+                      (system-msg state :runner (str "must use the replacement effect from " (:title (:card chosen))))
+                      (replace-access state :runner (:replace-access chosen) (:card chosen)))
 
                     ;; Multiple mandatory replace-access effects
                     (pos? (count mandatory-run-effects))
@@ -906,6 +923,8 @@
                       {:prompt "Choose a mandatory replacement effect"
                        :choices (mapv #(get-in % [:card :title]) mandatory-run-effects)
                        :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) mandatory-run-effects)]
+                                      (system-msg state :runner
+                                                  (str "chooses to use the replacement effect from " (:title (:card chosen))))
                                       (replace-access state :runner (:replace-access chosen) (:card chosen))))}
                       nil nil)
 
@@ -916,9 +935,12 @@
                       {:prompt "Use a replacement effect instead of accessing cards?"
                        :choices (conj (mapv #(get-in % [:card :title]) run-effects) "Access cards")
                        :effect (req (if-let [chosen (some #(when (= target (get-in % [:card :title])) %) run-effects)]
-                                      (replace-access state :runner (:replace-access chosen) (:card chosen))
-                                      (wait-for (do-access state :runner server)
-                                                (handle-end-run state :runner))))}
+                                      (do (system-msg state :runner
+                                                      (str "chooses to use the replacement effect from " (:title (:card chosen))))
+                                          (replace-access state :runner (:replace-access chosen) (:card chosen)))
+                                      (do (system-msg state :runner "chooses to access cards instead of use a replacement effect")
+                                          (wait-for (do-access state :runner server)
+                                                    (handle-end-run state :runner)))))}
                       nil nil)
 
                     ;; No replace-access effects
@@ -1050,7 +1072,10 @@
     (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
     (swap! state assoc-in [:runner :run-credit] 0)
     (swap! state assoc :run nil)
+    (update-all-icebreakers state side)
     (update-all-ice state side)
+    (doseq [ice (get-in @state [:corp :servers (first (:server run)) :ices])]
+      (reset-all-subs! state ice))
     (clear-run-register! state)
     (trigger-run-end-events state side (:eid run) run)))
 
@@ -1068,12 +1093,10 @@
     (swap! state assoc-in [:run :ending] true)
     (swap! state assoc-in [:run :ended] true)
     (wait-for (trigger-event-sync state side :run-ends server)
-              (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
-                (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-                (update-breaker-strength state side p))
-              (doseq [ice (get-in @state [:corp :servers server :ices])]
-                (reset-all-subs! state ice))
+              (unregister-floating-effects state side :end-of-encounter)
+              (unregister-floating-events state side :end-of-encounter)
+              (unregister-floating-effects state side :end-of-run)
+              (unregister-floating-events state side :end-of-run)
               (let [run-effects (get-in @state [:run :run-effects])
                     end-of-run-effects (filter :end-run run-effects)]
                 (wait-for (end-run-effect-impl state side server end-of-run-effects)

@@ -208,7 +208,26 @@
         (click-prompt state :corp "New remote")
         (is (= "Adonis Campaign" (:title (get-content state :remote4 0)))
             "Adonis installed by Team Sponsorship")
-        (is (nil? (find-card "Adonis Campaign" (:discard (get-corp)))) "No Adonis in discard")))))
+        (is (nil? (find-card "Adonis Campaign" (:discard (get-corp)))) "No Adonis in discard"))))
+  (testing "with Gang Sign and Leela. Issue #4487"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Amani Senai" "Hostile Takeover" "Hostile Takeover"]}
+                 :runner {:id "Leela Patel: Trained Pragmatist"
+                          :hand ["Gang Sign"]}})
+      (play-from-hand state :corp "Amani Senai" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gang Sign")
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (click-prompt state :corp "Hostile Takeover")
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (click-card state :corp "Gang Sign")
+      (click-prompt state :runner "Done") ; Leela trigger, no Gang Sign prompt
+      (is (empty? (:prompt (get-runner))) "Runner doesn't get an access prompt"))))
 
 (deftest anson-rose
   ;; Anson Rose
@@ -938,7 +957,24 @@
       (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
       (click-card state :corp (find-card "Resistor" (:hand (get-corp))))
       (is (empty? (:prompt (get-runner))) "Runner prompt cleared")
-      (is (= 3 (count (:hand (get-corp))))))))
+      (is (= 3 (count (:hand (get-corp)))))))
+  (testing "Interaction with Rashida and Start of Turn effects. Issue #4582"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Daily Business Show" "Rashida Jaheem"]}})
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (take-credits state :corp)
+      (core/rez state :corp (get-content state :remote1 0)) ;; DBS
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp has opportunity to use Rashida")
+      (core/rez state :corp (get-content state :remote2 0)) ;; RJ
+      (card-ability state :corp (get-content state :remote2 0) 0)
+      (click-prompt state :corp "Yes")
+      (is (nil? (get-content state :remote2 0)) "Rashida is trashed")
+      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (core/end-phase-12 state :corp nil)
+      (is (empty? (:prompt (get-corp))) "DBS doesn't trigger on mandatory draw"))))
 
 (deftest daily-quest
   ;; Daily Quest
@@ -987,7 +1023,6 @@
       (is (= 5 (:credit (get-runner))) "No successful runs on Daily Quest server")
       (is (= 6 (:credit (get-corp))))
       (take-credits state :runner)
-      (core/end-phase-12 state :corp nil)
       (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server")))
   (testing "Corp gains credits on no successful runs last turn when hosted on Rec Studio. Issue #4193"
     (do-game
@@ -1009,7 +1044,6 @@
           (is (= 5 (:credit (get-runner))) "No successful runs on Daily Quest server")
           (is (= 3 (:credit (get-corp))))
           (take-credits state :runner)
-          (core/end-phase-12 state :corp nil)
           (is (= 6 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server")))))
   (testing "Corp gains credits when there were no runs last turn. Issue #4447"
     (do-game
@@ -1020,7 +1054,6 @@
       (take-credits state :corp)
       (is (= 6 (:credit (get-corp))))
       (take-credits state :runner)
-      (core/end-phase-12 state :corp nil)
       (is (= 9 (:credit (get-corp))) "Corp gained credits due to no successful runs on Daily Quest server"))))
 
 (deftest dedicated-response-team
@@ -1657,14 +1690,12 @@
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Genetics Pavilion"]}
-                 :runner {:deck ["Diesel" (qty "Sure Gamble" 3) "Sports Hopper"]}})
+                 :runner {:deck [(qty "Sure Gamble" 3)]
+                          :hand ["Diesel" "Sports Hopper"]}})
       (play-from-hand state :corp "Genetics Pavilion" "New remote")
       (let [gp (get-content state :remote1 0)]
         (take-credits state :corp)
         (core/rez state :corp gp)
-        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
         (play-from-hand state :runner "Sports Hopper")
         (play-from-hand state :runner "Diesel")
         (is (= 2 (count (:hand (get-runner)))) "Drew only 2 cards because of Genetics Pavilion")
@@ -1675,18 +1706,22 @@
           (card-ability state :runner hopper 0)
           (is (= 3 (count (:hand (get-runner)))) "Able to draw 3 cards during Corp's turn")
           (core/derez state :corp (refresh gp))
-          (take-credits state :corp)
-          (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-          (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-          (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-          (core/move state :runner (find-card "Diesel" (:discard (get-runner))) :hand)
-          (is (= 1 (count (:hand (get-runner)))))
-          (play-from-hand state :runner "Diesel")
-          (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards with Diesel")
-          (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-          (core/rez state :corp (refresh gp))
-          (core/draw state :runner)
-          (is (= 2 (count (:hand (get-runner)))) "No card drawn; GP counts cards drawn prior to rez")))))
+          (take-credits state :corp)))))
+  (testing "Disables further draws after drawing"
+    (do-game
+      (new-game {:corp {:deck ["Genetics Pavilion"]}
+                 :runner {:deck [(qty "Sure Gamble" 3)]
+                          :hand ["Diesel"]}})
+      (play-from-hand state :corp "Genetics Pavilion" "New remote")
+      (let [gp (get-content state :remote1 0)]
+        (take-credits state :corp)
+        (is (= 1 (count (:hand (get-runner)))))
+        (play-from-hand state :runner "Diesel")
+        (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards with Diesel")
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+        (core/rez state :corp (refresh gp))
+        (core/draw state :runner)
+        (is (= 2 (count (:hand (get-runner)))) "No card drawn; GP counts cards drawn prior to rez"))))
   (testing "vs Fisk Investment Seminar"
     (do-game
       (new-game {:corp {:deck ["Genetics Pavilion" (qty "Hedge Fund" 3)]}
@@ -1974,32 +2009,33 @@
 (deftest it-department
   ;; IT Department - Add strength to rezzed ICE until end of turn
   (do-game
-    (new-game {:corp {:deck ["IT Department" "Wall of Static"]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["IT Department" "Wall of Static"]}})
     (play-from-hand state :corp "IT Department" "New remote")
     (play-from-hand state :corp "Wall of Static" "Server 1")
     (let [itd (get-content state :remote1 0)
           wos (get-ice state :remote1 0)]
       (core/rez state :corp itd)
       (core/rez state :corp wos)
-      (card-ability state :corp itd 1)
+      (card-ability state :corp itd 0)
       (is (zero? (:click (get-corp))) "Spent 1 click")
       (is (= 1 (get-counters (refresh itd) :power)) "IT Dept has 1 counter")
       (core/add-counter state :corp (refresh itd) :power 4)
       (is (= 5 (get-counters (refresh itd) :power)) "IT Dept has 5 counters")
-      (card-ability state :corp itd 0)
+      (card-ability state :corp itd 1)
       (click-card state :corp wos)
       ;; refer to online guides for summary of how this ludicrous formula is calculated
       (is (= 8 (:current-strength (refresh wos))) "Gained 5 strength")
       (is (= 4 (get-counters (refresh itd) :power)) "Spent 1 counter")
-      (card-ability state :corp itd 0)
+      (card-ability state :corp itd 1)
       (click-card state :corp wos)
       (is (= 11 (:current-strength (refresh wos))) "Gained total of 8 strength")
       (is (= 3 (get-counters (refresh itd) :power)) "Spent 1 counter")
-      (card-ability state :corp itd 0)
+      (card-ability state :corp itd 1)
       (click-card state :corp wos)
       (is (= 12 (:current-strength (refresh wos))) "Gained total of 9 strength")
       (is (= 2 (get-counters (refresh itd) :power)) "Spent 1 counter")
-      (card-ability state :corp itd 0)
+      (card-ability state :corp itd 1)
       (click-card state :corp wos)
       (is (= 11 (:current-strength (refresh wos))) "Gained total of 8 strength")
       (is (= 1 (get-counters (refresh itd) :power)) "Spent 1 counter")
@@ -3470,33 +3506,59 @@
 
 (deftest sandburg
   ;; Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c
-  (do-game
-    (new-game {:corp {:deck ["Sandburg" (qty "Ice Wall" 2) (qty "Hedge Fund" 3)]}})
-    (core/gain state :corp :click 3 :credit 3)
-    (play-from-hand state :corp "Sandburg" "New remote")
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "R&D")
-    (let [sb (get-content state :remote1 0)
-          iwall1 (get-ice state :hq 0)
-          iwall2 (get-ice state :rd 0)]
-      (core/rez state :corp iwall1)
-      (core/rez state :corp iwall2)
-      (core/rez state :corp sb)
-      (is (= 6 (:credit (get-corp))))
-      (play-from-hand state :corp "Hedge Fund")
-      (is (= 10 (:credit (get-corp))))
-      (is (= 3 (:current-strength (refresh iwall1))) "Strength boosted by 2")
-      (is (= 3 (:current-strength (refresh iwall2))) "Strength boosted by 2")
-      (play-from-hand state :corp "Hedge Fund")
-      (play-from-hand state :corp "Hedge Fund")
-      (is (= 18 (:credit (get-corp))))
-      (is (= 4 (:current-strength (refresh iwall1))) "Strength boosted by 3")
-      (is (= 4 (:current-strength (refresh iwall2))) "Strength boosted by 3")
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "Pay 4 [Credits] to trash")
-      (is (= 1 (:current-strength (refresh iwall1))) "Strength back to default")
-      (is (= 1 (:current-strength (refresh iwall2))) "Strength back to default"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Sandburg" (qty "Ice Wall" 2) (qty "Hedge Fund" 3)]}})
+      (core/gain state :corp :click 3 :credit 3)
+      (play-from-hand state :corp "Sandburg" "New remote")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (let [sb (get-content state :remote1 0)
+            iwall1 (get-ice state :hq 0)
+            iwall2 (get-ice state :rd 0)]
+        (core/rez state :corp iwall1)
+        (core/rez state :corp iwall2)
+        (core/rez state :corp sb)
+        (is (= 6 (:credit (get-corp))))
+        (play-from-hand state :corp "Hedge Fund")
+        (is (= 10 (:credit (get-corp))))
+        (is (= 3 (:current-strength (refresh iwall1))) "Strength boosted by 2")
+        (is (= 3 (:current-strength (refresh iwall2))) "Strength boosted by 2")
+        (play-from-hand state :corp "Hedge Fund")
+        (play-from-hand state :corp "Hedge Fund")
+        (is (= 18 (:credit (get-corp))))
+        (is (= 4 (:current-strength (refresh iwall1))) "Strength boosted by 3")
+        (is (= 4 (:current-strength (refresh iwall2))) "Strength boosted by 3")
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Pay 4 [Credits] to trash")
+        (is (= 1 (:current-strength (refresh iwall1))) "Strength back to default")
+        (is (= 1 (:current-strength (refresh iwall2))) "Strength back to default"))))
+  (testing "Changes on rez"
+    (do-game
+      (new-game {:corp {:hand ["Sandburg" (qty "Ice Wall" 2) "Mlinzi" "Hedge Fund"]
+                        :deck [(qty "Hedge Fund" 3)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Sandburg" "New remote")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Mlinzi" "Archives")
+      (let [sb (get-content state :remote1 0)
+            iwall1 (get-ice state :hq 0)
+            iwall2 (get-ice state :rd 0)
+            mlinzi (get-ice state :archives 0)]
+        (core/rez state :corp iwall1)
+        (core/rez state :corp iwall2)
+        (core/rez state :corp sb)
+        (is (= 8 (:credit (get-corp))))
+        (play-from-hand state :corp "Hedge Fund")
+        (is (= 3 (:current-strength (refresh iwall1))) "Strength boosted by 2")
+        (is (= 12 (:credit (get-corp))))
+        (core/rez state :corp mlinzi)
+        (is (= 5 (:credit (get-corp))))
+        (is (= 1 (:current-strength (refresh iwall1))) "Strength back to base")))))
 
 (deftest sealed-vault
   ;; Sealed Vault - Store credits for 1c, retrieve credits by trashing or spending click

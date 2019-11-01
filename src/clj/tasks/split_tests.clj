@@ -12,11 +12,14 @@
        sort
        (map slurp)))
 
+
 (defn extract-tests []
   (let [header (string/join
                  "\n"
                  ["(ns game-test.cards.%s.%s"
                   "  (:require [game.core :as core]"
+                  "            [game.core.card :refer :all]"
+                  "            [game.utils :as utils]"
                   "            [game-test.core :refer :all]"
                   "            [game-test.utils :refer :all]"
                   "            [game-test.macros :refer :all]"
@@ -58,6 +61,7 @@
                  "\n"
                  ["(ns game-test.cards.%s"
                   "  (:require [game.core :as core]"
+                  "            [game.core.card :refer :all]"
                   "            [game.utils :as utils]"
                   "            [game-test.core :refer :all]"
                   "            [game-test.utils :refer :all]"

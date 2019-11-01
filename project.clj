@@ -36,7 +36,8 @@
                  [org.clojure/tools.analyzer "0.7.0"]
                  [org.clojure/tools.analyzer.jvm "0.7.2"]
                  [org.clojars.frozenlock/reagent-modals "0.2.8"]
-                 [hawk "0.2.11"]]
+                 [hawk "0.2.11"]
+                 [danlentz/clj-uuid "0.1.9"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]
@@ -47,11 +48,12 @@
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.16"]
                                   [binaryage/devtools "0.9.7"]
-                                  [cider/piggieback "0.3.10"]]
+                                  [cider/piggieback "0.3.10"]
+                                  [org.clojure/tools.cli "0.4.2"]]
                    :plugins [[lein-figwheel "0.5.16"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
-  :aliases {"fetch" ["run" "-m" "tasks.fetch/fetch"]
+  :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "add-art" ["run" "-m" "tasks.altart/add-art"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
@@ -92,7 +94,7 @@
                   :npm-deps false
                   :external-config {:devtools/config {:features-to-install :all}}}}
       {:id "prod"
-       :source-paths ["src/clj/game/core" "src/cljs/nr" "src/cljs/prod" "src/cljc"]
+       :source-paths ["src/cljs/nr" "src/cljs/prod" "src/cljc"]
        :compiler {:output-to "resources/public/js/app10.js"
                   :output-dir "out"
                   :optimizations :advanced

@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare all-installed all-active-installed cards card-init deactivate
-         card-flag? gain get-all-installed lose get-card-hosted handle-end-run
+         card-flag? gain get-all-installed lose handle-end-run
          register-events remove-from-host remove-icon make-card
          toast-check-mu trash trigger-event
          update-breaker-strength update-hosted! update-ice-strength unregister-events
@@ -28,23 +28,6 @@
     :corp
     (find-cid cid (get-in @state [:runner :scored]))
     :runner))
-
-(defn get-card
-  "Returns the most recent copy of the card from the current state, as identified
-  by the argument's :zone and :cid."
-  [state {:keys [cid zone side host type] :as card}]
-  (when card
-    (if (= type "Identity")
-      (get-in @state [(to-keyword side) :identity])
-      (if zone
-        (if host
-          (get-card-hosted state card)
-          (some #(when (= cid (:cid %)) %)
-                (let [zones (map to-keyword zone)]
-                  (if (= (first zones) :scored)
-                    (into (get-in @state [:corp :scored]) (get-in @state [:runner :scored]))
-                    (get-in @state (cons (to-keyword side) zones))))))
-        card))))
 
 ;;; Functions for updating cards
 (defn update!
@@ -98,7 +81,9 @@
                                        (assoc-in [:host :zone] newz))]
                           (update! state side newh)
                           (unregister-events state side h)
-                          (register-events state side (:events (card-def newh)) newh)
+                          (register-events state side newh)
+                          (unregister-constant-effects state side h)
+                          (register-constant-effects state side newh)
                           newh))
         hosted (seq (flatten (map (if same-zone? update-hosted trash-hosted) (:hosted card))))
         ;; Set :seen correctly
@@ -192,6 +177,22 @@
                ; :corp-hand-change :corp-deck-change :corp-discard-change
                ; :runner-hand-change :runner-deck-change :runner-discard-change
                (trigger-event-sync state side (make-eid state) event (count (get-in @state [side zone])) moved-card)))
+           ; This is for removing `:location :X` events that are non-default locations,
+           ; such as Subliminal Messaging only registering in :discard. We first unregister
+           ; any non-default events from the previous zone and the register the non-default
+           ; events for the current zone.
+           ; NOTE: I (NoahTheDuke) experimented with using this as the basis for all event
+           ; registration and handling, but there are too many edge-cases in the engine
+           ; right now. Maybe at some later date it'll work, but currently (Oct '19),
+           ; there are more important things to focus on.
+           (let [zone #{(first (:previous-zone moved-card))}
+                 old-events (filter #(zone (:location %)) (:events (card-def moved-card)))]
+             (when (seq old-events)
+               (unregister-events state side moved-card {:events (into [] old-events)})))
+           (let [zone #{(first (:zone moved-card))}
+                 events (filter #(zone (:location %)) (:events (card-def moved-card)))]
+             (when (seq events)
+               (register-events state side moved-card events)))
            ;; Default a card when moved to inactive zones (except :persistent key)
            (when (#{:discard :hand :deck :rfg :scored} to)
              (reset-card state side moved-card)
@@ -285,6 +286,7 @@
   (let [id (assoc (get-in @state [side :identity]) :disabled true)]
     (update! state side id)
     (unregister-events state side id)
+    (unregister-constant-effects state side id)
     (when-let [leave-play (:leave-play (card-def id))]
       (leave-play state side (make-eid state) id nil))))
 
@@ -311,12 +313,12 @@
   "Actually enables the side's identity"
   [state side]
   (let [id (assoc (get-in @state [side :identity]) :disabled false)
-        {:keys [events effect]} (card-def id)]
+        {:keys [effect]} (card-def id)]
     (update! state side id)
     (when effect
       (effect state side (make-eid state) id nil))
-    (when events
-      (register-events state side events id))))
+    (register-events state side id)
+    (register-constant-effects state side id)))
 
 (defn enable-identity
   "Enables the side's identity"

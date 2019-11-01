@@ -5,6 +5,7 @@
    bonus
    click-state
    corp
+   effects
    effect-completed
    eid
    end-run

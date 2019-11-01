@@ -1788,6 +1788,7 @@ nav ul
     .card-frame:not(:first-child)
       margin-left: -15px
 
+
   .leftpane
     display-flex()
     flex-direction(column)
@@ -1924,8 +1925,14 @@ nav ul
           align-items(center)
 
           .run-card
-            margin-top: 100px
             transform(rotate(180deg))
+
+            &:first-child
+              margin-top: 100px
+
+            &:not(:first-child)
+              margin-top: -42px
+              margin-left: 12px
 
           .run-arrow
             position: relative

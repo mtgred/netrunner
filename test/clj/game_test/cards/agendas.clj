@@ -3179,13 +3179,24 @@
 
 (deftest water-monopoly
   ;; Water Monopoly
-  (do-game
-    (new-game {:corp {:deck ["Water Monopoly"]}
-               :runner {:deck ["Fan Site" "Levy Advanced Research Lab"]}})
-    (play-and-score state "Water Monopoly")
-    (take-credits state :corp)
-    (is (= 5 (:credit (get-runner))) "Runner should start with 5 credits")
-    (play-from-hand state :runner "Fan Site")
-    (is (= 5 (:credit (get-runner))) "Shouldn't lose any credits")
-    (play-from-hand state :runner "Levy Advanced Research Lab")
-    (is (zero? (:credit (get-runner))) "Should cost an extra credit to play")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Water Monopoly"]}
+                 :runner {:hand ["Fan Site" "Levy Advanced Research Lab"]}})
+      (play-and-score state "Water Monopoly")
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-runner))) "Runner should start with 5 credits")
+      (play-from-hand state :runner "Fan Site")
+      (is (= 5 (:credit (get-runner))) "Shouldn't lose any credits")
+      (play-from-hand state :runner "Levy Advanced Research Lab")
+      (is (zero? (:credit (get-runner))) "Should cost an extra credit to play")))
+  (testing "interaction with installing facedown"
+    (do-game
+      (new-game {:corp {:hand ["Water Monopoly"]}
+                 :runner {:hand ["Hunting Grounds"]
+                          :deck [(qty "Algo Trading" 3)]}})
+      (play-and-score state "Water Monopoly")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 3 (:credit (get-runner))) "Shouldn't lose any credits"))))

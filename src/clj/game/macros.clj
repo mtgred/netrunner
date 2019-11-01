@@ -27,7 +27,7 @@
       unprotected (let [server (second (:zone (if (:host card)
                                                 (get-card state (:host card)) card)))]
                     (empty? (get-in @state [:corp :servers server :ices])))
-      runnable-servers (zones->sorted-names (get-runnable-zones state))
+      runnable-servers (zones->sorted-names (get-runnable-zones state side eid card nil))
       hq-runnable (not (:hq (get-in (:runner @state) [:register :cannot-run-on-server])))
       rd-runnable (not (:rd (get-in (:runner @state) [:register :cannot-run-on-server])))
       archives-runnable (not (:archives (get-in (:runner @state) [:register :cannot-run-on-server])))

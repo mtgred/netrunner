@@ -6,7 +6,7 @@
             [hawk.core :as hawk]
             [game.core :as core]
             [game.core.card-defs :refer [reset-card-defs]]
-            [game.core.card :refer [make-cid]]
+            [game.core.card :refer [make-cid get-card]]
             [game.utils :as utils :refer [server-card]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
@@ -169,20 +169,20 @@
   triggering the ability."
   ([state side card ability] (card-ability state side card ability nil))
   ([state side card ability targets]
-   (core/play-ability state side {:card (core/get-card state card)
+   (core/play-ability state side {:card (get-card state card)
                                   :ability ability
                                   :targets targets})))
 
 (defn card-subroutine
   "Trigger a piece of ice's subroutine with the 0-based index."
   [state side card ability]
-  (core/play-subroutine state side {:card (core/get-card state card)
+  (core/play-subroutine state side {:card (get-card state card)
                                     :subroutine ability}))
 
 (defn card-side-ability
   ([state side card ability] (card-side-ability state side card ability nil))
   ([state side card ability targets]
-   (let [ab {:card (core/get-card state card)
+   (let [ab {:card (get-card state card)
              :ability ability
              :targets targets}]
      (if (= :corp side)
@@ -250,13 +250,19 @@
      (when (string? x)
        (find-card x (get-in @state [side :scored]))))))
 
-(defn play-from-hand
+(defn get-rfg
+  ([state side] (get-in @state [side :rfg]))
+  ([state side pos]
+   (get-in @state [side :rfg pos])))
+
+(defmacro play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate
   the server to install into with a string."
-  ([state side title] (play-from-hand state side title nil))
-  ([state side title server]
-   (core/play state side {:card (find-card title (get-in @state [side :hand]))
-                          :server server})))
+  [state side title & server]
+  `(let [card# (find-card ~title (get-in @~state [~side :hand]))]
+     (is (some? card#) (str ~title " is in the hand"))
+     (core/play ~state ~side {:card card#
+                              :server ~(first server)})))
 
 
 ;;; Run functions
@@ -310,6 +316,10 @@
   (run-on state server)
   (run-successful state))
 
+(defn get-run-event
+  ([state] (get-in @state [:runner :play-area]))
+  ([state pos]
+   (get-in @state [:runner :play-area pos])))
 
 ;;; Misc functions
 (defn score-agenda
@@ -319,9 +329,9 @@
          advancementcost (:advancementcost card)]
      (core/gain state :corp :click advancementcost :credit advancementcost)
      (dotimes [n advancementcost]
-       (core/advance state :corp {:card (core/get-card state card)}))
-     (is (= advancementcost (get-counters (core/get-card state card) :advancement)))
-     (core/score state :corp {:card (core/get-card state card)})
+       (core/advance state :corp {:card (get-card state card)}))
+     (is (= advancementcost (get-counters (get-card state card) :advancement)))
+     (core/score state :corp {:card (get-card state card)})
      (is (find-card title (get-scored state :corp))))))
 
 (defn advance
@@ -329,7 +339,7 @@
   ([state card] (advance state card 1))
   ([state card n]
    (dotimes [_ n]
-     (core/advance state :corp {:card (core/get-card state card)}))))
+     (core/advance state :corp {:card (get-card state card)}))))
 
 (defn trash-from-hand
   "Trash specified card from hand of specified side"

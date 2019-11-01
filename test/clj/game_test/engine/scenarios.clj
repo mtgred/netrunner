@@ -5,6 +5,38 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(deftest degree-mill-cvs
+  (testing "for issue #4515"
+    (do-game
+      (new-game {:corp {:hand ["Degree Mill"]
+                        :discard ["Cyberdex Virus Suite"]}
+                 :runner {:hand ["Aumakua" (qty "Clone Chip" 2)]
+                          :credits 10}})
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "Aumakua")
+      (play-from-hand state :runner "Clone Chip")
+      (play-from-hand state :runner "Clone Chip")
+      (run-empty-server state :rd)
+      (run-empty-server state :rd)
+      (is (= 2 (get-counters (get-program state 0) :virus)) "Aumakua has 2 virus counters")
+      (run-empty-server state :archives)
+      (click-prompt state :corp "Yes")
+      (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua has 1 virus counter after purge and no trash")
+      (is (not (:run @state)) "Run has ended")
+      (run-empty-server state :rd)
+      (run-empty-server state :rd)
+      (trash-from-hand state :corp "Degree Mill")
+      (run-empty-server state :archives)
+      (click-prompt state :runner "Degree Mill")
+      (click-prompt state :runner "Pay to steal")
+      (click-card state :runner (get-hardware state 0))
+      (click-card state :runner (get-hardware state 1))
+      (click-prompt state :runner "Cyberdex Virus Suite")
+      (click-prompt state :corp "Yes")
+      (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua has 0 virus counter after purge and steal")
+      (is (not (:run @state)) "Run has ended"))))
+
 (deftest minigame-prevent-netdmg-resourcetrash
   (testing "Mini-game testing prevention of net damage and resource trashing, with hosted Fall Guy"
     (do-game
@@ -127,3 +159,27 @@
           (click-prompt state :corp "1 [Credits]")
           (click-prompt state :runner "2 [Credits]")
           (is (not (:run @state)) "Corp won Caprice psi game and ended the run"))))))
+
+(deftest companions
+  ;; Fencer Fueno, Mystic Maemi, Trickster Taka:
+  ;; Gain 1c on start of turn or agenda steal
+  (letfn [(companion-test [card]
+            (do-game
+              (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                                :hand ["Hostile Takeover"]}
+                         :runner {:hand [card]}})
+              (take-credits state :corp)
+              (play-from-hand state :runner card)
+              (let [cc (get-resource state 0)
+                    counters (get-counters (refresh cc) :credit)]
+                (is (zero? (get-counters (refresh cc) :credit)) "Companion starts with 0 credits")
+                (run-empty-server state "HQ")
+                (click-prompt state :runner "Steal")
+                (is (= (inc counters) (get-counters (refresh cc) :credit)) "Companion gains 1c for stealing agenda")
+                (run-empty-server state "Archives")
+                (is (= (inc counters) (get-counters (refresh cc) :credit)) "Companion doesn't gain 1c when no agenda stolen"))))]
+    (doall (map companion-test
+                ["Fencer Fueno"
+                 "Trickster Taka"
+                 "Mystic Maemi"]))))
+

@@ -58,9 +58,9 @@
       * the keyword :counter -- user chooses an integer up to the :counter value of the given card.
       * a map containing the keyword :number with a value of a 4-argument function returning an integer -- user
         chooses an integer up to the value of the map.
-      * a map containing the keyword :req with a value of a 1-argument function returning true or false. Triggers a
-        'select' prompt with targeting cursor; only cards that cause the 1-argument function to return true will
-        be allowed.
+      * a map containing either: 1) the keyword :card with a value of a 1-argument function returning true or false,
+        or 2) the keyword :req with a value of the req 5-fn returning true or false. Triggers a 'select' prompt
+        with targeting cursor; only cards that cause the 1-argument function to return true will be allowed.
   :prompt -- a string or 4-argument function returning a string to display in the prompt menu.
   :priority -- a numeric value, or true (equivalent to 1). Prompts are inserted into the prompt queue and sorted base
                on priority, with higher priorities coming first. The sort is stable, so if two prompts have the same
@@ -214,7 +214,8 @@
        (:counter choices)
        (prompt! state s card prompt choices ab args)
        ;; a select prompt
-       (:req choices)
+       (or (:req choices)
+           (:card choices))
        (show-select state s card ability update! resolve-ability args)
        ;; a :number prompt
        (:number choices)
@@ -525,9 +526,9 @@
   ([state side eid card n all?]
    (continue-ability state side
                     {:show-discard  true
-                     :choices {:max n
-                               :req #(and (corp? %)
-                                          (in-discard? %))
+                     :choices {:max (min (-> @state :corp :discard count) n)
+                               :card #(and (corp? %)
+                                           (in-discard? %))
                                :all all?}
                      :msg (msg "shuffle "
                                (let [seen (filter :seen targets)
@@ -541,10 +542,3 @@
                                   (shuffle! state side :deck))
                      :cancel-effect (req (shuffle! state side :deck))}
                     card nil)))
-
-(defn rfg-and-shuffle-rd-effect
-  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))
-  ([state side card n all?] (rfg-and-shuffle-rd-effect state side (make-eid state) card n all?))
-  ([state side eid card n all?]
-   (move state side card :rfg)
-   (shuffle-into-rd-effect state side eid card n all?)))

@@ -3,7 +3,7 @@
             [web.lobby :refer [all-games]]
             [game.main :as main]
             [game.core.card-defs :refer [reset-card-defs]]
-            [tasks.fetch :refer [fetch-with-db]]
+            [tasks.nrdb :refer [fetch-data]]
             [web.utils :refer [response]]
             [monger.collection :as mc]
             [monger.operators :refer :all]
@@ -27,9 +27,10 @@
   (response 200 {:message "ok" :version version}))
 
 (defn fetch-handler
-  [req]
+  "Provide an admin endpoint for fetching card data. Options to fetch can be supplied as parameters to the fetch endpoint."
+  [{params :params :as req}]
   (try
-    (fetch-with-db)
+    (fetch-data params)
     (reset-card-defs)
     (response 200 {:message "ok"})
     (catch Exception e (do

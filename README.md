@@ -2,6 +2,7 @@
 
 Play Android: Netrunner in the browser.
 
+
 ## Live server
 
 http://www.jinteki.net
@@ -13,82 +14,77 @@ http://www.jinteki.net
 
 ## Card implementation status
 
-
 [Card rules implementation status](https://docs.google.com/spreadsheets/d/1ICv19cNjSaW9C-DoEEGH3iFt09PBTob4CAutGex0gnE/pubhtml)
 
 
-## Dependencies
+## Development
+### Quickstart
 
-* [Leiningen](https://leiningen.org/) (version 2+)
-* [MongoDB](https://docs.mongodb.com/manual/administration/install-community/)
+Install [Leiningen](https://leiningen.org/), [NodeJS](https://nodejs.org/en/download/package-manager/#macos) and
+[MongoDB](https://docs.mongodb.com/manual/installation/).
 
+This project runs on Java 8. If you're on OSX or Linux, we recommend using
+[jenv](https://github.com/jenv/jenv/blob/master/README.md) to manage your java environment.
 
-## Installation
+You can check your setup by running
 
-Install frontend dependencies:
+    $ lein version # Your exact version numbers below may vary, but we expect Java 1.8.X
+    Leiningen 2.9.1 on Java 1.8.0_222 OpenJDK 64-Bit Server VM
 
-```
-$ npm install -g bower
-$ npm install -g stylus
-$ bower install
-```
+Populate the database using:
 
-Launch MongoDB and fetch card data:
+    $ lein fetch
 
-```
-$ mongod --dbpath data
-```
-or on windows
-```
-$ mongod --dbpath .\data\
-```
-then:
-```
-$ lein fetch
-```
+You can optionally pass `--no-card-images` if you don't want to download images from
+[NetrunnerDB](https://netrunnerdb.com/), as this takes a while. See `lein fetch help` for further options.
 
-Compile and watch client side ClojureScript files<sup>[1](#footnote_1)</sup>:
+To install frontend dependencies, run:
 
-```
-$ lein figwheel
-```
+    $ npm install -g bower
+    $ npm install -g stylus
+    $ bower install
 
-Launch web server:
+To compile CSS:
 
-* As a REPL process (recommended for development):
-    ```
+    $ stylus src/css -o resources/public/css/
+
+Optionally you can pass `-w` to `stylus` to watch for changes and automatically recompile.
+
+Compile ClojureScript frontend:
+
+    $ lein cljsbuild once dev
+
+Alternatively, to watch ClojureScript files for changes and for access to a ClojureScript REPL, use `lein figwheel`.
+
+Finally, launch the webserver and the Clojure REPL:
+
     $ lein repl
-    ```
-* As a standalone process in production mode (must first run `lein uberjar` and `lein cljsbuild once prod`):
-    ```
-    $ java -jar target/netrunner-standalone.jar
-    ```
 
-Open http://localhost:1042/
+and open http://localhost:1042/
 
-## Tests
+
+### Tests
 
 To run all tests:
 
-```
-$ lein test
-```
+    $ lein test
 
 To run a single test file:
-```
-$ lein test game-test.cards.agendas
-```
+
+    $ lein test game-test.cards.agendas
 
 Or a single test:
-```
-$ lein test :only game-test.cards.agendas/fifteen-minutes
-```
+
+    $ lein test :only game-test.cards.agendas/fifteen-minutes
 
 For more information refer to the [development guide](https://github.com/mtgred/netrunner/wiki/Getting-Started-with-Development).
+
+
+### Further reading
+
+ - [Development Tips and Tricks](https://github.com/mtgred/netrunner/wiki/Development-Tips-and-Tricks)
+ - [Writing Tests](https://github.com/mtgred/netrunner/wiki/Tests)
 
 ## License
 
 Jinteki.net is released under the [MIT License](http://www.opensource.org/licenses/MIT).
-
-
-<a name="footnote_1">1</a>: This is only necessary the first time you run the project, or if you are working on front end changes.

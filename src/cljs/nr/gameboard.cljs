@@ -112,8 +112,11 @@
   (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state)
                                             :mute-state mute-state}]))
 
-(defn stack-servers [ss-state]
-  (swap! app-state assoc-in [:options :stacked-servers] ss-state))
+(defn stack-servers []
+  (swap! app-state update-in [:options :stacked-servers] not))
+
+(defn flip-runner-board []
+  (swap! app-state update-in [:options :runner-board-order] not))
 
 (defn concede []
   (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}]))
@@ -192,7 +195,8 @@
                 (swap! c-state assoc :runner-abilities true))))
 
         ;; Trigger first (and only) ability / action
-        (= c 1)
+        (and (= c 1)
+             (= side card-side))
         (if (= (count abilities) 1)
           (send-command "ability" {:card card :ability 0})
           (send-command (first actions) {:card card}))))))
@@ -605,9 +609,12 @@
        (fn [i sub]
          [:span {:style {:display "block"}
                  :key i}
-          [:span (when (:broken sub)
-                   {:class :disabled
-                    :style {:font-style :italic}})
+          [:span (cond (:broken sub)
+                       {:class :disabled
+                        :style {:font-style :italic}}
+                       (= false (:resolve sub))
+                       {:class :dont-resolve
+                        :style {:text-decoration :line-through}})
            (render-icons (str " [Subroutine]" " " (:label sub)))]
           [:span.float-right
            (cond (:broken sub) banned-span
@@ -671,9 +678,12 @@
              [:div {:key i
                     :on-click #(send-command "subroutine" {:card card
                                                            :subroutine i})}
-              [:span (when (:broken sub)
-                       {:class :disabled
-                        :style {:font-style :italic}})
+              [:span (cond (:broken sub)
+                           {:class :disabled
+                            :style {:font-style :italic}}
+                           (= false (:resolve sub))
+                           {:class :dont-resolve
+                            :style {:text-decoration :line-through}})
                (render-icons (str " [Subroutine]" " " (:label sub)))]
               [:span.float-right
                (cond (:broken sub) banned-span
@@ -959,7 +969,8 @@
            (map-indexed (fn [i card]
                           [:div.card-wrapper {:key i
                                               :style {:left (when (> size 1) (* (/ 128 size) i))}}
-                           (if (this-user? @user)
+                           (if (or (:seen card)
+                                   (this-user? @user))
                              [card-view card]
                              [facedown-card (:side card)])])
                         @cards))
@@ -1043,6 +1054,8 @@
 (defn run-arrow []
   [:div.run-arrow [:div]])
 
+(enable-console-print!)
+
 (defn server-view [{:keys [server central-view run]} opts]
   (let [content (:content server)
         ices (:ices server)
@@ -1053,8 +1066,11 @@
     [:div.server
      [:div.ices {:style {:width (when (pos? max-hosted)
                                   (+ 84 3 (* 42 (dec max-hosted))))}}
-      (when-let [run-card (:card (:run-effect run))]
-        [:div.run-card [card-img run-card]])
+      (when-let [run-cards (seq (filter :card (:run-effects run)))]
+        [:div
+         (doall (for [card (map :card (reverse run-cards))]
+                  [:div.run-card {:key (:cid card)}
+                   [card-img card]]))])
       (doall
         (for [ice (reverse ices)]
           [:div.ice {:key (:cid ice)
@@ -1180,11 +1196,15 @@
         centrals [:div.runner-centrals
                     [discard-view-runner player-side discard]
                     [deck-view :runner player-side identity deck]
-                    [identity-view identity]]]
+                    [identity-view identity]]
+        runner-f (if (and (not is-me)
+                          (not (get-in @app-state [:options :runner-board-order])))
+                   reverse
+                   seq)]
     [:div.runner-board {:class (if is-me "me" "opponent")}
      (when-not is-me centrals)
      (doall
-       (for [zone [:program :hardware :resource :facedown]]
+       (for [zone (runner-f [:program :hardware :resource :facedown])]
          ^{:key zone}
          [:div
           (doall (for [c (zone @rig)]
@@ -1710,8 +1730,8 @@
                     [starting-timestamp]
                     [rfg-view op-rfg "Removed from the game" true]
                     [rfg-view me-rfg "Removed from the game" true]
-                    [play-area-view op-user "Temporary Zone" op-play-area]
-                    [play-area-view me-user "Temporary Zone" me-play-area]
+                    [play-area-view op-user "Play Area" op-play-area]
+                    [play-area-view me-user "Play Area" me-play-area]
                     [rfg-view op-current "Current" false]
                     [rfg-view me-current "Current" false]])
                  (when-not (= @side :spectator)

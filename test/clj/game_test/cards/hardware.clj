@@ -270,6 +270,41 @@
         (click-card state :runner "Ice Wall")
         (click-prompt state :corp "No")))))
 
+(deftest bookmark
+  ;; Bookmark
+  (testing "Click ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
+                 :runner {:hand ["Bookmark" "Sure Gamble" "Daily Casts" "Brain Chip"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bookmark")
+      (let [bm (get-hardware state 0)]
+        (card-ability state :runner bm 0)
+        (click-card state :runner "Sure Gamble")
+        (click-card state :runner "Daily Casts")
+        (click-card state :runner "Brain Chip")
+        (is (= 3 (count (:hosted (refresh bm)))) "Bookmark can host cards of any type")
+        (card-ability state :runner bm 1)
+        (is (not (nil? (refresh bm))) "Bookmark is still installed")
+        (is (= 0 (count (:discard (get-runner)))) "Nothing moved to the heap")
+        (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip"))))
+  (testing "Trash ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
+                 :runner {:hand ["Bookmark" "Sure Gamble" "Daily Casts" "Brain Chip"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bookmark")
+      (let [bm (get-hardware state 0)]
+        (card-ability state :runner bm 0)
+        (click-card state :runner "Sure Gamble")
+        (click-card state :runner "Daily Casts")
+        (click-card state :runner "Brain Chip")
+        (is (= 3 (count (:hosted (refresh bm)))) "Bookmark can host cards of any type")
+        (card-ability state :runner bm 2)
+        (is (nil? (refresh bm)) "Bookmark is now trashed")
+        (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip")
+        (is (= 1 (count (:discard (get-runner)))) "Bookmark is only card in heap")))))
+
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
   (do-game
@@ -278,23 +313,6 @@
     (play-from-hand state :runner "Box-E")
     (is (= 6 (core/available-mu state)))
     (is (= 7 (hand-size :runner)))))
-
-(deftest bookmark
-  ;; Bookmark
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
-               :runner {:hand ["Bookmark" "Sure Gamble" "Daily Casts" "Brain Chip"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Bookmark")
-    (let [bm (get-hardware state 0)]
-    (card-ability state :runner bm 0)
-    (click-card state :runner "Sure Gamble")
-    (click-card state :runner "Daily Casts")
-    (click-card state :runner "Brain Chip")
-    (is (= 3 (count (:hosted (refresh bm)))) "Bookmark can host cards of any type")
-    (card-ability state :runner bm 2)
-    (is (nil? (refresh bm)) "Bookmark is now trashed")
-    (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip"))))
 
 (deftest brain-chip
   ;; Brain Chip handsize and memory limit
@@ -541,13 +559,13 @@
     (play-from-hand state :runner "Comet")
     (let [comet (get-hardware state 0)]
       (play-from-hand state :runner "Easy Mark")
-      (is (true? (:comet-event (core/get-card state comet)))) ; Comet ability enabled
+      (is (true? (:comet-event (get-card state comet)))) ; Comet ability enabled
       (card-ability state :runner comet 0)
       (is (= (:cid comet) (-> @state :runner :prompt first :card :cid)))
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (= 7 (:credit (get-runner))))
       (is (= 2 (:click (get-runner))))
-      (is (nil? (:comet-event (core/get-card state comet))) "Comet ability disabled"))))
+      (is (nil? (:comet-event (get-card state comet))) "Comet ability disabled"))))
 
 (deftest cortez-chip
   ;; Cortez Chip - Trash to add 2 credits to rez cost of an ICE until end of turn
@@ -564,6 +582,27 @@
       (is (= 1 (count (:discard (get-runner)))) "Cortez Chip trashed")
       (core/rez state :corp quan)
       (is (= 4 (:credit (get-corp))) "Paid 3c instead of 1c to rez Quandary"))))
+
+(deftest cyberdelia
+  ;; Cyberdelia
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Corroder" "Cyberdelia"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Cyberdelia")
+      (let [corr (get-program state 0)
+            icew (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp (refresh icew))
+        (card-ability state :runner (refresh corr) 0)
+        (click-prompt state :runner "End the run")
+        (changes-val-macro 1 (:credit (get-runner))
+                           "Got 1 credit from Cyberdelia"
+                           (run-continue state))))))
 
 (deftest cyberfeeder
   ;; Cyberfeeder
@@ -593,6 +632,14 @@
                            (card-ability state :runner co 1)
                            (click-card state :runner cyb))))))
 
+(deftest cybersolutions-mem-chip
+  ;; CyberSolutions Mem Chip- Gain 2 memory
+  (do-game
+    (new-game {:runner {:deck [(qty "CyberSolutions Mem Chip" 3)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "CyberSolutions Mem Chip")
+    (is (= 6 (core/available-mu state)) "Gain 2 memory")))
+
 (deftest cybsoft-macrodrive
   ;; Cybsoft MacroDrive
   (testing "Pay-credits prompt"
@@ -605,14 +652,6 @@
         (changes-val-macro -1 (:credit (get-runner))
                            "Used 1 credit from Cybsoft MacroDrive"
                            (click-card state :runner cyb))))))
-
-(deftest cybersolutions-mem-chip
-  ;; CyberSolutions Mem Chip- Gain 2 memory
-  (do-game
-    (new-game {:runner {:deck [(qty "CyberSolutions Mem Chip" 3)]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "CyberSolutions Mem Chip")
-    (is (= 6 (core/available-mu state)) "Gain 2 memory")))
 
 (deftest daredevil
   ;; Daredevil
@@ -946,6 +985,44 @@
       (is (= 2 (get-counters (refresh aum) :virus)) "Aumakua gained 1 counter")
       (is (zero? (get-counters (refresh fc) :virus)) "Friday Chip lost 1 counter"))))
 
+(deftest gebrselassie
+  ;; Gebrselassie
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "Fire Wall" 2)]
+                      :credits 20}
+               :runner {:hand ["Corroder" "Bukhgalter" "Gebrselassie"]
+                        :credits 20}})
+    (play-from-hand state :corp "Fire Wall" "HQ")
+    (play-from-hand state :corp "Fire Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (core/rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (core/gain state :runner :click 5)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Bukhgalter")
+    (play-from-hand state :runner "Gebrselassie")
+    (let [cor (get-program state 0)
+          bukh (get-program state 1)
+          geb (get-hardware state 0)]
+      (card-ability state :runner geb 0)
+      (click-card state :runner cor)
+      (run-on state :hq)
+      (is (= 2 (:current-strength (refresh cor))) "Corroder starts with 2 strength")
+      (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter starts with 1 strength")
+      (card-ability state :runner cor 1)
+      (card-ability state :runner cor 1)
+      (card-ability state :runner cor 1)
+      (is (= 5 (:current-strength (refresh cor))) "Corroder has 5 strength")
+      (card-ability state :runner bukh 1)
+      (is (= 2 (:current-strength (refresh bukh))) "Bukhgalter has 2 strength")
+      (card-ability state :runner cor 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (is (= 5 (:current-strength (refresh cor))) "Corroder still has 5 strength")
+      (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter has reset to 1")
+      (run-jack-out state))))
+
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
   (do-game
@@ -1055,14 +1132,17 @@
   (testing "Single ice"
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}
-                 :runner {:deck ["Hippo"]}})
+                 :runner {:deck ["Corroder" "Hippo"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
       (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
       (is (not-empty (get-hardware state)) "Hippo installed")
       (is (= 1 (count (get-ice state :hq))) "Ice Wall installed")
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
       (card-ability state :runner (get-hardware state 0) 0)
       (is (empty? (get-ice state :hq)) "Ice Wall removed")
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall trashed")
@@ -1071,16 +1151,20 @@
   (testing "Multiple ice"
     (do-game
       (new-game {:corp {:deck ["Ice Wall" "Enigma"]}
-                 :runner {:deck ["Hippo"]}})
+                 :runner {:deck ["Corroder" "Hippo"]}})
       (play-from-hand state :corp "Enigma" "HQ")
       (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
       (take-credits state :corp)
       (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
       (is (not-empty (get-hardware state)) "Hippo installed")
       (is (= 2 (count (get-ice state :hq))) "2 ice installed")
       (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall outermost")
       (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma innermost")
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
       (card-ability state :runner (get-hardware state 0) 0)
       (is (= 1 (count (get-ice state :hq))) "Ice removed")
       (is (= 1 (count (:discard (get-corp)))) "Ice trashed")
@@ -1230,7 +1314,6 @@
        (card-ability state :runner (get-hardware state 0) 0)
        (click-prompt state :runner "Done")
        (is (:run @state) "Run prevented from ending")))))
-
 
 (deftest mache
   ;; Mâché
@@ -1740,34 +1823,7 @@
 
 (deftest patchwork
   ;; Patchwork
-  (testing "Play event"
-    (do-game
-      (new-game {:runner {:deck ["Patchwork" (qty "Sure Gamble" 2) "Easy Mark"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 4)
-      (play-from-hand state :runner "Patchwork")
-      (card-ability state :runner (get-hardware state 0) 0)
-      (play-from-hand state :runner "Sure Gamble")
-      (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
-      (is (empty? (:discard (get-runner))) "Sure Gamble is not in heap yet")
-      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
-      (is (= 11 (:credit (get-runner))) "Runner was only charge 3 credits to play Sure Gamble")
-      (is (= 2 (count (:discard (get-runner)))) "2 cards now in heap")
-      (play-from-hand state :runner "Sure Gamble")
-      (is (= 15 (:credit (get-runner))) "Patchwork is once-per-turn")))
-  (testing "Install a card"
-    (do-game
-      (new-game {:runner {:deck ["Patchwork" "Easy Mark" "Cyberfeeder"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 4)
-      (play-from-hand state :runner "Patchwork")
-      (card-ability state :runner (get-hardware state 0) 0)
-      (play-from-hand state :runner "Cyberfeeder")
-      (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
-      (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
-      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
-      (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder")))
-  (testing "Play event with pay-credits prompt"
+  (testing "Play an event"
     (do-game
       (new-game {:runner {:deck ["Patchwork" (qty "Sure Gamble" 2) "Easy Mark"]}})
       (take-credits state :corp)
@@ -1780,7 +1836,7 @@
       (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (not-empty (:discard (get-runner))) "Easy Mark is in heap")
       (is (= 11 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble")))
-  (testing "Install a card with pay-credits prompt"
+  (testing "Install a card"
     (do-game
       (new-game {:runner {:deck ["Patchwork" "Easy Mark" "Cyberfeeder"]}})
       (take-credits state :corp)
@@ -1802,7 +1858,20 @@
       (click-card state :runner (get-hardware state 0))
       (click-card state :runner (find-card "Cyberfeeder" (:hand (get-runner))))
       (is (= 2 (count (:hand (get-runner)))) "Cyberfeeder is still in hand")
-      (is (not-empty (:prompt (get-runner))) "Prompt still open"))))
+      (is (not-empty (:prompt (get-runner))) "Prompt still open")))
+  (testing "Used when runner credit pool is under printed cost. Issue #4563"
+    (do-game
+      (new-game {:runner {:deck ["Patchwork" "Sure Gamble" "Easy Mark"]
+                          :credits 7}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Patchwork")
+      (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
+      (play-from-hand state :runner "Sure Gamble")
+      (click-card state :runner (get-hardware state 0))
+      (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
+      (click-card state :runner "Easy Mark")
+      (is (not-empty (:discard (get-runner))) "Easy Mark is in heap")
+      (is (= 9 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble"))))
 
 (deftest plascrete-carapace
   ;; Plascrete Carapace - Prevent meat damage
@@ -1823,19 +1892,6 @@
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-hardware state)) "Plascrete depleted and trashed"))))
 
-(deftest public-terminal
-  ;; Public Terminal
-  (testing "Pay-credits prompt"
-    (do-game
-      (new-game {:runner {:deck ["Public Terminal" "Dirty Laundry"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Public Terminal")
-      (let [pt (get-hardware state 0)]
-        (changes-val-macro -1 (:credit (get-runner))
-                           "Used 1 credit from Public Terminal"
-                           (play-from-hand state :runner "Dirty Laundry")
-                           (click-card state :runner pt))))))
-
 (deftest prepaid-voicepad
   ;; Prepaid VoicePAD
   (testing "Pay-credits prompt"
@@ -1848,6 +1904,19 @@
                            "Used 1 credit from "
                            (play-from-hand state :runner "Dirty Laundry")
                            (click-card state :runner ppvp))))))
+
+(deftest public-terminal
+  ;; Public Terminal
+  (testing "Pay-credits prompt"
+    (do-game
+      (new-game {:runner {:deck ["Public Terminal" "Dirty Laundry"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Public Terminal")
+      (let [pt (get-hardware state 0)]
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Used 1 credit from Public Terminal"
+                           (play-from-hand state :runner "Dirty Laundry")
+                           (click-card state :runner pt))))))
 
 (deftest rabbit-hole
   ;; Rabbit Hole - +1 link, optionally search Stack to install more copies
@@ -2500,7 +2569,7 @@
       (click-prompt state :runner "4") ;select ABT
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))) "Runner stole DNN")))
-  (testing "Ash interaction, currently not accurate"
+  (testing "Ash interaction"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Neural Net" "Ash 2X3ZB9CY"]}
                  :runner {:deck ["Top Hat"]}})
@@ -2525,7 +2594,42 @@
         (click-prompt state :runner "1") ; Top Hat
         (click-prompt state :corp "0") ; init Ash trace
         (click-prompt state :runner "0") ; lose Ash trace
-        (is (empty? (:prompt (get-runner))) "Can't trash Ash")))))
+        (is (empty? (:prompt (get-runner))) "Can't trash Ash"))))
+  (testing "Mad Dash interaction issue #4542"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Neural Net"]}
+                 :runner {:deck ["Top Hat" (qty "Mad Dash" 4)]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Dedicated Neural Net" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 3)) "Dedicated Neural Net"))
+      ;; R&D is now from top to bottom: A B C D
+      (take-credits state :corp)
+      (core/gain state :runner :click 100)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Top Hat")
+      ;; Not stealing agenda
+      (play-from-hand state :runner "Mad Dash")
+      (click-prompt state :runner "R&D")
+      (run-successful state)
+      (click-prompt state :runner "Yes") ; Top Hat activation
+      (is (= 0 (count (:discard (get-runner)))) "No damage yet")
+      (click-prompt state :runner "2") ; Top Hat - accessing Brainstorm
+      (click-prompt state :runner "No Action")
+      (is (= 2 (count (:discard (get-runner)))) "Now the meat damage fires")
+      ;; Stealing agenda
+      (play-from-hand state :runner "Mad Dash")
+      (click-prompt state :runner "R&D")
+      (run-successful state)
+      (click-prompt state :runner "Yes") ; Top Hat activation
+      (click-prompt state :runner "1") ; Top Hat - accessing Accelerated Beta Test
+      (click-prompt state :runner "Steal")
+      (is (= 3 (:agenda-point (get-runner))) "Runner got 3 points")
+      (is (= 2 (count (:scored (get-runner)))) "Runner got 2 cards in score area"))))
 
 (deftest turntable
   ;; Turntable - Swap a stolen agenda for a scored agenda
