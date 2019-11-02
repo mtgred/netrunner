@@ -39,48 +39,41 @@
     (swap! state assoc-in [:run :phase] :approach)
     (when-not jack-out?
       (swap! state assoc-in [:run :jack-out] true))
-    (wait-for (trigger-event-simult state side :approach-ice nil ice)
+    (wait-for (trigger-event-simult state :runner :approach-ice nil ice)
+              (show-wait-prompt state :corp "Paid ability window. Runner to decide about jacking out")
               (continue-ability
                 state side
                 {:async true
                  :prompt (str "approach-ice Paid ability window."
                               (when jack-out?
                                 " Jack out?"))
-                 :choices (cons "Continue the run"
+                 :choices (conj '("Continue the run")
                                 (when jack-out?
-                                  '("Jack out")))
-                 :effect (req (if (= target "Jack out")
+                                  "Jack out"))
+                 :effect (req (clear-wait-prompt state :corp)
+                              (if (= target "Jack out")
                                 (jack-out state side eid)
-                                (doseq [s [:corp :runner]]
-                                  (show-prompt
-                                    state s eid nil
-                                    (str
-                                      "approach-ice Paid ability window. "
-                                      (when (= s :corp)
-                                        "You may rez non-ice cards and the current ice. ")
-                                      "Press \"Done\" when finished.")
-                                    ["Done"]
-                                    (fn [_] (resolve-approach-ice state s eid))
-                                    nil))))}
+                                (do (show-wait-prompt state :runner "Paid ability window. Corp to decide about rezzing current ice")
+                                    (continue-ability
+                                      state :corp
+                                      {:async true
+                                       :prompt "approach-ice Paid ability window. You may rez non-ice cards."
+                                       :choices (conj '("Done")
+                                                      (when-not (rezzed? current-ice)
+                                                        (str "Rez " (:title current-ice) "?")))
+                                       :effect (req (if (= target "Done")
+                                                      (resolve-approach-ice state :runner eid current-ice)
+                                                      (wait-for (rez state :corp current-ice nil)
+                                                                (resolve-approach-ice state :runner eid current-ice))))}
+                                      nil nil))))}
                 nil nil))))
 
 (defn resolve-approach-ice
-  [state side eid]
-  (swap! state assoc-in [:run :approach-ice side] true)
-  (system-msg state side "has no further action")
-  (let [opponent (if (= side :corp) :runner :corp)]
-    (if (get-in @state [:run :approach-ice opponent])
-      (let [run-ice (get-run-ices state)
-            pos (get-in @state [:run :position])
-            ice (when (and pos (pos? pos) (<= pos (count run-ice)))
-                  (get-card state (nth run-ice (dec pos))))]
-        (swap! state dissoc-in [:run :approach-ice])
-        (clear-wait-prompt state opponent)
-        (if (rezzed? ice)
-          (encounter-ice state :runner eid)
-          (pass-ice state :runner eid)))
-      (show-wait-prompt
-        state side (str (string/capitalize (name opponent)) " to finish their actions")))))
+  [state side eid ice]
+  (clear-wait-prompt state :runner)
+  (if (rezzed? (get-card state ice))
+    (encounter-ice state :runner eid)
+    (pass-ice state :runner eid)))
 
 (defn encounter-ice
   [state side eid]
