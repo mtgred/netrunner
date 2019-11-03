@@ -1457,12 +1457,15 @@
                       card nil))}
 
    "Inside Job"
-   {:implementation "Bypass is manual"
-    :async true
+   {:async true
     :makes-run true
     :prompt "Choose a server"
     :choices (req runnable-servers)
-    :effect (effect (make-run eid target nil card))}
+    :effect (effect (make-run eid target nil card))
+    :events [{:event :encounter-ice
+              :once :per-run
+              :msg (msg "bypass " (:title target))
+              :effect (req (swap! state assoc-in [:run :bypass] true))}]}
 
    "Insight"
    {:async true

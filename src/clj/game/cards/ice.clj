@@ -1290,7 +1290,9 @@
     :subroutines [trash-program]}
 
    "Guard"
-   {:implementation "Prevent bypass is manual"
+   {:constant-effects [{:type :bypass-ice
+                        :req (req (same-card? card target))
+                        :value false}]
     :subroutines [end-the-run]}
 
    "Gutenberg"
