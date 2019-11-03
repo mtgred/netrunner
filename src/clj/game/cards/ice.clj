@@ -3055,6 +3055,19 @@
                                   (continue state side nil))
                                 (trash state side card))}]}
 
+   "Winchester"
+   (let [protecting-hq-req (req (= (second (:zone card)) :hq))
+         ab {:req protecting-hq-req
+             :effect (effect (continue-ability
+                               (reset-variable-subs state side card 1 (trace-ability 3 end-the-run) {:back true})
+                               card nil))}]
+     {:subroutines [(trace-ability 4 trash-program)
+                    (trace-ability 3 trash-hardware)]
+      :effect (effect (continue-ability ab card nil))
+      :events [(assoc ab :event :rez)
+               (assoc ab :event :card-moved)
+               (assoc ab :event :approach-ice)]})
+
    "Woodcutter"
    (zero-to-hero (do-net-damage 1))
 
