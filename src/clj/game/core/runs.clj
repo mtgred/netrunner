@@ -103,8 +103,12 @@
     (swap! state assoc-in [:run :phase] :encounter-ice)
     (system-msg state :runner (str "encounters " (card-str state ice)))
     (wait-for (trigger-event-simult state side :encounter-ice nil ice)
-              (if (can-bypass-ice state side eid ice)
+              (cond
+                (can-bypass-ice state side eid ice)
                 (resolve-encounter-ice state side eid)
+                (:ended (:run @state))
+                (handle-end-run state side)
+                :else
                 (break-subs-opportunity state side eid ice)))))
 
 (defn break-subs-opportunity

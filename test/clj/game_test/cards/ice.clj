@@ -1307,14 +1307,36 @@
       (run-on state :rd)
       (is (:run @state))
       (click-prompt state :runner "Continue")
+      (is (= :approach-ice (:phase (:run @state))) "Corp rez ice window")
       (click-prompt state :corp "Rez Ice Wall")
+      (is (= :encounter-ice (:phase (:run @state))) "Corp rez ice window")
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "Done")
+      (is (= :approach-server (:phase (:run @state))) "Approach server jack out prompt")
       (click-prompt state :runner "Continue")
+      (is (= :approach-server (:phase (:run @state))) "Approach server (corp-phase-43) rez and paid ability window")
       (click-prompt state :corp "Done")
       (click-prompt state :runner "Continue")
       (click-prompt state :runner "No action")
+      (is (nil? (:run @state)))))
+  (testing "with ice with on-encounter effect"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tollbooth"]
+                        :credits 10}})
+      (play-from-hand state :corp "Tollbooth" "New remote")
+      (let [tollbooth (get-ice state :remote1 0)]
+        (core/rez state :corp tollbooth)
+        (take-credits state :corp))
+      (run-on state :remote1)
+      (click-prompt state :runner "Continue")
+      (is (= :approach-ice (:phase (:run @state))))
+      (let [credits (:credit (get-runner))]
+        (click-prompt state :corp "Done")
+        (is (= (- credits 3) (:credit (get-runner))) "Tollbooth forced the runner to pay 3"))
+      (is (= :encounter-ice (:phase (:run @state))))
+      (click-prompt state :runner "Done")
       (is (nil? (:run @state)))))
   (testing "with bypass"
     (do-game
@@ -1326,14 +1348,47 @@
         (core/rez state :corp iw)
         (take-credits state :corp))
       (play-from-hand state :runner "Inside Job")
-      (is (:run @state))
       (click-prompt state :runner "Server 1")
       (click-prompt state :runner "Continue")
+      (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (click-prompt state :corp "Done")
-      (println (map :text (:log @state)))
-      (println (prompt-fmt :corp))
-      (println (prompt-fmt :runner))
-    ))
+      (is (= :approach-server (:phase (:run @state))) "Inside Job has bypassed Ice Wall")
+      (click-prompt state :runner "Jack out")))
+  (testing "with bypass vs cannot be bypassed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Guard"]}
+                 :runner {:hand ["Inside Job"]}})
+      (play-from-hand state :corp "Guard" "New remote")
+      (let [guard (get-ice state :remote1 0)]
+        (core/rez state :corp guard)
+        (take-credits state :corp))
+      (play-from-hand state :runner "Inside Job")
+      (click-prompt state :runner "Server 1")
+      (click-prompt state :runner "Continue")
+      (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
+      (click-prompt state :corp "Done")
+      (is (= :encounter-ice (:phase (:run @state))) "Inside Job hasn't bypassed Guard")
+      (click-prompt state :runner "Done")
+      (is (nil? (:run @state)))))
+  (testing "with bypass vs ice with on-encounter effect"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tollbooth"]
+                        :credits 10}
+                 :runner {:hand ["Inside Job"]}})
+      (play-from-hand state :corp "Tollbooth" "New remote")
+      (let [tollbooth (get-ice state :remote1 0)]
+        (core/rez state :corp tollbooth)
+        (take-credits state :corp))
+      (play-from-hand state :runner "Inside Job")
+      (click-prompt state :runner "Server 1")
+      (click-prompt state :runner "Continue")
+      (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
+      (click-prompt state :corp "Done")
+      (is (= :approach-server (:phase (:run @state))) "Inside Job has bypassed Ice Wall")
+      (click-prompt state :runner "Jack out")
+      (is (nil? (:run @state)))))
   )
 
 (deftest information-overload

@@ -2910,9 +2910,14 @@
     :subroutines [end-the-run]}
 
    "Tollbooth"
-   {:implementation "Encounter effect is manual"
-    :abilities [{:msg "make the Runner pay 3 [Credits], if able"
-                 :effect (effect (pay :runner card :credit 3))}]
+   {:events [{:event :encounter-ice
+              :async true
+              :req (req (not (:bypass run)))
+              :effect (req (wait-for (pay-sync state :runner card [:credit 3])
+                                     (if-let [cost-str async-result]
+                                       (do (system-msg state :corp "uses Tollbooth to force the Runner to pay 3 [Credits]")
+                                           (effect-completed state side eid))
+                                       (end-run state :corp eid card))))}]
     :subroutines [end-the-run]}
 
    "Tour Guide"
