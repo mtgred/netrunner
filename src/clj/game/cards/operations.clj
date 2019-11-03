@@ -1034,6 +1034,47 @@
    "IPO"
    {:msg "gain 13 [Credits]" :effect (effect (gain-credits 13))}
 
+   "Kakurenbo"
+   {:prompt "Select any number of cards in HQ to trash"
+    :choices {:max (req (count (:hand corp)))
+              :card #(and (corp? %)
+                          (in-hand? %))}
+    :msg (msg "trash " (count targets) " cards in HQ")
+    :async true
+    :effect (req (doseq [c targets]
+                   (move state side c :discard))
+                 (doseq [c (:discard (:corp @state))]
+                   (update! state side (assoc-in c [:seen] false)))
+                 (shuffle! state :corp :discard)
+                 (continue-ability state side
+                                   {:async true
+                                    :prompt "Select an agenda, asset or upgrade to install from Archives and place 2 advancement tokens on"
+                                    :show-discard true
+                                    :not-distinct true
+                                    :choices {:card #(and (or (agenda? %)
+                                                              (asset? %)
+                                                              (upgrade? %))
+                                                          (#{[:discard]} (:zone %)))}
+                                    :effect (req (let [card-to-install target]
+                                                   (when card-to-install
+                                                     (wait-for (resolve-ability state side
+                                                                                {:prompt (str "Choose a location to install " (:title card-to-install))
+                                                                                 :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state card-to-install))
+                                                                                 :async true
+                                                                                 :msg (msg (corp-install-msg card-to-install)
+                                                                                           " in "
+                                                                                           (if (= target "New remote")
+                                                                                             (str (remote-num->name (inc (get-in @state [:rid]))) " (new remote)")
+                                                                                             target)
+                                                                                           " and place 2 advancement tokens on it")
+                                                                                 :effect (req (wait-for (corp-install state side (make-eid state {:source card :source-type :corp-install})
+                                                                                                                      card-to-install target {:display-message false})
+                                                                                                        (add-prop state :corp eid (find-latest state card-to-install)
+                                                                                                                  :advance-counter 2 {:placed true})
+                                                                                                        (effect-completed state side eid)))}
+                                                                                card nil)))))}
+                                   card nil))}
+
    "Kill Switch"
    (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title target))
                                  :trace {:base 3
