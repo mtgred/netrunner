@@ -2855,6 +2855,27 @@
       (advance state tyrant 2)
       (is (= 2 (count (:subroutines (refresh tyrant)))) "Tyrant gains 2 subs"))))
 
+(deftest tyr
+  ;; Týr
+  (testing "Click gain by bioroid breaking"
+    (do-game
+      (new-game {:corp {:deck ["Týr"]}})
+      (play-from-hand state :corp "Týr" "HQ")
+      (core/gain state :corp :credit 10)
+      (take-credits state :corp)
+      (let [tyr (get-ice state :hq 0)]
+        (core/rez state :corp tyr)
+        (run-on state "HQ")
+        (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
+        (card-side-ability state :runner tyr 0)
+        (click-prompt state :runner "Do 2 brain damage")
+        (click-prompt state :runner "Force the Runner to trash an installed card. Gain 3 [Credits]")
+        (click-prompt state :runner "End the run")
+        (is (= 0 (:click (get-runner))) "Runner has no clicks left")
+        (run-jack-out state)
+        (take-credits state :runner)
+        (is (= 6 (:click (get-corp))) "Corp has 6 clicks")))))
+
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
   (do-game

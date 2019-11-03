@@ -2929,6 +2929,12 @@
    "Tyrant"
    (zero-to-hero end-the-run)
 
+   "Týr"
+   {:subroutines [(do-brain-damage 2)
+                  (combine-abilities trash-installed (gain-credits-sub 3))
+                  end-the-run]
+    :runner-abilities [(bioroid-break 1 1 {:additional-ability {:effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}})]}
+
    "Universal Connectivity Fee"
    {:subroutines [{:label "Force the Runner to lose credits"
                    :msg (msg "force the Runner to lose " (if tagged "all credits" "1 [Credits]"))
