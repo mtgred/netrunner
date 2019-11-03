@@ -59,8 +59,9 @@
   (runner-pay-or-break cost qty "pay for"))
 
 (defn bioroid-break
-  [cost qty]
-  (break-sub [:click cost {:action :bioroid-cost}] qty))
+  ([cost qty] (bioroid-break cost qty nil))
+  ([cost qty args]
+   (break-sub [:click cost {:action :bioroid-cost}] qty nil args)))
 
 ;;; General subroutines
 (def end-the-run
