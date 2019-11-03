@@ -2,7 +2,8 @@
 
 (declare available-mu free-mu host install-locked? make-rid rez run-flag?
          installable-servers server->zone set-prop system-msg turn-flag? in-play?
-         update-breaker-strength update-ice-strength update-run-ice use-mu add-sub)
+         update-breaker-strength update-ice-strength update-run-ice use-mu add-sub
+         get-remotes)
 
 ;;;; Functions for the installation and deactivation of cards.
 
@@ -116,25 +117,32 @@
    Returns :region if Region check fails
    Returns :ice if ICE check fails
    !! NB: This should only be used in a check with `true?` as all return values are truthy"
-  [state side card dest-zone]
+  [state side card slot]
   (cond
     ;; Region check
     (and (has-subtype? card "Region")
-         (some #(has-subtype? % "Region") dest-zone))
+         (some #(has-subtype? % "Region") (get-in @state (cons :corp slot))))
     :region
     ;; ICE install prevented by Unscheduled Maintenance
     (and (ice? card)
          (not (turn-flag? state side card :can-install-ice)))
     :ice
     ;; Installing not locked
-    (install-locked? state :corp) :lock-install
+    (install-locked? state :corp)
+    :lock-install
+    ;; Earth station cannot have more than one server
+    (and (= "Earth Station" (subs (:title (get-in @state [:corp :identity])) 0 13))
+         (not (:disabled (get-in @state [:corp :identity])))
+         (pos? (count (get-remotes state)))
+         (not (in-coll? (conj (keys (get-remotes state)) :archives :rd :hq) (second slot))))
+    :earth-station
     ;; no restrictions
     :default true))
 
 (defn- corp-can-install?
   "Checks `corp-can-install-reason` if not true, toasts reason and returns false"
-  [state side card dest-zone]
-  (let [reason (corp-can-install-reason state side card dest-zone)
+  [state side card slot]
+  (let [reason (corp-can-install-reason state side card slot)
         reason-toast #(do (toast state side % "warning") false)
         title (:title card)]
     (case reason
@@ -148,7 +156,10 @@
       (reason-toast (str "Unable to install " title ", installing is currently locked"))
       ;; failed ICE check
       :ice
-      (reason-toast (str "Unable to install " title ": can only install 1 piece of ICE per turn")))))
+      (reason-toast (str "Unable to install " title ": can only install 1 piece of ICE per turn"))
+      ;; Earth station cannot have more than one remote server
+      :earth-station
+      (reason-toast (str "Unable to install " title " in new remote: Earth Station limit")))))
 
 (defn- corp-install-asset-agenda
   "Forces the corp to trash an existing asset or agenda if a second was just installed."
@@ -264,7 +275,7 @@
                            {:server server :dest-zone dest-zone})
         costs (when-not ignore-all-cost
                 [base-cost [:credit cost]])]
-    (if (and (corp-can-install? state side card dest-zone)
+    (if (and (corp-can-install? state side card slot)
              (not (install-locked? state :corp)))
       (wait-for (pay-sync state side (make-eid state eid) card costs {:action action})
                 (if-let [cost-str async-result]
