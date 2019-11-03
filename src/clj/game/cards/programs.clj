@@ -1801,6 +1801,12 @@
    (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
                                  (strength-pump 2 3)]})
 
+   "Penrose"
+   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
+                     :abilities [(break-sub 1 1 "Barrier" {:req (req (= :this-turn (installed? card)))})
+                                 (break-sub 1 1 "Code Gate")
+                                 (strength-pump 1 3)]})
+
    "Peregrine"
    (return-and-derez (break-sub 1 1 "Code Gate")
                      (strength-pump 3 3))
