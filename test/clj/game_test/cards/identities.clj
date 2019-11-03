@@ -595,6 +595,114 @@
         (click-prompt state :runner "Suffer 1 net damage")
         (is (seq (:prompt (get-corp))) "Employee Strike out of play - Ability turned on correctly")))))
 
+(deftest earth-station-sea-headquarters
+  ;;Earth Station: SEA Headquarters
+  ;;Flipside. Earth Station: Ascending to Orbit
+  (testing "Front side: Additional cost to run HQ"
+    (do-game
+      ; (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+      (new-game {:corp {:id "Earth Station: On the Grid"}})
+      (take-credits state :corp)
+      (changes-val-macro -1 (:credit (get-runner))
+                         "Paid 1c to run on HQ"
+                         (run-on state :hq))))
+  (testing "Flip side: No additional cost to run HQ"
+    (do-game
+      ; (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+      (new-game {:corp {:id "Earth Station: On the Grid"}})
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (take-credits state :corp)
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Paid nothing to run on HQ"
+                         (run-on state :hq))))
+  (testing "Flip side: Additional cost to run a remote"
+    (do-game
+      ; (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+      (new-game {:corp {:id "Earth Station: On the Grid"
+                        :deck ["PAD Campaign"]}})
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (changes-val-macro -6 (:credit (get-runner))
+                         "Paid nothing to run on HQ"
+                         (run-on state :remote1))))
+  (testing "Flip side: No additional cost to run HQ"
+    (do-game
+      ; (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+      (new-game {:corp {:id "Earth Station: On the Grid"
+                        :deck ["PAD Campaign"]}})
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Paid nothing to run on HQ"
+                         (run-on state :hq))))
+  (testing "Flip side: Flip back on successful HQ run"
+    (do-game
+      ; (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+      (new-game {:corp {:id "Earth Station: On the Grid"
+                        :deck ["PAD Campaign"]}})
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (is (:flipped (get-in @state [:corp :identity])) "Corp ID is on the flip side")
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Paid nothing to run on HQ"
+                         (run-empty-server state :hq))
+      (is (not (:flipped (get-in @state [:corp :identity]))) "Corp ID is on the front side")))
+  (testing "Cannot install more than one remote"
+    (do-game
+      ; (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+      (new-game {:corp {:id "Earth Station: On the Grid"
+                        :deck [(qty "PAD Campaign" 2)]}})
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (is (= 1 (count (core/get-remotes state))) "Could not install second remote")))
+  (testing "Creating more servers while the identity is disabled"
+    (do-game
+      ; (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+      (new-game {:corp {:id "Earth Station: On the Grid"
+                        :hand ["PAD Campaign" "NASX" "Project Atlas" (qty "Bio Vault" 2) (qty "Vanilla" 5)]}
+                 :runner {:deck ["Employee Strike"]}})
+      (core/gain state :corp :click 3)
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "Vanilla" "Server 1")
+      (play-from-hand state :corp "Bio Vault" "Server 1")
+      (play-from-hand state :corp "Vanilla" "Archives")
+      (play-from-hand state :corp "Vanilla" "R&D")
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Employee Strike")
+      (take-credits state :runner)
+      (play-from-hand state :corp "NASX" "New remote")
+      (play-from-hand state :corp "Vanilla" "Server 2")
+      (play-from-hand state :corp "Bio Vault" "Server 2")
+      (core/gain state :corp :click 4)
+      (play-and-score state "Project Atlas")
+      (click-prompt state :corp "Server 2")
+      (is (= 3 (count (:discard (get-corp)))) "Contents of server 1 were trashed")
+      (is (not-empty (find-card "PAD Campaign" (:discard (get-corp)))) "PAD Campaign (was in server 1) was trashed")
+      (is (not-empty (get-content state :remote2 0)) "PAD Campaign (was in server 1) was trashed")))
+  (testing "Rules corner case: Architects on non-saved remotes can not be trashed"
+    (do-game
+      ; (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+      (new-game {:corp {:id "Earth Station: On the Grid"
+                        :hand [(qty "Architect" 2) "Project Atlas" (qty "PAD Campaign" 2)]}
+                 :runner {:deck ["Employee Strike"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Employee Strike")
+      (take-credits state :runner)
+      (dotimes [_ 2] (play-from-hand state :corp "Architect" "New remote"))
+      (core/rez state :corp (get-ice state :remote1 0))
+      (core/rez state :corp (get-ice state :remote2 0))
+      (play-and-score state "Project Atlas")
+      (click-prompt state :corp "Server 2")
+      (is (= 0 (count (:discard (get-corp)))) "None of the Architects were trashed"))))
+
 (deftest edward-kim-humanity-s-hammer
   ;; Edward Kim
   (testing "Trash first operation accessed each turn, but not if first one was in Archives"
