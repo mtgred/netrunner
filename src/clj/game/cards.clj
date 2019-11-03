@@ -1,5 +1,13 @@
 (in-ns 'game.core)
 
+(defn combine-abilities
+  ([ab-x ab-y]
+   {:label (str (:label ab-x) ". " (:label ab-y))
+    :effect (req (wait-for (resolve-ability state side ab-x card nil)
+                           (continue-ability state side ab-y card nil)))})
+  ([ab-x ab-y & ab-more]
+   (reduce combine-abilities (concat [ab-x ab-y] ab-more))))
+
 (def trash-program {:prompt "Select a program to trash"
                     :label "Trash a program"
                     :msg (msg "trash " (:title target))
