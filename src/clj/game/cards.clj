@@ -1,12 +1,14 @@
 (in-ns 'game.core)
 
 (defn combine-abilities
+  "Combines two or more abilities to a single one. Labels are joined together with a period between parts."
   ([ab-x ab-y]
    {:label (str (:label ab-x) ". " (:label ab-y))
+    :async true
     :effect (req (wait-for (resolve-ability state side ab-x card nil)
                            (continue-ability state side ab-y card nil)))})
   ([ab-x ab-y & ab-more]
-   (reduce combine-abilities (concat [ab-x ab-y] ab-more))))
+   (reduce combine-abilities (combine-abilities ab-x ab-y) ab-more)))
 
 (def trash-program {:prompt "Select a program to trash"
                     :label "Trash a program"
