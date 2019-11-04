@@ -2894,6 +2894,90 @@
         (is (has-subtype? (refresh wend) "Code Gate") "Wendigo gained Code Gate")
         (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
 
+(deftest winchester
+  ;; Winchester
+  (testing "Basic test - 3 sub on HQ"
+    (do-game
+      (new-game {:corp {:deck ["Winchester"]}
+                 :runner {:hand ["Misdirection" "Astrolabe" "Fan Site"]}})
+      (play-from-hand state :corp "Winchester" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Misdirection")
+      (play-from-hand state :runner "Astrolabe")
+      (play-from-hand state :runner "Fan Site")
+      (run-on state :hq)
+      (let [win (get-ice state :hq 0)
+            misd (get-program state 0)
+            astro (get-hardware state 0)
+            fs (get-resource state 0)]
+        (core/rez state :corp win)
+        (is (= 3 (count (:subroutines (refresh win)))) "Winchester has 3 subroutines on HQ")
+        (core/resolve-unbroken-subs! state :corp (refresh win))
+        ; Trace[4] - Trash 1 installed program
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :corp astro)
+        (is (= 0 (count (:discard (get-runner)))) "Could not choose hardware")
+        (click-card state :corp fs)
+        (is (= 0 (count (:discard (get-runner)))) "Could not choose resource")
+        (click-card state :corp misd)
+        (is (= 1 (count (:discard (get-runner)))) "Trashed program")
+        ; Trace[3] - Trash 1 installed hardware
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :corp fs)
+        (is (= 1 (count (:discard (get-runner)))) "Could not choose resource")
+        (click-card state :corp astro)
+        (is (= 2 (count (:discard (get-runner)))) "Trashed hardware")
+        ; Trace[3] - End the run
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (not (:run @state)) "Run has been ended"))))
+  (testing "2 subs on other servers"
+    (do-game
+      (new-game {:corp {:deck ["Winchester"]}})
+      (play-from-hand state :corp "Winchester" "R&D")
+      (take-credits state :corp)
+      (run-on state :rd)
+      (let [win (get-ice state :rd 0)]
+        (core/rez state :corp win)
+        (is (= 2 (count (:subroutines (refresh win)))) "Winchester has 2 subroutines on R&D"))))
+  (testing "2 subs when moved with Thimblerig"
+    (do-game
+      (new-game {:corp {:deck ["Winchester" "Thimblerig"]}
+                 :runner {:deck ["Aumakua"]}})
+      (play-from-hand state :corp "Winchester" "R&D")
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (take-credits state :corp)
+      ;Click 1 - Run R&D, rez Winchester and let it fire
+      (run-on state :rd)
+      (let [win (get-ice state :rd 0)
+            thim (get-ice state :hq 0)]
+        (core/rez state :corp win)
+        (is (= 2 (count (:subroutines (refresh win)))) "Winchester has 2 subroutines on R&D")
+        (core/resolve-unbroken-subs! state :corp (refresh win))
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-prompt state :corp "Done")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-prompt state :corp "Done")
+        (run-jack-out state)
+        ;Click 2 - Install Aumakua
+        (play-from-hand state :runner "Aumakua")
+        ;Click 3 - Run HQ, rez Thimblerig, break, swap ice
+        (run-on state :hq)
+        (core/rez state :corp thim)
+        (card-ability state :runner (get-program state 0) 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (card-ability state :corp (refresh thim) 0)
+        (click-card state :corp (refresh win))
+        (run-jack-out state)
+        ;Click 4 - Run HQ
+        (run-on state :hq)
+        (is (= 3 (count (:subroutines (get-ice state :hq 0)))) "Winchester has 3 subroutines on HQ")))))
+
 (deftest woodcutter
   ;; Woodcutter
   (do-game

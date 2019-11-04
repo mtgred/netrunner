@@ -68,8 +68,9 @@
                            (swap! state update-in [:stats side :runs :started] (fnil inc 0))
                            (wait-for (trigger-event-simult state :runner :run nil s cost-args)
                                      (when (>= n 2) (trigger-event state :runner :run-big s n))
-                                     (when (zero? n)
-                                       (trigger-event-simult state :runner (make-eid state) :approach-server nil)))))
+                                     (if (zero? n)
+                                       (trigger-event-simult state :runner (make-eid state) :approach-server nil)
+                                       (trigger-event-simult state :runner (make-eid state) :approach-ice nil)))))
                        (effect-completed state side eid))))
        (effect-completed state side eid)))))
 
