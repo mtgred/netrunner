@@ -2917,7 +2917,8 @@
                                      (if-let [cost-str async-result]
                                        (do (system-msg state :corp "uses Tollbooth to force the Runner to pay 3 [Credits]")
                                            (effect-completed state side eid))
-                                       (end-run state :corp eid card))))}]
+                                       (do (system-msg state :corp "uses Tollbooth to end the run as the Runner can't pay 3 [Credits]")
+                                           (end-run state :corp eid card)))))}]
     :subroutines [end-the-run]}
 
    "Tour Guide"
