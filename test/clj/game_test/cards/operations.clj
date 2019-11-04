@@ -1929,18 +1929,21 @@
       (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup")
       (take-credits state :runner)
       (play-from-hand state :corp "Kakurenbo")
+      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
       (click-card state :corp (find-card "Project Junebug" (:hand (get-corp))))
       (click-prompt state :corp "Done")
       (is (empty? (remove #(not (:seen %)) (:discard (get-corp)))) "Cards in Archives are turned facedown")
       (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
       (is (not-empty (:prompt (get-corp))) "Could not select operation to install")
       (click-card state :corp (find-card "Project Junebug" (:discard (get-corp))))
+      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
       (click-prompt state :corp "New remote")
       (is (= "Project Junebug" (:title (get-content state :remote1 0))) "Installed Junebug in remote")
       (is (= 2 (get-counters (get-content state :remote1 0) :advancement)) "Junebug has 2 advancement tokens")
       (is (= 4 (count (:hand (get-corp)))) "4 Hedge Funds left in HQ")
       (is (empty? (remove #(not (:seen %)) (:discard (get-corp)))) "Remaining cards in Archives are still facedown")
-      (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")))
+      (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")
+      (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")))
   (testing "Can turn cards facedown without installing"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1953,7 +1956,9 @@
       (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup")
       (take-credits state :runner)
       (play-from-hand state :corp "Kakurenbo")
+      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
       (click-prompt state :corp "Done")
+      (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")
       (is (empty? (:prompt (get-corp))) "No more prompts"))))
 
 
