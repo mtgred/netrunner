@@ -112,7 +112,6 @@
       (click-prompt state :runner "Continue")
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (click-prompt state :corp "Done")
-      (click-prompt state :runner "Done")
       (is (= :approach-server (:phase (:run @state))) "Inside Job has bypassed Ice Wall")
       (click-prompt state :runner "Jack out")))
   (testing "with bypass vs cannot be bypassed"
@@ -129,7 +128,6 @@
       (click-prompt state :runner "Continue")
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (click-prompt state :corp "Done")
-      (click-prompt state :runner "Done")
       (is (= :encounter-ice (:phase (:run @state))) "Inside Job hasn't bypassed Guard")
       (click-prompt state :runner "Done")
       (is (nil? (:run @state)))))

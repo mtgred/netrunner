@@ -143,9 +143,7 @@
       (:ended (:run @state))
       (handle-end-run state side)
       (and (rezzed? ice)
-           (->> (concat (all-active state :corp) (all-active state :runner))
-                (filter (fn [c] (some #(= :encounter-ice (:event %)) (:events (card-def c)))))
-                seq))
+           (some #(= :encounter-ice (:event %)) (:events (card-def ice))))
       (do (show-wait-prompt state :corp "Paid ability window. Runner can respond")
           (show-prompt state :runner nil
                        "approach-ice Paid ability window. Continue to encounter when ready."
@@ -267,7 +265,6 @@
                ["Done"]
                (fn [_] (resolve-approach-server state :runner eid))
                {:priority -1}))
-
 
 (defn resolve-approach-server
   [state side eid]
