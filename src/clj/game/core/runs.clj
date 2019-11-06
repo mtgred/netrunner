@@ -32,6 +32,33 @@
          approach-server approach-server-jack-out approach-server-rez-opportunity resolve-approach-server
          successful-run-trigger)
 
+(defn get-current-ice
+  [state]
+  (let [run-ice (get-run-ices state)
+        pos (get-in @state [:run :position])]
+    (when (and pos
+               (pos? pos)
+               (<= pos (count run-ice)))
+      (get-card state (nth run-ice (dec pos))))))
+
+(defn set-phase
+  [state phase]
+  (swap! state assoc-in [:run :phase] phase)
+  phase)
+
+(defn set-next-phase
+  [state phase]
+  (swap! state assoc-in [:run :next-phase] phase)
+  phase)
+
+(defmulti start-next-phase
+  (fn [state side args]
+    (:next-phase (:run @state))))
+
+(defmulti continue
+  (fn [state side args]
+    (:phase (:run @state))))
+
 (defn make-run
   "Starts a run on the given server, with the given card as the cause. If card is nil, assume a click was spent."
   ([state side server] (make-run state side (make-eid state) server nil nil nil))
@@ -50,125 +77,77 @@
              (play-sfx state side "click-run"))
            (wait-for (pay-sync state :runner (make-eid state {:source card :source-type :make-run}) nil costs)
                      (if-let [cost-str async-result]
-                       (do
+                       (let [s [(if (keyword? server) server (last (server->zone state server)))]
+                             ices (get-in @state (concat [:corp :servers] s [:ices]))
+                             n (count ices)]
                          (when click-run
                            (system-msg state :runner (str (build-spend-msg cost-str "make a run on" "makes a run on")
                                                           (zone->name (unknown->kw server))
                                                           (when ignore-costs ", ignoring all costs"))))
-                         (let [s [(if (keyword? server) server (last (server->zone state server)))]
-                               ices (get-in @state (concat [:corp :servers] s [:ices]))
-                               n (count ices)]
-                           ;; s is a keyword for the server, like :hq or :remote1
-                           (swap! state assoc
-                                  :per-run nil
-                                  :run {:server s
-                                        :position n
-                                        :access-bonus []
-                                        :jack-out false
-                                        :eid eid})
-                           (when (or run-effect card)
-                             (add-run-effect state side (assoc run-effect :card card)))
-                           (trigger-event state side :begin-run :server s)
-                           (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
-                           (swap! state assoc-in [:runner :next-run-credit] 0)
-                           (gain-run-credits state side (count-bad-pub state))
-                           (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
-                           (update-all-ice state :corp)
-                           (swap! state update-in [:stats side :runs :started] (fnil inc 0))
-                           (wait-for (trigger-event-simult state :runner :run nil s n)
-                                     (if (pos? n)
-                                       (approach-ice state side eid)
-                                       (approach-server state side eid)))))
+                         ;; s is a keyword for the server, like :hq or :remote1
+                         (swap! state assoc
+                                :per-run nil
+                                :run {:server s
+                                      :position n
+                                      :access-bonus []
+                                      :jack-out false
+                                      :phase :initiation
+                                      :next-phase :initiation
+                                      :eid eid})
+                         (when (or run-effect card)
+                           (add-run-effect state side (assoc run-effect :card card)))
+                         (trigger-event state side :begin-run :server s)
+                         (gain-run-credits state side (get-in @state [:runner :next-run-credit]))
+                         (swap! state assoc-in [:runner :next-run-credit] 0)
+                         (gain-run-credits state side (count-bad-pub state))
+                         (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
+                         (swap! state update-in [:stats side :runs :started] (fnil inc 0))
+                         (update-all-ice state side)
+                         (update-all-icebreakers state side)
+                         (wait-for (trigger-event-simult state :runner :run nil s n)
+                                   (if (pos? (get-in @state [:run :position]))
+                                     (set-next-phase state :approach-ice)
+                                     (do (set-next-phase state :approach-server)
+                                         (swap! state assoc-in [:run :jack-out] true)))))
                        (effect-completed state side eid))))
        (effect-completed state side eid)))))
 
-(defn approach-ice
-  [state side eid]
-  (let [run-ice (get-run-ices state)
-        pos (get-in @state [:run :position])
-        ice (when (and pos (pos? pos) (<= pos (count run-ice)))
-              (get-card state (nth run-ice (dec pos))))
-        jack-out? (:jack-out (:run @state))]
-    (update-all-ice state side)
-    (update-all-icebreakers state side)
-    (swap! state assoc-in [:run :phase] :approach-ice)
+(defmethod start-next-phase :approach-ice
+  [state side args]
+  (set-phase state :approach-ice)
+  (update-all-ice state side)
+  (update-all-icebreakers state side)
+  (let [ice (get-current-ice state)]
     (system-msg state :runner (str "approaches " (card-str state ice)))
-    (when-not jack-out?
-      (swap! state assoc-in [:run :jack-out] true))
     (wait-for (trigger-event-simult state :runner :approach-ice nil ice)
-              (jack-out-opportunity state side eid jack-out?))))
+              (update-all-ice state side)
+              (update-all-icebreakers state side))))
 
-(defn jack-out-opportunity
-  [state side eid jack-out?]
-  (show-wait-prompt state :corp (str "Paid ability window. Runner " (if jack-out? "can" "cannot") " jack out"))
-  (continue-ability
-    state side
-    {:async true
-     :prompt (str "approach-ice Paid ability window."
-                  (when jack-out?
-                    " Jack out?"))
-     :choices (concat
-                (when jack-out?
-                  ["Jack out"])
-                ["Continue"])
-     :effect (req (clear-wait-prompt state :corp)
-                  (if (= target "Jack out")
-                    (jack-out state side eid)
-                    (rez-ice-opportunity state side eid current-ice)))}
-    nil nil))
-
-(defn rez-ice-opportunity
-  [state side eid ice]
+(defmethod continue :approach-ice
+  [state side args]
   (update-all-ice state side)
   (update-all-icebreakers state side)
-  (show-wait-prompt state :runner "Paid ability window. Corp can rez current ice")
-  (if-let [ice (get-card state ice)]
-    (continue-ability
-      state :corp
-      {:async true
-       :priority -1
-       :prompt (str "approach-ice Paid ability window. You may rez " (:title ice) " and non-ice cards.")
-       :choices ["Done"]
-       :effect (req (resolve-approach-ice state :runner eid ice))}
-      nil nil)
-    (resolve-approach-ice state :runner eid nil)))
-
-(defn resolve-approach-ice
-  [state side eid ice]
-  (clear-wait-prompt state :runner)
-  (update-all-ice state side)
-  (update-all-icebreakers state side)
-  (let [ice (get-card state ice)]
-    (cond
-      (:ended (:run @state))
-      (handle-end-run state side)
-      (and (rezzed? ice)
-           (some #(= :encounter-ice (:event %)) (:events (card-def ice))))
-      (do (show-wait-prompt state :corp "Paid ability window. Runner can respond")
-          (show-prompt state :runner nil
-                       "approach-ice Paid ability window. Continue to encounter when ready."
-                       ["Done"]
-                       (fn [_]
-                         (clear-wait-prompt state :corp)
-                         (encounter-ice state :runner eid))
-                       {:priority -1}))
-      (rezzed? ice)
-      (encounter-ice state :runner eid)
-      :else
-      (pass-ice state :runner eid))))
+  (swap! state assoc-in [:run :no-action] false)
+  (swap! state assoc-in [:run :jack-out] true)
+  (cond
+    (:ended (:run @state))
+    (handle-end-run state side)
+    (rezzed? (get-current-ice state))
+    (set-next-phase state :encounter-ice)
+    :else
+    (set-next-phase state :pass-ice)))
 
 (defn can-bypass-ice
-  [state side eid ice]
+  [state side ice]
   (when-not (some false? (get-effects state side ice :bypass-ice))
     (:bypass (:run @state))))
 
-(defn encounter-ice
-  [state side eid]
-  (let [run-ice (get-run-ices state)
-        pos (get-in @state [:run :position])
-        ice (when (and pos (pos? pos) (<= pos (count run-ice)))
-              (get-card state (nth run-ice (dec pos))))]
-    (swap! state assoc-in [:run :phase] :encounter-ice)
+(defmethod start-next-phase :encounter-ice
+  [state side args]
+  (set-phase state :encounter-ice)
+  (update-all-ice state side)
+  (update-all-icebreakers state side)
+  (let [ice (get-current-ice state)]
     (system-msg state :runner (str "encounters " (card-str state ice)))
     (wait-for (trigger-event-simult state side :encounter-ice nil ice)
               (update-all-ice state side)
@@ -176,51 +155,45 @@
               (cond
                 (:ended (:run @state))
                 (handle-end-run state side)
-                (can-bypass-ice state side eid ice)
-                (resolve-encounter-ice state side eid ice)
-                :else
-                (break-subs-opportunity state side eid ice)))))
+                (can-bypass-ice state side ice)
+                (set-phase state :bypass-ice)))))
 
-(defn break-subs-opportunity
-  [state side eid ice]
-  (show-wait-prompt state :corp "Paid ability window. Runner can break subroutines")
-  (continue-ability
-    state side
-    {:async true
-     :priority -1
-     :prompt "encounter-ice Paid ability window. You may break subroutines. Press Done when finished"
-     :choices ["Done"]
-     :effect (req (clear-wait-prompt state :corp)
-                  (let [ice (get-card state current-ice)
-                        new-eid (make-eid state {:source (:title current-ice)
-                                                 :source-type :subroutine})]
-                    (if ice
-                      (wait-for (resolve-unbroken-subs! state :corp new-eid ice)
-                                (resolve-encounter-ice state side eid ice))
-                      (resolve-encounter-ice state side eid nil))))}
-    nil nil))
-
-(defn resolve-encounter-ice
-  [state side eid ice]
-  (wait-for (trigger-event-simult state side :encounter-ice-ends nil ice)
+(defn encounter-ends
+  [state side args]
+  (update-all-ice state side)
+  (update-all-icebreakers state side)
+  (swap! state assoc-in [:run :no-action] false)
+  (wait-for (trigger-event-simult state side :encounter-ice-ends nil (get-current-ice state))
             (swap! state dissoc-in [:run :bypass])
             (unregister-floating-effects state side :end-of-encounter)
             (unregister-floating-events state side :end-of-encounter)
+            (update-all-ice state side)
+            (update-all-icebreakers state side)
             (if (:ended (:run @state))
               (handle-end-run state side)
-              (pass-ice state :runner eid))))
+              (set-next-phase state :pass-ice))))
+
+(defmethod continue :encounter-ice
+  [state side args]
+  (encounter-ends state side args))
+
+(defmethod continue :bypass-ice
+  [state side args]
+  (encounter-ends state side args))
 
 (defn pass-ice
-  [state side eid]
+  [state side args]
   (let [run-ice (get-run-ices state)
         pos (get-in @state [:run :position])
-        ice (when (and pos (pos? pos) (<= pos (count run-ice)))
-              (get-card state (nth run-ice (dec pos))))
+        ice (get-current-ice state)
         passed-all-ice (and (pos? (count run-ice))
                             (zero? (dec pos)))
         args (when passed-all-ice
                {:card-abilities (gather-events state side :pass-all-ice nil)})]
-    (swap! state assoc-in [:run :phase] :pass-ice)
+    (set-phase state :pass-ice)
+    (update-all-ice state side)
+    (update-all-icebreakers state side)
+    (swap! state assoc-in [:run :no-action] false)
     (system-msg state :runner (str "passes " (card-str state ice)))
     (wait-for (trigger-event-simult state side :pass-ice args ice)
               (swap! state update-in [:run :position] (fnil dec 1))
@@ -229,52 +202,33 @@
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (if (pos? (get-in @state [:run :position]))
-                (approach-ice state :runner eid)
-                (approach-server state :runner eid)))))
+                (set-next-phase state :approach-ice)
+                (set-next-phase state :approach-server)))))
 
-(defn approach-server
-  [state side eid]
+(defmethod start-next-phase :pass-ice
+  [state side args]
+  (pass-ice state side args))
+
+(defmethod start-next-phase :approach-server
+  [state side args]
   (let [no-ice (zero? (count (get-run-ices state)))
         args (when (and no-ice
                         (= :initiation (get-in @state [:run :phase])))
                {:card-abilities (gather-events state side :pass-all-ice nil)})]
-        (swap! state assoc-in [:run :phase] :approach-server)
+        (set-phase state :approach-server)
         (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
         (wait-for (trigger-event-simult state side :approach-server args (count (get-run-ices state)))
-                  (approach-server-jack-out state side eid))))
+                  (update-all-ice state side)
+                  (update-all-icebreakers state side))))
 
-(defn approach-server-jack-out
-  [state side eid]
-  (show-wait-prompt state :corp "Paid ability window. Runner can jack out")
-  (continue-ability
-    state side
-    {:async true
-     :prompt "approach-server Paid ability window. Jack out?"
-     :choices ["Continue" "Jack out"]
-     :effect (req (clear-wait-prompt state :corp)
-                  (if (= target "Jack out")
-                    (jack-out state side eid)
-                    (approach-server-rez-opportunity state side eid)))}
-    nil nil))
+(defmethod continue :approach-server
+  [state side args] nil)
 
-(defn approach-server-rez-opportunity
-  [state side eid]
-  (show-wait-prompt state :runner "Paid ability window. Corp can rez non-ice")
-  (show-prompt state :corp nil
-               "approach-ice Paid ability window. You may rez non-ice cards."
-               ["Done"]
-               (fn [_] (resolve-approach-server state :runner eid))
-               {:priority -1}))
-
-(defn resolve-approach-server
-  [state side eid]
-  (clear-wait-prompt state :runner)
-  (if (:ended (:run @state))
-    (handle-end-run state side)
-    (show-prompt state :runner nil
-                 "The run is now successful"
-                 ["Continue"]
-                 (fn [_] (successful-run-trigger state :runner)))))
+(defn no-action
+  "The corp indicates they have no more actions for the encounter."
+  [state side args]
+  (swap! state assoc-in [:run :no-action] true)
+  (system-msg state side "has no further action"))
 
 ;; Non timing stuff
 (defn gain-run-credits

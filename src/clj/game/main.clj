@@ -14,7 +14,6 @@
 
 (def commands
   {"ability" core/play-ability
-   "access" core/successful-run
    "advance" core/advance
    "change" core/change
    "choice" core/resolve-prompt
@@ -47,6 +46,7 @@
    "shuffle" core/shuffle-deck
    "start-turn" core/start-turn
    "subroutine" core/play-subroutine
+   "successful-run" core/successful-run
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
    "toast" toast
    "trash-resource" core/trash-resource

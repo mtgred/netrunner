@@ -1395,6 +1395,41 @@
              (fn [{:keys [sfx] :as cursor}]
               (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
 
+(defn corp-run-div
+  [run]
+  [:div.panel.blue-shade
+   (when (zero? (:position @run))
+     [cond-button "Action before access" (not (:no-action @run)) #(send-command "corp-phase-43")])
+   [cond-button "No more action" (not (:no-action @run)) #(send-command "no-action")]])
+
+(defn runner-run-div
+  [run]
+  [:div.panel.blue-shade
+   (when (not (:no-action @run))
+     [:h4 "Waiting for Corp's actions"])
+   (case (:next-phase @run)
+     :approach-ice
+     [cond-button "Approach ice" (not (:no-action @run)) #(send-command "start-next-step")]
+     :encounter-ice
+     [cond-button "Encounter ice" (not (:no-action @run)) #(send-command "start-next-step")]
+     :bypass-ice
+     [cond-button "Bypass ice" (not (:no-action @run)) #(send-command "start-next-step")]
+     :pass-ice
+     [cond-button "Pass ice" (not (:no-action @run)) #(send-command "start-next-step")]
+     :approach-server
+     [cond-button "Approach server" (not (:no-action @run)) #(send-command "start-next-step")]
+     nil)
+   (if (zero? (:position @run))
+     [cond-button "Successful Run" (:no-action @run) #(send-command "successful-run")]
+     [cond-button "Continue" (:no-action @run) #(send-command "continue")])
+   [cond-button "Jack Out" (and (:jack-out @run)
+                                (not (:cannot-jack-out @run))) #(send-command "jack-out")]])
+
+(defn run-div
+  [side run]
+  (if (= side :corp)
+    [corp-run-div run]
+    [runner-run-div run]))
 
 (defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
   (let [s (r/atom {})
@@ -1516,25 +1551,7 @@
                                   (render-message (:title c))])))
                            (:choices prompt))))]
          (if @run
-           (let [rs (:server @run)
-                 kw (keyword (first rs))
-                 server (if-let [n (second rs)]
-                          (get-in @corp [:servers kw n])
-                          (get-in @corp [:servers kw]))]
-             (if (= side :runner)
-               [:div.panel.blue-shade
-                (when-not (:no-action @run) [:h4 "Waiting for Corp's actions"])
-                (if (zero? (:position @run))
-                  [cond-button "Successful Run" (:no-action @run) #(send-command "access")]
-                  [cond-button "Continue" (:no-action @run) #(send-command "continue")])
-                [cond-button "Jack Out" (not (:cannot-jack-out @run))
-                 #(send-command "jack-out")]]
-               [:div.panel.blue-shade
-                (when (zero? (:position @run))
-                  [cond-button "Action before access" (not (:no-action @run))
-                   #(send-command "corp-phase-43")])
-                [cond-button "No more action" (not (:no-action @run))
-                 #(send-command "no-action")]]))
+           [run-div side run]
            [:div.panel.blue-shade
             (if (= (keyword @active-player) side)
               (when (and (not (or @runner-phase-12 @corp-phase-12))
