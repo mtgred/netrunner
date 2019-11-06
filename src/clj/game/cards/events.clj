@@ -197,36 +197,33 @@
                                               (fn [cids] (remove #(= % (:cid target)) cids)))))}]})
 
    "Bribery"
-   {:implementation "ICE chosen for cost increase is specified at start of run, not on approach"
-    :async true
+   {:async true
     :makes-run true
     :prompt "How many credits?"
     :choices :credit
     :msg (msg "increase the rez cost of the first unrezzed ICE approached by " target " [Credits]")
-    :effect (effect (continue-ability
-                      (let [bribery-x target]
-                        {:prompt "Choose a server"
-                         :choices (req runnable-servers)
-                         :async true
-                         :effect (req (let [server (unknown->kw target)
-                                            run-ices (get-in @state (concat [:corp :servers] [server] [:ices]))
-                                            foremost-ice (last (remove rezzed? run-ices))]
-                                        (register-floating-effect
-                                          state side card
-                                          {:type :rez-additional-cost
-                                           :duration :end-of-run
-                                           :req (req (and (same-card? foremost-ice target)
-                                                          (not (get-in @state [:per-run (:cid card)]))))
-                                           :value [:credit bribery-x]})
-                                        (register-events
-                                          state side card
-                                          [{:event :rez
-                                            :duration :end-of-run
-                                            :req (req (and (same-card? foremost-ice target)
-                                                           (not (get-in @state [:per-run (:cid card)]))))
-                                            :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}])
-                                        (make-run state side eid target nil card)))})
-                      card nil))}
+    :effect (effect
+              (continue-ability
+                (let [bribery-x target]
+                  {:prompt "Choose a server"
+                   :choices (req runnable-servers)
+                   :async true
+                   :effect (effect
+                             (register-events
+                               card
+                               [{:event :approach-ice
+                                 :duration :end-of-run
+                                 :once :per-run
+                                 :effect (effect
+                                           (register-floating-effect
+                                             card
+                                             (let [approached-ice target]
+                                               {:type :rez-additional-cost
+                                                :duration :end-of-run
+                                                :req (req (same-card? approached-ice target))
+                                                :value [:credit bribery-x]})))}])
+                             (make-run state side eid target nil card))})
+                card nil))}
 
    "Brute-Force-Hack"
    {:req (req (some #(and (ice? %)

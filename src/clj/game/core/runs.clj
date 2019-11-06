@@ -25,12 +25,7 @@
           cost
           additional-costs])))))
 
-(declare make-run
-         approach-ice jack-out-opportunity rez-ice-opportunity resolve-approach-ice
-         encounter-ice break-subs-opportunity resolve-encounter-ice
-         pass-ice
-         approach-server approach-server-jack-out approach-server-rez-opportunity resolve-approach-server
-         successful-run-trigger)
+(declare make-run encounter-ends pass-ice)
 
 (defn get-current-ice
   [state]
@@ -44,6 +39,7 @@
 (defn set-phase
   [state phase]
   (swap! state assoc-in [:run :phase] phase)
+  (swap! state dissoc-in [:run :next-phase])
   phase)
 
 (defn set-next-phase
@@ -135,7 +131,7 @@
     (rezzed? (get-current-ice state))
     (set-next-phase state :encounter-ice)
     :else
-    (set-next-phase state :pass-ice)))
+    (pass-ice state side)))
 
 (defn can-bypass-ice
   [state side ice]
@@ -156,7 +152,7 @@
                 (:ended (:run @state))
                 (handle-end-run state side)
                 (can-bypass-ice state side ice)
-                (set-phase state :bypass-ice)))))
+                (encounter-ends state side args)))))
 
 (defn encounter-ends
   [state side args]
@@ -171,18 +167,14 @@
             (update-all-icebreakers state side)
             (if (:ended (:run @state))
               (handle-end-run state side)
-              (set-next-phase state :pass-ice))))
+              (pass-ice state side))))
 
 (defmethod continue :encounter-ice
   [state side args]
   (encounter-ends state side args))
 
-(defmethod continue :bypass-ice
-  [state side args]
-  (encounter-ends state side args))
-
 (defn pass-ice
-  [state side args]
+  [state side]
   (let [run-ice (get-run-ices state)
         pos (get-in @state [:run :position])
         ice (get-current-ice state)
@@ -204,10 +196,6 @@
               (if (pos? (get-in @state [:run :position]))
                 (set-next-phase state :approach-ice)
                 (set-next-phase state :approach-server)))))
-
-(defmethod start-next-phase :pass-ice
-  [state side args]
-  (pass-ice state side args))
 
 (defmethod start-next-phase :approach-server
   [state side args]

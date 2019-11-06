@@ -541,6 +541,7 @@
     (click-prompt state :runner "HQ")
     (let [iw1 (get-ice state :hq 1)
           iw2 (get-ice state :hq 0)]
+      (run-next-phase state)
       (core/rez state :corp iw1)
       (is (not (rezzed? (refresh iw1))) "Foremost Ice Wall is not rezzed")
       (core/rez state :corp iw2)

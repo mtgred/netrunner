@@ -287,6 +287,10 @@
   [state server]
   (core/click-run state :runner {:server server}))
 
+(defn run-next-phase
+  [state]
+  (core/start-next-phase state :runner nil))
+
 (defn run-continue
   "No action from corp and continue for runner to proceed in current run."
   [state]
