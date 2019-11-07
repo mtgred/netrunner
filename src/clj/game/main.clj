@@ -27,6 +27,7 @@
    "draw" core/click-draw
    "dynamic-ability" core/play-dynamic-ability
    "end-phase-12" core/end-phase-12
+   "start-next-phase" core/start-next-phase
    "end-turn" core/end-turn
    "generate-install-list" core/generate-install-list
    "generate-runnable-zones" core/generate-runnable-zones

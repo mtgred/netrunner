@@ -1408,16 +1408,16 @@
    (when (not (:no-action @run))
      [:h4 "Waiting for Corp's actions"])
    (case (:next-phase @run)
-     :approach-ice
-     [cond-button "Approach ice" (not (:no-action @run)) #(send-command "start-next-step")]
-     :encounter-ice
-     [cond-button "Encounter ice" (not (:no-action @run)) #(send-command "start-next-step")]
-     :bypass-ice
-     [cond-button "Bypass ice" (not (:no-action @run)) #(send-command "start-next-step")]
-     :pass-ice
-     [cond-button "Pass ice" (not (:no-action @run)) #(send-command "start-next-step")]
-     :approach-server
-     [cond-button "Approach server" (not (:no-action @run)) #(send-command "start-next-step")]
+     "approach-ice"
+     [cond-button "Approach ice" (not (:no-action @run)) #(send-command "start-next-phase")]
+     "encounter-ice"
+     [cond-button "Encounter ice" (not (:no-action @run)) #(send-command "start-next-phase")]
+     "bypass-ice"
+     [cond-button "Bypass ice" (not (:no-action @run)) #(send-command "start-next-phase")]
+     "pass-ice"
+     [cond-button "Pass ice" (not (:no-action @run)) #(send-command "start-next-phase")]
+     "approach-server"
+     [cond-button "Approach server" (not (:no-action @run)) #(send-command "start-next-phase")]
      nil)
    (if (zero? (:position @run))
      [cond-button "Successful Run" (:no-action @run) #(send-command "successful-run")]
