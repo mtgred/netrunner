@@ -129,7 +129,8 @@
     (:ended (:run @state))
     (handle-end-run state side)
     (rezzed? (get-current-ice state))
-    (set-next-phase state :encounter-ice)
+    (do (set-next-phase state :encounter-ice)
+        (start-next-phase state side nil))
     :else
     (pass-ice state side)))
 
