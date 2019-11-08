@@ -153,20 +153,26 @@
   (update-all-ice state side)
   (update-all-icebreakers state side)
   (let [ice (get-current-ice state)
-        on-encounter (when ice (:on-encounter (card-def ice)))]
+        on-encounter (when ice (:on-encounter (card-def ice)))
+        current-server (:server (:run @state))]
     (system-msg state :runner (str "encounters " (card-str state ice)))
     (wait-for (trigger-event-simult state side :encounter-ice
                                     {:card-abilities (ability-as-handler ice on-encounter)
-                                     ;; Immediately end encounter step if run ends or ice is bypassed
+                                     ;; Immediately end encounter step if:
+                                     ;; * run ends
+                                     ;; * ice is bypassed
+                                     ;; * run is moved to another server
                                      :cancel-fn (fn [state] (or (:ended (:run @state))
-                                                                (can-bypass-ice state side (get-card state ice))))}
+                                                                (can-bypass-ice state side (get-card state ice))
+                                                                (not= current-server (:server (:run @state)))))}
                                     ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
               (cond
                 (:ended (:run @state))
                 (handle-end-run state side)
-                (can-bypass-ice state side ice)
+                (or (can-bypass-ice state side ice)
+                    (not= current-server (:server (:run @state))))
                 (encounter-ends state side args)))))
 
 (defn encounter-ends
@@ -174,16 +180,16 @@
   (update-all-ice state side)
   (update-all-icebreakers state side)
   (swap! state assoc-in [:run :no-action] false)
-  (wait-for (trigger-event-simult state :runner :encounter-ice-ends
-                                  {:cancel-fn (fn [state] (:ended (:run @state)))}
-                                  (get-current-ice state))
+  (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil (get-current-ice state))
             (swap! state dissoc-in [:run :bypass])
             (unregister-floating-effects state side :end-of-encounter)
             (unregister-floating-events state side :end-of-encounter)
             (update-all-ice state side)
             (update-all-icebreakers state side)
-            (if (:ended (:run @state))
+            (cond
+              (:ended (:run @state))
               (handle-end-run state side)
+              (not (get-in @state [:run :next-phase]))
               (pass-ice state side))))
 
 (defmethod continue :encounter-ice

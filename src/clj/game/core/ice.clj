@@ -37,8 +37,10 @@
   with the same cid as the given ice."
   ([ice] (remove-sub ice #(= (:cid ice) (:from-cid %))))
   ([ice pred]
-   (let [curr-subs (:subroutines ice)
-         new-subs (remove-once pred curr-subs)]
+   (let [new-subs (->> (:subroutines ice)
+                       (remove-once pred)
+                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
+                       (into []))]
      (assoc ice :subroutines new-subs))))
 
 (defn remove-sub!

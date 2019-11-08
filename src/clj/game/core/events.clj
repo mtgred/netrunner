@@ -26,13 +26,15 @@
                  :location (or (:location ability) (default-locations card))
                  :duration (or (:duration ability) :while-installed)
                  :condition (or (:condition ability) :active)
+                 :unregister-once-resolved (or (:unregister-once-resolved ability) false)
                  :ability (dissoc ability :event :duration :condition)
                  :card card
                  :uuid (uuid/v1)})
               (into []))]
      (when (seq abilities)
        (swap! state update :events #(apply conj % abilities))))
-   (register-suppress state side card)))
+   (register-suppress state side card)
+   abilities))
 
 (defn unregister-events
   "Removes all event handlers defined for the given card.
@@ -70,6 +72,11 @@
               (remove #(and (same-card? card (:card %))
                             (= duration (:duration %))))
               (into []))))
+
+(defn unregister-event-by-uuid
+  "Removes a single event handler with matching uuid"
+  [state side uuid]
+  (swap! state assoc :events (remove-once #(= uuid (:uuid %)) (:events @state))))
 
 ;; triggering events
 (defn- get-side
@@ -135,13 +142,17 @@
           handlers (gather-events state side event targets)]
       (doseq [to-resolve handlers]
         (when-let [card (card-for-ability state to-resolve)]
-          (resolve-ability state side (dissoc (:ability to-resolve) :req) card targets))))))
+          (resolve-ability state side (dissoc (:ability to-resolve) :req) card targets)
+          (when (:unregister-once-resolved to-resolve)
+            (unregister-event-by-uuid state side (:uuid to-resolve))))))))
 
 (defn- trigger-event-sync-next
   [state side eid handlers event targets]
   (if-let [to-resolve (first handlers)]
     (if-let [card (card-for-ability state to-resolve)]
       (wait-for (resolve-ability state side (dissoc (:ability to-resolve) :req) card targets)
+                (when (:unregister-once-resolved to-resolve)
+                  (unregister-event-by-uuid state side (:uuid to-resolve)))
                 (trigger-event-sync-next state side eid (rest handlers) event targets))
       (trigger-event-sync-next state side eid (rest handlers) event targets))
     (effect-completed state side eid)))
@@ -197,6 +208,8 @@
                        :effect (req (wait-for (resolve-ability state (to-keyword (:side the-card))
                                                                ability-to-resolve
                                                                the-card event-targets)
+                                              (when (:unregister-once-resolved to-resolve)
+                                                (unregister-event-by-uuid state side (:uuid to-resolve)))
                                               (if (should-continue state handlers)
                                                 (continue-ability state side
                                                                   (choose-handler others) nil event-targets)
@@ -214,6 +227,8 @@
                                   (wait-for
                                     (resolve-ability state (to-keyword (:side the-card))
                                                      ability-to-resolve the-card event-targets)
+                                    (when (:unregister-once-resolved to-resolve)
+                                      (unregister-event-by-uuid state side (:uuid to-resolve)))
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler
