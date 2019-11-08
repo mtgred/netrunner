@@ -429,12 +429,10 @@
                      :effect (req (wait-for (resolve-ability state side corp-draw card nil)
                                             (continue-ability state :runner runner-draw card nil)))}
                     (do-net-damage 1)]
-      :events (let [damage-event (assoc (do-net-damage 3)
-                                        :req (req (and (= target card)
-                                                       (not-empty (remove :broken (:subroutines target))))))]
-                [(assoc damage-event :event :pass-ice)
-                 (assoc damage-event :event :jack-out)
-                 (assoc damage-event :event :run-ends)])})
+      :events [(assoc (do-net-damage 3)
+                      :event :encounter-ice-ends
+                      :req (req (and (= target card)
+                                     (seq (remove :broken (:subroutines target))))))]})
 
    "Archangel"
    {:flags {:rd-reveal (req true)}
@@ -517,12 +515,17 @@
    (space-ice end-the-run)
 
    "Authenticator"
-   {:implementation "Encounter effect is manual"
-    :abilities [(give-tags 1)]
-    :runner-abilities [{:label "Take 1 tag"
-                        :async true
-                        :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to Bypass it")
-                                     (gain-tags state :runner eid 1 {:unpreventable true}))}]
+   {:events [{:event :encounter-ice
+              :optional
+              {:req (req (and (not (:bypass run))
+                              (same-card? card target)))
+               :player :runner
+               :prompt "Take 1 tag to bypass?"
+               :yes-ability
+               {:async true
+                :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to bypass it")
+                             (swap! state assoc-in [:run :bypass] true)
+                             (gain-tags state :runner eid 1 {:unpreventable true}))}}}]
     :subroutines [(gain-credits-sub 2)
                   end-the-run]}
 
@@ -669,9 +672,12 @@
               :effect (effect (gain-credits 2)
                               (end-run eid card))}]
      {:effect take-bad-pub
-      :abilities [{:msg "gain 2 [Credits] if there is an installed AI"
-                   :req (req (some #(has-subtype? % "AI") (all-active-installed state :runner)))
-                   :effect (effect (gain-credits 2))}]
+      :events [{:event :encounter-ice
+                :req (req (and (not (:bypass run))
+                               (same-card? card target)
+                               (some #(has-subtype? % "AI") (all-active-installed state :runner))))
+                :msg "gain 2 [Credits] if there is an installed AI"
+                :effect (effect (gain-credits 2))}]
       :subroutines [(assoc trash-program
                            :player :runner
                            :msg "force the Runner to trash 1 program"
@@ -769,24 +775,26 @@
    {:subroutines [{:label "Give +2 strength to next ICE Runner encounters"
                    :req (req this-server)
                    :msg (msg "give +2 strength to the next ICE the Runner encounters")
-                   :effect (req (let [chum-effect {:duration :end-of-run
-                                                   :req (req (and (rezzed? current-ice)
-                                                                  (not= current-ice card))) ; current-ice not chum
-                                                   :effect (req (let [target-ice current-ice
-                                                                      damage-event (merge (do-net-damage 3) {:duration :end-of-run
-                                                                                                             :req (req (not-empty (remove :broken (:subroutines (get-card state target-ice)))))})]
-                                                                  (register-floating-effect state side card
-                                                                                            {:type :ice-strength
-                                                                                             :duration :end-of-run
-                                                                                             :value 2
-                                                                                             :req (req (= target target-ice))})
-                                                                  (update-all-ice state side)
-                                                                  (unregister-floating-events-for-card state side card :end-of-run)
-                                                                  (register-events state side card [(merge damage-event {:event :pass-ice})
-                                                                                                    (merge damage-event {:event :jack-out})
-                                                                                                    (merge damage-event {:event :run-ends})])))}]
-                                  (register-events state side card [(assoc chum-effect :event :approach-ice) ;should be encounter-ice but Corps are not hitting "No action" often
-                                                                    (assoc chum-effect :event :rez)])))}]}
+                   :effect (effect (register-events
+                                     card
+                                     [{:event :encounter-ice
+                                       :duration :end-of-run
+                                       :once :per-turn
+                                       :req (req (and (rezzed? target)
+                                                      (not= target card)))
+                                       :effect (req (let [target-ice target]
+                                                      (register-floating-effect
+                                                        state side card
+                                                        {:type :ice-strength
+                                                         :duration :end-of-run
+                                                         :value 2
+                                                         :req (req (= target target-ice))})
+                                                      (register-events
+                                                        state side card
+                                                        [(assoc (do-net-damage 3)
+                                                                :event :encounter-ice-ends
+                                                                :duration :end-of-run
+                                                                :req (req (seq (remove :broken (:subroutines (get-card state target-ice))))))])))}]))}]}
 
    "Clairvoyant Monitor"
    {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"
@@ -907,23 +915,25 @@
                                             (effect-completed state side eid)))))})]})
 
    "Data Loop"
-   (let [ability {:label "Add 2 cards from your Grip to the top of the Stack"
-                  :req (req (pos? (count (:hand runner))))
-                  :effect (req (let [n (min 2 (count (:hand runner)))]
-                                 (resolve-ability state side
-                                                  {:prompt (msg "Choose " n " cards in your Grip to add to the top of the Stack (first card targeted will be topmost)")
-                                                   :choices {:max n :all true
-                                                             :card #(and (in-hand? %)
-                                                                         (runner? %))}
-                                                   :effect (req (doseq [c targets]
-                                                                  (move state :runner c :deck {:front true}))
-                                                                (system-msg state :runner (str "adds " n " cards from their Grip to the top of the Stack")))}
-                                                  card nil)))}]
-     {:implementation "Encounter effect is manual"
-      :subroutines [end-the-run-if-tagged
-                    end-the-run]
-      :abilities [ability]
-      :runner-abilities [ability]})
+   {:subroutines [end-the-run-if-tagged
+                  end-the-run]
+    :events [{:event :encounter-ice
+              :req (req (and (not (:bypass run))
+                             (same-card? card target)
+                             (pos? (count (:hand runner)))))
+              :async true
+              :effect (effect
+                        (continue-ability
+                          (let [n (min 2 (count (:hand runner)))]
+                            {:prompt (str "Choose " n " cards in your Grip to add to the top of the Stack (first card targeted will be topmost)")
+                             :choices {:max n
+                                       :all true
+                                       :card #(and (in-hand? %)
+                                                   (runner? %))}
+                             :msg (msg "add " n " cards from their Grip to the top of the Stack")
+                             :effect (req (doseq [c targets]
+                                            (move state :runner c :deck {:front true})))})
+                          card nil))}]}
 
    "Data Mine"
    {:subroutines [{:msg "do 1 net damage"
@@ -934,26 +944,35 @@
                                 (trash state side card))}]}
 
    "Data Raven"
-   {:implementation "Encounter effect is manual"
-    :abilities [(give-tags 1)
-                (power-counter-ability (give-tags 1))]
-    :runner-abilities [{:label "End the run"
-                        :effect (req (end-run state :runner)
-                                     (system-msg state :runner "chooses to end the run on encountering Data Raven"))}
-                       {:label "Take 1 tag"
-                        :async true
-                        :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Raven")
-                                     (gain-tags state :runner eid 1))}]
+   {:abilities [(power-counter-ability (give-tags 1))]
+    :events [{:event :encounter-ice
+              :req (req (and (not (:bypass run))
+                             (same-card? card target)))
+              :msg "force the Runner to take 1 tag or end the run"
+              :player :runner
+              :prompt "Choose one"
+              :choices ["Take 1 tag" "End the run"]
+              :async true
+              :effect (req (if (= target "Take 1 tag")
+                             (do (system-msg state :runner "chooses to take 1 tag")
+                                 (gain-tags state :runner eid 1))
+                             (do (system-msg state :runner "ends the run")
+                                 (end-run state :runner eid card))))}]
     :subroutines [(trace-ability 3 add-power-counter)]}
 
    "Data Ward"
-   {:runner-abilities [{:label "Pay 3 [Credits]"
-                        :effect (req (pay state :runner card :credit 3)
-                                     (system-msg state :runner "chooses to pay 3 [Credits] on encountering Data Ward"))}
-                       {:label "Take 1 tag"
-                        :async true
-                        :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Ward")
-                                     (gain-tags state :runner eid 1))}]
+   {:events [{:event :encounter-ice
+              :req (req (and (not (:bypass run))
+                             (same-card? card target)))
+              :player :runner
+              :prompt "Choose one"
+              :choices ["Pay 3 [Credits]" "Take 1 tag"]
+              :async true
+              :effect (req (if (= target "Pay 3 [Credits]")
+                             (do (system-msg state :runner "pays 3 [Credits]")
+                                 (pay-sync state :runner card eid :credit 3))
+                             (do (system-msg state :runner "takes 1 tag on encountering Data Ward")
+                                 (gain-tags state :runner eid 1))))}]
     :subroutines [end-the-run-if-tagged
                   end-the-run-if-tagged
                   end-the-run-if-tagged
@@ -1506,8 +1525,9 @@
                                                         (trigger-event state side :corp-install newice)))} card nil)))}]
       :events [{:event :run-ends
                 :req (req (:howler-target card))
-                :effect (effect (trash card {:cause :self-trash})
-                                (derez (get-card state (:howler-target card))))}]})
+                :async true
+                :effect (effect (derez (get-card state (:howler-target card)))
+                                (trash eid card nil))}]})
 
    "Hudson 1.0"
    (let [sub {:msg "prevent the Runner from accessing more than 1 card during this run"
@@ -1586,9 +1606,12 @@
      {:subroutines [sub sub]})
 
    "IP Block"
-   {:abilities [(assoc (give-tags 1)
-                       :req (req (seq (filter #(has-subtype? % "AI") (all-active-installed state :runner))))
-                       :label "Give the Runner 1 tag if there is an installed AI")]
+   {:events [(assoc (give-tags 1)
+                    :event :encounter-ice
+                    :req (req (and (same-card? card target)
+                                   (not (:bypass run))
+                                   (seq (filter #(has-subtype? % "AI") (all-active-installed state :runner)))))
+                    :msg "give the runner 1 tag because there is an installed AI")]
     :subroutines [(tag-trace 3)
                   end-the-run-if-tagged]}
 
@@ -1867,23 +1890,20 @@
                                            (effect-completed eid))})]}
 
    "Marker"
-   {:implementation "Subroutine-adding is manual"
-    :events [{:event :run-ends
-              :effect (req (let [cid (:cid card)
-                                 ices (get-in card [:special :marker])]
-                             (doseq [i ices]
-                               (when-let [ice (get-card state i)]
-                                 (remove-sub! state side ice #(= cid (:from-cid %))))))
-                           (update! state side (dissoc-in card [:special :marker])))}]
-    :abilities [{:label "Give an End the run subroutine"
-                 :choices {:card #(and (ice? %)
-                                       (installed? %)
-                                       (rezzed? %))}
-                 :effect (effect (add-sub! target end-the-run (:cid card) {:back true})
-                                 (update! (update-in card [:special :marker] #(conj % target))))}]
-    :subroutines [{:label "Give the next ICE encountered \"End the run\""
-                   :msg (str "give the next ICE encountered \"[Subroutine] End the run\" "
-                             "after all its other subroutines for the remainder of the run")}]}
+   {:subroutines [{:label "Give next encountered ice \"End the run\""
+                   :msg (msg "give next encountered ice \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run")
+                   :effect (effect
+                             (register-events
+                               card
+                               [{:event :encounter-ice
+                                 :once :per-turn
+                                 :duration :end-of-run
+                                 :req (req (rezzed? target))
+                                 :msg (msg "give " (:title target) "\"[Subroutine] End the run\" after all its other subroutines")
+                                 :effect (effect (add-sub! target end-the-run (:cid card) {:back true}))}
+                                {:event :encounter-ice-ends
+                                 :duration :end-of-run
+                                 :effect (effect (remove-sub! target #(= (:cid card) (:from-cid %))))}]))}]}
 
    "Markus 1.0"
    {:subroutines [trash-installed end-the-run]
@@ -2258,16 +2278,24 @@
      {:subroutines [sub sub]})
 
    "Oduduwa"
-   {:implementation "Encounter effect is manual"
-    :abilities [{:label "Place 1 advancement counter on Oduduwa"
-                 :msg (msg "place 1 advancement counter on Oduduwa")
-                 :effect (req (add-prop state side card :advance-counter 1 {:placed true}))}
-                {:label "Place X advancement token on another piece of ice"
-                 :msg (msg "place " (get-counters card :advancement) " advancement token on " (card-str state target))
-                 :choices {:card ice?
-                           :not-self true}
-                 :effect (req (add-prop state side target :advance-counter (get-counters card :advancement) {:placed true}))}]
-    :subroutines [end-the-run end-the-run]}
+   {:events [{:event :encounter-ice
+              :msg "place 1 advancement counter on Oduduwa"
+              :async true
+              :effect (effect (add-prop card :advance-counter 1 {:placed true})
+                              (continue-ability
+                                (let [card (get-card state card)
+                                      counters (get-counters card :advancement)]
+                                  {:optional
+                                   {:prompt (str "Place " counters " advancement tokens on another ice?")
+                                    :yes-ability
+                                    {:msg (msg "place " counters
+                                               " advancement token on " (card-str state target))
+                                     :choices {:card ice?
+                                               :not-self true}
+                                     :effect (req (add-prop state side target :advance-counter counters {:placed true}))}}})
+                                (get-card state card) nil))}]
+    :subroutines [end-the-run
+                  end-the-run]}
 
    "Orion"
    (space-ice trash-program
@@ -2318,7 +2346,11 @@
                   end-the-run-if-tagged]}
 
    "Paper Wall"
-   {:implementation "Trash on break is manual"
+   {:events [{:event :encounter-ice-ends
+              :req (req (and (same-card? card target)
+                             (empty? (remove :broken (:subroutines target)))))
+              :async true
+              :effect (effect (trash :corp eid card nil))}]
     :subroutines [end-the-run]}
 
    "Peeping Tom"
@@ -2337,19 +2369,23 @@
                                              (do (system-msg state :runner "chooses to end the run")
                                                  (end-run state :runner eid card))))}
                              card nil))}]
-     {:implementation "Encounter effect is manual"
-      :events [{:event :run-ends
-                :effect (effect (reset-variable-subs card 0 nil))}]
-      :abilities [{:label "Name a card type and reveal all cards in the Runner's Grip"
-                   :prompt "Choose a card type"
-                   :choices ["Event" "Hardware" "Program" "Resource"]
-                   :effect (req (let [n (count (filter #(is-type? % target) (:hand runner)))]
-                                  (system-msg state side
-                                              (str "uses Peeping Tom to name " target ", then reveals "
-                                                   (join ", " (map :title (:hand runner)))
-                                                   " in the Runner's Grip. Peeping Tom gains " n " subroutines"))
-                                  (reveal state side (:hand runner))
-                                  (reset-variable-subs state side card n sub)))}]})
+     {:events [{:event :encounter-ice
+                :req (req (and (not (:bypass run))
+                               (same-card? card target)))
+                :prompt "Choose a card type"
+                :choices ["Event" "Hardware" "Program" "Resource"]
+                :effect (req (let [current-variable-subs (count (filter #(and (= (:cid card) (:from-cid %))
+                                                                              (:variable %))
+                                                                        (:subroutines card)))
+                                   n (count (filter #(is-type? % target) (:hand runner)))]
+                               (system-msg state side
+                                           (str "uses Peeping Tom to name " target ", then reveals "
+                                                (join ", " (map :title (:hand runner)))
+                                                " in the Runner's Grip. Peeping Tom gains " n " subroutines"))
+                               (reveal state side (:hand runner))
+                               (reset-variable-subs state side card (+ n current-variable-subs) sub)))}
+               {:event :run-ends
+                :effect (effect (reset-variable-subs card 0 nil))}]})
 
    "Pop-up Window"
    {:implementation "Encounter effect is manual."
@@ -2372,11 +2408,12 @@
    {:subroutines [end-the-run]}
 
    "Quicksand"
-   {:implementation "Encounter effect is manual"
-    :abilities [{:req (req (= current-ice card))
-                 :label "Add 1 power counter"
-                 :effect (effect (add-counter card :power 1)
-                                 (update-all-ice))}]
+   {:events [{:event :encounter-ice
+              :req (req (and (not (:bypass run))
+                             (same-card? card target)))
+              :msg "add 1 power counter to Quicksand"
+              :effect (effect (add-counter card :power 1)
+                              (update-all-ice))}]
     :subroutines [end-the-run]
     :strength-bonus (req (get-counters card :power))}
 
@@ -2510,19 +2547,21 @@
                                                  dmg (some #(when (= (:type %) choice) %) cards)]
                                                 (system-msg state :corp "uses Saisentan to deal a second net damage")
                                                 (damage state side eid :net 1 {:card card}))))}]
-     {:implementation "Encounter effect is manual"
-      :subroutines [sub sub sub]
-      :abilities [{:label "Choose card type"
-                   :req (req (and (same-card? current-ice card)
-                                  (rezzed? card)))
-                   :effect (effect (show-wait-prompt :runner "Corp to choose Saisentan card type")
-                                   (continue-ability
-                                     {:prompt "Choose a card type"
-                                      :choices ["Event" "Hardware" "Program" "Resource"]
-                                      :msg (msg "choose the card type " target)
-                                      :effect (effect (update! (assoc-in card [:special :saisentan] target))
-                                                      (clear-wait-prompt :runner))}
-                                     card nil))}]})
+     {:events [{:event :encounter-ice
+                :req (req (and (not (:bypass run))
+                               (same-card? card target)))
+                :effect (effect (show-wait-prompt :runner "Corp to choose Saisentan card type")
+                                (continue-ability
+                                  {:prompt "Choose a card type"
+                                   :choices ["Event" "Hardware" "Program" "Resource"]
+                                   :msg (msg "choose the card type " target)
+                                   :effect (effect (update! (assoc-in card [:special :saisentan] target))
+                                                   (clear-wait-prompt :runner))}
+                                  card nil))}
+               {:event :encounter-ice-ends
+                :req (req (get-in card [:special :saisentan]))
+                :effect (effect (update! (dissoc-in card [:special :saisentan])))}]
+      :subroutines [sub sub sub]})
 
    "Salvage"
    (zero-to-hero (tag-trace 2))
@@ -2541,14 +2580,14 @@
                                   (trash state side eid card {:unpreventable true})))}]}
 
    "Sandstone"
-   {:implementation "Encounter effect is manual"
-    :subroutines [end-the-run]
+   {:subroutines [end-the-run]
     :strength-bonus (req (- (get-counters card :virus)))
-    :abilities [{:label "Place one virus counter"
-                 :req (req (same-card? current-ice card))
-                 :msg "place 1 virus counter on Sandstone"
-                 :effect (effect (add-counter card :virus 1)
-                                 (update-ice-strength (get-card state card)))}]}
+    :events [{:event :encounter-ice
+              :req (req (and (not (:bypass run))
+                             (same-card? card target)))
+              :msg "place 1 virus counter on Sandstone"
+              :effect (effect (add-counter card :virus 1)
+                              (update-ice-strength (get-card state card)))}]}
 
    "Sandman"
    {:subroutines [add-runner-card-to-grip
@@ -2599,22 +2638,20 @@
     :flags {:cannot-lower-strength true}}
 
    "Sensei"
-   {:implementation "Subroutine-adding is manual"
-    :events [{:event :run-ends
-              :effect (req (let [cid (:cid card)
-                                 ices (get-in card [:special :sensei])]
-                             (doseq [i ices]
-                               (when-let [ice (get-card state i)]
-                                 (remove-sub! state side ice #(= cid (:from-cid %))))))
-                           (update! state side (dissoc-in card [:special :sensei])))}]
-    :abilities [{:label "Give an End the run subroutine"
-                 :choices {:card #(and (ice? %)
-                                       (installed? %)
-                                       (rezzed? %))}
-                 :effect (effect (add-sub! target end-the-run (:cid card) {:back true})
-                                 (update! (update-in card [:special :sensei] conj target)))}]
-    :subroutines [{:label "Give each other ICE encountered \"End the run\""
-                   :msg (msg "give each other ICE encountered \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run")}]}
+   {:subroutines [{:label "Give encountered ice \"End the run\""
+                   :msg (msg "give encountered ice \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run")
+                   :effect (effect
+                             (register-events
+                               card
+                               [{:event :encounter-ice
+                                 :duration :end-of-run
+                                 :req (req (and (rezzed? target)
+                                                (not (same-card? card target))))
+                                 :msg (msg "give " (:title target) "\"[Subroutine] End the run\" after all its other subroutines")
+                                 :effect (effect (add-sub! target end-the-run (:cid card) {:back true}))}
+                                {:event :encounter-ice-ends
+                                 :duration :end-of-run
+                                 :effect (effect (remove-sub! target #(= (:cid card) (:from-cid %))))}]))}]}
 
    "Shadow"
    {:advanceable :always
@@ -2912,7 +2949,8 @@
    "Tollbooth"
    {:events [{:event :encounter-ice
               :async true
-              :req (req (not (:bypass run)))
+              :req (req (and (not (:bypass run))
+                             (same-card? card target)))
               :effect (req (wait-for (pay-sync state :runner card [:credit 3])
                                      (if-let [cost-str async-result]
                                        (do (system-msg state :corp "uses Tollbooth to force the Runner to pay 3 [Credits]")
@@ -2957,18 +2995,22 @@
      {:subroutines [sub sub sub]})
 
    "Troll"
-   {:implementation "Encounter effect is manual"
-    :abilities [(trace-ability 2 {:label "Force the Runner to lose [Click] or end the run"
-                                  :msg "force the Runner to lose [Click] or end the run"
-                                  :player :runner
-                                  :prompt "Choose one"
-                                  :choices ["Lose [Click]" "End the run"]
-                                  :effect (req (if-not (and (= target "Lose [Click]")
-                                                            (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 1]))
-                                                 (do (end-run state side)
-                                                     (system-msg state side "ends the run"))
-                                                 (do (lose state side :click 1)
-                                                     (system-msg state side "loses [Click]"))))})]}
+   {:events [(assoc
+               (trace-ability 2 {:msg "force the Runner to lose [Click] or end the run"
+                                 :player :runner
+                                 :prompt "Choose one"
+                                 :choices ["Lose [Click]" "End the run"]
+                                 :async true
+                                 :effect (req (if (and (= target "Lose [Click]")
+                                                       (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 1]))
+                                                (do (system-msg state side "loses [Click]")
+                                                    (lose state side :click 1)
+                                                    (effect-completed state side eid))
+                                                (do (system-msg state side "ends the run")
+                                                    (end-run state side eid card))))})
+               :event :encounter-ice
+               :req (req (and (not (:bypass run))
+                              (same-card? card target))))]}
 
    "Tsurugi"
    {:subroutines [(end-the-run-unless-corp-pays 1)

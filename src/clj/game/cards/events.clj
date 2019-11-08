@@ -50,8 +50,7 @@
                       card))}
 
    "Always Have a Backup Plan"
-   {:implementation "Bypass is manual"
-    :prompt "Choose a server"
+   {:prompt "Choose a server"
     :choices (req runnable-servers)
     :async true
     :makes-run true
@@ -65,7 +64,30 @@
               :optional {:req (req (not (:run-again card)))
                          :player :runner
                          :prompt "Make another run on the same server?"
-                         :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}]}
+                         :yes-ability
+                         {:effect (req (let [last-run (get-in @state [:runner :register :last-run])
+                                             run-ice (get-in @state (concat [:corp :servers] (:server last-run) [:ices]))
+                                             pos (:position last-run)
+                                             ice (when (and pos
+                                                            (pos? pos)
+                                                            (<= pos (count run-ice)))
+                                                   (get-card state (nth run-ice (dec pos))))]
+                                         (update! state side (assoc card :run-again ice))))}}}
+             {:event :encounter-ice
+              :once :per-run
+              :req (req (and (:run-again card)
+                             (same-card? target (:run-again card))))
+              :msg (msg "bypass " (:title target))
+              :effect (req (swap! state assoc-in [:run :bypass] true))}]}
+
+(defn get-current-ice
+  [state]
+  (let [run-ice (get-in @state (concat [:corp :servers] (:server (:last-run @state)) [:ices]))
+        pos (get-in @state [:run :position])]
+    (when (and pos
+               (pos? pos)
+               (<= pos (count run-ice)))
+      (get-card state (nth run-ice (dec pos))))))
 
    "Amped Up"
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
@@ -400,26 +422,30 @@
                            (runner-install state side (assoc eid :source card :source-type :runner-install)
                                            (assoc-in target [:special :compile-installed] true)
                                            {:ignore-all-cost true}))})]
-     {:implementation "Trigger only on first encounter not enforced"
-      :prompt "Choose a server"
+     {:prompt "Choose a server"
       :msg "make a run and install a program on encounter with the first piece of ICE"
       :choices (req runnable-servers)
       :async true
       :makes-run true
       :effect (effect (make-run eid target nil card))
-      :abilities [{:label "Install a program using Compile"
-                   :prompt "Install a program from your Stack or Heap?"
-                   :choices ["Stack" "Heap"]
-                   :msg (msg "install a program from their " target)
-                   :effect (effect (continue-ability
-                                     (compile-fn (if (= "Stack" target) :deck :discard))
-                                     card nil))}]
-      :events [{:event :run-ends
-                :effect (req (when-let [compile-installed (some #(when (get-in % [:special :compile-installed]) %)
-                                                                (all-installed state :runner))]
-                               (system-msg state :runner (str "moved " (:title compile-installed)
-                                                              " to the bottom of the Stack at the end of the run from Compile"))
-                               (move state :runner compile-installed :deck)))}]})
+      :events [{:event :encounter-ice
+                :optional
+                {:once :per-run
+                 :yes-ability
+                 {:async true
+                  :prompt "Install a program from your Stack or Heap?"
+                  :choices ["Stack" "Heap"]
+                  :msg (msg "install a program from their " target)
+                  :effect (effect (continue-ability
+                                    (compile-fn (if (= "Stack" target) :deck :discard))
+                                    card nil))}}}
+               {:event :run-ends
+                :effect (req (let [compile-installed (first (filterv #(get-in % [:special :compile-installed])
+                                                                     (all-active-installed state :runner)))]
+                               (when (some? compile-installed)
+                                 (system-msg state :runner (str "moved " (:title compile-installed)
+                                                                " to the bottom of the Stack"))
+                                 (move state :runner compile-installed :deck))))}]})
 
    "Contaminate"
    {:effect (req (resolve-ability
@@ -643,35 +669,31 @@
       :effect (effect (continue-ability (choice all) card nil))})
 
    "Diana's Hunt"
-   {:implementation "One program per encounter not enforced"
-    :prompt "Choose a server"
-    :msg "make a run and install a program on encounter with each ICE"
+   {:prompt "Choose a server"
+    :msg "make a run"
     :choices (req runnable-servers)
     :async true
     :makes-run true
     :effect (effect (make-run eid target nil card))
-    :abilities [{:label "Install a program using Diana's Hunt"
-                 :async true
-                 :req (req current-ice)
-                 :effect
-                 (effect
-                   (continue-ability
-                     {:prompt "Choose a program in your grip to install"
-                      :choices {:card #(and (in-hand? %)
-                                            (program? %)
-                                            (runner-can-install? state side % false))}
-                      :msg (msg "install " (:title target) ", ignoring all costs")
-                      :async true
-                      :effect (req (let [diana-card (assoc-in target [:special :diana-installed] true)]
-                                     (update! state side (update-in card [:special :diana] conj diana-card))
-                                     (runner-install state side eid diana-card {:ignore-all-cost true})))}
-                     card nil))}]
-    :events [{:event :run-ends
-              :effect (req (doseq [c (get-in card [:special :diana])]
-                             (let [installed (find-cid (:cid c) (all-installed state :runner))]
-                               (when (get-in installed [:special :diana-installed])
-                                 (system-msg state :runner (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
-                                 (trash state :runner installed {:unpreventable true})))))}]}
+    :events [{:event :encounter-ice
+              :optional
+              {:req (req (seq (filter program? (:hand runner))))
+               :prompt "Install a program from your grip?"
+               :yes-ability
+               {:prompt "Choose a program in your grip to install"
+                :async true
+                :choices {:card #(and (in-hand? %)
+                                      (program? %))}
+                :msg (msg "install " (:title target) ", ignoring all costs")
+                :effect (effect (runner-install eid (assoc-in target [:special :diana-installed] true) {:ignore-all-cost true}))}}}
+             {:event :run-ends
+              :async true
+              :effect (req (let [installed-cards (filterv #(get-in % [:special :diana-installed]) (all-active-installed state :runner))]
+                             (when (seq install-cards)
+                               (system-msg state :runner (str "trashes " (count installed-cards)
+                                                              " cards (" (join ", " (map :title installed-cards))
+                                                              ") at the end of the run from Diana's Hunt"))
+                               (trash-cards state :runner eid installed-cards {:unpreventable true}))))}]}
 
    "Diesel"
    {:msg "draw 3 cards"
@@ -2090,19 +2112,20 @@
    "Queen's Gambit"
    {:choices ["0" "1" "2" "3"]
     :prompt "How many advancement tokens?"
-    :effect (req (let [c (str->int target)]
-                   (resolve-ability
-                     state side
-                     {:choices {:card #(and (is-remote? (second (:zone %)))
-                                            (= (last (:zone %)) :content)
-                                            (not (:rezzed %)))}
-                      :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
-                      :effect (effect (gain-credits (* 2 c))
-                                      (add-prop :corp target :advance-counter c {:placed true})
-                                      (register-turn-flag! card :can-access
-                                                           ;; prevent access of advanced card
-                                                           (fn [_ _ card] (not (same-card? target card)))))}
-                     card nil)))}
+    :async true
+    :effect (effect
+              (continue-ability
+                (let [c (str->int target)]
+                  {:choices {:card #(and (is-remote? (second (:zone %)))
+                                         (= (last (:zone %)) :content)
+                                         (not (:rezzed %)))}
+                   :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
+                   :effect (effect (gain-credits (* 2 c))
+                                   (add-prop :corp target :advance-counter c {:placed true})
+                                   (register-turn-flag! card :can-access
+                                                        ;; prevent access of advanced card
+                                                        (fn [_ _ card] (not (same-card? target card)))))})
+                card nil))}
 
    "Quest Completed"
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
@@ -2258,7 +2281,13 @@
               :prompt "Select a piece of ICE to bypass"
               :choices {:card ice?}
               :msg (msg "make a run and bypass " (card-str state target))
-              :effect (effect (make-run eid (second (:zone target)) nil card))})]
+              :effect (effect (make-run eid (second (:zone target)) nil card)
+                              (register-events
+                                card
+                                (let [target-ice target]
+                                  [{:event :encounter-ice
+                                    :req (req (same-card? target-ice target))
+                                    :effect (req (swap! state assoc-in [:run :bypass] true))}])))})]
      {:async true
       :effect (req (show-wait-prompt state :corp "Runner to spend credits")
                 (let [all-amounts (range (min 3 (inc (get-in @state [:runner :credit]))))
@@ -2405,15 +2434,17 @@
                        card nil))))}
 
    "Scrubbed"
-   {:implementation "Encounter effect is manual"
-    :abilities [{:label "Lower ice strength"
-                 :effect (effect (update! (assoc-in card [:special :scrubbed-target] current-ice))
-                                 (update-all-ice))}]
-    :constant-effects [{:type :ice-strength
-                        :req (req (same-card? target (get-in card [:special :scrubbed-target])))
-                        :value -2}]
-    :events [{:event :run-ends
-              :effect (effect (update! (dissoc-in card [:special :scrubbed-target])))}]}
+   {:events [{:event :encounter-ice
+              :once :per-turn
+              :effect (effect
+                        (register-floating-effect
+                          card
+                          (let [target-ice target]
+                            {:type :ice-strength
+                             :duration :end-of-run
+                             :req (req (same-card? target target-ice))
+                             :value -2}))
+                        (update-all-ice))}]}
 
    "Showing Off"
    {:async true
@@ -2573,8 +2604,8 @@
                               (swap! state assoc :effects
                                      (->> (:effects @state)
                                           (remove #(= (:uuid %) (:uuid new-pump)))
-                                          (into [])
-                                          (#(conj % new-pump)))))
+                                          (#(conj % new-pump))
+                                          (into []))))
                             (update-breaker-strength state side target))}
               (assoc ability :event :corp-turn-ends)
               (assoc ability :event :runner-turn-ends)]})

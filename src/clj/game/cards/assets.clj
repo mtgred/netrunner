@@ -343,10 +343,10 @@
                    :effect (req (as-agenda state :runner eid card 2))}}
 
    "Chief Slee"
-   {:abilities [{:label "Add 1 power counter"
-                 :effect (effect (add-counter card :power 1)
-                                 (system-msg (str "adds 1 power counter to Chief Slee")))}
-                {:cost [:click 1 :power 5]
+   {:events [{:event :encounter-ice-ends
+              :msg "add 1 power counter to Chief Slee"
+              :effect (effect (add-counter card :power (count (remove :broken (:subroutines target)))))}]
+    :abilities [{:cost [:click 1 :power 5]
                  :async true
                  :msg "do 5 meat damage"
                  :effect (effect (damage eid :meat 5 {:card card}))}]}

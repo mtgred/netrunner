@@ -320,14 +320,14 @@
    "Amina"
    (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
                                  (strength-pump 2 3)]
-                     :events [{:once :per-turn
+                     :events [{:event :encounter-ice-ends
+                               :once :per-turn
                                :label "Corp loses 1 [Credits]"
                                :msg (msg "make the Corp lose 1 [Credits]")
-                               :effect (effect (lose-credits :corp 1))
-                               :event :pass-ice
                                :req (req (and (rezzed? current-ice)
                                               (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
-                                              (empty? (remove :broken (:subroutines current-ice)))))}]})
+                                              (empty? (remove :broken (:subroutines current-ice)))))
+                               :effect (effect (lose-credits :corp 1))}]})
 
    "Analog Dreamers"
    {:abilities [{:cost [:click 1]
@@ -418,8 +418,7 @@
                                                                             :source (:title c)
                                                                             :index %1
                                                                             :label (make-label %2))
-                                                                    (filter #(not= :manual-state (:ability-type %))
-                                                                            (:abilities (card-def c)))))
+                                                                    (:abilities (card-def c))))
                                                (:hosted card))]
                           (update! state :runner (assoc card :abilities (concat new-abis [host-click host-free])))))]
      {:abilities [host-click host-free]
@@ -505,18 +504,17 @@
    (auto-icebreaker {:abilities [(break-sub 1 2 "All"
                                             {:additional-ability {:effect (effect (update! (assoc-in card [:special :brahman-used] true)))}})
                                  (strength-pump 2 1)]
-                     :events (let [put-back {:req (req (get-in card [:special :brahman-used]))
-                                             :player :runner ; Needed for when the run is ended by the Corp
-                                             :prompt "Choose a non-virus program to put on top of your stack."
-                                             :choices {:card #(and (installed? %)
-                                                                   (program? %)
-                                                                   (not (facedown? %))
-                                                                   (not (has-subtype? % "Virus")))}
-                                             :msg (msg "add " (:title target) " to the top of the Stack")
-                                             :effect (effect (update! (dissoc-in card [:special :brahman-used]))
-                                                             (move target :deck {:front true}))}]
-                               [(assoc put-back :event :pass-ice)
-                                (assoc put-back :event :run-ends)])})
+                     :events [{:event :encounter-ice-ends
+                               :req (req (get-in card [:special :brahman-used]))
+                               :player :runner ; Needed for when the run is ended by the Corp
+                               :prompt "Choose a non-virus program to put on top of your stack."
+                               :choices {:card #(and (installed? %)
+                                                     (program? %)
+                                                     (not (facedown? %))
+                                                     (not (has-subtype? % "Virus")))}
+                               :msg (msg "add " (:title target) " to the top of the Stack")
+                               :effect (effect (update! (dissoc-in card [:special :brahman-used]))
+                                               (move (get-card state target) :deck {:front true}))}]})
 
    "Breach"
    (central-only (break-sub 2 3 "Barrier")
@@ -745,25 +743,24 @@
    (break-and-enter "Code Gate")
 
    "Crypsis"
-   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:effect (effect (update! (assoc card :crypsis-broke true)))}})
+   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability
+                                                       {:effect (effect (update! (assoc-in card [:special :crypsis-broke] true)))}})
                                  (strength-pump 1 1)
                                  {:cost [:click 1]
                                   :msg "place 1 virus counter"
                                   :effect (effect (add-counter card :virus 1))}]
-                     :events (let [encounter-ends-effect
-                                   {:req (req (:crypsis-broke card))
-                                    :msg (msg (if (pos? (get-counters card :virus))
-                                                (str "remove a virus token from " (:title card))
-                                                (str "trash " (:title card))))
-                                    :effect (req ((:effect breaker-auto-pump) state side eid card targets)
-                                                 (if (pos? (get-counters card :virus))
-                                                   (add-counter state side card :virus -1)
-                                                   (trash state side card {:cause :self-trash}))
-                                                 (update! state side (dissoc (get-card state card) :crypsis-broke)))}]
-                               [(assoc encounter-ends-effect :event :pass-ice)
-                                (assoc encounter-ends-effect :event :run-ends)])
-                     :move-zone (req (when (= [:discard] (:zone card))
-                                       (update! state side (dissoc card :crypsis-broke))))})
+                     :events [{:event :encounter-ice-ends
+                               :req (req (get-in card [:special :crypsis-broke]))
+                               :msg (msg (if (pos? (get-counters card :virus))
+                                           (str "remove a virus token from " (:title card))
+                                           (str "trash " (:title card))))
+                               :async true
+                               :effect (req (update! state side (dissoc-in card [:special :crypsis-broke]))
+                                            (let [card (get-card state card)]
+                                              (if (pos? (get-counters card :virus))
+                                                (do (add-counter state side card :virus -1)
+                                                    (effect-completed state side eid))
+                                                (trash state side eid card nil))))}]})
 
    "Customized Secretary"
    (letfn [(custsec-host [cards]
@@ -838,22 +835,16 @@
     :strength-bonus (req (get-virus-counters state card))}
 
    "Datasucker"
-   {:events (let [ds {:effect (req (update! state side (dissoc card :datasucker-count)))}]
-              [{:event :successful-run
-                :silent (req true)
-                :effect (effect (add-counter card :virus 1))
-                :req (req (#{:hq :rd :archives} target))}
-               (assoc ds :event :pass-ice)
-               (assoc ds :event :run-ends)])
-    :constant-effects [{:type :ice-strength
-                        :req (req (and (same-card? target current-ice)
-                                       (:datasucker-count card)))
-                        :value (req (- (:datasucker-count card)))}]
+   {:events [{:event :successful-run
+              :silent (req true)
+              :req (req (#{:hq :rd :archives} target))
+              :effect (effect (add-counter card :virus 1))}]
     :abilities [{:cost [:virus 1]
+                 :label "Give -1 strength to current ICE"
+                 :req (req (and (rezzed? current-ice)
+                                (:encounter-ice (:phase run))))
                  :msg (msg "give -1 strength to " (:title current-ice))
-                 :req (req (and current-ice (:rezzed current-ice)))
-                 :effect (req (update! state side (update-in card [:datasucker-count] (fnil #(+ % 1) 0)))
-                              (update-ice-strength state side current-ice))}]}
+                 :effect (effect (pump-ice current-ice -1))}]}
 
    "DaVinci"
    {:events [{:event :successful-run
@@ -1107,10 +1098,12 @@
    (auto-icebreaker {:abilities [(break-sub 0 1 "Sentry"
                                             {:additional-ability {:effect (effect (update! (assoc-in card [:special :faerie-used] true)))}})
                                  (strength-pump 1 1)]
-                     :events [{:event :pass-ice
+                     :events [{:event :encounter-ice-ends
                                :req (req (get-in card [:special :faerie-used]))
                                :msg (msg "trash " (:title card))
-                               :effect (effect (trash card))}]})
+                               :async true
+                               :effect (effect (update! (dissoc-in card [:special :faerie-used]))
+                                               (trash eid (get-card state card) nil))}]})
 
    "False Echo"
    {:abilities [{:req (req (and run
@@ -1674,19 +1667,16 @@
                  :effect (effect (damage-prevent :net 1))}]}
 
    "Nfr"
-   (let [add-token-abi {:label "Place 1 power counter on Nfr"
-                        :msg "place 1 power counter on it"
-                        :ability-type :manual-state
-                        :effect (effect (add-counter card :power 1)
-                                        (update-breaker-strength card))}]
-     {:abilities [add-token-abi
-                  (break-sub 1 1 "Barrier")]
-      :strength-bonus (req (get-counters card :power))
-      :events [(assoc add-token-abi
-                      :event :pass-ice
-                      :req (req (and (rezzed? current-ice)
-                                     (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
-                                     (empty? (remove :broken (:subroutines current-ice))))))]})
+   {:abilities [(break-sub 1 1 "Barrier")]
+    :strength-bonus (req (get-counters card :power))
+    :events [{:event :encounter-ice-ends
+              :req (req (and (rezzed? target)
+                             (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines target))))
+                             (empty? (remove :broken (:subroutines target)))))
+              :label "Place 1 power counter on Nfr"
+              :msg "place 1 power counter on it"
+              :effect (effect (add-counter card :power 1)
+                              (update-breaker-strength card))}]}
 
    "Ninja"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
@@ -2283,19 +2273,16 @@
     :strength-bonus (req (get-counters card :power))}
 
    "Sūnya"
-   (let [add-token-abi {:label "Place 1 power counter on Sūnya"
-                        :msg "place 1 power counter on it"
-                        :ability-type :manual-state
-                        :effect (effect (add-counter card :power 1)
-                                        (update-breaker-strength card))}]
-     {:abilities [add-token-abi
-                  (break-sub 2 1 "Sentry")]
-      :strength-bonus (req (get-counters card :power))
-      :events [(assoc add-token-abi
-                      :event :pass-ice
-                      :req (req (and (rezzed? current-ice)
-                                     (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines current-ice))))
-                                     (empty? (remove :broken (:subroutines current-ice))))))]})
+   {:abilities [(break-sub 2 1 "Sentry")]
+    :strength-bonus (req (get-counters card :power))
+    :events [{:event :encounter-ice-ends
+              :req (req (and (rezzed? target)
+                             (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines target))))
+                             (empty? (remove :broken (:subroutines target)))))
+              :label "Place 1 power counter on Sūnya"
+              :msg "place 1 power counter on it"
+              :effect (effect (add-counter card :power 1)
+                              (update-breaker-strength card))}]}
 
    "Surfer"
    (letfn [(surf [state cice]
@@ -2332,25 +2319,22 @@
                                  (strength-pump 1 7 :end-of-encounter {:label "add 7 strength (using 1 stealth [Credits])"})]})
 
    "Takobi"
-   (let [add-counter-abi
-         {:label "Add 1 power counter"
-          :effect (effect (add-counter card :power 1)
-                          (system-msg "adds a power counter to Takobi"))}]
-     {:events [(assoc add-counter-abi
-                      :event :pass-ice
-                      :req (req (empty? (remove :broken (:subroutines current-ice)))))]
-      :abilities [add-counter-abi
-                  {:req (req (and (:run @state)
-                                  (rezzed? current-ice)
-                                  (>= (get-counters card :power) 2)))
-                   :cost [:power 2]
-                   :label "Increase non-AI icebreaker strength by +3 until end of encounter"
-                   :prompt "Choose an installed non-AI icebreaker"
-                   :choices {:card #(and (has-subtype? % "Icebreaker")
-                                         (not (has-subtype? % "AI"))
-                                         (installed? %))}
-                   :msg (msg "add +3 strength to " (:title target) " for remainder of encounter")
-                   :effect (effect (pump target 3))}]})
+   {:events [{:event :encounter-ice-ends
+              :req (req (empty? (remove :broken (:subroutines current-ice))))
+              :label "Add 1 power counter"
+              :effect (effect (add-counter card :power 1)
+                              (system-msg "adds a power counter to Takobi"))}]
+    :abilities [{:req (req (and (:run @state)
+                                (rezzed? current-ice)
+                                (>= (get-counters card :power) 2)))
+                 :cost [:power 2]
+                 :label "Give non-AI icebreaker +3 strength"
+                 :prompt "Choose an installed non-AI icebreaker"
+                 :choices {:card #(and (has-subtype? % "Icebreaker")
+                                       (not (has-subtype? % "AI"))
+                                       (installed? %))}
+                 :msg (msg "add +3 strength to " (:title target))
+                 :effect (effect (pump target 3))}]}
 
    "Tapwrm"
    (let [ability {:label "Gain [Credits] (start of turn)"
@@ -2437,12 +2421,11 @@
    (auto-icebreaker {:abilities [(break-sub 1 2 "Barrier"
                                             {:additional-ability {:effect (effect (update! (assoc-in card [:special :tycoon-used] true)))}})
                                  (strength-pump 2 3)]
-                     :events (let [give-credits {:req (req (get-in card [:special :tycoon-used]))
-                                                 :msg "give the Corp 2 [Credits]"
-                                                 :effect (effect (update! (dissoc-in card [:special :tycoon-used]))
-                                                                 (gain-credits :corp 2))}]
-                               [(assoc give-credits :event :pass-ice)
-                                (assoc give-credits :event :run-ends)])})
+                     :events [{:event :encounter-ice-ends
+                               :req (req (get-in card [:special :tycoon-used]))
+                               :msg "give the Corp 2 [Credits]"
+                               :effect (effect (update! (dissoc-in card [:special :tycoon-used]))
+                                               (gain-credits :corp 2))}]})
 
    "Upya"
    {:implementation "Power counters added automatically"

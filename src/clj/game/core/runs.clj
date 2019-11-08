@@ -160,7 +160,7 @@
   (update-all-ice state side)
   (update-all-icebreakers state side)
   (swap! state assoc-in [:run :no-action] false)
-  (wait-for (trigger-event-simult state side :encounter-ice-ends nil (get-current-ice state))
+  (wait-for (trigger-event-simult state :runner :encounter-ice-ends nil (get-current-ice state))
             (swap! state dissoc-in [:run :bypass])
             (unregister-floating-effects state side :end-of-encounter)
             (unregister-floating-events state side :end-of-encounter)
@@ -1207,7 +1207,6 @@
       (play-sfx state side "run-unsuccessful")
       (wait-for (trigger-event-sync state side :unsuccessful-run-ends run)
                 (effect-completed state side (make-result eid {:unsuccessful true}))))
-
     ;; Neither
     :else
     (effect-completed state side (make-result eid nil))))
@@ -1236,18 +1235,20 @@
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
-  (let [server (-> @state :run :server first)]
+  (let [server (-> @state :run :server first)
+        event (when (= :encounter-ice (get-in @state [:run :phase])) :encounter-ice-ends)]
     (swap! state assoc-in [:run :ending] true)
     (swap! state assoc-in [:run :ended] true)
-    (wait-for (trigger-event-sync state side :run-ends server)
-              (unregister-floating-effects state side :end-of-encounter)
-              (unregister-floating-events state side :end-of-encounter)
-              (unregister-floating-effects state side :end-of-run)
-              (unregister-floating-events state side :end-of-run)
-              (let [run-effects (get-in @state [:run :run-effects])
-                    end-of-run-effects (filter :end-run run-effects)]
-                (wait-for (end-run-effect-impl state side server end-of-run-effects)
-                          (run-cleanup-2 state side))))))
+    (wait-for (trigger-event-simult state side event nil (get-current-ice state))
+              (wait-for (trigger-event-sync state side :run-ends server)
+                        (unregister-floating-effects state side :end-of-encounter)
+                        (unregister-floating-events state side :end-of-encounter)
+                        (unregister-floating-effects state side :end-of-run)
+                        (unregister-floating-events state side :end-of-run)
+                        (let [run-effects (get-in @state [:run :run-effects])
+                              end-of-run-effects (filter :end-run run-effects)]
+                          (wait-for (end-run-effect-impl state side server end-of-run-effects)
+                                    (run-cleanup-2 state side)))))))
 
 (defn handle-end-run
   "Initiate run resolution."

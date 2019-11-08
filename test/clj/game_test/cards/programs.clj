@@ -137,6 +137,7 @@
     (let [amina (get-program state 0)
           enigma (get-ice state :hq 0)]
       (run-on state :hq)
+      (run-next-phase state)
       (core/rez state :corp (refresh enigma))
       (is (= 4 (:credit (get-corp))))
       (card-ability state :runner (refresh amina) 0)
@@ -146,6 +147,7 @@
       (is (= 4 (:credit (get-corp))) "Corp did not lose 1c because not all subs were broken")
       (run-jack-out state)
       (run-on state :hq)
+      (run-next-phase state)
       (card-ability state :runner (refresh amina) 0)
       (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
       (click-prompt state :runner "End the run")
@@ -153,6 +155,7 @@
       (is (= 3 (:credit (get-corp))) "Corp lost 1 credit")
       (run-jack-out state)
       (run-on state :hq)
+      (run-next-phase state)
       (card-ability state :runner (refresh amina) 0)
       (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
       (click-prompt state :runner "End the run")

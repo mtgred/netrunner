@@ -277,14 +277,14 @@
   "Change a breaker's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
   ([state side card n] (pump state side card n :end-of-encounter))
   ([state side card n duration]
-   (let [ability (register-floating-effect
-                   state side (get-card state card)
-                   {:type :breaker-strength
-                    :duration duration
-                    :req (req (same-card? card target))
-                    :value n})]
+   (let [floating-effect (register-floating-effect
+                           state side (get-card state card)
+                           {:type :breaker-strength
+                            :duration duration
+                            :req (req (same-card? card target))
+                            :value n})]
      (update-breaker-strength state side (get-card state card))
-     (trigger-event state side :pump-breaker (get-card state card) n ability))))
+     (trigger-event state side :pump-breaker (get-card state card) floating-effect))))
 
 (defn pump-all-icebreakers
   ([state side n] (pump-all-icebreakers state side n :end-of-encounter))

@@ -804,12 +804,12 @@
                               (host state side target card))}]
     :events [{:event :pump-breaker
               :req (req (same-card? target (:host card)))
-              :effect (req (let [last-pump (assoc (last (:effects @state))
+              :effect (req (let [last-pump (assoc (second targets)
                                                   :duration :end-of-run
                                                   :original-duration (:duration (last (:effects @state))))]
                              (swap! state assoc :effects
                                     (->> (:effects @state)
-                                         butlast
+                                         (remove #(= (:uuid last-pump) (:uuid %)))
                                          (#(conj % last-pump))
                                          (into []))))
                            (update-breaker-strength state side target))}]
@@ -1572,18 +1572,20 @@
                                 (update-breaker-strength state side t)))}]}
 
    "Security Nexus"
-   {:implementation "Bypass is manual"
-    :in-play [:memory 1 :link 1]
-    :abilities [{:req (req (:run @state))
-                 :once :per-turn
-                 :async true
-                 :msg "force the Corp to initiate a trace"
-                 :label "Trace 5 - Give the Runner 1 tag and end the run"
-                 :trace {:base 5
-                         :successful {:msg "give the Runner 1 tag and end the run"
-                                      :effect (effect (gain-tags :runner eid 1)
-                                                      (end-run))}
-                         :unsuccessful {:msg "bypass the current ICE"}}}]}
+   {:in-play [:memory 1 :link 1]
+    :events [{:event :encounter-ice
+              :optional
+              {:once :per-turn
+               :prompt "Trace 5 to bypass current ice?"
+               :yes-ability
+               {:msg "force the Corp to initiate a trace"
+                :trace {:base 5
+                        :successful {:msg "give the Runner 1 tag and end the run"
+                                     :async true
+                                     :effect (req (wait-for (gain-tags state :runner 1)
+                                                            (end-run state side eid card)))}
+                        :unsuccessful {:msg (msg "bypass " (:title current-ice))
+                                       :effect (req (swap! state assoc-in [:run :bypass] true))}}}}}]}
 
    "Severnius Stim Implant"
    (letfn [(implant-fn [srv kw]

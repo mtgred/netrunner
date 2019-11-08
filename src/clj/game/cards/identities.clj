@@ -1168,22 +1168,22 @@
                 :effect (req (mark-triggered state card))}]})
 
    "Rielle \"Kit\" Peddler: Transhuman"
-   {:abilities [{:req (req (and (:run @state)
-                                (:rezzed (get-card state current-ice))))
-                 :once :per-turn
-                 :msg (msg "make " (:title current-ice) " gain Code Gate until the end of the run")
-                 :effect (req (let [ice current-ice
-                                    stypes (:subtype ice)]
-                                (update! state side (assoc ice :subtype (combine-subtypes true stypes "Code Gate")))
-                                (register-events
-                                  state side card
-                                  [{:event :run-ends
-                                    :effect (effect (update! (assoc ice :subtype stypes))
-                                                    (trigger-event :ice-subtype-changed ice)
-                                                    (unregister-events card))}])
-                                (update-ice-strength state side ice)
-                                (trigger-event state side :ice-subtype-changed ice)))}]
-    :events [{:event :run-ends}]}
+   {:events [{:event :encounter-ice
+              :once :per-turn
+              :req (req (rezzed? target))
+              :msg (msg "make " (:title current-ice) " gain Code Gate until the end of the run")
+              :effect (req (let [ice current-ice
+                                 stypes (:subtype ice)]
+                             (update! state side (assoc ice :subtype (combine-subtypes false stypes "Code Gate")))
+                             (register-events
+                               state side card
+                               [{:event :run-ends
+                                 :duration :end-of-run
+                                 :effect (effect (update! (assoc ice :subtype stypes))
+                                                 (trigger-event :ice-subtype-changed ice)
+                                                 (unregister-events card))}])
+                             (update-ice-strength state side ice)
+                             (trigger-event state side :ice-subtype-changed ice)))}]}
 
    "Saraswati Mnemonics: Endless Exploration"
    (letfn [(install-card [chosen]
@@ -1484,12 +1484,14 @@
                                  :type :recurring}}}
 
    "Weyland Consortium: Builder of Nations"
-   {:implementation "Encounter effect is manual, Erratum: The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
-    :abilities [{:async true
-                 :label "Do 1 meat damage"
-                 :once :per-turn
-                 :msg "do 1 meat damage"
-                 :effect (effect (damage eid :meat 1 {:card card}))}]}
+   {:implementation "Erratum: The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
+    :events [{:event :encounter-ice-ends
+              :async true
+              :once :per-turn
+              :req (req (and (rezzed? target)
+                             (pos? (get-counters target :virus))))
+              :msg "do 1 meat damage"
+              :effect (effect (damage eid :meat 1 {:card card}))}]}
 
    "Weyland Consortium: Building a Better World"
    {:events [{:event :play-operation
