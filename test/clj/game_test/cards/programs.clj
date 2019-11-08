@@ -1288,6 +1288,31 @@
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")))
 
+(deftest euler
+  ;; Euler
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Euler"]}
+                 :corp {:hand ["Enigma"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Euler")
+      (run-on state :hq)
+      (core/gain state :runner :credit 10)
+      (core/rez state :corp (get-ice state :hq 0))
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Broke Enigma for 0c"
+                         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+                         (run-continue state))
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (changes-val-macro -2 (:credit (get-runner))
+                         "Broke Enigma for 2c"
+                         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+                         (run-continue state)))))
+
 (deftest faerie
   (testing "Trash after encounter is over, not before"
     (do-game

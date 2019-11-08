@@ -1042,6 +1042,11 @@
                 :interactive (req true)
                 :effect (effect (continue-ability reveal card nil))}]})
 
+   "Euler"
+   (auto-icebreaker {:abilities [(break-sub 0 1 "Code Gate" {:req (req (= :this-turn (installed? card)))})
+                                 (break-sub 2 2 "Code Gate")
+                                 (strength-pump 1 1)]})
+
    "eXer"
    {:in-play [:rd-access 1]
     :events [{:event :purge
