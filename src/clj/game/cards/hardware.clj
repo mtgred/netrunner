@@ -195,16 +195,7 @@
          :prompt "Add a trashed card to the bottom of the Stack"
          :choices (req (conj (vec (sort-by :title (filter :cid targets))) "No action"))
          :effect (req (when-not (= "No action" target)
-                        (register-events
-                          state side
-                          (assoc target :zone [:discard])
-                          (let [trashed-card target]
-                            [{:event :card-moved
-                              :req (req (let [moved-card (second targets)]
-                                          (same-card? moved-card trashed-card)))
-                              :effect (req (let [moved-card (second targets)]
-                                             (unregister-events state side moved-card {:effects {:card-moved nil}})
-                                             (move state side moved-card :deck)))}]))))}]
+                        (move state side (get-card state (assoc target :zone [:discard])) :deck)))}]
     {:events [(assoc triggered-ability :event :runner-trash)
               (assoc triggered-ability :event :corp-trash)]
      :abilities [{:label "Remove Buffer Drive from the game to add a card from the Heap to the bottom of the Stack"
