@@ -471,9 +471,10 @@
   [state side eid amount]
   (let [select-fn #(and ((if (= :corp side) corp? runner?) %)
                         (in-hand? %))
+        prompt-hand (if (= :corp side) "HQ" "your grip")
         hand (if (= :corp side) "HQ" "their grip")]
     (continue-ability state side
-                      {:prompt (str "Choose " (quantify amount (str "card in " hand)) " to trash")
+                      {:prompt (str "Choose " (quantify amount "card") " in " prompt-hand " to trash")
                        :choices {:all true
                                  :max amount
                                  :card select-fn}
