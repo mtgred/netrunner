@@ -378,18 +378,44 @@
     :leave-play (effect (gain :hand-size 1)
                         (gain :runner :hand-size 1))}
 
+   ; "Earth Station: SEA Headquarters"
    "Earth Station: On the Grid"
-   {:events [{:event :pre-first-turn
-              :req (req (= side :corp))
-              :effect (effect (update! (assoc card :flipped false)))}]
-    :abilities [{:msg "flip their ID"
-                 :effect (effect (update! (if (:flipped card)
+   (let [flip-effect (effect (update! (if (:flipped card)
+                                        (do (system-msg state :corp "flip their identity to Earth Station: SEA Headquarters")
                                             (assoc card
                                                    :flipped false
-                                                   :code (subs (:code card) 0 5))
+                                                   :code (subs (:code card) 0 5)))
+                                        (do (system-msg state :corp "flip their identity to Earth Station: Ascending to Orbit")
                                             (assoc card
                                                    :flipped true
-                                                   :code (str (subs (:code card) 0 5) "flip")))))}]}
+                                                   :code (str (subs (:code card) 0 5) "flip"))))))]
+     {:events [{:event :pre-first-turn
+                :req (req (= side :corp))
+                :effect (effect (update! (assoc card :flipped false)))}
+               {:event :successful-run
+                :req (req (and (= target :hq)
+                               (:flipped card)))
+                :effect flip-effect}]
+      :constant-effects [{:type :run-additional-cost
+                          :req (req (or
+                                      (and (not (:flipped card))
+                                           (= :hq (:server (second targets))))
+                                      (and (:flipped card)
+                                           (in-coll? (keys (get-remotes state)) (:server (second targets))))))
+                          :value (req [:credit (if (:flipped card) 6 1)])}]
+      ; This effect will be resolved when the ID is reenabled after Strike / Direct Access
+      :effect (effect
+                (continue-ability
+                  {:req (req (< 1 (count (get-remotes state))))
+                   :prompt "Select a server to be saved from the rules apocalypse"
+                   :choices (req (get-remote-names state))
+                   :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target] (zone->name (second (:zone %)))) (all-installed state :corp))]
+                                  (system-msg state side (str "chooses " target " to be saved from the rules apocalypse and trashes " (count to-be-trashed) " cards"))
+                                  ; even :unpreventable does not trash Architect
+                                  (trash-cards state side eid to-be-trashed {:unpreventable true})))}
+                  card nil))
+      :abilities [{:label "Flip identity"
+                   :effect flip-effect}]})
 
    "Edward Kim: Humanity's Hammer"
    {:events [{:event :access
