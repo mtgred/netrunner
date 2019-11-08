@@ -515,17 +515,16 @@
    (space-ice end-the-run)
 
    "Authenticator"
-   {:events [{:event :encounter-ice
-              :optional
-              {:req (req (and (not (:bypass run))
-                              (same-card? card target)))
-               :player :runner
-               :prompt "Take 1 tag to bypass?"
-               :yes-ability
-               {:async true
-                :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to bypass it")
-                             (swap! state assoc-in [:run :bypass] true)
-                             (gain-tags state :runner eid 1 {:unpreventable true}))}}}]
+   {:on-encounter {:optional
+                   {:req (req (and (not (:bypass run))
+                                   (same-card? card target)))
+                    :player :runner
+                    :prompt "Take 1 tag to bypass?"
+                    :yes-ability
+                    {:async true
+                     :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to bypass it")
+                                  (swap! state assoc-in [:run :bypass] true)
+                                  (gain-tags state :runner eid 1 {:unpreventable true}))}}}
     :subroutines [(gain-credits-sub 2)
                   end-the-run]}
 
@@ -672,12 +671,9 @@
               :effect (effect (gain-credits 2)
                               (end-run eid card))}]
      {:effect take-bad-pub
-      :events [{:event :encounter-ice
-                :req (req (and (not (:bypass run))
-                               (same-card? card target)
-                               (some #(has-subtype? % "AI") (all-active-installed state :runner))))
-                :msg "gain 2 [Credits] if there is an installed AI"
-                :effect (effect (gain-credits 2))}]
+      :on-encounter {:req (req (some #(has-subtype? % "AI") (all-active-installed state :runner)))
+                     :msg "gain 2 [Credits] if there is an installed AI"
+                     :effect (effect (gain-credits 2))}
       :subroutines [(assoc trash-program
                            :player :runner
                            :msg "force the Runner to trash 1 program"
@@ -917,23 +913,20 @@
    "Data Loop"
    {:subroutines [end-the-run-if-tagged
                   end-the-run]
-    :events [{:event :encounter-ice
-              :req (req (and (not (:bypass run))
-                             (same-card? card target)
-                             (pos? (count (:hand runner)))))
-              :async true
-              :effect (effect
-                        (continue-ability
-                          (let [n (min 2 (count (:hand runner)))]
-                            {:prompt (str "Choose " n " cards in your Grip to add to the top of the Stack (first card targeted will be topmost)")
-                             :choices {:max n
-                                       :all true
-                                       :card #(and (in-hand? %)
-                                                   (runner? %))}
-                             :msg (msg "add " n " cards from their Grip to the top of the Stack")
-                             :effect (req (doseq [c targets]
-                                            (move state :runner c :deck {:front true})))})
-                          card nil))}]}
+    :on-encounter {:req (req (pos? (count (:hand runner))))
+                   :async true
+                   :effect (effect
+                             (continue-ability
+                               (let [n (min 2 (count (:hand runner)))]
+                                 {:prompt (str "Choose " n " cards in your Grip to add to the top of the Stack (first card targeted will be topmost)")
+                                  :choices {:max n
+                                            :all true
+                                            :card #(and (in-hand? %)
+                                                        (runner? %))}
+                                  :msg (msg "add " n " cards from their Grip to the top of the Stack")
+                                  :effect (req (doseq [c targets]
+                                                 (move state :runner c :deck {:front true})))})
+                               card nil))}}
 
    "Data Mine"
    {:subroutines [{:msg "do 1 net damage"
@@ -945,34 +938,28 @@
 
    "Data Raven"
    {:abilities [(power-counter-ability (give-tags 1))]
-    :events [{:event :encounter-ice
-              :req (req (and (not (:bypass run))
-                             (same-card? card target)))
-              :msg "force the Runner to take 1 tag or end the run"
-              :player :runner
-              :prompt "Choose one"
-              :choices ["Take 1 tag" "End the run"]
-              :async true
-              :effect (req (if (= target "Take 1 tag")
-                             (do (system-msg state :runner "chooses to take 1 tag")
-                                 (gain-tags state :runner eid 1))
-                             (do (system-msg state :runner "ends the run")
-                                 (end-run state :runner eid card))))}]
+    :on-encounter {:msg "force the Runner to take 1 tag or end the run"
+                   :player :runner
+                   :prompt "Choose one"
+                   :choices ["Take 1 tag" "End the run"]
+                   :async true
+                   :effect (req (if (= target "Take 1 tag")
+                                  (do (system-msg state :runner "chooses to take 1 tag")
+                                      (gain-tags state :runner eid 1))
+                                  (do (system-msg state :runner "ends the run")
+                                      (end-run state :runner eid card))))}
     :subroutines [(trace-ability 3 add-power-counter)]}
 
    "Data Ward"
-   {:events [{:event :encounter-ice
-              :req (req (and (not (:bypass run))
-                             (same-card? card target)))
-              :player :runner
-              :prompt "Choose one"
-              :choices ["Pay 3 [Credits]" "Take 1 tag"]
-              :async true
-              :effect (req (if (= target "Pay 3 [Credits]")
-                             (do (system-msg state :runner "pays 3 [Credits]")
-                                 (pay-sync state :runner card eid :credit 3))
-                             (do (system-msg state :runner "takes 1 tag on encountering Data Ward")
-                                 (gain-tags state :runner eid 1))))}]
+   {:on-encounter {:player :runner
+                   :prompt "Choose one"
+                   :choices ["Pay 3 [Credits]" "Take 1 tag"]
+                   :async true
+                   :effect (req (if (= target "Pay 3 [Credits]")
+                                  (do (system-msg state :runner "pays 3 [Credits]")
+                                      (pay-sync state :runner card eid :credit 3))
+                                  (do (system-msg state :runner "takes 1 tag on encountering Data Ward")
+                                      (gain-tags state :runner eid 1))))}
     :subroutines [end-the-run-if-tagged
                   end-the-run-if-tagged
                   end-the-run-if-tagged
@@ -1606,12 +1593,9 @@
      {:subroutines [sub sub]})
 
    "IP Block"
-   {:events [(assoc (give-tags 1)
-                    :event :encounter-ice
-                    :req (req (and (same-card? card target)
-                                   (not (:bypass run))
-                                   (seq (filter #(has-subtype? % "AI") (all-active-installed state :runner)))))
-                    :msg "give the runner 1 tag because there is an installed AI")]
+   {:on-encounter (assoc (give-tags 1)
+                         :req (req (seq (filter #(has-subtype? % "AI") (all-active-installed state :runner))))
+                         :msg "give the runner 1 tag because there is an installed AI")
     :subroutines [(tag-trace 3)
                   end-the-run-if-tagged]}
 
@@ -2278,22 +2262,21 @@
      {:subroutines [sub sub]})
 
    "Oduduwa"
-   {:events [{:event :encounter-ice
-              :msg "place 1 advancement counter on Oduduwa"
-              :async true
-              :effect (effect (add-prop card :advance-counter 1 {:placed true})
-                              (continue-ability
-                                (let [card (get-card state card)
-                                      counters (get-counters card :advancement)]
-                                  {:optional
-                                   {:prompt (str "Place " counters " advancement tokens on another ice?")
-                                    :yes-ability
-                                    {:msg (msg "place " counters
-                                               " advancement token on " (card-str state target))
-                                     :choices {:card ice?
-                                               :not-self true}
-                                     :effect (req (add-prop state side target :advance-counter counters {:placed true}))}}})
-                                (get-card state card) nil))}]
+   {:on-encounter {:msg "place 1 advancement counter on Oduduwa"
+                   :async true
+                   :effect (effect (add-prop card :advance-counter 1 {:placed true})
+                                   (continue-ability
+                                     (let [card (get-card state card)
+                                           counters (get-counters card :advancement)]
+                                       {:optional
+                                        {:prompt (str "Place " counters " advancement tokens on another ice?")
+                                         :yes-ability
+                                         {:msg (msg "place " counters
+                                                    " advancement token on " (card-str state target))
+                                          :choices {:card ice?
+                                                    :not-self true}
+                                          :effect (req (add-prop state side target :advance-counter counters {:placed true}))}}})
+                                     (get-card state card) nil))}
     :subroutines [end-the-run
                   end-the-run]}
 
@@ -2369,22 +2352,19 @@
                                              (do (system-msg state :runner "chooses to end the run")
                                                  (end-run state :runner eid card))))}
                              card nil))}]
-     {:events [{:event :encounter-ice
-                :req (req (and (not (:bypass run))
-                               (same-card? card target)))
-                :prompt "Choose a card type"
-                :choices ["Event" "Hardware" "Program" "Resource"]
-                :effect (req (let [current-variable-subs (count (filter #(and (= (:cid card) (:from-cid %))
-                                                                              (:variable %))
-                                                                        (:subroutines card)))
-                                   n (count (filter #(is-type? % target) (:hand runner)))]
-                               (system-msg state side
-                                           (str "uses Peeping Tom to name " target ", then reveals "
-                                                (join ", " (map :title (:hand runner)))
-                                                " in the Runner's Grip. Peeping Tom gains " n " subroutines"))
-                               (reveal state side (:hand runner))
-                               (reset-variable-subs state side card (+ n current-variable-subs) sub)))}
-               {:event :run-ends
+     {:on-encounter {:prompt "Choose a card type"
+                     :choices ["Event" "Hardware" "Program" "Resource"]
+                     :effect (req (let [current-variable-subs (count (filter #(and (= (:cid card) (:from-cid %))
+                                                                                   (:variable %))
+                                                                             (:subroutines card)))
+                                        n (count (filter #(is-type? % target) (:hand runner)))]
+                                    (system-msg state side
+                                                (str "uses Peeping Tom to name " target ", then reveals "
+                                                     (join ", " (map :title (:hand runner)))
+                                                     " in the Runner's Grip. Peeping Tom gains " n " subroutines"))
+                                    (reveal state side (:hand runner))
+                                    (reset-variable-subs state side card (+ n current-variable-subs) sub)))}
+      :events [{:event :run-ends
                 :effect (effect (reset-variable-subs card 0 nil))}]})
 
    "Pop-up Window"
@@ -2408,12 +2388,9 @@
    {:subroutines [end-the-run]}
 
    "Quicksand"
-   {:events [{:event :encounter-ice
-              :req (req (and (not (:bypass run))
-                             (same-card? card target)))
-              :msg "add 1 power counter to Quicksand"
-              :effect (effect (add-counter card :power 1)
-                              (update-all-ice))}]
+   {:on-encounter {:msg "add 1 power counter to Quicksand"
+                   :effect (effect (add-counter card :power 1)
+                                   (update-all-ice))}
     :subroutines [end-the-run]
     :strength-bonus (req (get-counters card :power))}
 
@@ -2547,18 +2524,16 @@
                                                  dmg (some #(when (= (:type %) choice) %) cards)]
                                                 (system-msg state :corp "uses Saisentan to deal a second net damage")
                                                 (damage state side eid :net 1 {:card card}))))}]
-     {:events [{:event :encounter-ice
-                :req (req (and (not (:bypass run))
-                               (same-card? card target)))
-                :effect (effect (show-wait-prompt :runner "Corp to choose Saisentan card type")
-                                (continue-ability
-                                  {:prompt "Choose a card type"
-                                   :choices ["Event" "Hardware" "Program" "Resource"]
-                                   :msg (msg "choose the card type " target)
-                                   :effect (effect (update! (assoc-in card [:special :saisentan] target))
-                                                   (clear-wait-prompt :runner))}
-                                  card nil))}
-               {:event :encounter-ice-ends
+     {:on-encounter
+      {:effect (effect (show-wait-prompt :runner "Corp to choose Saisentan card type")
+                       (continue-ability
+                         {:prompt "Choose a card type"
+                          :choices ["Event" "Hardware" "Program" "Resource"]
+                          :msg (msg "choose the card type " target)
+                          :effect (effect (update! (assoc-in card [:special :saisentan] target))
+                                          (clear-wait-prompt :runner))}
+                         card nil))}
+      :events [{:event :encounter-ice-ends
                 :req (req (get-in card [:special :saisentan]))
                 :effect (effect (update! (dissoc-in card [:special :saisentan])))}]
       :subroutines [sub sub sub]})
@@ -2582,12 +2557,9 @@
    "Sandstone"
    {:subroutines [end-the-run]
     :strength-bonus (req (- (get-counters card :virus)))
-    :events [{:event :encounter-ice
-              :req (req (and (not (:bypass run))
-                             (same-card? card target)))
-              :msg "place 1 virus counter on Sandstone"
-              :effect (effect (add-counter card :virus 1)
-                              (update-ice-strength (get-card state card)))}]}
+    :on-encounter {:msg "place 1 virus counter on Sandstone"
+                   :effect (effect (add-counter card :virus 1)
+                                   (update-ice-strength (get-card state card)))}}
 
    "Sandman"
    {:subroutines [add-runner-card-to-grip
@@ -2947,16 +2919,13 @@
     :subroutines [end-the-run]}
 
    "Tollbooth"
-   {:events [{:event :encounter-ice
-              :async true
-              :req (req (and (not (:bypass run))
-                             (same-card? card target)))
-              :effect (req (wait-for (pay-sync state :runner card [:credit 3])
-                                     (if-let [cost-str async-result]
-                                       (do (system-msg state :corp "uses Tollbooth to force the Runner to pay 3 [Credits]")
-                                           (effect-completed state side eid))
-                                       (do (system-msg state :corp "uses Tollbooth to end the run as the Runner can't pay 3 [Credits]")
-                                           (end-run state :corp eid card)))))}]
+   {:on-encounter {:async true
+                   :effect (req (wait-for (pay-sync state :runner card [:credit 3])
+                                          (if-let [cost-str async-result]
+                                            (do (system-msg state :corp "uses Tollbooth to force the Runner to pay 3 [Credits]")
+                                                (effect-completed state side eid))
+                                            (do (system-msg state :corp "uses Tollbooth to end the run as the Runner can't pay 3 [Credits]")
+                                                (end-run state :corp eid card)))))}
     :subroutines [end-the-run]}
 
    "Tour Guide"
@@ -2995,22 +2964,20 @@
      {:subroutines [sub sub sub]})
 
    "Troll"
-   {:events [(assoc
-               (trace-ability 2 {:msg "force the Runner to lose [Click] or end the run"
-                                 :player :runner
-                                 :prompt "Choose one"
-                                 :choices ["Lose [Click]" "End the run"]
-                                 :async true
-                                 :effect (req (if (and (= target "Lose [Click]")
-                                                       (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 1]))
-                                                (do (system-msg state side "loses [Click]")
-                                                    (lose state side :click 1)
-                                                    (effect-completed state side eid))
-                                                (do (system-msg state side "ends the run")
-                                                    (end-run state side eid card))))})
-               :event :encounter-ice
-               :req (req (and (not (:bypass run))
-                              (same-card? card target))))]}
+   {:on-encounter
+    (assoc
+      (trace-ability 2 {:msg "force the Runner to lose [Click] or end the run"
+                        :player :runner
+                        :prompt "Choose one"
+                        :choices ["Lose [Click]" "End the run"]
+                        :async true
+                        :effect (req (if (and (= target "Lose [Click]")
+                                              (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 1]))
+                                       (do (system-msg state side "loses [Click]")
+                                           (lose state side :click 1)
+                                           (effect-completed state side eid))
+                                       (do (system-msg state side "ends the run")
+                                           (end-run state side eid card))))}))}
 
    "Tsurugi"
    {:subroutines [(end-the-run-unless-corp-pays 1)

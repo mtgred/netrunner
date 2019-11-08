@@ -419,12 +419,34 @@
                  :prompt "Choose a server"
                  :choices (req runnable-servers)
                  :msg (msg "make a run on " target)
-                 :effect (effect (make-run target nil card))}
-                {:label "Pay credits equal to strength of approached rezzed ICE to bypass it"
-                 :once :per-run
-                 :req (req (and (:run @state) (rezzed? current-ice)))
-                 :msg (msg "pay " (:current-strength current-ice) " [Credits] and bypass " (:title current-ice))
-                 :effect (effect (pay :runner card :credit (:current-strength current-ice)))}]}
+                 :async true
+                 :effect (effect (register-events
+                                   card
+                                   [{:event :approach-ice
+                                     :optional
+                                     {:prompt "Pay to bypass?"
+                                      :once :per-run
+                                      :req (req (and (rezzed? target)
+                                                     (can-pay? state :runner eid card nil
+                                                               [:credit (get-strength target)])))
+                                      :yes-ability
+                                      {:async true
+                                       :effect (req (wait-for (pay-sync :runner card [:credit (get-strength target)])
+                                                              (if-let [cost-str async-results]
+                                                                (do (system-msg state :runner
+                                                                                (str (build-spend-msg cost-str "use")
+                                                                                     "Charlatan to bypass " (:title target)))
+                                                                    (register-events
+                                                                      state :runner card
+                                                                      (let [target-ice target]
+                                                                        [{:event :encounter-ice
+                                                                          :req (req (and (same-card? target-ice target)
+                                                                                         (rezzed? target)))
+                                                                          :effect (req (bypass-ice state))}])))
+                                                                (do (system-msg state :runner
+                                                                                (str "can't afford to pay to bypass " (:title target)))
+                                                                    (effect-completed state side eid)))))}}}])
+                                 (make-run eid target nil card))}]}
 
    "Chatterjee University"
    {:abilities [{:cost [:click 1]

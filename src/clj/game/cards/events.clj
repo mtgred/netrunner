@@ -57,11 +57,11 @@
     :msg (msg "make a run on " target)
     :effect (req (wait-for (make-run state side target nil card)
                            (let [card (get-card state card)]
-                             (if (:run-again card)
+                             (if (get-in card [:special :run-again])
                                (make-run state side eid target nil card {:ignore-costs true})
                                (effect-completed state side eid)))))
     :events [{:event :unsuccessful-run-ends
-              :optional {:req (req (not (:run-again card)))
+              :optional {:req (req (not (get-in card [:special :run-again])))
                          :player :runner
                          :prompt "Make another run on the same server?"
                          :yes-ability
@@ -72,22 +72,16 @@
                                                             (pos? pos)
                                                             (<= pos (count run-ice)))
                                                    (get-card state (nth run-ice (dec pos))))]
-                                         (update! state side (assoc card :run-again ice))))}}}
+                                         (update! state side (update card :special
+                                                                     assoc
+                                                                     :run-again true
+                                                                     :run-again-ice ice))))}}}
              {:event :encounter-ice
               :once :per-run
-              :req (req (and (:run-again card)
-                             (same-card? target (:run-again card))))
+              :req (req (and (get-in card [:special :run-again])
+                             (same-card? target (get-in card [:special :run-again-ice]))))
               :msg (msg "bypass " (:title target))
-              :effect (req (swap! state assoc-in [:run :bypass] true))}]}
-
-(defn get-current-ice
-  [state]
-  (let [run-ice (get-in @state (concat [:corp :servers] (:server (:last-run @state)) [:ices]))
-        pos (get-in @state [:run :position])]
-    (when (and pos
-               (pos? pos)
-               (<= pos (count run-ice)))
-      (get-card state (nth run-ice (dec pos))))))
+              :effect (req (bypass-ice state))}]}
 
    "Amped Up"
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
@@ -1484,7 +1478,7 @@
     :events [{:event :encounter-ice
               :once :per-run
               :msg (msg "bypass " (:title target))
-              :effect (req (swap! state assoc-in [:run :bypass] true))}]}
+              :effect (req (bypass-ice state))}]}
 
    "Insight"
    {:async true
@@ -2287,7 +2281,7 @@
                                 (let [target-ice target]
                                   [{:event :encounter-ice
                                     :req (req (same-card? target-ice target))
-                                    :effect (req (swap! state assoc-in [:run :bypass] true))}])))})]
+                                    :effect (req (bypass-ice state))}])))})]
      {:async true
       :effect (req (show-wait-prompt state :corp "Runner to spend credits")
                 (let [all-amounts (range (min 3 (inc (get-in @state [:runner :credit]))))
