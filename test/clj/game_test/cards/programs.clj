@@ -2342,6 +2342,44 @@
       (run-continue state)
       (is (not (has-subtype? (refresh iw) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
 
+(deftest penrose
+  ;; Penrose
+  (testing "Pay-credits prompt and first turn ability"
+    (do-game
+      (new-game {:runner {:deck ["Cloak" "Penrose"]}
+                 :corp {:deck ["Enigma" "Vanilla"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cloak")
+      (play-from-hand state :runner "Penrose")
+      (core/gain state :runner :credit 1)
+      (run-on state :hq)
+      (let [enig (get-ice state :hq 0)
+            van (get-ice state :hq 1)
+            cl (get-program state 0)
+            penr (get-program state 1)]
+        (is (= 3 (count (:abilities penr))) "3 abilities on Penrose")
+        (core/rez state :corp van)
+        (is (= 4 (count (:abilities (refresh penr)))) "Auto pump and break ability on Penrose active")
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Used 1 credit from Cloak"
+                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)})
+                           (click-card state :runner cl))
+        (run-continue state)
+        (core/rez state :corp enig)
+        (changes-val-macro -2 (:credit (get-runner))
+                           "Paid 2 credits to break all subroutines on Enigma"
+                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)}))
+        (run-continue state)
+        (run-jack-out state)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (run-on state :hq)
+        (is (= 3 (count (:abilities (refresh penr)))) "Auto pump and break ability on Penrose is not active")
+        (card-ability state :runner (refresh penr) 0)
+        (is (empty? (:prompt (get-runner))) "No cloak prompt because the ability to break barriers is not active anymore")))))
+
 (deftest peregrine
   ;; Peregrine - 2c to return to grip and derez an encountered code gate
   (do-game
