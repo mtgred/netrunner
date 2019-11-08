@@ -999,7 +999,7 @@
                    :async true
                    :effect (req (let [c (get-agenda card)
                                       points (get-agenda-points state :runner c)]
-                                  (as-agenda state :runner eid c points)))
+                                  (as-agenda state :runner eid c points {:register-events true})))
                    :msg (msg (let [c (get-agenda card)]
                                (str "add " (:title c) " to their score area and gain "
                                     (quantify (get-agenda-points state :runner c) "agenda point"))))}]})
