@@ -1824,6 +1824,19 @@
                                ;refund credit for paid ability
                                (gain state :runner :credit 1))))}]}
 
+   "Penumbral Toolkit"
+   {:data {:counter {:credit 4}}
+    :install-cost-bonus (req (if (some #{:hq} (:successful-run runner-reg)) -2 0))
+    :abilities [{:msg "gain 1 [Credits]"
+                 :req (req (:run @state))
+                 :async true
+                 :effect (req (add-counter state side card :credit -1)
+                              (gain-credits state side 1)
+                              (trigger-event-sync state side eid :spent-stealth-credit card))}]
+    :events [(trash-on-empty :credit)]
+    :interactions {:pay-credits {:req (req run)
+                                 :type :credit}}}
+
    "Personal Workshop"
    (let [remove-counter
          {:async true
