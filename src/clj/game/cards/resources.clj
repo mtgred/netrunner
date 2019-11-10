@@ -1181,7 +1181,25 @@
 
    "Hunting Grounds"
    {:events [{:event :encounter-ice
-              }]
+              :optional
+              {:req
+               :prompt "Prevent a \"When encountered\" effect on this ice?"
+               :yes-ability
+               {:effect (req (let [suppress
+                                   (register-suppress
+                                     state side card
+                                     (let [ice target]
+                                       {:event :encounter-ice
+                                        :req (req (same-card? ice target))}))]
+                               (register-events
+                                 state side card
+                                 [{:event :encounter-ice-ends
+                                   :duration :end-of-encounter
+                                   :unregister-once-resolved true
+                                   :effect (req (swap! state assoc :suppress
+                                                       (->> (:suppress @state)
+                                                            (remove #(= (:uuid %) (:uuid suppress)))
+                                                            (into []))))}])))}}}]
     :abilities [(letfn [(ri [cards]
                           {:async true
                            :effect (req (if (seq cards)

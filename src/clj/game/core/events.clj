@@ -2,7 +2,7 @@
 
 (declare can-trigger? event-title
          register-suppress resolve-ability
-         trigger-suppress unregister-suppress)
+         unregister-suppress)
 
 (defn default-locations
   [card]
@@ -77,6 +77,43 @@
   "Removes a single event handler with matching uuid"
   [state side uuid]
   (swap! state assoc :events (remove-once #(= uuid (:uuid %)) (:events @state))))
+
+; Functions for registering trigger suppression events.
+(defn register-suppress
+  "Registers each suppression handler in the given card definition. Suppression handlers
+  can prevent the dispatching of a particular event."
+  ([state side card] (register-suppress state side card (:suppress (card-def card))))
+  ([state side card events]
+   (when events
+     (let [abilities
+           (->> (for [ability events]
+                  {:event (:event ability)
+                   :ability (dissoc ability :event)
+                   :card card
+                   :uuid (uuid/v1)})
+                (into []))]
+       (when (seq abilities)
+         (swap! state update :suppress #(apply conj % abilities)))
+       abilities))))
+
+(defn unregister-suppress
+  "Removes all event handler suppression effects as defined for the given card"
+  ([state side card] (unregister-suppress state side card (:suppress (card-def card))))
+  ([state side card events]
+   (let [abilities (map :event events)]
+     (swap! state assoc :suppress
+            (->> (:suppress @state)
+                 (remove #(and (same-card? card (:card %))
+                               (in-coll? abilities (:event %))))
+                 (into []))))))
+
+(defn trigger-suppress
+  "Returns true if the given event on the given targets should be suppressed, by triggering
+  each suppression handler and returning true if any suppression handler returns true."
+  [state side event & targets]
+  (->> (:suppress @state)
+       (filter #(= event (:event %)))
+       (some #((:req (:ability %)) state side (make-eid state) (:card %) targets))))
 
 ;; triggering events
 (defn- get-side
@@ -311,43 +348,7 @@
                                         (clear-wait-prompt state active-player)
                                         (effect-completed state side eid))))))))
 
-
-; Functions for registering trigger suppression events.
-(defn register-suppress
-  "Registers each suppression handler in the given card definition. Suppression handlers
-  can prevent the dispatching of a particular event."
-  ([state side card] (register-suppress state side card (:suppress (card-def card))))
-  ([state side card events]
-   (when events
-     (let [abilities
-           (->> (for [ability events]
-                  {:event (:event ability)
-                   :ability (dissoc ability :event)
-                   :card card
-                   :uuid (uuid/v1)})
-                (into []))]
-       (swap! state update :suppress
-              #(apply conj % abilities))))))
-
-(defn unregister-suppress
-  "Removes all event handler suppression effects as defined for the given card"
-  ([state side card] (unregister-suppress state side card (:suppress (card-def card))))
-  ([state side card events]
-   (let [abilities (map :event events)]
-     (swap! state assoc :suppress
-            (->> (:suppress @state)
-                 (remove #(and (same-card? card (:card %))
-                               (in-coll? abilities (:event %))))
-                 (into []))))))
-
-(defn trigger-suppress
-  "Returns true if the given event on the given targets should be suppressed, by triggering
-  each suppression handler and returning true if any suppression handler returns true."
-  [state side event & targets]
-  (->> (:suppress @state)
-       (filter #(= event (:event %)))
-       (some #((:req (:ability %)) state side (make-eid state) (:card %) targets))))
-
+;; Functions for event parsing
 (defn turn-events
   "Returns the targets vectors of each event with the given key that was triggered this turn."
   [state side ev]
