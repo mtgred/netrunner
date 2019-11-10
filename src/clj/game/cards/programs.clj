@@ -669,6 +669,32 @@
                                                          #(assoc % :position tgtndx :server [dest]))))}
                                   card nil)))}]}
 
+   "Cordyceps"
+   {:data {:counter {:virus 2}}
+    :events [{:event :successful-run
+              :optional {:req (req (and (is-central? target)
+                                        (pos? (get-counters card :virus))
+                                        (not-empty (get-in @state [:corp :servers target :ices]))
+                                        (<= 2 (count (filter ice? (all-installed state :corp))))))
+                         :once :per-turn
+                         :prompt "Use Cordyceps to swap ice?"
+                         :yes-ability {:prompt "Select ice protecting this server"
+                                       :choices {:req (req (and (installed? target)
+                                                                (ice? target)
+                                                                (= (first (:server (:run @state))) (second (:zone target)))))}
+                                       :effect (req (let [first-ice target]
+                                                      (resolve-ability state side
+                                                                       {:prompt "Select ice to swap with"
+                                                                        :choices {:req (req (and (installed? target)
+                                                                                                 (ice? target)
+                                                                                                 (not= first-ice target)))}
+                                                                        :msg (msg "swap the positions of " (card-str state first-ice) " and " (card-str state target))
+                                                                        :async true
+                                                                        :effect (req (wait-for (add-counter state side card :virus -1 nil)
+                                                                                               (swap-ice state side first-ice target)
+                                                                                               (effect-completed state side eid)))}
+                                                                       card nil)))}}}]}
+
    "Corroder"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
                                  (strength-pump 1 1)]})
