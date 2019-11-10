@@ -754,6 +754,21 @@
    "HQ Interface"
    {:in-play [:hq-access 1]}
 
+   "Keiko"
+   {:events [{:event :spent-credits-from-card
+              :once :per-turn
+              :req (req (and (has-subtype? target "Companion")
+                             (not (used-this-turn? (:cid card) state))))
+              :msg "gain 1 [Credit]"
+              :effect (effect (gain :credit 1))}
+             {:event :runner-install
+              :once :per-turn
+              :req (req (and (has-subtype? target "Companion")
+                             (not (facedown? target))
+                             (not (used-this-turn? (:cid card) state))))
+              :msg "gain 1 [Credit]"
+              :effect (effect (gain :credit 1))}]}
+
    "Knobkierie"
    {:implementation "MU usage restriction not enforced"
     :in-play [:memory 3]
