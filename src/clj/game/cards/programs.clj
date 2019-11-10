@@ -682,8 +682,9 @@
                                        :choices {:req (req (and (installed? target)
                                                                 (ice? target)
                                                                 (= (first (:server (:run @state))) (second (:zone target)))))}
+                                       :async true
                                        :effect (req (let [first-ice target]
-                                                      (resolve-ability state side
+                                                      (continue-ability state side
                                                                        {:prompt "Select ice to swap with"
                                                                         :choices {:req (req (and (installed? target)
                                                                                                  (ice? target)
