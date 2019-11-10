@@ -237,11 +237,11 @@
       (pick-credit-triggers state side eid (rest selected-cards) counter-count message))
     (effect-completed state side (make-result eid {:number counter-count :msg message}))))
 
-(defn trigger-stealth-cards
+(defn trigger-spend-credits-from-cards
   [state side eid cards]
   (if (seq cards)
-    (wait-for (trigger-event-sync state side :spent-stealth-credit (first cards))
-              (trigger-stealth-cards state side eid (rest cards)))
+    (wait-for (trigger-event-sync state side :spent-credits-from-card (first cards))
+              (trigger-spend-credits-from-cards state side eid (rest cards)))
     (effect-completed state side eid)))
 
 (defn pick-credit-providing-cards
@@ -267,8 +267,8 @@
                                      " from their credit pool"))]
                   (lose state side :credit remainder)
                   (swap! state update-in [:stats side :spent :credit] (fnil + 0) (- target-count remainder))
-                  (let [cards (filter #(has-subtype? % "Stealth") (map :card (vals selected-cards)))]
-                    (wait-for (trigger-stealth-cards state side cards)
+                  (let [cards (map :card (vals selected-cards))]
+                    (wait-for (trigger-spend-credits-from-cards state side cards)
                               ; Now we trigger all of the :counter-added events we'd neglected previously
                               (pick-credit-triggers state side eid selected-cards counter-count message))))
                 (continue-ability

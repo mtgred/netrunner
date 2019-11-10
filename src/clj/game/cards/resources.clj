@@ -1060,7 +1060,7 @@
                  :async true
                  :effect (req (add-counter state side card :credit -1)
                               (gain-credits state side 1)
-                              (trigger-event-sync state side eid :spent-stealth-credit card))}]
+                              (trigger-event-sync state side eid :spent-credits-from-card card))}]
     :events [(trash-on-empty :credit)]
     :interactions {:pay-credits {:req (req run)
                                  :type :credit}}}
@@ -1528,8 +1528,8 @@
                  :async true
                  :effect (effect (add-counter card :credit -1)
                                  (gain-credits 1)
-                                 (trigger-event-sync eid :spent-stealth-credit card))}]
-    :events [{:event :spent-stealth-credit
+                                 (trigger-event-sync eid :spent-credits-from-card card))}]
+    :events [{:event :spent-credits-from-card
               :req (req (and (:run @state)
                              (has-subtype? target "Stealth")))
               :once :per-run
@@ -1834,7 +1834,7 @@
                  :async true
                  :effect (req (add-counter state side card :credit -1)
                               (gain-credits state side 1)
-                              (trigger-event-sync state side eid :spent-stealth-credit card))}]
+                              (trigger-event-sync state side eid :spent-credits-from-card card))}]
     :events [(trash-on-empty :credit)]
     :interactions {:pay-credits {:req (req run)
                                  :type :credit}}}
@@ -2608,7 +2608,7 @@
         :async true
         :effect (effect (add-counter card :credit -1)
                         (gain-credits 1)
-                        (trigger-event-sync eid :spent-stealth-credit card))})
+                        (trigger-event-sync eid :spent-credits-from-card card))})
      ;; assoc: arguments
      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                  (program? target)
