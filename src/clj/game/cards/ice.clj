@@ -2702,7 +2702,7 @@
                    :effect (req (do-access state :runner eid [:rd] {:no-root true}))}]}
 
    "Slot Machine"
-   (let [(top-3 [state] (take 3 (get-in @state [:runner :deck])))
+   (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))
            (effect-type [card] (keyword (str "slot-machine-top-3-" (:cid card))))
            (name-builder [card] (str (:title card) " (" (:type card) ")"))
            (top-3-names [state card et] (map name-builder (get-effects state :corp card et)))
@@ -2734,7 +2734,8 @@
                                       (system-msg state :corp (str "uses Slot Machine to gain 3 [Credits]"))
                                       (gain-credits state :corp 3))))}
                     {:label "Place 3 advancement tokens"
-                     :effect (req (let [unique-types (top-3-types state card (effect-type card))]
+                     :effect (req (let [et (effect-type card)
+                                        unique-types (top-3-types state card et)]
                                     (when (and (= 3 (count (get-effects state :corp card et)))
                                                (= 1 unique-types))
                                       (continue-ability
@@ -2914,30 +2915,6 @@
                                                      "end the run")))
                                   (end-run state side eid card)))}]}
 
-   {:subroutines [{:msg "prevent the Runner from breaking subroutines on the next piece of ICE they encounter this run"
-                   :effect (effect
-                             (register-events
-                               card
-                               [{:event :encounter-ice
-                                 :duration :end-of-run
-                                 :unregister-once-resolved true
-                                 :msg (msg "prevent the runner from breaking subroutines on " (:title target))}]))}
-                  {:msg "prevent the Runner from jacking out until after the next piece of ICE"
-                   :effect (effect
-                             (register-events
-                               card
-                               [{:event :encounter-ice
-                                 :duration :end-of-run
-                                 :unregister-once-resolved true
-                                 :msg "prevent the runner from jacking out"
-                                 :effect (req (prevent-jack-out state side)
-                                              (register-events
-                                                state side card
-                                                [{:event :encounter-ice-ends
-                                                  :duration :end-of-encounter
-                                                  :unregister-once-resolved true
-                                                  :effect (req (swap! state update :run dissoc :prevent-jack-out))}]))}]))}]}
-
    "TL;DR"
    {:subroutines
     [{:label "Double subroutines on an ICE"
@@ -2953,7 +2930,7 @@
                                tldr-subs (map #(assoc % :from-cid (:cid card)) curr-subs)
                                new-subs (->> (interleave curr-subs tldr-subs)
                                              (reduce
-                                               (fn [ice sub] (add-sub ice sub (:cid card) args))
+                                               (fn [ice sub] (add-sub ice sub (:cid card) nil))
                                                (assoc target :subroutines []))
                                              :subroutines
                                              (into []))
@@ -3016,23 +2993,24 @@
    "Tribunal"
    (let [sub {:msg "force the Runner to trash 1 installed card"
               :effect (effect (continue-ability :runner trash-installed card nil))}]
-     {:subroutines [sub sub sub]})
+     {:subroutines [sub
+                    sub
+                    sub]})
 
    "Troll"
    {:on-encounter
-    (assoc
-      (trace-ability 2 {:msg "force the Runner to lose [Click] or end the run"
-                        :player :runner
-                        :prompt "Choose one"
-                        :choices ["Lose [Click]" "End the run"]
-                        :async true
-                        :effect (req (if (and (= target "Lose [Click]")
-                                              (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 1]))
-                                       (do (system-msg state side "loses [Click]")
-                                           (lose state side :click 1)
-                                           (effect-completed state side eid))
-                                       (do (system-msg state side "ends the run")
-                                           (end-run state side eid card))))}))}
+    (trace-ability 2 {:msg "force the Runner to lose [Click] or end the run"
+                      :player :runner
+                      :prompt "Choose one"
+                      :choices ["Lose [Click]" "End the run"]
+                      :async true
+                      :effect (req (if (and (= target "Lose [Click]")
+                                            (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 1]))
+                                     (do (system-msg state side "loses [Click]")
+                                         (lose state side :click 1)
+                                         (effect-completed state side eid))
+                                     (do (system-msg state side "ends the run")
+                                         (end-run state side eid card))))})}
 
    "Tsurugi"
    {:subroutines [(end-the-run-unless-corp-pays 1)

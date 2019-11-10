@@ -1883,6 +1883,27 @@
         (click-card state :corp iw)
         (is (= (dec credits) (:credit (get-corp))) "Corp should only gain 1 back when using Blue Sun's ability")))))
 
+(deftest hunting-grounds
+  ;; Hunting Grounds
+  (testing "Preventing an on-encounter effect"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tollbooth"]
+                        :credits 10}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Hunting Grounds"]}})
+      (play-from-hand state :corp "Tollbooth" "New remote")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (run-on state "Server 1")
+      (run-next-phase state)
+      (let [credits (:credit (get-runner))]
+        (card-ability state :runner (get-resource state 0) 0)
+        (run-continue state)
+        (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (is (:run @state) "Run hasn't ended from not paying Tollbooth")))))
+
 (deftest ice-analyzer
   ;; Ice Analyzer
   (testing "Pay-credits prompt"

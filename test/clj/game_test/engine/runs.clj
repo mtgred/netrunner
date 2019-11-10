@@ -44,7 +44,6 @@
       (is (= :approach-ice (:phase (:run @state))))
       (core/rez state :corp (get-ice state :rd 0))
       (run-continue state)
-      (run-next-phase state)
       (is (= :encounter-ice (:phase (:run @state))))
       (card-ability state :runner (get-program state 0) 0) ; Icebreaker
       (click-prompt state :runner "End the run")
@@ -68,7 +67,6 @@
       (is (= :approach-ice (:phase (:run @state))))
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (run-next-phase state)
         (is (= (- credits 3) (:credit (get-runner))) "Tollbooth forced the runner to pay 3"))
       (is (= :encounter-ice (:phase (:run @state))))
       (core/resolve-unbroken-subs! state :corp (get-ice state :remote1 0))
@@ -89,12 +87,11 @@
       (is (= :approach-ice (:phase (:run @state))))
       (let [credits (:credit (get-runner))]
         (core/rez state :corp (get-ice state :remote1 0))
-        (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "Corroder")
         (is (zero? (:credit (get-runner))) "Can't afford Tollbooth")
         (is (= :approach-ice (:phase (:run @state))) "Haven't left the approach window yet")
-        (run-next-phase state)
+        (run-continue state)
         (is (nil? (:run @state)) "Can't afford Tollbooth, so run ends"))))
   (testing "with bypass"
     (do-game
@@ -110,7 +107,6 @@
       (run-next-phase state)
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (run-continue state)
-      (run-next-phase state)
       (is (= :pass-ice (:phase (:run @state))) "Inside Job has marked the bypass")
       (run-next-phase state)
       (is (= :approach-server (:phase (:run @state))) "Inside Job has bypassed Ice Wall")
@@ -129,7 +125,6 @@
       (run-next-phase state)
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (run-continue state)
-      (run-next-phase state)
       (is (= :encounter-ice (:phase (:run @state))) "Inside Job hasn't bypassed Guard")
       (core/resolve-unbroken-subs! state :corp (get-ice state :remote1 0))
       (is (nil? (:run @state)))))
@@ -148,8 +143,8 @@
       (run-next-phase state)
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (run-continue state)
-      (run-next-phase state)
       (is (= :pass-ice (:phase (:run @state))) "Inside Job has bypassed Tollbooth")
+      (run-next-phase state)
       (run-jack-out state)
       (is (nil? (:run @state)))))
   (testing "with paid ability that ends the run during encounter (Border Control)"

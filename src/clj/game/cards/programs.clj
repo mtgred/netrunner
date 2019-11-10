@@ -2263,7 +2263,9 @@
                                            card))}]}
 
    "Snitch"
-   {:abilities [{:once :per-run :req (req (and (ice? current-ice) (not (rezzed? current-ice))))
+   {:abilities [{:once :per-run
+                 :req (req (and current-ice
+                                (not (rezzed? current-ice))))
                  :async true
                  :effect (req (wait-for (expose state side current-ice)
                                         (continue-ability

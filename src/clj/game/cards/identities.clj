@@ -1,5 +1,6 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
+            [game.core.effects :refer [register-floating-effect]]
             [game.core.eid :refer [effect-completed make-eid complete-with-result]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -1114,7 +1115,7 @@
                           " and reduce the strength of " (:title current-ice)
                           " by 2 for the remainder of the run")
                 :async true
-                :effect (effect (create-floating-effect
+                :effect (effect (register-floating-effect
                                   card
                                   (let [ice current-ice]
                                     {:type :ice-strength
@@ -1174,7 +1175,8 @@
    {:events [{:event :encounter-ice
               :once :per-turn
               :msg (msg "make " (:title target) " gain Code Gate until the end of the run")
-              :effect (req (let [ice target]
+              :effect (req (let [ice target
+                                 stypes (:subtype ice)]
                              (update! state side (assoc ice :subtype (combine-subtypes false stypes "Code Gate")))
                              (register-events
                                state side card

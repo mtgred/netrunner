@@ -32,9 +32,9 @@
                  :uuid (uuid/v1)})
               (into []))]
      (when (seq abilities)
-       (swap! state update :events #(apply conj % abilities))))
-   (register-suppress state side card)
-   abilities))
+       (swap! state update :events #(apply conj % abilities)))
+     (register-suppress state side card)
+     abilities)))
 
 (defn unregister-events
   "Removes all event handlers defined for the given card.

@@ -682,8 +682,8 @@
                 :effect (effect (runner-install eid (assoc-in target [:special :diana-installed] true) {:ignore-all-cost true}))}}}
              {:event :run-ends
               :async true
-              :effect (req (let [installed-cards (filterv #(get-in % [:special :diana-installed]) (all-active-installed state :runner))]
-                             (when (seq install-cards)
+              :effect (req (let [installed-cards (filter #(get-in % [:special :diana-installed]) (all-active-installed state :runner))]
+                             (when (seq installed-cards)
                                (system-msg state :runner (str "trashes " (count installed-cards)
                                                               " cards (" (join ", " (map :title installed-cards))
                                                               ") at the end of the run from Diana's Hunt"))

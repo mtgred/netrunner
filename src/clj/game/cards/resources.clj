@@ -437,7 +437,7 @@
                                       :yes-ability
                                       {:async true
                                        :effect (req (wait-for (pay-sync :runner card [:credit (get-strength target)])
-                                                              (if-let [cost-str async-results]
+                                                              (if-let [cost-str async-result]
                                                                 (do (system-msg state :runner
                                                                                 (str (build-spend-msg cost-str "use")
                                                                                      "Charlatan to bypass " (:title target)))
@@ -1180,27 +1180,31 @@
               :effect (effect (gain-credits (get-agenda-points state :runner target)))}]}
 
    "Hunting Grounds"
-   {:events [{:event :encounter-ice
-              :optional
-              {:req
-               :prompt "Prevent a \"When encountered\" effect on this ice?"
-               :yes-ability
-               {:effect (req (let [suppress
-                                   (register-suppress
-                                     state side card
-                                     (let [ice target]
-                                       {:event :encounter-ice
-                                        :req (req (same-card? ice target))}))]
-                               (register-events
-                                 state side card
-                                 [{:event :encounter-ice-ends
-                                   :duration :end-of-encounter
-                                   :unregister-once-resolved true
-                                   :effect (req (swap! state assoc :suppress
-                                                       (->> (:suppress @state)
-                                                            (remove #(= (:uuid %) (:uuid suppress)))
-                                                            (into []))))}])))}}}]
-    :abilities [(letfn [(ri [cards]
+   {:implementation "Use prevention ability during approach, after ice is rezzed"
+    :abilities [{:label "Prevent a \"When encountered\" ability"
+                 :req (req (and (= :approach-ice (:phase run))
+                                (rezzed? current-ice)
+                                (or (->> (:events @state)
+                                         (filter #(and (= :encounter-ice (:event %))
+                                                       (same-card? current-ice (:card %))))
+                                         seq)
+                                    (contains? (card-def current-ice) :on-encounter))))
+                 :effect (req (let [suppress
+                                    (register-suppress
+                                      state side card
+                                      (let [ice current-ice]
+                                        [{:event :encounter-ice
+                                          :req (req (same-card? ice target))}]))]
+                                (register-events
+                                  state side card
+                                  [{:event :encounter-ice-ends
+                                    :duration :end-of-encounter
+                                    :unregister-once-resolved true
+                                    :effect (req (swap! state assoc :suppress
+                                                        (->> (:suppress @state)
+                                                             (remove #(= (:uuid %) (:uuid suppress)))
+                                                             (into []))))}])))}
+                (letfn [(ri [cards]
                           {:async true
                            :effect (req (if (seq cards)
                                           (wait-for (runner-install state side (first cards) {:facedown true})
