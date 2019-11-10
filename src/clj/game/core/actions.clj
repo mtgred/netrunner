@@ -321,9 +321,7 @@
               :async true
               :effect (req (add-prop state side card :rec-counter -1)
                            (gain state side :credit 1)
-                           (let [event (when (has-subtype? card "Stealth")
-                                         :spent-stealth-credit)]
-                             (trigger-event-sync state side eid event card)))}
+                           (trigger-event-sync state side eid :spent-credits-from-card card))}
              (get-in cdef [:abilities ability]))]
     (when-not (:disabled card)
       (do-play-ability state side card ab targets))))
