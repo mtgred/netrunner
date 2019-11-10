@@ -2392,20 +2392,17 @@
                  :req (req (and (pos? (get-counters card :power))
                                 true)) ;; xxx: shufflable cards
                  :cost [:click 1 :remove-from-game]
-                 :async true
-                 :effect (effect (continue-ability 
-                                   {:show-discard true
-                                    :choices {:max (* 2 (get-counters card :power))
-                                              :req (req (and (runner? target)
-                                                             (in-discard? target)
-                                                             (some #(= :trash (first %)) (merge-costs (map :cost (:abilities (card-def target)))))))}
-                                    :msg (msg "shuffle " (join ", " (map :title targets))
-                                              " into their Stack")
-                                    :effect (req (system-msg state side (str ))
-                                                 (doseq [c targets] (move state side c :deck))
-                                                 (shuffle! state side :deck)
-                                                 (effect-completed state side eid))}
-                                   card nil))}]}
+                 :show-discard true
+                 :choices {:max (req (* 2 (get-counters card :power)))
+                           :req (req (and (runner? target)
+                                          (in-discard? target)
+                                          (some #(= :trash (first %)) (merge-costs (map :cost (:abilities (card-def target)))))))}
+                 :msg (msg "shuffle " (join ", " (map :title targets))
+                           " into their Stack")
+                 :effect (req (system-msg state side (str ))
+                              (doseq [c targets] (move state side c :deck))
+                              (shuffle! state side :deck)
+                              (effect-completed state side eid))}]}
 
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"
