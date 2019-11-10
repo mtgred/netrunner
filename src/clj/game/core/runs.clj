@@ -213,7 +213,8 @@
     (swap! state assoc-in [:run :no-action] false)
     (system-msg state :runner (str "passes " (card-str state ice)))
     (wait-for (trigger-event-simult state side :pass-ice args ice)
-              (swap! state update-in [:run :position] (fnil dec 1))
+              (when-not (get-in @state [:run :next-phase])
+                (swap! state update-in [:run :position] (fnil dec 1)))
               (when ice
                 (reset-all-subs! state (get-card state ice)))
               (update-all-ice state side)
@@ -221,10 +222,10 @@
               (cond
                 (:ended (:run @state))
                 (handle-end-run state side)
-                (pos? (get-in @state [:run :position]))
-                (set-next-phase state :approach-ice)
-                :else
-                (set-next-phase state :approach-server)))))
+                (not (get-in @state [:run :next-phase]))
+                (if (pos? (get-in @state [:run :position]))
+                  (set-next-phase state :approach-ice)
+                  (set-next-phase state :approach-server))))))
 
 (defmethod start-next-phase :approach-server
   [state side args]

@@ -33,7 +33,7 @@
    (trigger-event state side :subroutines-changed (get-card state ice))))
 
 (defn remove-sub
-  "Removes a single sub from a piece of ice. By default removes the first subroutine
+  "Removes a single sub from a piece of ice for pred. By default removes the first subroutine
   with the same cid as the given ice."
   ([ice] (remove-sub ice #(= (:cid ice) (:from-cid %))))
   ([ice pred]
@@ -47,6 +47,23 @@
   ([state side ice] (remove-sub! state side ice #(= (:cid ice) (:from-cid %))))
   ([state side ice pred]
    (update! state :corp (remove-sub ice pred))
+   (trigger-event state side :subroutines-changed (get-card state ice))))
+
+(defn remove-subs
+  "Removes all subs from a piece of ice for pred. By default removes the subroutines
+  with the same cid as the given ice."
+  ([ice] (remove-sub ice #(= (:cid ice) (:from-cid %))))
+  ([ice pred]
+   (let [new-subs (->> (:subroutines ice)
+                       (remove pred)
+                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
+                       (into []))]
+     (assoc ice :subroutines new-subs))))
+
+(defn remove-subs!
+  ([state side ice] (remove-subs! state side ice #(= (:cid ice) (:from-cid %))))
+  ([state side ice pred]
+   (update! state :corp (remove-subs ice pred))
    (trigger-event state side :subroutines-changed (get-card state ice))))
 
 (defn add-extra-sub!

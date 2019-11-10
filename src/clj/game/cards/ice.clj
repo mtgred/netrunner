@@ -785,29 +785,33 @@
                                card nil))}}
 
    "Chum"
-   {:subroutines [{:label "Give +2 strength to next ICE Runner encounters"
-                   :req (req this-server)
-                   :msg (msg "give +2 strength to the next ICE the Runner encounters")
-                   :effect (effect (register-events
-                                     card
-                                     [{:event :encounter-ice
-                                       :duration :end-of-run
-                                       :once :per-turn
-                                       :req (req (and (rezzed? target)
-                                                      (not= target card)))
-                                       :effect (req (let [target-ice target]
-                                                      (register-floating-effect
-                                                        state side card
-                                                        {:type :ice-strength
-                                                         :duration :end-of-run
-                                                         :value 2
-                                                         :req (req (= target target-ice))})
-                                                      (register-events
-                                                        state side card
-                                                        [(assoc (do-net-damage 3)
-                                                                :event :encounter-ice-ends
-                                                                :duration :end-of-run
-                                                                :req (req (seq (remove :broken (:subroutines (get-card state target-ice))))))])))}]))}]}
+   {:subroutines
+    [{:label "Give +2 strength to next ICE Runner encounters"
+      :req (req this-server)
+      :msg (msg "give +2 strength to the next ICE the Runner encounters")
+      :effect
+      (effect (register-events
+                card
+                [{:event :encounter-ice
+                  :duration :end-of-run
+                  :unregister-once-resolved true
+                  :req (req (and (rezzed? target)
+                                 (not= target card)))
+                  :effect
+                  (req (let [target-ice target]
+                         (register-floating-effect
+                           state side card
+                           {:type :ice-strength
+                            :duration :end-of-run
+                            :value 2
+                            :req (req (= target target-ice))})
+                         (register-events
+                           state side card
+                           [(assoc (do-net-damage 3)
+                                   :event :encounter-ice-ends
+                                   :duration :end-of-run
+                                   :unregister-once-resolved true
+                                   :req (req (seq (remove :broken (:subroutines (get-card state target-ice))))))])))}]))}]}
 
    "Clairvoyant Monitor"
    {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"
@@ -1241,28 +1245,28 @@
                                                       card nil))})]}
 
    "Formicary"
-   {:optional {:prompt "Move Formicary?"
-               :req (req (and (:run @state)
-                              (zero? (:position run))
-                              (not (contains? run :corp-phase-43))
-                              (not (contains? run :successful))))
-               :yes-ability {:msg "rez and move Formicary. The Runner is now approaching Formicary."
-                             :effect (req (move state side card
-                                                [:servers (first (:server run)) :ices]
-                                                {:front true})
-                                          (swap! state assoc-in [:run :position] 1))}
-               :no-ability {:msg "rez Formicary without moving it"}}
+   {:events
+    [{:event :approach-server
+      :condition :derezzed
+      :optional
+      {:prompt "Rez Formicary?"
+       :yes-ability
+       {:msg "rez and move Formicary. The Runner is now approaching Formicary."
+        :async true
+        :effect (req (wait-for (rez state side card nil)
+                               (move state side card
+                                     [:servers (first (:server run)) :ices]
+                                     {:front true})
+                               (swap! state assoc-in [:run :position] 1)
+                               (set-next-phase state :encounter-ice)))}}}]
     :subroutines [{:label "End the run unless the Runner suffers 2 net damage"
+                   :player :runner
                    :async true
-                   :effect (req (wait-for (resolve-ability
-                                            state :runner
-                                            {:optional
-                                             {:prompt "Suffer 2 net damage? (If not, end the run)"
-                                              :yes-ability {:async true
-                                                            :msg "let the Runner suffer 2 net damage"
-                                                            :effect (effect (damage eid :net 2 {:card card :unpreventable true}))}
-                                              :no-ability end-the-run}}
-                                            card nil)))}]}
+                   :prompt "Suffer 2 net damage or end the run?"
+                   :choices ["2 net damage" "End the run"]
+                   :effect (req (if (= target "End the run")
+                                  (end-run state :corp eid card)
+                                  (damage state :runner eid :net 2 {:card card :unpreventable true})))}]}
 
    "Free Lunch"
    {:abilities [(power-counter-ability {:label "Runner loses 1 [Credits]"
@@ -2290,21 +2294,22 @@
      {:subroutines [sub sub]})
 
    "Oduduwa"
-   {:on-encounter {:msg "place 1 advancement counter on Oduduwa"
-                   :async true
-                   :effect (effect (add-prop card :advance-counter 1 {:placed true})
-                                   (continue-ability
-                                     (let [card (get-card state card)
-                                           counters (get-counters card :advancement)]
-                                       {:optional
-                                        {:prompt (str "Place " counters " advancement tokens on another ice?")
-                                         :yes-ability
-                                         {:msg (msg "place " counters
-                                                    " advancement token on " (card-str state target))
-                                          :choices {:card ice?
-                                                    :not-self true}
-                                          :effect (req (add-prop state side target :advance-counter counters {:placed true}))}}})
-                                     (get-card state card) nil))}
+   {:on-encounter
+    {:msg "place 1 advancement counter on Oduduwa"
+     :async true
+     :effect (effect (add-prop card :advance-counter 1 {:placed true})
+                     (continue-ability
+                       (let [card (get-card state card)
+                             counters (get-counters card :advancement)]
+                         {:optional
+                          {:prompt (str "Place " counters " advancement tokens on another ice?")
+                           :yes-ability
+                           {:msg (msg "place " counters
+                                      " advancement token on " (card-str state target))
+                            :choices {:card ice?
+                                      :not-self true}
+                            :effect (req (add-prop state side target :advance-counter counters {:placed true}))}}})
+                       (get-card state card) nil))}
     :subroutines [end-the-run
                   end-the-run]}
 
@@ -2393,8 +2398,7 @@
                 :effect (effect (reset-variable-subs card 0 nil))}]})
 
    "Pop-up Window"
-   {:implementation "Encounter effect is manual."
-    :abilities [(gain-credits-sub 1)]
+   {:on-encounter (gain-credits-sub 1)
     :subroutines [(end-the-run-unless-runner-pays 1)]}
 
    "Pup"
@@ -2743,12 +2747,9 @@
                                         card nil))))}]})
 
    "Snoop"
-   {:implementation "Encounter effect is manual"
-    :abilities [{:req (req (= current-ice card))
-                 :label "Reveal all cards in the Runner's Grip"
-                 :msg (msg "reveal the Runner's Grip ( " (join ", " (map :title (:hand runner))) " )")
-                 :effect (effect (reveal (:hand runner)))}
-                {:async true
+   {:on-encounter {:msg (msg "reveal the Runner's Grip (" (join ", " (map :title (:hand runner))) ")")
+                   :effect (effect (reveal (:hand runner)))}
+    :abilities [{:async true
                  :req (req (pos? (get-counters card :power)))
                  :cost [:power 1]
                  :label "Reveal all cards in Grip and trash 1 card"
@@ -2876,12 +2877,7 @@
     :subroutines [end-the-run]}
 
    "Thoth"
-   {:implementation "Encounter effect is manual"
-    :abilities [(give-tags 1)]
-    :runner-abilities [{:label "Take 1 tag"
-                        :async true
-                        :effect (req (system-msg state :runner "takes 1 tag on encountering Thoth")
-                                     (gain-tags state :corp eid 1))}]
+   {:on-encounter (give-tags 1)
     :subroutines [(trace-ability 4 {:label "Do 1 net damage for each Runner tag"
                                     :async true
                                     :msg (msg "do " (count-tags state) " net damage")
@@ -2969,17 +2965,7 @@
                                :duration :end-of-encounter
                                :unregister-once-resolved true
                                :req (req (get-card state new-card))
-                               :effect
-                               (req (let [target (get-card state new-card)
-                                          curr-subs (:subroutines target)
-                                          new-subs (->> curr-subs
-                                                        (reduce
-                                                          (fn [ice _] (remove-sub ice #(= (:cid card) (:from-cid %))))
-                                                          target)
-                                                        :subroutines
-                                                        (into []))
-                                          new-card (assoc target :subroutines new-subs)]
-                                      (update! state :corp new-card)))}])))}]))}]}
+                               :effect (effect (remove-subs! (get-card state new-card) #(= (:cid card) (:from-cid %))))}])))}]))}]}
 
    "TMI"
    {:trace {:base 2

@@ -1617,21 +1617,26 @@
 
    "Şifr"
    {:in-play [:memory 2]
-    :abilities [{:once :per-turn
-                 :req (req (rezzed? current-ice))
-                 :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
-                 :effect (effect (lose :runner :hand-size 1)
-                                 (update! (assoc card :sifr-target current-ice :sifr-used true))
-                                 (update-ice-strength current-ice))}]
-    :constant-effects [{:type :ice-strength
-                        :req (req (same-card? target (:sifr-target card)))
-                        :value (req (- (get-strength target)))}]
-    :events [{:event :runner-turn-begins
-              :req (req (:sifr-used card))
-              :effect (effect (gain :runner :hand-size 1)
-                              (update! (dissoc card :sifr-used)))}
-             {:event :run-ends
-              :effect (effect (update! (dissoc card :sifr-target)))}]}
+    :events [{:event :encounter-ice
+              :optional
+              {:once :per-turn
+               :prompt "Use Şifr?"
+               :yes-ability
+               {:msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
+                :effect (effect (lose :runner :hand-size 1)
+                                (register-events
+                                  card
+                                  [{:event :runner-turn-begins
+                                    :duration :until-runner-turn-begins
+                                    :effect (effect (gain :runner :hand-size 1))}])
+                                (register-floating-effect
+                                  card
+                                  (let [ice current-ice]
+                                    {:type :ice-strength
+                                     :duration :end-of-encounter
+                                     :req (req (same-card? target ice))
+                                     :value (req (- (get-strength target)))}))
+                                (update-all-ice))}}}]}
 
    "Silencer"
    {:recurring 1

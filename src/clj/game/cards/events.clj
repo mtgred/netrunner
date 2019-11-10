@@ -1047,12 +1047,16 @@
                 card))}
 
    "Feint"
-   {:implementation "Bypass is manual"
-    :async true
+   {:async true
     :makes-run true
     :req (req hq-runnable)
     :effect (effect (make-run eid :hq nil card))
-    :events [{:event :successful-run
+    :events [{:event :encounter-ice
+              :req (req (< (get-in card [:special :bypass-count]) 2))
+              :msg (msg "bypass " (:title target))
+              :effect (req (bypass-ice state)
+                           (update! state side (update-in card [:special :bypass-count] (fnil inc 0))))}
+             {:event :successful-run
               :effect (effect (prevent-access))}]}
 
    "Fisk Investment Seminar"
@@ -2191,12 +2195,18 @@
                   card))})
 
    "Recon"
-   {:implementation "Jack out is manual"
-    :async true
+   {:async true
     :makes-run true
     :prompt "Choose a server"
     :choices (req runnable-servers)
-    :effect (effect (make-run eid target nil card))}
+    :effect (effect (make-run eid target nil card))
+    :events [{:event :encounter-ice
+              :once :per-run
+              :optional
+              {:prompt "Jack out?"
+               :yes-ability {:async true
+                             :msg "jack out"
+                             :effect (effect (jack-out eid))}}}]}
 
    "Rejig"
    (let [valid-target? (fn [card] (and (runner? card)
@@ -2275,13 +2285,14 @@
               :prompt "Select a piece of ICE to bypass"
               :choices {:card ice?}
               :msg (msg "make a run and bypass " (card-str state target))
-              :effect (effect (make-run eid (second (:zone target)) nil card)
-                              (register-events
+              :effect (effect (register-events
                                 card
                                 (let [target-ice target]
                                   [{:event :encounter-ice
                                     :req (req (same-card? target-ice target))
-                                    :effect (req (bypass-ice state))}])))})]
+                                    :msg (msg "bypass " (:title target))
+                                    :effect (req (bypass-ice state))}]))
+                              (make-run eid (second (:zone target)) nil card))})]
      {:async true
       :effect (req (show-wait-prompt state :corp "Runner to spend credits")
                 (let [all-amounts (range (min 3 (inc (get-in @state [:runner :credit]))))
@@ -2491,12 +2502,15 @@
                 card nil))}
 
    "Spear Phishing"
-   {:implementation "Bypass is manual"
-    :async true
+   {:async true
     :makes-run true
     :prompt "Choose a server"
     :choices (req runnable-servers)
-    :effect (effect (make-run eid target nil card))}
+    :effect (effect (make-run eid target nil card))
+    :events [{:event :encounter-ice
+              :req (req (= 1 run-position))
+              :msg (msg "bypass " (:title target))
+              :effect (req (bypass-ice state))}]}
 
    "Spec Work"
    {:async true

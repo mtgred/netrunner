@@ -81,6 +81,7 @@
         descriptor (str f)]
     {:abilities [{:req (req (and current-ice
                                  (rezzed? current-ice)
+                                 (= :encounter-ice (:phase run))
                                  (not (:broken (selector (:subroutines current-ice))))))
                   :break 1
                   :breaks "All"
@@ -187,7 +188,8 @@
    {:implementation "Run requirement not enforced"
     :events [{:event :runner-turn-begins
               :effect (req (toast state :runner "Reminder: Always Be Running requires a run on the first click" "info"))}]
-    :abilities [(assoc (break-sub [:click 2] 1 "All" {:req (req true)}) :once :per-turn)]}
+    :abilities [(assoc (break-sub [:click 2 {:action :bioroid-cost}] 1 "All" {:req (req true)})
+                       :once :per-turn)]}
 
    "Angel Arena"
    {:prompt "How many power counters?"
@@ -239,17 +241,18 @@
                  :msg (msg "turn " (:title target) " faceup")}]}
 
    "\"Baklan\" Bochkin"
-   {:implementation "Encounter effect is manual."
-    :abilities [{:label "Place 1 power counter"
-                 :once :per-run
-                 :msg (msg "places 1 power counter on " (:title card))
-                 :effect (effect (add-counter card :power 1))}
-                {:label "Derez a piece of ice currently being encountered"
+   {:events [{:event :encounter-ice
+              :once :per-run
+              :msg (msg "places 1 power counter on " (:title card))
+              :effect (effect (add-counter card :power 1))}]
+    :abilities [{:label "Derez a piece of ice currently being encountered"
                  :msg "derez a piece of ice currently being encountered and take 1 tag"
                  :req (req (and current-ice
                                 (rezzed? current-ice)
+                                (= :encounter-ice (:phase run))
                                 (<= (get-strength current-ice) (get-counters (get-card state card) :power))))
                  :cost [:trash]
+                 :async true
                  :effect (effect (derez current-ice)
                                  (gain-tags eid 1))}]}
 
@@ -423,9 +426,11 @@
                  :effect (effect (register-events
                                    card
                                    [{:event :approach-ice
+                                     :unregister-once-resolved true
+                                     :duration :end-of-run
+                                     :once :per-run
                                      :optional
                                      {:prompt "Pay to bypass?"
-                                      :once :per-run
                                       :req (req (and (rezzed? target)
                                                      (can-pay? state :runner eid card nil
                                                                [:credit (get-strength target)])))
@@ -1175,10 +1180,9 @@
               :effect (effect (gain-credits (get-agenda-points state :runner target)))}]}
 
    "Hunting Grounds"
-   {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ICE"
-                 :msg "prevent a \"when encountered\" ability on a piece of ICE"
-                 :once :per-turn}
-                (letfn [(ri [cards]
+   {:events [{:event :encounter-ice
+              }]
+    :abilities [(letfn [(ri [cards]
                           {:async true
                            :effect (req (if (seq cards)
                                           (wait-for (runner-install state side (first cards) {:facedown true})
@@ -1205,7 +1209,8 @@
 
    "Ice Carver"
    {:constant-effects [{:type :ice-strength
-                        :req (req (same-card? current-ice target))
+                        :req (req (and (= :encounter-ice (:phase run))
+                                       (same-card? current-ice target)))
                         :value -1}]}
 
    "Inside Man"
@@ -1431,9 +1436,8 @@
                                    :msg "add it to their score area as an agenda worth 2 points"} card nil)))}]}
 
    "Logic Bomb"
-   {:implementation "Bypass effect is manual"
-    :abilities [{:label "Bypass the encountered ice"
-                 :req (req (and (:run @state)
+   {:abilities [{:label "Bypass the encountered ice"
+                 :req (req (and (= :encounter-ice (:phase run))
                                 (rezzed? current-ice)))
                  :msg (msg "bypass "
                            (:title current-ice)
@@ -1441,7 +1445,8 @@
                              (str " and loses "
                                   (apply str (repeat (:click runner) "[Click]")))))
                  :cost [:trash]
-                 :effect (effect (lose :click (:click runner)))}]}
+                 :effect (effect (bypass-ice state)
+                                 (lose :click (:click runner)))}]}
 
    "London Library"
    {:abilities [{:async true

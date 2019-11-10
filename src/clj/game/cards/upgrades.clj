@@ -1360,6 +1360,23 @@
                                    :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")}
                                   card nil)))}]}
 
+   "The Twins"
+   {:events [{:event :pass-ice
+              :async true
+              :req (req (and this-server
+                             (rezzed? target)
+                             (seq (filter #(same-card? :title % target) (:hand corp)))))
+              :prompt "Select a copy of the ICE just passed"
+              :choices {:req (req (and (in-hand? target)
+                                       (ice? target)
+                                       (same-card? :title current-ice target)))}
+              :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")
+              :effect (req (reveal state side target)
+                           (swap! state update-in [:run]
+                                  #(assoc % :position (inc (:position run))))
+                           (set-next-phase state side :encounter-ice)
+                           (trash state side eid (assoc target :seen true) nil))}]}
+
    "Tori Hanzō"
    {:events [{:event :pre-resolve-damage
               :once :per-run
