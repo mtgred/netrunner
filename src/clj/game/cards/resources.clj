@@ -2373,6 +2373,40 @@
                                                          :cost-bonus -1}))
                  :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]}
 
+   "The Back"
+   {:implementation "Adding power tokens is manual on most cards"
+    :events [{:event :spent-credits-from-card
+              :req (req (and (:run @state)
+                             (hardware? target)
+                             (not (used-this-turn? (:cid card) state))))
+              :once :per-turn
+              :async true
+              :effect (effect (system-msg (str "places 1 power token on " (:title card)))
+                              (add-counter card :power 1))}]
+    :abilities [{:label "Manually place 1 power token"
+                 :req (req (and (:run @state)
+                                (not (used-this-turn? (:cid card) state))))
+                 :effect (effect (system-msg (str "manually places 1 power token on " (:title card)))
+                                 (add-counter card :power 1))}
+                {:label "Shuffle back cards with [Trash] abilities"
+                 :req (req (and (pos? (get-counters card :power))
+                                true)) ;; xxx: shufflable cards
+                 :cost [:click 1 :remove-from-game]
+                 :async true
+                 :effect (effect (continue-ability 
+                                   {:show-discard true
+                                    :choices {:max (* 2 (get-counters card :power))
+                                              :req (req (and (runner? target)
+                                                             (in-discard? target)
+                                                             (some #(= :trash (first %)) (merge-costs (map :cost (:abilities (card-def target)))))))}
+                                    :msg (msg "shuffle " (join ", " (map :title targets))
+                                              " into their Stack")
+                                    :effect (req (system-msg state side (str ))
+                                                 (doseq [c targets] (move state side c :deck))
+                                                 (shuffle! state side :deck)
+                                                 (effect-completed state side eid))}
+                                   card nil))}]}
+
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"
     :effect (req (swap! state assoc-in [:corp :cannot-win-on-points] true))
