@@ -1055,7 +1055,8 @@
    "Ghost Runner"
    {:data {:counter {:credit 3}}
     :abilities [{:msg "gain 1 [Credits]"
-                 :req (req (:run @state))
+                 :req (req (and (:run @state)
+                                (pos? (get-counters card :credit))))
                  :async true
                  :effect (req (add-counter state side card :credit -1)
                               (gain-credits state side 1)
@@ -1828,7 +1829,8 @@
    {:data {:counter {:credit 4}}
     :install-cost-bonus (req (if (some #{:hq} (:successful-run runner-reg)) -2 0))
     :abilities [{:msg "gain 1 [Credits]"
-                 :req (req (:run @state))
+                 :req (req (and (:run @state)
+                                (pos? (get-counters card :credit))))
                  :async true
                  :effect (req (add-counter state side card :credit -1)
                               (gain-credits state side 1)
