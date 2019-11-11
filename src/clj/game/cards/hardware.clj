@@ -1181,6 +1181,31 @@
     :interactions {:pay-credits {:req (req (= :play (:source-type eid)))
                                  :type :recurring}}}
 
+   "Prognostic Q-Loop"
+   {:events [{:event :run
+              :req (req (first-event? state side :run))
+              :interactive (get-autoresolve :auto-fire (complement never?))
+              :silent (get-autoresolve :auto-fire never?)
+              :optional {:prompt "Look at top 2 cards of the stack?"
+                         :player :runner
+                         :req (req (pos? (count (:deck runner))))
+                         :autoresolve (get-autoresolve :auto-fire)
+                         :yes-ability {:msg "look at the top 2 cards of the stack"
+                                       :effect (effect (prompt! card (str "The top two cards of your Stack are "
+                                                                          (join ", " (map :title (take 2 (:deck runner))))
+                                                                          ".") ["OK"] {}))}}}]
+    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
+                {:label "Reveal top card of stack. Install, if program or hardware"
+                 :once :per-turn
+                 :cost [:credit 1]
+                 :req (req (pos? (count (:deck runner))))
+                 :msg (msg "reveal the top card of the stack: " (:title (first (:deck runner))))
+                 :optional {:req (req (or (program? (first (:deck runner)))
+                                          (hardware? (first (:deck runner)))))
+                            :prompt (msg "Install " (:title (first (:deck runner))) "?")
+                            :async true
+                            :yes-ability {:effect (effect (runner-install eid (first (:deck runner)) nil))}}}]}
+
    "Public Terminal"
    {:recurring 1
     :interactions {:pay-credits {:req (req (and (= :play (:source-type eid))

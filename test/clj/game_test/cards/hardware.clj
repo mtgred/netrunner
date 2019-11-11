@@ -1905,6 +1905,75 @@
                            (play-from-hand state :runner "Dirty Laundry")
                            (click-card state :runner ppvp))))))
 
+(deftest prognostic-q-loop
+  ;; Prognostic Q-Loop
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "Dirty Laundry" "Equivocation" "Prognostic Q-Loop"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Dirty Laundry" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Equivocation" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B C D E
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (run-on state :hq)
+      (click-prompt state :runner "Yes")
+      (is (= "The top two cards of your Stack are Au Revoir, Bankroll." (-> (get-runner) :prompt first :msg)))
+      (click-prompt state :runner "OK")
+      (card-ability state :runner (get-hardware state 0) 1)
+      (click-prompt state :runner "Yes")
+      (is (= "Au Revoir" (:title (get-program state 0))) "Installed Au Revoir")
+      (card-ability state :runner (get-hardware state 0) 1)
+      (is (empty? (:prompt (get-runner))) "Can use ability only once per turn")
+      (run-jack-out state)
+      (run-on state :hq)
+      (is (empty? (:prompt (get-runner))) "Only trigger on the first run of the turn")))
+  (testing "Does not reveal if first run has been before install"
+    (do-game
+      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B
+      (run-empty-server state :archives)
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (run-on state :hq)
+      (is (empty? (:prompt (get-runner))) "Does not trigger on second run even if installed later")))
+  (testing "Auto-resolve"
+    (do-game
+      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (letfn [(toggle-q-loop [setting]
+                (card-ability state :runner (get-hardware state 0) 0)
+                (click-prompt state :runner setting)
+                (is (empty? (:prompt (get-runner))) "Prompt closed"))]
+        (doseq [set-to ["Never" "Ask" "Always"]]
+          (toggle-q-loop set-to)
+          (run-on state "Archives")
+          (case set-to
+            "Never"
+            (is (empty? (:prompt (get-runner))) "Does not show prompt")
+            "Always"
+            (do (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
+                (click-prompt state :runner "OK")
+                (is (empty? (:prompt (get-runner))) "Look prompt closed"))
+            "Ask"
+            (do (is (not-empty (:prompt (get-runner))) "Does show trigger prompt")
+                (click-prompt state :runner "Yes")
+                (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
+                (is (not-empty (:prompt (get-runner))) "Does show look prompt")
+                (click-prompt state :runner "OK")
+                (is (empty? (:prompt (get-runner))) "Look prompt closed")))
+          (run-jack-out state)
+          (take-credits state :runner)
+          (take-credits state :corp))))))
+
 (deftest public-terminal
   ;; Public Terminal
   (testing "Pay-credits prompt"
