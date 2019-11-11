@@ -3223,6 +3223,22 @@
     (is (= 1 (count (get-program state))) "Installed Nerve Agent")
     (is (= 4 (:credit (get-runner))) "Paid 0 credits")))
 
+(deftest moshing
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Moshing" (qty "Lamprey" 3)]}})
+      (take-credits state :corp)
+      (is (= 0 (count (:discard (get-runner)))) "Runner has no cards in heap")
+      (is (= 4 (count (:hand (get-runner)))) "Runner starts with 4 cards")
+      (is (not (find-card "Sure Gamble" (:hand (get-runner)))) "Runner does not have Sure Gamble in grip")
+      (play-from-hand state :runner "Moshing")
+      (is (= 0 (count (:discard (get-runner)))) "Moshing is still in play")
+      (dotimes [card 3] (click-card state :runner (nth (:hand (get-runner)) card)))
+      (is (= 4 (count (:discard (get-runner)))) "Runner trashed 3 cards and discarded Moshing")
+      (is (= 3 (count (:hand (get-runner)))) "Runner draws 3 cards")
+      (is (find-card "Sure Gamble" (:hand (get-runner))) "Runner drew Sure Gamble"))))
+
 (deftest net-celebrity
   ;; Net-celebrity
   (testing "Pay-credits prompt"
