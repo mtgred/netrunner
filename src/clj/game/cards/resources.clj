@@ -2373,6 +2373,37 @@
                                                          :cost-bonus -1}))
                  :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]}
 
+   "The Back"
+   {:implementation "Adding power tokens is manual on most cards"
+    :events [{:event :spent-credits-from-card
+              :req (req (and (:run @state)
+                             (hardware? target)
+                             (not (used-this-turn? (:cid card) state))))
+              :once :per-turn
+              :async true
+              :effect (effect (system-msg (str "places 1 power token on " (:title card)))
+                              (add-counter card :power 1))}]
+    :abilities [{:label "Manually place 1 power token"
+                 :req (req (and (:run @state)
+                                (not (used-this-turn? (:cid card) state))))
+                 :effect (effect (system-msg (str "manually places 1 power token on " (:title card)))
+                                 (add-counter card :power 1))}
+                {:label "Shuffle back cards with [Trash] abilities"
+                 :req (req (and (pos? (get-counters card :power))
+                                (some has-trash-ability? (:discard runner))))
+                 :cost [:click 1 :remove-from-game]
+                 :show-discard true
+                 :choices {:max (req (* 2 (get-counters card :power)))
+                           :req (req (and (runner? target)
+                                          (in-discard? target)
+                                          (has-trash-ability? target)))}
+                 :msg (msg "shuffle " (join ", " (map :title targets))
+                           " into their Stack")
+                 :effect (req (system-msg state side (str ))
+                              (doseq [c targets] (move state side c :deck))
+                              (shuffle! state side :deck)
+                              (effect-completed state side eid))}]}
+
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"
     :effect (req (swap! state assoc-in [:corp :cannot-win-on-points] true))

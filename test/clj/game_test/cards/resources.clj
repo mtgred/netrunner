@@ -3648,6 +3648,48 @@
       (is (= 2 (count (get-program state))) "2 Programs installed")
       (is (= 6 (:credit (get-runner))) "Artist discount applied new turn"))))
 
+(deftest the-back
+  ;; The Back
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:hand ["The Back" (qty "Spy Camera" 2) "Lockpick" "Refractor"]
+                          :discard [(qty "Spy Camera" 4) "Sure Gamble" "All-nighter" "Daily Casts" "Bankroll"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Back")
+      (play-from-hand state :runner "Lockpick")
+      (play-from-hand state :runner "Refractor")
+      (let [tb (get-resource state 0)
+            lp (get-hardware state 0)
+            refr (get-program state 0)]
+        (is (= 0 (get-counters (refresh tb) :power)) "No counters on The Back at start")
+        (run-on state :hq)
+        (card-ability state :runner refr 1)
+        (click-card state :runner lp)
+        (is (= 1 (get-counters (refresh tb) :power)) "Added 1 counter to The Back")
+        (run-jack-out state))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Spy Camera")
+      (let [tb (get-resource state 0)
+            sc (get-hardware state 1)]
+        (run-on state :hq)
+        (card-ability state :runner sc 1)
+        (card-ability state :runner tb 0)
+        (is (= 2 (get-counters (refresh tb) :power)) "Manually added 1 counter to The Back")
+        (click-prompt state :runner "OK")
+        (run-jack-out state)
+        (let [heapsize (count (:discard (get-runner)))]
+          (card-ability state :runner tb 1)
+          (is (clojure.string/starts-with? (-> (get-runner) :prompt first :msg) "Select up to 4") "Runner gets up to 4 choices")
+          (click-card state :runner (find-card "Spy Camera" (:discard (get-runner))))
+          (click-card state :runner (find-card "Bankroll" (:discard (get-runner))))
+          (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
+          (click-card state :runner (find-card "All-nighter" (:discard (get-runner))))
+          (click-card state :runner (find-card "Daily Casts" (:discard (get-runner))))
+          (click-prompt state :runner "Done")
+          (is (= (- heapsize 3) (count (:discard (get-runner)))) "Selected three of those cards to shuffle back")
+          (is (= 1 (count (:rfg (get-runner)))) "The Back removed from game"))))))
+
 (deftest the-black-file
   ;; The Black File - Prevent Corp from winning by agenda points
   (testing "Basic test"

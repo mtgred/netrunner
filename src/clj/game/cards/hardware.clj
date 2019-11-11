@@ -1514,7 +1514,7 @@
                                   (do (clear-wait-prompt state :corp)
                                       (effect-completed state side eid)))))}
                 {:label "Look at the top card of R&D"
-                 :msg "trash it and look at the top card of R&D"
+                 :msg "look at the top card of R&D"
                  :cost [:trash]
                  :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {}))}]}
 
