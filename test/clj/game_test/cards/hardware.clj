@@ -985,6 +985,71 @@
       (is (= 2 (get-counters (refresh aum) :virus)) "Aumakua gained 1 counter")
       (is (zero? (get-counters (refresh fc) :virus)) "Friday Chip lost 1 counter"))))
 
+(deftest gachapon
+  ;; Gachapon
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "DDoS" "Equivocation" "Falsified Credentials" "Gachapon"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "DDoS" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Equivocation" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Falsified Credentials" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B C D E F
+      (play-from-hand state :runner "Gachapon")
+      (card-ability state :runner (get-hardware state 0) 0)
+      (is (= (-> (get-runner) :prompt first :msg)
+             "The set aside cards are: Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials")
+          "Shown correct six cards")
+      (click-prompt state :runner "OK")
+      (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
+      (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
+      (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
+      (changes-val-macro -1 (:credit (get-runner))
+                         "Paid 1c to install DDoS"
+                         (click-prompt state :runner "DDoS"))
+      (is (= 5 (count (:deck (get-runner)))) "5 cards remain in deck")
+      (click-prompt state :runner "Au Revoir")
+      (click-prompt state :runner "Clone Chip")
+      (click-prompt state :runner "Equivocation")
+      (click-prompt state :runner "Start over")
+      (click-prompt state :runner "Au Revoir")
+      (click-prompt state :runner "Bankroll")
+      (click-prompt state :runner "Clone Chip")
+      (is (= 1 (count (:discard (get-runner)))) "Still just Gachapon in heap")
+      (is (= 0 (count (:rfg (get-runner)))) "No cards removed from game")
+      (click-prompt state :runner "Done")
+      (is (= 1 (count (:discard (get-runner)))) "Still just Gachapon in heap")
+      (is (= 3 (count (:deck (get-runner)))) "3 cards remain in deck")
+      (is (= 2 (count (:rfg (get-runner)))) "Removed 2 cards from game")
+      (is (empty? (:prompt (get-runner))) "No more prompts")
+      (is (empty? (:prompt (get-corp))) "Waiting prompt cleared")))
+  (testing "Shuffling with less than 3 cards set aside"
+    (do-game
+      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "Gachapon"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B C
+      (play-from-hand state :runner "Gachapon")
+      (card-ability state :runner (get-hardware state 0) 0)
+      (click-prompt state :runner "OK")
+      (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Paid 0c to install Bankroll"
+                         (click-prompt state :runner "Bankroll"))
+      (click-prompt state :runner "Au Revoir")
+      (click-prompt state :runner "Clone Chip")
+      (click-prompt state :runner "Done")
+      (is (= 1 (count (:discard (get-runner)))) "Just Gachapon in heap")
+      (is (= 2 (count (:deck (get-runner)))) "2 cards remain in deck")
+      (is (= 0 (count (:rfg (get-runner)))) "Removed no cards from game")
+      (is (empty? (:prompt (get-runner))) "No more prompts")
+      (is (empty? (:prompt (get-corp))) "Waiting prompt cleared"))))
+
 (deftest gebrselassie
   ;; Gebrselassie
   (do-game

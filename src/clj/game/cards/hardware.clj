@@ -649,6 +649,72 @@
                                    ab (if (> amt-trashed 1) mult-ab sing-ab)]
                                (continue-ability state side ab card targets)))}]})
 
+   "Gachapon"
+   (letfn [(shuffle-end [remove-from-game shuffle-back]
+             {:msg (msg "shuffle " (join ", " (map :title shuffle-back)) " into the stack"
+                        " and remove " (join ", " (map :title remove-from-game)) " from the game")
+              :effect (req
+                        (doseq [c remove-from-game]
+                          (move state side c :rfg))
+                        (doseq [c shuffle-back]
+                          (move state side c :deck))
+                        (shuffle! state side :deck)
+                        (clear-wait-prompt state :corp))})
+           (shuffle-next [set-aside target to-shuffle]
+             (let [set-aside (remove-once #(= % target) set-aside)
+                   to-shuffle (if target
+                                (concat to-shuffle [target])
+                                [])
+                   finished? (or (= 3 (count to-shuffle))
+                                 (empty? set-aside))]
+               {:prompt (msg (if finished?
+                               (str "Removing: " (if (not-empty set-aside)
+                                                   (join ", " (map :title set-aside))
+                                                   "nothing")
+                                    "[br]Shuffling: " (if (not-empty to-shuffle)
+                                                        (join ", " (map :title to-shuffle))
+                                                        "nothing"))
+                               (str "Choose " (- 3 (count to-shuffle)) " more cards to shuffle back."
+                                    (when (not-empty to-shuffle)
+                                      (str "[br]Currently shuffling back: " (join ", " (map :title to-shuffle)))))))
+                :async true
+                :not-distinct true ; show cards separately
+                :choices (req (if finished?
+                                ["Done" "Start over"]
+                                (seq set-aside)))
+                :effect (req (if finished?
+                               (if (= "Done" target)
+                                 (continue-ability state side
+                                                   (shuffle-end set-aside to-shuffle)
+                                                   card nil)
+                                 (continue-ability state side
+                                                   (shuffle-next (sort-by :title (concat set-aside to-shuffle)) nil nil)
+                                                   card nil))
+                               (continue-ability state side
+                                                 (shuffle-next set-aside target to-shuffle)
+                                                 card nil)))}))]
+     {:abilities [{:label "Set aside 6 cards and resolve effect"
+                   :cost [:trash]
+                   :prompt (msg "The set aside cards are: " (join ", " (map :title (take 6 (:deck runner)))))
+                   :msg (msg "set aside 6 cards and start resolving the effect")
+                   :choices (req ["OK"])
+                   :async true
+                   :effect (req (let [set-aside (sort-by :title (take 6 (:deck runner)))]
+                                  (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
+                                  (continue-ability state side
+                                                    {:prompt "Choose a card to install"
+                                                     :async true
+                                                     :choices (req (filter #(or (program? %)
+                                                                                (and (resource? %)
+                                                                                     (has-subtype? % "Virtual")))
+                                                                           set-aside))
+                                                     :cancel-effect (effect (continue-ability (shuffle-next set-aside nil nil) card nil))
+                                                     :effect (req (let [to-install target
+                                                                        set-aside (remove-once #(= % target) set-aside)]
+                                                                    (wait-for (runner-install state side (assoc eid :source card :source-type :ability) target {:cost-bonus -2})
+                                                                              (continue-ability state side (shuffle-next set-aside nil nil) card nil))))}
+                                                    card nil)))}]})
+
    "Gebrselassie"
    {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
                  :cost [:click 1]
