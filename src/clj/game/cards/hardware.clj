@@ -652,14 +652,14 @@
    "Gachapon"
    (letfn [(shuffle-end [remove-from-game shuffle-back]
              {:msg (msg "shuffle " (join ", " (map :title shuffle-back)) " into the stack"
-                     " and remove " (join ", " (map :title remove-from-game)) " from the game")
+                        " and remove " (join ", " (map :title remove-from-game)) " from the game")
               :effect (req
-                       (doseq [c remove-from-game]
-                         (move state side c :rfg))
-                       (doseq [c shuffle-back]
-                         (move state side c :deck))
-                       (shuffle! state side :deck)
-                       (clear-wait-prompt state :corp))})
+                        (doseq [c remove-from-game]
+                          (move state side c :rfg))
+                        (doseq [c shuffle-back]
+                          (move state side c :deck))
+                        (shuffle! state side :deck)
+                        (clear-wait-prompt state :corp))})
            (shuffle-next [set-aside target to-shuffle]
              (let [set-aside (remove-once #(= % target) set-aside)
                    to-shuffle (if target
