@@ -784,3 +784,7 @@
   ([state side card & targets]
    (merge-costs
      (get-effects state side card :run-additional-cost targets))))
+
+(defn has-trash-ability?
+  [card]
+  (some #(= :trash (first %)) (merge-costs (map :cost (:abilities (card-def card))))))

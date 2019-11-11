@@ -2390,13 +2390,13 @@
                                  (add-counter card :power 1))}
                 {:label "Shuffle back cards with [Trash] abilities"
                  :req (req (and (pos? (get-counters card :power))
-                                true)) ;; xxx: shufflable cards
+                                (some has-trash-ability? (:discard runner))))
                  :cost [:click 1 :remove-from-game]
                  :show-discard true
                  :choices {:max (req (* 2 (get-counters card :power)))
                            :req (req (and (runner? target)
                                           (in-discard? target)
-                                          (some #(= :trash (first %)) (merge-costs (map :cost (:abilities (card-def target)))))))}
+                                          (has-trash-ability? target)))}
                  :msg (msg "shuffle " (join ", " (map :title targets))
                            " into their Stack")
                  :effect (req (system-msg state side (str ))
