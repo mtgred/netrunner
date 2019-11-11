@@ -1173,6 +1173,25 @@
       (is (= 1 (count (:rfg (get-runner)))) "Hippo RFGed")
       (is (empty? (get-hardware state)) "Hippo removed"))))
 
+(deftest keiko
+  ;; Keiko
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Mystic Maemi" "Keiko" "Sure Gamble"]}})
+      (take-credits state :corp)
+      (changes-val-macro -2 (:credit (get-runner))
+                         "Got 1c back from installing Keiko"
+                         (play-from-hand state :runner "Keiko"))
+      (changes-val-macro -1 (:credit (get-runner))
+                         "Only triggers once per turn"
+                         (play-from-hand state :runner "Mystic Maemi"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (changes-val-macro 6 (:credit (get-runner))
+                         "Paid 4 for Sure Gamble. Got 9 from Sure Gamble and 1 from Keiko"
+                         (play-from-hand state :runner "Sure Gamble")
+                         (click-card state :runner (get-resource state 0))))))
+
 (deftest knobkierie
   ;; Knobkierie - first successful run, place a virus counter on a virus program
   (do-game
