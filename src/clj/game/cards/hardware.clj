@@ -668,18 +668,22 @@
                    finished? (or (= 3 (count to-shuffle))
                                  (empty? set-aside))]
                {:prompt (msg (if finished?
-                               (str "Removing: " (join ", " (map :title set-aside))
-                                    "[br]Shuffling: " (join ", " (map :title to-shuffle)))
+                               (str "Removing: " (if (not-empty set-aside)
+                                                   (join ", " (map :title set-aside))
+                                                   "nothing")
+                                    "[br]Shuffling: " (if (not-empty to-shuffle)
+                                                        (join ", " (map :title to-shuffle))
+                                                        "nothing"))
                                (str "Choose " (- 3 (count to-shuffle)) " more cards to shuffle back."
                                     (when (not-empty to-shuffle)
                                       (str "[br]Currently shuffling back: " (join ", " (map :title to-shuffle)))))))
                 :async true
                 :not-distinct true ; show cards separately
                 :choices (req (if finished?
-                                ["OK" "Start over"]
+                                ["Done" "Start over"]
                                 (seq set-aside)))
                 :effect (req (if finished?
-                               (if (= "OK" target)
+                               (if (= "Done" target)
                                  (continue-ability state side
                                                    (shuffle-end set-aside to-shuffle)
                                                    card nil)
