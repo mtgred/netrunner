@@ -777,6 +777,69 @@
         (is (zero? (get-counters (refresh c) :virus)) "Consume loses counters")
         (is (zero? (get-counters (refresh h) :virus)) "Hivemind loses counters")))))
 
+(deftest cordyceps
+  ;; Cordyceps
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Enigma" "Hedge Fund"]}
+                 :runner {:hand ["Cordyceps"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cordyceps")
+      (run-on state "HQ")
+      (let [iw (get-ice state :hq 0)
+            enig (get-ice state :hq 1)
+            cor (get-program state 0)]
+        (is (= 2 (get-counters (refresh cor) :virus)) "Cordyceps was installed with 2 virus tokens")
+        (run-continue state)
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "Yes")
+        (click-card state :runner (refresh enig))
+        (click-card state :runner (refresh iw))
+        (click-prompt state :runner "No action"))
+      (let [iw (get-ice state :hq 1)
+            enig (get-ice state :hq 0)
+            cor (get-program state 0)]
+        (is (= "Ice Wall" (:title iw)) "Ice Wall now outermost ice")
+        (is (= "Enigma" (:title enig)) "Enigma now outermost ice")
+        (is (= 1 (get-counters (refresh cor) :virus)) "Used 1 virus token"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "No prompt on uniced server")))
+  (testing "No prompt with less than 2 ice installed"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Hedge Fund"]}
+                 :runner {:hand ["Cordyceps"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cordyceps")
+      (run-on state "HQ")
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice")))
+  (testing "No prompt when empty"
+    (do-game
+      (new-game {:runner {:hand ["Cordyceps"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cordyceps")
+      (take-credits state :runner)
+      (core/purge state :corp)
+      (take-credits state :corp)
+      (is (= 0 (get-counters (get-program state 0) :virus)) "Purged virus tokens")
+      (run-on state "HQ")
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice"))))
+
 (deftest corroder
   ;; Corroder
   (do-game
