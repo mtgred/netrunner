@@ -228,7 +228,7 @@
                                  (zero? (:position run))))
                   :psi {:not-equal {:msg "end the run"
                                     :effect (effect (end-run eid card))}}}]
-     {:events [(assoc ability :event :approach-server)]
+     {:events [(assoc ability :event :pass-all-ice)]
       :abilities [ability]})
 
    "Cayambe Grid"
@@ -290,11 +290,12 @@
    "Code Replicator"
    {:abilities [{:label "Force the runner to approach the passed piece of ice again"
                  :req (req (and this-server
-                                (> (count (get-run-ices state)) (:position run))
-                                (:rezzed (get-in (:ices (card->server state card)) [(:position run)]))))
+                                (< run-position (count (get-run-ices state)))
+                                (rezzed? (get-in (:ices (card->server state card)) [(:position run)]))))
                  :effect (req (let [icename (:title (get-in (:ices (card->server state card)) [(:position run)]))]
                                 (trash state :corp (get-card state card))
                                 (swap! state update-in [:run] #(assoc % :position (inc (:position run))))
+                                (set-next-phase state :approach-ice)
                                 (system-msg state :corp (str "trashes Code Replicator to make the runner approach "
                                                              icename " again"))))}]}
 
@@ -385,7 +386,7 @@
      {:events [{:event :approach-server
                 :async true
                 :effect (effect (show-wait-prompt :runner "Corp to use Daruma")
-                          (continue-ability :corp (ability card) card nil))}]})
+                                (continue-ability :corp (ability card) card nil))}]})
 
    "Dedicated Technician Team"
    {:recurring 2
@@ -767,7 +768,7 @@
 
    "Letheia Nisei"
    (let [ability {:label "Force runner to re-approach outer ice"
-                  :once :per-turn
+                  :once :per-run
                   :req (req (and this-server
                                  (zero? (:position run))))
                   :psi {:not-equal
@@ -782,6 +783,7 @@
                                :yes-ability
                                {:msg "force the Runner to approach outermost piece of ice"
                                 :effect (req (swap! state assoc-in [:run :position] (count run-ices))
+                                             (set-next-phase state :approach-ice)
                                              (trash state side eid card {:unpreventable true}))}
                                :end-effect (effect (clear-wait-prompt :runner))}}
                              card nil))}}}]
@@ -846,7 +848,8 @@
 
    "Midori"
    {:abilities
-    [{:req (req this-server)
+    [{:req (req (and this-server
+                     (= :approach-ice (:phase run))))
       :label "Swap the ICE being approached with a piece of ICE from HQ"
       :prompt "Select a piece of ICE"
       :choices {:card #(and (ice? %)
@@ -854,18 +857,17 @@
       :once :per-run
       :msg (msg "swap " (card-str state current-ice) " with a piece of ICE from HQ")
       :effect (req (let [hqice target
-                         c current-ice]
-                     (resolve-ability
-                       state side
-                       {:effect (req (let [newice (assoc hqice :zone (:zone c))
-                                           cndx (ice-index state c)
-                                           ices (get-in @state (cons :corp (:zone c)))
-                                           newices (apply conj (subvec ices 0 cndx) newice (subvec ices cndx))]
-                                       (swap! state assoc-in (cons :corp (:zone c)) newices)
-                                       (swap! state update-in [:corp :hand]
-                                              (fn [coll] (remove-once #(same-card? % hqice) coll)))
-                                       (trigger-event state side :corp-install newice)
-                                       (move state side c :hand)))} card nil)))}]}
+                         c current-ice
+                         newice (assoc hqice :zone (:zone c))
+                         cndx (ice-index state c)
+                         ices (get-in @state (cons :corp (:zone c)))
+                         newices (apply conj (subvec ices 0 cndx) newice (subvec ices cndx))]
+                     (swap! state assoc-in (cons :corp (:zone c)) newices)
+                     (swap! state update-in [:corp :hand]
+                            (fn [coll] (remove-once #(same-card? % hqice) coll)))
+                     (trigger-event state side :corp-install newice)
+                     (move state side c :hand)
+                     (set-next-phase state :approach-ice)))}]}
 
    "Mumbad City Grid"
    {:abilities [{:req (req (let [num-ice (count run-ices)]

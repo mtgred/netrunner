@@ -5,7 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(deftest ^:test-refresh/focus run-timing
+(deftest run-timing
   (testing "with no ice"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -164,5 +164,4 @@
         (core/rez state :corp (get-ice state :remote1 1))
         (card-ability state :corp (get-ice state :remote1 1) 0)
         (is (nil? (:run @state)) "Pressing Done properly handles the ended run")
-        (is (= credits (:credit (get-runner))) "Runner shouldn't lose any credits to Tollbooth"))))
-  )
+        (is (= credits (:credit (get-runner))) "Runner shouldn't lose any credits to Tollbooth")))))

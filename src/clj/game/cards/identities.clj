@@ -964,10 +964,12 @@
                   :choices {:card #(and (ice? %)
                                         (in-hand? %))}
                   :async true
-                  :effect (req (corp-install state side eid target (zone->name (first (:server run)))
-                                             {:ignore-all-cost true
-                                              :front true})
-                               (swap! state assoc-in [:run :position] 1))}]
+                  :effect (req (wait-for (corp-install state side target (zone->name (first (:server run)))
+                                                       {:ignore-all-cost true
+                                                        :front true})
+                                         (swap! state assoc-in [:run :position] 1)
+                                         (set-next-phase state :approach-ice)
+                                         (effect-completed state side eid)))}]
      {:abilities [ability]
       :events [{:event :approach-server
                 :req (req (can-trigger? state side ability card nil))

@@ -6,7 +6,7 @@
             [hawk.core :as hawk]
             [game.core :as core]
             [game.core.card-defs :refer [reset-card-defs]]
-            [game.core.card :refer [make-cid get-card]]
+            [game.core.card :refer [make-cid get-card rezzed?]]
             [game.utils :as utils :refer [server-card]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
@@ -173,11 +173,20 @@
                                   :ability ability
                                   :targets targets})))
 
-(defn card-subroutine
+(defmacro card-subroutine
   "Trigger a piece of ice's subroutine with the 0-based index."
-  [state side card ability]
-  (core/play-subroutine state side {:card (get-card state card)
-                                    :subroutine ability}))
+  [state _ card ability]
+  `(let [ice# (get-card ~state ~card)
+         run# (:run @~state)]
+     (is (rezzed? ice#) (str (:title ice#) " is active"))
+     (is (some? run#) "There is a run happening")
+     (is (= :encounter-ice (:phase run#)) "Subroutines can be resolved")
+     (when (and (some? run#)
+                (not (:no-action run#))
+                (= :encounter-ice (:phase run#)))
+       (core/play-subroutine ~state :corp {:card ice#
+                                           :subroutine ~ability})
+       true)))
 
 (defn card-side-ability
   ([state side card ability] (card-side-ability state side card ability nil))
@@ -282,43 +291,92 @@
        (is (not (get-in @state [:runner :prompt])) "A prompt is not shown"))
      (is (get-in @state [:run :successful]) "Run is marked successful"))))
 
-(defn run-on
+(defmacro run-on
   "Start run on specified server."
   [state server]
-  (core/click-run state :runner {:server server}))
+  `(let [run# (:run @~state)]
+     (is (not run#) "There is no existing run")
+     (is (pos? (get-in @~state [:runner :click])) "Runner can make a run")
+     (when (and (not run#)
+                (get-in @~state [:runner :click]))
+       (core/click-run ~state :runner {:server ~server})
+       true)))
 
-(defn run-next-phase
+(defmacro run-next-phase
   [state]
-  (core/start-next-phase state :runner nil))
+  `(let [run# (:run @~state)]
+     (is (some? run#) "There is a run happening")
+     (is (:next-phase run#) "The next phase has been set")
+     (when (and (some? run#)
+                (:next-phase run#))
+       (core/start-next-phase ~state :runner nil)
+       true)))
 
-(defn run-continue
+(defmacro run-continue
   "No action from corp and continue for runner to proceed in current run."
   [state]
-  (core/no-action state :corp nil)
-  (core/continue state :runner nil))
+  `(let [run# (:run @~state)]
+     (is (some? run#) "There is a run happening")
+     (is (not (:no-action run#)) "The run can continue")
+     (when (and (some? run#)
+                (not (:no-action run#)))
+       (core/no-action ~state :corp nil)
+       (core/continue ~state :runner nil)
+       true)))
 
-(defn run-phase-43
+(defmacro run-phase-43
   "Ask for triggered abilities phase 4.3"
   [state]
-  (core/corp-phase-43 state :corp nil)
-  (core/successful-run state :runner nil))
+  `(let [run# (:run @~state)]
+     (is (some? run#) "There is a run happening")
+     (is (zero? (:position run#)) "Runner has passed all ice")
+     (when (and (some? run#)
+                (zero? (:position run#)))
+       (core/corp-phase-43 ~state :corp nil)
+       (core/successful-run ~state :runner nil)
+       true)))
 
-(defn run-successful
+(defmacro run-successful
   "No action from corp and successful run for runner."
   [state]
-  (core/no-action state :corp nil)
-  (core/successful-run state :runner nil))
+  `(let [run# (:run @~state)]
+     (is (some? run#) "There is a run happening")
+     (is (zero? (:position run#)) "Runner has passed all ice")
+     (is (= :approach-server (:phase run#)) "Run is in the right phase")
+     (when (and (some? run#)
+                (zero? (:position run#)))
+       (core/no-action ~state :corp nil)
+       (core/successful-run ~state :runner nil)
+       true)))
 
-(defn run-jack-out
+(defmacro run-jack-out
   "Jacks out in run."
   [state]
-  (core/jack-out state :runner nil))
+  `(let [run# (:run @~state)]
+     (is (some? run#) "There is a run happening")
+     (is (:jack-out run#) "Runner is allowed to jack out")
+     (core/jack-out ~state :runner nil)
+     true))
 
-(defn run-empty-server
+(defmacro run-empty-server
   "Make a successful run on specified server, assumes no ice in place."
   [state server]
-  (run-on state server)
-  (run-successful state))
+  `(when (run-on ~state ~server)
+     (when (run-next-phase ~state)
+       (when (run-continue ~state)
+         (run-successful ~state)))))
+
+(defmacro fire-subs
+  [state card]
+  `(let [ice# (get-card ~state ~card)
+         run# (:run @~state)]
+     (is (rezzed? ice#) (str (:title ice#) " is active"))
+     (is (some? run#) "There is a run happening")
+     (is (= :encounter-ice (:phase run#)) "Subroutines can be resolved")
+     (when (and (rezzed? ice#)
+                (some? run#)
+                (= :encounter-ice (:phase run#)))
+       (core/resolve-unbroken-subs! ~state :corp ice#))))
 
 (defn get-run-event
   ([state] (get-in @state [:runner :play-area]))

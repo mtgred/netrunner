@@ -144,5 +144,5 @@
 (defn clear-wait-prompt
   "Removes the first 'Waiting for...' prompt from the given side's prompt queue."
   [state side]
-  (when-let [wait (some #(when (= :waiting (:prompt-type %)) %) (reverse (-> @state side :prompt)))]
+  (when-let [wait (some #(when (= :waiting (:prompt-type %)) %) (-> @state side :prompt))]
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % wait) pr)))))

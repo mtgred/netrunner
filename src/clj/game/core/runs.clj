@@ -40,6 +40,7 @@
   [state phase]
   (swap! state assoc-in [:run :phase] phase)
   (swap! state dissoc-in [:run :next-phase])
+  (swap! state assoc-in [:run :no-action] false)
   phase)
 
 (defn set-next-phase

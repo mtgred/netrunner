@@ -1143,9 +1143,10 @@
                                (when-let [ice (get-card state i)]
                                  (remove-sub! state side ice #(= cid (:from-cid %))))))
                            (update! state side (dissoc-in card [:special :wotan])))}]
-    :abilities [{:req (req (and (ice? current-ice)
+    :abilities [{:req (req (and current-ice
                                 (rezzed? current-ice)
-                                (has-subtype? current-ice "Bioroid")))
+                                (has-subtype? current-ice "Bioroid")
+                                (= :approach-ice (:phase run))))
                  :cost [:agenda 1]
                  :msg (str "make the approached piece of Bioroid ICE gain \"[Subroutine] End the run\""
                            "after all its other subroutines for the remainder of this run")
@@ -1546,16 +1547,18 @@
                                               {:prompt "Which position to install in? (0 is innermost)"
                                                :choices (vec (reverse (map str (range (inc num-ice)))))
                                                :async true
-                                               :effect (req (wait-for (corp-install
-                                                                        state side chosen-ice chosen-server
-                                                                        {:ignore-all-cost true :index (Integer/parseInt target)})
-                                                                      (when (and run
-                                                                                 (= (zone->name (first (:server run)))
-                                                                                    chosen-server))
-                                                                        (let [curr-pos (get-in @state [:run :position])]
-                                                                          (when (>= curr-pos (Integer/parseInt target))
-                                                                            (swap! state assoc-in [:run :position] (inc curr-pos)))))
-                                                                      (effect-completed state side eid)))})
+                                               :effect (req (let [target (Integer/parseInt target)]
+                                                              (wait-for (corp-install
+                                                                          state side chosen-ice chosen-server
+                                                                          {:ignore-all-cost true :index target})
+                                                                        (when (and run
+                                                                                   (= (zone->name (first (:server run)))
+                                                                                      chosen-server))
+                                                                          (let [curr-pos (get-in @state [:run :position])]
+                                                                            (when (>= curr-pos target)
+                                                                              (swap! state assoc-in [:run :position] (inc curr-pos))
+                                                                              (set-next-phase state :approach-ice))))
+                                                                        (effect-completed state side eid))))})
                                             card nil))})
                              card nil))}]}
 

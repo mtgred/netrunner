@@ -714,6 +714,7 @@
                    :effect (req (let [srv (first (:server run))
                                       n (count (get-in @state [:corp :servers srv :ices]))]
                                   (swap! state assoc-in [:run :position] n)
+                                  (set-next-phase state :approach-ice)
                                   (derez state side card)))}]}
 
    "Changeling"
@@ -2064,12 +2065,14 @@
                    :effect (effect (corp-install eid target (zone->name (first (:server run))) {:ignore-all-cost true}))}]}
 
    "Mirāju"
-   {:abilities [{:label "Runner broke subroutine: Redirect run to Archives"
-                 :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
-                 :effect (req (swap! state update-in [:run]
-                                     #(assoc % :position (count (get-in corp [:servers :archives :ices]))
-                                               :server [:archives]))
-                              (derez state side card))}]
+   {:events [{:event :encounter-ice-ends
+              :req (req (:broken (first (filter :printed (:subroutines target)))))
+              :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
+              :effect (req (swap! state update :run
+                                  #(assoc % :position (count (get-in corp [:servers :archives :ices]))
+                                            :server [:archives]))
+                           (set-next-phase state :approach-ice)
+                           (derez state side card))}]
     :subroutines [{:async true
                    :label "Draw 1 card, then shuffle 1 card from HQ into R&D"
                    :effect (req (wait-for (resolve-ability
