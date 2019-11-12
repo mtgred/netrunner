@@ -1173,6 +1173,67 @@
       (card-ability state :runner (get-resource state 0) 1)
       (is (empty? (:prompt (get-corp))) "No Hayley wait prompt for facedown installs."))))
 
+(deftest hoshiko-shiro-next-level-shut-in
+  ;; Hoshiko Shiro
+  (testing "ID ability"
+    (do-game
+     ; (new-game {:runner {:id "Hoshiko Shiro: Next Level Shut-In"}})
+     (new-game {:runner {:id "Hoshiko Shiro"
+                         :deck [(qty "Sure Gamble" 5)]}})
+     (let [ho (get-in @state [:runner :identity])]
+       (dotimes [_ 5] (core/move state :runner (first (:hand (get-runner))) :deck))
+       (take-credits state :corp)
+       (is (not (:flipped (refresh ho))) "Hoshiko starts unflipped")
+       (is (= 0 (count (:hand (get-runner)))) "Test starts without cards in grip")
+       (take-credits state :runner)
+       (is (= 9 (:credit (get-runner))) "No credits from ID ability")
+       (is (not (:flipped (refresh ho))) "Hoshiko stays unflipped without access")
+       (is (= 0 (count (:hand (get-runner)))) "No draw")
+       (take-credits state :corp)
+       (run-on state :hq)
+       (run-successful state)
+       (click-prompt state :runner "No action")
+       (take-credits state :runner)
+       (is (:flipped (refresh ho)) "Hoshiko flips because of access")
+       (is (= 14 (:credit (get-runner))) "2 credits from ID ability")
+       (is (= 0 (count (:hand (get-runner)))) "No draw")
+       (take-credits state :corp)
+       (is (= 13 (:credit (get-runner))) "Lost 1 credit from ID ability")
+       (is (= 1 (count (:hand (get-runner)))) "Drew 1 card from ID ability")
+       (run-on state :hq)
+       (run-successful state)
+       (click-prompt state :runner "No action")
+       (take-credits state :runner)
+       (is (:flipped (refresh ho)) "Hoshiko stays flipped because of access")
+       (take-credits state :corp)
+       (is (= 15 (:credit (get-runner))) "Lost 1 credit from ID ability")
+       (is (= 2 (count (:hand (get-runner)))) "Drew 1 card from ID ability")
+       (take-credits state :runner)
+       (is (not (:flipped (refresh ho))) "Hoshiko flips because of no access")
+       (is (= 2 (count (:hand (get-runner)))) "Didn't draw card"))))
+  (testing "Interaction with Eater"
+    (do-game
+     ; (new-game {:runner {:id "Hoshiko Shiro: Next Level Shut-In"}})
+     (new-game {:runner {:id "Hoshiko Shiro"
+                         :deck [(qty "Sure Gamble" 4) "Eater"]}
+                :corp {:hand ["Vanilla"]
+                       :deck [(qty "Hedge Fund" 5)]}})
+     (play-from-hand state :corp "Vanilla" "R&D")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Eater")
+     (let [ho (get-in @state [:runner :identity])
+           van (get-ice state :rd 0)
+           eat (get-program state 0)]
+       (is (not (:flipped (refresh ho))) "Hoshiko starts unflipped")
+       (run-on state :rd)
+       (core/rez state :corp van)
+       (card-ability state :runner eat 0)
+       (click-prompt state :runner "End the run")
+       (run-continue state)
+       (run-successful state)
+       (take-credits state :runner)
+       (is (not (:flipped (refresh ho))) "Hoshiko does not flip")))))
+
 (deftest hyoubu-institute-absolute-clarity
   (testing "ID abilities"
     (do-game
