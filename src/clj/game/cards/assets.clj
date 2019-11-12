@@ -345,7 +345,7 @@
    "Chief Slee"
    {:events [{:event :encounter-ice-ends
               :msg "add 1 power counter to Chief Slee"
-              :effect (effect (add-counter card :power (count (remove :broken (:subroutines target)))))}]
+              :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines target)))))}]
     :abilities [{:cost [:click 1 :power 5]
                  :async true
                  :msg "do 5 meat damage"

@@ -6,7 +6,7 @@
             [hawk.core :as hawk]
             [game.core :as core]
             [game.core.card-defs :refer [reset-card-defs]]
-            [game.core.card :refer [make-cid get-card rezzed?]]
+            [game.core.card :refer [make-cid get-card rezzed? active?]]
             [game.utils :as utils :refer [server-card]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
@@ -164,14 +164,15 @@
    (new-game-internal (make-decks players))))
 
 ;;; Card related functions
-(defn card-ability
+(defmacro card-ability
   "Trigger a card's ability with its 0-based index. Refreshes the card argument before
   triggering the ability."
-  ([state side card ability] (card-ability state side card ability nil))
-  ([state side card ability targets]
-   (core/play-ability state side {:card (get-card state card)
-                                  :ability ability
-                                  :targets targets})))
+  [state side card ability & targets]
+  `(let [card# (get-card ~state ~card)]
+     (is (active? card#) (str (:title card#) " is active"))
+     (core/play-ability ~state ~side {:card card#
+                                      :ability ~ability
+                                      :targets (first ~targets)})))
 
 (defmacro card-subroutine
   "Trigger a piece of ice's subroutine with the 0-based index."
