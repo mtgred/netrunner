@@ -1997,7 +1997,6 @@
         (core/rez state :corp pachinko)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
         (is (= (- runner-credits 4) (:credit (get-runner))) "Autopump subtracted correct amount of credits"))))
-      
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -2010,7 +2009,6 @@
         (card-subroutine state :corp pachinko 0)
         (card-subroutine state :corp pachinko 1)
         (is (:run @state) "Runner have no tags, run continues"))))
-
   (testing "ETR with tags"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
