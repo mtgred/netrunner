@@ -1892,7 +1892,8 @@
                                                         (hardware? %)
                                                         (and (resource? %)
                                                              (has-subtype? % "Virtual")))
-                                                    (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil (:cost %)))
+                                                    (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
+                                                              [:credit (install-cost state side %)]))
                                               (:discard runner))))
                                "No install"))
            :msg (msg (if (= target "No install")
