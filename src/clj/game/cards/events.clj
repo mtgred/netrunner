@@ -426,9 +426,14 @@
     :events [{:event :pre-access-card
               :once :per-run
               :async true
-              :req (req (not= (:type target) "Agenda"))
+              :req (req (not (agenda? target)))
               :effect (req (let [c target
-                                 cost (:cost c)
+                                 cost (or (and (or (asset? c)
+                                                   (upgrade? c)
+                                                   (ice? c))
+                                               (rez-cost state side c))
+                                          (and (operation? c)
+                                               (play-cost state side c)))
                                  title (:title c)]
                              (if (can-pay? state :corp eid card nil [:credit cost])
                                (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent the trash")
