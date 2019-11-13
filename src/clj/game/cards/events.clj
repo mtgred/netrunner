@@ -1173,7 +1173,8 @@
     :effect (effect (trigger-event :searched-stack nil)
                     (continue-ability
                      (let [connection target]
-                       (if (can-pay? state side (assoc eid :source card :source-type :runner-install) connection nil :credit (:cost connection))
+                       (if (can-pay? state side (assoc eid :source card :source-type :runner-install) connection nil
+                                     [:credit (install-cost state side connection)])
                          {:optional {:prompt (str "Install " (:title connection) "?")
                                      :yes-ability {:async true
                                                    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) connection nil)
