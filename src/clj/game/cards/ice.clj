@@ -1308,7 +1308,7 @@
                    :prompt "How many advancement tokens?"
                    :choices (req (map str (range (inc (min 2 (:credit corp))))))
                    :effect (req (let [c (str->int target)]
-                                  (if (can-pay? state side eid card (:title card) :credit c)
+                                  (if (can-pay? state side (assoc eid :source card :source-type :subroutine) card (:title card) :credit c)
                                     (do (pay state :corp card :credit c)
                                         (continue-ability
                                           state side
@@ -2887,7 +2887,7 @@
                                   :prompt "Choose one"
                                   :choices ["Lose [Click]" "End the run"]
                                   :effect (req (if-not (and (= target "Lose [Click]")
-                                                            (can-pay? state :runner eid card nil [:click 1]))
+                                                            (can-pay? state :runner (assoc eid :source card :source-type :subroutine) card nil [:click 1]))
                                                  (do (end-run state side)
                                                      (system-msg state side "ends the run"))
                                                  (do (lose state side :click 1)

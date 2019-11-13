@@ -226,16 +226,16 @@
                  :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                 (not (install-locked? state side))
                                 (some #(and (program? %)
-                                            (can-pay? state side eid card nil
+                                            (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                       [:credit (install-cost state side %)]))
                                       (:discard runner))))
                  :choices {:req (req (and (program? target)
                                           (in-discard? target)
-                                          (can-pay? state side eid card nil
+                                          (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                     [:credit (install-cost state side target)])))}
                  :cost [:trash]
                  :msg (msg "install " (:title target))
-                 :effect (effect (runner-install eid target nil))}]}
+                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]}
 
    "Comet"
    {:in-play [:memory 1]
@@ -798,7 +798,7 @@
               {:async true
                :interactive (req true)
                :req (req (some #(and (hardware? %)
-                                     (can-pay? state side eid card nil
+                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) card %
                                                [:credit (install-cost state side % {:cost-bonus 1})]))
                                (:hand runner)))
                :prompt "Pay 1 [Credit] to install a hardware?"
@@ -807,7 +807,7 @@
                              :choices
                              {:req (req (and (in-hand? target)
                                              (hardware? target)
-                                             (can-pay? state side eid card nil
+                                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                        [:credit (install-cost state side target {:cost-bonus 1})])))}
                              :msg (msg "install " (:title target) " from the grip, paying 1 [Credit] more")
                              :effect (effect (runner-install eid target {:cost-bonus 1}))}}}
@@ -908,7 +908,7 @@
            {:prompt "Select a program to install"
             :choices {:req (req (and (program? target)
                                      (in-hand? target)
-                                     (can-pay? state side eid card nil
+                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                [:credit (install-cost state side target {:cost-bonus -4})])))}
             :async true
             :effect (req (wait-for (runner-install state side target {:cost-bonus -4})

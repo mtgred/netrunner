@@ -434,7 +434,7 @@
                  {:async true
                   :req (req (and (program? target)
                                  (in-hand? target)
-                                 (can-pay? state :runner eid card nil
+                                 (can-pay? state :runner (assoc eid :source card :source-type :runner-install) target nil
                                            [:credit (install-cost state side target
                                                                   {:cost-bonus (- (get-counters card :power))})])))}
                  :msg (msg "install " (:title target))
@@ -530,7 +530,7 @@
    {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
     :events [{:event :rez
               :req (req (and (#{"Asset" "Upgrade"} (:type target))
-                             (can-pay? state :runner eid card nil [:credit (rez-cost state :corp target)])))
+                             (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit (rez-cost state :corp target)])))
               :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
                                                      " that was just rezzed") "info")
                            (toast state :corp (str "Runner has the opportunity to derez with Councilman.") "error"))}]
@@ -949,7 +949,7 @@
        (effect (show-wait-prompt :corp "Runner to take decision on Fencer Fueno")
                (continue-ability
                  {:prompt "Pay 1 [Credits] or trash Fencer Fueno?"
-                  :choices (req (if (can-pay? state :runner eid card nil :credit 1)
+                  :choices (req (if (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
                                   ["Pay 1 [Credits]" "Trash"]
                                   ["Trash"]))
                   :player :runner
@@ -1498,7 +1498,7 @@
        (effect (show-wait-prompt :corp "Runner to take decision on Mystic Maemi")
                (continue-ability
                  {:prompt "Trash 1 card from your grip at random or trash Mystic Maemi?"
-                  :choices (req (if (can-pay? state :runner eid card nil :randomly-trash-from-hand 1)
+                  :choices (req (if (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :randomly-trash-from-hand 1)
                                   ["Card from grip" "Trash"]
                                   ["Trash"]))
                   :player :runner
@@ -1619,7 +1619,7 @@
                  :cost [:click 1]
                  :prompt "Select a connection in your Grip to install on Off-Campus Apartment"
                  :choices {:req (req (and (has-subtype? target "Connection")
-                                          (can-pay? state side eid card nil [:credit (install-cost state side target)])
+                                          (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil [:credit (install-cost state side target)])
                                           (in-hand? target)))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (runner-install eid target {:host-card card}))}
@@ -1827,7 +1827,7 @@
                      {:prompt "Select a rezzed card with a trash cost"
                       :choices {:card #(and (:trash %)
                                             (rezzed? %)
-                                            (can-pay? state side eid card nil [:credit (trash-cost state :runner %)]))}
+                                            (can-pay? state side (assoc eid :source card :source-type :ability) card nil [:credit (trash-cost state :runner %)]))}
                       :effect (effect
                                 (continue-ability
                                   {:async true
@@ -1892,7 +1892,7 @@
                                                         (hardware? %)
                                                         (and (resource? %)
                                                              (has-subtype? % "Virtual")))
-                                                    (can-pay? state :runner eid card nil (:cost %)))
+                                                    (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil (:cost %)))
                                               (:discard runner))))
                                "No install"))
            :msg (msg (if (= target "No install")
@@ -1950,7 +1950,7 @@
                                              (filter
                                                #(and (program? %)
                                                      (not (has-subtype? % "Virus"))
-                                                     (can-pay? state :runner eid card nil
+                                                     (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
                                                                [:credit (install-cost
                                                                           state side %
                                                                           {:cost-bonus (- (:cost (find-rfg state card)))})])))
@@ -2008,7 +2008,7 @@
      {:label "Remove card from game"
       :req (req (and (not (get-in @state [:per-turn (:cid card)]))
                      (:trash target)
-                     (can-pay? state :runner {:source card :source-type :ability}
+                     (can-pay? state :runner (assoc eid :source card :source-type :ability)
                                card (:title target) [:credit (trash-cost state side target)])))
       :once :per-turn
       :async true
@@ -2160,7 +2160,7 @@
                  :choices (req (cancellable
                                  (filter #(and (not (event? %))
                                                (runner-can-install? state side % nil)
-                                               (can-pay? state side eid card nil
+                                               (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                          [:credit (install-cost state side % {:cost-bonus -1})]))
                                          (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
@@ -2278,7 +2278,7 @@
                  :label "Install a program of piece of hardware"
                  :req (req (some #(and (or (hardware? %)
                                            (program? %))
-                                       (can-pay? state side eid card nil
+                                       (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                  [:credit (install-cost state side % {:cost-bonus -1})]))
                                  (:hand runner)))
                  :prompt "Select a program or piece of hardware to install from your Grip"
@@ -2286,7 +2286,7 @@
                  {:req (req (and (or (hardware? target)
                                      (program? target))
                                  (in-hand? target)
-                                 (can-pay? state side eid card nil
+                                 (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                            [:credit (install-cost state side target {:cost-bonus -1})])))}
                  :once :per-turn
                  :once-key :artist-install
@@ -2405,12 +2405,12 @@
    "The Supplier"
    (let [ability {:label "Install a hosted card (start of turn)"
                   :prompt "Choose a card hosted on The Supplier to install"
-                  :req (req (some #(can-pay? state side eid card nil [:credit (install-cost state side % {:cost-bonus -2})])
+                  :req (req (some #(can-pay? state side (assoc eid :source card :source-type :runner-install) % nil [:credit (install-cost state side % {:cost-bonus -2})])
                                   (:hosted card)))
                   :choices
                   {:req (req (and (= "The Supplier" (:title (:host target)))
                                   (runner? target)
-                                  (can-pay? state side eid card nil
+                                  (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                             [:credit (install-cost state side target {:cost-bonus -2})])))}
                   :once :per-turn
                   :msg (msg "install " (:title target)
@@ -2484,7 +2484,7 @@
                   {:req (req (and (runner? target)
                                   (in-hand? target)
                                   (not (event? target))
-                                  (can-pay? state side eid card nil
+                                  (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                             [:credit (install-cost state side target {:cost-bonus -1})])))}
                   :async true
                   :prompt (msg "Select a card to install with Thunder Art Gallery")
