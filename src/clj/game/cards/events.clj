@@ -229,6 +229,7 @@
                                card
                                [{:event :approach-ice
                                  :duration :end-of-run
+                                 :unregister-once-resolved true
                                  :once :per-run
                                  :effect (effect
                                            (register-floating-effect
@@ -236,9 +237,10 @@
                                              (let [approached-ice target]
                                                {:type :rez-additional-cost
                                                 :duration :end-of-run
+                                                :unregister-once-resolved true
                                                 :req (req (same-card? approached-ice target))
                                                 :value [:credit bribery-x]})))}])
-                             (make-run state side eid target nil card))})
+                             (make-run eid target nil card))})
                 card nil))}
 
    "Brute-Force-Hack"
@@ -424,10 +426,11 @@
       :effect (effect (make-run eid target nil card))
       :events [{:event :encounter-ice
                 :optional
-                {:once :per-run
+                {:prompt "Install a program?"
+                 :once :per-run
                  :yes-ability
                  {:async true
-                  :prompt "Install a program from your Stack or Heap?"
+                  :prompt "From your Stack or Heap?"
                   :choices ["Stack" "Heap"]
                   :msg (msg "install a program from their " target)
                   :effect (effect (continue-ability
@@ -683,11 +686,13 @@
              {:event :run-ends
               :async true
               :effect (req (let [installed-cards (filter #(get-in % [:special :diana-installed]) (all-active-installed state :runner))]
-                             (when (seq installed-cards)
-                               (system-msg state :runner (str "trashes " (count installed-cards)
-                                                              " cards (" (join ", " (map :title installed-cards))
-                                                              ") at the end of the run from Diana's Hunt"))
-                               (trash-cards state :runner eid installed-cards {:unpreventable true}))))}]}
+                             (if (seq installed-cards)
+                               (do
+                                 (system-msg state :runner (str "trashes " (count installed-cards)
+                                                                " cards (" (join ", " (map :title installed-cards))
+                                                                ") at the end of the run from Diana's Hunt"))
+                                 (trash-cards state :runner eid installed-cards {:unpreventable true}))
+                               (effect-completed state side eid))))}]}
 
    "Diesel"
    {:msg "draw 3 cards"
@@ -1052,7 +1057,7 @@
     :req (req hq-runnable)
     :effect (effect (make-run eid :hq nil card))
     :events [{:event :encounter-ice
-              :req (req (< (get-in card [:special :bypass-count]) 2))
+              :req (req (< (get-in card [:special :bypass-count] 0) 2))
               :msg (msg "bypass " (:title target))
               :effect (req (bypass-ice state)
                            (update! state side (update-in card [:special :bypass-count] (fnil inc 0))))}
@@ -1422,7 +1427,7 @@
      (let [access-effect
            {:async true
             :mandatory true
-            :effect (req (if (< 1 (count (:hand corp)))
+            :effect (req (if (<= 1 (count (:hand corp)))
                            (do (show-wait-prompt state :runner "Corp to create two piles")
                                (continue-ability
                                  state :corp
@@ -2030,28 +2035,29 @@
               :effect (effect (gain-credits 7))}]}
 
    "Prey"
-   {:implementation "Ice trash is manual"
-    :async true
+   {:async true
     :makes-run true
     :prompt "Choose a server:"
     :choices (req runnable-servers)
-    :effect (effect (toast "Click this card to trash the passed ice")
-                    (make-run eid target nil card))
-    :abilities [{:label "Trash previous ice"
-                 :once :per-run
-                 :req (req (let [last-ice (nth run-ices run-position)]
-                             (and run
-                                (rezzed? last-ice)
-                                (<= (get-strength last-ice) (count (all-installed state :runner))))))
-                 :async true
-                 :effect (effect
-                           (continue-ability
-                             (let [last-ice (nth run-ices run-position)]
-                               {:async true
-                                :cost [:installed (get-strength last-ice)]
-                                :msg (msg "trash " (card-str state last-ice))
-                                :effect (effect (trash eid last-ice nil))})
-                             card nil))}]}
+    :effect (effect (make-run eid target nil card))
+    :events [{:event :pass-ice
+              :req (req (and (rezzed? target)
+                             (<= (get-strength target) (count (all-installed state :runner)))))
+              :async true
+              :effect
+              (effect
+                (continue-ability
+                  (let [ice target]
+                    {:optional
+                     {:prompt (str "Trash " (quantify (get-strength target) "card")
+                                   " to trash " (:title ice) "?")
+                      :yes-ability
+                      {:async true
+                       :once :per-turn
+                       :cost [:installed (get-strength ice)]
+                       :msg (msg "trash " (card-str state ice))
+                       :effect (effect (trash eid ice nil))}}})
+                  card nil))}]}
 
    "Process Automation"
    {:msg "gain 2 [Credits] and draw 1 card"

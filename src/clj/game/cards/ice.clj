@@ -2575,15 +2575,19 @@
 
    "Sand Storm"
    {:subroutines [{:async true
-                   :req (req (:run @state))
+                   :req (req run)
                    :label "Move Sand Storm and the run to another server"
                    :prompt "Choose another server and redirect the run to its outermost position"
                    :choices (req (cancellable servers))
-                   :msg (msg "move Sand Storm and the run.  The Runner is now running on " target ". Sand Storm is trashed")
-                   :effect (req (let [dest (server->zone state target)]
-                                  (swap! state update-in [:run]
-                                         #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                 :server (rest dest)))
+                   :msg (msg "move Sand Storm and the run. The Runner is now running on " target ". Sand Storm is trashed")
+                   :effect (req (let [dest (server->zone state target)
+                                      position (count (get-in corp (conj dest :ices)))]
+                                  (swap! state
+                                         update :run
+                                         assoc
+                                         :position (count (get-in corp (conj dest :ices)))
+                                         :server (rest dest))
+                                  (set-next-phase state (if (pos? position) :approach-ice :approach-server))
                                   (trash state side eid card {:unpreventable true})))}]}
 
    "Sandstone"

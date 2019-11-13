@@ -2290,28 +2290,30 @@
                  :once :per-turn
                  :msg "make a run on R&D"
                  :makes-run true
-                 :effect (effect (make-run
-                                   :rd
-                                   {:req (req (= target :rd))
-                                    :replace-access
-                                    {:msg (msg "reveal "
-                                               (->>
-                                                 (:deck corp)
-                                                 (take 3)
-                                                 (map :title)
-                                                 (join ", ")))
-                                     :mandatory true
-                                     :effect
-                                     (effect
-                                       (reveal (take 3 (:deck corp)))
-                                       (continue-ability
-                                         {:prompt "Choose a card to trash"
-                                          :msg (msg "trash " (:title target))
-                                          :not-distinct true
-                                          :choices (req (take 3 (:deck corp)))
-                                          :effect (effect (trash :runner (assoc target :seen true)))}
-                                         card nil))}}
-                                   card))}]}
+                 :effect
+                 (effect
+                   (make-run
+                     :rd
+                     {:req (req (= target :rd))
+                      :replace-access
+                      {:mandatory true
+                       :async true
+                       :msg (msg "reveal " (->> (:deck corp)
+                                                (take 3)
+                                                (map :title)
+                                                (join ", ")))
+                       :effect
+                       (effect
+                         (reveal (take 3 (:deck corp)))
+                         (continue-ability
+                           {:async true
+                            :prompt "Choose a card to trash"
+                            :not-distinct true
+                            :choices (req (take 3 (:deck corp)))
+                            :msg (msg "trash " (:title target))
+                            :effect (effect (trash :runner eid (assoc target :seen true) nil))}
+                           card nil))}}
+                     card))}]}
 
    "Study Guide"
    {:abilities [(break-sub 1 1 "Code Gate")

@@ -28,11 +28,11 @@
     (reset-card-defs)))
 (load-all-cards)
 
-(hawk/watch! [{:paths ["src/clj/game/cards"]
-               :filter hawk/file?
-               :handler (fn [ctx e]
-                          (reset-card-defs
-                            (-> e :file io/file .getName (string/split #"\.") first)))}])
+; (hawk/watch! [{:paths ["src/clj/game/cards"]
+;                :filter hawk/file?
+;                :handler (fn [ctx e]
+;                           (reset-card-defs
+;                             (-> e :file io/file .getName (string/split #"\.") first)))}])
 
 ;; General utilities necessary for starting a new game
 (defn find-card
@@ -271,27 +271,13 @@
   [state side title & server]
   `(let [card# (find-card ~title (get-in @~state [~side :hand]))]
      (is (some? card#) (str ~title " is in the hand"))
-     (core/play ~state ~side {:card card#
-                              :server ~(first server)})))
+     (when (some? card#)
+       (core/play ~state ~side {:card card#
+                                :server ~(first server)})
+       true)))
 
 
 ;;; Run functions
-(defn play-run-event
-  "Play a run event with a replace-access effect on an unprotected server.
-  Advances the run timings to the point where replace-access occurs."
-  ([state card server] (play-run-event state card server true))
-  ([state card server show-prompt]
-   (let [card (if (map? card) card (find-card card (get-in @state [:runner :hand])))]
-     (core/play state :runner {:card card})
-     (is (= [server] (get-in @state [:run :server])) "Correct server is run")
-     (is (get-in @state [:run :run-effects]) "There is a run-effect")
-     (core/no-action state :corp nil)
-     (core/successful-run state :runner nil)
-     (if show-prompt
-       (is (get-in @state [:runner :prompt]) "A prompt is shown")
-       (is (not (get-in @state [:runner :prompt])) "A prompt is not shown"))
-     (is (get-in @state [:run :successful]) "Run is marked successful"))))
-
 (defmacro run-on
   "Start run on specified server."
   [state server]
@@ -377,7 +363,22 @@
      (when (and (rezzed? ice#)
                 (some? run#)
                 (= :encounter-ice (:phase run#)))
-       (core/resolve-unbroken-subs! ~state :corp ice#))))
+       (core/resolve-unbroken-subs! ~state :corp ice#)
+       true)))
+
+(defmacro play-run-event
+  "Play a run event with a replace-access effect on an unprotected server.
+  Advances the run timings to the point where replace-access occurs."
+  [state card server & show-prompt]
+  `(when (play-from-hand ~state :runner ~card)
+     (is (:run @~state) "There is a run happening")
+     (is (= [~server] (get-in @~state [:run :server])) "Correct server is run")
+     (is (get-in @~state [:run :run-effects]) "There is a run-effect")
+     (when (run-next-phase ~state)
+       (when (run-continue ~state)
+         (when (run-successful ~state)
+           (is (get-in @~state [:runner :prompt]) "A prompt is shown")
+           (is (get-in @~state [:run :successful]) "Run is marked successful"))))))
 
 (defn get-run-event
   ([state] (get-in @state [:runner :play-area]))
