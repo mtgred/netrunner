@@ -1424,7 +1424,7 @@
                                  :type :recurring}}}
 
    "Weyland Consortium: Builder of Nations"
-   {:implementation "Encounter effect is manual"
+   {:implementation "Encounter effect is manual, Erratum: The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
     :abilities [{:async true
                  :label "Do 1 meat damage"
                  :once :per-turn
