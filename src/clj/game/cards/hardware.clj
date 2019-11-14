@@ -512,14 +512,14 @@
                  :choices (req runnable-servers)
                  :msg "make a run and avoid all tags for the remainder of the run"
                  :makes-run true
-                 :effect (effect (update! (assoc card :dorm-active true))
-                                 (make-run target))}]
-    :events [{:event :pre-tag
-              :req (req (:dorm-active card))
-              :effect (effect (tag-prevent :runner Integer/MAX_VALUE))
-              :msg "avoid all tags during the run"}
-             {:event :run-ends
-              :effect (effect (update! (dissoc card :dorm-active)))}]}
+                 :async true
+                 :effect (effect (register-events
+                                   card
+                                   [{:event :pre-tag
+                                     :duration :end-of-run
+                                     :msg "avoid all tags during the run"
+                                     :effect (effect (tag-prevent :runner Integer/MAX_VALUE))}])
+                                 (make-run eid target nil card))}]}
 
    "Dyson Fractal Generator"
    {:recurring 1
@@ -1598,22 +1598,18 @@
               :effect (req (let [bonus (quot (count targets) 2)]
                              (wait-for (trash-cards state side targets {:unpreventable true
                                                                         :suppress-event true})
-                                       (make-run state side srv nil card)
-                                       (register-events
+                                      (register-events
                                          state side card
                                          [{:event :pre-access
+                                           :duration :end-of-run
                                            :silent (req true)
-                                           :effect (effect (access-bonus kw bonus))}
-                                          {:event :run-ends
-                                           :effect (effect (unregister-events card))}])
-                                       (effect-completed state side eid))))})]
+                                           :effect (effect (access-bonus kw bonus))}])
+                                      (make-run state side eid srv nil card))))})]
      {:abilities [{:req (req (<= 2 (count (:hand runner))))
                    :cost [:click 1]
                    :prompt "Choose a server to run with Severnius Stim Implant"
                    :choices ["HQ" "R&D"]
-                   :effect (effect (continue-ability (implant-fn target (if (= target "HQ") :hq :rd)) card nil))}]
-      :events [{:event :pre-access}
-               {:event :run-ends}]})
+                   :effect (effect (continue-ability (implant-fn target (if (= target "HQ") :hq :rd)) card nil))}]})
 
    "Şifr"
    {:in-play [:memory 2]
@@ -1625,18 +1621,18 @@
                {:msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
                 :effect (effect (lose :runner :hand-size 1)
                                 (register-events
-                                  card
+                                  :runner card
                                   [{:event :runner-turn-begins
                                     :duration :until-runner-turn-begins
                                     :effect (effect (gain :runner :hand-size 1))}])
                                 (register-floating-effect
-                                  card
+                                  :runner card
                                   (let [ice current-ice]
                                     {:type :ice-strength
                                      :duration :end-of-encounter
                                      :req (req (same-card? target ice))
                                      :value (req (- (get-strength target)))}))
-                                (update-all-ice))}}}]}
+                                (update-all-ice :runner))}}}]}
 
    "Silencer"
    {:recurring 1
