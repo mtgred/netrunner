@@ -131,9 +131,9 @@
   [cost ice-type abilities]
   {:abilities abilities
    :events [{:event :encounter-ice
-             :req (req (and (can-pay? state :runner eid card nil [:credit 2])
+             :req (req (and (not-used-once? state {:once :per-turn} card)
                             (not (has-subtype? target ice-type))
-                            (not (get-in @state [:per-turn (:cid card)]))))
+                            (can-pay? state :runner eid card nil [:credit 2])))
              :async true
              :effect
              (effect
@@ -146,12 +146,12 @@
                     :effect (req (let [ice current-ice
                                        stargets (:subtype-target ice)
                                        stypes (:subtype ice)]
-                                   (register-once state side {:once :per-turn} card)
+                                   (register-once state {:once :per-turn} card)
                                    (update! state side
                                             (assoc ice
                                                    :subtype-target (combine-subtypes false stargets ice-type)
                                                    :subtype (combine-subtypes false stypes ice-type)))
-                                   (update-all-ice)
+                                   (update-all-ice state side)
                                    (register-events
                                      state side card
                                      [{:event :encounter-ice-ends
@@ -1862,8 +1862,7 @@
                            (when (get-in card [:special :installing])
                              (update! state side (update-in card [:special] dissoc :installing))
                              (trigger-event state side :runner-install card))
-                           (trash state side target)
-                           (continue state side nil))
+                           (trash state side target))
               :msg (msg "trash " (:title target))}]}
 
    "Paricia"

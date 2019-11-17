@@ -222,7 +222,9 @@
   "Sums the results from get-effects."
   [state side ice]
   (let [can-lower? (not (card-flag? ice :cannot-lower-strength true))]
-    (reduce + (filter #(and % (or can-lower? (pos? %))) (get-effects state side ice :ice-strength nil)))))
+    (->> (get-effects state side ice :ice-strength nil)
+         (filter #(and % (or can-lower? (pos? %))))
+         (reduce +))))
 
 (defn ice-strength
   "Gets the modified strength of the given ice."

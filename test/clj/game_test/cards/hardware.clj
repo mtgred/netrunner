@@ -7,15 +7,6 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-;; ramujan-reliant-550-bmi
-;; security-nexus
-;; severnius-stim-implant
-;; sifr
-;; spinal-modem
-;; swift
-;; titanium-ribs
-;; top-hat
-
 (deftest acacia
   ;; Acacia - Optionally gain credits for number of virus tokens then trash
   (testing "Basic test"
@@ -975,6 +966,7 @@
         (card-ability state :runner ff 0)
         (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
         (is (= 4 (:credit (get-runner))))
+        (run-continue state)
         (run-next-phase state)
         (run-continue state)
         (run-successful state)
@@ -2734,7 +2726,7 @@
     (click-prompt state :runner "Steal") ; Second card, due to additional access
     (is (nil? (:run @state)) "Run is over")))
 
-(deftest ^:test-refresh/focus sifr
+(deftest sifr
   ;; Sifr - Once per turn drop encountered ICE to zero strenght
   ;; Also handle archangel then re-install sifr should not break the game #2576
   (do-game
@@ -2758,12 +2750,11 @@
       (run-next-phase state)
       (run-continue state)
       (is (= 2 (:position (:run @state))))
+      (is (= "Use Şifr?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (println (map :text (:log @state)))
-      (println (:current-strength (refresh ip)))
-      (println (:cid (core/get-current-ice state)))
-      ; (core/update-all-ice state :runner)
       (is (zero? (:current-strength (refresh ip))))
+      (run-continue state)
+      (run-next-phase state)
       (run-continue state)
       (is (= 1 (:position (:run @state))))
       (is (= 2 (count (:hand (get-runner))))) ; pre archangel
@@ -2778,20 +2769,8 @@
       (is (= 4 (:current-strength (refresh ip))) "IP Block back to standard strength")
       (play-from-hand state :runner "Modded")
       (is (seq (:prompt (get-runner))) "Modded choice prompt exists")
-      (click-card state :runner (find-card "Şifr" (:hand (get-runner))))
-      (is (= 4 (:current-strength (refresh ip))) "IP Block back to standard strength")
-      (play-from-hand state :runner "Clone Chip")
-      (take-credits state :runner)
-      (take-credits state :corp 4)
-      (let [chip (get-hardware state 1)]
-        (is (nil? (:sifr-target (refresh sifr))) "Sifr cleaned up on leave play")
-        (is (zero? (count (:discard (get-corp)))) "No Corp cards trashed")
-        (card-ability state :runner chip 0)
-        (click-card state :runner (find-card "Parasite" (:discard (get-runner))))
-        (let [para (get-program state 0)]
-          (click-card state :runner ip)
-          (is (zero? (count (:discard (get-corp)))) "IP Block Not Trashed")
-          (is (= 1 (count (:hosted (refresh ip)))) "Parasite is hosted"))))))
+      (click-card state :runner "Şifr")
+      (is (= 4 (:current-strength (refresh ip))) "IP Block back to standard strength"))))
 
 (deftest silencer
   ;; Silencer
@@ -2822,7 +2801,9 @@
         (is (= 5 (core/available-mu state)))
         (is (= 2 (get-counters (refresh sm) :recurring)))
         (run-on state :hq)
+        (run-next-phase state)
         (core/rez state :corp cad)
+        (run-continue state)
         (card-subroutine state :corp cad 0)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
@@ -2925,6 +2906,8 @@
   (letfn [(laundry-archives [state]
             (play-from-hand state :runner "Dirty Laundry")
             (click-prompt state :runner "Archives")
+            (run-next-phase state)
+            (run-continue state)
             (run-successful state))]
     (testing "Installing Swift gives the runner +1[mu]"
       (do-game
@@ -3032,8 +3015,10 @@
     (is (empty? (:prompt (get-runner))) "Fall Guy didn't try to prevent trashing of Kati")
     (is (= 2 (count (:discard (get-runner)))) "2 cards trashed for Ribs installation meat damage")
     (run-on state "HQ")
+    (run-next-phase state)
     (let [pup (get-ice state :hq 0)]
       (core/rez state :corp pup)
+      (run-continue state)
       (card-subroutine state :corp pup 0)
       (click-prompt state :runner "Suffer 1 net damage")
       (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner)))) ; Ribs takes precedence over CP on Runner turn
@@ -3064,7 +3049,7 @@
       ;; R&D is now from top to bottom: A B C D
       (take-credits state :corp)
       (play-from-hand state :runner "Top Hat")
-      (run-empty-server state :rd)
+      (run-empty-server state "R&D")
       (click-prompt state :runner "Yes") ;Top Hat Prompt
       (click-prompt state :runner "4") ;select ABT
       (click-prompt state :runner "Steal")
@@ -3089,7 +3074,7 @@
         (core/gain state :runner :click 100)
         (core/gain state :runner :credit 100)
         (play-from-hand state :runner "Top Hat")
-        (run-empty-server state :rd)
+        (run-empty-server state "R&D")
         (click-prompt state :runner "Yes") ; Top Hat activation
         (click-prompt state :runner "1") ; Top Hat
         (click-prompt state :corp "0") ; init Ash trace
@@ -3115,6 +3100,8 @@
       ;; Not stealing agenda
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
+      (run-next-phase state)
+      (run-continue state)
       (run-successful state)
       (click-prompt state :runner "Yes") ; Top Hat activation
       (is (= 0 (count (:discard (get-runner)))) "No damage yet")
@@ -3124,6 +3111,8 @@
       ;; Stealing agenda
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
+      (run-next-phase state)
+      (run-continue state)
       (run-successful state)
       (click-prompt state :runner "Yes") ; Top Hat activation
       (click-prompt state :runner "1") ; Top Hat - accessing Accelerated Beta Test

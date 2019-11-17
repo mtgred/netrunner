@@ -953,27 +953,24 @@
       :abilities [ability]})
 
    "Mti Mwekundu: Life Improved"
-   (let [ability {:once :per-turn
-                  :label "Install a piece of ice from HQ at the innermost position"
-                  :req (req (and run
-                                 (zero? (:position run))
-                                 (not (contains? run :corp-phase-43))
-                                 (not (contains? run :successful))))
-                  :prompt "Choose ICE to install from HQ"
-                  :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
-                  :choices {:card #(and (ice? %)
-                                        (in-hand? %))}
-                  :async true
-                  :effect (req (wait-for (corp-install state side target (zone->name (first (:server run)))
-                                                       {:ignore-all-cost true
-                                                        :front true})
-                                         (swap! state assoc-in [:run :position] 1)
-                                         (set-next-phase state :approach-ice)
-                                         (effect-completed state side eid)))}]
-     {:abilities [ability]
-      :events [{:event :approach-server
-                :req (req (can-trigger? state side ability card nil))
-                :effect (req (toast state :corp "You may use Mti Mwekundu: Life Improved to install ice from HQ." "info"))}]})
+   {:events [{:event :approach-server
+              :optional
+              {:req (req (and (not-used-once? state {:once :per-turn} card)
+                              (some ice? (:hand corp))))
+               :prompt "Install an ice?"
+               :yes-ability
+               {:once :per-turn
+                :prompt "Choose ICE to install from HQ"
+                :choices {:card #(and (ice? %)
+                                      (in-hand? %))}
+                :async true
+                :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
+                :effect (req (wait-for (corp-install state side target (zone->name (first (:server run)))
+                                                     {:ignore-all-cost true
+                                                      :front true})
+                                       (swap! state assoc-in [:run :position] 1)
+                                       (set-next-phase state :approach-ice)
+                                       (effect-completed state side eid)))}}}]}
 
    "Nasir Meidan: Cyber Explorer"
    {:events [{:event :approach-ice

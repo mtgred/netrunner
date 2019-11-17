@@ -16,7 +16,7 @@
                         :card card
                         :uuid (uuid/v1)))]
       (swap! state update :effects
-             #(apply conj % abilities))
+             #(apply conj (into [] %) abilities))
       abilities)))
 
 (defn unregister-constant-effects
@@ -26,7 +26,7 @@
            (->> (:effects @state)
                 (remove #(and (same-card? card (:card %))
                               (= :constant (:duration %))))
-                doall))))
+                (into [])))))
 
 (defn register-floating-effect
   [state side card ability]
@@ -42,7 +42,7 @@
   (swap! state assoc :effects
          (->> (:effects @state)
               (remove #(= duration (:duration %)))
-              doall)))
+              (into []))))
 
 (defn gather-effects
   [state side effect-type]
