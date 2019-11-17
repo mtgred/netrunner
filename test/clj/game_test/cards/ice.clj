@@ -3176,7 +3176,7 @@
       (click-card state :corp iw)
       (is (= 3 (get-counters (refresh iw) :advancement))))))
 
-(deftest ^:test-refresh/focus snowflake
+(deftest snowflake
   ;; Snowflake - Win a psi game to end the run
   (do-game
     (new-game {:corp {:deck ["Snowflake"]}})

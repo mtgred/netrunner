@@ -39,7 +39,7 @@
    :abilities [{:async true
                 :cost [:trash]
                 :msg message
-                :effect (effect (effect-fn eid card target))}]})
+                :effect (effect (effect-fn eid card targets))}]})
 
 (defn- trash-when-tagged-contructor
   "Constructor for a 'trash when tagged' card. Does not overwrite `:effect` key."
@@ -1151,11 +1151,7 @@
 
    "Hades Shard"
    (shard-constructor "Hades Shard" :archives "access all cards in Archives"
-                      (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                           (wait-for (trigger-event-sync state side :pre-access :archives)
-                                     (resolve-ability state :runner
-                                                      (choose-access (get-in @state [:corp :discard])
-                                                                     '(:archives) {:no-root true}) card nil))))
+                      (effect (do-access eid [:archives] {:no-root true})))
 
    "Hard at Work"
    (let [ability {:msg "gain 2 [Credits] and lose [Click]"

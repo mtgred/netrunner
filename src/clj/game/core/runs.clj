@@ -101,7 +101,7 @@
                          (swap! state update-in [:stats side :runs :started] (fnil inc 0))
                          (update-all-ice state side)
                          (update-all-icebreakers state side)
-                         (wait-for (trigger-event-simult state :runner :run nil s n)
+                         (wait-for (trigger-event-simult state :runner :run nil s n cost-args)
                                    (if (pos? (get-in @state [:run :position]))
                                      (set-next-phase state :approach-ice)
                                      (do (set-next-phase state :approach-server)
@@ -963,7 +963,8 @@
                       archives-count (+ (count (-> @state :corp :discard)) (count (-> @state :corp :servers :archives :content)))]
                   ;; Because we don't "access" cards in Archives like normal,
                   ;; we have to manually count all the cards we'd normally skip
-                  (swap! state update-in [:run :cards-accessed :discard] (fnil + 0 0) (- archives-count (count cards)))
+                  (when (:run @state)
+                    (swap! state update-in [:run :cards-accessed :discard] (fnil + 0 0) (- archives-count (count cards))))
                   (if (not-empty cards)
                     (if (= 1 archives-count)
                       (access-card state side eid (first cards))
