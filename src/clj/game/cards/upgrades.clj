@@ -1357,7 +1357,7 @@
               :effect (req (reveal state side target)
                            (swap! state update-in [:run]
                                   #(assoc % :position (inc (:position run))))
-                           (set-next-phase state side :encounter-ice)
+                           (set-next-phase state :encounter-ice)
                            (trash state side eid (assoc target :seen true) nil))}]}
 
    "Tori Hanzō"
