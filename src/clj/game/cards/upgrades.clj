@@ -1378,6 +1378,20 @@
                       :successful {:msg "gain 1 [Credits]"
                                    :effect (effect (gain-credits 1))}}}]}
 
+   "Tranquility Home Grid"
+   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+    :events [{:event :corp-install
+              :req (req (and (#{"Asset" "Agenda" "Upgrade"} (:type target))
+                             (= (second (:zone card)) (second (:zone target)))
+                             (first-event? state :corp :corp-install #(= (-> card :zone second) (-> % first :zone second)))))
+              :prompt (msg "Use " (:title card) " to gain 2 [Credits] or draw 1 card?")
+              :choices ["Gain 2 [Credits]" "Draw 1 card"]
+              :msg (msg (decapitalize target))
+              :effect (req (if (= target "Gain 2 [Credits]")
+                             (gain state side :credit 2)
+                             (draw state side 1 nil)))}]
+    }
+
    "Tyr's Hand"
    {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ICE from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
