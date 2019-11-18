@@ -402,9 +402,7 @@
       (is (find-card "Interdiction" (:discard (get-runner))) "Interdiction is trashed")
       (trash-from-hand state :corp "IPO")
       (take-credits state :corp)
-      (run-on state "HQ")
-      (run-next-phase state)
-      (run-successful state)
+      (run-empty-server state "HQ")
       (click-prompt state :runner "Steal")
       (is (find-card "Paywall Implementation" (:rfg (get-corp))) "Paywall Implementation removed from game")
       (is (not= "Paywall Implementation" (:title (first (:discard (get-corp))))) "Paywall Implementation not moved to trash")
@@ -465,7 +463,7 @@
       (is (empty? (get-in @state [:corp :prompt])) "Caprice not trigger on first ice")
       (run-continue state)
       (run-next-phase state)
-      (run-continue state) ; Caprice should trigger here TODO: fix
+      (run-continue state) ; Caprice should trigger here
       (is (prompt-is-card? state :corp caprice)
           "Corp has Caprice prompt (triggered automatically as runner passed last ice)")
       (is (prompt-is-card? state :runner caprice) "Runner has Caprice prompt")
@@ -819,9 +817,7 @@
       (play-from-hand state :runner "Desperado")
       (play-from-hand state :runner "Temüjin Contract")
       (click-prompt state :runner "HQ")
-      (run-on state :hq)
-      (run-next-phase state)
-      (run-successful state)
+      (run-empty-server state :hq)
       (is (= 2 (:credit (get-runner))) "No Desperado or Temujin credits")
       (is (not (:successful-run (:register (get-runner)))) "No successful run in register")
       (click-prompt state :runner "Crisium Grid")
@@ -943,9 +939,7 @@
                       :deck ["Ice Wall"]}})
     (play-from-hand state :corp "Disposable HQ" "New remote")
     (take-credits state :corp)
-    (run-on state "Server 1")
-    (run-next-phase state)
-    (run-successful state)
+    (run-empty-server state "Server 1")
     (click-prompt state :corp "Yes")
     (click-card state :corp "Fire Wall")
     (click-card state :corp "Hedge Fund")
@@ -1039,6 +1033,8 @@
       (core/rez state :corp geo)
       (take-credits state :corp)
       (run-on state "Server 1")
+      (run-next-phase state)
+      (run-continue state)
       (run-jack-out state)
       (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")
       (card-ability state :corp (refresh geo) 0)
@@ -1046,9 +1042,13 @@
       (let [geo (get-content state :archives 0)]
         (is geo "Georgia moved to Archives")
         (run-on state "Archives")
+        (run-next-phase state)
+        (run-continue state)
         (run-jack-out state)
         (is (= 2 (count (:discard (get-runner)))) "Runner took 1 net damage")
         (run-on state "HQ")
+        (run-next-phase state)
+        (run-continue state)
         (run-jack-out state)
         (is (= 2 (count (:discard (get-runner)))) "Runner did not take damage")))))
 
@@ -1118,12 +1118,12 @@
       (is (= 6 (:current-strength (refresh gutenberg))))
       (is (zero? (:current-strength (refresh vanilla))))
       (card-ability state :corp helheim 0)
-      (click-card state :corp (find-card "Jackson Howard" (:hand (get-corp))))
+      (click-card state :corp "Jackson Howard")
       (is (= 1 (count (:discard (get-corp)))))
       (is (= 8 (:current-strength (refresh gutenberg))))
       (is (= 2 (:current-strength (refresh vanilla))))
       (card-ability state :corp helheim 0)
-      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (click-card state :corp "Hedge Fund")
       (is (= 2 (count (:discard (get-corp)))))
       (is (= 10 (:current-strength (refresh gutenberg))))
       (is (= 4 (:current-strength (refresh vanilla))))
@@ -1149,9 +1149,7 @@
        (is (prompt-is-card? state :runner (refresh hh)) "Runner prompt is on Hired Help")
        (click-prompt state :runner "End the run")
        (is (not (:run @state)) "Run ended")
-       (run-on state :remote2)
-       (run-next-phase state)
-       (run-successful state)
+       (run-empty-server state :remote2)
        (click-prompt state :runner "Steal")
        (run-on state :remote1)
        (run-next-phase state)
@@ -1217,16 +1215,12 @@
     (starting-hand state :corp ["Increased Drop Rates"])
     (play-from-hand state :corp "Increased Drop Rates" "New remote")
     (take-credits state :corp)
-    (run-on state "R&D")
-    (run-next-phase state)
-    (run-successful state)
+    (run-empty-server state "R&D")
     (is (= 0 (count-tags state)))
     (click-prompt state :runner "Yes")
     (is (= 1 (count-tags state)) "Runner takes 1 tag to prevent Corp from removing 1 BP")
     (click-prompt state :runner "Pay 2 [Credits] to trash") ; trash
-    (run-on state "Archives")
-    (run-next-phase state)
-    (run-successful state)
+    (run-empty-server state "Archives")
     (is (= 1 (count-bad-pub state)))
     (click-prompt state :runner "No")
     (is (= 0 (count-bad-pub state)) "Runner declines to take tag, Corp removes 1 BP")))
@@ -1243,9 +1237,7 @@
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "Fester")
     (play-from-hand state :runner "Daily Casts")
-    (run-on state "R&D")
-    (run-next-phase state)
-    (run-successful state)
+    (run-empty-server state "R&D")
     (click-prompt state :corp "0") ; trace
     (click-prompt state :runner "0")
     (is (empty? (:hand (get-runner))) "Runner starts with no cards in hand")
@@ -1253,9 +1245,9 @@
     (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
     (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash
     ;; TODO: Understand weird :waiting prompt on Runner side here:
-    ;; Corp: 
+    ;; Corp:
     ;; Type: nil
-    ;; 
+    ;;
     ;; Runner: Waiting for Corp to resolve runner-trash triggers
     ;; Type: :waiting
     ; (run-empty-server state "Archives")
@@ -1331,6 +1323,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
     (run-on state :hq)
+    (run-next-phase state)
     (let [keeg (get-content state :hq 0)]
       (core/rez state :corp keeg)
       (card-ability state :corp keeg 0)
@@ -1463,7 +1456,7 @@
       (run-continue state)
       (run-next-phase state)
       (run-continue state)
-      ; TODO: Letheia should trigger here
+      (run-next-phase state)
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
       (is (zero? (:position (:run @state))) "Runner should be approaching the server")
@@ -2562,9 +2555,9 @@
 (deftest the-twins
   ;; The Twins
   (do-game
-    (new-game {:corp {:deck ["The Twins" (qty "Ice Wall" 10)]}
+    (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                      :hand ["The Twins" (qty "Ice Wall" 2)]}
                :runner {:deck ["Corroder"]}})
-    (starting-hand state :corp ["The Twins" "Ice Wall" "Ice Wall"])
     (play-from-hand state :corp "The Twins" "New remote")
     (play-from-hand state :corp "Ice Wall" "Server 1")
     (take-credits state :corp)

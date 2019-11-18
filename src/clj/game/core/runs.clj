@@ -213,9 +213,9 @@
     (update-all-icebreakers state side)
     (swap! state assoc-in [:run :no-action] false)
     (system-msg state :runner (str "passes " (card-str state ice)))
+    (when-not (get-in @state [:run :next-phase])
+      (swap! state update-in [:run :position] (fnil dec 1)))
     (wait-for (trigger-event-simult state side :pass-ice args ice)
-              (when-not (get-in @state [:run :next-phase])
-                (swap! state update-in [:run :position] (fnil dec 1)))
               (when ice
                 (reset-all-subs! state (get-card state ice)))
               (update-all-ice state side)

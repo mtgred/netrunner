@@ -224,12 +224,10 @@
                                    card nil))}]}
 
    "Caprice Nisei"
-   (let [ability {:req (req (and this-server
-                                 (zero? (:position run))))
-                  :psi {:not-equal {:msg "end the run"
-                                    :effect (effect (end-run eid card))}}}]
-     {:events [(assoc ability :event :pass-all-ice)]
-      :abilities [ability]})
+   {:events [{:event :pass-all-ice
+              :req (req this-server)
+              :psi {:not-equal {:msg "end the run"
+                                :effect (effect (end-run eid card))}}}]}
 
    "Cayambe Grid"
    (let [ability {:interactive (req (->> (all-installed state :corp)
@@ -734,23 +732,16 @@
                             (clear-wait-prompt state :runner)))}]})
 
    "K. P. Lynn"
-   (let [abi {:prompt "Choose one"
+   {:events [{:event :pass-all-ice
+              :req (req this-server)
               :player :runner
+              :prompt "Choose one"
               :choices ["Take 1 tag" "End the run"]
               :effect (req (if (= target "Take 1 tag")
                              (do (gain-tags state :runner 1)
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to take 1 tag")))
                              (do (end-run state side eid card)
-                                 (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run")))))}]
-     {:events [{:event :pass-ice
-                :req (req (and this-server (= (:position run) 1))) ; trigger when last ice passed
-                :async true
-                :effect (req (continue-ability state :runner abi card nil))}
-               {:event :run
-                :req (req (and this-server
-                               (zero? (:position run)))) ; trigger on unprotected server
-                :async true
-                :effect (req (continue-ability state :runner abi card nil))}]})
+                                 (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run")))))}]}
 
    "La Costa Grid"
    (let [ability {:effect
@@ -767,29 +758,26 @@
       :abilities [ability]})
 
    "Letheia Nisei"
-   (let [ability {:label "Force runner to re-approach outer ice"
-                  :once :per-run
-                  :req (req (and this-server
-                                 (zero? (:position run))))
-                  :psi {:not-equal
-                        {:effect
-                         (effect
-                           (show-wait-prompt :runner "Corp to use Letheia Nisei")
-                           (continue-ability
-                             :corp
-                             {:optional
-                              {:prompt "Trash to force re-approach outer ice?"
-                               :autoresolve (get-autoresolve :auto-fire)
-                               :yes-ability
-                               {:msg "force the Runner to approach outermost piece of ice"
-                                :effect (req (swap! state assoc-in [:run :position] (count run-ices))
-                                             (set-next-phase state :approach-ice)
-                                             (trash state side eid card {:unpreventable true}))}
-                               :end-effect (effect (clear-wait-prompt :runner))}}
-                             card nil))}}}]
-     {:events [(assoc ability :event :approach-server)]
-      :abilities [ability
-                  (set-autoresolve :auto-fire "Fire Letheia Nisei?")]})
+   {:events [{:event :approach-server
+              :once :per-run
+              :req (req this-server)
+              :psi {:not-equal
+                    {:effect
+                     (effect
+                       (show-wait-prompt :runner "Corp to use Letheia Nisei")
+                       (continue-ability
+                         :corp
+                         {:optional
+                          {:prompt "Trash to force re-approach outer ice?"
+                           :autoresolve (get-autoresolve :auto-fire)
+                           :yes-ability
+                           {:msg "force the Runner to approach outermost piece of ice"
+                            :effect (req (swap! state assoc-in [:run :position] (count run-ices))
+                                         (set-next-phase state :approach-ice)
+                                         (trash state side eid card {:unpreventable true}))}
+                           :end-effect (effect (clear-wait-prompt :runner))}}
+                         card nil))}}}]
+    :abilities [(set-autoresolve :auto-fire "Fire Letheia Nisei?")]}
 
    "Keegan Lane"
    {:abilities [{:req (req (and this-server
@@ -1349,16 +1337,21 @@
               :req (req (and this-server
                              (rezzed? target)
                              (seq (filter #(same-card? :title % target) (:hand corp)))))
-              :prompt "Select a copy of the ICE just passed"
-              :choices {:req (req (and (in-hand? target)
-                                       (ice? target)
-                                       (same-card? :title current-ice target)))}
-              :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")
-              :effect (req (reveal state side target)
-                           (swap! state update-in [:run]
-                                  #(assoc % :position (inc (:position run))))
-                           (set-next-phase state :encounter-ice)
-                           (trash state side eid (assoc target :seen true) nil))}]}
+              :effect
+              (effect
+                (continue-ability
+                  (let [passed-ice target]
+                    {:async true
+                     :prompt "Select a copy of the ICE just passed"
+                     :choices {:req (req (and (in-hand? target)
+                                              (ice? target)
+                                              (same-card? :title passed-ice target)))}
+                     :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")
+                     :effect (req (reveal state side target)
+                                  (swap! state update-in [:run :position] inc)
+                                  (set-next-phase state :encounter-ice)
+                                  (trash state side eid (assoc target :seen true) nil))})
+                  card nil))}]}
 
    "Tori Hanzō"
    {:events [{:event :pre-resolve-damage

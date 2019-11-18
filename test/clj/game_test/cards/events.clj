@@ -4707,7 +4707,7 @@
     (click-prompt state :runner "HQ")
     (run-next-phase state)
     (card-ability state :runner (get-program state 0) 0)
-    (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
+    (click-prompt state :runner "Force the Runner to lose 1 [Click]")
     (click-prompt state :runner "End the run")
     (run-continue state)
     (run-continue state)
