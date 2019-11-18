@@ -778,7 +778,7 @@
    {:interactive (req true)
     :prompt "Select an asset or upgrade to install from Archives or HQ"
     :show-discard true
-    :choices {:card #(and (#{"Asset" "Upgrade"} (:type %))
+    :choices {:card #(and (or (asset? %) (upgrade? %))
                           (#{[:hand] [:discard]} (:zone %))
                           (corp? %))}
     :msg (msg "install and rez " (:title target) ", ignoring all costs")

@@ -426,7 +426,7 @@
     :events [{:event :pre-access-card
               :once :per-run
               :async true
-              :req (req (not= (:type target) "Agenda"))
+              :req (req (not (agenda? target)))
               :effect (req (let [c target
                                  cost (:cost c)
                                  title (:title c)]
@@ -719,7 +719,7 @@
     :async true
     :effect (req (wait-for (expose state side target) ;; would be nice if this could return a value on completion
                            (if async-result ;; expose was successful
-                             (if (#{"Asset" "Upgrade"} (:type target))
+                             (if (or (asset? target) (upgrade? target))
                                (do (system-msg state :runner (str "uses Drive By to trash " (:title target)))
                                    (trash state side (assoc target :seen true))
                                    ;; Turn on Reprisal cards
@@ -754,7 +754,7 @@
                   :prompt "Choose a card type"
                   :choices ["Asset" "Upgrade" "Operation" "ICE"]
                   :msg (msg "reveal 2 cards from HQ and trash all "
-                            target (when (not= "ICE" (:type target)) "s"))
+                            target (when (not (ice? target)) "s"))
                   :effect (req (let [cards-to-reveal (take 2 (shuffle (:hand corp)))
                                      cards-to-trash (filter #(is-type? % target) cards-to-reveal)
                                      credits (* 4 (count cards-to-trash))]
@@ -2676,7 +2676,7 @@
       :choices (req (filter #(can-run-server? state %) remotes))
       :effect (effect (make-run eid target nil card))
       :events [{:event :pre-access-card
-                :req (req (and (not= (:type target) "Agenda")
+                :req (req (and (not (agenda? target))
                                (:successful run)))
                 :once :per-run
                 :msg (msg "remove " (:title target) " from the game, and watch for other copies of " (:title target) " to burn")
