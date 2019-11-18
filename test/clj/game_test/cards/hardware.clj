@@ -305,6 +305,88 @@
         (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip")
         (is (= 1 (count (:discard (get-runner)))) "Bookmark is only card in heap")))))
 
+(deftest boomerang
+  ;; Boomerang
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [icew (get-ice state :hq 0)
+            boom (get-hardware state 0)]
+        (click-card state :runner icew)
+        (is (= "ICE protecting HQ at position 0" (:server-target (refresh boom))) "ICE name is not revealed")
+        (run-on state :hq)
+        (core/rez state :corp icew)
+        (is (= "Ice Wall protecting HQ at position 0" (:server-target (refresh boom))) "Target was updated to contain ICE name")
+        (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
+        (card-ability state :runner (refresh boom) 0)
+        (click-prompt state :runner "End the run")
+        (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
+        (click-prompt state :runner "Yes")
+        (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
+        (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
+  (testing "Does not trigger on following successful runs"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [icew (get-ice state :hq 0)
+            boom (get-hardware state 0)]
+        (click-card state :runner icew)
+        (run-on state :hq)
+        (core/rez state :corp icew)
+        (card-ability state :runner (refresh boom) 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No")
+        (run-empty-server state :archives)
+        (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
+  (testing "Cannot use Boomerang on other ice"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall" "Enigma"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [icew (get-ice state :hq 0)
+            enig (get-ice state :hq 1)
+            boom (get-hardware state 0)]
+        (click-card state :runner icew)
+        (run-on state :hq)
+        (core/rez state :corp enig)
+        (card-ability state :runner (refresh boom) 0)
+        (is (empty? (:prompt (get-runner))) "Cannot use Boomerang on other ice"))))
+  (testing "Assimilator frees target restriction"
+    (do-game
+      (new-game {:runner {:id "Apex: Invasive Predator"
+                          :deck ["Boomerang" "Assimilator"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/end-phase-12 state :runner nil)
+      (click-card state :runner "Boomerang")
+      (play-from-hand state :runner "Assimilator")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-card state :runner (-> (get-runner) :rig :facedown first))
+      (let [icew (get-ice state :hq 0)
+            boom (get-hardware state 0)]
+        (run-on state :hq)
+        (core/rez state :corp icew)
+        (card-ability state :runner (refresh boom) 0)
+        (is (not-empty (:prompt (get-runner))) "Can use Boomerang on ice")))))
+
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
   (do-game
