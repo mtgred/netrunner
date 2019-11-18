@@ -2850,15 +2850,17 @@
    (constellation-ice trash-hardware)
 
    "Thimblerig"
-   {:flags {:corp-phase-12 (req (>= (count (filter ice? (all-installed state :corp))) 2))}
-    :implementation "Does not restrict usage of swap ability to start of turn or after pass"
-    :abilities [{:label "Swap Thimblerig with a piece of ice"
-                 :prompt "Choose a piece of ice to swap Thimblerig with"
-                 :choices {:card ice?
-                           :not-self true}
-                 :effect (effect (swap-ice card target))
-                 :msg (msg "swap " (card-str state card) " with " (card-str state target))}]
-    :subroutines [end-the-run]}
+   (let [ability {:optional
+                  {:req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
+                   :prompt "Swap Thimblerig with another ice?"
+                   :yes-ability {:prompt "Choose a piece of ice to swap Thimblerig with"
+                                 :choices {:card ice?
+                                           :not-self true}
+                                 :effect (effect (swap-ice card target))
+                                 :msg (msg "swap " (card-str state card) " with " (card-str state target))}}}]
+     {:events [(assoc ability :event :pass-ice)
+               (assoc ability :event :corp-turn-begins)]
+      :subroutines [end-the-run]})
 
    "Thoth"
    {:on-encounter (give-tags 1)
@@ -2909,11 +2911,11 @@
                     :unregister-once-resolved true
                     :msg (msg "duplicate each subroutine on " (:title target))
                     :effect
-                    (req (let [curr-subs (:subroutines target)
+                    (req (let [curr-subs (map #(assoc % :from-cid (:cid target)) (:subroutines target))
                                tldr-subs (map #(assoc % :from-cid (:cid card)) curr-subs)
                                new-subs (->> (interleave curr-subs tldr-subs)
                                              (reduce
-                                               (fn [ice sub] (add-sub ice sub (:cid card) nil))
+                                               (fn [ice sub] (add-sub ice sub (:from-cid sub) nil))
                                                (assoc target :subroutines []))
                                              :subroutines
                                              (into []))
@@ -2921,11 +2923,12 @@
                            (update! state :corp new-card)
                            (register-events
                              state side card
-                             [{:event :encounter-ice-ends
-                               :duration :end-of-encounter
-                               :unregister-once-resolved true
-                               :req (req (get-card state new-card))
-                               :effect (effect (remove-subs! (get-card state new-card) #(= (:cid card) (:from-cid %))))}])))}]))}]}
+                             (let [cid (:cid card)]
+                               [{:event :encounter-ice-ends
+                                 :duration :end-of-encounter
+                                 :unregister-once-resolved true
+                                 :req (req (get-card state new-card))
+                                 :effect (effect (remove-subs! (get-card state new-card) #(= cid (:from-cid %))))}]))))}]))}]}
 
    "TMI"
    {:trace {:base 2
