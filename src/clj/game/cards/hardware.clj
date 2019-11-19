@@ -413,6 +413,21 @@
               :silent (req true)
               :msg "gain 1 [Credits]" :effect (effect (gain-credits 1))}]}
 
+   "Devil Charm"
+   {:abilities [{:label "Give encountered ice -6 strength"
+                 :msg (msg "give -6 strength to " (card-str state current-ice) " for the remainder of the run")
+                 :cost [:remove-from-game]
+                 :req (req (and run
+                                (rezzed? current-ice)))
+                 :effect (effect (register-floating-effect
+                                   card
+                                   (let [target-ice current-ice]
+                                     {:type :ice-strength
+                                      :duration :end-of-run
+                                      :req (req (same-card? target target-ice))
+                                      :value -6}))
+                                 (update-all-ice))}]}
+
    "Dinosaurus"
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card))) :cost [:click 1]
