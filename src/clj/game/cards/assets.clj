@@ -1496,6 +1496,43 @@
                                    agendas (filter agenda? drawn)]
                                (continue-ability state side (pdhelper agendas 0) card nil)))}]})
 
+   "Prāna Condenser" ; Prana Condenser
+   {:events [{:event :pre-resolve-damage
+              :async true
+              :req (req (and (not (get-in card [:special :prana-disabled]))
+                             (= target :net)
+                             (pos? (last targets))))
+              :effect (req (let [amount (last targets)
+                                 damagecard (second targets)]
+                             (swap! state assoc-in [:damage :damage-replace] true)
+                             (show-wait-prompt state :runner (str "Corp to use " (:title card)))
+                             (continue-ability
+                               state side
+                               {:optional
+                                {:prompt (str "Prevent 1 net damage to add power token to " (:title card) "?")
+                                 :player :corp
+                                 :yes-ability
+                                 {:async true
+                                  :msg "prevent 1 net damage, place 1 power token, and gain 3 [Credits]"
+                                  :effect (req (swap! state update-in [:damage] dissoc :damage-replace :defer-damage)
+                                               (clear-wait-prompt state :runner)
+                                               (add-counter state side (get-card state card) :power 1)
+                                               (gain state side :credit 3)
+                                               (update! state side (assoc-in (get-card state card) [:special :prana-disabled] true)) ;temporarily disable prana to not trigger on X-1 net damage
+                                               (wait-for (damage state side :net (dec amount) {:card damagecard})
+                                                         (swap! state assoc-in [:damage :damage-replace] true)
+                                                         (update! state side (assoc-in (get-card state card) [:special :prana-disabled] false))
+                                                         (effect-completed state side eid)))}
+                                 :no-ability
+                                 {:async true
+                                  :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
+                                               (clear-wait-prompt state :runner)
+                                               (effect-completed state side eid))}}}
+                             card nil)))}]
+    :abilities [{:msg (msg "deal " (get-counters card :power) " net damage")
+                 :cost [[:click 2] [:trash]]
+                 :effect (effect (damage eid :net (get-counters card :power) {:card card}))}]}
+
    "Primary Transmission Dish"
    {:recurring 3
     :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
