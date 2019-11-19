@@ -1514,7 +1514,7 @@
                                  :yes-ability
                                  {:async true
                                   :msg "prevent 1 net damage, place 1 power token, and gain 3 [Credits]"
-                                  :effect (req (swap! state update-in [:damage] dissoc :damage-replace :defer-damage)
+                                  :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
                                                (clear-wait-prompt state :runner)
                                                (add-counter state side (get-card state card) :power 1)
                                                (gain state side :credit 3)
