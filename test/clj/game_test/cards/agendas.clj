@@ -992,6 +992,74 @@
       (is (= 2 (get-counters (refresh fu) :agenda)) "Firmware Updates should now have 2 agenda counters")
       (is (= 1 (get-counters (refresh iw) :advancement)) "Ice Wall should have 1 advancement token"))))
 
+(deftest flower-sermon
+  ;; Flower Sermon
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                               "DNA Tracker" "Excalibur" "Fire Wall" "Flower Sermon"]}})
+      (core/draw state :corp)
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Excalibur" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 3)) "DNA Tracker"))
+      (is (= (:title (nth (-> @state :corp :deck) 4)) "Excalibur"))
+      (is (= (:title (nth (-> @state :corp :deck) 5)) "Fire Wall"))
+      ;; R&D is now from top to bottom: A B C D E F
+      (play-and-score state "Flower Sermon")
+      (is (= 0 (count (:hand (get-corp)))) "No cards in HQ")
+      (let [fs (get-scored state :corp 0)]
+        (is (= 5 (get-counters (refresh fs) :agenda)) "5 agenda tokens on Flower Sermon")
+        (card-ability state :corp fs 0)
+        (is (= 2 (count (:hand (get-corp)))) "Drew 2 cards")
+        (click-card state :corp (find-card "Brainstorm" (:hand (get-corp))))
+        (is (= "Brainstorm" (:title (first (:deck (get-corp))))) "Brainstorm now on top")
+        (is (= 4 (get-counters (refresh fs) :agenda)) "Spent agenda token on Flower Sermon")
+        (card-ability state :corp fs 0)
+        (is (empty? (:prompt (get-corp))) "Can only use once per turn"))))
+  (testing "Hyoubu interaction"
+    (do-game
+      (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                        :deck [(qty "Hedge Fund" 10)]
+                        :hand ["Flower Sermon"]}})
+      (play-and-score state "Flower Sermon")
+      (let [fs (get-scored state :corp 0)
+            corp-credits (:credit (get-corp))]
+        (card-ability state :corp fs 0)
+        (is (= (+ 1 corp-credits) (:credit (get-corp))) "Gained 1 credit from Hyoubu"))))
+  (testing "DBS interaction"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                               "DNA Tracker" "Daily Business Show" "Flower Sermon"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 3)) "DNA Tracker"))
+      ;; R&D is now from top to bottom: A B C D
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (play-and-score state "Flower Sermon")
+      (take-credits state :corp)
+      (is (= 0 (count (:hand (get-corp)))) "No cards in HQ")
+      (let [fs (get-scored state :corp 0)
+            dbs (get-content state :remote1 0)]
+        (core/rez state :corp dbs)
+        (card-ability state :corp fs 0)
+        (is (= (count (:hand (get-corp))) 3) "Drew 3 cards with DBS")
+        (click-card state :corp (find-card "Chiyashi" (:hand (get-corp))))
+        (is (= "Chiyashi" (:title (last (:deck (get-corp))))) "Chiyashi at the bottom")
+        (click-card state :corp (find-card "Brainstorm" (:hand (get-corp))))
+        (is (= "Brainstorm" (:title (first (:deck (get-corp))))) "Brainstorm now on top")))))
+
 (deftest fly-on-the-wall
   ;; Fly on the Wall - give the runner 1 tag
   (do-game
