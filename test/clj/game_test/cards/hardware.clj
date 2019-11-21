@@ -317,10 +317,10 @@
       (let [icew (get-ice state :hq 0)
             boom (get-hardware state 0)]
         (click-card state :runner icew)
-        (is (= "ICE protecting HQ at position 0" (:server-target (refresh boom))) "ICE name is not revealed")
+        (is (= "ICE[br]HQ (0)" (:server-target (refresh boom))) "ICE name is not revealed")
         (run-on state :hq)
         (core/rez state :corp icew)
-        (is (= "Ice Wall protecting HQ at position 0" (:server-target (refresh boom))) "Target was updated to contain ICE name")
+        (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Target was updated to contain ICE name")
         (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
         (card-ability state :runner (refresh boom) 0)
         (click-prompt state :runner "End the run")
@@ -385,7 +385,26 @@
         (run-on state :hq)
         (core/rez state :corp icew)
         (card-ability state :runner (refresh boom) 0)
-        (is (not-empty (:prompt (get-runner))) "Can use Boomerang on ice")))))
+        (is (not-empty (:prompt (get-runner))) "Can use Boomerang on ice"))))
+  (testing "Update server-target on ice swap"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall" "Thimblerig"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Thimblerig" "R&D")
+      (take-credits state :corp)
+      (let [icew (get-ice state :hq 0)
+            thim (get-ice state :rd 0)]
+        (core/rez state :corp icew)
+        (core/rez state :corp thim)
+        (play-from-hand state :runner "Boomerang")
+        (click-card state :runner thim)
+        (let [boom (get-hardware state 0)]
+          (is (= "Thimblerig[br]R&D (0)" (:server-target (refresh boom))) "Targetting Thimblerig on R&D")
+          (card-ability state :corp (refresh thim) 0)
+          (click-card state :corp (refresh icew))
+          (is (= "Thimblerig[br]HQ (0)" (:server-target (refresh boom))) "Targetting Thimblerig on HQ")
+          (println (clojure.string/join "\n" (map :text (:log @state)))))))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
