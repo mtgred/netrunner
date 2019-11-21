@@ -127,6 +127,7 @@
           (unregister-events state side h)
           (when (rezzed? h)
             (register-events state side newh)))))
+    (trigger-event state side :swap a-new b-new)
     (update-ice-strength state side a-new)
     (update-ice-strength state side b-new)))
 
@@ -151,7 +152,8 @@
                        (assoc-in [:host :zone] (:zone newcard)))]
           (update! state side newh)
           (unregister-events state side h)
-          (register-events state side newh))))))
+          (register-events state side newh))))
+    (trigger-event state side :swap a-new b-new)))
 
 (defn do-net-damage
   "Do specified amount of net-damage."
