@@ -403,8 +403,22 @@
           (is (= "Thimblerig[br]R&D (0)" (:server-target (refresh boom))) "Targetting Thimblerig on R&D")
           (card-ability state :corp (refresh thim) 0)
           (click-card state :corp (refresh icew))
-          (is (= "Thimblerig[br]HQ (0)" (:server-target (refresh boom))) "Targetting Thimblerig on HQ")
-          (println (clojure.string/join "\n" (map :text (:log @state)))))))))
+          (is (= "Thimblerig[br]HQ (0)" (:server-target (refresh boom))) "Targetting Thimblerig on HQ")))))
+  (testing "Update server-target on ice trash"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (let [icew (get-ice state :hq 0)]
+        (core/rez state :corp icew)
+        (play-from-hand state :runner "Boomerang")
+        (click-card state :runner icew)
+        (let [boom (get-hardware state 0)]
+          (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Targetting Ice Wall on HQ")
+          (core/trash-cards state :runner [icew])
+          (is (nil? (:server-target (refresh boom))) "No more target message")
+          (is (some? (get-in (refresh boom) [:special :boomerang-target])) "Still targetting a card"))))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size

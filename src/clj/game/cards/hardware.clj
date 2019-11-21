@@ -179,7 +179,13 @@
                 :effect (effect (update! (assoc card :server-target (shortened-card-str state (get-card state target)))))}
                {:event :swap
                 :req (req (some #(same-card? % (get-in card [:special :boomerang-target])) targets))
-                :effect (effect (update! (assoc card :server-target (shortened-card-str state (some #(when (same-card? % (get-in card [:special :boomerang-target])) %) targets)))))}]
+                :effect (effect (update! (assoc card :server-target (shortened-card-str state (some #(when (same-card? % (get-in card [:special :boomerang-target])) %) targets)))))}
+               {:event :corp-trash
+                :req (req (some #(same-card? % (get-in card [:special :boomerang-target])) targets))
+                :effect (effect (update! (dissoc card :server-target)))}
+               {:event :runner-trash
+                :req (req (some #(same-card? % (get-in card [:special :boomerang-target])) targets))
+                :effect (effect (update! (dissoc card :server-target)))}]
       :abilities [(break-sub [:trash] 2 "All"
                     {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
                                  (same-card? current-ice boomerang-target)
