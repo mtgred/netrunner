@@ -630,6 +630,28 @@
                            "Runner should only lose 3 credits"
                            (card-side-ability state :runner eula 0))))))
 
+(deftest engram-flush
+  ;; Engram Flush
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Engram Flush"]}
+                 :runner {:hand ["Daily Casts" "Sure Gamble" "Dirty Laundry" "Political Operative" "Corroder"]}})
+      (play-from-hand state :corp "Engram Flush" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (let [ef (get-ice state :hq 0)]
+        (core/rez state :corp ef)
+        (card-ability state :corp ef 0)
+        (click-prompt state :corp "Program")
+        (card-subroutine state :corp ef 0)
+        (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
+        (is (= 2 (-> (get-corp) :prompt first :choices count)) "Only options: Corroder and None")
+        (click-prompt state :corp "Corroder")
+        (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder got trashed")
+        (is (= 1 (count (:discard (get-runner)))) "Corroder in heap")
+        (card-subroutine state :corp ef 0)
+        (is (empty? (:prompt (get-corp))) "No prompt because no more fitting cards in grip")))))
+
 (deftest enigma
   ;; Enigma - Force Runner to lose 1 click if able
   (do-game

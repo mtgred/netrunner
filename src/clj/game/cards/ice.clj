@@ -1044,6 +1044,30 @@
                                   (trash state side c)))}]
     :runner-abilities [(bioroid-break 1 1)]}
 
+   "Engram Flush"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:label "Name a card type"
+                 :prompt "Choose a card type"
+                 :choices ["Event" "Hardware" "Program" "Resource"]
+                 :effect (req (let [cardtype target]
+                                (system-msg state side
+                                            (str "uses " (:title card) " to name " target))
+                                (register-events state side card
+                                                 [{:event :corp-reveal
+                                                   :duration :end-of-encounter
+                                                   :req (req (every? in-hand? targets) ;all revealed cards are in grip
+                                                             (= (count targets) (count (:hand runner))) ;entire grip was revealed
+                                                             (some #(is-type? % cardtype) targets)) ;there are cards with the named card type
+                                                   :prompt "Select revealed card to trash"
+                                                   :choices (req (concat (filter #(is-type? % cardtype) targets) ["None"]))
+                                                   :msg (msg "trash " (:title target) " from grip")
+                                                   :effect (req (when (not= "None" target)
+                                                                  (trash state side target)))}])))}]
+    :subroutines [{:label "Reveal the grip"
+                   :msg (msg "reveal " (count (:hand runner))
+                             " cards from grip: " (join ", " (map :title (:hand runner))))
+                   :effect (req (reveal state :corp (:hand runner)))}]}
+
    "Enigma"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
                    :effect runner-loses-click}
