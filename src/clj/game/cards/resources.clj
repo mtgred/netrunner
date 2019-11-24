@@ -2374,18 +2374,17 @@
                  :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]}
 
    "The Back"
-   {:implementation "Adding power tokens is manual on most cards"
-    :events [{:event :spent-credits-from-card
-              :req (req (and (:run @state)
-                             (hardware? target)
-                             (not (used-this-turn? (:cid card) state))))
-              :once :per-turn
-              :async true
-              :effect (effect (system-msg (str "places 1 power token on " (:title card)))
-                              (add-counter card :power 1))}]
+   {:implementation "Adding power tokens is manual"
+    ; :events [{:event :spent-credits-from-card
+              ; :req (req (and (:run @state)
+                             ; (hardware? target)
+                             ; (not (used-this-turn? (:cid card) state))))
+              ; :once :per-turn
+              ; :async true
+              ; :effect (effect (system-msg (str "places 1 power token on " (:title card)))
+                              ; (add-counter card :power 1))}]
     :abilities [{:label "Manually place 1 power token"
-                 :req (req (and (:run @state)
-                                (not (used-this-turn? (:cid card) state))))
+                 :req (req (:run @state))
                  :effect (effect (system-msg (str "manually places 1 power token on " (:title card)))
                                  (add-counter card :power 1))}
                 {:label "Shuffle back cards with [Trash] abilities"
