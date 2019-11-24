@@ -1152,6 +1152,52 @@
                         :req (req (not (ice? target)))
                         :value [:randomly-trash-from-hand 1]}]}
 
+   "Harmony AR Therapy"
+   (letfn [(choose-end [to-shuffle]
+             (let [to-shuffle (sort to-shuffle)]
+               {:msg (msg "shuffle " (count to-shuffle)" cards back into the stack: " (join ", " to-shuffle))
+                :effect (req (doseq [c-title to-shuffle]
+                               (let [c (some #(when (= (:title %) c-title) %) (:discard runner))]
+                                 (move state side c :deck)))
+                             (shuffle! state side :deck)
+                             (effect-completed state side eid)
+                             (clear-wait-prompt state :corp))}))
+           (choose-next [to-shuffle target remaining]
+             (let [remaining (if (= "Done" target)
+                               remaining
+                               (remove #(= % target) remaining))
+                   to-shuffle (if (= "Done" target)
+                                to-shuffle
+                                (if target
+                                  (concat to-shuffle [target])
+                                  []))
+                   remaining-choices (- 5 (count to-shuffle))
+                   finished? (or (= "Done" target)
+                                 (= 0 remaining-choices)
+                                 (empty? remaining))]
+               {:prompt (msg (if finished?
+                               (str "Shuffling: " (join ", " to-shuffle))
+                               (str "Choose up to " remaining-choices
+                                    (when (not-empty to-shuffle)
+                                      " more")
+                                    " cards."
+                                    (when (not-empty to-shuffle)
+                                      (str "[br]Shuffling: " (join ", " to-shuffle))))))
+                :async true
+                :choices (req (if finished?
+                                ["OK" "Start over"]
+                                (concat remaining (when (not-empty to-shuffle) ["Done"]))))
+                :effect (req (if finished?
+                               (if (= "OK" target)
+                                 (continue-ability state side (choose-end to-shuffle) card nil)
+                                 (continue-ability state side (choose-next '() nil (distinct (map :title (:discard runner)))) card nil))
+                               (continue-ability state side (choose-next to-shuffle target remaining) card nil)))}))]
+     {:async true
+      :req (req (pos? (count (:discard runner))))
+      :rfg-instead-of-trashing true
+      :effect (req (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
+                (continue-ability state side (choose-next '() nil (sort (distinct (map :title (:discard runner))))) card nil))})
+
    "High-Stakes Job"
    {:async true
     :makes-run true

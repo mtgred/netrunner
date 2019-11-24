@@ -2218,6 +2218,83 @@
       (is (not (rezzed? (refresh sundew))) "Sundew is not rezzed as corp has no cards in hand")
       (is (= "Unable to pay for Sundew." (-> @state :corp :toast first :msg)) "Corp gets the correct toast"))))
 
+(deftest harmony-ar-therapy
+  ;; Harmony AR Therapy
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:hand [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
+                          :deck ["Harmony AR Therapy"]}})
+      (take-credits state :corp)
+      (dotimes [_ 12] (core/move state :runner (first (:hand (get-runner))) :discard))
+      (core/draw state :runner 1)
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (= 6 (-> (get-runner) :prompt first :choices count)) "Cards are shown distinctly")
+      (click-prompt state :runner "Dirty Laundry")
+      (click-prompt state :runner "Astrolabe")
+      (click-prompt state :runner "Bankroll")
+      (click-prompt state :runner "Chameleon")
+      (click-prompt state :runner "Equivocation")
+      (is (= 12 (count (:discard (get-runner)))) "12 cards in discard (HART still in play area)")
+      (is (= 0 (count (:deck (get-runner)))) "No cards in stack")
+      (is (= 0 (count (:rfg (get-runner)))) "Nothing removed from game")
+      (click-prompt state :runner "OK")
+      (is (= 7 (count (:discard (get-runner)))) "7 cards in discard")
+      (is (= 5 (count (:deck (get-runner)))) "5 cards shuffled back into stack")
+      (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
+  (testing "Cannot play with empty heap"
+    (do-game
+      (new-game {:runner {:hand ["Harmony AR Therapy"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (empty? (:prompt (get-runner))) "HART was not played")))
+  (testing "Shuffle back less than 5 cards"
+    (do-game
+      (new-game {:runner {:hand [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
+                          :deck ["Harmony AR Therapy"]}})
+      (take-credits state :corp)
+      (dotimes [_ 12] (core/move state :runner (first (:hand (get-runner))) :discard))
+      (core/draw state :runner 1)
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (= 6 (-> (get-runner) :prompt first :choices count)) "Cards are shown distinctly")
+      (click-prompt state :runner "Dirty Laundry")
+      (click-prompt state :runner "Astrolabe")
+      (click-prompt state :runner "Bankroll")
+      (click-prompt state :runner "Done")
+      (is (= 12 (count (:discard (get-runner)))) "12 cards in discard (HART still in play area)")
+      (is (= 0 (count (:deck (get-runner)))) "No cards in stack")
+      (is (= 0 (count (:rfg (get-runner)))) "Nothing removed from game")
+      (click-prompt state :runner "OK")
+      (is (= 9 (count (:discard (get-runner)))) "9 cards in discard")
+      (is (= 3 (count (:deck (get-runner)))) "3 cards shuffled back into stack")
+      (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
+  (testing "Start over function"
+    (do-game
+      (new-game {:runner {:hand [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
+                          :deck ["Harmony AR Therapy"]}})
+      (take-credits state :corp)
+      (dotimes [_ 12] (core/move state :runner (first (:hand (get-runner))) :discard))
+      (core/draw state :runner 1)
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (= 6 (-> (get-runner) :prompt first :choices count)) "Cards are shown distinctly")
+      (click-prompt state :runner "Dirty Laundry")
+      (click-prompt state :runner "Astrolabe")
+      (click-prompt state :runner "Bankroll")
+      (click-prompt state :runner "Chameleon")
+      (click-prompt state :runner "Equivocation")
+      (click-prompt state :runner "Start over")
+      (is (= 12 (count (:discard (get-runner)))) "12 cards in discard (HART still in play area)")
+      (is (= 0 (count (:deck (get-runner)))) "No cards in stack")
+      (is (= 0 (count (:rfg (get-runner)))) "Nothing removed from game")
+      (click-prompt state :runner "Dirty Laundry")
+      (click-prompt state :runner "Find the Truth")
+      (click-prompt state :runner "Bankroll")
+      (click-prompt state :runner "Chameleon")
+      (click-prompt state :runner "Equivocation")
+      (click-prompt state :runner "OK")
+      (is (= 7 (count (:discard (get-runner)))) "7 cards in discard")
+      (is (= 5 (count (:deck (get-runner)))) "5 cards shuffled back into stack")
+      (is (= 1 (count (:rfg (get-runner)))) "HART removed from game"))))
+
 (deftest high-stakes-job
   ;; High Stakes Job - run on server with at least 1 piece of unrezzed ice, gains 12 credits if successful
   (do-game
