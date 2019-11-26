@@ -165,6 +165,37 @@
                           true)))
                     (make-run eid target nil card))}
 
+   "Bravado"
+   ; Bravado only counts distinct pieces of ice that were passed.
+   ; That means if a piece of ice was reinstalled and then repassed, it needs to be counted twice.
+   ; This is handled by tracking :card-moved and counting them in :special :bravado-moved.
+   (letfn [(iced-servers [state]
+             (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?) (zones->sorted-names (get-zones state))))]
+     {:async true
+      :makes-run true
+      :req (req (pos? (count (iced-servers state))))
+      :prompt "Choose an iced server"
+      :choices (req (iced-servers state))
+      :effect (effect
+                (register-events card [{:event :pass-ice
+                                        :duration :end-of-run
+                                        :effect (effect (update! (update-in (get-card state card) [:special :bravado-passed] conj (:cid current-ice))))}])
+                (make-run eid target nil (get-card state card)))
+      :events [{:event :successful-run-ends
+                :silent (req true)
+                :msg (msg "gain "
+                       (+ 6 (count (distinct (get-in card [:special :bravado-passed])))
+                          (get-in card [:special :bravado-moved] 0))
+                       " [Credits]")
+                :effect (effect (gain-credits (+ 6 (count (distinct (get-in card [:special :bravado-passed])))
+                                                 (get-in card [:special :bravado-moved] 0))))}
+               {:event :card-moved
+                :silent (req true)
+                :req (req (in-coll? (get-in card [:special :bravado-passed] []) (:cid target)))
+                :effect (effect (update! (update-in card [:special :bravado-moved] (fnil inc 0)))
+                          (update! (update-in (get-card state card) [:special :bravado-passed]
+                                              (fn [cids] (remove #(= % (:cid target)) cids)))))}]})
+
    "Bribery"
    {:implementation "ICE chosen for cost increase is specified at start of run, not on approach"
     :async true
