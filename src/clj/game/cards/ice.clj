@@ -329,10 +329,11 @@
 ;; Card definitions
 (def card-definitions
   {"Afshar"
-   {:implementation "Breaking both subs not restricted"
-    :subroutines [{:msg "make the Runner lose 2 [Credits]"
-                   :effect (effect (lose-credits :runner 2))}
-                  end-the-run]}
+   (let [breakable-fn (fn [ice] (empty? (filter #(and (:broken %) (:printed %)) (:subroutines ice))))]
+     {:subroutines [{:msg "make the Runner lose 2 [Credits]"
+                     :breakable breakable-fn
+                     :effect (effect (lose-credits :runner 2))}
+                    (assoc end-the-run :breakable breakable-fn)]})
 
    "Aiki"
    {:subroutines [(do-psi {:label "Runner draws 2 cards"
