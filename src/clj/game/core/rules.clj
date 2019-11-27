@@ -34,8 +34,9 @@
                   ;; Resolve ability, removing :req as that has already been checked
                   (wait-for (resolve-ability state side (dissoc cdef :req) card nil)
                             (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
+                                  trash-after-resolving (:trash-after-resolving cdef true)
                                   zone (if (:rfg-instead-of-trashing c) :rfg :discard)]
-                              (when c
+                              (when (and c trash-after-resolving)
                                 (move state side c zone)
                                 (unregister-events state side card)
                                 (unregister-constant-effects state side card)
