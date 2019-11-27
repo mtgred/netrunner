@@ -55,7 +55,7 @@
         (core/rez state :corp arella)
         (score-agenda state :corp (refresh domest))
         ;; Simultaneous prompt: Sportsmetal automatically triggers, as Arella is silent because there are no installable cards in HQ
-        (click-prompt state :corp "2 cards")
+        (click-prompt state :corp "Draw 2 cards")
         ;; Arella is no longer silent and now triggers
         (click-card state :corp (find-card "Project Vitruvius" (:hand (get-corp))))
         (click-prompt state :corp "Server 1")
@@ -2313,7 +2313,7 @@
       (core/rez state :corp sg)
       (core/rez state :corp (refresh iw1))
       (is (= 1 (:extra-advance-counter (refresh iw1))) "1 fake advancement token")
-      (is (= 1 (get-counters (refresh iw1) :advancement)) "Only 1 real advancement token")
+      (is (= 1 (:advance-counter (refresh iw1))) "Only 1 real advancement token")
       (is (= 3 (:current-strength (refresh iw1))) "Satellite Grid counter boosting strength by 1")
       (core/rez state :corp (refresh iw2))
       (is (= 1 (:current-strength (refresh iw2))) "Satellite Grid not impacting ICE elsewhere")
@@ -2573,7 +2573,7 @@
       (card-ability state :runner cor 0)
       (click-prompt state :runner "End the run")
       (run-continue state)
-      (is (zero? (-> @state :run :position)) "Run should be at position 0")
+      (click-prompt state :corp "Yes")
       (click-card state :corp (-> (get-corp) :hand first))
       (is (= 1 (-> @state :run :position)) "Run should be moved back to position 1"))))
 

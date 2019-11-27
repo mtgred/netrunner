@@ -251,8 +251,7 @@
                       card nil))}]
      {:events [(assoc ability :event :corp-turn-begins)
                {:event :approach-server
-                :req (req (and this-server
-                               (zero? (:position run))))
+                :req (req this-server)
                 :effect
                 (effect
                   (show-wait-prompt :corp "Runner to choose for Cayambe Grid")
@@ -1341,16 +1340,19 @@
               (effect
                 (continue-ability
                   (let [passed-ice target]
-                    {:async true
-                     :prompt "Select a copy of the ICE just passed"
-                     :choices {:req (req (and (in-hand? target)
-                                              (ice? target)
-                                              (same-card? :title passed-ice target)))}
-                     :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")
-                     :effect (req (reveal state side target)
-                                  (swap! state update-in [:run :position] inc)
-                                  (set-next-phase state :encounter-ice)
-                                  (trash state side eid (assoc target :seen true) nil))})
+                    {:optional
+                     {:prompt (str "Force the runner to encounter " (:title passed-ice) " again?")
+                      :yes-ability
+                      {:async true
+                       :prompt "Select a copy of the ICE just passed"
+                       :choices {:req (req (and (in-hand? target)
+                                                (ice? target)
+                                                (same-card? :title passed-ice target)))}
+                       :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")
+                       :effect (req (reveal state side target)
+                                    (swap! state update-in [:run :position] inc)
+                                    (set-next-phase state :encounter-ice)
+                                    (trash state side eid (assoc target :seen true) nil))}}})
                   card nil))}]}
 
    "Tori Hanzō"

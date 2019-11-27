@@ -98,6 +98,10 @@
                                (activate state card true)))}
                {:event :encounter-ice-ends
                 :effect (req (when (outermost? run-position run-ices)
+                               (activate state card false)))}
+               {:event :derez
+                :req (req (same-card? target current-ice))
+                :effect (req (when (outermost? run-position run-ices)
                                (activate state card false)))}]})
 
    "Adam: Compulsive Hacker"
@@ -862,6 +866,7 @@
    {:events [{:event :pass-ice
               :req (req (first-event? state :corp :pass-ice))
               :async true
+              :interactive (req true)
               :effect (effect
                         (continue-ability
                           (when (some #(and (has-subtype? % "Icebreaker")
@@ -1103,6 +1108,7 @@
 
    "Null: Whistleblower"
    {:events [{:event :encounter-ice
+              :once :per-turn
               :optional
               {:req (req (pos? (count (:hand runner))))
                :once :per-turn
@@ -1280,16 +1286,16 @@
    "Sportsmetal: Go Big or Go Home"
    (let [ab {:prompt "Gain 2 credits or draw 2 cards?"
              :player :corp
-             :choices ["2 credits" "2 cards"]
-             :msg "gain 2 [Credits] or draw 2 cards"
+             :choices ["Gain 2 credits" "Draw 2 cards"]
+             :msg (msg (= target "Gain 2 credits")
+                       "gain 2 credits"
+                       "draw 2 cards")
              :async true
              :interactive (req true)
-             :effect (req (if (= target "2 credits")
-                            (do (system-msg state side "chooses to take 2 [Credits]")
-                                (gain-credits state :corp 2)
+             :effect (req (if (= target "Gain 2 credits")
+                            (do (gain-credits state :corp 2)
                                 (effect-completed state side eid))
-                            (do (system-msg state side "chooses to draw 2 cards")
-                                (draw state :corp eid 2 nil))))}]
+                            (draw state :corp eid 2 nil)))}]
      {:events [(assoc ab :event :agenda-scored)
                (assoc ab :event :agenda-stolen)]})
 
@@ -1495,7 +1501,7 @@
               :async true
               :once :per-turn
               :req (req (and (rezzed? target)
-                             (pos? (get-counters target :virus))))
+                             (pos? (get-counters target :advancement))))
               :msg "do 1 meat damage"
               :effect (effect (damage eid :meat 1 {:card card}))}]}
 

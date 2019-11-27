@@ -1,5 +1,6 @@
 (ns game-test.engine.rules
   (:require [game.core :as core]
+            [game.core.card :refer :all]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]

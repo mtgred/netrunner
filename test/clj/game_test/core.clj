@@ -6,7 +6,7 @@
             [hawk.core :as hawk]
             [game.core :as core]
             [game.core.card-defs :refer [reset-card-defs]]
-            [game.core.card :refer [make-cid get-card rezzed? active?]]
+            [game.core.card :refer [make-cid get-card rezzed? active? get-counters]]
             [game.utils :as utils :refer [server-card]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
@@ -28,11 +28,11 @@
     (reset-card-defs)))
 (load-all-cards)
 
-; (hawk/watch! [{:paths ["src/clj/game/cards"]
-;                :filter hawk/file?
-;                :handler (fn [ctx e]
-;                           (reset-card-defs
-;                             (-> e :file io/file .getName (string/split #"\.") first)))}])
+(hawk/watch! [{:paths ["src/clj/game/cards"]
+               :filter hawk/file?
+               :handler (fn [ctx e]
+                          (reset-card-defs
+                            (-> e :file io/file .getName (string/split #"\.") first)))}])
 
 ;; General utilities necessary for starting a new game
 (defn find-card
@@ -199,7 +199,6 @@
        (core/play-corp-ability state side ab)
        (core/play-runner-ability state side ab)))))
 
-(def get-counters utils/get-counters)
 (def count-tags jutils/count-tags)
 (def is-tagged? jutils/is-tagged?)
 (def count-bad-pub jutils/count-bad-pub)

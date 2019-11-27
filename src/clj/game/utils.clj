@@ -272,17 +272,6 @@
   ([n string single-suffix plural-suffix]
    (str n " " (pluralize string single-suffix plural-suffix n))))
 
-(defn get-counters
-  "Get number of counters of specified type."
-  [card counter]
-  (cond
-    (= counter :advancement)
-    (:advance-counter card 0)
-    (= counter :recurring)
-    (:rec-counter card 0)
-    :else
-    (get-in card [:counter counter] 0)))
-
 (defn in-coll?
   "true if coll contains elm"
   [coll elm]

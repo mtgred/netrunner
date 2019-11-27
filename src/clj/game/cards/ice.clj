@@ -218,13 +218,9 @@
                      card nil))})
 
 ;;; For Advanceable ICE
-(defn get-advance-counters
-  [card]
-  (+ (get-counters card :advancement) (:extra-advance-counter card 0)))
-
 (def advance-counters
   "Number of advancement counters - for advanceable ICE."
-  (req (get-advance-counters card)))
+  (req (get-counters card :advancement)))
 
 (def space-ice-rez-bonus
   "Amount of rez reduction for the Space ICE."
@@ -235,7 +231,7 @@
   [& abilities]
   {:advanceable :always
    :subroutines (vec abilities)
-   :rez-cost-bonus (req (* -3 (get-advance-counters card)))})
+   :rez-cost-bonus (req (* -3 (get-counters card :advancement)))})
 
 ;;; For Grail ICE
 (defn grail-in-hand
@@ -324,7 +320,7 @@
 (defn wonder-sub
   "Checks total number of advancement counters on a piece of ice against number"
   [card number]
-  (<= number (get-advance-counters card)))
+  (<= number (get-counters card :advancement)))
 
 (defn resolve-another-subroutine
   "For cards like Orion or Upayoga."
@@ -672,14 +668,17 @@
                            :prompt "Choose a server"
                            :choices (req servers)
                            :msg (msg "move it to the outermost position of " target)
-                           :effect (req (let [dest (server->zone state target)]
+                           :effect (req (let [dest (second (server->zone state target))
+                                              n (count (get-in @state [:corp :servers dest :ices]))]
+                                          (move state side card
+                                                (conj (server->zone state target) :ices))
                                           (swap! state update-in [:run]
                                                  #(assoc %
-                                                         :position (count (get-in corp (conj dest :ices)))
-                                                         :server (rest dest))))
-                                        (move state side card
-                                              (conj (server->zone state target) :ices))
-                                        (effect-completed state side eid))})]}
+                                                         :position n
+                                                         :server [dest]))
+                                          (if (pos? n)
+                                            (set-next-phase state :approach-ice)
+                                            (set-next-phase state :approach-server))))})]}
 
    "Bulwark"
    (let [sub {:msg "gain 2 [Credits] and end the run"
