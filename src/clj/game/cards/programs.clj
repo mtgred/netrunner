@@ -2378,13 +2378,16 @@
 
    "Takobi"
    {:events [{:event :encounter-ice-ends
-              :req (req (empty? (remove :broken (:subroutines current-ice))))
-              :label "Add 1 power counter"
-              :effect (effect (add-counter card :power 1)
-                              (system-msg "adds a power counter to Takobi"))}]
+              :optional
+              {:req (req (empty? (remove :broken (:subroutines current-ice))))
+               :prompt "Place 1 power counter on Takobi?"
+               :yes-ability
+               {:label "Add 1 power counter"
+                :effect (effect (add-counter card :power 1)
+                                (system-msg "adds a power counter to Takobi"))}}}]
     :abilities [{:req (req (and run
                                 (rezzed? current-ice)
-                                (<= 2 (get-counters card :power))))
+                                (= :encounter-ice (:phase run))))
                  :cost [:power 2]
                  :label "Give non-AI icebreaker +3 strength"
                  :prompt "Choose an installed non-AI icebreaker"

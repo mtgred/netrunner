@@ -1463,8 +1463,8 @@
                              (str " and loses "
                                   (apply str (repeat (:click runner) "[Click]")))))
                  :cost [:trash]
-                 :effect (effect (bypass-ice state)
-                                 (lose :click (:click runner)))}]}
+                 :effect (req (bypass-ice state)
+                              (lose state :runner :click (:click runner)))}]}
 
    "London Library"
    {:abilities [{:async true

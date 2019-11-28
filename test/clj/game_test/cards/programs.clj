@@ -1427,7 +1427,6 @@
         (card-subroutine state :corp roto 0)
         (click-card state :corp engolo)
         (run-continue state)
-        (println (get-run))
         (is (nil? (refresh engolo)) "Engolo is trashed")
         (is (not (has-subtype? (refresh roto) "Code Gate")) "Rototurret loses subtype even when Engolo is trashed")))))
 
@@ -3511,48 +3510,17 @@
       (is (= 1 (get-in @state [:run :position])) "Now at next position (1)")
       (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall now at position 1"))))
 
-(deftest ^:test-refresh/focus takobi
-  (testing "+3 strength"
-    ;; Takobi - 2 power counter to add +3 strength to a non-AI icebreaker for encounter
-    (do-game
-      (new-game {:corp {:deck ["Enigma"]}
-                 :runner {:deck ["Takobi" "Corroder" "Faust"]}})
-      (play-from-hand state :corp "Enigma" "HQ")
-      (take-credits state :corp)
-      (core/gain state :runner :credit 10)
-      (play-from-hand state :runner "Takobi")
-      (play-from-hand state :runner "Corroder")
-      (play-from-hand state :runner "Faust")
-      (let [tako (get-program state 0)
-            corr (get-program state 1)
-            faus (get-program state 2)]
-        (dotimes [_ 3]
-          (card-ability state :runner tako 0))
-        (is (= 3 (get-counters (refresh tako) :power)) "3 counters on Takobi")
-        (run-on state "HQ")
-        (card-ability state :runner tako 1)
-        (is (empty? (:prompt (get-runner))) "No prompt for un-rezzed ice")
-        (core/rez state :corp (get-ice state :hq 0))
-        (card-ability state :runner tako 1)
-        (click-card state :runner (refresh faus))
-        (is (not-empty (:prompt (get-runner))) "Can't select AI breakers")
-        (click-card state :runner (refresh corr))
-        (is (empty? (:prompt (get-runner))) "Can select non-AI breakers")
-        (is (= 5 (:current-strength (refresh corr))) "Corroder at +3 strength")
-        (is (= 1 (get-counters (refresh tako) :power)) "1 counter on Takobi")
-        (card-ability state :runner tako 1)
-        (is (empty? (:prompt (get-runner))) "No prompt when too few power counters")
-        (core/no-action state :corp nil)
-        (run-continue state)
-        (is (= 2 (:current-strength (refresh corr))) "Corroder returned to normal strength"))))
+(deftest takobi
+  ;; Takobi - 2 power counter to add +3 strength to a non-AI icebreaker for encounter
   (testing "+1 counter when breaking all subs"
     (do-game
-      (new-game {:corp {:deck ["Ice Wall" "Enigma"]}
-                 :runner {:deck ["Takobi" "Corroder" "Gordian Blade"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Enigma"]}
+                 :runner {:hand ["Takobi" "Corroder" "Gordian Blade"]
+                          :credits 20}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Enigma" "HQ")
       (take-credits state :corp)
-      (core/gain state :runner :credit 20)
       (play-from-hand state :runner "Takobi")
       (play-from-hand state :runner "Corroder")
       (play-from-hand state :runner "Gordian Blade")
@@ -3562,17 +3530,56 @@
             enig (get-ice state :hq 1)
             icew (get-ice state :hq 0)]
         (run-on state "HQ")
+        (run-next-phase state)
         (core/rez state :corp enig)
+        (run-continue state)
         (card-ability state :runner gord 0)
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "Done")
+        (is (empty? (:prompt (get-runner))) "No prompt because not all subs were broken")
         (is (= 0 (get-counters (refresh tako) :power)) "No counter gained because not all subs were broken")
         (run-continue state)
+        (run-next-phase state)
         (core/rez state :corp icew)
+        (run-continue state)
         (card-ability state :runner corr 0)
         (click-prompt state :runner "End the run")
         (run-continue state)
-        (is (= 1 (get-counters (refresh tako) :power)) "Counter gained from breaking all subs")))))
+        (click-prompt state :runner "Yes")
+        (is (= 1 (get-counters (refresh tako) :power)) "Counter gained from breaking all subs"))))
+  (testing "+3 strength"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Enigma"]}
+                 :runner {:hand ["Takobi" "Corroder" "Faust"]
+                          :credits 10}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Takobi")
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Faust")
+      (let [tako (get-program state 0)
+            corr (get-program state 1)
+            faus (get-program state 2)]
+        (core/add-counter state :runner tako :power 3)
+        (is (= 3 (get-counters (refresh tako) :power)) "3 counters on Takobi")
+        (run-on state "HQ")
+        (run-next-phase state)
+        (core/rez state :corp (get-ice state :hq 0))
+        (run-continue state)
+        (card-ability state :runner tako 0)
+        (click-card state :runner (refresh faus))
+        (is (not-empty (:prompt (get-runner))) "Can't select AI breakers")
+        (click-card state :runner (refresh corr))
+        (is (empty? (:prompt (get-runner))) "Can select non-AI breakers")
+        (is (= 5 (:current-strength (refresh corr))) "Corroder at +3 strength")
+        (is (= 1 (get-counters (refresh tako) :power)) "1 counter on Takobi")
+        (card-ability state :runner tako 0)
+        (is (empty? (:prompt (get-runner))) "No prompt when too few power counters")
+        (run-continue state)
+        (run-next-phase state)
+        (run-continue state)
+        (is (= 2 (:current-strength (refresh corr))) "Corroder returned to normal strength")))))
 
 (deftest trypano
   (testing "Hivemind and Architect interactions"
