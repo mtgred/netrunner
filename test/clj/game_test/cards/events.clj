@@ -442,6 +442,74 @@
       (is (= ["Sure Gamble" "Easy Mark"] (mapv :title (:hand (get-runner)))))
       (is (not (find-card "Daily Casts" (:hand (get-runner))))))))
 
+(deftest bravado
+  ;; Bravado
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Bravado"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bravado")
+      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Only HQ is runnable")
+      (click-prompt state :runner "HQ")
+      (run-continue state)
+      (changes-val-macro 7 (:credit (get-runner))
+                         "Gained 6+1 credits from Bravado"
+                         (run-successful state))))
+  (testing "Gaining money based on distinct pieces of ice"
+    (do-game
+      (new-game {:corp {:hand [(qty "Ice Wall" 2) "Cell Portal"]
+                        :credits 8}
+                 :runner {:hand ["Bravado"]}})
+      (play-from-hand state :corp "Cell Portal" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [cp (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Bravado")
+        (click-prompt state :runner "HQ")
+        (dotimes [_ 2] (run-continue state))
+        (core/rez state :corp cp)
+        (card-subroutine state :corp (refresh cp) 0)
+        (dotimes [_ 3] (run-continue state))
+        (changes-val-macro 9 (:credit (get-runner))
+                           "Gained 6+3 credits from Bravado"
+                           (run-successful state)))))
+  (testing "Reinstalled ice during a run is counted twice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                        :hand ["Cell Portal" "Architect" "Enigma"]
+                        :credits 15}
+                 :runner {:hand ["Bravado"]}})
+      (play-from-hand state :corp "Cell Portal" "HQ")
+      (play-from-hand state :corp "Architect" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (let [cp (get-ice state :hq 0)
+            arch (get-ice state :hq 1)
+            enig (get-ice state :hq 2)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Bravado")
+        (click-prompt state :runner "HQ")
+        (run-continue state)
+        (core/rez state :corp arch)
+        ; Overinstall Enigma
+        (card-subroutine state :corp (refresh arch) 0)
+        (click-prompt state :corp "Ice Wall")
+        (core/move state :corp enig :discard)
+        (click-prompt state :corp "HQ")
+        ; Reinstall Enigma
+        (card-subroutine state :corp (refresh arch) 1)
+        (click-card state :corp (find-card "Enigma" (:discard (get-corp))))
+        (click-prompt state :corp "HQ")
+        (run-continue state)
+        (core/rez state :corp cp)
+        (card-subroutine state :corp (refresh cp) 0)
+        (dotimes [_ 4] (run-continue state))
+        (changes-val-macro 11 (:credit (get-runner))
+                           "Gained 6+5 credits from Bravado"
+                           ; Cell Portal, Architect, Ice Wall, 2x Enigma
+                           (run-successful state))))))
 (deftest bribery
   ;; Bribery
   (do-game
