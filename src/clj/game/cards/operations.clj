@@ -2094,7 +2094,7 @@
               :prompt "Pay 4 [Credits] or take 1 tag?"
               :choices ["Pay 4 [Credits]" "Take 1 tag"]
               :effect (req (if (= target "Pay 4 [Credits]")
-                             (pay state :runner card :credit 4)
+                             (pay-sync state :runner eid card :credit 4)
                              (gain-tags state :corp eid 1 nil)))}
              {:event :corp-turn-begins
               :effect (effect (trash card nil))}]}
