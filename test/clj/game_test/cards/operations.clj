@@ -2274,6 +2274,49 @@
     (play-from-hand state :corp "Neural EMP")
     (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))
 
+(deftest next-activation-command
+  ;; NEXT Activation Command
+  (testing "Get trashed at start of next Corp turn"
+    (do-game
+      (new-game {:corp {:hand ["NEXT Activation Command"]}})
+      (is (= 0 (count (:play-area (get-corp)))) "Play area is empty")
+      (is (= 0 (count (:discard (get-corp)))) "Discard is empty")
+      (play-from-hand state :corp "NEXT Activation Command")
+      (is (= 1 (count (:play-area (get-corp)))) "NAC in play area")
+      (is (= 0 (count (:discard (get-corp)))) "Discard is empty")
+      (take-credits state :corp)
+      (is (= 1 (count (:play-area (get-corp)))) "NAC in play area")
+      (take-credits state :runner)
+      (is (= 0 (count (:play-area (get-corp)))) "NAC left play area")
+      (is (= 1 (count (:discard (get-corp)))) "NAC in discard")))
+  (testing "Prevents break abilities on non-icebreakers"
+    (do-game
+      (new-game {:corp {:hand ["NEXT Activation Command" "Eli 1.0"]}
+                 :runner {:hand ["Self-modifying Code" "Corroder" "D4v1d"]
+                          :credits 15
+                          :deck [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "NEXT Activation Command")
+      (play-from-hand state :corp "Eli 1.0" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "D4v1d")
+      (play-from-hand state :runner "Self-modifying Code")
+      (play-from-hand state :runner "Corroder")
+      (let [eli (get-ice state :hq 0)
+            d4 (get-program state 0)
+            smc (get-program state 1)
+            cor (get-program state 2)]
+        (run-on state :hq)
+        (core/rez state :corp (get-ice state :hq 0))
+        (card-ability state :runner d4 0)
+        (is (empty? (:prompt (get-runner))) "Can't use D4v1d")
+        (card-side-ability state :runner eli 0)
+        (is (empty? (:prompt (get-runner))) "Can't use break ability on Eli")
+        (card-ability state :runner smc 0) ; Can still use SMC
+        (click-prompt state :runner "No install")
+        (changes-val-macro -6 (:credit (get-runner))
+                           "Paid 4+2 to pump and break 6 strength Eli"
+                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)}))))))
+
 (deftest o-shortage
   ;; O₂ Shortage
   (do-game

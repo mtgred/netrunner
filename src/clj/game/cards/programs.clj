@@ -1223,6 +1223,9 @@
                  :req (req (and current-ice
                                 (rezzed? current-ice)
                                 (< 1 (count (remove :broken (:subroutines current-ice))))))
+                 :break 1 ;technically not correct, but will only be used by the engine to check for breaking abilities
+                 :breaks "All"
+                 :break-cost [:trash]
                  :cost [:trash]
                  :prompt "Select the subroutine to NOT break"
                  :choices (req (unbroken-subroutines-choice current-ice))
