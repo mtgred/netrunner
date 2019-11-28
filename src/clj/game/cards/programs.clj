@@ -270,6 +270,17 @@
                          1 "Barrier"
                          1 "Sentry")])
 
+   "Afterimage"
+   (auto-icebreaker {:implementation "Stealth credit restriction not enforced. Bypass not implemented"
+                     :abilities [{:label "Bypass sentry"
+                                  :cost [:credit 2]
+                                  :req (req (and current-ice
+                                                 (rezzed? current-ice)
+                                                 (has-subtype? current-ice "Sentry")))
+                                  :msg (msg "bypass " (card-str state current-ice))}
+                                 (break-sub 1 2 "Sentry")
+                                 (strength-pump 1 2)]})
+
    "Aghora"
    (swap-with-in-hand "Aghora"
                       {:req (req (and (<= 5 (:cost current-ice 0))
