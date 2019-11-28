@@ -120,6 +120,16 @@
                                       (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
                      card nil)))}
 
+   "Argus Crackdown"
+   {:trash-after-resolving false
+    :events [{:event :successful-run
+              :req (req (let [server (first (get-in @state [:run :server]))]
+                          (not-empty (get-in @state [:corp :servers server :ices]))))
+              :msg (msg "deal 2 meat damage")
+              :effect (effect (damage eid :meat 2 {:card card}))}
+             {:event :corp-turn-begins
+              :effect (effect (trash card nil))}]}
+
    "Ark Lockdown"
    {:async true
     :req (req (not-empty (:discard runner)))
