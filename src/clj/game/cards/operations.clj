@@ -2055,6 +2055,20 @@
    {:effect (effect (gain-credits (count (:hand runner))))
     :msg (msg "gain " (count (:hand runner)) " [Credits]")}
 
+   "SYNC Rerouting"
+   {:trash-after-resolving false
+    :events [{:event :run
+              :async true
+              :msg (msg "force the Runner to " (decapitalize target))
+              :player :runner
+              :prompt "Pay 4 [Credits] or take 1 tag?"
+              :choices ["Pay 4 [Credits]" "Take 1 tag"]
+              :effect (req (if (= target "Pay 4 [Credits]")
+                             (pay state :runner card :credit 4)
+                             (gain-tags state :corp eid 1 nil)))}
+             {:event :corp-turn-begins
+              :effect (effect (trash card nil))}]}
+
    "Targeted Marketing"
    (let [gaincr {:req (req (= (:title target) (get-in card [:special :marketing-target])))
                  :effect (effect (gain-credits :corp 10))
