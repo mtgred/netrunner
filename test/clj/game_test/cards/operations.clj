@@ -183,6 +183,30 @@
     (click-card state :corp "Hostile Takeover")
     (is (= ["Hostile Takeover"] (->> (get-corp) :hand (map :title))) "Hostile Takeover should be in HQ")))
 
+(deftest argus-crackdown
+  ;; Argus Crackdown
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall" "Argus Crackdown" "Hedge Fund"]
+                        :deck ["Hedge Fund"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Argus Crackdown")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-continue state)
+      (run-continue state)
+      (changes-val-macro -2 (count (:hand (get-runner)))
+                         "Runner took 2 meat damage"
+                         (run-successful state))
+      (click-prompt state :runner "No action")
+      (run-on state :rd)
+      (run-continue state)
+      (run-continue state)
+      (changes-val-macro 0 (count (:hand (get-runner)))
+                         "Runner took no meat damage on unprotected server"
+                         (run-successful state)))))
+
 (deftest ark-lockdown
   ;; Ark Lockdown
   (do-game
