@@ -3648,8 +3648,9 @@
       (is (= 2 (count (get-program state))) "2 Programs installed")
       (is (= 6 (:credit (get-runner))) "Artist discount applied new turn"))))
 
-(deftest the-back
-  ;; The Back
+; TODO: Enable this once card is fully implemented
+(deftest-pending the-back
+  ; The Back
   (testing "Basic test"
     (do-game
       (new-game {:runner {:hand ["The Back" (qty "Spy Camera" 2) "Lockpick" "Refractor"]
