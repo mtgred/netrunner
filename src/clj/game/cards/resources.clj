@@ -82,6 +82,9 @@
     {:abilities [{:req (req (and current-ice
                                  (rezzed? current-ice)
                                  (not (:broken (selector (:subroutines current-ice))))))
+                  :break 1
+                  :breaks "All"
+                  :break-cost [:trash]
                   :cost [:trash]
                   :label (str "Break the " descriptor " subroutine")
                   :msg (msg "break the " descriptor " subroutine on " (:title current-ice)
