@@ -1687,6 +1687,37 @@
         (run-jack-out state)
         (is (= 2 (-> (get-corp) :discard count)) "Two Kitsunes trashed after resolving their subroutines")))))
 
+(deftest navi-mumbai-city-grid
+  ;; Navi Mumbai City Grid
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Navi Mumbai City Grid" "Fire Wall"]
+                        :credits 7}
+                 :runner {:hand ["D4v1d" "Corroder" "DDoS"]
+                          :deck [(qty "Sure Gamble" 5)]
+                          :credits 12}})
+      (play-from-hand state :corp "Navi Mumbai City Grid" "HQ")
+      (play-from-hand state :corp "Fire Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "D4v1d")
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "DDoS")
+      (let [nmcg (get-content state :hq 0)
+            fire (get-ice state :hq 0)
+            d4 (get-program state 0)
+            cor (get-program state 1)
+            ddos (get-resource state 0)]
+        (run-on state :hq)
+        (core/rez state :corp nmcg)
+        (core/rez state :corp fire)
+        (card-ability state :runner d4 0)
+        (is (empty? (:prompt (get-runner))) "Could not use D4v1d")
+        (card-ability state :runner ddos 0)
+        (is (empty? (:discard (get-runner))) "DDoS not trashed")
+        (changes-val-macro -4 (:credit (get-runner))
+                           "Paid 3+1 to break Fire Wall with Corroder"
+                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)}))))))
+
 (deftest neotokyo-grid
   ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement
   (do-game

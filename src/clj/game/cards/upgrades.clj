@@ -926,6 +926,14 @@
                                  :duration :end-of-run
                                  :req (req (= (:from-server target) (second (:previous-zone card)))))]))}})
 
+   "Navi Mumbai City Grid"
+   {:constant-effects [{:type :prevent-ability
+                        :req (req (let [target-card (first targets)]
+                                    (and run
+                                         (= (first (:server run)) (second (:zone card)))
+                                         (not (has-subtype? target-card "Icebreaker")))))
+                        :value true}]}
+
    "NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
              :once :per-turn
