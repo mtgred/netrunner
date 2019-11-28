@@ -1924,22 +1924,26 @@
                      (strength-pump 3 3))
 
    "Persephone"
-   (auto-icebreaker {:implementation "Requires runner to input the number of subroutines allowed to resolve"
-                     :abilities [(break-sub 2 1 "Sentry")
+   (auto-icebreaker {:abilities [(break-sub 2 1 "Sentry")
                                  (strength-pump 1 1)]
                      :events [{:event :pass-ice
-                               :req (req (and (has-subtype? target "Sentry") (rezzed? target)) (pos? (count (:deck runner))))
-                               :optional
-                               {:prompt (msg "Use Persephone's ability??")
-                                :yes-ability
-                                {:prompt "How many subroutines resolved on the passed ICE?"
-                                 :async true
-                                 :choices {:number (req 10)}
-                                 :msg (msg (if (pos? target)
-                                             (str "trash " (:title (first (:deck runner))) " from their Stack and trash " target " cards from R&D")
-                                             (str "trash " (:title (first (:deck runner))) " from their Stack and nothing from R&D")))
-                                 :effect (req (wait-for (mill state :runner :runner 1)
-                                                        (mill state :runner eid :corp target)))}}}]})
+                               :req (req (and (has-subtype? target "Sentry")
+                                              (rezzed? target)
+                                              (pos? (count (:deck runner)))))
+                               :effect
+                               (effect
+                                 (continue-ability
+                                   (let [fired-subs (count (filter :fired (:subroutines target)))]
+                                     {:optional
+                                      {:prompt (str "Use Persephone to trash " (quantify fired-subs "card") " from R&D?")
+                                       :yes-ability
+                                       {:async true
+                                        :msg (msg (str "trash " (:title (first (:deck runner)))
+                                                       " from the Stack and"
+                                                       " trash " (quantify fired-subs "card") " from R&D"))
+                                        :effect (req (wait-for (mill state :runner :runner 1)
+                                                               (mill state :runner eid :corp fired-subs)))}}})
+                                   card nil))}]})
 
    "Pelangi"
    {:data {:counter {:virus 2}}
@@ -2261,18 +2265,23 @@
                                            card))}]}
 
    "Snitch"
-   {:abilities [{:once :per-run
-                 :req (req (and current-ice
-                                (not (rezzed? current-ice))))
-                 :async true
-                 :effect (req (wait-for (expose state side current-ice)
-                                        (continue-ability
-                                          state side
-                                          {:optional {:prompt "Jack out?"
-                                                      :yes-ability {:msg "jack out"
-                                                                    :effect (effect (jack-out nil))}
-                                                      :no-ability {:msg "continue the run"}}}
-                                          card nil)))}]}
+   {:events [{:event :approach-ice
+              :optional
+              {:req (req (not (rezzed? target)))
+               :prompt "Use Snitch to expose approached ice?"
+               :yes-ability
+               {:async true
+                :effect (req (wait-for
+                               (expose state side target)
+                               (continue-ability
+                                 state side
+                                 {:optional
+                                  {:prompt "Jack out?"
+                                   :yes-ability {:msg "jack out"
+                                                 :async true
+                                                 :effect (effect (jack-out eid))}
+                                   :no-ability {:msg "continue the run"}}}
+                                 card nil)))}}}]}
 
    "Snowball"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier"
@@ -2373,9 +2382,9 @@
               :label "Add 1 power counter"
               :effect (effect (add-counter card :power 1)
                               (system-msg "adds a power counter to Takobi"))}]
-    :abilities [{:req (req (and (:run @state)
+    :abilities [{:req (req (and run
                                 (rezzed? current-ice)
-                                (>= (get-counters card :power) 2)))
+                                (<= 2 (get-counters card :power))))
                  :cost [:power 2]
                  :label "Give non-AI icebreaker +3 strength"
                  :prompt "Choose an installed non-AI icebreaker"
