@@ -988,6 +988,18 @@
     :msg (msg "trash " (card-str state target))
     :effect (effect (trash target))}
 
+   "Hyoubu Precog Manifold"
+   {:trash-after-resolving false
+    :prompt "Choose a server"
+    :choices (req servers)
+    :effect (effect (update! (assoc-in card [:special :hyoubu-precog-target] target)))
+    :events [{:event :successful-run
+              :req (req (= (zone->name (get-in @state [:run :server])) (get-in card [:special :hyoubu-precog-target])))
+              :psi {:not-equal {:msg "end the run"
+                                :effect (effect (end-run eid card))}}}
+             {:event :corp-turn-begins
+              :effect (effect (trash card nil))}]}
+
    "Interns"
    {:async true
     :prompt "Select a card to install from Archives or HQ"

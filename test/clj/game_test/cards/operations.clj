@@ -1860,6 +1860,27 @@
     (click-card state :corp "Kati Jones")
     (is (not (get-resource state 0)) "Kati should be trashed")))
 
+(deftest hyoubu-precog-manifold
+  ;; Hyoubu Precog Manifold
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:hand ["Hyoubu Precog Manifold" "Hedge Fund"]}})
+      (play-from-hand state :corp "Hyoubu Precog Manifold")
+      (click-prompt state :corp "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :corp "0 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
+      (is (not (:run @state)) "Run ended")
+      (run-on state :hq)
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
+      (is (:run @state) "Run still going"))))
+
 (deftest interns
   ;; Fire Wall
   (do-game
