@@ -1296,6 +1296,19 @@
     :msg "do 1 net damage"
     :effect (effect (damage eid :net 1 {:card card}))}
 
+   "NEXT Activation Command"
+   {:trash-after-resolving false
+    :constant-effects [{:type :ice-strength
+                        :value 2}
+                       {:type :prevent-ability
+                        :req (req (let [target-card (first targets)
+                                        ability (second targets)]
+                                    (and (not (has-subtype? target-card "Icebreaker"))
+                                         (:break ability))))
+                        :value true}]
+    :events [{:event :corp-turn-begins
+              :effect (effect (trash card nil))}]}
+
    "O₂ Shortage"
    {:async true
     :effect (req (if (empty? (:hand runner))
