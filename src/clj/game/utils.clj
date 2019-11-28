@@ -247,8 +247,9 @@
 (defn remove-subtypes-once
   "Takes an existing subtype-string and removes one instance of
   each subtypes-to-remove"
-  [subtype-string subtypes-to-remove]
-  (let [types (split (or subtype-string " - ") #" - ")
+  [subtype-string & subtypes-to-remove]
+  (let [subtypes-to-remove (flatten subtypes-to-remove)
+        types (split (or subtype-string " - ") #" - ")
         part (join " - " (remove-once #(= % (first subtypes-to-remove)) types))
         left (rest subtypes-to-remove)]
     (if-not (empty? left)

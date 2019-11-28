@@ -408,6 +408,7 @@
          args (assoc args :subtype subtype)
          break-req (req (and current-ice
                              (rezzed? current-ice)
+                             (= :encounter-ice (:phase run))
                              (if subtype
                                (or (= subtype "All")
                                    (has-subtype? current-ice subtype)))
@@ -516,6 +517,7 @@
                    (assoc card :abilities
                           (if (and (seq total-cost)
                                    (rezzed? current-ice)
+                                   (= :encounter-ice (:phase run))
                                    break-ability)
                             (vec (concat (when (and break-ability
                                                     no-unbreakable-subs
@@ -541,7 +543,7 @@
 ;; hooks up breaker-auto-pump to the necessary events.
 ;; IMPORTANT: Events on cdef take precedence, and should call
 ;; (:effect breaker-auto-pump) themselves.
-(let [events (for [event [:run :approach-ice :pass-ice :run-ends
+(let [events (for [event [:run :approach-ice :encounter-ice :pass-ice :run-ends
                           :ice-strength-changed :ice-subtype-changed :breaker-strength-changed
                           :subroutines-changed]]
                (assoc breaker-auto-pump :event event))]

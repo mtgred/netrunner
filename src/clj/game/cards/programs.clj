@@ -850,7 +850,7 @@
     :abilities [{:cost [:virus 1]
                  :label "Give -1 strength to current ICE"
                  :req (req (and (rezzed? current-ice)
-                                (:encounter-ice (:phase run))))
+                                (= :encounter-ice (:phase run))))
                  :msg (msg "give -1 strength to " (:title current-ice))
                  :effect (effect (pump-ice current-ice -1))}]}
 
@@ -1047,8 +1047,7 @@
                            (when (get-in card [:special :installing])
                              (update! state side (assoc (:host (get-card state card)) :subtype (combine-subtypes false (-> card :host :subtype) "Barrier" "Code Gate" "Sentry")))
                              (update! state side (update-in card [:special] dissoc :installing))
-                             (trigger-event state side :runner-install card))
-                           (continue state side nil))}]}
+                             (trigger-event state side :runner-install card)))}]}
 
    "Endless Hunger"
    {:implementation "ETR restriction not implemented"
@@ -1112,25 +1111,30 @@
                                :effect (effect (trash eid (get-card state card) nil))}]})
 
    "False Echo"
-   {:abilities [{:req (req (and run
-                                (< (:position run) (count run-ices))
-                                (not (rezzed? current-ice))))
-                 :msg "make the Corp rez the passed ICE or add it to HQ"
-                 :effect (req (let [s (:server run)
-                                    ice (nth (get-in @state (vec (concat [:corp :servers] s [:ices]))) (:position run))]
-                                (continue-ability
-                                  state side
-                                  {:prompt (msg "Rez " (:title ice) " or add it to HQ?")
-                                   :player :corp
-                                   :choices (req (if (< (:credit corp) (rez-cost state side ice))
-                                                   ["Add to HQ"]
-                                                   ["Rez" "Add to HQ"]))
-                                   :effect (req (if (= target "Rez")
-                                                  (rez state side ice)
-                                                  (do (move state :corp ice :hand nil)
-                                                      (system-msg state :corp (str "chooses to add the passed ICE to HQ"))))
-                                                (trash state side card))}
-                                  card nil)))}]}
+   {:events [{:event :pass-ice
+              :optional
+              {:req (req (not (rezzed? target)))
+               :prompt "Trash False Echo?"
+               :yes-ability
+               {:async true
+                :cost [:trash]
+                :msg "make the Corp rez the passed ICE or add it to HQ"
+                :effect
+                (effect
+                  (continue-ability
+                    (let [ice target]
+                      {:async true
+                       :prompt (msg "Rez " (:title ice) " or add it to HQ?")
+                       :player :corp
+                       :choices (req (if (can-pay? state :runner eid card nil [:credit (rez-cost state side ice)])
+                                       ["Rez" "Add to HQ"]
+                                       ["Add to HQ"]))
+                       :effect (req (if (= target "Rez")
+                                      (rez state side eid ice nil)
+                                      (do (system-msg state :corp (str "chooses to add the passed ICE to HQ"))
+                                          (move state :corp ice :hand nil)
+                                          (effect-completed state side eid))))})
+                    card nil))}}}]}
 
    "Faust"
    {:abilities [(break-sub [:trash-from-hand 1] 1)
@@ -1161,19 +1165,14 @@
                      (register-events
                        state side card
                        [{:event :encounter-ice
-                         :effect
-                         (effect
-                           (continue-ability
-                             {:optional
-                              {:req (req (and (same-card? ice target)
-                                              (can-pay? state :runner eid card nil [:credit (count (:subroutines target))])))
-                               :prompt (str "Pay " (count (:subroutines target))
-                                            " [Credits] to bypass " (:title target) "?")
-                               :yes-ability {:async true
-                                             :cost [:credit (count (:subroutines target))]
-                                             :msg (msg "bypass " (:title target))
-                                             :effect (req (bypass-ice state))}}}
-                             card nil))}])))
+                         :optional
+                         {:req (req (and (same-card? ice target)
+                                         (can-pay? state :runner eid target nil [:credit (count (:subroutines (get-card state ice)))])))
+                          :prompt (str "Pay " (count (:subroutines (get-card state ice)))
+                                       " [Credits] to bypass " (:title ice) "?")
+                          :yes-ability {:cost [:credit (count (:subroutines (get-card state ice)))]
+                                        :msg (msg "bypass " (:title target))
+                                        :effect (req (bypass-ice state))}}}])))
       :abilities [(break-sub 1 1 "Sentry")
                   (strength-pump 2 1)]})
 
