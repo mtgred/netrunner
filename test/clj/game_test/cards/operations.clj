@@ -3539,6 +3539,33 @@
       (is (= (+ credits -1 (count (:hand (get-runner)))) (:credit (get-corp)))
           "Corp should gain 5 for 6 cards in the grip"))))
 
+(deftest sync-rerouting
+  ;; SYNC Rerouting
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["SYNC Rerouting"]}})
+      (play-from-hand state :corp "SYNC Rerouting")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (changes-val-macro 1 (count-tags state)
+                         "Runner took 1 tag"
+                         (click-prompt state :runner "Take 1 tag"))
+      (run-jack-out state)
+      (run-on state :rd)
+      (changes-val-macro -4 (:credit (get-runner))
+                         "Runner paid 4 credits"
+                         (click-prompt state :runner "Pay 4 [Credits]"))))
+  (testing "Jesminder avoids SYNC Rerouting tag"
+    (do-game
+      (new-game {:corp {:hand ["SYNC Rerouting"]}
+                 :runner {:id "Jesminder Sareen: Girl Behind the Curtain"}})
+      (play-from-hand state :corp "SYNC Rerouting")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (changes-val-macro 0 (count-tags state)
+                         "Jesminder avoided tag"
+                         (click-prompt state :runner "Take 1 tag")))))
+
 (deftest targeted-marketing
   ;; Targeted Marketing
   (do-game
