@@ -2307,6 +2307,25 @@
       (is (second-last-log-contains? state "Hedge Fund") "Skipped card name was logged")
       (is (second-last-log-contains? state "Enigma") "Installed card name was logged"))))
 
+(deftest napd-cordon
+  ;; NAPD Cordon
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["NAPD Cordon" "Project Atlas"]}
+                 :runner {:credits 8}})
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "NAPD Cordon")
+      (play-from-hand state :corp "Project Atlas" "New remote")
+      (let [atlas (get-content state :remote1 0)]
+        (dotimes [_ 2] (core/advance state :corp {:card (refresh atlas)}))
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (run-continue state)
+        (run-successful state)
+        (changes-val-macro -8 (:credit (get-runner))
+                           "Paid 8c to steal 1adv Atlas"
+                           (click-prompt state :runner "Pay to steal"))))))
+
 (deftest neural-emp
   ;; Neural EMP - Play if Runner made a run the previous turn to do 1 net damage
   (do-game

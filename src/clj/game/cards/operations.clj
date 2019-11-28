@@ -1313,6 +1313,14 @@
                                (shuffle! state :corp :deck)
                                (effect-completed state side eid)))))}
 
+   "NAPD Cordon"
+   {:trash-after-resolving false
+    :events [{:event :pre-steal-cost
+              :effect (req (let [counter (get-counters target :advancement)]
+                             (steal-cost-bonus state side [:credit (+ 4 (* 2 counter))])))}
+             {:event :corp-turn-begins
+              :effect (effect (trash card nil))}]}
+
    "Neural EMP"
    {:req (req (last-turn? state :runner :made-run))
     :msg "do 1 net damage"
