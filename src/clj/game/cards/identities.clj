@@ -143,7 +143,9 @@
                                 (swap! state update :run
                                        #(assoc % :position (count (get-in corp (conj dest :ices)))
                                                  :server (rest dest)))
-                                (set-next-phase state side :encounter-ice)
+                                (if (pos? (count (get-in corp (conj dest :ices))))
+                                  (set-next-phase state :encounter-ice)
+                                  (set-next-phase state :approach-server))
                                 (trash state side eid current-ice {:unpreventable true})))}]}
 
    "Akiko Nisei: Head Case"

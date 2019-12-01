@@ -1100,7 +1100,7 @@
    "Ghost Runner"
    {:data {:counter {:credit 3}}
     :abilities [{:msg "gain 1 [Credits]"
-                 :req (req (and (:run @state)
+                 :req (req (and run
                                 (pos? (get-counters card :credit))))
                  :async true
                  :effect (req (add-counter state side card :credit -1)
@@ -1670,7 +1670,7 @@
                         :priority 11
                         :unsuccessful {:msg message
                                        :effect (req (if (= type :net)
-                                                      (damage-prevent state side :net Integer/MAX_VALUE)
+                                                      (damage-prevent state :runner :net Integer/MAX_VALUE)
                                                       (tag-prevent state :runner Integer/MAX_VALUE)))}}}))]
      {:interactions {:prevent [{:type #{:net :tag}
                                 :req (req (first-chance? state side))}]}
