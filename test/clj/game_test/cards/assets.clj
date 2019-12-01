@@ -1683,7 +1683,19 @@
         (core/rez state :corp (refresh gs))
         (card-ability state :corp (refresh gs) 0)
         (is (nil? (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
-        (is (= 1 (:agendapoints (get-scored state :corp 0))) "Gene Splicer added to Corp score area")))))
+        (is (= 1 (:agendapoints (get-scored state :corp 0))) "Gene Splicer added to Corp score area"))))
+  (testing "Corp double-advances a Gene Splicer and fails to use its ability to add to their score area as a 1 point agenda"
+    (do-game
+      (new-game {:corp {:deck [(qty "Gene Splicer" 2) (qty "Ice Wall" 3) (qty "Vanilla" 2)]}
+                 :runner {:deck [(qty "Sure Gamble" 3)]}})
+      (play-from-hand state :corp "Gene Splicer" "New remote")
+      (let [gs (get-content state :remote1 0)]
+        (core/add-counter state :corp gs :advancement 2)
+        (take-credits state :runner)
+        (core/rez state :corp (refresh gs))
+        (card-ability state :corp (refresh gs) 0)
+        (is (= "Gene Splicer" (:title (get-content state :remote1 0))) "Gene Splicer is still in remote")
+        (is (= nil (:agendapoints (get-scored state :corp 0))) "Score area is still empty")))))
 
 (deftest genetics-pavilion
   ;; Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn
