@@ -116,7 +116,9 @@
         (play-from-hand state :runner "Desperado")
         (is (= 1 (:credit (get-runner))))
         (run-on state "HQ")
+        (run-next-phase state)
         (core/rez state :corp ash)
+        (run-continue state)
         (run-successful state)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
@@ -138,15 +140,19 @@
         (core/gain state :runner :credit 1)
         (play-from-hand state :runner "Dirty Laundry")
         (click-prompt state :runner "HQ")
+        (run-next-phase state)
+        (run-continue state)
         (run-successful state)
         (click-prompt state :runner "Steal")
         (is (= 2 (:agenda-point (get-runner))) "Stole Global Food Initiative")
         (is (and (= 6 (:credit (get-runner))) (= 10 (:credit (get-corp))))
             "Desperado plus Dirty Laundry, Lamprey took 1 from Corp")
         (run-on state "Server 1")
+        (run-next-phase state)
         (let [tur (get-ice state :remote1 0)
               cap (get-content state :remote1 2)]
           (core/rez state :corp tur)
+          (run-continue state)
           (is (= 5 (:current-strength (refresh tur))) "Turing +3 strength protecting a remote")
           (card-subroutine state :corp tur 0) ; end the run
           (click-prompt state :runner "End the run")
@@ -154,6 +160,7 @@
           (click-card state :runner tur)
           (is (not (:rezzed (refresh tur))) "Turing derezzed")
           (run-on state "Server 1") ; letting Runner in this time to use Caprice
+          (run-next-phase state)
           (core/rez state :corp cap)
           (run-continue state)
           ;; Caprice psi game started automatically

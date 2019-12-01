@@ -222,10 +222,6 @@
   "Number of advancement counters - for advanceable ICE."
   (req (get-counters card :advancement)))
 
-(def space-ice-rez-bonus
-  "Amount of rez reduction for the Space ICE."
-  (req (* -3 (get-advance-counters card))))
-
 (defn space-ice
   "Creates data for Space ICE with specified abilities."
   [& abilities]

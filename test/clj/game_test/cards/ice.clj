@@ -2511,10 +2511,12 @@
       (play-from-hand state :runner "Corroder")
       (core/gain state :runner :credit 10)
       (run-on state "HQ")
+      (run-next-phase state)
       (let [pachinko (get-ice state :hq 0)
             corroder (get-program state 0)
             runner-credits (:credit (get-runner))]
         (core/rez state :corp pachinko)
+        (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
         (is (= (- runner-credits 4) (:credit (get-runner))) "Autopump subtracted correct amount of credits"))))
   (testing "Basic test"
@@ -2524,8 +2526,10 @@
       (play-from-hand state :corp "Pachinko" "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
+      (run-next-phase state)
       (let [pachinko (get-ice state :hq 0)]
         (core/rez state :corp pachinko)
+        (run-continue state)
         (card-subroutine state :corp pachinko 0)
         (card-subroutine state :corp pachinko 1)
         (is (:run @state) "Runner have no tags, run continues"))))
@@ -2537,8 +2541,10 @@
       (take-credits state :corp)
       (core/gain-tags state :runner 1)
       (run-on state "HQ")
+      (run-next-phase state)
       (let [pachinko (get-ice state :hq 0)]
         (core/rez state :corp pachinko)
+        (run-continue state)
         (card-subroutine state :corp pachinko 0)
         (is (not (:run @state)) "Run ended")))))
 

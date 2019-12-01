@@ -3156,11 +3156,6 @@
     (let [savant (get-program state 0)
           cobra (get-ice state :hq 0)
           enigma (get-ice state :rd 0)]
-<<<<<<< HEAD
-      (core/rez state :corp cobra)
-      (core/rez state :corp enigma)
-=======
->>>>>>> Finish programs except Takobi
       (is (= 2 (core/available-mu state)))
       (is (= 3 (:current-strength (refresh savant))) "+2 strength for 2 unused MU")
       (play-from-hand state :runner "Box-E")
@@ -3180,11 +3175,7 @@
       (core/rez state :corp enigma)
       (run-continue state)
       (card-ability state :runner (refresh savant) 0)
-<<<<<<< HEAD
-      (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
-=======
       (click-prompt state :runner "Force the Runner to lose 1 [Click]")
->>>>>>> Finish programs except Takobi
       (click-prompt state :runner "End the run")
       (is (:broken (first (:subroutines (refresh enigma)))) "Broke a code gate subroutine"))))
 

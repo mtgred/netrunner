@@ -1790,8 +1790,10 @@
             cor (get-program state 1)
             ddos (get-resource state 0)]
         (run-on state :hq)
+        (run-next-phase state)
         (core/rez state :corp nmcg)
         (core/rez state :corp fire)
+        (run-continue state)
         (card-ability state :runner d4 0)
         (is (empty? (:prompt (get-runner))) "Could not use D4v1d")
         (card-ability state :runner ddos 0)

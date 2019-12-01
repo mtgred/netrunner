@@ -26,8 +26,11 @@
         (core/rez state :corp tg)
         (is (= 1 (count (:subroutines (refresh tg)))))
         (run-on state :hq)
-        (is (= "1 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities first :label)))
+        (run-next-phase state)
+        (is (= "1 [Credits]: break 1 Sentry subroutine" (-> (refresh buk) :abilities first :label))
+            "Not encountered an ice yet")
         (core/rez state :corp p2)
+        (run-continue state)
         (is (= "2 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities first :label)))
         (is (= 2 (count (:subroutines (refresh tg))))))))
   (testing "Also works on second encounter"
@@ -86,9 +89,11 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Eli 1.0"]}})
     (play-from-hand state :corp "Eli 1.0" "HQ")
-    (core/rez state :corp (get-ice state :hq 0))
     (take-credits state :corp)
     (run-on state :hq)
+    (run-next-phase state)
+    (core/rez state :corp (get-ice state :hq 0))
+    (run-continue state)
     (let [undo-click (:click-state @state)
           clicks (:click (get-runner))]
       (card-side-ability state :runner (get-ice state :hq 0) 0)
