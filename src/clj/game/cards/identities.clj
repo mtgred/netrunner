@@ -58,7 +58,7 @@
                          :yes-ability
                          {:async true
                           :effect (req (clear-wait-prompt state :corp)
-                                       (if (not (can-pay? state :corp eid card nil :credit 1))
+                                       (if (not (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil :credit 1))
                                          (do
                                            (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
                                            (expose state :runner eid itarget))
@@ -520,7 +520,7 @@
                                  :choices
                                  {:req (req (and (has-subtype? target "Bioroid")
                                                  (not (rezzed? target))
-                                                 (can-pay? state side eid card nil
+                                                 (can-pay? state side (assoc eid :source card :source-type :rez) target nil
                                                            [:credit (rez-cost state side target {:cost-bonus -4})])))}
                                  :msg (msg "rez " (:title target))
                                  :cancel-effect (effect (clear-wait-prompt :runner)
@@ -762,7 +762,7 @@
                  :choices (req (cancellable
                                  (filter #(and (program? %)
                                                (not (has-subtype? % "Virus"))
-                                               (can-pay? state :runner eid card nil
+                                               (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
                                                          [:credit (install-cost state side % {:cost-bonus -1})]))
                                          (:deck runner))))
                  :msg (msg "install " (:title target) " from the stack, lowering the cost by 1 [Credit]")
@@ -814,14 +814,14 @@
               :effect (effect
                         (continue-ability
                           (when (some #(and (has-subtype? % "Icebreaker")
-                                            (can-pay? state side eid card nil
+                                            (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                       [:credit (install-cost state side % {:cost-bonus -1})]))
                                       (:hand runner))
                             {:prompt "Select an icebreaker to install from your Grip"
                              :choices
                              {:req (req (and (in-hand? target)
                                              (has-subtype? target "Icebreaker")
-                                             (can-pay? state side eid card nil
+                                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                        [:credit (install-cost state side target {:cost-bonus -1})])))}
                              :async true
                              :msg (msg "install " (:title target) ", lowering the cost by 1 [Credits]")
