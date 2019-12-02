@@ -806,7 +806,7 @@
              :async true
              :effect (effect (damage eid :net (get-counters (get-card state card) :advancement)
                                      {:card card}))}
-    :abilities [{:cost [:click 1 :advancement 2]
+    :abilities [{:cost [:click 1 :advancement 3]
                  :label "Add Gene Splicing to your score area as an agenda worth 1 agenda point"
                  :msg "add it to their score area as an agenda worth 1 agenda point"
                  :async true
