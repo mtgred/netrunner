@@ -355,7 +355,7 @@
                              :value (:password @s) :placeholder "Password" :maxLength "30"
                              :on-key-press (fn [e]
                                             (when (= 13 (.charCode e))
-                                              ((join prompt))))}]]
+                                              (join prompt)))}]]
 
         [:p
          [:button {:type "button" :on-click #(join prompt)}
