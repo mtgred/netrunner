@@ -120,6 +120,16 @@
                                       (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
                      card nil)))}
 
+   "Argus Crackdown"
+   {:trash-after-resolving false
+    :events [{:event :successful-run
+              :req (req (let [server (first (get-in @state [:run :server]))]
+                          (not-empty (get-in @state [:corp :servers server :ices]))))
+              :msg (msg "deal 2 meat damage")
+              :effect (effect (damage eid :meat 2 {:card card}))}
+             {:event :corp-turn-begins
+              :effect (effect (trash card nil))}]}
+
    "Ark Lockdown"
    {:async true
     :req (req (not-empty (:discard runner)))
@@ -988,6 +998,18 @@
     :msg (msg "trash " (card-str state target))
     :effect (effect (trash target))}
 
+   "Hyoubu Precog Manifold"
+   {:trash-after-resolving false
+    :prompt "Choose a server"
+    :choices (req servers)
+    :effect (effect (update! (assoc-in card [:special :hyoubu-precog-target] target)))
+    :events [{:event :successful-run
+              :req (req (= (zone->name (get-in @state [:run :server])) (get-in card [:special :hyoubu-precog-target])))
+              :psi {:not-equal {:msg "end the run"
+                                :effect (effect (end-run eid card))}}}
+             {:event :corp-turn-begins
+              :effect (effect (trash card nil))}]}
+
    "Interns"
    {:async true
     :prompt "Select a card to install from Archives or HQ"
@@ -1033,6 +1055,48 @@
 
    "IPO"
    {:msg "gain 13 [Credits]" :effect (effect (gain-credits 13))}
+
+   "Kakurenbo"
+   (let [install-abi {:async true
+                      :prompt "Select an agenda, asset or upgrade to install from Archives and place 2 advancement tokens on"
+                      :show-discard true
+                      :not-distinct true
+                      :choices {:card #(and (or (agenda? %)
+                                                (asset? %)
+                                                (upgrade? %))
+                                            (#{[:discard]} (:zone %)))}
+                      :effect (req (let [card-to-install target]
+                                     (when card-to-install
+                                       (wait-for (resolve-ability state side
+                                                                  {:prompt (str "Choose a location to install " (:title card-to-install))
+                                                                   :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state card-to-install))
+                                                                   :async true
+                                                                   :msg (msg (corp-install-msg card-to-install)
+                                                                             " in "
+                                                                             (if (= target "New remote")
+                                                                               (str (remote-num->name (inc (get-in @state [:rid]))) " (new remote)")
+                                                                               target)
+                                                                             " and place 2 advancement tokens on it")
+                                                                   :effect (req (wait-for (corp-install state side (make-eid state {:source card :source-type :corp-install})
+                                                                                                        card-to-install target {:display-message false})
+                                                                                          (add-prop state :corp eid (find-latest state card-to-install)
+                                                                                                    :advance-counter 2 {:placed true})
+                                                                                          (effect-completed state side eid)))}
+                                                                  card nil)
+                                                 (effect-completed state side eid)))))}]
+     {:prompt "Select any number of cards in HQ to trash"
+      :rfg-instead-of-trashing true
+      :choices {:max (req (count (:hand corp)))
+                :card #(and (corp? %)
+                            (in-hand? %))}
+      :msg (msg "trash " (count targets) " cards in HQ")
+      :async true
+      :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+                             (doseq [c (:discard (:corp @state))]
+                               (update! state side (assoc-in c [:seen] false)))
+                             (shuffle! state :corp :discard)
+                             (wait-for (resolve-ability state side install-abi card nil)
+                                       (effect-completed state side eid))))})
 
    "Kill Switch"
    (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title target))
@@ -1249,10 +1313,31 @@
                                (shuffle! state :corp :deck)
                                (effect-completed state side eid)))))}
 
+   "NAPD Cordon"
+   {:trash-after-resolving false
+    :events [{:event :pre-steal-cost
+              :effect (req (let [counter (get-counters target :advancement)]
+                             (steal-cost-bonus state side [:credit (+ 4 (* 2 counter))])))}
+             {:event :corp-turn-begins
+              :effect (effect (trash card nil))}]}
+
    "Neural EMP"
    {:req (req (last-turn? state :runner :made-run))
     :msg "do 1 net damage"
     :effect (effect (damage eid :net 1 {:card card}))}
+
+   "NEXT Activation Command"
+   {:trash-after-resolving false
+    :constant-effects [{:type :ice-strength
+                        :value 2}
+                       {:type :prevent-ability
+                        :req (req (let [target-card (first targets)
+                                        ability (second targets)]
+                                    (and (not (has-subtype? target-card "Icebreaker"))
+                                         (:break ability))))
+                        :value true}]
+    :events [{:event :corp-turn-begins
+              :effect (effect (trash card nil))}]}
 
    "O₂ Shortage"
    {:async true
@@ -1723,6 +1808,18 @@
                  (doseq [c (filter #(= target (:title %)) (:hand runner))]
                    (trash state side c {:unpreventable true})))}
 
+   "Scapenet"
+   {:req (req (last-turn? state :runner :successful-run))
+    :trace {:base 7
+            :successful
+            {:async true
+             :prompt "Choose an installed virtual or chip card to remove from game"
+             :choices {:card #(and (installed? %)
+                                   (or (has-subtype? % "Virtual")
+                                       (has-subtype? % "Chip")))}
+             :msg (msg "remove " (card-str state target) " from game")
+             :effect (req (move state :runner target :rfg))}}}
+
    "Scarcity of Resources"
    {:msg "increase the install cost of resources by 2"
     :constant-effects [{:type :install-cost
@@ -1987,6 +2084,20 @@
    "Sweeps Week"
    {:effect (effect (gain-credits (count (:hand runner))))
     :msg (msg "gain " (count (:hand runner)) " [Credits]")}
+
+   "SYNC Rerouting"
+   {:trash-after-resolving false
+    :events [{:event :run
+              :async true
+              :msg (msg "force the Runner to " (decapitalize target))
+              :player :runner
+              :prompt "Pay 4 [Credits] or take 1 tag?"
+              :choices ["Pay 4 [Credits]" "Take 1 tag"]
+              :effect (req (if (= target "Pay 4 [Credits]")
+                             (pay-sync state :runner eid card :credit 4)
+                             (gain-tags state :corp eid 1 nil)))}
+             {:event :corp-turn-begins
+              :effect (effect (trash card nil))}]}
 
    "Targeted Marketing"
    (let [gaincr {:req (req (= (:title target) (get-in card [:special :marketing-target])))

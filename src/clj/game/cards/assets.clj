@@ -1497,6 +1497,43 @@
                                    agendas (filter agenda? drawn)]
                                (continue-ability state side (pdhelper agendas 0) card nil)))}]})
 
+   "Prāna Condenser" ; Prana Condenser
+   {:events [{:event :pre-resolve-damage
+              :async true
+              :req (req (and (not (get-in card [:special :prana-disabled]))
+                             (= target :net)
+                             (pos? (last targets))))
+              :effect (req (let [amount (last targets)
+                                 damagecard (second targets)]
+                             (swap! state assoc-in [:damage :damage-replace] true)
+                             (show-wait-prompt state :runner (str "Corp to use " (:title card)))
+                             (continue-ability
+                               state side
+                               {:optional
+                                {:prompt (str "Prevent 1 net damage to add power token to " (:title card) "?")
+                                 :player :corp
+                                 :yes-ability
+                                 {:async true
+                                  :msg "prevent 1 net damage, place 1 power token, and gain 3 [Credits]"
+                                  :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
+                                               (clear-wait-prompt state :runner)
+                                               (add-counter state side (get-card state card) :power 1)
+                                               (gain state side :credit 3)
+                                               (update! state side (assoc-in (get-card state card) [:special :prana-disabled] true)) ;temporarily disable prana to not trigger on X-1 net damage
+                                               (wait-for (damage state side :net (dec amount) {:card damagecard})
+                                                         (swap! state assoc-in [:damage :damage-replace] true)
+                                                         (update! state side (assoc-in (get-card state card) [:special :prana-disabled] false))
+                                                         (effect-completed state side eid)))}
+                                 :no-ability
+                                 {:async true
+                                  :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
+                                               (clear-wait-prompt state :runner)
+                                               (effect-completed state side eid))}}}
+                             card nil)))}]
+    :abilities [{:msg (msg "deal " (get-counters card :power) " net damage")
+                 :cost [[:click 2] [:trash]]
+                 :effect (effect (damage eid :net (get-counters card :power) {:card card}))}]}
+
    "Primary Transmission Dish"
    {:recurring 3
     :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
@@ -2139,6 +2176,44 @@
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :async true
                    :effect (req (as-agenda state :runner eid card 2))}}
+
+   "Wall To Wall"
+   (let [all [{:msg "gain 1 [Credits]"
+               :effect (effect (gain-credits 1))}
+              {:msg "draw 1 card"
+               :async true
+               :effect (effect (draw eid 1 nil))}
+              {:label "place 1 advancement token on a piece of ice"
+               :msg (msg "place 1 advancement token on " (card-str state target))
+               :prompt "Choose a piece of ice on which to place an advancement"
+               :async true
+               :choices {:card #(and (ice? %)
+                                     (installed? %))}
+               :cancel-effect (effect (effect-completed eid))
+               :effect (effect (add-prop target :advance-counter 1 {:placed true})
+                               (effect-completed eid))}
+              {:label "add this asset to HQ"
+               :msg "add it to HQ"
+               :effect (effect (move card :hand))}
+              {:msg "done"}]
+         choice (fn choice [abis n]
+                  {:prompt "Choose an ability to resolve"
+                   :choices (map make-label abis)
+                   :async true
+                   :effect (req (let [chosen (some #(when (= target (make-label %)) %) abis)]
+                                  (wait-for
+                                    (resolve-ability state side chosen card nil)
+                                    (if (and (pos? (dec n)) (not= "done" (:msg chosen)))
+                                      (continue-ability state side (choice (remove-once #(= % chosen) abis) (dec n)) card nil)
+                                      (effect-completed state side eid)))))})
+         ability {:async true
+                  :once :per-turn
+                  :effect (effect (continue-ability (choice all (if (< 1 (count (filter asset? (all-active-installed state :corp))))
+                                                                  1
+                                                                  3)) card nil))}]
+     {:derezzed-events [(assoc corp-rez-toast :event :runner-turn-ends)]
+      :events [(assoc ability :event :corp-turn-begins)]
+      :abilities [ability]})
 
    "Warden Fatuma"
    (let [new-sub {:label "[Warden Fatuma] Force the Runner to lose 1 [Click], if able"}]

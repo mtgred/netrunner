@@ -649,6 +649,28 @@
                            "Runner should only lose 3 credits"
                            (card-side-ability state :runner eula 0))))))
 
+(deftest engram-flush
+  ;; Engram Flush
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Engram Flush"]}
+                 :runner {:hand ["Daily Casts" "Sure Gamble" "Dirty Laundry" "Political Operative" "Corroder"]}})
+      (play-from-hand state :corp "Engram Flush" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (let [ef (get-ice state :hq 0)]
+        (core/rez state :corp ef)
+        (card-ability state :corp ef 0)
+        (click-prompt state :corp "Program")
+        (card-subroutine state :corp ef 0)
+        (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
+        (is (= 2 (-> (get-corp) :prompt first :choices count)) "Only options: Corroder and None")
+        (click-prompt state :corp "Corroder")
+        (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder got trashed")
+        (is (= 1 (count (:discard (get-runner)))) "Corroder in heap")
+        (card-subroutine state :corp ef 0)
+        (is (empty? (:prompt (get-corp))) "No prompt because no more fitting cards in grip")))))
+
 (deftest enigma
   ;; Enigma - Force Runner to lose 1 click if able
   (do-game
@@ -703,6 +725,35 @@
       (core/gain state :runner :click 1)
       (run-on state "HQ")
       (is (:run @state) "Run initiated ok"))))
+
+(deftest f2p
+  ;; F2P
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["F2P"]}
+                 :runner {:deck ["Inti" "Scrubber"]}})
+      (play-from-hand state :corp "F2P" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inti")
+      (play-from-hand state :runner "Scrubber")
+      (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
+      (run-on state "HQ")
+      (let [f2p (get-ice state :hq 0)]
+        (core/rez state :corp (refresh f2p))
+        (changes-val-macro -2 (:credit (get-runner))
+                           "Pay 2c to break sub"
+                           (card-side-ability state :runner f2p 0)
+                           (click-prompt state :runner "Add an installed Runner card to the grip"))
+        (card-subroutine state :corp (refresh f2p) 0)
+        (changes-val-macro 1 (count (:hand (get-runner)))
+                           "Bounce Inti to hand"
+                           (click-card state :corp "Inti"))
+        (card-subroutine state :corp (refresh f2p) 0)
+        (changes-val-macro 1 (count (:hand (get-runner)))
+                           "Bounce Scrubber to hand"
+                           (click-card state :corp "Scrubber"))
+        (card-subroutine state :corp (refresh f2p) 0)
+        (is (empty? (:prompt (get-corp))) "F2P doesn't fire if no installed cards")))))
 
 (deftest fenris
   ;; Fenris - Illicit ICE give Corp 1 bad publicity when rezzed
@@ -2888,6 +2939,27 @@
       (advance state tyrant 2)
       (is (= 2 (count (:subroutines (refresh tyrant)))) "Tyrant gains 2 subs"))))
 
+(deftest tyr
+  ;; Týr
+  (testing "Click gain by bioroid breaking"
+    (do-game
+      (new-game {:corp {:deck ["Týr"]}})
+      (play-from-hand state :corp "Týr" "HQ")
+      (core/gain state :corp :credit 10)
+      (take-credits state :corp)
+      (let [tyr (get-ice state :hq 0)]
+        (core/rez state :corp tyr)
+        (run-on state "HQ")
+        (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
+        (card-side-ability state :runner tyr 0)
+        (click-prompt state :runner "Do 2 brain damage")
+        (click-prompt state :runner "Force the Runner to trash an installed card. Gain 3 [Credits]")
+        (click-prompt state :runner "End the run")
+        (is (= 0 (:click (get-runner))) "Runner has no clicks left")
+        (run-jack-out state)
+        (take-credits state :runner)
+        (is (= 6 (:click (get-corp))) "Corp has 6 clicks")))))
+
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
   (do-game
@@ -2926,6 +2998,90 @@
         (is (not (has-subtype? (refresh wend) "Barrier")) "Wendigo lost Barrier")
         (is (has-subtype? (refresh wend) "Code Gate") "Wendigo gained Code Gate")
         (is (= 4 (:current-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
+
+(deftest winchester
+  ;; Winchester
+  (testing "Basic test - 3 sub on HQ"
+    (do-game
+      (new-game {:corp {:deck ["Winchester"]}
+                 :runner {:hand ["Misdirection" "Astrolabe" "Fan Site"]}})
+      (play-from-hand state :corp "Winchester" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Misdirection")
+      (play-from-hand state :runner "Astrolabe")
+      (play-from-hand state :runner "Fan Site")
+      (run-on state :hq)
+      (let [win (get-ice state :hq 0)
+            misd (get-program state 0)
+            astro (get-hardware state 0)
+            fs (get-resource state 0)]
+        (core/rez state :corp win)
+        (is (= 3 (count (:subroutines (refresh win)))) "Winchester has 3 subroutines on HQ")
+        (core/resolve-unbroken-subs! state :corp (refresh win))
+        ; Trace[4] - Trash 1 installed program
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :corp astro)
+        (is (= 0 (count (:discard (get-runner)))) "Could not choose hardware")
+        (click-card state :corp fs)
+        (is (= 0 (count (:discard (get-runner)))) "Could not choose resource")
+        (click-card state :corp misd)
+        (is (= 1 (count (:discard (get-runner)))) "Trashed program")
+        ; Trace[3] - Trash 1 installed hardware
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-card state :corp fs)
+        (is (= 1 (count (:discard (get-runner)))) "Could not choose resource")
+        (click-card state :corp astro)
+        (is (= 2 (count (:discard (get-runner)))) "Trashed hardware")
+        ; Trace[3] - End the run
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (is (not (:run @state)) "Run has been ended"))))
+  (testing "2 subs on other servers"
+    (do-game
+      (new-game {:corp {:deck ["Winchester"]}})
+      (play-from-hand state :corp "Winchester" "R&D")
+      (take-credits state :corp)
+      (run-on state :rd)
+      (let [win (get-ice state :rd 0)]
+        (core/rez state :corp win)
+        (is (= 2 (count (:subroutines (refresh win)))) "Winchester has 2 subroutines on R&D"))))
+  (testing "2 subs when moved with Thimblerig"
+    (do-game
+      (new-game {:corp {:deck ["Winchester" "Thimblerig"]}
+                 :runner {:deck ["Aumakua"]}})
+      (play-from-hand state :corp "Winchester" "R&D")
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (take-credits state :corp)
+      ;Click 1 - Run R&D, rez Winchester and let it fire
+      (run-on state :rd)
+      (let [win (get-ice state :rd 0)
+            thim (get-ice state :hq 0)]
+        (core/rez state :corp win)
+        (is (= 2 (count (:subroutines (refresh win)))) "Winchester has 2 subroutines on R&D")
+        (core/resolve-unbroken-subs! state :corp (refresh win))
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-prompt state :corp "Done")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-prompt state :corp "Done")
+        (run-jack-out state)
+        ;Click 2 - Install Aumakua
+        (play-from-hand state :runner "Aumakua")
+        ;Click 3 - Run HQ, rez Thimblerig, break, swap ice
+        (run-on state :hq)
+        (core/rez state :corp thim)
+        (card-ability state :runner (get-program state 0) 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (card-ability state :corp (refresh thim) 0)
+        (click-card state :corp (refresh win))
+        (run-jack-out state)
+        ;Click 4 - Run HQ
+        (run-on state :hq)
+        (is (= 3 (count (:subroutines (get-ice state :hq 0)))) "Winchester has 3 subroutines on HQ")))))
 
 (deftest woodcutter
   ;; Woodcutter

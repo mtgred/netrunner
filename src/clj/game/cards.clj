@@ -1,5 +1,15 @@
 (in-ns 'game.core)
 
+(defn combine-abilities
+  "Combines two or more abilities to a single one. Labels are joined together with a period between parts."
+  ([ab-x ab-y]
+   {:label (str (:label ab-x) ". " (:label ab-y))
+    :async true
+    :effect (req (wait-for (resolve-ability state side ab-x card nil)
+                           (continue-ability state side ab-y card nil)))})
+  ([ab-x ab-y & ab-more]
+   (reduce combine-abilities (combine-abilities ab-x ab-y) ab-more)))
+
 (def trash-program {:prompt "Select a program to trash"
                     :label "Trash a program"
                     :msg (msg "trash " (:title target))
@@ -117,6 +127,7 @@
           (unregister-events state side h)
           (when (rezzed? h)
             (register-events state side newh)))))
+    (trigger-event state side :swap a-new b-new)
     (update-ice-strength state side a-new)
     (update-ice-strength state side b-new)))
 
@@ -141,7 +152,8 @@
                        (assoc-in [:host :zone] (:zone newcard)))]
           (update! state side newh)
           (unregister-events state side h)
-          (register-events state side newh))))))
+          (register-events state side newh))))
+    (trigger-event state side :swap a-new b-new)))
 
 (defn do-net-damage
   "Do specified amount of net-damage."
@@ -227,11 +239,11 @@
       (pick-credit-triggers state side eid (rest selected-cards) counter-count message))
     (effect-completed state side (make-result eid {:number counter-count :msg message}))))
 
-(defn trigger-stealth-cards
+(defn trigger-spend-credits-from-cards
   [state side eid cards]
   (if (seq cards)
-    (wait-for (trigger-event-sync state side :spent-stealth-credit (first cards))
-              (trigger-stealth-cards state side eid (rest cards)))
+    (wait-for (trigger-event-sync state side :spent-credits-from-card (first cards))
+              (trigger-spend-credits-from-cards state side eid (rest cards)))
     (effect-completed state side eid)))
 
 (defn pick-credit-providing-cards
@@ -257,8 +269,8 @@
                                      " from their credit pool"))]
                   (lose state side :credit remainder)
                   (swap! state update-in [:stats side :spent :credit] (fnil + 0) (- target-count remainder))
-                  (let [cards (filter #(has-subtype? % "Stealth") (map :card (vals selected-cards)))]
-                    (wait-for (trigger-stealth-cards state side cards)
+                  (let [cards (map :card (vals selected-cards))]
+                    (wait-for (trigger-spend-credits-from-cards state side cards)
                               ; Now we trigger all of the :counter-added events we'd neglected previously
                               (pick-credit-triggers state side eid selected-cards counter-count message))))
                 (continue-ability

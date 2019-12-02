@@ -270,6 +270,17 @@
                          1 "Barrier"
                          1 "Sentry")])
 
+   "Afterimage"
+   (auto-icebreaker {:implementation "Stealth credit restriction not enforced. Bypass not implemented"
+                     :abilities [{:label "Bypass sentry"
+                                  :cost [:credit 2]
+                                  :req (req (and current-ice
+                                                 (rezzed? current-ice)
+                                                 (has-subtype? current-ice "Sentry")))
+                                  :msg (msg "bypass " (card-str state current-ice))}
+                                 (break-sub 1 2 "Sentry")
+                                 (strength-pump 1 2)]})
+
    "Aghora"
    (swap-with-in-hand "Aghora"
                       {:req (req (and (<= 5 (:cost current-ice 0))
@@ -669,6 +680,33 @@
                                                          #(assoc % :position tgtndx :server [dest]))))}
                                   card nil)))}]}
 
+   "Cordyceps"
+   {:data {:counter {:virus 2}}
+    :events [{:event :successful-run
+              :optional {:req (req (and (is-central? target)
+                                        (pos? (get-counters card :virus))
+                                        (not-empty (get-in @state [:corp :servers target :ices]))
+                                        (<= 2 (count (filter ice? (all-installed state :corp))))))
+                         :once :per-turn
+                         :prompt "Use Cordyceps to swap ice?"
+                         :yes-ability {:prompt "Select ice protecting this server"
+                                       :choices {:req (req (and (installed? target)
+                                                                (ice? target)
+                                                                (= (first (:server (:run @state))) (second (:zone target)))))}
+                                       :async true
+                                       :effect (req (let [first-ice target]
+                                                      (continue-ability state side
+                                                                       {:prompt "Select ice to swap with"
+                                                                        :choices {:req (req (and (installed? target)
+                                                                                                 (ice? target)
+                                                                                                 (not= first-ice target)))}
+                                                                        :msg (msg "swap the positions of " (card-str state first-ice) " and " (card-str state target))
+                                                                        :async true
+                                                                        :effect (req (wait-for (add-counter state side card :virus -1 nil)
+                                                                                               (swap-ice state side first-ice target)
+                                                                                               (effect-completed state side eid)))}
+                                                                       card nil)))}}}]}
+
    "Corroder"
    (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
                                  (strength-pump 1 1)]})
@@ -1042,6 +1080,11 @@
                 :interactive (req true)
                 :effect (effect (continue-ability reveal card nil))}]})
 
+   "Euler"
+   (auto-icebreaker {:abilities [(break-sub 0 1 "Code Gate" {:req (req (= :this-turn (installed? card)))})
+                                 (break-sub 2 2 "Code Gate")
+                                 (strength-pump 1 1)]})
+
    "eXer"
    {:in-play [:rd-access 1]
     :events [{:event :purge
@@ -1180,6 +1223,9 @@
                  :req (req (and current-ice
                                 (rezzed? current-ice)
                                 (< 1 (count (remove :broken (:subroutines current-ice))))))
+                 :break 1 ;technically not correct, but will only be used by the engine to check for breaking abilities
+                 :breaks "All"
+                 :break-cost [:trash]
                  :cost [:trash]
                  :prompt "Select the subroutine to NOT break"
                  :choices (req (unbroken-subroutines-choice current-ice))
@@ -1644,6 +1690,16 @@
                                 card nil))}]
     :abilities [(set-autoresolve :auto-nyashia "Nyashia")]}
 
+   "Odore"
+   (auto-icebreaker {:abilities [(break-sub 2 0 "Sentry"
+                                            {:req (req (> 3 (count (filter #(has-subtype? % "Virtual")
+                                                                           (all-active-installed state :runner)))))})
+                                 (break-sub 0 1 "Sentry"
+                                            {:label "Break 1 Sentry subroutine (Virtual restriction)"
+                                             :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
+                                                                            (all-active-installed state :runner)))))})
+                                 (strength-pump 3 3)]})
+
    "Omega"
    (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:req (req (= 1 (:position run)))})
                                  (strength-pump 1 1 :end-of-encounter {:req (req (= 1 (:position run)))})]})
@@ -1800,6 +1856,12 @@
    "Peacock"
    (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
                                  (strength-pump 2 3)]})
+
+   "Penrose"
+   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
+                     :abilities [(break-sub 1 1 "Barrier" {:req (req (= :this-turn (installed? card)))})
+                                 (break-sub 1 1 "Code Gate")
+                                 (strength-pump 1 3)]})
 
    "Peregrine"
    (return-and-derez (break-sub 1 1 "Code Gate")

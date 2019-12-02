@@ -321,11 +321,11 @@
               :async true
               :effect (req (add-prop state side card :rec-counter -1)
                            (gain state side :credit 1)
-                           (let [event (when (has-subtype? card "Stealth")
-                                         :spent-stealth-credit)]
-                             (trigger-event-sync state side eid event card)))}
-             (get-in cdef [:abilities ability]))]
-    (when-not (:disabled card)
+                           (trigger-event-sync state side eid :spent-credits-from-card card))}
+             (get-in cdef [:abilities ability]))
+        cannot-play (or (:disabled card)
+                        (some true? (get-effects state side card :prevent-ability [ab])))]
+    (when-not cannot-play
       (do-play-ability state side card ab targets))))
 
 (defn play-auto-pump
@@ -453,16 +453,22 @@
   [state side {:keys [card ability targets] :as args}]
   (let [card (get-card state card)
         cdef (card-def card)
-        ab (get-in cdef [:corp-abilities ability])]
-    (do-play-ability state side card ab targets)))
+        ab (get-in cdef [:corp-abilities ability])
+        cannot-play (or (:disabled card)
+                        (some true? (get-effects state side card :prevent-ability [ab])))]
+    (when-not cannot-play
+      (do-play-ability state side card ab targets))))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
   [state side {:keys [card ability targets] :as args}]
   (let [card (get-card state card)
         cdef (card-def card)
-        ab (get-in cdef [:runner-abilities ability])]
-    (do-play-ability state side card ab targets)))
+        ab (get-in cdef [:runner-abilities ability])
+        cannot-play (or (:disabled card)
+                        (some true? (get-effects state side card :prevent-ability [ab])))]
+    (when-not cannot-play
+      (do-play-ability state side card ab targets))))
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
