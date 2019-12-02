@@ -3086,7 +3086,7 @@
         (is (zero? (count (:hand (get-corp)))))
         (is (= (:cid agenda1) (:cid (last (:deck (get-corp))))))))))
 
-(deftest prana-condenser
+(deftest-pending prana-condenser
   ;; Prāna Condenser
   (testing "Basic test"
     (do-game

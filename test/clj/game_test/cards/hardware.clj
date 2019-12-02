@@ -1372,7 +1372,7 @@
       (is (= 1 (count (:rfg (get-runner)))) "Hippo RFGed")
       (is (empty? (get-hardware state)) "Hippo removed"))))
 
-(deftest keiko
+(deftest-pending keiko
   ;; Keiko
   (testing "Basic test"
     (do-game

@@ -792,7 +792,7 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
-(deftest digital-rights-management
+(deftest-pending digital-rights-management
   (testing "DRM only searches for Agendas in R&D"
     (do-game
       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]

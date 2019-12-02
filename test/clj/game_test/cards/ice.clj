@@ -2090,7 +2090,7 @@
       (let [pachinko (get-ice state :hq 0)]
         (core/rez state :corp pachinko)
         (card-subroutine state :corp pachinko 0)
-        (is (not (:run @state)) "Run ended"))))) 
+        (is (not (:run @state)) "Run ended")))))
 
 (deftest peeping-tom
   ;;Peeping Tom - Counts # of chosen card type in Runner grip
@@ -2939,7 +2939,7 @@
       (advance state tyrant 2)
       (is (= 2 (count (:subroutines (refresh tyrant)))) "Tyrant gains 2 subs"))))
 
-(deftest tyr
+(deftest-pending tyr
   ;; Týr
   (testing "Click gain by bioroid breaking"
     (do-game
