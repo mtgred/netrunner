@@ -1153,7 +1153,7 @@
                    :label "Install a card from HQ"
                    :cost [:click 1 :credit 1]
                    :prompt "Select a card to install from HQ"
-                   :choices {:card #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
+                   :choices {:card #(and (or (asset? %) (agenda? %) (upgrade? %))
                                       (corp? %)
                                       (in-hand? %))}
                    :msg (msg "install a card in a remote server and place 1 advancement token on it")

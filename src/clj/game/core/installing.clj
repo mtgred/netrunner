@@ -153,8 +153,8 @@
 (defn- corp-install-asset-agenda
   "Forces the corp to trash an existing asset or agenda if a second was just installed."
   [state side eid card dest-zone server]
-  (let [prev-card (some #(when (#{"Asset" "Agenda"} (:type %)) %) dest-zone)]
-    (if (and (#{"Asset" "Agenda"} (:type card))
+  (let [prev-card (some #(when (or (asset? %) (agenda? %)) %) dest-zone)]
+    (if (and (or (asset? card) (agenda? card))
              prev-card
              (not (:host card)))
       (continue-ability state side {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")

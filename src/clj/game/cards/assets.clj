@@ -680,7 +680,7 @@
 
    "Estelle Moon"
    {:events [{:event :corp-install
-              :req (req (and (#{"Asset" "Agenda" "Upgrade"} (:type target))
+              :req (req (and (or (asset? target) (agenda? target) (upgrade? target))
                              (is-remote? (second (:zone target)))))
               :effect (effect (add-counter card :power 1)
                               (system-msg (str "places 1 power counter on Estelle Moon")))}]

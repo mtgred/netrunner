@@ -529,7 +529,7 @@
    "Councilman"
    {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
     :events [{:event :rez
-              :req (req (and (#{"Asset" "Upgrade"} (:type target))
+              :req (req (and (or (asset? target) (upgrade? target))
                              (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit (rez-cost state :corp target)])))
               :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
                                                      " that was just rezzed") "info")
@@ -975,7 +975,7 @@
               :effect (effect (pay :corp card :credit 2))}]}
 
    "Film Critic"
-   (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))
+   (letfn [(get-agenda [card] (first (filter agenda? (:hosted card))))
            (host-agenda? [agenda]
              {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
                          :yes-ability {:effect (req (host state side card (move state side agenda :play-area))
@@ -985,7 +985,7 @@
                                                       (swap! state dissoc :access)))
                                        :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
      {:events [{:event :access
-                :req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
+                :req (req (and (empty? (filter agenda? (:hosted card)))
                                (agenda? target)))
                 :interactive (req true)
                 :async true

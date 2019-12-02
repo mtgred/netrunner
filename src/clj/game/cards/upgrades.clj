@@ -357,7 +357,7 @@
              {:prompt (str "Select a card to swap with " (:title to-swap))
               :choices {:not-self true
                         :card #(and (corp? %)
-                                    (#{"Asset" "Agenda" "Upgrade"} (:type %))
+                                    (or (asset? %) (agenda? %) (upgrade? %))
                                     (or (in-hand? %) ; agenda, asset or upgrade from HQ
                                         (and (installed? %) ; card installed in a server
                                              ;; central upgrades are not in a server
