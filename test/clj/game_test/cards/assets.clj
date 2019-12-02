@@ -1696,7 +1696,7 @@
         (core/rez state :corp (refresh gs))
         (card-ability state :corp (refresh gs) 0)
         (is (refresh gs) "Gene Splicer is still in remote")
-        (is (zero? (count (get-scored state :corp))) "Score area is still empty")))))
+        (is (empty (get-scored state :corp)) "Score area is still empty")))))
 
 (deftest genetics-pavilion
   ;; Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn
