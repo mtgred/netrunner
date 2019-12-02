@@ -1690,12 +1690,13 @@
                  :runner {:deck [(qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Gene Splicer" "New remote")
       (let [gs (get-content state :remote1 0)]
-        (core/add-counter state :corp gs :advancement 2)
+        (core/advance state :corp {:card (refresh gs)})
+        (core/advance state :corp {:card (refresh gs)})
         (take-credits state :runner)
         (core/rez state :corp (refresh gs))
         (card-ability state :corp (refresh gs) 0)
-        (is (= "Gene Splicer" (:title (get-content state :remote1 0))) "Gene Splicer is still in remote")
-        (is (= nil (:agendapoints (get-scored state :corp 0))) "Score area is still empty")))))
+        (is (refresh gs) "Gene Splicer is still in remote")
+        (is (zero? (count (get-scored state :corp))) "Score area is still empty")))))
 
 (deftest genetics-pavilion
   ;; Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn
