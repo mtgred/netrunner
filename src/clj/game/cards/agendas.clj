@@ -241,6 +241,11 @@
                  :effect arrange-rd}
         :interactive (req true)}))
 
+   "Bellona"
+   {:steal-cost-bonus (req [:credit 5])
+    :effect (req (gain-credits state :corp 5)
+                 (system-msg state side (str "uses " (:title card) " to gain 5 [Credits]")))}
+
    "Better Citizen Program"
    (letfn [(ability [kind]
              (effect (show-wait-prompt :runner "Corp to use Better Citizen Program")
@@ -418,6 +423,17 @@
      {:events [(assoc ability :event :corp-turn-begins)]
       :abilities [ability]})
 
+   "Cyberdex Sandbox"
+   {:effect (effect (continue-ability
+                      {:optional {:prompt "Purge virus counters with Cyberdex Sandbox?"
+                                  :yes-ability {:msg (msg "purge virus counters")
+                                                :effect (effect (purge))}}}
+                      card nil))
+    :events [{:event :purge
+              :once :per-turn
+              :msg "gain 4 [Credits]"
+              :effect (req (gain-credits state :corp 4))}]}
+
    "Dedicated Neural Net"
    {:events [{:event :successful-run
               :interactive (req true)
@@ -573,6 +589,27 @@
                  :msg (msg "place 1 advancement token on " (card-str state target))
                  :once :per-turn
                  :effect (effect (add-prop target :advance-counter 1))}]}
+
+   "Flower Sermon"
+   {:silent (req true)
+    :effect (effect (add-counter card :agenda 5))
+    :abilities [{:cost [:agenda 1]
+                 :once :per-turn
+                 :msg (msg "reveal " (:title (first (:deck corp))) " and draw 2 cards")
+                 :async true
+                 :effect (req (reveal state side [(first (:deck corp))])
+                              (show-wait-prompt state :runner (str "Corp to resolve " (:title card)))
+                              (wait-for (draw state side 2 nil)
+                                        (continue-ability state side
+                                                          {:req (req (pos? (count (:hand corp))))
+                                                           :prompt "Choose a card in HQ to move to the top of R&D"
+                                                           :msg "add 1 card in HQ to the top of R&D"
+                                                           :choices {:card #(and (in-hand? %)
+                                                                                 (corp? %))}
+                                                           :effect (effect (move target :deck {:front true})
+                                                                           (clear-wait-prompt :runner)
+                                                                           (effect-completed eid))}
+                                                          card nil)))}]}
 
    "Fly on the Wall"
    {:msg "give the runner 1 tag"
@@ -1052,6 +1089,33 @@
                                                   (:cid card) {:back true})
                                   (update! (update-in card [:special :kusanagi] #(conj % target))))}]}
 
+   "Project Vacheron"
+   (let [vacheron-ability
+         {:msg (msg "add 4 agenda counters on " (:title card))
+          :effect (effect (add-counter (get-card state card) :agenda 4)
+                          (update! (assoc-in (get-card state card) [:special :vacheron] true)))}]
+     {:agendapoints-runner (req (if (and (get-in card [:special :vacheron])
+                                         (zero? (get-counters card :agenda))) 3 0))
+      :stolen vacheron-ability
+      :events [(assoc vacheron-ability :event :agenda-stolen :req (req (not= (first (:zone card)) :discard)))
+               (assoc vacheron-ability :event :as-agenda)
+               {:event :runner-turn-begins
+                :req (req (pos? (get-counters card :agenda)))
+                :msg (msg (str "remove "
+                               (if (= 1 (get-counters card :agenda))
+                                 "the final"
+                                 "1")
+                               " agenda token from " (:title card)))
+                :effect (req (when (pos? (get-counters card :agenda))
+                               (add-counter state side card :agenda -1))
+                             (when (= 0 (get-counters (get-card state card) :agenda))
+                               (let [points (get-agenda-points state :runner (assoc-in card [:counter :agenda] 0))]
+                                 (system-msg state :runner
+                                             (str "gains " (quantify points "agenda point")
+                                                  " from " (:title card)))
+                                 (gain-agenda-point state :runner points))))}]
+      :flags {:has-events-when-stolen true}})
+
    "Project Vitruvius"
    {:silent (req true)
     :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))
@@ -1493,6 +1557,25 @@
                                                                       (effect-completed state side eid)))})
                                             card nil))})
                              card nil))}]}
+
+   "Transport Monopoly"
+   (let [suppress-event {:req (req (and (get-in (get-card state card) [:special :transport-monopoly])
+                                        (not (same-card? target card))))}]
+     {:silent (req true)
+      :effect (effect (add-counter card :agenda 2))
+      :abilities [{:cost [:agenda 1]
+                   :req (req run)
+                   :msg "prevent this run from becoming successful"
+                   :effect (effect (update! (assoc-in card [:special :transport-monopoly] true)))}]
+      :suppress [(assoc suppress-event :event :pre-successful-run)
+                 (assoc suppress-event :event :successful-run)]
+      :events [{:event :pre-successful-run
+                :silent (req true)
+                :req (req (get-in card [:special :transport-monopoly]))
+                :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
+                             (swap! state update-in [:run] dissoc :successful)
+                             (swap! state update-in [:runner :register :successful-run] #(next %))
+                             (update! state side (dissoc-in card [:special :transport-monopoly])))}]})
 
    "Underway Renovation"
    (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]

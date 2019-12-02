@@ -471,9 +471,10 @@
   [state side eid amount]
   (let [select-fn #(and ((if (= :corp side) corp? runner?) %)
                         (in-hand? %))
+        prompt-hand (if (= :corp side) "HQ" "your grip")
         hand (if (= :corp side) "HQ" "their grip")]
     (continue-ability state side
-                      {:prompt (str "Choose " (quantify amount (str "card in " hand)) " to trash")
+                      {:prompt (str "Choose " (quantify amount "card") " in " prompt-hand " to trash")
                        :choices {:all true
                                  :max amount
                                  :card select-fn}
@@ -784,3 +785,7 @@
   ([state side card & targets]
    (merge-costs
      (get-effects state side card :run-additional-cost targets))))
+
+(defn has-trash-ability?
+  [card]
+  (some #(= :trash (first %)) (merge-costs (map :cost (:abilities (card-def card))))))

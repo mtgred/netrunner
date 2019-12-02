@@ -926,6 +926,14 @@
                                  :duration :end-of-run
                                  :req (req (= (:from-server target) (second (:previous-zone card)))))]))}})
 
+   "Navi Mumbai City Grid"
+   {:constant-effects [{:type :prevent-ability
+                        :req (req (let [target-card (first targets)]
+                                    (and run
+                                         (= (first (:server run)) (second (:zone card)))
+                                         (not (has-subtype? target-card "Icebreaker")))))
+                        :value true}]}
+
    "NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
              :once :per-turn
@@ -1377,6 +1385,21 @@
               :trace {:base 2
                       :successful {:msg "gain 1 [Credits]"
                                    :effect (effect (gain-credits 1))}}}]}
+
+   "Tranquility Home Grid"
+   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+    :events [{:event :corp-install
+              :req (req (and (or (asset? target)
+                                 (agenda? target)
+                                 (upgrade? target))
+                             (= (second (:zone card)) (second (:zone target)))
+                             (first-event? state :corp :corp-install #(= (-> card :zone second) (-> % first :zone second)))))
+              :prompt (msg "Use " (:title card) " to gain 2 [Credits] or draw 1 card?")
+              :choices ["Gain 2 [Credits]" "Draw 1 card"]
+              :msg (msg (decapitalize target))
+              :effect (req (if (= target "Gain 2 [Credits]")
+                             (gain state side :credit 2)
+                             (draw state side 1 nil)))}]}
 
    "Tyr's Hand"
    {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ICE from being broken"

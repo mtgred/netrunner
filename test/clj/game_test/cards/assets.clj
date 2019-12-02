@@ -3086,6 +3086,98 @@
         (is (zero? (count (:hand (get-corp)))))
         (is (= (:cid agenda1) (:cid (last (:deck (get-corp))))))))))
 
+(deftest-pending prana-condenser
+  ;; Prāna Condenser
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Prāna Condenser" (qty "Neural EMP" 2)]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Prāna Condenser" "New remote")
+      (let [pc (get-content state :remote1 0)]
+        (core/rez state :corp pc)
+        (take-credits state :corp)
+        (run-empty-server state :archives)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Neural EMP")
+        (let [corp-credits (:credit (get-corp))]
+          (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
+          (click-prompt state :corp "Yes")
+          (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power token")
+          (is (= (+ 3 corp-credits) (:credit (get-corp))) "Gained 3 credits")
+          (play-from-hand state :corp "Neural EMP")
+          (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
+          (click-prompt state :corp "Yes")
+          (is (= 2 (get-counters (refresh pc) :power)) "Added another power token")
+          (is (= (+ 4 corp-credits) (:credit (get-corp))) "Gained another 3 credits (and paid 2 for EMP)")
+          (is (= 5 (count (:hand (get-runner)))) "No damage dealt"))
+        (take-credits state :runner)
+        (card-ability state :corp (refresh pc) 0)
+        (is (= 3 (count (:hand (get-runner)))) "2 damage dealt"))))
+  (testing "Refuse to prevent damage"
+    (do-game
+      (new-game {:corp {:hand ["Prāna Condenser" "Neural EMP"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Prāna Condenser" "New remote")
+      (let [pc (get-content state :remote1 0)]
+        (core/rez state :corp pc)
+        (take-credits state :corp)
+        (run-empty-server state :archives)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Neural EMP")
+        (let [corp-credits (:credit (get-corp))]
+          (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
+          (click-prompt state :corp "No")
+          (is (= 4 (count (:hand (get-runner)))) "1 net damage dealt")
+          (is (= 0 (get-counters (refresh pc) :power)) "No power token added")
+          (is (= corp-credits (:credit (get-corp))) "No credits gained")))))
+  (testing "Only prevents 1 net damage"
+    (do-game
+      (new-game {:corp {:hand ["Prāna Condenser" "Snare!"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Prāna Condenser" "New remote")
+      (let [pc (get-content state :remote1 0)]
+        (core/rez state :corp pc)
+        (take-credits state :corp)
+        (run-empty-server state :hq)
+        (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
+        (click-prompt state :corp "Yes") ;Snare
+        (click-prompt state :corp "Yes") ;Prana
+        (is (= 3 (count (:hand (get-runner)))) "2 net damage dealt")
+        (is (= 1 (get-counters (refresh pc) :power)) "Only 1 power token added"))))
+  (testing "Runner preventing damage on their turn"
+    (do-game
+      (new-game {:corp {:hand ["Prāna Condenser" "Shock!"]}
+                 :runner {:hand [(qty "Caldera" 5)]
+                          :credits 6}})
+      (play-from-hand state :corp "Prāna Condenser" "New remote")
+      (let [pc (get-content state :remote1 0)]
+        (core/rez state :corp pc)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Caldera")
+        (is (= 4 (count (:hand (get-runner)))) "Runner starts with 4 cards in grip")
+        (run-empty-server state :hq)
+        (card-ability state :runner (get-resource state 0) 0)
+        (click-prompt state :runner "No action")
+        (is (= 4 (count (:hand (get-runner)))) "Runner took no damage")
+        (is (empty? (:prompt (get-corp))) "No Prana prompt for Corp"))))
+  (testing "Corp gets Prana prompt first"
+    (do-game
+      (new-game {:corp {:hand ["Prāna Condenser" "Neural EMP"]}
+                 :runner {:hand [(qty "Caldera" 5)]
+                          :credits 6}})
+      (play-from-hand state :corp "Prāna Condenser" "New remote")
+      (let [pc (get-content state :remote1 0)]
+        (core/rez state :corp pc)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Caldera")
+        (run-empty-server state :archives)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Neural EMP")
+        ; TODO: Implement interrupts to make these prompts work correctly
+        ; (is (not-empty (:prompt (get-corp))) "Prana prompt for Corp")
+        ; (is (empty? (:prompt (get-runner))) "No Caldera prompt for Runner")
+        ))))
+
 (deftest primary-transmission-dish
   ;; Primary Transmission Dish
   (do-game
@@ -4601,6 +4693,40 @@
       (is (= 2 (:agenda-point (get-runner))) "Runner should gain 2 agenda points from trashing Victoria Jenkins")
       (is (= 1 (count (get-scored state :runner))) "Runner should have 1 card in score area")
       (is (zero? (-> (get-corp) :discard count)) "Victoria Jenkins shouldn't go to Archives when trashed"))))
+
+(deftest wall-to-wall
+  (testing "Basic functionality"
+    (do-game
+      (new-game {:corp {:deck ["Wall To Wall" (qty "Hedge Fund" 3)
+                               "PAD Campaign" "Ice Wall"]}})
+      (play-from-hand state :corp "Wall To Wall" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [w2w (get-content state :remote1 0)
+            pad (get-content state :remote2 0)
+            iw (get-ice state :hq 0)]
+        (core/rez state :corp w2w)
+        (take-credits state :corp)
+        (dotimes [_ 3]
+          (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck))
+        (take-credits state :runner)
+        (changes-val-macro 1 (:credit (get-corp))
+                           "Gained 1 credit"
+                           (click-prompt state :corp "Gain 1 [Credits]"))
+        (changes-val-macro 1 (count (:hand (get-corp)))
+                           "Drew 1 card"
+                           (click-prompt state :corp "Draw 1 card"))
+        (changes-val-macro 1 (get-counters (refresh iw) :advancement)
+                           "Added 1 advancement token"
+                           (click-prompt state :corp "Place 1 advancement token on a piece of ice")
+                           (click-card state :corp iw))
+        (core/rez state :corp pad)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (changes-val-macro 2 (count (:hand (get-corp)))
+                           "Added this asset to HQ (and took mandatory draw)"
+                           (click-prompt state :corp "Add this asset to HQ"))
+        (is (empty? (:prompt (get-corp))) "No further options because PAD Campaign is rezzed")))))
 
 (deftest warden-fatuma
   ;; Warden Fatuma - rezzed bioroid ice gains an additional sub

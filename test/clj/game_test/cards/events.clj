@@ -442,6 +442,74 @@
       (is (= ["Sure Gamble" "Easy Mark"] (mapv :title (:hand (get-runner)))))
       (is (not (find-card "Daily Casts" (:hand (get-runner))))))))
 
+(deftest bravado
+  ;; Bravado
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Bravado"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bravado")
+      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Only HQ is runnable")
+      (click-prompt state :runner "HQ")
+      (run-continue state)
+      (changes-val-macro 7 (:credit (get-runner))
+                         "Gained 6+1 credits from Bravado"
+                         (run-successful state))))
+  (testing "Gaining money based on distinct pieces of ice"
+    (do-game
+      (new-game {:corp {:hand [(qty "Ice Wall" 2) "Cell Portal"]
+                        :credits 8}
+                 :runner {:hand ["Bravado"]}})
+      (play-from-hand state :corp "Cell Portal" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [cp (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Bravado")
+        (click-prompt state :runner "HQ")
+        (dotimes [_ 2] (run-continue state))
+        (core/rez state :corp cp)
+        (card-subroutine state :corp (refresh cp) 0)
+        (dotimes [_ 3] (run-continue state))
+        (changes-val-macro 9 (:credit (get-runner))
+                           "Gained 6+3 credits from Bravado"
+                           (run-successful state)))))
+  (testing "Reinstalled ice during a run is counted twice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                        :hand ["Cell Portal" "Architect" "Enigma"]
+                        :credits 15}
+                 :runner {:hand ["Bravado"]}})
+      (play-from-hand state :corp "Cell Portal" "HQ")
+      (play-from-hand state :corp "Architect" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (let [cp (get-ice state :hq 0)
+            arch (get-ice state :hq 1)
+            enig (get-ice state :hq 2)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Bravado")
+        (click-prompt state :runner "HQ")
+        (run-continue state)
+        (core/rez state :corp arch)
+        ; Overinstall Enigma
+        (card-subroutine state :corp (refresh arch) 0)
+        (click-prompt state :corp "Ice Wall")
+        (core/move state :corp enig :discard)
+        (click-prompt state :corp "HQ")
+        ; Reinstall Enigma
+        (card-subroutine state :corp (refresh arch) 1)
+        (click-card state :corp (find-card "Enigma" (:discard (get-corp))))
+        (click-prompt state :corp "HQ")
+        (run-continue state)
+        (core/rez state :corp cp)
+        (card-subroutine state :corp (refresh cp) 0)
+        (dotimes [_ 4] (run-continue state))
+        (changes-val-macro 11 (:credit (get-runner))
+                           "Gained 6+5 credits from Bravado"
+                           ; Cell Portal, Architect, Ice Wall, 2x Enigma
+                           (run-successful state))))))
 (deftest bribery
   ;; Bribery
   (do-game
@@ -2218,6 +2286,83 @@
       (is (not (rezzed? (refresh sundew))) "Sundew is not rezzed as corp has no cards in hand")
       (is (= "Unable to pay for Sundew." (-> @state :corp :toast first :msg)) "Corp gets the correct toast"))))
 
+(deftest harmony-ar-therapy
+  ;; Harmony AR Therapy
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:hand [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
+                          :deck ["Harmony AR Therapy"]}})
+      (take-credits state :corp)
+      (dotimes [_ 12] (core/move state :runner (first (:hand (get-runner))) :discard))
+      (core/draw state :runner 1)
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (= 6 (-> (get-runner) :prompt first :choices count)) "Cards are shown distinctly")
+      (click-prompt state :runner "Dirty Laundry")
+      (click-prompt state :runner "Astrolabe")
+      (click-prompt state :runner "Bankroll")
+      (click-prompt state :runner "Chameleon")
+      (click-prompt state :runner "Equivocation")
+      (is (= 12 (count (:discard (get-runner)))) "12 cards in discard (HART still in play area)")
+      (is (= 0 (count (:deck (get-runner)))) "No cards in stack")
+      (is (= 0 (count (:rfg (get-runner)))) "Nothing removed from game")
+      (click-prompt state :runner "OK")
+      (is (= 7 (count (:discard (get-runner)))) "7 cards in discard")
+      (is (= 5 (count (:deck (get-runner)))) "5 cards shuffled back into stack")
+      (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
+  (testing "Cannot play with empty heap"
+    (do-game
+      (new-game {:runner {:hand ["Harmony AR Therapy"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (empty? (:prompt (get-runner))) "HART was not played")))
+  (testing "Shuffle back less than 5 cards"
+    (do-game
+      (new-game {:runner {:hand [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
+                          :deck ["Harmony AR Therapy"]}})
+      (take-credits state :corp)
+      (dotimes [_ 12] (core/move state :runner (first (:hand (get-runner))) :discard))
+      (core/draw state :runner 1)
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (= 6 (-> (get-runner) :prompt first :choices count)) "Cards are shown distinctly")
+      (click-prompt state :runner "Dirty Laundry")
+      (click-prompt state :runner "Astrolabe")
+      (click-prompt state :runner "Bankroll")
+      (click-prompt state :runner "Done")
+      (is (= 12 (count (:discard (get-runner)))) "12 cards in discard (HART still in play area)")
+      (is (= 0 (count (:deck (get-runner)))) "No cards in stack")
+      (is (= 0 (count (:rfg (get-runner)))) "Nothing removed from game")
+      (click-prompt state :runner "OK")
+      (is (= 9 (count (:discard (get-runner)))) "9 cards in discard")
+      (is (= 3 (count (:deck (get-runner)))) "3 cards shuffled back into stack")
+      (is (= 1 (count (:rfg (get-runner)))) "HART removed from game")))
+  (testing "Start over function"
+    (do-game
+      (new-game {:runner {:hand [(qty "Find the Truth" 2) (qty "Astrolabe" 2) (qty "Bankroll" 2) (qty "Chameleon" 2) (qty "Dirty Laundry" 2) (qty "Equivocation" 2)]
+                          :deck ["Harmony AR Therapy"]}})
+      (take-credits state :corp)
+      (dotimes [_ 12] (core/move state :runner (first (:hand (get-runner))) :discard))
+      (core/draw state :runner 1)
+      (play-from-hand state :runner "Harmony AR Therapy")
+      (is (= 6 (-> (get-runner) :prompt first :choices count)) "Cards are shown distinctly")
+      (click-prompt state :runner "Dirty Laundry")
+      (click-prompt state :runner "Astrolabe")
+      (click-prompt state :runner "Bankroll")
+      (click-prompt state :runner "Chameleon")
+      (click-prompt state :runner "Equivocation")
+      (click-prompt state :runner "Start over")
+      (is (= 12 (count (:discard (get-runner)))) "12 cards in discard (HART still in play area)")
+      (is (= 0 (count (:deck (get-runner)))) "No cards in stack")
+      (is (= 0 (count (:rfg (get-runner)))) "Nothing removed from game")
+      (click-prompt state :runner "Dirty Laundry")
+      (click-prompt state :runner "Find the Truth")
+      (click-prompt state :runner "Bankroll")
+      (click-prompt state :runner "Chameleon")
+      (click-prompt state :runner "Equivocation")
+      (click-prompt state :runner "OK")
+      (is (= 7 (count (:discard (get-runner)))) "7 cards in discard")
+      (is (= 5 (count (:deck (get-runner)))) "5 cards shuffled back into stack")
+      (is (= 1 (count (:rfg (get-runner)))) "HART removed from game"))))
+
 (deftest high-stakes-job
   ;; High Stakes Job - run on server with at least 1 piece of unrezzed ice, gains 12 credits if successful
   (do-game
@@ -3222,6 +3367,22 @@
     (click-card state :runner (find-card "Nerve Agent" (:hand (get-runner))))
     (is (= 1 (count (get-program state))) "Installed Nerve Agent")
     (is (= 4 (:credit (get-runner))) "Paid 0 credits")))
+
+(deftest moshing
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Moshing" (qty "Lamprey" 3)]}})
+      (take-credits state :corp)
+      (is (= 0 (count (:discard (get-runner)))) "Runner has no cards in heap")
+      (is (= 4 (count (:hand (get-runner)))) "Runner starts with 4 cards")
+      (is (not (find-card "Sure Gamble" (:hand (get-runner)))) "Runner does not have Sure Gamble in grip")
+      (play-from-hand state :runner "Moshing")
+      (is (= 0 (count (:discard (get-runner)))) "Moshing is still in play")
+      (dotimes [card 3] (click-card state :runner (nth (:hand (get-runner)) card)))
+      (is (= 4 (count (:discard (get-runner)))) "Runner trashed 3 cards and discarded Moshing")
+      (is (= 3 (count (:hand (get-runner)))) "Runner draws 3 cards")
+      (is (find-card "Sure Gamble" (:hand (get-runner))) "Runner drew Sure Gamble"))))
 
 (deftest net-celebrity
   ;; Net-celebrity

@@ -183,6 +183,30 @@
     (click-card state :corp "Hostile Takeover")
     (is (= ["Hostile Takeover"] (->> (get-corp) :hand (map :title))) "Hostile Takeover should be in HQ")))
 
+(deftest argus-crackdown
+  ;; Argus Crackdown
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall" "Argus Crackdown" "Hedge Fund"]
+                        :deck ["Hedge Fund"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Argus Crackdown")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-continue state)
+      (run-continue state)
+      (changes-val-macro -2 (count (:hand (get-runner)))
+                         "Runner took 2 meat damage"
+                         (run-successful state))
+      (click-prompt state :runner "No action")
+      (run-on state :rd)
+      (run-continue state)
+      (run-continue state)
+      (changes-val-macro 0 (count (:hand (get-runner)))
+                         "Runner took no meat damage on unprotected server"
+                         (run-successful state)))))
+
 (deftest ark-lockdown
   ;; Ark Lockdown
   (do-game
@@ -768,7 +792,7 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
-(deftest digital-rights-management
+(deftest-pending digital-rights-management
   (testing "DRM only searches for Agendas in R&D"
     (do-game
       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
@@ -1860,6 +1884,27 @@
     (click-card state :corp "Kati Jones")
     (is (not (get-resource state 0)) "Kati should be trashed")))
 
+(deftest hyoubu-precog-manifold
+  ;; Hyoubu Precog Manifold
+  (testing "Basic Test"
+    (do-game
+      (new-game {:corp {:hand ["Hyoubu Precog Manifold" "Hedge Fund"]}})
+      (play-from-hand state :corp "Hyoubu Precog Manifold")
+      (click-prompt state :corp "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :corp "0 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
+      (is (not (:run @state)) "Run ended")
+      (run-on state :hq)
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
+      (is (:run @state) "Run still going"))))
+
 (deftest interns
   ;; Fire Wall
   (do-game
@@ -1914,6 +1959,53 @@
     (play-from-hand state :corp "IPO")
     (is (= 13 (:credit (get-corp))))
     (is (zero? (:click (get-corp))) "Terminal ends turns")))
+
+(deftest kakurenbo
+  ;; Kakurenbo
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 8) "Project Junebug" "Kakurenbo"]}})
+      (take-credits state :corp)
+      (dotimes [n 5]
+        (click-card state :corp (nth (:hand (get-corp)) n)))
+      (run-empty-server state :archives)
+      (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")
+      (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Kakurenbo")
+      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
+      (click-card state :corp (find-card "Project Junebug" (:hand (get-corp))))
+      (click-prompt state :corp "Done")
+      (is (empty? (remove #(not (:seen %)) (:discard (get-corp)))) "Cards in Archives are turned facedown")
+      (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
+      (is (not-empty (:prompt (get-corp))) "Could not select operation to install")
+      (click-card state :corp (find-card "Project Junebug" (:discard (get-corp))))
+      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
+      (click-prompt state :corp "New remote")
+      (is (= "Project Junebug" (:title (get-content state :remote1 0))) "Installed Junebug in remote")
+      (is (= 2 (get-counters (get-content state :remote1 0) :advancement)) "Junebug has 2 advancement tokens")
+      (is (= 4 (count (:hand (get-corp)))) "4 Hedge Funds left in HQ")
+      (is (empty? (remove #(not (:seen %)) (:discard (get-corp)))) "Remaining cards in Archives are still facedown")
+      (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")
+      (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")))
+  (testing "Can turn cards facedown without installing"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 8) "Project Junebug" "Kakurenbo"]}})
+      (take-credits state :corp)
+      (dotimes [n 5]
+        (click-card state :corp (nth (:hand (get-corp)) n)))
+      (run-empty-server state :archives)
+      (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")
+      (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Kakurenbo")
+      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
+      (click-prompt state :corp "Done")
+      (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")
+      (is (empty? (:prompt (get-corp))) "No more prompts"))))
+
 
 (deftest kill-switch
   ;; Kill Switch
@@ -2215,6 +2307,25 @@
       (is (second-last-log-contains? state "Hedge Fund") "Skipped card name was logged")
       (is (second-last-log-contains? state "Enigma") "Installed card name was logged"))))
 
+(deftest napd-cordon
+  ;; NAPD Cordon
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["NAPD Cordon" "Project Atlas"]}
+                 :runner {:credits 8}})
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "NAPD Cordon")
+      (play-from-hand state :corp "Project Atlas" "New remote")
+      (let [atlas (get-content state :remote1 0)]
+        (dotimes [_ 2] (core/advance state :corp {:card (refresh atlas)}))
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (run-continue state)
+        (run-successful state)
+        (changes-val-macro -8 (:credit (get-runner))
+                           "Paid 8c to steal 1adv Atlas"
+                           (click-prompt state :runner "Pay to steal"))))))
+
 (deftest neural-emp
   ;; Neural EMP - Play if Runner made a run the previous turn to do 1 net damage
   (do-game
@@ -2226,6 +2337,49 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Neural EMP")
     (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))
+
+(deftest next-activation-command
+  ;; NEXT Activation Command
+  (testing "Get trashed at start of next Corp turn"
+    (do-game
+      (new-game {:corp {:hand ["NEXT Activation Command"]}})
+      (is (= 0 (count (:play-area (get-corp)))) "Play area is empty")
+      (is (= 0 (count (:discard (get-corp)))) "Discard is empty")
+      (play-from-hand state :corp "NEXT Activation Command")
+      (is (= 1 (count (:play-area (get-corp)))) "NAC in play area")
+      (is (= 0 (count (:discard (get-corp)))) "Discard is empty")
+      (take-credits state :corp)
+      (is (= 1 (count (:play-area (get-corp)))) "NAC in play area")
+      (take-credits state :runner)
+      (is (= 0 (count (:play-area (get-corp)))) "NAC left play area")
+      (is (= 1 (count (:discard (get-corp)))) "NAC in discard")))
+  (testing "Prevents break abilities on non-icebreakers"
+    (do-game
+      (new-game {:corp {:hand ["NEXT Activation Command" "Eli 1.0"]}
+                 :runner {:hand ["Self-modifying Code" "Corroder" "D4v1d"]
+                          :credits 15
+                          :deck [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "NEXT Activation Command")
+      (play-from-hand state :corp "Eli 1.0" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "D4v1d")
+      (play-from-hand state :runner "Self-modifying Code")
+      (play-from-hand state :runner "Corroder")
+      (let [eli (get-ice state :hq 0)
+            d4 (get-program state 0)
+            smc (get-program state 1)
+            cor (get-program state 2)]
+        (run-on state :hq)
+        (core/rez state :corp (get-ice state :hq 0))
+        (card-ability state :runner d4 0)
+        (is (empty? (:prompt (get-runner))) "Can't use D4v1d")
+        (card-side-ability state :runner eli 0)
+        (is (empty? (:prompt (get-runner))) "Can't use break ability on Eli")
+        (card-ability state :runner smc 0) ; Can still use SMC
+        (click-prompt state :runner "No install")
+        (changes-val-macro -6 (:credit (get-runner))
+                           "Paid 4+2 to pump and break 6 strength Eli"
+                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)}))))))
 
 (deftest o-shortage
   ;; O₂ Shortage
@@ -2528,33 +2682,6 @@
     (click-prompt state :runner "0")
     (is (empty? (:hand (get-runner))) "Runner took 3 meat damage")))
 
-(deftest reclamation-order
-  ;; Reclamation Order
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Reclamation Order"]
-                      :discard [(qty "Ice Wall" 5) (qty "IPO" 3)]}})
-    (play-from-hand state :corp "Reclamation Order")
-    (click-card state :corp (find-card "IPO" (:discard (get-corp))))
-    (click-prompt state :corp "3")
-    (is (= 3 (count (:hand (get-corp)))) "Corp should have all 3 IPO in hand")
-    (is (= 6 (count (:discard (get-corp)))) "Corp should have 5 Ice Wall and 1 Reclamation Order in discard")))
-
-(deftest recruiting-trip
-  ;; Mason Bellamy
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5) "Keegan Lane" "Midori"
-                             "The Twins" "Arella Salvatore" "Mason Bellamy"]
-                      :hand ["Recruiting Trip"]}})
-    (play-from-hand state :corp "Recruiting Trip")
-    (click-prompt state :corp "5")
-    (click-prompt state :corp "Midori")
-    (click-prompt state :corp "The Twins")
-    (click-prompt state :corp "Arella Salvatore")
-    (click-prompt state :corp "Mason Bellamy")
-    (click-prompt state :corp "Keegan Lane")
-    (is (= 5 (count (:hand (get-corp)))) "Corp should have 5 cards in hand")))
-
 (deftest red-level-clearance
   ;; Red Level Clearance
   (testing "Basic test"
@@ -2618,56 +2745,6 @@
       (is (zero? (get-counters (refresh iw2) :advancement)) "Advancements removed")
       (is (= 6 (get-counters (refresh gt) :advancement)) "Gained 6 advancements"))))
 
-(deftest replanting
-  ;; Prisec
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Replanting" "Ice Wall" "Prisec"]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Replanting")
-    (click-card state :corp "Ice Wall")
-    (click-card state :corp "Ice Wall")
-    (click-prompt state :corp "New remote")
-    (click-card state :corp "Prisec")
-    (click-prompt state :corp "Server 1")
-    (is (= "Ice Wall" (:title (get-ice state :remote1 0))) "Ice Wall has been moved")
-    (is (= "Prisec" (:title (get-content state :remote1 0))) "Prisec has been installed")))
-
-(deftest restore
-  ;; Fire Wall
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Restore" "Fire Wall"]
-                      :discard [(qty "Ice Wall" 10)]}})
-    (play-from-hand state :corp "Fire Wall" "HQ")
-    (play-from-hand state :corp "Restore")
-    (click-card state :corp (find-card "Ice Wall" (:discard (get-corp))))
-    (let [credits (:credit (get-corp))]
-      (click-prompt state :corp "HQ")
-      (is (= (+ credits -2) (:credit (get-corp))) "Corp should pay for both install and rez cost"))
-    (is (= ["Restore"] (->> (get-corp) :discard (map :title))) "All other copies of Ice Wall should be rfg'd")))
-
-(deftest restoring-face
-  ;; Midori
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Restoring Face" "Midori"]
-                      :bad-pub 3}})
-    (play-from-hand state :corp "Midori" "New remote")
-    (play-from-hand state :corp "Restoring Face")
-    (click-card state :corp "Midori")
-    (is (= 1 (count-bad-pub state)) "Corp should lose 2 bad pub")
-    (is (= "Midori" (-> (get-corp) :discard first :title)) "Midori should be in Archives")))
-
-(deftest restructure
-  ;; Restructure
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Restructure"]
-                      :credits 10}})
-    (play-from-hand state :corp "Restructure")
-    (is (= 15 (:credit (get-corp))) "Corp should gain 5 credits")))
-
 (deftest reuse
   ;; Reuse - Gain 2 credits for each card trashed from HQ
   (do-game
@@ -2710,16 +2787,6 @@
     (is (zero? (get-counters (get-resource state 0) :virus)) "Viruses purged from VBG")
     (is (zero? (get-counters (get-program state 0) :virus)) "Viruses purged from Datasucker")
     (is (= 3 (count (:discard (get-runner)))) "Three cards trashed from stack")))
-
-(deftest rework
-  ;; Ice Wall
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Rework" "Ice Wall"]}})
-    (play-from-hand state :corp "Rework")
-    (click-card state :corp "Ice Wall")
-    (is (zero? (count (:hand (get-corp)))) "Corp should have no cards in hand")
-    (is (find-card "Ice Wall" (:deck (get-corp))) "Corp should shuffle Ice Wall into deck")))
 
 (deftest riot-suppression
   ;; Riot Suppression - lose 3 clicks or take 1 brain damage
@@ -2781,30 +2848,6 @@
     (play-from-hand state :runner "Easy Mark")
     (is (= 12 (:credit (get-runner))) "Easy Mark netted 3c after Brownout trashed")))
 
-(deftest rover-algorithm
-  ;; Enigma
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Rover Algorithm" "Enigma"]
-                      :credits 10}})
-    (play-from-hand state :corp "Enigma" "HQ")
-    (core/rez state :corp (get-ice state :hq 0))
-    (play-from-hand state :corp "Rover Algorithm")
-    (click-card state :corp "Enigma")
-    (take-credits state :corp)
-    (let [enigma (get-ice state :hq 0)
-          strength (core/get-strength (refresh enigma))]
-      (run-on state :hq)
-      (run-continue state)
-      (run-jack-out state)
-      (run-on state :hq)
-      (run-continue state)
-      (run-jack-out state)
-      (run-on state :hq)
-      (run-continue state)
-      (run-jack-out state)
-      (is (= (+ strength 3) (core/get-strength (refresh enigma))) "Enigma should gain 3 str from Rover Algorithm"))))
-
 (deftest sacrifice
   ;; Sacrifice - Remove BP for each agenda point sacrificed and gain a credit
   (testing "Basic test"
@@ -2844,6 +2887,29 @@
     (play-from-hand state :corp "Salem's Hospitality")
     (click-prompt state :corp "Plascrete Carapace")
     (is (= 2 (count (:hand (get-runner)))))))
+
+(deftest scapenet
+  (testing "Basic test"
+    (doseq [card [["Misdirection" get-program]
+                  ["Clone Chip" get-hardware]
+                  ["The Turning Wheel" get-resource]]]
+      (do-game
+        (new-game {:corp {:deck ["Scapenet"]}
+                   :runner {:deck [(first card)]}})
+        (play-from-hand state :corp "Scapenet")
+        (is (empty? (:prompt (get-corp))) "Couldn't play Scapenet without a successful run.")
+        (take-credits state :corp)
+        (play-from-hand state :runner (first card))
+        (run-empty-server state :archives)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Scapenet")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (let [c ((second card) state 0)]
+          (click-card state :corp c))
+        (if (= "Misdirection" (first card))
+          (is (not (empty? (:prompt (get-corp)))) "Scapenet doesn't work on non-virtual non-chip card.")
+          (is (= 1 (count (:rfg (get-runner)))) "Card removed from game."))))))
 
 (deftest scarcity-of-resources
   ;; Scarcity of Resources
@@ -3579,6 +3645,33 @@
       (play-from-hand state :corp "Sweeps Week")
       (is (= (+ credits -1 (count (:hand (get-runner)))) (:credit (get-corp)))
           "Corp should gain 5 for 6 cards in the grip"))))
+
+(deftest sync-rerouting
+  ;; SYNC Rerouting
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["SYNC Rerouting"]}})
+      (play-from-hand state :corp "SYNC Rerouting")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (changes-val-macro 1 (count-tags state)
+                         "Runner took 1 tag"
+                         (click-prompt state :runner "Take 1 tag"))
+      (run-jack-out state)
+      (run-on state :rd)
+      (changes-val-macro -4 (:credit (get-runner))
+                         "Runner paid 4 credits"
+                         (click-prompt state :runner "Pay 4 [Credits]"))))
+  (testing "Jesminder avoids SYNC Rerouting tag"
+    (do-game
+      (new-game {:corp {:hand ["SYNC Rerouting"]}
+                 :runner {:id "Jesminder Sareen: Girl Behind the Curtain"}})
+      (play-from-hand state :corp "SYNC Rerouting")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (changes-val-macro 0 (count-tags state)
+                         "Jesminder avoided tag"
+                         (click-prompt state :runner "Take 1 tag")))))
 
 (deftest targeted-marketing
   ;; Targeted Marketing

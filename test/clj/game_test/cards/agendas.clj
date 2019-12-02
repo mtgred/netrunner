@@ -288,6 +288,27 @@
       (is (empty (:prompt (get-runner))) "Bacterial Programming prompts finished")
       (is (not (:run @state))))))
 
+(deftest bellona
+  ;; Bellona
+  (testing "basic test"
+    (do-game
+      (new-game {:corp {:deck ["Bellona"]}})
+      (play-from-hand state :corp "Bellona" "New remote")
+      (let [bell (get-content state :remote1 0)]
+        (advance state bell 2)
+        (take-credits state :corp)
+        (core/lose state :runner :credit 1)
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "No action")
+        (is (zero? (count (:scored (get-runner)))) "Runner could not steal Bellona")
+        (is (= 4 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
+        (take-credits state :runner)
+        (advance state bell 3)
+        (changes-val-macro 5 (:credit (get-corp))
+                           "Got 5 credits from Bellona"
+                           (core/score state :corp {:card (refresh bell)}))
+        (is (= 3 (:agenda-point (get-corp))) "Scored Bellona for 3 points")))))
+
 (deftest better-citizen-program
   ;; Better Citizen Program
   (testing "Basic test"
@@ -560,6 +581,29 @@
     (core/gain-tags state :runner 1)
     (take-credits state :runner)
     (is (= 2 (count (:hand (get-runner)))) "Crisis Management dealt 1 meat damage")))
+
+(deftest cyberdex-sandbox
+  ;; Cyberdex Sandbox
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" "Cyberdex Trial"]}})
+      (play-and-score state "Cyberdex Sandbox")
+      (core/gain state :corp :click 10)
+      (is (changes-credits (get-corp) 4
+                           (click-prompt state :corp "Yes")))
+      (is (changes-credits (get-corp) 0
+                           (core/purge state :corp)))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (changes-credits (get-corp) 4
+                           (play-from-hand state :corp "Cyberdex Trial")))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
+      (let [cvs (get-content state :hq 0)]
+        (core/rez state :corp cvs)
+        (is (changes-credits (get-corp) 4
+                             (card-ability state :corp cvs 0)))))))
 
 (deftest dedicated-neural-net
   ;; Dedicated Neural Net
@@ -947,6 +991,74 @@
       (click-card state :corp (refresh iw))
       (is (= 2 (get-counters (refresh fu) :agenda)) "Firmware Updates should now have 2 agenda counters")
       (is (= 1 (get-counters (refresh iw) :advancement)) "Ice Wall should have 1 advancement token"))))
+
+(deftest flower-sermon
+  ;; Flower Sermon
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                               "DNA Tracker" "Excalibur" "Fire Wall" "Flower Sermon"]}})
+      (core/draw state :corp)
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Excalibur" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 3)) "DNA Tracker"))
+      (is (= (:title (nth (-> @state :corp :deck) 4)) "Excalibur"))
+      (is (= (:title (nth (-> @state :corp :deck) 5)) "Fire Wall"))
+      ;; R&D is now from top to bottom: A B C D E F
+      (play-and-score state "Flower Sermon")
+      (is (= 0 (count (:hand (get-corp)))) "No cards in HQ")
+      (let [fs (get-scored state :corp 0)]
+        (is (= 5 (get-counters (refresh fs) :agenda)) "5 agenda tokens on Flower Sermon")
+        (card-ability state :corp fs 0)
+        (is (= 2 (count (:hand (get-corp)))) "Drew 2 cards")
+        (click-card state :corp (find-card "Brainstorm" (:hand (get-corp))))
+        (is (= "Brainstorm" (:title (first (:deck (get-corp))))) "Brainstorm now on top")
+        (is (= 4 (get-counters (refresh fs) :agenda)) "Spent agenda token on Flower Sermon")
+        (card-ability state :corp fs 0)
+        (is (empty? (:prompt (get-corp))) "Can only use once per turn"))))
+  (testing "Hyoubu interaction"
+    (do-game
+      (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                        :deck [(qty "Hedge Fund" 10)]
+                        :hand ["Flower Sermon"]}})
+      (play-and-score state "Flower Sermon")
+      (let [fs (get-scored state :corp 0)
+            corp-credits (:credit (get-corp))]
+        (card-ability state :corp fs 0)
+        (is (= (+ 1 corp-credits) (:credit (get-corp))) "Gained 1 credit from Hyoubu"))))
+  (testing "DBS interaction"
+    (do-game
+      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                               "DNA Tracker" "Daily Business Show" "Flower Sermon"]}})
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 3)) "DNA Tracker"))
+      ;; R&D is now from top to bottom: A B C D
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (play-and-score state "Flower Sermon")
+      (take-credits state :corp)
+      (is (= 0 (count (:hand (get-corp)))) "No cards in HQ")
+      (let [fs (get-scored state :corp 0)
+            dbs (get-content state :remote1 0)]
+        (core/rez state :corp dbs)
+        (card-ability state :corp fs 0)
+        (is (= (count (:hand (get-corp))) 3) "Drew 3 cards with DBS")
+        (click-card state :corp (find-card "Chiyashi" (:hand (get-corp))))
+        (is (= "Chiyashi" (:title (last (:deck (get-corp))))) "Chiyashi at the bottom")
+        (click-card state :corp (find-card "Brainstorm" (:hand (get-corp))))
+        (is (= "Brainstorm" (:title (first (:deck (get-corp))))) "Brainstorm now on top")))))
 
 (deftest fly-on-the-wall
   ;; Fly on the Wall - give the runner 1 tag
@@ -2058,6 +2170,46 @@
       (is (= 2 (count (:subroutines (get-ice state :hq 0)))) "Ice Wall gains 1 subroutine")
       (is (zero? (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 0 agenda counters"))))
 
+(deftest project-vacheron
+  ;; Project Vacheron
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Project Vacheron"]}})
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (is (= 0 (:agenda-point (get-runner))) "Runner should have 0 agenda points")
+      (click-prompt state :runner "Steal")
+      (dotimes [n 5]
+        (if (> 4 n)
+          (is (= 0 (:agenda-point (get-runner))) "Runner should still have 0 agenda points")
+          (is (= 3 (:agenda-point (get-runner))) "Runner should now have 0 agenda points"))
+        (let [target-tokens (- 4 n)]
+          (is (= target-tokens (get-counters (get-scored state :runner 0) :agenda)) (str "Vacheron should have " target-tokens " agenda tokens")))
+        (take-credits state :runner)
+        (take-credits state :corp))))
+  (testing "Still adding agenda tokens when using Film Critic"
+    (do-game
+      (new-game {:corp {:deck ["Project Vacheron"]}
+                 :runner {:deck ["Film Critic"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Film Critic")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Yes") ;host on Film Critic
+      (card-ability state :runner (get-resource state 0) 0)
+      (dotimes [n 5]
+        (if (> 4 n)
+          (is (= 0 (:agenda-point (get-runner))) "Runner should still have 0 agenda points")
+          (is (= 3 (:agenda-point (get-runner))) "Runner should now have 0 agenda points"))
+        (let [target-tokens (- 4 n)]
+          (is (= target-tokens (get-counters (get-scored state :runner 0) :agenda)) (str "Vacheron should have " target-tokens " agenda tokens")))
+        (take-credits state :runner)
+        (take-credits state :corp))))
+  (testing "Scoring as Corp gives 3 points"
+    (do-game
+      (new-game {:corp {:deck ["Project Vacheron"]}})
+      (play-and-score state "Project Vacheron")
+      (is (= 3 (:agenda-point (get-corp))) "Corp gets 3 points instantly"))))
+
 (deftest project-vitruvius
   ;; Project Vitruvius
   (do-game
@@ -2882,6 +3034,44 @@
          (is (= "Ice Wall" (:title (get-ice state :rd 1))) "Ice Wall was installed")
          (is (= innermost (get-in @state [:run :position])) "Run position unchanged because ice was installed 'behind' the runner")
          (is (= corp-credits (:credit (get-corp))) "Install was free"))))))
+
+(deftest transport-monopoly
+  (testing "Basic functionality"
+    (do-game
+     (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
+                :runner {:deck [(qty "Dirty Laundry" 3)]}})
+     (play-and-score state "Transport Monopoly")
+     (take-credits state :corp)
+     (let [tm (get-scored state :corp 0)]
+       (changes-val-macro -2 (:credit (get-runner))
+                          "Did not gain 5c from DL"
+                          (play-from-hand state :runner "Dirty Laundry")
+                          (click-prompt state :runner "HQ")
+                          (card-ability state :corp (refresh tm) 0)
+                          (run-continue state)
+                          (run-successful state)
+                          (click-prompt state :runner "No action")) ; accessed Hedge Fund
+       (changes-val-macro 3 (:credit (get-runner))
+                          "Gained 5c from DL"
+                          (play-from-hand state :runner "Dirty Laundry")
+                          (click-prompt state :runner "HQ")
+                          (run-continue state)
+                          (run-successful state)
+                          (click-prompt state :runner "No action"))))) ; accessed Hedge Fund
+  (testing "Omar interaction"
+    (do-game
+     (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
+                :runner {:id "Omar Keung: Conspiracy Theorist"
+                         :deck [(qty "Sure Gamble" 3)]}})
+     (play-and-score state "Transport Monopoly")
+     (take-credits state :corp)
+     (let [tm (get-scored state :corp 0)
+           omar (get-in @state [:runner :identity])]
+        (card-ability state :runner omar 0)
+        (card-ability state :corp (refresh tm) 0)
+        (run-successful state)
+        (is (empty? (-> (get-runner) :register :successful-run)))
+        (is (empty? (:prompt (get-runner))) "No omar prompt")))))
 
 (deftest underway-renovation
   ;; Underway Renovation

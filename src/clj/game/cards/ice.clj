@@ -59,8 +59,9 @@
   (runner-pay-or-break cost qty "pay for"))
 
 (defn bioroid-break
-  [cost qty]
-  (break-sub [:click cost {:action :bioroid-cost}] qty))
+  ([cost qty] (bioroid-break cost qty nil))
+  ([cost qty args]
+   (break-sub [:click cost {:action :bioroid-cost}] qty nil args)))
 
 ;;; General subroutines
 (def end-the-run
@@ -184,6 +185,24 @@
   "Runner loses a click effect"
   (effect (lose :runner :click 1)))
 
+(def add-runner-card-to-grip
+  "Add 1 installed Runner card to the grip"
+  {:async true
+   :label "Add an installed Runner card to the grip"
+   :req (req (not-empty (all-installed state :runner)))
+   :effect (effect (show-wait-prompt :runner (str "Corp to select " (:title card) " target"))
+                   (continue-ability
+                     {:choices {:card #(and (installed? %)
+                                            (runner? %))}
+                      :msg "add 1 installed card to the Runner's Grip"
+                      :effect (effect (clear-wait-prompt :runner)
+                                      (move :runner target :hand true)
+                                      (system-msg (str "adds " (:title target)
+                                                       " to the Runner's Grip")))
+                      :cancel-effect (effect (clear-wait-prompt :runner)
+                                             (effect-completed eid))}
+                     card nil))})
+
 ;;; For Advanceable ICE
 (defn get-advance-counters
   [card]
@@ -192,6 +211,10 @@
 (def advance-counters
   "Number of advancement counters - for advanceable ICE."
   (req (get-advance-counters card)))
+
+(def space-ice-rez-bonus
+  "Amount of rez reduction for the Space ICE."
+  (req (* -3 (get-advance-counters card))))
 
 (defn space-ice
   "Creates data for Space ICE with specified abilities."
@@ -357,6 +380,17 @@
                                 (trash state side card)
                                 (system-msg state side (str "trashes Aimor")))}]}
 
+   "Akhet"
+   {:implementation "Breaking both subs not restricted"
+    :subroutines [{:label "Gain 1[Credit]. Place 1 advancement token."
+                   :msg (msg "gain 1 [Credit] and place 1 advancement token on " (card-str state target))
+                   :prompt "Choose an installed card"
+                   :choices {:req installed?}
+                   :effect (effect (gain-credits 1)
+                                   (add-prop target :advance-counter 1 {:placed true}))}
+                  end-the-run]
+    :strength-bonus (req (if (>= 3 (get-advance-counters card)) 3 0))}
+
    "Anansi"
    (let [corp-draw {:optional {:prompt "Draw 1 card?"
                                :yes-ability {:async true
@@ -426,22 +460,7 @@
                          :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel")
                                                       (clear-wait-prompt :runner))}}}
                        card nil))}
-    :subroutines [(trace-ability
-                    6
-                    {:async true
-                     :effect (effect (show-wait-prompt :runner "Corp to select Archangel target")
-                                     (continue-ability
-                                       {:choices {:card #(and (installed? %)
-                                                              (runner? %))}
-                                        :label "Add 1 installed card to the Runner's Grip"
-                                        :msg "add 1 installed card to the Runner's Grip"
-                                        :effect (effect (clear-wait-prompt :runner)
-                                                        (move :runner target :hand true)
-                                                        (system-msg (str "adds " (:title target)
-                                                                         " to the Runner's Grip")))
-                                        :cancel-effect (effect (clear-wait-prompt :runner)
-                                                               (effect-completed eid))}
-                                       card nil))})]}
+    :subroutines [(trace-ability 6 add-runner-card-to-grip)]}
 
    "Archer"
    {:additional-cost [:forfeit]
@@ -1026,6 +1045,30 @@
                                   (trash state side c)))}]
     :runner-abilities [(bioroid-break 1 1)]}
 
+   "Engram Flush"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:label "Name a card type"
+                 :prompt "Choose a card type"
+                 :choices ["Event" "Hardware" "Program" "Resource"]
+                 :effect (req (let [cardtype target]
+                                (system-msg state side
+                                            (str "uses " (:title card) " to name " target))
+                                (register-events state side card
+                                                 [{:event :corp-reveal
+                                                   :duration :end-of-encounter
+                                                   :req (req (every? in-hand? targets) ;all revealed cards are in grip
+                                                             (= (count targets) (count (:hand runner))) ;entire grip was revealed
+                                                             (some #(is-type? % cardtype) targets)) ;there are cards with the named card type
+                                                   :prompt "Select revealed card to trash"
+                                                   :choices (req (concat (filter #(is-type? % cardtype) targets) ["None"]))
+                                                   :msg (msg "trash " (:title target) " from grip")
+                                                   :effect (req (when (not= "None" target)
+                                                                  (trash state side target)))}])))}]
+    :subroutines [{:label "Reveal the grip"
+                   :msg (msg "reveal " (count (:hand runner))
+                             " cards from grip: " (join ", " (map :title (:hand runner))))
+                   :effect (req (reveal state :corp (:hand runner)))}]}
+
    "Enigma"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
                    :effect runner-loses-click}
@@ -1056,6 +1099,11 @@
 
    "Executive Functioning"
    {:subroutines [(trace-ability 4 (do-brain-damage 1))]}
+
+   "F2P"
+   {:subroutines [add-runner-card-to-grip
+                  (give-tags 1)]
+    :runner-abilities [(break-sub [:credit 2] 1 nil {:req (req (not tagged))})]}
 
    "Fairchild"
    {:subroutines [(end-the-run-unless-runner-pays 4)
@@ -1989,6 +2037,7 @@
                                              (do (system-msg state :corp
                                                              (str "uses Mlinzi to do "
                                                                   net-dmg " net damage"))
+                                                 (clear-wait-prompt state :corp)
                                                  (damage state :runner eid :net net-dmg {:card card}))
                                              (do (system-msg state :corp
                                                              (str "uses Mlinzi to trash "
@@ -2469,20 +2518,8 @@
                                  (update-ice-strength (get-card state card)))}]}
 
    "Sandman"
-   (let [sub {:async true
-              :label "Add an installed Runner card to the grip"
-              :req (req (not-empty (all-installed state :runner)))
-              :effect (effect (show-wait-prompt :runner "Corp to select Sandman target")
-                              (continue-ability
-                                {:prompt "Select an installed Runner card"
-                                 :choices {:card #(and (installed? %)
-                                                       (runner? %))}
-                                 :msg (msg "to add " (:title target) " to the grip")
-                                 :effect (effect (clear-wait-prompt :runner)
-                                                 (move :runner target :hand true))
-                                 :cancel-effect (effect (clear-wait-prompt :runner))}
-                                card nil))}]
-     {:subroutines [sub sub]})
+   {:subroutines [add-runner-card-to-grip
+                  add-runner-card-to-grip]}
 
    "Sapper"
    {:flags {:rd-reveal (req true)}
@@ -2917,6 +2954,12 @@
    "Tyrant"
    (zero-to-hero end-the-run)
 
+   "Týr"
+   {:subroutines [(do-brain-damage 2)
+                  (combine-abilities trash-installed (gain-credits-sub 3))
+                  end-the-run]
+    :runner-abilities [(bioroid-break 1 1 {:additional-ability {:effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}})]}
+
    "Universal Connectivity Fee"
    {:subroutines [{:label "Force the Runner to lose credits"
                    :msg (msg "force the Runner to lose " (if tagged "all credits" "1 [Credits]"))
@@ -3043,6 +3086,19 @@
                                   (no-action state side nil)
                                   (continue state side nil))
                                 (trash state side card))}]}
+
+   "Winchester"
+   (let [protecting-hq-req (req (= (second (:zone card)) :hq))
+         ab {:req protecting-hq-req
+             :effect (effect (continue-ability
+                               (reset-variable-subs state side card 1 (trace-ability 3 end-the-run) {:back true})
+                               card nil))}]
+     {:subroutines [(trace-ability 4 trash-program)
+                    (trace-ability 3 trash-hardware)]
+      :effect (effect (continue-ability ab card nil))
+      :events [(assoc ab :event :rez)
+               (assoc ab :event :card-moved)
+               (assoc ab :event :approach-ice)]})
 
    "Woodcutter"
    (zero-to-hero (do-net-damage 1))

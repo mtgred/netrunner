@@ -82,6 +82,9 @@
     {:abilities [{:req (req (and current-ice
                                  (rezzed? current-ice)
                                  (not (:broken (selector (:subroutines current-ice))))))
+                  :break 1
+                  :breaks "All"
+                  :break-cost [:trash]
                   :cost [:trash]
                   :label (str "Break the " descriptor " subroutine")
                   :msg (msg "break the " descriptor " subroutine on " (:title current-ice)
@@ -458,6 +461,7 @@
     :events [{:event :runner-turn-ends
               :req (req (pos? (count-tags state)))
               :msg "force the Corp to initiate a trace"
+              :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
               :trace {:base 1
                       :unsuccessful {:msg "remove 1 tag"
                                      :async true
@@ -879,6 +883,7 @@
               :effect (effect (trash-prevent (keyword card-type) 1))})]
      {:interactions {:prevent [{:type #{:trash-hardware :trash-resource :trash-program}
                                 :req (req (and (installed? (:prevent-target target))
+                                               (not= :runner-ability (:cause target))
                                                (not= :purge (:cause target))))}]}
       :abilities [(dummy-prevent "hardware")
                   (dummy-prevent "program")
@@ -944,8 +949,10 @@
    "Fencer Fueno"
    (assoc
      (companion-builder
+       ;; companion-builder: ability-req
        (req (and (pos? (get-counters (get-card state card) :credit))
                  (:successful run)))
+       ;; companion-builder: turn-ends-effect
        (effect (show-wait-prompt :corp "Runner to take decision on Fencer Fueno")
                (continue-ability
                  {:prompt "Pay 1 [Credits] or trash Fencer Fueno?"
@@ -962,12 +969,12 @@
                                    (system-msg state :runner "pays 1 [Credits] to avoid trashing Fencer Fueno")))
                                (clear-wait-prompt state :corp))}
                  card nil))
+       ;; companion-builder: ability
        {:msg "take 1 [Credits]"
         :effect (effect (add-counter card :credit -1)
                         (gain-run-credits 1))})
      :interactions {:pay-credits {:req (req (:successful run))
                                   :type :credit}})
-
 
    "Fester"
    {:events [{:event :purge
@@ -995,7 +1002,7 @@
                    :async true
                    :effect (req (let [c (get-agenda card)
                                       points (get-agenda-points state :runner c)]
-                                  (as-agenda state :runner eid c points)))
+                                  (as-agenda state :runner eid c points {:register-events true})))
                    :msg (msg (let [c (get-agenda card)]
                                (str "add " (:title c) " to their score area and gain "
                                     (quantify (get-agenda-points state :runner c) "agenda point"))))}]})
@@ -1051,11 +1058,12 @@
    "Ghost Runner"
    {:data {:counter {:credit 3}}
     :abilities [{:msg "gain 1 [Credits]"
-                 :req (req (:run @state))
+                 :req (req (and (:run @state)
+                                (pos? (get-counters card :credit))))
                  :async true
                  :effect (req (add-counter state side card :credit -1)
                               (gain-credits state side 1)
-                              (trigger-event-sync state side eid :spent-stealth-credit card))}]
+                              (trigger-event-sync state side eid :spent-credits-from-card card))}]
     :events [(trash-on-empty :credit)]
     :interactions {:pay-credits {:req (req run)
                                  :type :credit}}}
@@ -1523,8 +1531,8 @@
                  :async true
                  :effect (effect (add-counter card :credit -1)
                                  (gain-credits 1)
-                                 (trigger-event-sync eid :spent-stealth-credit card))}]
-    :events [{:event :spent-stealth-credit
+                                 (trigger-event-sync eid :spent-credits-from-card card))}]
+    :events [{:event :spent-credits-from-card
               :req (req (and (:run @state)
                              (has-subtype? target "Stealth")))
               :once :per-run
@@ -1729,6 +1737,31 @@
                                                  (vec)))
                                   card nil))}]})
 
+   "Paladin Poemu"
+   (assoc
+     (companion-builder
+       ;; companion-builder: ability-req
+       (req (and (pos? (get-counters (get-card state card) :credit))
+                 (:successful run)))
+       ;; companion-builder: turn-ends-effect
+       (effect (show-wait-prompt :corp "Runner to take decision on Paladin Poemu")
+               (continue-ability
+                 {:prompt "Select an installed card to trash for Paladin Poemu"
+                      :player :runner
+                      :msg (msg "trash " (:title target))
+                      :choices {:card #(and (installed? %)
+                                            (runner? %))}
+                      :effect (effect (trash target {:cause :runner-ability}))}
+                 card nil))
+       ;; companion-builder: ability
+       {:msg "take 1 [Credits]"
+        :effect (effect (add-counter card :credit -1)
+                        (gain :credit 1))})
+     ;; assoc: arguments
+     :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
+                                                 (not (has-subtype? target "Connection"))))
+                                  :type :credit}})
+
    "Paparazzi"
    {:effect (req (swap! state update-in [:runner :tag :is-tagged] inc)
                  (trigger-event state :runner :runner-is-tagged true))
@@ -1761,6 +1794,53 @@
                {:event :runner-turn-ends
                 :effect (effect (update! (dissoc (get-card state card) :server-target)))}]
       :abilities [ability]})
+
+   "Paule's Cafe"
+   {:abilities [{:label "Host a program or piece of hardware"
+                 :cost [:click 1]
+                 :choices {:card #(and (#{"Program" "Hardware"} (:type %))
+                                       (in-hand? %)
+                                       (runner? %))}
+                 :effect (req (host state side card target))
+                 :msg (msg "host " (:title target) "")}
+                {:label "1[Credit]: Install hosted card"
+                 :cost [:credit 1]
+                 :choices {:card #(:host %)}
+                 :req (req (not (empty? (:hosted card))))
+                 :effect (req
+                           (let [discount (if (and (= :runner (:active-player @state))
+                                                   (not (get-in @state [:per-turn (:cid card)])))
+                                            (->> (all-active-installed state :runner)
+                                             (filter #(and (resource? %)
+                                                           (has-subtype? % "Connection")
+                                                           (:uniqueness %)))
+                                             count
+                                             -)
+                                            0)]
+                             ; Todo: find correct function to calculate cost
+                             (if-let [costs (can-pay? state side eid card nil [(:cost target) [:credit discount]])]
+                               ;small hack to generate the correct message with runner-install
+                               (do (gain state :runner :credit 1)
+                                   (runner-install state side (assoc eid :source card :source-type :runner-install) target
+                                                   {:cost-bonus (+ 1 discount)
+                                                    :custom-message #(str (build-spend-msg % "install") (:title target) " using " (:title card))})
+                                   (swap! state assoc-in [:per-turn (:cid card)] true))
+                               ;refund credit for paid ability
+                               (gain state :runner :credit 1))))}]}
+
+   "Penumbral Toolkit"
+   {:data {:counter {:credit 4}}
+    :install-cost-bonus (req (if (some #{:hq} (:successful-run runner-reg)) -2 0))
+    :abilities [{:msg "gain 1 [Credits]"
+                 :req (req (and (:run @state)
+                                (pos? (get-counters card :credit))))
+                 :async true
+                 :effect (req (add-counter state side card :credit -1)
+                              (gain-credits state side 1)
+                              (trigger-event-sync state side eid :spent-credits-from-card card))}]
+    :events [(trash-on-empty :credit)]
+    :interactions {:pay-credits {:req (req run)
+                                 :type :credit}}}
 
    "Personal Workshop"
    (let [remove-counter
@@ -2297,6 +2377,36 @@
                                                          :cost-bonus -1}))
                  :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]}
 
+   "The Back"
+   {:implementation "Adding power tokens is manual"
+    ; :events [{:event :spent-credits-from-card
+              ; :req (req (and (:run @state)
+                             ; (hardware? target)
+                             ; (not (used-this-turn? (:cid card) state))))
+              ; :once :per-turn
+              ; :async true
+              ; :effect (effect (system-msg (str "places 1 power token on " (:title card)))
+                              ; (add-counter card :power 1))}]
+    :abilities [{:label "Manually place 1 power token"
+                 :req (req (:run @state))
+                 :effect (effect (system-msg (str "manually places 1 power token on " (:title card)))
+                                 (add-counter card :power 1))}
+                {:label "Shuffle back cards with [Trash] abilities"
+                 :req (req (and (pos? (get-counters card :power))
+                                (some has-trash-ability? (:discard runner))))
+                 :cost [:click 1 :remove-from-game]
+                 :show-discard true
+                 :choices {:max (req (* 2 (get-counters card :power)))
+                           :req (req (and (runner? target)
+                                          (in-discard? target)
+                                          (has-trash-ability? target)))}
+                 :msg (msg "shuffle " (join ", " (map :title targets))
+                           " into their Stack")
+                 :effect (req (system-msg state side (str ))
+                              (doseq [c targets] (move state side c :deck))
+                              (shuffle! state side :deck)
+                              (effect-completed state side eid))}]}
+
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"
     :effect (req (swap! state assoc-in [:corp :cannot-win-on-points] true))
@@ -2505,10 +2615,12 @@
    "Trickster Taka"
    (assoc
      (companion-builder
+       ;; companion-builder: ability-req
        (req (and (pos? (get-counters (get-card state card) :credit))
                  run
                  (not (:successful run))
                  (not (:unsuccessful run))))
+       ;; companion-builder: turn-ends-effect
        (effect (show-wait-prompt :corp "Runner to take decision on Trickster Taka")
                (continue-ability
                  {:prompt "Take 1 tag or trash Trickster Taka?"
@@ -2525,11 +2637,13 @@
                                    (system-msg state :runner "takes 1 tag to avoid trashing Trickster Taka")
                                    (gain-tags state :runner eid 1))))}
                  card nil))
+       ;; companion-builder: ability
        {:msg "take 1 [Credits]"
         :async true
         :effect (effect (add-counter card :credit -1)
                         (gain-credits 1)
-                        (trigger-event-sync eid :spent-stealth-credit card))})
+                        (trigger-event-sync eid :spent-credits-from-card card))})
+     ;; assoc: arguments
      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                  (program? target)
                                                  run))

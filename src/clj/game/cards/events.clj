@@ -165,6 +165,37 @@
                           true)))
                     (make-run eid target nil card))}
 
+   "Bravado"
+   ; Bravado only counts distinct pieces of ice that were passed.
+   ; That means if a piece of ice was reinstalled and then repassed, it needs to be counted twice.
+   ; This is handled by tracking :card-moved and counting them in :special :bravado-moved.
+   (letfn [(iced-servers [state]
+             (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?) (zones->sorted-names (get-zones state))))]
+     {:async true
+      :makes-run true
+      :req (req (pos? (count (iced-servers state))))
+      :prompt "Choose an iced server"
+      :choices (req (iced-servers state))
+      :effect (effect
+                (register-events card [{:event :pass-ice
+                                        :duration :end-of-run
+                                        :effect (effect (update! (update-in (get-card state card) [:special :bravado-passed] conj (:cid current-ice))))}])
+                (make-run eid target nil (get-card state card)))
+      :events [{:event :successful-run-ends
+                :silent (req true)
+                :msg (msg "gain "
+                       (+ 6 (count (distinct (get-in card [:special :bravado-passed])))
+                          (get-in card [:special :bravado-moved] 0))
+                       " [Credits]")
+                :effect (effect (gain-credits (+ 6 (count (distinct (get-in card [:special :bravado-passed])))
+                                                 (get-in card [:special :bravado-moved] 0))))}
+               {:event :card-moved
+                :silent (req true)
+                :req (req (in-coll? (get-in card [:special :bravado-passed] []) (:cid target)))
+                :effect (effect (update! (update-in card [:special :bravado-moved] (fnil inc 0)))
+                          (update! (update-in (get-card state card) [:special :bravado-passed]
+                                              (fn [cids] (remove #(= % (:cid target)) cids)))))}]})
+
    "Bribery"
    {:implementation "ICE chosen for cost increase is specified at start of run, not on approach"
     :async true
@@ -1157,6 +1188,52 @@
                         :req (req (not (ice? target)))
                         :value [:randomly-trash-from-hand 1]}]}
 
+   "Harmony AR Therapy"
+   (letfn [(choose-end [to-shuffle]
+             (let [to-shuffle (sort to-shuffle)]
+               {:msg (msg "shuffle " (count to-shuffle)" cards back into the stack: " (join ", " to-shuffle))
+                :effect (req (doseq [c-title to-shuffle]
+                               (let [c (some #(when (= (:title %) c-title) %) (:discard runner))]
+                                 (move state side c :deck)))
+                             (shuffle! state side :deck)
+                             (effect-completed state side eid)
+                             (clear-wait-prompt state :corp))}))
+           (choose-next [to-shuffle target remaining]
+             (let [remaining (if (= "Done" target)
+                               remaining
+                               (remove #(= % target) remaining))
+                   to-shuffle (if (= "Done" target)
+                                to-shuffle
+                                (if target
+                                  (concat to-shuffle [target])
+                                  []))
+                   remaining-choices (- 5 (count to-shuffle))
+                   finished? (or (= "Done" target)
+                                 (= 0 remaining-choices)
+                                 (empty? remaining))]
+               {:prompt (msg (if finished?
+                               (str "Shuffling: " (join ", " to-shuffle))
+                               (str "Choose up to " remaining-choices
+                                    (when (not-empty to-shuffle)
+                                      " more")
+                                    " cards."
+                                    (when (not-empty to-shuffle)
+                                      (str "[br]Shuffling: " (join ", " to-shuffle))))))
+                :async true
+                :choices (req (if finished?
+                                ["OK" "Start over"]
+                                (concat remaining (when (not-empty to-shuffle) ["Done"]))))
+                :effect (req (if finished?
+                               (if (= "OK" target)
+                                 (continue-ability state side (choose-end to-shuffle) card nil)
+                                 (continue-ability state side (choose-next '() nil (distinct (map :title (:discard runner)))) card nil))
+                               (continue-ability state side (choose-next to-shuffle target remaining) card nil)))}))]
+     {:async true
+      :req (req (pos? (count (:discard runner))))
+      :rfg-instead-of-trashing true
+      :effect (req (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
+                (continue-ability state side (choose-next '() nil (sort (distinct (map :title (:discard runner))))) card nil))})
+
    "High-Stakes Job"
    {:async true
     :makes-run true
@@ -1753,6 +1830,14 @@
                                        [:credit (install-cost state side target {:cost-bonus -3})])))}
     :async true
     :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))}
+
+   "Moshing"
+   {:cost [:trash-from-hand 3]
+    :msg "draw 3 cards and gain 3 [Credits]"
+    :async true
+    :effect (req (wait-for (draw state side 3 nil)
+                           (gain state side :credit 3)
+                           (effect-completed state side eid)))}
 
    "Net Celebrity"
    {:recurring 1
