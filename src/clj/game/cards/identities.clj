@@ -378,8 +378,7 @@
     :leave-play (effect (gain :hand-size 1)
                         (gain :runner :hand-size 1))}
 
-   ; "Earth Station: SEA Headquarters"
-   "Earth Station: On the Grid"
+   "Earth Station: SEA Headquarters"
    (let [flip-effect (effect (update! (if (:flipped card)
                                         (do (system-msg state :corp "flip their identity to Earth Station: SEA Headquarters")
                                             (assoc card
@@ -621,7 +620,7 @@
                           :effect (effect (clear-wait-prompt :corp))})
                        card nil)))}]}
 
-   "Hoshiko Shiro"
+   "Hoshiko Shiro: Next Level Shut-In"
    (let [flip-effect (effect (update! (if (:flipped card)
                                         (assoc card
                                                :flipped false

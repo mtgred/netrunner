@@ -792,101 +792,101 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
-(deftest-pending digital-rights-management
-  (testing "DRM only searches for Agendas in R&D"
-    (do-game
-      (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
-                        :deck [(qty "Project Beale" 2)
-                               (qty "PAD Campaign" 2)
-                               (qty "Hedge Fund" 2)
-                               (qty "Crisium Grid" 2)
-                               (qty "Ice Wall" 2)]}})
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Digital Rights Management")
-      (is (= 2 (-> (get-corp) :prompt first :choices count)) "Only Beale and 'None' option displayed")
-      (let [cards-in-hand (count (:hand (get-corp)))]
-        (click-prompt state :corp "Project Beale")
-        (is (= (inc cards-in-hand) (count (:hand (get-corp)))) "Beale added to hand"))
-      (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
-      (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to install on centrals")
-      (click-prompt state :corp "New remote")
-      (core/gain state :corp :click 1)
-      (let [beale (get-content state :remote1 0)]
-        (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
-        (core/score state :corp {:card (refresh beale)})
-        (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (core/score state :corp {:card (refresh beale)})
-        (is (= 1 (count (get-scored state :corp))) "Beale was scored"))))
-  (testing "DRM only installs on remotes"
-    (do-game
-      (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
-                        :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Digital Rights Management")
-      (click-prompt state :corp "Project Beale")
-      (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
-      (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to install on centrals")
-      (click-prompt state :corp "New remote")))
-  (testing "Cannot score Agenda installed by DRM"
-    (do-game
-      (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
-                        :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Digital Rights Management")
-      (click-prompt state :corp "Project Beale")
-      (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
-      (click-prompt state :corp "New remote")
-      (core/gain state :corp :click 1)
-      (let [beale (get-content state :remote1 0)]
-        (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
-        (core/score state :corp {:card (refresh beale)})
-        (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (core/score state :corp {:card (refresh beale)})
-        (is (= 1 (count (get-scored state :corp))) "Beale was scored"))))
-  (testing "Cannot score Agenda installed before playing DRM"
-    (do-game
-      (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Beale" (qty "Hedge Fund" 2)]
-                        :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (core/gain state :corp :click 3)
-      (play-from-hand state :corp "Project Beale" "New remote")
-      (let [beale (get-content state :remote1 0)]
-        (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
-        (play-from-hand state :corp "Digital Rights Management")
-        (click-prompt state :corp "None")
-        (click-prompt state :corp "Done")
-        (core/score state :corp {:card (refresh beale)})
-        (is (= 0 (count (get-scored state :corp))) "Beale was not scored"))))
-  ;; ToDo: Activate test once implementation is complete
-  ; (testing "Cannot score Agenda installed after playing DRM"
-    ; (do-game
-      ; (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Vitruvius" (qty "Hedge Fund" 2)]
-                        ; :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
-      ; (take-credits state :corp)
-      ; (take-credits state :runner)
-      ; (play-from-hand state :corp "Digital Rights Management")
-      ; (click-prompt state :corp "None")
-      ; (play-and-score state "Project Vitruvius")
-      ; (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
-      ; ))
-  (testing "Cannot play if runner made a successful run on HQ last turn"
-    (do-game
-      (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 2)]
-                        :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
-      (take-credits state :corp)
-      (run-empty-server state "HQ")
-      (click-prompt state :runner "No Action")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Digital Rights Management")
-      (is (empty? (:prompt (get-corp))) "No prompt displayed"))))
+; (deftest digital-rights-management
+;   (testing "DRM only searches for Agendas in R&D"
+;     (do-game
+;       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
+;                         :deck [(qty "Project Beale" 2)
+;                                (qty "PAD Campaign" 2)
+;                                (qty "Hedge Fund" 2)
+;                                (qty "Crisium Grid" 2)
+;                                (qty "Ice Wall" 2)]}})
+;       (take-credits state :corp)
+;       (take-credits state :runner)
+;       (play-from-hand state :corp "Digital Rights Management")
+;       (is (= 2 (-> (get-corp) :prompt first :choices count)) "Only Beale and 'None' option displayed")
+;       (let [cards-in-hand (count (:hand (get-corp)))]
+;         (click-prompt state :corp "Project Beale")
+;         (is (= (inc cards-in-hand) (count (:hand (get-corp)))) "Beale added to hand"))
+;       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
+;       (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to install on centrals")
+;       (click-prompt state :corp "New remote")
+;       (core/gain state :corp :click 1)
+;       (let [beale (get-content state :remote1 0)]
+;         (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
+;         (core/score state :corp {:card (refresh beale)})
+;         (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
+;         (take-credits state :corp)
+;         (take-credits state :runner)
+;         (core/score state :corp {:card (refresh beale)})
+;         (is (= 1 (count (get-scored state :corp))) "Beale was scored"))))
+;   (testing "DRM only installs on remotes"
+;     (do-game
+;       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
+;                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+;       (take-credits state :corp)
+;       (take-credits state :runner)
+;       (play-from-hand state :corp "Digital Rights Management")
+;       (click-prompt state :corp "Project Beale")
+;       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
+;       (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to install on centrals")
+;       (click-prompt state :corp "New remote")))
+;   (testing "Cannot score Agenda installed by DRM"
+;     (do-game
+;       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 3)]
+;                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+;       (take-credits state :corp)
+;       (take-credits state :runner)
+;       (play-from-hand state :corp "Digital Rights Management")
+;       (click-prompt state :corp "Project Beale")
+;       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
+;       (click-prompt state :corp "New remote")
+;       (core/gain state :corp :click 1)
+;       (let [beale (get-content state :remote1 0)]
+;         (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
+;         (core/score state :corp {:card (refresh beale)})
+;         (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
+;         (take-credits state :corp)
+;         (take-credits state :runner)
+;         (core/score state :corp {:card (refresh beale)})
+;         (is (= 1 (count (get-scored state :corp))) "Beale was scored"))))
+;   (testing "Cannot score Agenda installed before playing DRM"
+;     (do-game
+;       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Beale" (qty "Hedge Fund" 2)]
+;                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+;       (take-credits state :corp)
+;       (take-credits state :runner)
+;       (core/gain state :corp :click 3)
+;       (play-from-hand state :corp "Project Beale" "New remote")
+;       (let [beale (get-content state :remote1 0)]
+;         (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
+;         (play-from-hand state :corp "Digital Rights Management")
+;         (click-prompt state :corp "None")
+;         (click-prompt state :corp "Done")
+;         (core/score state :corp {:card (refresh beale)})
+;         (is (= 0 (count (get-scored state :corp))) "Beale was not scored"))))
+;   ;; ToDo: Activate test once implementation is complete
+;   ; (testing "Cannot score Agenda installed after playing DRM"
+;     ; (do-game
+;       ; (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Vitruvius" (qty "Hedge Fund" 2)]
+;                         ; :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+;       ; (take-credits state :corp)
+;       ; (take-credits state :runner)
+;       ; (play-from-hand state :corp "Digital Rights Management")
+;       ; (click-prompt state :corp "None")
+;       ; (play-and-score state "Project Vitruvius")
+;       ; (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
+;       ; ))
+;   (testing "Cannot play if runner made a successful run on HQ last turn"
+;     (do-game
+;       (new-game {:corp {:hand [(qty "Digital Rights Management" 2) (qty "Hedge Fund" 2)]
+;                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+;       (take-credits state :corp)
+;       (run-empty-server state "HQ")
+;       (click-prompt state :runner "No Action")
+;       (take-credits state :runner)
+;       (play-from-hand state :corp "Digital Rights Management")
+;       (is (empty? (:prompt (get-corp))) "No prompt displayed"))))
 
 (deftest distract-the-masses
   (do-game
@@ -1960,51 +1960,51 @@
     (is (= 13 (:credit (get-corp))))
     (is (zero? (:click (get-corp))) "Terminal ends turns")))
 
-(deftest kakurenbo
-  ;; Kakurenbo
-  (testing "Basic test"
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand [(qty "Hedge Fund" 8) "Project Junebug" "Kakurenbo"]}})
-      (take-credits state :corp)
-      (dotimes [n 5]
-        (click-card state :corp (nth (:hand (get-corp)) n)))
-      (run-empty-server state :archives)
-      (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")
-      (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Kakurenbo")
-      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
-      (click-card state :corp (find-card "Project Junebug" (:hand (get-corp))))
-      (click-prompt state :corp "Done")
-      (is (empty? (remove #(not (:seen %)) (:discard (get-corp)))) "Cards in Archives are turned facedown")
-      (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
-      (is (not-empty (:prompt (get-corp))) "Could not select operation to install")
-      (click-card state :corp (find-card "Project Junebug" (:discard (get-corp))))
-      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
-      (click-prompt state :corp "New remote")
-      (is (= "Project Junebug" (:title (get-content state :remote1 0))) "Installed Junebug in remote")
-      (is (= 2 (get-counters (get-content state :remote1 0) :advancement)) "Junebug has 2 advancement tokens")
-      (is (= 4 (count (:hand (get-corp)))) "4 Hedge Funds left in HQ")
-      (is (empty? (remove #(not (:seen %)) (:discard (get-corp)))) "Remaining cards in Archives are still facedown")
-      (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")
-      (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")))
-  (testing "Can turn cards facedown without installing"
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand [(qty "Hedge Fund" 8) "Project Junebug" "Kakurenbo"]}})
-      (take-credits state :corp)
-      (dotimes [n 5]
-        (click-card state :corp (nth (:hand (get-corp)) n)))
-      (run-empty-server state :archives)
-      (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")
-      (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Kakurenbo")
-      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
-      (click-prompt state :corp "Done")
-      (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")
-      (is (empty? (:prompt (get-corp))) "No more prompts"))))
+; (deftest kakurenbo
+;   ;; Kakurenbo
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+;                         :hand [(qty "Hedge Fund" 8) "Project Junebug" "Kakurenbo"]}})
+;       (take-credits state :corp)
+;       (dotimes [n 5]
+;         (click-card state :corp (nth (:hand (get-corp)) n)))
+;       (run-empty-server state :archives)
+;       (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")
+;       (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup")
+;       (take-credits state :runner)
+;       (play-from-hand state :corp "Kakurenbo")
+;       (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
+;       (click-card state :corp (find-card "Project Junebug" (:hand (get-corp))))
+;       (click-prompt state :corp "Done")
+;       (is (empty? (remove #(not (:seen %)) (:discard (get-corp)))) "Cards in Archives are turned facedown")
+;       (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
+;       (is (not-empty (:prompt (get-corp))) "Could not select operation to install")
+;       (click-card state :corp (find-card "Project Junebug" (:discard (get-corp))))
+;       (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
+;       (click-prompt state :corp "New remote")
+;       (is (= "Project Junebug" (:title (get-content state :remote1 0))) "Installed Junebug in remote")
+;       (is (= 2 (get-counters (get-content state :remote1 0) :advancement)) "Junebug has 2 advancement tokens")
+;       (is (= 4 (count (:hand (get-corp)))) "4 Hedge Funds left in HQ")
+;       (is (empty? (remove #(not (:seen %)) (:discard (get-corp)))) "Remaining cards in Archives are still facedown")
+;       (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")
+;       (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")))
+;   (testing "Can turn cards facedown without installing"
+;     (do-game
+;       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+;                         :hand [(qty "Hedge Fund" 8) "Project Junebug" "Kakurenbo"]}})
+;       (take-credits state :corp)
+;       (dotimes [n 5]
+;         (click-card state :corp (nth (:hand (get-corp)) n)))
+;       (run-empty-server state :archives)
+;       (is (= 5 (count (:discard (get-corp)))) "5 cards in Archives")
+;       (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup")
+;       (take-credits state :runner)
+;       (play-from-hand state :corp "Kakurenbo")
+;       (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
+;       (click-prompt state :corp "Done")
+;       (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")
+;       (is (empty? (:prompt (get-corp))) "No more prompts"))))
 
 
 (deftest kill-switch
@@ -2888,28 +2888,28 @@
     (click-prompt state :corp "Plascrete Carapace")
     (is (= 2 (count (:hand (get-runner)))))))
 
-(deftest scapenet
-  (testing "Basic test"
-    (doseq [card [["Misdirection" get-program]
-                  ["Clone Chip" get-hardware]
-                  ["The Turning Wheel" get-resource]]]
-      (do-game
-        (new-game {:corp {:deck ["Scapenet"]}
-                   :runner {:deck [(first card)]}})
-        (play-from-hand state :corp "Scapenet")
-        (is (empty? (:prompt (get-corp))) "Couldn't play Scapenet without a successful run.")
-        (take-credits state :corp)
-        (play-from-hand state :runner (first card))
-        (run-empty-server state :archives)
-        (take-credits state :runner)
-        (play-from-hand state :corp "Scapenet")
-        (click-prompt state :corp "0")
-        (click-prompt state :runner "0")
-        (let [c ((second card) state 0)]
-          (click-card state :corp c))
-        (if (= "Misdirection" (first card))
-          (is (not (empty? (:prompt (get-corp)))) "Scapenet doesn't work on non-virtual non-chip card.")
-          (is (= 1 (count (:rfg (get-runner)))) "Card removed from game."))))))
+; (deftest scapenet
+;   (testing "Basic test"
+;     (doseq [card [["Misdirection" get-program]
+;                   ["Clone Chip" get-hardware]
+;                   ["The Turning Wheel" get-resource]]]
+;       (do-game
+;         (new-game {:corp {:deck ["Scapenet"]}
+;                    :runner {:deck [(first card)]}})
+;         (play-from-hand state :corp "Scapenet")
+;         (is (empty? (:prompt (get-corp))) "Couldn't play Scapenet without a successful run.")
+;         (take-credits state :corp)
+;         (play-from-hand state :runner (first card))
+;         (run-empty-server state :archives)
+;         (take-credits state :runner)
+;         (play-from-hand state :corp "Scapenet")
+;         (click-prompt state :corp "0")
+;         (click-prompt state :runner "0")
+;         (let [c ((second card) state 0)]
+;           (click-card state :corp c))
+;         (if (= "Misdirection" (first card))
+;           (is (not (empty? (:prompt (get-corp)))) "Scapenet doesn't work on non-virtual non-chip card.")
+;           (is (= 1 (count (:rfg (get-runner)))) "Card removed from game."))))))
 
 (deftest scarcity-of-resources
   ;; Scarcity of Resources

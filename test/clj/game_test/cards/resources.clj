@@ -2675,49 +2675,49 @@
       (is (= 11 (count (:discard (get-runner)))) "11 cards in heap")
       (is (= 2 (:credit (get-runner))) "No charge to install Ninja"))))
 
-(deftest paladin-poemu
-  (testing "Basic test"
-    (do-game
-      (new-game {:corp {:deck ["Project Vitruvius"]}
-                 :runner {:hand ["Corroder" "Fan Site" "Dummy Box" "Sacrificial Construct" "Misdirection" "Hernando Cortez" "Paladin Poemu"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :click 1)
-      (play-from-hand state :runner "Paladin Poemu")
-      (play-from-hand state :runner "Fan Site")
-      (play-from-hand state :runner "Dummy Box")
-      (play-from-hand state :runner "Sacrificial Construct")
-      (play-from-hand state :runner "Misdirection")
-      (let [pp (get-resource state 0)
-            fs (get-resource state 1)
-            db (get-resource state 2)
-            sac (get-resource state 3)
-            misd (get-program state 0)]
-        (is (= 0 (get-counters (refresh pp) :credit)) "No credits on Poemu yet")
-        (take-credits state :corp)
-        (is (= 1 (get-counters (refresh pp) :credit)) "+1c from start of turn")
-        (run-empty-server state "HQ")
-        (click-prompt state :runner "Steal")
-        (is (= 2 (get-counters (refresh pp) :credit)) "+1c from steal")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 3 (get-counters (refresh pp) :credit)) "+1c from start of turn")
-        (take-credits state :runner)
-        (click-card state :runner fs)
-        (is (empty? (:prompt (get-runner))) "No prompt to prevent trashing with Dummy Box")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (click-card state :runner (refresh misd))
-        (is (not-empty (:prompt (get-runner))) "Prompt to prevent trashing with Sacrificial Construct")
-        (card-ability state :runner sac 0)
-        (click-prompt state :runner "Done")
-        (take-credits state :corp)
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Used Poemu to install Corroder for free"
-                           (play-from-hand state :runner "Corroder")
-                           (click-card state :runner pp)
-                           (click-card state :runner pp))
-        (play-from-hand state :runner "Hernando Cortez")
-        (is (empty? (:prompt (get-runner))) "No pay-credits prompt on the install of a Connection")))))
+; (deftest paladin-poemu
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:corp {:deck ["Project Vitruvius"]}
+;                  :runner {:hand ["Corroder" "Fan Site" "Dummy Box" "Sacrificial Construct" "Misdirection" "Hernando Cortez" "Paladin Poemu"]}})
+;       (take-credits state :corp)
+;       (core/gain state :runner :click 1)
+;       (play-from-hand state :runner "Paladin Poemu")
+;       (play-from-hand state :runner "Fan Site")
+;       (play-from-hand state :runner "Dummy Box")
+;       (play-from-hand state :runner "Sacrificial Construct")
+;       (play-from-hand state :runner "Misdirection")
+;       (let [pp (get-resource state 0)
+;             fs (get-resource state 1)
+;             db (get-resource state 2)
+;             sac (get-resource state 3)
+;             misd (get-program state 0)]
+;         (is (= 0 (get-counters (refresh pp) :credit)) "No credits on Poemu yet")
+;         (take-credits state :corp)
+;         (is (= 1 (get-counters (refresh pp) :credit)) "+1c from start of turn")
+;         (run-empty-server state "HQ")
+;         (click-prompt state :runner "Steal")
+;         (is (= 2 (get-counters (refresh pp) :credit)) "+1c from steal")
+;         (take-credits state :runner)
+;         (take-credits state :corp)
+;         (is (= 3 (get-counters (refresh pp) :credit)) "+1c from start of turn")
+;         (take-credits state :runner)
+;         (click-card state :runner fs)
+;         (is (empty? (:prompt (get-runner))) "No prompt to prevent trashing with Dummy Box")
+;         (take-credits state :corp)
+;         (take-credits state :runner)
+;         (click-card state :runner (refresh misd))
+;         (is (not-empty (:prompt (get-runner))) "Prompt to prevent trashing with Sacrificial Construct")
+;         (card-ability state :runner sac 0)
+;         (click-prompt state :runner "Done")
+;         (take-credits state :corp)
+;         (changes-val-macro 0 (:credit (get-runner))
+;                            "Used Poemu to install Corroder for free"
+;                            (play-from-hand state :runner "Corroder")
+;                            (click-card state :runner pp)
+;                            (click-card state :runner pp))
+;         (play-from-hand state :runner "Hernando Cortez")
+;         (is (empty? (:prompt (get-runner))) "No pay-credits prompt on the install of a Connection")))))
 
 (deftest patron
   ;; Patron
@@ -2765,80 +2765,80 @@
         (core/end-phase-12 state :runner nil)
         (is (empty? (:prompt (get-runner))) "No second prompt for Patron - used already")))))
 
-(deftest paule-s-cafe
-  (testing "Basic test"
-    (do-game
-      (new-game {:runner {:hand ["Paule's Cafe" "Hernando Cortez" "Kati Jones" "Magnum Opus" "Desperado" "Fan Site" "Corroder"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 10 :click 10)
-      (play-from-hand state :runner "Paule's Cafe")
-      (play-from-hand state :runner "Hernando Cortez")
-      (play-from-hand state :runner "Kati Jones")
-      (play-from-hand state :runner "Fan Site")
-      (let [pau (get-resource state 0)]
-        (card-ability state :runner pau 0)
-        (click-card state :runner (find-card "Magnum Opus" (:hand (get-runner))))
-        (card-ability state :runner pau 0)
-        (click-card state :runner (find-card "Desperado" (:hand (get-runner))))
-        (card-ability state :runner pau 0)
-        (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
-        (is (= 0 (count (:hand (get-runner)))) "Hosted Mopus, Desperado and Corroder on the Cafe")
-        (let [mo (find-card "Magnum Opus" (:hosted (refresh pau)))
-              des (find-card "Desperado" (:hosted (refresh pau)))
-              cor (find-card "Corroder" (:hosted (refresh pau)))]
-          (card-ability state :runner pau 1)
-          (changes-val-macro -4 (:credit (get-runner))
-                             "Pay 4 for MOpus install (1+5-2)"
-                             (click-card state :runner mo))
-          (card-ability state :runner pau 1)
-          (changes-val-macro -4 (:credit (get-runner))
-                             "Pay 4 for Desperado install (1+3)"
-                             (click-card state :runner des))
-          (take-credits state :runner)
-          (card-ability state :runner pau 1)
-          (changes-val-macro -3 (:credit (get-runner))
-                             "Pay 3 for Corroder install (1+2)"
-                             (click-card state :runner cor)))))))
+; (deftest paule-s-cafe
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:runner {:hand ["Paule's Cafe" "Hernando Cortez" "Kati Jones" "Magnum Opus" "Desperado" "Fan Site" "Corroder"]}})
+;       (take-credits state :corp)
+;       (core/gain state :runner :credit 10 :click 10)
+;       (play-from-hand state :runner "Paule's Cafe")
+;       (play-from-hand state :runner "Hernando Cortez")
+;       (play-from-hand state :runner "Kati Jones")
+;       (play-from-hand state :runner "Fan Site")
+;       (let [pau (get-resource state 0)]
+;         (card-ability state :runner pau 0)
+;         (click-card state :runner (find-card "Magnum Opus" (:hand (get-runner))))
+;         (card-ability state :runner pau 0)
+;         (click-card state :runner (find-card "Desperado" (:hand (get-runner))))
+;         (card-ability state :runner pau 0)
+;         (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
+;         (is (= 0 (count (:hand (get-runner)))) "Hosted Mopus, Desperado and Corroder on the Cafe")
+;         (let [mo (find-card "Magnum Opus" (:hosted (refresh pau)))
+;               des (find-card "Desperado" (:hosted (refresh pau)))
+;               cor (find-card "Corroder" (:hosted (refresh pau)))]
+;           (card-ability state :runner pau 1)
+;           (changes-val-macro -4 (:credit (get-runner))
+;                              "Pay 4 for MOpus install (1+5-2)"
+;                              (click-card state :runner mo))
+;           (card-ability state :runner pau 1)
+;           (changes-val-macro -4 (:credit (get-runner))
+;                              "Pay 4 for Desperado install (1+3)"
+;                              (click-card state :runner des))
+;           (take-credits state :runner)
+;           (card-ability state :runner pau 1)
+;           (changes-val-macro -3 (:credit (get-runner))
+;                              "Pay 3 for Corroder install (1+2)"
+;                              (click-card state :runner cor)))))))
 
-(deftest penumbral-toolkit
-  ;; Penumbral Toolkit
-  (testing "install cost reduction after HQ run"
-    (do-game
-      (new-game {:runner {:deck [(qty "Penumbral Toolkit" 3)]}})
-      (take-credits state :corp)
-      (core/gain state :runner :click 1)
-      (changes-val-macro -2 (:credit (get-runner))
-                         "No cost reduction without run"
-                         (play-from-hand state :runner "Penumbral Toolkit"))
-      (run-empty-server state :rd)
-      (changes-val-macro -2 (:credit (get-runner))
-                         "No cost reduction after run on R&D"
-                         (play-from-hand state :runner "Penumbral Toolkit"))
-      (run-empty-server state :hq)
-      (changes-val-macro 0 (:credit (get-runner))
-                         "Cost reduction after run on HQ"
-                         (play-from-hand state :runner "Penumbral Toolkit"))
-      (is (= 3 (count (:rig (get-runner)))) "Installed all three cards")))
-  (testing "Pay-credits prompt"
-    (do-game
-      (new-game {:runner {:deck ["Penumbral Toolkit" "Refractor"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Penumbral Toolkit")
-      (play-from-hand state :runner "Refractor")
-      (run-on state :hq)
-      (let [pt (get-resource state 0)
-            refr (get-program state 0)]
-        (changes-val-macro 2 (:credit (get-runner))
-                           "Took 2 credits off of Penumbral Toolkit the traditional way."
-                           (dotimes [_ 2]
-                             (card-ability state :runner (refresh pt) 0)))
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Used 2 credits from Penumbral Toolkit"
-                           (card-ability state :runner refr 1)
-                           (click-card state :runner (refresh pt))
-                           (card-ability state :runner (refresh refr) 1)
-                           (click-card state :runner (refresh pt)))
-        (is (not-empty (:discard (get-runner))) "Empty Ghost Runner trashed")))))
+; (deftest penumbral-toolkit
+;   ;; Penumbral Toolkit
+;   (testing "install cost reduction after HQ run"
+;     (do-game
+;       (new-game {:runner {:deck [(qty "Penumbral Toolkit" 3)]}})
+;       (take-credits state :corp)
+;       (core/gain state :runner :click 1)
+;       (changes-val-macro -2 (:credit (get-runner))
+;                          "No cost reduction without run"
+;                          (play-from-hand state :runner "Penumbral Toolkit"))
+;       (run-empty-server state :rd)
+;       (changes-val-macro -2 (:credit (get-runner))
+;                          "No cost reduction after run on R&D"
+;                          (play-from-hand state :runner "Penumbral Toolkit"))
+;       (run-empty-server state :hq)
+;       (changes-val-macro 0 (:credit (get-runner))
+;                          "Cost reduction after run on HQ"
+;                          (play-from-hand state :runner "Penumbral Toolkit"))
+;       (is (= 3 (count (:rig (get-runner)))) "Installed all three cards")))
+;   (testing "Pay-credits prompt"
+;     (do-game
+;       (new-game {:runner {:deck ["Penumbral Toolkit" "Refractor"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Penumbral Toolkit")
+;       (play-from-hand state :runner "Refractor")
+;       (run-on state :hq)
+;       (let [pt (get-resource state 0)
+;             refr (get-program state 0)]
+;         (changes-val-macro 2 (:credit (get-runner))
+;                            "Took 2 credits off of Penumbral Toolkit the traditional way."
+;                            (dotimes [_ 2]
+;                              (card-ability state :runner (refresh pt) 0)))
+;         (changes-val-macro 0 (:credit (get-runner))
+;                            "Used 2 credits from Penumbral Toolkit"
+;                            (card-ability state :runner refr 1)
+;                            (click-card state :runner (refresh pt))
+;                            (card-ability state :runner (refresh refr) 1)
+;                            (click-card state :runner (refresh pt)))
+;         (is (not-empty (:discard (get-runner))) "Empty Ghost Runner trashed")))))
 
 (deftest power-tap
   ;; Power Tap
