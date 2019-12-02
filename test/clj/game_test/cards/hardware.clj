@@ -54,119 +54,119 @@
     (play-from-hand state :runner "Akamatsu Mem Chip")
     (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
-(deftest aniccam
-  (testing "The runner draws 1 card when an event is trashed from the Grip by the Runner"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-                          :deck ["Corroder"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (trash-from-hand state :runner "Sure Gamble")
-      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-  (testing "The runner draws 1 card when an event is trashed from the Grip by the Corp"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-                          :deck ["Corroder"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (core/trash state :runner (find-card "Sure Gamble" (:hand (get-runner))))
-      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-  (testing "Trashing a non-event doesn't trigger Aniccam"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Clone Chip", "Mimic", "Daily Casts"]
-                          :deck ["Corroder"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (:hand (get-runner)))
-      (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card")))
-  (testing "Trashing an event along with some non events triggers Aniccam"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Clone Chip", "Sure Gamble", "Mimic", "Daily Casts"]
-                          :deck ["Corroder"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (:hand (get-runner)))
-      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-  (testing "Aniccam must not trigger a second time in one turn"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-                          :deck [(qty "Corroder" 2)]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (trash-from-hand state :runner "Sure Gamble")
-      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")
-      (trash-from-hand state :runner "Corroder")
-      (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a second card")))
-  (doseq [first-side [:corp :runner]
-          second-side [:corp :runner]]
-    (testing (str (name first-side) " trash -> install Aniccam -> " (name second-side) " trash does not trigger Aniccam")
-      (do-game
-        (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
-                            :deck ["Corroder"]}})
-        (take-credits state :corp)
-        (core/trash state first-side (find-card "Sure Gamble" (:hand (get-runner))))
-        (play-from-hand state :runner "Aniccam")
-        (core/trash state second-side (find-card "Dirty Laundry" (:hand (get-runner))))
-        (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card"))))
-  (testing "The effect triggers on meat damage"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-                          :deck ["Corroder"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (core/damage state :runner :meat 1)
-      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-  (testing "The effect triggers on net damage"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-                          :deck ["Corroder"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (core/damage state :runner :net 1)
-      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-  (testing "The effect triggers on brain damage"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-                          :deck ["Corroder"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (core/damage state :runner :brain 1)
-      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-  (testing "Trashing an event from R&D triggers Annicam"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam"]
-                          :deck [(qty "Sure Gamble" 2)]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (core/trash state :runner (first (:deck (get-runner))))
-      (is (find-card "Sure Gamble" (:hand (get-runner))) "The runner has drawn a card")))
-  (testing "An event being trashed after playing it triggers Aniccam"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Easy Mark"]
-                          :deck ["Corroder"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (play-from-hand state :runner "Easy Mark")
-      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-  (testing "Event play/trash events"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
-                          :deck ["Corroder"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (:hand (get-runner)))))
-  (testing "Trashing a current triggers Aniccam"
-    (do-game
-      (new-game {:runner {:hand ["Aniccam", "Hacktivist Meeting"]
-                          :deck ["Corroder"]}
-                 :corp {:hand ["Scarcity of Resources"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (play-from-hand state :runner "Hacktivist Meeting")
-      (is (not (find-card "Corroder" (:hand (get-runner)))) "The runner has not drawn a card immediately after playing a current")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Scarcity of Resources")
-      (is (find-card "Corroder" (:hand (get-runner))) "The has drawn a card after their current was trashed"))))
+; (deftest aniccam
+;   (testing "The runner draws 1 card when an event is trashed from the Grip by the Runner"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+;                           :deck ["Corroder"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (trash-from-hand state :runner "Sure Gamble")
+;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+;   (testing "The runner draws 1 card when an event is trashed from the Grip by the Corp"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+;                           :deck ["Corroder"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (core/trash state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+;   (testing "Trashing a non-event doesn't trigger Aniccam"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Clone Chip", "Mimic", "Daily Casts"]
+;                           :deck ["Corroder"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (core/trash-cards state :runner (:hand (get-runner)))
+;       (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card")))
+;   (testing "Trashing an event along with some non events triggers Aniccam"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Clone Chip", "Sure Gamble", "Mimic", "Daily Casts"]
+;                           :deck ["Corroder"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (core/trash-cards state :runner (:hand (get-runner)))
+;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+;   (testing "Aniccam must not trigger a second time in one turn"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+;                           :deck [(qty "Corroder" 2)]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (trash-from-hand state :runner "Sure Gamble")
+;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")
+;       (trash-from-hand state :runner "Corroder")
+;       (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a second card")))
+;   (doseq [first-side [:corp :runner]
+;           second-side [:corp :runner]]
+;     (testing (str (name first-side) " trash -> install Aniccam -> " (name second-side) " trash does not trigger Aniccam")
+;       (do-game
+;         (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
+;                             :deck ["Corroder"]}})
+;         (take-credits state :corp)
+;         (core/trash state first-side (find-card "Sure Gamble" (:hand (get-runner))))
+;         (play-from-hand state :runner "Aniccam")
+;         (core/trash state second-side (find-card "Dirty Laundry" (:hand (get-runner))))
+;         (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card"))))
+;   (testing "The effect triggers on meat damage"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+;                           :deck ["Corroder"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (core/damage state :runner :meat 1)
+;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+;   (testing "The effect triggers on net damage"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+;                           :deck ["Corroder"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (core/damage state :runner :net 1)
+;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+;   (testing "The effect triggers on brain damage"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+;                           :deck ["Corroder"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (core/damage state :runner :brain 1)
+;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+;   (testing "Trashing an event from R&D triggers Annicam"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam"]
+;                           :deck [(qty "Sure Gamble" 2)]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (core/trash state :runner (first (:deck (get-runner))))
+;       (is (find-card "Sure Gamble" (:hand (get-runner))) "The runner has drawn a card")))
+;   (testing "An event being trashed after playing it triggers Aniccam"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Easy Mark"]
+;                           :deck ["Corroder"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (play-from-hand state :runner "Easy Mark")
+;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+;   (testing "Event play/trash events"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
+;                           :deck ["Corroder"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (core/trash-cards state :runner (:hand (get-runner)))))
+;   (testing "Trashing a current triggers Aniccam"
+;     (do-game
+;       (new-game {:runner {:hand ["Aniccam", "Hacktivist Meeting"]
+;                           :deck ["Corroder"]}
+;                  :corp {:hand ["Scarcity of Resources"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Aniccam")
+;       (play-from-hand state :runner "Hacktivist Meeting")
+;       (is (not (find-card "Corroder" (:hand (get-runner)))) "The runner has not drawn a card immediately after playing a current")
+;       (take-credits state :runner)
+;       (play-from-hand state :corp "Scarcity of Resources")
+;       (is (find-card "Corroder" (:hand (get-runner))) "The has drawn a card after their current was trashed"))))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
@@ -305,120 +305,120 @@
         (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip")
         (is (= 1 (count (:discard (get-runner)))) "Bookmark is only card in heap")))))
 
-(deftest boomerang
-  ;; Boomerang
-  (testing "Basic test"
-    (do-game
-      (new-game {:runner {:deck ["Boomerang"]}
-                 :corp {:deck ["Ice Wall" "Hedge Fund"]}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Boomerang")
-      (let [icew (get-ice state :hq 0)
-            boom (get-hardware state 0)]
-        (click-card state :runner icew)
-        (is (= "ICE[br]HQ (0)" (:server-target (refresh boom))) "ICE name is not revealed")
-        (run-on state :hq)
-        (core/rez state :corp icew)
-        (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Target was updated to contain ICE name")
-        (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
-        (card-ability state :runner (refresh boom) 0)
-        (click-prompt state :runner "End the run")
-        (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
-        (run-continue state)
-        (run-successful state)
-        (click-prompt state :runner "No action")
-        (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
-        (click-prompt state :runner "Yes")
-        (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
-        (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
-  (testing "Does not trigger on following successful runs"
-    (do-game
-      (new-game {:runner {:deck ["Boomerang"]}
-                 :corp {:deck ["Ice Wall" "Hedge Fund"]}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Boomerang")
-      (let [icew (get-ice state :hq 0)
-            boom (get-hardware state 0)]
-        (click-card state :runner icew)
-        (run-on state :hq)
-        (core/rez state :corp icew)
-        (card-ability state :runner (refresh boom) 0)
-        (click-prompt state :runner "End the run")
-        (run-continue state)
-        (run-successful state)
-        (click-prompt state :runner "No action")
-        (click-prompt state :runner "No")
-        (run-empty-server state :archives)
-        (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
-  (testing "Cannot use Boomerang on other ice"
-    (do-game
-      (new-game {:runner {:deck ["Boomerang"]}
-                 :corp {:deck ["Ice Wall" "Enigma"]}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (play-from-hand state :corp "Enigma" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Boomerang")
-      (let [icew (get-ice state :hq 0)
-            enig (get-ice state :hq 1)
-            boom (get-hardware state 0)]
-        (click-card state :runner icew)
-        (run-on state :hq)
-        (core/rez state :corp enig)
-        (card-ability state :runner (refresh boom) 0)
-        (is (empty? (:prompt (get-runner))) "Cannot use Boomerang on other ice"))))
-  (testing "Assimilator frees target restriction"
-    (do-game
-      (new-game {:runner {:id "Apex: Invasive Predator"
-                          :deck ["Boomerang" "Assimilator"]}
-                 :corp {:deck ["Ice Wall"]}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (take-credits state :corp)
-      (core/end-phase-12 state :runner nil)
-      (click-card state :runner "Boomerang")
-      (play-from-hand state :runner "Assimilator")
-      (card-ability state :runner (get-resource state 0) 0)
-      (click-card state :runner (-> (get-runner) :rig :facedown first))
-      (let [icew (get-ice state :hq 0)
-            boom (get-hardware state 0)]
-        (run-on state :hq)
-        (core/rez state :corp icew)
-        (card-ability state :runner (refresh boom) 0)
-        (is (not-empty (:prompt (get-runner))) "Can use Boomerang on ice"))))
-  (testing "Update server-target on ice swap"
-    (do-game
-      (new-game {:runner {:deck ["Boomerang"]}
-                 :corp {:deck ["Ice Wall" "Thimblerig"]}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (play-from-hand state :corp "Thimblerig" "R&D")
-      (take-credits state :corp)
-      (let [icew (get-ice state :hq 0)
-            thim (get-ice state :rd 0)]
-        (core/rez state :corp icew)
-        (core/rez state :corp thim)
-        (play-from-hand state :runner "Boomerang")
-        (click-card state :runner thim)
-        (let [boom (get-hardware state 0)]
-          (is (= "Thimblerig[br]R&D (0)" (:server-target (refresh boom))) "Targetting Thimblerig on R&D")
-          (card-ability state :corp (refresh thim) 0)
-          (click-card state :corp (refresh icew))
-          (is (= "Thimblerig[br]HQ (0)" (:server-target (refresh boom))) "Targetting Thimblerig on HQ")))))
-  (testing "Update server-target on ice trash"
-    (do-game
-      (new-game {:runner {:deck ["Boomerang"]}
-                 :corp {:deck ["Ice Wall"]}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (take-credits state :corp)
-      (let [icew (get-ice state :hq 0)]
-        (core/rez state :corp icew)
-        (play-from-hand state :runner "Boomerang")
-        (click-card state :runner icew)
-        (let [boom (get-hardware state 0)]
-          (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Targetting Ice Wall on HQ")
-          (core/trash-cards state :runner [icew])
-          (is (nil? (:server-target (refresh boom))) "No more target message")
-          (is (some? (get-in (refresh boom) [:special :boomerang-target])) "Still targetting a card"))))))
+; (deftest boomerang
+;   ;; Boomerang
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:runner {:deck ["Boomerang"]}
+;                  :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+;       (play-from-hand state :corp "Ice Wall" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Boomerang")
+;       (let [icew (get-ice state :hq 0)
+;             boom (get-hardware state 0)]
+;         (click-card state :runner icew)
+;         (is (= "ICE[br]HQ (0)" (:server-target (refresh boom))) "ICE name is not revealed")
+;         (run-on state :hq)
+;         (core/rez state :corp icew)
+;         (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Target was updated to contain ICE name")
+;         (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
+;         (card-ability state :runner (refresh boom) 0)
+;         (click-prompt state :runner "End the run")
+;         (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
+;         (run-continue state)
+;         (run-successful state)
+;         (click-prompt state :runner "No action")
+;         (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
+;         (click-prompt state :runner "Yes")
+;         (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
+;         (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
+;   (testing "Does not trigger on following successful runs"
+;     (do-game
+;       (new-game {:runner {:deck ["Boomerang"]}
+;                  :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+;       (play-from-hand state :corp "Ice Wall" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Boomerang")
+;       (let [icew (get-ice state :hq 0)
+;             boom (get-hardware state 0)]
+;         (click-card state :runner icew)
+;         (run-on state :hq)
+;         (core/rez state :corp icew)
+;         (card-ability state :runner (refresh boom) 0)
+;         (click-prompt state :runner "End the run")
+;         (run-continue state)
+;         (run-successful state)
+;         (click-prompt state :runner "No action")
+;         (click-prompt state :runner "No")
+;         (run-empty-server state :archives)
+;         (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
+;   (testing "Cannot use Boomerang on other ice"
+;     (do-game
+;       (new-game {:runner {:deck ["Boomerang"]}
+;                  :corp {:deck ["Ice Wall" "Enigma"]}})
+;       (play-from-hand state :corp "Ice Wall" "HQ")
+;       (play-from-hand state :corp "Enigma" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Boomerang")
+;       (let [icew (get-ice state :hq 0)
+;             enig (get-ice state :hq 1)
+;             boom (get-hardware state 0)]
+;         (click-card state :runner icew)
+;         (run-on state :hq)
+;         (core/rez state :corp enig)
+;         (card-ability state :runner (refresh boom) 0)
+;         (is (empty? (:prompt (get-runner))) "Cannot use Boomerang on other ice"))))
+;   (testing "Assimilator frees target restriction"
+;     (do-game
+;       (new-game {:runner {:id "Apex: Invasive Predator"
+;                           :deck ["Boomerang" "Assimilator"]}
+;                  :corp {:deck ["Ice Wall"]}})
+;       (play-from-hand state :corp "Ice Wall" "HQ")
+;       (take-credits state :corp)
+;       (core/end-phase-12 state :runner nil)
+;       (click-card state :runner "Boomerang")
+;       (play-from-hand state :runner "Assimilator")
+;       (card-ability state :runner (get-resource state 0) 0)
+;       (click-card state :runner (-> (get-runner) :rig :facedown first))
+;       (let [icew (get-ice state :hq 0)
+;             boom (get-hardware state 0)]
+;         (run-on state :hq)
+;         (core/rez state :corp icew)
+;         (card-ability state :runner (refresh boom) 0)
+;         (is (not-empty (:prompt (get-runner))) "Can use Boomerang on ice"))))
+;   (testing "Update server-target on ice swap"
+;     (do-game
+;       (new-game {:runner {:deck ["Boomerang"]}
+;                  :corp {:deck ["Ice Wall" "Thimblerig"]}})
+;       (play-from-hand state :corp "Ice Wall" "HQ")
+;       (play-from-hand state :corp "Thimblerig" "R&D")
+;       (take-credits state :corp)
+;       (let [icew (get-ice state :hq 0)
+;             thim (get-ice state :rd 0)]
+;         (core/rez state :corp icew)
+;         (core/rez state :corp thim)
+;         (play-from-hand state :runner "Boomerang")
+;         (click-card state :runner thim)
+;         (let [boom (get-hardware state 0)]
+;           (is (= "Thimblerig[br]R&D (0)" (:server-target (refresh boom))) "Targetting Thimblerig on R&D")
+;           (card-ability state :corp (refresh thim) 0)
+;           (click-card state :corp (refresh icew))
+;           (is (= "Thimblerig[br]HQ (0)" (:server-target (refresh boom))) "Targetting Thimblerig on HQ")))))
+;   (testing "Update server-target on ice trash"
+;     (do-game
+;       (new-game {:runner {:deck ["Boomerang"]}
+;                  :corp {:deck ["Ice Wall"]}})
+;       (play-from-hand state :corp "Ice Wall" "HQ")
+;       (take-credits state :corp)
+;       (let [icew (get-ice state :hq 0)]
+;         (core/rez state :corp icew)
+;         (play-from-hand state :runner "Boomerang")
+;         (click-card state :runner icew)
+;         (let [boom (get-hardware state 0)]
+;           (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Targetting Ice Wall on HQ")
+;           (core/trash-cards state :runner [icew])
+;           (is (nil? (:server-target (refresh boom))) "No more target message")
+;           (is (some? (get-in (refresh boom) [:special :boomerang-target])) "Still targetting a card"))))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
@@ -825,24 +825,24 @@
     (is (= 5 (core/available-mu state)) "Gain 1 memory")
     (is (= 3 (:credit (get-runner))) "Got 1c for successful run on Desperado")))
 
-(deftest devil-charm
-  ;; Devil Charm
-  (testing "Basic test"
-    (do-game
-      (new-game {:runner {:deck ["Devil Charm"]}
-                 :corp {:deck ["Enigma"]}})
-      (play-from-hand state :corp "Enigma" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Devil Charm")
-      (run-on state :hq)
-      (let [dc (get-hardware state 0)
-            enig (get-ice state :hq 0)]
-        (core/rez state :corp (refresh enig))
-        (is (= 2 (:current-strength (refresh enig))) "Enigma starts at 2 strength")
-        (card-ability state :runner (refresh dc) 0)
-        (is (= -4 (:current-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
-        (run-jack-out state)
-        (is (= 2 (:current-strength (refresh enig))) "Enigma is back at 2 strength")))))
+; (deftest devil-charm
+;   ;; Devil Charm
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:runner {:deck ["Devil Charm"]}
+;                  :corp {:deck ["Enigma"]}})
+;       (play-from-hand state :corp "Enigma" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Devil Charm")
+;       (run-on state :hq)
+;       (let [dc (get-hardware state 0)
+;             enig (get-ice state :hq 0)]
+;         (core/rez state :corp (refresh enig))
+;         (is (= 2 (:current-strength (refresh enig))) "Enigma starts at 2 strength")
+;         (card-ability state :runner (refresh dc) 0)
+;         (is (= -4 (:current-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
+;         (run-jack-out state)
+;         (is (= 2 (:current-strength (refresh enig))) "Enigma is back at 2 strength")))))
 
 (deftest dinosaurus
   ;; Dinosaurus
@@ -1119,70 +1119,70 @@
       (is (= 2 (get-counters (refresh aum) :virus)) "Aumakua gained 1 counter")
       (is (zero? (get-counters (refresh fc) :virus)) "Friday Chip lost 1 counter"))))
 
-(deftest gachapon
-  ;; Gachapon
-  (testing "Basic test"
-    (do-game
-      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "DDoS" "Equivocation" "Falsified Credentials" "Gachapon"]}})
-      (take-credits state :corp)
-      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "DDoS" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Equivocation" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Falsified Credentials" (:hand (get-runner))) :deck)
-      ; Deck is now top to bottom: A B C D E F
-      (play-from-hand state :runner "Gachapon")
-      (card-ability state :runner (get-hardware state 0) 0)
-      (is (= (-> (get-runner) :prompt first :msg)
-             "The set aside cards are: Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials")
-          "Shown correct six cards")
-      (click-prompt state :runner "OK")
-      (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
-      (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
-      (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
-      (changes-val-macro -1 (:credit (get-runner))
-                         "Paid 1c to install DDoS"
-                         (click-prompt state :runner "DDoS"))
-      (is (= 5 (count (:deck (get-runner)))) "5 cards remain in deck")
-      (click-prompt state :runner "Au Revoir")
-      (click-prompt state :runner "Clone Chip")
-      (click-prompt state :runner "Equivocation")
-      (click-prompt state :runner "Start over")
-      (click-prompt state :runner "Au Revoir")
-      (click-prompt state :runner "Bankroll")
-      (click-prompt state :runner "Clone Chip")
-      (is (= 1 (count (:discard (get-runner)))) "Still just Gachapon in heap")
-      (is (= 0 (count (:rfg (get-runner)))) "No cards removed from game")
-      (click-prompt state :runner "Done")
-      (is (= 1 (count (:discard (get-runner)))) "Still just Gachapon in heap")
-      (is (= 3 (count (:deck (get-runner)))) "3 cards remain in deck")
-      (is (= 2 (count (:rfg (get-runner)))) "Removed 2 cards from game")
-      (is (empty? (:prompt (get-runner))) "No more prompts")
-      (is (empty? (:prompt (get-corp))) "Waiting prompt cleared")))
-  (testing "Shuffling with less than 3 cards set aside"
-    (do-game
-      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "Gachapon"]}})
-      (take-credits state :corp)
-      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
-      ; Deck is now top to bottom: A B C
-      (play-from-hand state :runner "Gachapon")
-      (card-ability state :runner (get-hardware state 0) 0)
-      (click-prompt state :runner "OK")
-      (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
-      (changes-val-macro 0 (:credit (get-runner))
-                         "Paid 0c to install Bankroll"
-                         (click-prompt state :runner "Bankroll"))
-      (click-prompt state :runner "Au Revoir")
-      (click-prompt state :runner "Clone Chip")
-      (click-prompt state :runner "Done")
-      (is (= 1 (count (:discard (get-runner)))) "Just Gachapon in heap")
-      (is (= 2 (count (:deck (get-runner)))) "2 cards remain in deck")
-      (is (= 0 (count (:rfg (get-runner)))) "Removed no cards from game")
-      (is (empty? (:prompt (get-runner))) "No more prompts")
-      (is (empty? (:prompt (get-corp))) "Waiting prompt cleared"))))
+; (deftest gachapon
+;   ;; Gachapon
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "DDoS" "Equivocation" "Falsified Credentials" "Gachapon"]}})
+;       (take-credits state :corp)
+;       (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "DDoS" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Equivocation" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Falsified Credentials" (:hand (get-runner))) :deck)
+;       ; Deck is now top to bottom: A B C D E F
+;       (play-from-hand state :runner "Gachapon")
+;       (card-ability state :runner (get-hardware state 0) 0)
+;       (is (= (-> (get-runner) :prompt first :msg)
+;              "The set aside cards are: Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials")
+;           "Shown correct six cards")
+;       (click-prompt state :runner "OK")
+;       (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
+;       (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
+;       (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
+;       (changes-val-macro -1 (:credit (get-runner))
+;                          "Paid 1c to install DDoS"
+;                          (click-prompt state :runner "DDoS"))
+;       (is (= 5 (count (:deck (get-runner)))) "5 cards remain in deck")
+;       (click-prompt state :runner "Au Revoir")
+;       (click-prompt state :runner "Clone Chip")
+;       (click-prompt state :runner "Equivocation")
+;       (click-prompt state :runner "Start over")
+;       (click-prompt state :runner "Au Revoir")
+;       (click-prompt state :runner "Bankroll")
+;       (click-prompt state :runner "Clone Chip")
+;       (is (= 1 (count (:discard (get-runner)))) "Still just Gachapon in heap")
+;       (is (= 0 (count (:rfg (get-runner)))) "No cards removed from game")
+;       (click-prompt state :runner "Done")
+;       (is (= 1 (count (:discard (get-runner)))) "Still just Gachapon in heap")
+;       (is (= 3 (count (:deck (get-runner)))) "3 cards remain in deck")
+;       (is (= 2 (count (:rfg (get-runner)))) "Removed 2 cards from game")
+;       (is (empty? (:prompt (get-runner))) "No more prompts")
+;       (is (empty? (:prompt (get-corp))) "Waiting prompt cleared")))
+;   (testing "Shuffling with less than 3 cards set aside"
+;     (do-game
+;       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "Gachapon"]}})
+;       (take-credits state :corp)
+;       (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+;       ; Deck is now top to bottom: A B C
+;       (play-from-hand state :runner "Gachapon")
+;       (card-ability state :runner (get-hardware state 0) 0)
+;       (click-prompt state :runner "OK")
+;       (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
+;       (changes-val-macro 0 (:credit (get-runner))
+;                          "Paid 0c to install Bankroll"
+;                          (click-prompt state :runner "Bankroll"))
+;       (click-prompt state :runner "Au Revoir")
+;       (click-prompt state :runner "Clone Chip")
+;       (click-prompt state :runner "Done")
+;       (is (= 1 (count (:discard (get-runner)))) "Just Gachapon in heap")
+;       (is (= 2 (count (:deck (get-runner)))) "2 cards remain in deck")
+;       (is (= 0 (count (:rfg (get-runner)))) "Removed no cards from game")
+;       (is (empty? (:prompt (get-runner))) "No more prompts")
+;       (is (empty? (:prompt (get-corp))) "Waiting prompt cleared"))))
 
 (deftest gebrselassie
   ;; Gebrselassie
@@ -1372,24 +1372,24 @@
       (is (= 1 (count (:rfg (get-runner)))) "Hippo RFGed")
       (is (empty? (get-hardware state)) "Hippo removed"))))
 
-(deftest-pending keiko
-  ;; Keiko
-  (testing "Basic test"
-    (do-game
-      (new-game {:runner {:deck ["Mystic Maemi" "Keiko" "Sure Gamble"]}})
-      (take-credits state :corp)
-      (changes-val-macro -2 (:credit (get-runner))
-                         "Got 1c back from installing Keiko"
-                         (play-from-hand state :runner "Keiko"))
-      (changes-val-macro -1 (:credit (get-runner))
-                         "Only triggers once per turn"
-                         (play-from-hand state :runner "Mystic Maemi"))
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (changes-val-macro 6 (:credit (get-runner))
-                         "Paid 4 for Sure Gamble. Got 9 from Sure Gamble and 1 from Keiko"
-                         (play-from-hand state :runner "Sure Gamble")
-                         (click-card state :runner (get-resource state 0))))))
+; (deftest keiko
+;   ;; Keiko
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:runner {:deck ["Mystic Maemi" "Keiko" "Sure Gamble"]}})
+;       (take-credits state :corp)
+;       (changes-val-macro -2 (:credit (get-runner))
+;                          "Got 1c back from installing Keiko"
+;                          (play-from-hand state :runner "Keiko"))
+;       (changes-val-macro -1 (:credit (get-runner))
+;                          "Only triggers once per turn"
+;                          (play-from-hand state :runner "Mystic Maemi"))
+;       (take-credits state :runner)
+;       (take-credits state :corp)
+;       (changes-val-macro 6 (:credit (get-runner))
+;                          "Paid 4 for Sure Gamble. Got 9 from Sure Gamble and 1 from Keiko"
+;                          (play-from-hand state :runner "Sure Gamble")
+;                          (click-card state :runner (get-resource state 0))))))
 
 (deftest knobkierie
   ;; Knobkierie - first successful run, place a virus counter on a virus program
@@ -2135,74 +2135,74 @@
                            (play-from-hand state :runner "Dirty Laundry")
                            (click-card state :runner ppvp))))))
 
-(deftest prognostic-q-loop
-  ;; Prognostic Q-Loop
-  (testing "Basic test"
-    (do-game
-      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "Dirty Laundry" "Equivocation" "Prognostic Q-Loop"]}})
-      (take-credits state :corp)
-      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Dirty Laundry" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Equivocation" (:hand (get-runner))) :deck)
-      ; Deck is now top to bottom: A B C D E
-      (play-from-hand state :runner "Prognostic Q-Loop")
-      (run-on state :hq)
-      (click-prompt state :runner "Yes")
-      (is (= "The top two cards of your Stack are Au Revoir, Bankroll." (-> (get-runner) :prompt first :msg)))
-      (click-prompt state :runner "OK")
-      (card-ability state :runner (get-hardware state 0) 1)
-      (click-prompt state :runner "Yes")
-      (is (= "Au Revoir" (:title (get-program state 0))) "Installed Au Revoir")
-      (card-ability state :runner (get-hardware state 0) 1)
-      (is (empty? (:prompt (get-runner))) "Can use ability only once per turn")
-      (run-jack-out state)
-      (run-on state :hq)
-      (is (empty? (:prompt (get-runner))) "Only trigger on the first run of the turn")))
-  (testing "Does not reveal if first run has been before install"
-    (do-game
-      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
-      (take-credits state :corp)
-      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
-      ; Deck is now top to bottom: A B
-      (run-empty-server state :archives)
-      (play-from-hand state :runner "Prognostic Q-Loop")
-      (run-on state :hq)
-      (is (empty? (:prompt (get-runner))) "Does not trigger on second run even if installed later")))
-  (testing "Auto-resolve"
-    (do-game
-      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
-      (take-credits state :corp)
-      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
-      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
-      ; Deck is now top to bottom: A B
-      (play-from-hand state :runner "Prognostic Q-Loop")
-      (letfn [(toggle-q-loop [setting]
-                (card-ability state :runner (get-hardware state 0) 0)
-                (click-prompt state :runner setting)
-                (is (empty? (:prompt (get-runner))) "Prompt closed"))]
-        (doseq [set-to ["Never" "Ask" "Always"]]
-          (toggle-q-loop set-to)
-          (run-on state "Archives")
-          (case set-to
-            "Never"
-            (is (empty? (:prompt (get-runner))) "Does not show prompt")
-            "Always"
-            (do (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
-                (click-prompt state :runner "OK")
-                (is (empty? (:prompt (get-runner))) "Look prompt closed"))
-            "Ask"
-            (do (is (not-empty (:prompt (get-runner))) "Does show trigger prompt")
-                (click-prompt state :runner "Yes")
-                (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
-                (is (not-empty (:prompt (get-runner))) "Does show look prompt")
-                (click-prompt state :runner "OK")
-                (is (empty? (:prompt (get-runner))) "Look prompt closed")))
-          (run-jack-out state)
-          (take-credits state :runner)
-          (take-credits state :corp))))))
+; (deftest prognostic-q-loop
+;   ;; Prognostic Q-Loop
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "Dirty Laundry" "Equivocation" "Prognostic Q-Loop"]}})
+;       (take-credits state :corp)
+;       (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Dirty Laundry" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Equivocation" (:hand (get-runner))) :deck)
+;       ; Deck is now top to bottom: A B C D E
+;       (play-from-hand state :runner "Prognostic Q-Loop")
+;       (run-on state :hq)
+;       (click-prompt state :runner "Yes")
+;       (is (= "The top two cards of your Stack are Au Revoir, Bankroll." (-> (get-runner) :prompt first :msg)))
+;       (click-prompt state :runner "OK")
+;       (card-ability state :runner (get-hardware state 0) 1)
+;       (click-prompt state :runner "Yes")
+;       (is (= "Au Revoir" (:title (get-program state 0))) "Installed Au Revoir")
+;       (card-ability state :runner (get-hardware state 0) 1)
+;       (is (empty? (:prompt (get-runner))) "Can use ability only once per turn")
+;       (run-jack-out state)
+;       (run-on state :hq)
+;       (is (empty? (:prompt (get-runner))) "Only trigger on the first run of the turn")))
+;   (testing "Does not reveal if first run has been before install"
+;     (do-game
+;       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
+;       (take-credits state :corp)
+;       (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+;       ; Deck is now top to bottom: A B
+;       (run-empty-server state :archives)
+;       (play-from-hand state :runner "Prognostic Q-Loop")
+;       (run-on state :hq)
+;       (is (empty? (:prompt (get-runner))) "Does not trigger on second run even if installed later")))
+;   (testing "Auto-resolve"
+;     (do-game
+;       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
+;       (take-credits state :corp)
+;       (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+;       (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+;       ; Deck is now top to bottom: A B
+;       (play-from-hand state :runner "Prognostic Q-Loop")
+;       (letfn [(toggle-q-loop [setting]
+;                 (card-ability state :runner (get-hardware state 0) 0)
+;                 (click-prompt state :runner setting)
+;                 (is (empty? (:prompt (get-runner))) "Prompt closed"))]
+;         (doseq [set-to ["Never" "Ask" "Always"]]
+;           (toggle-q-loop set-to)
+;           (run-on state "Archives")
+;           (case set-to
+;             "Never"
+;             (is (empty? (:prompt (get-runner))) "Does not show prompt")
+;             "Always"
+;             (do (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
+;                 (click-prompt state :runner "OK")
+;                 (is (empty? (:prompt (get-runner))) "Look prompt closed"))
+;             "Ask"
+;             (do (is (not-empty (:prompt (get-runner))) "Does show trigger prompt")
+;                 (click-prompt state :runner "Yes")
+;                 (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
+;                 (is (not-empty (:prompt (get-runner))) "Does show look prompt")
+;                 (click-prompt state :runner "OK")
+;                 (is (empty? (:prompt (get-runner))) "Look prompt closed")))
+;           (run-jack-out state)
+;           (take-credits state :runner)
+;           (take-credits state :corp))))))
 
 (deftest public-terminal
   ;; Public Terminal

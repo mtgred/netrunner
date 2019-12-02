@@ -777,68 +777,68 @@
         (is (zero? (get-counters (refresh c) :virus)) "Consume loses counters")
         (is (zero? (get-counters (refresh h) :virus)) "Hivemind loses counters")))))
 
-(deftest cordyceps
-  ;; Cordyceps
-  (testing "Basic test"
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Ice Wall" "Enigma" "Hedge Fund"]}
-                 :runner {:hand ["Cordyceps"]}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (play-from-hand state :corp "Enigma" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Cordyceps")
-      (run-on state "HQ")
-      (let [iw (get-ice state :hq 0)
-            enig (get-ice state :hq 1)
-            cor (get-program state 0)]
-        (is (= 2 (get-counters (refresh cor) :virus)) "Cordyceps was installed with 2 virus tokens")
-        (run-continue state)
-        (run-continue state)
-        (run-successful state)
-        (click-prompt state :runner "Yes")
-        (click-card state :runner (refresh enig))
-        (click-card state :runner (refresh iw))
-        (click-prompt state :runner "No action"))
-      (let [iw (get-ice state :hq 1)
-            enig (get-ice state :hq 0)
-            cor (get-program state 0)]
-        (is (= "Ice Wall" (:title iw)) "Ice Wall now outermost ice")
-        (is (= "Enigma" (:title enig)) "Enigma now outermost ice")
-        (is (= 1 (get-counters (refresh cor) :virus)) "Used 1 virus token"))
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (run-on state "R&D")
-      (run-successful state)
-      (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt on uniced server")))
-  (testing "No prompt with less than 2 ice installed"
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Ice Wall" "Hedge Fund"]}
-                 :runner {:hand ["Cordyceps"]}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Cordyceps")
-      (run-on state "HQ")
-      (run-continue state)
-      (run-successful state)
-      (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice")))
-  (testing "No prompt when empty"
-    (do-game
-      (new-game {:runner {:hand ["Cordyceps"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Cordyceps")
-      (take-credits state :runner)
-      (core/purge state :corp)
-      (take-credits state :corp)
-      (is (= 0 (get-counters (get-program state 0) :virus)) "Purged virus tokens")
-      (run-on state "HQ")
-      (run-continue state)
-      (run-successful state)
-      (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice"))))
+; (deftest cordyceps
+;   ;; Cordyceps
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+;                         :hand ["Ice Wall" "Enigma" "Hedge Fund"]}
+;                  :runner {:hand ["Cordyceps"]}})
+;       (play-from-hand state :corp "Ice Wall" "HQ")
+;       (play-from-hand state :corp "Enigma" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Cordyceps")
+;       (run-on state "HQ")
+;       (let [iw (get-ice state :hq 0)
+;             enig (get-ice state :hq 1)
+;             cor (get-program state 0)]
+;         (is (= 2 (get-counters (refresh cor) :virus)) "Cordyceps was installed with 2 virus tokens")
+;         (run-continue state)
+;         (run-continue state)
+;         (run-successful state)
+;         (click-prompt state :runner "Yes")
+;         (click-card state :runner (refresh enig))
+;         (click-card state :runner (refresh iw))
+;         (click-prompt state :runner "No action"))
+;       (let [iw (get-ice state :hq 1)
+;             enig (get-ice state :hq 0)
+;             cor (get-program state 0)]
+;         (is (= "Ice Wall" (:title iw)) "Ice Wall now outermost ice")
+;         (is (= "Enigma" (:title enig)) "Enigma now outermost ice")
+;         (is (= 1 (get-counters (refresh cor) :virus)) "Used 1 virus token"))
+;       (take-credits state :runner)
+;       (take-credits state :corp)
+;       (run-on state "R&D")
+;       (run-successful state)
+;       (click-prompt state :runner "No action")
+;       (is (empty? (:prompt (get-runner))) "No prompt on uniced server")))
+;   (testing "No prompt with less than 2 ice installed"
+;     (do-game
+;       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+;                         :hand ["Ice Wall" "Hedge Fund"]}
+;                  :runner {:hand ["Cordyceps"]}})
+;       (play-from-hand state :corp "Ice Wall" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Cordyceps")
+;       (run-on state "HQ")
+;       (run-continue state)
+;       (run-successful state)
+;       (click-prompt state :runner "No action")
+;       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice")))
+;   (testing "No prompt when empty"
+;     (do-game
+;       (new-game {:runner {:hand ["Cordyceps"]}})
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Cordyceps")
+;       (take-credits state :runner)
+;       (core/purge state :corp)
+;       (take-credits state :corp)
+;       (is (= 0 (get-counters (get-program state 0) :virus)) "Purged virus tokens")
+;       (run-on state "HQ")
+;       (run-continue state)
+;       (run-successful state)
+;       (click-prompt state :runner "No action")
+;       (is (empty? (:prompt (get-runner))) "No prompt with only 1 installed ice"))))
 
 (deftest corroder
   ;; Corroder
@@ -1351,30 +1351,30 @@
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")))
 
-(deftest euler
-  ;; Euler
-  (testing "Basic test"
-    (do-game
-      (new-game {:runner {:deck ["Euler"]}
-                 :corp {:hand ["Enigma"]}})
-      (play-from-hand state :corp "Enigma" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Euler")
-      (run-on state :hq)
-      (core/gain state :runner :credit 10)
-      (core/rez state :corp (get-ice state :hq 0))
-      (changes-val-macro 0 (:credit (get-runner))
-                         "Broke Enigma for 0c"
-                         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
-                         (run-continue state))
-      (run-jack-out state)
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (run-on state :hq)
-      (changes-val-macro -2 (:credit (get-runner))
-                         "Broke Enigma for 2c"
-                         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
-                         (run-continue state)))))
+; (deftest euler
+;   ;; Euler
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:runner {:deck ["Euler"]}
+;                  :corp {:hand ["Enigma"]}})
+;       (play-from-hand state :corp "Enigma" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Euler")
+;       (run-on state :hq)
+;       (core/gain state :runner :credit 10)
+;       (core/rez state :corp (get-ice state :hq 0))
+;       (changes-val-macro 0 (:credit (get-runner))
+;                          "Broke Enigma for 0c"
+;                          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+;                          (run-continue state))
+;       (run-jack-out state)
+;       (take-credits state :runner)
+;       (take-credits state :corp)
+;       (run-on state :hq)
+;       (changes-val-macro -2 (:credit (get-runner))
+;                          "Broke Enigma for 2c"
+;                          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+;                          (run-continue state)))))
 
 (deftest faerie
   (testing "Trash after encounter is over, not before"
@@ -2164,46 +2164,46 @@
     (is (= 2 (+ (get-in @state [:runner :rd-access])
                 (core/access-bonus-count (:run @state) :rd))))))
 
-(deftest odore
-  (testing "Basic test"
-    (do-game
-      (new-game {:corp {:deck ["Cobra"]}
-                 :runner {:deck ["Odore" (qty "Logic Bomb" 3)]}})
-      (play-from-hand state :corp "Cobra" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Odore")
-      (let [odore (get-program state 0)
-            cobra (get-ice state :hq 0)]
-        (core/gain state :runner :click 2 :credit 20)
-        (run-on state "HQ")
-        (core/rez state :corp cobra)
-        (changes-val-macro -5 (:credit (get-runner))
-                           "Paid 3 to pump and 2 to break"
-                           (card-ability state :runner odore 2)
-                           (card-ability state :runner odore 0)
-                           (click-prompt state :runner "Trash a program")
-                           (click-prompt state :runner "Do 2 net damage")))))
-  (testing "auto-pump-and-break with and without 3 virtual resources"
-    (do-game
-      (new-game {:corp {:deck ["Cobra"]}
-                 :runner {:deck ["Odore" (qty "Logic Bomb" 3)]}})
-      (play-from-hand state :corp "Cobra" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Odore")
-      (let [odore (get-program state 0)
-            cobra (get-ice state :hq 0)]
-        (core/gain state :runner :click 2 :credit 20)
-        (run-on state "HQ")
-        (core/rez state :corp cobra)
-        (changes-val-macro -5 (:credit (get-runner))
-                           "Paid 3 to pump and 2 to break"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)}))
-        (run-jack-out state)
-        (dotimes [_ 3] (play-from-hand state :runner "Logic Bomb"))
-        (run-on state "HQ")
-        (changes-val-macro -3 (:credit (get-runner))
-                           "Paid 3 to pump and 0 to break"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)}))))))
+; (deftest odore
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:corp {:deck ["Cobra"]}
+;                  :runner {:deck ["Odore" (qty "Logic Bomb" 3)]}})
+;       (play-from-hand state :corp "Cobra" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Odore")
+;       (let [odore (get-program state 0)
+;             cobra (get-ice state :hq 0)]
+;         (core/gain state :runner :click 2 :credit 20)
+;         (run-on state "HQ")
+;         (core/rez state :corp cobra)
+;         (changes-val-macro -5 (:credit (get-runner))
+;                            "Paid 3 to pump and 2 to break"
+;                            (card-ability state :runner odore 2)
+;                            (card-ability state :runner odore 0)
+;                            (click-prompt state :runner "Trash a program")
+;                            (click-prompt state :runner "Do 2 net damage")))))
+;   (testing "auto-pump-and-break with and without 3 virtual resources"
+;     (do-game
+;       (new-game {:corp {:deck ["Cobra"]}
+;                  :runner {:deck ["Odore" (qty "Logic Bomb" 3)]}})
+;       (play-from-hand state :corp "Cobra" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Odore")
+;       (let [odore (get-program state 0)
+;             cobra (get-ice state :hq 0)]
+;         (core/gain state :runner :click 2 :credit 20)
+;         (run-on state "HQ")
+;         (core/rez state :corp cobra)
+;         (changes-val-macro -5 (:credit (get-runner))
+;                            "Paid 3 to pump and 2 to break"
+;                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)}))
+;         (run-jack-out state)
+;         (dotimes [_ 3] (play-from-hand state :runner "Logic Bomb"))
+;         (run-on state "HQ")
+;         (changes-val-macro -3 (:credit (get-runner))
+;                            "Paid 3 to pump and 0 to break"
+;                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)}))))))
 
 (deftest origami
   ;; Origami - Increases Runner max hand size
@@ -2471,43 +2471,43 @@
       (run-continue state)
       (is (not (has-subtype? (refresh iw) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
 
-(deftest penrose
-  ;; Penrose
-  (testing "Pay-credits prompt and first turn ability"
-    (do-game
-      (new-game {:runner {:deck ["Cloak" "Penrose"]}
-                 :corp {:deck ["Enigma" "Vanilla"]}})
-      (play-from-hand state :corp "Enigma" "HQ")
-      (play-from-hand state :corp "Vanilla" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Cloak")
-      (play-from-hand state :runner "Penrose")
-      (core/gain state :runner :credit 1)
-      (run-on state :hq)
-      (let [enig (get-ice state :hq 0)
-            van (get-ice state :hq 1)
-            cl (get-program state 0)
-            penr (get-program state 1)]
-        (is (= 3 (count (:abilities penr))) "3 abilities on Penrose")
-        (core/rez state :corp van)
-        (is (= 4 (count (:abilities (refresh penr)))) "Auto pump and break ability on Penrose active")
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Used 1 credit from Cloak"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)})
-                           (click-card state :runner cl))
-        (run-continue state)
-        (core/rez state :corp enig)
-        (changes-val-macro -2 (:credit (get-runner))
-                           "Paid 2 credits to break all subroutines on Enigma"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)}))
-        (run-continue state)
-        (run-jack-out state)
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (run-on state :hq)
-        (is (= 3 (count (:abilities (refresh penr)))) "Auto pump and break ability on Penrose is not active")
-        (card-ability state :runner (refresh penr) 0)
-        (is (empty? (:prompt (get-runner))) "No cloak prompt because the ability to break barriers is not active anymore")))))
+; (deftest penrose
+;   ;; Penrose
+;   (testing "Pay-credits prompt and first turn ability"
+;     (do-game
+;       (new-game {:runner {:deck ["Cloak" "Penrose"]}
+;                  :corp {:deck ["Enigma" "Vanilla"]}})
+;       (play-from-hand state :corp "Enigma" "HQ")
+;       (play-from-hand state :corp "Vanilla" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Cloak")
+;       (play-from-hand state :runner "Penrose")
+;       (core/gain state :runner :credit 1)
+;       (run-on state :hq)
+;       (let [enig (get-ice state :hq 0)
+;             van (get-ice state :hq 1)
+;             cl (get-program state 0)
+;             penr (get-program state 1)]
+;         (is (= 3 (count (:abilities penr))) "3 abilities on Penrose")
+;         (core/rez state :corp van)
+;         (is (= 4 (count (:abilities (refresh penr)))) "Auto pump and break ability on Penrose active")
+;         (changes-val-macro 0 (:credit (get-runner))
+;                            "Used 1 credit from Cloak"
+;                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)})
+;                            (click-card state :runner cl))
+;         (run-continue state)
+;         (core/rez state :corp enig)
+;         (changes-val-macro -2 (:credit (get-runner))
+;                            "Paid 2 credits to break all subroutines on Enigma"
+;                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)}))
+;         (run-continue state)
+;         (run-jack-out state)
+;         (take-credits state :runner)
+;         (take-credits state :corp)
+;         (run-on state :hq)
+;         (is (= 3 (count (:abilities (refresh penr)))) "Auto pump and break ability on Penrose is not active")
+;         (card-ability state :runner (refresh penr) 0)
+;         (is (empty? (:prompt (get-runner))) "No cloak prompt because the ability to break barriers is not active anymore")))))
 
 (deftest peregrine
   ;; Peregrine - 2c to return to grip and derez an encountered code gate

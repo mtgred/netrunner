@@ -288,26 +288,26 @@
       (is (empty (:prompt (get-runner))) "Bacterial Programming prompts finished")
       (is (not (:run @state))))))
 
-(deftest bellona
-  ;; Bellona
-  (testing "basic test"
-    (do-game
-      (new-game {:corp {:deck ["Bellona"]}})
-      (play-from-hand state :corp "Bellona" "New remote")
-      (let [bell (get-content state :remote1 0)]
-        (advance state bell 2)
-        (take-credits state :corp)
-        (core/lose state :runner :credit 1)
-        (run-empty-server state "Server 1")
-        (click-prompt state :runner "No action")
-        (is (zero? (count (:scored (get-runner)))) "Runner could not steal Bellona")
-        (is (= 4 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
-        (take-credits state :runner)
-        (advance state bell 3)
-        (changes-val-macro 5 (:credit (get-corp))
-                           "Got 5 credits from Bellona"
-                           (core/score state :corp {:card (refresh bell)}))
-        (is (= 3 (:agenda-point (get-corp))) "Scored Bellona for 3 points")))))
+; (deftest bellona
+;   ;; Bellona
+;   (testing "basic test"
+;     (do-game
+;       (new-game {:corp {:deck ["Bellona"]}})
+;       (play-from-hand state :corp "Bellona" "New remote")
+;       (let [bell (get-content state :remote1 0)]
+;         (advance state bell 2)
+;         (take-credits state :corp)
+;         (core/lose state :runner :credit 1)
+;         (run-empty-server state "Server 1")
+;         (click-prompt state :runner "No action")
+;         (is (zero? (count (:scored (get-runner)))) "Runner could not steal Bellona")
+;         (is (= 4 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
+;         (take-credits state :runner)
+;         (advance state bell 3)
+;         (changes-val-macro 5 (:credit (get-corp))
+;                            "Got 5 credits from Bellona"
+;                            (core/score state :corp {:card (refresh bell)}))
+;         (is (= 3 (:agenda-point (get-corp))) "Scored Bellona for 3 points")))))
 
 (deftest better-citizen-program
   ;; Better Citizen Program
@@ -3035,43 +3035,43 @@
          (is (= innermost (get-in @state [:run :position])) "Run position unchanged because ice was installed 'behind' the runner")
          (is (= corp-credits (:credit (get-corp))) "Install was free"))))))
 
-(deftest transport-monopoly
-  (testing "Basic functionality"
-    (do-game
-     (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
-                :runner {:deck [(qty "Dirty Laundry" 3)]}})
-     (play-and-score state "Transport Monopoly")
-     (take-credits state :corp)
-     (let [tm (get-scored state :corp 0)]
-       (changes-val-macro -2 (:credit (get-runner))
-                          "Did not gain 5c from DL"
-                          (play-from-hand state :runner "Dirty Laundry")
-                          (click-prompt state :runner "HQ")
-                          (card-ability state :corp (refresh tm) 0)
-                          (run-continue state)
-                          (run-successful state)
-                          (click-prompt state :runner "No action")) ; accessed Hedge Fund
-       (changes-val-macro 3 (:credit (get-runner))
-                          "Gained 5c from DL"
-                          (play-from-hand state :runner "Dirty Laundry")
-                          (click-prompt state :runner "HQ")
-                          (run-continue state)
-                          (run-successful state)
-                          (click-prompt state :runner "No action"))))) ; accessed Hedge Fund
-  (testing "Omar interaction"
-    (do-game
-     (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
-                :runner {:id "Omar Keung: Conspiracy Theorist"
-                         :deck [(qty "Sure Gamble" 3)]}})
-     (play-and-score state "Transport Monopoly")
-     (take-credits state :corp)
-     (let [tm (get-scored state :corp 0)
-           omar (get-in @state [:runner :identity])]
-        (card-ability state :runner omar 0)
-        (card-ability state :corp (refresh tm) 0)
-        (run-successful state)
-        (is (empty? (-> (get-runner) :register :successful-run)))
-        (is (empty? (:prompt (get-runner))) "No omar prompt")))))
+; (deftest transport-monopoly
+;   (testing "Basic functionality"
+;     (do-game
+;      (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
+;                 :runner {:deck [(qty "Dirty Laundry" 3)]}})
+;      (play-and-score state "Transport Monopoly")
+;      (take-credits state :corp)
+;      (let [tm (get-scored state :corp 0)]
+;        (changes-val-macro -2 (:credit (get-runner))
+;                           "Did not gain 5c from DL"
+;                           (play-from-hand state :runner "Dirty Laundry")
+;                           (click-prompt state :runner "HQ")
+;                           (card-ability state :corp (refresh tm) 0)
+;                           (run-continue state)
+;                           (run-successful state)
+;                           (click-prompt state :runner "No action")) ; accessed Hedge Fund
+;        (changes-val-macro 3 (:credit (get-runner))
+;                           "Gained 5c from DL"
+;                           (play-from-hand state :runner "Dirty Laundry")
+;                           (click-prompt state :runner "HQ")
+;                           (run-continue state)
+;                           (run-successful state)
+;                           (click-prompt state :runner "No action"))))) ; accessed Hedge Fund
+;   (testing "Omar interaction"
+;     (do-game
+;      (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
+;                 :runner {:id "Omar Keung: Conspiracy Theorist"
+;                          :deck [(qty "Sure Gamble" 3)]}})
+;      (play-and-score state "Transport Monopoly")
+;      (take-credits state :corp)
+;      (let [tm (get-scored state :corp 0)
+;            omar (get-in @state [:runner :identity])]
+;         (card-ability state :runner omar 0)
+;         (card-ability state :corp (refresh tm) 0)
+;         (run-successful state)
+;         (is (empty? (-> (get-runner) :register :successful-run)))
+;         (is (empty? (:prompt (get-runner))) "No omar prompt")))))
 
 (deftest underway-renovation
   ;; Underway Renovation
