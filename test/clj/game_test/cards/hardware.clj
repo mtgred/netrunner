@@ -1588,7 +1588,19 @@
       (is (empty? (:discard (get-runner))) "Easy Mark is not in heap yet")
       (click-card state :runner "Easy Mark")
       (is (not-empty (:discard (get-runner))) "Easy Mark is in heap")
-      (is (= 9 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble"))))
+      (is (= 9 (:credit (get-runner))) "Runner has only paid 3 for Sure Gamble")))
+  (testing "Career Fair + Patchwork don't properly allow playing of cards only playable with both discounts. Issue #4617"
+    (do-game
+      (new-game {:runner {:deck ["Patchwork" "Sure Gamble" "Career Fair" "Liberated Account"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Patchwork")
+      (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+      (play-from-hand state :runner "Career Fair")
+      (click-card state :runner (find-card "Liberated Account" (:hand (get-runner))))
+      (click-card state :runner (get-hardware state 0))
+      (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      (is (= 0 (:credit (get-runner))) "Paid 1c for Liberated Account")
+      (is (get-resource state 0) "Installed Liberated Account"))))
 
 (deftest plascrete-carapace
   ;; Plascrete Carapace - Prevent meat damage

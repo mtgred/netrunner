@@ -25,7 +25,7 @@
               :optional
               {:req (req (and (ice? target)
                               (protecting-same-server? card target)
-                              (can-pay? state side eid card nil
+                              (can-pay? state side (assoc eid :source card :source-type :rez) target nil
                                         [:credit (rez-cost state side target {:cost-bonus -3})])))
                :prompt "Rez ICE with rez cost lowered by 3?"
                :yes-ability {:msg (msg "lower the rez cost of " (:title target) " by 3 [Credits]")
@@ -78,7 +78,7 @@
                  :effect (req (corp-install state side eid target card {:ignore-all-cost true}))}
                 {:req (req (and this-server
                                 (zero? (get-in @state [:run :position]))
-                                (some #(can-pay? state side eid card nil
+                                (some #(can-pay? state side (assoc eid :source card :source-type :rez) % nil
                                                  [:credit (rez-cost state side % {:cost-bonus -7})])
                                       (:hosted card))))
                  :label "Rez a hosted piece of Bioroid ICE"
@@ -266,7 +266,7 @@
                        :player :runner
                        :prompt (str "Pay " cost " [Credits] or end the run?")
                        :choices (concat
-                                  (when (can-pay? state :runner eid card nil [:credit cost])
+                                  (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit cost])
                                     [(str "Pay " cost " [Credits]")])
                                   ["End the run"])
                        :msg (msg (if (= target "End the run")
@@ -1264,7 +1264,7 @@
                              (not (same-card? target card))
                              (some #(and (not (rezzed? %))
                                          (not (agenda? %))
-                                         (can-pay? state side eid card nil
+                                         (can-pay? state side (assoc eid :source card :source-type :rez) % nil
                                                    [:credit (install-cost state side % {:cost-bonus -2})]))
                                    (all-installed state :corp))))
               :effect (effect (continue-ability
@@ -1273,7 +1273,7 @@
                                   :yes-ability {:prompt "Select a card to rez"
                                                 :choices {:card #(and (not (rezzed? %))
                                                                       (not (agenda? %))
-                                                                      (can-pay? state side eid card nil
+                                                                      (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                                                 [:credit (rez-cost state side % {:cost-bonus -2})]))}
                                                 :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
                                                 :effect (effect (rez eid target {:cost-bonus -2}))}}}
@@ -1340,7 +1340,7 @@
               :req (req (and this-server
                              (= target :net)
                              (pos? (last targets))
-                             (can-pay? state :corp eid card nil [:credit 2])))
+                             (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 2])))
               :effect (req (swap! state assoc-in [:damage :damage-replace] true)
                            (show-wait-prompt state :runner "Corp to use Tori Hanzō")
                            (continue-ability

@@ -58,7 +58,7 @@
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice ice-type)
                                        (not (install-locked? state :runner))
-                                       (can-pay? state :runner eid card nil [:credit (install-cost state side card)])))
+                                       (can-pay? state :runner (assoc eid :source card :source-type :runner-install) card nil [:credit (install-cost state side card)])))
                         :effect (effect
                                   (continue-ability
                                     {:optional
@@ -278,7 +278,7 @@
    "Algernon"
    {:events
     [{:event :runner-turn-begins
-      :req (req (can-pay? state :runner eid card nil [:credit 2]))
+      :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2]))
       :optional
       {:prompt (msg "Pay 2 [Credits] to gain [Click]")
        :player :runner
@@ -748,10 +748,10 @@
                      (continue-ability state side (custsec-host from) card nil)))
       :abilities [{:cost [:click 1]
                    :prompt "Choose a program hosted on Customized Secretary to install"
-                   :choices (req (cancellable (filter #(can-pay? state side eid card nil [:credit (install-cost state side %)])
+                   :choices (req (cancellable (filter #(can-pay? state side (assoc eid :source card :source-type :runner-install) % nil [:credit (install-cost state side %)])
                                                       (:hosted card))))
                    :msg (msg "install " (:title target))
-                   :effect (req (if (can-pay? state side eid card nil [:credit (install-cost state side target)])
+                   :effect (req (if (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil [:credit (install-cost state side target)])
                                   (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
                                   (effect-completed state side eid)))}]})
 
@@ -862,7 +862,7 @@
    {:abilities [{:req (req (and (not (get-in card [:special :dheg-prog]))
                                 (some #(and (program? %)
                                             (runner-can-install? state side % false)
-                                            (can-pay? state side eid card nil
+                                            (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                       [:credit (install-cost state side % {:cost-bonus -1})]))
                                       (:hand runner))))
                  :cost [:click 1]
@@ -872,7 +872,7 @@
                  {:req (req (and (program? target)
                                  (runner-can-install? state side target false)
                                  (in-hand? target)
-                                 (can-pay? state side eid card nil
+                                 (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                            [:credit (install-cost state side target {:cost-bonus -1})])))}
                  :msg (msg (str "host " (:title target)
                                 (when (-> target :cost pos?)

@@ -1316,24 +1316,40 @@
 
 (deftest estelle-moon
   ;; Estelle Moon
-  (letfn [(estelle-test [number]
-            (do-game
-              (new-game {:corp {:deck ["Estelle Moon" (qty "Encryption Protocol" 20)]}})
-              (starting-hand state :corp (repeat 9 "Encryption Protocol"))
-              (core/move state :corp (find-card "Estelle Moon" (:deck (get-corp))) :hand)
-              (play-from-hand state :corp "Estelle Moon" "New remote")
-              (let [em (get-content state :remote1 0)]
-                (core/rez state :corp (refresh em))
-                (core/gain state :corp :click 10)
-                (dotimes [_ number]
-                  (play-from-hand state :corp "Encryption Protocol" "New remote"))
-                (let [credits (:credit (get-corp))
-                      hand (count (:hand (get-corp)))]
-                  (card-ability state :corp (refresh em) 0)
-                  (is (= (* 2 number) (- (:credit (get-corp)) credits)) (str "Should gain " (* 2 number) " credits"))
-                  (is (= number (- (count (:hand (get-corp))) hand)) (str "Should draw " number " cards"))
-                  (is (= 1 (-> (get-corp) :discard count)) "Estelle Moon should be trashed")))))]
-    (doall (map estelle-test (range 10)))))
+  (testing "Basic test"
+    (letfn [(estelle-test [number]
+              (do-game
+                (new-game {:corp {:deck ["Estelle Moon" (qty "Encryption Protocol" 20)]}})
+                (starting-hand state :corp (repeat 9 "Encryption Protocol"))
+                (core/move state :corp (find-card "Estelle Moon" (:deck (get-corp))) :hand)
+                (play-from-hand state :corp "Estelle Moon" "New remote")
+                (let [em (get-content state :remote1 0)]
+                  (core/rez state :corp (refresh em))
+                  (core/gain state :corp :click 10)
+                  (dotimes [_ number]
+                    (play-from-hand state :corp "Encryption Protocol" "New remote"))
+                  (let [credits (:credit (get-corp))
+                        hand (count (:hand (get-corp)))]
+                    (card-ability state :corp (refresh em) 0)
+                    (is (= (* 2 number) (- (:credit (get-corp)) credits)) (str "Should gain " (* 2 number) " credits"))
+                    (is (= number (- (count (:hand (get-corp))) hand)) (str "Should draw " number " cards"))
+                    (is (= 1 (-> (get-corp) :discard count)) "Estelle Moon should be trashed")))))]
+      (doall (map estelle-test (range 10)))))
+  (testing "Estelle Moon triggers multiple time after derez #4601"
+    (do-game
+      (new-game {:corp {:hand ["Estelle Moon" "Divert Power" (qty "Encryption Protocol" 3)]
+                        :deck [(qty "Encryption Protocol" 20)]}})
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "Estelle Moon" "New remote")
+      (let [em (get-content state :remote1 0)]
+        (core/rez state :corp (refresh em))
+        (play-from-hand state :corp "Encryption Protocol" "New remote")
+        (is (= 1 (get-counters (refresh em) :power)) "Moon has one power token")
+        (play-from-hand state :corp "Divert Power")
+        (click-card state :corp (refresh em)) ;derez moon
+        (click-card state :corp (refresh em)) ;rez again
+        (play-from-hand state :corp "Encryption Protocol" "New remote")
+        (is (= 2 (get-counters (refresh em) :power)) "Moon has two power tokens")))))
 
 (deftest eve-campaign
   ;; Eve Campaign
@@ -2447,18 +2463,46 @@
 
 (deftest marked-accounts
   ;; Marked Accounts
-  (do-game
-    (new-game {:corp {:deck ["Marked Accounts"]}})
-    (play-from-hand state :corp "Marked Accounts" "New remote")
-    (let [ma (get-content state :remote1 0)]
-      (core/rez state :corp ma)
-      (is (zero? (get-counters (refresh ma) :credit)) "Marked Accounts should start with 0 credits on it")
-      (card-ability state :corp ma 1)
-      (is (= 3 (get-counters (refresh ma) :credit)) "Marked Accounts should gain 3 credits when ability is used")
-      (take-credits state :corp)
-      (let [credits (:credit (get-corp))]
-        (take-credits state :runner)
-        (is (= (inc credits) (:credit (get-corp))) "Should gain 1 credit at beginning of turn from Marked Accounts")))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Marked Accounts"]}})
+      (play-from-hand state :corp "Marked Accounts" "New remote")
+      (let [ma (get-content state :remote1 0)]
+        (core/rez state :corp ma)
+        (is (zero? (get-counters (refresh ma) :credit)) "Marked Accounts should start with 0 credits on it")
+        (card-ability state :corp ma 1)
+        (is (= 3 (get-counters (refresh ma) :credit)) "Marked Accounts should gain 3 credits when ability is used")
+        (take-credits state :corp)
+        (let [credits (:credit (get-corp))]
+          (take-credits state :runner)
+          (is (= (inc credits) (:credit (get-corp))) "Should gain 1 credit at beginning of turn from Marked Accounts")))))
+  (testing "Marked Accounts can go negative #4599"
+    (do-game
+      (new-game {:corp {:hand [(qty "Marked Accounts" 2)]
+                        :deck [(qty "Hedge Fund" 5)]}})
+      (play-from-hand state :corp "Marked Accounts" "New remote")
+      (play-from-hand state :corp "Marked Accounts" "New remote")
+      (let [ma1 (get-content state :remote1 0)
+            ma2 (get-content state :remote2 0)
+            take-credits-both (fn [state] (doseq [side [:corp :runner]] (take-credits state side)))]
+        (core/rez state :corp ma1)
+        (core/rez state :corp ma2)
+        (is (zero? (get-counters (refresh ma1) :credit)) "First Marked Accounts should start with 0 credits on it")
+        (is (zero? (get-counters (refresh ma2) :credit)) "Second Marked Accounts should start with 0 credits on it")
+        (card-ability state :corp ma2 1)
+        (is (= 3 (get-counters (refresh ma2) :credit)) "Second Marked Accounts should gain 3 credits when ability is used")
+        (take-credits-both state)
+        (is (= 6 (:credit (get-corp))) "Took 1c from second Marked Accounts, but none from first Marked Accounts")
+        (is (zero? (get-counters (refresh ma1) :credit)) "Still no credits on first Marked Accounts")
+        (is (= 2 (get-counters (refresh ma2) :credit)) "Two credits left on second Marked Accounts")
+        (dotimes [_ 2] (take-credits-both state))
+        (is (zero? (get-counters (refresh ma1) :credit)) "Still no credits on first Marked Accounts")
+        (is (zero? (get-counters (refresh ma2) :credit)) "No credits left on second Marked Accounts")
+        (is (= 14 (:credit (get-corp))) "Took 3c from second Marked Accounts in total and 6c by clicking")
+        (card-ability state :corp ma1 1)
+        (is (= 3 (get-counters (refresh ma1) :credit)) "First Marked Accounts should gain 3 credits when ability is used")
+        (card-ability state :corp ma2 1)
+        (is (= 3 (get-counters (refresh ma2) :credit)) "Second Marked Accounts should gain 3 credits when ability is used")))))
 
 (deftest mca-austerity-policy
   (do-game

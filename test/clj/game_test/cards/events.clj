@@ -4777,20 +4777,37 @@
 
 (deftest wanton-destruction
   ;; Wanton Destruction
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand [(qty "Hedge Fund" 5)]}
-               :runner {:hand ["Wanton Destruction"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Wanton Destruction")
-    (is (= [:hq] (:server (:run @state))) "Run should be on HQ")
-    (run-successful state)
-    (click-prompt state :runner "Wanton Destruction")
-    (is (zero? (count (:discard (get-corp)))) "Corp should have no cards in Archives")
-    (click-prompt state :runner "3")
-    (is (= 2 (count (:hand (get-corp)))) "Corp should discard 3 cards")
-    (is (= 3 (count (:discard (get-corp)))) "Corp should now have 3 cards in Archives")
-    (is (zero? (:click (get-runner))) "Runner should spend 3 clicks on ability")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Wanton Destruction"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Wanton Destruction")
+      (is (= [:hq] (:server (:run @state))) "Run should be on HQ")
+      (run-successful state)
+      (click-prompt state :runner "Wanton Destruction")
+      (is (zero? (count (:discard (get-corp)))) "Corp should have no cards in Archives")
+      (click-prompt state :runner "3")
+      (is (= 2 (count (:hand (get-corp)))) "Corp should discard 3 cards")
+      (is (= 3 (count (:discard (get-corp)))) "Corp should now have 3 cards in Archives")
+      (is (zero? (:click (get-runner))) "Runner should spend 3 clicks on ability")))
+  (testing "Can choose 0 for Wanton Destruction. Issue #4618"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 5)]}
+                 :runner {:hand ["Wanton Destruction"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Wanton Destruction")
+      (is (= [:hq] (:server (:run @state))) "Run should be on HQ")
+      (run-successful state)
+      (click-prompt state :runner "Wanton Destruction")
+      (is (zero? (count (:discard (get-corp)))) "Corp should have no cards in Archives")
+      (click-prompt state :runner "0")
+      (is (= 5 (count (:hand (get-corp)))) "Corp should not have discarded cards")
+      (is (= 0 (count (:discard (get-corp)))) "Corp should not have discarded cards")
+      (is (= 3 (:click (get-runner))) "Runner should spend 0 clicks on ability")
+      (is (not (:run @state)) "Run ended"))))
 
 (deftest watch-the-world-burn
   ;; Watch the World Burn - run a remote to RFG the first card accessed

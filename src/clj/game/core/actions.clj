@@ -595,11 +595,13 @@
   [state side card]
   (let [card (get-card state card)]
     (system-msg state side (str "derezzes " (:title card)))
+    (unregister-events state side card)
     (update! state :corp (deactivate state :corp card true))
     (let [cdef (card-def card)]
       (when-let [derez-effect (:derez-effect cdef)]
         (resolve-ability state side derez-effect (get-card state card) nil))
-      (register-events state side card (map #(assoc % :condition :derezzed) (:derezzed-events cdef))))
+      (when-let [derezzed-events (:derezzed-events cdef)]
+        (register-events state side card (map #(assoc % :condition :derezzed) derezzed-events))))
     (unregister-constant-effects state side card)
     (trigger-event state side :derez card side)))
 

@@ -1979,6 +1979,49 @@
       (is (= "You accessed Otoroshi." (-> (get-runner) :prompt first :msg)) "Runner should access Otoroshi even tho it's an ice.")
       (click-prompt state :runner "No action"))))
 
+(deftest pachinko
+  ;;Pachinko
+  (testing "Autopump subtracted correct amount of credits"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Pachinko"]}
+                :runner {:hand ["Corroder"]}})
+      (play-from-hand state :corp "Pachinko" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (core/gain state :runner :credit 10)
+      (run-on state "HQ")
+      (let [pachinko (get-ice state :hq 0)
+            corroder (get-program state 0)
+            runner-credits (:credit (get-runner))]
+        (core/rez state :corp pachinko)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+        (is (= (- runner-credits 4) (:credit (get-runner))) "Autopump subtracted correct amount of credits"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Pachinko"]}})
+      (play-from-hand state :corp "Pachinko" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [pachinko (get-ice state :hq 0)]
+        (core/rez state :corp pachinko)
+        (card-subroutine state :corp pachinko 0)
+        (card-subroutine state :corp pachinko 1)
+        (is (:run @state) "Runner have no tags, run continues"))))
+  (testing "ETR with tags"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Pachinko"]}})
+      (play-from-hand state :corp "Pachinko" "HQ")
+      (take-credits state :corp)
+      (core/gain-tags state :runner 1)
+      (run-on state "HQ")
+      (let [pachinko (get-ice state :hq 0)]
+        (core/rez state :corp pachinko)
+        (card-subroutine state :corp pachinko 0)
+        (is (not (:run @state)) "Run ended"))))) 
+
 (deftest peeping-tom
   ;;Peeping Tom - Counts # of chosen card type in Runner grip
   (do-game
