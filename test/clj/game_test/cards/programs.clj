@@ -2635,19 +2635,19 @@
   ;; Sage
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Ice Wall" "Afshar"]
+                      :hand ["Ice Wall" "Enigma"]
                       :credits 10}
                :runner {:deck ["Sage" "Box-E"]
                         :credits 20}})
     (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Afshar" "R&D")
+    (play-from-hand state :corp "Enigma" "R&D")
     (take-credits state :corp)
     (play-from-hand state :runner "Sage")
     (let [sage (get-program state 0)
           iw (get-ice state :hq 0)
-          afshar (get-ice state :rd 0)]
+          enigma (get-ice state :rd 0)]
       (core/rez state :corp iw)
-      (core/rez state :corp afshar)
+      (core/rez state :corp enigma)
       (is (= 2 (core/available-mu state)))
       (is (= 2 (:current-strength (refresh sage))) "+2 strength for 2 unused MU")
       (play-from-hand state :runner "Box-E")
@@ -2660,9 +2660,9 @@
       (core/end-run state :corp)
       (run-on state :rd)
       (card-ability state :runner (refresh sage) 0)
-      (click-prompt state :runner "Make the Runner lose 2 [Credits]")
+      (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
       (click-prompt state :runner "Done")
-      (is (:broken (first (:subroutines (refresh afshar)))) "Broke a code gate subroutine"))))
+      (is (:broken (first (:subroutines (refresh enigma)))) "Broke a code gate subroutine"))))
 
 (deftest sahasrara
   ;; Sahasrara
@@ -2682,19 +2682,19 @@
   ;; Savant
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Cobra" "Afshar"]
+                      :hand ["Cobra" "Enigma"]
                       :credits 10}
                :runner {:deck ["Savant" "Box-E"]
                         :credits 20}})
     (play-from-hand state :corp "Cobra" "HQ")
-    (play-from-hand state :corp "Afshar" "R&D")
+    (play-from-hand state :corp "Enigma" "R&D")
     (take-credits state :corp)
     (play-from-hand state :runner "Savant")
     (let [savant (get-program state 0)
           cobra (get-ice state :hq 0)
-          afshar (get-ice state :rd 0)]
+          enigma (get-ice state :rd 0)]
       (core/rez state :corp cobra)
-      (core/rez state :corp afshar)
+      (core/rez state :corp enigma)
       (is (= 2 (core/available-mu state)))
       (is (= 3 (:current-strength (refresh savant))) "+2 strength for 2 unused MU")
       (play-from-hand state :runner "Box-E")
@@ -2708,9 +2708,9 @@
       (core/end-run state :corp)
       (run-on state :rd)
       (card-ability state :runner (refresh savant) 0)
-      (click-prompt state :runner "Make the Runner lose 2 [Credits]")
+      (click-prompt state :runner "Force the Runner to lose 1 [Click] if able")
       (click-prompt state :runner "End the run")
-      (is (:broken (first (:subroutines (refresh afshar)))) "Broke a code gate subroutine"))))
+      (is (:broken (first (:subroutines (refresh enigma)))) "Broke a code gate subroutine"))))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program

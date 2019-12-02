@@ -9,17 +9,36 @@
 
 (deftest afshar
   ;; Afshar
-  (do-game
-    (new-game {:corp {:hand ["Afshar"]}})
-    (play-from-hand state :corp "Afshar" "HQ")
-    (let [afshar (get-ice state :hq 0)]
-      (core/rez state :corp afshar)
+  (testing "Subroutines"
+    (do-game
+      (new-game {:corp {:hand ["Afshar"]}})
+      (play-from-hand state :corp "Afshar" "HQ")
+      (let [afshar (get-ice state :hq 0)]
+        (core/rez state :corp afshar)
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (card-subroutine state :corp afshar 0)
+        (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits")
+        (card-subroutine state :corp afshar 1)
+        (is (not (:run @state)) "Run is ended"))))
+  (testing "Breaking restriction"
+    (do-game
+      (new-game {:corp {:hand ["Afshar"]}
+                 :runner {:hand ["Gordian Blade"]
+                          :credits 10}})
+      (play-from-hand state :corp "Afshar" "HQ")
       (take-credits state :corp)
+      (play-from-hand state :runner "Gordian Blade")
       (run-on state "HQ")
-      (card-subroutine state :corp afshar 0)
-      (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits")
-      (card-subroutine state :corp afshar 1)
-      (is (not (:run @state)) "Run is ended"))))
+      (let [afshar (get-ice state :hq 0)
+            gord (get-program state 0)]
+        (core/rez state :corp afshar)
+        (is (empty? (filter #(:dynamic %) (:abilities (refresh gord)))) "No auto break dynamic ability")
+        (card-ability state :runner gord 0)
+        (click-prompt state :runner "End the run")
+        (is (empty? (:prompt (get-runner))) "No prompt for further breaking")
+        (card-ability state :runner gord 0)
+        (is (empty? (:prompt (get-runner))) "Can't use break ability")))))
 
 (deftest aimor
   ;; Aimor - trash the top 3 cards of the stack, trash Aimor
