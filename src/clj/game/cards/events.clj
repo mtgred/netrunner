@@ -2663,7 +2663,7 @@
                        :replace-access
                        {:msg (msg "force the Corp to discard " target " cards from HQ at random")
                         :prompt "How many [Click] do you want to spend?"
-                        :choices (req (map str (range 1 (inc (:click runner)))))
+                        :choices (req (map str (range 0 (inc (:click runner)))))
                         :effect (req (let [n (str->int target)]
                                        (wait-for (pay-sync state :runner card :click n)
                                                  (trash-cards state :corp eid (take n (shuffle (:hand corp)))))))}}
