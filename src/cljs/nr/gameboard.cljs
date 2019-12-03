@@ -306,6 +306,32 @@
 
 (def should-scroll (r/atom {:update true :send-msg false}))
 
+(defn log-resize [event ui]
+  "Resize the card zoom to fit the available space"
+  (let [width (.. ui -size -width)
+        top (.. ui -position -top)
+        max-card-width (- width 5)
+        max-card-height (- top 10)
+        card-ratio (/ 418 300)]
+    (if (> (/ max-card-height max-card-width) card-ratio)
+      (-> ".card-zoom" js/$
+          (.css "width" max-card-width)
+          (.css "height" (int (* max-card-width card-ratio))))
+      (-> ".card-zoom" js/$
+          (.css "width" (int (/ max-card-height card-ratio)))
+          (.css "height" max-card-height)))
+    (-> ".rightpane" js/$ (.css "width" width))
+    (set! (.. ui -position -left) 0)))
+
+(defn log-start-resize [event ui]
+  "Display a zoomed card when resizing so the user can visualize how the
+  resulting zoom will look."
+  (when-let [card (get-in @game-state [:runner :identity])]
+    (put! zoom-channel card)))
+
+(defn log-stop-resize [event ui]
+  (put! zoom-channel false))
+
 (defn log-pane []
   (r/create-class
     (let [log (r/cursor game-state [:log])]
@@ -313,7 +339,10 @@
 
        :component-did-mount
        (fn [this]
-         (-> ".log" js/$ (.resizable #js {:handles "w"})))
+         (-> ".log" js/$ (.resizable #js {:handles "w, n, nw"
+                                          :resize log-resize
+                                          :start log-start-resize
+                                          :stop log-stop-resize})))
 
        :component-will-update
        (fn [this]
