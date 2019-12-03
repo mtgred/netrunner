@@ -1222,7 +1222,21 @@
        (run-continue state)
        (run-successful state)
        (take-credits state :runner)
-       (is (not (:flipped (refresh ho))) "Hoshiko does not flip")))))
+       (is (not (:flipped (refresh ho))) "Hoshiko does not flip"))))
+  (testing "Changing link and subtype when flipping"
+    (do-game
+     (new-game {:runner {:id "Hoshiko Shiro: Next Level Shut-In"}})
+     (take-credits state :corp)
+     (let [ho (get-in @state [:runner :identity])]
+           (is (not (:flipped (refresh ho))) "Hoshiko starts unflipped")
+           (is (= 0 (:link (get-runner))) "Hoshiko starts with 0 link")
+           (is (has-subtype? (refresh ho) "Natural") "Hoshiko starts with subtype Natural")
+           (run-empty-server state :hq)
+           (click-prompt state :runner "No action")
+           (take-credits state :runner)
+           (is (:flipped (refresh ho)) "Hoshiko is flipped")
+           (is (= 1 (:link (get-runner))) "Hoshiko now has 1 link")
+           (is (has-subtype? (refresh ho) "Digital") "Hoshiko now has the subtype Digital")))))
 
 (deftest hyoubu-institute-absolute-clarity
   (testing "ID abilities"

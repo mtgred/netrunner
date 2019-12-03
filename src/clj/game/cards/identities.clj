@@ -621,13 +621,18 @@
                        card nil)))}]}
 
    "Hoshiko Shiro: Next Level Shut-In"
-   (let [flip-effect (effect (update! (if (:flipped card)
-                                        (assoc card
-                                               :flipped false
-                                               :code (subs (:code card) 0 5))
-                                        (assoc card
-                                               :flipped true
-                                               :code (str (subs (:code card) 0 5) "flip")))))]
+   (let [flip-effect (req (update! state side (if (:flipped card)
+                                                (assoc card
+                                                       :flipped false
+                                                       :code (subs (:code card) 0 5)
+                                                       :subtype "Natural")
+                                                (assoc card
+                                                       :flipped true
+                                                       :code (str (subs (:code card) 0 5) "flip")
+                                                       :subtype "Digital")))
+                          (if (:flipped card)
+                            (lose state :runner :link 1)
+                            (gain state :runner :link 1)))]
    {:events [{:event :pre-first-turn
               :req (req (= side :runner))
               :effect (effect (update! (assoc card :flipped false)))}
