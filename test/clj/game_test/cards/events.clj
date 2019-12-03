@@ -1692,9 +1692,9 @@
       (starting-hand state :runner ["Emergent Creativity" "Heartbeat" "Gordian Blade" ])
       (take-credits state :corp)
       (play-from-hand state :runner "Emergent Creativity")
-      (click-card state :runner (find-card "Heartbeat" (:hand (get-runner))))
-      (click-card state :runner (find-card "Gordian Blade" (:hand (get-runner))))
-      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Liberated Account shouldn't be shown in prompt (only Cancel)")
+      (click-card state :runner "Heartbeat")
+      (click-card state :runner "Gordian Blade")
+      (is (= ["Cancel"] (-> (get-runner) :prompt first :choices)) "Liberated Account shouldn't be shown in prompt (only Cancel)")
       (click-prompt state :runner "Cancel"))))
 
 (deftest employee-strike
