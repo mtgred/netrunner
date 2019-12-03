@@ -2237,7 +2237,7 @@
         (card-ability state :runner smc1 0)
         (click-prompt state :runner "Self-modifying Code")
         (is (= 3 (:credit (get-runner))) "Paid 2 for SMC, 0 for install - 3 credits left")
-        (is (zero? (count(:hand (get-runner)))) "Runner hand should be empty")
+        (is (empty? (:hand (get-runner))) "Runner hand should be empty")
         (is (nil? (refresh qchip)) "Q chip should be trashed"))))
   (testing "program trashed from hand shouldn't trash chip"
     (do-game
