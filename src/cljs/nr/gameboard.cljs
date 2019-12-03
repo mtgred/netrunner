@@ -306,6 +306,18 @@
 
 (def should-scroll (r/atom {:update true :send-msg false}))
 
+(defn log-resize [event ui]
+  (let [width (.. ui -size -width)
+        card-width (- width 5)
+        card-ratio (/ 418 300)
+        card-height (* card-width card-ratio)]
+    (-> ".card-zoom" js/$
+        (.css "width" card-width)
+        (.css "height" card-height))
+    (set! (.. ui -size -width) width)
+    (set! (.. ui -position -left) 0)
+    (set! (.. ui -position -top) (+ card-height 10))))
+
 (defn log-pane []
   (r/create-class
     (let [log (r/cursor game-state [:log])]
@@ -313,7 +325,8 @@
 
        :component-did-mount
        (fn [this]
-         (-> ".log" js/$ (.resizable #js {:handles "w"})))
+         (-> ".log" js/$ (.resizable #js {:handles "w"
+                                          :resize log-resize})))
 
        :component-will-update
        (fn [this]
