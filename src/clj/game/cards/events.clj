@@ -823,9 +823,11 @@
               :msg (msg "trash " (if (empty? to-trash) "no cards" (join ", " (map :title to-trash)))
                         " and install " (:title target)
                         " lowering the cost by " trash-cost)
-              :choices (req (cancellable (filter #(or (program? %)
-                                                      (hardware? %)
-                                                      (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
+              ;;:choices (req (cancellable (filter #(or (program? %)
+              ;;                                  (hardware? %)
+              :choices (req (cancellable (filter #(and (or (program? %)
+                                                           (hardware? %))
+                                                       (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                                 [:credit (install-cost state side % {:cost-bonus (- trash-cost)})]))
                                                  (:deck runner)) :sorted))
               :effect (req (trigger-event state side :searched-stack nil)
