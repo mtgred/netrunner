@@ -352,7 +352,11 @@
         [:p
          [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
                              :type "password"
-                             :value (:password @s) :placeholder "Password" :maxLength "30"}]]
+                             :value (:password @s) :placeholder "Password" :maxLength "30"
+                             :on-key-press (fn [e]
+                                            (when (= 13 (.charCode e))
+                                              (join prompt)))}]]
+
         [:p
          [:button {:type "button" :on-click #(join prompt)}
           prompt]
