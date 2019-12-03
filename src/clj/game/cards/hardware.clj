@@ -1356,7 +1356,9 @@
    {:in-play [:memory 1]
     :events (let [e {:async true
                      :interactive (req true)
-                     :req (req (some program? targets))
+                     :req (req (some #(and (installed? %)
+                                           (program? %))
+                                     targets))
                      :effect (effect (system-msg (str "trashes Q-Coherence Chip"))
                                      (trash eid card nil))}]
               [(assoc e :event :runner-trash)
