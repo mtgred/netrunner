@@ -352,7 +352,7 @@
 ;; Card definitions
 (def card-definitions
   {"Afshar"
-   (let [breakable-fn (fn [ice] (empty? (filter #(and (:broken %) (:printed %)) (:subroutines ice))))]
+   (let [breakable-fn (fn [ice] (empty? (filter #(and (= :hq (second (:zone ice))) (:broken %) (:printed %)) (:subroutines ice))))]
      {:subroutines [{:msg "make the Runner lose 2 [Credits]"
                      :breakable breakable-fn
                      :effect (effect (lose-credits :runner 2))}

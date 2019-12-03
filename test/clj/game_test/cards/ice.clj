@@ -38,7 +38,23 @@
         (click-prompt state :runner "End the run")
         (is (empty? (:prompt (get-runner))) "No prompt for further breaking")
         (card-ability state :runner gord 0)
-        (is (empty? (:prompt (get-runner))) "Can't use break ability")))))
+        (is (empty? (:prompt (get-runner))) "Can't use break ability"))))
+  (testing "No breaking restriction on other servers"
+    (do-game
+      (new-game {:corp {:hand ["Afshar"]}
+                 :runner {:hand ["Gordian Blade"]
+                          :credits 10}})
+      (play-from-hand state :corp "Afshar" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state "R&D")
+      (let [afshar (get-ice state :rd 0)
+            gord (get-program state 0)]
+        (core/rez state :corp afshar)
+        (card-ability state :runner gord 0)
+        (click-prompt state :runner "End the run")
+        (is (not-empty (:prompt (get-runner))) "Can break more subs")
+        (click-prompt state :runner "Make the Runner lose 2 [Credits]")))))
 
 (deftest aimor
   ;; Aimor - trash the top 3 cards of the stack, trash Aimor
