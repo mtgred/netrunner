@@ -464,7 +464,7 @@
             {target-cid :cid} target
             non-target-cids (set (map :cid non-targets))]
         (core/trash-cards state :runner (:hand (get-runner)))
-        (click-prompt state :runner target)
+        (click-prompt state :runner (assoc target :zone [:discard]))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
         (is (= target-cid (:cid (last (:deck (get-runner))))))
@@ -479,7 +479,7 @@
             {target-cid :cid} target
             non-target-cids (set (map :cid non-targets))]
         (core/trash-cards state :runner (:hand (get-runner)))
-        (click-prompt state :runner target)
+        (click-prompt state :runner (assoc target :zone [:discard]))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
         (is (= target-cid (:cid (last (:deck (get-runner))))))
@@ -494,7 +494,7 @@
             {target-cid :cid} target
             non-target-cids (set (map :cid non-targets))]
         (core/trash-cards state :runner (take 3 (:deck (get-runner))))
-        (click-prompt state :runner target)
+        (click-prompt state :runner (assoc target :zone [:discard]))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
         (is (= target-cid (:cid (last (:deck (get-runner))))))
@@ -2242,7 +2242,7 @@
   (testing "program trashed from hand shouldn't trash chip"
     (do-game
       (new-game {:corp {:deck [(qty "Breached Dome" 10)]}
-                 :runner {:deck ["Self-modifying Code", "Q-Coherence Chip"]}})               
+                 :runner {:deck ["Self-modifying Code", "Q-Coherence Chip"]}})
       (starting-hand state :runner ["Self-modifying Code" "Q-Coherence Chip"])
       (starting-hand state :corp ["Breached Dome"])
       (play-from-hand state :corp "Breached Dome" "New remote")
@@ -2255,7 +2255,7 @@
   (testing "program milled from stack shouldn't trash chip"
     (do-game
       (new-game {:corp {:deck [(qty "Breached Dome" 10)]}
-                 :runner {:deck ["Self-modifying Code", (qty "Q-Coherence Chip" 2)]}})               
+                 :runner {:deck ["Self-modifying Code", (qty "Q-Coherence Chip" 2)]}})
       (starting-hand state :runner ["Q-Coherence Chip", "Q-Coherence Chip"])
       (starting-hand state :corp ["Breached Dome"])
       (play-from-hand state :corp "Breached Dome" "New remote")
