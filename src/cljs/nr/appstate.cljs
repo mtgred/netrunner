@@ -17,6 +17,7 @@
                             :runner-board-order (= (get-local-value "runner-board-order" "true") "true")
                             :deckstats "always"
                             :gamestats "always"
+                            :log-width (str->int (get-local-value "log-width" "300"))
                             :sounds (= (get-local-value "sounds" "true") "true")
                             :lobby-sounds (= (get-local-value "lobby_sounds" "true") "true")
                             :sounds-volume (str->int (get-local-value "sounds_volume" "100"))}

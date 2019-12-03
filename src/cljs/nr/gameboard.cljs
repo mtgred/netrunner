@@ -316,7 +316,8 @@
         (.css "height" card-height))
     (set! (.. ui -size -width) width)
     (set! (.. ui -position -left) 0)
-    (set! (.. ui -position -top) (+ card-height 10))))
+    (set! (.. ui -position -top) (+ card-height 10))
+    (swap! app-state assoc-in [:options :log-width] width)))
 
 (defn log-pane []
   (r/create-class
