@@ -461,10 +461,10 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (let [[target & non-targets] (:hand (get-runner))
-            {target-name :title, target-cid :cid} target
+            {target-cid :cid} target
             non-target-cids (set (map :cid non-targets))]
         (core/trash-cards state :runner (:hand (get-runner)))
-        (click-prompt state :runner target-name)
+        (click-prompt state :runner target)
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
         (is (= target-cid (:cid (last (:deck (get-runner))))))
@@ -476,10 +476,10 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (let [[target & non-targets] (:hand (get-runner))
-            {target-name :title, target-cid :cid} target
+            {target-cid :cid} target
             non-target-cids (set (map :cid non-targets))]
         (core/trash-cards state :runner (:hand (get-runner)))
-        (click-prompt state :runner target-name)
+        (click-prompt state :runner target)
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
         (is (= target-cid (:cid (last (:deck (get-runner))))))
@@ -491,10 +491,10 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (let [[target & non-targets] (take 3 (:deck (get-runner)))
-            {target-name :title, target-cid :cid} target
+            {target-cid :cid} target
             non-target-cids (set (map :cid non-targets))]
         (core/trash-cards state :runner (take 3 (:deck (get-runner))))
-        (click-prompt state :runner target-name)
+        (click-prompt state :runner target)
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
         (is (= target-cid (:cid (last (:deck (get-runner))))))
