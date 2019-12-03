@@ -2217,6 +2217,55 @@
                            (play-from-hand state :runner "Dirty Laundry")
                            (click-card state :runner pt))))))
 
+(deftest q-coherence-chip
+  ;; Q-Coherence Chip
+  (testing "Basic memory test"
+    (do-game
+      (new-game {:runner {:deck [(qty "Q-Coherence Chip" 3)]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Q-Coherence Chip")
+        (is (= 5 (core/available-mu state)) "Gain 1 memory")))
+  (testing "Basic trash test"
+    (do-game
+      (new-game {:runner {:deck [(qty "Self-modifying Code" 3) "Q-Coherence Chip"]}})
+      (starting-hand state :runner ["Self-modifying Code" "Q-Coherence Chip"])
+      (take-credits state :corp)
+      (play-from-hand state :runner "Q-Coherence Chip")
+      (play-from-hand state :runner "Self-modifying Code")
+      (let [smc1 (get-program state 0),
+            qchip (get-hardware state 0)]
+        (card-ability state :runner smc1 0)
+        (click-prompt state :runner (find-card "Self-modifying Code" (:deck (get-runner))))
+        (is (= 3 (:credit (get-runner))) "Paid 2 for SMC, 0 for install - 3 credits left")
+        (is (zero? (count(:hand (get-runner)))) "Runner hand should be empty")
+        (is (nil? (refresh qchip )) "Q chip should be trashed"))))
+  (testing "program trashed from hand shouldn't trash chip"
+    (do-game
+      (new-game {:corp {:deck [(qty "Breached Dome" 10)]}
+                 :runner {:deck ["Self-modifying Code", "Q-Coherence Chip"]}})               
+      (starting-hand state :runner ["Self-modifying Code" "Q-Coherence Chip"])
+      (starting-hand state :corp ["Breached Dome"])
+      (play-from-hand state :corp "Breached Dome" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Q-Coherence Chip")
+      (let [qchip (get-hardware state 0)]
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "No action")
+        (is (refresh qchip) "Q chip should NOT be trashed"))))
+  (testing "program milled from stack shouldn't trash chip"
+    (do-game
+      (new-game {:corp {:deck [(qty "Breached Dome" 10)]}
+                 :runner {:deck ["Self-modifying Code", (qty "Q-Coherence Chip" 2)]}})               
+      (starting-hand state :runner ["Q-Coherence Chip", "Q-Coherence Chip"])
+      (starting-hand state :corp ["Breached Dome"])
+      (play-from-hand state :corp "Breached Dome" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Q-Coherence Chip")
+      (let [qchip (get-hardware state 0)]
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "No action")
+        (is (refresh qchip) "Q chip should NOT be trashed")))))
+
 (deftest rabbit-hole
   ;; Rabbit Hole - +1 link, optionally search Stack to install more copies
   (do-game
