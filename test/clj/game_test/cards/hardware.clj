@@ -2235,7 +2235,7 @@
       (let [smc1 (get-program state 0)
             qchip (get-hardware state 0)]
         (card-ability state :runner smc1 0)
-        (click-prompt state :runner (find-card "Self-modifying Code" (:deck (get-runner))))
+        (click-prompt state :runner "Self-modifying Code")
         (is (= 3 (:credit (get-runner))) "Paid 2 for SMC, 0 for install - 3 credits left")
         (is (zero? (count(:hand (get-runner)))) "Runner hand should be empty")
         (is (nil? (refresh qchip)) "Q chip should be trashed"))))
