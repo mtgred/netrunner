@@ -2232,7 +2232,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Q-Coherence Chip")
       (play-from-hand state :runner "Self-modifying Code")
-      (let [smc1 (get-program state 0),
+      (let [smc1 (get-program state 0)
             qchip (get-hardware state 0)]
         (card-ability state :runner smc1 0)
         (click-prompt state :runner (find-card "Self-modifying Code" (:deck (get-runner))))
