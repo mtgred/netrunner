@@ -481,7 +481,7 @@
       (click-prompt state :runner "Professional Contacts")
       (click-prompt state :runner "Yes")
       (is (= "Professional Contacts" (:title (get-resource state 0))) "ProCo was correctly installed")
-      (is (= (+ 5 -1 -5 1) (:credit (get-runner))) "Spent all credits. Was at 5, -1 hostage, -5 ProCo, +1 ID")
+      (is (= (+ 5 -1 -5 1) (:credit (get-runner))) "Spent all credits. Was at 5, -1 hostage, -5 ProCo, +1 ID"))))
 
 (deftest azmari-edtech-shaping-the-future
   ;; Azmari EdTech: Shaping the Future
