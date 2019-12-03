@@ -1358,7 +1358,7 @@
                      :interactive (req true)
                      :req (req (some #(and (installed? %)
                                            (program? %))
-                                   targets))
+                                     targets))
                      :effect (effect (system-msg (str "trashes Q-Coherence Chip"))
                                      (trash eid card nil))}]
               [(assoc e :event :runner-trash)
