@@ -70,6 +70,15 @@
           (println "Finished downloading card art"))
         (println "All" total "card images exist, skipping download")))))
 
+(defn update-config
+  "Store import meta info in the db"
+  []
+  (mc/update webdb/db "config"
+             {:cards-version {$exists true}}
+             {$inc {:cards-version 1}
+              $currentDate {:last-updated true}}
+             {:upsert true}))
+
 (defn fetch-data
   [{:keys [card-images db local]}]
   (let [edn (download-edn-data local)]
@@ -84,6 +93,7 @@
                 :let [col (name k)]]
           (replace-collection col data)
           (println (str "Imported " col " into database")))
+        (update-config)
         (finally (webdb/disconnect))))
     (println (count (:cycles edn)) "cycles imported")
     (println (count (:sets edn)) "sets imported")
@@ -91,12 +101,3 @@
     (println (count (:cards edn)) "cards imported")
     (when card-images
       (download-card-images (:cards edn)))))
-
-(defn update-config
-  "Store import meta info in the db"
-  []
-  (mc/update webdb/db "config"
-             {:cards-version {$exists true}}
-             {$inc {:cards-version 1}
-              $currentDate {:last-updated true}}
-             {:upsert true}))
