@@ -297,6 +297,16 @@
         (is (= 1 (- (:credit (get-corp)) c-credits)))
         (is (= -1 (- (:credit (get-runner)) r-credits)))))))
 
+(deftest bass-ch1r180g4
+  (do-game
+    (new-game {:corp {:deck ["Bass CH1R180G4"]}})
+    (play-from-hand state :corp "Bass CH1R180G4" "New remote")
+    (let [bass (get-content state :remote1 0)]
+      (core/rez state :corp bass)
+      (is (= 2 (:credit (get-corp))))
+      (card-ability state :corp bass 0)
+      (is (= 3 (:click (get-corp)))))))
+
 (deftest bio-ethics-association
   ;; Bio-Ethics Association
   (testing "Basic test"
