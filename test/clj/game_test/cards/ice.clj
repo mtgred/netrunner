@@ -162,8 +162,38 @@
         (is (= 0 (get-counters (refresh akhet) :advancement)) "Akhet has no adv tokens")
         (click-card state :corp (refresh akhet))
         (is (= 1 (get-counters (refresh akhet) :advancement)) "Akhet gained 1 adv tokens")
-        (is (not (:run @state)) "Run has ended")))))
-
+        (is (not (:run @state)) "Run has ended"))))
+  (testing "Breaking restriction"
+    (do-game
+      (new-game {:corp {:hand ["Akhet"]}
+                 :runner {:hand ["Corroder"]}})
+      (play-from-hand state :corp "Akhet" "HQ")
+      (let [akhet (get-ice state :hq 0)]
+        (dotimes [n 2] (core/advance state :corp {:card akhet}))
+        (is (= 2 (get-counters (refresh akhet) :advancement)) "Akhet has 2 adv tokens")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (run-on state :hq)
+        (let [cor (get-program state 0)]
+          (core/rez state :corp (refresh akhet))
+          (card-ability state :runner cor 0)
+          (click-prompt state :runner "End the run")
+          (is (not-empty (:prompt (get-runner))) "Prompt to break second sub open")
+          (click-prompt state :runner "Gain 1[Credit]. Place 1 advancement token.")
+          (is (empty? (:prompt (get-runner))) "Prompt now closed")
+          (is (empty? (remove :broken (:subroutines (refresh akhet)))) "All subroutines broken")
+          (run-jack-out state)
+          (take-credits state :runner)
+          (core/gain state :corp :credit 1)
+          (core/advance state :corp {:card (refresh akhet)})
+          (is (= 3 (get-counters (refresh akhet) :advancement)) "Akhet now has 3 adv tokens")
+          (take-credits state :corp)
+          (core/gain state :runner :credit 5)
+          (run-on state :hq)
+          (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+          (card-ability state :runner (refresh cor) 0)
+          (click-prompt state :runner "End the run")
+          (is (empty? (:prompt (get-runner))) "No option to break second sub"))))))
 
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.

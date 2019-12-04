@@ -381,7 +381,7 @@
                                 (system-msg state side (str "trashes Aimor")))}]}
 
    "Akhet"
-   (let [breakable-fn (fn [ice] (if (<= 3 (get-advance-counters ice)) 
+   (let [breakable-fn (fn [ice] (if (<= 3 (get-counters ice :advancement))
                                   (empty? (filter #(and (:broken %) (:printed %)) (:subroutines ice)))
                                   true))]
      {:subroutines [{:label "Gain 1[Credit]. Place 1 advancement token."
