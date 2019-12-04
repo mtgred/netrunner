@@ -67,7 +67,7 @@
       (let [afshar (get-ice state :hq 0)
             gord (get-program state 0)]
         (core/rez state :corp afshar)
-        (is (empty? (filter #(:dynamic %) (:abilities (refresh gord)))) "No auto break dynamic ability")
+        (is (empty? (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh gord)))) "No auto break dynamic ability")
         (card-ability state :runner gord 0)
         (click-prompt state :runner "Make the Runner lose 2 [Credits]")
         (core/resolve-unbroken-subs! state :corp (refresh afshar))

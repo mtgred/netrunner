@@ -352,7 +352,9 @@
 ;; Card definitions
 (def card-definitions
   {"Afshar"
-   (let [breakable-fn (fn [ice] (empty? (filter #(and (= :hq (second (:zone ice))) (:broken %) (:printed %)) (:subroutines ice))))]
+   (let [breakable-fn (fn [ice] (if (= :hq (second (:zone ice)))
+                                  (empty? (filter #(and (:broken %) (:printed %)) (:subroutines ice)))
+                                  :unrestricted))]
      {:subroutines [{:msg "make the Runner lose 2 [Credits]"
                      :breakable breakable-fn
                      :effect (effect (lose-credits :runner 2))}
@@ -383,7 +385,7 @@
    "Akhet"
    (let [breakable-fn (fn [ice] (if (<= 3 (get-counters ice :advancement))
                                   (empty? (filter #(and (:broken %) (:printed %)) (:subroutines ice)))
-                                  true))]
+                                  :unrestricted))] ; returning :unrestricted allows auto-pump-and-break to break this ice
      {:subroutines [{:label "Gain 1[Credit]. Place 1 advancement token."
                      :breakable breakable-fn
                      :msg (msg "gain 1 [Credit] and place 1 advancement token on " (card-str state target))
