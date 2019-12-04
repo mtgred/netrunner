@@ -29,7 +29,28 @@
         (is (= "1 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities first :label)))
         (core/rez state :corp p2)
         (is (= "2 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities first :label)))
-        (is (= 2 (count (:subroutines (refresh tg)))))))))
+        (is (= 2 (count (:subroutines (refresh tg))))))))
+  (testing "Also works on second encounter"
+    (do-game
+      (new-game {:corp {:hand ["Tour Guide" (qty "PAD Campaign" 2)]
+                        :credits 10}
+                 :runner {:hand ["Bukhgalter"]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "Tour Guide" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bukhgalter")
+      (let [p1 (get-content state :remote1 0)
+            tg (get-ice state :hq 0)
+            buk (get-program state 0)]
+        (core/rez state :corp p1)
+        (core/rez state :corp tg)
+        (run-on state :hq)
+        (is (= "1 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities first :label)))
+        (core/resolve-unbroken-subs! state :corp (refresh tg))
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (run-on state :hq)
+        (is (= "1 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities first :label)))))))
 
 (deftest bioroid-break-abilities
   ;; The click-to-break ablities on bioroids shouldn't create an undo-click

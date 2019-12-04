@@ -113,7 +113,7 @@
 
 (defn reset-sub
   [ice sub]
-  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (dissoc sub :broken :fired :resolve :breakable))))
+  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (dissoc sub :broken :fired :resolve))))
 
 (defn reset-sub!
   [state ice sub]
@@ -477,7 +477,7 @@
               unbroken-subs (count (remove :broken (:subroutines current-ice)))
               no-unbreakable-subs (empty? (filter #(if (fn? (:breakable %))
                                                      true
-                                                     (not (:breakable %)))
+                                                     (not (:breakable % true)))
                                                   (:subroutines current-ice)))
               times-break (when (and (pos? unbroken-subs)
                                      subs-broken-at-once)

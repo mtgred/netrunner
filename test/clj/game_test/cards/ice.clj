@@ -38,6 +38,47 @@
         (click-prompt state :runner "End the run")
         (is (empty? (:prompt (get-runner))) "No prompt for further breaking")
         (card-ability state :runner gord 0)
+        (is (empty? (:prompt (get-runner))) "Can't use break ability"))))
+  (testing "No breaking restriction on other servers"
+    (do-game
+      (new-game {:corp {:hand ["Afshar"]}
+                 :runner {:hand ["Gordian Blade"]
+                          :credits 10}})
+      (play-from-hand state :corp "Afshar" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state "R&D")
+      (let [afshar (get-ice state :rd 0)
+            gord (get-program state 0)]
+        (core/rez state :corp afshar)
+        (card-ability state :runner gord 0)
+        (click-prompt state :runner "End the run")
+        (is (not-empty (:prompt (get-runner))) "Can break more subs")
+        (click-prompt state :runner "Make the Runner lose 2 [Credits]"))))
+  (testing "Breaking restriction also on the second encounter"
+    (do-game
+      (new-game {:corp {:hand ["Afshar"]}
+                 :runner {:hand ["Gordian Blade"]
+                          :credits 10}})
+      (play-from-hand state :corp "Afshar" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state "HQ")
+      (let [afshar (get-ice state :hq 0)
+            gord (get-program state 0)]
+        (core/rez state :corp afshar)
+        (is (empty? (filter #(:dynamic %) (:abilities (refresh gord)))) "No auto break dynamic ability")
+        (card-ability state :runner gord 0)
+        (click-prompt state :runner "Make the Runner lose 2 [Credits]")
+        (core/resolve-unbroken-subs! state :corp (refresh afshar))
+        (is (not (:run @state)) "Run ended")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (card-ability state :runner gord 0)
+        (click-prompt state :runner "Make the Runner lose 2 [Credits]")
+        (is (empty? (:prompt (get-runner))) "No prompt for further breaking")
+        (card-ability state :runner gord 0)
         (is (empty? (:prompt (get-runner))) "Can't use break ability")))))
 
 (deftest aimor
