@@ -381,15 +381,18 @@
                                 (system-msg state side (str "trashes Aimor")))}]}
 
    "Akhet"
-   {:implementation "Breaking both subs not restricted"
-    :subroutines [{:label "Gain 1[Credit]. Place 1 advancement token."
-                   :msg (msg "gain 1 [Credit] and place 1 advancement token on " (card-str state target))
-                   :prompt "Choose an installed card"
-                   :choices {:card installed?}
-                   :effect (effect (gain-credits 1)
-                                   (add-prop target :advance-counter 1 {:placed true}))}
-                  end-the-run]
-    :strength-bonus (req (if (<= 3 (get-advance-counters card)) 3 0))}
+   (let [breakable-fn (fn [ice] (if (<= 3 (get-advance-counters ice)) 
+                                  (empty? (filter #(and (:broken %) (:printed %)) (:subroutines ice)))
+                                  true))]
+     {:subroutines [{:label "Gain 1[Credit]. Place 1 advancement token."
+                     :breakable breakable-fn
+                     :msg (msg "gain 1 [Credit] and place 1 advancement token on " (card-str state target))
+                     :prompt "Choose an installed card"
+                     :choices {:card installed?}
+                     :effect (effect (gain-credits 1)
+                                     (add-prop target :advance-counter 1 {:placed true}))}
+                    (assoc end-the-run :breakable breakable-fn)]
+      :strength-bonus (req (if (<= 3 (get-advance-counters card)) 3 0))})
 
    "Anansi"
    (let [corp-draw {:optional {:prompt "Draw 1 card?"
