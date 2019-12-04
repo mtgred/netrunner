@@ -535,7 +535,7 @@
            [:span.impl-msg implemented])]))))
 
 (defn card-zoom [zoom-card]
-  (when-let [card @zoom-card]
+  (if-let [card @zoom-card]
     [:div.card-preview.blue-shade
      [:h4 (:title card)]
      (when-let [memory (:memoryunits card)]
@@ -569,7 +569,9 @@
                       (some #(when (= (:title %) title) %) @all-cards))]
              (render-icons (:text (card-by-title (:title card)))))]]
      (when-let [url (image-url card)]
-       [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])]))
+       [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])
+     (do (-> ".card-zoom" js/$ (.addClass "fade")) nil)]
+    (do (-> ".card-zoom" js/$ (.removeClass "fade")) nil)))
 
 (defn server-menu [card c-state remotes type zone]
   (let [centrals ["Archives" "R&D" "HQ"]
