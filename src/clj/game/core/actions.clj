@@ -253,7 +253,7 @@
       ;; Default text prompt
       :else
       (let [buttons (filter #(or (= choice %)
-                                 (= card %)
+                                 (same-card? card %)
                                  (let [choice-str (if (string? choice)
                                                     (lower-case choice)
                                                     (lower-case (:title choice "do-not-match")))]

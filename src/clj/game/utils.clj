@@ -150,7 +150,11 @@
   "Checks if the two cards are the same by :cid. Alternatively specify 1-function to use to check the card"
   ([card1 card2] (same-card? :cid card1 card2))
   ([func card1 card2]
-    (= (func card1) (func card2))))
+   (let [id1 (func card1)
+         id2 (func card2)]
+     (and (some? id1)
+          (some? id2)
+          (= id1 id2)))))
 
 ;;; Functions for working with zones.
 (defn remote-num->name [num]
