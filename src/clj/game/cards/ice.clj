@@ -1702,6 +1702,14 @@
       :abilities [{:label "Reset subroutines"
                    :effect (effect (reset-variable-subs card (count (:hand runner)) sub))}]})
 
+   "Konjin"
+   {:implementation "Encounter effect is manual"
+    :abilities [(do-psi {:label "Force the runner to encounter another ice"
+                         :prompt "Choose a piece of ice"
+                         :choices {:card ice?
+                                   :not-self true}
+                         :msg (msg "force the Runner to encounter " (card-str state target))})]}
+
    "Lab Dog"
    {:subroutines [(assoc trash-hardware
                          :label "Force the Runner to trash an installed piece of hardware"
