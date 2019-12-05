@@ -475,9 +475,9 @@
               subs-broken-at-once (when break-ability
                                     (:break break-ability 1))
               unbroken-subs (count (remove :broken (:subroutines current-ice)))
-              no-unbreakable-subs (empty? (filter #(if (fn? (:breakable %))
-                                                     true
-                                                     (not (:breakable % true)))
+              no-unbreakable-subs (empty? (filter #(if (fn? (:breakable %)) ; filter for possibly unbreakable subs
+                                                     (if (= :unrestricted ((:breakable %) current-ice)) false true) ; breakable is a 1-fn
+                                                     (not (:breakable % true))) ; breakable is a bool
                                                   (:subroutines current-ice)))
               times-break (when (and (pos? unbroken-subs)
                                      subs-broken-at-once)
