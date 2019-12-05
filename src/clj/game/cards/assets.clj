@@ -227,6 +227,11 @@
               :effect (effect (gain-credits 1)
                               (lose-credits :runner 1))}]}
 
+   "Bass CH1R180G4"
+   {:abilities [{:cost [:click 1 :trash]
+                 :msg "gain [Click][Click]"
+                 :effect (effect (gain :click 2))}]}
+
    "Bio-Ethics Association"
    (let [ability {:req (req unprotected)
                   :async true
