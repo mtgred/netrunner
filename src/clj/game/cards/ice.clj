@@ -386,7 +386,8 @@
    (let [breakable-fn (fn [ice] (if (<= 3 (get-counters ice :advancement))
                                   (empty? (filter #(and (:broken %) (:printed %)) (:subroutines ice)))
                                   :unrestricted))] ; returning :unrestricted allows auto-pump-and-break to break this ice
-     {:subroutines [{:label "Gain 1[Credit]. Place 1 advancement token."
+     {:advanceable :always
+      :subroutines [{:label "Gain 1[Credit]. Place 1 advancement token."
                      :breakable breakable-fn
                      :msg (msg "gain 1 [Credit] and place 1 advancement token on " (card-str state target))
                      :prompt "Choose an installed card"
