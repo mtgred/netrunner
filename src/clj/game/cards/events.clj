@@ -181,14 +181,14 @@
                                         :duration :end-of-run
                                         :effect (effect (update! (update-in (get-card state card) [:special :bravado-passed] conj (:cid current-ice))))}])
                 (make-run eid target nil (get-card state card)))
-      :events [{:event :successful-run-ends
+      :events [{:event :run-ends
                 :silent (req true)
                 :msg (msg "gain "
                        (+ 6 (count (distinct (get-in card [:special :bravado-passed])))
                           (get-in card [:special :bravado-moved] 0))
                        " [Credits]")
-                :effect (effect (gain-credits (+ 6 (count (distinct (get-in card [:special :bravado-passed])))
-                                                 (get-in card [:special :bravado-moved] 0))))}
+                :effect (effect (gain-credits :runner (+ 6 (count (distinct (get-in card [:special :bravado-passed])))
+                                                         (get-in card [:special :bravado-moved] 0))))}
                {:event :card-moved
                 :silent (req true)
                 :req (req (in-coll? (get-in card [:special :bravado-passed] []) (:cid target)))

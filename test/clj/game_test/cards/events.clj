@@ -509,7 +509,23 @@
         (changes-val-macro 11 (:credit (get-runner))
                            "Gained 6+5 credits from Bravado"
                            ; Cell Portal, Architect, Ice Wall, 2x Enigma
-                           (run-successful state))))))
+                           (run-successful state)))))
+  (testing "Also gaining credits on unsuccessful runs"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Bravado"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bravado")
+      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Only HQ is runnable")
+      (click-prompt state :runner "HQ")
+      (let [icew (get-ice state :hq 0)]
+        (core/rez state :corp icew)
+        (changes-val-macro 6 (:credit (get-runner))
+                           "Gained 6 credits from Bravado"
+                           (card-subroutine state :corp (refresh icew) 0))
+        (is (not (:run @state)) "Run has ended")))))
+
 (deftest bribery
   ;; Bribery
   (do-game
