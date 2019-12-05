@@ -1002,6 +1002,7 @@
    {:trash-after-resolving false
     :prompt "Choose a server"
     :choices (req servers)
+    :msg (msg "choose " target)
     :effect (effect (update! (assoc-in card [:special :hyoubu-precog-target] target)))
     :events [{:event :successful-run
               :req (req (= (zone->name (get-in @state [:run :server])) (get-in card [:special :hyoubu-precog-target])))
