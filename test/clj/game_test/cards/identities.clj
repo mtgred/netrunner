@@ -454,22 +454,34 @@
 
 (deftest az-mccaffrey-mechanical-prodigy
   ;; Az McCaffrey: Mechanical Prodigy
-  (do-game
-    (new-game {:runner {:id "Az McCaffrey: Mechanical Prodigy"
-                        :deck ["Bank Job" "Drug Dealer" "HQ Interface"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Bank Job")
-    (is (= 1 (count (get-resource state))) "One installed resource")
-    (is (= 5 (:credit (get-runner))) "Az discount was applied")
-    (play-from-hand state :runner "Drug Dealer")
-    (is (= 2 (count (get-resource state))) "Two installed resources")
-    (is (= 4 (:credit (get-runner))) "Az discount not applied on 2nd install")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (let [creds (:credit (get-runner))]
-      (play-from-hand state :runner "HQ Interface")
-      (is (= 1 (count (get-hardware state))) "One installed hardware")
-      (is (= (- creds 3) (:credit (get-runner))) "Az discount was applied"))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:id "Az McCaffrey: Mechanical Prodigy"
+                          :deck ["Bank Job" "Drug Dealer" "HQ Interface"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bank Job")
+      (is (= 1 (count (get-resource state))) "One installed resource")
+      (is (= 5 (:credit (get-runner))) "Az discount was applied")
+      (play-from-hand state :runner "Drug Dealer")
+      (is (= 2 (count (get-resource state))) "Two installed resources")
+      (is (= 4 (:credit (get-runner))) "Az discount not applied on 2nd install")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [creds (:credit (get-runner))]
+        (play-from-hand state :runner "HQ Interface")
+        (is (= 1 (count (get-hardware state))) "One installed hardware")
+        (is (= (- creds 3) (:credit (get-runner))) "Az discount was applied"))))
+  (testing "Test for interaction with Hostage"
+    (do-game
+      (new-game {:runner {:id "Az McCaffrey: Mechanical Prodigy"
+                          :deck ["Hostage" "Professional Contacts"]
+                          :hand ["Hostage"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hostage")
+      (click-prompt state :runner "Professional Contacts")
+      (click-prompt state :runner "Yes")
+      (is (= "Professional Contacts" (:title (get-resource state 0))) "ProCo was correctly installed")
+      (is (= (+ 5 -1 -5 1) (:credit (get-runner))) "Spent all credits. Was at 5, -1 hostage, -5 ProCo, +1 ID"))))
 
 (deftest azmari-edtech-shaping-the-future
   ;; Azmari EdTech: Shaping the Future
