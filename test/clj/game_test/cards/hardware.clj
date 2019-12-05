@@ -1389,7 +1389,21 @@
       (changes-val-macro 6 (:credit (get-runner))
                          "Paid 4 for Sure Gamble. Got 9 from Sure Gamble and 1 from Keiko"
                          (play-from-hand state :runner "Sure Gamble")
-                         (click-card state :runner (get-resource state 0))))))
+                         (click-card state :runner (get-resource state 0)))))
+  (testing "Does not fire on second trigger"
+    (do-game
+      (new-game {:runner {:deck ["Mystic Maemi" "Keiko" "Sure Gamble"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mystic Maemi")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (changes-val-macro 5 (:credit (get-runner))
+                         "Paid 4 for Sure Gamble. Got 9 from Sure Gamble"
+                         (play-from-hand state :runner "Sure Gamble")
+                         (click-card state :runner (get-resource state 0)))
+      (changes-val-macro -3 (:credit (get-runner))
+                         "Paid full 3c for Keiko"
+                         (play-from-hand state :runner "Keiko")))))
 
 (deftest knobkierie
   ;; Knobkierie - first successful run, place a virus counter on a virus program
