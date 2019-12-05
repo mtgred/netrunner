@@ -1097,7 +1097,8 @@
      {:agendapoints-runner (req (if (and (get-in card [:special :vacheron])
                                          (zero? (get-counters card :agenda))) 3 0))
       :stolen vacheron-ability
-      :events [(assoc vacheron-ability :event :agenda-stolen :req (req (not= (first (:zone card)) :discard)))
+      :events [(assoc vacheron-ability :event :agenda-stolen :req (req (and (not= (first (:zone card)) :discard)
+                                                                            (same-card? card target))))
                (assoc vacheron-ability :event :as-agenda)
                {:event :runner-turn-begins
                 :req (req (pos? (get-counters card :agenda)))
