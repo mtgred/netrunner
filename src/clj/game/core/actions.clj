@@ -195,12 +195,9 @@
 (defn resolve-prompt
   "Resolves a prompt by invoking its effect function with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
-  [state side {:keys [choice card] :as args}]
-  (let [servercard (get-card state card)
-        card (if (not= (:title card) (:title servercard))
-               (server-card (:title card))
-               servercard)
-        prompt (first (get-in @state [side :prompt]))
+  [state side {:keys [choice] :as args}]
+  (let [prompt (first (get-in @state [side :prompt]))
+        card (get-card state (:card prompt))
         choices (:choices prompt)]
     (cond
       ;; Shortcut
@@ -221,7 +218,7 @@
               (pay state side card :credit (min choice (get-in @state [side :credit]))))
             (when (:counter choices)
               ;; :Counter prompts deduct counters from the card
-              (add-counter state side (:card prompt) (:counter choices) (- choice)))
+              (add-counter state side card (:counter choices) (- choice)))
             ;; trigger the prompt's effect function
             (when-let [effect-prompt (:effect prompt)]
               (effect-prompt (or choice card)))
@@ -238,7 +235,7 @@
         (let [title-fn (:card-title choices)
               found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (server-cards))]
           (if found
-            (if (title-fn state side (make-eid state) (:card prompt) [found])
+            (if (title-fn state side (make-eid state) card [found])
               (do (when-let [effect-prompt (:effect prompt)]
                     (effect-prompt (or choice card)))
                   (finish-prompt state side prompt card))
@@ -250,20 +247,14 @@
                               (Exception. "Error in a card-title prompt") 25)))
           (.println *err* (str "Current prompt: " prompt))))
 
-      ;; Default text prompt
+      ;; Otherwise, choices is a sequence of strings and/or cards
+      ;; choice is a string and should match one of the strings, or the title of one of the cards
       :else
-      (let [buttons (filter #(or (= choice %)
-                                 (same-card? card %)
-                                 (let [choice-str (if (string? choice)
-                                                    (lower-case choice)
-                                                    (lower-case (:title choice "do-not-match")))]
-                                   (or (= choice-str (lower-case %))
-                                       (= choice-str (lower-case (:title % ""))))))
-                            choices)
-            button (first buttons)]
-        (if button
-          (do (when-let [effect-prompt (:effect prompt)]
-                (effect-prompt button))
+      (let [match (first (filter #(or (= choice %)
+                                      (= choice (:title % "")))
+                                 choices))]
+        (if match
+          (do ((:effect prompt) match)
               (finish-prompt state side prompt card))
           (do
             (.println *err* (with-out-str
