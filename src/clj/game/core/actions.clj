@@ -192,6 +192,13 @@
     (swap! state dissoc :access))
   true)
 
+(defn- prompt-error
+  [context prompt prompt-args]
+  (.println *err* (with-out-str (clojure.stacktrace/print-stack-trace
+                                  (Exception. (str "Error " context)))))
+  (.println *err* (str "Prompt: " prompt))
+  (.println *err* (str "Prompt args: " prompt-args)))
+
 (defn resolve-prompt
   "Resolves a prompt by invoking its effect function with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
@@ -224,11 +231,7 @@
             (when effect
               (effect (or choice card)))
             (finish-prompt state side prompt card))
-        (do
-          (.println *err* (with-out-str
-                            (clojure.stacktrace/print-stack-trace
-                              (Exception. "Error in an integer prompt") 25)))
-          (.println *err* (str "Current prompt: " prompt))))
+        (prompt-error "in an integer prompt" prompt args))
 
       ;; List of card titles for auto-completion
       (:card-title choices)
@@ -242,11 +245,7 @@
                   (finish-prompt state side prompt card))
               (toast state side (str "You cannot choose " choice " for this effect.") "warning"))
             (toast state side (str "Could not find a card named " choice ".") "warning")))
-        (do
-          (.println *err* (with-out-str
-                            (clojure.stacktrace/print-stack-trace
-                              (Exception. "Error in a card-title prompt") 25)))
-          (.println *err* (str "Current prompt: " prompt))))
+        (prompt-error "in a card-title prompt" prompt args))
 
       ;; Otherwise, choices is a sequence of strings and/or cards
       ;; choice is a string and should match one of the strings, or the title of one of the cards
@@ -257,19 +256,10 @@
         (if match
           (do (effect match)
               (finish-prompt state side prompt card))
-          (do
-            (.println *err* (with-out-str
-                              (clojure.stacktrace/print-stack-trace
-                                (Exception. "Error in a text prompt") 25)))
-            (.println *err* (str "Current prompt: " prompt))
-            (.println *err* (str "Current args: " args)))))
+          (prompt-error "in a text prompt" prompt args)))
+
       :else
-      (do
-        (.println *err* (with-out-str
-                          (clojure.stacktrace/print-stack-trace
-                            (Exception. "Error in an unknown prompt type") 25)))
-        (.println *err* (str "Current prompt: " prompt))
-        (.println *err* (str "Current args: " args))))))
+      (prompt-error "in an unknown prompt type" prompt args))))
 
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
