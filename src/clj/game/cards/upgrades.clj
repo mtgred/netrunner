@@ -243,8 +243,8 @@
                                  (filter #(and (ice? %)
                                                (same-server? card %)))
                                  count
-                                 pos?)
-                        {:prompt "Place 1 advancement token on an ice protecting this server"
+                                 pos?)               
+                        {:prompt (str "Place 1 advancement token on an ice protecting " (zone->name (second (:zone card))))
                          :choices {:card #(and (ice? %)
                                                (same-server? % card))}
                          :msg (msg "place an advancement token on " (card-str state target))

@@ -495,6 +495,7 @@
         (take-credits state :runner)
         (let [enigma (get-ice state :hq 0)]
           (is (zero? (get-counters (refresh enigma) :advancement)) "Enigma has 0 counters to start")
+          (is (= (-> (get-corp) :prompt first :msg) "Place 1 advancement token on an ice protecting HQ") "Correct server in prompt title")
           (click-card state :corp enigma)
           (is (= 1 (get-counters (refresh enigma) :advancement)) "Enigma has 1 counter"))))
     (testing "1 ice in another server"
@@ -614,7 +615,31 @@
             (is (= 1 (->> (get-runner) :prompt first :choices count)))
             (click-prompt state :runner "End the run")
             (is (= credits (:credit (get-runner))))
-            (is (not (:run @state)) "Run has ended")))))))
+            (is (not (:run @state)) "Run has ended"))))))
+  (testing "Prompt from starting ability"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Cayambe Grid" 2) (qty "Ice Wall" 2)]
+                        :credits 10}})
+      (core/gain state :corp :click 10)      
+      (play-from-hand state :corp "Ice Wall" "HQ")       
+      (play-from-hand state :corp "Cayambe Grid" "HQ")  
+      (play-from-hand state :corp "Ice Wall" "New remote")       
+      (play-from-hand state :corp "Cayambe Grid" "Server 1")  
+      (let [cg1 (get-content state :hq 0)
+            cg2 (get-content state :remote1 0)
+            iw1 (get-ice state :hq 0)
+            iw2 (get-ice state :remote1 0)]
+          (core/rez state :corp cg1) 
+          (core/rez state :corp cg2) 
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (click-prompt state :corp "Cayambe Grid")
+          (is (= (-> (get-corp) :prompt first :msg) "Place 1 advancement token on an ice protecting HQ") "Correct server in prompt title (HQ)")
+          (click-card state :corp iw1)
+          (is (= (-> (get-corp) :prompt first :msg) "Place 1 advancement token on an ice protecting Server 1") "Correct server in prompt title (Server 1)")
+          (click-card state :corp iw2)
+      ))))       
 
 (deftest chilo-city-grid
   ;; ChiLo City Grid - Give 1 tag for successful traces during runs on its server
