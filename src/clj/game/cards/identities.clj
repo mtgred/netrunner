@@ -414,6 +414,8 @@
                                   (trash-cards state side eid to-be-trashed {:unpreventable true})))}
                   card nil))
       :abilities [{:label "Flip identity"
+                   :req (req (not (:flipped card)))
+                   :cost [:click 1]
                    :effect flip-effect}]})
 
    "Edward Kim: Humanity's Hammer"
@@ -637,15 +639,15 @@
               :req (req (= side :runner))
               :effect (effect (update! (assoc card :flipped false)))}
              {:event :runner-turn-ends
-              :effect (req (when (not (:flipped card))
+              :async true
+              :effect (req (if (:flipped card)
+                             (when (not (:accessed-cards runner-reg))
+                               (system-msg state :runner "flip their identity to Hoshiko Shiro: Next Level Shut-In")
+                               (continue-ability state :runner {:effect flip-effect} card nil))
                              (when (:accessed-cards runner-reg)
                                (gain state :runner :credit 2)
                                (system-msg state :runner "gain 2 [Credits] and flip their identity to Hoshiko Shiro: Mahou Shoujo")
-                               (resolve-ability state :runner {:effect flip-effect} card nil)))
-                           (when (:flipped card)
-                             (when (not (:accessed-cards runner-reg))
-                               (system-msg state :runner "flip their identity to Hoshiko Shiro: Next Level Shut-In")
-                               (resolve-ability state :runner {:effect flip-effect} card nil))))}
+                               (continue-ability state :runner {:effect flip-effect} card nil))))}
              {:event :runner-turn-begins
               :req (req (:flipped card))
               :msg "draw 1 card and lose 1 [Credits]"
