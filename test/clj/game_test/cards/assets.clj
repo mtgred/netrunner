@@ -305,7 +305,8 @@
       (core/rez state :corp bass)
       (is (= 2 (:credit (get-corp))))
       (card-ability state :corp bass 0)
-      (is (= 3 (:click (get-corp)))))))
+      (is (= 3 (:click (get-corp))))
+      (is (nil? (refresh bass)) "Bass CH1R180G4 should be trashed"))))
 
 (deftest bio-ethics-association
   ;; Bio-Ethics Association
