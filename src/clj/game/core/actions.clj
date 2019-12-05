@@ -197,6 +197,7 @@
   Triggered by a selection of a prompt choice button in the UI."
   [state side {:keys [choice] :as args}]
   (let [prompt (first (get-in @state [side :prompt]))
+        effect (:effect prompt)
         card (get-card state (:card prompt))
         choices (:choices prompt)]
     (cond
@@ -220,8 +221,8 @@
               ;; :Counter prompts deduct counters from the card
               (add-counter state side card (:counter choices) (- choice)))
             ;; trigger the prompt's effect function
-            (when-let [effect-prompt (:effect prompt)]
-              (effect-prompt (or choice card)))
+            (when effect
+              (effect (or choice card)))
             (finish-prompt state side prompt card))
         (do
           (.println *err* (with-out-str
@@ -236,8 +237,8 @@
               found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (server-cards))]
           (if found
             (if (title-fn state side (make-eid state) card [found])
-              (do (when-let [effect-prompt (:effect prompt)]
-                    (effect-prompt (or choice card)))
+              (do (when effect
+                    (effect (or choice card)))
                   (finish-prompt state side prompt card))
               (toast state side (str "You cannot choose " choice " for this effect.") "warning"))
             (toast state side (str "Could not find a card named " choice ".") "warning")))
@@ -254,7 +255,7 @@
                                       (= choice (:title % "")))
                                  choices))]
         (if match
-          (do ((:effect prompt) match)
+          (do (effect match)
               (finish-prompt state side prompt card))
           (do
             (.println *err* (with-out-str
