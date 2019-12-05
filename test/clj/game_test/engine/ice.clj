@@ -48,11 +48,15 @@
         (core/rez state :corp p1)
         (core/rez state :corp tg)
         (run-on state :hq)
+        (run-next-phase state)
+        (run-continue state)
         (is (= "1 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities first :label)))
-        (core/resolve-unbroken-subs! state :corp (refresh tg))
+        (fire-subs state tg)
         (take-credits state :runner)
         (take-credits state :corp)
         (run-on state :hq)
+        (run-next-phase state)
+        (run-continue state)
         (is (= "1 [Credits]: Fully break Tour Guide" (-> (refresh buk) :abilities first :label))))))
   (testing "Breaking restrictions on auto-pump-and-break - No auto pumping if (:breakable sub) does not return :unrestricted"
     (do-game
@@ -63,9 +67,11 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Gordian Blade")
       (run-on state :hq)
+      (run-next-phase state)
       (let [afshar (get-ice state :hq 0)
             gord (get-program state 0)]
         (core/rez state :corp afshar)
+        (run-continue state)
         (is (empty? (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh gord)))) "No auto break dynamic ability"))))
   (testing "Breaking restrictions on auto-pump-and-break - Auto pumping if (:breakable sub) returns :unrestricted"
     (do-game
@@ -76,9 +82,11 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Gordian Blade")
       (run-on state :rd)
+      (run-next-phase state)
       (let [afshar (get-ice state :rd 0)
             gord (get-program state 0)]
         (core/rez state :corp afshar)
+        (run-continue state)
         (is (not-empty (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh gord)))) "Autobreak is active")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh gord)})
         (is (empty? (remove :broken (:subroutines (refresh afshar)))) "All subroutines broken")))))

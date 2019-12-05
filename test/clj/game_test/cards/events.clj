@@ -562,8 +562,10 @@
       (play-from-hand state :runner "Bravado")
       (is (= 1 (-> (get-runner) :prompt first :choices count)) "Only HQ is runnable")
       (click-prompt state :runner "HQ")
+      (run-next-phase state)
       (let [icew (get-ice state :hq 0)]
         (core/rez state :corp icew)
+        (run-continue state)
         (changes-val-macro 6 (:credit (get-runner))
                            "Gained 6 credits from Bravado"
                            (card-subroutine state :corp (refresh icew) 0))

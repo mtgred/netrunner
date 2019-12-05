@@ -398,7 +398,7 @@
                      :effect (effect (gain-credits 1)
                                      (add-prop target :advance-counter 1 {:placed true}))}
                     (assoc end-the-run :breakable breakable-fn)]
-      :strength-bonus (req (if (<= 3 (get-advance-counters card)) 3 0))})
+      :strength-bonus (req (if (<= 3 (get-counters card :advancement)) 3 0))})
 
    "Anansi"
    (let [corp-draw {:optional {:prompt "Draw 1 card?"
