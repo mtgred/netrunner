@@ -634,20 +634,27 @@
                                                        :subtype "Digital")))
                           (if (:flipped card)
                             (lose state :runner :link 1)
-                            (gain state :runner :link 1)))]
+                            (gain state :runner :link 1))
+                          (effect-completed state side eid))]
    {:events [{:event :pre-first-turn
               :req (req (= side :runner))
               :effect (effect (update! (assoc card :flipped false)))}
              {:event :runner-turn-ends
               :async true
-              :effect (req (if (:flipped card)
-                             (when (not (:accessed-cards runner-reg))
-                               (system-msg state :runner "flip their identity to Hoshiko Shiro: Next Level Shut-In")
-                               (continue-ability state :runner {:effect flip-effect} card nil))
-                             (when (:accessed-cards runner-reg)
-                               (gain state :runner :credit 2)
-                               (system-msg state :runner "gain 2 [Credits] and flip their identity to Hoshiko Shiro: Mahou Shoujo")
-                               (continue-ability state :runner {:effect flip-effect} card nil))))}
+              :effect (req (cond
+                             (and (:flipped card)
+                                  (not (:accessed-cards runner-reg)))
+                             (do (system-msg state :runner "flips their identity to Hoshiko Shiro: Next Level Shut-In")
+                                 (continue-ability state :runner {:effect flip-effect} card nil))
+
+                             (and (not (:flipped card))
+                                  (:accessed-cards runner-reg))
+                             (do (gain state :runner :credit 2)
+                                 (system-msg state :runner "gains 2 [Credits] and flips their identity to Hoshiko Shiro: Mahou Shoujo")
+                                 (continue-ability state :runner {:effect flip-effect} card nil))
+
+                             :else
+                             (effect-completed state side eid)))}
              {:event :runner-turn-begins
               :req (req (:flipped card))
               :msg "draw 1 card and lose 1 [Credits]"
