@@ -2564,15 +2564,22 @@
               :effect (effect (lose-credits :corp 1))}]}
 
    "System Seizure"
-   {:events [{:event :pump-breaker
-              :once :per-turn
-              :effect (req (let [last-pump (assoc (last (:effects @state)) :duration :end-of-run)]
-                             (swap! state assoc :effects
-                                    (->> (:effects @state)
-                                         butlast
-                                         (into [])
-                                         (#(conj % last-pump)))))
-                           (update-breaker-strength state side target))}]}
+   (let [ability {:req (req (get-in card [:special :ss-target]))
+                  :effect (effect (update! (dissoc-in card [:special :ss-target])))}]
+    {:events [{:event :pump-breaker
+               :req (req (or (not (get-in card [:special :ss-target]))
+                             (same-card? target (get-in card [:special :ss-target]))))
+               :effect (req (when-not (get-in card [:special :ss-target])
+                              (update! state side (assoc-in card [:special :ss-target] target)))
+                            (let [new-pump (assoc (nth targets 2) :duration :end-of-run)]
+                              (swap! state assoc :effects
+                                     (->> (:effects @state)
+                                          (remove #(= (:uuid %) (:uuid new-pump)))
+                                          (into [])
+                                          (#(conj % new-pump)))))
+                            (update-breaker-strength state side target))}
+              (assoc ability :event :corp-turn-ends)
+              (assoc ability :event :runner-turn-ends)]})
 
    "Test Run"
    {:prompt "Install a program from your Stack or Heap?"
