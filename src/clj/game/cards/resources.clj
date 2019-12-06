@@ -775,8 +775,9 @@
                    :once :per-turn
                    :effect (effect (add-counter card :power 1))
                    :msg "manually add a power counter"}]
-      :events (let [prog-or-hw #(or (program? (first %))
-                                    (hardware? (first %)))
+      :events (let [prog-or-hw #(and (or (program? (first %))
+                                         (hardware? (first %)))
+                                     (not (facedown? (first %))))
                     trash-event (fn [side-trash] {:event side-trash
                                                   :once :per-turn
                                                   :req (req (first-event? state side side-trash prog-or-hw))

@@ -936,7 +936,32 @@
           (click-prompt state :runner faerie)
           (is (= 1 (count (:hand (get-runner)))) "1 card added to hand")
           (is (= "Faerie" (-> (get-runner) :hand first :title)) "Faerie added to hand")
-          (is (zero? (get-counters (refresh d99) :power)) "Picking up Faerie removed 3 counters"))))))
+          (is (zero? (get-counters (refresh d99) :power)) "Picking up Faerie removed 3 counters")))))
+  (testing "Harbinger interaction, basic functionality"
+    (do-game
+      (new-game {:corp {:deck ["Grim"]}
+                 :runner {:deck ["District 99" "Harbinger" "Aesop's Pawnshop"]}})  
+      (play-from-hand state :corp "Grim" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "District 99")
+      (play-from-hand state :runner "Aesop's Pawnshop")
+      (play-from-hand state :runner "Harbinger")
+      (let [d99 (get-resource state 0)
+            ap (get-resource state 1)
+            harb (get-program state 0)
+            grim (get-ice state :hq 0)]
+          (run-on state :hq)
+          (core/rez state :corp grim)
+          (card-subroutine state :corp (refresh grim) 0)
+          (is (zero? (get-counters (refresh d99) :power)) "No power counters before Harbinger is trashed")
+          (click-card state :corp harb)
+          (is (= 1 (get-counters (refresh d99) :power)) "1 power counter after Harbinger trashed")
+          (run-jack-out state)
+          (take-credits state :corp)
+          (card-ability state :runner ap 0)
+          (click-card state :runner (get-runner-facedown state 0))
+          (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed")
+        ))))
 
 (let [;; Start id for dj-fenris
       sunny "Sunny Lebeau: Security Specialist"
