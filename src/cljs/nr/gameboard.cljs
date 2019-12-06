@@ -229,16 +229,12 @@
         (= side :corp)
         (case (first zone)
           "hand" (case type
-                   ("Upgrade" "ICE") (if root
-                                       (send-command "play" {:card card :server root})
-                                       (if (:servers @c-state)
-                                         (swap! c-state dissoc :servers)
-                                         (swap! c-state assoc :servers true)))
-                   ("Agenda" "Asset") (if (< (count (get-in @game-state [:corp :servers])) 4)
-                                        (send-command "play" {:card card :server "New remote"})
-                                        (if (:servers @c-state)
-                                          (swap! c-state dissoc :servers)
-                                          (swap! c-state assoc :servers true)))
+                   ("Agenda" "Asset" "ICE" "Upgrade")
+                   (if (:servers @c-state)
+                     (do (swap! c-state dissoc :servers)
+                         (send-command "generate-install-list" nil))
+                     (do (swap! c-state assoc :servers true)
+                         (send-command "generate-install-list" {:card card})))
                    (send-command "play" {:card card}))
           ("current" "onhost" "play-area" "scored" "servers" "rig")
           (handle-abilities side card c-state)
@@ -455,19 +451,6 @@
   (let [num (remote->num server)]
     (str "Server " num)))
 
-(defn central->name [zone]
-  "Converts a central zone keyword to a string."
-  (case (if (keyword? zone) zone (last zone))
-    :hq "HQ"
-    :rd "R&D"
-    :archives "Archives"
-    nil))
-
-(defn zone->name [zone]
-  "Converts a zone to a string."
-  (or (central->name zone)
-      (remote->name zone)))
-
 (defn zone->sort-key [zone]
   (case (if (keyword? zone) zone (last zone))
     :archives -3
@@ -476,16 +459,10 @@
     (str->int
       (last (clojure.string/split (str zone) #":remote")))))
 
-(defn zones->sorted-names [zones]
-  (->> zones (sort-by zone->sort-key) (map zone->name)))
-
 (defn get-remotes [servers]
   (->> servers
        (filter #(not (#{:hq :rd :archives} (first %))))
        (sort-by #(zone->sort-key (first %)))))
-
-(defn remote-list [remotes]
-  (->> remotes (map first) zones->sorted-names))
 
 (defn facedown-card
   "Image element of a facedown card"
@@ -571,20 +548,19 @@
      (when-let [url (image-url card)]
        [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])]))
 
-(defn server-menu [card c-state remotes type zone]
-  (let [centrals ["Archives" "R&D" "HQ"]
-        remotes (concat (remote-list remotes) ["New remote"])
-        servers (case type
-                  ("Upgrade" "ICE") (concat centrals remotes)
-                  ("Agenda" "Asset") remotes)]
-   [:div.panel.blue-shade.servers-menu {:style (when (:servers @c-state) {:display "inline"})}
-     (map-indexed
-       (fn [i label]
-         [:div {:key i
-                :on-click #(do (send-command "play" {:card card :server label})
-                               (swap! c-state dissoc :servers))}
-          label])
-       servers)]))
+(defn server-menu
+  "The pop-up on a card in hand when clicked"
+  [card c-state]
+  (let [servers (get-in @game-state [:corp :install-list])]
+    (when servers
+      [:div.panel.blue-shade.servers-menu {:style (when (:servers @c-state) {:display "inline"})}
+       (map-indexed
+         (fn [i label]
+           [:div {:key i
+                  :on-click #(do (send-command "play" {:card card :server label})
+                                 (swap! c-state dissoc :servers))}
+            label])
+         servers)])))
 
 (defn runner-abs [card c-state runner-abilities subroutines title]
   (when (:runner-abilities @c-state)
@@ -749,8 +725,9 @@
                       subtype-target)]
           [:div.darkbg.subtype-target {:class colour-type} label]))
 
-      (when (and (= zone ["hand"]) (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
-        [server-menu card c-state remotes type zone])
+      (when (and (= zone ["hand"])
+                 (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
+        [server-menu card c-state])
 
       (when (pos? (+ (count runner-abilities) (count subroutines)))
         [runner-abs card c-state runner-abilities subroutines title])
@@ -1218,16 +1195,6 @@
     [:button {:on-click f :key text} text]
     [:button.disabled {:key text} text]))
 
-(defn runnable-servers
-  "List of servers the runner can run on"
-  [corp runner]
-  (let [servers (keys (:servers corp))
-        restricted-servers (keys (get-in runner [:register :cannot-run-on-server]))]
-    ;; remove restricted servers from all servers to just return allowed servers
-    (remove (set restricted-servers) servers)))
-
-
-
 (defn play-sfx
   "Plays a list of sounds one after another."
   [sfx soundbank]
@@ -1590,16 +1557,17 @@
                 #(send-command "remove-tag")]
                [:div.run-button
                 [cond-button "Run" (and (not (or @runner-phase-12 @corp-phase-12))
-                                        (pos? (:click @me))
-                                        (not (get-in @me [:register :cannot-run])))
-                 #(-> (:servers @s) js/$ .toggle)]
-                [:div.panel.blue-shade.servers-menu {:ref #(swap! s assoc :servers %)}
-                 (map-indexed (fn [i label]
-                                [:div {:key i
-                                       :on-click #(do (send-command "run" {:server label})
-                                                      (-> (:servers @s) js/$ .fadeOut))}
-                                 label])
-                              (zones->sorted-names (runnable-servers @corp @runner)))]]])
+                                        (pos? (:click @me)))
+                 #(do (send-command "generate-runnable-zones")
+                      (swap! s update :servers not))]
+                [:div.panel.blue-shade.servers-menu {:style (when (:servers @s) {:display "inline"})}
+                 (let [servers (get-in @game-state [:runner :runnable-list])]
+                   (map-indexed (fn [i label]
+                                  [:div {:key i
+                                         :on-click #(do (send-command "run" {:server label})
+                                                        (swap! s update :servers not))}
+                                   label])
+                                servers))]]])
             (when (= side :corp)
               [cond-button "Purge"
                (and (not (or @runner-phase-12 @corp-phase-12))

@@ -8,7 +8,8 @@
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
          reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
-         update-all-ice update-all-icebreakers)
+         update-all-ice update-all-icebreakers
+         installable-servers get-runnable-zones)
 
 ;;; Neutral actions
 (defn play
@@ -725,3 +726,14 @@
   [state side args]
   (system-msg state side "stops looking at their deck")
   (swap! state update-in [side] dissoc :view-deck))
+
+(defn generate-install-list
+  [state side {:keys [card] :as args}]
+  (let [card (get-card state card)]
+    (if card
+      (swap! state assoc-in [:corp :install-list] (installable-servers state card))
+      (swap! state dissoc-in [:corp :install-list]))))
+
+(defn generate-runnable-zones
+  [state side args]
+  (swap! state assoc-in [:runner :runnable-list] (zones->sorted-names (get-runnable-zones state))))

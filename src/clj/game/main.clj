@@ -29,6 +29,8 @@
    "dynamic-ability" core/play-dynamic-ability
    "end-phase-12" core/end-phase-12
    "end-turn" core/end-turn
+   "generate-install-list" core/generate-install-list
+   "generate-runnable-zones" core/generate-runnable-zones
    "jack-out" core/jack-out
    "keep" core/keep-hand
    "move" core/move-card
@@ -53,7 +55,7 @@
 
 (defn strip [state]
   (-> state
-    (dissoc :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state)
+    (dissoc :eid :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state)
     (update-in [:corp :register] dissoc :most-recent-drawn)
     (update-in [:runner :register] dissoc :most-recent-drawn)))
 
@@ -74,6 +76,7 @@
 
 (defn- make-private-runner [state]
   (-> (:runner @state)
+      (dissoc :runnable-list)
       (update-in [:hand] #(private-card-vector state :runner %))
       (update-in [:discard] #(private-card-vector state :runner %))
       (update-in [:deck] #(private-card-vector state :runner %))
@@ -83,8 +86,10 @@
 (defn- make-private-corp [state]
   (let [zones (concat [[:hand]] [[:discard]] [[:deck]]
                       (for [server (keys (:servers (:corp @state)))] [:servers server :ices])
-                      (for [server (keys (:servers (:corp @state)))] [:servers server :content]))]
-    (loop [s (:corp @state)
+                      (for [server (keys (:servers (:corp @state)))] [:servers server :content]))
+        corp (-> (:corp @state)
+                 (dissoc :install-list))]
+    (loop [s corp
            z zones]
       (if (empty? z)
         s
