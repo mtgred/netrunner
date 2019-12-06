@@ -3607,8 +3607,10 @@
       (core/gain state :corp :credit 10)
       (take-credits state :corp)
       (let [tyr (get-ice state :hq 0)]
-        (core/rez state :corp tyr)
         (run-on state "HQ")
+        (run-next-phase state)
+        (core/rez state :corp tyr)
+        (run-continue state)
         (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
         (card-side-ability state :runner tyr 0)
         (click-prompt state :runner "Do 2 brain damage")
@@ -3674,14 +3676,16 @@
       (play-from-hand state :runner "Astrolabe")
       (play-from-hand state :runner "Fan Site")
       (run-on state :hq)
+      (run-next-phase state)
       (let [win (get-ice state :hq 0)
             misd (get-program state 0)
             astro (get-hardware state 0)
             fs (get-resource state 0)]
         (core/rez state :corp win)
+        (run-continue state)
         (is (= 3 (count (:subroutines (refresh win)))) "Winchester has 3 subroutines on HQ")
-        (core/resolve-unbroken-subs! state :corp (refresh win))
-        ; Trace[4] - Trash 1 installed program
+        (fire-subs state win)
+        (is (= 4 (:base (prompt-map :corp))) "Trace[4] - Trash 1 installed program")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (click-card state :corp astro)
@@ -3690,14 +3694,14 @@
         (is (= 0 (count (:discard (get-runner)))) "Could not choose resource")
         (click-card state :corp misd)
         (is (= 1 (count (:discard (get-runner)))) "Trashed program")
-        ; Trace[3] - Trash 1 installed hardware
+        (is (= 3 (:base (prompt-map :corp))) "Trace[3] - Trash 1 installed hardware")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (click-card state :corp fs)
         (is (= 1 (count (:discard (get-runner)))) "Could not choose resource")
         (click-card state :corp astro)
         (is (= 2 (count (:discard (get-runner)))) "Trashed hardware")
-        ; Trace[3] - End the run
+        (is (= 3 (:base (prompt-map :corp))) "Trace[3] - End the run")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (not (:run @state)) "Run has been ended"))))
@@ -3707,8 +3711,10 @@
       (play-from-hand state :corp "Winchester" "R&D")
       (take-credits state :corp)
       (run-on state :rd)
+      (run-next-phase state)
       (let [win (get-ice state :rd 0)]
         (core/rez state :corp win)
+        (run-continue state)
         (is (= 2 (count (:subroutines (refresh win)))) "Winchester has 2 subroutines on R&D"))))
   (testing "2 subs when moved with Thimblerig"
     (do-game
@@ -3719,11 +3725,13 @@
       (take-credits state :corp)
       ;Click 1 - Run R&D, rez Winchester and let it fire
       (run-on state :rd)
+      (run-next-phase state)
       (let [win (get-ice state :rd 0)
             thim (get-ice state :hq 0)]
         (core/rez state :corp win)
+        (run-continue state)
         (is (= 2 (count (:subroutines (refresh win)))) "Winchester has 2 subroutines on R&D")
-        (core/resolve-unbroken-subs! state :corp (refresh win))
+        (fire-subs state win)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (click-prompt state :corp "Done")
@@ -3735,15 +3743,19 @@
         (play-from-hand state :runner "Aumakua")
         ;Click 3 - Run HQ, rez Thimblerig, break, swap ice
         (run-on state :hq)
+        (run-next-phase state)
         (core/rez state :corp thim)
+        (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "End the run")
         (run-continue state)
-        (card-ability state :corp (refresh thim) 0)
+        (click-prompt state :corp "Yes")
         (click-card state :corp (refresh win))
         (run-jack-out state)
         ;Click 4 - Run HQ
         (run-on state :hq)
+        (run-next-phase state)
+        (run-continue state)
         (is (= 3 (count (:subroutines (get-ice state :hq 0)))) "Winchester has 3 subroutines on HQ")))))
 
 (deftest woodcutter

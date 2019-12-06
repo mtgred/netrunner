@@ -2614,7 +2614,7 @@
                              (same-card? target (get-in card [:special :ss-target]))))
                :effect (req (when-not (get-in card [:special :ss-target])
                               (update! state side (assoc-in card [:special :ss-target] target)))
-                            (let [new-pump (assoc (nth targets 2) :duration :end-of-run)]
+                            (let [new-pump (assoc (second targets) :duration :end-of-run)]
                               (swap! state assoc :effects
                                      (->> (:effects @state)
                                           (remove #(= (:uuid %) (:uuid new-pump)))

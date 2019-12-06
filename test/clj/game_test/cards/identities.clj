@@ -882,7 +882,9 @@
       (let [harb (get-program state 0)
             grim (get-ice state :hq 0)]
         (run-on state :hq)
+        (run-next-phase state)
         (core/rez state :corp grim)
+        (run-continue state)
         (card-subroutine state :corp (refresh grim) 0)
         (click-card state :corp harb)
         (is (= 0 (count (:hand (get-runner)))) "Exile didn't draw a card")))))

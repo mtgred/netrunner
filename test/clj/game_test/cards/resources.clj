@@ -978,7 +978,9 @@
             harb (get-program state 0)
             grim (get-ice state :hq 0)]
           (run-on state :hq)
+          (run-next-phase state)
           (core/rez state :corp grim)
+          (run-continue state)
           (card-subroutine state :corp (refresh grim) 0)
           (is (zero? (get-counters (refresh d99) :power)) "No power counters before Harbinger is trashed")
           (click-card state :corp harb)
