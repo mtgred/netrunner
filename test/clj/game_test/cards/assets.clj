@@ -4036,7 +4036,7 @@
         (is (zero? (get-counters (refresh sr) :power)) "No power counters initially")
         (is (empty? (:discard (get-runner))) "Nothing in trash")
         (run-empty-server state :hq)
-        (click-prompt state :runner "No Action")
+        (click-prompt state :runner "No action")
         (is (= 1 (get-counters (refresh sr) :power)) "Gained power counter when trashing Mimic")
         (is (= 2 (count (:discard (get-runner)))) "Mimic was trashed")
         (take-credits state :runner)

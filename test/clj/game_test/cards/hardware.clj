@@ -2967,7 +2967,7 @@
       (click-prompt state :runner "Yes") ; Top Hat activation
       (is (= 0 (count (:discard (get-runner)))) "No damage yet")
       (click-prompt state :runner "2") ; Top Hat - accessing Brainstorm
-      (click-prompt state :runner "No Action")
+      (click-prompt state :runner "No action")
       (is (= 2 (count (:discard (get-runner)))) "Now the meat damage fires")
       ;; Stealing agenda
       (play-from-hand state :runner "Mad Dash")

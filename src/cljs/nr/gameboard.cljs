@@ -1511,7 +1511,7 @@
                                   (render-message c)]
                                  [:button {:key (or (:cid c) i)
                                            :class (when (:rotated c) :rotated)
-                                           :on-click #(send-command "choice" {:card c})
+                                           :on-click #(send-command "choice" {:choice (:title c)})
                                            :id {:code c}}
                                   (render-message (:title c))])))
                            (:choices prompt))))]

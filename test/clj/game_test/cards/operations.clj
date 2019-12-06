@@ -883,7 +883,7 @@
                         :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
       (take-credits state :corp)
       (run-empty-server state "HQ")
-      (click-prompt state :runner "No Action")
+      (click-prompt state :runner "No action")
       (take-credits state :runner)
       (play-from-hand state :corp "Digital Rights Management")
       (is (empty? (:prompt (get-corp))) "No prompt displayed"))))

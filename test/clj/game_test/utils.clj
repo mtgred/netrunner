@@ -89,7 +89,7 @@
 
       ;; Default text prompt
       :else
-      (when-not (core/resolve-prompt state side {(if (string? choice) :choice :card) choice})
+      (when-not (core/resolve-prompt state side {:choice (if (string? choice) choice (:title choice))})
         (is (= choice (first choices))
             (str (side-str side) " expected to click [ "
                  (if (string? choice) choice (:title choice ""))
