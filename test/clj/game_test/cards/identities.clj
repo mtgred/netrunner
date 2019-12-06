@@ -1209,11 +1209,11 @@
       (card-ability state :runner (get-resource state 0) 1)
       (is (empty? (:prompt (get-corp))) "No Hayley wait prompt for facedown installs."))))
 
-(deftest hoshiko-shiro-next-level-shut-in
+(deftest hoshiko-shiro-untold-proganoist
   ;; Hoshiko Shiro
   (testing "ID ability"
     (do-game
-     (new-game {:runner {:id "Hoshiko Shiro: Next Level Shut-In"
+     (new-game {:runner {:id "Hoshiko Shiro: Untold Protagonist"
                          :deck [(qty "Sure Gamble" 5)]}})
      (let [ho (get-in @state [:runner :identity])]
        (dotimes [_ 5] (core/move state :runner (first (:hand (get-runner))) :deck))
@@ -1248,7 +1248,7 @@
        (is (= 2 (count (:hand (get-runner)))) "Didn't draw card"))))
   (testing "Interaction with Eater"
     (do-game
-     (new-game {:runner {:id "Hoshiko Shiro: Next Level Shut-In"
+     (new-game {:runner {:id "Hoshiko Shiro: Untold Protagonist"
                          :deck [(qty "Sure Gamble" 4) "Eater"]}
                 :corp {:hand ["Vanilla"]
                        :deck [(qty "Hedge Fund" 5)]}})
@@ -1269,7 +1269,7 @@
        (is (not (:flipped (refresh ho))) "Hoshiko does not flip"))))
   (testing "Changing link and subtype when flipping"
     (do-game
-     (new-game {:runner {:id "Hoshiko Shiro: Next Level Shut-In"}})
+     (new-game {:runner {:id "Hoshiko Shiro: Untold Protagonist"}})
      (take-credits state :corp)
      (let [ho (get-in @state [:runner :identity])]
            (is (not (:flipped (refresh ho))) "Hoshiko starts unflipped")
