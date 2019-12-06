@@ -880,19 +880,13 @@
    {:in-play [:hq-access 1]}
 
    "Keiko"
-   {:events [{:event :spent-credits-from-card
-              :once :per-turn
-              :req (req (and (has-subtype? target "Companion")
-                             (not (used-this-turn? (:cid card) state))))
-              :msg "gain 1 [Credit]"
-              :effect (effect (gain :credit 1))}
-             {:event :runner-install
-              :once :per-turn
-              :req (req (and (has-subtype? target "Companion")
-                             (not (facedown? target))
-                             (not (used-this-turn? (:cid card) state))))
-              :msg "gain 1 [Credit]"
-              :effect (effect (gain :credit 1))}]}
+   (let [keiko-ability {:req (req (= 1 (+ (event-count state :runner :spent-credits-from-card #(has-subtype? (first %) "Companion"))
+                                          (event-count state :runner :runner-install #(and (not (facedown? (first %)))
+                                                                                           (has-subtype? (first %) "Companion"))))))
+                        :msg "gain 1 [Credit]"
+                        :effect (effect (gain :credit 1))}]
+     {:events [(assoc keiko-ability :event :spent-credits-from-card)
+               (assoc keiko-ability :event :runner-install)]})
 
    "Knobkierie"
    {:implementation "MU usage restriction not enforced"
