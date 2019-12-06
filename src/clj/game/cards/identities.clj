@@ -622,7 +622,7 @@
                           :effect (effect (clear-wait-prompt :corp))})
                        card nil)))}]}
 
-   "Hoshiko Shiro: Next Level Shut-In"
+   "Hoshiko Shiro: Untold Protagonist"
    (let [flip-effect (req (update! state side (if (:flipped card)
                                                 (assoc card
                                                        :flipped false
@@ -644,7 +644,7 @@
               :effect (req (cond
                              (and (:flipped card)
                                   (not (:accessed-cards runner-reg)))
-                             (do (system-msg state :runner "flips their identity to Hoshiko Shiro: Next Level Shut-In")
+                             (do (system-msg state :runner "flips their identity to Hoshiko Shiro: Untold Protagonist")
                                  (continue-ability state :runner {:effect flip-effect} card nil))
 
                              (and (not (:flipped card))
