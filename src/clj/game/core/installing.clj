@@ -316,6 +316,7 @@
        (let [slot (if host-card
                     (:zone host-card)
                     (conj (server->zone state server) (if (ice? card) :ices :content)))]
+         (swap! state dissoc-in [:corp :install-list])
          (corp-install-pay state side eid card server args slot))))))
 
 
