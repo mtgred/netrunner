@@ -801,14 +801,14 @@
       (is (= 2 (-> (get-runner) :prompt first :choices count)) "Simultaneous-resolution prompt is showing")
       (click-prompt state :runner "Exile: Streethawk")
       (is (= 1 (count (:hand (get-runner)))) "Exile drew a card")))
-  (testing "Interaction with harbringer"
+  (testing "Interaction with Harbinger"
     (do-game
       (new-game {:corp {:deck ["Grim"]}
                  :runner {:id "Exile: Streethawk"
-                          :deck ["Harbinger", (qty "Sure Gamble" 10)]}})
+                          :deck ["Harbinger" (qty "Sure Gamble" 10)]}})
       (play-from-hand state :corp "Grim" "HQ")
-      (take-credits state :corp)              
-      (starting-hand state :runner ["Harbinger"])      
+      (take-credits state :corp)
+      (starting-hand state :runner ["Harbinger"])
       (play-from-hand state :runner "Harbinger")
       (let [harb (get-program state 0)
             grim (get-ice state :hq 0)]
@@ -816,7 +816,7 @@
         (core/rez state :corp grim)
         (card-subroutine state :corp (refresh grim) 0)
         (click-card state :corp harb)
-        (is (= 0 (count (:hand (get-runner)))) "Exile didn't drew a card")))))
+        (is (= 0 (count (:hand (get-runner)))) "Exile didn't draw a card")))))
 
 (deftest freedom-khumalo-crypto-anarchist
   ;; Freedom Khumalo - Can spend virus counters from other cards to trash accessed cards with play/rez costs

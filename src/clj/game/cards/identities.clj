@@ -447,8 +447,7 @@
               :silent (req (not (and (program? target)
                                      (some #{:discard} (:previous-zone target)))))
               :async true
-              :req (req (and (and (program? target)
-                                  (not (facedown? target)))
+              :req (req (and (program? target)
                              (some #{:discard} (:previous-zone target))))
               :msg (msg "draw a card")
               :effect (req (draw state side eid 1 nil))}]}
