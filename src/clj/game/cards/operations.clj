@@ -853,8 +853,8 @@
    {:async true
     :msg "trash the top 2 cards of R&D"
     :rfg-instead-of-trashing true
-    :effect (effect (mill :corp 2)
-                    (shuffle-into-rd-effect eid card 4 false))}
+    :effect (req (wait-for (mill state :corp :corp 2)
+                           (shuffle-into-rd-effect state side eid card 4 false)))}
 
    "Green Level Clearance"
    {:msg "gain 3 [Credits] and draw 1 card"
@@ -1424,22 +1424,30 @@
                                              (- target (second targets)))))}}}
 
    "Power Shutdown"
-   {:req (req (and (last-turn? state :runner :made-run))
-              (not-empty (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %)))
-                                 (all-active-installed state :runner))))
+   {:req (req (and (last-turn? state :runner :made-run)
+                   (not-empty (filter #(or (hardware? %)
+                                           (program? %))
+                                      (all-active-installed state :runner)))))
     :prompt "Trash how many cards from the top R&D?"
-    :choices {:number (req (apply max (map :cost (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %))) (all-active-installed state :runner)))))}
+    :choices {:number (req (->> (all-active-installed state :runner)
+                                (filter #(or (hardware? %)
+                                             (program? %)))
+                                (map :cost)
+                                (apply max)))}
     :msg (msg "trash " target " cards from the top of R&D")
     :async true
-    :effect (req (mill state :corp target)
-                 (let [n target]
-                   (continue-ability state :runner
-                                     {:prompt "Select a Program or piece of Hardware to trash"
-                                      :choices {:card #(and (#{"Hardware" "Program"} (:type %))
-                                                            (<= (:cost %) n))}
-                                      :msg (msg "trash " (:title target))
-                                      :effect (effect (trash target))}
-                                     card nil)))}
+    :effect (req (wait-for (mill state :corp :corp target)
+                           (continue-ability
+                             state :runner
+                             (let [n target]
+                               {:async true
+                                :prompt "Select a Program or piece of Hardware to trash"
+                                :choices {:card #(and (or (hardware? %)
+                                                          (program? %))
+                                                      (<= (:cost %) n))}
+                                :msg (msg "trash " (:title target))
+                                :effect (effect (trash eid target nil))})
+                             card nil)))}
 
    "Precognition"
    {:async true
@@ -1715,23 +1723,27 @@
                                       (gain-credits (* 2 (count targets))))} card nil)))}
 
    "Reverse Infection"
-   {:prompt "Choose One:"
+   {:async true
+    :prompt "Choose One:"
     :choices ["Purge virus counters"
               "Gain 2 [Credits]"]
     :effect (req (if (= target "Gain 2 [Credits]")
                    (do (gain-credits state side 2)
-                       (system-msg state side "uses Reverse Infection to gain 2 [Credits]"))
+                       (system-msg state side "uses Reverse Infection to gain 2 [Credits]")
+                       (effect-completed state side eid))
                    (let [pre-purge-virus (number-of-virus-counters state)]
                      (purge state side)
                      (let [post-purge-virus (number-of-virus-counters state)
                            num-virus-purged (- pre-purge-virus post-purge-virus)
                            num-to-trash (quot num-virus-purged 3)]
-                       (mill state :corp :runner num-to-trash)
-                       (system-msg state side (str "uses Reverse Infection to purge "
-                                                   num-virus-purged (pluralize " virus counter" num-virus-purged)
-                                                   " and trash "
-                                                   num-to-trash (pluralize " card" num-to-trash)
-                                                   " from the top of the stack"))))))}
+                       (wait-for (mill state :corp :runner num-to-trash)
+                                 (system-msg state side
+                                             (str "uses Reverse Infection to purge "
+                                                  num-virus-purged (quantify num-virus-purged "virus counter")
+                                                  " and trash "
+                                                  num-to-trash (quantify num-to-trash "card")
+                                                  " from the top of the stack"))
+                                 (effect-completed state side eid))))))}
 
    "Rework"
    {:prompt "Select a card from HQ to shuffle into R&D"

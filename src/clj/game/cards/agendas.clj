@@ -1582,13 +1582,14 @@
    (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]
      {:install-state :face-up
       :events [{:event :advance
+                :async true
                 :req (req (same-card? card target))
                 :msg (msg (if (pos? (count (:deck runner)))
                             (str "trash "
                                  (join ", " (map :title (take (adv4? state card) (:deck runner))))
                                  " from the Runner's stack")
                             "trash from the Runner's stack but it is empty"))
-                :effect (effect (mill :corp :runner (adv4? state card)))}]})
+                :effect (effect (mill :corp eid :runner (adv4? state card)))}]})
 
    "Unorthodox Predictions"
    {:implementation "Prevention of subroutine breaking is not enforced"

@@ -236,19 +236,19 @@
                                      event))]
                      (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
                              (event-count state side :corp-trash grip-or-stack-trash?)))))
-         :prompt "Add a trashed card to the bottom of the Stack"
+         :prompt "Add a trashed card to the bottom of the stack"
          :choices (req (conj (mapv #(assoc % :zone [:discard]) (sort-by :title (filter :cid targets))) "No action"))
          :effect (req (when-not (= "No action" target)
                         (move state side (get-card state (assoc target :zone [:discard])) :deck)))}]
     {:events [(assoc triggered-ability :event :runner-trash)
               (assoc triggered-ability :event :corp-trash)]
-     :abilities [{:label "Remove Buffer Drive from the game to add a card from the Heap to the bottom of the Stack"
-                  :msg "add a card from the Heap to the bottom of the Stack"
+     :abilities [{:label "Add a card from the heap to the bottom of the stack"
+                  :msg "add a card from the Heap to the bottom of the stack"
                   :cost [:remove-from-game]
                   :show-discard true
                   :choices {:card #(and (runner? %)
                                         (in-discard? %))}
-                  :effect (req (move state side target :deck))}]})
+                  :effect (effect (move target :deck {:front true}))}]})
 
    "Capstone"
    {:abilities [{:req (req (pos? (count (:hand runner))))
@@ -1405,7 +1405,8 @@
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
                                 (continue-ability
                                   state side
-                                  {:prompt "Choose how much damage to prevent"
+                                  {:async true
+                                   :prompt "Choose how much damage to prevent"
                                    :priority 50
                                    :choices {:number (req (min n (count (:deck runner))))}
                                    :msg (msg "trash " (join ", " (map :title (take target (:deck runner))))
@@ -1413,7 +1414,7 @@
                                    :cost [:trash]
                                    :effect (effect (damage-prevent :net target)
                                                    (damage-prevent :brain target)
-                                                   (mill :runner target))}
+                                                   (mill :runner eid :runner target))}
                                   card nil)))}]}
 
    "Recon Drone"
