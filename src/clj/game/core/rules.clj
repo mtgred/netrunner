@@ -654,21 +654,21 @@
 
 (defn mill
   "Force the discard of n cards from the deck by trashing them"
-  ([state side] (mill state side side 1))
-  ([state side n] (mill state side side n))
-  ([state from-side to-side n]
-   (let [milltargets (take n (get-in @state [to-side :deck]))]
-     (doseq [card milltargets]
-       (trash state from-side (make-eid state) card {:unpreventable true})))))
+  ([state side] (mill state side (make-eid state) side 1))
+  ([state side n] (mill state side (make-eid state) side n))
+  ([state from-side to-side n] (mill state from-side (make-eid state) to-side n))
+  ([state from-side eid to-side n]
+   (let [cards (take n (get-in @state [to-side :deck]))]
+     (trash-cards state from-side eid cards {:unpreventable true}))))
 
 (defn discard-from-hand
   "Force the discard of n cards from the hand by trashing them"
-  ([state side] (discard-from-hand state side side 1))
-  ([state side n] (discard-from-hand state side side n))
-  ([state from-side to-side n]
-   (let [milltargets (take n (get-in @state [to-side :hand]))]
-     (doseq [card milltargets]
-       (trash state from-side (make-eid state) card {:unpreventable true})))))
+  ([state side] (discard-from-hand state side (make-eid state) side 1))
+  ([state side n] (discard-from-hand state side (make-eid state) side n))
+  ([state from-side to-side n] (discard-from-hand state from-side (make-eid state) to-side n))
+  ([state from-side eid to-side n]
+   (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
+     (trash-cards state from-side eid cards {:unpreventable true}))))
 
 (defn change-hand-size
   "Changes a side's hand-size modification by specified amount (positive or negative)"

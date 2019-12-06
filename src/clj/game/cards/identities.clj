@@ -785,12 +785,13 @@
                (assoc ability :event :agenda-stolen)]})
 
    "Jinteki: Potential Unleashed"
-   {:events [{:event :pre-resolve-damage
+   {:events [{:async true
+              :event :pre-resolve-damage
               :req (req (and (-> @state :corp :disable-id not) (= target :net) (pos? (last targets))))
               :effect (req (let [c (first (get-in @state [:runner :deck]))]
                              (system-msg state :corp (str "uses Jinteki: Potential Unleashed to trash " (:title c)
                                                           " from the top of the Runner's Stack"))
-                             (mill state :corp :runner 1)))}]}
+                             (mill state :corp eid :runner 1)))}]}
 
    "Jinteki: Replicating Perfection"
    {:events [{:event :runner-phase-12
@@ -944,8 +945,8 @@
                                 "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                   :once :per-turn
                   :async true
-                  :effect (effect (mill :runner 2)
-                                  (draw eid 1 nil))}]
+                  :effect (req (wait-for (mill state :runner :runner 2)
+                                         (draw state :runner eid 1 nil)))}]
      {:flags {:runner-turn-draw true
               :runner-phase-12 (req (and (not (:disabled card))
                                          (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
@@ -1085,10 +1086,11 @@
               :effect (effect (gain-credits :corp 1))}]}
 
    "Noise: Hacker Extraordinaire"
-   {:events [{:event :runner-install
+   {:events [{:async true
+              :event :runner-install
+              :req (req (has-subtype? target "Virus"))
               :msg "force the Corp to trash the top card of R&D"
-              :effect (effect (mill :corp))
-              :req (req (has-subtype? target "Virus"))}]}
+              :effect (effect (mill :runner eid :corp 1))}]}
 
    "Null: Whistleblower"
    {:abilities [{:once :per-turn

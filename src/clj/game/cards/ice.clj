@@ -369,18 +369,15 @@
                   (do-net-damage 1)]}
 
    "Aimor"
-   {:subroutines [{:label "Trash the top 3 cards of the Stack. Trash Aimor."
-                   :effect (req (when (not-empty (:deck runner))
-                                  (system-msg state :corp
-                                              (str "uses Aimor to trash "
-                                                   (join ", " (map :title (take 3 (:deck runner))))
-                                                   " from the Runner's Stack"))
-                                  (mill state :corp :runner 3))
-                                (when current-ice
-                                  (no-action state :corp nil)
-                                  (continue state :runner nil))
-                                (trash state side card)
-                                (system-msg state side (str "trashes Aimor")))}]}
+   {:subroutines [{:async true
+                   :label "Trash the top 3 cards of the Stack. Trash Aimor."
+                   :effect (req (system-msg state :corp
+                                            (str "uses Aimor to trash "
+                                                 (join ", " (map :title (take 3 (:deck runner))))
+                                                 " from the Runner's Stack"))
+                                (wait-for (mill state :corp :runner 3)
+                                          (system-msg state side (str "trashes Aimor"))
+                                          (trash state side eid card nil)))}]}
 
    "Akhet"
    (let [breakable-fn (fn [ice] (if (<= 3 (get-counters ice :advancement))
@@ -573,20 +570,21 @@
                     end-the-run]})
 
    "Bloodletter"
-   {:subroutines [{:label "Runner trashes 1 program or top 2 cards of their Stack"
+   {:subroutines [{:async true
+                   :label "Runner trashes 1 program or top 2 cards of their Stack"
                    :effect (req (if (empty? (filter program? (all-active-installed state :runner)))
-                                  (do (mill state :runner 2)
-                                      (system-msg state :runner (str "trashes the top 2 cards of their Stack")))
+                                  (do (system-msg state :runner (str "trashes the top 2 cards of their Stack"))
+                                      (mill state :runner eid :runner 2))
                                   (do (show-wait-prompt state :corp "Runner to choose an option for Bloodletter")
-                                      (resolve-ability
+                                      (continue-ability
                                         state :runner
                                         {:prompt "Trash 1 program or trash top 2 cards of the Stack?"
                                          :choices ["Trash 1 program" "Trash top 2 of Stack"]
-                                         :effect (req (if (and (= target "Trash top 2 of Stack") (> (count (:deck runner)) 1))
-                                                        (do (mill state :runner 2)
-                                                            (system-msg state :runner (str "trashes the top 2 cards of their Stack")))
-                                                        (resolve-ability state :runner trash-program card nil))
-                                                      (clear-wait-prompt state :corp))}
+                                         :effect (req (clear-wait-prompt state :corp)
+                                                      (if (and (= target "Trash top 2 of Stack") (> (count (:deck runner)) 1))
+                                                        (do (system-msg state :runner (str "trashes the top 2 cards of their Stack"))
+                                                            (mill state :runner eid :runner 2))
+                                                        (continue-ability state :runner trash-program card nil)))}
                                         card nil))))}]}
 
    "Bloom"
@@ -741,10 +739,11 @@
 
    "Chiyashi"
    {:implementation "Trash effect when using an AI to break is activated manually"
-    :abilities [{:label "Trash the top 2 cards of the Runner's Stack"
+    :abilities [{:async true
+                 :label "Trash the top 2 cards of the Runner's Stack"
                  :req (req (some #(has-subtype? % "AI") (all-active-installed state :runner)))
                  :msg (msg (str "trash " (join ", " (map :title (take 2 (:deck runner)))) " from the Runner's Stack"))
-                 :effect (effect (mill :corp :runner 2))}]
+                 :effect (effect (mill :corp eid :runner 2))}]
     :subroutines [(do-net-damage 2)
                   (do-net-damage 2)
                   end-the-run]}
@@ -2057,8 +2056,7 @@
                                                              (str "uses Mlinzi to trash "
                                                                   (join ", " (map :title (take mill-cnt (:deck runner))))
                                                                   " from the runner's stack"))
-                                                 (mill state :runner mill-cnt)
-                                                 (effect-completed state side eid))))}
+                                                 (mill state :runner eid :runner mill-cnt))))}
                              card nil))})]
      {:subroutines [(net-or-trash 1 2)
                     (net-or-trash 2 3)

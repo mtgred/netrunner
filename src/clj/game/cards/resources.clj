@@ -336,10 +336,11 @@
 
    "Bhagat"
    {:events [{:event :successful-run
+              :async true
               :req (req (and (= target :hq)
                              (first-successful-run-on-server? state :hq)))
               :msg "force the Corp to trash the top card of R&D"
-              :effect (effect (mill :corp))}]}
+              :effect (req (mill state :runner eid :corp 1))}]}
 
    "Bio-Modeled Network"
    {:interactions {:prevent [{:type #{:net}
@@ -718,9 +719,10 @@
 
    "Data Leak Reversal"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
-    :abilities [{:req (req tagged)
+    :abilities [{:async true
+                 :req (req tagged)
                  :cost [:click 1]
-                 :effect (effect (mill :corp))
+                 :effect (req (mill state :corp eid :corp 1))
                  :msg "force the Corp to trash the top card of R&D"}]}
 
    "DDoS"
@@ -1665,8 +1667,7 @@
                                       (gain-credits state side 2)
                                       (draw state side eid 1 nil))
                                   (do (system-msg state side (str "trashes " (:title c)))
-                                      (mill state side)
-                                      (effect-completed state side eid)))))}]}
+                                      (mill state side eid :runner 1)))))}]}
 
    "Order of Sol"
    {:effect (req (add-watch state :order-of-sol
@@ -2008,11 +2009,12 @@
                        card nil)
                      (do (clear-wait-prompt state :corp)
                          (effect-completed state side eid)))))
-    :trash-effect {:effect (effect (system-msg :runner
-                                               (str "trashes "
-                                                    (join ", " (map :title (take 3 (:deck runner))))
-                                                    " from their Stack due to Rolodex being trashed"))
-                                   (mill :runner 3))}}
+    :trash-effect {:async true
+                   :effect (req (system-msg state :runner
+                                            (str "trashes "
+                                                 (join ", " (map :title (take 3 (:deck runner))))
+                                                 " from their Stack due to Rolodex being trashed"))
+                                (mill state :runner eid :runner 3))}}
 
    "Rosetta 2.0"
    (let [find-rfg (fn [state card]
@@ -2113,9 +2115,9 @@
                                :yes-ability {:msg (msg "force the Corp to trash the top "
                                                        (get-turn-damage state :runner)
                                                        " cards of R&D and trash itself")
-                                             :effect (effect (mill :corp (get-turn-damage state :runner))
-                                                             (clear-wait-prompt :corp)
-                                                             (trash card {:unpreventable true}))}
+                                             :effect (req (clear-wait-prompt :corp)
+                                                          (wait-for (mill state :corp :corp (get-turn-damage state :runner))
+                                                                    (trash state side eid card {:unpreventable true})))}
                                :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                              card nil))}]}
 
@@ -2180,9 +2182,10 @@
 
    "Spoilers"
    {:events [{:event :agenda-scored
+              :async true
               :interactive (req true)
               :msg "trash the top card of R&D"
-              :effect (effect (mill :corp))}]}
+              :effect (req (mill state :runner eid :corp 1))}]}
 
    "Starlight Crusade Funding"
    {:msg "ignore additional costs on Double events"
@@ -2463,11 +2466,10 @@
    (let [has-2-virus-tokens? (req (<= 2 (number-of-virus-counters state)))
          corp-choice {:optional {:player :corp
                                  :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
-                                 :async true
-                                 :yes-ability {:effect (effect (clear-wait-prompt :runner)
+                                 :yes-ability {:async true
+                                               :effect (effect (clear-wait-prompt :runner)
                                                                (system-msg :corp "trashes the top card of R&D to prevent the Runner drawing 2 cards")
-                                                               (mill :corp)
-                                                               (effect-completed eid))}
+                                                               (mill :corp eid :corp 1))}
                                  :no-ability {:async true
                                               :effect (effect (clear-wait-prompt :runner)
                                                               (system-msg :runner "draw 2 cards")

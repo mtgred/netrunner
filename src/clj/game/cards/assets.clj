@@ -272,8 +272,8 @@
              :effect (req (let [c (first (get-in @state [:runner :deck]))]
                             (system-msg state :corp (str "uses Breached Dome to do one meat damage and to trash " (:title c)
                                                          " from the top of the Runner's Stack"))
-                            (mill state :corp :runner 1)
-                            (damage state side eid :meat 1 {:card card})))}}
+                            (wait-for (mill state :corp :runner 1)
+                                      (damage state side eid :meat 1 {:card card}))))}}
 
    "Broadcast Square"
    {:events [{:event :pre-bad-publicity
@@ -392,7 +392,8 @@
                                    card nil))}]}
 
    "Clyde Van Rite"
-   (let [ability {:req (req (or (pos? (:credit runner))
+   (let [ability {:async true
+                  :req (req (or (pos? (:credit runner))
                                 (pos? (count (:deck runner)))))
                   :player :runner
                   :once :per-turn
@@ -405,10 +406,10 @@
                   :effect (req (case target
                                  "Pay 1 [Credits]"
                                  (do (system-msg state side "pays 1 [Credits]")
-                                     (pay state side card :credit 1))
+                                     (pay-sync state side eid card :credit 1))
                                  "Trash top card"
                                  (do (system-msg state side "trashes the top card of the Stack")
-                                     (mill state :runner))))}]
+                                     (mill state :runner eid :runner 1))))}]
      {:derezzed-events [corp-rez-toast]
       :flags {:corp-phase-12 (req true)}
       :events [(assoc ability :event :corp-turn-begins)]
@@ -980,10 +981,11 @@
     :abilities [{:msg "look at the top card of the Runner's Stack"
                  :effect (effect (prompt! card (str "The top card of the Runner's Stack is "
                                                     (:title (first (:deck runner)))) ["OK"] {}))}
-                {:label "Trash the top card of the Runner's Stack"
+                {:async true
+                 :label "Trash the top card of the Runner's Stack"
                  :msg (msg "trash " (:title (first (:deck runner))) " from the Runner's Stack")
                  :cost [:trash]
-                 :effect (effect (mill :runner))}]}
+                 :effect (effect (mill :corp eid :runner 1))}]}
 
    "Kuwinda K4H1U3"
    {:derezzed-events [corp-rez-toast]

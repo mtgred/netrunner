@@ -1018,19 +1018,21 @@
                  {:async true
                   :mandatory true
                   :msg "force the Corp to trash the top card of R&D"
-                  :effect (effect (mill :corp)
-                                  (continue-ability
-                                    (let [n (count (filter #(same-card? :title card %) (:hand runner)))]
-                                      {:prompt "Reveal how many copies of Fear the Masses?"
-                                       :choices {:card #(and (in-hand? %)
-                                                             (same-card? :title card %))
-                                                 :max n}
-                                       :msg (msg "reveal " (count targets) " copies of Fear the Masses,"
-                                                 " forcing the Corp to trash " (count targets)
-                                                 " additional cards from the top of R&D")
-                                       :effect (effect (reveal targets)
-                                                       (mill :corp (count targets)))})
-                                    card nil))}}
+                  :effect (req (wait-for (mill state :corp :corp 1)
+                                         (continue-ability
+                                           state side
+                                           (let [n (count (filter #(same-card? :title card %) (:hand runner)))]
+                                             {:async true
+                                              :prompt "Reveal how many copies of Fear the Masses?"
+                                              :choices {:card #(and (in-hand? %)
+                                                                    (same-card? :title card %))
+                                                        :max n}
+                                              :msg (msg "reveal " (count targets) " copies of Fear the Masses,"
+                                                        " forcing the Corp to trash " (count targets)
+                                                        " additional cards from the top of R&D")
+                                              :effect (effect (reveal targets)
+                                                              (mill eid :corp (count targets)))})
+                                           card nil)))}}
                 card))}
 
    "Feint"
@@ -1587,27 +1589,26 @@
     :rfg-instead-of-trashing true
     :async true
     :effect (req (let [mill-count (min 3 (count (:deck runner)))]
-                   (mill state :runner :runner mill-count)
-                   (system-msg state :runner (str "trashes the top " (quantify mill-count "card") " of their stack"))
-                   (let [heap-count (min 3 (count (get-in @state [:runner :discard])))]
-                     (continue-ability
-                       state side
-                       {:prompt (str "Choose " (quantify heap-count "card") " to shuffle into the stack")
-                        :show-discard true
-                        :async true
-                        :choices {:max heap-count
-                                  :all true
-                                  :not-self true
-                                  :card #(and (runner? %)
-                                              (in-discard? %))}
-                        :effect (req (doseq [c targets]
-                                       (move state side c :deck))
-                                     (system-msg state :runner (str "shuffles " (join ", " (map :title targets))
-                                                                    " from their Heap into their Stack, and draws 1 card"))
-                                     (shuffle! state :runner :deck)
-                                     (wait-for (draw state :runner 1 nil)
-                                               (effect-completed state side eid)))}
-                       card nil))))}
+                   (wait-for (mill state :runner :runner mill-count)
+                             (system-msg state :runner (str "trashes the top " (quantify mill-count "card") " of their stack"))
+                             (let [heap-count (min 3 (count (get-in @state [:runner :discard])))]
+                               (continue-ability
+                                 state side
+                                 {:prompt (str "Choose " (quantify heap-count "card") " to shuffle into the stack")
+                                  :show-discard true
+                                  :async true
+                                  :choices {:max heap-count
+                                            :all true
+                                            :not-self true
+                                            :card #(and (runner? %)
+                                                        (in-discard? %))}
+                                  :effect (req (doseq [c targets]
+                                                 (move state side c :deck))
+                                               (system-msg state :runner (str "shuffles " (join ", " (map :title targets))
+                                                                              " from their Heap into their Stack, and draws 1 card"))
+                                               (shuffle! state :runner :deck)
+                                               (draw state :runner eid 1 nil))}
+                                 card nil)))))}
 
    "Lawyer Up"
    {:msg "remove 2 tags and draw 3 cards"

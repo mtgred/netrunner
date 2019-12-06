@@ -1255,9 +1255,10 @@
             :effect (effect (add-counter :runner card :virus 1))}]
      {:events [(assoc e :event :runner-trash)
                (assoc e :event :corp-trash)]
-      :abilities [{:cost [:click 1 :virus 1]
+      :abilities [{:async true
+                   :cost [:click 1 :virus 1]
                    :msg "force the Corp to trash the top card of R&D"
-                   :effect (effect (mill :corp))}]})
+                   :effect (effect (mill :corp eid :corp 1))}]})
 
    "GS Sherman M3"
    (global-sec-breaker "Barrier")
@@ -1882,8 +1883,8 @@
                                  :msg (msg (if (pos? target)
                                              (str "trash " (:title (first (:deck runner))) " from their Stack and trash " target " cards from R&D")
                                              (str "trash " (:title (first (:deck runner))) " from their Stack and nothing from R&D")))
-                                 :effect (effect (mill :runner)
-                                                 (mill :runner :corp target))}}}]})
+                                 :effect (req (wait-for (mill state :runner :runner 1)
+                                                        (mill state :runner eid :corp target)))}}}]})
 
    "Pelangi"
    {:data {:counter {:virus 2}}
