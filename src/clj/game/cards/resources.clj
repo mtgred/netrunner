@@ -777,9 +777,8 @@
                    :once :per-turn
                    :effect (effect (add-counter card :power 1))
                    :msg "manually add a power counter"}]
-      :events (let [prog-or-hw #(and (or (program? (first %))
-                                         (hardware? (first %)))
-                                     (not (facedown? (first %))))
+      :events (let [prog-or-hw #(or (program? (first %))
+                                    (hardware? (first %)))
                     trash-event (fn [side-trash] {:event side-trash
                                                   :once :per-turn
                                                   :req (req (first-event? state side side-trash prog-or-hw))
@@ -2243,10 +2242,11 @@
                  :req (req (not (install-locked? state side)))
                  :prompt "Choose a card on Street Peddler to install"
                  :choices (req (cancellable
-                                 (filter #(and (not (event? %))
-                                               (runner-can-install? state side % nil)
-                                               (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                                         [:credit (install-cost state side % {:cost-bonus -1})]))
+                                 (filter #(let [target (dissoc % :facedown)]
+                                            (and (not (event? target))
+                                                 (runner-can-install? state side target nil)
+                                                 (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                                           [:credit (install-cost state side target {:cost-bonus -1})])))
                                          (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
                  :effect (req (trash state side (update-in card [:hosted]

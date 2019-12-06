@@ -112,6 +112,8 @@
   [card type]
   (card-is? card :type type))
 
+(declare facedown?)
+
 (defn agenda?
   [card]
   (is-type? card "Agenda"))
@@ -122,11 +124,13 @@
 
 (defn event?
   [card]
-  (is-type? card "Event"))
+  (and (not (facedown? card))
+       (is-type? card "Event")))
 
 (defn hardware?
   [card]
-  (is-type? card "Hardware"))
+  (and (not (facedown? card))
+       (is-type? card "Hardware")))
 
 (defn ice?
   [card]
@@ -147,11 +151,13 @@
 
 (defn program?
   [card]
-  (is-type? card "Program"))
+  (and (not (facedown? card))
+       (is-type? card "Program")))
 
 (defn resource?
   [card]
-  (is-type? card "Resource"))
+  (and (not (facedown? card))
+       (is-type? card "Resource")))
 
 (defn upgrade?
   [card]

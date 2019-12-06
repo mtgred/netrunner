@@ -940,7 +940,7 @@
   (testing "Harbinger interaction, basic functionality"
     (do-game
       (new-game {:corp {:deck ["Grim"]}
-                 :runner {:deck ["District 99" "Harbinger" "Aesop's Pawnshop"]}})  
+                 :runner {:deck ["District 99" "Harbinger" "Aesop's Pawnshop"]}})
       (play-from-hand state :corp "Grim" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "District 99")
@@ -960,8 +960,7 @@
           (take-credits state :corp)
           (card-ability state :runner ap 0)
           (click-card state :runner (get-runner-facedown state 0))
-          (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed")
-        ))))
+          (is (= 1 (get-counters (refresh d99) :power)) "still 1 power counter after facedown Harbinger trashed")))))
 
 (let [;; Start id for dj-fenris
       sunny "Sunny Lebeau: Security Specialist"
