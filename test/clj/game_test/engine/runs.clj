@@ -27,8 +27,8 @@
       (run-next-phase state)
       (is (= :approach-ice (:phase (:run @state))) "Corp rez ice window")
       (core/rez state :corp (get-ice state :remote1 0))
-      (core/no-action state :corp nil)
-      (core/resolve-unbroken-subs! state :corp (get-ice state :remote1 0))
+      (run-continue state)
+      (fire-subs state (get-ice state :remote1 0))
       (is (nil? (:run @state)) "ice Wall subroutine ends the run")))
   (testing "with ice and a breaker"
     (do-game
@@ -59,17 +59,16 @@
                         :hand ["Tollbooth"]
                         :credits 10}})
       (play-from-hand state :corp "Tollbooth" "New remote")
-      (let [tollbooth (get-ice state :remote1 0)]
-        (core/rez state :corp tollbooth)
-        (take-credits state :corp))
+      (take-credits state :corp)
       (run-on state :remote1)
       (run-next-phase state)
+      (core/rez state :corp (get-ice state :remote1 0))
       (is (= :approach-ice (:phase (:run @state))))
       (let [credits (:credit (get-runner))]
         (run-continue state)
         (is (= (- credits 3) (:credit (get-runner))) "Tollbooth forced the runner to pay 3"))
       (is (= :encounter-ice (:phase (:run @state))))
-      (core/resolve-unbroken-subs! state :corp (get-ice state :remote1 0))
+      (fire-subs state (get-ice state :remote1 0))
       (is (nil? (:run @state)))))
   (testing "with paid ability before ice with on-encounter effect"
     (do-game
@@ -117,16 +116,15 @@
                         :hand ["Guard"]}
                  :runner {:hand ["Inside Job"]}})
       (play-from-hand state :corp "Guard" "New remote")
-      (let [guard (get-ice state :remote1 0)]
-        (core/rez state :corp guard)
-        (take-credits state :corp))
+      (take-credits state :corp)
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "Server 1")
       (run-next-phase state)
+      (core/rez state :corp (get-ice state :remote1 0))
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (run-continue state)
       (is (= :encounter-ice (:phase (:run @state))) "Inside Job hasn't bypassed Guard")
-      (core/resolve-unbroken-subs! state :corp (get-ice state :remote1 0))
+      (fire-subs state (get-ice state :remote1 0))
       (is (nil? (:run @state)))))
   (testing "with bypass vs ice with on-encounter effect"
     (do-game
@@ -135,15 +133,16 @@
                         :credits 10}
                  :runner {:hand ["Inside Job"]}})
       (play-from-hand state :corp "Tollbooth" "New remote")
-      (let [tollbooth (get-ice state :remote1 0)]
-        (core/rez state :corp tollbooth)
-        (take-credits state :corp))
+      (take-credits state :corp)
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "Server 1")
       (run-next-phase state)
+      (core/rez state :corp (get-ice state :remote1 0))
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
-      (run-continue state)
-      (is (= :pass-ice (:phase (:run @state))) "Inside Job has bypassed Tollbooth")
+      (let [credits (:credit (get-runner))]
+        (run-continue state)
+        (is (= :pass-ice (:phase (:run @state))) "Inside Job has bypassed Tollbooth")
+        (is (= credits (:credit (get-runner)))))
       (run-next-phase state)
       (run-jack-out state)
       (is (nil? (:run @state)))))

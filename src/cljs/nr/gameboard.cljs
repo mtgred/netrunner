@@ -1395,35 +1395,42 @@
              (fn [{:keys [sfx] :as cursor}]
               (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
 
+(def phase->title
+  {"approach-ice" "Approach ice"
+   "encounter-ice" "Encounter ice"
+   "bypass-ice" "Bypass ice"
+   "pass-ice" "Pass ice"
+   "approach-server" "Approach server"})
+
 (defn corp-run-div
   [run]
   [:div.panel.blue-shade
+   [:h4 "Current phase:" [:br] (get phase->title (:phase @run))]
    (when (zero? (:position @run))
      [cond-button "Action before access" (not (:no-action @run)) #(send-command "corp-phase-43")])
    [cond-button "No more action" (not (:no-action @run)) #(send-command "no-action")]])
 
 (defn runner-run-div
   [run]
-  [:div.panel.blue-shade
-   (when (not (:no-action @run))
-     [:h4 "Waiting for Corp's actions"])
-   (case (:next-phase @run)
-     "approach-ice"
-     [cond-button "Approach ice" (not (:no-action @run)) #(send-command "start-next-phase")]
-     "encounter-ice"
-     [cond-button "Encounter ice" (not (:no-action @run)) #(send-command "start-next-phase")]
-     "bypass-ice"
-     [cond-button "Bypass ice" (not (:no-action @run)) #(send-command "start-next-phase")]
-     "pass-ice"
-     [cond-button "Pass ice" (not (:no-action @run)) #(send-command "start-next-phase")]
-     "approach-server"
-     [cond-button "Approach server" (not (:no-action @run)) #(send-command "start-next-phase")]
-     nil)
-   (if (zero? (:position @run))
-     [cond-button "Successful Run" (:no-action @run) #(send-command "successful-run")]
-     [cond-button "Continue" (:no-action @run) #(send-command "continue")])
-   [cond-button "Jack Out" (and (:jack-out @run)
-                                (not (:cannot-jack-out @run))) #(send-command "jack-out")]])
+  (let [phase (:phase @run)
+        next-phase (:next-phase @run)]
+    [:div.panel.blue-shade
+     [:h4 "Current phase:" [:br] (get phase->title phase)]
+     [cond-button
+      (or (get phase->title next-phase)
+          (get phase->title phase))
+      (and next-phase
+           (not (:no-action @run)))
+      #(send-command "start-next-phase")]
+     (if (and (not (:next-phase @run))
+              (zero? (:position @run)))
+       [cond-button "Successful Run" (:no-action @run) #(send-command "successful-run")]
+       [cond-button "Continue" (:no-action @run) #(send-command "continue")])
+     [cond-button "Jack Out"
+      (and (:jack-out @run)
+           (not (:cannot-jack-out @run))
+           (not (= "encounter-ice" phase)))
+      #(send-command "jack-out")]]))
 
 (defn run-div
   [side run]
