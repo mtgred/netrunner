@@ -1911,11 +1911,11 @@
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner rh)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
-        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "1")
         (is (= 1 (count-tags state)) "Runner takes a tag")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
-        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "1")
         (is (= 2 (count-tags state)) "Runner takes a tag"))))
   (testing "Effect persists after trash"
     (do-game
@@ -1931,11 +1931,11 @@
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
-        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "1")
         (is (= 1 (count-tags state)) "Runner takes a tag")
         (click-card state :runner rh)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
-        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "1")
         (is (= 2 (count-tags state)) "Runner takes a tag"))))
   (testing "Effect ends after current run"
     (do-game
@@ -1951,7 +1951,7 @@
         (is (zero? (count-tags state)) "Runner starts with no tags")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
-        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "1")
         (is (= 1 (count-tags state)) "Runner takes a tag")
         (click-card state :runner rh)
         (click-prompt state :runner "No action")
@@ -1960,7 +1960,24 @@
         (run-successful state)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
         (is (empty? (:prompt (get-corp))) "No prompt for Overseer Matrix")
-        (is (= 1 (count-tags state)) "Runner doesn't take a tag")))))
+        (is (= 1 (count-tags state)) "Runner doesn't take a tag"))))
+  (testing "Takes into account apocalypse-like full-server trashes"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Overseer Matrix" "Bio Vault" "Red Herrings"]}
+                 :runner {:hand ["Apocalypse"]}})
+      (play-from-hand state :corp "Overseer Matrix" "New remote")
+      (play-from-hand state :corp "Bio Vault" "Server 1")
+      (play-from-hand state :corp "Red Herrings" "Server 1")
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (run-empty-server state "R&D")
+      (click-prompt state :runner "No action")
+      (run-empty-server state "HQ")
+      (core/rez state :corp (get-content state :remote1 0))
+      (play-from-hand state :runner "Apocalypse")
+      (click-prompt state :corp "3")
+      (is (= 3 (count-tags state)) "Overseer Matrix gives the runner 3 tags"))))
 
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program

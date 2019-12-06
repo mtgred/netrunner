@@ -243,7 +243,7 @@
                                  (filter #(and (ice? %)
                                                (same-server? card %)))
                                  count
-                                 pos?)               
+                                 pos?)
                         {:prompt (str "Place 1 advancement token on an ice protecting " (zone->name (second (:zone card))))
                          :choices {:card #(and (ice? %)
                                                (same-server? % card))}
@@ -1048,36 +1048,51 @@
                 :effect (req (clear-persistent-flag! state side card :can-steal))}]})
 
    "Overseer Matrix"
-   (let [om {:async true
-             :interactive (req true)
-             :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
-                             (continue-ability
-                               {:optional
-                                {:prompt "Pay 1 [Credits] to use Overseer Matrix ability?"
-                                 :player :corp
-                                 :yes-ability {:cost [:credit 1]
-                                               :msg "give the Runner 1 tag"
-                                               :async true
-                                               :effect (req (gain-tags state :corp eid 1))}
-                                 :end-effect (effect (clear-wait-prompt :runner))}}
-                               card nil))}]
+   (let [ability {:async true
+                  :interactive (req true)
+                  :req (req (some #(or (in-same-server? card %)
+                                       (from-same-server? card %)
+                                       (let [card (assoc card :zone (:previous-zone card))]
+                                         (in-same-server? card %)
+                                         (from-same-server? card %)))
+                                  targets))
+                  :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
+                                  (continue-ability
+                                    (let [num-trashed-cards
+                                          (->> targets
+                                               (filter #(or (in-same-server? card %)
+                                                            (from-same-server? card %)
+                                                            (let [card (assoc card :zone (:previous-zone card))]
+                                                              (in-same-server? card %)
+                                                              (from-same-server? card %))))
+                                               count)]
+                                      {:async true
+                                       :prompt "Pay how much to use Overseer Matrix's ability?"
+                                       :player :corp
+                                       :choices {:number (req (min num-trashed-cards
+                                                                   (total-available-credits state :corp eid card)))}
+                                       :effect
+                                       (effect
+                                         (clear-wait-prompt :runner)
+                                         (continue-ability
+                                           (let [n target]
+                                             {:async true
+                                              :cost [:credit n]
+                                              :msg (str "give the Runner " (quantify n "tag"))
+                                              :effect (effect (gain-tags :corp eid n))})
+                                           card nil))})
+                                    card nil))}]
      {:trash-effect
       {:async true
-       :req (req (and (= :servers (first (:previous-zone card)))
-                      (:run @state)))
-       :effect (effect (register-events
-                         card
-                         [(assoc om
-                                 :event :runner-trash
-                                 :duration :end-of-run
-                                 :req (req (or (= (:zone (get-nested-host target))
-                                                  (:previous-zone card))
-                                               (= (central->zone (:zone target))
-                                                  (butlast (:previous-zone card))))))])
-                       (continue-ability om card nil))}
-      :events [(assoc om
-                      :event :runner-trash
-                      :req (req (in-same-server? card target)))]})
+       :interactive (req true)
+       :effect (req (when (:run @state)
+                      (register-events
+                        state side card
+                        [(assoc ability
+                                :event :runner-trash
+                                :duration :end-of-run)]))
+                    (continue-ability state side ability card targets))}
+      :events [(assoc ability :event :runner-trash)]})
 
    "Panic Button"
    {:init {:root "HQ"}
