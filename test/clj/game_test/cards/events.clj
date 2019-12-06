@@ -4655,10 +4655,10 @@
   ;; System Seizure - First icebreaker boosted keeps strength for remainder of that run.
   (do-game
     (new-game {:corp {:deck ["Wraparound"]}
-               :runner {:deck [(qty "Corroder" 2) "System Seizure"]}})
+               :runner {:deck [(qty "Corroder" 2) "System Seizure"]
+                        :credits 20}})
     (play-from-hand state :corp "Wraparound" "HQ")
     (take-credits state :corp)
-    (core/gain state :runner :credit 3)
     (core/gain state :runner :click 2)
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "Corroder")
@@ -4679,7 +4679,8 @@
       (run-successful state)
       (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
       (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength")
-      (run-on state "HQ") ;; Check that System Seizure does not keep strength on 2nd run
+      ;; Check that System Seizure does not keep strength on 2nd run
+      (run-on state "HQ")
       (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
       (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength")
       (card-ability state :runner c1 1)
@@ -4687,8 +4688,23 @@
       (is (= 3 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 3 strength")
       (is (= 3 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 3 strength")
       (run-continue state)
+      (is (= 3 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 3 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength")
+      (run-successful state)
       (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
       (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ;; System Seizure resets which card it tracks each turn
+      (run-on state "HQ")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength")
+      (card-ability state :runner c2 1)
+      (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 3 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 3 strength")
+      (run-continue state)
+      (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 3 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 3 strength")
       (run-successful state)
       (is (= 2 (core/breaker-strength state :runner (get-card state c1))) "Corroder 1 has 2 strength")
       (is (= 2 (core/breaker-strength state :runner (get-card state c2))) "Corroder 2 has 2 strength"))))
