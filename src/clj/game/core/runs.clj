@@ -237,7 +237,7 @@
                                   (swap! state assoc-in [:runner :register :trashed-card] true)
                                   (system-msg state side (str async-result " to trash "
                                                               (:title card) " from "
-                                                              (name-zone :corp (:zone card))))
+                                                              (name-zone :corp (get-nested-zone card))))
                                   (wait-for (trash state side card nil)
                                             (access-end state side eid c)))
 
@@ -303,7 +303,7 @@
                       (wait-for (pay-sync state side nil cost {:action :steal-cost})
                                 (system-msg state side (str async-result " to steal "
                                                             (:title card) " from "
-                                                            (name-zone :corp (:zone card))))
+                                                            (name-zone :corp (get-nested-zone card))))
                                 (steal-agenda state side eid card))
 
                       ;; Use access ability
