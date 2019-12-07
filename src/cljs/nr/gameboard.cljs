@@ -1396,7 +1396,8 @@
               (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
 
 (def phase->title
-  {"approach-ice" "Approach ice"
+  {"initiation" "Initiation"
+   "approach-ice" "Approach ice"
    "encounter-ice" "Encounter ice"
    "bypass-ice" "Bypass ice"
    "pass-ice" "Pass ice"
@@ -1407,8 +1408,16 @@
   [:div.panel.blue-shade
    [:h4 "Current phase:" [:br] (get phase->title (:phase @run))]
    (when (zero? (:position @run))
-     [cond-button "Action before access" (not (:no-action @run)) #(send-command "corp-phase-43")])
-   [cond-button "No more action" (not (:no-action @run)) #(send-command "no-action")]])
+     [cond-button
+      "Action before access"
+      (and (not= "initiation" (:phase @run))
+           (not (:no-action @run)))
+      #(send-command "corp-phase-43")])
+   [cond-button
+    "Pass priority"
+    (and (not= "initiation" (:phase @run))
+         (not (:no-action @run)))
+    #(send-command "no-action")]])
 
 (defn runner-run-div
   [run]
