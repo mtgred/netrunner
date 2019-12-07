@@ -2797,16 +2797,39 @@
 
 (deftest inside-job
   ;; Inside Job
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Ice Wall"]}
-               :runner {:hand ["Inside Job"]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (core/rez state :corp (get-ice state :hq 0))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Inside Job")
-    (click-prompt state :runner "HQ")
-    (is (:run @state) "A run has been initiated")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Inside Job"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inside Job")
+      (click-prompt state :runner "HQ")
+      (is (:run @state) "A run has been initiated")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (= :pass-ice (:phase (get-run))) "Run has bypassed Ice Wall")))
+  (testing "Only bypasses one ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Ice Wall" 2)]}
+                 :runner {:hand ["Inside Job"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inside Job")
+      (click-prompt state :runner "HQ")
+      (is (:run @state) "A run has been initiated")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (is (= :pass-ice (:phase (get-run))) "Run has bypassed Ice Wall")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (= :encounter-ice (:phase (get-run))) "Run not has bypassed Ice Wall"))))
 
 (deftest insight
   ;; Insight

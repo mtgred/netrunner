@@ -1399,23 +1399,60 @@
   {"initiation" "Initiation"
    "approach-ice" "Approach ice"
    "encounter-ice" "Encounter ice"
-   "bypass-ice" "Bypass ice"
    "pass-ice" "Pass ice"
    "approach-server" "Approach server"})
+
+(defn phase->next-phase-title
+  [run]
+  (case (:phase @run)
+    "initiation" "Approach ice"
+    "approach-ice" "Encounter ice"
+    "encounter-ice" "Pass ice"
+    "pass-ice" (if (zero? (:position @run))
+                 "Approach server"
+                 "Approach ice")
+    "approach-server" "Approach server"))
+
+(defn get-run-ices []
+  (let [server (-> (:run @game-state)
+                   :server
+                   first
+                   keyword)]
+    (get-in @game-state (concat [:corp :servers] [server] [:ices]))))
+
+(defn get-current-ice []
+  (let [run-ice (get-run-ices)
+        pos (get-in @game-state [:run :position])]
+    (when (and pos
+               (pos? pos)
+               (<= pos (count run-ice)))
+      (nth run-ice (dec pos)))))
 
 (defn corp-run-div
   [run]
   [:div.panel.blue-shade
    [:h4 "Current phase:" [:br] (get phase->title (:phase @run))]
-   (when (zero? (:position @run))
+   (cond
+     (= "approach-ice" (:phase @run))
+     (let [current-ice (get-current-ice)]
+       [cond-button
+        (str "Rez " (:title current-ice))
+        (not (rezzed? current-ice))
+        #(send-command "rez" {:card current-ice})])
+
+     (zero? (:position @run))
      [cond-button
       "Action before access"
       (and (not= "initiation" (:phase @run))
            (not (:no-action @run)))
       #(send-command "corp-phase-43")])
+
    [cond-button
-    "Pass priority"
+    (if-let [next-phase (:next-phase @run)]
+      "No further actions"
+      (str "Continue to " (phase->next-phase-title run)))
     (and (not= "initiation" (:phase @run))
+         (not= "pass-ice" (:phase @run))
          (not (:no-action @run)))
     #(send-command "no-action")]])
 
@@ -1434,7 +1471,10 @@
      (if (and (not (:next-phase @run))
               (zero? (:position @run)))
        [cond-button "Successful Run" (:no-action @run) #(send-command "successful-run")]
-       [cond-button "Continue" (:no-action @run) #(send-command "continue")])
+       [cond-button
+        (str "Continue to " (phase->next-phase-title run))
+        (:no-action @run)
+        #(send-command "continue")])
      [cond-button "Jack Out"
       (and (:jack-out @run)
            (not (:cannot-jack-out @run))

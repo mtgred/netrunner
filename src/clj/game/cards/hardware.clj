@@ -356,8 +356,8 @@
               :msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
               :effect (effect (gain-credits 1))
               :event :pass-ice
-              :req (req (and (rezzed? current-ice)
-                             (empty? (remove :broken (:subroutines current-ice)))))}]}
+              :req (req (and (rezzed? target)
+                             (empty? (remove :broken (:subroutines target)))))}]}
 
    "Cyberfeeder"
    {:recurring 1

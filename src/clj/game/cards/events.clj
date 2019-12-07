@@ -192,10 +192,11 @@
       :req (req (pos? (count (iced-servers state))))
       :prompt "Choose an iced server"
       :choices (req (iced-servers state))
-      :effect (effect
-                (register-events card [{:event :pass-ice
-                                        :duration :end-of-run
-                                        :effect (effect (update! (update-in (get-card state card) [:special :bravado-passed] conj (:cid current-ice))))}])
+      :effect (effect (register-events
+                        card
+                        [{:event :pass-ice
+                          :duration :end-of-run
+                          :effect (effect (update! (update-in (get-card state card) [:special :bravado-passed] conj (:cid target))))}])
                 (make-run eid target nil (get-card state card)))
       :events [{:event :run-ends
                 :silent (req true)

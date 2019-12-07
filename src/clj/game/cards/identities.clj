@@ -866,7 +866,7 @@
 
    "Khan: Savvy Skiptracer"
    {:events [{:event :pass-ice
-              :req (req (first-event? state :corp :pass-ice))
+              :req (req (first-event? state :runner :pass-ice))
               :async true
               :interactive (req true)
               :effect (effect

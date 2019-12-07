@@ -1117,24 +1117,25 @@
                :prompt "Trash False Echo?"
                :yes-ability
                {:async true
-                :cost [:trash]
-                :msg "make the Corp rez the passed ICE or add it to HQ"
+                :msg "trashes False Echo to make the Corp rez the passed ICE or add it to HQ"
                 :effect
-                (effect
-                  (continue-ability
-                    (let [ice target]
-                      {:async true
-                       :prompt (msg "Rez " (:title ice) " or add it to HQ?")
-                       :player :corp
-                       :choices (req (if (can-pay? state :runner eid card nil [:credit (rez-cost state side ice)])
-                                       ["Rez" "Add to HQ"]
-                                       ["Add to HQ"]))
-                       :effect (req (if (= target "Rez")
-                                      (rez state side eid ice nil)
-                                      (do (system-msg state :corp (str "chooses to add the passed ICE to HQ"))
-                                          (move state :corp ice :hand nil)
-                                          (effect-completed state side eid))))})
-                    card nil))}}}]}
+                (req (wait-for
+                       (trash state side card nil)
+                       (continue-ability
+                         state side
+                         (let [ice target]
+                           {:async true
+                            :prompt (msg "Rez " (:title ice) " or add it to HQ?")
+                            :player :corp
+                            :choices (req (if (can-pay? state :runner eid card nil [:credit (rez-cost state side ice)])
+                                            ["Rez" "Add to HQ"]
+                                            ["Add to HQ"]))
+                            :effect (req (if (= target "Rez")
+                                           (rez state side eid ice nil)
+                                           (do (system-msg state :corp (str "chooses to add the passed ICE to HQ"))
+                                               (move state :corp ice :hand nil)
+                                               (effect-completed state side eid))))})
+                         card target)))}}}]}
 
    "Faust"
    {:abilities [(break-sub [:trash-from-hand 1] 1)
