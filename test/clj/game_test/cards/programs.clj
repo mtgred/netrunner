@@ -1979,6 +1979,64 @@
       (card-ability state :runner mopus 0)
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
 
+(deftest makler
+  ;; Makler
+  (testing "Break ability costs 2 for 2 subroutines"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Battlement"]}
+                 :runner {:hand ["Makler"]
+                          :credits 20}})
+      (play-from-hand state :corp "Battlement" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Makler")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Break ability costs 2 credits"
+        (card-ability state :runner (get-program state 0) 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run"))))
+  (testing "Boost ability costs 2 credits, increases strength by 2"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Bastion"]}
+                 :runner {:hand ["Makler"]
+                          :credits 20}})
+      (play-from-hand state :corp "Bastion" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Makler")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Boost ability costs 2 credits"
+        (card-ability state :runner (get-program state 0) 1))
+      (changes-val-macro
+        2 (core/get-strength (get-program state 0))
+        "Boost ability increases strength by 2"
+        (card-ability state :runner (get-program state 0) 1))))
+  (testing "Break all subs ability gives 1 credit"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Battlement" 2)]}
+                 :runner {:hand ["Makler"]
+                          :credits 20}})
+      (play-from-hand state :corp "Battlement" "HQ")
+      (play-from-hand state :corp "Battlement" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Makler")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "End the run")
+      (changes-val-macro
+        1 (:credit (get-runner))
+        "Break all subs ability gives 1 credit"
+        (run-continue state)))))
+
 (deftest mammon
   ;; Mammon - Pay to add X power counters at start of turn, all removed at end of turn
   (do-game

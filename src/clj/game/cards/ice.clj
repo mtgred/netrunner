@@ -496,8 +496,8 @@
                                          (or (in-hand? %)
                                              (in-discard? %)))}
                    :async true
-                   :effect (effect (corp-install eid target nil nil))
-                   :msg (msg (corp-install-msg target))}]}
+                   :msg (msg (corp-install-msg target))
+                   :effect (effect (corp-install eid target nil nil))}]}
 
    "Ashigaru"
    {:events [{:event :card-moved

@@ -1521,6 +1521,17 @@
                  :effect (effect (gain-credits 2))
                  :msg "gain 2 [Credits]"}]}
 
+   "Makler"
+   (auto-icebreaker {:abilities [(break-sub 2 2 "Barrier")
+                                 (strength-pump 2 2)]
+                     :events [{:event :pass-ice
+                               :once :per-turn
+                               :req (req (and (rezzed? target)
+                                              (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines target))))
+                                              (empty? (remove :broken (:subroutines target)))))
+                               :msg (msg "gain 1 [Credits]")
+                               :effect (effect (gain-credits :runner 1))}]})
+
    "Mammon"
    (auto-icebreaker {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
                      :abilities [{:label "X [Credits]: Place X power counters"
