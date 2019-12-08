@@ -107,18 +107,12 @@
     :effect (effect (draw eid 3 nil))}
 
    "Archived Memories"
-   {:async true
-    :effect (req (let [cid (:cid card)]
-                   (continue-ability
-                     state side
-                     {:prompt "Select a card from Archives to add to HQ"
-                      :show-discard true
-                      :choices {:card #(and (not= (:cid %) cid)
-                                            (corp? %)
-                                            (in-discard? %))}
-                      :effect (effect (move target :hand)
-                                      (system-msg (str "adds " (if (:seen target) (:title target) "an unseen card") " to HQ")))}
-                     card nil)))}
+   {:prompt "Select a card from Archives to add to HQ"
+    :show-discard true
+    :choices {:card #(and (corp? %)
+                          (in-discard? %))}
+    :msg (msg "add " (if (faceup? target) (:title target) "an unseen card") " to HQ")
+    :effect (effect (move target :hand))}
 
    "Argus Crackdown"
    {:trash-after-resolving false

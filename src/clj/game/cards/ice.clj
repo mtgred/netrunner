@@ -987,6 +987,25 @@
                                     :effect (effect (gain-tags :corp eid 1)
                                                     (end-run))})]}
 
+   "Drafter"
+   {:subroutines [{:label "Add 1 card from Archives to HQ"
+                   :prompt "Select a card from Archives to add to HQ"
+                   :show-discard true
+                   :choices {:card #(and (corp? %)
+                                         (in-discard? %))}
+                   :msg (msg "add " (if (faceup? target) (:title target) "an unseen card") " to HQ")
+                   :effect (effect (move target :hand))}
+                  {:async true
+                   :label "Install a card from HQ or Archives"
+                   :prompt "Select a card to install from Archives or HQ"
+                   :show-discard true
+                   :choices {:card #(and (corp? %)
+                                         (not (operation? %))
+                                         (or (in-hand? %)
+                                             (in-discard? %)))}
+                   :msg (msg (corp-install-msg target))
+                   :effect (effect (corp-install eid target nil {:ignore-all-cost true}))}]}
+
    "Eli 1.0"
    {:subroutines [end-the-run
                   end-the-run]

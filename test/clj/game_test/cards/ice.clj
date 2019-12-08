@@ -697,6 +697,62 @@
       (card-subroutine state :corp dm 0)
       (is (= 1 (count (:discard (get-runner)))) "Runner suffered 1 net damage"))))
 
+(deftest drafter
+  ;; Drafter
+  (testing "Subroutine 1: Add 1 card from Archives to HQ"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Drafter"]
+                        :discard ["Wotan"]}})
+      (play-from-hand state :corp "Drafter" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [drafter (get-ice state :hq 0)]
+        (core/rez state :corp (get-ice state :hq 0))
+        (card-subroutine state :corp drafter 0)
+        (is (= :select (:prompt-type (prompt-map :corp))))
+        (click-card state :corp "Wotan")
+        (is (find-card "Wotan" (:hand (get-corp))) "Wotan is now in HQ"))))
+  (testing "Subroutine 2: Install 1 card"
+    (testing "from Archives"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Drafter" "Fairchild"]
+                          :discard ["Wotan"]}})
+        (play-from-hand state :corp "Drafter" "HQ")
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (let [drafter (get-ice state :hq 0)]
+          (core/rez state :corp (get-ice state :hq 0))
+          (card-subroutine state :corp drafter 1)
+          (is (= :select (:prompt-type (prompt-map :corp))))
+          (click-card state :corp "Wotan")
+          (changes-val-macro
+            0 (:credit (get-corp))
+            "Costs no credits to install a second ice on HQ"
+            (click-prompt state :corp "HQ"))
+          (is (= "Wotan" (:title (get-ice state :hq 1)))
+              "Wotan is now installed in the outermost position protecting HQ"))))
+    (testing "from HQ"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Drafter" "Fairchild"]
+                          :discard ["Wotan"]}})
+        (play-from-hand state :corp "Drafter" "HQ")
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (let [drafter (get-ice state :hq 0)]
+          (core/rez state :corp (get-ice state :hq 0))
+          (card-subroutine state :corp drafter 1)
+          (is (= :select (:prompt-type (prompt-map :corp))))
+          (click-card state :corp "Fairchild")
+          (changes-val-macro
+            0 (:credit (get-corp))
+            "Costs no credits to install a second ice on HQ"
+            (click-prompt state :corp "HQ"))
+          (is (= "Fairchild" (:title (get-ice state :hq 1)))
+              "Fairchild is now installed in the outermost position protecting HQ"))))))
+
 (deftest draco
   ;; Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run
   (do-game
@@ -753,27 +809,27 @@
                            "Runner should only lose 3 credits"
                            (card-side-ability state :runner eula 0))))))
 
-; (deftest engram-flush
-;   ;; Engram Flush
-;   (testing "Basic test"
-;     (do-game
-;       (new-game {:corp {:deck ["Engram Flush"]}
-;                  :runner {:hand ["Daily Casts" "Sure Gamble" "Dirty Laundry" "Political Operative" "Corroder"]}})
-;       (play-from-hand state :corp "Engram Flush" "HQ")
-;       (take-credits state :corp)
-;       (run-on state :hq)
-;       (let [ef (get-ice state :hq 0)]
-;         (core/rez state :corp ef)
-;         (card-ability state :corp ef 0)
-;         (click-prompt state :corp "Program")
-;         (card-subroutine state :corp ef 0)
-;         (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
-;         (is (= 2 (-> (get-corp) :prompt first :choices count)) "Only options: Corroder and None")
-;         (click-prompt state :corp "Corroder")
-;         (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder got trashed")
-;         (is (= 1 (count (:discard (get-runner)))) "Corroder in heap")
-;         (card-subroutine state :corp ef 0)
-;         (is (empty? (:prompt (get-corp))) "No prompt because no more fitting cards in grip")))))
+(deftest engram-flush
+  ;; Engram Flush
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Engram Flush"]}
+                 :runner {:hand ["Daily Casts" "Sure Gamble" "Dirty Laundry" "Political Operative" "Corroder"]}})
+      (play-from-hand state :corp "Engram Flush" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (let [ef (get-ice state :hq 0)]
+        (core/rez state :corp ef)
+        (card-ability state :corp ef 0)
+        (click-prompt state :corp "Program")
+        (card-subroutine state :corp ef 0)
+        (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
+        (is (= 2 (-> (get-corp) :prompt first :choices count)) "Only options: Corroder and None")
+        (click-prompt state :corp "Corroder")
+        (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder got trashed")
+        (is (= 1 (count (:discard (get-runner)))) "Corroder in heap")
+        (card-subroutine state :corp ef 0)
+        (is (empty? (:prompt (get-corp))) "No prompt because no more fitting cards in grip")))))
 
 (deftest enigma
   ;; Enigma - Force Runner to lose 1 click if able

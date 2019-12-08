@@ -305,120 +305,120 @@
         (is (= 3 (count (:hand (get-runner)))) "Bookmark moved all hosted card into the grip")
         (is (= 1 (count (:discard (get-runner)))) "Bookmark is only card in heap")))))
 
-; (deftest boomerang
-;   ;; Boomerang
-;   (testing "Basic test"
-;     (do-game
-;       (new-game {:runner {:deck ["Boomerang"]}
-;                  :corp {:deck ["Ice Wall" "Hedge Fund"]}})
-;       (play-from-hand state :corp "Ice Wall" "HQ")
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Boomerang")
-;       (let [icew (get-ice state :hq 0)
-;             boom (get-hardware state 0)]
-;         (click-card state :runner icew)
-;         (is (= "ICE[br]HQ (0)" (:server-target (refresh boom))) "ICE name is not revealed")
-;         (run-on state :hq)
-;         (core/rez state :corp icew)
-;         (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Target was updated to contain ICE name")
-;         (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
-;         (card-ability state :runner (refresh boom) 0)
-;         (click-prompt state :runner "End the run")
-;         (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
-;         (run-continue state)
-;         (run-successful state)
-;         (click-prompt state :runner "No action")
-;         (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
-;         (click-prompt state :runner "Yes")
-;         (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
-;         (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
-;   (testing "Does not trigger on following successful runs"
-;     (do-game
-;       (new-game {:runner {:deck ["Boomerang"]}
-;                  :corp {:deck ["Ice Wall" "Hedge Fund"]}})
-;       (play-from-hand state :corp "Ice Wall" "HQ")
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Boomerang")
-;       (let [icew (get-ice state :hq 0)
-;             boom (get-hardware state 0)]
-;         (click-card state :runner icew)
-;         (run-on state :hq)
-;         (core/rez state :corp icew)
-;         (card-ability state :runner (refresh boom) 0)
-;         (click-prompt state :runner "End the run")
-;         (run-continue state)
-;         (run-successful state)
-;         (click-prompt state :runner "No action")
-;         (click-prompt state :runner "No")
-;         (run-empty-server state :archives)
-;         (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
-;   (testing "Cannot use Boomerang on other ice"
-;     (do-game
-;       (new-game {:runner {:deck ["Boomerang"]}
-;                  :corp {:deck ["Ice Wall" "Enigma"]}})
-;       (play-from-hand state :corp "Ice Wall" "HQ")
-;       (play-from-hand state :corp "Enigma" "HQ")
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Boomerang")
-;       (let [icew (get-ice state :hq 0)
-;             enig (get-ice state :hq 1)
-;             boom (get-hardware state 0)]
-;         (click-card state :runner icew)
-;         (run-on state :hq)
-;         (core/rez state :corp enig)
-;         (card-ability state :runner (refresh boom) 0)
-;         (is (empty? (:prompt (get-runner))) "Cannot use Boomerang on other ice"))))
-;   (testing "Assimilator frees target restriction"
-;     (do-game
-;       (new-game {:runner {:id "Apex: Invasive Predator"
-;                           :deck ["Boomerang" "Assimilator"]}
-;                  :corp {:deck ["Ice Wall"]}})
-;       (play-from-hand state :corp "Ice Wall" "HQ")
-;       (take-credits state :corp)
-;       (core/end-phase-12 state :runner nil)
-;       (click-card state :runner "Boomerang")
-;       (play-from-hand state :runner "Assimilator")
-;       (card-ability state :runner (get-resource state 0) 0)
-;       (click-card state :runner (-> (get-runner) :rig :facedown first))
-;       (let [icew (get-ice state :hq 0)
-;             boom (get-hardware state 0)]
-;         (run-on state :hq)
-;         (core/rez state :corp icew)
-;         (card-ability state :runner (refresh boom) 0)
-;         (is (not-empty (:prompt (get-runner))) "Can use Boomerang on ice"))))
-;   (testing "Update server-target on ice swap"
-;     (do-game
-;       (new-game {:runner {:deck ["Boomerang"]}
-;                  :corp {:deck ["Ice Wall" "Thimblerig"]}})
-;       (play-from-hand state :corp "Ice Wall" "HQ")
-;       (play-from-hand state :corp "Thimblerig" "R&D")
-;       (take-credits state :corp)
-;       (let [icew (get-ice state :hq 0)
-;             thim (get-ice state :rd 0)]
-;         (core/rez state :corp icew)
-;         (core/rez state :corp thim)
-;         (play-from-hand state :runner "Boomerang")
-;         (click-card state :runner thim)
-;         (let [boom (get-hardware state 0)]
-;           (is (= "Thimblerig[br]R&D (0)" (:server-target (refresh boom))) "Targetting Thimblerig on R&D")
-;           (card-ability state :corp (refresh thim) 0)
-;           (click-card state :corp (refresh icew))
-;           (is (= "Thimblerig[br]HQ (0)" (:server-target (refresh boom))) "Targetting Thimblerig on HQ")))))
-;   (testing "Update server-target on ice trash"
-;     (do-game
-;       (new-game {:runner {:deck ["Boomerang"]}
-;                  :corp {:deck ["Ice Wall"]}})
-;       (play-from-hand state :corp "Ice Wall" "HQ")
-;       (take-credits state :corp)
-;       (let [icew (get-ice state :hq 0)]
-;         (core/rez state :corp icew)
-;         (play-from-hand state :runner "Boomerang")
-;         (click-card state :runner icew)
-;         (let [boom (get-hardware state 0)]
-;           (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Targetting Ice Wall on HQ")
-;           (core/trash-cards state :runner [icew])
-;           (is (nil? (:server-target (refresh boom))) "No more target message")
-;           (is (some? (get-in (refresh boom) [:special :boomerang-target])) "Still targetting a card"))))))
+(deftest boomerang
+  ;; Boomerang
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [icew (get-ice state :hq 0)
+            boom (get-hardware state 0)]
+        (click-card state :runner icew)
+        (is (= "ICE[br]HQ (0)" (:server-target (refresh boom))) "ICE name is not revealed")
+        (run-on state :hq)
+        (core/rez state :corp icew)
+        (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Target was updated to contain ICE name")
+        (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
+        (card-ability state :runner (refresh boom) 0)
+        (click-prompt state :runner "End the run")
+        (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
+        (click-prompt state :runner "Yes")
+        (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
+        (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
+  (testing "Does not trigger on following successful runs"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [icew (get-ice state :hq 0)
+            boom (get-hardware state 0)]
+        (click-card state :runner icew)
+        (run-on state :hq)
+        (core/rez state :corp icew)
+        (card-ability state :runner (refresh boom) 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No")
+        (run-empty-server state :archives)
+        (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
+  (testing "Cannot use Boomerang on other ice"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall" "Enigma"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [icew (get-ice state :hq 0)
+            enig (get-ice state :hq 1)
+            boom (get-hardware state 0)]
+        (click-card state :runner icew)
+        (run-on state :hq)
+        (core/rez state :corp enig)
+        (card-ability state :runner (refresh boom) 0)
+        (is (empty? (:prompt (get-runner))) "Cannot use Boomerang on other ice"))))
+  (testing "Assimilator frees target restriction"
+    (do-game
+      (new-game {:runner {:id "Apex: Invasive Predator"
+                          :deck ["Boomerang" "Assimilator"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/end-phase-12 state :runner nil)
+      (click-card state :runner "Boomerang")
+      (play-from-hand state :runner "Assimilator")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-card state :runner (-> (get-runner) :rig :facedown first))
+      (let [icew (get-ice state :hq 0)
+            boom (get-hardware state 0)]
+        (run-on state :hq)
+        (core/rez state :corp icew)
+        (card-ability state :runner (refresh boom) 0)
+        (is (not-empty (:prompt (get-runner))) "Can use Boomerang on ice"))))
+  (testing "Update server-target on ice swap"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall" "Thimblerig"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Thimblerig" "R&D")
+      (take-credits state :corp)
+      (let [icew (get-ice state :hq 0)
+            thim (get-ice state :rd 0)]
+        (core/rez state :corp icew)
+        (core/rez state :corp thim)
+        (play-from-hand state :runner "Boomerang")
+        (click-card state :runner thim)
+        (let [boom (get-hardware state 0)]
+          (is (= "Thimblerig[br]R&D (0)" (:server-target (refresh boom))) "Targetting Thimblerig on R&D")
+          (card-ability state :corp (refresh thim) 0)
+          (click-card state :corp (refresh icew))
+          (is (= "Thimblerig[br]HQ (0)" (:server-target (refresh boom))) "Targetting Thimblerig on HQ")))))
+  (testing "Update server-target on ice trash"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (let [icew (get-ice state :hq 0)]
+        (core/rez state :corp icew)
+        (play-from-hand state :runner "Boomerang")
+        (click-card state :runner icew)
+        (let [boom (get-hardware state 0)]
+          (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Targetting Ice Wall on HQ")
+          (core/trash-cards state :runner [icew])
+          (is (nil? (:server-target (refresh boom))) "No more target message")
+          (is (some? (get-in (refresh boom) [:special :boomerang-target])) "Still targetting a card"))))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
@@ -2149,74 +2149,74 @@
                            (play-from-hand state :runner "Dirty Laundry")
                            (click-card state :runner ppvp))))))
 
-; (deftest prognostic-q-loop
-;   ;; Prognostic Q-Loop
-;   (testing "Basic test"
-;     (do-game
-;       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "Dirty Laundry" "Equivocation" "Prognostic Q-Loop"]}})
-;       (take-credits state :corp)
-;       (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
-;       (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
-;       (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
-;       (core/move state :runner (find-card "Dirty Laundry" (:hand (get-runner))) :deck)
-;       (core/move state :runner (find-card "Equivocation" (:hand (get-runner))) :deck)
-;       ; Deck is now top to bottom: A B C D E
-;       (play-from-hand state :runner "Prognostic Q-Loop")
-;       (run-on state :hq)
-;       (click-prompt state :runner "Yes")
-;       (is (= "The top two cards of your Stack are Au Revoir, Bankroll." (-> (get-runner) :prompt first :msg)))
-;       (click-prompt state :runner "OK")
-;       (card-ability state :runner (get-hardware state 0) 1)
-;       (click-prompt state :runner "Yes")
-;       (is (= "Au Revoir" (:title (get-program state 0))) "Installed Au Revoir")
-;       (card-ability state :runner (get-hardware state 0) 1)
-;       (is (empty? (:prompt (get-runner))) "Can use ability only once per turn")
-;       (run-jack-out state)
-;       (run-on state :hq)
-;       (is (empty? (:prompt (get-runner))) "Only trigger on the first run of the turn")))
-;   (testing "Does not reveal if first run has been before install"
-;     (do-game
-;       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
-;       (take-credits state :corp)
-;       (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
-;       (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
-;       ; Deck is now top to bottom: A B
-;       (run-empty-server state :archives)
-;       (play-from-hand state :runner "Prognostic Q-Loop")
-;       (run-on state :hq)
-;       (is (empty? (:prompt (get-runner))) "Does not trigger on second run even if installed later")))
-;   (testing "Auto-resolve"
-;     (do-game
-;       (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
-;       (take-credits state :corp)
-;       (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
-;       (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
-;       ; Deck is now top to bottom: A B
-;       (play-from-hand state :runner "Prognostic Q-Loop")
-;       (letfn [(toggle-q-loop [setting]
-;                 (card-ability state :runner (get-hardware state 0) 0)
-;                 (click-prompt state :runner setting)
-;                 (is (empty? (:prompt (get-runner))) "Prompt closed"))]
-;         (doseq [set-to ["Never" "Ask" "Always"]]
-;           (toggle-q-loop set-to)
-;           (run-on state "Archives")
-;           (case set-to
-;             "Never"
-;             (is (empty? (:prompt (get-runner))) "Does not show prompt")
-;             "Always"
-;             (do (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
-;                 (click-prompt state :runner "OK")
-;                 (is (empty? (:prompt (get-runner))) "Look prompt closed"))
-;             "Ask"
-;             (do (is (not-empty (:prompt (get-runner))) "Does show trigger prompt")
-;                 (click-prompt state :runner "Yes")
-;                 (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
-;                 (is (not-empty (:prompt (get-runner))) "Does show look prompt")
-;                 (click-prompt state :runner "OK")
-;                 (is (empty? (:prompt (get-runner))) "Look prompt closed")))
-;           (run-jack-out state)
-;           (take-credits state :runner)
-;           (take-credits state :corp))))))
+(deftest prognostic-q-loop
+  ;; Prognostic Q-Loop
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "Dirty Laundry" "Equivocation" "Prognostic Q-Loop"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Dirty Laundry" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Equivocation" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B C D E
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (run-on state :hq)
+      (click-prompt state :runner "Yes")
+      (is (= "The top two cards of your Stack are Au Revoir, Bankroll." (-> (get-runner) :prompt first :msg)))
+      (click-prompt state :runner "OK")
+      (card-ability state :runner (get-hardware state 0) 1)
+      (click-prompt state :runner "Yes")
+      (is (= "Au Revoir" (:title (get-program state 0))) "Installed Au Revoir")
+      (card-ability state :runner (get-hardware state 0) 1)
+      (is (empty? (:prompt (get-runner))) "Can use ability only once per turn")
+      (run-jack-out state)
+      (run-on state :hq)
+      (is (empty? (:prompt (get-runner))) "Only trigger on the first run of the turn")))
+  (testing "Does not reveal if first run has been before install"
+    (do-game
+      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B
+      (run-empty-server state :archives)
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (run-on state :hq)
+      (is (empty? (:prompt (get-runner))) "Does not trigger on second run even if installed later")))
+  (testing "Auto-resolve"
+    (do-game
+      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Prognostic Q-Loop"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (letfn [(toggle-q-loop [setting]
+                (card-ability state :runner (get-hardware state 0) 0)
+                (click-prompt state :runner setting)
+                (is (empty? (:prompt (get-runner))) "Prompt closed"))]
+        (doseq [set-to ["Never" "Ask" "Always"]]
+          (toggle-q-loop set-to)
+          (run-on state "Archives")
+          (case set-to
+            "Never"
+            (is (empty? (:prompt (get-runner))) "Does not show prompt")
+            "Always"
+            (do (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
+                (click-prompt state :runner "OK")
+                (is (empty? (:prompt (get-runner))) "Look prompt closed"))
+            "Ask"
+            (do (is (not-empty (:prompt (get-runner))) "Does show trigger prompt")
+                (click-prompt state :runner "Yes")
+                (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
+                (is (not-empty (:prompt (get-runner))) "Does show look prompt")
+                (click-prompt state :runner "OK")
+                (is (empty? (:prompt (get-runner))) "Look prompt closed")))
+          (run-jack-out state)
+          (take-credits state :runner)
+          (take-credits state :corp))))))
 
 (deftest public-terminal
   ;; Public Terminal
