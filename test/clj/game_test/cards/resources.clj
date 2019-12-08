@@ -1109,6 +1109,67 @@
     (play-from-hand state :corp "Hedge Fund")
     (is (= 11 (:credit (get-corp))) "Corp has 11c")))
 
+(deftest dreamnet
+  ;; DreamNet
+  (testing "Draw 1 card on first successful run"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["DreamNet"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DreamNet")
+      (is (empty? (:hand (get-runner))) "Runner has 0 cards in hand")
+      (changes-val-macro
+        1 (count (:hand (get-runner)))
+        "Runner has drawn 1 card on successful run"
+        (run-empty-server state :archives))))
+  (testing "Don't draw anything on runs after the first"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["DreamNet"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DreamNet")
+      (is (empty? (:hand (get-runner))) "Runner has 0 cards in hand")
+      (run-empty-server state :archives)
+      (is (= 1 (count (:hand (get-runner)))) "Runner has drawn 1 card on successful run")
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "Runner has not drawn additional cards"
+        (run-empty-server state :archives))))
+  (testing "Don't draw anything on unsuccessful run"
+    (do-game
+      (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["DreamNet"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DreamNet")
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "Runner still has 0 cards in hand"
+        (run-on state :archives)
+        (run-jack-out state))))
+  (testing "Gain 1 credit on successful run"
+    (testing "with 2 link"
+      (do-game
+        (new-game {:runner {:id "Sunny Lebeau: Security Specialist"
+                            :deck [(qty "Sure Gamble" 5)]
+                            :hand ["DreamNet"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "DreamNet")
+        (changes-val-macro
+          1 (:credit (get-runner))
+          "Runner gains 1 credit for having 2 link"
+          (run-empty-server state :archives))))
+    (testing "with Digital subtype"
+      (do-game
+        (new-game {:runner {:id "Apex: Invasive Predator"
+                            :deck [(qty "Sure Gamble" 5)]
+                            :hand ["DreamNet"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "DreamNet")
+        (changes-val-macro
+          1 (:credit (get-runner))
+          "Runner gains 1 credit for having Digital subtype"
+          (run-empty-server state :archives))))))
+
 (deftest dummy-box
   ;; Dummy Box - trash a card from hand to prevent corp trashing installed card
   (testing "Basic test"

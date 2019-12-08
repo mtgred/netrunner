@@ -1332,7 +1332,8 @@
                                          (:break ability))))
                         :value true}]
     :events [{:event :corp-turn-begins
-              :effect (effect (trash card nil))}]}
+              :effect (effect (trash card {:unpreventable true})
+                              (update-all-ice))}]}
 
    "O₂ Shortage"
    {:async true

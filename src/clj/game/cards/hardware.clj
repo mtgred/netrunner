@@ -1091,6 +1091,33 @@
                    :effect (effect (damage-prevent :brain 1)
                                    (damage-prevent :net 1))}]})
 
+   "Mu Safecracker"
+   {:implementation "Stealth credit restriction not enforced"
+    :events [{:event :successful-run
+              :optional
+              {:req (req (and (= target :hq)
+                              (some #(has-subtype? % "Stealth")
+                                    (all-active-installed state :runner))))
+               :prompt "Pay 1 [Credits] to access 1 additional card?"
+               :yes-ability
+               {:async true
+                :cost [:credit 1]
+                :msg "access 1 additional card from HQ"
+                :effect (effect (access-bonus :hq 1)
+                                (effect-completed eid))}}}
+             {:event :successful-run
+              :optional
+              {:req (req (and (= target :rd)
+                              (some #(has-subtype? % "Stealth")
+                                    (all-active-installed state :runner))))
+               :prompt "Pay 2 [Credits] to access 1 additional card?"
+               :yes-ability
+               {:async true
+                :cost [:credit 2]
+                :msg "access 1 additional card from R&D"
+                :effect (effect (access-bonus :rd 1)
+                                (effect-completed eid))}}}]}
+
    "Muresh Bodysuit"
    {:events [{:event :pre-damage
               :once :per-turn :once-key :muresh-bodysuit

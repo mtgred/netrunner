@@ -1863,6 +1863,70 @@
             (click-prompt state :runner "Yes")) ;Aeneas
           (is (= (+ num-creds 2) (:credit (get-runner))) "Runner has gained 2 from Aeneas"))))))
 
+(deftest mu-safecracker
+  ;; MU Safecracker
+  (testing "No available stealth credits"
+    (testing "Access HQ"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand [(qty "Hedge Fund" 2)]}
+                   :runner {:hand ["Mu Safecracker"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Mu Safecracker")
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "No action")
+        (is (not (:run @state)) "Run has ended with no prompt")))
+    (testing "Access R&D"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand [(qty "Hedge Fund" 2)]}
+                   :runner {:hand ["Mu Safecracker"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Mu Safecracker")
+        (run-empty-server state "R&D")
+        (click-prompt state :runner "No action")
+        (is (not (:run @state)) "Run has ended with no prompt"))))
+  (testing "Available stealth credits"
+    (testing "Access HQ"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand [(qty "Hedge Fund" 2)]}
+                   :runner {:hand ["Mu Safecracker" "Ghost Runner"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Ghost Runner")
+        (play-from-hand state :runner "Mu Safecracker")
+        (run-empty-server state "HQ")
+        (is (= "Pay 1 [Credits] to access 1 additional card?"
+               (:msg (prompt-map :runner)))
+            "Runner has the Mu Safecracker prompt")
+        (click-prompt state :runner "Yes")
+        (click-card state :runner "Ghost Runner")
+        (click-prompt state :runner "Card from hand")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Card from hand")
+        (click-prompt state :runner "No action")
+        (is (not (:run @state)) "Run has ended")))
+    (testing "Access R&D"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand [(qty "Hedge Fund" 2)]}
+                   :runner {:hand ["Mu Safecracker" "Ghost Runner"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Ghost Runner")
+        (play-from-hand state :runner "Mu Safecracker")
+        (run-empty-server state "R&D")
+        (is (= "Pay 2 [Credits] to access 1 additional card?"
+               (:msg (prompt-map :runner)))
+            "Runner has the Mu Safecracker prompt")
+        (click-prompt state :runner "Yes")
+        (click-card state :runner "Ghost Runner")
+        (click-card state :runner "Ghost Runner")
+        (click-prompt state :runner "Card from deck")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Card from deck")
+        (click-prompt state :runner "No action")
+        (is (not (:run @state)) "Run has ended")))))
+
 (deftest net-ready-eyes
   ;; Net-Ready Eyes
   (testing "Basic test"

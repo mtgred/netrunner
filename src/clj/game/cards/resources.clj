@@ -852,6 +852,16 @@
                                                  (unregister-events state side card))}])))}]
     :events [{:event :post-runner-turn-ends}]}
 
+   "DreamNet"
+   {:events [{:event :successful-run
+              :async true
+              :req (req (first-event? state :runner :successful-run))
+              :effect (req (wait-for (draw state :runner 1 nil)
+                                     (when (or (<= 2 (:link (:runner @state)))
+                                               (has-subtype? (:identity (:runner @state)) "Digital"))
+                                       (gain-credits state :runner 1))
+                                     (effect-completed state side eid)))}]}
+
    "Drug Dealer"
    {:flags {:runner-phase-12 (req (some #(card-flag? % :drip-economy true) (all-active-installed state :runner)))}
     :abilities [{:label "Lose 1 [Credits] (start of turn)"
