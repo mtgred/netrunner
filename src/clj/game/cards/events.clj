@@ -693,7 +693,6 @@
                     :async true
                     :effect (effect (make-run eid target nil card))}
                    card nil))
-    :abilities [(set-autoresolve :auto-reshuffle "reshuffle")]
     :events [{:event :run-ends
               :async true
               :effect (req (doseq [s [:corp :runner]]
@@ -701,8 +700,7 @@
                            (continue-ability
                              state :runner
                              {:optional
-                              {:autoresolve (get-autoresolve :auto-reshuffle)
-                               :prompt "Shuffle Direct Access into the Stack?"
+                              {:prompt "Shuffle Direct Access into the Stack?"
                                :yes-ability
                                {:msg (msg "shuffles Direct Access into the Stack")
                                 :effect (effect (move (get-card state card) :deck)
@@ -1806,21 +1804,21 @@
     :async true
     :effect (req (wait-for (make-run state side :rd nil card)
                            (let [card (get-card state card)]
-                             (if (:run-again card)
+                             (if (get-in card [:special :run-again])
                                (make-run state side eid :rd nil card)
                                (effect-completed state side eid)))))
     :events [{:event :successful-run
-              :req (req (and (:run-again card)
+              :req (req (and (get-in card [:special :run-again])
                              (= target :rd)))
               :msg "gain 4 [Credits]"
               :effect (effect (gain-credits 4))}
              {:event :successful-run-ends
               :interactive (req true)
-              :optional {:req (req (and (not (:run-again card))
+              :optional {:req (req (and (not (get-in card [:special :run-again]))
                                         (= [:rd] (:server target))))
                          :prompt "Make another run on R&D?"
                          :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                       (update! (assoc card :run-again true)))}}}]}
+                                                       (update! (assoc-in card [:special :run-again] true)))}}}]}
 
    "Modded"
    {:prompt "Select a program or piece of hardware to install from your Grip"
@@ -1986,9 +1984,9 @@
                         card))
       :events [{:event :purge
                 :effect (effect (trash card {:cause :purge}))}]
-      :trash-effect {:effect (req (let [current-side (get-scoring-owner state {:cid (:agenda-cid card)})]
+      :trash-effect {:effect (req (let [current-side (get-scoring-owner state {:cid (:agenda-cid target)})]
                                     (update-agenda-points state current-side
-                                                          (find-cid (:agenda-cid card) (get-in @state [current-side :scored]))
+                                                          (find-cid (:agenda-cid target) (get-in @state [current-side :scored]))
                                                           1)))}})
 
    "Populist Rally"

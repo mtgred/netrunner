@@ -1366,37 +1366,7 @@
      (is (changes-val-macro 1 (count (:discard (get-corp)))
                             "Alice not permanently blanked"
                             (run-successful state)
-                            (click-prompt state :corp (find-card "PAD Campaign" (:hand (get-corp))))))))
-  (testing "Direct Access autoresolve"
-    (do-game
-     (new-game {:runner {:deck ["Direct Access"]
-                         :id "Valencia Estevez: The Angel of Cayambe"}
-                :corp {:deck [(qty "Rashida Jaheem" 3) "Hedge Fund"]
-                       :id "Industrial Genomics: Growing Solutions"}})
-     (dotimes [_ 3]
-       (play-from-hand state :corp "Rashida Jaheem" "New remote"))
-     (trash-from-hand state :corp "Hedge Fund")
-     (take-credits state :corp)
-     (play-from-hand state :runner "Direct Access")
-     (click-prompt state :runner "Server 1")
-     (card-ability state :runner (first (get-in @state [:runner :play-area])) 0)
-     (click-prompt state :runner "Always") ; toggle Direct Access to always reshuffle
-     (run-successful state)
-     (click-prompt state :runner "Pay 1 [Credits] to trash")
-     (is (empty? (:prompt (get-runner))) "Direct Access prompt autoresolved")
-     (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access reshuffled into deck")
-     (is (= 4 (:credit (get-runner))) "1 BP cred spent to trash Rashida, as IG is blank") ; 1 cred spent on play cost
-     (core/click-draw state :runner 1)
-     (play-from-hand state :runner "Direct Access")
-     (click-prompt state :runner "Server 2")
-     (run-successful state)
-     (click-prompt state :runner "Pay 1 [Credits] to trash")
-     (is (empty? (:prompt (get-runner))) "Direct Access remembered its autoresolve setting and autoresolved")
-     (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access reshuffled into deck")
-     (is (= 3 (:credit (get-runner))) "1 BP cred spent to trash Rashida, as IG is blank") ; 1 cred spent on play cost
-     (run-empty-server state "Server 3")
-     (click-prompt state :runner "Pay 2 [Credits] to trash")
-     (is (= 2 (:credit (get-runner))) "1 BP cred + 1 real cred spent on trashing Rashida, as IG is active blank"))))
+                            (click-prompt state :corp (find-card "PAD Campaign" (:hand (get-corp)))))))))
 
 (deftest dirty-laundry
   ;; Dirty Laundry - Gain 5 credits at the end of the run if it was successful
@@ -3417,18 +3387,14 @@
       (run-continue state)
       (run-successful state)
       (is (= 5 (:credit (get-runner))))
-      (println (prompt-fmt :runner))
       (click-prompt state :runner "No action")
-      (println (prompt-fmt :runner))
       (click-prompt state :runner "Yes")
       (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
       (run-continue state)
       (run-successful state)
-      (println (prompt-fmt :runner))
       (click-prompt state :runner "No action")
       (is (= 9 (:credit (get-runner))))
       (play-from-hand state :runner "Déjà Vu")
-      (println (prompt-fmt :runner))
       (click-prompt state :runner (find-card "Möbius" (:discard (get-runner))))
       (is (empty? (:prompt (get-runner))) "Recurring a non-virus card stops Déjà Vu prompting further")
       (is (= 1 (count (:hand (get-runner)))))
@@ -3436,9 +3402,7 @@
       (run-continue state)
       (run-successful state)
       (is (= 7 (:credit (get-runner))))
-      (println (prompt-fmt :runner))
       (click-prompt state :runner "No action")
-      (println (prompt-fmt :runner))
       (click-prompt state :runner "Yes")
       (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
       (run-continue state)
