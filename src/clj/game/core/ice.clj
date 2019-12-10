@@ -112,11 +112,17 @@
   ([state ice breaker]
    (update! state :corp (break-all-subroutines ice breaker))))
 
+(defn any-subs-broken-by-card?
+  [state ice card]
+  (some #(and (:broken %)
+              (= (:cid card) (:breaker %)))
+        (:subroutines (get-card state ice))))
+
 (defn all-subs-broken-by-card?
   [state ice card]
-  (and (every? #(and (:broken %)
-                     (= (:cid card) (:breaker %)))
-               (:subroutines (get-card state ice)))))
+  (every? #(and (:broken %)
+                (= (:cid card) (:breaker %)))
+          (:subroutines (get-card state ice))))
 
 (defn dont-resolve-subroutine
   "Marks a given subroutine as not resolving (e.g. Mass-Driver)"
