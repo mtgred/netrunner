@@ -1549,6 +1549,13 @@
                      :events [{:event :runner-turn-ends
                                :effect (effect (update! (assoc-in card [:counter :power] 0)))}]})
 
+   "Mantle"
+   {:recurring 1
+    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
+                                                (or (hardware? target)
+                                                    (program? target))))
+                                 :type :recurring}}}
+
    "Mass-Driver"
    (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
                                  (strength-pump 1 1)]
@@ -2364,11 +2371,13 @@
                                  (strength-pump 1 1)]})
 
    "Tracker"
-   (let [ability {:prompt "Choose a server for Tracker" :choices (req servers)
+   (let [ability {:prompt "Choose a server for Tracker"
+                  :choices (req servers)
                   :msg (msg "target " target)
                   :req (req (not (:server-target card)))
                   :effect (effect (update! (assoc card :server-target target)))}]
-     {:abilities [{:label "Make a run on targeted server" :cost [:click 1 :credit 2]
+     {:abilities [{:label "Make a run on targeted server"
+                   :cost [:click 1 :credit 2]
                    :req (req (some #(= (:server-target card) %) runnable-servers))
                    :msg (msg "make a run on " (:server-target card) ". Prevent the first subroutine that would resolve from resolving")
                    :effect (effect (make-run (:server-target card) nil card))}]

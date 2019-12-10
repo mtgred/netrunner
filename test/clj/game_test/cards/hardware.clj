@@ -2280,7 +2280,32 @@
                 (is (empty? (:prompt (get-runner))) "Look prompt closed")))
           (run-jack-out state)
           (take-credits state :runner)
-          (take-credits state :corp))))))
+          (take-credits state :corp)))))
+  (testing "Printing the revealed card"
+    (testing "when the revealed card is a hardware"
+      (do-game
+        (new-game {:runner {:deck ["Au Revoir"]
+                            :hand ["Prognostic Q-Loop"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Prognostic Q-Loop")
+        (card-ability state :runner (get-hardware state 0) 1)
+        (is (last-log-contains? state "reveal the top card of the stack: Au Revoir") "Correctly prints the revealed card")))
+    (testing "when the revealed card is not a hardware"
+      (do-game
+        (new-game {:runner {:deck ["Sure Gamble"]
+                            :hand ["Prognostic Q-Loop"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Prognostic Q-Loop")
+        (card-ability state :runner (get-hardware state 0) 1)
+        (is (last-log-contains? state "reveal the top card of the stack: Sure Gamble") "Correctly prints the revealed card"))))
+  (testing "Doesn't fire with an empty deck"
+    (do-game
+      (new-game {:runner {:hand ["Prognostic Q-Loop"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (card-ability state :runner (get-hardware state 0) 1)
+      (is (last-log-contains? state "Runner spends \\[Click] and pays 1 \\[Credits] to install Prognostic Q-Loop.")
+          "Shouldn't print anything to log as the stack is empty"))))
 
 (deftest public-terminal
   ;; Public Terminal
