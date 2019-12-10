@@ -352,12 +352,10 @@
 
    "Cyberdelia"
    {:in-play [:memory 1]
-    :events [{:once :per-turn
+    :events [{:event :subroutines-broken
+              :req (req (first-event? state side :subroutines-broken #(every? :broken (:subroutines (first %)))))
               :msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
-              :effect (effect (gain-credits 1))
-              :event :pass-ice
-              :req (req (and (rezzed? target)
-                             (empty? (remove :broken (:subroutines target)))))}]}
+              :effect (effect (gain-credits 1))}]}
 
    "Cyberfeeder"
    {:recurring 1
@@ -868,19 +866,21 @@
                                                     (effect-completed state side eid)))}}}]}
 
    "Hippo"
-   {:implementation "First encounter requirements not enforced"
-    :abilities [{:label "Remove Hippo from the game: trash outermost piece of ICE if all subroutines were broken"
-                 :req (req (and run
-                                (pos? (count run-ices))
-                                (rezzed? current-ice)
-                                (empty? (remove :broken (:subroutines current-ice)))))
-                 :async true
-                 :effect (req (let [ice (last run-ices)]
-                                (system-msg
-                                  state :runner
-                                  (str "removes Hippo from the game to trash " (card-str state ice)))
-                                (move state :runner card :rfg)
-                                (trash state :runner eid ice nil)))}]}
+   {:events [{:event :subroutines-broken
+              :effect
+              (effect
+                (continue-ability
+                  {:optional
+                   {:req (req (let [pred #(and (same-card? (last run-ices) (first %))
+                                               (every? :broken (:subroutines (first %))))]
+                                (first-event? state side :subroutines-broken pred)))
+                    :prompt (str "Remove Hippo from the game to trash " (:title target) "?")
+                    :yes-ability
+                    {:async true
+                     :effect (effect (system-msg (str "removes Hippo from the game to trash " (card-str state target)))
+                                     (move card :rfg)
+                                     (trash eid target nil))}}}
+                  card targets))}]}
 
    "HQ Interface"
    {:in-play [:hq-access 1]}

@@ -717,10 +717,10 @@
         (run-next-phase state)
         (run-continue state)
         (card-ability state :runner (refresh corr) 0)
-        (click-prompt state :runner "End the run")
-        (changes-val-macro 1 (:credit (get-runner))
-                           "Got 1 credit from Cyberdelia"
-                           (run-continue state))))))
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Spent 1, paid 1"
+          (click-prompt state :runner "End the run"))))))
 
 (deftest cyberfeeder
   ;; Cyberfeeder
@@ -1336,7 +1336,7 @@
       (run-next-phase state)
       (run-continue state)
       (is (not-empty (get-hardware state)) "Hippo installed")
-      (card-ability state :runner (get-hardware state 0) 0)
+      (is (empty? (:prompt (get-runner))) "No prompt")
       (is (empty? (:rfg (get-runner))) "Hippo not RFGed")
       (is (not-empty (get-hardware state)) "Hippo still installed")))
   (testing "Single ice"
@@ -1355,7 +1355,7 @@
       (is (= 1 (count (get-ice state :hq))) "Ice Wall installed")
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (card-ability state :runner (get-hardware state 0) 0)
+      (click-prompt state :runner "Yes")
       (is (empty? (get-ice state :hq)) "Ice Wall removed")
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall trashed")
       (is (= 1 (count (:rfg (get-runner)))) "Hippo RFGed")
@@ -1379,13 +1379,32 @@
       (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma innermost")
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (card-ability state :runner (get-hardware state 0) 0)
+      (click-prompt state :runner "Yes")
       (is (= 1 (count (get-ice state :hq))) "Ice removed")
       (is (= 1 (count (:discard (get-corp)))) "Ice trashed")
       (is (= "Ice Wall" (:title (first (:discard (get-corp))))) "Ice Wall in trash")
       (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma still innermost")
       (is (= 1 (count (:rfg (get-runner)))) "Hippo RFGed")
-      (is (empty? (get-hardware state)) "Hippo removed"))))
+      (is (empty? (get-hardware state)) "Hippo removed")))
+  (testing "Doesn't fire on partial break"
+    (do-game
+      (new-game {:corp {:deck ["Battlement"]}
+                 :runner {:deck ["Corroder" "Hippo"]}})
+      (play-from-hand state :corp "Battlement" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (not-empty (get-hardware state)) "Hippo installed")
+      (is (= 1 (count (get-ice state :hq))) "Battlement installed")
+      (card-ability state :runner (get-program state 0) 1)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (is (not-empty (get-hardware state)) "Hippo installed")
+      (is (empty? (:prompt (get-runner))) "No prompt"))))
 
 (deftest keiko
   ;; Keiko
