@@ -19,14 +19,12 @@
    :prompt "Choose a server:"
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
-   :events [{:event :pass-ice
-             :once :per-run
+   :events [{:event :subroutines-broken
              :async true
+             :req (req (let [pred #(and (has-subtype? (first %) subtype)
+                                        (every? :broken (:subroutines (first %))))]
+                         (first-event? state side :subroutines-broken pred)))
              :msg (msg "trash " (card-str state target))
-             :req (req (and run
-                            (has-subtype? target subtype)
-                            (rezzed? target)
-                            (empty? (remove :broken (:subroutines target)))))
              :effect (effect (trash eid target nil))}]})
 
 ;; Card definitions
