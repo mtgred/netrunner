@@ -1356,16 +1356,21 @@
                                                                           (join ", " (map :title (take 2 (:deck runner))))
                                                                           ".") ["OK"] {}))}}}]
     :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
-                {:label "Reveal top card of stack. Install, if program or hardware"
+                {:label "Reveal and install top card of stack"
                  :once :per-turn
                  :cost [:credit 1]
                  :req (req (pos? (count (:deck runner))))
                  :msg (msg "reveal the top card of the stack: " (:title (first (:deck runner))))
-                 :optional {:req (req (or (program? (first (:deck runner)))
-                                          (hardware? (first (:deck runner)))))
-                            :prompt (msg "Install " (:title (first (:deck runner))) "?")
-                            :async true
-                            :yes-ability {:effect (effect (runner-install eid (first (:deck runner)) nil))}}}]}
+                 :effect
+                 (effect
+                   (continue-ability
+                     {:optional
+                      {:req (req (or (program? (first (:deck runner)))
+                                     (hardware? (first (:deck runner)))))
+                       :prompt (msg "Install " (:title (first (:deck runner))) "?")
+                       :async true
+                       :yes-ability {:effect (effect (runner-install eid (first (:deck runner)) nil))}}}
+                     card nil))}]}
 
    "Public Terminal"
    {:recurring 1

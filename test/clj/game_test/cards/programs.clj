@@ -2053,6 +2053,44 @@
       (take-credits state :runner)
       (is (zero? (get-counters (refresh mam) :power)) "All power counters removed"))))
 
+(deftest mantle
+  ;; Mantle
+  (testing "Works with programs"
+    (do-game
+      ;; Using Tracker to demonstrate that it's not just icebreakers
+      (new-game {:runner {:hand ["Mantle" "Tracker"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mantle")
+      (play-from-hand state :runner "Tracker")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (let [mantle (get-program state 0)
+            tracker (get-program state 1)]
+        (card-ability state :runner tracker 0)
+        (changes-val-macro
+          -1 (get-counters (refresh mantle) :recurring)
+          "Can spend credits on Mantle for programs"
+          (click-card state :runner mantle)))))
+  (testing "Works with programs"
+    (do-game
+      (new-game {:runner {:deck ["Sure Gamble"]
+                          :hand ["Mantle" "Prognostic Q-Loop"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mantle")
+      (play-from-hand state :runner "Prognostic Q-Loop")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [mantle (get-program state 0)
+            qloop (get-hardware state 0)]
+        (card-ability state :runner qloop 1)
+        (changes-val-macro
+          -1 (get-counters (refresh mantle) :recurring)
+          "Can spend credits on Mantle for programs"
+          (click-card state :runner mantle))
+        (take-credits state :runner)
+        (take-credits state :corp)))))
+
 (deftest mass-driver
   ;; Mass-Driver
   (testing "Basic test"
