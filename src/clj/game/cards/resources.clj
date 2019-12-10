@@ -1181,7 +1181,8 @@
 
    "Investigative Journalism"
    {:req (req (has-bad-pub? state))
-    :abilities [{:cost [:click 4 :trash] :msg "give the Corp 1 bad publicity"
+    :abilities [{:cost [:click 4 :trash]
+                 :msg "give the Corp 1 bad publicity"
                  :effect (effect (gain-bad-publicity :corp 1))}]}
 
    "Jackpot!"
@@ -1901,7 +1902,9 @@
 
    "Political Operative"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
-    :abilities [{:effect
+    :abilities [{:async true
+                 :trash-icon true
+                 :effect
                  (effect
                    (continue-ability
                      ;; TODO: Convert this to a cost

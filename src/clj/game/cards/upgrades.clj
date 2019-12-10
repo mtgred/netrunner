@@ -213,6 +213,7 @@
    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
     :abilities [{:label "Place 1 advancement token on a card in this server"
                  :async true
+                 :trash-icon true
                  :effect (effect (continue-ability
                                    {:prompt "Select a card in this server"
                                     :choices {:card #(in-same-server? % card)}
@@ -310,9 +311,11 @@
                  :effect (effect (add-counter card :power 1))}]}
 
    "Corporate Troubleshooter"
-   {:abilities [{:label "Add strength to a rezzed ICE protecting this server"
-                 :choices {:number (req (total-available-credits state :corp eid card))}
+   {:abilities [{:async true
+                 :trash-icon true
+                 :label "Add strength to a rezzed ICE protecting this server"
                  :prompt "How many credits?"
+                 :choices {:number (req (total-available-credits state :corp eid card))}
                  :effect (effect
                            (continue-ability
                              (let [boost target]
@@ -778,8 +781,8 @@
                                :autoresolve (get-autoresolve :auto-fire)
                                :yes-ability
                                {:msg "force the Runner to approach outermost piece of ice"
-                                :cost [:trash]
-                                :effect (req (swap! state assoc-in [:run :position] (count run-ices)))}
+                                :effect (req (swap! state assoc-in [:run :position] (count run-ices))
+                                             (trash state side eid card {:unpreventable true}))}
                                :end-effect (effect (clear-wait-prompt :runner))}}
                              card nil))}}}]
      {:events [(assoc ability :event :approach-server)]

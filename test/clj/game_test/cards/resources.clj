@@ -3672,9 +3672,27 @@
       (is (= 2 (count (get-program state))) "2 Programs installed")
       (is (= 6 (:credit (get-runner))) "Artist discount applied new turn"))))
 
-; TODO: Enable this once card is fully implemented
-(deftest-pending the-back
-  ; The Back
+(deftest the-back
+  ;; The Back
+  (do-game
+      (new-game {:runner {:hand ["The Back"]
+                          :discard ["Spy Camera" "Recon Drone" "All-nighter" "Deus X"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Back")
+      (let [the-back (get-resource state 0)]
+        (core/add-counter state :runner (refresh the-back) :power 2)
+        (card-ability state :runner (refresh the-back) 1)
+        (is (= "Select up to 4 targets for The Back" (:msg (prompt-map :runner))) "Runner gets up to 4 cards")
+        (click-card state :runner "Spy Camera") ; Hardware
+        (click-card state :runner "Recon Drone") ; Hardware with :trash-icon
+        (click-card state :runner "Deus X") ; Program
+        (click-card state :runner "All-nighter") ; Resource
+        (is (find-card "Spy Camera" (:deck (get-runner))) "Spy Camera is shuffled back into the stack")
+        (is (find-card "Recon Drone" (:deck (get-runner))) "Program is shuffled back into the stack")
+        (is (find-card "Deus X" (:deck (get-runner))) "Deus X is shuffled back into the stack")
+        (is (find-card "All-nighter" (:deck (get-runner))) "All-nighter is shuffled back into the stack"))))
+(deftest-pending the-back-automated
+  ;; TODO: Enable this once card is fully implemented
   (testing "Basic test"
     (do-game
       (new-game {:runner {:hand ["The Back" (qty "Spy Camera" 2) "Lockpick" "Refractor"]

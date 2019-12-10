@@ -788,4 +788,6 @@
 
 (defn has-trash-ability?
   [card]
-  (some #(= :trash (first %)) (merge-costs (map :cost (:abilities (card-def card))))))
+  (let [abilities (:abilities (card-def card))]
+    (or (some :trash-icon abilities)
+        (some #(= :trash (first %)) (merge-costs (map :cost abilities))))))

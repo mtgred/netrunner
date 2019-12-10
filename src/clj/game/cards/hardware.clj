@@ -151,6 +151,7 @@
                  :effect (req (doseq [c (:hosted card)]
                                 (move state side c :hand)))}
                 {:label "Add all hosted cards to Grip"
+                 :trash-icon true
                  :effect (req (doseq [c (:hosted card)]
                                 (move state side c :hand))
                               (continue-ability
@@ -186,22 +187,24 @@
                {:event :runner-trash
                 :req (req (some #(same-card? % (get-in card [:special :boomerang-target])) targets))
                 :effect (effect (update! (dissoc card :server-target)))}]
-      :abilities [(break-sub [:trash] 2 "All"
+      :abilities [(break-sub
+                    [:trash] 2 "All"
                     {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
                                  (same-card? current-ice boomerang-target)
                                  true)) ;When eg. flipped by Assimilator
                      :additional-ability
                      {:effect (req (let [boomerang (assoc card :zone '(:discard))]
-                                     (register-events state side boomerang
-                                                      [{:event :successful-run-ends
-                                                        :location :discard
-                                                        :optional
-                                                        {:prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
-                                                         :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
-                                                                       :effect (effect (move card :deck)
-                                                                                       (shuffle! :deck))}
-                                                         ; TODO: replace with new :unregister-after-use or :once :and-never-more or however it will be called once it's done
-                                                         :end-effect (effect (unregister-floating-events-for-card boomerang :while-installed))}}])))}})]})
+                                     (register-events
+                                       state side boomerang
+                                       [{:event :successful-run-ends
+                                         :location :discard
+                                         :optional
+                                         {:prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
+                                          :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
+                                                        :effect (effect (move card :deck)
+                                                                        (shuffle! :deck))}
+                                          ; TODO: replace with new :unregister-after-use or :once :and-never-more or however it will be called once it's done
+                                          :end-effect (effect (unregister-floating-events-for-card boomerang :while-installed))}}])))}})]})
 
    "Box-E"
    {:in-play [:memory 2 :hand-size 2]}
@@ -1395,6 +1398,7 @@
    {:interactions {:prevent [{:type #{:net :brain}
                               :req (req true)}]}
     :abilities [{:async true
+                 :trash-icon true
                  :req (req (not-empty (:deck runner)))
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
                                 (continue-ability
@@ -1417,9 +1421,11 @@
              (into {} (reverse (get s :turn-events))))]
      {:interactions {:prevent [{:type #{:net :brain :meat}
                                 :req (req (:access @state))}]}
-      :abilities [{:req (req (= (:cid (second (:pre-damage (eventmap @state))))
+      :abilities [{:trash-icon true
+                   :async true
+                   :req (req (= (:cid (second (:pre-damage (eventmap @state))))
                                 (:cid (first (:pre-access-card (eventmap @state))))))
-                   :effect (effect (resolve-ability
+                   :effect (effect (continue-ability
                                      {:prompt "Choose how much damage to prevent"
                                       :priority 50
                                       :choices {:number (req (min (last (:pre-damage (eventmap @state)))
