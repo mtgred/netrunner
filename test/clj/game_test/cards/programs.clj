@@ -509,10 +509,10 @@
         (run-continue state)
         (card-ability state :runner (refresh mimic) 0)
         (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
-        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
-        (changes-val-macro 0 (:credit (get-runner))
-                           "No credit gain from Bukhgalter for breaking with only Mimic"
-                           (run-continue state))
+        (changes-val-macro
+          -1 (:credit (get-runner))
+          "No credit gain from Bukhgalter for breaking with only Mimic"
+          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))
         (run-jack-out state)
         (run-on state :hq)
         (run-next-phase state)
@@ -521,20 +521,20 @@
         (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
         (click-prompt state :runner "Done")
         (card-ability state :runner (refresh mimic) 0)
-        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
-        (changes-val-macro 0 (:credit (get-runner))
-                           "No credit gain from Bukhgalter"
-                           (run-continue state))
+        (changes-val-macro
+          -1 (:credit (get-runner))
+          "No credit gain from Bukhgalter"
+          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))
         (run-jack-out state)
         (run-on state :hq)
         (run-next-phase state)
         (run-continue state)
         (card-ability state :runner (refresh bukhgalter) 0)
         (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
-        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
-        (changes-val-macro 2 (:credit (get-runner))
-                           "2 credits gained from Bukhgalter"
-                           (run-continue state)))))
+        (changes-val-macro
+          (+ 2 -1) (:credit (get-runner))
+          "2 credits gained from Bukhgalter"
+          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")))))
   (testing "gaining 2c only once per turn"
     (do-game
       (new-game {:runner {:deck ["Bukhgalter" "Mimic"]}
@@ -551,20 +551,20 @@
         (run-continue state)
         (card-ability state :runner (refresh bukhgalter) 0)
         (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
-        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
-        (changes-val-macro 2 (:credit (get-runner))
-                           "2 credits gained from Bukhgalter"
-                           (run-continue state))
+        (changes-val-macro
+          (+ 2 -1) (:credit (get-runner))
+          "2 credits gained from Bukhgalter"
+          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))
         (run-jack-out state)
         (run-on state :hq)
         (run-next-phase state)
         (run-continue state)
         (card-ability state :runner (refresh bukhgalter) 0)
         (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
-        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
-        (changes-val-macro 0 (:credit (get-runner))
-                           "No credits gained from Bukhgalter"
-                           (run-continue state))))))
+        (changes-val-macro
+          -1 (:credit (get-runner))
+          "No credits gained from Bukhgalter"
+          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))))))
 
 (deftest cerberus-rex-h2
   ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter

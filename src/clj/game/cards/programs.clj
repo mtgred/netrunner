@@ -332,7 +332,7 @@
    (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
                                  (strength-pump 2 3)]
                      :events [{:event :encounter-ice-ends
-                               :req (req (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? state (first %) card)))
+                               :req (req (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card)))
                                :msg "make the Corp lose 1 [Credits]"
                                :effect (effect (lose-credits :corp 1))}]})
 
@@ -358,7 +358,7 @@
                                  (strength-pump 1 1)]
                      :events [{:event :subroutines-broken
                                :req (req (and (has-subtype? target "Barrier")
-                                              (all-subs-broken-by-card? state target card)))
+                                              (all-subs-broken-by-card? target card)))
                                :msg (msg "add " (:title target)
                                          " to HQ after breaking all its subroutines")
                                :effect (effect (move :corp target :hand nil)
@@ -537,7 +537,7 @@
    (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
                                  (strength-pump 1 1)]
                      :events [{:event :subroutines-broken
-                               :req (req (first-event? state side :subroutines-broken #(all-subs-broken-by-card? state (first %) card)))
+                               :req (req (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card)))
                                :msg (msg "gain 2 [Credits]")
                                :effect (effect (gain-credits :runner 2))}]})
 
@@ -736,7 +736,7 @@
    "Crescentus"
    {:abilities [{:req (req (and run
                                 (= :encounter-ice (:phase run))
-                                (all-subs-broken-by-card? current-ice card)))
+                                (all-subs-broken? current-ice)))
                  :cost [:trash]
                  :msg (msg "derez " (:title current-ice))
                  :effect (effect (derez current-ice))}]}
@@ -1396,7 +1396,7 @@
    (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
                                  (strength-pump 1 1)]
                      :events [{:event :pass-ice
-                               :req (req (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? state (first %) card)))
+                               :req (req (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card)))
                                :effect
                                (effect
                                  (continue-ability
@@ -1584,7 +1584,7 @@
    (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
                                  (strength-pump 1 1)]
                      :events [{:event :subroutines-broken
-                               :req (req (all-subs-broken-by-card? state target card))
+                               :req (req (all-subs-broken-by-card? target card))
                                :msg "prevent the first 3 subroutines from resolving on the next encountered ice"
                                :effect
                                (effect
@@ -1699,7 +1699,7 @@
    {:abilities [(break-sub 1 1 "Barrier")]
     :strength-bonus (req (get-counters card :power))
     :events [{:event :encounter-ice-ends
-              :req (req (all-subs-broken-by-card? state target card))
+              :req (req (all-subs-broken-by-card? target card))
               :msg "place 1 power counter on it"
               :effect (effect (add-counter card :power 1)
                               (update-breaker-strength card))}]}
@@ -2318,7 +2318,7 @@
    {:abilities [(break-sub 2 1 "Sentry")]
     :strength-bonus (req (get-counters card :power))
     :events [{:event :encounter-ice-ends
-              :req (req (all-subs-broken-by-card? state target card))
+              :req (req (all-subs-broken-by-card? target card))
               :msg "place 1 power counter on it"
               :effect (effect (add-counter card :power 1)
                               (update-breaker-strength card))}]}
@@ -2359,12 +2359,11 @@
 
    "Takobi"
    {:events [{:event :subroutines-broken
-              :optional
-              {:req (req (all-subs-broken-by-card? state target card))
-               :prompt "Place 1 power counter on Takobi?"
-               :yes-ability
-               {:msg "add 1 power counter to Takobi"
-                :effect (effect (add-counter card :power 1))}}}]
+              :optional {:req (req (all-subs-broken? target))
+                         :prompt "Place 1 power counter on Takobi?"
+                         :yes-ability
+                         {:msg "add 1 power counter to Takobi"
+                          :effect (effect (add-counter card :power 1))}}}]
     :abilities [{:req (req (and run
                                 (rezzed? current-ice)
                                 (= :encounter-ice (:phase run))))

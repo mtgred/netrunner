@@ -893,23 +893,25 @@
         (is (= (- credits 6) (:credit (get-runner))) "Runner should lose 6 credits"))))
   (testing "Testing interaction with subs not resolving (Mass-Driver)"
     (do-game
-      (new-game {:corp {:deck ["Enigma" "Endless EULA"]}
-                 :runner {:deck ["Mass-Driver"]}})
+      (new-game {:corp {:deck ["Enigma" "Endless EULA"]
+                        :credits 20}
+                 :runner {:deck ["Mass-Driver"]
+                          :credits 20}})
       (play-from-hand state :corp "Endless EULA" "HQ")
       (play-from-hand state :corp "Enigma" "HQ")
-      (core/gain state :corp :credit 20)
       (take-credits state :corp)
-      (core/gain state :runner :credit 20)
       (play-from-hand state :runner "Mass-Driver")
       (let [eula (get-ice state :hq 0)
             enigma (get-ice state :hq 1)
-            massdriver (get-program state 0)
-            credits (:credit (get-runner))]
+            mass-driver (get-program state 0)]
         (run-on state :hq)
         (run-next-phase state)
         (core/rez state :corp enigma)
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh massdriver)})
+        (card-ability state :runner mass-driver 1)
+        (card-ability state :runner mass-driver 0)
+        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "End the run")
         (run-continue state)
         (run-next-phase state)
         (core/rez state :corp eula)
@@ -1233,6 +1235,13 @@
         (click-prompt state :corp "Yes")
         (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")))))
+
+(deftest gold-farmer
+  ;; Gold Farmer
+  (do-game
+    (new-game {:corp {:hand ["Gold Farmer"]}})
+    )
+  )
 
 (deftest hagen
   ;; Hagen

@@ -112,17 +112,29 @@
   ([state ice breaker]
    (update! state :corp (break-all-subroutines ice breaker))))
 
+(defn any-subs-broken?
+  [ice]
+  (some :broken (:subroutines ice)))
+
+(defn all-subs-broken?
+  [ice]
+  (let [subroutines (:subroutines ice)]
+    (and (seq subroutines)
+         (every? :broken subroutines))))
+
 (defn any-subs-broken-by-card?
-  [state ice card]
+  [ice card]
   (some #(and (:broken %)
               (= (:cid card) (:breaker %)))
-        (:subroutines (get-card state ice))))
+        (:subroutines ice)))
 
 (defn all-subs-broken-by-card?
-  [state ice card]
-  (every? #(and (:broken %)
-                (= (:cid card) (:breaker %)))
-          (:subroutines (get-card state ice))))
+  [ice card]
+  (let [subroutines (:subroutines ice)]
+    (and (seq subroutines)
+         (every? #(and (:broken %)
+                       (= (:cid card) (:breaker %)))
+                 subroutines))))
 
 (defn dont-resolve-subroutine
   "Marks a given subroutine as not resolving (e.g. Mass-Driver)"
@@ -398,12 +410,10 @@
                                                     (:additional-ability args)
                                                     card nil))
                                  (let [ice (get-card state ice)
-                                       on-break-subs (when ice (:on-break-subs (card-def ice)))]
+                                       on-break-subs (when ice (:on-break-subs (card-def ice)))
+                                       event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
                                    (wait-for
-                                     (trigger-event-simult
-                                       state side :subroutines-broken
-                                       {:card-abilities [(ability-as-handler ice on-break-subs)]}
-                                       ice broken-subs)
+                                     (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
                                      (let [ice (get-card state ice)
                                            card (get-card state card)]
                                        (if (and (not early-exit)

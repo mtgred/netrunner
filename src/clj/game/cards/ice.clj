@@ -1309,6 +1309,13 @@
    "Gemini"
    (constellation-ice (do-net-damage 1))
 
+   "Gold Farmer"
+   {:on-break-subs {:req (req (some :printed (second targets)))
+                    :effect (req (dotimes [_ (count (filter :printed (second targets)))]
+                                   (lose-credits state :runner 1)))}
+    :subroutines [(end-the-run-unless-runner-pays 3)
+                  (end-the-run-unless-runner-pays 3)]}
+
    "Grim"
    {:effect take-bad-pub
     :subroutines [trash-program]}

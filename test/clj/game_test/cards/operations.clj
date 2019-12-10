@@ -3849,7 +3849,7 @@
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "End the run")
-        (card-ability state :runner (get-hardware state 0) 0)
+        (click-prompt state :runner "Yes")
         (is (empty? (get-ice state :hq)) "Ice Wall is gone"))
       (run-jack-out state)
       (take-credits state :runner)
