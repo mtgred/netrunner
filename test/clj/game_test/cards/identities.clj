@@ -745,15 +745,15 @@
       (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first")
       (take-credits state :runner)
       (play-from-hand state :corp "Hedge Fund")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Eater")
-      (let [eater (get-program state 0)]
-        (run-on state "Archives")
-        (card-ability state :runner eater 0) ; pretend to break a sub so no cards in Archives will be accessed
-        (run-successful state)
-        (is (= 3 (count (:discard (get-corp)))))
-        (run-empty-server state "HQ")
-        (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
+      (take-credits state :corp)))
+      ;(play-from-hand state :runner "Eater")
+      ;(let [eater (get-program state 0)]
+      ;  (run-on state "Archives")
+      ;  (card-ability state :runner eater 0) ; pretend to break a sub so no cards in Archives will be accessed
+      ;  (run-successful state)
+      ;  (is (= 3 (count (:discard (get-corp)))))
+      ;  (run-empty-server state "HQ")
+      ;  (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
   (testing "Do not trigger maw on first Operation access (due to trash)"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Restructure" 2)]}
@@ -767,7 +767,18 @@
       (is (= 1 (count (:discard (get-corp)))) "Only one card trashed from HQ, by Ed Kim")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
-      (is (= 2 (count (:discard (get-corp)))) "One more card trashed from HQ, by Maw"))))
+      (is (= 2 (count (:discard (get-corp)))) "One more card trashed from HQ, by Maw")))
+ (testing "Do not trigger trash with Divide and Conquer"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Restructure" 3)]}
+                 :runner {:id "Edward Kim: Humanity's Hammer"
+                          :deck ["Divide and Conquer" (qty "Sure Gamble" 2)]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (take-credits state :corp)
+      (is (= 1 (count (:discard (get-corp)))) "Only Hedge Fund in archives")
+      (play-from-hand state :runner "Divide and Conquer")
+      (run-successful state)
+      (is (= 1 (count (:discard (get-corp)))) "Still only Hedge Fund in archives"))))
 
 (deftest ele-smoke-scovak-cynosure-of-the-net
   ;; Ele "Smoke" Scovak: Cynosure of the Net

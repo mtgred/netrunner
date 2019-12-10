@@ -428,10 +428,9 @@
                            (swap! state assoc-in [:runner :register :trashed-card] true)
                            (register-turn-flag! state side card :can-trash-operation (constantly false)))
               :msg (msg "trash " (:title target))}
-             {:event :successful-run-ends
-              :req (req (and (= (:server target) [:archives])
-                             (empty? (filter :replace-access (:run-effects target)))
-                             (not= (:max-access target) 0)
+             {:event :end-access-phase
+              :req (req (and (= :archives (:from-server target))
+                             (not= (get-in @state [:run :cards-accessed :discard]) 0)
                              (seq (filter operation? (:discard corp)))))
               :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}]}
 
