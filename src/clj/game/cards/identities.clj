@@ -52,6 +52,7 @@
                        state side
                        {:optional
                         {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
+                         :priority 2
                          :player :runner
                          :autoresolve (get-autoresolve :auto-419)
                          :no-ability {:effect (req (clear-wait-prompt state :corp))}
