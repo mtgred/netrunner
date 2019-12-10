@@ -1090,7 +1090,7 @@
                                 :req (req true)}]}
       :in-play [:memory 3]
       :async true
-      :effect (effect (continue-ability (mhelper state side eid card 1) card nil))
+      :effect (effect (continue-ability (mhelper 1) card nil))
       :abilities [{:msg (msg "prevent 1 brain or net damage")
                    :cost [:trash-program-from-grip 1]
                    :effect (effect (damage-prevent :brain 1)
