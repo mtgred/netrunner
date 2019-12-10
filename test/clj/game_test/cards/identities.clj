@@ -114,7 +114,28 @@
       (play-from-hand state :corp "Building Blocks")
       (click-card state :corp "Ice Wall")
       (click-prompt state :corp "HQ")
-      (is (empty? (:prompt (get-runner))) "419 doesn't trigger on installed and rezzed cards"))))
+      (is (empty? (:prompt (get-runner))) "419 doesn't trigger on installed and rezzed cards")))
+  (testing "419 vs Sportsmetal Jinja Grid. Issue #3806"
+    (do-game
+      (new-game {:corp {:id "Sportsmetal: Go Big or Go Home"
+                        :deck [(qty "Ice Wall" 5)]
+                        :hand ["Domestic Sleepers" "Jinja City Grid"]}
+                 :runner {:id "419: Amoral Scammer"}})
+      (play-from-hand state :corp "Jinja City Grid" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (click-prompt state :runner "No")
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (click-prompt state :corp "2 cards")
+      (is (prompt-is-type? state :runner :waiting) "During Jinja, Runner should wait")
+      (click-prompt state :corp (-> (get-corp) :prompt first :choices first))
+      (is (= 2 (->> (get-runner) :prompt first :choices count)) "419 can trigger ability with 2 options")
+      (is (prompt-is-type? state :corp :waiting) "Corp is waiting for runner ability")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :corp "No")
+      (is (= 2 (->> (get-corp) :prompt first :choices count)) "Corp should have prompt back with 2 options")
+      (is (prompt-is-type? state :runner :waiting) "Runner should wait again"))))
 
 (deftest acme-consulting-the-truth-you-need
   (testing "Tag gain when rezzing outermost ice"
