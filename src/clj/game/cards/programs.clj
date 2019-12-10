@@ -1595,11 +1595,9 @@
    "Mass-Driver"
    (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
                                  (strength-pump 1 1)]
-                     :events [{:event :encounter-ice-ends
+                     :events [{:event :subroutines-broken
+                               :req (req (all-subs-broken-by-card? state target card))
                                :msg "prevent the first 3 subroutines from resolving on the next encountered ice"
-                               :req (req (and (every? #(= (:cid card) %) (map :breaker (filter :broken (:subroutines target))))
-                                              (pos? (count (filter :broken (:subroutines target))))
-                                              (empty? (remove :broken (:subroutines target)))))
                                :effect
                                (effect
                                  (register-events

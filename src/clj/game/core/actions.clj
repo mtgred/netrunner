@@ -406,7 +406,7 @@
                                          (str (build-spend-msg async-result "increase")
                                               "the strength of " (:title card)
                                               " to " (get-strength (get-card state card))
-                                              " and break all " (when (< 1 (count unbroken-subs)) unbroken-subs)
+                                              " and break all " (when (< 1 unbroken-subs) unbroken-subs)
                                               " subroutines on " (:title current-ice))
                                          (str (build-spend-msg async-result "use")
                                               (:title card)
