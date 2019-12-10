@@ -228,7 +228,7 @@
                                         " from " (if (= :runner side) "their Grip" "HQ")
                                         " at end of turn"))
                        (doseq [t targets]
-                         (trash state side t {:unpreventable true}))
+                         (move state side t :discard))
                        (effect-completed state side eid))}
          nil nil)
        (effect-completed state side eid)))))
