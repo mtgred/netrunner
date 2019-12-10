@@ -397,23 +397,26 @@
          strength-req (req (if (has-subtype? card "Icebreaker")
                              (<= (get-strength current-ice) (get-strength card))
                              true))]
-     {:req (req (and (break-req state side eid card targets)
-                     (strength-req state side eid card targets)))
-      :break-req break-req
-      :break n
-      :breaks subtype
-      :break-cost cost
-      :additional-ability (:additional-ability args)
-      :label (str (when cost (str (build-cost-label cost) ": "))
-                  (or (:label args)
-                      (str "break "
-                           (when (< 1 n) "up to ")
-                           (if (pos? n) n "any number of")
-                           (when (not= "All" subtype) (str " " subtype))
-                           (pluralize " subroutine" n))))
-      :effect (effect (continue-ability
-                        (break-subroutines current-ice card cost n args)
-                        card nil))})))
+     (merge
+       (when (some #(= :trash (first %)) (merge-costs cost))
+         {:trash-icon true})
+       {:req (req (and (break-req state side eid card targets)
+                       (strength-req state side eid card targets)))
+        :break-req break-req
+        :break n
+        :breaks subtype
+        :break-cost cost
+        :additional-ability (:additional-ability args)
+        :label (str (when cost (str (build-cost-label cost) ": "))
+                    (or (:label args)
+                        (str "break "
+                             (when (< 1 n) "up to ")
+                             (if (pos? n) n "any number of")
+                             (when (not= "All" subtype) (str " " subtype))
+                             (pluralize " subroutine" n))))
+        :effect (effect (continue-ability
+                          (break-subroutines current-ice card cost n args)
+                          card nil))}))))
 
 (defn strength-pump
   "Creates a strength pump ability.

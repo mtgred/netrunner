@@ -663,22 +663,24 @@
                 (set-autoresolve :auto-accept "adding virus counters")]}
 
    "Copycat"
-   {:abilities [{:req (req (and (:run @state)
+   {:abilities [{:async true
+                 :req (req (and (:run @state)
                                 (:rezzed current-ice)))
-                 :effect (req (let [icename (:title current-ice)]
-                                (resolve-ability
-                                  state side
-                                  {:prompt (msg "Choose a rezzed copy of " icename)
-                                   :choices {:card #(and (rezzed? %)
-                                                         (ice? %)
-                                                         (= (:title %) icename))}
-                                   :msg "redirect the run"
-                                   :cost [:trash]
-                                   :effect (req (let [dest (second (:zone target))
-                                                      tgtndx (ice-index state target)]
-                                                  (swap! state update-in [:run]
-                                                         #(assoc % :position tgtndx :server [dest]))))}
-                                  card nil)))}]}
+                 :effect (effect
+                           (continue-ability
+                             (let [icename (:title current-ice)]
+                               {:async true
+                                :prompt (msg "Choose a rezzed copy of " icename)
+                                :choices {:card #(and (rezzed? %)
+                                                      (ice? %)
+                                                      (= (:title %) icename))}
+                                :msg "redirect the run"
+                                :effect (req (let [dest (second (:zone target))
+                                                   tgtndx (ice-index state target)]
+                                               (swap! state update-in [:run]
+                                                      #(assoc % :position tgtndx :server [dest]))
+                                               (trash state side eid card {:unpreventable true})))})
+                             card nil))}]}
 
    "Cordyceps"
    {:data {:counter {:virus 2}}

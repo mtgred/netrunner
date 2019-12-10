@@ -1,5 +1,6 @@
 (ns game.utils
   (:require [clojure.string :refer [split-lines split join]]
+            [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.cards :refer [all-cards]]))
 
 (defn server-card
@@ -7,7 +8,10 @@
   (let [card (get @all-cards title)]
     (if (and title card)
       card
-      (.println *err* (str "Tried to select server-card for " title)))))
+      (.println *err* (with-out-str
+                        (print-stack-trace
+                          (Exception. (str "Tried to select server-card for " title))
+                          2500))))))
 
 (defn server-cards
   []
