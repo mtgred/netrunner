@@ -588,7 +588,7 @@
           [:span (cond (:broken sub)
                        {:class :disabled
                         :style {:font-style :italic}}
-                       (= false (:resolve sub))
+                       (false? (:resolve sub))
                        {:class :dont-resolve
                         :style {:text-decoration :line-through}})
            (render-icons (str " [Subroutine]" " " (:label sub)))]
@@ -657,7 +657,7 @@
               [:span (cond (:broken sub)
                            {:class :disabled
                             :style {:font-style :italic}}
-                           (= false (:resolve sub))
+                           (false? (:resolve sub))
                            {:class :dont-resolve
                             :style {:text-decoration :line-through}})
                (render-icons (str " [Subroutine]" " " (:label sub)))]
@@ -1440,7 +1440,16 @@
         (not (rezzed? current-ice))
         #(send-command "rez" {:card current-ice})])
 
-     (zero? (:position @run))
+     (= "encounter-ice" (:phase @run))
+     (let [current-ice (get-current-ice)]
+       [cond-button
+        "Fire unbroken subs"
+        (and (seq (:subroutines current-ice))
+             (not (every? :broken (:subroutines current-ice))))
+        #(send-command "unbroken-subroutines" {:card current-ice})])
+
+     (and (not (:next-phase @run))
+          (zero? (:position @run)))
      [cond-button
       "Action before access"
       (and (not= "initiation" (:phase @run))
@@ -1448,9 +1457,10 @@
       #(send-command "corp-phase-43")])
 
    [cond-button
-    (if-let [next-phase (:next-phase @run)]
-      "No further actions"
-      (str "Continue to " (phase->next-phase-title run)))
+    (let [next-phase (:next-phase @run)]
+      (if (or next-phase (zero? (:position @run)))
+        "No further actions"
+        (str "Continue to " (phase->next-phase-title run))))
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
          (not (:no-action @run)))
@@ -1462,19 +1472,35 @@
         next-phase (:next-phase @run)]
     [:div.panel.blue-shade
      [:h4 "Current phase:" [:br] (get phase->title phase)]
-     [cond-button
-      (or (get phase->title next-phase)
-          (get phase->title phase))
-      (and next-phase
-           (not (:no-action @run)))
-      #(send-command "start-next-phase")]
-     (if (and (not (:next-phase @run))
-              (zero? (:position @run)))
-       [cond-button "Successful Run" (:no-action @run) #(send-command "successful-run")]
+     (cond
+       (:next-phase @run)
+       [cond-button
+        (phase->next-phase-title run)
+        (and next-phase
+             (not (:no-action @run)))
+        #(send-command "start-next-phase")]
+
+       (and (not (:next-phase @run))
+            (not (zero? (:position @run))))
        [cond-button
         (str "Continue to " (phase->next-phase-title run))
         (:no-action @run)
-        #(send-command "continue")])
+        #(send-command "continue")]
+
+       (zero? (:position @run))
+       [cond-button "Successful Run"
+        (:no-action @run)
+        #(send-command "successful-run")])
+
+     (when (= "encounter-ice" (:phase @run))
+       (let [current-ice (get-current-ice)
+             title (:title current-ice)]
+         [cond-button
+          "Let all subroutines fire"
+          (and (seq (:subroutines current-ice))
+               (not (every? #(or (:broken %) (false? (:resolve %))) (:subroutines current-ice))))
+          #(send-command "system-msg"
+                         {:msg (str "indicates to fire all unbroken subroutines on " title)})]))
      [cond-button "Jack Out"
       (and (:jack-out @run)
            (not (:cannot-jack-out @run))

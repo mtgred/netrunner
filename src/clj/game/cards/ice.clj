@@ -100,8 +100,16 @@
    :choices ["End the run"
              (str "Pay " amount " [Credits]")]
    :effect (req (if (= "End the run" target)
-                  (end-run state :corp eid card)
-                  (pay-sync state :runner eid card [:credit amount])))})
+                  (do (system-msg state :corp
+                                  (str "uses " (:title card) " to end the run"))
+                    (end-run state :corp eid card))
+                  (wait-for (pay-sync state :runner card [:credit amount])
+                            (when async-result
+                              (let [cost-str (str async-result
+                                                  " due to " (:title card)
+                                                  " subroutine")]
+                                (system-msg state :runner cost-str)))
+                            (effect-completed state side eid))))})
 
 (defn end-the-run-unless-corp-pays
   [amount]

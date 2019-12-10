@@ -402,20 +402,28 @@
                   (break-subroutine! state (get-card state current-ice) sub card)
                   (resolve-ability state side (make-eid state {:source card :source-type :ability})
                                    (:additional-ability break-ability) (get-card state card) nil))
-                (system-msg state side (if (pos? times-pump)
-                                         (str (build-spend-msg async-result "increase")
-                                              "the strength of " (:title card)
-                                              " to " (get-strength (get-card state card))
-                                              " and break all " (when (< 1 unbroken-subs) unbroken-subs)
-                                              " subroutines on " (:title current-ice))
-                                         (str (build-spend-msg async-result "use")
-                                              (:title card)
-                                              " to break "
-                                              (if some-already-broken
-                                                "the remaining "
-                                                "all ")
-                                              unbroken-subs " subroutines on "
-                                              (:title current-ice))))))))
+                (let [ice (get-card state current-ice)
+                      broken-subs (remove :broken (:subroutines current-ice))
+                      on-break-subs (when ice (:on-break-subs (card-def current-ice)))
+                      event-args (when on-break-subs
+                                   {:card-abilities (ability-as-handler ice on-break-subs)})]
+                  (wait-for
+                    (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
+                    (system-msg state side
+                                (if (pos? times-pump)
+                                  (str (build-spend-msg async-result "increase")
+                                       "the strength of " (:title card)
+                                       " to " (get-strength (get-card state card))
+                                       " and break all " (when (< 1 unbroken-subs) unbroken-subs)
+                                       " subroutines on " (:title current-ice))
+                                  (str (build-spend-msg async-result "use")
+                                       (:title card)
+                                       " to break "
+                                       (if some-already-broken
+                                         "the remaining "
+                                         "all ")
+                                       unbroken-subs " subroutines on "
+                                       (:title current-ice))))))))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."
