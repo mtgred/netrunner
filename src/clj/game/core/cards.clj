@@ -129,9 +129,14 @@
 
 (defn reset-card
   "Resets a card back to its original state - retaining any data in the :persistent key"
-  ([state side {:keys [title cid persistent]}]
+  ([state side {:keys [cid persistent previous-zone seen title zone]}]
    (swap! state update-in [:per-turn] dissoc cid)
-   (update! state side (assoc (make-card (server-card title) cid) :persistent persistent))))
+   (let [new-card (make-card (server-card title) cid)]
+     (update! state side (assoc new-card
+                                :persistent persistent
+                                :previous-zone previous-zone
+                                :seen seen
+                                :zone zone)))))
 
 (defn move
   "Moves the given card to the given new zone."
@@ -194,12 +199,9 @@
              (when (seq events)
                (register-events state side moved-card events)))
            ;; Default a card when moved to inactive zones (except :persistent key)
-           (when (#{:discard :hand :deck :rfg :scored} to)
-             (reset-card state side moved-card)
-             (when-let [icon-card (get-in moved-card [:icon :card])]
-               ;; Remove icon and icon-card keys
-               (remove-icon state side icon-card moved-card)))
-           moved-card))))))
+           (when (#{:discard :hand :deck :rfg} to)
+             (reset-card state side moved-card))
+           (get-card state moved-card)))))))
 
 (defn move-zone
   "Moves all cards from one zone to another, as in Chronos Project."

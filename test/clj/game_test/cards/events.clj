@@ -1366,37 +1366,7 @@
      (is (changes-val-macro 1 (count (:discard (get-corp)))
                             "Alice not permanently blanked"
                             (run-successful state)
-                            (click-prompt state :corp (find-card "PAD Campaign" (:hand (get-corp))))))))
-  (testing "Direct Access autoresolve"
-    (do-game
-     (new-game {:runner {:deck ["Direct Access"]
-                         :id "Valencia Estevez: The Angel of Cayambe"}
-                :corp {:deck [(qty "Rashida Jaheem" 3) "Hedge Fund"]
-                       :id "Industrial Genomics: Growing Solutions"}})
-     (dotimes [_ 3]
-       (play-from-hand state :corp "Rashida Jaheem" "New remote"))
-     (trash-from-hand state :corp "Hedge Fund")
-     (take-credits state :corp)
-     (play-from-hand state :runner "Direct Access")
-     (click-prompt state :runner "Server 1")
-     (card-ability state :runner (first (get-in @state [:runner :play-area])) 0)
-     (click-prompt state :runner "Always") ; toggle Direct Access to always reshuffle
-     (run-successful state)
-     (click-prompt state :runner "Pay 1 [Credits] to trash")
-     (is (empty? (:prompt (get-runner))) "Direct Access prompt autoresolved")
-     (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access reshuffled into deck")
-     (is (= 4 (:credit (get-runner))) "1 BP cred spent to trash Rashida, as IG is blank") ; 1 cred spent on play cost
-     (core/click-draw state :runner 1)
-     (play-from-hand state :runner "Direct Access")
-     (click-prompt state :runner "Server 2")
-     (run-successful state)
-     (click-prompt state :runner "Pay 1 [Credits] to trash")
-     (is (empty? (:prompt (get-runner))) "Direct Access remembered its autoresolve setting and autoresolved")
-     (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access reshuffled into deck")
-     (is (= 3 (:credit (get-runner))) "1 BP cred spent to trash Rashida, as IG is blank") ; 1 cred spent on play cost
-     (run-empty-server state "Server 3")
-     (click-prompt state :runner "Pay 2 [Credits] to trash")
-     (is (= 2 (:credit (get-runner))) "1 BP cred + 1 real cred spent on trashing Rashida, as IG is active blank"))))
+                            (click-prompt state :corp (find-card "PAD Campaign" (:hand (get-corp)))))))))
 
 (deftest dirty-laundry
   ;; Dirty Laundry - Gain 5 credits at the end of the run if it was successful
@@ -3350,31 +3320,95 @@
 
 (deftest mobius
   ;; Mobius
-  (do-game
-    (new-game {:runner {:deck [(qty "Möbius" 3)]}})
-    (starting-hand state :corp ["Hedge Fund"])
-    (take-credits state :corp)
-    (is (= 5 (:credit (get-runner))))
-    (play-from-hand state :runner "Möbius")
-    (core/no-action state :corp nil)
-    (run-successful state)
-    (is (= 5 (:credit (get-runner))))
-    (click-prompt state :runner "No action")
-    (click-prompt state :runner "Yes")
-    (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
-    (core/no-action state :corp nil)
-    (run-successful state)
-    (click-prompt state :runner "No action")
-    (is (= 9 (:credit (get-runner))))
-    (is (empty? (:prompt (get-runner))) "No prompt to run a third time")
-    (is (not (:run @state)) "Run is over")
-    (changes-val-macro 0 (:credit (get-runner))
-                       "Normal run on R&D didn't give any credits"
-                       (run-empty-server state :rd)
-                       (click-prompt state :runner "No action"))
-    (play-from-hand state :runner "Möbius")
-    (run-jack-out state)
-    (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
+  (testing "Second run triggered"
+    (do-game
+      (new-game {:runner {:deck [(qty "Möbius" 3)]}})
+      (starting-hand state :corp ["Hedge Fund"])
+      (take-credits state :corp)
+      (play-from-hand state :runner "Möbius")
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Yes")
+      (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (is (not (:run @state)) "Run is over")
+      (is (empty? (:prompt (get-runner))) "No prompt to run a third time")))
+  (testing "Gain 4 credits after succesful second run"
+    (do-game
+      (new-game {:runner {:deck [(qty "Möbius" 3)]}})
+      (starting-hand state :corp ["Hedge Fund"])
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-runner))))
+      (play-from-hand state :runner "Möbius")
+      (run-continue state)
+      (run-successful state)
+      (is (= 5 (:credit (get-runner))))
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Yes")
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (is (= 9 (:credit (get-runner))))))
+  (testing "No second run if first is unsuccesful"
+    (do-game
+      (new-game {:runner {:deck [(qty "Möbius" 3)]}})
+      (starting-hand state :corp ["Hedge Fund"])
+      (take-credits state :corp)
+      (play-from-hand state :runner "Möbius")
+      (run-jack-out state)
+      (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
+  (testing "Normal rnd run does not gain cred"
+    (do-game
+      (new-game {:runner {:deck [(qty "Möbius" 3)]}})
+      (starting-hand state :corp ["Hedge Fund"])
+      (take-credits state :corp)
+      (play-from-hand state :runner "Möbius")
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Yes")
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Normal run on R&D didn't give any credits"
+                         (run-empty-server state :rd)
+                         (click-prompt state :runner "No action"))))
+  (testing "Recurred use"
+    (do-game
+      (new-game {:runner {:deck ["Möbius" "Déjà Vu"]}})
+      (starting-hand state :corp ["Hedge Fund"])
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-runner))))
+      (play-from-hand state :runner "Möbius")
+      (run-continue state)
+      (run-successful state)
+      (is (= 5 (:credit (get-runner))))
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Yes")
+      (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (is (= 9 (:credit (get-runner))))
+      (play-from-hand state :runner "Déjà Vu")
+      (click-prompt state :runner (find-card "Möbius" (:discard (get-runner))))
+      (is (empty? (:prompt (get-runner))) "Recurring a non-virus card stops Déjà Vu prompting further")
+      (is (= 1 (count (:hand (get-runner)))))
+      (play-from-hand state :runner "Möbius")
+      (run-continue state)
+      (run-successful state)
+      (is (= 7 (:credit (get-runner))))
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Yes")
+      (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (is (= 11 (:credit (get-runner)))))))
 
 (deftest modded
   ;; Modded - Install a program or piece of hardware at a 3 credit discount
