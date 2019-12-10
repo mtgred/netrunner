@@ -856,6 +856,10 @@
    {:events [{:event :successful-run
               :async true
               :req (req (first-event? state :runner :successful-run))
+              :msg (msg "draw 1 card"
+                        (when (or (<= 2 (:link (:runner @state)))
+                                  (has-subtype? (:identity (:runner @state)) "Digital"))
+                          " and gain 1 [Credit]"))
               :effect (req (wait-for (draw state :runner 1 nil)
                                      (when (or (<= 2 (:link (:runner @state)))
                                                (has-subtype? (:identity (:runner @state)) "Digital"))
