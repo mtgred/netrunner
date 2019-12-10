@@ -300,7 +300,7 @@
              (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])]
                        (when prevent (trigger-event state side :prevented-damage type prevent))
                        (system-msg state :runner
-                                   (if prevent (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                   (if prevent (str "prevents " (if (>= prevent Integer/MAX_VALUE) "all" prevent)
                                                     " " (name type) " damage") "will not prevent damage"))
                        (clear-wait-prompt state :corp)
                        (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
