@@ -228,27 +228,29 @@
                              :hand-size (runner-points @state)))})
 
    "Buffer Drive"
-  (let [triggered-ability
-        {:once :per-turn
-         :req (req (letfn [(grip-or-stack-trash? [event] ;; a <side>-trash event is a list of targets for trashing
-                             (some #(and (runner? %)
-                                           (or (in-hand? %) (in-deck? %)))
-                                     event))]
-                     (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
-                             (event-count state side :corp-trash grip-or-stack-trash?)))))
-         :prompt "Add a trashed card to the bottom of the stack"
-         :choices (req (conj (mapv #(assoc % :zone [:discard]) (sort-by :title (filter :cid targets))) "No action"))
-         :effect (req (when-not (= "No action" target)
-                        (move state side (get-card state (assoc target :zone [:discard])) :deck)))}]
-    {:events [(assoc triggered-ability :event :runner-trash)
-              (assoc triggered-ability :event :corp-trash)]
-     :abilities [{:label "Add a card from the heap to the bottom of the stack"
-                  :msg "add a card from the Heap to the bottom of the stack"
-                  :cost [:remove-from-game]
-                  :show-discard true
-                  :choices {:card #(and (runner? %)
-                                        (in-discard? %))}
-                  :effect (effect (move target :deck {:front true}))}]})
+   (let [triggered-ability
+         {:once :per-turn
+          :req (req (letfn [(grip-or-stack-trash? [event] ;; a <side>-trash event is a list of targets for trashing
+                              (some #(and (runner? %)
+                                          (or (in-hand? %) (in-deck? %)))
+                                    event))]
+                      (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
+                              (event-count state side :corp-trash grip-or-stack-trash?)))))
+          :prompt "Add a trashed card to the bottom of the stack"
+          :choices (req (conj (mapv #(assoc % :zone [:discard]) (sort-by :title (filter :cid targets))) "No action"))
+          :effect (req (when-not (= "No action" target)
+                         (system-msg state side (str "uses Buffer Drive to add " (:title target)
+                                                     " to the bottom of the stack"))
+                         (move state side (get-card state (assoc target :zone [:discard])) :deck)))}]
+     {:events [(assoc triggered-ability :event :runner-trash)
+               (assoc triggered-ability :event :corp-trash)]
+      :abilities [{:label "Add a card from the heap to the top of the stack"
+                   :cost [:remove-from-game]
+                   :show-discard true
+                   :choices {:card #(and (runner? %)
+                                         (in-discard? %))}
+                   :msg (msg "add " (:title target) " to the top of the stack")
+                   :effect (effect (move target :deck {:front true}))}]})
 
    "Capstone"
    {:abilities [{:req (req (pos? (count (:hand runner))))
