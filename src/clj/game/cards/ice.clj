@@ -2378,7 +2378,7 @@
                   end-the-run-if-tagged]}
 
    "Paper Wall"
-   {:events [{:event :encounter-ice-ends
+   {:events [{:event :subroutine-broken
               :req (req (and (same-card? card target)
                              (empty? (remove :broken (:subroutines target)))))
               :async true
