@@ -320,12 +320,16 @@
         (click-card state :runner icew)
         (is (= "ICE[br]HQ (0)" (:server-target (refresh boom))) "ICE name is not revealed")
         (run-on state :hq)
+        (run-next-phase state)
         (core/rez state :corp icew)
+        (run-continue state)
         (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Target was updated to contain ICE name")
         (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
         (card-ability state :runner (refresh boom) 0)
         (click-prompt state :runner "End the run")
         (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
+        (run-continue state)
+        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "No action")
@@ -344,9 +348,13 @@
             boom (get-hardware state 0)]
         (click-card state :runner icew)
         (run-on state :hq)
+        (run-next-phase state)
         (core/rez state :corp icew)
+        (run-continue state)
         (card-ability state :runner (refresh boom) 0)
         (click-prompt state :runner "End the run")
+        (run-continue state)
+        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "No action")
@@ -366,7 +374,9 @@
             boom (get-hardware state 0)]
         (click-card state :runner icew)
         (run-on state :hq)
+        (run-next-phase state)
         (core/rez state :corp enig)
+        (run-continue state)
         (card-ability state :runner (refresh boom) 0)
         (is (empty? (:prompt (get-runner))) "Cannot use Boomerang on other ice"))))
   (testing "Assimilator frees target restriction"
@@ -384,7 +394,9 @@
       (let [icew (get-ice state :hq 0)
             boom (get-hardware state 0)]
         (run-on state :hq)
+        (run-next-phase state)
         (core/rez state :corp icew)
+        (run-continue state)
         (card-ability state :runner (refresh boom) 0)
         (is (not-empty (:prompt (get-runner))) "Can use Boomerang on ice"))))
   (testing "Update server-target on ice swap"
@@ -402,7 +414,8 @@
         (click-card state :runner thim)
         (let [boom (get-hardware state 0)]
           (is (= "Thimblerig[br]R&D (0)" (:server-target (refresh boom))) "Targetting Thimblerig on R&D")
-          (card-ability state :corp (refresh thim) 0)
+          (take-credits state :runner)
+          (click-prompt state :corp "Yes")
           (click-card state :corp (refresh icew))
           (is (= "Thimblerig[br]HQ (0)" (:server-target (refresh boom))) "Targetting Thimblerig on HQ")))))
   (testing "Update server-target on ice trash"
@@ -417,7 +430,7 @@
         (click-card state :runner icew)
         (let [boom (get-hardware state 0)]
           (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Targetting Ice Wall on HQ")
-          (core/trash-cards state :runner [icew])
+          (core/trash state :runner icew)
           (is (nil? (:server-target (refresh boom))) "No more target message")
           (is (some? (get-in (refresh boom) [:special :boomerang-target])) "Still targetting a card"))))))
 

@@ -1455,14 +1455,16 @@
   ;; Euler
   (testing "Basic test"
     (do-game
-      (new-game {:runner {:deck ["Euler"]}
+      (new-game {:runner {:hand ["Euler"]
+                          :credits 20}
                  :corp {:hand ["Enigma"]}})
       (play-from-hand state :corp "Enigma" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Euler")
       (run-on state :hq)
-      (core/gain state :runner :credit 10)
+      (run-next-phase state)
       (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
       (changes-val-macro 0 (:credit (get-runner))
                          "Broke Enigma for 0c"
                          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
@@ -1471,6 +1473,8 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (run-on state :hq)
+      (run-next-phase state)
+      (run-continue state)
       (changes-val-macro -2 (:credit (get-runner))
                          "Broke Enigma for 2c"
                          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
@@ -2151,7 +2155,9 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Makler")
       (run-on state "HQ")
+      (run-next-phase state)
       (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
       (changes-val-macro
         -2 (:credit (get-runner))
         "Break ability costs 2 credits"
@@ -2168,7 +2174,9 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Makler")
       (run-on state "HQ")
+      (run-next-phase state)
       (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
       (changes-val-macro
         -2 (:credit (get-runner))
         "Boost ability costs 2 credits"
@@ -2188,7 +2196,9 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Makler")
       (run-on state "HQ")
+      (run-next-phase state)
       (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "End the run")
@@ -2460,7 +2470,9 @@
             cobra (get-ice state :hq 0)]
         (core/gain state :runner :click 2 :credit 20)
         (run-on state "HQ")
+        (run-next-phase state)
         (core/rez state :corp cobra)
+        (run-continue state)
         (changes-val-macro -5 (:credit (get-runner))
                            "Paid 3 to pump and 2 to break"
                            (card-ability state :runner odore 2)
@@ -2478,13 +2490,17 @@
             cobra (get-ice state :hq 0)]
         (core/gain state :runner :click 2 :credit 20)
         (run-on state "HQ")
+        (run-next-phase state)
         (core/rez state :corp cobra)
+        (run-continue state)
         (changes-val-macro -5 (:credit (get-runner))
                            "Paid 3 to pump and 2 to break"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)}))
         (run-jack-out state)
         (dotimes [_ 3] (play-from-hand state :runner "Logic Bomb"))
         (run-on state "HQ")
+        (run-next-phase state)
+        (run-continue state)
         (changes-val-macro -3 (:credit (get-runner))
                            "Paid 3 to pump and 0 to break"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)}))))))
