@@ -429,7 +429,7 @@
               :msg (msg "trash " (:title target))}
              {:event :end-access-phase
               :req (req (and (= :archives (:from-server target))
-                             (not= (get-in @state [:run :cards-accessed :discard]) 0)
+                             (pos? (get-in @state [:run :cards-accessed :discard] 0))
                              (seq (filter operation? (:discard corp)))))
               :effect (effect (register-turn-flag! card :can-trash-operation (constantly false)))}]}
 

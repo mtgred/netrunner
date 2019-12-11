@@ -54,119 +54,119 @@
     (play-from-hand state :runner "Akamatsu Mem Chip")
     (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
-; (deftest aniccam
-;   (testing "The runner draws 1 card when an event is trashed from the Grip by the Runner"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-;                           :deck ["Corroder"]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (trash-from-hand state :runner "Sure Gamble")
-;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-;   (testing "The runner draws 1 card when an event is trashed from the Grip by the Corp"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-;                           :deck ["Corroder"]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (core/trash state :runner (find-card "Sure Gamble" (:hand (get-runner))))
-;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-;   (testing "Trashing a non-event doesn't trigger Aniccam"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Clone Chip", "Mimic", "Daily Casts"]
-;                           :deck ["Corroder"]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (core/trash-cards state :runner (:hand (get-runner)))
-;       (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card")))
-;   (testing "Trashing an event along with some non events triggers Aniccam"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Clone Chip", "Sure Gamble", "Mimic", "Daily Casts"]
-;                           :deck ["Corroder"]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (core/trash-cards state :runner (:hand (get-runner)))
-;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-;   (testing "Aniccam must not trigger a second time in one turn"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-;                           :deck [(qty "Corroder" 2)]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (trash-from-hand state :runner "Sure Gamble")
-;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")
-;       (trash-from-hand state :runner "Corroder")
-;       (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a second card")))
-;   (doseq [first-side [:corp :runner]
-;           second-side [:corp :runner]]
-;     (testing (str (name first-side) " trash -> install Aniccam -> " (name second-side) " trash does not trigger Aniccam")
-;       (do-game
-;         (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
-;                             :deck ["Corroder"]}})
-;         (take-credits state :corp)
-;         (core/trash state first-side (find-card "Sure Gamble" (:hand (get-runner))))
-;         (play-from-hand state :runner "Aniccam")
-;         (core/trash state second-side (find-card "Dirty Laundry" (:hand (get-runner))))
-;         (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card"))))
-;   (testing "The effect triggers on meat damage"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-;                           :deck ["Corroder"]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (core/damage state :runner :meat 1)
-;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-;   (testing "The effect triggers on net damage"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-;                           :deck ["Corroder"]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (core/damage state :runner :net 1)
-;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-;   (testing "The effect triggers on brain damage"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
-;                           :deck ["Corroder"]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (core/damage state :runner :brain 1)
-;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-;   (testing "Trashing an event from R&D triggers Annicam"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam"]
-;                           :deck [(qty "Sure Gamble" 2)]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (core/trash state :runner (first (:deck (get-runner))))
-;       (is (find-card "Sure Gamble" (:hand (get-runner))) "The runner has drawn a card")))
-;   (testing "An event being trashed after playing it triggers Aniccam"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Easy Mark"]
-;                           :deck ["Corroder"]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (play-from-hand state :runner "Easy Mark")
-;       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-;   (testing "Event play/trash events"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
-;                           :deck ["Corroder"]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (core/trash-cards state :runner (:hand (get-runner)))))
-;   (testing "Trashing a current triggers Aniccam"
-;     (do-game
-;       (new-game {:runner {:hand ["Aniccam", "Hacktivist Meeting"]
-;                           :deck ["Corroder"]}
-;                  :corp {:hand ["Scarcity of Resources"]}})
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Aniccam")
-;       (play-from-hand state :runner "Hacktivist Meeting")
-;       (is (not (find-card "Corroder" (:hand (get-runner)))) "The runner has not drawn a card immediately after playing a current")
-;       (take-credits state :runner)
-;       (play-from-hand state :corp "Scarcity of Resources")
-;       (is (find-card "Corroder" (:hand (get-runner))) "The has drawn a card after their current was trashed"))))
+(deftest aniccam
+  (testing "The runner draws 1 card when an event is trashed from the Grip by the Runner"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (trash-from-hand state :runner "Sure Gamble")
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "The runner draws 1 card when an event is trashed from the Grip by the Corp"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/trash state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "Trashing a non-event doesn't trigger Aniccam"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Clone Chip", "Mimic", "Daily Casts"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/trash-cards state :runner (:hand (get-runner)))
+      (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card")))
+  (testing "Trashing an event along with some non events triggers Aniccam"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Clone Chip", "Sure Gamble", "Mimic", "Daily Casts"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/trash-cards state :runner (:hand (get-runner)))
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "Aniccam must not trigger a second time in one turn"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck [(qty "Corroder" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (trash-from-hand state :runner "Sure Gamble")
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")
+      (trash-from-hand state :runner "Corroder")
+      (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a second card")))
+  (doseq [first-side [:corp :runner]
+          second-side [:corp :runner]]
+    (testing (str (name first-side) " trash -> install Aniccam -> " (name second-side) " trash does not trigger Aniccam")
+      (do-game
+        (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
+                            :deck ["Corroder"]}})
+        (take-credits state :corp)
+        (core/trash state first-side (find-card "Sure Gamble" (:hand (get-runner))))
+        (play-from-hand state :runner "Aniccam")
+        (core/trash state second-side (find-card "Dirty Laundry" (:hand (get-runner))))
+        (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card"))))
+  (testing "The effect triggers on meat damage"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/damage state :runner :meat 1)
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "The effect triggers on net damage"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/damage state :runner :net 1)
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "The effect triggers on brain damage"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/damage state :runner :brain 1)
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "Trashing an event from R&D triggers Annicam"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam"]
+                          :deck [(qty "Sure Gamble" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/trash state :runner (first (:deck (get-runner))))
+      (is (find-card "Sure Gamble" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "An event being trashed after playing it triggers Aniccam"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Easy Mark"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (play-from-hand state :runner "Easy Mark")
+      (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
+  (testing "Event play/trash events"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble", "Dirty Laundry"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (core/trash-cards state :runner (:hand (get-runner)))))
+  (testing "Trashing a current triggers Aniccam"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Hacktivist Meeting"]
+                          :deck ["Corroder"]}
+                 :corp {:hand ["Scarcity of Resources"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (play-from-hand state :runner "Hacktivist Meeting")
+      (is (not (find-card "Corroder" (:hand (get-runner)))) "The runner has not drawn a card immediately after playing a current")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Scarcity of Resources")
+      (is (find-card "Corroder" (:hand (get-runner))) "The has drawn a card after their current was trashed"))))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
@@ -845,27 +845,27 @@
     (is (= 5 (core/available-mu state)) "Gain 1 memory")
     (is (= 3 (:credit (get-runner))) "Got 1c for successful run on Desperado")))
 
-; (deftest devil-charm
-;   ;; Devil Charm
-;   (testing "Basic test"
-;     (do-game
-;       (new-game {:runner {:deck ["Devil Charm"]}
-;                  :corp {:deck ["Enigma"]}})
-;       (play-from-hand state :corp "Enigma" "HQ")
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Devil Charm")
-;       (run-on state :hq)
-;       (run-next-phase state)
-;       (let [dc (get-hardware state 0)
-;             enig (get-ice state :hq 0)]
-;         (core/rez state :corp (refresh enig))
-;         (run-continue state)
-;         (is (= 2 (:current-strength (refresh enig))) "Enigma starts at 2 strength")
-;         (click-prompt state :runner "Yes")
-;         (is (= -4 (:current-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
-;         (is (find-card "Devil Charm" (:rfg (get-runner))) "Devil Charm is removed from the game")
-;         (run-jack-out state)
-;         (is (= 2 (:current-strength (refresh enig))) "Enigma is back at 2 strength")))))
+(deftest devil-charm
+  ;; Devil Charm
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Devil Charm"]}
+                 :corp {:deck ["Enigma"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Devil Charm")
+      (run-on state :hq)
+      (run-next-phase state)
+      (let [dc (get-hardware state 0)
+            enig (get-ice state :hq 0)]
+        (core/rez state :corp (refresh enig))
+        (run-continue state)
+        (is (= 2 (:current-strength (refresh enig))) "Enigma starts at 2 strength")
+        (click-prompt state :runner "Yes")
+        (is (= -4 (:current-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
+        (is (find-card "Devil Charm" (:rfg (get-runner))) "Devil Charm is removed from the game")
+        (run-jack-out state)
+        (is (= 2 (:current-strength (refresh enig))) "Enigma is back at 2 strength")))))
 
 (deftest dinosaurus
   ;; Dinosaurus
@@ -1818,7 +1818,7 @@
       (play-from-hand state :runner "Imp")
       (run-empty-server state :archives)
       (click-prompt state :corp (find-card "Ice Wall" (:hand (get-corp)))) ;; Alice's ability
-      (click-prompt state :runner "Cyberdex Virus Suite")
+      ; (click-prompt state :runner "Cyberdex Virus Suite")
       (click-prompt state :corp "Yes")
       (run-empty-server state :rd)
       (click-prompt state :runner "Pay 1 [Credits] to trash")
