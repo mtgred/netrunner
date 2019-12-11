@@ -958,15 +958,17 @@
 
 (defmethod choose-access :archives [cards server {:keys [no-root] :as args}]
   {:async true
-   :effect (req (let [cards (concat (get-archives-accessible state) (-> @state :corp :servers :archives :content))
-                      archives-count (+ (count (-> @state :corp :discard)) (count (-> @state :corp :servers :archives :content)))]
+   :effect (req (let [archives-count (count cards)
+                      active-cards (concat (get-archives-accessible state) (-> @state :corp :servers :archives :content))]
                   ;; Because we don't "access" cards in Archives like normal,
                   ;; we have to manually count all the cards we'd normally skip
-                  (when (:run @state)
-                    (swap! state update-in [:run :cards-accessed :discard] (fnil + 0 0) (- archives-count (count cards))))
-                  (if (not-empty cards)
-                    (if (= 1 archives-count)
-                      (access-card state side eid (first cards))
+                  (when (and (:run @state)
+                             (not (safe-zero? (get-in @state [:run :max-access]))))
+                    (swap! state update-in [:run :cards-accessed :discard] (fnil + 0 0) (- archives-count (count active-cards))))
+                  (if (and (seq cards)
+                           (seq active-cards))
+                    (if (= 1 (count active-cards))
+                      (access-card state side eid (first active-cards))
                       (continue-ability state side
                                         (access-helper-archives state archives-count
                                                                 (if no-root
@@ -997,11 +999,13 @@
 
 (defmethod cards-to-access :archives [state side server]
   (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-  (concat (get-in @state [:corp :discard]) (get-in @state [:corp :servers :archives :content])))
+  (when-not (safe-zero? (get-in @state [:run :max-access]))
+    (concat (get-in @state [:corp :discard]) (get-in @state [:corp :servers :archives :content]))))
 
 (defmethod cards-to-access :remote [state side server]
   (let [contents (get-in @state [:corp :servers (first server) :content])]
-    (filter (partial can-access-loud state side) (concat contents (get-all-hosted contents)))))
+    (when-not (safe-zero? (get-in @state [:run :max-access]))
+      (filter (partial can-access-loud state side) (concat contents (get-all-hosted contents))))))
 
 (defn set-cards-to-access
   "Currently only used with Ash 2X"

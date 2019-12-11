@@ -332,7 +332,6 @@
      (when (and (some? run#)
                 (zero? (:position run#))
                 (= :approach-server (:phase run#)))
-       (core/no-action ~state :corp nil)
        (core/successful-run ~state :runner nil)
        true)))
 

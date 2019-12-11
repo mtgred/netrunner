@@ -792,31 +792,30 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Hedge Fund")
       (take-credits state :corp)))
-  ; TODO
-  ; (testing "Interaction with Eater"
-  ;   (do-game
-  ;     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-  ;                       :hand ["Ice Wall" "Hedge Fund"]
-  ;                       :discard ["Hedge Fund"]}
-  ;                :runner {:id "Edward Kim: Humanity's Hammer"
-  ;                         :deck ["Eater" (qty "Sure Gamble" 2)]}})
-  ;     (play-from-hand state :corp "Ice Wall" "Archives")
-  ;     (take-credits state :corp)
-  ;     (play-from-hand state :runner "Eater")
-  ;     (let [eater (get-program state 0)]
-  ;       (run-on state "Archives")
-  ;       (run-next-phase state)
-  ;       (core/rez state :corp (get-ice state :archives 0))
-  ;       (run-continue state)
-  ;       (card-ability state :runner eater 0)
-  ;       (click-prompt state :runner "End the run")
-  ;       (run-continue state)
-  ;       (run-next-phase state)
-  ;       (run-continue state)
-  ;       (run-successful state)
-  ;       (is (= 1 (count (:discard (get-corp)))))
-  ;       (run-empty-server state "HQ")
-  ;       (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
+  (testing "Interaction with Eater"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Hedge Fund"]
+                        :discard ["Hedge Fund"]}
+                 :runner {:id "Edward Kim: Humanity's Hammer"
+                          :deck ["Eater" (qty "Sure Gamble" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Eater")
+      (let [eater (get-program state 0)]
+        (run-on state "Archives")
+        (run-next-phase state)
+        (core/rez state :corp (get-ice state :archives 0))
+        (run-continue state)
+        (card-ability state :runner eater 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (run-next-phase state)
+        (run-continue state)
+        (run-successful state)
+        (is (= 1 (count (:discard (get-corp)))))
+        (run-empty-server state "HQ")
+        (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
   (testing "Do not trigger maw on first Operation access (due to trash)"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Restructure" 2)]}
