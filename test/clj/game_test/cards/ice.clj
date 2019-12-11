@@ -2593,7 +2593,6 @@
         (core/rez state :corp paperwall)
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-        (run-continue state)
         (is (nil? (get-ice state :hq 0)) "Paper Wall was trashed")))))
 
 (deftest peeping-tom
