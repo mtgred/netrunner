@@ -7,6 +7,24 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(deftest abagnale
+  ;; Abagnale
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma"]}
+               :runner {:hand ["Abagnale"]
+                        :credits 10}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Abagnale")
+    (run-on state "HQ")
+    (run-next-phase state)
+    (core/rez state :corp (get-ice state :hq 0))
+    (run-continue state)
+    (card-ability state :runner (get-program state 0) 2)
+    (is (= :pass-ice (:phase (get-run))) "Run has bypassed Enigma")
+    (is (find-card "Abagnale" (:discard (get-runner))) "Abagnale is trashed")))
+
 (deftest adept
   ;; Adept
   (do-game
@@ -43,6 +61,25 @@
       (click-prompt state :runner "Trash a program")
       (click-prompt state :runner "Done")
       (is (:broken (first (:subroutines (refresh cobra)))) "Broke a sentry subroutine"))))
+
+(deftest afterimage
+  ;; Afterimage
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rototurret"]
+                        :credits 10}
+                 :runner {:hand ["Afterimage"]
+                          :credits 10}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Afterimage")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (is (= :pass-ice (:phase (get-run))) "Run has bypassed Ice Wall"))))
 
 (deftest algernon
   ;; Algernon - pay 2 credits to gain a click, trash if no successful run
@@ -1218,6 +1255,24 @@
         (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Datasucker")
         (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Datasucker")))))
 
+(deftest demara
+  ;; Demara
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall"]}
+               :runner {:hand ["Demara"]
+                        :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Demara")
+    (run-on state "HQ")
+    (run-next-phase state)
+    (core/rez state :corp (get-ice state :hq 0))
+    (run-continue state)
+    (card-ability state :runner (get-program state 0) 2)
+    (is (= :pass-ice (:phase (get-run))) "Run has bypassed Ice Wall")
+    (is (find-card "Demara" (:discard (get-runner))) "Demara is trashed")))
+
 (deftest deus-x
   (testing "vs Multiple Hostile Infrastructure"
     (do-game
@@ -2130,6 +2185,24 @@
         (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not added to available MU")
         (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
         (is (= 3 (core/available-mu state)) "Imp 1 MU not added to available MU")))))
+
+(deftest lustig
+  ;; Lustig
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Rototurret"]}
+               :runner {:hand ["Lustig"]
+                        :credits 10}})
+    (play-from-hand state :corp "Rototurret" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Lustig")
+    (run-on state "HQ")
+    (run-next-phase state)
+    (core/rez state :corp (get-ice state :hq 0))
+    (run-continue state)
+    (card-ability state :runner (get-program state 0) 2)
+    (is (= :pass-ice (:phase (get-run))) "Run has bypassed Rototurret")
+    (is (find-card "Lustig" (:discard (get-runner))) "Lustig is trashed")))
 
 (deftest magnum-opus
   ;; Magnum Opus - Gain 2 cr

@@ -219,7 +219,9 @@
                     :req (req (and (= :encounter-ice (:phase run))
                                    (rezzed? current-ice)
                                    (has-subtype? current-ice ice-type)))
-                    :msg (msg "bypass " (:title current-ice))}]})))
+                    :msg (msg "bypass " (:title current-ice))
+                    :effect (req (bypass-ice state)
+                                 (continue state :runner nil))}]})))
 
 (defn- cloud-icebreaker
   "Reduce MU cost to 0 with 2+ link
@@ -282,14 +284,23 @@
                          1 "Sentry")])
 
    "Afterimage"
-   (auto-icebreaker {:implementation "Stealth credit restriction not enforced. Bypass not implemented"
-                     :abilities [{:label "Bypass sentry"
-                                  :cost [:credit 2]
-                                  :req (req (and current-ice
-                                                 (rezzed? current-ice)
-                                                 (has-subtype? current-ice "Sentry")))
-                                  :msg (msg "bypass " (card-str state current-ice))}
-                                 (break-sub 1 2 "Sentry")
+   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
+                     :events [{:event :encounter-ice
+                               :async true
+                               :req (req (and (has-subtype? target "Sentry")
+                                              (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2])))
+                               :effect
+                               (effect
+                                 (continue-ability
+                                   {:optional
+                                    {:prompt (str "Pay 2 [Credits] to bypass" (:title target))
+                                     :yes-ability
+                                     {:once :per-run
+                                      :cost [:credit 2]
+                                      :msg (msg "bypass " (:title target))
+                                      :effect (req (bypass-ice state))}}}
+                                   card targets))}]
+                     :abilities [(break-sub 1 2 "Sentry")
                                  (strength-pump 1 2)]})
 
    "Aghora"

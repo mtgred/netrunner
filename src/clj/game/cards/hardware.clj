@@ -191,20 +191,19 @@
                     [:trash] 2 "All"
                     {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
                                  (same-card? current-ice boomerang-target)
-                                 true)) ;When eg. flipped by Assimilator
+                                 true)) ; When eg. flipped by Assimilator
                      :additional-ability
                      {:effect (req (let [boomerang (assoc card :zone '(:discard))]
                                      (register-events
                                        state side boomerang
                                        [{:event :successful-run-ends
                                          :location :discard
+                                         :unregister-once-resolved true
                                          :optional
                                          {:prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
                                           :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
                                                         :effect (effect (move card :deck)
-                                                                        (shuffle! :deck))}
-                                          ; TODO: replace with new :unregister-after-use or :once :and-never-more or however it will be called once it's done
-                                          :end-effect (effect (unregister-floating-events-for-card boomerang :while-installed))}}])))}})]})
+                                                                        (shuffle! :deck))}}}])))}})]})
 
    "Box-E"
    {:in-play [:memory 2 :hand-size 2]}
@@ -434,19 +433,21 @@
               :msg "gain 1 [Credits]" :effect (effect (gain-credits 1))}]}
 
    "Devil Charm"
-   {:abilities [{:label "Give encountered ice -6 strength"
-                 :msg (msg "give -6 strength to " (card-str state current-ice) " for the remainder of the run")
-                 :cost [:remove-from-game]
-                 :req (req (and run
-                                (rezzed? current-ice)))
-                 :effect (effect (register-floating-effect
-                                   card
-                                   (let [target-ice current-ice]
-                                     {:type :ice-strength
-                                      :duration :end-of-run
-                                      :req (req (same-card? target target-ice))
-                                      :value -6}))
-                                 (update-all-ice))}]}
+   {:events [{:event :encounter-ice
+              :interactive (req true)
+              :optional
+              {:prompt "Remove this card from the game: give encountered ice -6 strength?"
+               :yes-ability
+               {:msg (msg "give -6 strength to " (card-str state target) " for the remainder of the run")
+                :cost [:remove-from-game]
+                :effect (effect (register-floating-effect
+                                  card
+                                  (let [target-ice target]
+                                    {:type :ice-strength
+                                     :duration :end-of-run
+                                     :req (req (same-card? target target-ice))
+                                     :value -6}))
+                                (update-all-ice))}}}]}
 
    "Dinosaurus"
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
