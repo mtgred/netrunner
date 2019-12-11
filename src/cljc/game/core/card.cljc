@@ -232,6 +232,17 @@
       (and (is-type? card "Agenda")
            (installed? card))))
 
+(defn get-counters
+  "Get number of counters of specified type."
+  [card counter]
+  (cond
+    (= counter :advancement)
+    (+ (:advance-counter card 0) (:extra-advance-counter card 0))
+    (= counter :recurring)
+    (:rec-counter card 0)
+    :else
+    (get-in card [:counter counter] 0)))
+
 (defn get-nested-host
   "Recursively searches upward to find the 'root' card of a hosting chain."
   [card]

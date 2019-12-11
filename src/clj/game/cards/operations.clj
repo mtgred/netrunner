@@ -267,8 +267,7 @@
     :effect (effect (gain-tags :corp eid 2))}
 
    "Bioroid Efficiency Research"
-   {:implementation "Derez and trash is manual"
-    :async true
+   {:async true
     :req (req (some #(and (ice? %)
                           (has-subtype? % "Bioroid")
                           (not (rezzed? %)))
@@ -280,7 +279,17 @@
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
     :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
                            (host state side (get-card state target) (assoc card :seen true :condition true))
-                           (effect-completed state side eid)))}
+                           (effect-completed state side eid)))
+    :events [{:event :encounter-ice-ends
+              :condition :hosted
+              :async true
+              :req (req (and (same-card? target (:host card))
+                             (empty? (remove :broken (:subroutines target)))))
+              :effect (effect (system-msg :corp
+                                          (str "derezzes " (:title target)
+                                               " and trashes Bioroid Efficiency Research"))
+                              (derez :corp target)
+                              (trash :corp eid card {:unpreventable true}))}]}
 
    "Biotic Labor"
    {:msg "gain [Click][Click]"
@@ -552,16 +561,17 @@
                                                   (gain-tags state :corp eid 1)))}}}]}
 
    "Eavesdrop"
-   {:implementation "On encounter effect is manual"
-    :choices {:card #(and (ice? %)
+   {:choices {:card #(and (ice? %)
                           (installed? %))}
     :msg (msg "give " (card-str state target {:visible false}) " additional text")
     :effect (effect (host target (assoc card :seen true :condition true)))
-    :abilities [{:label "Give the Runner 1 tag"
-                 :trace {:base 3
-                         :successful {:msg "give the Runner 1 tag"
-                                      :async true
-                                      :effect (effect (gain-tags :runner eid 1))}}}]}
+    :events [{:event :encounter-ice
+              :condition :hosted
+              :req (req (same-card? target (:host card)))
+              :trace {:base 3
+                      :successful {:msg "give the Runner 1 tag"
+                                   :async true
+                                   :effect (effect (gain-tags :runner eid 1))}}}]}
 
    "Economic Warfare"
    {:req (req (and (last-turn? state :runner :successful-run)
@@ -603,7 +613,7 @@
    "Enhanced Login Protocol"
    {:msg "uses Enhanced Login Protocol to add an additional cost of [Click] to make the first run not through a card ability this turn"
     :constant-effects [{:type :run-additional-cost
-                        :req (req (and (no-event? state side :run #(:click-run (second %)))
+                        :req (req (and (no-event? state side :run #(:click-run (nth % 2)))
                                        (:click-run (second targets))))
                         :value [:click 1]}]}
 
@@ -1367,13 +1377,19 @@
     :effect (effect (trash eid target nil))}
 
    "Oversight AI"
-   {:implementation "Trashing ICE is manual"
-    :choices {:card #(and (ice? %)
+   {:choices {:card #(and (ice? %)
                           (not (rezzed? %))
                           (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:ignore-cost :all-costs})
-                    (host (get-card state target) (assoc card :seen true :condition true)))}
+                    (host (get-card state target) (assoc card :seen true :condition true)))
+    :events [{:event :encounter-ice-ends
+              :condition :hosted
+              :async true
+              :req (req (and (same-card? target (:host card))
+                             (empty? (remove :broken (:subroutines target)))))
+              :effect (effect (system-msg :corp (str "trashes " (:title target)))
+                              (trash :corp eid card {:unpreventable true}))}]}
 
    "Patch"
    {:choices {:card #(and (ice? %)

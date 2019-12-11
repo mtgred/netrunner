@@ -2,7 +2,7 @@
 
 (declare can-trigger? event-title
          register-suppress resolve-ability
-         trigger-suppress unregister-suppress)
+         unregister-suppress)
 
 (defn default-locations
   [card]
@@ -26,13 +26,15 @@
                  :location (or (:location ability) (default-locations card))
                  :duration (or (:duration ability) :while-installed)
                  :condition (or (:condition ability) :active)
+                 :unregister-once-resolved (or (:unregister-once-resolved ability) false)
                  :ability (dissoc ability :event :duration :condition)
                  :card card
                  :uuid (uuid/v1)})
               (into []))]
      (when (seq abilities)
-       (swap! state update :events #(apply conj % abilities))))
-   (register-suppress state side card)))
+       (swap! state update :events #(apply conj % abilities)))
+     (register-suppress state side card)
+     abilities)))
 
 (defn unregister-events
   "Removes all event handlers defined for the given card.
@@ -70,6 +72,48 @@
               (remove #(and (same-card? card (:card %))
                             (= duration (:duration %))))
               (into []))))
+
+(defn unregister-event-by-uuid
+  "Removes a single event handler with matching uuid"
+  [state side uuid]
+  (swap! state assoc :events (remove-once #(= uuid (:uuid %)) (:events @state))))
+
+; Functions for registering trigger suppression events.
+(defn register-suppress
+  "Registers each suppression handler in the given card definition. Suppression handlers
+  can prevent the dispatching of a particular event."
+  ([state side card] (register-suppress state side card (:suppress (card-def card))))
+  ([state side card events]
+   (when events
+     (let [abilities
+           (->> (for [ability events]
+                  {:event (:event ability)
+                   :ability (dissoc ability :event)
+                   :card card
+                   :uuid (uuid/v1)})
+                (into []))]
+       (when (seq abilities)
+         (swap! state update :suppress #(apply conj % abilities)))
+       abilities))))
+
+(defn unregister-suppress
+  "Removes all event handler suppression effects as defined for the given card"
+  ([state side card] (unregister-suppress state side card (:suppress (card-def card))))
+  ([state side card events]
+   (let [abilities (map :event events)]
+     (swap! state assoc :suppress
+            (->> (:suppress @state)
+                 (remove #(and (same-card? card (:card %))
+                               (in-coll? abilities (:event %))))
+                 (into []))))))
+
+(defn trigger-suppress
+  "Returns true if the given event on the given targets should be suppressed, by triggering
+  each suppression handler and returning true if any suppression handler returns true."
+  [state side event & targets]
+  (->> (:suppress @state)
+       (filter #(= event (:event %)))
+       (some #((:req (:ability %)) state side (make-eid state) (:card %) targets))))
 
 ;; triggering events
 (defn- get-side
@@ -135,13 +179,17 @@
           handlers (gather-events state side event targets)]
       (doseq [to-resolve handlers]
         (when-let [card (card-for-ability state to-resolve)]
-          (resolve-ability state side (dissoc (:ability to-resolve) :req) card targets))))))
+          (resolve-ability state side (dissoc (:ability to-resolve) :req) card targets)
+          (when (:unregister-once-resolved to-resolve)
+            (unregister-event-by-uuid state side (:uuid to-resolve))))))))
 
 (defn- trigger-event-sync-next
   [state side eid handlers event targets]
   (if-let [to-resolve (first handlers)]
     (if-let [card (card-for-ability state to-resolve)]
       (wait-for (resolve-ability state side (dissoc (:ability to-resolve) :req) card targets)
+                (when (:unregister-once-resolved to-resolve)
+                  (unregister-event-by-uuid state side (:uuid to-resolve)))
                 (trigger-event-sync-next state side eid (rest handlers) event targets))
       (trigger-event-sync-next state side eid (rest handlers) event targets))
     (effect-completed state side eid)))
@@ -173,7 +221,8 @@
               (and (< 1 (count handlers))
                    (not (and cancel-fn (cancel-fn state)))))
             (choose-handler [handlers]
-              (let [handlers (filter #(card-for-ability state %) handlers)
+              (let [handlers (when-not (and cancel-fn (cancel-fn state))
+                               (filter #(card-for-ability state %) handlers))
                     non-silent (filter #(let [silent-fn (:silent (:ability %))]
                                           (not (and silent-fn
                                                     (silent-fn state side (make-eid state) (:card %) event-targets))))
@@ -197,6 +246,8 @@
                        :effect (req (wait-for (resolve-ability state (to-keyword (:side the-card))
                                                                ability-to-resolve
                                                                the-card event-targets)
+                                              (when (:unregister-once-resolved to-resolve)
+                                                (unregister-event-by-uuid state side (:uuid to-resolve)))
                                               (if (should-continue state handlers)
                                                 (continue-ability state side
                                                                   (choose-handler others) nil event-targets)
@@ -214,6 +265,8 @@
                                   (wait-for
                                     (resolve-ability state (to-keyword (:side the-card))
                                                      ability-to-resolve the-card event-targets)
+                                    (when (:unregister-once-resolved to-resolve)
+                                      (unregister-event-by-uuid state side (:uuid to-resolve)))
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler
@@ -296,43 +349,7 @@
                                         (clear-wait-prompt state active-player)
                                         (effect-completed state side eid))))))))
 
-
-; Functions for registering trigger suppression events.
-(defn register-suppress
-  "Registers each suppression handler in the given card definition. Suppression handlers
-  can prevent the dispatching of a particular event."
-  ([state side card] (register-suppress state side card (:suppress (card-def card))))
-  ([state side card events]
-   (when events
-     (let [abilities
-           (->> (for [ability events]
-                  {:event (:event ability)
-                   :ability (dissoc ability :event)
-                   :card card
-                   :uuid (uuid/v1)})
-                (into []))]
-       (swap! state update :suppress
-              #(apply conj % abilities))))))
-
-(defn unregister-suppress
-  "Removes all event handler suppression effects as defined for the given card"
-  ([state side card] (unregister-suppress state side card (:suppress (card-def card))))
-  ([state side card events]
-   (let [abilities (map :event events)]
-     (swap! state assoc :suppress
-            (->> (:suppress @state)
-                 (remove #(and (same-card? card (:card %))
-                               (in-coll? abilities (:event %))))
-                 (into []))))))
-
-(defn trigger-suppress
-  "Returns true if the given event on the given targets should be suppressed, by triggering
-  each suppression handler and returning true if any suppression handler returns true."
-  [state side event & targets]
-  (->> (:suppress @state)
-       (filter #(= event (:event %)))
-       (some #((:req (:ability %)) state side (make-eid state) (:card %) targets))))
-
+;; Functions for event parsing
 (defn turn-events
   "Returns the targets vectors of each event with the given key that was triggered this turn."
   [state side ev]

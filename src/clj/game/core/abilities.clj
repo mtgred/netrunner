@@ -23,12 +23,15 @@
          trace (partial-should-trigger? trace)
          :else true)))))
 
+(defn not-used-once?
+  [state {:keys [once once-key] :as ability} {:keys [cid] :as card}]
+  (not (get-in @state [once (or once-key cid)])))
+
 (defn can-trigger?
   "Checks if ability can trigger. Checks that once-per-turn is not violated."
-  [state side {:keys [once once-key] :as ability} card targets]
-  (let [cid (:cid card)]
-    (and (not (get-in @state [once (or once-key cid)]))
-         (should-trigger? state side card targets ability))))
+  [state side ability card targets]
+  (and (not-used-once? state ability card)
+       (should-trigger? state side card targets ability)))
 
 (defn is-ability?
   "Checks to see if a given map represents a card ability. Looks for :effect, :optional, :trace, or :psi."

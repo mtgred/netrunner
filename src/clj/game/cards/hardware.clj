@@ -191,20 +191,19 @@
                     [:trash] 2 "All"
                     {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
                                  (same-card? current-ice boomerang-target)
-                                 true)) ;When eg. flipped by Assimilator
+                                 true)) ; When eg. flipped by Assimilator
                      :additional-ability
                      {:effect (req (let [boomerang (assoc card :zone '(:discard))]
                                      (register-events
                                        state side boomerang
                                        [{:event :successful-run-ends
                                          :location :discard
+                                         :unregister-once-resolved true
                                          :optional
                                          {:prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
                                           :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
                                                         :effect (effect (move card :deck)
-                                                                        (shuffle! :deck))}
-                                          ; TODO: replace with new :unregister-after-use or :once :and-never-more or however it will be called once it's done
-                                          :end-effect (effect (unregister-floating-events-for-card boomerang :while-installed))}}])))}})]})
+                                                                        (shuffle! :deck))}}}])))}})]})
 
    "Box-E"
    {:in-play [:memory 2 :hand-size 2]}
@@ -352,12 +351,10 @@
 
    "Cyberdelia"
    {:in-play [:memory 1]
-    :events [{:once :per-turn
+    :events [{:event :subroutines-broken
+              :req (req (first-event? state side :subroutines-broken #(every? :broken (:subroutines (first %)))))
               :msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
-              :effect (effect (gain-credits 1))
-              :event :pass-ice
-              :req (req (and (rezzed? current-ice)
-                             (empty? (remove :broken (:subroutines current-ice)))))}]}
+              :effect (effect (gain-credits 1))}]}
 
    "Cyberfeeder"
    {:recurring 1
@@ -379,9 +376,10 @@
 
    "Daredevil"
    {:in-play [:memory 2]
-    :events [{:event :run-big
+    :events [{:event :run
               :once :per-turn
-              :req (req (first-event? state side :run-big))
+              :req (req (and (<= 2 run-position)
+                             (first-event? state side :run #(<= 2 (second %)))))
               :msg "draw two cards"
               :async true
               :effect (effect (draw eid 2 nil))}]}
@@ -435,19 +433,21 @@
               :msg "gain 1 [Credits]" :effect (effect (gain-credits 1))}]}
 
    "Devil Charm"
-   {:abilities [{:label "Give encountered ice -6 strength"
-                 :msg (msg "give -6 strength to " (card-str state current-ice) " for the remainder of the run")
-                 :cost [:remove-from-game]
-                 :req (req (and run
-                                (rezzed? current-ice)))
-                 :effect (effect (register-floating-effect
-                                   card
-                                   (let [target-ice current-ice]
-                                     {:type :ice-strength
-                                      :duration :end-of-run
-                                      :req (req (same-card? target target-ice))
-                                      :value -6}))
-                                 (update-all-ice))}]}
+   {:events [{:event :encounter-ice
+              :interactive (req true)
+              :optional
+              {:prompt "Remove this card from the game: give encountered ice -6 strength?"
+               :yes-ability
+               {:msg (msg "give -6 strength to " (card-str state target) " for the remainder of the run")
+                :cost [:remove-from-game]
+                :effect (effect (register-floating-effect
+                                  card
+                                  (let [target-ice target]
+                                    {:type :ice-strength
+                                     :duration :end-of-run
+                                     :req (req (same-card? target target-ice))
+                                     :value -6}))
+                                (update-all-ice))}}}]}
 
    "Dinosaurus"
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
@@ -511,14 +511,14 @@
                  :choices (req runnable-servers)
                  :msg "make a run and avoid all tags for the remainder of the run"
                  :makes-run true
-                 :effect (effect (update! (assoc card :dorm-active true))
-                                 (make-run target))}]
-    :events [{:event :pre-tag
-              :req (req (:dorm-active card))
-              :effect (effect (tag-prevent :runner Integer/MAX_VALUE))
-              :msg "avoid all tags during the run"}
-             {:event :run-ends
-              :effect (effect (update! (dissoc card :dorm-active)))}]}
+                 :async true
+                 :effect (effect (register-events
+                                   card
+                                   [{:event :pre-tag
+                                     :duration :end-of-run
+                                     :msg "avoid all tags during the run"
+                                     :effect (effect (tag-prevent :runner Integer/MAX_VALUE))}])
+                                 (make-run eid target nil card))}]}
 
    "Dyson Fractal Generator"
    {:recurring 1
@@ -803,12 +803,12 @@
                               (host state side target card))}]
     :events [{:event :pump-breaker
               :req (req (same-card? target (:host card)))
-              :effect (req (let [last-pump (assoc (last (:effects @state))
+              :effect (req (let [last-pump (assoc (second targets)
                                                   :duration :end-of-run
                                                   :original-duration (:duration (last (:effects @state))))]
                              (swap! state assoc :effects
                                     (->> (:effects @state)
-                                         butlast
+                                         (remove #(= (:uuid last-pump) (:uuid %)))
                                          (#(conj % last-pump))
                                          (into []))))
                            (update-breaker-strength state side target))}]
@@ -867,19 +867,21 @@
                                                     (effect-completed state side eid)))}}}]}
 
    "Hippo"
-   {:implementation "First encounter requirements not enforced"
-    :abilities [{:label "Remove Hippo from the game: trash outermost piece of ICE if all subroutines were broken"
-                 :req (req (and run
-                                (pos? (count run-ices))
-                                (rezzed? current-ice)
-                                (empty? (remove :broken (:subroutines current-ice)))))
-                 :async true
-                 :effect (req (let [ice (last run-ices)]
-                                (system-msg
-                                  state :runner
-                                  (str "removes Hippo from the game to trash " (card-str state ice)))
-                                (move state :runner card :rfg)
-                                (trash state :runner eid ice nil)))}]}
+   {:events [{:event :subroutines-broken
+              :effect
+              (effect
+                (continue-ability
+                  {:optional
+                   {:req (req (let [pred #(and (same-card? (last run-ices) (first %))
+                                               (every? :broken (:subroutines (first %))))]
+                                (first-event? state side :subroutines-broken pred)))
+                    :prompt (str "Remove Hippo from the game to trash " (:title target) "?")
+                    :yes-ability
+                    {:async true
+                     :effect (effect (system-msg (str "removes Hippo from the game to trash " (card-str state target)))
+                                     (move card :rfg)
+                                     (trash eid target nil))}}}
+                  card targets))}]}
 
    "HQ Interface"
    {:in-play [:hq-access 1]}
@@ -1571,18 +1573,21 @@
                                 (update-breaker-strength state side t)))}]}
 
    "Security Nexus"
-   {:implementation "Bypass is manual"
-    :in-play [:memory 1 :link 1]
-    :abilities [{:req (req (:run @state))
-                 :once :per-turn
-                 :async true
-                 :msg "force the Corp to initiate a trace"
-                 :label "Trace 5 - Give the Runner 1 tag and end the run"
-                 :trace {:base 5
-                         :successful {:msg "give the Runner 1 tag and end the run"
-                                      :effect (effect (gain-tags :runner eid 1)
-                                                      (end-run))}
-                         :unsuccessful {:msg "bypass the current ICE"}}}]}
+   {:in-play [:memory 1 :link 1]
+    :events [{:event :encounter-ice
+              :optional
+              {:req (req (not-used-once? state {:once :per-turn} card))
+               :prompt "Trace 5 to bypass current ice?"
+               :yes-ability
+               {:once :per-turn
+                :msg "force the Corp to initiate a trace"
+                :trace {:base 5
+                        :successful {:msg "give the Runner 1 tag and end the run"
+                                     :async true
+                                     :effect (req (wait-for (gain-tags state :runner 1)
+                                                            (end-run state side eid card)))}
+                        :unsuccessful {:msg (msg "bypass " (:title current-ice))
+                                       :effect (req (swap! state assoc-in [:run :bypass] true))}}}}}]}
 
    "Severnius Stim Implant"
    (letfn [(implant-fn [srv kw]
@@ -1595,40 +1600,63 @@
               :effect (req (let [bonus (quot (count targets) 2)]
                              (wait-for (trash-cards state side targets {:unpreventable true
                                                                         :suppress-event true})
-                                       (make-run state side srv nil card)
-                                       (register-events
+                                      (register-events
                                          state side card
                                          [{:event :pre-access
+                                           :duration :end-of-run
                                            :silent (req true)
-                                           :effect (effect (access-bonus kw bonus))}
-                                          {:event :run-ends
-                                           :effect (effect (unregister-events card))}])
-                                       (effect-completed state side eid))))})]
+                                           :effect (effect (access-bonus kw bonus))}])
+                                      (make-run state side eid srv nil card))))})]
      {:abilities [{:req (req (<= 2 (count (:hand runner))))
                    :cost [:click 1]
                    :prompt "Choose a server to run with Severnius Stim Implant"
                    :choices ["HQ" "R&D"]
-                   :effect (effect (continue-ability (implant-fn target (if (= target "HQ") :hq :rd)) card nil))}]
-      :events [{:event :pre-access}
-               {:event :run-ends}]})
+                   :effect (effect (continue-ability (implant-fn target (if (= target "HQ") :hq :rd)) card nil))}]})
 
    "Şifr"
-   {:in-play [:memory 2]
-    :abilities [{:once :per-turn
-                 :req (req (rezzed? current-ice))
-                 :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
-                 :effect (effect (lose :runner :hand-size 1)
-                                 (update! (assoc card :sifr-target current-ice :sifr-used true))
-                                 (update-ice-strength current-ice))}]
-    :constant-effects [{:type :ice-strength
-                        :req (req (same-card? target (:sifr-target card)))
-                        :value (req (- (get-strength target)))}]
-    :events [{:event :runner-turn-begins
-              :req (req (:sifr-used card))
-              :effect (effect (gain :runner :hand-size 1)
-                              (update! (dissoc card :sifr-used)))}
-             {:event :run-ends
-              :effect (effect (update! (dissoc card :sifr-target)))}]}
+   (letfn [(gather-pre-sifr-effects [sifr state side eid target targets]
+             ;; This is needed because of the stupid ass rulings about how Sifr modifies
+             ;; ice strength: Sifr only lowers the ice to 0 at the point it's activated,
+             ;; and then other abilities (Sandburg, etc) can raise it back after, which
+             ;; is DUMB, so that means we have to on the fly calculate what the strength
+             ;; of the ice is at the moment Sifr would affect it.
+             (if (card-flag? target :cannot-lower-strength true)
+               0
+               (->> (:effects @state)
+                    (filter #(= :ice-strength (:type %)))
+                    (filter #(if-not (:req %)
+                               true
+                               ((:req %) state side eid (get-card state (:card %)) (cons target targets))))
+                    (split-with #(same-card? sifr %))
+                    (first)
+                    (mapv #(if-not (fn? (:value %))
+                             (:value %)
+                             ((:value %) state side eid (get-card state (:card %)) (cons target targets))))
+                    (reduce +)
+                    (abs))))]
+     {:in-play [:memory 2]
+      :events [{:event :encounter-ice
+                :optional
+                {:req (req (not-used-once? state {:once :per-turn} card))
+                 :prompt "Use Şifr?"
+                 :yes-ability
+                 {:once :per-turn
+                  :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
+                  :effect (effect (lose :runner :hand-size 1)
+                                  (register-events
+                                    :runner card
+                                    [{:event :runner-turn-begins
+                                      :duration :until-runner-turn-begins
+                                      :effect (effect (gain :runner :hand-size 1))}])
+                                  (register-floating-effect
+                                    :runner card
+                                    (let [ice current-ice]
+                                      {:type :ice-strength
+                                       :duration :end-of-encounter
+                                       :req (req (same-card? target ice))
+                                       :value (req (- (+ (:strength target 0)
+                                                         (gather-pre-sifr-effects card state side eid target (rest targets)))))}))
+                                  (update-all-ice :runner))}}}]})
 
    "Silencer"
    {:recurring 1

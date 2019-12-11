@@ -402,20 +402,28 @@
                   (break-subroutine! state (get-card state current-ice) sub card)
                   (resolve-ability state side (make-eid state {:source card :source-type :ability})
                                    (:additional-ability break-ability) (get-card state card) nil))
-                (system-msg state side (if (pos? times-pump)
-                                         (str (build-spend-msg async-result "increase")
-                                              "the strength of " (:title card)
-                                              " to " (get-strength (get-card state card))
-                                              " and break all " unbroken-subs
-                                              " subroutines on " (:title current-ice))
-                                         (str (build-spend-msg async-result "use")
-                                              (:title card)
-                                              " to break "
-                                              (if some-already-broken
-                                                "the remaining "
-                                                "all ")
-                                              unbroken-subs " subroutines on "
-                                              (:title current-ice))))))))
+                (let [ice (get-card state current-ice)
+                      broken-subs (remove :broken (:subroutines current-ice))
+                      on-break-subs (when ice (:on-break-subs (card-def current-ice)))
+                      event-args (when on-break-subs
+                                   {:card-abilities (ability-as-handler ice on-break-subs)})]
+                  (wait-for
+                    (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
+                    (system-msg state side
+                                (if (pos? times-pump)
+                                  (str (build-spend-msg async-result "increase")
+                                       "the strength of " (:title card)
+                                       " to " (get-strength (get-card state card))
+                                       " and break all " (when (< 1 unbroken-subs) unbroken-subs)
+                                       " subroutines on " (:title current-ice))
+                                  (str (build-spend-msg async-result "use")
+                                       (:title card)
+                                       " to break "
+                                       (if some-already-broken
+                                         "the remaining "
+                                         "all ")
+                                       unbroken-subs " subroutines on "
+                                       (:title current-ice))))))))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."
@@ -649,20 +657,6 @@
                                                                                (play-sfx state side "agenda-score")))}}
                     c)))))))
 
-(defn no-action
-  "The corp indicates they have no more actions for the encounter."
-  [state side args]
-  (swap! state assoc-in [:run :no-action] true)
-  (system-msg state side "has no further action")
-  (trigger-event state side :no-action)
-  (let [run-ice (get-run-ices state)
-        pos (get-in @state [:run :position])
-        ice (when (and pos (pos? pos) (<= pos (count run-ice)))
-              (get-card state (nth run-ice (dec pos))))]
-    (when (rezzed? ice)
-      (trigger-event state side :encounter-ice ice)
-      (update-ice-strength state side ice))))
-
 ;;; Runner actions
 (defn click-run
   "Click to start a run."
@@ -680,29 +674,6 @@
                 (system-msg state side (string/trimr (build-spend-msg cost-str "remove 1 tag" "removes 1 tag")))
                 (play-sfx state side "click-remove-tag"))
               (effect-completed state side eid)))))
-
-(defn continue
-  "The runner decides to approach the next ice, or the server itself."
-  [state side args]
-  (when (get-in @state [:run :no-action])
-    (let [run-ice (get-run-ices state)
-          pos (get-in @state [:run :position])
-          cur-ice (when (and pos (pos? pos) (<= pos (count run-ice)))
-                    (get-card state (nth run-ice (dec pos))))
-          next-ice (when (and pos (< 1 pos) (<= (dec pos) (count run-ice)))
-                     (get-card state (nth run-ice (- pos 2))))]
-      (wait-for (trigger-event-sync state side :pass-ice cur-ice)
-                (unregister-floating-effects state side :end-of-encounter)
-                (unregister-floating-events state side :end-of-encounter)
-                (swap! state update-in [:run :position] (fnil dec 1))
-                (swap! state assoc-in [:run :no-action] false)
-                (system-msg state side "continues the run")
-                (when cur-ice
-                  (reset-all-subs! state (get-card state cur-ice)))
-                (update-all-ice state side)
-                (update-all-icebreakers state side)
-                (trigger-event-simult state side (make-eid state)
-                                      (if next-ice :approach-ice :approach-server) nil (when next-ice next-ice))))))
 
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."

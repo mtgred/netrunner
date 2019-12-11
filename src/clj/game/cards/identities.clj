@@ -1,5 +1,6 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
+            [game.core.effects :refer [register-floating-effect]]
             [game.core.eid :refer [effect-completed make-eid complete-with-result]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -92,25 +93,15 @@
              (and run-position
                   (pos? run-position)
                   (= run-position (count run-ices))))]
-     {:implementation "Additional tag is gained on approach, not on encounter"
-      ;; Should be comprehensive list of all cases when tag should be gained or lost
-      :events [{:event :run
-                :effect (req (when (and (outermost? run-position run-ices)
-                                        (rezzed? current-ice))
+     {:events [{:event :encounter-ice
+                :effect (req (when (outermost? run-position run-ices)
                                (activate state card true)))}
-               {:event :rez
-                :effect (req (when (and (outermost? run-position run-ices)
-                                        (same-card? current-ice target))
-                               (activate state card true)))}
-               {:event :derez
+               {:event :encounter-ice-ends
                 :effect (req (when (outermost? run-position run-ices)
                                (activate state card false)))}
-               {:event :pass-ice
-                :effect (req (when (and (outermost? run-position run-ices)
-                                        (get-in card [:special :acme-active]))
-                               (activate state card false)))}
-               {:event :run-ends
-                :effect (req (when (get-in card [:special :acme-active])
+               {:event :derez
+                :req (req (same-card? target current-ice))
+                :effect (req (when (outermost? run-position run-ices)
                                (activate state card false)))}]})
 
    "Adam: Compulsive Hacker"
@@ -138,17 +129,24 @@
                                                card nil)))}]}
 
    "AgInfusion: New Miracles for a New World"
-   {:abilities [{:once :per-turn
-                 :req (req (and (:run @state) (not (rezzed? current-ice)) (can-rez? state side current-ice {:ignore-unique true})))
+   {:abilities [{:label "Trash a piece of ice to choose another server- the runner is now running that server"
+                 :once :per-turn
+                 :async true
+                 :req (req (and run
+                                (= :approach-ice (:phase run))
+                                (not (rezzed? current-ice))
+                                (can-rez? state side current-ice {:ignore-unique true})))
                  :prompt "Choose another server and redirect the run to its outermost position"
                  :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
-                 :label "Trash a piece of ice to choose another server- the runner is now running that server"
                  :msg (msg "trash the approached ICE. The Runner is now running on " target)
                  :effect (req (let [dest (server->zone state target)]
-                                (trash state side current-ice)
-                                (swap! state update-in [:run]
+                                (swap! state update :run
                                        #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                 :server (rest dest)))))}]}
+                                                 :server (rest dest)))
+                                (if (pos? (count (get-in corp (conj dest :ices))))
+                                  (set-next-phase state :encounter-ice)
+                                  (set-next-phase state :approach-server))
+                                (trash state side eid current-ice {:unpreventable true})))}]}
 
    "Akiko Nisei: Head Case"
    {:events [{:event :pre-access
@@ -868,8 +866,9 @@
 
    "Khan: Savvy Skiptracer"
    {:events [{:event :pass-ice
-              :req (req (first-event? state :corp :pass-ice))
+              :req (req (first-event? state :runner :pass-ice))
               :async true
+              :interactive (req true)
               :effect (effect
                         (continue-ability
                           (when (some #(and (has-subtype? % "Icebreaker")
@@ -961,33 +960,40 @@
       :abilities [ability]})
 
    "Mti Mwekundu: Life Improved"
-   (let [ability {:once :per-turn
-                  :label "Install a piece of ice from HQ at the innermost position"
-                  :req (req (and run
-                                 (zero? (:position run))
-                                 (not (contains? run :corp-phase-43))
-                                 (not (contains? run :successful))))
-                  :prompt "Choose ICE to install from HQ"
-                  :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
-                  :choices {:card #(and (ice? %)
-                                        (in-hand? %))}
-                  :async true
-                  :effect (req (corp-install state side eid target (zone->name (first (:server run)))
-                                             {:ignore-all-cost true
-                                              :front true})
-                               (swap! state assoc-in [:run :position] 1))}]
-     {:abilities [ability]
-      :events [{:event :approach-server
-                :req (req (can-trigger? state side ability card nil))
-                :effect (req (toast state :corp "You may use Mti Mwekundu: Life Improved to install ice from HQ." "info"))}]})
+   {:events [{:event :approach-server
+              :optional
+              {:req (req (and (not-used-once? state {:once :per-turn} card)
+                              (some ice? (:hand corp))))
+               :prompt "Install an ice?"
+               :yes-ability
+               {:once :per-turn
+                :prompt "Choose ICE to install from HQ"
+                :choices {:card #(and (ice? %)
+                                      (in-hand? %))}
+                :async true
+                :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
+                :effect (req (wait-for (corp-install state side target (zone->name (first (:server run)))
+                                                     {:ignore-all-cost true
+                                                      :front true})
+                                       (swap! state assoc-in [:run :position] 1)
+                                       (set-next-phase state :approach-ice)
+                                       (effect-completed state side eid)))}}}]}
 
    "Nasir Meidan: Cyber Explorer"
-   {:events [{:event :rez
-              :req (req (same-card? target current-ice))
-              :msg (msg "lose all credits and gain " (rez-cost state side current-ice)
-                        " [Credits] from the rez of " (:title current-ice))
-              :effect (effect (lose-credits :runner (:credit runner))
-                              (gain-credits :runner (rez-cost state side current-ice)))}]}
+   {:events [{:event :approach-ice
+              :req (req (not (rezzed? target)))
+              :effect (effect
+                        (register-events
+                          card
+                          (let [ice target
+                                cost (rez-cost state side target)]
+                            [{:event :encounter-ice
+                              :duration :end-of-encounter
+                              :req (req (same-card? target ice))
+                              :msg (msg "lose all credits and gain " cost
+                                        " [Credits] from the rez of " (:title ice))
+                              :effect (effect (lose-credits :runner (:credit runner))
+                                              (gain-credits :runner cost))}])))}]}
 
    "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
    (let [ability {:label "Gain 1 [Credits] (start of turn)"
@@ -1043,10 +1049,13 @@
               :effect (effect (draw :corp eid 1 nil))}]}
 
    "Nero Severn: Information Broker"
-   {:abilities [{:req (req (has-subtype? current-ice "Sentry"))
-                 :once :per-turn
-                 :msg "jack out when encountering a Sentry"
-                 :effect (effect (jack-out nil))}]}
+   {:events [{:event :encounter-ice
+              :req (req (has-subtype? target "Sentry"))
+              :interactive (req true)
+              :once :per-turn
+              :msg "jack out"
+              :async true
+              :effect (effect (jack-out eid))}]}
 
    "New Angeles Sol: Your News"
    (let [nasol {:optional
@@ -1100,26 +1109,28 @@
               :effect (effect (mill :runner eid :corp 1))}]}
 
    "Null: Whistleblower"
-   {:abilities [{:once :per-turn
-                 :req (req (and run
-                                (rezzed? current-ice)
-                                (pos? (count (:hand runner)))))
-                 :prompt "Select a card in your Grip to trash"
-                 :choices {:card in-hand?}
-                 :msg (msg "trash " (:title target) " and reduce the strength of " (:title current-ice)
-                           " by 2 for the remainder of the run")
-                 :effect (effect (update! (assoc-in card [:special :null-target] current-ice))
-                                 (update-ice-strength current-ice)
-                                 (trash target {:unpreventable true}))}]
-    :constant-effects [{:type :ice-strength
-                        :req (req (same-card? target (get-in card [:special :null-target])))
-                        :value -2}]
-    :events [{:event :pass-ice
-              :effect (effect (update! (dissoc-in card [:special :null-target]))
-                              (update-all-ice))}
-             {:event :run-ends
-              :effect (effect (update! (dissoc-in card [:special :null-target]))
-                              (update-all-ice))}]}
+   {:events [{:event :encounter-ice
+              :once :per-turn
+              :optional
+              {:req (req (pos? (count (:hand runner))))
+               :once :per-turn
+               :prompt "Trash a card in grip to lower ice strength by 2?"
+               :yes-ability
+               {:prompt "Select a card in your Grip to trash"
+                :choices {:card in-hand?}
+                :msg (msg "trash " (:title target)
+                          " and reduce the strength of " (:title current-ice)
+                          " by 2 for the remainder of the run")
+                :async true
+                :effect (effect (register-floating-effect
+                                  card
+                                  (let [ice current-ice]
+                                    {:type :ice-strength
+                                     :duration :end-of-run
+                                     :req (req (same-card? target ice))
+                                     :value -2}))
+                                (update-all-ice)
+                                (trash eid target {:unpreventable true}))}}}]}
 
    "Omar Keung: Conspiracy Theorist"
    {:abilities [{:cost [:click 1]
@@ -1168,22 +1179,25 @@
                 :effect (req (mark-triggered state card))}]})
 
    "Rielle \"Kit\" Peddler: Transhuman"
-   {:abilities [{:req (req (and (:run @state)
-                                (:rezzed (get-card state current-ice))))
-                 :once :per-turn
-                 :msg (msg "make " (:title current-ice) " gain Code Gate until the end of the run")
-                 :effect (req (let [ice current-ice
-                                    stypes (:subtype ice)]
-                                (update! state side (assoc ice :subtype (combine-subtypes true stypes "Code Gate")))
-                                (register-events
-                                  state side card
-                                  [{:event :run-ends
-                                    :effect (effect (update! (assoc ice :subtype stypes))
-                                                    (trigger-event :ice-subtype-changed ice)
-                                                    (unregister-events card))}])
-                                (update-ice-strength state side ice)
-                                (trigger-event state side :ice-subtype-changed ice)))}]
-    :events [{:event :run-ends}]}
+   {:events [{:event :encounter-ice
+              :once :per-turn
+              :msg (msg "make " (:title target) " gain Code Gate until the end of the run")
+              :effect (req (let [ice target
+                                 stypes (:subtype ice)]
+                             (update! state side (assoc ice :subtype (combine-subtypes false stypes "Code Gate")))
+                             (register-events
+                               state side card
+                               [{:event :run-ends
+                                 :duration :end-of-run
+                                 :req (req (and (get-card state ice)
+                                                (rezzed? (get-card state ice))))
+                                 :effect (req (let [ice (get-card state ice)
+                                                    stypes (remove-subtypes-once (:subtype ice) "Code Gate")]
+                                                (update! state side (assoc ice :subtype stypes))
+                                                (update-all-ice state side)
+                                                (trigger-event state side :ice-subtype-changed ice)))}])
+                             (update-all-ice state side)
+                             (trigger-event state side :ice-subtype-changed ice)))}]}
 
    "Saraswati Mnemonics: Endless Exploration"
    (letfn [(install-card [chosen]
@@ -1274,16 +1288,16 @@
    "Sportsmetal: Go Big or Go Home"
    (let [ab {:prompt "Gain 2 credits or draw 2 cards?"
              :player :corp
-             :choices ["2 credits" "2 cards"]
-             :msg "gain 2 [Credits] or draw 2 cards"
+             :choices ["Gain 2 credits" "Draw 2 cards"]
+             :msg (msg (= target "Gain 2 credits")
+                       "gain 2 credits"
+                       "draw 2 cards")
              :async true
              :interactive (req true)
-             :effect (req (if (= target "2 credits")
-                            (do (system-msg state side "chooses to take 2 [Credits]")
-                                (gain-credits state :corp 2)
+             :effect (req (if (= target "Gain 2 credits")
+                            (do (gain-credits state :corp 2)
                                 (effect-completed state side eid))
-                            (do (system-msg state side "chooses to draw 2 cards")
-                                (draw state :corp eid 2 nil))))}]
+                            (draw state :corp eid 2 nil)))}]
      {:events [(assoc ab :event :agenda-scored)
                (assoc ab :event :agenda-stolen)]})
 
@@ -1484,12 +1498,14 @@
                                  :type :recurring}}}
 
    "Weyland Consortium: Builder of Nations"
-   {:implementation "Encounter effect is manual, Erratum: The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
-    :abilities [{:async true
-                 :label "Do 1 meat damage"
-                 :once :per-turn
-                 :msg "do 1 meat damage"
-                 :effect (effect (damage eid :meat 1 {:card card}))}]}
+   {:implementation "Erratum: The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
+    :events [{:event :encounter-ice-ends
+              :async true
+              :once :per-turn
+              :req (req (and (rezzed? target)
+                             (pos? (get-counters target :advancement))))
+              :msg "do 1 meat damage"
+              :effect (effect (damage eid :meat 1 {:card card}))}]}
 
    "Weyland Consortium: Building a Better World"
    {:events [{:event :play-operation

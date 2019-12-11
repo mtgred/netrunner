@@ -588,7 +588,7 @@
           [:span (cond (:broken sub)
                        {:class :disabled
                         :style {:font-style :italic}}
-                       (= false (:resolve sub))
+                       (false? (:resolve sub))
                        {:class :dont-resolve
                         :style {:text-decoration :line-through}})
            (render-icons (str " [Subroutine]" " " (:label sub)))]
@@ -657,7 +657,7 @@
               [:span (cond (:broken sub)
                            {:class :disabled
                             :style {:font-style :italic}}
-                           (= false (:resolve sub))
+                           (false? (:resolve sub))
                            {:class :dont-resolve
                             :style {:text-decoration :line-through}})
                (render-icons (str " [Subroutine]" " " (:label sub)))]
@@ -1395,6 +1395,123 @@
              (fn [{:keys [sfx] :as cursor}]
               (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
 
+(def phase->title
+  {"initiation" "Initiation"
+   "approach-ice" "Approach ice"
+   "encounter-ice" "Encounter ice"
+   "pass-ice" "Pass ice"
+   "approach-server" "Approach server"})
+
+(defn phase->next-phase-title
+  [run]
+  (case (:phase @run)
+    "initiation" "Approach ice"
+    "approach-ice" "Encounter ice"
+    "encounter-ice" "Pass ice"
+    "pass-ice" (if (zero? (:position @run))
+                 "Approach server"
+                 "Approach ice")
+    "approach-server" "Approach server"))
+
+(defn get-run-ices []
+  (let [server (-> (:run @game-state)
+                   :server
+                   first
+                   keyword)]
+    (get-in @game-state (concat [:corp :servers] [server] [:ices]))))
+
+(defn get-current-ice []
+  (let [run-ice (get-run-ices)
+        pos (get-in @game-state [:run :position])]
+    (when (and pos
+               (pos? pos)
+               (<= pos (count run-ice)))
+      (nth run-ice (dec pos)))))
+
+(defn corp-run-div
+  [run]
+  [:div.panel.blue-shade
+   [:h4 "Current phase:" [:br] (get phase->title (:phase @run))]
+   (cond
+     (= "approach-ice" (:phase @run))
+     (let [current-ice (get-current-ice)]
+       [cond-button
+        (str "Rez " (:title current-ice))
+        (not (rezzed? current-ice))
+        #(send-command "rez" {:card current-ice})])
+
+     (= "encounter-ice" (:phase @run))
+     (let [current-ice (get-current-ice)]
+       [cond-button
+        "Fire unbroken subs"
+        (and (seq (:subroutines current-ice))
+             (not (every? :broken (:subroutines current-ice))))
+        #(send-command "unbroken-subroutines" {:card current-ice})])
+
+     (and (not (:next-phase @run))
+          (zero? (:position @run)))
+     [cond-button
+      "Action before access"
+      (and (not= "initiation" (:phase @run))
+           (not (:no-action @run)))
+      #(send-command "corp-phase-43")])
+
+   [cond-button
+    (let [next-phase (:next-phase @run)]
+      (if (or next-phase (zero? (:position @run)))
+        "No further actions"
+        (str "Continue to " (phase->next-phase-title run))))
+    (and (not= "initiation" (:phase @run))
+         (not= "pass-ice" (:phase @run))
+         (not (:no-action @run)))
+    #(send-command "no-action")]])
+
+(defn runner-run-div
+  [run]
+  (let [phase (:phase @run)
+        next-phase (:next-phase @run)]
+    [:div.panel.blue-shade
+     [:h4 "Current phase:" [:br] (get phase->title phase)]
+     (cond
+       (:next-phase @run)
+       [cond-button
+        (phase->next-phase-title run)
+        (and next-phase
+             (not (:no-action @run)))
+        #(send-command "start-next-phase")]
+
+       (and (not (:next-phase @run))
+            (not (zero? (:position @run))))
+       [cond-button
+        (str "Continue to " (phase->next-phase-title run))
+        (:no-action @run)
+        #(send-command "continue")]
+
+       (zero? (:position @run))
+       [cond-button "Successful Run"
+        (:no-action @run)
+        #(send-command "successful-run")])
+
+     (when (= "encounter-ice" (:phase @run))
+       (let [current-ice (get-current-ice)
+             title (:title current-ice)]
+         [cond-button
+          "Let all subroutines fire"
+          (and (seq (:subroutines current-ice))
+               (not (every? #(or (:broken %) (false? (:resolve %))) (:subroutines current-ice))))
+          #(send-command "system-msg"
+                         {:msg (str "indicates to fire all unbroken subroutines on " title)})]))
+     [cond-button "Jack Out"
+      (and (:jack-out @run)
+           (not (:cannot-jack-out @run))
+           (not (= "encounter-ice" phase)))
+      #(send-command "jack-out")]]))
+
+(defn run-div
+  [side run]
+  (if (= side :corp)
+    [corp-run-div run]
+    [runner-run-div run]))
 
 (defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
   (let [s (r/atom {})
@@ -1516,25 +1633,7 @@
                                   (render-message (:title c))])))
                            (:choices prompt))))]
          (if @run
-           (let [rs (:server @run)
-                 kw (keyword (first rs))
-                 server (if-let [n (second rs)]
-                          (get-in @corp [:servers kw n])
-                          (get-in @corp [:servers kw]))]
-             (if (= side :runner)
-               [:div.panel.blue-shade
-                (when-not (:no-action @run) [:h4 "Waiting for Corp's actions"])
-                (if (zero? (:position @run))
-                  [cond-button "Successful Run" (:no-action @run) #(send-command "access")]
-                  [cond-button "Continue" (:no-action @run) #(send-command "continue")])
-                [cond-button "Jack Out" (not (:cannot-jack-out @run))
-                 #(send-command "jack-out")]]
-               [:div.panel.blue-shade
-                (when (zero? (:position @run))
-                  [cond-button "Action before access" (not (:no-action @run))
-                   #(send-command "corp-phase-43")])
-                [cond-button "No more action" (not (:no-action @run))
-                 #(send-command "no-action")]]))
+           [run-div side run]
            [:div.panel.blue-shade
             (if (= (keyword @active-player) side)
               (when (and (not (or @runner-phase-12 @corp-phase-12))
