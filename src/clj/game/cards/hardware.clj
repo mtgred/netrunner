@@ -1576,10 +1576,11 @@
    {:in-play [:memory 1 :link 1]
     :events [{:event :encounter-ice
               :optional
-              {:once :per-turn
+              {:req (req (not-used-once? state {:once :per-turn} card))
                :prompt "Trace 5 to bypass current ice?"
                :yes-ability
-               {:msg "force the Corp to initiate a trace"
+               {:once :per-turn
+                :msg "force the Corp to initiate a trace"
                 :trace {:base 5
                         :successful {:msg "give the Runner 1 tag and end the run"
                                      :async true

@@ -845,27 +845,27 @@
     (is (= 5 (core/available-mu state)) "Gain 1 memory")
     (is (= 3 (:credit (get-runner))) "Got 1c for successful run on Desperado")))
 
-(deftest devil-charm
-  ;; Devil Charm
-  (testing "Basic test"
-    (do-game
-      (new-game {:runner {:deck ["Devil Charm"]}
-                 :corp {:deck ["Enigma"]}})
-      (play-from-hand state :corp "Enigma" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Devil Charm")
-      (run-on state :hq)
-      (run-next-phase state)
-      (let [dc (get-hardware state 0)
-            enig (get-ice state :hq 0)]
-        (core/rez state :corp (refresh enig))
-        (run-continue state)
-        (is (= 2 (:current-strength (refresh enig))) "Enigma starts at 2 strength")
-        (click-prompt state :runner "Yes")
-        (is (= -4 (:current-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
-        (is (find-card "Devil Charm" (:rfg (get-runner))) "Devil Charm is removed from the game")
-        (run-jack-out state)
-        (is (= 2 (:current-strength (refresh enig))) "Enigma is back at 2 strength")))))
+; (deftest devil-charm
+;   ;; Devil Charm
+;   (testing "Basic test"
+;     (do-game
+;       (new-game {:runner {:deck ["Devil Charm"]}
+;                  :corp {:deck ["Enigma"]}})
+;       (play-from-hand state :corp "Enigma" "HQ")
+;       (take-credits state :corp)
+;       (play-from-hand state :runner "Devil Charm")
+;       (run-on state :hq)
+;       (run-next-phase state)
+;       (let [dc (get-hardware state 0)
+;             enig (get-ice state :hq 0)]
+;         (core/rez state :corp (refresh enig))
+;         (run-continue state)
+;         (is (= 2 (:current-strength (refresh enig))) "Enigma starts at 2 strength")
+;         (click-prompt state :runner "Yes")
+;         (is (= -4 (:current-strength (refresh enig))) "Enigma now has -4 strength for the remainder of the run")
+;         (is (find-card "Devil Charm" (:rfg (get-runner))) "Devil Charm is removed from the game")
+;         (run-jack-out state)
+;         (is (= 2 (:current-strength (refresh enig))) "Enigma is back at 2 strength")))))
 
 (deftest dinosaurus
   ;; Dinosaurus

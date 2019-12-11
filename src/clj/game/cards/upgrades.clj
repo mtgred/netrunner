@@ -1423,11 +1423,13 @@
                  :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]}
 
    "Underway Grid"
-   {:implementation "Bypass prevention is not implemented"
-    :events [{:event :pre-expose
+   {:events [{:event :pre-expose
               :req (req (same-server? card target))
               :msg "prevent 1 card from being exposed"
-              :effect (effect (expose-prevent 1))}]}
+              :effect (effect (expose-prevent 1))}]
+    :constant-effects [{:type :bypass-ice
+                        :req (req (same-server? card target))
+                        :value false}]}
 
    "Valley Grid"
    {:implementation "Activation is manual"

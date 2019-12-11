@@ -536,7 +536,7 @@
                     :yes-ability
                     {:async true
                      :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to bypass it")
-                                  (swap! state assoc-in [:run :bypass] true)
+                                  (bypass-ice state)
                                   (gain-tags state :runner eid 1 {:unpreventable true}))}}}
     :subroutines [(gain-credits-sub 2)
                   end-the-run]}
