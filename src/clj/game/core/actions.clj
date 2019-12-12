@@ -403,6 +403,7 @@
                   (resolve-ability state side (make-eid state {:source card :source-type :ability})
                                    (:additional-ability break-ability) (get-card state card) nil))
                 (let [ice (get-card state current-ice)
+                      cost-str async-result
                       broken-subs (remove :broken (:subroutines current-ice))
                       on-break-subs (when ice (:on-break-subs (card-def current-ice)))
                       event-args (when on-break-subs
@@ -411,12 +412,12 @@
                     (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
                     (system-msg state side
                                 (if (pos? times-pump)
-                                  (str (build-spend-msg async-result "increase")
+                                  (str (build-spend-msg cost-str "increase")
                                        "the strength of " (:title card)
                                        " to " (get-strength (get-card state card))
                                        " and break all " (when (< 1 unbroken-subs) unbroken-subs)
                                        " subroutines on " (:title current-ice))
-                                  (str (build-spend-msg async-result "use")
+                                  (str (build-spend-msg cost-str "use")
                                        (:title card)
                                        " to break "
                                        (if some-already-broken
