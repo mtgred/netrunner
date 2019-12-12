@@ -2866,7 +2866,8 @@
 
    "Thimblerig"
    (let [ability {:optional
-                  {:req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
+                  {:req (req (and (<= 2 (count (filter ice? (all-installed state :corp))))
+                                  (same-card? target card)))
                    :prompt "Swap Thimblerig with another ice?"
                    :yes-ability {:prompt "Choose a piece of ice to swap Thimblerig with"
                                  :choices {:card ice?
