@@ -3235,11 +3235,11 @@
                  :runner {:deck [(qty "Sure Gamble" 10)]}})
       (play-from-hand state :corp "Slot Machine" "HQ")
       (take-credits state :corp)
-      (run-on state :hq)     
+      (run-on state :hq)
       (run-next-phase state)
       (let [sm (get-ice state :hq 0)]
-        (core/rez state :corp sm))   
-        (run-continue state)    
+        (core/rez state :corp sm))
+        (run-continue state)
         (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal the top 3 cards in the stack: Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), Sure Gamble \\(Event\\).") "3 top cards revelaed"))))
 
 (deftest snowflake
