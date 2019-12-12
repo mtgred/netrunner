@@ -119,7 +119,7 @@
                                    :async true
                                    :choices (take 3 (:deck corp))
                                    :not-distinct true
-                                   :msg (msg " secretly add card to HQ") 
+                                   :msg "secretly add card to HQ"
                                    :effect (req (move state side target :hand)                                            
                                                 (continue-ability state side (reorder-cards card) card nil))}           
                                   card nil))}]})                          
