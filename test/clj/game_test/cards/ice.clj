@@ -3662,7 +3662,7 @@
         (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
         (card-side-ability state :runner tyr 0)
         (click-prompt state :runner "Do 2 brain damage")
-        (click-prompt state :runner "Force the Runner to trash an installed card. Gain 3 [Credits]")
+        (click-prompt state :runner "Trash an installed Runner card. Gain 3 [Credits]")
         (click-prompt state :runner "End the run")
         (is (= 0 (:click (get-runner))) "Runner has no clicks left")
         (run-jack-out state)
