@@ -96,7 +96,7 @@
                                        :effect (req (trash state side (get-card state ice)))}])))}]}
 
    "Bamboo Dome"
-   (letfn [(reorder-cards [card]
+   (letfn [(reorder-cards []
              {:async true
               :effect (req (let [from (take 2 (:deck corp))]
                                 (if (pos? (count from))
