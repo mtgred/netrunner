@@ -104,7 +104,7 @@
                                                                   (count from) from)
                                                                   card nil)
                                   (do (clear-wait-prompt state :runner)
-                                    (effect-completed state side eid)))))})]           
+                                      (effect-completed state side eid)))))})]
      {:init {:root "R&D"}
       :install-req (req (filter #{"R&D"} targets))
       :abilities [{:cost [:click 1]
