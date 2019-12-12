@@ -96,24 +96,15 @@
                                        :effect (req (trash state side (get-card state ice)))}])))}]}
 
    "Bamboo Dome"
-   (letfn [(dome [dcard]
-             {:prompt "Select a card to add to HQ"
-              :async true
-              :choices {:card #(and (corp? %)
-                                    (in-play-area? %))}
-              :msg "move a card to HQ"
-              :effect (effect (move target :hand)
-                              (continue-ability (put dcard) dcard nil))})
-           (put [dcard]
-             {:prompt "Select first card to put back onto R&D"
-              :async true
-              :choices {:card #(and (corp? %)
-                                    (in-play-area? %))}
-              :msg "move remaining cards back to R&D"
-              :effect (effect (move target :deck {:front true})
-                              (move (first (get-in @state [:corp :play-area])) :deck {:front true})
-                              (clear-wait-prompt :runner)
-                              (effect-completed eid))})]
+   (letfn [(reorder-cards [card]
+             {:async true
+              :effect (req (let [from (take 2 (:deck corp))]
+                                (if (pos? (count from))
+                                  (continue-ability state side (reorder-choice :corp :runner from '()
+                                                                  (count from) from)
+                                                                  card nil)
+                                  (do (clear-wait-prompt state :runner)
+                                    (effect-completed state side eid)))))})]           
      {:init {:root "R&D"}
       :install-req (req (filter #{"R&D"} targets))
       :abilities [{:cost [:click 1]
@@ -122,10 +113,16 @@
                    :msg (msg (str "reveal " (join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
                    :label "Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order."
                    :effect (req (reveal state side (take 3 (:deck corp)))
-                                (doseq [c (take 3 (:deck corp))]
-                                  (move state side c :play-area))
                                 (show-wait-prompt state :runner "Corp to use Bamboo Dome")
-                                (continue-ability state side (dome card) card nil))}]})
+                                (continue-ability state side 
+                                  {:prompt "Select a card to add to HQ"
+                                   :async true
+                                   :choices (take 3 (:deck corp))
+                                   :not-distinct true
+                                   :msg (msg " secretly add card to HQ") 
+                                   :effect (req (move state side target :hand)                                            
+                                                (resolve-ability state side (reorder-cards card) card nil))}           
+                                  card nil))}]})                          
 
    "Ben Musashi"
    {:trash-effect

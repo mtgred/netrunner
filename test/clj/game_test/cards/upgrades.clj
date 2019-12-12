@@ -176,6 +176,26 @@
           (is (= 1 (count (:discard (get-corp)))) "Fairchild in discard")
           (is (empty? (:hosted (refresh ac))) "Fairchild no longer hosted"))))))
 
+(deftest bamboo-dome
+  ;; Bamboo Dome
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Border Control" "Fairchild" "Ice Wall"]
+                        :hand ["Bamboo Dome"]}
+                 :runner {:deck [(qty "Sure Gamble" 10)]}})
+      (play-from-hand state :corp "Bamboo Dome" "R&D")
+      (let [bd (get-content state :rd 0)]
+        (core/rez state :corp bd)
+        (card-ability state :corp (refresh bd) 0) 
+        (click-prompt state :corp "Border Control")
+        (click-prompt state :corp "Fairchild")
+        (click-prompt state :corp "Ice Wall")
+        (click-prompt state :corp "Done")
+        (is (= "Ice Wall" (:title (first (:deck (get-corp))))))
+        (is (= "Fairchild" (:title (second (:deck (get-corp))))))
+        (is (= 1 (count (:hand (get-corp)))) "Border Control in hand - hand size 1")
+        (is (= "Border Control" (:title (first (:hand (get-corp))))) "Border Control in hand")))))
+
 (deftest ben-musashi
   ;; Ben Musashi
   (testing "Basic test - pay 2 net damage to steal from this server"
