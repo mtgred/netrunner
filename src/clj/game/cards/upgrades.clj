@@ -121,7 +121,7 @@
                                    :not-distinct true
                                    :msg (msg " secretly add card to HQ") 
                                    :effect (req (move state side target :hand)                                            
-                                                (resolve-ability state side (reorder-cards card) card nil))}           
+                                                (continue-ability state side (reorder-cards card) card nil))}           
                                   card nil))}]})                          
 
    "Ben Musashi"
