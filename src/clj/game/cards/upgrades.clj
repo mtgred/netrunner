@@ -1407,8 +1407,7 @@
                                  (agenda? target)
                                  (upgrade? target))
                              (= (second (:zone card)) (second (:zone target)))
-                             (first-event? state :corp :corp-install #(and (= (-> card :zone second) (-> % first :zone second))
-                                                                           (= (nth (-> card :zone) 2) (nth (-> % first :zone) 2))))))
+                             (first-event? state :corp :corp-install #(in-same-server? card (first %)))))
               :prompt (msg "Use " (:title card) " to gain 2 [Credits] or draw 1 card?")
               :choices ["Gain 2 [Credits]" "Draw 1 card"]
               :msg (msg (decapitalize target))
