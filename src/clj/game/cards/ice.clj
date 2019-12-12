@@ -2719,7 +2719,7 @@
    (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))
            (effect-type [card] (keyword (str "slot-machine-top-3-" (:cid card))))
            (name-builder [card] (str (:title card) " (" (:type card) ")"))
-           (top-3-names [state card et] (map name-builder (get-effects state :corp card et)))
+           (top-3-names [cards] (map name-builder cards))
            (top-3-types [state card et]
                         (->> (get-effects state :corp card et)
                              first
@@ -2739,7 +2739,7 @@
                                     (system-msg state side
                                                 (str "uses Slot Machine to put the top card of the stack to the bottom,"
                                                      " then reveal the top 3 cards in the stack: "
-                                                     (join ", " (top-3-names state card effect-type))))))}
+                                                     (join ", " (top-3-names t3))))))}
       :subroutines [{:label "Runner loses 3 [Credits]"
                      :msg "force the Runner to lose 3 [Credits]"
                      :effect (effect (lose-credits :runner 3))}

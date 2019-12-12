@@ -3184,31 +3184,44 @@
 
 (deftest slot-machine
   ;; Slot Machine
-  (do-game
-    (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
-               :runner {:deck [(qty "Sure Gamble" 10)]}})
-    (play-from-hand state :corp "Ice Wall" "R&D")
-    (play-from-hand state :corp "Slot Machine" "HQ")
-    (take-credits state :corp)
-    (run-on state :hq)
-    (run-next-phase state)
-    (let [sm (get-ice state :hq 0)]
-      (core/rez state :corp sm))
-    (let [sm (get-ice state :hq 0)
-          iw (get-ice state :rd 0)
-          corp-credits (:credit (get-corp))
-          runner-credits (:credit (get-runner))
-          cid (:cid (first (:deck (get-runner))))]
-      (run-continue state)
-      (is (not= cid (:cid (first (:deck (get-runner))))))
-      (card-subroutine state :corp sm 0)
-      (is (= (- runner-credits 3) (:credit (get-runner))))
-      (card-subroutine state :corp sm 1)
-      (is (= (+ corp-credits 3) (:credit (get-corp))))
-      (card-subroutine state :corp sm 2)
-      (is (zero? (get-counters (refresh iw) :advancement)))
-      (click-card state :corp iw)
-      (is (= 3 (get-counters (refresh iw) :advancement))))))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
+                :runner {:deck [(qty "Sure Gamble" 10)]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Slot Machine" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-next-phase state)
+      (let [sm (get-ice state :hq 0)]
+        (core/rez state :corp sm))
+      (let [sm (get-ice state :hq 0)
+            iw (get-ice state :rd 0)
+            corp-credits (:credit (get-corp))
+            runner-credits (:credit (get-runner))
+            cid (:cid (first (:deck (get-runner))))]
+        (run-continue state)
+        (is (not= cid (:cid (first (:deck (get-runner))))))
+        (card-subroutine state :corp sm 0)
+        (is (= (- runner-credits 3) (:credit (get-runner))))
+        (card-subroutine state :corp sm 1)
+        (is (= (+ corp-credits 3) (:credit (get-corp))))
+        (card-subroutine state :corp sm 2)
+        (is (zero? (get-counters (refresh iw) :advancement)))
+        (click-card state :corp iw)
+        (is (= 3 (get-counters (refresh iw) :advancement))))))
+  (testing "Slot Machine chat log test"
+    (do-game
+      (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
+                 :runner {:deck [(qty "Sure Gamble" 10)]}})
+      (play-from-hand state :corp "Slot Machine" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)     
+      (run-next-phase state)
+      (let [sm (get-ice state :hq 0)]
+        (core/rez state :corp sm))   
+        (run-continue state)    
+        (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal the top 3 cards in the stack: Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), Sure Gamble \\(Event\\).") "3 top cards revelaed"))))
 
 (deftest snowflake
   ;; Snowflake - Win a psi game to end the run
