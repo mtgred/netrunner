@@ -2371,7 +2371,21 @@
         (click-prompt state :runner "No install")
         (changes-val-macro -6 (:credit (get-runner))
                            "Paid 4+2 to pump and break 6 strength Eli"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)}))))))
+                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})))))
+  (testing "Strength bonus doesn't persist after trash. Issue #4710"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["NEXT Activation Command" "Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [iw (get-ice state :hq 0)]
+        (core/rez state :corp (refresh iw))
+        (is (= 1 (core/get-strength (refresh iw))))
+        (play-from-hand state :corp "NEXT Activation Command")
+        (is (= 3 (core/get-strength (refresh iw))))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 1 (core/get-strength (refresh iw))))
+        (is (find-card "NEXT Activation Command" (:discard (get-corp))))))))
 
 (deftest o-shortage
   ;; O₂ Shortage

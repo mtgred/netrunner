@@ -104,7 +104,7 @@
             card)
         c (if (and (or installed
                        host
-                       (#{:servers :scored :current} src-zone))
+                       (#{:servers :scored :current :play-area} src-zone))
                    (or (#{:hand :deck :discard :rfg} target-zone)
                        to-facedown)
                    (not (facedown? c)))

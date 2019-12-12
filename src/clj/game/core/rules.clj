@@ -525,7 +525,8 @@
                                                          (and (rezzed? card)
                                                               (not host-trashed))
                                                          (and (:when-inactive (:trash-effect (card-def card)))
-                                                              (not host-trashed))))
+                                                              (not host-trashed))
+                                                         (in-play-area? card)))
                                             (:trash-effect (card-def card))))
                        moved-cards (->> trashlist
                                         (map #(get-card? state %))
