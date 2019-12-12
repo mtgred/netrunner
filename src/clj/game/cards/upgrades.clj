@@ -96,7 +96,7 @@
                                        :effect (req (trash state side (get-card state ice)))}])))}]}
 
    "Bamboo Dome"
-   (letfn [(reorder-cards [card]
+   (letfn [(reorder-cards []
              {:async true
               :effect (req (let [from (take 2 (:deck corp))]
                                 (if (pos? (count from))
@@ -104,7 +104,7 @@
                                                                   (count from) from)
                                                                   card nil)
                                   (do (clear-wait-prompt state :runner)
-                                    (effect-completed state side eid)))))})]           
+                                      (effect-completed state side eid)))))})]
      {:init {:root "R&D"}
       :install-req (req (filter #{"R&D"} targets))
       :abilities [{:cost [:click 1]
@@ -119,9 +119,9 @@
                                    :async true
                                    :choices (take 3 (:deck corp))
                                    :not-distinct true
-                                   :msg (msg " secretly add card to HQ") 
-                                   :effect (req (move state side target :hand)                                            
-                                                (continue-ability state side (reorder-cards card) card nil))}           
+                                   :msg "secretly add card to HQ"
+                                   :effect (req (move state side target :hand)
+                                                (continue-ability state side (reorder-cards) card nil))}
                                   card nil))}]})                          
 
    "Ben Musashi"
