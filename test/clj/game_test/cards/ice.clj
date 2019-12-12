@@ -2576,6 +2576,25 @@
         (card-subroutine state :corp pachinko 0)
         (is (not (:run @state)) "Run ended")))))
 
+(deftest paper-wall
+  ;;Paper Wall
+  (testing "Basic trash test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Paper Wall"]}
+                 :runner {:hand ["Corroder"]}})
+      (play-from-hand state :corp "Paper Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (let [paperwall (get-ice state :hq 0)
+            corroder (get-program state 0)]
+        (core/rez state :corp paperwall)
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+        (is (nil? (get-ice state :hq 0)) "Paper Wall was trashed")))))
+
 (deftest peeping-tom
   ;;Peeping Tom - Counts # of chosen card type in Runner grip
   (do-game
