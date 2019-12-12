@@ -887,11 +887,14 @@
    {:in-play [:hq-access 1]}
 
    "Keiko"
-   (let [keiko-ability {:req (req (= 1 (+ (event-count state :runner :spent-credits-from-card #(has-subtype? (first %) "Companion"))
-                                          (event-count state :runner :runner-install #(and (not (facedown? (first %)))
-                                                                                           (has-subtype? (first %) "Companion"))))))
+   (let [keiko-ability {:req (req (and (not (facedown? target))
+                                       (has-subtype? target "Companion")
+                                       (let [f #(and (not (facedown? (first %)))
+                                                     (has-subtype? (first %) "Companion"))]
+                                         (= 1 (+ (event-count state :runner :spent-credits-from-card f)
+                                                 (event-count state :runner :runner-install f))))))
                         :msg "gain 1 [Credit]"
-                        :effect (effect (gain :credit 1))}]
+                        :effect (effect (gain-credits :runner 1))}]
      {:events [(assoc keiko-ability :event :spent-credits-from-card)
                (assoc keiko-ability :event :runner-install)]})
 

@@ -1453,7 +1453,16 @@
                          (click-card state :runner (get-resource state 0)))
       (changes-val-macro -3 (:credit (get-runner))
                          "Paid full 3c for Keiko"
-                         (play-from-hand state :runner "Keiko")))))
+                         (play-from-hand state :runner "Keiko"))))
+  (testing "Does not fire on non-Companion cards. Issue #4705"
+    (do-game
+      (new-game {:runner {:hand ["Keiko" "Mystic Maemi" "Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Keiko")
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Triggers only on Companions"
+        (play-from-hand state :runner "Corroder")))))
 
 (deftest knobkierie
   ;; Knobkierie - first successful run, place a virus counter on a virus program
