@@ -108,7 +108,7 @@
      {:init {:root "R&D"}
       :install-req (req (filter #{"R&D"} targets))
       :abilities [{:cost [:click 1]
-                   :req (req (>= (count (:deck corp)) 3))
+                   :req (req (pos? (count (:deck corp))))
                    :async true
                    :msg (msg (str "reveal " (join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
                    :label "Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order."
