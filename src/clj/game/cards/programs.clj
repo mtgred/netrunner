@@ -343,7 +343,8 @@
    (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
                                  (strength-pump 2 3)]
                      :events [{:event :encounter-ice-ends
-                               :req (req (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card)))
+                               :req (req (and (all-subs-broken-by-card? target card)
+                                              (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card))))
                                :msg "make the Corp lose 1 [Credits]"
                                :effect (effect (lose-credits :corp 1))}]})
 
@@ -548,7 +549,8 @@
    (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
                                  (strength-pump 1 1)]
                      :events [{:event :subroutines-broken
-                               :req (req (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card)))
+                               :req (req (and (all-subs-broken-by-card? target card)
+                                              (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
                                :msg (msg "gain 2 [Credits]")
                                :effect (effect (gain-credits :runner 2))}]})
 

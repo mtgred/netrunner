@@ -212,7 +212,38 @@
       (click-prompt state :runner "Force the Runner to lose 1 [Click]")
       (click-prompt state :runner "End the run")
       (run-continue state)
-      (is (= 3 (:credit (get-corp))) "Ability only once per turn"))))
+      (is (= 3 (:credit (get-corp))) "Ability only once per turn")))
+  (testing "Amina only triggers on itself. Issue #4716"
+    (do-game
+      (new-game {:runner {:deck ["Amina" "Yog.0"]}
+                 :corp {:deck ["Enigma"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20 :click 1)
+      (play-from-hand state :runner "Amina")
+      (play-from-hand state :runner "Yog.0")
+      (let [amina (get-program state 0)
+            yog (get-program state 1)
+            enima (get-ice state :hq 0)]
+        (run-on state :hq)
+        (run-next-phase state)
+        (core/rez state :corp (refresh enima))
+        (run-continue state)
+        (card-ability state :runner (refresh amina) 0)
+        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "End the run")
+        (run-jack-out state)
+        (run-on state :hq)
+        (run-next-phase state)
+        (run-continue state)
+        (card-ability state :runner (refresh yog) 0)
+        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (changes-val-macro
+          0 (:credit (get-corp))
+          "No credit gain from Amina"
+          (click-prompt state :runner "End the run")
+          (run-continue state))
+        (run-jack-out state)))))
 
 (deftest analog-dreamers
   ;; Analog Dreamers
@@ -666,7 +697,37 @@
         (changes-val-macro
           -1 (:credit (get-runner))
           "No credits gained from Bukhgalter"
-          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))))))
+          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")))))
+  (testing "Bukhgalter only triggers on itself. Issue #4716"
+    (do-game
+      (new-game {:runner {:deck ["Bukhgalter" "Mimic"]}
+                 :corp {:deck ["Pup"]}})
+      (play-from-hand state :corp "Pup" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20 :click 1)
+      (play-from-hand state :runner "Bukhgalter")
+      (play-from-hand state :runner "Mimic")
+      (let [bukhgalter (get-program state 0)
+            mimic (get-program state 1)
+            pup (get-ice state :hq 0)]
+        (run-on state :hq)
+        (run-next-phase state)
+        (core/rez state :corp (refresh pup))
+        (run-continue state)
+        (card-ability state :runner (refresh bukhgalter) 0)
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (run-jack-out state)
+        (run-on state :hq)
+        (run-next-phase state)
+        (run-continue state)
+        (card-ability state :runner (refresh mimic) 0)
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (changes-val-macro
+          -1 (:credit (get-runner))
+          "No credit gain from Bukhgalter"
+          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))
+        (run-jack-out state)))))
 
 (deftest cerberus-rex-h2
   ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter
