@@ -373,7 +373,7 @@
                                :msg (msg "add " (:title target)
                                          " to HQ after breaking all its subroutines")
                                :effect (effect (move :corp target :hand nil)
-                                               (continue state :runner))}]})
+                                               (continue :runner nil))}]})
 
    "Atman"
    {:prompt "How many power counters?"
@@ -1150,7 +1150,7 @@
                  :choices {:number (req (total-available-credits state :runner eid card))}
                  :prompt "How many credits?"
                  :effect (effect
-                           (continue
+                           (continue-ability
                              (strength-pump target target :end-of-run)
                              card nil))
                  :msg (msg "increase strength by " target " for the remainder of the run")}]}

@@ -240,6 +240,71 @@
       (is (some #(utils/same-card? pad %) (:deck (get-corp))) "PAD Campaign is shuffled into R&D")
       (is (nil? (refresh pad)) "PAD Campaign is shuffled into R&D"))))
 
+(deftest ankusa
+  ;; Ankusa
+  (testing "Boost 1 strength for 1 credit"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Battlement"]}
+                 :runner {:hand ["Ankusa"]
+                          :credits 15}})
+      (play-from-hand state :corp "Battlement" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ankusa")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (let [ankusa (get-program state 0)
+            credits (:credit (get-runner))]
+          "Boost ability costs 1 credit each"
+          (card-ability state :runner ankusa 1)
+          (is (= (dec credits) (:credit (get-runner))) "Boost 1 for 1 credit")
+          (is (= (inc (core/get-strength ankusa)) (core/get-strength (refresh ankusa)))
+              "Ankusa gains 1 strength"))))
+  (testing "Break 1 for 2 credits"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Battlement"]}
+                 :runner {:hand ["Ankusa"]
+                          :credits 15}})
+      (play-from-hand state :corp "Battlement" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ankusa")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (let [ankusa (get-program state 0)]
+        (card-ability state :runner ankusa 1)
+        (card-ability state :runner ankusa 1)
+        (changes-val-macro
+          -2 (:credit (get-runner))
+          "Break ability costs 2 credits"
+          (card-ability state :runner ankusa 0)
+          (click-prompt state :runner "End the run")
+          (click-prompt state :runner "Done")))))
+  (testing "Breaking an ice fully returns it to hand. Issue #4711"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Battlement"]}
+                 :runner {:hand ["Ankusa"]
+                          :credits 15}})
+      (play-from-hand state :corp "Battlement" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ankusa")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (let [ankusa (get-program state 0)]
+        (card-ability state :runner ankusa 1)
+        (card-ability state :runner ankusa 1)
+        (card-ability state :runner ankusa 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
+        (is (find-card "Battlement" (:hand (get-corp))) "Battlement should be back in hand")))))
+
 (deftest atman
   ;; Atman
   (testing "Installing with 0 power counters"
