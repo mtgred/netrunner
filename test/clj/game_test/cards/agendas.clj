@@ -2231,7 +2231,33 @@
     (do-game
       (new-game {:corp {:deck ["Project Vacheron"]}})
       (play-and-score state "Project Vacheron")
-      (is (= 3 (:agenda-point (get-corp))) "Corp gets 3 points instantly"))))
+      (is (= 3 (:agenda-point (get-corp))) "Corp gets 3 points instantly")))
+  (testing "Additional cards added to the runner's score area shouldn't add counters to it. Issue #4715"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Vacheron"]}
+                 :runner {:hand ["Mad Dash"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mad Dash")
+      (click-prompt state :runner "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))) "Runner should only have 1 agenda point as Project Vacheron has agenda tokens on it")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")))
+  (testing "Scoring other agendas shouldn't increase number of agenda counters. Issue #4715"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Vacheron" "Hostile Takeover"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Steal")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it"))))
 
 (deftest project-vitruvius
   ;; Project Vitruvius
