@@ -3229,7 +3229,7 @@
         (is (zero? (get-counters (refresh iw) :advancement)))
         (click-card state :corp iw)
         (is (= 3 (get-counters (refresh iw) :advancement))))))
-  (testing "Slot Machine chat log test"
+  (testing "Should properly log the card titles when revealed"
     (do-game
       (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
                  :runner {:deck [(qty "Sure Gamble" 10)]}})
@@ -3240,7 +3240,73 @@
       (let [sm (get-ice state :hq 0)]
         (core/rez state :corp sm))
         (run-continue state)
-        (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal the top 3 cards in the stack: Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), Sure Gamble \\(Event\\).") "3 top cards revelaed"))))
+        (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal the top 3 cards in the stack: Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), Sure Gamble \\(Event\\).") "3 top cards revelaed")))
+  (testing "Subroutines"
+    (testing "Subroutine 2 should only fire when there are at least 2 cards in deck"
+      (testing "Only 1 card in deck"
+        (do-game
+          (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
+                     :runner {:deck ["Sure Gamble"]
+                              :hand ["Sure Gamble"]}})
+          (play-from-hand state :corp "Slot Machine" "HQ")
+          (take-credits state :corp)
+          (run-on state :hq)
+          (run-next-phase state)
+          (let [sm (get-ice state :hq 0)]
+            (core/rez state :corp sm)
+            (run-continue state)
+            (changes-val-macro
+              0 (:credit (get-corp))
+              "Corp does not gain any credits when runner has 1 or less cards in deck"
+              (card-subroutine state :corp sm 1)))))
+      (testing "Enough cards in deck"
+        (do-game
+          (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
+                     :runner {:deck [(qty "Sure Gamble" 10)]}})
+          (play-from-hand state :corp "Slot Machine" "HQ")
+          (take-credits state :corp)
+          (run-on state :hq)
+          (run-next-phase state)
+          (let [sm (get-ice state :hq 0)]
+            (core/rez state :corp sm)
+            (run-continue state)
+            (changes-val-macro
+              3 (:credit (get-corp))
+              "Corp does not gain any credits when runner has 1 or less cards in deck"
+              (card-subroutine state :corp sm 1))))))
+    (testing "Subroutine 3 should only fire when there are at least 2 cards in deck"
+      (testing "Only 1 card in deck"
+        (do-game
+          (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
+                     :runner {:deck ["Sure Gamble"]
+                              :hand ["Sure Gamble"]}})
+          (play-from-hand state :corp "Slot Machine" "HQ")
+          (take-credits state :corp)
+          (run-on state :hq)
+          (run-next-phase state)
+          (let [sm (get-ice state :hq 0)]
+            (core/rez state :corp sm)
+            (run-continue state)
+            (card-subroutine state :corp sm 2)
+            (is (empty? (:prompt (get-corp))) "No target prompt as effect didn't happen"))))
+      (testing "Enough cards in deck"
+        (do-game
+          (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
+                     :runner {:deck [(qty "Sure Gamble" 10)]}})
+          (play-from-hand state :corp "Ice Wall" "R&D")
+          (play-from-hand state :corp "Slot Machine" "HQ")
+          (take-credits state :corp)
+          (run-on state :hq)
+          (run-next-phase state)
+          (let [iw (get-ice state :rd 0)
+                sm (get-ice state :hq 0)]
+            (core/rez state :corp sm)
+            (run-continue state)
+            (changes-val-macro
+              3 (get-counters (refresh iw) :advancement)
+              "Corp does not gain any credits when runner has 1 or less cards in deck"
+              (card-subroutine state :corp sm 2)
+              (click-card state :corp iw))))))))
 
 (deftest snowflake
   ;; Snowflake - Win a psi game to end the run

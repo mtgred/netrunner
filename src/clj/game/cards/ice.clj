@@ -2763,8 +2763,12 @@
                      :msg "force the Runner to lose 3 [Credits]"
                      :effect (effect (lose-credits :runner 3))}
                     {:label "Gain 3 [Credits]"
-                     :effect (req (let [unique-types (top-3-types state card (effect-type card))]
-                                    (when (>= 2 unique-types)
+                     :effect (req (let [et (effect-type card)
+                                        unique-types (top-3-types state card et)]
+                                    ;; When there are two or fewer unique types
+                                    ;; and at least 2 cards in the deck
+                                    (when (and (<= unique-types 2)
+                                               (<= 2 (count (first (get-effects state :corp card et)))))
                                       (system-msg state :corp (str "uses Slot Machine to gain 3 [Credits]"))
                                       (gain-credits state :corp 3))))}
                     {:label "Place 3 advancement tokens"
