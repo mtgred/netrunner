@@ -193,17 +193,19 @@
                                  (same-card? current-ice boomerang-target)
                                  true)) ; When eg. flipped by Assimilator
                      :additional-ability
-                     {:effect (req (let [boomerang (assoc card :zone '(:discard))]
-                                     (register-events
-                                       state side boomerang
-                                       [{:event :successful-run-ends
-                                         :location :discard
-                                         :unregister-once-resolved true
-                                         :optional
-                                         {:prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
-                                          :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
-                                                        :effect (effect (move card :deck)
-                                                                        (shuffle! :deck))}}}])))}})]})
+                     {:effect (effect
+                                (register-events
+                                  (assoc card :zone '(:discard))
+                                  (let [server (:server run)]
+                                    [{:event :successful-run-ends
+                                      :location :discard
+                                      :unregister-once-resolved true
+                                      :optional
+                                      {:req (req (= server (:server target)))
+                                       :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
+                                       :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
+                                                     :effect (effect (move card :deck)
+                                                                     (shuffle! :deck))}}}])))}})]})
 
    "Box-E"
    {:in-play [:memory 2 :hand-size 2]}
