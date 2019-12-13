@@ -3121,7 +3121,26 @@
         (run-continue state)
         (run-successful state)
         (is (empty? (-> (get-runner) :register :successful-run)))
-        (is (empty? (:prompt (get-runner))) "No omar prompt")))))
+        (is (empty? (:prompt (get-runner))) "No omar prompt"))))
+  (testing "Stargate interaction. Issue #4713"
+    (do-game
+     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                       :hand ["Transport Monopoly"]}
+                :runner {:deck [(qty "Sure Gamble" 3)]
+                         :hand ["Stargate"]}})
+     (play-and-score state "Transport Monopoly")
+     (take-credits state :corp)
+     (play-from-hand state :runner "Stargate")
+     (let [tm (get-scored state :corp 0)
+           stargate (get-program state 0)]
+        (card-ability state :runner stargate 0)
+        (card-ability state :corp (refresh tm) 0)
+        (run-next-phase state)
+        (run-continue state)
+        (run-successful state)
+        (is (empty? (-> (get-runner) :register :successful-run)))
+        (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "No stargate prompt")
+        (click-prompt state :runner "No action")))))
 
 (deftest underway-renovation
   ;; Underway Renovation

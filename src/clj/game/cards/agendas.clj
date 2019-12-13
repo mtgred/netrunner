@@ -1576,9 +1576,9 @@
       :events [{:event :pre-successful-run
                 :silent (req true)
                 :req (req (get-in card [:special :transport-monopoly]))
-                :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
+                :effect (req (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
                              (swap! state update-in [:run] dissoc :successful)
-                             (swap! state update-in [:runner :register :successful-run] #(next %))
+                             (swap! state update-in [:runner :register :successful-run] #(seq (rest %)))
                              (update! state side (dissoc-in card [:special :transport-monopoly])))}]})
 
    "Underway Renovation"
