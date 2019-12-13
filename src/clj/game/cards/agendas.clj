@@ -1570,16 +1570,18 @@
       :abilities [{:cost [:agenda 1]
                    :req (req run)
                    :msg "prevent this run from becoming successful"
-                   :effect (effect (update! (assoc-in card [:special :transport-monopoly] true)))}]
+                   :effect (effect (update! (assoc-in (get-card state card) [:special :transport-monopoly] true)))}]
       :suppress [(assoc suppress-event :event :pre-successful-run)
                  (assoc suppress-event :event :successful-run)]
       :events [{:event :pre-successful-run
                 :silent (req true)
-                :req (req (get-in card [:special :transport-monopoly]))
+                :req (req (get-in (get-card state card) [:special :transport-monopoly]))
                 :effect (req (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
                              (swap! state update-in [:run] dissoc :successful)
-                             (swap! state update-in [:runner :register :successful-run] #(seq (rest %)))
-                             (update! state side (dissoc-in card [:special :transport-monopoly])))}]})
+                             (swap! state update-in [:runner :register :successful-run] #(seq (rest %))))}
+               {:event :run-ends
+                :silent (req true)
+                :effect (req (update! state side (dissoc-in (get-card state card) [:special :transport-monopoly])))}]})
 
    "Underway Renovation"
    (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]
