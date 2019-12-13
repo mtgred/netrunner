@@ -861,17 +861,17 @@
               :silent (req true)
               :effect (effect (add-counter card :power 1))}]
     :abilities [{:prompt "Choose a card to install from your Grip"
-                 :choices {:req (req (and (in-hand? target)
-                                          (or (hardware? target)
-                                              (program? target)
-                                              (resource? target))
-                                          (<= (install-cost state side target) (get-counters card :power))))}
                  :req (req (and (not (install-locked? state side))
                                 (some #(and (or (hardware? %)
                                                 (program? %)
                                                 (resource? %))
                                             (<= (install-cost state side %) (get-counters card :power)))
                                       (:hand runner))))
+                 :choices {:req (req (and (in-hand? target)
+                                          (or (hardware? target)
+                                              (program? target)
+                                              (resource? target))
+                                          (<= (install-cost state side target) (get-counters card :power))))}
                  :msg (msg "install " (:title target) " at no cost")
                  :cost [:trash]
                  :async true

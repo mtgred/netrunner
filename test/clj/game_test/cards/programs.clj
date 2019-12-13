@@ -1320,6 +1320,47 @@
         (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Datasucker")
         (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Datasucker")))))
 
+(deftest davinci
+  ;; DaVinci
+  (testing "Gain 1 counter on successful run"
+    (do-game
+      (new-game {:runner {:hand ["DaVinci"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DaVinci")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (changes-val-macro
+        1 (get-counters (get-program state 0) :power)
+        "DaVinci gains 1 counter on successful run"
+        (run-successful state))))
+  (testing "Gain no counters on unsuccessful run"
+    (do-game
+      (new-game {:runner {:hand ["DaVinci"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DaVinci")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (changes-val-macro
+        0 (get-counters (get-program state 0) :power)
+        "DaVinci gains 1 counter on successful run"
+        (run-jack-out state))))
+  (testing "Install a card with install cost lower than number of counters"
+    (do-game
+      (new-game {:runner {:hand ["DaVinci" "The Turning Wheel"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DaVinci")
+      (let [davinci (get-program state 0)]
+        (core/add-counter state :runner davinci :power 2)
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "DaVinci installs The Turning Wheel for free"
+          (card-ability state :runner (refresh davinci) 0)
+          (click-card state :runner "The Turning Wheel"))
+        (is (get-resource state 0) "The Turning Wheel is installed")
+        (is (find-card "DaVinci" (:discard (get-runner))) "DaVinci is trashed")))))
+
 (deftest demara
   ;; Demara
   (do-game

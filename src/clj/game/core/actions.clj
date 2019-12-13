@@ -266,23 +266,23 @@
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
   if the max number of cards has been selected."
   [state side {:keys [card] :as args}]
-  (let [card (get-card state card)
+  (let [target (get-card state card)
         prompt (first (get-in @state [side :selected]))
         ability (:ability prompt)
         card-req (:req prompt)
         card-condition (:card prompt)
         cid (:not-self prompt)]
-    (when (and (not= (:cid card) cid)
+    (when (and (not= (:cid target) cid)
                (cond
-                 card-condition (card-condition card)
-                 card-req (card-req state side (:eid ability) (:card ability) [card])
+                 card-condition (card-condition target)
+                 card-req (card-req state side (:eid ability) (get-card state (:card ability)) [target])
                  :else true))
-      (let [c (update-in card [:selected] not)]
+      (let [c (update-in target [:selected] not)]
         (update! state side c)
         (if (:selected c)
           (swap! state update-in [side :selected 0 :cards] #(conj % c))
           (swap! state update-in [side :selected 0 :cards]
-                 (fn [coll] (remove-once #(same-card? % card) coll))))
+                 (fn [coll] (remove-once #(same-card? % target) coll))))
         (let [selected (get-in @state [side :selected 0])]
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side update! resolve-ability)))))))
