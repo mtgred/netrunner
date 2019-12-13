@@ -1041,9 +1041,7 @@
                   :interactive (req true)
                   :req (req (some #(or (in-same-server? card %)
                                        (from-same-server? card %)
-                                       (let [card (assoc card :zone (:previous-zone card))]
-                                         (in-same-server? card %)
-                                         (from-same-server? card %)))
+                                       (in-same-server? (assoc card :zone (:previous-zone card)) %))
                                   targets))
                   :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
                                   (continue-ability
@@ -1051,9 +1049,7 @@
                                           (->> targets
                                                (filter #(or (in-same-server? card %)
                                                             (from-same-server? card %)
-                                                            (let [card (assoc card :zone (:previous-zone card))]
-                                                              (in-same-server? card %)
-                                                              (from-same-server? card %))))
+                                                            (in-same-server? (assoc card :zone (:previous-zone card)) %)))
                                                count)]
                                       {:async true
                                        :prompt "Pay how much to use Overseer Matrix's ability?"

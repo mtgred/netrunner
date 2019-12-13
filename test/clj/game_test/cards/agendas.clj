@@ -2231,7 +2231,33 @@
     (do-game
       (new-game {:corp {:deck ["Project Vacheron"]}})
       (play-and-score state "Project Vacheron")
-      (is (= 3 (:agenda-point (get-corp))) "Corp gets 3 points instantly"))))
+      (is (= 3 (:agenda-point (get-corp))) "Corp gets 3 points instantly")))
+  (testing "Additional cards added to the runner's score area shouldn't add counters to it. Issue #4715"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Vacheron"]}
+                 :runner {:hand ["Mad Dash"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mad Dash")
+      (click-prompt state :runner "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))) "Runner should only have 1 agenda point as Project Vacheron has agenda tokens on it")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")))
+  (testing "Scoring other agendas shouldn't increase number of agenda counters. Issue #4715"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Vacheron" "Hostile Takeover"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Steal")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it"))))
 
 (deftest project-vitruvius
   ;; Project Vitruvius
@@ -3056,46 +3082,84 @@
          (is (= corp-credits (:credit (get-corp))) "Install was free"))))))
 
 (deftest transport-monopoly
+  ;; Transport Monopoly
   (testing "Basic functionality"
     (do-game
-     (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
-                :runner {:deck [(qty "Dirty Laundry" 3)]}})
-     (play-and-score state "Transport Monopoly")
-     (take-credits state :corp)
-     (let [tm (get-scored state :corp 0)]
-       (changes-val-macro -2 (:credit (get-runner))
-                          "Did not gain 5c from DL"
-                          (play-from-hand state :runner "Dirty Laundry")
-                          (click-prompt state :runner "HQ")
-                          (card-ability state :corp (refresh tm) 0)
-                          (run-next-phase state)
-                          (run-continue state)
-                          (run-successful state)
-                          (click-prompt state :runner "No action")) ; accessed Hedge Fund
-       (changes-val-macro 3 (:credit (get-runner))
-                          "Gained 5c from DL"
-                          (play-from-hand state :runner "Dirty Laundry")
-                          (click-prompt state :runner "HQ")
-                          (run-next-phase state)
-                          (run-continue state)
-                          (run-successful state)
-                          (click-prompt state :runner "No action"))))) ; accessed Hedge Fund
+      (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
+                 :runner {:deck [(qty "Dirty Laundry" 3)]}})
+      (play-and-score state "Transport Monopoly")
+      (take-credits state :corp)
+      (let [tm (get-scored state :corp 0)]
+        (changes-val-macro -2 (:credit (get-runner))
+                           "Did not gain 5c from DL"
+                           (play-from-hand state :runner "Dirty Laundry")
+                           (click-prompt state :runner "HQ")
+                           (card-ability state :corp (refresh tm) 0)
+                           (run-next-phase state)
+                           (run-continue state)
+                           (run-successful state)
+                           (click-prompt state :runner "No action")) ; accessed Hedge Fund
+        (changes-val-macro 3 (:credit (get-runner))
+                           "Gained 5c from DL"
+                           (play-from-hand state :runner "Dirty Laundry")
+                           (click-prompt state :runner "HQ")
+                           (run-next-phase state)
+                           (run-continue state)
+                           (run-successful state)
+                           (click-prompt state :runner "No action"))))) ; accessed Hedge Fund
   (testing "Omar interaction"
     (do-game
-     (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
-                :runner {:id "Omar Keung: Conspiracy Theorist"
-                         :deck [(qty "Sure Gamble" 3)]}})
-     (play-and-score state "Transport Monopoly")
-     (take-credits state :corp)
-     (let [tm (get-scored state :corp 0)
-           omar (get-in @state [:runner :identity])]
+      (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
+                 :runner {:id "Omar Keung: Conspiracy Theorist"
+                          :deck [(qty "Sure Gamble" 3)]}})
+      (play-and-score state "Transport Monopoly")
+      (take-credits state :corp)
+      (let [tm (get-scored state :corp 0)
+            omar (get-in @state [:runner :identity])]
         (card-ability state :runner omar 0)
         (card-ability state :corp (refresh tm) 0)
         (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (is (empty? (-> (get-runner) :register :successful-run)))
-        (is (empty? (:prompt (get-runner))) "No omar prompt")))))
+        (is (empty? (:prompt (get-runner))) "No omar prompt"))))
+  (testing "Stargate interaction. Issue #4713"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Transport Monopoly"]}
+                 :runner {:deck [(qty "Sure Gamble" 3)]
+                          :hand ["Stargate"]}})
+      (play-and-score state "Transport Monopoly")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Stargate")
+      (let [tm (get-scored state :corp 0)
+            stargate (get-program state 0)]
+        (card-ability state :runner stargate 0)
+        (card-ability state :corp (refresh tm) 0)
+        (run-next-phase state)
+        (run-continue state)
+        (run-successful state)
+        (is (empty? (-> (get-runner) :register :successful-run)))
+        (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "No stargate prompt")
+        (click-prompt state :runner "No action"))))
+  (testing "Successful runs bugs. Issue #4735"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Transport Monopoly"]}
+                 :runner {:deck [(qty "Sure Gamble" 3)]
+                          :hand ["DreamNet"]}})
+      (play-and-score state "Transport Monopoly")
+      (take-credits state :corp)
+      (play-from-hand state :runner "DreamNet")
+      (let [tm (get-scored state :corp 0)]
+        (run-on state "R&D")
+        (run-next-phase state)
+        (card-ability state :corp (refresh tm) 0)
+        (run-continue state)
+        (changes-val-macro
+          0 (count (:hand (get-runner)))
+          "Transport Monopoly blocks DreamNet"
+          (run-successful state))))))
 
 (deftest underway-renovation
   ;; Underway Renovation

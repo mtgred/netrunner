@@ -2064,7 +2064,32 @@
       (core/rez state :corp (get-content state :remote1 0))
       (play-from-hand state :runner "Apocalypse")
       (click-prompt state :corp "3")
-      (is (= 3 (count-tags state)) "Overseer Matrix gives the runner 3 tags"))))
+      (is (= 3 (count-tags state)) "Overseer Matrix gives the runner 3 tags")))
+  (testing "Only works on Corp card trashes. Issue #4739"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Overseer Matrix" "PAD Campaign"]}
+                 :runner {:hand ["Spy Camera"]
+                          :credits 10}})
+      (play-from-hand state :corp "Overseer Matrix" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Spy Camera")
+      (run-on state :remote1)
+      (run-next-phase state)
+      (run-continue state)
+      (changes-val-macro
+        0 (count-tags state)
+        "Runner should not gain a tag from trashing Spy Camera"
+        (card-ability state :runner (get-hardware state 0) 1))
+      (click-prompt state :runner "OK")
+      (run-jack-out state)
+      (changes-val-macro
+        0 (count-tags state)
+        "Runner should not gain a tag from trashing a card in another server"
+        (run-empty-server state :remote2)
+        (click-prompt state :runner "Pay 4 [Credits] to trash")))))
 
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
@@ -2525,7 +2550,7 @@
       (click-card state :corp (find-card "Tranquility Home Grid" (:discard (get-corp))))
       (click-prompt state :corp "New remote")
       (is (empty? (:prompt (get-corp))) "No prompt from THG on its own install, because it was inactive at the point of install triggers")))
-  (testing "THG interaction with ICE install"  
+  (testing "THG interaction with ICE install"
     (do-game
       (new-game {:corp {:deck [(qty "PAD Campaign" 5)]
                         :hand ["Tranquility Home Grid" "PAD Campaign" "Ice Wall"]}})

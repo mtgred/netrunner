@@ -193,17 +193,19 @@
                                  (same-card? current-ice boomerang-target)
                                  true)) ; When eg. flipped by Assimilator
                      :additional-ability
-                     {:effect (req (let [boomerang (assoc card :zone '(:discard))]
-                                     (register-events
-                                       state side boomerang
-                                       [{:event :successful-run-ends
-                                         :location :discard
-                                         :unregister-once-resolved true
-                                         :optional
-                                         {:prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
-                                          :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
-                                                        :effect (effect (move card :deck)
-                                                                        (shuffle! :deck))}}}])))}})]})
+                     {:effect (effect
+                                (register-events
+                                  (assoc card :zone '(:discard))
+                                  (let [server (:server run)]
+                                    [{:event :successful-run-ends
+                                      :location :discard
+                                      :unregister-once-resolved true
+                                      :optional
+                                      {:req (req (= server (:server target)))
+                                       :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
+                                       :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
+                                                     :effect (effect (move card :deck)
+                                                                     (shuffle! :deck))}}}])))}})]})
 
    "Box-E"
    {:in-play [:memory 2 :hand-size 2]}
@@ -887,11 +889,14 @@
    {:in-play [:hq-access 1]}
 
    "Keiko"
-   (let [keiko-ability {:req (req (= 1 (+ (event-count state :runner :spent-credits-from-card #(has-subtype? (first %) "Companion"))
-                                          (event-count state :runner :runner-install #(and (not (facedown? (first %)))
-                                                                                           (has-subtype? (first %) "Companion"))))))
+   (let [keiko-ability {:req (req (and (not (facedown? target))
+                                       (has-subtype? target "Companion")
+                                       (let [f #(and (not (facedown? (first %)))
+                                                     (has-subtype? (first %) "Companion"))]
+                                         (= 1 (+ (event-count state :runner :spent-credits-from-card f)
+                                                 (event-count state :runner :runner-install f))))))
                         :msg "gain 1 [Credit]"
-                        :effect (effect (gain :credit 1))}]
+                        :effect (effect (gain-credits :runner 1))}]
      {:events [(assoc keiko-ability :event :spent-credits-from-card)
                (assoc keiko-ability :event :runner-install)]})
 

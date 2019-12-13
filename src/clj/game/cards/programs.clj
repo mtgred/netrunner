@@ -343,7 +343,8 @@
    (auto-icebreaker {:abilities [(break-sub 2 3 "Code Gate")
                                  (strength-pump 2 3)]
                      :events [{:event :encounter-ice-ends
-                               :req (req (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card)))
+                               :req (req (and (all-subs-broken-by-card? target card)
+                                              (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card))))
                                :msg "make the Corp lose 1 [Credits]"
                                :effect (effect (lose-credits :corp 1))}]})
 
@@ -373,7 +374,7 @@
                                :msg (msg "add " (:title target)
                                          " to HQ after breaking all its subroutines")
                                :effect (effect (move :corp target :hand nil)
-                                               (continue state :runner))}]})
+                                               (continue :runner nil))}]})
 
    "Atman"
    {:prompt "How many power counters?"
@@ -548,7 +549,8 @@
    (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
                                  (strength-pump 1 1)]
                      :events [{:event :subroutines-broken
-                               :req (req (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card)))
+                               :req (req (and (all-subs-broken-by-card? target card)
+                                              (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
                                :msg (msg "gain 2 [Credits]")
                                :effect (effect (gain-credits :runner 2))}]})
 
@@ -861,17 +863,17 @@
               :silent (req true)
               :effect (effect (add-counter card :power 1))}]
     :abilities [{:prompt "Choose a card to install from your Grip"
-                 :choices {:req (req (and (in-hand? target)
-                                          (or (hardware? target)
-                                              (program? target)
-                                              (resource? target))
-                                          (<= (install-cost state side target) (get-counters card :power))))}
                  :req (req (and (not (install-locked? state side))
                                 (some #(and (or (hardware? %)
                                                 (program? %)
                                                 (resource? %))
                                             (<= (install-cost state side %) (get-counters card :power)))
                                       (:hand runner))))
+                 :choices {:req (req (and (in-hand? target)
+                                          (or (hardware? target)
+                                              (program? target)
+                                              (resource? target))
+                                          (<= (install-cost state side target) (get-counters card :power))))}
                  :msg (msg "install " (:title target) " at no cost")
                  :cost [:trash]
                  :async true
@@ -1150,7 +1152,7 @@
                  :choices {:number (req (total-available-credits state :runner eid card))}
                  :prompt "How many credits?"
                  :effect (effect
-                           (continue
+                           (continue-ability
                              (strength-pump target target :end-of-run)
                              card nil))
                  :msg (msg "increase strength by " target " for the remainder of the run")}]}

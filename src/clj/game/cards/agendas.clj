@@ -1091,15 +1091,15 @@
 
    "Project Vacheron"
    (let [vacheron-ability
-         {:msg (msg "add 4 agenda counters on " (:title card))
+         {:req (req (and (not= (first (:zone card)) :discard)
+                         (same-card? card target)))
+          :msg (msg "add 4 agenda counters on " (:title card))
           :effect (effect (add-counter (get-card state card) :agenda 4)
                           (update! (assoc-in (get-card state card) [:special :vacheron] true)))}]
      {:agendapoints-runner (req (if (and (get-in card [:special :vacheron])
                                          (zero? (get-counters card :agenda))) 3 0))
       :stolen vacheron-ability
-      :events [(assoc vacheron-ability :event :agenda-stolen :req (req (and (not= (first (:zone card)) :discard)
-                                                                            (same-card? card target))))
-               (assoc vacheron-ability :event :as-agenda)
+      :events [(assoc vacheron-ability :event :as-agenda)
                {:event :runner-turn-begins
                 :req (req (pos? (get-counters card :agenda)))
                 :msg (msg (str "remove "
@@ -1570,16 +1570,18 @@
       :abilities [{:cost [:agenda 1]
                    :req (req run)
                    :msg "prevent this run from becoming successful"
-                   :effect (effect (update! (assoc-in card [:special :transport-monopoly] true)))}]
+                   :effect (effect (update! (assoc-in (get-card state card) [:special :transport-monopoly] true)))}]
       :suppress [(assoc suppress-event :event :pre-successful-run)
                  (assoc suppress-event :event :successful-run)]
       :events [{:event :pre-successful-run
                 :silent (req true)
-                :req (req (get-in card [:special :transport-monopoly]))
-                :effect (req (swap! state update-in [:run :run-effect] dissoc :replace-access)
+                :req (req (get-in (get-card state card) [:special :transport-monopoly]))
+                :effect (req (swap! state update-in [:run :run-effects] #(mapv (fn [x] (dissoc x :replace-access)) %))
                              (swap! state update-in [:run] dissoc :successful)
-                             (swap! state update-in [:runner :register :successful-run] #(next %))
-                             (update! state side (dissoc-in card [:special :transport-monopoly])))}]})
+                             (swap! state update-in [:runner :register :successful-run] #(seq (rest %))))}
+               {:event :run-ends
+                :silent (req true)
+                :effect (req (update! state side (dissoc-in (get-card state card) [:special :transport-monopoly])))}]})
 
    "Underway Renovation"
    (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]

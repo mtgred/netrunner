@@ -1149,7 +1149,9 @@
                                    (do (gain-credits state :corp 1)
                                        (effect-completed state side eid))
                                    (draw state :corp eid 1 nil)))}]
-     {:subroutines [sub sub sub]})
+     {:subroutines [sub
+                    sub
+                    sub]})
 
    "Excalibur"
    {:subroutines [{:label "The Runner cannot make another run this turn"
@@ -1170,7 +1172,7 @@
                   (end-the-run-unless-runner
                     "trashes an installed card"
                     "trash an installed card"
-                    trash-installed)
+                    runner-trash-installed-sub)
                   (end-the-run-unless-runner
                     "suffers 1 brain damage"
                     "suffer 1 brain damage"
@@ -1185,8 +1187,9 @@
               :effect (req (if (= target "Pay 1 [Credits]")
                              (do (pay state side card :credit 1)
                                  (system-msg state side "pays 1 [Credits]"))
-                             (continue-ability state :runner trash-installed card nil)))}]
-     {:subroutines [sub sub]
+                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
+     {:subroutines [sub
+                    sub]
       :runner-abilities [(bioroid-break 1 1)]})
 
    "Fairchild 2.0"
@@ -1198,8 +1201,9 @@
               :effect (req (if (= target "Pay 2 [Credits]")
                              (do (pay state side card :credit 2)
                                  (system-msg state side "pays 2 [Credits]"))
-                             (continue-ability state :runner trash-installed card nil)))}]
-     {:subroutines [sub sub
+                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
+     {:subroutines [sub
+                    sub
                     (do-brain-damage 1)]
       :runner-abilities [(bioroid-break 2 2)]})
 
@@ -1212,8 +1216,9 @@
               :effect (req (if (= target "Pay 3 [Credits]")
                              (do (pay state side card :credit 3)
                                  (system-msg state side "pays 3 [Credits]"))
-                             (continue-ability state :runner trash-installed card nil)))}]
-     {:subroutines [sub sub
+                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
+     {:subroutines [sub
+                    sub
                     {:label "Do 1 brain damage or end the run"
                      :prompt "Choose one"
                      :choices ["Do 1 brain damage" "End the run"]
@@ -1404,7 +1409,8 @@
                                                                      (str "trashes " (join ", " (map :title targets)))))}
                                            card nil)
                                          (effect-completed state side eid)))))}]
-     {:subroutines [sub sub]})
+     {:subroutines [sub
+                    sub]})
 
    "Heimdall 1.0"
    {:subroutines [(do-brain-damage 1)
@@ -1556,7 +1562,8 @@
    "Hudson 1.0"
    (let [sub {:msg "prevent the Runner from accessing more than 1 card during this run"
               :effect (effect (max-access 1))}]
-     {:subroutines [sub sub]
+     {:subroutines [sub
+                    sub]
       :runner-abilities [(bioroid-break 1 1)]})
 
    "Hunter"
@@ -1630,7 +1637,7 @@
                                                   :effect (req (swap! state update :run dissoc :prevent-jack-out))}]))}]))}]}
 
    "Information Overload"
-   (let [ef (effect (reset-variable-subs card (count-tags state) trash-installed))
+   (let [ef (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))
          ability {:effect ef}]
      {:on-encounter (tag-trace 1)
       :effect ef
@@ -1640,7 +1647,8 @@
    "Interrupt 0"
    (let [sub {:label "Make the Runner pay 1 [Credits] to use icebreaker"
               :msg "For the remainder of this run, the Runner must pay 1 [Credits] as an additional cost each time they use an icebreaker to break at least 1 subroutine."}]
-     {:subroutines [sub sub]})
+     {:subroutines [sub
+                    sub]})
 
    "IP Block"
    {:on-encounter (assoc (give-tags 1)
@@ -1675,11 +1683,12 @@
    {:expose {:msg "do 2 net damage"
              :async true
              :effect (effect (damage eid :net 2 {:card card}))}
-    :subroutines [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
-                                                      (when current-ice
-                                                        (no-action state side nil)
-                                                        (continue state side nil))
-                                                      (trash state side card)))]}
+    :subroutines [(assoc runner-trash-installed-sub
+                         :effect (req (trash state side target {:cause :subroutine})
+                                      (when current-ice
+                                        (no-action state side nil)
+                                        (continue state side nil))
+                                      (trash state side card)))]}
 
    "Janus 1.0"
    {:subroutines [(do-brain-damage 1)
@@ -1936,7 +1945,8 @@
                                  :effect (effect (remove-sub! target #(= (:cid card) (:from-cid %))))}]))}]}
 
    "Markus 1.0"
-   {:subroutines [trash-installed end-the-run]
+   {:subroutines [runner-trash-installed-sub
+                  end-the-run]
     :runner-abilities [(bioroid-break 1 1)]}
 
    "Masvingo"
@@ -2186,7 +2196,8 @@
                                                        :msg "draw 1 card"
                                                        :effect (effect (draw eid 1 nil))}}}
                                        card nil)))}]
-     {:subroutines [sub sub]
+     {:subroutines [sub
+                    sub]
       :runner-abilities [(bioroid-break 2 2)]})
 
    "Neural Katana"
@@ -2306,7 +2317,8 @@
                         "Corp gains an additional [Click] to spend during their next turn")
               :effect (req (lose state :runner :click 1)
                            (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]
-     {:subroutines [sub sub]})
+     {:subroutines [sub
+                    sub]})
 
    "Oduduwa"
    {:on-encounter
@@ -2416,7 +2428,8 @@
               :effect (req (if (= "Suffer 1 net damage" target)
                              (continue-ability state side (do-net-damage 1) card nil)
                              (pay-sync state :runner eid card [:credit 1])))}]
-     {:subroutines [sub sub]})
+     {:subroutines [sub
+                    sub]})
 
    "Quandary"
    {:subroutines [end-the-run]}
@@ -2435,7 +2448,8 @@
    (let [sub (resolve-another-subroutine
                #(has-subtype? % "Bioroid")
                "Resolve a subroutine on a rezzed bioroid ice")]
-     {:subroutines [sub sub]
+     {:subroutines [sub
+                    sub]
       :runner-abilities [(bioroid-break 1 1)]})
 
    "Red Tape"
@@ -2570,7 +2584,9 @@
       :events [{:event :encounter-ice-ends
                 :req (req (get-in card [:special :saisentan]))
                 :effect (effect (update! (dissoc-in card [:special :saisentan])))}]
-      :subroutines [sub sub sub]})
+      :subroutines [sub
+                    sub
+                    sub]})
 
    "Salvage"
    (zero-to-hero (tag-trace 2))
@@ -2631,7 +2647,8 @@
                       :label "Give the Runner 1 tag"
                       :successful (give-tags 1)}}]
      {:advanceable :always
-      :subroutines [sub sub]})
+      :subroutines [sub
+                    sub]})
 
    "Seidr Adaptive Barrier"
    (let [recalculate-strength (req (update-ice-strength state side (get-card state card)))
@@ -2674,7 +2691,8 @@
                                :label "Add an installed program to the top of the Runner's Stack"
                                :msg (msg "add " (:title target) " to the top of the Runner's Stack")
                                :effect (effect (move :runner target :deck {:front true}))})]
-     {:subroutines [sub sub]
+     {:subroutines [sub
+                    sub]
       :runner-abilities [(bioroid-break 1 1)]})
 
    "Sherlock 2.0"
@@ -2683,7 +2701,8 @@
                                :label "Add an installed program to the bottom of the Runner's Stack"
                                :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
                                :effect (effect (move :runner target :deck))})]
-     {:subroutines [sub sub
+     {:subroutines [sub
+                    sub
                     (give-tags 1)]
       :runner-abilities [(bioroid-break 2 2)]})
 
@@ -2744,8 +2763,12 @@
                      :msg "force the Runner to lose 3 [Credits]"
                      :effect (effect (lose-credits :runner 3))}
                     {:label "Gain 3 [Credits]"
-                     :effect (req (let [unique-types (top-3-types state card (effect-type card))]
-                                    (when (>= 2 unique-types)
+                     :effect (req (let [et (effect-type card)
+                                        unique-types (top-3-types state card et)]
+                                    ;; When there are two or fewer unique types
+                                    ;; and at least 2 cards in the deck
+                                    (when (and (<= unique-types 2)
+                                               (<= 2 (count (first (get-effects state :corp card et)))))
                                       (system-msg state :corp (str "uses Slot Machine to gain 3 [Credits]"))
                                       (gain-credits state :corp 3))))}
                     {:label "Place 3 advancement tokens"
@@ -2993,11 +3016,9 @@
                                                                          (toast state :runner "Cannot trash due to Trebuchet." "warning")))))})]}
 
    "Tribunal"
-   (let [sub {:msg "force the Runner to trash 1 installed card"
-              :effect (effect (continue-ability :runner trash-installed card nil))}]
-     {:subroutines [sub
-                    sub
-                    sub]})
+   {:subroutines [runner-trash-installed-sub
+                  runner-trash-installed-sub
+                  runner-trash-installed-sub]}
 
    "Troll"
    {:on-encounter
@@ -3039,7 +3060,7 @@
 
    "Týr"
    {:subroutines [(do-brain-damage 2)
-                  (combine-abilities trash-installed (gain-credits-sub 3))
+                  (combine-abilities trash-installed-sub (gain-credits-sub 3))
                   end-the-run]
     :runner-abilities [(bioroid-break 1 1 {:additional-ability {:effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}})]}
 

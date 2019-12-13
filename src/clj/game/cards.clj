@@ -32,13 +32,20 @@
                                                (resource? %))}
                          :effect (effect (trash target {:cause :subroutine}))})
 
-(def trash-installed {:prompt "Select an installed card to trash"
-                      :player :runner
-                      :label "Force the Runner to trash an installed card"
-                      :msg (msg "force the Runner to trash " (:title target))
-                      :choices {:card #(and (installed? %)
-                                            (runner? %))}
-                      :effect (effect (trash target {:cause :subroutine}))})
+(def trash-installed-sub
+  {:async true
+   :prompt "Select an installed card to trash"
+   :label "Trash an installed Runner card"
+   :msg (msg "trash " (:title target))
+   :choices {:card #(and (installed? %)
+                         (runner? %))}
+   :effect (effect (trash eid target {:cause :subroutine}))})
+
+(def runner-trash-installed-sub
+  (assoc trash-installed-sub
+         :player :runner
+         :label "Force the Runner to trash an installed card"
+         :msg (msg "force the Runner to trash " (:title target))))
 
 (def corp-rez-toast
   "Effect to be placed with `:runner-turn-ends` to remind players of 'when turn begins'

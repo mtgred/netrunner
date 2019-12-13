@@ -107,13 +107,15 @@
                                (in-coll? abilities (:event %))))
                  (into []))))))
 
+(declare card-for-ability)
+
 (defn trigger-suppress
   "Returns true if the given event on the given targets should be suppressed, by triggering
   each suppression handler and returning true if any suppression handler returns true."
   [state side event & targets]
   (->> (:suppress @state)
        (filter #(= event (:event %)))
-       (some #((:req (:ability %)) state side (make-eid state) (:card %) targets))))
+       (some #((:req (:ability %)) state side (make-eid state) (card-for-ability state %) targets))))
 
 ;; triggering events
 (defn- get-side

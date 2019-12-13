@@ -212,7 +212,38 @@
       (click-prompt state :runner "Force the Runner to lose 1 [Click]")
       (click-prompt state :runner "End the run")
       (run-continue state)
-      (is (= 3 (:credit (get-corp))) "Ability only once per turn"))))
+      (is (= 3 (:credit (get-corp))) "Ability only once per turn")))
+  (testing "Amina only triggers on itself. Issue #4716"
+    (do-game
+      (new-game {:runner {:deck ["Amina" "Yog.0"]}
+                 :corp {:deck ["Enigma"]}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20 :click 1)
+      (play-from-hand state :runner "Amina")
+      (play-from-hand state :runner "Yog.0")
+      (let [amina (get-program state 0)
+            yog (get-program state 1)
+            enima (get-ice state :hq 0)]
+        (run-on state :hq)
+        (run-next-phase state)
+        (core/rez state :corp (refresh enima))
+        (run-continue state)
+        (card-ability state :runner (refresh amina) 0)
+        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "End the run")
+        (run-jack-out state)
+        (run-on state :hq)
+        (run-next-phase state)
+        (run-continue state)
+        (card-ability state :runner (refresh yog) 0)
+        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (changes-val-macro
+          0 (:credit (get-corp))
+          "No credit gain from Amina"
+          (click-prompt state :runner "End the run")
+          (run-continue state))
+        (run-jack-out state)))))
 
 (deftest analog-dreamers
   ;; Analog Dreamers
@@ -239,6 +270,71 @@
       (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Should be shuffled")
       (is (some #(utils/same-card? pad %) (:deck (get-corp))) "PAD Campaign is shuffled into R&D")
       (is (nil? (refresh pad)) "PAD Campaign is shuffled into R&D"))))
+
+(deftest ankusa
+  ;; Ankusa
+  (testing "Boost 1 strength for 1 credit"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Battlement"]}
+                 :runner {:hand ["Ankusa"]
+                          :credits 15}})
+      (play-from-hand state :corp "Battlement" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ankusa")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (let [ankusa (get-program state 0)
+            credits (:credit (get-runner))]
+          "Boost ability costs 1 credit each"
+          (card-ability state :runner ankusa 1)
+          (is (= (dec credits) (:credit (get-runner))) "Boost 1 for 1 credit")
+          (is (= (inc (core/get-strength ankusa)) (core/get-strength (refresh ankusa)))
+              "Ankusa gains 1 strength"))))
+  (testing "Break 1 for 2 credits"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Battlement"]}
+                 :runner {:hand ["Ankusa"]
+                          :credits 15}})
+      (play-from-hand state :corp "Battlement" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ankusa")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (let [ankusa (get-program state 0)]
+        (card-ability state :runner ankusa 1)
+        (card-ability state :runner ankusa 1)
+        (changes-val-macro
+          -2 (:credit (get-runner))
+          "Break ability costs 2 credits"
+          (card-ability state :runner ankusa 0)
+          (click-prompt state :runner "End the run")
+          (click-prompt state :runner "Done")))))
+  (testing "Breaking an ice fully returns it to hand. Issue #4711"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Battlement"]}
+                 :runner {:hand ["Ankusa"]
+                          :credits 15}})
+      (play-from-hand state :corp "Battlement" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ankusa")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (let [ankusa (get-program state 0)]
+        (card-ability state :runner ankusa 1)
+        (card-ability state :runner ankusa 1)
+        (card-ability state :runner ankusa 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
+        (is (find-card "Battlement" (:hand (get-corp))) "Battlement should be back in hand")))))
 
 (deftest atman
   ;; Atman
@@ -601,7 +697,37 @@
         (changes-val-macro
           -1 (:credit (get-runner))
           "No credits gained from Bukhgalter"
-          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))))))
+          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")))))
+  (testing "Bukhgalter only triggers on itself. Issue #4716"
+    (do-game
+      (new-game {:runner {:deck ["Bukhgalter" "Mimic"]}
+                 :corp {:deck ["Pup"]}})
+      (play-from-hand state :corp "Pup" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20 :click 1)
+      (play-from-hand state :runner "Bukhgalter")
+      (play-from-hand state :runner "Mimic")
+      (let [bukhgalter (get-program state 0)
+            mimic (get-program state 1)
+            pup (get-ice state :hq 0)]
+        (run-on state :hq)
+        (run-next-phase state)
+        (core/rez state :corp (refresh pup))
+        (run-continue state)
+        (card-ability state :runner (refresh bukhgalter) 0)
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (run-jack-out state)
+        (run-on state :hq)
+        (run-next-phase state)
+        (run-continue state)
+        (card-ability state :runner (refresh mimic) 0)
+        (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]")
+        (changes-val-macro
+          -1 (:credit (get-runner))
+          "No credit gain from Bukhgalter"
+          (click-prompt state :runner "Do 1 net damage unless the Runner pays 1 [Credits]"))
+        (run-jack-out state)))))
 
 (deftest cerberus-rex-h2
   ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter
@@ -1254,6 +1380,47 @@
         (card-ability state :runner (refresh sucker) 0)
         (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Datasucker")
         (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Datasucker")))))
+
+(deftest davinci
+  ;; DaVinci
+  (testing "Gain 1 counter on successful run"
+    (do-game
+      (new-game {:runner {:hand ["DaVinci"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DaVinci")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (changes-val-macro
+        1 (get-counters (get-program state 0) :power)
+        "DaVinci gains 1 counter on successful run"
+        (run-successful state))))
+  (testing "Gain no counters on unsuccessful run"
+    (do-game
+      (new-game {:runner {:hand ["DaVinci"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DaVinci")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (changes-val-macro
+        0 (get-counters (get-program state 0) :power)
+        "DaVinci gains 1 counter on successful run"
+        (run-jack-out state))))
+  (testing "Install a card with install cost lower than number of counters"
+    (do-game
+      (new-game {:runner {:hand ["DaVinci" "The Turning Wheel"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "DaVinci")
+      (let [davinci (get-program state 0)]
+        (core/add-counter state :runner davinci :power 2)
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "DaVinci installs The Turning Wheel for free"
+          (card-ability state :runner (refresh davinci) 0)
+          (click-card state :runner "The Turning Wheel"))
+        (is (get-resource state 0) "The Turning Wheel is installed")
+        (is (find-card "DaVinci" (:discard (get-runner))) "DaVinci is trashed")))))
 
 (deftest demara
   ;; Demara

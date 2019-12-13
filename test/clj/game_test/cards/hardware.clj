@@ -432,7 +432,32 @@
           (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Targetting Ice Wall on HQ")
           (core/trash state :runner icew)
           (is (nil? (:server-target (refresh boom))) "No more target message")
-          (is (some? (get-in (refresh boom) [:special :boomerang-target])) "Still targetting a card"))))))
+          (is (some? (get-in (refresh boom) [:special :boomerang-target])) "Still targetting a card")))))
+  (testing "Does not fire on Crisium runs. Issue #4734"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Crisium Grid"]}
+                 :runner {:deck ["Boomerang"]}})
+      (play-from-hand state :corp "Crisium Grid" "HQ")
+      (core/rez state :corp (get-content state :hq 0))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [icew (get-ice state :hq 0)
+            boom (get-hardware state 0)]
+        (click-card state :runner icew)
+        (run-on state :hq)
+        (run-next-phase state)
+        (core/rez state :corp icew)
+        (run-continue state)
+        (card-ability state :runner (refresh boom) 0)
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (run-next-phase state)
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in")))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
@@ -1453,7 +1478,16 @@
                          (click-card state :runner (get-resource state 0)))
       (changes-val-macro -3 (:credit (get-runner))
                          "Paid full 3c for Keiko"
-                         (play-from-hand state :runner "Keiko")))))
+                         (play-from-hand state :runner "Keiko"))))
+  (testing "Does not fire on non-Companion cards. Issue #4705"
+    (do-game
+      (new-game {:runner {:hand ["Keiko" "Mystic Maemi" "Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Keiko")
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Triggers only on Companions"
+        (play-from-hand state :runner "Corroder")))))
 
 (deftest knobkierie
   ;; Knobkierie - first successful run, place a virus counter on a virus program
