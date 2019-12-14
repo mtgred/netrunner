@@ -2088,13 +2088,15 @@
 
    "Mirāju"
    {:events [{:event :encounter-ice-ends
-              :req (req (:broken (first (filter :printed (:subroutines target)))))
+              :req (req (and (same-card? card target)
+                             (:broken (first (filter :printed (:subroutines target))))))
               :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
-              :effect (req (swap! state update :run
-                                  #(assoc % :position (count (get-in corp [:servers :archives :ices]))
-                                            :server [:archives]))
-                           (set-next-phase state :approach-ice)
-                           (derez state side card))}]
+              :effect (req (let [position (count (get-in corp [:servers :archives :ices]))]
+                             (swap! state update :run
+                                    #(assoc % :position position
+                                              :server [:archives]))
+                             (set-next-phase state (if (pos? position) :approach-ice :approach-server))
+                             (derez state side card)))}]
     :subroutines [{:async true
                    :label "Draw 1 card, then shuffle 1 card from HQ into R&D"
                    :effect (req (wait-for (resolve-ability
