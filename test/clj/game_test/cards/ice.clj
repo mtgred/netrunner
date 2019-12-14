@@ -2132,6 +2132,24 @@
     (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
     (is (= 6 (:credit (get-corp))) "Didn't pay 1 credit to install as second ICE")))
 
+(deftest miraju
+  ;; Miraju
+  (do-game
+    (new-game {:corp {:hand ["Mirāju"]}
+               :runner {:hand ["Force of Nature"]
+                        :credits 10}})
+    (play-from-hand state :corp "Mirāju" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Force of Nature")
+    (run-on state "HQ")
+    (run-next-phase state)
+    (core/rez state :corp (get-ice state :hq 0))
+    (run-continue state)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "Draw 1 card, then shuffle 1 card from HQ into R&D")
+    (run-continue state)
+    (is (= [:archives] (:server (get-run))))))
+
 (deftest mlinzi
   ;; Mlinzi - take X net damage or trash the top X+1 cards from the Stack
   (testing "Each side of each subroutine"
