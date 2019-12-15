@@ -1051,7 +1051,7 @@
 
    "Nero Severn: Information Broker"
    {:events [{:event :encounter-ice
-              :optional 
+              :optional
               {:req (req (and (not-used-once? state {:once :per-turn} card)
                               (has-subtype? target "Sentry")))
                :prompt "Do you want to jack out?"
@@ -1113,27 +1113,27 @@
 
    "Null: Whistleblower"
    {:events [{:event :encounter-ice
-              :optional {
-                 :req (req (and (not-used-once? state {:once :per-turn} card)
-                                (pos? (count (:hand runner)))))
-                 :prompt "Trash a card in grip to lower ice strength by 2?"
-                 :yes-ability
-                   {:prompt "Select a card in your Grip to trash"
-                    :once :per-turn
-                    :choices {:card in-hand?}
-                    :msg (msg "trash " (:title target)
-                              " and reduce the strength of " (:title current-ice)
-                              " by 2 for the remainder of the run")
-                    :async true
-                    :effect (effect (register-floating-effect
-                                      card
-                                      (let [ice current-ice]
-                                        {:type :ice-strength
-                                        :duration :end-of-run
-                                        :req (req (same-card? target ice))
-                                        :value -2}))
-                                    (update-all-ice)
-                                    (trash eid target {:unpreventable true}))}}}]}
+              :optional
+              {:req (req (and (not-used-once? state {:once :per-turn} card)
+                              (pos? (count (:hand runner)))))
+               :prompt "Trash a card in grip to lower ice strength by 2?"
+               :yes-ability
+               {:prompt "Select a card in your Grip to trash"
+                :once :per-turn
+                :choices {:card in-hand?}
+                :msg (msg "trash " (:title target)
+                          " and reduce the strength of " (:title current-ice)
+                          " by 2 for the remainder of the run")
+                :async true
+                :effect (effect (register-floating-effect
+                                  card
+                                  (let [ice current-ice]
+                                    {:type :ice-strength
+                                     :duration :end-of-run
+                                     :req (req (same-card? target ice))
+                                     :value -2}))
+                                (update-all-ice)
+                                (trash eid target {:unpreventable true}))}}}]}
 
    "Omar Keung: Conspiracy Theorist"
    {:abilities [{:cost [:click 1]
