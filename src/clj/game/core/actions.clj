@@ -189,8 +189,7 @@
   (when (empty? (get-in @state [:runner :prompt]))
     (when-let [run (:run @state)]
       (when (:ended run)
-        (handle-end-run state :runner)))
-    (swap! state dissoc :access))
+        (handle-end-run state :runner))))
   true)
 
 (defn- prompt-error

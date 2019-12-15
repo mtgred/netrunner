@@ -1163,6 +1163,7 @@
         (is (zero? (get-in @state [:run :position])) "Now approaching server")
         (run-next-phase state)
         (run-continue state)
+        (click-prompt state :corp "Formicary")
         (click-prompt state :corp "Yes") ; Move Formicary
         (click-prompt state :corp "No") ; Move Formicary
         (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")

@@ -1545,7 +1545,20 @@
         (run-empty-server state :remote1)
         (is (= 2 (get-counters (refresh prireq) :advancement)) "Two advancement tokens on Pri Req")
         (click-prompt state :runner "Yes")
-        (is (= 0 (get-counters (refresh prireq) :advancement)) "No more counters on the Pri Req")))))
+        (is (= 0 (get-counters (refresh prireq) :advancement)) "No more counters on the Pri Req"))))
+  (testing "Kill Switch interaction. Issue #4641"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                        :hand ["Kill Switch" "Hostile Takeover"]}
+                 :runner {:deck ["Film Critic" (qty "Sure Gamble" 3)]}})
+      (play-from-hand state :corp "Kill Switch")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Film Critic")
+      (let [fc (get-resource state 0)]
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "Yes")
+        (is (empty? (:prompt (get-corp))))
+        (is (empty? (:prompt (get-corp))))))))
 
 (deftest find-the-truth
   ;; Find the Truth

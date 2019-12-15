@@ -549,10 +549,15 @@
     (msg-handle-access state side c title cost-msg)
     (wait-for (trigger-event-simult state side :access
                                     {:card-abilities access-effect
-                                     ;; Cancel other access handlers if the card moves zones because of a handler
-                                     :cancel-fn (fn [state] (not (get-card state c)))}
+                                     ; Cancel other access handlers if the card moves zones because of a handler
+                                     ; or access has been stopped
+                                     :cancel-fn (fn [state] (or (not (get-card state c))
+                                                                (not (:access @state))))}
                                     c)
-              (if (get-card state c) ; make sure the card has not been moved by a handler
+              ; make sure the card has not been moved by a handler
+              ; and we're still accessing the card
+              (if (and (get-card state c)
+                       (:access @state))
                 (if (agenda? c)
                   (access-agenda state side eid c)
                   ;; Accessing a non-agenda
