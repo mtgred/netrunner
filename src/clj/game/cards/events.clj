@@ -2047,15 +2047,23 @@
               (effect
                 (continue-ability
                   (let [ice target]
-                    {:optional
-                     {:prompt (str "Trash " (quantify (get-strength target) "card")
-                                   " to trash " (:title ice) "?")
-                      :yes-ability
-                      {:async true
-                       :once :per-turn
-                       :cost [:installed (get-strength ice)]
-                       :msg (msg "trash " (card-str state ice))
-                       :effect (effect (trash eid ice nil))}}})
+                    (if (pos? (get-strength target))
+                      {:optional
+                       {:prompt (str "Use Prey to trash " (quantify (get-strength target) "card")
+                                     " to trash " (:title ice) "?")
+                        :yes-ability
+                        {:async true
+                         :once :per-turn
+                         :cost [:installed (get-strength ice)]
+                         :msg (msg "trash " (card-str state ice))
+                         :effect (effect (trash eid ice nil))}}}
+                      {:optional
+                       {:prompt (str "Use Prey to trash " (:title ice) "?")
+                        :yes-ability
+                        {:async true
+                         :once :per-turn
+                         :msg (msg "trash " (card-str state ice))
+                         :effect (effect (trash eid ice nil))}}}))
                   card nil))}]}
 
    "Process Automation"
