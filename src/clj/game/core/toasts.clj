@@ -28,3 +28,21 @@
                 "to our GitHub issues page.<br/><br/>Use /error to see this message again.")
            "exception"
            {:time-out 0 :close-button true})))
+
+(defn swap-sides
+  [side]
+  (if (= side :corp)
+              :runner
+              :corp))
+
+(defn indicate-action
+  [state side args]
+  (when state
+    (do (toast state side 
+          (str "You have indicated action to your opponent")
+          "info"
+          {:time-out 2000 :close-button false})
+        (toast state (swap-sides side)
+          (str "Pause please, opponent is acting")
+          "info"
+          {:time-out 5000 :close-button true}))))

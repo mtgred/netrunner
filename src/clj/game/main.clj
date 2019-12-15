@@ -2,7 +2,7 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [game.core :refer [card-is-public?] :as core]
-            [game.core.toasts :refer [toast]]
+            [game.core.toasts :refer [toast indicate-action]]
             [game.core.card :refer [private-card get-card]]
             [differ.core :as differ]))
 
@@ -31,6 +31,7 @@
    "end-turn" core/end-turn
    "generate-install-list" core/generate-install-list
    "generate-runnable-zones" core/generate-runnable-zones
+   "indicate-action" indicate-action
    "jack-out" core/jack-out
    "keep" core/keep-hand
    "move" core/move-card
