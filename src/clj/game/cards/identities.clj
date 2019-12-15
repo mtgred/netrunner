@@ -212,7 +212,8 @@
    {:events [{:event :runner-trash
               :async true
               :interactive (req true)
-              :req (req (and (= side :runner) (= (second targets) :ability-cost)))
+              :req (req (and (= side :runner)
+                             (= (second targets) :ability-cost)))
               :msg "draw a card"
               :effect (effect (draw eid 1 nil))}]}
 

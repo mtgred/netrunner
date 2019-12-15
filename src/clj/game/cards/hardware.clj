@@ -652,6 +652,7 @@
                                 {:optional
                                  {:prompt "Use Flip Switch to reduce base trace strength to 0?"
                                   :yes-ability {:msg "reduce the base trace strength to 0"
+                                                :async true
                                                 :cost [:trash]
                                                 :effect (req (swap! state assoc-in [:trace :force-base] 0)
                                                              (effect-completed state side eid))}
