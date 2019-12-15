@@ -67,7 +67,7 @@
          costs (total-run-cost state side card cost-args)]
      (if (and (can-run? state :runner)
               (can-run-server? state server)
-              (can-pay? state :runner (make-eid state eid) card "a run" costs))
+              (can-pay? state :runner eid card "a run" costs))
        (do (when click-run
              (swap! state assoc-in [:runner :register :click-type] :run)
              (swap! state assoc-in [:runner :register :made-click-run] true)

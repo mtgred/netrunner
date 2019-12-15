@@ -974,10 +974,9 @@
    "Masterwork (v37)"
    {:in-play [:memory 1]
     :events [{:event :run
+              :interactive (req true)
               :optional
-              {:async true
-               :interactive (req true)
-               :req (req (some #(and (hardware? %)
+              {:req (req (some #(and (hardware? %)
                                      (can-pay? state side (assoc eid :source card :source-type :runner-install) card %
                                                [:credit (install-cost state side % {:cost-bonus 1})]))
                                (:hand runner)))
@@ -1356,12 +1355,12 @@
 
    "Prognostic Q-Loop"
    {:events [{:event :run
-              :req (req (first-event? state side :run))
               :interactive (get-autoresolve :auto-fire (complement never?))
               :silent (get-autoresolve :auto-fire never?)
-              :optional {:prompt "Look at top 2 cards of the stack?"
+              :optional {:req (req (and (first-event? state side :run)
+                                        (pos? (count (:deck runner)))))
+                         :prompt "Look at top 2 cards of the stack?"
                          :player :runner
-                         :req (req (pos? (count (:deck runner))))
                          :autoresolve (get-autoresolve :auto-fire)
                          :yes-ability {:msg "look at the top 2 cards of the stack"
                                        :effect (effect (prompt! card (str "The top two cards of your Stack are "
@@ -1375,13 +1374,15 @@
                  :msg (msg "reveal the top card of the stack: " (:title (first (:deck runner))))
                  :effect
                  (effect
+                   (reveal (first (:deck runner)))
                    (continue-ability
-                     {:optional
-                      {:req (req (or (program? (first (:deck runner)))
-                                     (hardware? (first (:deck runner)))))
-                       :prompt (msg "Install " (:title (first (:deck runner))) "?")
-                       :async true
-                       :yes-ability {:effect (effect (runner-install eid (first (:deck runner)) nil))}}}
+                     (let [top-card (first (:deck runner))]
+                       {:optional
+                        {:req (req (or (program? top-card)
+                                       (hardware? top-card)))
+                         :prompt (msg "Install " (:title top-card) "?")
+                         :yes-ability {:async true
+                                       :effect (effect (runner-install eid top-card nil))}}})
                      card nil))}]}
 
    "Public Terminal"
