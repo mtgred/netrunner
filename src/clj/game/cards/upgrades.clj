@@ -248,6 +248,7 @@
                       card nil))}]
      {:events [(assoc ability :event :corp-turn-begins)
                {:event :approach-server
+                :interactive (req true)
                 :req (req this-server)
                 :effect
                 (effect

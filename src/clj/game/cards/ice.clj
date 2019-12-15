@@ -1262,6 +1262,7 @@
    "Formicary"
    {:derezzed-events
     [{:event :approach-server
+      :interactive (req true)
       :optional
       {:prompt "Rez Formicary?"
        :yes-ability
