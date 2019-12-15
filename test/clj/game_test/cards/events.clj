@@ -1017,7 +1017,32 @@
         (let [deck (count (:deck (get-runner)))]
           (fire-subs state iw)
           (is (= (inc deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
-          (is (nil? (get-program state 0))))))))
+          (is (nil? (get-program state 0)))))))
+  (testing "Only asks once per run. Issue #4749"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Enigma" "Enigma"]
+                        :credits 10}
+                 :runner {:deck ["Gordian Blade"]
+                          :hand ["Compile"]
+                          :credits 15}})
+      (play-from-hand state :corp "Enigma" "Archives")
+      (play-from-hand state :corp "Enigma" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Compile")
+      (click-prompt state :runner "Archives")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :archives 1))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Stack")
+      (click-prompt state :runner "Gordian Blade")
+      (is (:installed (get-program state 0)) "Gordian Blade should be installed")
+      (run-continue state)
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (is (empty? (:hand (get-runner))) "No Compile prompt"))))
 
 (deftest contaminate
   ;; Contaminate - add 3 virus counters to an installed runner card with no virus counters

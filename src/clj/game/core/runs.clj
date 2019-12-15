@@ -2,7 +2,7 @@
 
 (declare any-flag-fn? clear-run-register! run-cleanup
          gain-run-credits update-ice-in-server update-all-ice
-         get-agenda-points gain-agenda-point optional-ability
+         get-agenda-points gain-agenda-point
          get-remote-names card-name can-access-loud can-steal?
          prevent-jack-out card-flag? can-run?)
 

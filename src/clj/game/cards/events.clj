@@ -424,9 +424,9 @@
       :makes-run true
       :effect (effect (make-run eid target nil card))
       :events [{:event :encounter-ice
+                :once :per-run
                 :optional
                 {:prompt "Install a program?"
-                 :once :per-run
                  :yes-ability
                  {:async true
                   :prompt "From your Stack or Heap?"
