@@ -768,7 +768,25 @@
       (core/rez state :corp (get-ice state :remote2 0))
       (play-and-score state "Project Atlas")
       (click-prompt state :corp "Server 2")
-      (is (= 0 (count (:discard (get-corp)))) "None of the Architects were trashed"))))
+      (is (= 0 (count (:discard (get-corp)))) "None of the Architects were trashed")))
+  (testing "Worlds Plaza interaction. Issue #4723"
+    (do-game
+      (new-game {:corp {:id "Earth Station: SEA Headquarters"
+                        :hand ["Worlds Plaza" "NASX"]}})
+      (play-from-hand state :corp "Worlds Plaza" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (card-ability state :corp (get-content state :remote1 0) 0)
+      (click-card state :corp "NASX")
+      (is (= "NASX" (:title (first (:hosted (get-content state :remote1 0))))))))
+  (testing "Full Immersion RecStudio interaction. Issue #4723"
+    (do-game
+      (new-game {:corp {:id "Earth Station: SEA Headquarters"
+                        :hand ["Full Immersion RecStudio" "NASX"]}})
+      (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (card-ability state :corp (get-content state :remote1 0) 0)
+      (click-card state :corp "NASX")
+      (is (= "NASX" (:title (first (:hosted (get-content state :remote1 0)))))))))
 
 (deftest edward-kim-humanity-s-hammer
   ;; Edward Kim
