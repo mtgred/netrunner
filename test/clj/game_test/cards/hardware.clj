@@ -1144,7 +1144,31 @@
         (card-ability state :runner flip 1)
         (is (zero? (count-tags state)) "Runner has lost 1 tag")
         (is (nil? (refresh flip)) "Flip Switch has been trashed")
-        (is (find-card "Flip Switch" (:discard (get-runner))))))))
+        (is (find-card "Flip Switch" (:discard (get-runner)))))))
+  (testing "Trace reaction ability. Issue #4746"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["SEA Source" "IP Block"]}
+                 :runner {:id "Armand \"Geist\" Walker: Tech Lord"
+                          :deck [(qty "Sure Gamble" 5)]
+                          :hand ["Flip Switch" "Tech Trader"]}})
+      (play-from-hand state :corp "IP Block" "HQ")
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (play-from-hand state :runner "Tech Trader")
+      (play-from-hand state :runner "Flip Switch")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [ip (get-ice state :hq 0)]
+        (run-on state "HQ")
+        (run-next-phase state)
+        (core/rez state :corp ip)
+        (run-continue state)
+        (card-subroutine state :corp ip 0))
+      (is (prompt-is-type? state :corp :waiting) "Corp should now be waiting on Runner for Flip Switch")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Armand \"Geist\" Walker: Tech Lord")
+      (is (= 0 (-> (get-corp) :prompt first :base)) "Base trace should now be 0"))))
 
 (deftest friday-chip
   ;; Friday Chip - gain counters for trashing cards, move a counter on turn start

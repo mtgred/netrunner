@@ -2420,16 +2420,52 @@
 
 (deftest oversight-ai
   ;; Oversight AI - Rez a piece of ICE ignoring all costs
-  (do-game
-    (new-game {:corp {:deck ["Oversight AI" "Archer"]}})
-    (play-from-hand state :corp "Archer" "R&D")
-    (let [archer (get-ice state :rd 0)]
-      (play-from-hand state :corp "Oversight AI")
-      (click-card state :corp archer)
-      (is (rezzed? (refresh archer)))
-      (is (= 4 (:credit (get-corp))) "Archer rezzed at no credit cost")
-      (is (= "Oversight AI" (:title (first (:hosted (refresh archer)))))
-          "Archer hosting OAI as a condition"))))
+  (testing "Rez at no cost"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Oversight AI" "Archer"]}})
+      (play-from-hand state :corp "Archer" "R&D")
+      (let [archer (get-ice state :rd 0)]
+        (play-from-hand state :corp "Oversight AI")
+        (click-card state :corp archer)
+        (is (rezzed? (refresh archer)))
+        (is (= 4 (:credit (get-corp))) "Archer rezzed at no credit cost")
+        (is (= "Oversight AI" (:title (first (:hosted (refresh archer)))))
+            "Archer hosting OAI as a condition")
+        (is (last-log-contains? state "Corp uses Oversight AI to rez ICE protecting R&D at position 0 at no cost.")
+                  "The right information is printed to the log"))))
+  (testing "Trash rezzed ice when all subs are broken. Issue #4752"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Oversight AI" "Archer"]}
+                 :runner {:hand ["Bukhgalter"]
+                          :credits 20}})
+      (play-from-hand state :corp "Archer" "R&D")
+      (let [archer (get-ice state :rd 0)]
+        (play-from-hand state :corp "Oversight AI")
+        (click-card state :corp archer)
+        (is (rezzed? (refresh archer)))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Bukhgalter")
+        (let [bukh (get-program state 0)]
+          (run-on state "R&D")
+          (run-next-phase state)
+          (run-continue state)
+          (card-ability state :runner bukh 1)
+          (card-ability state :runner bukh 1)
+          (card-ability state :runner bukh 1)
+          (card-ability state :runner bukh 1)
+          (card-ability state :runner bukh 1)
+          (card-ability state :runner bukh 0)
+          (click-prompt state :runner "Gain 2 [Credits]")
+          (click-prompt state :runner "Trash a program")
+          (click-prompt state :runner "Trash a program")
+          (click-prompt state :runner "End the run")
+          (is (not (refresh archer)) "Archer is trashed")))
+      (is (find-card "Archer" (:discard (get-corp))) "Archer is in the discard")
+      (is (find-card "Oversight AI" (:discard (get-corp))) "Oversight AI is in the discard")
+      (is (last-log-contains? state "Corp uses Oversight AI to trash itself and Archer protecting R&D at position 0.")
+          "The right information is printed to the log"))))
 
 (deftest patch
   ;; Patch - +2 current strength

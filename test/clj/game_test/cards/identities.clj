@@ -655,72 +655,74 @@
 (deftest earth-station-sea-headquarters
   ;;Earth Station: SEA Headquarters
   ;;Flipside. Earth Station: Ascending to Orbit
-  (testing "Front side: Additional cost to run HQ"
-    (do-game
-      (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
-      (take-credits state :corp)
-      (changes-val-macro -1 (:credit (get-runner))
-                         "Paid 1c to run on HQ"
-                         (run-on state :hq))))
-  (testing "Flip side: No additional cost to run HQ"
-    (do-game
-      (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
-      (card-ability state :corp (get-in @state [:corp :identity]) 0)
-      (take-credits state :corp)
-      (changes-val-macro 0 (:credit (get-runner))
-                         "Paid nothing to run on HQ"
-                         (run-on state :hq))))
-  (testing "Front side: Flipping costs 1 click"
-    (do-game
-      (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
-      (changes-val-macro -1 (:click (get-corp))
-                         "Paid 1 click to flip Earth Station"
-                         (card-ability state :corp (get-in @state [:corp :identity]) 0))
-      (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side")))
-  (testing "Flip side: Can't use ability to flip back to front side"
-    (do-game
-      (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
-      (card-ability state :corp (get-in @state [:corp :identity]) 0)
-      (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side")
-      (changes-val-macro 0 (:click (get-corp))
-                         "Paid 1 click to flip Earth Station"
-                         (card-ability state :corp (get-in @state [:corp :identity]) 0))
-      (is (:flipped (get-in @state [:corp :identity])) "Earth Station is still on flip side")))
-  (testing "Flip side: Additional cost to run a remote"
-    (do-game
-      (new-game {:corp {:id "Earth Station: SEA Headquarters"
-                        :deck ["PAD Campaign"]}})
-      (card-ability state :corp (get-in @state [:corp :identity]) 0)
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (take-credits state :corp)
-      (core/gain state :runner :credit 10)
-      (changes-val-macro -6 (:credit (get-runner))
-                         "Paid nothing to run on HQ"
-                         (run-on state :remote1))))
-  (testing "Flip side: No additional cost to run HQ"
-    (do-game
-      (new-game {:corp {:id "Earth Station: SEA Headquarters"
-                        :deck ["PAD Campaign"]}})
-      (card-ability state :corp (get-in @state [:corp :identity]) 0)
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (take-credits state :corp)
-      (core/gain state :runner :credit 10)
-      (changes-val-macro 0 (:credit (get-runner))
-                         "Paid nothing to run on HQ"
-                         (run-on state :hq))))
-  (testing "Flip side: Flip back on successful HQ run"
-    (do-game
-      (new-game {:corp {:id "Earth Station: SEA Headquarters"
-                        :deck ["PAD Campaign"]}})
-      (card-ability state :corp (get-in @state [:corp :identity]) 0)
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (take-credits state :corp)
-      (core/gain state :runner :credit 10)
-      (is (:flipped (get-in @state [:corp :identity])) "Corp ID is on the flip side")
-      (changes-val-macro 0 (:credit (get-runner))
-                         "Paid nothing to run on HQ"
-                         (run-empty-server state :hq))
-      (is (not (:flipped (get-in @state [:corp :identity]))) "Corp ID is on the front side")))
+  (testing "Front side:"
+    (testing "Additional cost to run HQ"
+      (do-game
+        (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+        (take-credits state :corp)
+        (changes-val-macro -1 (:credit (get-runner))
+                           "Paid 1c to run on HQ"
+                           (run-on state :hq))))
+    (testing "Flipping costs 1 click"
+      (do-game
+        (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+        (changes-val-macro -1 (:click (get-corp))
+                           "Paid 1 click to flip Earth Station"
+                           (card-ability state :corp (get-in @state [:corp :identity]) 0))
+        (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side"))))
+  (testing "Flip side:"
+    (testing "No additional cost to run HQ"
+      (do-game
+        (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+        (card-ability state :corp (get-in @state [:corp :identity]) 0)
+        (take-credits state :corp)
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Paid nothing to run on HQ"
+                           (run-on state :hq))))
+    (testing "Can't use ability to flip back to front side"
+      (do-game
+        (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
+        (card-ability state :corp (get-in @state [:corp :identity]) 0)
+        (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side")
+        (changes-val-macro 0 (:click (get-corp))
+                           "Paid 1 click to flip Earth Station"
+                           (card-ability state :corp (get-in @state [:corp :identity]) 0))
+        (is (:flipped (get-in @state [:corp :identity])) "Earth Station is still on flip side")))
+    (testing "Additional cost to run a remote"
+      (do-game
+        (new-game {:corp {:id "Earth Station: SEA Headquarters"
+                          :deck ["PAD Campaign"]}})
+        (card-ability state :corp (get-in @state [:corp :identity]) 0)
+        (play-from-hand state :corp "PAD Campaign" "New remote")
+        (take-credits state :corp)
+        (core/gain state :runner :credit 10)
+        (changes-val-macro -6 (:credit (get-runner))
+                           "Paid nothing to run on HQ"
+                           (run-on state :remote1))))
+    (testing "No additional cost to run HQ"
+      (do-game
+        (new-game {:corp {:id "Earth Station: SEA Headquarters"
+                          :deck ["PAD Campaign"]}})
+        (card-ability state :corp (get-in @state [:corp :identity]) 0)
+        (play-from-hand state :corp "PAD Campaign" "New remote")
+        (take-credits state :corp)
+        (core/gain state :runner :credit 10)
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Paid nothing to run on HQ"
+                           (run-on state :hq))))
+    (testing "Flip back on successful HQ run"
+      (do-game
+        (new-game {:corp {:id "Earth Station: SEA Headquarters"
+                          :deck ["PAD Campaign"]}})
+        (card-ability state :corp (get-in @state [:corp :identity]) 0)
+        (play-from-hand state :corp "PAD Campaign" "New remote")
+        (take-credits state :corp)
+        (core/gain state :runner :credit 10)
+        (is (:flipped (get-in @state [:corp :identity])) "Corp ID is on the flip side")
+        (changes-val-macro 0 (:credit (get-runner))
+                           "Paid nothing to run on HQ"
+                           (run-empty-server state :hq))
+        (is (not (:flipped (get-in @state [:corp :identity]))) "Corp ID is on the front side"))))
   (testing "Cannot install more than one remote"
     (do-game
       (new-game {:corp {:id "Earth Station: SEA Headquarters"

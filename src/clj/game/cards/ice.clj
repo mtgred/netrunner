@@ -941,8 +941,9 @@
                    :async true
                    :effect (effect
                              (continue-ability
+                               :runner
                                (let [n (min 2 (count (:hand runner)))]
-                                 {:prompt (str "Choose " n " cards in your Grip to add to the top of the Stack (first card targeted will be topmost)")
+                                 {:prompt (str "Choose " (quantify n "card") " in your Grip to add to the top of the Stack (first card targeted will be topmost)")
                                   :choices {:max n
                                             :all true
                                             :card #(and (in-hand? %)
@@ -1261,6 +1262,7 @@
    "Formicary"
    {:derezzed-events
     [{:event :approach-server
+      :interactive (req true)
       :optional
       {:prompt "Rez Formicary?"
        :yes-ability

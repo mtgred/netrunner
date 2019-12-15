@@ -784,6 +784,67 @@
       (is (= 2 (count (:discard (get-runner)))))
       (is (= "Corroder" (:title (first (:deck (get-runner)))))))))
 
+(deftest data-loop
+  ;; Data Loop
+  (testing "Encounter ability. Issue #4744"
+    (testing "Enough cards in hand"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Data Loop"]
+                          :credits 10}
+                   :runner {:deck ["Account Siphon"]
+                            :hand ["Sure Gamble" "Easy Mark"]}})
+        (play-from-hand state :corp "Data Loop" "HQ")
+        (take-credits state :corp)
+        (is (= "Account Siphon" (:title (first (:deck (get-runner))))))
+        (run-on state "HQ")
+        (run-next-phase state)
+        (core/rez state :corp (get-ice state :hq 0))
+        (run-continue state)
+        (is (= "Choose 2 cards in your Grip to add to the top of the Stack (first card targeted will be topmost)"
+               (:msg (prompt-map :runner)))
+            "Runner is prompted")
+        (click-card state :runner "Sure Gamble")
+        (click-card state :runner "Easy Mark")
+        (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))
+        (is (= "Easy Mark" (:title (second (:deck (get-runner))))))))
+    (testing "1 card in hand"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Data Loop"]
+                          :credits 10}
+                   :runner {:deck ["Account Siphon"]
+                            :hand ["Sure Gamble"]}})
+        (play-from-hand state :corp "Data Loop" "HQ")
+        (take-credits state :corp)
+        (is (= "Account Siphon" (:title (first (:deck (get-runner))))))
+        (run-on state "HQ")
+        (run-next-phase state)
+        (core/rez state :corp (get-ice state :hq 0))
+        (run-continue state)
+        (is (= "Choose 1 card in your Grip to add to the top of the Stack (first card targeted will be topmost)"
+               (:msg (prompt-map :runner)))
+            "Runner is prompted")
+        (click-card state :runner "Sure Gamble")
+        (is (empty? (:prompt (get-runner))) "Runner only selects 1 card")
+        (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))))
+    (testing "Empty hand"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Data Loop"]
+                          :credits 10}
+                   :runner {:deck ["Account Siphon"]
+                            :hand ["Sure Gamble"]}})
+        (play-from-hand state :corp "Data Loop" "HQ")
+        (take-credits state :corp)
+        (is (= "Account Siphon" (:title (first (:deck (get-runner))))))
+        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :discard)
+        (run-on state "HQ")
+        (run-next-phase state)
+        (core/rez state :corp (get-ice state :hq 0))
+        (run-continue state)
+        (is (empty? (:prompt (get-runner))) "Runner doesn't have a prompt")))))
+
 (deftest data-mine
   ;; Data Mine - do one net and trash
   (do-game
@@ -1102,6 +1163,7 @@
         (is (zero? (get-in @state [:run :position])) "Now approaching server")
         (run-next-phase state)
         (run-continue state)
+        (click-prompt state :corp "Formicary")
         (click-prompt state :corp "Yes") ; Move Formicary
         (click-prompt state :corp "No") ; Move Formicary
         (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")

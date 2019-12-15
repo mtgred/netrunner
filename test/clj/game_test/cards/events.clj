@@ -692,7 +692,8 @@
       (is (= 1 (count (:discard (get-runner)))) "By Any Means has been played")
       (run-empty-server state "HQ")
       (is (= #{"Film Critic" "By Any Means"}
-             (->> (get-runner) :prompt first :choices (into #{}))) "A choice of which to trigger first")
+             (->> (get-runner) :prompt first :choices (map :title) (into #{})))
+          "A choice of which to trigger first")
       (click-prompt state :runner "Film Critic")
       (click-prompt state :runner "No")
       (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
@@ -703,7 +704,8 @@
       (play-from-hand state :runner "By Any Means")
       (run-empty-server state "HQ")
       (is (= #{"Film Critic" "By Any Means"}
-             (->> (get-runner) :prompt first :choices (into #{}))) "A choice of which to trigger first")
+             (->> (get-runner) :prompt first :choices (map :title) (into #{})))
+          "A choice of which to trigger first")
       (click-prompt state :runner "By Any Means")
       (is (nil? (->> (get-runner) :prompt first :choices)) "By Any Means trashes with no prompt")
       (is (= 2 (count (:discard (get-corp)))) "Agenda was trashed")
@@ -743,7 +745,8 @@
       (take-credits state :corp)
       (play-from-hand state :runner "By Any Means")
       (play-from-hand state :runner "Levy AR Lab Access")
-      (is (= ["By Any Means" "By Any Means"] (->> (get-runner) :hand (mapv :title))) "By Any Means back in the grip")
+      (is (= ["By Any Means" "By Any Means"] (->> (get-runner) :hand (mapv :title)))
+          "By Any Means back in the grip")
       (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")
       (is (= 2 (count (:hand (get-runner)))) "No damage yet")
       (run-empty-server state "HQ")
@@ -1017,7 +1020,32 @@
         (let [deck (count (:deck (get-runner)))]
           (fire-subs state iw)
           (is (= (inc deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
-          (is (nil? (get-program state 0))))))))
+          (is (nil? (get-program state 0)))))))
+  (testing "Only asks once per run. Issue #4749"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Enigma" "Enigma"]
+                        :credits 10}
+                 :runner {:deck ["Gordian Blade"]
+                          :hand ["Compile"]
+                          :credits 15}})
+      (play-from-hand state :corp "Enigma" "Archives")
+      (play-from-hand state :corp "Enigma" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Compile")
+      (click-prompt state :runner "Archives")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :archives 1))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Stack")
+      (click-prompt state :runner "Gordian Blade")
+      (is (:installed (get-program state 0)) "Gordian Blade should be installed")
+      (run-continue state)
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :archives 0))
+      (run-continue state)
+      (is (empty? (:hand (get-runner))) "No Compile prompt"))))
 
 (deftest contaminate
   ;; Contaminate - add 3 virus counters to an installed runner card with no virus counters
@@ -3946,41 +3974,63 @@
 
 (deftest prey
   ;; Prey
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Ice Wall" "Enigma"]}
-               :runner {:hand [(qty "Prey" 2) (qty "Clone Chip" 3)]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Enigma" "R&D")
-    (core/rez state :corp (get-ice state :hq 0))
-    (core/rez state :corp (get-ice state :rd 0))
-    (take-credits state :corp)
-    (core/gain state :runner :click 5)
-    (dotimes [_ 3]
-      (play-from-hand state :runner "Clone Chip"))
-    (play-from-hand state :runner "Prey")
-    (click-prompt state :runner "HQ")
-    (run-next-phase state)
-    (run-continue state)
-    (run-continue state)
-    (is (get-ice state :hq 0) "Ice Wall should not be trashed yet")
-    (click-prompt state :runner "Yes")
-    (click-card state :runner (get-hardware state 0))
-    (is (not (get-ice state :hq 0)) "Ice Wall should be trashed")
-    (run-next-phase state)
-    (run-continue state)
-    (run-successful state)
-    (play-from-hand state :runner "Prey")
-    (click-prompt state :runner "R&D")
-    (run-next-phase state)
-    (run-continue state)
-    (run-continue state)
-    (card-ability state :runner (-> (get-runner) :play-area first) 0)
-    (is (get-ice state :rd 0) "Enigma should not be trashed yet")
-    (click-prompt state :runner "Yes")
-    (click-card state :runner (get-hardware state 0))
-    (click-card state :runner (get-hardware state 1))
-    (is (not (get-ice state :rd 0)) "Enigma should be trashed")))
+  (testing "Full test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Enigma"]}
+                 :runner {:hand [(qty "Prey" 2) (qty "Clone Chip" 3)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Enigma" "R&D")
+      (core/rez state :corp (get-ice state :hq 0))
+      (core/rez state :corp (get-ice state :rd 0))
+      (take-credits state :corp)
+      (core/gain state :runner :click 5)
+      (dotimes [_ 3]
+        (play-from-hand state :runner "Clone Chip"))
+      (play-from-hand state :runner "Prey")
+      (click-prompt state :runner "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (run-continue state)
+      (is (get-ice state :hq 0) "Ice Wall should not be trashed yet")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (get-hardware state 0))
+      (is (not (get-ice state :hq 0)) "Ice Wall should be trashed")
+      (run-next-phase state)
+      (run-continue state)
+      (run-successful state)
+      (play-from-hand state :runner "Prey")
+      (click-prompt state :runner "R&D")
+      (run-next-phase state)
+      (run-continue state)
+      (run-continue state)
+      (card-ability state :runner (-> (get-runner) :play-area first) 0)
+      (is (get-ice state :rd 0) "Enigma should not be trashed yet")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (get-hardware state 0))
+      (click-card state :runner (get-hardware state 1))
+      (is (not (get-ice state :rd 0)) "Enigma should be trashed")))
+  (testing "Correct prompt when ice has 0 strength. Issue #4743"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Burke Bugs"]}
+                 :runner {:hand ["Prey" (qty "Clone Chip" 3)]}})
+      (play-from-hand state :corp "Burke Bugs" "HQ")
+      (take-credits state :corp)
+      (dotimes [_ 3]
+        (play-from-hand state :runner "Clone Chip"))
+      (play-from-hand state :runner "Prey")
+      (click-prompt state :runner "HQ")
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (run-continue state)
+      (is (get-ice state :hq 0) "Ice Wall should not be trashed yet")
+      (is (= "Use Prey to trash Burke Bugs?" (:msg (prompt-map :runner)))
+          "Runner has correct prompt")
+      (click-prompt state :runner "Yes")
+      (is (find-card "Burke Bugs" (:discard (get-corp))) "Burke Bugs is trashed")
+      (is (not (get-ice state :hq 0)) "Burke Bugs is trashed"))))
 
 (deftest process-automation
   ;; Process Automation

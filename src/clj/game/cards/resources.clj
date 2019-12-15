@@ -1028,10 +1028,8 @@
    (letfn [(get-agenda [card] (first (filter agenda? (:hosted card))))
            (host-agenda? [agenda]
              {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
-                         :yes-ability {:effect (req (let [agenda (host state side card agenda)]
-                                                      (access-end state side eid agenda))
-                                                    (when-not (:run @state)
-                                                      (swap! state dissoc :access)))
+                         :yes-ability {:effect (req (host state side card agenda)
+                                                    (swap! state dissoc :access))
                                        :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
      {:events [{:event :access
                 :req (req (and (empty? (filter agenda? (:hosted card)))

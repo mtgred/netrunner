@@ -1381,16 +1381,17 @@
    {:choices {:card #(and (ice? %)
                           (not (rezzed? %))
                           (= (last (:zone %)) :ices))}
-    :msg (msg "rez " (:title target) " at no cost")
-    :effect (effect (rez target {:ignore-cost :all-costs})
+    :msg (msg "rez " (card-str state target) " at no cost")
+    :effect (effect (rez target {:ignore-cost :all-costs
+                                 :no-msg true})
                     (host (get-card state target) (assoc card :seen true :condition true)))
-    :events [{:event :encounter-ice-ends
+    :events [{:event :subroutines-broken
               :condition :hosted
               :async true
               :req (req (and (same-card? target (:host card))
                              (empty? (remove :broken (:subroutines target)))))
-              :effect (effect (system-msg :corp (str "trashes " (:title target)))
-                              (trash :corp eid card {:unpreventable true}))}]}
+              :msg (msg "trash itself and " (card-str state target))
+              :effect (effect (trash :corp eid target {:unpreventable true}))}]}
 
    "Patch"
    {:choices {:card #(and (ice? %)

@@ -424,9 +424,9 @@
       :makes-run true
       :effect (effect (make-run eid target nil card))
       :events [{:event :encounter-ice
+                :once :per-run
                 :optional
                 {:prompt "Install a program?"
-                 :once :per-run
                  :yes-ability
                  {:async true
                   :prompt "From your Stack or Heap?"
@@ -2047,15 +2047,23 @@
               (effect
                 (continue-ability
                   (let [ice target]
-                    {:optional
-                     {:prompt (str "Trash " (quantify (get-strength target) "card")
-                                   " to trash " (:title ice) "?")
-                      :yes-ability
-                      {:async true
-                       :once :per-turn
-                       :cost [:installed (get-strength ice)]
-                       :msg (msg "trash " (card-str state ice))
-                       :effect (effect (trash eid ice nil))}}})
+                    (if (pos? (get-strength target))
+                      {:optional
+                       {:prompt (str "Use Prey to trash " (quantify (get-strength target) "card")
+                                     " to trash " (:title ice) "?")
+                        :yes-ability
+                        {:async true
+                         :once :per-turn
+                         :cost [:installed (get-strength ice)]
+                         :msg (msg "trash " (card-str state ice))
+                         :effect (effect (trash eid ice nil))}}}
+                      {:optional
+                       {:prompt (str "Use Prey to trash " (:title ice) "?")
+                        :yes-ability
+                        {:async true
+                         :once :per-turn
+                         :msg (msg "trash " (card-str state ice))
+                         :effect (effect (trash eid ice nil))}}}))
                   card nil))}]}
 
    "Process Automation"
