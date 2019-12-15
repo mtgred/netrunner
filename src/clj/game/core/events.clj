@@ -229,7 +229,7 @@
                                           (not (and silent-fn
                                                     (silent-fn state side (make-eid state) (:card %) event-targets))))
                                        handlers)
-                    titles (map (comp :title :card) non-silent)
+                    titles (map :card non-silent)
                     interactive (filter #(let [interactive-fn (:interactive (:ability %))]
                                            (and interactive-fn
                                                 (interactive-fn state side (make-eid state) (:card %) event-targets)))
@@ -261,7 +261,7 @@
                   {:prompt "Choose a trigger to resolve"
                    :choices titles
                    :async true
-                   :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
+                   :effect (req (let [to-resolve (some #(when (same-card? target (:card %)) %) handlers)
                                       ability-to-resolve (dissoc (:ability to-resolve) :req)
                                       the-card (card-for-ability state to-resolve)]
                                   (wait-for
@@ -272,7 +272,7 @@
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler
-                                                          (remove-once #(= target (:title (:card %))) handlers))
+                                                          (remove-once #(same-card? target (:card %)) handlers))
                                                         nil event-targets)
                                       (effect-completed state side eid)))))})))]
 
