@@ -2437,7 +2437,28 @@
         (click-prompt state :runner "Yes")
         (click-card state :runner (first (:hand (get-runner))))
         (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Null")
-        (is (= 1 (:current-strength (refresh iw))) "Ice Wall not reduced by Null")))))
+        (is (= 1 (:current-strength (refresh iw))) "Ice Wall not reduced by Null"))))
+  (testing "Receives prompt on second run, if ability not used"
+    (do-game
+      (new-game {:runner {:id "Null: Whistleblower"
+                          :deck [(qty "Sure Gamble" 10)]}
+                :corp { :deck ["Guard"]}})
+      (play-from-hand state :corp "Guard" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (is (prompt-is-type? state :corp :waiting) "Corp should now be waiting on Runner for Null ability")
+      (is (= "Trash a card in grip to lower ice strength by 2?" (->> (get-runner) :prompt first :msg)))
+      (click-prompt state :runner "No")
+      (fire-subs state (get-ice state :hq 0))
+      (run-on state "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (is (prompt-is-type? state :corp :waiting) "Corp should now be again waiting on Runner for Null ability")
+      (is (= "Trash a card in grip to lower ice strength by 2?" (->> (get-runner) :prompt first :msg)))
+      (click-prompt state :runner "Yes"))))
 
 (deftest omar-keung-conspiracy-theorist
   ;; Omar Keung
