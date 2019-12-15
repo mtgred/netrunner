@@ -897,7 +897,8 @@
                                                  (event-count state :runner :runner-install f))))))
                         :msg "gain 1 [Credit]"
                         :effect (effect (gain-credits :runner 1))}]
-     {:events [(assoc keiko-ability :event :spent-credits-from-card)
+     {:in-play [:memory 2]
+      :events [(assoc keiko-ability :event :spent-credits-from-card)
                (assoc keiko-ability :event :runner-install)]})
 
    "Knobkierie"
