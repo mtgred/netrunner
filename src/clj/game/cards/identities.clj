@@ -1168,7 +1168,7 @@
       :events [{:event :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))
-                :msg (msg "increased the install cost of " (:title target) " by 1 [Credits]")}]})
+                :msg (msg "increased the rez cost of " (:title target) " by 1 [Credits]")}]})
 
    "Rielle \"Kit\" Peddler: Transhuman"
    {:events [{:event :encounter-ice
