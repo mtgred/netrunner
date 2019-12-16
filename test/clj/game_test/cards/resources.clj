@@ -259,18 +259,40 @@
 
 (deftest bazaar
   ;; Bazaar - Only triggers when installing from Grip
-  (do-game
-    (new-game {:runner {:deck ["Street Peddler"
-                               "Bazaar"
-                               (qty "Spy Camera" 6)]}})
-    (take-credits state :corp)
-    (starting-hand state :runner ["Street Peddler" "Bazaar" "Spy Camera" "Spy Camera" "Spy Camera"])
-    (play-from-hand state :runner "Bazaar")
-    (play-from-hand state :runner "Street Peddler")
-    (let [peddler (get-resource state 1)]
-      (card-ability state :runner peddler 0)
-      (click-prompt state :runner (first (:hosted peddler)))
-      (is (empty? (:prompt (get-runner))) "No Bazaar prompt from install off Peddler"))))
+  (testing "basic test"
+    (do-game
+      (new-game {:runner {:deck ["Street Peddler"
+                                "Bazaar"
+                                (qty "Spy Camera" 6)]}})
+      (take-credits state :corp)
+      (starting-hand state :runner ["Street Peddler" "Bazaar" "Spy Camera" "Spy Camera" "Spy Camera"])
+      (play-from-hand state :runner "Bazaar")
+      (play-from-hand state :runner "Street Peddler")
+      (let [peddler (get-resource state 1)]
+        (card-ability state :runner peddler 0)
+        (click-prompt state :runner (first (:hosted peddler)))
+        (is (empty? (:prompt (get-runner))) "No Bazaar prompt from install off Peddler"))))
+  (testing "bazaar with kate test"
+    (do-game
+      (new-game {:runner {:id "Kate \"Mac\" McCaffrey: Digital Tinker"
+                          :deck ["Bazaar" "Cache" (qty "Clone Chip" 6)]}})
+      (take-credits state :corp)
+      (starting-hand state :runner ["Bazaar" "Cache" "Clone Chip" "Clone Chip" "Clone Chip"])
+      (play-from-hand state :runner "Bazaar")
+      (play-from-hand state :runner "Clone Chip")
+      (click-prompt state :runner "Yes")
+      (is (= 3 (:credit (get-runner))) "Runner has 3 credits (-1 Bazaar, -1 second clone chip")))
+  ;(testing "bazaar with Az test"
+  ;  (do-game
+  ;    (new-game {:runner {:id "Az McCaffrey: Mechanical Prodigy"
+  ;                        :deck ["Bazaar" (qty "Clone Chip" 6)]}})
+  ;    (take-credits state :corp)
+  ;    (starting-hand state :runner ["Bazaar" "Clone Chip" "Clone Chip" "Clone Chip"])
+  ;    (play-from-hand state :runner "Bazaar")
+  ;    (play-from-hand state :runner "Clone Chip")
+  ;    (click-prompt state :runner "Yes")
+  ;    (is (= 3 (:credit (get-runner))) "Runner has 3 credits (-1 Bazaar, -1 second clone chip")))
+      )
 
 (deftest beach-party
   ;; Beach Party - Lose 1 click when turn begins; hand size increased by 5
