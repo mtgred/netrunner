@@ -282,17 +282,16 @@
       (play-from-hand state :runner "Clone Chip")
       (click-prompt state :runner "Yes")
       (is (= 3 (:credit (get-runner))) "Runner has 3 credits (-1 Bazaar, -1 second clone chip")))
-  ;(testing "bazaar with Az test"
-  ;  (do-game
-  ;    (new-game {:runner {:id "Az McCaffrey: Mechanical Prodigy"
-  ;                        :deck ["Bazaar" (qty "Clone Chip" 6)]}})
-  ;    (take-credits state :corp)
-  ;    (starting-hand state :runner ["Bazaar" "Clone Chip" "Clone Chip" "Clone Chip"])
-  ;    (play-from-hand state :runner "Bazaar")
-  ;    (play-from-hand state :runner "Clone Chip")
-  ;    (click-prompt state :runner "Yes")
-  ;    (is (= 3 (:credit (get-runner))) "Runner has 3 credits (-1 Bazaar, -1 second clone chip")))
-      )
+  (testing "bazaar with Az test"
+    (do-game
+      (new-game {:runner {:id "Az McCaffrey: Mechanical Prodigy"
+                          :deck ["Bazaar" (qty "Clone Chip" 6)]}})
+      (take-credits state :corp)
+      (starting-hand state :runner ["Bazaar" "Clone Chip" "Clone Chip" "Clone Chip"])
+      (play-from-hand state :runner "Bazaar")
+      (play-from-hand state :runner "Clone Chip")
+      (click-prompt state :runner "Yes")
+      (is (= 3 (:credit (get-runner))) "Runner has 3 credits (-1 Bazaar, -1 second clone chip"))))
 
 (deftest beach-party
   ;; Beach Party - Lose 1 click when turn begins; hand size increased by 5
