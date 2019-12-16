@@ -2258,7 +2258,7 @@
       :events [{:event :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))
-                :msg (msg "reduce the install cost of " (:title target) " by " (count-tags state) " [Credits]")}]})
+                :msg (msg "reduce the rez cost of " (:title target) " by " (count-tags state) " [Credits]")}]})
 
    "Whampoa Reclamation"
    {:abilities [{:label "Add 1 card from Archives to the bottom of R&D"
