@@ -50,6 +50,19 @@
   [state card text]
   (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")}))
 
+(defn indicate-action
+  [state side args]
+  (system-msg state side
+              (str "Please pause, " (if (= side :corp) "Corp" "Runner") " is acting."))
+  (toast state side
+         "You have indicated action to your opponent"
+         "info"
+         {:time-out 2000 :close-button false})
+  (toast state (if (= side :corp) :runner :corp)
+         "Pause please, opponent is acting"
+         "info"
+         {:time-out 5000 :close-button true}))
+
 (defn play-sfx
   "Adds a sound effect to play to the sfx queue.
   Each SFX comes with a unique ID, so each client can track for themselves which sounds have already been played.
