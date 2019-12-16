@@ -1051,12 +1051,14 @@
 
    "Nero Severn: Information Broker"
    {:events [{:event :encounter-ice
-              :req (req (has-subtype? target "Sentry"))
-              :interactive (req true)
-              :once :per-turn
-              :msg "jack out"
-              :async true
-              :effect (effect (jack-out eid))}]}
+              :optional 
+              {:req (req (and (not-used-once? state {:once :per-turn} card)
+                              (has-subtype? target "Sentry")))
+               :prompt "Do you want to jack out?"
+               :yes-ability {:once :per-turn
+                             :async true
+                             :msg "jack out"
+                             :effect (effect (jack-out eid))}}}]}
 
    "New Angeles Sol: Your News"
    (let [nasol {:optional

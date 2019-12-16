@@ -2286,6 +2286,48 @@
         (take-credits state :runner)
         (is (= 2 (get-counters (refresh nbn-mn) :recurring)) "Recurring credits refill once MN isn't disabled anymore")))))
 
+(deftest nero-severn-information-broker
+  ;; Nero Severn: Information Broker
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:id "Nero Severn: Information Broker"
+                          :deck [(qty "Sure Gamble" 10)]}
+                :corp { :deck ["Komainu"]}})
+      (play-from-hand state :corp "Komainu" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (is (prompt-is-type? state :corp :waiting) "Corp should now be waiting on Runner for Nero ability")
+      (is (= "Do you want to jack out?" (->> (get-runner) :prompt first :msg)))
+      (click-prompt state :runner "Yes")
+      (run-on state "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (is (not (= "Do you want to jack out?" (->> (get-runner) :prompt first :msg))) "No prompt for Nero ability because we used it on previous run")))
+  (testing "Receives prompt on second run, if ability not used"
+    (do-game
+      (new-game {:runner {:id "Nero Severn: Information Broker"
+                          :deck [(qty "Sure Gamble" 10)]}
+                :corp { :deck ["Guard"]}})
+      (play-from-hand state :corp "Guard" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (is (prompt-is-type? state :corp :waiting) "Corp should now be waiting on Runner for Nero ability")
+      (is (= "Do you want to jack out?" (->> (get-runner) :prompt first :msg)))
+      (click-prompt state :runner "No")
+      (fire-subs state (get-ice state :hq 0))
+      (run-on state "HQ")
+      (run-next-phase state)
+      (run-continue state)
+      (is (prompt-is-type? state :corp :waiting) "Corp should now be again waiting on Runner for Nero ability")
+      (is (= "Do you want to jack out?" (->> (get-runner) :prompt first :msg)))
+      (click-prompt state :runner "Yes"))))
+
 (deftest new-angeles-sol-your-news
   ;; New Angeles Sol - interaction with runner stealing agendas
   (do-game
