@@ -1160,18 +1160,16 @@
    {:abilities [(assoc (break-sub nil 1 "Barrier") :once :per-turn)]}
 
    "Reina Roja: Freedom Fighter"
-   (letfn [(not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
-           (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
-     {:effect (req (when (pos? (event-count state :corp :rez #(ice? (first %))))
-                     (mark-triggered state card)))
-      :constant-effects [{:type :rez-cost
+   (letfn [(not-triggered? [state card] (no-event? state :runner :rez #(ice? (first %))))]
+     {:constant-effects [{:type :rez-cost
                           :req (req (and (ice? target)
                                          (not-triggered? state card)))
                           :value 1}]
       :events [{:event :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))
-                :effect (req (mark-triggered state card))}]})
+                :msg (msg "increased the install cost of " (:title target) " by 1 [Credits]")}]})
+                               
 
    "Rielle \"Kit\" Peddler: Transhuman"
    {:events [{:event :encounter-ice
