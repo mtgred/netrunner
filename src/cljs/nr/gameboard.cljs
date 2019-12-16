@@ -1646,6 +1646,9 @@
                        (or @runner-phase-12 @corp-phase-12))
               [:button {:on-click #(send-command "end-phase-12")}
                (if (= side :corp) "Mandatory Draw" "Take Clicks")])
+            [cond-button "Indicate action"
+               (not (or @runner-phase-12 @corp-phase-12))
+               #(send-command "indicate-action")]
             (when (= side :runner)
               [:div
                [cond-button "Remove Tag"
