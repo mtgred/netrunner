@@ -1609,6 +1609,33 @@
         (run-next-phase state)
         (run-continue state)
         (run-successful state)
+        (is (empty? (:prompt (get-runner))) "No prompt for accessing cards"))))
+  (testing "Eater interaction with remote server. Issue #4536"
+    (do-game
+      (new-game {:corp {:deck [(qty "Rototurret" 2) "NGO Front"]}
+                 :runner {:deck [(qty "Eater" 2)]}})
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "Rototurret" "Server 1")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Eater")
+      (let [eater (get-program state 0)
+            ngo (get-content state :remote1 0)
+            rt (get-ice state :remote1 0)]
+        (run-on state "Server 1")
+        (run-next-phase state)
+        (core/rez state :corp (refresh rt))
+        (run-continue state)
+        (card-ability state :runner eater 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "Done")
+        (fire-subs state (refresh rt))
+        (click-card state :corp eater)
+        (run-continue state)
+        (run-next-phase state)
+        (run-continue state)
+        (run-successful state)
+        (is (find-card "Eater" (:discard (get-runner))) "Eater is trashed")
         (is (empty? (:prompt (get-runner))) "No prompt for accessing cards")))))
 
 (deftest egret
