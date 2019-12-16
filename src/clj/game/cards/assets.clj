@@ -2250,18 +2250,15 @@
                   :effect (req (add-one (:cid card) state (get-card state target)))}]}))
 
    "Watchdog"
-   (letfn [(not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
-           (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
-     {:effect (req (when (pos? (event-count state :corp :rez #(ice? (first %))))
-                     (mark-triggered state card)))
-      :constant-effects [{:type :rez-cost
+   (letfn [(not-triggered? [state card] (no-event? state :runner :rez #(ice? (first %))))]
+     {:constant-effects [{:type :rez-cost
                           :req (req (and (ice? target)
                                          (not-triggered? state card)))
                           :value (req (- (count-tags state)))}]
       :events [{:event :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))
-                :effect (req (mark-triggered state card))}]})
+                :msg (msg "reduce the install cost of " (:title target) " by " (count-tags state) " [Credits]")}]})
 
    "Whampoa Reclamation"
    {:abilities [{:label "Add 1 card from Archives to the bottom of R&D"
