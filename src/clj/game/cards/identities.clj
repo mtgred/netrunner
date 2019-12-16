@@ -1056,6 +1056,7 @@
                               (has-subtype? target "Sentry")))
                :prompt "Do you want to jack out?"
                :yes-ability {:once :per-turn
+                             :async true
                              :msg "jack out"
                              :effect (effect (jack-out eid))}}}]}
 
