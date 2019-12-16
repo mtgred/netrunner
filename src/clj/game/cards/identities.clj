@@ -1051,7 +1051,7 @@
 
    "Nero Severn: Information Broker"
    {:events [{:event :encounter-ice
-              :optional 
+              :optional
               {:req (req (and (not-used-once? state {:once :per-turn} card)
                               (has-subtype? target "Sentry")))
                :prompt "Do you want to jack out?"
@@ -1113,13 +1113,13 @@
 
    "Null: Whistleblower"
    {:events [{:event :encounter-ice
-              :once :per-turn
               :optional
-              {:req (req (pos? (count (:hand runner))))
-               :once :per-turn
+              {:req (req (and (not-used-once? state {:once :per-turn} card)
+                              (pos? (count (:hand runner)))))
                :prompt "Trash a card in grip to lower ice strength by 2?"
                :yes-ability
                {:prompt "Select a card in your Grip to trash"
+                :once :per-turn
                 :choices {:card in-hand?}
                 :msg (msg "trash " (:title target)
                           " and reduce the strength of " (:title current-ice)
