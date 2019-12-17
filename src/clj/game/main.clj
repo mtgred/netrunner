@@ -31,6 +31,7 @@
    "end-turn" core/end-turn
    "generate-install-list" core/generate-install-list
    "generate-runnable-zones" core/generate-runnable-zones
+   "indicate-action" core/indicate-action
    "jack-out" core/jack-out
    "keep" core/keep-hand
    "move" core/move-card

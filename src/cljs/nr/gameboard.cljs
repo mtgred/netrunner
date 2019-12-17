@@ -1464,7 +1464,11 @@
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
          (not (:no-action @run)))
-    #(send-command "no-action")]])
+    #(send-command "no-action")]
+
+   [:button {:on-click #(send-command "indicate-action")
+             :key "Indicate action"}
+    "Indicate action"]])
 
 (defn runner-run-div
   [run]
@@ -1505,7 +1509,11 @@
       (and (:jack-out @run)
            (not (:cannot-jack-out @run))
            (not (= "encounter-ice" phase)))
-      #(send-command "jack-out")]]))
+      #(send-command "jack-out")]
+
+     [:button {:on-click #(send-command "indicate-action")
+               :key "Indicate action"}
+      "Indicate action"]]))
 
 (defn run-div
   [side run]
@@ -1687,7 +1695,10 @@
             [cond-button "Gain Credit"
              (and (not (or @runner-phase-12 @corp-phase-12))
                   (pos? (:click @me)))
-             #(send-command "credit")]]))])})))
+             #(send-command "credit")]
+            [:button {:on-click #(send-command "indicate-action")
+                      :key "Indicate action"}
+             "Indicate action"]]))])})))
 
 (defn starting-timestamp []
   [:div.panel.blue-shade
