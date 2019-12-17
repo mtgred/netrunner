@@ -1176,6 +1176,7 @@
    "Hunting Grounds"
    {:implementation "Use prevention ability during approach, after ice is rezzed"
     :abilities [{:label "Prevent a \"When encountered\" ability"
+                 :once :per-turn
                  :req (req (and (= :approach-ice (:phase run))
                                 (rezzed? current-ice)
                                 (or (->> (:events @state)
@@ -1183,6 +1184,7 @@
                                                        (same-card? current-ice (:card %))))
                                          seq)
                                     (contains? (card-def current-ice) :on-encounter))))
+                 :msg (msg "prevent the encounter effect on " (card-str state current-ice))
                  :effect (req (let [suppress
                                     (register-suppress
                                       state side card

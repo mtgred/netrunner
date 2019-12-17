@@ -1976,7 +1976,45 @@
         (card-ability state :runner (get-resource state 0) 0)
         (run-continue state)
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
-        (is (:run @state) "Run hasn't ended from not paying Tollbooth")))))
+        (is (:run @state) "Run hasn't ended from not paying Tollbooth"))))
+  (testing "Prints correctly to the log"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Tollbooth"]
+                        :credits 10}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Hunting Grounds"]}})
+      (play-from-hand state :corp "Tollbooth" "New remote")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (run-on state "Server 1")
+      (run-next-phase state)
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (last-log-contains? state "prevent the encounter effect on Tollbooth protecting Server 1 at position 0")
+          "Hunting Grounds logs the ability")))
+  (testing "Only prevents the on-encounter effects of a single ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Tollbooth" 2)]
+                        :credits 20}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Hunting Grounds"]}})
+      (play-from-hand state :corp "Tollbooth" "New remote")
+      (play-from-hand state :corp "Tollbooth" "Server 1")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (core/rez state :corp (get-ice state :remote1 1))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (run-on state "Server 1")
+      (run-next-phase state)
+      (let [credits (:credit (get-runner))]
+        (card-ability state :runner (get-resource state 0) 0)
+        (run-continue state)
+        (run-continue state)
+        (run-next-phase state)
+        (run-continue state)
+        (is (= (- credits 3) (:credit (get-runner))) "Runner loses 3 credits to Tollbooth 2 ")))))
 
 (deftest ice-analyzer
   ;; Ice Analyzer
