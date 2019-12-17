@@ -294,11 +294,8 @@
                                 (and (resource? card)
                                      (or (has-subtype? card "Job")
                                          (has-subtype? card "Connection")))))
-           (not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
-           (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
-     {:effect (req (when (pos? (event-count state :runner :runner-install #(az-type? (first %))))
-                     (mark-triggered state card)))
-      :constant-effects [{:type :install-cost
+           (not-triggered? [state card] (no-event? state :runner :runner-install #(az-type? (first %))))]
+     {:constant-effects [{:type :install-cost
                           :req (req (and (az-type? target)
                                          (not-triggered? state card)))
                           :value -1}]
@@ -306,8 +303,7 @@
                 :req (req (and (az-type? target)
                                (not-triggered? state card)))
                 :silent (req true)
-                :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")
-                :effect (req (mark-triggered state card))}]})
+                :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]})
 
    "Blue Sun: Powering the Future"
    {:flags {:corp-phase-12 (req (and (not (:disabled card))
@@ -843,11 +839,8 @@
    ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
    (letfn [(kate-type? [card] (or (hardware? card)
                                   (program? card)))
-           (not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
-           (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
-     {:effect (req (when (pos? (event-count state :runner :runner-install #(kate-type? (first %))))
-                     (mark-triggered state card)))
-      :constant-effects [{:type :install-cost
+           (not-triggered? [state card] (no-event? state :runner :runner-install #(kate-type? (first %))))]
+     {:constant-effects [{:type :install-cost
                           :req (req (and (kate-type? target)
                                          (not-triggered? state card)))
                           :value -1}]
@@ -855,8 +848,7 @@
                 :req (req (and (kate-type? target)
                                (not-triggered? state card)))
                 :silent (req true)
-                :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")
-                :effect (req (mark-triggered state card))}]})
+                :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]})
 
    "Ken \"Express\" Tenma: Disappeared Clone"
    {:events [{:event :play-event
@@ -1168,18 +1160,15 @@
    {:abilities [(assoc (break-sub nil 1 "Barrier") :once :per-turn)]}
 
    "Reina Roja: Freedom Fighter"
-   (letfn [(not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
-           (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
-     {:effect (req (when (pos? (event-count state :corp :rez #(ice? (first %))))
-                     (mark-triggered state card)))
-      :constant-effects [{:type :rez-cost
+   (letfn [(not-triggered? [state card] (no-event? state :runner :rez #(ice? (first %))))]
+     {:constant-effects [{:type :rez-cost
                           :req (req (and (ice? target)
                                          (not-triggered? state card)))
                           :value 1}]
       :events [{:event :rez
                 :req (req (and (ice? target)
                                (not-triggered? state card)))
-                :effect (req (mark-triggered state card))}]})
+                :msg (msg "increased the rez cost of " (:title target) " by 1 [Credits]")}]})
 
    "Rielle \"Kit\" Peddler: Transhuman"
    {:events [{:event :encounter-ice
