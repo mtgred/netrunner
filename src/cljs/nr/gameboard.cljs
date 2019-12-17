@@ -306,10 +306,10 @@
 
 (def should-scroll (r/atom {:update true :send-msg false}))
 
-(defn log-resize [event ui]
-  "Resize the card zoom to fit the available space"
-  (let [width (.. ui -size -width)
-        top (.. ui -position -top)
+(defn resize-card-zoom []
+  "Resizes the card zoom based on the values in the app-state"
+  (let [width (get-in @app-state [:options :log-width])
+        top (get-in @app-state [:options :log-top])
         max-card-width (- width 5)
         max-card-height (- top 10)
         card-ratio (/ 418 300)]
@@ -321,7 +321,20 @@
           (.css "width" (int (/ max-card-height card-ratio)))
           (.css "height" max-card-height)))
     (-> ".rightpane" js/$ (.css "width" width))
-    (set! (.. ui -position -left) 0)))
+    (-> ".log" js/$
+        (.css "left" 0)
+        (.css "top" top)
+        (.css "width" width))))
+
+(defn log-resize [event ui]
+  "Resize the card zoom to fit the available space"
+  (let [width (.. ui -size -width)
+        top (.. ui -position -top)]
+    (swap! app-state assoc-in [:options :log-width] width)
+    (swap! app-state assoc-in [:options :log-top] top)
+    (.setItem js/localStorage "log-width" width)
+    (.setItem js/localStorage "log-top" top)
+    (resize-card-zoom)))
 
 (defn log-start-resize [event ui]
   "Display a zoomed card when resizing so the user can visualize how the
@@ -1725,6 +1738,7 @@
                 [log-pane]
                 [log-typing]
                 [log-input]]]
+              (do (resize-card-zoom) nil)
 
               [:div.centralpane
                (if (= op-side :corp)
