@@ -1071,34 +1071,34 @@
       (run-on state "HQ")
       (is (:run @state) "Run initiated ok"))))
 
-; (deftest f2p
-;   ;; F2P
-;   (testing "Basic test"
-;     (do-game
-;       (new-game {:corp {:deck ["F2P"]}
-;                  :runner {:deck ["Inti" "Scrubber"]}})
-;       (play-from-hand state :corp "F2P" "HQ")
-;       (take-credits state :corp)
-;       (play-from-hand state :runner "Inti")
-;       (play-from-hand state :runner "Scrubber")
-;       (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
-;       (run-on state "HQ")
-;       (let [f2p (get-ice state :hq 0)]
-;         (core/rez state :corp (refresh f2p))
-;         (changes-val-macro -2 (:credit (get-runner))
-;                            "Pay 2c to break sub"
-;                            (card-side-ability state :runner f2p 0)
-;                            (click-prompt state :runner "Add an installed Runner card to the grip"))
-;         (card-subroutine state :corp (refresh f2p) 0)
-;         (changes-val-macro 1 (count (:hand (get-runner)))
-;                            "Bounce Inti to hand"
-;                            (click-card state :corp "Inti"))
-;         (card-subroutine state :corp (refresh f2p) 0)
-;         (changes-val-macro 1 (count (:hand (get-runner)))
-;                            "Bounce Scrubber to hand"
-;                            (click-card state :corp "Scrubber"))
-;         (card-subroutine state :corp (refresh f2p) 0)
-;         (is (empty? (:prompt (get-corp))) "F2P doesn't fire if no installed cards")))))
+(deftest f2p
+  ;; F2P
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["F2P"]}
+                 :runner {:deck ["Inti" "Scrubber"]}})
+      (play-from-hand state :corp "F2P" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inti")
+      (play-from-hand state :runner "Scrubber")
+      (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
+      (run-on state "HQ")
+      (let [f2p (get-ice state :hq 0)]
+        (core/rez state :corp (refresh f2p))
+        (changes-val-macro -2 (:credit (get-runner))
+                           "Pay 2c to break sub"
+                           (card-side-ability state :runner f2p 0)
+                           (click-prompt state :runner "Add an installed Runner card to the grip"))
+        (card-subroutine state :corp (refresh f2p) 0)
+        (changes-val-macro 1 (count (:hand (get-runner)))
+                           "Bounce Inti to hand"
+                           (click-card state :corp "Inti"))
+        (card-subroutine state :corp (refresh f2p) 0)
+        (changes-val-macro 1 (count (:hand (get-runner)))
+                           "Bounce Scrubber to hand"
+                           (click-card state :corp "Scrubber"))
+        (card-subroutine state :corp (refresh f2p) 0)
+        (is (empty? (:prompt (get-corp))) "F2P doesn't fire if no installed cards")))))
 
 (deftest fenris
   ;; Fenris - Illicit ICE give Corp 1 bad publicity when rezzed

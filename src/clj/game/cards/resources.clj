@@ -1855,7 +1855,7 @@
                 :effect (effect (update! (dissoc (get-card state card) :server-target)))}]
       :abilities [ability]})
 
-   "Paule's Cafe"
+   "Paule's Café"
    {:abilities [{:label "Host a program or piece of hardware"
                  :cost [:click 1]
                  :choices {:card #(and (#{"Program" "Hardware"} (:type %))
