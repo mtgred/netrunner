@@ -1084,7 +1084,9 @@
       (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
       (run-on state "HQ")
       (let [f2p (get-ice state :hq 0)]
+        (run-next-phase state)
         (core/rez state :corp (refresh f2p))
+        (run-continue state)
         (changes-val-macro -2 (:credit (get-runner))
                            "Pay 2c to break sub"
                            (card-side-ability state :runner f2p 0)
