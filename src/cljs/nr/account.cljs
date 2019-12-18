@@ -63,6 +63,8 @@
   (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
   (swap! app-state assoc-in [:options :stacked-servers] (:stacked-servers @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
+  (swap! app-state assoc-in [:options :log-width] (:log-width @s))
+  (swap! app-state assoc-in [:options :log-top] (:log-top @s))
   (swap! app-state assoc-in [:options :blocked-users] (:blocked-users @s))
   (swap! app-state assoc-in [:options :alt-arts] (:alt-arts @s))
   (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
@@ -70,6 +72,8 @@
   (.setItem js/localStorage "sounds" (:sounds @s))
   (.setItem js/localStorage "lobby_sounds" (:lobby-sounds @s))
   (.setItem js/localStorage "sounds_volume" (:volume @s))
+  (.setItem js/localStorage "log-width" (:log-width @s))
+  (.setItem js/localStorage "log-top" (:log-top @s))
   (.setItem js/localStorage "stacked-servers" (:stacked-servers @s))
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
   (post-options url (partial post-response s)))
@@ -127,6 +131,33 @@
    (doseq [card (vals (:alt-arts @app-state))]
      (update-card-art card art s))))
 
+(defn log-width-option [s]
+  (let [log-width (r/atom (:log-width @s))]
+    (println @log-width)
+    (fn []
+      [:div
+       [:input {:type "number"
+                :min 100 :max 2000
+                :on-change #(do (swap! s assoc-in [:log-width] (.. % -target -value))
+                                (reset! log-width (.. % -target -value)))
+                :value @log-width}]
+       [:button.update-log-width {:type "button"
+                                  :on-click #(do (swap! s assoc-in [:log-width] (get-in @app-state [:options :log-width]))
+                                                 (reset! log-width (get-in @app-state [:options :log-width])))} "Get current log width" ]])))
+(defn log-top-option [s]
+  (let [log-top (r/atom (:log-top @s))]
+    (println @log-top)
+    (fn []
+      [:div
+       [:input {:type "number"
+                :min 100 :max 2000
+                :on-change #(do (swap! s assoc-in [:log-top] (.. % -target -value))
+                                (reset! log-top (.. % -target -value)))
+                :value @log-top}]
+       [:button.update-log-width {:type "button"
+                                  :on-click #(do (swap! s assoc-in [:log-top] (get-in @app-state [:options :log-top]))
+                                                 (reset! log-top (get-in @app-state [:options :log-top])))} "Get current log top" ]])))
+
 (defn account-view [user]
   (let [s (r/atom {:flash-message ""
                    :background (get-in @app-state [:options :background])
@@ -137,6 +168,8 @@
                    :all-art-select ""
                    :stacked-servers (get-in @app-state [:options :stacked-servers])
                    :runner-board-order (get-in @app-state [:options :runner-board-order])
+                   :log-width (get-in @app-state [:options :log-width])
+                   :log-top (get-in @app-state [:options :log-top])
                    :gamestats (get-in @app-state [:options :gamestats])
                    :deckstats (get-in @app-state [:options :deckstats])
                    :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
@@ -194,6 +227,9 @@
                             :checked (:runner-board-order @s)
                             :on-change #(swap! s assoc-in [:runner-board-order] (.. % -target -checked))}]
             "Runner rig layout is jnet-classic (Top to bottom: Programs, Hardware, Resources)"]]]
+
+         [log-width-option s]
+         [log-top-option s]
 
          [:section
           [:h3  "Game board background"]

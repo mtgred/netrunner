@@ -302,6 +302,45 @@
 
 (def should-scroll (r/atom {:update true :send-msg false}))
 
+(defn resize-card-zoom []
+  "Resizes the card zoom based on the values in the app-state"
+  (let [width (get-in @app-state [:options :log-width])
+        top (get-in @app-state [:options :log-top])
+        max-card-width (- width 5)
+        max-card-height (- top 10)
+        card-ratio (/ 418 300)]
+    (if (> (/ max-card-height max-card-width) card-ratio)
+      (-> ".card-zoom" js/$
+          (.css "width" max-card-width)
+          (.css "height" (int (* max-card-width card-ratio))))
+      (-> ".card-zoom" js/$
+          (.css "width" (int (/ max-card-height card-ratio)))
+          (.css "height" max-card-height)))
+    (-> ".rightpane" js/$ (.css "width" width))
+    (-> ".log" js/$
+        (.css "left" 0)
+        (.css "top" top)
+        (.css "width" width))))
+
+(defn log-resize [event ui]
+  "Resize the card zoom to fit the available space"
+  (let [width (.. ui -size -width)
+        top (.. ui -position -top)]
+    (swap! app-state assoc-in [:options :log-width] width)
+    (swap! app-state assoc-in [:options :log-top] top)
+    (.setItem js/localStorage "log-width" width)
+    (.setItem js/localStorage "log-top" top)
+    (resize-card-zoom)))
+
+(defn log-start-resize [event ui]
+  "Display a zoomed card when resizing so the user can visualize how the
+  resulting zoom will look."
+  (when-let [card (get-in @game-state [:runner :identity])]
+    (put! zoom-channel card)))
+
+(defn log-stop-resize [event ui]
+  (put! zoom-channel false))
+
 (defn log-pane []
   (r/create-class
     (let [log (r/cursor game-state [:log])]
@@ -309,7 +348,10 @@
 
        :component-did-mount
        (fn [this]
-         (-> ".log" js/$ (.resizable #js {:handles "w"})))
+         (-> ".log" js/$ (.resizable #js {:handles "w, n, nw"
+                                          :resize log-resize
+                                          :start log-start-resize
+                                          :stop log-stop-resize})))
 
        :component-will-update
        (fn [this]
@@ -512,7 +554,7 @@
            [:span.impl-msg implemented])]))))
 
 (defn card-zoom [zoom-card]
-  (when-let [card @zoom-card]
+  (if-let [card @zoom-card]
     [:div.card-preview.blue-shade
      [:h4 (:title card)]
      (when-let [memory (:memoryunits card)]
@@ -546,7 +588,9 @@
                       (some #(when (= (:title %) title) %) @all-cards))]
              (render-icons (:text (card-by-title (:title card)))))]]
      (when-let [url (image-url card)]
-       [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])]))
+       [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])
+     (do (-> ".card-zoom" js/$ (.addClass "fade")) nil)]
+    (do (-> ".card-zoom" js/$ (.removeClass "fade")) nil)))
 
 (defn server-menu
   "The pop-up on a card in hand when clicked"
@@ -1772,6 +1816,7 @@
                 [log-pane]
                 [log-typing]
                 [log-input]]]
+              (do (resize-card-zoom) nil)
 
               [:div.centralpane
                (if (= op-side :corp)
