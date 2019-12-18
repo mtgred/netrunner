@@ -4376,7 +4376,7 @@
       (play-from-hand state :runner "The Turning Wheel")
       (let [ttw (get-resource state 0)]
         (card-ability state :runner ttw 2) ;; Bounce ability
-        (is (= 0 (get-counters (refresh ttw) :power)) "Bounce add 1 counter to The Turning Wheel")))))
+        (is (= 0 (get-counters (refresh ttw) :power)) "Bounce didn't add counter to The Turning Wheel")))))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool
