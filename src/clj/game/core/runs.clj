@@ -128,18 +128,21 @@
 
 (defmethod continue :approach-ice
   [state side args]
-  (update-all-ice state side)
-  (update-all-icebreakers state side)
-  (swap! state assoc-in [:run :no-action] false)
-  (swap! state assoc-in [:run :jack-out] true)
-  (cond
-    (:ended (:run @state))
-    (handle-end-run state side)
-    (rezzed? (get-current-ice state))
-    (do (set-next-phase state :encounter-ice)
-        (start-next-phase state side nil))
-    :else
-    (pass-ice state side)))
+  (if (get-in @state [:run :no-action])
+    (do (update-all-ice state side)
+        (update-all-icebreakers state side)
+        (swap! state assoc-in [:run :no-action] false)
+        (swap! state assoc-in [:run :jack-out] true)
+        (cond
+          (:ended (:run @state))
+          (handle-end-run state side)
+          (rezzed? (get-current-ice state))
+          (do (set-next-phase state :encounter-ice)
+              (start-next-phase state side nil))
+          :else
+          (pass-ice state side)))
+    (do (swap! state assoc-in [:run :no-action] :runner)
+        (system-msg state side "has no further action"))))
 
 (defn bypass-ice
   [state]
@@ -197,7 +200,10 @@
 
 (defmethod continue :encounter-ice
   [state side args]
-  (encounter-ends state side args))
+  (if (get-in @state [:run :no-action])
+    (encounter-ends state side args)
+    (do (swap! state assoc-in [:run :no-action] :runner)
+        (system-msg state side "has no further action"))))
 
 (defn pass-ice
   [state side]
@@ -253,8 +259,10 @@
 (defn no-action
   "The corp indicates they have no more actions for the encounter."
   [state side args]
-  (swap! state assoc-in [:run :no-action] true)
-  (system-msg state side "has no further action"))
+  (if (get-in @state [:run :no-action])
+    (continue state side args)
+    (do (swap! state assoc-in [:run :no-action] :corp)
+        (system-msg state side "has no further action"))))
 
 ;; Non timing stuff
 (defn gain-run-credits
