@@ -260,7 +260,7 @@
   "The corp indicates they have no more actions for the encounter."
   [state side args]
   (if (get-in @state [:run :no-action])
-    (continue state side args)
+    (continue state :runner args)
     (do (swap! state assoc-in [:run :no-action] :corp)
         (system-msg state side "has no further action"))))
 
