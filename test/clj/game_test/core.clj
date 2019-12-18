@@ -348,9 +348,10 @@
   "Make a successful run on specified server, assumes no ice in place."
   [state server]
   `(when (run-on ~state ~server)
-     (when (run-next-phase ~state)
+     ; (when (run-next-phase ~state)
        (when (run-continue ~state)
-         (run-successful ~state)))))
+         (run-successful ~state))))
+  ; )
 
 (defmacro fire-subs
   [state card]
@@ -373,11 +374,11 @@
      (is (:run @~state) "There is a run happening")
      (is (= [~server] (get-in @~state [:run :server])) "Correct server is run")
      (is (get-in @~state [:run :run-effects]) "There is a run-effect")
-     (when (run-next-phase ~state)
+     ; (when (run-next-phase ~state)
        (when (run-continue ~state)
          (when (run-successful ~state)
            (is (get-in @~state [:runner :prompt]) "A prompt is shown")
-           (is (get-in @~state [:run :successful]) "Run is marked successful"))))))
+           (is (get-in @~state [:run :successful]) "Run is marked successful"))))) ;)
 
 (defn get-run-event
   ([state] (get-in @state [:runner :play-area]))

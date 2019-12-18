@@ -244,7 +244,6 @@
       (let [snitch (get-program state 0)
             iwall (get-ice state :archives 0)]
         (run-on state :archives)
-        (run-next-phase state)
         (click-prompt state :runner "Yes")
         (is (rezzed? (refresh iwall)) "Ice Wall was rezzed"))))
   (testing "Additional cost handling, issue #1244"
@@ -320,7 +319,6 @@
         (click-card state :runner icew)
         (is (= "ICE[br]HQ (0)" (:server-target (refresh boom))) "ICE name is not revealed")
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp icew)
         (run-continue state)
         (is (= "Ice Wall[br]HQ (0)" (:server-target (refresh boom))) "Target was updated to contain ICE name")
@@ -329,7 +327,6 @@
         (click-prompt state :runner "End the run")
         (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "No action")
@@ -348,13 +345,11 @@
             boom (get-hardware state 0)]
         (click-card state :runner icew)
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp icew)
         (run-continue state)
         (card-ability state :runner (refresh boom) 0)
         (click-prompt state :runner "End the run")
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "No action")
@@ -374,7 +369,6 @@
             boom (get-hardware state 0)]
         (click-card state :runner icew)
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp enig)
         (run-continue state)
         (card-ability state :runner (refresh boom) 0)
@@ -394,7 +388,6 @@
       (let [icew (get-ice state :hq 0)
             boom (get-hardware state 0)]
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp icew)
         (run-continue state)
         (card-ability state :runner (refresh boom) 0)
@@ -447,13 +440,11 @@
             boom (get-hardware state 0)]
         (click-card state :runner icew)
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp icew)
         (run-continue state)
         (card-ability state :runner (refresh boom) 0)
         (click-prompt state :runner "End the run")
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "No action")
@@ -752,7 +743,6 @@
             icew (get-ice state :hq 0)]
         (run-on state :hq)
         (core/rez state :corp (refresh icew))
-        (run-next-phase state)
         (run-continue state)
         (card-ability state :runner (refresh corr) 0)
         (changes-val-macro
@@ -822,11 +812,9 @@
     (is (= 6 (core/available-mu state)) "Gained 2 MU")
     (run-on state "HQ")
     (is (empty? (:hand (get-runner))) "No cards drawn")
-    (run-next-phase state)
     (run-continue state)
     (run-jack-out state)
     (run-on state "Archives")
-    (run-next-phase state)
     (run-continue state)
     (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")
     (run-jack-out state)
@@ -880,7 +868,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Devil Charm")
       (run-on state :hq)
-      (run-next-phase state)
       (let [dc (get-hardware state 0)
             enig (get-ice state :hq 0)]
         (core/rez state :corp (refresh enig))
@@ -957,7 +944,6 @@
     (let [dorm (get-hardware state 0)]
       (card-ability state :runner dorm 0)
       (click-prompt state :runner "Server 1")
-      (run-next-phase state)
       (run-continue state)
       (run-successful state)
       (is (= :waiting (-> @state :runner :prompt first :prompt-type))
@@ -1001,7 +987,6 @@
       (is (= 7 (:credit (get-runner))))
       (let [ff (get-hardware state 0)]
         (run-on state "Server 1")
-        (run-next-phase state)
         (core/rez state :corp dm)
         (run-continue state)
         (card-subroutine state :corp dm 0)
@@ -1009,7 +994,6 @@
         (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
         (is (= 4 (:credit (get-runner))))
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :corp "Yes") ; pay 3 to fire Overwriter
@@ -1073,7 +1057,6 @@
         (is (= 1 (count (:hosted (refresh fo)))) "Mimic still hosted")
         (is (= 2 (:credit (get-runner))) "Runner starts with 2 credits")
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (run-continue state)
         (card-ability state :runner (first (:hosted (refresh fo))) 0)
@@ -1104,7 +1087,6 @@
       (take-credits state :corp)
       (let [ip (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp ip)
         (run-continue state)
         (card-subroutine state :corp ip 0))
@@ -1161,7 +1143,6 @@
       (take-credits state :corp)
       (let [ip (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp ip)
         (run-continue state)
         (card-subroutine state :corp ip 0))
@@ -1289,7 +1270,6 @@
       (run-on state :hq)
       (is (= 2 (:current-strength (refresh cor))) "Corroder starts with 2 strength")
       (is (= 1 (:current-strength (refresh bukh))) "Bukhgalter starts with 1 strength")
-      (run-next-phase state)
       (run-continue state)
       (card-ability state :runner cor 1)
       (card-ability state :runner cor 1)
@@ -1398,7 +1378,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Hippo")
       (run-on state "HQ")
-      (run-next-phase state)
       (run-continue state)
       (is (not-empty (get-hardware state)) "Hippo installed")
       (is (empty? (:prompt (get-runner))) "No prompt")
@@ -1413,7 +1392,6 @@
       (play-from-hand state :runner "Hippo")
       (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (is (not-empty (get-hardware state)) "Hippo installed")
@@ -1435,7 +1413,6 @@
       (play-from-hand state :runner "Hippo")
       (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp (get-ice state :hq 1))
       (run-continue state)
       (is (not-empty (get-hardware state)) "Hippo installed")
@@ -1460,7 +1437,6 @@
       (play-from-hand state :runner "Hippo")
       (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (is (not-empty (get-hardware state)) "Hippo installed")
@@ -1587,7 +1563,6 @@
      (is (empty? (:prompt (get-runner))) "No prompt messing with runner when run naturally ends successfully")
      (doseq [serv ["Archives" "HQ" "R&D" "Server 1"]]
        (run-on state serv)
-       (run-next-phase state)
        (run-continue state)
        (is (:run @state) "Run is ongoing")
        (run-jack-out state)
@@ -1595,18 +1570,14 @@
        (is (not (:run @state)) "Run is finished"))
      (doseq [serv ["Archives" "HQ"]]    ; R&D, server 1 has cards
        (run-on state serv)
-       (run-next-phase state)
        (run-continue state)
        (is (:run @state) "Run is ongoing")
        (run-successful state)
        (is (not (:run @state)) "Run is ended")
        (is (empty? (:prompt (get-runner))) (str "No prompt messing with runner on a successful run on " serv)))
      (run-on state "Server 1")
-     (run-next-phase state)
      (run-continue state)
-     (run-next-phase state)
      (run-continue state)
-     (run-next-phase state)
      (run-continue state)
      (run-successful state)
      (click-prompt state :runner "No action") ;access batty
@@ -1620,7 +1591,6 @@
        (core/rez state :corp (refresh mb))
        ;; run into ice wall, have it ETR, do not use lucky charm
        (run-on state "Server 1")
-       (run-next-phase state)
        (run-continue state)
        (card-subroutine state :corp (refresh iw) 0)
        (is (:run @state) "Run not ended yet")
@@ -1630,7 +1600,6 @@
        (is (empty? (:prompt (get-runner))) "Prevent prompt gone")
        ;; run into border control, have its subroutine ETR, do use lucky charm
        (run-on state "Server 1")
-       (run-next-phase state)
        (run-continue state)
        (card-subroutine state :corp (refresh bc) 1)
        (is (:run @state) "Run not ended yet")
@@ -1727,7 +1696,6 @@
         (is (= (- credits 2) (:credit (get-runner))) "Runner should spend 1 for Masterwork and 1 for Acacia"))
       (is (empty? (:prompt (get-corp))) "Corp shouldn't be waiting anymore")
       (is (empty? (:prompt (get-runner))))
-      (run-next-phase state)
       (run-continue state)
       (run-successful state)
       (click-prompt state :runner "No action")
@@ -2058,7 +2026,6 @@
       (let [pea (get-program state 0)]
         (click-card state :runner pea)
         (is (= 3 (:current-strength (refresh pea))) "Peacock strength boosted")
-        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "No action")
@@ -2524,7 +2491,6 @@
               rr2 (get-hardware state 1)
               rr3 (get-hardware state 2)]
           (run-on state "Server 1")
-          (run-next-phase state)
           (core/rez state :corp dm)
           (run-continue state)
           (card-subroutine state :corp dm 0)
@@ -2535,7 +2501,6 @@
           (click-prompt state :runner "Done")
           (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
           (run-continue state)
-          (run-next-phase state)
           (run-continue state)
           (run-successful state)
           (click-prompt state :corp "No")
@@ -2560,7 +2525,6 @@
         (play-from-hand state :runner "Ramujan-reliant 550 BMI")
         (let [rr1 (get-hardware state 0)]
           (run-on state "Server 1")
-          (run-next-phase state)
           (core/rez state :corp dm)
           (run-continue state)
           (card-subroutine state :corp dm 0)
@@ -2782,7 +2746,6 @@
     (let [nexus (get-hardware state 0)
           iw (get-ice state :rd 0)]
       (run-on state "R&D")
-      (run-next-phase state)
       (core/rez state :corp iw)
       (run-continue state)
       (is (zero? (count-tags state)) "Runner should have no tags to start")
@@ -2794,13 +2757,12 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (run-on state "R&D")
-      (run-next-phase state)
       (run-continue state)
       (is (= :encounter-ice (:phase (:run @state))) "Run should be in encounter phase")
       (click-prompt state :runner "Yes")
       (click-prompt state :corp "0")
       (click-prompt state :runner "10")
-      (is (= :pass-ice (:phase (:run @state))) "Security Nexus should bypass Ice Wall")
+      (is (= :approach-server (:phase (:run @state))) "Security Nexus should bypass Ice Wall")
       (is (:run @state) "Run should still be going on from winning Security Nexus trace")
       (is (= 1 (count-tags state)) "Runner should still only have 1 tag"))))
 
@@ -2819,7 +2781,6 @@
     (click-card state :runner "Sure Gamble")
     (click-card state :runner "Lucky Find")
     (click-prompt state :runner "Done")
-    (run-next-phase state)
     (run-continue state)
     (run-successful state)
     (click-prompt state :runner "Card from deck")
@@ -2849,14 +2810,12 @@
       (core/rez state :corp ip)
       (is (= 4 (:current-strength (refresh ip))))
       (run-on state "HQ")
-      (run-next-phase state)
       (run-continue state)
       (is (= 2 (:position (:run @state))))
       (is (= "Use Şifr?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (is (zero? (:current-strength (refresh ip))))
       (run-continue state)
-      (run-next-phase state)
       (run-continue state)
       (is (= 1 (:position (:run @state))))
       (is (= 2 (count (:hand (get-runner))))) ; pre archangel
@@ -2903,7 +2862,6 @@
         (is (= 5 (core/available-mu state)))
         (is (= 2 (get-counters (refresh sm) :recurring)))
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp cad)
         (run-continue state)
         (card-subroutine state :corp cad 0)
@@ -3008,7 +2966,6 @@
   (letfn [(laundry-archives [state]
             (play-from-hand state :runner "Dirty Laundry")
             (click-prompt state :runner "Archives")
-            (run-next-phase state)
             (run-continue state)
             (run-successful state))]
     (testing "Installing Swift gives the runner +1[mu]"
@@ -3117,7 +3074,6 @@
     (is (empty? (:prompt (get-runner))) "Fall Guy didn't try to prevent trashing of Kati")
     (is (= 2 (count (:discard (get-runner)))) "2 cards trashed for Ribs installation meat damage")
     (run-on state "HQ")
-    (run-next-phase state)
     (let [pup (get-ice state :hq 0)]
       (core/rez state :corp pup)
       (run-continue state)
@@ -3202,7 +3158,6 @@
       ;; Not stealing agenda
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
-      (run-next-phase state)
       (run-continue state)
       (run-successful state)
       (click-prompt state :runner "Yes") ; Top Hat activation
@@ -3213,7 +3168,6 @@
       ;; Stealing agenda
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
-      (run-next-phase state)
       (run-continue state)
       (run-successful state)
       (click-prompt state :runner "Yes") ; Top Hat activation

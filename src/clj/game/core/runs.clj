@@ -103,9 +103,11 @@
                          (update-all-icebreakers state side)
                          (wait-for (trigger-event-simult state :runner :run nil s n cost-args)
                                    (if (pos? (get-in @state [:run :position]))
-                                     (set-next-phase state :approach-ice)
+                                     (do (set-next-phase state :approach-ice)
+                                         (start-next-phase state side nil))
                                      (do (set-next-phase state :approach-server)
-                                         (swap! state assoc-in [:run :jack-out] true)))))
+                                         (swap! state assoc-in [:run :jack-out] true)
+                                         (start-next-phase state side nil)))))
                        (effect-completed state side eid))))
        (effect-completed state side eid)))))
 
@@ -224,8 +226,10 @@
                 (handle-end-run state side)
                 (not (get-in @state [:run :next-phase]))
                 (if (pos? (get-in @state [:run :position]))
-                  (set-next-phase state :approach-ice)
-                  (set-next-phase state :approach-server))))))
+                  (do (set-next-phase state :approach-ice)
+                      (start-next-phase state side nil))
+                  (do (set-next-phase state :approach-server)
+                      (start-next-phase state side nil)))))))
 
 (defmethod start-next-phase :approach-server
   [state side args]

@@ -352,7 +352,6 @@
     (let [caprice (get-content state :remote1 0)]
       (core/rez state :corp caprice)
       (run-on state "Server 1")
-      (run-next-phase state)
       (run-continue state)
       (is (prompt-is-card? state :corp caprice) "Caprice prompt even with no ice, once runner makes run")
       (is (prompt-is-card? state :runner caprice) "Runner has Caprice prompt")
@@ -491,7 +490,6 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp 2)
     (run-on state "HQ")
-    (run-next-phase state)
     (is (= [:hq] (get-in @state [:run :server])))
     (let [iwall (get-ice state :hq 0)]
       (core/rez state :corp iwall)
@@ -511,7 +509,6 @@
       (core/gain state :runner :credit 5)
       (play-from-hand state :runner "Laamb")
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (let [laamb (get-program state 0)]
@@ -529,7 +526,6 @@
       (core/gain state :runner :credit 5)
       (play-from-hand state :runner "Ankusa")
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (let [ank (get-program state 0)]
@@ -782,7 +778,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Saker")
     (run-on state "HQ")
-    (run-next-phase state)
     (core/rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (card-ability state :runner (get-program state 0) 0)
