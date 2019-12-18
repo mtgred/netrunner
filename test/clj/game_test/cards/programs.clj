@@ -3068,14 +3068,18 @@
             cl (get-program state 0)
             penr (get-program state 1)]
         (is (= 3 (count (:abilities penr))) "3 abilities on Penrose")
+        (run-next-phase state)
         (core/rez state :corp van)
+        (run-continue state)
         (is (= 4 (count (:abilities (refresh penr)))) "Auto pump and break ability on Penrose active")
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 1 credit from Cloak"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)})
                            (click-card state :runner cl))
         (run-continue state)
+        (run-next-phase state)
         (core/rez state :corp enig)
+        (run-continue state)
         (changes-val-macro -2 (:credit (get-runner))
                            "Paid 2 credits to break all subroutines on Enigma"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)}))
