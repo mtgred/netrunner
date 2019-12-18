@@ -12,7 +12,6 @@
                         :hand ["Ice Wall"]}})
       (take-credits state :corp)
       (run-on state :archives)
-      (run-next-phase state)
       (run-continue state)
       (run-successful state)
       (is (nil? (:run @state)))))
@@ -24,7 +23,6 @@
       (take-credits state :corp)
       (run-on state :remote1)
       (is (:run @state))
-      (run-next-phase state)
       (is (= :approach-ice (:phase (:run @state))) "Corp rez ice window")
       (core/rez state :corp (get-ice state :remote1 0))
       (run-continue state)
@@ -40,7 +38,6 @@
       (play-from-hand state :runner "Corroder")
       (run-on state :rd)
       (is (:run @state))
-      (run-next-phase state)
       (is (= :approach-ice (:phase (:run @state))))
       (core/rez state :corp (get-ice state :rd 0))
       (run-continue state)
@@ -48,7 +45,6 @@
       (card-ability state :runner (get-program state 0) 0) ; Icebreaker
       (click-prompt state :runner "End the run")
       (run-continue state)
-      (run-next-phase state)
       (is (= :approach-server (:phase (:run @state))))
       (run-successful state)
       (click-prompt state :runner "No action") ; Access Hedge Fund
@@ -61,7 +57,6 @@
       (play-from-hand state :corp "Tollbooth" "New remote")
       (take-credits state :corp)
       (run-on state :remote1)
-      (run-next-phase state)
       (core/rez state :corp (get-ice state :remote1 0))
       (is (= :approach-ice (:phase (:run @state))))
       (let [credits (:credit (get-runner))]
@@ -82,7 +77,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Self-modifying Code")
       (run-on state :remote1)
-      (run-next-phase state)
       (is (= :approach-ice (:phase (:run @state))))
       (let [credits (:credit (get-runner))]
         (core/rez state :corp (get-ice state :remote1 0))
@@ -103,11 +97,8 @@
         (take-credits state :corp))
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "Server 1")
-      (run-next-phase state)
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (run-continue state)
-      (is (= :pass-ice (:phase (:run @state))) "Inside Job has marked the bypass")
-      (run-next-phase state)
       (is (= :approach-server (:phase (:run @state))) "Inside Job has bypassed Ice Wall")
       (run-jack-out state)))
   (testing "with bypass vs cannot be bypassed"
@@ -119,7 +110,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "Server 1")
-      (run-next-phase state)
       (core/rez state :corp (get-ice state :remote1 0))
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (run-continue state)
@@ -136,14 +126,12 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "Server 1")
-      (run-next-phase state)
       (core/rez state :corp (get-ice state :remote1 0))
       (is (= :approach-ice (:phase (:run @state))) "Inside Job hasn't done the effect yet")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (is (= :pass-ice (:phase (:run @state))) "Inside Job has bypassed Tollbooth")
+        (is (= :approach-server (:phase (:run @state))) "Inside Job has bypassed Tollbooth")
         (is (= credits (:credit (get-runner)))))
-      (run-next-phase state)
       (run-jack-out state)
       (is (nil? (:run @state)))))
   (testing "with paid ability that ends the run during encounter (Border Control)"
@@ -157,7 +145,6 @@
       (take-credits state :corp)
       (run-on state :remote1)
       (is (:run @state))
-      (run-next-phase state)
       (is (= :approach-ice (:phase (:run @state))) "Corp rez ice window")
       (let [credits (:credit (get-runner))]
         (core/rez state :corp (get-ice state :remote1 1))

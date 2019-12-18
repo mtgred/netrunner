@@ -78,7 +78,7 @@
       (play-from-hand state :runner "Daily Casts")
       (is (last-log-contains? state "Runner spends \\[Click\\] and pays 3 \\[Credits\\] to install Daily Casts.") "Install resource, three cost")
       (run-on state :archives)
-      (is (last-log-contains? state "Runner spends \\[Click\\] to make a run on Archives.") "Initiate run, zero cost")))
+      (is (second-last-log-contains? state "Runner spends \\[Click\\] to make a run on Archives.") "Initiate run, zero cost")))
   (testing "Issue #4295: Auto-pumping Icebreaker with pay-credits prompt"
     (do-game
       (new-game {:runner {:hand ["Corroder" "Net Mercur" "Cloak"]}
@@ -111,7 +111,6 @@
       (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Corroder")
       (run-on state :hq)
-      (run-next-phase state)
       (let [cor (get-program state 0)
             hive (get-ice state :hq 0)]
         (core/rez state :corp hive)
@@ -130,7 +129,6 @@
       (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Corroder")
       (run-on state :hq)
-      (run-next-phase state)
       (let [cor (get-program state 0)
             hive (get-ice state :hq 0)]
         (core/rez state :corp hive)
@@ -150,7 +148,6 @@
       (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Corroder")
       (run-on state :hq)
-      (run-next-phase state)
       (let [cor (get-program state 0)
             hive (get-ice state :hq 0)]
         (core/rez state :corp hive)

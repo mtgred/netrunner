@@ -16,7 +16,6 @@
       (let [afshar (get-ice state :hq 0)]
         (take-credits state :corp)
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp afshar)
         (run-continue state)
         (card-subroutine state :corp afshar 0)
@@ -34,7 +33,6 @@
       (let [afshar (get-ice state :hq 0)
             gord (get-program state 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp afshar)
         (run-continue state)
         (is (empty? (filter #(:dynamic %) (:abilities (refresh gord)))) "No auto break dynamic ability")
@@ -52,7 +50,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Gordian Blade")
       (run-on state "R&D")
-      (run-next-phase state)
       (let [afshar (get-ice state :rd 0)
             gord (get-program state 0)]
         (core/rez state :corp afshar)
@@ -70,7 +67,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Gordian Blade")
       (run-on state "HQ")
-      (run-next-phase state)
       (let [afshar (get-ice state :hq 0)
             gord (get-program state 0)]
         (core/rez state :corp afshar)
@@ -83,7 +79,6 @@
         (take-credits state :runner)
         (take-credits state :corp)
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (card-ability state :runner gord 0)
         (click-prompt state :runner "Make the Runner lose 2 [Credits]")
@@ -102,7 +97,6 @@
     (take-credits state :corp)
     (let [aim (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp aim)
       (run-continue state)
       (card-subroutine state :corp aim 0)
@@ -122,7 +116,6 @@
       (let [anansi (get-ice state :hq 0)]
         (play-from-hand state :runner "Inside Job")
         (click-prompt state :runner "HQ")
-        (run-next-phase state)
         (core/rez state :corp anansi)
         (changes-val-macro -3 (count (:hand (get-runner)))
                            "3 net damage from passing Anansi"
@@ -139,7 +132,6 @@
       (let [anansi (get-ice state :hq 0)
             mongoose (get-program state 0)]
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp anansi)
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mongoose)})
@@ -172,7 +164,6 @@
       (take-credits state :corp)
       (let [akhet (get-ice state :hq 0)]
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp akhet)
         (run-continue state)
         (fire-subs state akhet)
@@ -191,7 +182,6 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Corroder")
         (run-on state :hq)
-        (run-next-phase state)
         (let [cor (get-program state 0)]
           (core/rez state :corp (refresh akhet))
           (run-continue state)
@@ -209,7 +199,6 @@
           (take-credits state :corp)
           (core/gain state :runner :credit 5)
           (run-on state :hq)
-          (run-next-phase state)
           (run-continue state)
           (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
           (card-ability state :runner (refresh cor) 0)
@@ -229,7 +218,6 @@
         (core/rez state :corp archangel)
         (play-from-hand state :runner "Bank Job")
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (card-subroutine state :corp archangel 0)
         (click-prompt state :corp "0")
@@ -297,7 +285,6 @@
         (is (= 1 (count (:subroutines (refresh ashigaru)))))
         (take-credits state :corp)
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (fire-subs state ashigaru)
         (is (nil? (:run @state)) "Sub is ETR")))))
@@ -323,18 +310,15 @@
     (let [bw (get-ice state :archives 0)]
       (take-credits state :corp)
       (run-on state "Archives")
-      (run-next-phase state)
       (core/rez state :corp bw)
       (run-continue state)
       (card-subroutine state :corp bw 0)
       (is (= 1 (count-tags state)) "Runner took 1 tag")
       (run-continue state)
-      (run-next-phase state)
       (run-continue state)
       (run-successful state)
       (is (zero? (count-tags state)) "Run successful; Runner lost 1 tag")
       (run-on state "Archives")
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp bw 0)
       (is (= 1 (count-tags state)) "Runner took 1 tag")
@@ -362,7 +346,6 @@
         (is (= 12 (:credit (get-corp))) "Corp has 12 credits from four Beanstalks")
         (take-credits state :corp)
         (run-on state :hq)
-        (run-next-phase state)
         (run-continue state)
         (let [credits (:credit (get-corp))]
           (card-subroutine state :corp bc 0)
@@ -399,7 +382,6 @@
     (let [bloom (get-ice state :hq 1)]
       (core/rez state :corp bloom)
       (run-on state :hq)
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp bloom 1)
       (click-card state :corp "Ice Wall")
@@ -415,7 +397,6 @@
     (play-from-hand state :corp "Border Control" "HQ")
     (take-credits state :corp)
     (run-on state :hq)
-    (run-next-phase state)
     (let [bc (get-ice state :hq 1)]
       (core/rez state :corp bc))
     (run-continue state)
@@ -441,7 +422,6 @@
         (core/rez state :corp bs)
         (take-credits state :corp)
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (is (= 1 (count (:subroutines (refresh bs)))) "1 card in hand, no existing subs")
         (core/draw state :runner 1)
@@ -472,12 +452,10 @@
       (take-credits state :corp)
       (run-on state :rd)
       (let [bs (get-ice state :rd 0)]
-        (run-next-phase state)
         (core/rez state :corp bs)
         (run-continue state)
         (is (= 1 (count (:subroutines (refresh bs)))))
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "No action")
@@ -492,7 +470,6 @@
     (play-from-hand state :corp "Pup" "R&D")
     (take-credits state :corp)
     (run-on state :hq)
-    (run-next-phase state)
     (let [frog (get-ice state :hq 0)]
       (core/rez state :corp frog)
       (run-continue state)
@@ -516,11 +493,8 @@
     (let [cp (get-ice state :hq 0)]
       (core/rez state :corp cp)
       (run-on state :hq)
-      (run-next-phase state)
       (run-continue state)
-      (run-next-phase state)
       (run-continue state)
-      (run-next-phase state)
       (run-continue state)
       (is (= 1 (get-in @state [:run :position])))
       (card-subroutine state :corp cp 0)
@@ -563,7 +537,6 @@
         (core/rez state :corp icewall)
         (core/rez state :corp enigma)
         (run-on state :hq)
-        (run-next-phase state)
         (run-continue state)
         (is (= 4 (:current-strength (refresh chum))) "Chum is at 4 strength")
         (card-subroutine state :corp (refresh chum) 0)
@@ -571,15 +544,12 @@
         (is (= 1 (:current-strength (refresh icewall))) "Ice Wall still at 1 strength")
         (run-continue state)
         (is (= 1 (:current-strength (refresh icewall))) "Ice Wall still at 1 strength while passing unrezzed ice")
-        (run-next-phase state)
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (is (= 3 (:current-strength (refresh icewall))) "Ice Wall now at 3 strength")
         (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength before encounter")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
         (run-jack-out state))))
@@ -592,12 +562,10 @@
       (let [chum (get-ice state :hq 1)
             icewall (get-ice state :hq 0)]
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp chum)
         (run-continue state)
         (card-subroutine state :corp (refresh chum) 0)
         (run-continue state)
-        (run-next-phase state)
         (core/rez state :corp icewall)
         (run-continue state)
         (changes-val-macro -3 (count (:hand (get-runner)))
@@ -614,11 +582,9 @@
         (core/rez state :corp chum)
         (core/rez state :corp pachinko)
         (run-on state :hq)
-        (run-next-phase state)
         (run-continue state)
         (card-subroutine state :corp (refresh chum) 0)
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (changes-val-macro -3 (count (:hand (get-runner)))
                            "3 Damage from passing an unbroken ice"
@@ -634,11 +600,9 @@
         (core/rez state :corp chum)
         (core/rez state :corp pachinko)
         (run-on state :hq)
-        (run-next-phase state)
         (run-continue state)
         (card-subroutine state :corp (refresh chum) 0)
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (changes-val-macro -3 (count (:hand (get-runner)))
                            "3 Damage from pressing jack out button after encountering Pachinko"
@@ -655,12 +619,10 @@
             icewall (get-ice state :hq 0)
             corroder (get-program state 0)]
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp chum)
         (run-continue state)
         (card-subroutine state :corp (refresh chum) 0)
         (run-continue state)
-        (run-next-phase state)
         (core/rez state :corp icewall)
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
@@ -676,7 +638,6 @@
     (take-credits state :corp)
     (let [congrats (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp congrats)
       (is (= 6 (:credit (get-corp))))
       (is (= 5 (:credit (get-runner))))
@@ -698,7 +659,6 @@
       (play-from-hand state :runner "Corroder")
       (is (= 3 (core/available-mu state)))
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp cort)
       (run-continue state)
       (card-subroutine state :corp cort 0)
@@ -719,7 +679,6 @@
       (is (= 3 (:current-strength (refresh cr1))) "Normal strength over HQ")
       (is (= 6 (:current-strength (refresh cr2))) "+3 strength over Archives")
       (run-on state "Archives")
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp cr2 0)
       (click-card state :corp "Ice Wall")
@@ -752,7 +711,6 @@
     (take-credits state :corp)
     (let [dh (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp dh)
       (run-continue state)
       (card-subroutine state :corp dh 0)
@@ -775,7 +733,6 @@
       (is (= "Patron" (:title (second (rest (:deck (get-runner)))))))
       (run-jack-out state)
       (run-on state "HQ")
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp dh 0)
       (click-prompt state :corp "0")
@@ -798,7 +755,6 @@
         (take-credits state :corp)
         (is (= "Account Siphon" (:title (first (:deck (get-runner))))))
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (run-continue state)
         (is (= "Choose 2 cards in your Grip to add to the top of the Stack (first card targeted will be topmost)"
@@ -819,7 +775,6 @@
         (take-credits state :corp)
         (is (= "Account Siphon" (:title (first (:deck (get-runner))))))
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (run-continue state)
         (is (= "Choose 1 card in your Grip to add to the top of the Stack (first card targeted will be topmost)"
@@ -840,7 +795,6 @@
         (is (= "Account Siphon" (:title (first (:deck (get-runner))))))
         (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :discard)
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (run-continue state)
         (is (empty? (:prompt (get-runner))) "Runner doesn't have a prompt")))))
@@ -853,7 +807,6 @@
     (take-credits state :corp)
     (let [dm (get-ice state :remote1 0)]
       (run-on state "Server 1")
-      (run-next-phase state)
       (core/rez state :corp dm)
       (run-continue state)
       (card-subroutine state :corp dm 0)
@@ -869,7 +822,6 @@
       (play-from-hand state :corp "Drafter" "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-next-phase state)
       (let [drafter (get-ice state :hq 0)]
         (core/rez state :corp (get-ice state :hq 0))
         (run-continue state)
@@ -886,7 +838,6 @@
         (play-from-hand state :corp "Drafter" "HQ")
         (take-credits state :corp)
         (run-on state "HQ")
-        (run-next-phase state)
         (let [drafter (get-ice state :hq 0)]
           (core/rez state :corp (get-ice state :hq 0))
           (run-continue state)
@@ -907,7 +858,6 @@
         (play-from-hand state :corp "Drafter" "HQ")
         (take-credits state :corp)
         (run-on state "HQ")
-        (run-next-phase state)
         (let [drafter (get-ice state :hq 0)]
           (core/rez state :corp (get-ice state :hq 0))
           (run-continue state)
@@ -929,7 +879,6 @@
     (take-credits state :corp)
     (let [drac (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp drac)
       (click-prompt state :corp "4")
       (run-continue state)
@@ -954,7 +903,6 @@
             credits (:credit (get-runner))]
         (core/rez state :corp eula)
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (card-side-ability state :runner eula 0)
         (is (= (- credits 6) (:credit (get-runner))) "Runner should lose 6 credits"))))
@@ -972,7 +920,6 @@
             enigma (get-ice state :hq 1)
             mass-driver (get-program state 0)]
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp enigma)
         (run-continue state)
         (card-ability state :runner mass-driver 1)
@@ -980,7 +927,6 @@
         (click-prompt state :runner "Force the Runner to lose 1 [Click]")
         (click-prompt state :runner "End the run")
         (run-continue state)
-        (run-next-phase state)
         (core/rez state :corp eula)
         (run-continue state)
         (changes-val-macro -3 (:credit (get-runner))
@@ -996,7 +942,6 @@
       (play-from-hand state :corp "Engram Flush" "HQ")
       (take-credits state :corp)
       (run-on state :hq)
-      (run-next-phase state)
       (let [ef (get-ice state :hq 0)]
         (core/rez state :corp ef)
         (run-continue state)
@@ -1018,7 +963,6 @@
     (take-credits state :corp)
     (let [enig (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (is (= 3 (:click (get-runner))))
       (core/rez state :corp enig)
       (run-continue state)
@@ -1033,7 +977,6 @@
     (take-credits state :corp)
     (let [envl (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp envl)
       (run-continue state)
       (is (zero? (count (:discard (get-runner)))) "No discarded cards")
@@ -1052,7 +995,6 @@
     (take-credits state :corp)
     (let [excal (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp excal)
       (run-continue state)
       (card-subroutine state :corp excal 0)
@@ -1084,7 +1026,6 @@
       (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
       (run-on state "HQ")
       (let [f2p (get-ice state :hq 0)]
-        (run-next-phase state)
         (core/rez state :corp (refresh f2p))
         (run-continue state)
         (changes-val-macro -2 (:credit (get-runner))
@@ -1110,7 +1051,6 @@
     (take-credits state :corp)
     (let [fen (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp fen)
       (run-continue state)
       (is (= 1 (count-bad-pub state)) "Gained 1 bad pub")
@@ -1132,7 +1072,6 @@
     (let [flare (get-ice state :hq 0)
           cc (get-hardware state 1)]
       (run-on state :hq)
-      (run-next-phase state)
       (core/rez state :corp flare)
       (run-continue state)
       (card-subroutine state :corp flare 0)
@@ -1160,10 +1099,8 @@
             form2 (get-ice state :archives 0)
             responders (get-resource state 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (is (zero? (get-in @state [:run :position])) "Now approaching server")
-        (run-next-phase state)
         (run-continue state)
         (click-prompt state :corp "Formicary")
         (click-prompt state :corp "Yes") ; Move Formicary
@@ -1179,7 +1116,6 @@
           (card-ability state :runner responders 0)
           (is (= (inc cards-in-hand) (count (:hand (get-runner)))) "First Responders was able to trigger"))
         (run-on state "Archives")
-        (run-next-phase state)
         (run-continue state)
         (click-prompt state :corp "Yes") ; Move Formicary
         (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
@@ -1195,11 +1131,8 @@
       (take-credits state :corp)
       (let [form (get-ice state :hq 1)]
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state) ; pass the first ice
-        (run-next-phase state)
         (run-continue state) ; pass the second ice
-        (run-next-phase state) ; approach the server
         (is (zero? (get-in @state [:run :position])) "Now approaching server")
         (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is the innermost piece of ice before swap")
         (is (= "Formicary" (:title (get-ice state :hq 1))) "Formicary is the outermost piece of ice before swap")
@@ -1217,7 +1150,6 @@
     (let [fl (get-ice state :hq 0)]
       (core/rez state :corp fl)
       (run-on state "HQ")
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp fl 0)
       (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
@@ -1243,7 +1175,6 @@
           num-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))
           hostile (find-card "Hostile Takeover" (:hand (get-corp)))]
       (run-on state "Server 1")
-      (run-next-phase state)
       (core/rez state :corp gate)
       (run-continue state)
       (is (= 6 (:current-strength (refresh gate))))
@@ -1275,7 +1206,6 @@
       (take-credits state :corp)
       (let [gem (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp gem)
         (run-continue state)
         (card-subroutine state :corp gem 0)
@@ -1297,7 +1227,6 @@
       (take-credits state :corp)
       (let [gem (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp gem)
         (run-continue state)
         (card-subroutine state :corp gem 0)
@@ -1329,7 +1258,6 @@
         (play-from-hand state :runner "Pipeline")
         (play-from-hand state :runner "Misdirection")
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp hag)
         (run-continue state)
         (card-subroutine state :corp hag 0)
@@ -1351,32 +1279,27 @@
         (core/gain state :runner :click 100)
         (core/gain state :runner :credit 100)
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp hag)
         (run-continue state)
         (is (= 6 (:current-strength (refresh hag))) "Hagen is at base strength of 6.")
         (run-jack-out state)
         (play-from-hand state :runner "Inti")
         (run-on state "HQ")
-        (run-next-phase state)
         (is (= 5 (:current-strength (refresh hag))) "Inti lowered strength to 5.")
         (run-continue state)
         (run-jack-out state)
         (play-from-hand state :runner "Gordian Blade")
         (run-on state "HQ")
-        (run-next-phase state)
         (is (= 4 (:current-strength (refresh hag))) "Gordian Blade lowered strength to 4.")
         (run-continue state)
         (run-jack-out state)
         (play-from-hand state :runner "Pipeline")
         (run-on state "HQ")
-        (run-next-phase state)
         (is (= 3 (:current-strength (refresh hag))) "Pipeline lowered strength to 3.")
         (run-continue state)
         (run-jack-out state)
         (play-from-hand state :runner "Misdirection")
         (run-on state "HQ")
-        (run-next-phase state)
         (is (= 3 (:current-strength (refresh hag))) "Misdirection didn't lower strength.")))))
 
 (deftest harvester
@@ -1391,7 +1314,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "The Class Act")
       (run-on state "HQ")
-      (run-next-phase state)
       (run-continue state)
       (is (= 4 (count (:hand (get-runner)))) "Runner has 4 cards in hand")
       (card-subroutine state :corp harv 0)
@@ -1419,7 +1341,6 @@
         (core/rez state :corp herald)
         (take-credits state :corp)
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (= 4 (:credit (get-corp)))
         (card-subroutine state :corp herald 0)
@@ -1458,7 +1379,6 @@
       (play-from-hand state :runner "Inti")
       (play-from-hand state :runner "Cache")
       (run-on state "HQ")
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp holm 0)
       (click-prompt state :corp "0")
@@ -1469,7 +1389,6 @@
       (click-card state :corp "Inti")
       (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
       (run-continue state)
-      (run-next-phase state)
       (run-continue state)
       (run-successful state)
       ;; Prompt for "you cannot access any card this run"
@@ -1484,7 +1403,6 @@
     (take-credits state :corp)
     (core/gain-credits state :corp 10)
     (run-on state :hq)
-    (run-next-phase state)
     (let [hydra (get-ice state :hq 0)
           corp-creds (:credit (get-corp))]
       (core/rez state :corp hydra)
@@ -1521,7 +1439,6 @@
       (is (= 2 (core/get-strength (refresh iw))))
       (take-credits state :corp)
       (run-on state :remote1)
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp iw 0)
       (is (nil? (:run @state))))))
@@ -1536,7 +1453,6 @@
     (take-credits state :corp)
     (let [io (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp io)
       (is (zero? (count (:subroutines (refresh io)))))
       (run-continue state)
@@ -1594,7 +1510,6 @@
       (is (= 3 (count (:discard (get-runner)))) "Did 2 net damage on expose")
       (play-from-hand state :runner "Cache")
       (run-on state "Archives")
-      (run-next-phase state)
       (core/rez state :corp iat)
       (run-continue state)
       (card-subroutine state :corp (refresh iat) 0)
@@ -1612,11 +1527,9 @@
       (take-credits state :corp)
       (let [jua (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp jua)
         (run-continue state)
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (is (= 2 (count (:hand (get-runner)))) "Runner starts with 2 cards in hand")
@@ -1639,7 +1552,6 @@
         (core/gain state :runner :credit 10)
         (play-from-hand state :runner "Desperado")
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp jua)
         (run-continue state)
         (card-subroutine state :corp (refresh jua) 0)
@@ -1649,7 +1561,6 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Gordian Blade")
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (card-subroutine state :corp (refresh jua) 0)
         (click-card state :corp "Gordian Blade")
@@ -1666,12 +1577,10 @@
       (let [jua (get-ice state :hq 0)]
         (take-credits state :corp)
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp jua)
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Jua encounter effect happens")
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
         (click-prompt state :corp "Yes")
@@ -1679,9 +1588,9 @@
         (is (= 1 (get-in @state [:run :position])) "Now approaching Kakugo")
         (is (= "Kakugo" (:title (get-ice state :hq 0))) "Kakugo was installed")
         (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
+        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (is (empty? (:prompt (get-runner))) "Runner can't install Paperclip because of Jua encounter ability")
-        (run-next-phase state)
         (run-continue state)
         (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo")))))
 
@@ -1697,20 +1606,16 @@
       (let [kakugo (get-ice state :rd 0)
             ice-wall (get-ice state :archives 0)]
         (run-on state "R&D")
-        (run-next-phase state)
         (core/rez state :corp kakugo)
         (run-continue state)
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (run-jack-out state)
         (is (= 2 (count (:hand (get-runner)))) "Runner took damage before swap")
         (core/swap-ice state :corp (refresh kakugo) (refresh ice-wall))
         (run-on state "Archives")
-        (run-next-phase state)
         (run-continue state)
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (run-jack-out state)
         (is (= 1 (count (:hand (get-runner)))) "Runner took damage after swap"))))
@@ -1727,7 +1632,6 @@
       (let [kakugo (get-ice state :rd 0)
             engolo (get-program state 0)]
         (run-on state "R&D")
-        (run-next-phase state)
         (core/rez state :corp kakugo)
         (run-continue state)
         (click-prompt state :runner "Yes")
@@ -1748,7 +1652,6 @@
     (play-from-hand state :runner "Cache")
     (let [kamali (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp kamali)
       (run-continue state)
       (card-subroutine state :corp kamali 0)
@@ -1775,7 +1678,6 @@
       (play-from-hand state :corp "Kitsune" "R&D")
       (take-credits state :corp)
       (run-on state "R&D")
-      (run-next-phase state)
       (let [kitsune (get-ice state :rd 0)]
         (core/rez state :corp kitsune)
         (run-continue state)
@@ -1799,7 +1701,6 @@
       (take-credits state :corp)
       (let [ko (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp ko)
         (run-continue state)
         (is (= 1 (count (:subroutines (refresh ko)))) "1 card in hand, no existing subs")
@@ -1828,13 +1729,11 @@
       (play-from-hand state :corp "Komainu" "R&D")
       (take-credits state :corp)
       (run-on state :rd)
-      (run-next-phase state)
       (let [ko (get-ice state :rd 0)]
         (core/rez state :corp ko)
         (run-continue state)
         (is (= 1 (count (:subroutines (refresh ko)))))
         (run-continue state)
-        (run-next-phase state)
         (run-continue state)
         (run-successful state)
         (click-prompt state :runner "No action")
@@ -1850,12 +1749,10 @@
     (take-credits state :corp)
     (let [lock (get-ice state :rd 0)]
       (run-on state "R&D")
-      (run-next-phase state)
       (core/rez state :corp lock)
       (run-continue state)
       (card-subroutine state :corp lock 0)
       (run-continue state)
-      (run-next-phase state)
       (run-continue state)
       (run-successful state)
       (play-from-hand state :runner "Diesel")
@@ -1876,7 +1773,6 @@
     (take-credits state :corp)
     (let [lootbox (get-ice state :rd 0)]
       (run-on state "R&D")
-      (run-next-phase state)
       (core/rez state :corp lootbox)
       (run-continue state)
       (card-subroutine state :corp lootbox 0)
@@ -1908,7 +1804,6 @@
       (core/rez state :corp lotus)
       (play-from-hand state :runner "Ice Carver")
       (run-on state "Archives")
-      (run-next-phase state)
       (run-continue state)
       (is (= 4 (:current-strength (refresh lotus))) "Lotus Field strength unchanged")
       (run-jack-out state)
@@ -1942,7 +1837,6 @@
         (click-card state :runner (refresh e))
         (is (= 1 (count (:hosted (refresh e)))) "Parasite hosted on Enigma")
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (run-continue state)
         (click-card state :corp (first (:hosted (get-ice state :rd 0))))
@@ -1966,7 +1860,6 @@
         (click-card state :runner (refresh e))
         (is (= 1 (count (:hosted (refresh e)))) "Trypano hosted on Enigma")
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (run-continue state)
         (click-card state :corp (first (:hosted (get-ice state :rd 0))))
@@ -1992,7 +1885,6 @@
         (click-card state :runner (refresh e))
         (is (= 1 (count (:hosted (refresh e)))) "Parasite hosted on Enigma")
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (run-continue state)
         (click-card state :corp (first (:hosted (get-ice state :rd 0))))
@@ -2012,7 +1904,6 @@
         (click-card state :runner (refresh e))
         (is (= 1 (count (:hosted (refresh e)))) "Parasite hosted on Enigma")
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp (get-ice state :hq 0))
         (run-continue state)
         (click-card state :corp (first (:hosted (get-ice state :rd 0))))
@@ -2047,14 +1938,12 @@
       (core/rez state :corp mark)
       (core/rez state :corp iw)
       (run-on state "Server 1")
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp mark 0)
       (is (last-log-contains? state "Marker to give next encountered ice")
           "The message correctly prints")
       (run-continue state)
       (is (= 1 (count (:subroutines (refresh iw)))) "Ice Wall starts with 1 subroutine")
-      (run-next-phase state)
       (run-continue state)
       (is (= 2 (count (:subroutines (refresh iw)))) "Marker correctly gives Ice Wall an additional subroutine")
       (run-jack-out state)
@@ -2074,7 +1963,6 @@
       (is (= 2 (count (:subroutines (refresh mas)))) "Should gain 1 subroutine")
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp mas 0)
       (is (not (:run @state)) "Run is ended"))))
@@ -2089,7 +1977,6 @@
       (core/rez state :corp mau)
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-next-phase state)
       (is (= 3 (:credit (get-corp))) "corp starts encounter with 3 crs")
       (is (zero? (count (:discard (get-runner)))) "runner starts encounter with no cards in heap")
       (is (zero? (count-tags state)) "runner starts encounter with 0 tags")
@@ -2105,7 +1992,6 @@
       (advance state mau 3)
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-next-phase state)
       (is (= 1 (:credit (get-corp))) "corp starts encounter with 1 crs")
       (is (= 1 (count (:discard (get-runner)))) "runner starts encounter with 1 card in heap")
       (is (= 1 (count-tags state)) "runner starts encounter with 1 tags")
@@ -2128,7 +2014,6 @@
       (let [mer (get-ice state :hq 0)]
         (core/rez state :corp (refresh mer))
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (card-subroutine state :corp (refresh mer) 0)
         (click-prompt state :runner "End the run")
@@ -2143,7 +2028,6 @@
       (let [mer (get-ice state :hq 0)]
         (core/rez state :corp (refresh mer))
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (card-subroutine state :corp (refresh mer) 0)
         (click-prompt state :runner "Add Meridian to score area")
@@ -2170,7 +2054,6 @@
     (take-credits state :corp)
     (let [mindgame (get-ice state :hq 0)]
       (run-on state :hq)
-      (run-next-phase state)
       (core/rez state :corp mindgame)
       (run-continue state)
       (card-subroutine state :corp mindgame 0))
@@ -2187,7 +2070,6 @@
     (play-from-hand state :corp "Minelayer" "HQ")
     (take-credits state :corp)
     (run-on state :hq)
-    (run-next-phase state)
     (core/rez state :corp (get-ice state :hq 0))
     (is (= 6 (:credit (get-corp))))
     (run-continue state)
@@ -2206,7 +2088,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Force of Nature")
     (run-on state "HQ")
-    (run-next-phase state)
     (core/rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (card-ability state :runner (get-program state 0) 0)
@@ -2225,7 +2106,6 @@
       (take-credits state :corp)
       (let [ml (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp ml)
         (run-continue state)
         ;; Subroutine 1
@@ -2269,7 +2149,6 @@
       (take-credits state :corp)
       (let [ml (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp ml)
         (run-continue state)
         ;; Subroutine 3, 3 net or 4 from stack
@@ -2286,7 +2165,6 @@
       (take-credits state :corp)
       (let [ml (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp ml)
         (run-continue state)
         ;; Subroutine 3, 3 net or 4 from stack
@@ -2398,7 +2276,6 @@
     (let [no (get-ice state :hq 0)]
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp no)
       (is (= 1 (count (:subroutines (refresh no)))) "Should rez with 1 subroutine")
       (run-continue state)
@@ -2434,7 +2311,6 @@
         (core/rez state :corp sapphire)
         (take-credits state :corp)
         (run-on state "R&D")
-        (run-next-phase state)
         (run-continue state)
         (let [hand (count (:hand (get-corp)))
               deck (count (:deck (get-corp)))]
@@ -2471,7 +2347,6 @@
             hand (count (:hand (get-corp)))
             deck (count (:deck (get-corp)))
             num-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
-        (run-next-phase state)
         (core/rez state :corp sapphire)
         (run-continue state)
         (card-subroutine state :corp sapphire 2)
@@ -2498,7 +2373,6 @@
           "Should gain additional sub when another NEXT ice is rezzed")
       (take-credits state :corp)
       (run-on state :hq)
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp sil 0)
       (is (not (:run @state)) "Run has ended"))))
@@ -2511,7 +2385,6 @@
     (take-credits state :corp)
     (let [nd (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp nd)
       (run-continue state)
       (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
@@ -2538,7 +2411,6 @@
         (core/rez state :corp eni)
         (take-credits state :corp)
         (run-on state :hq)
-        (run-next-phase state)
         (run-continue state)
         (is (= "Place 1 advancement counter on another ice?" (:msg (prompt-map :corp))) "Corp has correct prompt")
         (click-prompt state :corp "Yes")
@@ -2549,7 +2421,6 @@
         (take-credits state :runner)
         (take-credits state :corp)
         (run-on state :hq)
-        (run-next-phase state)
         (run-continue state)
         (is (= "Place 2 advancement counters on another ice?" (:msg (prompt-map :corp))) "Corp has correct prompt")
         (click-prompt state :corp "Yes")
@@ -2560,7 +2431,6 @@
         (take-credits state :runner)
         (take-credits state :corp)
         (run-on state :hq)
-        (run-next-phase state)
         (run-continue state)
         (is (= "Place 3 advancement counters on another ice?" (:msg (prompt-map :corp)))
             "Corp has correct prompt message")
@@ -2581,7 +2451,6 @@
     (play-from-hand state :corp "Project Junebug" "New remote")
     (take-credits state :corp)
     (run-on state :remote1)
-    (run-next-phase state)
     (let [otoroshi (get-ice state :remote1 0)
           junebug (get-content state :remote2 0)
           credits (:credit (get-runner))]
@@ -2596,7 +2465,6 @@
       (is (= (- credits 3) (:credit (get-runner))) "Runner should pay 3 credits to Otoroshi subroutine")
       (run-jack-out state)
       (run-on state :remote1)
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp otoroshi 0)
       (click-card state :corp (refresh junebug))
@@ -2621,7 +2489,6 @@
       (play-from-hand state :runner "Corroder")
       (core/gain state :runner :credit 10)
       (run-on state "HQ")
-      (run-next-phase state)
       (let [pachinko (get-ice state :hq 0)
             corroder (get-program state 0)
             runner-credits (:credit (get-runner))]
@@ -2636,7 +2503,6 @@
       (play-from-hand state :corp "Pachinko" "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-next-phase state)
       (let [pachinko (get-ice state :hq 0)]
         (core/rez state :corp pachinko)
         (run-continue state)
@@ -2651,7 +2517,6 @@
       (take-credits state :corp)
       (core/gain-tags state :runner 1)
       (run-on state "HQ")
-      (run-next-phase state)
       (let [pachinko (get-ice state :hq 0)]
         (core/rez state :corp pachinko)
         (run-continue state)
@@ -2669,7 +2534,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
-      (run-next-phase state)
       (let [paperwall (get-ice state :hq 0)
             corroder (get-program state 0)]
         (core/rez state :corp paperwall)
@@ -2688,7 +2552,6 @@
     (play-from-hand state :runner "Corroder")
     (run-on state "HQ")
     (let [tom (get-ice state :hq 0)]
-      (run-next-phase state)
       (core/rez state :corp (refresh tom))
       (run-continue state)
       (click-prompt state :corp "Event")
@@ -2724,7 +2587,6 @@
         (core/rez state :corp resistor)
         (take-credits state :corp)
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (fire-subs state resistor)
         (is (= :trace (:prompt-type (prompt-map :corp))) "Trace is initiated")
@@ -2767,7 +2629,6 @@
       (let [sadaka (get-ice state :archives 0)]
         (take-credits state :corp)
         (run-on state "Archives")
-        (run-next-phase state)
         (core/rez state :corp sadaka)
         (run-continue state)
         (is (zero? (count (:hand (get-corp)))) "Corp starts with empty hand")
@@ -2794,7 +2655,6 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Bank Job")
         (run-on state "Archives")
-        (run-next-phase state)
         (core/rez state :corp sadaka)
         (run-continue state)
         (is (= 3 (count (:hand (get-corp)))) "Corp starts with 3 cards in hand")
@@ -2807,7 +2667,6 @@
         (is (= 2 (count (:discard (get-corp)))) "Sadaka trashed")
         (run-jack-out state)
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp sadakaHQ)
         (run-continue state)
         (is (= 2 (count (:hand (get-corp)))) "Corp starts with 2 cards in hand")
@@ -2830,7 +2689,6 @@
       (play-from-hand state :corp "Saisentan" "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-next-phase state)
       (let [sai (get-ice state :hq 0)]
         (core/rez state :corp sai)
         (run-continue state)
@@ -2846,7 +2704,6 @@
       (play-from-hand state :corp "Saisentan" "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-next-phase state)
       (let [sai (get-ice state :hq 0)]
         (core/rez state :corp sai)
         (run-continue state)
@@ -2877,7 +2734,6 @@
         (advance state salvage 1)
         (take-credits state :corp)
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (fire-subs state salvage)
         (is (= :trace (:prompt-type (prompt-map :corp))) "Trace is initiated")
@@ -2894,7 +2750,6 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp)
     (run-on state "Server 1")
-    (run-next-phase state)
     (let [sand-storm (get-ice state :remote1 0)]
       (core/rez state :corp sand-storm)
       (run-continue state)
@@ -2913,7 +2768,6 @@
     (play-from-hand state :runner "Scrubber")
     (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
     (run-on state "HQ")
-    (run-next-phase state)
     (let [sand (get-ice state :hq 0)]
       (core/rez state :corp (refresh sand))
       (run-continue state)
@@ -2937,7 +2791,6 @@
      (core/rez state :corp snd)
      (dotimes [i 6]
        (run-on state "HQ")
-       (run-next-phase state)
        (is (= i (get-counters (refresh snd) :virus)) (str "Counter " i " not placed yet"))
        (is (= (- 6 i) (core/get-strength (refresh snd))) "Strength not reduced yet")
        (run-continue state)
@@ -2959,7 +2812,6 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Corroder")
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp sapper)
         (run-continue state)
         (card-subroutine state :corp sapper 0)
@@ -2985,7 +2837,6 @@
     (take-credits state :corp)
     (let [searchlight (get-ice state :hq 0)]
       (run-on state "HQ")
-      (run-next-phase state)
       (core/rez state :corp searchlight)
       (run-continue state)
       (card-subroutine state :corp (refresh searchlight) 0)
@@ -2999,7 +2850,6 @@
       (advance state searchlight 1)
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp (refresh searchlight) 0)
       (is (= :trace (:prompt-type (prompt-map :corp))) "Trace is initiated")
@@ -3034,7 +2884,6 @@
     (let [sacw (get-ice state :archives 0)]
       (play-from-hand state :runner "Ice Carver")
       (run-on state "Archives")
-      (run-next-phase state)
       (core/rez state :corp sacw)
       (run-continue state)
       (is (= 1 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength unchanged")
@@ -3067,18 +2916,15 @@
           snow (get-ice state :hq 1)
           sensei (get-ice state :hq 2)]
       (run-on state :hq)
-      (run-next-phase state)
       (core/rez state :corp sensei)
       (run-continue state)
       (fire-subs state sensei)
       (is (= 1 (count (:subroutines (refresh offer)))) "Special Offer starts with 1 sub")
       (run-continue state)
-      (run-next-phase state)
       (core/rez state :corp snow)
       (run-continue state)
       (is (= 2 (count (:subroutines (refresh snow)))) "Snowflake gains 1 sub from Sensei")
       (run-continue state)
-      (run-next-phase state)
       (core/rez state :corp offer)
       (run-continue state)
       (is (= 2 (count (:subroutines (refresh offer)))) "Special Offer gains 1 sub from Sensei")
@@ -3097,7 +2943,6 @@
       (let [sherlock (get-ice state :hq 0)]
         (play-from-hand state :runner "Gordian Blade")
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp sherlock)
         (run-continue state)
         (card-subroutine state :corp sherlock 0)
@@ -3117,7 +2962,6 @@
       (let [sherlock (get-ice state :hq 0)]
         (play-from-hand state :runner "Gordian Blade")
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp sherlock)
         (run-continue state)
         (card-subroutine state :corp sherlock 1)
@@ -3140,7 +2984,6 @@
       (let [sherlock (get-ice state :hq 0)]
         (play-from-hand state :runner "Gordian Blade")
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp sherlock)
         (run-continue state)
         (card-subroutine state :corp sherlock 0)
@@ -3160,7 +3003,6 @@
       (let [sherlock (get-ice state :hq 0)]
         (play-from-hand state :runner "Gordian Blade")
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp sherlock)
         (run-continue state)
         (card-subroutine state :corp sherlock 1)
@@ -3178,7 +3020,6 @@
       (take-credits state :corp)
       (let [sherlock (get-ice state :hq 0)]
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp sherlock)
         (run-continue state)
         (card-subroutine state :corp sherlock 2)
@@ -3196,7 +3037,6 @@
       (play-from-hand state :runner "R&D Interface")
       (let [shiro (get-ice state :hq 0)]
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp shiro)
         (run-continue state)
         (card-subroutine state :corp shiro 0)
@@ -3223,7 +3063,6 @@
         (play-from-hand state :runner "R&D Interface")
         (let [shiro (get-ice state :hq 0)]
           (run-on state :hq)
-          (run-next-phase state)
           (core/rez state :corp shiro)
           (run-continue state)
           (card-subroutine state :corp shiro 1)
@@ -3246,7 +3085,6 @@
         (play-from-hand state :runner "R&D Interface")
         (let [shiro (get-ice state :hq 0)]
           (run-on state :hq)
-          (run-next-phase state)
           (core/rez state :corp shiro)
           (run-continue state)
           (card-subroutine state :corp shiro 1)
@@ -3269,7 +3107,6 @@
       (let [shiro (get-ice state :rd 0)
             mwanza (get-content state :rd 0)]
         (run-on state :rd)
-        (run-next-phase state)
         (core/rez state :corp shiro)
         (core/rez state :corp mwanza)
         (run-continue state)
@@ -3293,7 +3130,6 @@
       (play-from-hand state :corp "Slot Machine" "HQ")
       (take-credits state :corp)
       (run-on state :hq)
-      (run-next-phase state)
       (let [sm (get-ice state :hq 0)]
         (core/rez state :corp sm))
       (let [sm (get-ice state :hq 0)
@@ -3318,7 +3154,6 @@
       (play-from-hand state :corp "Slot Machine" "HQ")
       (take-credits state :corp)
       (run-on state :hq)
-      (run-next-phase state)
       (let [sm (get-ice state :hq 0)]
         (core/rez state :corp sm))
         (run-continue state)
@@ -3333,7 +3168,6 @@
           (play-from-hand state :corp "Slot Machine" "HQ")
           (take-credits state :corp)
           (run-on state :hq)
-          (run-next-phase state)
           (let [sm (get-ice state :hq 0)]
             (core/rez state :corp sm)
             (run-continue state)
@@ -3348,7 +3182,6 @@
           (play-from-hand state :corp "Slot Machine" "HQ")
           (take-credits state :corp)
           (run-on state :hq)
-          (run-next-phase state)
           (let [sm (get-ice state :hq 0)]
             (core/rez state :corp sm)
             (run-continue state)
@@ -3365,7 +3198,6 @@
           (play-from-hand state :corp "Slot Machine" "HQ")
           (take-credits state :corp)
           (run-on state :hq)
-          (run-next-phase state)
           (let [sm (get-ice state :hq 0)]
             (core/rez state :corp sm)
             (run-continue state)
@@ -3379,7 +3211,6 @@
           (play-from-hand state :corp "Slot Machine" "HQ")
           (take-credits state :corp)
           (run-on state :hq)
-          (run-next-phase state)
           (let [iw (get-ice state :rd 0)
                 sm (get-ice state :hq 0)]
             (core/rez state :corp sm)
@@ -3397,7 +3228,6 @@
     (play-from-hand state :corp "Snowflake" "HQ")
     (take-credits state :corp)
     (run-on state :hq)
-    (run-next-phase state)
     (let [sf (get-ice state :hq 0)]
       (core/rez state :corp sf)
       (run-continue state)
@@ -3418,7 +3248,6 @@
     (play-from-hand state :corp "Special Offer" "HQ")
     (take-credits state :corp 1)
     (run-on state "HQ")
-    (run-next-phase state)
     (is (= 2 (:position (get-in @state [:run]))) "Initial position approaching Special Offer")
     (let [special (get-ice state :hq 1)]
       (core/rez state :corp special)
@@ -3445,11 +3274,8 @@
       (is (= 6 (:current-strength (refresh surv))) "Surveyor has 6 strength for 3 pieces of ICE")
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-next-phase state)
       (run-continue state)
-      (run-next-phase state)
       (run-continue state)
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp surv 0)
       (is (= :trace (:prompt-type (prompt-map :corp))) "Trace is initiated")
@@ -3518,7 +3344,6 @@
       (let [thimble (get-ice state :hq 0)
             vanilla (get-ice state :remote1 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp thimble)
         (run-continue state)
         (run-continue state)
@@ -3563,7 +3388,6 @@
         (play-from-hand state :runner "Wasteland")
         (let [wast (get-resource state 0)]
           (run-on state "HQ")
-          (run-next-phase state)
           (core/gain state :corp :credit 9)
           (core/rez state :corp (refresh ti))
           (run-continue state)
@@ -3572,7 +3396,6 @@
           (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
           (is (not (:run @state)) "Run ended")
           (run-on state "HQ")
-          (run-next-phase state)
           (run-continue state)
           (card-subroutine state :corp ti 2)
           (is (not (:run @state)) "Run ended")))))
@@ -3602,18 +3425,15 @@
     (let [e (get-ice state :hq 0)
           tldr (get-ice state :hq 1)]
       (run-on state :hq)
-      (run-next-phase state)
       (core/rez state :corp e)
       (core/rez state :corp tldr)
       (run-continue state)
       (is (= 2 (count (:subroutines (refresh e)))) "Enigma starts with 2 subroutines")
       (fire-subs state tldr)
       (run-continue state)
-      (run-next-phase state)
       (run-continue state)
       (is (= 4 (count (:subroutines (refresh e)))) "Enigma has 4 subroutines after TLDR doubles them")
       (run-continue state)
-      (run-next-phase state)
       (run-continue state)
       (is (= 2 (count (:subroutines (refresh e)))) "Enigma starts with 2 subroutines"))))
 
@@ -3687,7 +3507,6 @@
       (play-from-hand state :runner "Inti")
       (let [treb (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (is (= 0 (count-bad-pub state)) "No BP before")
         (core/rez state :corp treb)
         (is (= 1 (count-bad-pub state)) "Gained 1 BP from rez")
@@ -3700,7 +3519,6 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (run-continue state)
-        (run-next-phase state)
         (run-successful state)
         (click-prompt state :runner "No action")))) ;; Runner couldn't steal
   (testing "No trashing on successful trace."
@@ -3712,7 +3530,6 @@
       (play-from-hand state :runner "Inti")
       (let [treb (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (is (= 0 (count-bad-pub state)) "No BP before")
         (core/rez state :corp treb)
         (is (= 1 (count-bad-pub state)) "Gained 1 BP from rez")
@@ -3725,7 +3542,6 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (run-continue state)
-        (run-next-phase state)
         (run-successful state)
         (click-prompt state :runner "Pay 4 [Credits] to trash") ;; Try to trash PAD Campaign
         (is (= 0 (count (:discard (get-corp)))) "PAD Campaign didn't get trashed")))))
@@ -3740,7 +3556,6 @@
       (let [troll (get-ice state :hq 0)]
         (core/rez state :corp troll)
         (run-on state "HQ")
-        (run-next-phase state)
         (run-continue state)
         (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
         (click-prompt state :corp "0")
@@ -3758,7 +3573,6 @@
     (take-credits state :corp)
     (let [tsurugi (get-ice state :hq 0)]
       (run-on state :hq)
-      (run-next-phase state)
       (core/rez state :corp tsurugi)
       (run-continue state)
       (card-subroutine state :corp tsurugi 0)
@@ -3804,7 +3618,6 @@
       (take-credits state :corp)
       (let [tyr (get-ice state :hq 0)]
         (run-on state "HQ")
-        (run-next-phase state)
         (core/rez state :corp tyr)
         (run-continue state)
         (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
@@ -3826,7 +3639,6 @@
     (take-credits state :corp)
     (run-on state :hq)
     (let [waiv (get-ice state :hq 0)]
-      (run-next-phase state)
       (core/rez state :corp waiv)
       (run-continue state)
       (card-subroutine state :corp waiv 0)
@@ -3872,7 +3684,6 @@
       (play-from-hand state :runner "Astrolabe")
       (play-from-hand state :runner "Fan Site")
       (run-on state :hq)
-      (run-next-phase state)
       (let [win (get-ice state :hq 0)
             misd (get-program state 0)
             astro (get-hardware state 0)
@@ -3907,7 +3718,6 @@
       (play-from-hand state :corp "Winchester" "R&D")
       (take-credits state :corp)
       (run-on state :rd)
-      (run-next-phase state)
       (let [win (get-ice state :rd 0)]
         (core/rez state :corp win)
         (run-continue state)
@@ -3921,7 +3731,6 @@
       (take-credits state :corp)
       ;Click 1 - Run R&D, rez Winchester and let it fire
       (run-on state :rd)
-      (run-next-phase state)
       (let [win (get-ice state :rd 0)
             thim (get-ice state :hq 0)]
         (core/rez state :corp win)
@@ -3939,7 +3748,6 @@
         (play-from-hand state :runner "Aumakua")
         ;Click 3 - Run HQ, rez Thimblerig, break, swap ice
         (run-on state :hq)
-        (run-next-phase state)
         (core/rez state :corp thim)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
@@ -3950,7 +3758,6 @@
         (run-jack-out state)
         ;Click 4 - Run HQ
         (run-on state :hq)
-        (run-next-phase state)
         (run-continue state)
         (is (= 3 (count (:subroutines (get-ice state :hq 0)))) "Winchester has 3 subroutines on HQ")))))
 
@@ -3980,7 +3787,6 @@
           wormhole (get-ice state :hq 0)]
       (run-on state :hq)
       (core/rez state :corp wormhole)
-      (run-next-phase state)
       (run-continue state)
       (card-subroutine state :corp wormhole 0)
       (is (:fired (first (:subroutines (refresh wormhole))))
@@ -3988,7 +3794,6 @@
       (is (empty? (:prompt (get-corp))) "No choice prompt for the Corp")
       (core/end-run state :corp)
       (run-on state :hq)
-      (run-next-phase state)
       (core/rez state :corp iw)
       (run-continue state)
       (fire-subs state wormhole)
