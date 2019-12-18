@@ -2619,12 +2619,16 @@
                 :effect (effect (update! (dissoc card :supplier-installed)))}]})
 
    "The Turning Wheel"
-   (let [ttw-ab (fn [m s]
-                  {:label (str "Access an additional card in " m)
-                   :cost [:power 2]
-                   :req (req run)
-                   :msg (msg "access 1 additional card from " m " for the remainder of the run")
-                   :effect (req (access-bonus state side s 1))})]
+   (letfn [(get-outermost-ice [state server]
+           (if (pos? (count (get-in state (concat [:corp :servers] [server] [:ices]))))
+            ((get-in state (concat [:corp :servers] [server] [:ices])) (dec (count (get-in state (concat [:corp :servers] [server] [:ices])))))))
+           (ttw-ab [name server]
+            {:label (str "Access an additional card in " name)
+            :cost [:power 2]
+            :req (req run)
+            :msg (msg "access 1 additional card from " name " for the remainder of the run")
+            :effect (req (access-bonus state side server 1))})
+          ]
      {:events [{:event :agenda-stolen
                 :effect (effect (update! (assoc card :agenda-stolen true)))
                 :silent (req true)}
@@ -2636,7 +2640,19 @@
                              (update! state side (dissoc (get-card state card) :agenda-stolen)))
                 :silent (req true)}]
       :abilities [(ttw-ab "R&D" :rd)
-                  (ttw-ab "HQ" :hq)]})
+                  (ttw-ab "HQ" :hq)
+                  ;we want to check that outermost ICE is rezzed
+                  ;we want to check that ALL subs on outermost ICE are ETR subs
+                  {:label "Bounce HQ or R&D"
+                   :cost [:click 1]
+                   :req (req (or (and (rezzed? (get-outermost-ice @state :hq))
+                                      (every? #(= "End the run" (-> % :label)) (:subroutines (get-outermost-ice @state :hq))))
+                                 (and (rezzed? (get-outermost-ice @state :rd))
+                                      (every? #(= "End the run" (-> % :label)) (:subroutines (get-outermost-ice @state :rd))))))
+                   :effect (req (add-counter state side card :power 1)
+                                ;TODO: mark run as unsuccessful?
+                                ;(swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
+                                (system-msg state :runner (str "places a power counter on " (:title card))))}]})
 
    "Theophilius Bagbiter"
    {:effect (req (lose-credits state :runner :all)

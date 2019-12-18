@@ -4299,7 +4299,84 @@
         (run-successful state)
         (is (= "You accessed Fire Wall." (-> (get-runner) :prompt first :msg)))
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available")))))
+        (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available"))))
+  (testing "Successful bounce test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand [(qty "Ice Wall" 2) (qty "Fire Wall" 2)]
+                        :credits 20}
+                 :runner {:hand ["The Turning Wheel"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Fire Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")  
+      (core/rez state :corp (get-ice state :hq 0))
+      (core/rez state :corp (get-ice state :hq 1))
+      (core/rez state :corp (get-ice state :rd 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (card-ability state :runner ttw 2) ;; Bounce ability
+        (is (= 1 (get-counters (refresh ttw) :power)) "Bounce should add 1 counter to The Turning Wheel")
+        (is (last-log-contains? state "places a power counter on")))))
+  (testing "Bounce needs rezzed ICE"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand [(qty "Ice Wall" 2) (qty "Fire Wall" 2)]
+                        :credits 20}
+                 :runner {:hand ["The Turning Wheel"]
+                          :credits 10}})
+      (play-from-hand state :corp "Fire Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")  
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (card-ability state :runner ttw 2) ;; Bounce ability
+        (is (= 0 (get-counters (refresh ttw) :power)) "Bounce didn't add counter to The Turning Wheel"))))   
+  (testing "No suitable ICE for bounce test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand [(qty "Rototurret" 2) (qty "Fire Wall" 2)]
+                        :credits 20}
+                 :runner {:hand ["The Turning Wheel"]
+                          :credits 10}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (play-from-hand state :corp "Rototurret" "R&D")  
+      (core/rez state :corp (get-ice state :hq 0))
+      (core/rez state :corp (get-ice state :rd 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (card-ability state :runner ttw 2) ;; Bounce ability
+        (is (= 0 (get-counters (refresh ttw) :power)) "Bounce didn't add counter to The Turning Wheel"))))
+  (testing "No suitable ICE on HQ, suitable on R&D"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand [(qty "Rototurret" 2) (qty "Eli 1.0" 2)]
+                        :credits 20}
+                 :runner {:hand ["The Turning Wheel"]
+                          :credits 10}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (play-from-hand state :corp "Eli 1.0" "R&D")  
+      (core/rez state :corp (get-ice state :hq 0))
+      (core/rez state :corp (get-ice state :rd 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (card-ability state :runner ttw 2) ;; Bounce ability
+        (is (= 1 (get-counters (refresh ttw) :power)) "Bounce add 1 counter to The Turning Wheel"))))
+  (testing "No ICE bounce shouldn't be possible, enjoy your access"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand [(qty "Rototurret" 2) (qty "Eli 1.0" 2)]
+                        :credits 20}
+                 :runner {:hand ["The Turning Wheel"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (card-ability state :runner ttw 2) ;; Bounce ability
+        (is (= 0 (get-counters (refresh ttw) :power)) "Bounce add 1 counter to The Turning Wheel")))))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool
