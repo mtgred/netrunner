@@ -1281,9 +1281,9 @@
    (let [ab {:prompt "Gain 2 credits or draw 2 cards?"
              :player :corp
              :choices ["Gain 2 credits" "Draw 2 cards"]
-             :msg (msg (= target "Gain 2 credits")
+             :msg (msg (if (= target "Gain 2 credits")
                        "gain 2 credits"
-                       "draw 2 cards")
+                       "draw 2 cards"))
              :async true
              :interactive (req true)
              :effect (req (if (= target "Gain 2 credits")
