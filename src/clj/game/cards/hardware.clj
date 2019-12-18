@@ -872,14 +872,16 @@
 
    "Hippo"
    {:events [{:event :subroutines-broken
+              :req (req (let [pred #(and (same-card? (last run-ices) (first %))
+                                         (every? :broken (:subroutines (first %))))]
+                          (and (same-card? (last run-ices) target)
+                               (every? :broken (:subroutines target))
+                               (first-event? state side :subroutines-broken pred))))
               :effect
               (effect
                 (continue-ability
                   {:optional
-                   {:req (req (let [pred #(and (same-card? (last run-ices) (first %))
-                                               (every? :broken (:subroutines (first %))))]
-                                (first-event? state side :subroutines-broken pred)))
-                    :prompt (str "Remove Hippo from the game to trash " (:title target) "?")
+                   {:prompt (str "Remove Hippo from the game to trash " (:title target) "?")
                     :yes-ability
                     {:async true
                      :effect (effect (system-msg (str "removes Hippo from the game to trash " (card-str state target)))
