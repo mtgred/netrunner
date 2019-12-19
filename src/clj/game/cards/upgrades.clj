@@ -114,7 +114,7 @@
                    :label "Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order."
                    :effect (req (reveal state side (take 3 (:deck corp)))
                                 (show-wait-prompt state :runner "Corp to use Bamboo Dome")
-                                (continue-ability state side 
+                                (continue-ability state side
                                   {:prompt "Select a card to add to HQ"
                                    :async true
                                    :choices (take 3 (:deck corp))
@@ -122,7 +122,7 @@
                                    :msg "secretly add card to HQ"
                                    :effect (req (move state side target :hand)
                                                 (continue-ability state side (reorder-cards) card nil))}
-                                  card nil))}]})                          
+                                  card nil))}]})
 
    "Ben Musashi"
    {:trash-effect

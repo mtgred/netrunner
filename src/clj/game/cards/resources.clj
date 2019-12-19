@@ -1185,7 +1185,7 @@
                                          seq)
                                     (contains? (card-def current-ice) :on-encounter))))
                  :msg (msg "prevent the encounter effect on " (card-str state current-ice))
-                 :effect (req (let [suppress
+                 :effect (req (let [[suppress & rst]
                                     (register-suppress
                                       state side card
                                       (let [ice current-ice]
@@ -1196,10 +1196,7 @@
                                   [{:event :encounter-ice-ends
                                     :duration :end-of-encounter
                                     :unregister-once-resolved true
-                                    :effect (req (swap! state assoc :suppress
-                                                        (->> (:suppress @state)
-                                                             (remove #(= (:uuid %) (:uuid suppress)))
-                                                             (into []))))}])))}
+                                    :effect (effect (unregister-suppress-by-uuid (:uuid suppress)))}])))}
                 (letfn [(ri [cards]
                           {:async true
                            :effect (req (if (seq cards)
