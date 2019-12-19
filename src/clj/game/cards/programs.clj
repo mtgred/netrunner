@@ -1305,11 +1305,10 @@
 
    "Harbinger"
    {:trash-effect
-    {:async true
-     :req (req (not-any? #{:facedown :hand} (:previous-zone card)))
+    {:req (req (not-any? #{:facedown :hand} (:previous-zone card)))
      :effect (req (let [lock (get-in @state [:runner :locked :discard])]
                     (swap! state assoc-in [:runner :locked] nil)
-                    (runner-install state :runner (assoc eid :source card :source-type :runner-install) card {:facedown true})
+                    (flip-facedown state side card)
                     (swap! state assoc-in [:runner :locked] lock)))}}
 
    "Hemorrhage"

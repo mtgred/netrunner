@@ -3244,8 +3244,7 @@
         (click-prompt state :runner "Draw 2 cards")
         (click-prompt state :runner "No action")
         (is (= 2 (count (:hand (get-runner)))) "Gained 2 cards")
-        (is (zero? (count (:deck (get-runner)))) "Cards came from stack"))
-      (println (map :text (:log @state)))))
+        (is (zero? (count (:deck (get-runner)))) "Cards came from stack"))))
   (testing "Pays out when accessing an Upgrade. Issue #4804"
     (do-game
       (new-game {:corp {:deck ["Hokusai Grid" "Hedge Fund"]}
