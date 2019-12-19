@@ -200,7 +200,8 @@
 
 (defmethod continue :encounter-ice
   [state side args]
-  (if (get-in @state [:run :no-action])
+  (if (or (get-in @state [:run :no-action])
+          (get-in @state [:run :bypass]))
     (encounter-ends state side args)
     (do (swap! state assoc-in [:run :no-action] :runner)
         (system-msg state side "has no further action"))))
