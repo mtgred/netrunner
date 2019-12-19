@@ -2619,10 +2619,7 @@
                 :effect (effect (update! (dissoc card :supplier-installed)))}]})
 
    "The Turning Wheel"
-   (letfn [(get-outermost-ice [state server]
-           (if (pos? (count (get-in state (concat [:corp :servers] [server] [:ices]))))
-            ((get-in state (concat [:corp :servers] [server] [:ices])) (dec (count (get-in state (concat [:corp :servers] [server] [:ices])))))))
-           (ttw-ab [name server]
+   (letfn [(ttw-ab [name server]
             {:label (str "Access an additional card in " name)
             :cost [:power 2]
             :req (req run)
@@ -2641,17 +2638,19 @@
                 :silent (req true)}]
       :abilities [(ttw-ab "R&D" :rd)
                   (ttw-ab "HQ" :hq)
-                  ;we want to check that outermost ICE is rezzed
-                  ;we want to check that ALL subs on outermost ICE are ETR subs
-                  {:label "Bounce HQ or R&D"
+                  {:label "Bounce HQ"
                    :cost [:click 1]
-                   :req (req (or (and (rezzed? (get-outermost-ice @state :hq))
-                                      (every? #(= "End the run" (-> % :label)) (:subroutines (get-outermost-ice @state :hq))))
-                                 (and (rezzed? (get-outermost-ice @state :rd))
-                                      (every? #(= "End the run" (-> % :label)) (:subroutines (get-outermost-ice @state :rd))))))
+                   :req (req true)
                    :effect (req (add-counter state side card :power 1)
-                                ;TODO: mark run as unsuccessful?
-                                ;(swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
+                                (swap! state update-in [:runner :register :unsuccessful-run] #(conj % :hq))
+                                (swap! state assoc-in [:run :unsuccessful] true)
+                                (system-msg state :runner (str "places a power counter on " (:title card))))}
+                  {:label "Bounce R&D"
+                   :cost [:click 1]
+                   :req (req true)
+                   :effect (req (add-counter state side card :power 1)
+                                (swap! state update-in [:runner :register :unsuccessful-run] #(conj % :rd))
+                                (swap! state assoc-in [:run :unsuccessful] true)
                                 (system-msg state :runner (str "places a power counter on " (:title card))))}]})
 
    "Theophilius Bagbiter"
