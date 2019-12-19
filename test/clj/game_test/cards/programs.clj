@@ -589,7 +589,7 @@
         (core/rez state :corp spi)
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh brah)})
-        (run-continue state)
+        (core/no-action state :corp nil)
         (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
         (click-card state :runner par)
         (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now.")))))
@@ -1154,7 +1154,7 @@
         (core/rez state :corp (refresh iw))
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh crypsis)})
-        (run-continue state)
+        (core/no-action state :corp nil)
         (is (= 0 (get-counters (refresh crypsis) :virus)) "Used up virus token on Crypsis")))))
 
 (deftest cyber-cypher
@@ -1646,7 +1646,7 @@
       (changes-val-macro 0 (:credit (get-runner))
                          "Broke Enigma for 0c"
                          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
-                         (run-continue state))
+                         (core/no-action state :corp nil))
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1655,7 +1655,7 @@
       (changes-val-macro -2 (:credit (get-runner))
                          "Broke Enigma for 2c"
                          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
-                         (run-continue state)))))
+                         (core/no-action state :corp nil)))))
 
 (deftest faerie
   (testing "Trash after encounter is over, not before"
@@ -1688,7 +1688,7 @@
         (core/rez state :corp (get-ice state :archives 0))
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh fae)})
-        (run-continue state)
+        (core/no-action state :corp nil)
         (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed")))))
 
 (deftest false-echo
@@ -2656,6 +2656,7 @@
         (changes-val-macro -5 (:credit (get-runner))
                            "Paid 3 to pump and 2 to break"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)}))
+        (core/no-action state :corp nil)
         (run-jack-out state)
         (dotimes [_ 3] (play-from-hand state :runner "Logic Bomb"))
         (run-on state "HQ")
@@ -2960,13 +2961,13 @@
                            "Used 1 credit from Cloak"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)})
                            (click-card state :runner cl))
-        (run-continue state)
+        (core/no-action state :corp nil)
         (core/rez state :corp enig)
         (run-continue state)
         (changes-val-macro -2 (:credit (get-runner))
                            "Paid 2 credits to break all subroutines on Enigma"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)}))
-        (run-continue state)
+        (core/no-action state :corp nil)
         (run-jack-out state)
         (take-credits state :runner)
         (take-credits state :corp)
@@ -3564,7 +3565,7 @@
         (is (= 1 (:current-strength (refresh snow))) "Snowball starts at 1 strength")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh snow)})
         (is (= 5 (:current-strength (refresh snow))) "Snowball was pumped once and gained 3 strength from breaking")
-        (run-continue state)
+        (core/no-action state :corp nil)
         (run-continue state)
         (is (= 4 (:current-strength (refresh snow))) "+3 until-end-of-run strength")))))
 
@@ -3832,7 +3833,7 @@
         (run-continue state)
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh tycoon)})
         (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
-        (run-continue state)
+        (core/no-action state :corp nil)
         (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used")))))
 
 (deftest upya

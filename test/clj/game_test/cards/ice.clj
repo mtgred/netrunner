@@ -137,7 +137,7 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mongoose)})
         (changes-val-macro 0 (count (:hand (get-runner)))
                            "3 net damage from passing Anansi"
-                           (run-continue state))))))
+                           (core/no-action state :corp nil))))))
 
 (deftest akhet
   ;; Akhet
@@ -549,7 +549,7 @@
         (is (= 3 (:current-strength (refresh icewall))) "Ice Wall now at 3 strength")
         (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength before encounter")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-        (run-continue state)
+        (core/no-action state :corp nil)
         (run-continue state)
         (is (= 2 (:current-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
         (run-jack-out state))))
@@ -628,7 +628,7 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
         (changes-val-macro 0 (count (:hand (get-runner)))
                            "No Damage from Ice Wall ending the run"
-                           (run-continue state))))))
+                           (core/no-action state :corp nil))))))
 
 (deftest congratulations
   ;; Congratulations!

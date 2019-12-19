@@ -2907,7 +2907,7 @@
       (run-on state :hq)
       (run-continue state)
       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corr)})
-      (run-continue state)
+      (core/no-action state :corp nil)
       (run-jack-out state)
       (is (= 2 (core/get-strength (refresh icew))) "Ice Wall gained 1 str from Rover Algorithm")
       (run-on state :hq)

@@ -8,7 +8,7 @@
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
          reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
-         update-all-ice update-all-icebreakers
+         update-all-ice update-all-icebreakers continue
          installable-servers get-runnable-zones)
 
 ;;; Neutral actions
@@ -423,7 +423,8 @@
                                          "the remaining "
                                          "all ")
                                        unbroken-subs " subroutines on "
-                                       (:title current-ice))))))))))
+                                       (:title current-ice))))
+                    (continue state side nil)))))))
 
 (defn play-copy-ability
   "Play an ability from another card's definition."
