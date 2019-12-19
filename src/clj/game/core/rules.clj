@@ -7,6 +7,11 @@
 
 ;;;; Functions for applying core Netrunner game rules.
 
+(defn fake-move
+  [state side eid c args]
+  (move state side c :rfg)
+  (effect-completed state side eid))
+
 ;;; Playing cards.
 (defn- complete-play-instant
   "Completes the play of the event / operation that the player can play for"
@@ -36,17 +41,22 @@
                             (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
                                   trash-after-resolving (:trash-after-resolving cdef true)
                                   zone (if (:rfg-instead-of-trashing c) :rfg :discard)]
-                              (when (and c trash-after-resolving)
-                                (move state side c zone)
-                                (unregister-events state side card)
-                                (unregister-constant-effects state side card)
-                                (when (= zone :rfg)
-                                  (system-msg state side
-                                              (str " removes " (:title c) " from the game instead of trashing it")))))
-                            (when (has-subtype? card "Terminal")
-                              (lose state side :click (-> @state side :click))
-                              (swap! state assoc-in [:corp :register :terminal] true))
-                            (effect-completed state side eid)))))))
+                              (if (and c trash-after-resolving)
+                                (let [trash-or-move (if (= zone :rfg) fake-move trash)]
+                                  (wait-for (trash-or-move state side c {:unpreventable true})
+                                            (unregister-events state side card)
+                                            (unregister-constant-effects state side card)
+                                            (when (= zone :rfg)
+                                              (system-msg state side
+                                                          (str " removes " (:title c) " from the game instead of trashing it")))
+                                            (when (has-subtype? card "Terminal")
+                                              (lose state side :click (-> @state side :click))
+                                              (swap! state assoc-in [:corp :register :terminal] true))
+                                            (effect-completed state side eid)))
+                                (do (when (has-subtype? card "Terminal")
+                                      (lose state side :click (-> @state side :click))
+                                      (swap! state assoc-in [:corp :register :terminal] true))
+                                    (effect-completed state side eid))))))))))
 
 (defn play-instant
   "Plays an Event or Operation."
