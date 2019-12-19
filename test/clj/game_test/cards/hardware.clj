@@ -55,6 +55,13 @@
     (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
 (deftest aniccam
+  (testing "Aniccam gives 1 MU"
+    (do-game
+      (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]
+                          :deck ["Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aniccam")
+      (is (= 5 (core/available-mu state)))))
   (testing "The runner draws 1 card when an event is trashed from the Grip by the Runner"
     (do-game
       (new-game {:runner {:hand ["Aniccam", "Sure Gamble"]

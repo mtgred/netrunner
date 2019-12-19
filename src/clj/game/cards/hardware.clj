@@ -55,7 +55,8 @@
    {:in-play [:memory 1]}
 
    "Aniccam"
-   {:events [{:event :card-moved
+   {:in-play [:memory 1]
+    :events [{:event :card-moved
               :msg "draw 1 card"
               :req (req (letfn [(event-moved-to-discard? [[old-card new-card]]
                                   (and (is-type? new-card "Event")
