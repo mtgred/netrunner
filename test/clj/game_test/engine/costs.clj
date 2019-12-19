@@ -119,7 +119,7 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
         (is (= 3 (:current-strength (refresh cor))) "Corroder now at 3 strength")
         (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")
-        (is (last-log-contains? state "Runner pays 6 \\[Credits\\] to increase the strength of Corroder to 3 and break all 5 subroutines on Hive.") "Should write correct pump & break price to log"))))
+        (is (second-last-log-contains? state "Runner pays 6 \\[Credits\\] to increase the strength of Corroder to 3 and break all 5 subroutines on Hive.") "Should write correct pump & break price to log"))))
   (testing "Auto-pump first"
     (do-game
       (new-game {:runner {:hand ["Corroder"]}
@@ -138,7 +138,7 @@
         (is (last-log-contains? state "Runner pays 1 \\[Credits\\] to increase the strength of Corroder to 3.") "Should write correct pump price to log")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
         (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")
-        (is (last-log-contains? state "Runner pays 5 \\[Credits\\] to use Corroder to break all 5 subroutines on Hive.") "Should write correct break price to log"))))
+        (is (second-last-log-contains? state "Runner pays 5 \\[Credits\\] to use Corroder to break all 5 subroutines on Hive.") "Should write correct break price to log"))))
   (testing "Auto-pump and break some subs manually first"
     (do-game
       (new-game {:runner {:hand ["Corroder"]}
@@ -160,7 +160,7 @@
         (is (= 4 (count (remove :broken (:subroutines (refresh hive))))) "Only broken 1 sub")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
         (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")
-        (is (last-log-contains? state "Runner pays 4 \\[Credits\\] to use Corroder to break the remaining 4 subroutines on Hive.") "Should write correct price to log")))))
+        (is (second-last-log-contains? state "Runner pays 4 \\[Credits\\] to use Corroder to break the remaining 4 subroutines on Hive.") "Should write correct price to log")))))
 
 (deftest run-additional-costs
   (testing "If runner cannot pay additional cost, server not shown as an option for run events or click to run button"
