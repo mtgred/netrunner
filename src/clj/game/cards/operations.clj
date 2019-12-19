@@ -1844,7 +1844,8 @@
                                    (or (has-subtype? % "Virtual")
                                        (has-subtype? % "Chip")))}
              :msg (msg "remove " (card-str state target) " from game")
-             :effect (req (move state :runner target :rfg))}}}
+             :effect (effect (move :runner target :rfg)
+                             (effect-completed eid))}}}
 
    "Scarcity of Resources"
    {:msg "increase the install cost of resources by 2"
