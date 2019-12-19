@@ -1507,7 +1507,7 @@
         (str "Continue to " (phase->next-phase-title run))))
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
-         (not (:no-action @run)))
+         (not= "corp" (:no-action @run)))
     #(send-command "no-action")]
 
    [:button {:on-click #(send-command "indicate-action")
@@ -1532,7 +1532,7 @@
             (not (zero? (:position @run))))
        [cond-button
         (str "Continue to " (phase->next-phase-title run))
-        (:no-action @run)
+        (not= "runner" (:no-action @run))
         #(send-command "continue")]
 
        (zero? (:position @run))
