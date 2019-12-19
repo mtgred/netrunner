@@ -3054,9 +3054,9 @@
     :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))}
 
    "Turnpike"
-   {:implementation "Encounter effect is manual"
-    :abilities [{:msg "force the Runner to lose 1 [Credits]"
-                 :effect (effect (lose-credits :runner 1))}]
+   {:events [{:event :encounter-ice
+              :msg "force the Runner to lose 1 [Credits]"
+              :effect (effect (lose-credits :runner 1))}]
     :subroutines [(tag-trace 5)]}
 
    "Tyrant"
