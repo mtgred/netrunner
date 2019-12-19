@@ -151,3 +151,72 @@
         (card-ability state :corp (get-ice state :remote1 1) 0)
         (is (nil? (:run @state)) "Pressing Done properly handles the ended run")
         (is (= credits (:credit (get-runner))) "Runner shouldn't lose any credits to Tollbooth")))))
+
+(deftest buffered-continue
+  (testing "Buffered continue on approaching ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (is (= :approach-ice (:phase (:run @state))) "Runner in approach on ice")
+        (is (not (:no-action (:run @state))) "no-action is not set yet")
+        (core/continue state :runner nil)
+        (is (= :approach-ice (:phase (:run @state))) "Still in approach on ice")
+        (is (= :runner (:no-action (:run @state))) "Runner pressed Continue button")
+        (core/no-action state :corp nil)
+        (is (= :approach-server (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
+        (is (not (:no-action (:run @state))) "no-action is reset")))
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (is (= :approach-ice (:phase (:run @state))) "Runner in approach on ice")
+        (is (not (:no-action (:run @state))) "no-action is not set yet")
+        (core/no-action state :corp nil)
+        (is (= :approach-ice (:phase (:run @state))) "Still in approach on ice")
+        (is (= :corp (:no-action (:run @state))) "Corp pressed Continue button")
+        (core/continue state :runner nil)
+        (is (= :approach-server (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
+        (is (not (:no-action (:run @state))) "no-action is reset"))))
+  (testing "Buffered continue on encountering ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (core/rez state :corp iw)
+        (run-continue state)
+        (is (= :encounter-ice (:phase (:run @state))) "Runner in encounter with ice")
+        (is (not (:no-action (:run @state))) "no-action is not set yet")
+        (core/continue state :runner nil)
+        (is (= :encounter-ice (:phase (:run @state))) "Still in encounter with ice")
+        (is (= :runner (:no-action (:run @state))) "Runner pressed Continue button")
+        (core/no-action state :corp nil)
+        (is (= :approach-server (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
+        (is (not (:no-action (:run @state))) "no-action is reset"))))
+  (testing "Buffered continue on encountering ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (core/rez state :corp iw)
+        (run-continue state)
+        (is (= :encounter-ice (:phase (:run @state))) "Runner in encounter with ice")
+        (is (not (:no-action (:run @state))) "no-action is not set yet")
+        (core/no-action state :corp nil)
+        (is (= :encounter-ice (:phase (:run @state))) "Still in encounter with ice")
+        (is (= :corp (:no-action (:run @state))) "Corp pressed Continue button")
+        (core/continue state :runner nil)
+        (is (= :approach-server (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
+        (is (not (:no-action (:run @state))) "no-action is reset")))))
