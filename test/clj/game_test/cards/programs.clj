@@ -2960,13 +2960,13 @@
                            "Used 1 credit from Cloak"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)})
                            (click-card state :runner cl))
-        (run-continue state)
+        (core/no-action state :corp nil)
         (core/rez state :corp enig)
         (run-continue state)
         (changes-val-macro -2 (:credit (get-runner))
                            "Paid 2 credits to break all subroutines on Enigma"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)}))
-        (run-continue state)
+        (core/no-action state :corp nil)
         (run-jack-out state)
         (take-credits state :runner)
         (take-credits state :corp)
