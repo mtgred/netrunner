@@ -2083,26 +2083,23 @@
               :async true
               :msg (msg "reveal " (:title target))
               :effect (req (if-let [guess (get-in card [:special :rng-guess])]
-                             (if (installed? target)
-                               ;; Do not trigger on installed cards (can't "reveal" an installed card per UFAQ)
-                               (do (toast state :runner "Installed cards cannot be revealed, so RNG Key does not pay out." "info")
-                                   (effect-completed state side eid))
-                               (if (or (= guess (:cost target))
-                                       (= guess (:advancementcost target)))
-                                 (do (reveal state side target)
-                                     (continue-ability
-                                       state side
-                                       {:prompt "Choose RNG Key award"
-                                        :choices ["Gain 3 [Credits]" "Draw 2 cards"]
-                                        :async true
-                                        :effect (req (if (= target "Draw 2 cards")
-                                                       (do (system-msg state :runner "uses RNG Key to draw 2 cards")
-                                                           (draw state :runner eid 2 nil))
-                                                       (do (system-msg state :runner "uses RNG Key to gain 3 [Credits]")
-                                                           (gain-credits state :runner 3)
-                                                           (effect-completed state side eid))))}
-                                       card nil))
-                                 (effect-completed state side eid)))
+                             (if (or (= guess (:cost target))
+                                     (= guess (:advancementcost target)))
+                               (do (reveal state side target)
+                                   (continue-ability
+                                     state side
+                                     {:prompt "Choose RNG Key reward"
+                                      :choices ["Gain 3 [Credits]" "Draw 2 cards"]
+                                      :async true
+                                      :msg (msg (if (= target "Draw 2 cards")
+                                                  "draw 2 cards"
+                                                  "gain 3 [Credits]"))
+                                      :effect (req (if (= target "Draw 2 cards")
+                                                     (draw state :runner eid 2 nil)
+                                                     (do (gain-credits state :runner 3)
+                                                         (effect-completed state side eid))))}
+                                     card nil))
+                               (effect-completed state side eid))
                              (effect-completed state side eid)))}
              {:event :post-access-card
               :effect (effect (update! (assoc-in card [:special :rng-guess] nil)))}
