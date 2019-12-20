@@ -2,7 +2,6 @@
   (:require [web.db :refer [db object-id]]
             [web.lobby :refer [all-games]]
             [game.main :as main]
-            [game.core.card-defs :refer [reset-card-defs]]
             [tasks.nrdb :refer [fetch-data]]
             [web.utils :refer [response]]
             [monger.collection :as mc]
@@ -31,7 +30,6 @@
   [{params :params :as req}]
   (try
     (fetch-data params)
-    (reset-card-defs)
     (response 200 {:message "ok"})
     (catch Exception e (do
                          (println "fetch-handler failed:" (.getMessage e))

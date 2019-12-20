@@ -1,10 +1,10 @@
-(ns game-test.engine.effects
+(ns game.engine.effects-test
   (:require [game.core :as core]
             [game.core.effects :as e]
             [game.utils :refer [same-card?]]
-            [game-test.core :refer :all]
-            [game-test.utils :refer :all]
-            [game-test.macros :refer :all]
+            [game.core-test :refer :all]
+            [game.utils-test :refer :all]
+            [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
 (deftest gather-effects

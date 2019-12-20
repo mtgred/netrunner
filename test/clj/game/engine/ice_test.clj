@@ -1,10 +1,10 @@
-(ns game-test.engine.ice
+(ns game.engine.ice-test
   (:require [game.core :as core]
             [game.utils :as utils]
             [jinteki.utils :as jutils]
-            [game-test.core :refer :all]
-            [game-test.utils :refer :all]
-            [game-test.macros :refer :all]
+            [game.core-test :refer :all]
+            [game.utils-test :refer :all]
+            [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
 (deftest auto-pump-and-break
