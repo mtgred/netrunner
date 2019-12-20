@@ -2238,7 +2238,17 @@
       (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")
       (run-empty-server state :remote1)
       (click-prompt state :runner "Steal")
-      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it"))))
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")))
+  (testing "Stealing from Archives shouldn't add any counters. Issue #4799"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hostile Takeover"]
+                        :discard ["Project Vacheron"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :archives)
+      (click-prompt state :runner "Steal")
+      (is (zero? (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 0 tokens on it"))))
 
 (deftest project-vitruvius
   ;; Project Vitruvius

@@ -1091,7 +1091,8 @@
 
    "Project Vacheron"
    (let [vacheron-ability
-         {:req (req (and (not= (first (:zone card)) :discard)
+         {:req (req (and (in-scored? card)
+                         (not= (first (:previous-zone card)) :discard)
                          (same-card? card target)))
           :msg (msg "add 4 agenda counters on " (:title card))
           :effect (effect (add-counter (get-card state card) :agenda 4)
