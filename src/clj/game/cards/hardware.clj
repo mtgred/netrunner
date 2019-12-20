@@ -1853,26 +1853,20 @@
               :interactive (req true)
               :req (req (not (empty? (:scored corp))))
               :async true
-              :effect (req
-                        (let [stolen target]
-                          (continue-ability
-                            state side
+              :effect (effect
+                        (continue-ability
+                          (let [stolen target]
                             {:optional
                              {:prompt (msg "Swap " (:title stolen) " for an agenda in the Corp's score area?")
                               :yes-ability
                               {:async true
-                               :effect (req
-                                         (continue-ability
-                                           state side
-                                           {:prompt (str "Select a scored Corp agenda to swap with " (:title stolen))
-                                            :choices {:card #(in-corp-scored? state side %)}
-                                            :effect (req (let [scored target]
-                                                           (swap-agendas state side scored stolen)
-                                                           (system-msg state side (str "uses Turntable to swap "
-                                                                                       (:title stolen) " for " (:title scored)))
-                                                           (effect-completed state side eid)))}
-                                           card targets))}}}
-                            card targets)))}]}
+                               :prompt (str "Select a scored Corp agenda to swap with " (:title stolen))
+                               :choices {:card #(in-corp-scored? state side %)}
+                               :effect (effect (swap-agendas target stolen)
+                                               (system-msg (str "uses Turntable to swap "
+                                                                (:title stolen) " for " (:title target)))
+                                               (effect-completed eid))}}})
+                          card targets))}]}
 
    "Ubax"
    (let [ability {:req (req (:runner-phase-12 @state))

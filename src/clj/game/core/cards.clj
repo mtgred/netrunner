@@ -16,9 +16,9 @@
 (defn find-latest
   "Returns the newest version of a card where-ever it may be"
   [state card]
-  (let [side (-> card :side to-keyword)]
-    (find-cid (:cid card) (concat (all-installed state side)
-                                  (-> (map #(-> @state side %) [:hand :discard :deck :rfg :scored]) concat flatten)))))
+  (find-cid (:cid card) (concat (all-installed state (-> card :side to-keyword))
+                                (-> (map #(-> @state :corp %) [:hand :discard :deck :rfg :scored]) concat flatten)
+                                (-> (map #(-> @state :runner %) [:hand :discard :deck :rfg :scored]) concat flatten))))
 
 (defn get-scoring-owner
   "Returns the owner of the scoring area the card is in"

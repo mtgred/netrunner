@@ -474,11 +474,16 @@
       :interactive (req true)
       :effect (req (if (:winner @state)
                      (effect-completed state side eid)
-                     (let [stolen-agenda target
+                     (let [card (find-latest state card)
+                           stolen-agenda (find-latest state target)
                            title (:title stolen-agenda)
                            prompt (str "Forfeit Divested Trust to add " title
                                        " to HQ and gain 5[Credits]?")
-                           message (str "add " title " to HQ and gain 5 [Credits]")]
+                           message (str "add " title " to HQ and gain 5 [Credits]")
+                           agenda-side (if (in-runner-scored? state side stolen-agenda)
+                                         :runner :corp)
+                           card-side (if (in-runner-scored? state side card)
+                                       :runner :corp)]
                        (show-wait-prompt state :runner "Corp to use Divested Trust")
                        (continue-ability
                          state side
@@ -486,11 +491,11 @@
                           {:prompt prompt
                            :yes-ability
                            {:msg message
-                            :effect (effect (forfeit card)
-                                            (move stolen-agenda :hand)
-                                            (gain-agenda-point :runner (- (:agendapoints stolen-agenda)))
-                                            (gain-credits 5)
-                                            (effect-completed eid))}
+                            :effect (req (forfeit state card-side card)
+                                         (move state side stolen-agenda :hand)
+                                         (gain-agenda-point state agenda-side (- (:agendapoints stolen-agenda)))
+                                         (gain-credits state side 5)
+                                         (effect-completed state side eid))}
                            :end-effect (effect (clear-wait-prompt :runner))}}
                          card nil))))}]}
 

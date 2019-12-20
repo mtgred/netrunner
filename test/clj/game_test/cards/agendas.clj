@@ -736,8 +736,8 @@
   (testing "Doesn't stop the runner from winning. Issue #4107"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
-                        :hand ["Government Takeover" "Hostile Takeover" "Divested Trust"]}})
-      (core/gain state :corp :click 10)
+                        :hand ["Government Takeover" "Hostile Takeover" "Divested Trust"]
+                        :credits 20}})
       (play-and-score state "Divested Trust")
       (play-from-hand state :corp "Government Takeover" "New remote")
       (take-credits state :corp)
@@ -748,7 +748,31 @@
       (click-prompt state :runner "Steal")
       (is (empty? (:prompt (get-corp))) "Corp doesn't get opportunity to use Divested Trust")
       (is (= :runner (:winner @state)) "Runner should win")
-      (is (= "Agenda" (:reason @state)) "Win condition reports points"))))
+      (is (= "Agenda" (:reason @state)) "Win condition reports points")))
+  (testing "Interaction with Turntable. Issue #4789"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Government Takeover" "Divested Trust"]
+                        :credits 20}
+                 :runner {:hand ["Turntable"]}})
+      (play-and-score state "Divested Trust")
+      (play-from-hand state :corp "Government Takeover" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Turntable")
+      (run-empty-server state "Server 2")
+      (click-prompt state :runner "Steal")
+      (is (= "Swap Government Takeover for an agenda in the Corp's score area?"
+             (:msg (prompt-map :runner)))
+          "Runner has Turntable prompt")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Divested Trust")
+      (click-prompt state :corp "Yes")
+      (is (zero? (:agenda-point (get-corp))) "Corp has 0 points")
+      (is (zero? (:agenda-point (get-runner))) "Runner has 0 points")
+      (is (empty? (:scored (get-corp))) "Corp has no cards scored")
+      (is (empty? (:scored (get-runner))) "Runner has no cards scored")
+      (is (find-card "Divested Trust" (:rfg (get-corp))) "Divested Trust should be rfg'd")
+      (is (find-card "Government Takeover" (:hand (get-corp))) "Gov Takeover should be in HQ"))))
 
 (deftest domestic-sleepers
   ;; Domestic Sleepers

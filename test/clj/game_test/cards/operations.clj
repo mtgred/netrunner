@@ -2998,8 +2998,8 @@
           (click-card state :corp c))
         (if (= "Misdirection" title)
           (is (not (empty? (:prompt (get-corp)))) "Scapenet doesn't work on non-virtual non-chip card.")
-          (is (= 1 (count (:rfg (get-runner)))) "Card removed from game."))
-        (is (find-card "Scapenet" (:discard (get-corp))))))))
+          (do (is (= 1 (count (:rfg (get-runner)))) "Card removed from game.")
+              (is (find-card "Scapenet" (:discard (get-corp))))))))))
 
 (deftest scarcity-of-resources
   ;; Scarcity of Resources

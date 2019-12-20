@@ -635,9 +635,8 @@
      (when (:msg args)
        (system-msg state side (str "forfeits " (:title card))))
      (gain-agenda-point state side (- (get-agenda-points state side card)))
-     (move state side card :rfg)
-     (wait-for (trigger-event-sync state side (keyword (str (name side) "-forfeit-agenda")) card)
-               (effect-completed state side eid)))))
+     (move state (to-keyword (:side card)) card :rfg)
+     (trigger-event-sync state side eid (keyword (str (name side) "-forfeit-agenda")) card))))
 
 (defn gain-agenda-point
   "Gain n agenda points and check for winner."
