@@ -2937,7 +2937,24 @@
                            (click-card state :runner pp)
                            (click-card state :runner pp))
         (play-from-hand state :runner "Hernando Cortez")
-        (is (empty? (:prompt (get-runner))) "No pay-credits prompt on the install of a Connection")))))
+        (is (empty? (:prompt (get-runner))) "No pay-credits prompt on the install of a Connection"))))
+  (testing "Async issues are handled properly. Issue #4784"
+    (do-game
+      (new-game {:corp {:deck ["Project Vitruvius"]}
+                 :runner {:hand ["Paladin Poemu"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paladin Poemu")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (click-card state :runner "Paladin Poemu")
+      (is (find-card "Paladin Poemu" (:discard (get-runner))) "Paladin Poemu should be trashed")
+      (is (empty? (:prompt (get-runner))) "Runner has no prompt")
+      (is (empty? (:prompt (get-corp))) "Corp has no prompt"))))
 
 (deftest patron
   ;; Patron
