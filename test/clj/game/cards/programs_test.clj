@@ -1,10 +1,10 @@
-(ns game-test.cards.programs
+(ns game.cards.programs-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.utils :as utils]
-            [game-test.core :refer :all]
-            [game-test.utils :refer :all]
-            [game-test.macros :refer :all]
+            [game.core-test :refer :all]
+            [game.utils-test :refer :all]
+            [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
 (deftest abagnale

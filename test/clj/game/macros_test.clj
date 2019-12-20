@@ -1,10 +1,10 @@
-(ns game-test.macros
+(ns game.macros-test
   (:require [game.core :as core]
             [game.core.card :refer [get-card]]
             [game.utils :refer [side-str]]
             [clojure.test :refer :all]
             [clojure.string :refer [join]]
-            [game-test.utils :refer :all]
+            [game.utils-test :refer :all]
             [jinteki.utils :as jutils]))
 
 (defmacro do-game [s & body]

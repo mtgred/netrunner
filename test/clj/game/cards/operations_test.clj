@@ -1,10 +1,10 @@
-(ns game-test.cards.operations
+(ns game.cards.operations-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.utils :as utils]
-            [game-test.core :refer :all]
-            [game-test.utils :refer :all]
-            [game-test.macros :refer :all]
+            [game.core-test :refer :all]
+            [game.utils-test :refer :all]
+            [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
 (deftest ^{:card-title "24-7-news-cycle"}

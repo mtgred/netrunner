@@ -4,16 +4,6 @@
             [monger.collection :as mc]
             [clojure.data :refer [diff]]
             [clojure.string :as s]
-            [game-test.cards.agendas]
-            [game-test.cards.assets]
-            [game-test.cards.events]
-            [game-test.cards.hardware]
-            [game-test.cards.ice]
-            [game-test.cards.identities]
-            [game-test.cards.operations]
-            [game-test.cards.programs]
-            [game-test.cards.resources]
-            [game-test.cards.upgrades]
             [jinteki.utils :refer [slugify]]))
 
 (defn- get-card-by-type
@@ -74,20 +64,30 @@
   [& args]
   (webdb/connect)
   (try
+    (require '[game.cards.agendas-test]
+             '[game.cards.assets-test]
+             '[game.cards.events-test]
+             '[game.cards.hardware-test]
+             '[game.cards.ice-test]
+             '[game.cards.identities-test]
+             '[game.cards.operations-test]
+             '[game.cards.programs-test]
+             '[game.cards.resources-test]
+             '[game.cards.upgrades-test])
     (let [only (some #{"--only"} args)
           card-type (first (remove #(s/starts-with? % "--") args))
           show-all (some #{"--show-all"} args)
           show-none (some #{"--show-none"} args)
-          nspaces {"Agenda" '(game-test.cards.agendas)
-                   "Asset" '(game-test.cards.assets)
-                   "Event" '(game-test.cards.events)
-                   "Hardware" '(game-test.cards.hardware)
-                   "ICE" '(game-test.cards.ice)
-                   "Identity" '(game-test.cards.identities)
-                   "Operation" '(game-test.cards.operations)
-                   "Program"  '(game-test.cards.programs)
-                   "Resource" '(game-test.cards.resources)
-                   "Upgrade" '(game-test.cards.upgrades)}
+          nspaces {"Agenda" '(game.cards.agendas-test)
+                   "Asset" '(game.cards.assets-test)
+                   "Event" '(game.cards.events-test)
+                   "Hardware" '(game.cards.hardware-test)
+                   "ICE" '(game.cards.ice-test)
+                   "Identity" '(game.cards.identities-test)
+                   "Operation" '(game.cards.operations-test)
+                   "Program" '(game.cards.programs-test)
+                   "Resource" '(game.cards.resources-test)
+                   "Upgrade" '(game.cards.upgrades-test)}
           filtered-nspaces (if only
                              (select-keys nspaces [card-type])
                              (into (sorted-map) nspaces))]
