@@ -481,28 +481,48 @@
       (run-continue state)
       (is (= 2 (core/get-strength (refresh berserker))) "Berserker gains 0 strength from Enigma (non-barrier)"))))
 
-(deftest black-orchestra
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Macrophage"]
-                      :credits 10}
-               :runner {:hand ["Black Orchestra"]
-                        :credits 100}})
-    (play-from-hand state :corp "Macrophage" "HQ")
-    (core/rez state :corp (get-ice state :hq 0))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Black Orchestra")
-    (let [bo (get-program state 0)]
-      (run-on state :hq)
-      (run-continue state)
-      (card-ability state :runner bo 0)
-      (card-ability state :runner bo 0)
-      (is (empty? (:prompt (get-runner))) "Has no break prompt as strength isn't high enough")
-      (card-ability state :runner bo 0)
-      (is (= 8 (core/get-strength (refresh bo))) "Pumped Black Orchestra up to str 8")
-      (click-prompt state :runner "Trace 4 - Purge virus counters")
-      (click-prompt state :runner "Trace 3 - Trash a virus")
-      (is (= 2 (count (filter :broken (:subroutines (get-ice state :hq 0)))))))))
+(deftest ^:test-refresh/focus black-orchestra
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Macrophage"]
+                        :credits 10}
+                 :runner {:hand ["Black Orchestra"]
+                          :credits 100}})
+      (play-from-hand state :corp "Macrophage" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Black Orchestra")
+      (let [bo (get-program state 0)]
+        (run-on state :hq)
+        (run-continue state)
+        (card-ability state :runner bo 0)
+        (card-ability state :runner bo 0)
+        (is (empty? (:prompt (get-runner))) "Has no break prompt as strength isn't high enough")
+        (card-ability state :runner bo 0)
+        (is (= 8 (core/get-strength (refresh bo))) "Pumped Black Orchestra up to str 8")
+        (click-prompt state :runner "Trace 4 - Purge virus counters")
+        (click-prompt state :runner "Trace 3 - Trash a virus")
+        (is (= 2 (count (filter :broken (:subroutines (get-ice state :hq 0)))))))))
+  (testing "auto-pump"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Macrophage"]
+                        :credits 10}
+                 :runner {:hand ["Black Orchestra"]
+                          :credits 100}})
+      (play-from-hand state :corp "Macrophage" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Black Orchestra")
+      (let [bo (get-program state 0)]
+        (run-on state :hq)
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)})
+        (println (prompt-fmt :runner))
+        (println (clojure.string/join "\n" (map :text (:log @state))))
+        )))
+  )
 
 (deftest brahman
   ;; Brahman
