@@ -1986,7 +1986,29 @@
       (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup")
       (take-credits state :runner)
       (play-from-hand state :corp "Kakurenbo")
+      (click-prompt state :corp "Done")
+      (is (every? (complement faceup?) (:discard (get-corp))) "Cards in Archives are facedown")))
+  (testing "Works if 0 cards are chosen to be discarded. Issue #4794"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Junebug" "Kakurenbo"]
+                        :discard ["Launch Campaign"]}})
+      (is (= 1 (count (:discard (get-corp)))) "1 card in Archives")
+      (play-from-hand state :corp "Kakurenbo")
       (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
+      (click-prompt state :corp "Done")
+      (click-card state :corp "Launch Campaign")
+      (click-prompt state :corp "New remote")
+      (is (get-content state :remote1 0) "Launch Campaign is installed")))
+  (testing "Works if 0 cards are chosen to be discarded and 0 card are chosen to be installed. Issue #4794"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Junebug" "Kakurenbo"]
+                        :discard ["Launch Campaign"]}})
+      (is (= 1 (count (:discard (get-corp)))) "1 card in Archives")
+      (play-from-hand state :corp "Kakurenbo")
+      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
+      (click-prompt state :corp "Done")
       (click-prompt state :corp "Done")
       (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")
       (is (empty? (:prompt (get-corp))) "No more prompts"))))

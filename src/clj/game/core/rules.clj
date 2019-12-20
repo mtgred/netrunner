@@ -48,7 +48,7 @@
                                             (unregister-constant-effects state side card)
                                             (when (= zone :rfg)
                                               (system-msg state side
-                                                          (str " removes " (:title c) " from the game instead of trashing it")))
+                                                          (str "removes " (:title c) " from the game instead of trashing it")))
                                             (when (has-subtype? card "Terminal")
                                               (lose state side :click (-> @state side :click))
                                               (swap! state assoc-in [:corp :register :terminal] true))
