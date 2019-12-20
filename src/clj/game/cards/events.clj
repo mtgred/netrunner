@@ -21,9 +21,11 @@
    :effect (effect (make-run eid target nil card))
    :events [{:event :subroutines-broken
              :async true
-             :req (req (let [pred #(and (has-subtype? (first %) subtype)
-                                        (every? :broken (:subroutines (first %))))]
-                         (first-event? state side :subroutines-broken pred)))
+             :req (req (and (has-subtype? target subtype)
+                            (every? :broken (:subroutines target))
+                            (let [pred #(and (has-subtype? (first %) subtype)
+                                             (every? :broken (:subroutines (first %))))]
+                              (first-event? state side :subroutines-broken pred))))
              :msg (msg "trash " (card-str state target))
              :effect (effect (trash eid target nil))}]})
 

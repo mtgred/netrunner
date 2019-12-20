@@ -1185,7 +1185,7 @@
                                          seq)
                                     (contains? (card-def current-ice) :on-encounter))))
                  :msg (msg "prevent the encounter effect on " (card-str state current-ice))
-                 :effect (req (let [suppress
+                 :effect (req (let [[suppress & rst]
                                     (register-suppress
                                       state side card
                                       (let [ice current-ice]
@@ -1196,10 +1196,7 @@
                                   [{:event :encounter-ice-ends
                                     :duration :end-of-encounter
                                     :unregister-once-resolved true
-                                    :effect (req (swap! state assoc :suppress
-                                                        (->> (:suppress @state)
-                                                             (remove #(= (:uuid %) (:uuid suppress)))
-                                                             (into []))))}])))}
+                                    :effect (effect (unregister-suppress-by-uuid (:uuid suppress)))}])))}
                 (letfn [(ri [cards]
                           {:async true
                            :effect (req (if (seq cards)
@@ -1806,12 +1803,15 @@
        ;; companion-builder: turn-ends-effect
        (effect (show-wait-prompt :corp "Runner to take decision on Paladin Poemu")
                (continue-ability
-                 {:prompt "Select an installed card to trash for Paladin Poemu"
-                      :player :runner
-                      :msg (msg "trash " (:title target))
-                      :choices {:card #(and (installed? %)
-                                            (runner? %))}
-                      :effect (effect (trash target {:cause :runner-ability}))}
+                 {:async true
+                  :prompt "Select an installed card to trash for Paladin Poemu"
+                  :player :runner
+                  :msg (msg "trash " (:title target))
+                  :choices {:all true
+                            :card #(and (installed? %)
+                                        (runner? %))}
+                  :effect (effect (clear-wait-prompt :corp)
+                                  (trash eid target {:cause :runner-ability}))}
                  card nil))
        ;; companion-builder: ability
        {:msg "take 1 [Credits]"

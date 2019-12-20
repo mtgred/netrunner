@@ -1984,7 +1984,28 @@
         (run-continue state)
         (run-continue state)
         (run-continue state)
-        (is (= (- credits 3) (:credit (get-runner))) "Runner loses 3 credits to Tollbooth 2 ")))))
+        (is (= (- credits 3) (:credit (get-runner))) "Runner loses 3 credits to Tollbooth 2 "))))
+  (testing "Only prevents the on-encounter effects once per turn. Issue #4807"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Tollbooth" 2)]
+                        :credits 20}
+                 :runner {:deck [(qty "Sure Gamble" 5)]
+                          :hand ["Hunting Grounds"]}})
+      (play-from-hand state :corp "Tollbooth" "New remote")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hunting Grounds")
+      (let [credits (:credit (get-runner))]
+        (run-on state "Server 1")
+        (card-ability state :runner (get-resource state 0) 0)
+        (run-continue state)
+        (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
+        (run-jack-out state))
+      (let [credits (:credit (get-runner))]
+        (run-on state "Server 1")
+        (run-continue state)
+        (is (= (- credits 3) (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")))))
 
 (deftest ice-analyzer
   ;; Ice Analyzer
@@ -2916,7 +2937,24 @@
                            (click-card state :runner pp)
                            (click-card state :runner pp))
         (play-from-hand state :runner "Hernando Cortez")
-        (is (empty? (:prompt (get-runner))) "No pay-credits prompt on the install of a Connection")))))
+        (is (empty? (:prompt (get-runner))) "No pay-credits prompt on the install of a Connection"))))
+  (testing "Async issues are handled properly. Issue #4784"
+    (do-game
+      (new-game {:corp {:deck ["Project Vitruvius"]}
+                 :runner {:hand ["Paladin Poemu"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Paladin Poemu")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (click-card state :runner "Paladin Poemu")
+      (is (find-card "Paladin Poemu" (:discard (get-runner))) "Paladin Poemu should be trashed")
+      (is (empty? (:prompt (get-runner))) "Runner has no prompt")
+      (is (empty? (:prompt (get-corp))) "Corp has no prompt"))))
 
 (deftest patron
   ;; Patron

@@ -3595,6 +3595,20 @@
       (is (= 5 (:current-strength (refresh t2)))
           "Turing increased to 5 strength over a remote server"))))
 
+(deftest turnpike
+  ;; Turnpike
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Turnpike"]}})
+    (play-from-hand state :corp "Turnpike" "HQ")
+    (take-credits state :corp)
+    (changes-val-macro
+      -1 (:credit (get-runner))
+      "Runner loses 1 credit to Turnpike"
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state))))
+
 (deftest tyrant
   ;; Tyrant
   (do-game

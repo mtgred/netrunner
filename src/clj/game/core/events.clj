@@ -107,6 +107,11 @@
                                (in-coll? abilities (:event %))))
                  (into []))))))
 
+(defn unregister-suppress-by-uuid
+  "Removes a single event handler with matching uuid"
+  [state side uuid]
+  (swap! state assoc :suppress (remove-once #(= uuid (:uuid %)) (:suppress @state))))
+
 (declare card-for-ability)
 
 (defn trigger-suppress

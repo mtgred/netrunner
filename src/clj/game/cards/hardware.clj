@@ -55,16 +55,17 @@
    {:in-play [:memory 1]}
 
    "Aniccam"
-   {:in-play [:memory 1]
-    :events [{:event :card-moved
-              :msg "draw 1 card"
-              :req (req (letfn [(event-moved-to-discard? [[old-card new-card]]
-                                  (and (is-type? new-card "Event")
-                                       (in-discard? new-card)))]
-                          (and (event-moved-to-discard? targets)
-                            (first-event? state side :card-moved event-moved-to-discard?))))
-              :async true
-              :effect (effect (draw :runner eid 1 nil))}]}
+   (let [ability {:async true
+                  :req (req (and (some event? targets)
+                                 (letfn [(event-targets? [event-targets]
+                                           (some event? event-targets))]
+                                   (= 1 (+ (event-count state side :runner-trash event-targets?)
+                                           (event-count state side :corp-trash event-targets?))))))
+                  :msg "draw 1 card"
+                  :effect (effect (draw :runner eid 1 nil))}]
+     {:in-play [:memory 1]
+      :events [(assoc ability :event :corp-trash)
+               (assoc ability :event :runner-trash)]})
 
    "Archives Interface"
    {:events
@@ -872,14 +873,16 @@
 
    "Hippo"
    {:events [{:event :subroutines-broken
+              :req (req (let [pred #(and (same-card? (last run-ices) (first %))
+                                         (every? :broken (:subroutines (first %))))]
+                          (and (same-card? (last run-ices) target)
+                               (every? :broken (:subroutines target))
+                               (first-event? state side :subroutines-broken pred))))
               :effect
               (effect
                 (continue-ability
                   {:optional
-                   {:req (req (let [pred #(and (same-card? (last run-ices) (first %))
-                                               (every? :broken (:subroutines (first %))))]
-                                (first-event? state side :subroutines-broken pred)))
-                    :prompt (str "Remove Hippo from the game to trash " (:title target) "?")
+                   {:prompt (str "Remove Hippo from the game to trash " (:title target) "?")
                     :yes-ability
                     {:async true
                      :effect (effect (system-msg (str "removes Hippo from the game to trash " (card-str state target)))
@@ -1850,26 +1853,20 @@
               :interactive (req true)
               :req (req (not (empty? (:scored corp))))
               :async true
-              :effect (req
-                        (let [stolen target]
-                          (continue-ability
-                            state side
+              :effect (effect
+                        (continue-ability
+                          (let [stolen target]
                             {:optional
                              {:prompt (msg "Swap " (:title stolen) " for an agenda in the Corp's score area?")
                               :yes-ability
                               {:async true
-                               :effect (req
-                                         (continue-ability
-                                           state side
-                                           {:prompt (str "Select a scored Corp agenda to swap with " (:title stolen))
-                                            :choices {:card #(in-corp-scored? state side %)}
-                                            :effect (req (let [scored target]
-                                                           (swap-agendas state side scored stolen)
-                                                           (system-msg state side (str "uses Turntable to swap "
-                                                                                       (:title stolen) " for " (:title scored)))
-                                                           (effect-completed state side eid)))}
-                                           card targets))}}}
-                            card targets)))}]}
+                               :prompt (str "Select a scored Corp agenda to swap with " (:title stolen))
+                               :choices {:card #(in-corp-scored? state side %)}
+                               :effect (effect (swap-agendas target stolen)
+                                               (system-msg (str "uses Turntable to swap "
+                                                                (:title stolen) " for " (:title target)))
+                                               (effect-completed eid))}}})
+                          card targets))}]}
 
    "Ubax"
    (let [ability {:req (req (:runner-phase-12 @state))
