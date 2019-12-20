@@ -107,7 +107,7 @@
                             (get-card state current-ice))
               ;; match strength
               can-pump (fn [ability]
-                         (when (:heap-braeker-pump ability)
+                         (when (:heap-breaker-pump ability)
                            ((:req ability) state side eid card nil)))
               breaker-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
               pump-strength-at-once (when breaker-ability
