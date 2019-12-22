@@ -4313,8 +4313,7 @@
         (card-ability state :runner ttw 2) ;; Bounce HQ ability
         (is (= 1 (get-counters (refresh ttw) :power)) "The Turning Wheel ability has 1 power counter")
         (card-ability state :runner ttw 3) ;; Bounce R&D ability
-        (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel ability has 2 power counter")
-        (is (get-in @state [:runner :register :unsuccessful-run]) "Server is registered as unsuccessful")))))
+        (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel ability has 2 power counter")))))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool
