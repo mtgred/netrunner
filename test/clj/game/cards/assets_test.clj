@@ -4712,6 +4712,115 @@
       (is (= 1 (count (:discard (get-corp)))) "Urban Renewal got trashed")
       (is (= 4 (count (:discard (get-runner)))) "Urban Renewal did 4 meat damage"))))
 
+(deftest vaporframe-fabricator
+  ;; Vaporframe Fabricator
+  (testing "Click ability"
+    (testing "Install an agenda"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Vaporframe Fabricator" "Bellona"]}})
+        (play-from-hand state :corp "Vaporframe Fabricator" "New remote")
+        (core/rez state :corp (get-content state :remote1 0))
+        (card-ability state :corp (get-content state :remote1 0) 0)
+        (click-card state :corp "Bellona")
+        (click-prompt state :corp "New remote")
+        (is (= "Bellona" (:title (get-content state :remote2 0))) "Bellona is now installed")))
+    (testing "Install an asset"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Vaporframe Fabricator" "NGO Front"]}})
+        (play-from-hand state :corp "Vaporframe Fabricator" "New remote")
+        (core/rez state :corp (get-content state :remote1 0))
+        (card-ability state :corp (get-content state :remote1 0) 0)
+        (click-card state :corp "NGO Front")
+        (click-prompt state :corp "New remote")
+        (is (= "NGO Front" (:title (get-content state :remote2 0))) "NGO Front is now installed")))
+    (testing "Install an ice"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Vaporframe Fabricator" "Ice Wall"]}})
+        (play-from-hand state :corp "Vaporframe Fabricator" "New remote")
+        (core/rez state :corp (get-content state :remote1 0))
+        (card-ability state :corp (get-content state :remote1 0) 0)
+        (click-card state :corp "Ice Wall")
+        (is (= ["Archives" "R&D" "HQ" "Server 1" "New remote"] (:choices (prompt-map :corp)))
+            "Can install in the same server as Vaporframe Fabricator")
+        (click-prompt state :corp "New remote")
+        (is (= "Ice Wall" (:title (get-ice state :remote2 0))) "Ice Wall is now installed")))
+    (testing "Install an ice in a server with other ice"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Vaporframe Fabricator" "Ice Wall" "Enigma"]}})
+        (play-from-hand state :corp "Enigma" "HQ")
+        (play-from-hand state :corp "Vaporframe Fabricator" "New remote")
+        (core/rez state :corp (get-content state :remote1 0))
+        (card-ability state :corp (get-content state :remote1 0) 0)
+        (click-card state :corp "Ice Wall")
+        (is (= ["Archives" "R&D" "HQ" "Server 1" "New remote"] (:choices (prompt-map :corp)))
+            "Can install in the same server as Vaporframe Fabricator")
+        (changes-val-macro
+          0 (:credit (get-corp))
+          "Corp doesn't lose any credits from installing a second ice over HQ"
+          (click-prompt state :corp "HQ"))
+        (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is now installed"))))
+  (testing "Trash ability"
+    (testing "Install an agenda"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Vaporframe Fabricator" "Bellona"]}})
+        (play-from-hand state :corp "Vaporframe Fabricator" "New remote")
+        (core/rez state :corp (get-content state :remote1 0))
+        (take-credits state :corp)
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (click-card state :corp "Bellona")
+        (click-prompt state :corp "New remote")
+        (is (= "Bellona" (:title (get-content state :remote2 0))) "Bellona is now installed")))
+    (testing "Install an asset"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Vaporframe Fabricator" "NGO Front"]}})
+        (play-from-hand state :corp "Vaporframe Fabricator" "New remote")
+        (core/rez state :corp (get-content state :remote1 0))
+        (take-credits state :corp)
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (click-card state :corp "NGO Front")
+        (click-prompt state :corp "New remote")
+        (is (= "NGO Front" (:title (get-content state :remote2 0))) "NGO Front is now installed")))
+    (testing "Install an ice"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Vaporframe Fabricator" "Ice Wall"]}})
+        (play-from-hand state :corp "Vaporframe Fabricator" "New remote")
+        (core/rez state :corp (get-content state :remote1 0))
+        (take-credits state :corp)
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (click-card state :corp "Ice Wall")
+        (is (= ["Archives" "R&D" "HQ" "New remote"] (:choices (prompt-map :corp)))
+            "Can't install in the same server as Vaporframe Fabricator")
+        (click-prompt state :corp "New remote")
+        (is (= "Ice Wall" (:title (get-ice state :remote2 0))) "Ice Wall is now installed")))
+    (testing "Install an ice in a server with other ice"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Vaporframe Fabricator" "Ice Wall" "Enigma"]}})
+        (play-from-hand state :corp "Enigma" "HQ")
+        (play-from-hand state :corp "Vaporframe Fabricator" "New remote")
+        (core/rez state :corp (get-content state :remote1 0))
+        (take-credits state :corp)
+        (run-empty-server state :remote1)
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (click-card state :corp "Ice Wall")
+        (is (= ["Archives" "R&D" "HQ" "New remote"] (:choices (prompt-map :corp)))
+            "Can install in the same server as Vaporframe Fabricator")
+        (changes-val-macro
+          0 (:credit (get-corp))
+          "Corp doesn't lose any credits from installing a second ice over HQ"
+          (click-prompt state :corp "HQ"))
+        (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is now installed")))))
+
 (deftest victoria-jenkins
   ;; Victoria Jenkins
   (do-game

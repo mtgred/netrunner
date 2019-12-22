@@ -2186,6 +2186,7 @@
                     (continue-ability
                       (let [card-to-install target]
                         {:async true
+                         :prompt (str "Where to install " (:title card-to-install))
                          :choices (req (remove (set (zone->name (:zone card))) (installable-servers state card-to-install)))
                          :effect (effect (corp-install eid card-to-install target {:ignore-all-cost true}))})
                       card nil))}
@@ -2197,8 +2198,7 @@
                                       (in-hand? %)
                                       (not (operation? %)))}
                 :msg (msg (corp-install-msg target))
-                :effect (effect (corp-install eid target nil {:ignore-all-cost true}))}]
-   })
+                :effect (effect (corp-install eid target nil {:ignore-all-cost true}))}]})
 
 (define-card "Victoria Jenkins"
   {:effect (req (lose state :runner :click-per-turn 1))
