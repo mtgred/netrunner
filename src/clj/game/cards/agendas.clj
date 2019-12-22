@@ -1091,13 +1091,14 @@
 
    "Project Vacheron"
    (let [vacheron-ability
-         {:req (req (and (not= (first (:zone card)) :discard)
+         {:req (req (and (not= (first (:previous-zone card)) :discard)
                          (same-card? card target)))
           :msg (msg "add 4 agenda counters on " (:title card))
           :effect (effect (add-counter (get-card state card) :agenda 4)
                           (update! (assoc-in (get-card state card) [:special :vacheron] true)))}]
-     {:agendapoints-runner (req (if (and (get-in card [:special :vacheron])
-                                         (zero? (get-counters card :agenda))) 3 0))
+     {:agendapoints-runner (req (if (or (= (first (:previous-zone card)) :discard)
+                                        (and (get-in card [:special :vacheron])
+                                             (zero? (get-counters card :agenda)))) 3 0))
       :stolen vacheron-ability
       :events [(assoc vacheron-ability :event :as-agenda)
                {:event :runner-turn-begins

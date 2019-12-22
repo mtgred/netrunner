@@ -2214,6 +2214,16 @@
       (new-game {:corp {:deck ["Project Vacheron"]}})
       (play-and-score state "Project Vacheron")
       (is (= 3 (:agenda-point (get-corp))) "Corp gets 3 points instantly")))
+  (testing "Steal from Archives gives 3 points"
+    (do-game
+      (new-game {:corp {:hand ["Project Vacheron"]}})
+      (trash-from-hand state :corp "Project Vacheron")
+      (take-credits state :corp)
+      (is (= 1 (count (:discard (get-corp)))) "Project Vacheron is trashed")
+      (run-empty-server state :archives)
+      (click-prompt state :runner "Steal")
+      (is (zero? (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron has zero tokens")
+      (is (= 3 (:agenda-point (get-runner))) "Runner gets 3 points instantly")))
   (testing "Additional cards added to the runner's score area shouldn't add counters to it. Issue #4715"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
