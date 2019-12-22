@@ -209,6 +209,13 @@
   [zone]
   (not (is-remote? zone)))
 
+(defn is-root?
+  "Returns true if the zone is root a central server"
+  [zone]
+  (and (is-central? (second zone))
+       (= :content (last zone)))
+)
+
 (defn central->zone
   "Converts a central server keyword like :discard into a corresponding zone vector"
   [zone]
