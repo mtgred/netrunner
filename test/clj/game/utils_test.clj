@@ -1,4 +1,4 @@
-(ns game-test.utils
+(ns game.utils-test
   (:require [game.core :as core]
             [game.utils :as utils :refer [side-str]]
             [clojure.test :refer :all]

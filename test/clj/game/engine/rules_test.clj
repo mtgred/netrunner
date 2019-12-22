@@ -1,9 +1,9 @@
-(ns game-test.engine.rules
+(ns game.engine.rules-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
-            [game-test.core :refer :all]
-            [game-test.utils :refer :all]
-            [game-test.macros :refer :all]
+            [game.core-test :refer :all]
+            [game.utils-test :refer :all]
+            [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
 (deftest corp-rez-unique

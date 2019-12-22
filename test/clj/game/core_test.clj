@@ -1,11 +1,10 @@
-(ns game-test.core
+(ns game.core-test
   (:require [clojure.string :as string]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.test :refer :all]
             [hawk.core :as hawk]
             [game.core :as core]
-            [game.core.card-defs :refer [reset-card-defs]]
             [game.core.card :refer [make-cid get-card rezzed? active? get-counters]]
             [game.utils :as utils :refer [server-card]]
             [jinteki.cards :refer [all-cards]]
@@ -25,14 +24,33 @@
          (map (juxt :title identity))
          (into {})
          (reset! all-cards))
-    (reset-card-defs)))
+    (require '[game.cards.agendas]
+             '[game.cards.assets]
+             '[game.cards.events]
+             '[game.cards.hardware]
+             '[game.cards.ice]
+             '[game.cards.identities]
+             '[game.cards.operations]
+             '[game.cards.programs]
+             '[game.cards.resources]
+             '[game.cards.upgrades])))
 (load-all-cards)
 
-(hawk/watch! [{:paths ["src/clj/game/cards"]
-               :filter hawk/file?
-               :handler (fn [ctx e]
-                          (reset-card-defs
-                            (-> e :file io/file .getName (string/split #"\.") first)))}])
+(let [nspaces {"agendas" 'game.cards.agendas
+               "assets" 'game.cards.assets
+               "events" 'game.cards.events
+               "hardware" 'game.cards.hardware
+               "ice" 'game.cards.ice
+               "identities" 'game.cards.identities
+               "operations" 'game.cards.operations
+               "programs" 'game.cards.programs
+               "resources" 'game.cards.resources
+               "upgrades" 'game.cards.upgrades}]
+  (hawk/watch! [{:paths ["src/clj/game/cards"]
+                 :filter hawk/file?
+                 :handler (fn [ctx e]
+                            (let [filename (-> e :file io/file .getName (string/split #"\.") first)]
+                              (require [(get nspaces filename) :reload true])))}]))
 
 ;; General utilities necessary for starting a new game
 (defn find-card

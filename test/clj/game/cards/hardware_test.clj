@@ -1,10 +1,10 @@
-(ns game-test.cards.hardware
+(ns game.cards.hardware-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.utils :as utils]
-            [game-test.core :refer :all]
-            [game-test.utils :refer :all]
-            [game-test.macros :refer :all]
+            [game.core-test :refer :all]
+            [game.utils-test :refer :all]
+            [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
 (deftest acacia
@@ -1452,7 +1452,32 @@
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
       (is (not-empty (get-hardware state)) "Hippo installed")
-      (is (empty? (:prompt (get-runner))) "No prompt"))))
+      (is (empty? (:prompt (get-runner))) "no prompt")))
+  (testing "Can't be used after first ice. Issue #4792"
+    (do-game
+      (new-game {:corp {:hand [(qty "Ice Wall" 2)]}
+                 :runner {:hand ["Corroder" "Hippo"]
+                          :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Corroder")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (is (not-empty (get-hardware state)) "Hippo installed")
+      (is (get-ice state :hq 1) "Ice Wall installed")
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "No")
+      (is (get-ice state :hq 1) "Ice Wall is not removed")
+      (run-continue state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (is (empty? (:prompt (get-runner))) "No Hippo prompt on later ice"))))
 
 (deftest keiko
   ;; Keiko

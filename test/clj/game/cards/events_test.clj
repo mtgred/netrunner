@@ -1,10 +1,10 @@
-(ns game-test.cards.events
+(ns game.cards.events-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.utils :as utils]
-            [game-test.core :refer :all]
-            [game-test.utils :refer :all]
-            [game-test.macros :refer :all]
+            [game.core-test :refer :all]
+            [game.utils-test :refer :all]
+            [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
 (deftest account-siphon
@@ -3030,22 +3030,48 @@
 
 (deftest knifed
   ;; Knifed - Make a run, trash a barrier if all subs broken
-  (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}
-               :runner {:deck ["Knifed" "Corroder"]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Corroder")
-    (play-from-hand state :runner "Knifed")
-    (click-prompt state :runner "HQ")
-    (core/rez state :corp (get-ice state :hq 0))
-    (run-continue state)
-    (card-ability state :runner (get-program state 0) 0)
-    (click-prompt state :runner "End the run")
-    (run-continue state)
-    (run-continue state)
-    (is (= 1 (count (:discard (get-corp)))) "Ice Wall is trashed")
-    (run-successful state)))
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Knifed" "Corroder"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Knifed")
+      (click-prompt state :runner "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (run-continue state)
+      (is (= 1 (count (:discard (get-corp)))) "Ice Wall is trashed")
+      (run-successful state)))
+  (testing "Can only trash a single ice per run. Issue #4791"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
+                 :runner {:deck ["Knifed" "Corroder"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (play-from-hand state :runner "Knifed")
+      (click-prompt state :runner "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (is (find-card "Ice Wall" (:discard (get-corp))) "Ice Wall is trashed")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (run-continue state)
+      (is (get-ice state :hq 0) "Second Ice Wall is not trashed")
+      (run-successful state))))
 
 (deftest kraken
   ;; Kraken

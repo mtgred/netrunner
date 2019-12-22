@@ -1,10 +1,10 @@
-(ns game-test.cards.operations
+(ns game.cards.operations-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.utils :as utils]
-            [game-test.core :refer :all]
-            [game-test.utils :refer :all]
-            [game-test.macros :refer :all]
+            [game.core-test :refer :all]
+            [game.utils-test :refer :all]
+            [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
 (deftest ^{:card-title "24-7-news-cycle"}
@@ -1986,7 +1986,29 @@
       (is (empty? (remove :seen (:discard (get-corp)))) "Cards in Archives are faceup")
       (take-credits state :runner)
       (play-from-hand state :corp "Kakurenbo")
+      (click-prompt state :corp "Done")
+      (is (every? (complement faceup?) (:discard (get-corp))) "Cards in Archives are facedown")))
+  (testing "Works if 0 cards are chosen to be discarded. Issue #4794"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Junebug" "Kakurenbo"]
+                        :discard ["Launch Campaign"]}})
+      (is (= 1 (count (:discard (get-corp)))) "1 card in Archives")
+      (play-from-hand state :corp "Kakurenbo")
       (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
+      (click-prompt state :corp "Done")
+      (click-card state :corp "Launch Campaign")
+      (click-prompt state :corp "New remote")
+      (is (get-content state :remote1 0) "Launch Campaign is installed")))
+  (testing "Works if 0 cards are chosen to be discarded and 0 card are chosen to be installed. Issue #4794"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Junebug" "Kakurenbo"]
+                        :discard ["Launch Campaign"]}})
+      (is (= 1 (count (:discard (get-corp)))) "1 card in Archives")
+      (play-from-hand state :corp "Kakurenbo")
+      (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
+      (click-prompt state :corp "Done")
       (click-prompt state :corp "Done")
       (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")
       (is (empty? (:prompt (get-corp))) "No more prompts"))))
@@ -2957,26 +2979,27 @@
 
 (deftest scapenet
   (testing "Basic test"
-    (doseq [card [["Misdirection" get-program]
-                  ["Clone Chip" get-hardware]
-                  ["The Turning Wheel" get-resource]]]
+    (doseq [[title func] [["Misdirection" get-program]
+                          ["Clone Chip" get-hardware]
+                          ["The Turning Wheel" get-resource]]]
       (do-game
         (new-game {:corp {:deck ["Scapenet"]}
-                   :runner {:deck [(first card)]}})
+                   :runner {:deck [title]}})
         (play-from-hand state :corp "Scapenet")
         (is (empty? (:prompt (get-corp))) "Couldn't play Scapenet without a successful run.")
         (take-credits state :corp)
-        (play-from-hand state :runner (first card))
+        (play-from-hand state :runner title)
         (run-empty-server state :archives)
         (take-credits state :runner)
         (play-from-hand state :corp "Scapenet")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (let [c ((second card) state 0)]
+        (let [c (func state 0)]
           (click-card state :corp c))
-        (if (= "Misdirection" (first card))
+        (if (= "Misdirection" title)
           (is (not (empty? (:prompt (get-corp)))) "Scapenet doesn't work on non-virtual non-chip card.")
-          (is (= 1 (count (:rfg (get-runner)))) "Card removed from game."))))))
+          (do (is (= 1 (count (:rfg (get-runner)))) "Card removed from game.")
+              (is (find-card "Scapenet" (:discard (get-corp))))))))))
 
 (deftest scarcity-of-resources
   ;; Scarcity of Resources

@@ -6,7 +6,6 @@
             [hawk.core :as hawk]
             [monger.collection :as mc]
             [game.core :as core]
-            [game.core.card-defs :refer [reset-card-defs]]
             [game.quotes :as quotes]
             [jinteki.cards :as cards]
             [jinteki.nav :as nav]
@@ -19,7 +18,18 @@
             [web.game :as game]
             [web.lobby :as lobby]
             [web.stats :as stats]
-            [web.ws :as ws])
+            [web.ws :as ws]
+            [game.cards.agendas]
+            [game.cards.assets]
+            [game.cards.events]
+            [game.cards.hardware]
+            [game.cards.ice]
+            [game.cards.identities]
+            [game.cards.operations]
+            [game.cards.programs]
+            [game.cards.resources]
+            [game.cards.upgrades]
+            )
   (:gen-class :main true))
 
 (defonce server (atom nil))
@@ -55,9 +65,6 @@
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
       (reset! cards/mwl latest-mwl))
-
-    ;; Reset all of the card implementation definitions
-    (reset-card-defs)
 
     (when (#{"dev" "prod"} (first args))
       (reset! server-mode (first args)))

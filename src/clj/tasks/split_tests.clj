@@ -6,7 +6,7 @@
             [jinteki.cards :refer [all-cards]]))
 
 (defn open-base-tests []
-  (->> (io/file "test/clj/game_test/cards")
+  (->> (io/file "test/clj/game/cards")
        .listFiles
        (filter #(string/ends-with? (.getPath %) ".clj"))
        sort
@@ -20,9 +20,9 @@
                   "  (:require [game.core :as core]"
                   "            [game.core.card :refer :all]"
                   "            [game.utils :as utils]"
-                  "            [game-test.core :refer :all]"
-                  "            [game-test.utils :refer :all]"
-                  "            [game-test.macros :refer :all]"
+                  "            [game.core-test :refer :all]"
+                  "            [game.utils-test :refer :all]"
+                  "            [game.macros-test :refer :all]"
                   "            [clojure.test :refer :all]))"
                   "\n"])
         footer "\n"
@@ -39,9 +39,9 @@
                             (string/split #" ") last)
                   all-card (some #(when (= title (:normalizedtitle %)) %) (vals @all-cards))
                   card-type (type->dir all-card)
-                  filename (str "test/clj/game_test/cards/"
+                  filename (str "test/clj/game/cards/"
                                 card-type "/"
-                                (slugify title "_") ".clj")]]
+                                (slugify title "_") "_test.clj")]]
       (io/make-parents filename)
       (spit filename
             (str (format header card-type title)
@@ -49,7 +49,7 @@
                  footer)))))
 
 (defn- open-individual-tests []
-  (->> (io/file "test/clj/game_test/cards/")
+  (->> (io/file "test/clj/game/cards/")
        .listFiles
        (remove #(.isFile %))
        (mapcat file-seq)
@@ -63,9 +63,9 @@
                   "  (:require [game.core :as core]"
                   "            [game.core.card :refer :all]"
                   "            [game.utils :as utils]"
-                  "            [game-test.core :refer :all]"
-                  "            [game-test.utils :refer :all]"
-                  "            [game-test.macros :refer :all]"
+                  "            [game.core-test :refer :all]"
+                  "            [game.utils-test :refer :all]"
+                  "            [game.macros-test :refer :all]"
                   "            [clojure.test :refer :all]))"
                   "\n"])
         footer "\n"
@@ -90,7 +90,7 @@
                 {card-type {title card}})
         card-tests (apply deep-merge tests)]
     (doseq [[card-type cards] (sort-by key card-tests)]
-      (spit (str "test/clj/game_test/cards/" card-type ".clj")
+      (spit (str "test/clj/game/cards/" card-type "_test.clj")
             (str (format header card-type)
                  (string/join "\n\n" (vals (sort-by #(slugify (key %)) cards)))
                  footer)))))
