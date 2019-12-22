@@ -2644,20 +2644,8 @@
                 :silent (req true)}]
       :abilities [(ttw-ab "R&D" :rd)
                   (ttw-ab "HQ" :hq)
-                  {:label "Bounce HQ"
-                   :cost [:click 1]
-                   :req (req true)
-                   :effect (req (add-counter state side card :power 1)
-                                (swap! state update-in [:runner :register :unsuccessful-run] #(conj % :hq))
-                                (swap! state assoc-in [:run :unsuccessful] true)
-                                (system-msg state :runner (str "places a power counter on " (:title card))))}
-                  {:label "Bounce R&D"
-                   :cost [:click 1]
-                   :req (req true)
-                   :effect (req (add-counter state side card :power 1)
-                                (swap! state update-in [:runner :register :unsuccessful-run] #(conj % :rd))
-                                (swap! state assoc-in [:run :unsuccessful] true)
-                                (system-msg state :runner (str "places a power counter on " (:title card))))}]})
+                  (ttw-bounce "R&D" :rd)
+                  (ttw-bounce "HQ" :hq)]})
 
    "Theophilius Bagbiter"
    {:effect (req (lose-credits state :runner :all)
