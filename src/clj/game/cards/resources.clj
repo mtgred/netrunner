@@ -2625,7 +2625,13 @@
             :req (req run)
             :msg (msg "access 1 additional card from " name " for the remainder of the run")
             :effect (req (access-bonus state side server 1))})
-          ]
+                  (ttw-bounce [name server]
+                   :label (str "Bounce " name)
+                   :cost [:click 1]
+                   :effect (req (add-counter state side card :power 1)
+                                (swap! state update-in [:runner :register :unsuccessful-run] #(conj % server))
+                                (swap! state assoc-in [:run :unsuccessful] true)
+                                (system-msg state :runner (str "places a power counter on " (:title card))))}]
      {:events [{:event :agenda-stolen
                 :effect (effect (update! (assoc card :agenda-stolen true)))
                 :silent (req true)}
