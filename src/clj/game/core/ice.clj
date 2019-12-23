@@ -388,8 +388,14 @@
 (defn- break-subroutines-pay
   [ice cost broken-subs args]
   (when (seq broken-subs)
-    {:msg (break-subroutines-msg ice broken-subs args)
-     :cost cost}))
+    {:effect
+     (effect
+       (continue-ability
+         (let [cost (icebreaker-ability-cost state side {:cost cost} card ice)]
+           (println cost)
+           {:msg (break-subroutines-msg ice broken-subs args)
+            :cost cost})
+         card nil))}))
 
 (defn break-subroutines
   ([ice breaker cost n] (break-subroutines ice breaker cost n nil))

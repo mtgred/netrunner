@@ -1649,7 +1649,12 @@
 
 (define-card "Interrupt 0"
   (let [sub {:label "Make the Runner pay 1 [Credits] to use icebreaker"
-             :msg "For the remainder of this run, the Runner must pay 1 [Credits] as an additional cost each time they use an icebreaker to break at least 1 subroutine."}]
+             :msg "make the Runner pay 1 [Credits] to use icebreakers to break subroutines during this run"
+             :effect (effect (register-floating-effect
+                               card
+                               {:type :icebreaker-additional-cost
+                                :duration :end-of-run
+                                :value [:credit 1]}))}]
     {:subroutines [sub
                    sub]}))
 

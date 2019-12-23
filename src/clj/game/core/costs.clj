@@ -799,5 +799,12 @@
   ([state side ability card targets {:keys [cost-bonus] :as args}]
    (concat (:cost ability)
            (:additional-cost ability)
-           (get-effects state side card :card-ability-cost (cons ability targets))
            (get-effects state side card :card-ability-additional-cost (cons ability targets)))))
+
+(defn icebreaker-ability-cost
+  ([state side ability card] (icebreaker-ability-cost state side ability card nil nil))
+  ([state side ability card targets] (icebreaker-ability-cost state side ability card targets nil))
+  ([state side ability card targets {:keys [cost-bonus] :as args}]
+   (concat (:cost ability)
+           (:additional-cost ability)
+           (get-effects state side card :icebreaker-additional-cost (cons ability targets)))))
