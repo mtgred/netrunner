@@ -1253,7 +1253,8 @@
                            (resolve-jack-out state side eid)
                            (effect-completed state side (make-result eid false)))))
                    (effect-completed state side (make-result eid false))))
-       (effect-completed state side (make-result eid false))))))
+       (do (system-msg state :runner (str "attempts to jack out but can't pay (" (build-cost-string cost) ")"))
+           (effect-completed state side (make-result eid false)))))))
 
 (defn- trigger-run-end-events
   [state side eid run]

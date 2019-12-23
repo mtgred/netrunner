@@ -404,7 +404,7 @@
                                                                 card ice))
                            message (when (seq broken-subs)
                                      (break-subroutines-msg ice broken-subs args))]
-                       (wait-for (pay-sync state side card total-cost)
+                       (wait-for (pay-sync state side (make-eid state {:source-type :ability}) card total-cost)
                                  (if-let [cost-str async-result]
                                    (do (system-msg state :runner (str cost-str " to " message))
                                        (doseq [sub broken-subs]

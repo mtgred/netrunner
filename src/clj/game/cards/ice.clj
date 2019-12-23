@@ -2079,17 +2079,17 @@
                           :player :corp
                           :prompt "Choose a server"
                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
-                          :msg (msg "redirect the run to " target)
+                          :msg (msg "redirect the run to " target
+                                    " and for the remainder of the run, the runner must add 1 installed card to the bottom of their stack as an additional cost to jack out")
                           :effect (req (let [dest (server->zone state target)]
                                          (swap! state update-in [:run]
                                                 #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                        :server (rest dest)))))})]
-   :runner-abilities [{:label "Add an installed card to the bottom of your Stack"
-                       :prompt "Choose one of your installed cards"
-                       :choices {:card #(and (installed? %)
-                                             (runner? %))}
-                       :effect (effect (move target :deck)
-                                       (system-msg :runner (str "adds " (:title target) " to the bottom of their Stack")))}]})
+                                                        :server (rest dest)))
+                                         (register-floating-effect
+                                           state side card
+                                           {:type :jack-out-additional-cost
+                                            :duration :end-of-run
+                                            :value [:add-program-to-bottom-of-deck 1]})))})]})
 
 (define-card "Minelayer"
   {:subroutines [{:msg "install an ICE from HQ"

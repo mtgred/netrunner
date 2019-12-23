@@ -183,6 +183,7 @@
       :trash-resource-from-hand (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) amount))
       :trash-entire-hand true
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
+      :add-program-to-bottom-of-deck (<= 0 (- (count (all-installed-runner-type state :program)) amount))
       :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
       (:advancement :agenda :power :virus) (<= 0 (- (get-counters card cost-type) amount))
       :any-virus-counter (or (<= 0 (- (get-counters card :virus) amount))
@@ -243,6 +244,7 @@
       :trash-resource-from-hand (str "trash " (quantify amount "resource") " in your hand")
       (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
       :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
+      :add-program-to-bottom-of-deck (str "add " (quantify amount "installed program") " to the bottom of the stack")
       :any-agenda-counter "any agenda counter"
       :any-virus-counter (str "any " (quantify amount "virus counter"))
       (:advancement :agenda :power :virus) (if (< 1 amount)
@@ -548,6 +550,30 @@
                                          " into their stack")))}
                     nil nil))
 
+(defn pay-move-installed-to-deck
+  "Trash a card as part of paying for a card or ability"
+  ([state side eid card-type amount select-fn] (pay-move-installed-to-deck state side eid card-type amount select-fn nil))
+  ([state side eid card-type amount select-fn args]
+   (let [args (merge {:front true} args)
+         location (if (:front args) "top" "bottom")
+         deck (if (= :corp side) "R&D" "the stack")]
+     (continue-ability state side
+                       {:prompt (str "Choose " (quantify amount card-type) " to move to the " location " of " deck)
+                        :choices {:all true
+                                  :max amount
+                                  :card select-fn}
+                        :async true
+                        :priority 11
+                        :effect (req (doseq [c targets]
+                                       (move state side target :deck (select-keys args [:front])))
+                                     (complete-with-result
+                                       state side eid
+                                       (str "adds " (quantify amount (or (:plural args) card-type))
+                                            " to the " location
+                                            " of " deck
+                                            " (" (join ", " (map #(card-str state %) targets)) ")")))}
+                       nil nil))))
+
 (defn pay-any-agenda-counter
   [state side eid amount]
   (continue-ability
@@ -642,6 +668,12 @@
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid amount)
+
+     ;; Move installed cards to the deck
+     :add-program-to-bottom-of-deck
+     (pay-move-installed-to-deck state side eid "program" amount
+                                 (every-pred installed? program? (complement facedown?))
+                                 {:front false})
 
      ;; Spend a counter on another card
      :any-agenda-counter (pay-any-agenda-counter state side eid amount)
