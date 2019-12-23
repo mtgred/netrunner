@@ -1686,7 +1686,7 @@
                                                        (program? (first %)))]
                                         (zero? (+ (event-count state nil :runner-trash pred)
                                                   (event-count state nil :corp-trash pred))))))
-                       :value [:program]}]
+                       :value [:program 1]}]
    :abilities [{:async true
                 :label "Install a program from the heap"
                 :req (req (and (not (install-locked? state side))
