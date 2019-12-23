@@ -391,8 +391,7 @@
     {:effect
      (effect
        (continue-ability
-         (let [cost (icebreaker-ability-cost state side {:cost cost} card ice)]
-           (println cost)
+         (let [cost (break-sub-ability-cost state side (assoc args :cost cost) card ice)]
            {:msg (break-subroutines-msg ice broken-subs args)
             :cost cost})
          card nil))}))
@@ -441,7 +440,7 @@
   ([cost n subtype args]
    (let [cost (if (number? cost) [:credit cost] cost)
          subtype (or subtype "All")
-         args (assoc args :subtype subtype)
+         args (assoc args :subtype subtype :break n)
          break-req (req (and current-ice
                              (rezzed? current-ice)
                              (= :encounter-ice (:phase run))
@@ -454,12 +453,15 @@
                                true)))
          strength-req (req (if (has-subtype? card "Icebreaker")
                              (<= (get-strength current-ice) (get-strength card))
-                             true))]
+                             true))
+         cost-req (req (let [total-cost (break-sub-ability-cost state side {:cost cost} card current-ice)]
+                         (can-pay? state side eid card total-cost)))]
      (merge
        (when (some #(= :trash (first %)) (merge-costs cost))
          {:trash-icon true})
        {:req (req (and (break-req state side eid card targets)
-                       (strength-req state side eid card targets)))
+                       (strength-req state side eid card targets)
+                       (cost-req state side eid card targets)))
         :break-req break-req
         :break n
         :breaks subtype

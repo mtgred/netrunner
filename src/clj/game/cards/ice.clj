@@ -1652,8 +1652,13 @@
              :msg "make the Runner pay 1 [Credits] to use icebreakers to break subroutines during this run"
              :effect (effect (register-floating-effect
                                card
-                               {:type :icebreaker-additional-cost
+                               {:type :break-sub-additional-cost
                                 :duration :end-of-run
+                                :req (req (and ; The card is an icebreaker
+                                               (has-subtype? target "Icebreaker")
+                                               ; and is using a break ability
+                                               (contains? (second targets) :break)
+                                               (pos? (:break (second targets) 0))))
                                 :value [:credit 1]}))}]
     {:subroutines [sub
                    sub]}))

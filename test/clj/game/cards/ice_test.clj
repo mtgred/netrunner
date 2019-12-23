@@ -1498,6 +1498,7 @@
       (run-on state "HQ")
       (run-continue state)
       (run-continue state)
+      (run-continue state)
       (changes-val-macro
         -1 (:credit (get-runner))
         "Runner should lose 1 for base ability as Interrupt 0 sub ends at end of run"
