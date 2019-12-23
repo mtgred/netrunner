@@ -2451,14 +2451,14 @@
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Tollbooth" "Ice Wall"]}
-                 :runner {:deck [(qty "Sure Gamble" 3) "Muertos Gang Member"]}})
+                 :runner {:deck ["Sure Gamble"]
+                          :hand [(qty "Sure Gamble" 2) "Muertos Gang Member"]}})
       (play-from-hand state :corp "Tollbooth" "HQ")
       (play-from-hand state :corp "Ice Wall" "Archives")
       (take-credits state :corp)
       (let [toll (get-ice state :hq 0)
             iw (get-ice state :archives 0)]
         (core/rez state :corp iw)
-        (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
         (play-from-hand state :runner "Muertos Gang Member")
         (click-card state :corp (refresh iw))
         (is (not (rezzed? (refresh iw))) "Ice Wall derezzed")

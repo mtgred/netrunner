@@ -37,7 +37,7 @@
       (let [card (get-card state card)]
         (wait-for (trigger-event-sync state side (if (= side :corp) :play-operation :play-event) card)
                   ;; Resolve ability, removing :req as that has already been checked
-                  (wait-for (resolve-ability state side (dissoc cdef :req) card nil)
+                  (wait-for (resolve-ability state side (dissoc cdef :req :cost :additional-cost) card nil)
                             (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
                                   trash-after-resolving (:trash-after-resolving cdef true)
                                   zone (if (:rfg-instead-of-trashing c) :rfg :discard)]

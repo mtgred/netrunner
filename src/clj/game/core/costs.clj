@@ -791,3 +791,13 @@
   (let [abilities (:abilities (card-def card))]
     (or (some :trash-icon abilities)
         (some #(= :trash (first %)) (merge-costs (map :cost abilities))))))
+
+(defn card-ability-cost
+  "Returns a list of all costs (printed and additional) required to use a given ability"
+  ([state side ability card] (card-ability-cost state side ability card nil nil))
+  ([state side ability card targets] (card-ability-cost state side ability card targets nil))
+  ([state side ability card targets {:keys [cost-bonus] :as args}]
+   (concat (:cost ability)
+           (:additional-cost ability)
+           (get-effects state side card :card-ability-cost (cons ability targets))
+           (get-effects state side card :card-ability-additional-cost (cons ability targets)))))

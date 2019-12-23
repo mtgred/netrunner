@@ -267,7 +267,12 @@
   currently doesn't work properly with `pay-counters`"
   [card cost]
   ;; TODO: Remove me some day
-  (let [[counter-type counter-amount] (first (filter #(some #{:advancement :agenda :power :virus} %) (partition 2 cost)))]
+  (let [[counter-type counter-amount]
+        (->> cost
+             (remove map?)
+             merge-costs
+             (filter #(some #{:advancement :agenda :power :virus} %))
+             first)]
     (if counter-type
       (let [counter (if (= :advancement counter-type)
                       [:advance-counter]
@@ -277,15 +282,16 @@
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [eid cost] :as ability} card targets]
-  ;; Ensure that any costs can be paid
-  (wait-for (pay-sync state side (make-eid state eid) card cost {:action (:cid card)})
-            (when-let [cost-str async-result]
-              ;; Print the message
-              (print-msg state side ability card targets cost-str)
-              ;; Trigger the effect
-              (register-once state ability card)
-              (do-effect state side ability (ugly-counter-hack card cost) targets))))
+  [state side {:keys [eid] :as ability} card targets]
+  (let [cost (card-ability-cost state side ability card targets)]
+    ;; Ensure that any costs can be paid
+    (wait-for (pay-sync state side (make-eid state eid) card cost {:action (:cid card)})
+              (when-let [cost-str async-result]
+                ;; Print the message
+                (print-msg state side ability card targets cost-str)
+                ;; Trigger the effect
+                (register-once state ability card)
+                (do-effect state side ability (ugly-counter-hack card cost) targets)))))
 
 (defn active-prompt?
   "Checks if this card has an active prompt"

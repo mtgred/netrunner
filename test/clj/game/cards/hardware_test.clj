@@ -2883,7 +2883,7 @@
 (deftest simulchip
   ;; Simulchip
   (testing "with a program already in the heap"
-    (testing "with a program trashed this turn"
+    (testing "and a program trashed this turn"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["SDS Drone Deployment"]}
@@ -2900,11 +2900,11 @@
         (click-card state :runner "Corroder")
         (changes-val-macro
           0 (:credit (get-runner))
-          "Corroder is installed for free"
+          "Mantle is installed for free"
           (card-ability state :runner (get-hardware state 0) 0)
-          (click-card state :runner "Corroder"))
-        (is (get-program state 0) "Corroder is installed for free")))
-    (testing "with no program trashed this turn"
+          (click-card state :runner "Mantle"))
+        (is (get-program state 0) "Mantle is installed for free")))
+    (testing "and no program trashed this turn and a card to trash as additional cost"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["SDS Drone Deployment"]}
@@ -2920,9 +2920,28 @@
           0 (:credit (get-runner))
           "Corroder is installed for free"
           (card-ability state :runner (get-hardware state 0) 0)
+          (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
+              "Runner chooses ability target first")
+          (click-card state :runner "Mantle")
+          (is (= "Choose 1 program to trash" (:msg (prompt-map :runner)))
+              "Runner chooses program to trash as a cost")
           (click-card state :runner "Corroder"))
-        (is (get-program state 0) "Corroder is installed for free")))
-    (testing "with not enough credits"
+        (is (get-program state 0) "Mantle is installed for free")
+        (is (find-card "Corroder" (:discard (get-runner))) "Corroder has been trashed")))
+    (testing "and no program trashed this turn and no card to trash as additional cost"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["SDS Drone Deployment"]}
+                   :runner {:hand ["Simulchip"]
+                            :discard ["Mantle"]
+                            :credits 20}})
+        (play-from-hand state :corp "SDS Drone Deployment" "New remote")
+        (take-credits state :corp)
+        (core/gain state :runner :click 4)
+        (play-from-hand state :runner "Simulchip")
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (empty? (:prompt (get-runner))) "No Simulchip prompt")))
+    (testing "and not enough credits"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["SDS Drone Deployment"]}
@@ -2940,7 +2959,7 @@
         (card-ability state :runner (get-hardware state 0) 0)
         (is (empty? (:prompt (get-runner))) "No Simulchip prompt"))))
   (testing "with no programs in the heap"
-    (testing "with a program trashed this turn"
+    (testing "and a program trashed this turn"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["SDS Drone Deployment"]}
@@ -2960,7 +2979,7 @@
           (card-ability state :runner (get-hardware state 0) 0)
           (click-card state :runner "Corroder"))
         (is (get-program state 0) "Corroder is installed for free")))
-    (testing "with no program trashed this turn"
+    (testing "and no program trashed this turn"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                           :hand ["SDS Drone Deployment"]}

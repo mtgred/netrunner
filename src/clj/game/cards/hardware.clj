@@ -1679,34 +1679,29 @@
                                 :type :recurring}}})
 
 (define-card "Simulchip"
-  {:abilities [{:async true
-                :trash-icon true
-                :label "[trash]: Install a program from the heap"
+  {:constant-effects [{:type :card-ability-additional-cost
+                       :req (req (and (same-card? card target)
+                                      (let [pred #(and (runner? (first %))
+                                                       (installed? (first %))
+                                                       (program? (first %)))]
+                                        (zero? (+ (event-count state nil :runner-trash pred)
+                                                  (event-count state nil :corp-trash pred))))))
+                       :value [:program]}]
+   :abilities [{:async true
+                :label "Install a program from the heap"
                 :req (req (and (not (install-locked? state side))
                                (some #(and (program? %)
                                            (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                      [:credit (install-cost state side % {:cost-bonus -3})]))
                                      (:discard runner))))
-                :effect
-                (effect
-                  (continue-ability
-                    (merge
-                      (when (let [pred #(and (runner? (first %))
-                                             (installed? (first %))
-                                             (program? (first %)))]
-                              (zero? (+ (event-count state nil :runner-trash pred)
-                                        (event-count state nil :corp-trash pred))))
-                        {:additional-cost [:program]})
-                      {:async true
-                       :cost [:trash]
-                       :show-discard true
-                       :choices {:req (req (and (in-discard? target)
-                                                (program? target)
-                                                (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                                          [:credit (install-cost state side target {:cost-bonus -3})])))}
-                       :msg (msg "install " (:title target))
-                       :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))})
-                    card nil))}]})
+                :cost [:trash]
+                :show-discard true
+                :choices {:req (req (and (in-discard? target)
+                                         (program? target)
+                                         (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                                   [:credit (install-cost state side target {:cost-bonus -3})])))}
+                :msg (msg "install " (:title target))
+                :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))}]})
 
 (define-card "Skulljack"
   {:effect (effect (damage eid :brain 1 {:card card}))

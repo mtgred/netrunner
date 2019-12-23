@@ -103,7 +103,7 @@
      (register-events state side c)
      (register-constant-effects state side c)
      (if (and resolve-effect (is-ability? cdef))
-       (resolve-ability state side eid cdef c nil)
+       (resolve-ability state side eid (dissoc cdef :cost :additional-cost) c nil)
        (effect-completed state side eid))
      (when-let [in-play (:in-play cdef)]
        (apply gain state side in-play))
