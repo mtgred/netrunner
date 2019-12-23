@@ -3469,6 +3469,106 @@
         (run-successful state)
         (is (= (+ credits 5 2) (:credit (get-runner))) "Runner gains 5 from Dirty Laundry and 2 from Security Testing")))))
 
+(deftest slipstream
+  ;; Slipstream
+  (testing "There is an ice at the correct position"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Ice Wall" 2)]}
+                 :runner {:hand ["Slipstream"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Slipstream")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (get-ice state :rd 0))
+      (run-next-phase state)
+      (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
+      (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")))
+  (testing "There isn't an ice at the correct position"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Ice Wall" 3)]
+                        :credits 20}
+                 :runner {:hand ["Slipstream"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Slipstream")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (run-continue state)
+      (is (empty? (:prompt (get-runner))) "No Slipstream prompt")))
+  (testing "You can only select the correct ice"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Ice Wall" 3)]
+                        :credits 20}
+                 :runner {:hand ["Slipstream"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Slipstream")
+      (run-on state "R&D")
+      (core/rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (get-ice state :hq 1))
+      (is (seq (:prompt (get-runner)))
+          "Slipstream prompt still up as you can't choose ice at the wrong position")
+      (click-card state :runner (get-ice state :hq 0))
+      (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
+      (run-next-phase state)
+      (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")))
+  (testing "Interaction with Kakugo"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Kakugo" "Ice Wall"]
+                        :credits 20}
+                 :runner {:hand ["Slipstream" "Sure Gamble"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Kakugo" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Slipstream")
+      (run-on state "R&D")
+      (core/rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (get-ice state :hq 0))
+      (is (find-card "Slipstream" (:discard (get-runner))) "Slipstream is discarded")
+      (run-next-phase state)
+      (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")
+      (is (find-card "Sure Gamble" (:hand (get-runner))) "Kakugo doesn't deal any net damage")))
+  (testing "Interaction with Spear Phishing"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Kakugo" "Ice Wall"]
+                        :credits 20}
+                 :runner {:hand ["Slipstream" "Spear Phishing" "Sure Gamble"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Kakugo" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Slipstream")
+      (play-from-hand state :runner "Spear Phishing")
+      (click-prompt state :runner "R&D")
+      (core/rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (get-ice state :hq 0))
+      (run-next-phase state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (= :approach-server (:phase (get-run))) "Spear Phishing has bypassed Ice Wall"))))
+
 (deftest spoilers
   ;; Spoilers - Mill the Corp when it scores an agenda
   (do-game
