@@ -799,7 +799,7 @@
   ([state side ability card targets {:keys [cost-bonus] :as args}]
    (concat (:cost ability)
            (:additional-cost ability)
-           (get-effects state side card :card-ability-additional-cost (cons ability targets)))))
+           (get-effects state side card :card-ability-additional-cost (flatten [ability targets])))))
 
 (defn break-sub-ability-cost
   ([state side ability card] (break-sub-ability-cost state side ability card nil nil))
@@ -807,4 +807,9 @@
   ([state side ability card targets {:keys [cost-bonus] :as args}]
    (concat (:cost ability)
            (:additional-cost ability)
-           (get-effects state side card :break-sub-additional-cost (cons ability (flatten [targets]))))))
+           (get-effects state side card :break-sub-additional-cost (flatten [ability targets])))))
+
+(defn jack-out-cost
+  ([state side] (jack-out-cost state side nil))
+  ([state side args]
+   (get-effects state side nil :jack-out-additional-cost args)))

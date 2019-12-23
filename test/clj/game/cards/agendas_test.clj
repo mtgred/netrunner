@@ -178,15 +178,96 @@
 
 (deftest armored-servers
   ;; Armored Servers
-  (do-game
-    (new-game {:corp {:deck ["Armored Servers"]}})
-    (play-and-score state "Armored Servers")
-    (let [as-scored (get-scored state :corp 0)]
-      (is (= 1 (get-counters (refresh as-scored) :agenda)) "Should start with 1 agenda counters")
+  (testing "should write to the log"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Armored Servers"]}})
+      (play-and-score state "Armored Servers")
+      (let [as-scored (get-scored state :corp 0)]
+        (is (= 1 (get-counters (refresh as-scored) :agenda)) "Should start with 1 agenda counters")
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (card-ability state :corp as-scored 0)
+        (is (last-log-contains? state "make the Runner trash") "Should write to log"))))
+  (testing "when using an icebreaker that breaks 1 sub at a time"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Armored Servers" "Ice Wall"]
+                        :credits 20}
+                 :runner {:hand ["Corroder" "Sure Gamble"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-and-score state "Armored Servers")
       (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
-      (card-ability state :corp as-scored 0)
-      (is (last-log-contains? state "make the Runner trash") "Should only write to log"))))
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-card state :runner "Sure Gamble")
+      (is (find-card "Sure Gamble" (:discard (get-runner))) "Sure Gamble is now trashed")))
+  (testing "when using an icebreaker that breaks more than 1 sub at a time"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Armored Servers" "Battlement"]
+                        :credits 20}
+                 :runner {:hand ["Berserker" "Sure Gamble" "Easy Mark"]
+                          :credits 20}})
+      (play-from-hand state :corp "Battlement" "HQ")
+      (play-and-score state "Armored Servers")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Berserker")
+      (run-on state "HQ")
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "End the run")
+      (click-card state :runner "Sure Gamble")
+      (click-card state :runner "Easy Mark")
+      (is (find-card "Sure Gamble" (:discard (get-runner))) "Sure Gamble is now trashed")
+      (is (find-card "Easy Mark" (:discard (get-runner))) "Easy Mark is now trashed")))
+  (testing "when jacking out"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Armored Servers" "Ice Wall"]}
+                 :runner {:hand ["Corroder" "Sure Gamble"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-and-score state "Armored Servers")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-on state "HQ")
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (run-jack-out state)
+      (click-card state :runner "Sure Gamble")
+      (is (find-card "Sure Gamble" (:discard (get-runner))) "Sure Gamble is now trashed")))
+  (testing "when spending multiple counters"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Armored Servers" 2) "Ice Wall"]
+                        :credits 20}
+                 :runner {:hand ["Corroder" "Sure Gamble" "Easy Mark"]
+                          :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-and-score state "Armored Servers")
+      (play-and-score state "Armored Servers")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-on state "HQ")
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (card-ability state :corp (get-scored state :corp 1) 0)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-card state :runner "Sure Gamble")
+      (click-card state :runner "Easy Mark")
+      (is (find-card "Sure Gamble" (:discard (get-runner))) "Sure Gamble is now trashed")
+      (is (find-card "Easy Mark" (:discard (get-runner))) "Easy Mark is now trashed"))))
 
 (deftest astroscript-pilot-program
   ;; AstroScript token placement
