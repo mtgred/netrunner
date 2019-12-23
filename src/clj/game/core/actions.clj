@@ -292,7 +292,7 @@
               (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
-      (resolve-ability state side ability card targets))))
+      (resolve-ability state side (assoc ability :cost cost) card targets))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."

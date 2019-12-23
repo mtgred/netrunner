@@ -855,6 +855,17 @@
                     (move state side c :hand)
                     (set-next-phase state :approach-ice)))}]})
 
+(define-card "Midway Station Grid"
+  {:constant-effects [{:type :card-ability-additional-cost
+                       :req (req (and ; The card is an icebreaker
+                                      (has-subtype? target "Icebreaker")
+                                      ; and is using a break ability
+                                      (contains? (second targets) :break)
+                                      (pos? (:break (second targets) 0))
+                                      ; during a run on this server
+                                      this-server))
+                       :value [:credit 1]}]})
+
 (define-card "Mumbad City Grid"
   {:abilities [{:req (req (let [num-ice (count run-ices)]
                             (and this-server
