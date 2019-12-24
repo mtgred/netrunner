@@ -2226,21 +2226,36 @@
      :abilities [ability]}))
 
 (define-card "Slipstream"
-  {:implementation "Use Slipstream before hitting Continue to pass current ice"
-   :abilities [{:req (req (:run @state))
-                :effect (req (let [ice-pos  (get-in @state [:run :position])]
-                               (resolve-ability
-                                 state side
-                                 {:prompt (msg "Choose a piece of ICE protecting a central server at the same position as " (:title current-ice))
-                                  :choices {:card #(and (is-central? (second (:zone %)))
-                                                        (ice? %)
-                                                        (= ice-pos (inc (ice-index state %))))}
-                                  :msg (msg "approach " (card-str state target))
-                                  :effect (req (let [dest (second (:zone target))]
-                                                 (swap! state update-in [:run]
-                                                        #(assoc % :position ice-pos :server [dest]))
-                                                 (trash state side card)))}
-                                 card nil)))}]})
+  {:events [{:event :pass-ice
+             :req (req (and (rezzed? (get-card state target))
+                            (some #(and (ice? %)
+                                        (not (protecting-same-server? target %))
+                                        (= run-position (ice-index state %))
+                                        (is-central? (second (:zone %))))
+                                  (all-installed state :corp))))
+             :optional
+             {:prompt "Trash Slipstream to change servers?"
+              :yes-ability
+              {:async true
+               :effect
+               (effect
+                 (continue-ability
+                   (let [passed-ice target]
+                     {:async true
+                      :prompt "Choose a piece of ICE protecting a central server at the same position"
+                      :choices {:req (req (and (ice? target)
+                                               (not (protecting-same-server? passed-ice target))
+                                               (= run-position (ice-index state target))
+                                               (not (same-card? target passed-ice))
+                                               (is-central? (second (:zone target)))))}
+                      :msg (msg "approach " (card-str state target))
+                      :effect (req (wait-for (trash state side card {:unpreventable true})
+                                             (let [dest (second (:zone target))]
+                                               (swap! state update-in [:run]
+                                                      #(assoc % :position (inc run-position) :server [dest]))
+                                               (set-next-phase state :approach-ice)
+                                               (effect-completed state side eid))))})
+                   card nil))}}}]})
 
 (define-card "Spoilers"
   {:events [{:event :agenda-scored

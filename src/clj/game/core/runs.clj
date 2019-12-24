@@ -213,10 +213,15 @@
         ice (get-current-ice state)
         passed-all-ice (and (pos? (count run-ice))
                             (zero? (dec pos)))
+        current-server (:server (:run @state))
         args (assoc
                (when passed-all-ice
                  {:card-abilities (gather-events state side :pass-all-ice nil)})
-               :cancel-fn (fn [state] (:ended (:run @state))))]
+               ;; Immediately end pass ice step if:
+               ;; * run ends
+               ;; * run is moved to another server
+               :cancel-fn (fn [state] (or (:ended (:run @state))
+                                          (not= current-server (:server (:run @state))))))]
     (set-phase state :pass-ice)
     (update-all-ice state side)
     (update-all-icebreakers state side)
