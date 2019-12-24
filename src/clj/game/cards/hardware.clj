@@ -919,6 +919,7 @@
   {:implementation "MU usage restriction not enforced"
    :in-play [:memory 3]
    :events [{:event :successful-run
+             :interactive (req true)
              :req (req (and (first-event? state :runner :successful-run)
                             (pos? (count-virus-programs state))))
              :optional {:prompt "Place a virus counter?"

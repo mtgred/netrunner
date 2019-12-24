@@ -1545,29 +1545,52 @@
 
 (deftest knobkierie
   ;; Knobkierie - first successful run, place a virus counter on a virus program
-  (do-game
-    (new-game {:runner {:deck ["Knobkierie" "Hivemind" "Eater"]}})
-    (core/gain state :runner :credit 20)
-    (take-credits state :corp)
-    (play-from-hand state :runner "Knobkierie")
-    (play-from-hand state :runner "Eater")
-    (run-empty-server state "HQ")
-    (click-prompt state :runner "No action")
-    (is (empty? (:prompt (get-runner))) "No prompt if not virus program installed")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (play-from-hand state :runner "Hivemind")
-    (let [hv (find-card "Hivemind" (get-program state))]
-      (is (= 1 (get-counters (refresh hv) :virus)) "Hivemind starts with 1 virus counters")
-      (run-empty-server state "HQ")
-      (click-prompt state :runner "Yes") ; gain virus counter
-      (click-card state :runner (find-card "Hivemind" (get-program state)))
-      (click-prompt state :runner "No action")
-      (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind gains a counter on successful run")
+  (testing "functionality"
+    (do-game
+      (new-game {:runner {:deck ["Knobkierie" "Hivemind" "Eater"]}})
+      (core/gain state :runner :credit 20)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Knobkierie")
+      (play-from-hand state :runner "Eater")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt after first run")
-      (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind doesn't gain a counter after first run"))))
+      (is (empty? (:prompt (get-runner))) "No prompt if not virus program installed")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hivemind")
+      (let [hv (find-card "Hivemind" (get-program state))]
+        (is (= 1 (get-counters (refresh hv) :virus)) "Hivemind starts with 1 virus counters")
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "Yes") ; gain virus counter
+        (click-card state :runner (find-card "Hivemind" (get-program state)))
+        (click-prompt state :runner "No action")
+        (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind gains a counter on successful run")
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "No prompt after first run")
+        (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind doesn't gain a counter after first run"))))
+  (testing "Interaction with Cordyceps. Issue #4781"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Enigma"]}
+                 :runner {:hand ["Knobkierie" "Cordyceps"]
+                          :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Knobkierie")
+      (play-from-hand state :runner "Cordyceps")
+      (run-empty-server state "HQ")
+      (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))) "Runner has simult prompt")
+      (click-prompt state :runner "Knobkierie")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Cordyceps")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Enigma")
+      (click-card state :runner "Ice Wall")
+      (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is now protecting HQ")
+      (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma is now protecting R&D")
+      (is (empty? (:prompt (get-runner))) "No prompt if not virus program installed"))))
 
 (deftest llds-processor
   ;; LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install
