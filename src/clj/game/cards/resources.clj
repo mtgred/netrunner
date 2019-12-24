@@ -2247,7 +2247,7 @@
              :async true
              :interactive (req true)
              :msg "trash the top card of R&D"
-             :effect (req (mill state :runner eid :corp 1))}]})
+             :effect (effect (mill :corp eid :corp 1))}]})
 
 (define-card "Starlight Crusade Funding"
   {:msg "ignore additional costs on Double events"

@@ -3471,19 +3471,35 @@
 
 (deftest spoilers
   ;; Spoilers - Mill the Corp when it scores an agenda
-  (do-game
-    (new-game {:corp {:deck ["Hostile Takeover" "Hedge Fund"]}
-               :runner {:deck ["Spoilers"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Spoilers")
-    (take-credits state :runner)
-    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
-    (is (= 1 (count (:deck (get-corp)))))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (let [ht (get-content state :remote1 0)]
-      (score-agenda state :corp ht)
-      (is (= 1 (count (:discard (get-corp)))))
-      (is (zero? (count (:deck (get-corp)))) "Last card from R&D milled"))))
+  (testing "basic functionality"
+    (do-game
+      (new-game {:corp {:deck ["Hostile Takeover" "Hedge Fund"]}
+                 :runner {:deck ["Spoilers"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Spoilers")
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (is (= 1 (count (:deck (get-corp)))))
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (let [ht (get-content state :remote1 0)]
+        (score-agenda state :corp ht)
+        (is (= 1 (count (:discard (get-corp)))))
+        (is (zero? (count (:deck (get-corp)))) "Last card from R&D milled"))))
+  (testing "Interaction with Friday Chip. Issue #4838"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hostile Takeover"]}
+                 :runner {:deck ["Spoilers" "Friday Chip"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Spoilers")
+      (play-from-hand state :runner "Friday Chip")
+      (take-credits state :runner)
+      (changes-val-macro
+        0 (get-counters (get-hardware state 0) :virus)
+        "Friday Chip shouldn't gain counters from Spoilers"
+        (score-agenda state :corp (get-content state :remote1 0))
+        (is (empty? (:prompt (get-runner))) "Runner has no Friday Chip prompt")))))
 
 (deftest stim-dealer
   ;; Stim Dealer - Take 1 brain damage when it accumulates 2 power counters
