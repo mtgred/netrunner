@@ -87,8 +87,7 @@
                 (str (cond (ice? card)
                            " protecting "
 
-                           (and (is-central? (second zone))
-                                (= :content (last zone)))
+                           (is-root? zone)
                            " in the root of "
 
                            :else " in ")

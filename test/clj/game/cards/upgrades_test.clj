@@ -2837,4 +2837,44 @@
       (dotimes [_ 4]
         (click-card state :runner (get-program state 0)))
       (is (empty? (:prompt (get-corp))) "Warroid Tracker can't trash anything else")
-      (is (= 5 (-> (get-runner) :discard count)) "Runner should trash 4 installed cards"))))
+      (is (= 5 (-> (get-runner) :discard count)) "Runner should trash 4 installed cards")))
+  (testing "Shouldn't trigger from self-trash in root of central server. Issue #4813"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                        :hand ["Warroid Tracker"]}
+                 :runner {:deck [(qty "Sure Gamble" 10)]
+                          :hand ["Corroder" "Dyson Mem Chip"]
+                          :credits 20}})
+      (play-from-hand state :corp "Warroid Tracker" "HQ")
+      (let [war (get-content state :hq 0)]
+        (core/rez state :corp war)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (play-from-hand state :runner "Dyson Mem Chip")
+        (run-empty-server state :hq)
+        (click-prompt state :runner "Pay 4 [Credits] to trash")
+        (is (empty? (:prompt (get-corp))) "Corp has no prompt")
+        (is (empty? (:prompt (get-runner))) "Runner has no prompt"))))
+  (testing "Shouldn't trigger when trashed card is in root of central server."
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                        :hand ["Warroid Tracker" "Crisium Grid"]
+                        :credits 20}
+                 :runner {:deck [(qty "Sure Gamble" 10)]
+                          :hand ["Corroder" "Dyson Mem Chip"]
+                          :credits 20}})
+      (play-from-hand state :corp "Warroid Tracker" "HQ")
+      (play-from-hand state :corp "Crisium Grid" "HQ")
+      (let [war (get-content state :hq 0)
+            cg (get-content state :hq 1)]
+        (core/rez state :corp war)
+        (core/rez state :corp cg)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (play-from-hand state :runner "Dyson Mem Chip")
+        (run-empty-server state :hq)
+        (click-prompt state :runner "Crisium Grid")
+        (click-prompt state :runner "Pay 5 [Credits] to trash")
+        (is (empty? (:prompt (get-corp))) "Corp has no prompt")
+        (is (empty? (:prompt (get-runner))) "Runner has no prompt")))))
+

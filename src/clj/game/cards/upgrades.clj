@@ -1484,8 +1484,10 @@
                      (let [target-zone (:zone target)
                            target-zone (or (central->zone target-zone) target-zone)
                            warroid-zone (:previous-zone card)]
-                       (= (second warroid-zone)
-                          (second target-zone)))))
+                       (and (not (is-root? target-zone))
+                            (= (second warroid-zone)
+                               (second target-zone))))))
+                      
       :effect (effect (continue-ability (ability (count (filter :cid targets))) card nil))}
      :events [{:event :runner-trash
                :async true
@@ -1493,8 +1495,9 @@
                               (let [target-zone (:zone target)
                                     target-zone (or (central->zone target-zone) target-zone)
                                     warroid-zone (:zone card)]
-                                (= (second warroid-zone)
-                                   (second target-zone)))))
+                                (and (not (is-root? target-zone))
+                                     (= (second warroid-zone)
+                                        (second target-zone))))))
                :effect (effect (continue-ability (ability (count (filter :cid targets))) card nil))}]}))
 
 (define-card "Will-o'-the-Wisp"
