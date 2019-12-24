@@ -357,7 +357,8 @@
 (define-card "Cyberdelia"
   {:in-play [:memory 1]
    :events [{:event :subroutines-broken
-             :req (req (first-event? state side :subroutines-broken #(every? :broken (:subroutines (first %)))))
+             :req (req (and (every? :broken (:subroutines target))
+                            (first-event? state side :subroutines-broken #(every? :broken (:subroutines (first %))))))
              :msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
              :effect (effect (gain-credits 1))}]})
 

@@ -1219,7 +1219,7 @@
                 (swap! state update-in [:runner :tag :additional] inc)
                 (trigger-event state :corp :runner-additional-tag-change 1))
    :leave-play (req (swap! state update-in [:runner :tag :additional] dec)
-                    (trigger-event state :corp :runner-additional-tag-change 1)
+                    (trigger-event state :corp :runner-additional-tag-change -1)
                     (system-msg state :corp "trashes MCA Informant"))
    :runner-abilities [{:label "Trash MCA Informant host"
                        :cost [:click 1 :credit 2]
