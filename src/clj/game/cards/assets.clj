@@ -2175,6 +2175,31 @@
                                           (damage state side eid :meat 4 {:card card})))
                             (effect-completed state side eid)))}]})
 
+(define-card "Vaporframe Fabricator"
+  {:trash-effect {:async true
+                  :choices {:card #(and (corp? %)
+                                        (in-hand? %)
+                                        (not (operation? %)))}
+                  :msg (msg (corp-install-msg target))
+                  :effect
+                  (effect
+                    (continue-ability
+                      (let [card-to-install target]
+                        {:async true
+                         :prompt (str "Where to install " (:title card-to-install))
+                         :choices (req (remove (set (zone->name (:zone card))) (installable-servers state card-to-install)))
+                         :effect (effect (corp-install eid card-to-install target {:ignore-all-cost true}))})
+                      card nil))}
+   :abilities [{:label "Install 1 card"
+                :async true
+                :cost [:click 1]
+                :once :per-turn
+                :choices {:card #(and (corp? %)
+                                      (in-hand? %)
+                                      (not (operation? %)))}
+                :msg (msg (corp-install-msg target))
+                :effect (effect (corp-install eid target nil {:ignore-all-cost true}))}]})
+
 (define-card "Victoria Jenkins"
   {:effect (req (lose state :runner :click-per-turn 1))
    :leave-play (req (gain state :runner :click-per-turn 1))
