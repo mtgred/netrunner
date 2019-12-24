@@ -286,13 +286,13 @@
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side update! resolve-ability)))))))
 
-(defn- do-play-ability [state side card ability targets]
+(defn- do-play-ability [state side card ability ability-idx targets]
   (let [cost (card-ability-cost state side ability card targets)]
     (when (or (nil? cost)
-              (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost))
+              (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) card (:title card) cost))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
-      (resolve-ability state side (assoc ability :cost cost) card targets))))
+      (resolve-ability state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) (assoc ability :cost cost) card targets))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."
@@ -310,9 +310,9 @@
                            (trigger-event-sync state side eid :spent-credits-from-card card))}
              (get-in cdef [:abilities ability]))
         cannot-play (or (:disabled card)
-                        (some true? (get-effects state side card :prevent-ability [ab])))]
+                        (some true? (get-effects state side card :prevent-ability [ab ability])))]
     (when-not cannot-play
-      (do-play-ability state side card ab targets))))
+      (do-play-ability state side card ab ability targets))))
 
 (defn play-auto-pump
   "Use the 'match strength with ice' function of icebreakers."
@@ -431,7 +431,7 @@
         abi (when (< -1 index (count source-abis))
               (nth source-abis index))]
     (when abi
-      (do-play-ability state side card abi nil))))
+      (do-play-ability state side card abi index nil))))
 
 (def dynamic-abilities
   {"auto-pump" play-auto-pump
@@ -451,9 +451,9 @@
         cdef (card-def card)
         ab (get-in cdef [:corp-abilities ability])
         cannot-play (or (:disabled card)
-                        (some true? (get-effects state side card :prevent-ability [ab])))]
+                        (some true? (get-effects state side card :prevent-ability [ab ability])))]
     (when-not cannot-play
-      (do-play-ability state side card ab targets))))
+      (do-play-ability state side card ab ability targets))))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
@@ -462,9 +462,9 @@
         cdef (card-def card)
         ab (get-in cdef [:runner-abilities ability])
         cannot-play (or (:disabled card)
-                        (some true? (get-effects state side card :prevent-ability [ab])))]
+                        (some true? (get-effects state side card :prevent-ability [ab ability])))]
     (when-not cannot-play
-      (do-play-ability state side card ab targets))))
+      (do-play-ability state side card ab ability targets))))
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
