@@ -110,7 +110,7 @@
   ([state side {:keys [eid] :as ability} card targets]
    (resolve-ability state side (or eid (make-eid state {:source card :source-type :ability})) ability card targets))
   ([state side eid ability card targets]
-   (resolve-ability-eid state side (assoc ability :eid eid :source card :source-type :ability) card targets)))
+   (resolve-ability-eid state side (assoc ability :eid eid) card targets)))
 
 (defn- resolve-ability-eid
   [state side {:keys [eid optional psi trace choices] :as ability} card targets]

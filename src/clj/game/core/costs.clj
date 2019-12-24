@@ -352,11 +352,11 @@
       ;; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
       (swap! state assoc :click-state (dissoc @state :log)))
     (lose state side :click amount)
-    (trigger-event state side
-                   (if (= side :corp) :corp-spent-click :runner-spent-click)
-                   a (:click (into {} costs)))
-    (swap! state assoc-in [side :register :spent-click] true)
-    (complete-with-result state side eid (str "spends " (->> "[Click]" repeat (take amount) (apply str))))))
+    (wait-for (trigger-event-sync state side (make-eid state eid)
+                                  (if (= side :corp) :corp-spent-click :runner-spent-click)
+                                  a (:click (into {} costs)))
+              (swap! state assoc-in [side :register :spent-click] true)
+              (complete-with-result state side eid (str "spends " (->> "[Click]" repeat (take amount) (apply str)))))))
 
 (defn pay-trash
   "[Trash] cost as part of an ability"

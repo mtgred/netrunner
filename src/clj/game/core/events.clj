@@ -194,7 +194,7 @@
   [state side eid handlers event targets]
   (if-let [to-resolve (first handlers)]
     (if-let [card (card-for-ability state to-resolve)]
-      (wait-for (resolve-ability state side (dissoc (:ability to-resolve) :req) card targets)
+      (wait-for (resolve-ability state side (make-eid state eid) (dissoc (:ability to-resolve) :req) card targets)
                 (when (:unregister-once-resolved to-resolve)
                   (unregister-event-by-uuid state side (:uuid to-resolve)))
                 (trigger-event-sync-next state side eid (rest handlers) event targets))
@@ -211,7 +211,7 @@
         (let [get-side #(-> % :card :side game.utils/to-keyword)
               is-active-player #(= (:active-player @state) (get-side %))
               handlers (gather-events state side event targets)]
-          (wait-for (trigger-event-sync-next state side handlers event targets)
+          (wait-for (trigger-event-sync-next state side (make-eid state eid) handlers event targets)
                     (effect-completed state side eid))))))
 
 (defn- trigger-event-simult-player
