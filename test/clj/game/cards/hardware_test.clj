@@ -1250,7 +1250,29 @@
       (is (= 2 (count (:deck (get-runner)))) "2 cards remain in deck")
       (is (= 0 (count (:rfg (get-runner)))) "Removed no cards from game")
       (is (empty? (:prompt (get-runner))) "No more prompts")
-      (is (empty? (:prompt (get-corp))) "Waiting prompt cleared"))))
+      (is (empty? (:prompt (get-corp))) "Waiting prompt cleared")))
+  (testing "No programs or virtual resources are revealed. Issue #4826"
+    (do-game
+      (new-game {:runner {:hand ["Acacia" "Blackmail" "Capstone" "Daredevil" "Easy Mark" "Frame Job" "Gachapon"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Acacia" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Blackmail" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Capstone" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Daredevil" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Frame Job" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B C
+      (play-from-hand state :runner "Gachapon")
+      (card-ability state :runner (get-hardware state 0) 0)
+      (click-prompt state :runner "OK")
+      (is (= ["No action"] (:choices (prompt-map :runner))) "Runner can't choose ineligable cards")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Acacia")
+      (click-prompt state :runner "Blackmail")
+      (click-prompt state :runner "Capstone")
+      (click-prompt state :runner "Done")
+      (is (= 3 (count (:deck (get-runner)))) "3 card back in deck")
+      (is (= 3 (count (:rfg (get-runner)))) "3 card removed from the game"))))
 
 (deftest gebrselassie
   ;; Gebrselassie

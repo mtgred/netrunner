@@ -771,19 +771,26 @@
                   :async true
                   :effect (req (let [set-aside (sort-by :title (take 6 (:deck runner)))]
                                  (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
-                                 (continue-ability state side
-                                                   {:prompt "Choose a card to install"
-                                                    :async true
-                                                    :choices (req (filter #(or (program? %)
-                                                                               (and (resource? %)
-                                                                                    (has-subtype? % "Virtual")))
-                                                                          set-aside))
-                                                    :cancel-effect (effect (continue-ability (shuffle-next set-aside nil nil) card nil))
-                                                    :effect (req (let [to-install target
-                                                                       set-aside (remove-once #(= % target) set-aside)]
-                                                                   (wait-for (runner-install state side (assoc eid :source card :source-type :ability) target {:cost-bonus -2})
-                                                                             (continue-ability state side (shuffle-next set-aside nil nil) card nil))))}
-                                                   card nil)))}]}))
+                                 (continue-ability
+                                   state side
+                                   {:prompt "Choose a card to install"
+                                    :async true
+                                    :choices (req (concat (filter #(and (or (program? %)
+                                                                            (and (resource? %)
+                                                                                 (has-subtype? % "Virtual")))
+                                                                        (can-pay? state side
+                                                                                  (assoc eid :source card :source-type :runner-install)
+                                                                                  % nil [:credit (install-cost state side % {:cost-bonus -2})]))
+                                                                  set-aside)
+                                                          ["No action"]))
+                                    :cancel-effect (effect (continue-ability (shuffle-next set-aside nil nil) card nil))
+                                    :effect (req (if (= "No action" target)
+                                                   (continue-ability state side (shuffle-next set-aside nil nil) card nil)
+                                                   (let [to-install target
+                                                         set-aside (remove-once #(= % target) set-aside)]
+                                                     (wait-for (runner-install state side (assoc eid :source card :source-type :ability) target {:cost-bonus -2})
+                                                               (continue-ability state side (shuffle-next set-aside nil nil) card nil)))))}
+                                   card nil)))}]}))
 
 (define-card "Gebrselassie"
   {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
