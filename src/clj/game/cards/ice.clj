@@ -1649,7 +1649,17 @@
 
 (define-card "Interrupt 0"
   (let [sub {:label "Make the Runner pay 1 [Credits] to use icebreaker"
-             :msg "For the remainder of this run, the Runner must pay 1 [Credits] as an additional cost each time they use an icebreaker to break at least 1 subroutine."}]
+             :msg "make the Runner pay 1 [Credits] to use icebreakers to break subroutines during this run"
+             :effect (effect (register-floating-effect
+                               card
+                               {:type :break-sub-additional-cost
+                                :duration :end-of-run
+                                :req (req (and ; The card is an icebreaker
+                                               (has-subtype? target "Icebreaker")
+                                               ; and is using a break ability
+                                               (contains? (second targets) :break)
+                                               (pos? (:break (second targets) 0))))
+                                :value [:credit 1]}))}]
     {:subroutines [sub
                    sub]}))
 
@@ -2069,17 +2079,17 @@
                           :player :corp
                           :prompt "Choose a server"
                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
-                          :msg (msg "redirect the run to " target)
+                          :msg (msg "redirect the run to " target
+                                    " and for the remainder of the run, the runner must add 1 installed card to the bottom of their stack as an additional cost to jack out")
                           :effect (req (let [dest (server->zone state target)]
                                          (swap! state update-in [:run]
                                                 #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                        :server (rest dest)))))})]
-   :runner-abilities [{:label "Add an installed card to the bottom of your Stack"
-                       :prompt "Choose one of your installed cards"
-                       :choices {:card #(and (installed? %)
-                                             (runner? %))}
-                       :effect (effect (move target :deck)
-                                       (system-msg :runner (str "adds " (:title target) " to the bottom of their Stack")))}]})
+                                                        :server (rest dest)))
+                                         (register-floating-effect
+                                           state side card
+                                           {:type :jack-out-additional-cost
+                                            :duration :end-of-run
+                                            :value [:add-program-to-bottom-of-deck 1]})))})]})
 
 (define-card "Minelayer"
   {:subroutines [{:msg "install an ICE from HQ"

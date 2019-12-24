@@ -1678,6 +1678,31 @@
                                                (has-subtype? target "Icebreaker")))
                                 :type :recurring}}})
 
+(define-card "Simulchip"
+  {:constant-effects [{:type :card-ability-additional-cost
+                       :req (req (and (same-card? card target)
+                                      (let [pred #(and (runner? (first %))
+                                                       (installed? (first %))
+                                                       (program? (first %)))]
+                                        (zero? (+ (event-count state nil :runner-trash pred)
+                                                  (event-count state nil :corp-trash pred))))))
+                       :value [:program 1]}]
+   :abilities [{:async true
+                :label "Install a program from the heap"
+                :req (req (and (not (install-locked? state side))
+                               (some #(and (program? %)
+                                           (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
+                                                     [:credit (install-cost state side % {:cost-bonus -3})]))
+                                     (:discard runner))))
+                :cost [:trash]
+                :show-discard true
+                :choices {:req (req (and (in-discard? target)
+                                         (program? target)
+                                         (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                                   [:credit (install-cost state side target {:cost-bonus -3})])))}
+                :msg (msg "install " (:title target))
+                :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))}]})
+
 (define-card "Skulljack"
   {:effect (effect (damage eid :brain 1 {:card card}))
    :constant-effects [{:type :trash-cost

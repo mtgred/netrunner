@@ -3924,7 +3924,6 @@
       (click-prompt state :runner "R&D")
       (run-continue state)
       (run-continue state)
-      (card-ability state :runner (-> (get-runner) :play-area first) 0)
       (is (get-ice state :rd 0) "Enigma should not be trashed yet")
       (click-prompt state :runner "Yes")
       (click-card state :runner (get-hardware state 0))

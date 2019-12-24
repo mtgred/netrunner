@@ -287,15 +287,12 @@
             (resolve-select state side update! resolve-ability)))))))
 
 (defn- do-play-ability [state side card ability targets]
-  (let [cost (:cost ability)
-        cost-to-run (when (has-subtype? card "Run")
-                      (total-run-cost state side card))]
-    (when (or (and (nil? cost)
-                   (nil? cost-to-run))
-              (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost cost-to-run))
+  (let [cost (card-ability-cost state side ability card targets)]
+    (when (or (nil? cost)
+              (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
-      (resolve-ability state side ability card targets))))
+      (resolve-ability state side (assoc ability :cost cost) card targets))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."

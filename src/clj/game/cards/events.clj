@@ -1858,7 +1858,7 @@
    :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))})
 
 (define-card "Moshing"
-  {:cost [:trash-from-hand 3]
+  {:additional-cost [:trash-from-hand 3]
    :msg "draw 3 cards and gain 3 [Credits]"
    :async true
    :effect (req (wait-for (draw state side 3 nil)

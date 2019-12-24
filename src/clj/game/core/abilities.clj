@@ -267,7 +267,12 @@
   currently doesn't work properly with `pay-counters`"
   [card cost]
   ;; TODO: Remove me some day
-  (let [[counter-type counter-amount] (first (filter #(some #{:advancement :agenda :power :virus} %) (partition 2 cost)))]
+  (let [[counter-type counter-amount]
+        (->> cost
+             (remove map?)
+             merge-costs
+             (filter #(some #{:advancement :agenda :power :virus} %))
+             first)]
     (if counter-type
       (let [counter (if (= :advancement counter-type)
                       [:advance-counter]

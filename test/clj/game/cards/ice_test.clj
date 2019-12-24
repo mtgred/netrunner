@@ -1464,6 +1464,49 @@
       (core/lose-tags state :runner 2)
       (is (zero? (count (:subroutines (refresh io))))))))
 
+(deftest interrupt-0
+  ;; Interrupt 0
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Interrupt 0" "Battlement"]
+                      :credits 20}
+               :runner {:hand ["Corroder"]
+                        :credits 10}})
+    (play-from-hand state :corp "Battlement" "HQ")
+    (play-from-hand state :corp "Interrupt 0" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (let [corroder (get-program state 0)]
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (card-subroutine state :corp (get-ice state :hq 1) 0)
+      (run-continue state)
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Runner loses 1 credit only for boosting strength"
+        (card-ability state :runner corroder 1))
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Runner should lose 2 credits, 1 for Interrupt 0, 1 for base ability"
+        (card-ability state :runner corroder 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "Done"))
+      (run-jack-out state)
+      (run-on state "HQ")
+      (run-continue state)
+      (run-continue state)
+      (run-continue state)
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Runner should lose 1 for base ability as Interrupt 0 sub ends at end of run"
+        (card-ability state :runner corroder 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "Done"))
+      (run-jack-out state))))
+
 (deftest iq
   ;; IQ - Rez cost and strength equal to cards in HQ
   (do-game
@@ -2048,20 +2091,63 @@
 
 (deftest mind-game
   ;; Mind game - PSI redirect to different server
-  (do-game
-    (new-game {:corp {:deck ["Mind Game"]}})
-    (play-from-hand state :corp "Mind Game" "HQ")
-    (take-credits state :corp)
-    (let [mindgame (get-ice state :hq 0)]
-      (run-on state :hq)
-      (core/rez state :corp mindgame)
-      (run-continue state)
-      (card-subroutine state :corp mindgame 0))
-    (click-prompt state :corp "1 [Credits]")
-    (click-prompt state :runner "0 [Credits]")
-    (is (= (set ["R&D" "Archives"]) (set (:choices (prompt-map :corp)))) "Corp cannot choose server Runner is on")
-    (click-prompt state :corp "Archives")
-    (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")))
+  (testing "Server redirection"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Mind Game"]}
+                 :runner {:deck ["Easy Mark"]
+                          :hand ["Sure Gamble"]}})
+      (play-from-hand state :corp "Mind Game" "HQ")
+      (take-credits state :corp)
+      (let [mindgame (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp mindgame)
+        (run-continue state)
+        (card-subroutine state :corp mindgame 0))
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "0 [Credits]")
+      (is (= (set ["R&D" "Archives"]) (set (:choices (prompt-map :corp)))) "Corp cannot choose server Runner is on")
+      (click-prompt state :corp "Archives")
+      (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")))
+  (testing "Jack out additional cost"
+    (testing "and can't pay"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Mind Game"]}
+                   :runner {:deck ["Easy Mark"]
+                            :hand ["Sure Gamble"]}})
+        (play-from-hand state :corp "Mind Game" "HQ")
+        (take-credits state :corp)
+        (let [mindgame (get-ice state :hq 0)]
+          (run-on state :hq)
+          (core/rez state :corp mindgame)
+          (run-continue state)
+          (card-subroutine state :corp mindgame 0))
+        (click-prompt state :corp "1 [Credits]")
+        (click-prompt state :runner "0 [Credits]")
+        (click-prompt state :corp "Archives")
+        (run-jack-out state)
+        (is (get-run) "Run hasn't ended because runner can't pay cost")))
+    (testing "and can pay"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Mind Game"]}
+                   :runner {:deck ["Easy Mark"]
+                            :hand ["Sure Gamble" "Corroder"]}})
+        (play-from-hand state :corp "Mind Game" "HQ")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corroder")
+        (let [mindgame (get-ice state :hq 0)]
+          (run-on state :hq)
+          (core/rez state :corp mindgame)
+          (run-continue state)
+          (card-subroutine state :corp mindgame 0))
+        (click-prompt state :corp "1 [Credits]")
+        (click-prompt state :runner "0 [Credits]")
+        (click-prompt state :corp "Archives")
+        (run-jack-out state)
+        (click-card state :runner "Corroder")
+        (is (= "Corroder" (-> (get-runner) :deck last :title)) "Corroder is on the bottom of the deck")))))
 
 (deftest minelayer
   ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost

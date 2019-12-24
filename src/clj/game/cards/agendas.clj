@@ -2,6 +2,7 @@
   (:require [game.core :refer :all]
             [game.core.card :refer :all]
             [game.core.card-defs :refer [define-card]]
+            [game.core.effects :refer [register-floating-effect]]
             [game.core.eid :refer [effect-completed]]
             [game.core.card-defs :refer [card-def]]
             [game.core.prompts :refer [show-wait-prompt clear-wait-prompt]]
@@ -159,12 +160,21 @@
                      card nil))})
 
 (define-card "Armored Servers"
-  {:implementation "Runner must trash cards manually when required"
-   :effect (effect (add-counter card :agenda 1))
+  {:effect (effect (add-counter card :agenda 1))
    :silent (req true)
    :abilities [{:cost [:agenda 1]
-                :req (req (:run @state))
-                :msg "make the Runner trash a card from their grip to jack out or break subroutines for the remainder of the run"}]})
+                :req (req run)
+                :msg "make the Runner trash a card from their grip to jack out or break subroutines for the remainder of the run"
+                :effect (effect (register-floating-effect
+                                  card
+                                  {:type :break-sub-additional-cost
+                                   :duration :end-of-run
+                                   :value (req (repeat (count (:broken-subs (second targets))) [:trash-from-hand 1]))})
+                                (register-floating-effect
+                                  card
+                                  {:type :jack-out-additional-cost
+                                   :duration :end-of-run
+                                   :value [:trash-from-hand 1]}))}]})
 
 (define-card "AstroScript Pilot Program"
   {:effect (effect (add-counter card :agenda 1))

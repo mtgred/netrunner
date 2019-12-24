@@ -855,6 +855,17 @@
                     (move state side c :hand)
                     (set-next-phase state :approach-ice)))}]})
 
+(define-card "Midway Station Grid"
+  {:constant-effects [{:type :break-sub-additional-cost
+                       :req (req (and ; The card is an icebreaker
+                                      (has-subtype? target "Icebreaker")
+                                      ; and is using a break ability
+                                      (contains? (second targets) :break)
+                                      (pos? (:break (second targets) 0))
+                                      ; during a run on this server
+                                      this-server))
+                       :value [:credit 1]}]})
+
 (define-card "Mumbad City Grid"
   {:abilities [{:req (req (let [num-ice (count run-ices)]
                             (and this-server
@@ -1091,16 +1102,13 @@
 
   (define-card "Port Anson Grid"
     {:msg "prevent the Runner from jacking out unless they trash an installed program"
-     :effect (req (when this-server
-                    (prevent-jack-out state side)))
+     :constant-effects [{:type :jack-out-additional-cost
+                         :duration :end-of-run
+                         :req (req this-server)
+                         :value [:program 1]}]
      :events [{:event :run
                :req (req this-server)
-               :msg "prevent the Runner from jacking out unless they trash an installed program"
-               :effect (effect (prevent-jack-out))}
-              {:event :runner-trash
-               :req (req (and this-server
-                              (some program? targets)))
-               :effect (req (swap! state update-in [:run] dissoc :cannot-jack-out))}]})
+               :msg "prevent the Runner from jacking out unless they trash an installed program"}]})
 
   (define-card "Prisec"
     {:access {:req (req (installed? card))

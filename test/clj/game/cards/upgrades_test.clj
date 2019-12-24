@@ -1493,6 +1493,44 @@
         (is (not (:run @state)) "Run has ended")
         (is (nil? (refresh mb)) "Marcus Batty is trashed")))))
 
+(deftest midway-station-grid
+  ;; Midway Station Grid
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Midway Station Grid" (qty "Battlement" 2)]
+                      :credits 20}
+               :runner {:hand ["Corroder"]
+                        :credits 10}})
+    (play-from-hand state :corp "Midway Station Grid" "HQ")
+    (core/rez state :corp (get-content state :hq 0))
+    (play-from-hand state :corp "Battlement" "HQ")
+    (play-from-hand state :corp "Battlement" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (let [corroder (get-program state 0)]
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Runner loses 1 credit only for boosting strength"
+        (card-ability state :runner corroder 1))
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Runner should lose 2 credits, 1 for Midway Station, 1 for base ability"
+        (card-ability state :runner corroder 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "Done"))
+      (run-jack-out state)
+      (run-on state "Server 1")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (run-continue state)
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Runner loses 1 credit only for running on a different server"
+        (card-ability state :runner corroder 0)
+        (click-prompt state :runner "End the run")))))
+
 (deftest mumbad-city-grid
   ;; Mumbad City Grid - when runner passes a piece of ice, swap that ice with another from this server
   (testing "1 ice"
@@ -2034,25 +2072,22 @@
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
   (do-game
     (new-game {:corp {:deck ["Port Anson Grid"]}
-               :runner {:deck ["Faerie" "Technical Writer"]}})
+               :runner {:deck ["Faerie"]}})
     (play-from-hand state :corp "Port Anson Grid" "New remote")
     (take-credits state :corp)
-    (play-from-hand state :runner "Technical Writer")
-    (play-from-hand state :runner "Faerie")
-    (let [pag (get-content state :remote1 0)
-          fae (get-program state 0)
-          tw (get-resource state 0)]
+    (let [pag (get-content state :remote1 0)]
       (run-on state "Server 1")
       (core/rez state :corp pag)
-      (is (:cannot-jack-out (get-in @state [:run])) "Jack out disabled for Runner") ; UI button greyed out
-      (core/trash state :runner tw)
-      (is (:cannot-jack-out (get-in @state [:run])) "Resource trash didn't disable jack out prevention")
-      (core/trash state :runner fae)
-      (is (nil? (:cannot-jack-out (get-in @state [:run]))) "Jack out enabled by program trash")
+      (run-jack-out state)
+      (is (get-run) "Can't jack out when no programs are installed")
       (run-successful state)
       (click-prompt state :runner "No action")
+      (play-from-hand state :runner "Faerie")
       (run-on state "Server 1")
-      (is (:cannot-jack-out (get-in @state [:run])) "Prevents jack out when upgrade is rezzed prior to run"))))
+      (run-jack-out state)
+      (click-card state :runner "Faerie")
+      (is (find-card "Faerie" (:discard (get-runner))) "Faerie has been trashed")
+      (is (not (get-run)) "Run has ended"))))
 
 (deftest prisec
   ;; Prisec

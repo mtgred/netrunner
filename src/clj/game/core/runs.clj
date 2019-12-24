@@ -1231,22 +1231,30 @@
   ([state side] (jack-out state side (make-eid state)))
   ([state side eid]
    (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
-   (wait-for (trigger-event-sync state side :pre-jack-out nil)
-             (let [prevent (get-prevent-list state :corp :jack-out)]
-               (if (cards-can-prevent? state :corp prevent :jack-out)
-                 (do (system-msg state :corp "has the option to prevent the Runner from jacking out")
-                     (show-wait-prompt state :runner "Corp to prevent the jack out" {:priority 10})
-                     (show-prompt state :corp nil
-                                  (str "Prevent the Runner from jacking out?") ["Done"]
-                                  (fn [_]
-                                    (clear-wait-prompt state :runner)
-                                    (if-let [_ (get-in @state [:jack-out :jack-out-prevent])]
-                                      (effect-completed state side (make-result eid false))
-                                      (do (system-msg state :corp "will not prevent the Runner from jacking out")
-                                          (resolve-jack-out state side eid))))
-                                  {:priority 10}))
-                 (do (resolve-jack-out state side eid)
-                     (effect-completed state side (make-result eid false))))))))
+   (let [cost (jack-out-cost state side)]
+     (if (can-pay? state side eid nil "jack out" cost)
+       (wait-for (pay-sync state :runner nil cost)
+                 (if-let [cost-str async-result]
+                   (let [prevent (get-prevent-list state :corp :jack-out)]
+                     (if (cards-can-prevent? state :corp prevent :jack-out)
+                       (do (system-msg state :runner (str (build-spend-msg cost-str "attempt to" "attempts to") "jack out"))
+                           (system-msg state :corp "has the option to prevent the Runner from jacking out")
+                           (show-wait-prompt state :runner "Corp to prevent the jack out" {:priority 10})
+                           (show-prompt state :corp nil
+                                        (str "Prevent the Runner from jacking out?") ["Done"]
+                                        (fn [_]
+                                          (clear-wait-prompt state :runner)
+                                          (if-let [_ (get-in @state [:jack-out :jack-out-prevent])]
+                                            (effect-completed state side (make-result eid false))
+                                            (do (system-msg state :corp "will not prevent the Runner from jacking out")
+                                                (resolve-jack-out state side eid))))
+                                        {:priority 10}))
+                       (do (system-msg state :runner (str cost-str " to jack out"))
+                           (resolve-jack-out state side eid)
+                           (effect-completed state side (make-result eid false)))))
+                   (effect-completed state side (make-result eid false))))
+       (do (system-msg state :runner (str "attempts to jack out but can't pay (" (build-cost-string cost) ")"))
+           (effect-completed state side (make-result eid false)))))))
 
 (defn- trigger-run-end-events
   [state side eid run]
