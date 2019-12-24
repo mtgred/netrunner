@@ -654,7 +654,8 @@
         (changes-val-macro -1 (:click (get-corp))
                            "Paid 1 click to flip Earth Station"
                            (card-ability state :corp (get-in @state [:corp :identity]) 0))
-        (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side"))))
+        (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side")
+        (is (last-log-contains? state "Corp spends \\[Click\\] to use Earth Station: SEA Headquarters to flip their identity to Earth Station: Ascending to Orbit.") "Should have correct log with click price"))))
   (testing "Flip side:"
     (testing "No additional cost to run HQ"
       (do-game

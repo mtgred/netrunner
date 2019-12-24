@@ -381,10 +381,9 @@
                                            (assoc card
                                                   :flipped false
                                                   :code (subs (:code card) 0 5)))
-                                       (do (system-msg state :corp "flip their identity to Earth Station: Ascending to Orbit")
-                                           (assoc card
-                                                  :flipped true
-                                                  :code (str (subs (:code card) 0 5) "flip"))))))]
+                                       (assoc card
+                                              :flipped true
+                                              :code (str (subs (:code card) 0 5) "flip")))))]
     {:events [{:event :pre-first-turn
                :req (req (= side :corp))
                :effect (effect (update! (assoc card :flipped false)))}
@@ -413,6 +412,7 @@
      :abilities [{:label "Flip identity"
                   :req (req (not (:flipped card)))
                   :cost [:click 1]
+                  :msg "flip their identity to Earth Station: Ascending to Orbit"
                   :effect flip-effect}]}))
 
 (define-card "Edward Kim: Humanity's Hammer"
