@@ -4444,7 +4444,21 @@
         (run-successful state)
         (is (= "You accessed Fire Wall." (-> (get-runner) :prompt first :msg)))
         (click-prompt state :runner "No action")
-        (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available")))))
+        (is (empty? (:prompt (get-runner))) "Runner should have no more access prompts available"))))
+  (testing "Bounce test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand [(qty "Fire Wall" 5)]}
+                 :runner {:hand ["The Turning Wheel"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (card-ability state :runner ttw 2) ;; Bounce HQ ability
+        (is (= 1 (get-counters (refresh ttw) :power)) "The Turning Wheel ability has 1 power counter")
+        (card-ability state :runner ttw 3) ;; Bounce R&D ability
+        (is (= 2 (get-counters (refresh ttw) :power)) "The Turning Wheel ability has 2 power counter")))))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool

@@ -2637,12 +2637,17 @@
                :effect (effect (update! (dissoc card :supplier-installed)))}]}))
 
 (define-card "The Turning Wheel"
-  (let [ttw-ab (fn [m s]
-                 {:label (str "Access an additional card in " m)
-                  :cost [:power 2]
-                  :req (req run)
-                  :msg (msg "access 1 additional card from " m " for the remainder of the run")
-                  :effect (req (access-bonus state side s 1))})]
+  (letfn [(ttw-ab [name server]
+            {:label (str "Access an additional card in " name)
+             :cost [:power 2]
+             :req (req run)
+             :msg (msg "access 1 additional card from " name " for the remainder of the run")
+             :effect (req (access-bonus state side server 1))})
+          (ttw-bounce [name server]
+            {:label (str "Bounce " name)
+             :cost [:click 1]
+             :effect (req (add-counter state side card :power 1)
+                          (system-msg state :runner (str "places a power counter on " (:title card))))})]
     {:events [{:event :agenda-stolen
                :effect (effect (update! (assoc card :agenda-stolen true)))
                :silent (req true)}
@@ -2651,10 +2656,12 @@
                                        (#{:hq :rd} target))
                               (add-counter state side card :power 1)
                               (system-msg state :runner (str "places a power counter on " (:title card))))
-                            (update! state side (dissoc (get-card state card) :agenda-stolen)))
+                         (update! state side (dissoc (get-card state card) :agenda-stolen)))
                :silent (req true)}]
      :abilities [(ttw-ab "R&D" :rd)
-                 (ttw-ab "HQ" :hq)]}))
+                 (ttw-ab "HQ" :hq)
+                 (ttw-bounce "R&D" :rd)
+                 (ttw-bounce "HQ" :hq)]}))
 
 (define-card "Theophilius Bagbiter"
   {:effect (req (lose-credits state :runner :all)
