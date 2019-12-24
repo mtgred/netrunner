@@ -1332,6 +1332,7 @@
 
 (define-card "Gold Farmer"
   {:on-break-subs {:req (req (some :printed (second targets)))
+                   :msg "force the runner to lose 1 [Credits] for breaking a printed sub"
                    :effect (req (dotimes [_ (count (filter :printed (second targets)))]
                                   (lose-credits state :runner 1)))}
    :subroutines [(end-the-run-unless-runner-pays 3)
