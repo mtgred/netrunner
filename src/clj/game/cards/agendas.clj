@@ -1182,8 +1182,10 @@
                                          (asset? %)
                                          (upgrade? %))))}
              :msg (msg "swap " (card-str state to-swap) " with a card from HQ")
-             :effect (req (move state :corp to-swap (:zone target) {:keep-server-alive true})
-                          (move state :corp target (:zone to-swap) {:keep-server-alive true})
+             :effect (req (move state :corp to-swap (:zone target) {:keep-server-alive true
+                                                                    :index (:index target)})
+                          (move state :corp target (:zone to-swap) {:keep-server-alive true
+                                                                    :index (:index to-swap)})
                           (clear-wait-prompt state :runner))
              :cancel-effect (effect (put-back-counter card)
                                     (clear-wait-prompt :runner))})

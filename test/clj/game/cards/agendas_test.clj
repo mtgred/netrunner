@@ -2414,7 +2414,26 @@
         (card-ability state :corp pyu-scored 0)
         (click-card state :corp eli1)
         (click-prompt state :corp "Done")
-        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during second selection should bring back counter")))))
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during second selection should bring back counter"))))
+  (testing "Swap inner ice with HQ. Issue #4831"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Yagi-Uda" "Eli 1.0" (qty "Ice Wall" 2)]
+                        :credits 20}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+      (let [pyu (get-content state :remote1 0)]
+        (advance state pyu 4)
+        (core/score state :corp {:card (refresh pyu)}))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (let [pyu-scored (get-scored state :corp 0)]
+        (run-on state :hq)
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp (get-ice state :hq 0))
+        (click-card state :corp "Eli 1.0")
+        (is (= (:title (get-ice state :hq 0)) "Eli 1.0") "Swapped Ice Wall with Eli 1.0")))))
 
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.

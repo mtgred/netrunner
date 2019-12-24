@@ -162,7 +162,9 @@
            (let [pos-to-move-to (cond index index
                                       front 0
                                       :else (count (get-in @state (cons side dest))))]
-             (swap! state update-in (cons side dest) #(vec (concat (take pos-to-move-to %) [moved-card] (drop pos-to-move-to %)))))
+             (swap! state update-in (cons side dest) #(into [] (concat (take pos-to-move-to %) [moved-card] (drop pos-to-move-to %)))))
+           (swap! state update-in (cons side dest)
+                  #(into [] (map-indexed (fn [idx card] (assoc card :index idx)) %)))
            (let [z (vec (cons :corp (butlast zone)))]
              (when (and (not keep-server-alive)
                         (is-remote? z)
