@@ -2040,6 +2040,27 @@
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total")))))
 
+(deftest ^:test-refresh/focus mirrormorph-endless-iteration
+  ;; MirrorMorph: Endless Iteration
+  (testing "Mirrormorph triggers on three different actions"
+    (testing "Basic action + Asset ability"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Capital Investors" 10)]}})
+        (core/click-draw state :corp nil)
+        (play-from-hand state :corp "Capital Investors" "New remote")
+        (let [ci (get-content state :remote1 0)
+              mm (get-in @state [:corp :identity])]
+          (core/rez state :corp ci)
+          (card-ability state :corp (refresh ci) 0)
+          (click-prompt state :corp "Gain [Click]")
+          (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
+          (card-ability state :corp (refresh ci) 0)
+          (println (clojure.string/join "\n" (map :text (:log @state))))
+          )))
+    ))
+
+
 (deftest mti-mwekundu-life-improved
   ;; Mti Mwekundu: Life Improved - when server is approached, install ice from HQ at the innermost position
   (testing "No ice"

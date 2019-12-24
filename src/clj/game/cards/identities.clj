@@ -953,6 +953,41 @@
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
+(define-card "MirrorMorph: Endless Iteration"
+  (let [mm-ability {:prompt "Gain [Click] or gain 1 [Credits]"
+                    :choices ["Gain [Click]" "Gain 1 [Credits]"]
+                    :msg (msg (decapitalize target))
+                    :once :per-turn
+                    :label "Manually trigger ability"
+                    :effect (req (if (= "Gain [Click]" target)
+                                   (do (gain state side :click 1)
+                                       (update! state side (assoc-in (get-card state card) [:special :mm-click] true)))
+                                   (gain-credits state side 1)))}]
+    {:abilities [mm-ability]
+     :events [{:event :corp-spent-click
+               :effect (req (let [cid (first target)
+                                  ability-idx (:ability-idx (:source-info eid))
+                                  cause (if (number? (first target))
+                                          (seq [cid ability-idx])
+                                          (first target))
+                                  prev-actions (get-in card [:special :mm-actions] [])
+                                  actions (conj prev-actions cause)]
+                              (update! state side (assoc-in card [:special :mm-actions] actions))
+                              (update! state side (assoc-in (get-card state card) [:special :mm-click] false))
+                              (when (and (= 3 (count actions))
+                                         (= 3 (count (distinct actions))))
+                                (resolve-ability state side mm-ability (get-card state card) nil))))}]
+     :constant-effects [{:type :prevent-ability
+                         :req (req (and (get-in card [:special :mm-click])
+                                        (let [cid (:cid target)
+                                              ability-idx (nth targets 2 nil)
+                                              cause (seq [cid ability-idx])
+                                              prev-actions (get-in card [:special :mm-actions] [])
+                                              actions (conj prev-actions cause)]
+                                          (not (and (= 4 (count actions))
+                                                    (= 4 (count (distinct actions))))))))
+                         :value true}]}))
+
 (define-card "Mti Mwekundu: Life Improved"
   {:events [{:event :approach-server
              :optional
