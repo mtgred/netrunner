@@ -164,51 +164,33 @@
                                (get-card state card) nil))}]})
 
 (define-card "Boomerang"
-  (letfn [(shortened-card-str [state target]
-            (str (if (rezzed? target) (:title target) "ICE")
-                 "[br]"
-                 (zone->name (or (second (:zone target)) (:zone target)))
-                 " ("
-                    (ice-index state target)
-                    ")"))]
-    {:prompt "Choose an installed piece of ice"
-     :msg (msg "target " (card-str state target))
-     :choices {:card #(and (installed? %)
-                        (ice? %))}
-     :effect (effect (update! (assoc card :server-target (shortened-card-str state target)))
-               (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))
-     :leave-play (effect (update! (dissoc card :server-target :special)))
-     :events [{:event :rez
-               :req (req (same-card? target (get-in card [:special :boomerang-target])))
-               :effect (effect (update! (assoc card :server-target (shortened-card-str state (get-card state target)))))}
-              {:event :swap
-               :req (req (some #(same-card? % (get-in card [:special :boomerang-target])) targets))
-               :effect (effect (update! (assoc card :server-target (shortened-card-str state (some #(when (same-card? % (get-in card [:special :boomerang-target])) %) targets)))))}
-              {:event :corp-trash
-               :req (req (some #(same-card? % (get-in card [:special :boomerang-target])) targets))
-               :effect (effect (update! (dissoc card :server-target)))}
-              {:event :runner-trash
-               :req (req (some #(same-card? % (get-in card [:special :boomerang-target])) targets))
-               :effect (effect (update! (dissoc card :server-target)))}]
-     :abilities [(break-sub
-                   [:trash] 2 "All"
-                   {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
-                                (same-card? current-ice boomerang-target)
-                                true)) ; When eg. flipped by Assimilator
-                    :additional-ability
-                    {:effect (effect
-                               (register-events
-                                 (assoc card :zone '(:discard))
-                                 (let [server (:server run)]
-                                   [{:event :successful-run-ends
-                                     :location :discard
-                                     :unregister-once-resolved true
-                                     :optional
-                                     {:req (req (= server (:server target)))
-                                      :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
-                                      :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
-                                                    :effect (effect (move card :deck)
-                                                                    (shuffle! :deck))}}}])))}})]}))
+  { :prompt "Choose an installed piece of ice"
+    :msg (msg "target " (card-str state target))
+    :choices {:card #(and (installed? %)
+                      (ice? %))}
+    :effect (req (add-icon state side card target "B" "blue")
+                 (update! state side (assoc-in (get-card state card) [:special :boomerang-target] target)))
+    :leave-play (req (remove-icon state side card)
+                     (update! state side (dissoc card :server-target :special)))
+    :abilities [(break-sub
+                  [:trash] 2 "All"
+                  {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
+                              (same-card? current-ice boomerang-target)
+                              true)) ; When eg. flipped by Assimilator
+                  :additional-ability
+                  {:effect (effect
+                              (register-events
+                                (assoc card :zone '(:discard))
+                                (let [server (:server run)]
+                                  [{:event :successful-run-ends
+                                    :location :discard
+                                    :unregister-once-resolved true
+                                    :optional
+                                    {:req (req (= server (:server target)))
+                                    :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
+                                    :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
+                                                  :effect (effect (move card :deck)
+                                                                  (shuffle! :deck))}}}])))}})]})
 
 (define-card "Box-E"
   {:in-play [:memory 2 :hand-size 2]})
