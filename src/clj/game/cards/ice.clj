@@ -3055,9 +3055,8 @@
    :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))})
 
 (define-card "Turnpike"
-  {:events [{:event :encounter-ice
-             :msg "force the Runner to lose 1 [Credits]"
-             :effect (effect (lose-credits :runner 1))}]
+  {:on-encounter {:msg "force the Runner to lose 1 [Credits]"
+                  :effect (effect (lose-credits :runner 1))}
    :subroutines [(tag-trace 5)]})
 
 (define-card "Tyrant"
