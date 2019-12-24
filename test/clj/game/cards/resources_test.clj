@@ -3036,7 +3036,27 @@
           (card-ability state :runner pau 1)
           (changes-val-macro -3 (:credit (get-runner))
                              "Pay 3 for Corroder install (1+2)"
-                             (click-card state :runner cor)))))))
+                             (click-card state :runner cor))))))
+  (testing "Can't lower cost below 1. Issue #4816"
+    (do-game
+      (new-game {:runner {:hand ["Paule's Café" "Hernando Cortez" "Kati Jones""Fan Site" "Miss Bones" "Corroder"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10 :click 10)
+      (play-from-hand state :runner "Paule's Café")
+      (play-from-hand state :runner "Hernando Cortez")
+      (play-from-hand state :runner "Kati Jones")
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Miss Bones")
+      (let [pau (get-resource state 0)]
+        (card-ability state :runner pau 0)
+        (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
+        (is (= 0 (count (:hand (get-runner)))) "Hosted Corroder on the Café")
+        (let [cor (find-card "Corroder" (:hosted (refresh pau)))]
+          (changes-val-macro
+            -1 (:credit (get-runner))
+            "Pay 1 credit for Corroder (2 - 4 + 1 base)"
+            (card-ability state :runner pau 1)
+            (click-card state :runner cor)))))))
 
 (deftest penumbral-toolkit
   ;; Penumbral Toolkit

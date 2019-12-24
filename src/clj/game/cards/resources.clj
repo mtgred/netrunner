@@ -1864,30 +1864,35 @@
                                       (runner? %))}
                 :effect (req (host state side card target))
                 :msg (msg "host " (:title target) "")}
-               {:label "1[Credit]: Install hosted card"
-                :cost [:credit 1]
-                :choices {:card #(:host %)}
-                :req (req (not (empty? (:hosted card))))
-                :effect (req
-                          (let [discount (if (and (= :runner (:active-player @state))
-                                                  (not (get-in @state [:per-turn (:cid card)])))
-                                           (->> (all-active-installed state :runner)
-                                                (filter #(and (resource? %)
-                                                              (has-subtype? % "Connection")
-                                                              (:uniqueness %)))
-                                                count
-                                                -)
-                                           0)]
-                            ; Todo: find correct function to calculate cost
-                            (if-let [costs (can-pay? state side eid card nil [(:cost target) [:credit discount]])]
-                              ;small hack to generate the correct message with runner-install
-                              (do (gain state :runner :credit 1)
-                                  (runner-install state side (assoc eid :source card :source-type :runner-install) target
-                                                  {:cost-bonus (+ 1 discount)
-                                                   :custom-message #(str (build-spend-msg % "install") (:title target) " using " (:title card))})
-                                  (swap! state assoc-in [:per-turn (:cid card)] true))
-                              ;refund credit for paid ability
-                              (gain state :runner :credit 1))))}]})
+               (letfn [(discount [state card]
+                         (if (and (= :runner (:active-player @state))
+                                  (not (get-in @state [:per-turn (:cid card)])))
+                           (->> (all-active-installed state :runner)
+                                (filter #(and (resource? %)
+                                              (has-subtype? % "Connection")
+                                              (:uniqueness %)))
+                                count
+                                -)
+                           0))]
+                 {:async true
+                  :label "Install hosted card"
+                  :cost [:credit 1]
+                  :req (req (and (seq (:hosted card))
+                                 (some #(can-pay? state :runner (assoc eid :source card :source-type :runner-install)
+                                                  % nil
+                                                  [:credit (install-cost state side % {:cost-bonus (discount state card)})])
+                                       (:hosted card))))
+                  :choices {:req (req (and (same-card? card (:host target))
+                                           (can-pay? state :runner (assoc eid :source card :source-type :runner-install)
+                                                     target nil
+                                                     [:credit (install-cost state side target {:cost-bonus (discount state card)})])))}
+                  :effect (req (runner-install
+                                 state side
+                                 (assoc eid :source card :source-type :runner-install)
+                                 target
+                                 {:cost-bonus (discount state card)
+                                  :custom-message #(str (build-spend-msg % "install") (:title target) " using " (:title card))})
+                            (swap! state assoc-in [:per-turn (:cid card)] true))})]})
 
 (define-card "Penumbral Toolkit"
   {:data {:counter {:credit 4}}
