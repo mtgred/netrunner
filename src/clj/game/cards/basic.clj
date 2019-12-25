@@ -15,21 +15,55 @@
 ;; Card definitions
 
 (define-card "Corp Basic Action Card"
-  {:abilities [{:label "Draw"
+  {:abilities [{:label "Gain 1 [Credits]"
+                :cost [:click]
+                :msg "gain 1 [Credits]"
+                :effect (req (gain-credits state side 1 :corp-click-credit)
+                             (swap! state update-in [:stats side :click :credit] (fnil inc 0))
+                             (trigger-event state side :corp-click-credit)
+                             (play-sfx state side "click-credit"))}
+               {:label "Draw 1 card"
+                :cost [:click]
                 :msg "draw 1 card"
-                :effect (req
-                          (wait-for (trigger-event-simult state side (make-eid state eid) :pre-corp-click-draw nil nil)
-                                    (trigger-event state side :corp-click-draw (->> @state side :deck (take 1)))
-                                    (draw state side)
-                                    (swap! state update-in [:stats side :click :draw] (fnil inc 0))
-                                    (play-sfx state side "click-card")))}]})
+                :async true
+                :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :pre-corp-click-draw nil nil)
+                                       (trigger-event state side :corp-click-draw (->> @state side :deck (take 1)))
+                                       (draw state side)
+                                       (swap! state update-in [:stats side :click :draw] (fnil inc 0))
+                                       (play-sfx state side "click-card")))}
+               {:label "Install 1 agenda, asset, upgrade, or piece of ice from HQ"
+                :cost [:click]
+                :async true
+                :effect (req (let [targetcard (first targets)
+                                      server (second targets)]
+                               (if (and targetcard server)
+                                 (corp-install state side (make-eid state {:source server :source-type :corp-install})
+                                               targetcard server {:base-cost [:click 1] :action :corp-click-install})
+                                 (continue-ability
+                                   state side
+                                   {:prompt "Choose card to install"
+                                    :choices {:card #(and (corp? %)
+                                                          (not (operation? %))
+                                                          (in-hand? %))}
+                                    :async true
+                                    :effect (effect (corp-install (make-eid state {:source nil :source-type :corp-install})
+                                                                  target nil {:base-cost [:click 1] :action :corp-click-install}))}
+                                   card nil))))}
+               ]})
 
 (define-card "Runner Basic Action Card"
-  {:abilities [{:label "Draw"
+  {:abilities [{:label "Gain 1 [Credits]"
+                :cost [:click]
+                :msg "gain 1 [Credits]"
+                :effect (req (gain-credits state side 1 :runner-click-credit)
+                             (swap! state update-in [:stats side :click :credit] (fnil inc 0))
+                             (trigger-event state side :runner-click-credit)
+                             (play-sfx state side "click-credit"))}
+               {:label "Draw 1 card"
+                :cost [:click]
                 :msg "draw 1 card"
-                :effect (req
-                          (wait-for (trigger-event-simult state side (make-eid state eid) :pre-corp-click-draw nil nil)
-                                    (trigger-event state side :corp-click-draw (->> @state side :deck (take 1)))
-                                    (draw state side)
-                                    (swap! state update-in [:stats side :click :draw] (fnil inc 0))
-                                    (play-sfx state side "click-card")))}]})
+                :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :pre-runner-click-draw nil nil)
+                                       (trigger-event state side :runner-click-draw (->> @state side :deck (take 1)))
+                                       (draw state side)
+                                       (swap! state update-in [:stats side :click :draw] (fnil inc 0))
+                                       (play-sfx state side "click-card")))}]})

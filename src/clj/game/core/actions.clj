@@ -21,8 +21,10 @@
                                                                       :source-type :play}) card {:base-cost [:click 1]})
       ("Hardware" "Resource" "Program") (runner-install state side (make-eid state {:source :action
                                                                                     :source-type :runner-install}) card {:base-cost [:click 1]})
-      ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side (make-eid state {:source server
-                                                                                   :source-type :corp-install}) card server {:base-cost [:click 1] :action :corp-click-install}))))
+
+      ("ICE" "Upgrade" "Asset" "Agenda") (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 2 :targets [card server]}))))
+      ; ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side (make-eid state {:source server
+                                                                                   ; :source-type :corp-install}) card server {:base-cost [:click 1] :action :corp-click-install}))))
 
 (defn shuffle-deck
   "Shuffle R&D/Stack."
@@ -37,17 +39,12 @@
 (defn click-draw
   "Click to draw."
   [state side args]
-  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 0}))
+  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 1}))
 
 (defn click-credit
   "Click to gain 1 credit."
   [state side args]
-  (when (pay state side nil :click 1 {:action :corp-click-credit})
-    (system-msg state side "spends [Click] to gain 1 [Credits]")
-    (gain-credits state side 1 (if (= :corp side) :corp-click-credit :runner-click-credit))
-    (swap! state update-in [:stats side :click :credit] (fnil inc 0))
-    (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
-    (play-sfx state side "click-credit")))
+  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 0}))
 
 (defn- change-msg
   "Send a system message indicating the property change"

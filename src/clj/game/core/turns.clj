@@ -87,7 +87,6 @@
   (swap! state assoc-in [:corp :basic-action-card] (make-card {:side "Corp" :type "Basic Action" :title "Corp Basic Action Card"}))
   (swap! state assoc-in [:runner :basic-action-card] (make-card {:side "Runner" :type "Basic Action" :title "Runner Basic Action Card"})))
 
-
 (defn- subroutines-init
   "Initialised the subroutines associated with the card, these work as abilities"
   [card cdef]

@@ -8,10 +8,17 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest ^:test-refresh/focus runner-basic-actions
+(deftest ^:test-refresh/focus corp-basic-actions
   (testing "Draw card"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}})
-      (core/click-draw state :corp nil)
+      (changes-val-macro 1 (count (:hand (get-corp)))
+                         "Drew 1 card"
+                         (core/click-draw state :corp nil))
+      ))
+  (testing "Install card"
+    (do-game
+      (new-game {:corp {:deck [(qty "PAD Campaign" 10)]}})
+      (play-from-hand state :corp "PAD Campaign" "New server")
       (println (clojure.string/join "\n" (map :text (:log @state))))
       )))
