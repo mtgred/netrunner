@@ -19,12 +19,8 @@
     (case (:type card)
       ("Event" "Operation") (play-instant state side (make-eid state {:source :action
                                                                       :source-type :play}) card {:base-cost [:click 1]})
-      ("Hardware" "Resource" "Program") (runner-install state side (make-eid state {:source :action
-                                                                                    :source-type :runner-install}) card {:base-cost [:click 1]})
-
+      ("Hardware" "Resource" "Program") (play-ability state side {:card (get-in @state [:runner :basic-action-card]) :ability 2 :targets [card server]})
       ("ICE" "Upgrade" "Asset" "Agenda") (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 2 :targets [card server]}))))
-      ; ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side (make-eid state {:source server
-                                                                                   ; :source-type :corp-install}) card server {:base-cost [:click 1] :action :corp-click-install}))))
 
 (defn shuffle-deck
   "Shuffle R&D/Stack."
