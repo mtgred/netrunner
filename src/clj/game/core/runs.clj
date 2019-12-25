@@ -102,7 +102,7 @@
                          (update-all-ice state side)
                          (update-all-icebreakers state side)
                          (wait-for (trigger-event-simult state :runner :run nil s n cost-args)
-                                   (if (pos? (get-in @state [:run :position]))
+                                   (if (pos? (get-in @state [:run :position] 0))
                                      (do (set-next-phase state :approach-ice)
                                          (start-next-phase state side nil))
                                      (do (set-next-phase state :approach-server)
