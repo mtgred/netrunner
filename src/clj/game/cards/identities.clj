@@ -976,7 +976,9 @@
                               (update! state side (assoc-in (get-card state card) [:special :mm-click] false))
                               (when (and (= 3 (count actions))
                                          (= 3 (count (distinct actions))))
-                                (resolve-ability state side mm-ability (get-card state card) nil))))}]
+                                (resolve-ability state side mm-ability (get-card state card) nil))))}
+              {:event :corp-turn-ends
+               :effect (effect (update! (assoc-in card [:special :mm-actions] [])))}]
      :constant-effects [{:type :prevent-ability
                          :req (req (and (get-in card [:special :mm-click])
                                         (let [cid (:cid target)

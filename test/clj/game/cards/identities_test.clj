@@ -2043,7 +2043,17 @@
 (deftest ^:test-refresh/focus mirrormorph-endless-iteration
   ;; MirrorMorph: Endless Iteration
   (testing "Mirrormorph triggers on three different actions"
-    (testing "Basic action + Asset ability"
+    (testing "Gain credit from MM"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Hedge Fund" 10)]}})
+        (core/click-draw state :corp nil)
+        (core/click-credit state :corp nil)
+        (play-from-hand state :corp "Hedge Fund")
+        (changes-val-macro 1 (:credit (get-corp))
+                           "Gained 1 credit from MM ability"
+                           (click-prompt state :corp "Gain 1 [Credits]"))))
+    (testing "Gain click from using Asset ability"
       (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Capital Investors" 10)]}})
@@ -2056,8 +2066,56 @@
           (click-prompt state :corp "Gain [Click]")
           (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
           (card-ability state :corp (refresh ci) 0)
-          (println (clojure.string/join "\n" (map :text (:log @state))))
-          )))
+          (is (= 1 (:click (get-corp))) "Could not use Capital Investors again with MM click")
+          (core/click-credit state :corp nil)
+          (is (= 0 (:click (get-corp))) "Was able to click for credit"))))
+    (testing "Gain click from playing an Operation"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Hedge Fund" 10)]}})
+        (core/click-draw state :corp nil)
+        (core/click-credit state :corp nil)
+        (play-from-hand state :corp "Hedge Fund")
+        (click-prompt state :corp "Gain [Click]")
+        (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
+        (play-from-hand state :corp "Hedge Fund")
+        (is (= 1 (:click (get-corp))) "Could not use Hedge Fund again with MM click")))
+    (testing "Gain click from using Upgrade ability"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Cold Site Server" 10)]}})
+        (core/click-draw state :corp nil)
+        (play-from-hand state :corp "Cold Site Server" "New remote")
+        (let [css (get-content state :remote1 0)
+              mm (get-in @state [:corp :identity])]
+          (core/rez state :corp css)
+          (card-ability state :corp (refresh css) 0)
+          (click-prompt state :corp "Gain [Click]")
+          (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
+          (card-ability state :corp (refresh css) 0)
+          (is (= 1 (:click (get-corp))) "Could not use Hedge Fund again with MM click")
+          (core/click-credit state :corp nil)
+          (is (= 0 (:click (get-corp))) "Was able to click for credit"))))
+    (testing "Gain click from trashing three different PAD Taps"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :credits 9}
+                   :runner {:deck [(qty "PAD Tap" 3)]}})
+        (take-credits state :corp)
+        (dotimes [_ 3] (play-from-hand state :runner "PAD Tap"))
+        (take-credits state :runner)
+        (let [tap1 (get-resource state 0)
+              tap2 (get-resource state 1)
+              tap3 (get-resource state 2)
+              mm (get-in @state [:corp :identity])]
+          (card-side-ability state :corp tap1 0)
+          (card-side-ability state :corp tap2 0)
+          (card-side-ability state :corp tap3 0)
+          (click-prompt state :corp "Gain [Click]")
+          (is (= 1 (:click (get-corp))) "Gained 1 click from MM"))))
+    )
+  (testing "Cases where Mirrormorph does not trigger"
+
     ))
 
 
