@@ -8,7 +8,7 @@
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
          reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
-         update-all-ice update-all-icebreakers continue
+         update-all-ice update-all-icebreakers continue play-ability
          installable-servers get-runnable-zones)
 
 ;;; Neutral actions
@@ -37,14 +37,7 @@
 (defn click-draw
   "Click to draw."
   [state side args]
-  (when (and (not (get-in @state [side :register :cannot-draw]))
-             (pay state side nil :click 1 {:action :corp-click-draw}))
-    (system-msg state side "spends [Click] to draw a card")
-    (wait-for (trigger-event-simult state side (if (= side :corp) :pre-corp-click-draw :pre-runner-click-draw) nil nil)
-              (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw) (->> @state side :deck (take 1)))
-              (draw state side)
-              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
-              (play-sfx state side "click-card"))))
+  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 0}))
 
 (defn click-credit
   "Click to gain 1 credit."

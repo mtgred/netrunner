@@ -7,6 +7,7 @@
   [user
    identity
    options
+   basic-action-card
    deck
    deck-id
    hand
@@ -38,6 +39,7 @@
     {:user user
      :identity c-identity
      :options options
+     :basic-action-card nil
      :deck deck
      :deck-id deck-id
      :hand []
@@ -56,6 +58,7 @@
   [user
    identity
    options
+   basic-action-card
    deck
    deck-id
    hand
@@ -97,6 +100,7 @@
     {:user user
      :identity r-identity
      :options options
+     :basic-action-card nil
      :deck deck
      :deck-id deck-id
      :hand []
