@@ -41,6 +41,12 @@
       (new-game {:corp {:deck ["Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "New remote")
       (is (= "Ice Wall" (:title (get-ice state :remote1 0))) "Ice Wall installed")))
+  (testing "Play operation"
+    (do-game
+      (new-game {:corp {:deck ["Hedge Fund"]}})
+      (changes-val-macro 4 (:credit (get-corp))
+                         "Gained 4c from Hedge Fund"
+                         (play-from-hand state :corp "Hedge Fund"))))
   )
 
 (deftest ^:test-refresh/focus runner-basic-actions
@@ -75,4 +81,11 @@
                  :runner {:deck ["Bookmark"]}})
       (play-from-hand state :runner "Bookmark")
       (is (= "Bookmark" (:title (get-hardware state 0))) "Bookmark installed")))
+  (testing "Play operation"
+    (do-game
+      (new-game {:options {:start-as :runner}
+                 :runner {:deck ["Sure Gamble"]}})
+      (changes-val-macro 4 (:credit (get-runner))
+                         "Gained 4c from Sure Gamble"
+                         (play-from-hand state :runner "Sure Gamble"))))
   )

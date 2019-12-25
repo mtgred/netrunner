@@ -17,10 +17,8 @@
   [state side {:keys [card server]}]
   (when-let [card (get-card state card)]
     (case (:type card)
-      ("Event" "Operation") (play-instant state side (make-eid state {:source :action
-                                                                      :source-type :play}) card {:base-cost [:click 1]})
-      ("Hardware" "Resource" "Program") (play-ability state side {:card (get-in @state [:runner :basic-action-card]) :ability 2 :targets [card server]})
-      ("ICE" "Upgrade" "Asset" "Agenda") (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 2 :targets [card server]}))))
+      ("Event" "Operation") (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 3 :targets [card]})
+      ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda") (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 2 :targets [card server]}))))
 
 (defn shuffle-deck
   "Shuffle R&D/Stack."
