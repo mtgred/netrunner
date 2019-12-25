@@ -26,6 +26,7 @@
          (reset! all-cards))
     (require '[game.cards.agendas]
              '[game.cards.assets]
+             '[game.cards.basic]
              '[game.cards.events]
              '[game.cards.hardware]
              '[game.cards.ice]
@@ -38,6 +39,7 @@
 
 (let [nspaces {"agendas" 'game.cards.agendas
                "assets" 'game.cards.assets
+               "basic" 'game.cards.basic
                "events" 'game.cards.events
                "hardware" 'game.cards.hardware
                "ice" 'game.cards.ice
