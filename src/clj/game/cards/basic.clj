@@ -38,7 +38,7 @@
                                       server (second targets)]
                                (if (and targetcard server)
                                  (corp-install state side (make-eid state {:source server :source-type :corp-install})
-                                               targetcard server {:base-cost [:click 1] :action :corp-click-install})
+                                               targetcard server {:action :corp-click-install})
                                  (continue-ability
                                    state side
                                    {:prompt "Choose card to install"
@@ -47,7 +47,7 @@
                                                           (in-hand? %))}
                                     :async true
                                     :effect (effect (corp-install (make-eid state {:source nil :source-type :corp-install})
-                                                                  target nil {:base-cost [:click 1] :action :corp-click-install}))}
+                                                                  target nil {:action :corp-click-install}))}
                                    card nil))))}
                ]})
 
@@ -66,4 +66,21 @@
                                        (trigger-event state side :runner-click-draw (->> @state side :deck (take 1)))
                                        (draw state side)
                                        (swap! state update-in [:stats side :click :draw] (fnil inc 0))
-                                       (play-sfx state side "click-card")))}]})
+                                       (play-sfx state side "click-card")))}
+               {:label "Install 1 program, resource, or piece of hardware from the grip"
+                :cost [:click]
+                :async true
+                :effect (req (if-let [targetcard (first targets)]
+                               (runner-install state side (make-eid state {:source :action :source-type :runner-install})
+                                               targetcard nil)
+                               (continue-ability
+                                 state side
+                                 {:prompt "Choose card to install"
+                                  :choices {:card #(and (runner? %)
+                                                        (not (event? %))
+                                                        (in-hand? %))}
+                                  :async true
+                                  :effect (effect (runner-install (make-eid state {:source :action :source-type :runner-install})
+                                                                  target nil nil))}
+                                 card nil)))}
+               ]})
