@@ -963,7 +963,8 @@
                                    (do (gain state side :click 1)
                                        (update! state side (assoc-in (get-card state card) [:special :mm-click] true)))
                                    (gain-credits state side 1)))}]
-    {:abilities [mm-ability]
+    {:implementation "Does not work with terminal Operations"
+     :abilities [mm-ability]
      :events [{:event :corp-spent-click
                :effect (req (let [cid (first target)
                                   ability-idx (:ability-idx (:source-info eid))

@@ -2113,7 +2113,39 @@
           (card-side-ability state :corp tap3 0)
           (click-prompt state :corp "Gain [Click]")
           (is (= 1 (:click (get-corp))) "Gained 1 click from MM"))))
-    )
+    (testing "Trigger Mirrormorph with double Operation"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :hand ["Mandatory Upgrades" "Blue Level Clearance"]
+                          :deck [(qty "Hedge Fund" 10)]}})
+        (play-and-score state "Mandatory Upgrades")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (core/click-credit state :corp nil)
+        (core/click-draw state :corp nil)
+        (play-from-hand state :corp "Blue Level Clearance")
+        (changes-val-macro 1 (:credit (get-corp))
+                           "Gained 1 credit from MM ability"
+                           (click-prompt state :corp "Gain 1 [Credits]"))))
+    (testing "Trigger Mirrormorph with MCAAP"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :hand ["MCA Austerity Policy"]
+                          :deck [(qty "Hedge Fund" 10)]}})
+        (play-from-hand state :corp "MCA Austerity Policy" "New remote")
+        (let [mcaap (get-content state :remote1 0)
+              mm (get-in @state [:corp :identity])]
+          (core/rez state :corp mcaap)
+          (card-ability state :corp mcaap 0)
+          (dotimes [_ 2]
+            (take-credits state :corp)
+            (take-credits state :runner)
+            (card-ability state :corp mcaap 0))
+          (core/click-credit state :corp nil)
+          (card-ability state :corp mcaap 1)
+          (changes-val-macro 1 (:credit (get-corp))
+                             "Gained 1 credit from MM ability"
+                             (click-prompt state :corp "Gain 1 [Credits]"))))))
   (testing "Cases where Mirrormorph does not trigger"
 
     ))
