@@ -1814,7 +1814,7 @@
                :effect (req (let [ice current-ice
                                   chosen-type target
                                   stypes (combine-subtypes false (:subtype ice) chosen-type)]
-                              (register-once state side {:once :per-turn} card)
+                              (register-once state {:once :per-turn} card)
                               (update! state side (assoc ice :subtype stypes))
                               (update-all-ice state side)
                               (register-events
