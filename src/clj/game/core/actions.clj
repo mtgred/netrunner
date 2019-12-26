@@ -469,19 +469,7 @@
 (defn trash-resource
   "Click to trash a resource."
   [state side args]
-  (let [trash-cost (max 0 (- 2 (get-in @state [:corp :trash-cost-bonus] 0)))]
-    (when-let [cost-str (pay state side nil :click 1 :credit trash-cost {:action :corp-trash-resource})]
-      (resolve-ability state side
-                       {:prompt  "Choose a resource to trash"
-                        :choices {:card (fn [card]
-                                          (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
-                                                   (> (count (filter resource? (all-active-installed state :runner))) 1))
-                                            (and (resource? card) (not (untrashable-while-resources? card)))
-                                            (resource? card)))}
-                        :cancel-effect (effect (gain :credit trash-cost :click 1))
-                        :effect  (effect (trash target)
-                                         (system-msg (str (build-spend-msg cost-str "trash")
-                                                          (:title target))))} nil nil))))
+  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 5}))
 
 (defn do-purge
   "Purge viruses."

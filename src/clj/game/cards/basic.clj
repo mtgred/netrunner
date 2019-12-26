@@ -52,6 +52,16 @@
                 :effect (req (update-advancement-cost state side card)
                              (add-prop state side (get-card state card) :advance-counter 1)
                              (play-sfx state side "click-advance"))}
+               {:label "Trash 1 resource if the Runner is tagged"
+                :cost [:click 1 :credit 2]
+                :req (req tagged)
+                :prompt "Choose a resource to trash"
+                :msg (msg "trash " (:title target))
+                :choices {:req (req (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
+                                             (> (count (filter resource? (all-active-installed state :runner))) 1))
+                                      (and (resource? target) (not (untrashable-while-resources? target)))
+                                      (resource? target)))}
+                :effect (effect (trash target))}
                ]})
 
 (define-card "Runner Basic Action Card"

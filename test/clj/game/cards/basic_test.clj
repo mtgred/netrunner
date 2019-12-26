@@ -59,6 +59,16 @@
       (play-from-hand state :corp "Project Beale" "New remote")
       (core/advance state :corp {:card (get-content state :remote1 0)})
       (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "Placed 1 advancement on Project Beale")))
+  (testing "Trash resource if runner is tagged"
+    (do-game
+      (new-game {:runner {:deck ["Fan Site"]}
+                 :options {:start-as :runner}})
+      (play-from-hand state :runner "Fan Site")
+      (let [fs (get-resource state 0)]
+        (take-credits state :runner)
+        (core/gain-tags state :runner 1)
+        (core/trash-resource state :corp nil)
+        (click-card state :corp fs))))
   )
 
 (deftest ^:test-refresh/focus runner-basic-actions
