@@ -44,6 +44,14 @@
                 :effect (req (let [target-card (first targets)]
                                (play-instant state side (make-eid state {:source :action :source-type :play})
                                              target-card {:base-cost [:click 1]})))}
+               {:label "Advance 1 installed card"
+                :cost [:click 1 :credit 1]
+                :async true
+                :msg (msg "advance " (card-str state target))
+                :req (req (can-advance? state side target))
+                :effect (req (update-advancement-cost state side card)
+                             (add-prop state side (get-card state card) :advance-counter 1)
+                             (play-sfx state side "click-advance"))}
                ]})
 
 (define-card "Runner Basic Action Card"

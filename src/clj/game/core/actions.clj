@@ -591,6 +591,11 @@
     (unregister-constant-effects state side card)
     (trigger-event state side :derez card side)))
 
+(defn click-advance
+  "Click to advance installed card."
+  [state side {:keys [target-card]}]
+  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 4 :targets [target-card]}))
+
 (defn advance
   "Advance a corp card that can be advanced.
    If you pass in a truthy value as the no-cost parameter, it will advance at no cost (for the card Success)."

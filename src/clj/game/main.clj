@@ -14,7 +14,7 @@
 
 (def commands
   {"ability" core/play-ability
-   "advance" core/advance
+   "advance" core/click-advance
    "change" core/change
    "choice" core/resolve-prompt
    "close-deck" core/close-deck
