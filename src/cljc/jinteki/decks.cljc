@@ -47,7 +47,7 @@
 (defn min-deck-size
   "Contains implementation-specific decksize adjustments, if they need to be different from printed ones."
   [identity]
-  (:minimumdecksize identity))
+  (:minimumdecksize identity 0))
 
 (defn min-agenda-points
   [deck]

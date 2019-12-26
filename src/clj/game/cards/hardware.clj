@@ -338,7 +338,8 @@
 (define-card "Cyberdelia"
   {:in-play [:memory 1]
    :events [{:event :subroutines-broken
-             :req (req (first-event? state side :subroutines-broken #(every? :broken (:subroutines (first %)))))
+             :req (req (and (every? :broken (:subroutines target))
+                            (first-event? state side :subroutines-broken #(every? :broken (:subroutines (first %))))))
              :msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
              :effect (effect (gain-credits 1))}]})
 
@@ -752,19 +753,26 @@
                   :async true
                   :effect (req (let [set-aside (sort-by :title (take 6 (:deck runner)))]
                                  (show-wait-prompt state :corp (str "Runner to resolve " (:title card)))
-                                 (continue-ability state side
-                                                   {:prompt "Choose a card to install"
-                                                    :async true
-                                                    :choices (req (filter #(or (program? %)
-                                                                               (and (resource? %)
-                                                                                    (has-subtype? % "Virtual")))
-                                                                          set-aside))
-                                                    :cancel-effect (effect (continue-ability (shuffle-next set-aside nil nil) card nil))
-                                                    :effect (req (let [to-install target
-                                                                       set-aside (remove-once #(= % target) set-aside)]
-                                                                   (wait-for (runner-install state side (assoc eid :source card :source-type :ability) target {:cost-bonus -2})
-                                                                             (continue-ability state side (shuffle-next set-aside nil nil) card nil))))}
-                                                   card nil)))}]}))
+                                 (continue-ability
+                                   state side
+                                   {:prompt "Choose a card to install"
+                                    :async true
+                                    :choices (req (concat (filter #(and (or (program? %)
+                                                                            (and (resource? %)
+                                                                                 (has-subtype? % "Virtual")))
+                                                                        (can-pay? state side
+                                                                                  (assoc eid :source card :source-type :runner-install)
+                                                                                  % nil [:credit (install-cost state side % {:cost-bonus -2})]))
+                                                                  set-aside)
+                                                          ["No action"]))
+                                    :cancel-effect (effect (continue-ability (shuffle-next set-aside nil nil) card nil))
+                                    :effect (req (if (= "No action" target)
+                                                   (continue-ability state side (shuffle-next set-aside nil nil) card nil)
+                                                   (let [to-install target
+                                                         set-aside (remove-once #(= % target) set-aside)]
+                                                     (wait-for (runner-install state side (assoc eid :source card :source-type :ability) target {:cost-bonus -2})
+                                                               (continue-ability state side (shuffle-next set-aside nil nil) card nil)))))}
+                                   card nil)))}]}))
 
 (define-card "Gebrselassie"
   {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
@@ -892,6 +900,7 @@
   {:implementation "MU usage restriction not enforced"
    :in-play [:memory 3]
    :events [{:event :successful-run
+             :interactive (req true)
              :req (req (and (first-event? state :runner :successful-run)
                             (pos? (count-virus-programs state))))
              :optional {:prompt "Place a virus counter?"

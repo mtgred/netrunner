@@ -2530,7 +2530,25 @@
         (click-prompt state :corp "OK") ; Trash existing PAD Campaign
         (changes-val-macro 2 (:credit (get-corp))
                            "Gained 2 credits from THG"
-                           (click-prompt state :corp "Gain 2 [Credits]"))))))
+                           (click-prompt state :corp "Gain 2 [Credits]")))))
+  (testing "Interaction with PAD Tap. Issue #4835"
+    (do-game
+      (new-game {:corp {:deck [(qty "PAD Campaign" 5)]
+                        :hand ["Tranquility Home Grid" "PAD Campaign"]}
+                 :runner {:hand ["PAD Tap"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "PAD Tap")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Tranquility Home Grid" "New remote")
+      (let [thg (get-content state :remote1 0)]
+        (core/rez state :corp thg)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (play-from-hand state :corp "PAD Campaign" "Server 1")
+        (changes-val-macro
+          1 (:credit (get-runner))
+          "Runner gained 1 credit from PAD Tap"
+          (click-prompt state :corp "Gain 2 [Credits]"))))))
 
 (deftest tempus
   ;; Tempus - Trace^3, the runner chooses to lose 2 clicks or take 1 brain damage

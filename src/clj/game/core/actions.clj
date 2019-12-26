@@ -392,7 +392,7 @@
         total-cost (merge-costs (conj total-pump-cost total-break-cost))]
     (when (can-pay? state side eid card (:title card) total-cost)
       (wait-for (pay-sync state side (make-eid state eid) card total-cost)
-                (dotimes [n times-pump]
+                (dotimes [n (or times-pump 0)]
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
                 (doseq [sub (remove :broken (:subroutines current-ice))]
                   (break-subroutine! state (get-card state current-ice) sub card)

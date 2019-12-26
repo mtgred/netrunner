@@ -1409,13 +1409,13 @@
              :req (req (and (or (asset? target)
                                 (agenda? target)
                                 (upgrade? target))
-                            (= (second (:zone card)) (second (:zone target)))
+                            (in-same-server? card target)
                             (first-event? state :corp :corp-install #(in-same-server? card (first %)))))
              :prompt (msg "Use " (:title card) " to gain 2 [Credits] or draw 1 card?")
              :choices ["Gain 2 [Credits]" "Draw 1 card"]
              :msg (msg (decapitalize target))
              :effect (req (if (= target "Gain 2 [Credits]")
-                            (gain state side :credit 2)
+                            (gain-credits state side 2)
                             (draw state side 1 nil)))}]})
 
 (define-card "Tyr's Hand"

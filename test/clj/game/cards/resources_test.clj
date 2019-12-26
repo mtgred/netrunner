@@ -3036,7 +3036,27 @@
           (card-ability state :runner pau 1)
           (changes-val-macro -3 (:credit (get-runner))
                              "Pay 3 for Corroder install (1+2)"
-                             (click-card state :runner cor)))))))
+                             (click-card state :runner cor))))))
+  (testing "Can't lower cost below 1. Issue #4816"
+    (do-game
+      (new-game {:runner {:hand ["Paule's Café" "Hernando Cortez" "Kati Jones""Fan Site" "Miss Bones" "Corroder"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10 :click 10)
+      (play-from-hand state :runner "Paule's Café")
+      (play-from-hand state :runner "Hernando Cortez")
+      (play-from-hand state :runner "Kati Jones")
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Miss Bones")
+      (let [pau (get-resource state 0)]
+        (card-ability state :runner pau 0)
+        (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
+        (is (= 0 (count (:hand (get-runner)))) "Hosted Corroder on the Café")
+        (let [cor (find-card "Corroder" (:hosted (refresh pau)))]
+          (changes-val-macro
+            -1 (:credit (get-runner))
+            "Pay 1 credit for Corroder (2 - 4 + 1 base)"
+            (card-ability state :runner pau 1)
+            (click-card state :runner cor)))))))
 
 (deftest penumbral-toolkit
   ;; Penumbral Toolkit
@@ -3571,19 +3591,35 @@
 
 (deftest spoilers
   ;; Spoilers - Mill the Corp when it scores an agenda
-  (do-game
-    (new-game {:corp {:deck ["Hostile Takeover" "Hedge Fund"]}
-               :runner {:deck ["Spoilers"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Spoilers")
-    (take-credits state :runner)
-    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
-    (is (= 1 (count (:deck (get-corp)))))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (let [ht (get-content state :remote1 0)]
-      (score-agenda state :corp ht)
-      (is (= 1 (count (:discard (get-corp)))))
-      (is (zero? (count (:deck (get-corp)))) "Last card from R&D milled"))))
+  (testing "basic functionality"
+    (do-game
+      (new-game {:corp {:deck ["Hostile Takeover" "Hedge Fund"]}
+                 :runner {:deck ["Spoilers"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Spoilers")
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (is (= 1 (count (:deck (get-corp)))))
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (let [ht (get-content state :remote1 0)]
+        (score-agenda state :corp ht)
+        (is (= 1 (count (:discard (get-corp)))))
+        (is (zero? (count (:deck (get-corp)))) "Last card from R&D milled"))))
+  (testing "Interaction with Friday Chip. Issue #4838"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hostile Takeover"]}
+                 :runner {:deck ["Spoilers" "Friday Chip"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Spoilers")
+      (play-from-hand state :runner "Friday Chip")
+      (take-credits state :runner)
+      (changes-val-macro
+        0 (get-counters (get-hardware state 0) :virus)
+        "Friday Chip shouldn't gain counters from Spoilers"
+        (score-agenda state :corp (get-content state :remote1 0))
+        (is (empty? (:prompt (get-runner))) "Runner has no Friday Chip prompt")))))
 
 (deftest stim-dealer
   ;; Stim Dealer - Take 1 brain damage when it accumulates 2 power counters
