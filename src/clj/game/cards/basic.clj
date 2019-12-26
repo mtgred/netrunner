@@ -33,12 +33,14 @@
                                        (play-sfx state side "click-card")))}
                {:label "Install 1 agenda, asset, upgrade, or piece of ice from HQ"
                 :async true
+                :req (req (not-empty (:hand corp)))
                 :effect (req (let [target-card (first targets)
                                    server (second targets)]
                                (corp-install state side (make-eid state {:source server :source-type :corp-install})
                                              target-card server {:base-cost [:click 1] :action :corp-click-install})))}
                {:label "Play 1 operation"
                 :async true
+                :req (req (not-empty (:hand corp)))
                 :effect (req (let [target-card (first targets)]
                                (play-instant state side (make-eid state {:source :action :source-type :play})
                                              target-card {:base-cost [:click 1]})))}
@@ -62,11 +64,13 @@
                                        (play-sfx state side "click-card")))}
                {:label "Install 1 program, resource, or piece of hardware from the grip"
                 :async true
+                :req (req (not-empty (:hand runner)))
                 :effect (req (let [target-card (first targets)]
                                (runner-install state side (make-eid state {:source :action :source-type :runner-install})
                                                target-card {:base-cost [:click 1]})))}
                {:label "Play 1 event"
                 :async true
+                :req (req (not-empty (:hand runner)))
                 :effect (req (let [target-card (first targets)]
                                (play-instant state side (make-eid state {:source :action :source-type :play})
                                              target-card {:base-cost [:click 1]})))}
