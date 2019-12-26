@@ -147,7 +147,7 @@
                     :effect (req (let [ice current-ice
                                        stargets (:subtype-target ice)
                                        stypes (:subtype ice)]
-                                   (register-once state {:once :per-turn} card)
+                                   (register-once state side {:once :per-turn} card)
                                    (update! state side
                                             (assoc ice
                                                    :subtype-target (combine-subtypes false stargets ice-type)
