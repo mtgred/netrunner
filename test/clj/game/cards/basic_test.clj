@@ -68,8 +68,8 @@
         (take-credits state :runner)
         (core/gain-tags state :runner 1)
         (core/trash-resource state :corp nil)
-        (is (= 1 (count (:discard (get-runner)))) "Fan Site got trashed")
-        (click-card state :corp fs))))
+        (click-card state :corp fs)
+        (is (= 1 (count (:discard (get-runner)))) "Fan Site got trashed"))))
   (testing "Purge"
     (do-game
       (new-game {:runner {:deck ["Clot"]}
@@ -77,7 +77,6 @@
       (play-from-hand state :runner "Clot")
       (take-credits state :runner)
       (core/do-purge state :corp nil)
-      (println (clojure.string/join "\n" (map :text (:log @state))))
       (is (= 1 (count (:discard (get-runner)))) "Clot got trashed")))
   )
 
