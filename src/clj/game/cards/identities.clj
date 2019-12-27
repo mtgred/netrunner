@@ -968,9 +968,13 @@
      :events [{:event :corp-spent-click
                :effect (req (let [cid (first target)
                                   ability-idx (:ability-idx (:source-info eid))
+                                  bac-cid (get-in @state [:corp :basic-action-card :cid])
                                   cause (if (number? (first target))
                                           (seq [cid ability-idx])
-                                          (first target))
+                                          (case (first target)
+                                            :play-instant (seq [bac-cid 3])
+                                            :corp-click-install (seq [bac-cid 2])
+                                            (first target)))
                                   prev-actions (get-in card [:special :mm-actions] [])
                                   actions (conj prev-actions cause)]
                               (update! state side (assoc-in card [:special :mm-actions] actions))
