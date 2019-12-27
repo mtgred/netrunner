@@ -104,7 +104,4 @@
                 :msg "remove 1 tag"
                 :req (req tagged)
                 :effect (effect (lose-tags 1)
-                                (play-sfx "click-remove-tag"))}
-                ; :effect (req (let [remove-cost (max 0 (- 2 (get-in @state [:runner :tag-remove-bonus] 0)))]
-                               ; (wait-for (pay-sync state side (make-eid state {:source :action :source-type :remove-tag}) nil :click 1 :credit remove-cost)
-               ]})
+                                (play-sfx "click-remove-tag"))}]})
