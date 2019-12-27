@@ -62,7 +62,11 @@
                                       (and (resource? target) (not (untrashable-while-resources? target)))
                                       (resource? target)))}
                 :effect (effect (trash target))}
-               ]})
+               {:label "Purge virus counters"
+                :cost [:click 3]
+                :msg "purge all virus counters"
+                :effect (effect (purge)
+                                (play-sfx "virus-purge"))}]})
 
 (define-card "Runner Basic Action Card"
   {:abilities [{:label "Gain 1 [Credits]"

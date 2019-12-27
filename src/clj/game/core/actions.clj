@@ -474,12 +474,7 @@
 (defn do-purge
   "Purge viruses."
   [state side args]
-  (when-let [cost (pay state side nil :click 3 {:action :corp-click-purge})]
-    (purge state side)
-    (let [spent (build-spend-msg cost "purge")
-          message (str spent "all virus counters")]
-      (system-msg state side message))
-    (play-sfx state side "virus-purge")))
+  (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 6}))
 
 (defn get-rez-cost
   [state side card {:keys [ignore-cost alternative-cost cost-bonus] :as args}]
