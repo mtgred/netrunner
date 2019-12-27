@@ -469,7 +469,7 @@
 (defn trash-resource
   "Click to trash a resource."
   [state side args]
-  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 5}))
+  (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 5}))
 
 (defn do-purge
   "Purge viruses."
@@ -582,7 +582,7 @@
 (defn click-advance
   "Click to advance installed card."
   [state side {:keys [target-card]}]
-  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 4 :targets [target-card]}))
+  (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 4 :targets [target-card]}))
 
 (defn advance
   "Advance a corp card that can be advanced.
