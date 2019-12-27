@@ -619,7 +619,9 @@
 (define-card "Crash Space"
   {:interactions {:prevent [{:type #{:meat}
                              :req (req true)}]
-                  :pay-credits {:req (req (= :remove-tag (:source-type eid)))
+                  :pay-credits {:req (req (or (= :remove-tag (:source-type eid))
+                                              (and (same-card? (:source eid) (:basic-action-card runner))
+                                                   (= 5 (:ability-idx (:source-info eid))))))
                                 :type :recurring}}
    :recurring 2
    :abilities [{:label "Trash to prevent up to 3 meat damage"
