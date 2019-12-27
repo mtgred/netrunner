@@ -2040,7 +2040,7 @@
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total")))))
 
-(deftest ^:test-refresh/focus mirrormorph-endless-iteration
+(deftest mirrormorph-endless-iteration
   ;; MirrorMorph: Endless Iteration
   (testing "Mirrormorph triggers on three different actions"
     (testing "Gain credit from MM"

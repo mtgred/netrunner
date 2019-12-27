@@ -8,7 +8,7 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest ^:test-refresh/focus corp-basic-actions
+(deftest corp-basic-actions
   (testing "Gain 1 credit"
     (do-game
       (new-game)
@@ -77,10 +77,9 @@
       (play-from-hand state :runner "Clot")
       (take-credits state :runner)
       (core/do-purge state :corp nil)
-      (is (= 1 (count (:discard (get-runner)))) "Clot got trashed")))
-  )
+      (is (= 1 (count (:discard (get-runner)))) "Clot got trashed"))))
 
-(deftest ^:test-refresh/focus runner-basic-actions
+(deftest runner-basic-actions
   (testing "Gain 1 credit"
     (do-game
       (new-game {:options {:start-as :runner}})
