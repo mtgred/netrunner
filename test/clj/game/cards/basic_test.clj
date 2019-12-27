@@ -119,4 +119,15 @@
       (changes-val-macro 4 (:credit (get-runner))
                          "Gained 4c from Sure Gamble"
                          (play-from-hand state :runner "Sure Gamble"))))
-  )
+  (testing "Run HQ"
+    (do-game
+      (new-game {:options {:start-as :runner}})
+      (run-on state :hq)
+      (is (:run @state) "Run initiated")))
+  (testing "Remove tag"
+    (do-game
+      (new-game {:options {:start-as :runner}})
+      (core/gain-tags state :runner 1)
+      (is (= 1 (count-tags state)) "Runner has 1 tag")
+      (core/remove-tag state :runner nil)
+      (is (= 0 (count-tags state)) "Runner removed tag"))))

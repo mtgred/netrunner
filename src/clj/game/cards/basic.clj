@@ -96,4 +96,15 @@
                 :effect (req (let [target-card (first targets)]
                                (play-instant state side (make-eid state {:source :action :source-type :play})
                                              target-card {:base-cost [:click 1]})))}
+               {:label "Run any server"
+                :async true
+                :effect (effect (make-run (make-eid state) target nil nil {:click-run true}))}
+               {:label "Remove 1 tag"
+                :cost [:click 1 :credit 2]
+                :msg "remove 1 tag"
+                :req (req tagged)
+                :effect (effect (lose-tags 1)
+                                (play-sfx "click-remove-tag"))}
+                ; :effect (req (let [remove-cost (max 0 (- 2 (get-in @state [:runner :tag-remove-bonus] 0)))]
+                               ; (wait-for (pay-sync state side (make-eid state {:source :action :source-type :remove-tag}) nil :click 1 :credit remove-cost)
                ]})
