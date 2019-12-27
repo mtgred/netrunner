@@ -576,8 +576,9 @@
 
 (defn click-advance
   "Click to advance installed card."
-  [state side {:keys [target-card]}]
-  (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 4 :targets [target-card]}))
+  [state side {:keys [card]}]
+  (when-let [card (get-card state card)]
+    (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 4 :targets [card]})))
 
 (defn advance
   "Advance a corp card that can be advanced.
