@@ -3016,6 +3016,28 @@
       (is (zero? (count (:prompt (get-corp))))
           "Corp not prompted to trigger Strategic Innovations"))))
 
+(deftest sync-everything-everywhere
+  ;; SYNC: Everything, Everywhere
+  (do-game
+    (new-game {:corp {:id "SYNC: Everything, Everywhere"}
+               :runner {:deck ["Fan Site"]}
+               :options {:start-as :runner}})
+    (play-from-hand state :runner "Fan Site")
+    (core/gain-tags state :runner 1)
+    (is (= 1 (count-tags state)) "Runner has 1 tag")
+    (changes-val-macro -3 (:credit (get-runner))
+                       "Paid 3c to remove tag"
+                       (core/remove-tag state :runner nil))
+    (is (= 0 (count-tags state)) "Runner removed tag")
+    (take-credits state :runner)
+    (core/gain-tags state :runner 1)
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (changes-val-macro 0 (:credit (get-runner))
+                       "Paid 0c to trash resource"
+                       (core/trash-resource state :corp nil)
+                       (click-card state :corp (get-resource state 0)))
+    (is (= 1 (count (:discard (get-runner)))) "Trashed Fan Site")))
+
 (deftest the-foundry-refining-the-process
   ;; The Foundry
   (testing "interaction with Accelerated Beta Test"

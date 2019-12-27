@@ -1433,29 +1433,26 @@
   {})
 
 (define-card "SYNC: Everything, Everywhere"
-  {:effect (req (when (> (:turn @state) 1)
-                  (if (:sync-front card)
-                    (tag-remove-bonus state side -1)
-                    (trash-resource-bonus state side 2))))
-   :events [{:event :pre-first-turn
-             :req (req (= side :corp))
-             :effect (effect (update! (assoc card :sync-front true))
-                             (tag-remove-bonus -1))}]
+  {:constant-effects [{:type :card-ability-additional-cost
+                       :req (req (let [targetcard (first targets)
+                                       target (second targets)]
+                                   (and (not (:sync-flipped card))
+                                        (same-card? targetcard (:basic-action-card runner))
+                                        (= "Remove 1 tag" (:label target)))))
+                       :value [:credit 1]}
+                      {:type :card-ability-additional-cost
+                       :req (req (let [targetcard (first targets)
+                                       target (second targets)]
+                                   (and (:sync-flipped card)
+                                        (same-card? targetcard (:basic-action-card corp))
+                                        (= "Trash 1 resource if the Runner is tagged" (:label target)))))
+                       :value [:credit -2]}]
    :abilities [{:cost [:click 1]
-                :effect (req (if (:sync-front card)
-                               (do (tag-remove-bonus state side 1)
-                                   (trash-resource-bonus state side 2)
-                                   (update! state side (-> card (assoc :sync-front false
-                                                                       :code "sync"))))
-                               (do (tag-remove-bonus state side -1)
-                                   (trash-resource-bonus state side -2)
-                                   (update! state side (-> card (assoc :sync-front true
-                                                                       :code "09001"))))))
+                :effect (req (if (:sync-flipped card)
+                               (update! state side (-> card (assoc :sync-flipped false :code "09001")))
+                               (update! state side (-> card (assoc :sync-flipped true :code "sync")))))
                 :label "Flip this identity"
-                :msg (msg "flip their ID")}]
-   :leave-play (req (if (:sync-front card)
-                      (tag-remove-bonus state side 1)
-                      (trash-resource-bonus state side -2)))})
+                :msg (msg "flip their ID")}]})
 
 (define-card "Synthetic Systems: The World Re-imagined"
   {:events [{:event :pre-start-game
