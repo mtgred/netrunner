@@ -498,47 +498,68 @@
       (is (zero? (get-counters (refresh ce) :recurring)) "Has used recurring credit"))))
 
 (deftest councilman
-  ;; Councilman reverses the rezz and prevents re-rezz
-  (do-game
-    (new-game {:corp {:deck ["Jackson Howard"]}
-               :runner {:deck ["Councilman"]}})
-    (play-from-hand state :corp "Jackson Howard" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Councilman")
-    (let [jesus (get-content state :remote1 0)
-          judas (get-resource state 0)]
-      (core/rez state :corp jesus)
-      ;; Runner triggers Councilman
-      (card-ability state :runner judas 0)
-      (click-card state :runner jesus)
-      (is (not (rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
-      (core/rez state :corp (refresh jesus))
-      (is (not (rezzed? (refresh jesus))) "Jackson Howard cannot be rezzed")
+  ;; Councilman reverses the rez and prevents re-rez
+  (testing "Rez prevention"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Chief Slee"]
+                        :credits 10}
+                 :runner {:deck ["Councilman"]}})
+      (play-from-hand state :corp "Chief Slee" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Councilman")
+      (let [slee (get-content state :remote1 0)]
+        (core/rez state :corp slee)
+        (changes-val-macro
+          -2 (:credit (get-runner))
+          "Runner pays 2 credits to derez Slee"
+          ;; Runner triggers Councilman
+          (click-prompt state :runner "Yes"))
+        (is (not (rezzed? (refresh slee))) "Chief Slee no longer rezzed")
+        (core/rez state :corp (refresh slee))
+        (is (not (rezzed? (refresh slee))) "Chief Slee cannot be rezzed")
+        (take-credits state :runner)
+        ;; Next turn
+        (core/rez state :corp (refresh slee))
+        (is (rezzed? (refresh slee)) "Chief Slee can be rezzed next turn"))))
+  (testing "Rezz no longer prevented when card changes zone (issues #1571)"
+    (do-game
+      (new-game {:corp {:deck ["Jackson Howard"]}
+                 :runner {:deck ["Councilman"]}})
+      (play-from-hand state :corp "Jackson Howard" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Councilman")
       (take-credits state :runner)
-      ;; Next turn
-      (core/rez state :corp (refresh jesus))
-      (is (rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
-(deftest-pending councilman-zone-change
-  ;; Rezz no longer prevented when card changes zone (issues #1571)
-  (do-game
-    (new-game {:corp {:deck ["Jackson Howard"]}
-               :runner {:deck ["Councilman"]}})
-    (play-from-hand state :corp "Jackson Howard" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Councilman")
-    (take-credits state :runner)
-    (let [jesus (get-content state :remote1 0)
-          judas (get-resource state 0)]
-      (core/rez state :corp jesus)
-      ;; Runner triggers Councilman
-      (card-ability state :runner judas 0)
-      (click-card state :runner jesus)
-      (is (not (rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
-      (core/move state :corp (refresh jesus) :hand))
-    (play-from-hand state :corp "Jackson Howard" "New remote")
-    (let [jesus (get-content state :remote2 0)]
-      (core/rez state :corp jesus)
-      (is (rezzed? (refresh jesus)) "Jackson Howard can be rezzed after changing zone"))))
+      (let [jhow (get-content state :remote1 0)]
+        (core/rez state :corp jhow)
+        (click-prompt state :runner "Yes")
+        (is (not (rezzed? (refresh jhow))) "Jackson Howard no longer rezzed")
+        (core/move state :corp (refresh jhow) :hand))
+      (play-from-hand state :corp "Jackson Howard" "New remote")
+      (let [jhow (get-content state :remote2 0)]
+        (core/rez state :corp jhow)
+        (is (rezzed? (refresh jhow)) "Jackson Howard can be rezzed after changing zone"))))
+  (testing "Preventing Councilman's self-trash prevents the rez prevention effect"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Chief Slee"]}
+                 :runner {:deck ["Councilman" "Fall Guy"]}})
+      (play-from-hand state :corp "Chief Slee" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Councilman")
+      (play-from-hand state :runner "Fall Guy")
+      (take-credits state :runner)
+      (let [slee (get-content state :remote1 0)
+            councilman (get-resource state 0)
+            fall-guy (get-resource state 1)]
+        (core/rez state :corp slee)
+        (changes-val-macro
+          -2 (:credit (get-runner))
+          "Runner still pays for Councilman effect"
+          (click-prompt state :runner "Yes")
+          (card-ability state :runner fall-guy 0)
+          (is (rezzed? (refresh slee)) "Chief Slee still rezzed")
+          (is (refresh councilman) "Councilman's trash is prevented"))))))
 
 (deftest counter-surveillance
   ;; Counter-Surveillance

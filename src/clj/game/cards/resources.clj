@@ -560,33 +560,36 @@
              :effect (effect (reveal target))}]})
 
 (define-card "Councilman"
-  {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
-   :events [{:event :rez
-             :req (req (and (or (asset? target) (upgrade? target))
-                            (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit (rez-cost state :corp target)])))
-             :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
-                                                    " that was just rezzed") "info")
-                          (toast state :corp (str "Runner has the opportunity to derez with Councilman.") "error"))}]
-   :abilities [{:prompt "Select an asset or upgrade that was just rezzed"
-                :choices {:card #(and (rezzed? %)
-                                      (or (asset? %)
-                                          (upgrade? %)))}
-                :effect (effect
-                          (continue-ability
-                            :runner
-                            (let [c target]
-                              {:cost [:credit (rez-cost state :corp c)]
-                               :msg (msg "derez " (:title c))
-                               :effect (req (derez state :corp c)
-                                            (register-turn-flag!
-                                              state side card :can-rez
-                                              (fn [state side card]
-                                                (if (same-card? card c)
-                                                  ((constantly false)
-                                                   (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
-                                                  true)))
-                                            (trash state side card {:unpreventable true}))})
-                            card nil))}]})
+  {:events [{:event :rez
+             :req (req (and (or (asset? target)
+                                (upgrade? target))
+                            (can-pay? state :runner (assoc eid :source card :source-type :ability)
+                                      card nil
+                                      [:credit (rez-cost state :corp target)])))
+             :effect (effect
+                       (continue-ability
+                         :runner
+                         (let [c target]
+                           {:optional
+                            {:prompt (str "Trash Councilman and pay " (rez-cost state :corp c)
+                                          " [Credits] to trash " (:title c) "?")
+                             :yes-ability
+                             {:async true
+                              :cost [:credit (rez-cost state :corp c)]
+                              :msg (msg "derez " (:title c)
+                                        " and prevent it from being rezzed this turn")
+                              :effect (req (wait-for (trash state side card nil)
+                                                     (when-not (get-card state card)
+                                                       (derez state :runner c)
+                                                       (register-turn-flag!
+                                                         state side card :can-rez
+                                                         (fn [state side card]
+                                                           (if (same-card? :installed-cid card c)
+                                                             ((constantly false)
+                                                              (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
+                                                             true))))
+                                                     (effect-completed state side eid)))}}})
+                         card nil))}]})
 
 (define-card "Counter Surveillance"
   {:implementation "Does not prevent access of cards installed in the root of a server"
