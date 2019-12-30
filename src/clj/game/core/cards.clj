@@ -116,6 +116,9 @@
         c (if to-facedown
             (assoc c :facedown true)
             (dissoc c :facedown))
+        c (if (= :scored (first dest))
+            (assoc c :scored-side side)
+            c)
         moved-card (assoc c :zone dest
                             :host nil
                             :hosted hosted

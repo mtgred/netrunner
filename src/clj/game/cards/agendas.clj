@@ -33,14 +33,12 @@
 ;; Card definitions
 
 (define-card "15 Minutes"
-  {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
+  {:abilities [{:cost [:click 1]
+                :msg "shuffle 15 Minutes into R&D"
                 :label "Shuffle 15 Minutes into R&D"
-                :effect (req (let [corp-agendas (get-in corp [:scored])
-                                   agenda-owner (if (some #(same-card? % card) corp-agendas) :corp :runner)]
-                               (gain-agenda-point state agenda-owner (- (:agendapoints card))))
-                             ; refresh agendapoints to 1 before shuffle in case it was modified by e.g. The Board
-                             (move state :corp (dissoc (assoc card :agendapoints 1) :seen :rezzed) :deck {:front true})
-                             (shuffle! state :corp :deck))}]
+                :effect (effect (move :corp card :deck nil)
+                                (shuffle! :corp :deck)
+                                (update-all-agenda-points))}]
    :flags {:has-abilities-when-stolen true}})
 
 (define-card "Accelerated Beta Test"
@@ -335,19 +333,15 @@
 
 (define-card "Breaking News"
   {:async true
-   :effect (effect (gain-tags :corp eid 2)
-                   (register-events
-                     card
-                     [{:event :corp-turn-ends
-                       :msg "make the Runner lose 2 tags"
-                       :effect (effect (lose :runner :tag 2)
-                                       (unregister-events card))}
-                      {:event :runner-turn-ends
-                       :msg "make the Runner lose 2 tags"
-                       :effect (effect (lose :runner :tag 2)
-                                       (unregister-events card))}]))
    :silent (req true)
    :msg "give the Runner 2 tags"
+   :effect (effect (register-events
+                     card
+                     [{:event (if (= :corp (:active-player @state)) :corp-turn-ends :runner-turn-ends)
+                       :unregister-once-resolved true
+                       :msg "make the Runner lose 2 tags"
+                       :effect (effect (lose :runner :tag 2))}])
+                   (gain-tags :corp eid 2))
    :events [{:event :corp-turn-ends}
             {:event :runner-turn-ends}]})
 
@@ -504,18 +498,18 @@
                           {:msg message
                            :effect (req (forfeit state card-side card)
                                         (move state side stolen-agenda :hand)
-                                        (gain-agenda-point state agenda-side (- (:agendapoints stolen-agenda)))
+                                        (update-all-agenda-points state side)
                                         (gain-credits state side 5)
                                         (effect-completed state side eid))}
                           :end-effect (effect (clear-wait-prompt :runner))}}
                         card nil))))}]})
 
 (define-card "Domestic Sleepers"
-  {:agendapoints-runner (req 0)
-   :abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
-                :req (req (not (:counter card)))
-                :effect (effect (gain-agenda-point 1)
-                                (set-prop card :counter {:agenda 1} :agendapoints 1))}]})
+  {:agendapoints-corp (req (if (pos? (get-counters card :agenda)) 1 0))
+   :abilities [{:cost [:click 3]
+                :msg "place 1 agenda counter on Domestic Sleepers"
+                :effect (effect (add-counter card :agenda 1)
+                                (update-all-agenda-points))}]})
 
 (define-card "Eden Fragment"
   {:constant-effects [{:type :ignore-install-cost
@@ -635,7 +629,8 @@
 (define-card "Genetic Resequencing"
   {:choices {:card #(= (last (:zone %)) :scored)}
    :msg (msg "add 1 agenda counter on " (:title target))
-   :effect (effect (add-counter target :agenda 1))
+   :effect (effect (add-counter target :agenda 1)
+                   (update-all-agenda-points))
    :silent (req true)})
 
 (define-card "Geothermal Fracking"
@@ -1120,19 +1115,16 @@
      :events [(assoc vacheron-ability :event :as-agenda)
               {:event :runner-turn-begins
                :req (req (pos? (get-counters card :agenda)))
-               :msg (msg (str "remove "
-                              (if (= 1 (get-counters card :agenda))
-                                "the final"
-                                "1")
-                              " agenda token from " (:title card)))
+               :msg (msg "remove 1 agenda token from " (:title card))
                :effect (req (when (pos? (get-counters card :agenda))
                               (add-counter state side card :agenda -1))
                             (when (= 0 (get-counters (get-card state card) :agenda))
                               (let [points (get-agenda-points state :runner (assoc-in card [:counter :agenda] 0))]
                                 (system-msg state :runner
                                             (str "gains " (quantify points "agenda point")
-                                                 " from " (:title card)))
-                                (gain-agenda-point state :runner points))))}]
+                                                 " from " (:title card)))))
+                            (update-all-agenda-points state side)
+                            (check-winner state side))}]
      :flags {:has-events-when-stolen true}}))
 
 (define-card "Project Vitruvius"

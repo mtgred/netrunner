@@ -639,21 +639,24 @@
                                                             :init-data true})
                        points (get-agenda-points state :corp c)]
                    (system-msg state :corp (str "scores " (:title c) " and gains " (quantify points "agenda point")))
-                   (trigger-event-simult state :corp eid :agenda-scored
-                                         {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
-                                                                         ;; This is to handle Employee Strike with damage IDs #2688
-                                                                         (when (:disable-id (card-def current))
-                                                                           (swap! state assoc-in [:corp :disable-id] true)))
-                                                                       (remove-old-current state side :runner))}
-                                          :card-abilities (card-as-handler c)
-                                          :after-active-player {:effect (req (let [c (get-card state c)
-                                                                                   points (or (get-agenda-points state :corp c) points)]
-                                                                               (set-prop state :corp (get-card state moved-card) :advance-counter 0)
-                                                                               (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-                                                                               (swap! state dissoc-in [:corp :disable-id])
-                                                                               (gain-agenda-point state :corp points)
-                                                                               (play-sfx state side "agenda-score")))}}
-                    c)))))))
+                   (trigger-event-simult
+                     state :corp eid :agenda-scored
+                     {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
+                                                     ;; This is to handle Employee Strike with damage IDs #2688
+                                                     (when (:disable-id (card-def current))
+                                                       (swap! state assoc-in [:corp :disable-id] true)))
+                                                   (remove-old-current state side :runner))}
+                      :card-abilities (card-as-handler c)
+                      :after-active-player
+                      {:effect (req (let [c (get-card state c)
+                                          points (or (get-agenda-points-2 state :corp c) points)]
+                                      (set-prop state :corp (get-card state moved-card) :advance-counter 0)
+                                      (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+                                      (swap! state dissoc-in [:corp :disable-id])
+                                      (update-all-agenda-points state side)
+                                      (check-winner state side)
+                                      (play-sfx state side "agenda-score")))}}
+                     c)))))))
 
 ;;; Runner actions
 (defn click-run

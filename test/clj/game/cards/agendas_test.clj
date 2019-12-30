@@ -857,16 +857,32 @@
 
 (deftest domestic-sleepers
   ;; Domestic Sleepers
-  (do-game
-    (new-game {:corp {:deck ["Domestic Sleepers"]}})
-    (play-and-score state "Domestic Sleepers")
-    (core/gain state :corp :click 3)
-    (let [ds_scored (get-scored state :corp 0)]
-      (is (zero? (get-counters (refresh ds_scored) :agenda)) "Should start with 0 agenda counters")
-      (is (zero? (:agenda-point (get-corp))) "Should provide 0 agenda points initially")
-      (card-ability state :corp ds_scored 0)
-      (is (= 1 (get-counters (refresh ds_scored) :agenda)) "Should gain 1 agenda counter")
-      (is (= 1 (:agenda-point (get-corp))) "Should provide 1 agenda point after ability use"))))
+  (testing "Ability changes points"
+    (do-game
+      (new-game {:corp {:deck ["Domestic Sleepers"]}})
+      (play-and-score state "Domestic Sleepers")
+      (core/gain state :corp :click 3)
+      (let [ds_scored (get-scored state :corp 0)]
+        (is (zero? (get-counters (refresh ds_scored) :agenda)) "Should start with 0 agenda counters")
+        (is (zero? (:agenda-point (get-corp))) "Should provide 0 agenda points initially")
+        (card-ability state :corp ds_scored 0)
+        (is (= 1 (get-counters (refresh ds_scored) :agenda)) "Should gain 1 agenda counter")
+        (is (= 1 (:agenda-point (get-corp))) "Should provide 1 agenda point after ability use"))))
+  (testing "Interaction with Mark Yale (issue #2920)"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Domestic Sleepers" "Mark Yale"]
+                        :credits 10}})
+      (core/gain state :corp :click 5)
+      (play-from-hand state :corp "Mark Yale" "New remote")
+      (play-and-score state "Domestic Sleepers")
+      (let [sleepers (get-scored state :corp 0)
+            yale (get-content state :remote1 0)]
+        (card-ability state :corp sleepers 0)
+        (core/rez state :corp yale)
+        (card-ability state :corp yale 1)
+        (click-card state :corp "Domestic Sleepers")
+        (is (zero? (:agenda-point (get-corp))) "Domestic Sleepers is worth 0 points after losing the agenda counter")))))
 
 (deftest eden-fragment
   ;; Test that Eden Fragment ignores the install cost of the first ice
@@ -2004,14 +2020,22 @@
   ;; Obotaka Protocol
   (do-game
     (new-game {:corp {:id "Jinteki: Personal Evolution"
-                      :deck [(qty "Obokata Protocol" 10)]}
-               :runner {:deck [(qty "Sure Gamble" 4)]}})
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["Obokata Protocol" "Merger" "Hostile Takeover"]}
+               :runner {:hand [(qty "Sure Gamble" 6)]}})
     (play-from-hand state :corp "Obokata Protocol" "New remote")
     (take-credits state :corp)
-    (core/gain state :runner :agenda-point 6)
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Steal")
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (take-credits state :corp)
     (run-empty-server state "Server 1")
-    (click-prompt state :runner "Pay to steal")
-    (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")
+    (changes-val-macro
+      4 (count (:discard (get-runner)))
+      "Runner paid 4 net damage"
+      (click-prompt state :runner "Pay to steal"))
     (is (= :runner (:winner @state)) "Runner wins")
     (is (= "Agenda" (:reason @state)) "Win condition reports agenda points")))
 

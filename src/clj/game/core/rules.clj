@@ -1,9 +1,10 @@
 (in-ns 'game.core)
 
-(declare can-run? can-trash? card-init card-str cards-can-prevent? close-access-prompt enforce-msg
-         gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? play-sfx
+(declare can-run? can-trash? card-init card-str cards-can-prevent? check-winner close-access-prompt
+         enforce-msg gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? play-sfx
          prevent-draw remove-old-current should-trigger? system-say system-msg steal-trigger-events
-         trash-cards untrashable-while-rezzed? update-all-ice untrashable-while-resources? win win-decked)
+         trash-cards untrashable-while-rezzed? update-all-agenda-points update-all-ice
+         untrashable-while-resources? win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -610,15 +611,19 @@
   "Adds the given card to the given side's :scored area as an agenda worth n points."
   ([state side card n] (as-agenda state side (make-eid state) card n nil))
   ([state side eid card n] (as-agenda state side eid card n nil))
-  ([state side eid card n {:keys [register-events]}]
-   (let [card (move state side (assoc (deactivate state side card) :agendapoints n) :scored)]
+  ([state side eid card n {:keys [register-events force]}]
+   (let [card (deactivate state side card)
+         card (move state side (assoc card :agendapoints n) :scored {:force force})]
      (if register-events
        (wait-for (card-init state side card {:resolve-effect false})
-                 (wait-for (resolve-ability state side eid (:swapped (card-def card)) card nil)
+                 (wait-for (resolve-ability state side (make-eid state eid) (:swapped (card-def card)) card nil)
                            (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
-                                     (gain-agenda-point state side n))))
+                                     (update-all-agenda-points state side)
+                                     (check-winner state side)
+                                     (effect-completed state side eid))))
        (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
-                 (gain-agenda-point state side n)
+                 (update-all-agenda-points state side)
+                 (check-winner state side)
                  (effect-completed state side eid))))))
 
 (defn forfeit
@@ -634,17 +639,64 @@
    (let [card (get-card state card)]
      (when (:msg args)
        (system-msg state side (str "forfeits " (:title card))))
-     (gain-agenda-point state side (- (get-agenda-points state side card)))
      (move state (to-keyword (:side card)) card :rfg)
+     (update-all-agenda-points state side)
+     (check-winner state side)
      (trigger-event-sync state side eid (keyword (str (name side) "-forfeit-agenda")) card))))
 
+(defn check-winner
+  [state side]
+  (doseq [side [:corp :runner]]
+    (when (and (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
+               (not (some true? (get-effects state side nil :cannot-win-on-points))))
+      (win state side "Agenda"))))
+
 (defn gain-agenda-point
-  "Gain n agenda points and check for winner."
+  "Deprecated function, plz no use"
   [state side n]
-  (gain state side :agenda-point n)
-  (when (and (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
-             (not (get-in @state [side :cannot-win-on-points])))
-    (win state side "Agenda")))
+  (check-winner state side))
+
+
+(defn get-agenda-points-2
+  "Apply agenda-point modifications to calculate the number of points this card is worth
+  to the given player."
+  [state side card]
+  (let [base-points (:agendapoints card 0)
+        as-agenda-points (:as-agenda-points card 0)
+        points-fn (if (= side :corp)
+                    (:agendapoints-corp (card-def card))
+                    (:agendapoints-runner (card-def card)))
+        effect-key (if (= side :corp)
+                     :corp-agenda-points
+                     :runner-agenda-points)]
+    (if (fn? points-fn)
+      (points-fn state side nil card nil)
+      (+ base-points
+         as-agenda-points
+         (sum-effects state side card effect-key nil)
+         (sum-effects state side card :agenda-points nil)))))
+
+(defn update-agenda-points-card
+  [state side card]
+  (update! state side (assoc card :current-points (get-agenda-points-2 state side card))))
+
+(defn sum-agenda-points
+  [state side]
+  (let [new-points (->> (get-in @state [side :scored])
+                        (map :current-points)
+                        (reduce + 0))]
+    (swap! state assoc-in [side :agenda-point] new-points)))
+
+(defn update-agenda-points
+  [state side]
+  (doseq [card (get-in @state [side :scored])]
+    (update-agenda-points-card state side card))
+  (sum-agenda-points state side))
+
+(defn update-all-agenda-points
+  [state side]
+  (doseq [side [:corp :runner]]
+    (update-agenda-points state side)))
 
 
 ;;; Miscellaneous
