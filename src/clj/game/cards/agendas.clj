@@ -335,15 +335,13 @@
   {:async true
    :silent (req true)
    :msg "give the Runner 2 tags"
-   :effect (effect (register-events
-                     card
-                     [{:event (if (= :corp (:active-player @state)) :corp-turn-ends :runner-turn-ends)
-                       :unregister-once-resolved true
-                       :msg "make the Runner lose 2 tags"
-                       :effect (effect (lose :runner :tag 2))}])
-                   (gain-tags :corp eid 2))
-   :events [{:event :corp-turn-ends}
-            {:event :runner-turn-ends}]})
+   :effect (effect (gain-tags :corp eid 2))
+   :events (let [event {:unregister-once-resolved true
+                        :req (effect (first-event? :agenda-scored #(same-card? card (first %))))
+                        :msg "make the Runner lose 2 tags"
+                        :effect (effect (lose :runner :tag 2))}]
+             [(assoc event :event :corp-turn-begins)
+              (assoc event :event :runner-turn-begins)])})
 
 (define-card "Broad Daylight"
   (letfn [(add-counters [state side card eid]
