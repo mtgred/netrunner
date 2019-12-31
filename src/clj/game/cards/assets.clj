@@ -2083,7 +2083,8 @@
                   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                   :async true
                   :effect (req (as-agenda state :runner eid card 2))}
-   :constant-effects [{:type :runner-agenda-points
+   :constant-effects [{:type :agenda-value
+                       :req (req (= :runner (:scored-side target)))
                        :value -1}]
    :events [{:event :card-moved
              :req (req (or (= :scored (first (:zone target)))

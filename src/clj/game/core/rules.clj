@@ -659,16 +659,12 @@
         as-agenda-points (:as-agenda-points card 0)
         points-fn (if (= side :corp)
                     (:agendapoints-corp (card-def card))
-                    (:agendapoints-runner (card-def card)))
-        effect-key (if (= side :corp)
-                     :corp-agenda-points
-                     :runner-agenda-points)]
+                    (:agendapoints-runner (card-def card)))]
     (if (fn? points-fn)
       (points-fn state side nil card nil)
       (+ base-points
          as-agenda-points
-         (sum-effects state side card effect-key nil)
-         (sum-effects state side card :agenda-points nil)))))
+         (sum-effects state side card :agenda-value nil)))))
 
 (defn update-agenda-points-card
   [state side card]
@@ -676,10 +672,12 @@
 
 (defn sum-agenda-points
   [state side]
-  (let [new-points (->> (get-in @state [side :scored])
-                        (map :current-points)
-                        (reduce + 0))]
-    (swap! state assoc-in [side :agenda-point] new-points)))
+  (let [user-adjusted-points (sum-effects state side side :user-agenda-points nil)
+        scored-points (->> (get-in @state [side :scored])
+                           (map :current-points)
+                           (reduce + 0))
+        total-points (+ user-adjusted-points scored-points)]
+    (swap! state assoc-in [side :agenda-point] total-points)))
 
 (defn update-agenda-points
   [state side]

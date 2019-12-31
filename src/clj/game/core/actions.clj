@@ -100,6 +100,25 @@
               (str "sets Bad Publicity to " (get-in @state [:corp :bad-publicity :base])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
+(defn- change-agenda-points
+  "Change a player's total agenda points. This is done through registering an agenda
+  point effect that's only used when tallying total agenda points. Instead of adding or
+  removing these effects, we allow for creating as many as needed to properly adjust
+  the total."
+  [state side delta]
+  (register-floating-effect
+    state side nil
+    ;; This is needed as `req` creates/shadows the existing `side` already in scope.
+    (let [user-side side]
+      {:type :user-agenda-points
+       ;; `target` is either `:corp` or `:runner`
+       :req (req (= user-side target))
+       :value delta}))
+  (update-all-agenda-points state side)
+  (system-msg state side
+              (str "sets their agenda points to " (get-in @state [side :agenda-point])
+                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+
 (defn- change-generic
   "Change a player's base generic property."
   [state side key delta]
@@ -116,6 +135,7 @@
     :hand-size (change-map state side key delta)
     :tag (change-tags state delta)
     :bad-publicity (change-bad-pub state delta)
+    :agenda-point (change-agenda-points state side delta)
     ; else
     (change-generic state side key delta)))
 

@@ -2004,7 +2004,7 @@
                        :effect (effect (host :runner (get-card state target) (assoc card :installed true))
                                        (update-all-agenda-points))}}
                      card))
-   :constant-effects [{:type :agenda-points
+   :constant-effects [{:type :agenda-value
                        :req (req (same-card? (:host card) target))
                        :value -1}]
    :events [{:event :purge
