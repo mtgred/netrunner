@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare can-run? can-trash? card-init card-str cards-can-prevent? check-winner close-access-prompt
-         enforce-msg gain-agenda-point get-prevent-list get-agenda-points in-corp-scored? play-sfx
+         enforce-msg get-prevent-list get-agenda-points in-corp-scored? play-sfx
          prevent-draw remove-old-current should-trigger? system-say system-msg steal-trigger-events
          trash-cards untrashable-while-rezzed? update-all-agenda-points update-all-ice
          untrashable-while-resources? win win-decked)
@@ -650,12 +650,6 @@
     (when (and (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
                (not (some true? (get-effects state side nil :cannot-win-on-points))))
       (win state side "Agenda"))))
-
-(defn gain-agenda-point
-  "Deprecated function, plz no use"
-  [state side n]
-  (check-winner state side))
-
 
 (defn get-agenda-points-2
   "Apply agenda-point modifications to calculate the number of points this card is worth

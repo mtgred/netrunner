@@ -3,7 +3,7 @@
 ;; These functions are called by main.clj in response to commands sent by users.
 
 (declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler
-         enforce-msg gain-agenda-point get-remote-names get-run-ices jack-out move
+         enforce-msg get-remote-names get-run-ices jack-out move
          name-zone play-instant purge make-run runner-install trash get-strength
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
