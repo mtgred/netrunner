@@ -340,8 +340,8 @@
                         :req (effect (first-event? :agenda-scored #(same-card? card (first %))))
                         :msg "make the Runner lose 2 tags"
                         :effect (effect (lose :runner :tag 2))}]
-             [(assoc event :event :corp-turn-begins)
-              (assoc event :event :runner-turn-begins)])})
+             [(assoc event :event :corp-turn-ends)
+              (assoc event :event :runner-turn-ends)])})
 
 (define-card "Broad Daylight"
   (letfn [(add-counters [state side card eid]
@@ -868,7 +868,9 @@
   {:interactive (req true)
    :req (req tagged)
    :effect (effect (add-counter card :agenda 1)
-                   (set-prop card :agendapoints 3))})
+                   (update-all-agenda-points)
+                   (check-winner))
+   :agendapoints-corp (req (if (zero? (get-counters card :agenda)) 2 3))})
 
 (define-card "Medical Breakthrough"
   {:silent (req true)
@@ -900,8 +902,8 @@
                       (system-msg state side "uses Meteor Mining to gain 7 [Credits]")
                       (effect-completed state side eid))
                   "Do 7 meat damage"
-                  (do (damage state side eid :meat 7 {:card card})
-                      (system-msg state side "uses Meteor Mining do 7 meat damage"))
+                  (do (system-msg state side "uses Meteor Mining do 7 meat damage")
+                      (damage state side eid :meat 7 {:card card}))
                   "No action"
                   (do (system-msg state side "does not use Meteor Mining")
                       (effect-completed state side eid))))})
@@ -1071,10 +1073,11 @@
 (define-card "Project Beale"
   {:interactive (req true)
    :agendapoints-runner (req 2)
+   :agendapoints-corp (req (+ 2 (get-counters card :agenda)))
    :effect (req (let [n (quot (- (get-counters card :advancement) 3) 2)]
-                  (set-prop state side card
-                            :counter {:agenda n}
-                            :agendapoints (+ 2 n))))})
+                  (add-counter state side card :agenda n)
+                  (update-all-agenda-points state side)
+                  (check-winner state side)))})
 
 (define-card "Project Kusanagi"
   {:silent (req true)
