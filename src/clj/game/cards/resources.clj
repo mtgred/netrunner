@@ -1338,7 +1338,7 @@
              :req (req (and (first-event? state :runner :run-ends is-remote?)
                             (not (get-in @state [:run :did-steal]))
                             (get-in @state [:run :did-access])
-                            (is-remote? (:server run))))
+                            (is-remote? (:server target))))
              :effect (effect (add-counter card :power 1))
              :msg "add a power counter to itself"}
             {:event :counter-added
@@ -2001,8 +2001,10 @@
                                 (draw eid 1 nil))}]})
 
 (define-card "Psych Mike"
-  {:events [{:event :successful-run-ends
-             :req (req (first-event? state side :successful-run-ends #(= :rd (first (:server (first %))))))
+  {:events [{:event :run-ends
+             :req (req (and (:successful target)
+                            (first-event? state side :run-ends #(and (= :rd (first (:server (first %))))
+                                                                     (:successful (first %))))))
              :msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
              :effect (effect (gain-credits :runner (total-cards-accessed target :deck)))}]})
 
@@ -2661,7 +2663,7 @@
                :silent (req true)}
               {:event :run-ends
                :effect (req (when (and (not (:agenda-stolen card))
-                                       (#{:hq :rd} target))
+                                       (#{:hq :rd} (first (:server target))))
                               (add-counter state side card :power 1)
                               (system-msg state :runner (str "places a power counter on " (:title card))))
                          (update! state side (dissoc (get-card state card) :agenda-stolen)))
@@ -2797,28 +2799,29 @@
              :effect (effect (gain-credits 1))}]})
 
 (define-card "Whistleblower"
-  (letfn [(steal-events [named-agenda]
-            [{:event :run-ends
-              :effect (effect (unregister-events card {:events [{:event :access}
-                                                                {:event :run-ends}]}))}
-             {:event :access
-              :req (req (= (:title target) named-agenda))
-              :once :per-run
-              :async true
-              :effect (effect (steal eid target))}])]
-    {:events [{:event :successful-run
-               :optional {:autoresolve (get-autoresolve :auto-name-agenda)
-                          :prompt "Trash Whistleblower to name an agenda?"
-                          :yes-ability {:prompt "Name an agenda"
-                                        :choices {:card-title (req (and (corp? target)
-                                                                        (agenda? target)))}
-                                        :effect (effect (system-msg (str "trashes " (:title card)
-                                                                         " to name " (:title target)))
-                                                  (register-events (dissoc card :zone)
-                                                                   (steal-events target))
-                                                  (trash eid card {:unpreventable true
-                                                                   :cause :ability-cost}))}}}]
-     :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]}))
+  {:events [{:event :successful-run
+             :optional
+             {:autoresolve (get-autoresolve :auto-name-agenda)
+              :prompt "Trash Whistleblower to name an agenda?"
+              :yes-ability
+              {:prompt "Name an agenda"
+               :choices {:card-title (req (and (corp? target)
+                                               (agenda? target)))}
+               :msg (msg "to name " (:title target))
+               :effect (effect (system-msg (str "trashes " (:title card)
+                                                " to use " (:title card)
+                                                " to name " (:title target)))
+                               (register-events
+                                 card
+                                 (let [named-agenda target]
+                                   [{:event :access
+                                     :duration :end-of-run
+                                     :unregister-once-resolved true
+                                     :async true
+                                     :req (req (= (:title target) named-agenda))
+                                     :effect (effect (steal eid target))}]))
+                               (trash eid card {:unpreventable true}))}}}]
+   :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]})
 
 (define-card "Wireless Net Pavilion"
   {:effect (effect (trash-resource-bonus -2))

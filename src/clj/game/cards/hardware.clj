@@ -174,18 +174,19 @@
    :abilities [(break-sub
                  [:trash] 2 "All"
                  {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
-                              (same-card? current-ice boomerang-target)
+                              (same-card? :installed-cid current-ice boomerang-target)
                               true)) ; When eg. flipped by Assimilator
                   :additional-ability
                   {:effect (effect
                              (register-events
                                (assoc card :zone '(:discard))
                                (let [server (:server run)]
-                                 [{:event :successful-run-ends
+                                 [{:event :run-ends
                                    :location :discard
                                    :unregister-once-resolved true
                                    :optional
-                                   {:req (req (= server (:server target)))
+                                   {:req (req (and (:successful target)
+                                                   (= server (:server target))))
                                     :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
                                     :yes-ability {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
                                                   :effect (effect (move card :deck)
@@ -475,10 +476,11 @@
              :effect (effect (update! (assoc card :dopp-active true)))}
             {:event :runner-turn-begins
              :effect (effect (update! (assoc card :dopp-active true)))}
-            {:event :successful-run-ends
+            {:event :run-ends
              :interactive (req true)
              :optional
-             {:req (req (:dopp-active card))
+             {:req (req (and (:successful target)
+                             (:dopp-active card)))
               :player :runner
               :prompt "Use Doppelgänger to run again?"
               :yes-ability {:prompt "Choose a server"
@@ -530,24 +532,23 @@
      :leave-play (req (remove-watch state :ekomind))}))
 
 (define-card "EMP Device"
-  {:abilities [{:req (req (:run @state))
+  {:abilities [{:req (req run)
                 :msg "prevent the Corp from rezzing more than 1 piece of ICE for the remainder of the run"
                 :cost [:trash]
-                :effect (effect (register-events
-                                  (assoc card :zone '(:discard))
-                                  [{:event :rez
-                                    :req (req (ice? target))
-                                    :effect (effect (register-run-flag!
-                                                      card :can-rez
-                                                      (fn [state side card]
-                                                        (if (ice? card)
-                                                          ((constantly false)
-                                                           (toast state :corp "Cannot rez ICE the rest of this run due to EMP Device"))
-                                                          true))))}
-                                   {:event :run-ends
-                                    :effect (effect (unregister-events card))}]))}]
-   :events [{:event :rez}
-            {:event :run-ends}]})
+                :effect (effect
+                          (register-events
+                            card
+                            [{:event :rez
+                              :duration :end-of-run
+                              :unregister-once-resolved true
+                              :req (req (ice? target))
+                              :effect (effect (register-run-flag!
+                                                card :can-rez
+                                                (fn [state side card]
+                                                  (if (ice? card)
+                                                    ((constantly false)
+                                                     (toast state :corp "Cannot rez ICE the rest of this run due to EMP Device"))
+                                                    true))))}]))}]})
 
 (define-card "Feedback Filter"
   {:interactions {:prevent [{:type #{:net :brain}
@@ -1193,11 +1194,13 @@
   {:in-play [:memory 1]
    :effect (req (change-hand-size state :runner (count-tags state)))
    :leave-play (req (change-hand-size state :runner (- (count-tags state))))
-   :events [{:event :successful-run-ends
+   :events [{:event :run-ends
              :once :per-turn
-             :req (req (and (#{:rd :hq} (first (:server target)))
-                            (first-event? state side :successful-run-ends
-                                          #(#{:rd :hq} (first (:server (first %)))))))
+             :req (req (and (:successful target)
+                            (#{:rd :hq} (first (:server target)))
+                            (first-event? state side :run-ends
+                                          #(and (:successful (first %))
+                                                (#{:rd :hq} (first (:server (first %))))))))
              :msg (msg "draw " (total-cards-accessed target) " cards")
              :async true
              :effect (effect (draw eid (total-cards-accessed target) nil))}
