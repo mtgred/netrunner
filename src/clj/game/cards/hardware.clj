@@ -179,11 +179,11 @@
                   :additional-ability
                   {:effect (effect
                              (register-events
-                               (assoc card :zone '(:discard))
+                               ;; Boomerang is trashed at this point
+                               (find-latest state card)
                                (let [server (:server run)]
                                  [{:event :run-ends
-                                   :location :discard
-                                   :unregister-once-resolved true
+                                   :duration :end-of-run
                                    :optional
                                    {:req (req (and (:successful target)
                                                    (= server (:server target))))

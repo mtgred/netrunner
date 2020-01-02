@@ -359,7 +359,12 @@
         (run-successful state)
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No")
-        (run-empty-server state :archives)
+        (run-on state :hq)
+        (run-continue state)
+        (run-continue state)
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
   (testing "Cannot use Boomerang on other ice"
     (do-game
