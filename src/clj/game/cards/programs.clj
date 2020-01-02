@@ -1176,7 +1176,7 @@
                       state side card
                       [{:event :encounter-ice
                         :optional
-                        {:req (req (and (same-card? ice target)
+                        {:req (req (and (same-card? :installed-cid ice target)
                                         (can-pay? state :runner eid target nil [:credit (count (:subroutines (get-card state ice)))])))
                          :prompt (str "Pay " (count (:subroutines (get-card state ice)))
                                       " [Credits] to bypass " (:title ice) "?")
