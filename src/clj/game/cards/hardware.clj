@@ -488,6 +488,7 @@
                             :makes-run true
                             :effect (effect (update! (dissoc card :dopp-active))
                                             (clear-wait-prompt :corp)
+                                            (effect-completed (make-result eid {:successful true}))
                                             (make-run eid target))}}}]})
 
 (define-card "Dorm Computer"

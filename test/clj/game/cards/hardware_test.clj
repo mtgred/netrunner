@@ -921,19 +921,50 @@
 
 (deftest doppelganger
   ;; Doppelgänger - run again when successful
-  (do-game
-    (new-game {:runner {:deck ["Doppelgänger"]}})
-    (core/gain state :corp :bad-publicity 1)
-    (take-credits state :corp)
-    (play-from-hand state :runner "Doppelgänger")
-    (run-empty-server state :hq)
-    (click-prompt state :runner "No action")
-    (is (zero? (:run-credit (get-runner))) "Runner lost BP credits")
-    (click-prompt state :runner "Yes")
-    (click-prompt state :runner "R&D")
-    (is (:run @state) "New run started")
-    (is (= [:rd] (:server (:run @state))) "Running on R&D")
-    (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Doppelgänger"]}})
+      (core/gain state :corp :bad-publicity 1)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Doppelgänger")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (is (zero? (:run-credit (get-runner))) "Runner lost BP credits")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "R&D")
+      (is (:run @state) "New run started")
+      (is (= [:rd] (:server (:run @state))) "Running on R&D")
+      (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+  (testing "Makers eye interaction"
+    (do-game
+      (new-game {:corp {:deck [(qty "Quandary" 5)]}
+                 :runner {:hand ["Doppelgänger" "The Maker's Eye"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Doppelgänger")
+      (play-from-hand state :runner "The Maker's Eye")
+      (run-continue state)
+      (run-successful state)
+      ;(click-prompt state :runner "Card from deck")
+      ;(is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "1st quandary")
+      ;(click-prompt state :runner "No action")
+      ;(click-prompt state :runner "Card from deck")
+      ;(is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "2nd quandary")
+      ;(click-prompt state :runner "No action")
+      ;(click-prompt state :runner "Card from deck")
+      ;(is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "3rd quandary")
+      ;(click-prompt state :runner "No action")
+      (is (not (:run @state)))
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "R&D")
+      (is (:run @state) "New run started")
+      (run-continue state)
+      (run-successful state)
+      ;(is (= [:rd] (:server (:run @state))) "Running on R&D")
+      ;(click-prompt state :runner "Card from deck")
+      ;(is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "1st quandary")
+      ;(click-prompt state :runner "No action")
+      (is (not (:run @state)))
+      )))
 
 (deftest dorm-computer
   ;; make a run and avoid all tags for the remainder of the run
