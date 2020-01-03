@@ -1401,6 +1401,7 @@
    :silent (req true)
    :abilities [{:cost [:agenda 1]
                 :req (req (some #(and (has-subtype? % "Bioroid") (not (rezzed? %))) (all-installed state :corp)))
+                :label "Choose a bioroid to rez, ignoring all costs"
                 :prompt "Choose a bioroid to rez, ignoring all costs"
                 :choices {:card #(and (has-subtype? % "Bioroid")
                                       (not (rezzed? %)))}
