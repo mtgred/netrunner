@@ -299,19 +299,32 @@
 
 (deftest bhagat
   ;; Bhagat - only trigger on first run
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)]}
-               :runner {:deck ["Bhagat"]}})
-    (starting-hand state :corp [])
-    (take-credits state :corp)
-    (run-empty-server state :hq)
-    (play-from-hand state :runner "Bhagat")
-    (run-empty-server state :hq)
-    (is (empty? (:discard (get-corp))) "Bhagat did not trigger on second successful run")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (run-empty-server state :hq)
-    (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
+  (testing "only trigger on first run"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)]}
+                :runner {:deck ["Bhagat"]}})
+      (starting-hand state :corp [])
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (play-from-hand state :runner "Bhagat")
+      (run-empty-server state :hq)
+      (is (empty? (:discard (get-corp))) "Bhagat did not trigger on second successful run")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
+  (testing "only trigger on first run"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)]
+                        :hand ["AR-Enhanced Security"]}
+                :runner {:deck ["Bhagat"]}})
+      (core/gain state :corp :click 10 :credit 10)
+      (play-and-score state "AR-Enhanced Security")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bhagat")
+      (run-empty-server state :hq)
+      (is (= 0 (count-tags state)) "Runner has no tag")
+      (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card"))))
 
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
