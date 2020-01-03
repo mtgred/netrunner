@@ -183,7 +183,6 @@
       :trash-resource-from-hand (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) amount))
       :trash-entire-hand true
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
-      :add-program-to-bottom-of-deck (<= 0 (- (count (all-installed-runner-type state :program)) amount))
       :add-installed-to-bottom-of-deck (<= 0 (- (count (all-installed state side)) amount))
       :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
       (:advancement :agenda :power :virus) (<= 0 (- (get-counters card cost-type) amount))
@@ -245,7 +244,6 @@
       :trash-resource-from-hand (str "trash " (quantify amount "resource") " in your hand")
       (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
       :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
-      :add-program-to-bottom-of-deck (str "add " (quantify amount "installed program") " to the bottom of the stack")
       :add-installed-to-bottom-of-deck (str "add " (quantify amount "installed card") " to the bottom of the stack")
       :any-agenda-counter "any agenda counter"
       :any-virus-counter (str "any " (quantify amount "virus counter"))
