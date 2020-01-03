@@ -2086,11 +2086,12 @@
                                          (swap! state update-in [:run]
                                                 #(assoc % :position (count (get-in corp (conj dest :ices)))
                                                         :server (rest dest)))
+                                         (set-phase state :approach-ice)
                                          (register-floating-effect
                                            state side card
                                            {:type :jack-out-additional-cost
                                             :duration :end-of-run
-                                            :value [:add-program-to-bottom-of-deck 1]})))})]})
+                                            :value [:add-installed-to-bottom-of-deck 1]})))})]})
 
 (define-card "Minelayer"
   {:subroutines [{:msg "install an ICE from HQ"

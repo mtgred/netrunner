@@ -184,6 +184,7 @@
       :trash-entire-hand true
       :shuffle-installed-to-stack (<= 0 (- (count (all-installed state :runner)) amount))
       :add-program-to-bottom-of-deck (<= 0 (- (count (all-installed-runner-type state :program)) amount))
+      :add-installed-to-bottom-of-deck (<= 0 (- (count (all-installed state side)) amount))
       :any-agenda-counter (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) amount))
       (:advancement :agenda :power :virus) (<= 0 (- (get-counters card cost-type) amount))
       :any-virus-counter (or (<= 0 (- (get-counters card :virus) amount))
@@ -245,6 +246,7 @@
       (:net :meat :brain) (str "suffer " (quantify amount (str (name cost-type) " damage") ""))
       :shuffle-installed-to-stack (str "shuffle " (quantify amount "installed card") " into the stack")
       :add-program-to-bottom-of-deck (str "add " (quantify amount "installed program") " to the bottom of the stack")
+      :add-installed-to-bottom-of-deck (str "add " (quantify amount "installed card") " to the bottom of the stack")
       :any-agenda-counter "any agenda counter"
       :any-virus-counter (str "any " (quantify amount "virus counter"))
       (:advancement :agenda :power :virus) (if (< 1 amount)
@@ -558,7 +560,7 @@
          location (if (:front args) "top" "bottom")
          deck (if (= :corp side) "R&D" "the stack")]
      (continue-ability state side
-                       {:prompt (str "Choose " (quantify amount card-type) " to move to the " location " of " deck)
+                       {:prompt (str "Choose " (quantify amount (if card-type card-type "card") ) " to move to the " location " of " deck)
                         :choices {:all true
                                   :max amount
                                   :card select-fn}
@@ -670,9 +672,9 @@
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid amount)
 
      ;; Move installed cards to the deck
-     :add-program-to-bottom-of-deck
-     (pay-move-installed-to-deck state side eid "program" amount
-                                 (every-pred installed? program? (complement facedown?))
+     :add-installed-to-bottom-of-deck
+     (pay-move-installed-to-deck state side eid nil amount
+                                 (every-pred installed?)
                                  {:front false})
 
      ;; Spend a counter on another card
