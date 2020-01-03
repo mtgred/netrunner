@@ -1275,7 +1275,7 @@
                                             first)
                                 broken-subs (->> (:subroutines current-ice)
                                                  (remove #(= (:index %) (:index target))))]
-                            (break-subroutines-msg current-ice broken-subs)))
+                            (break-subroutines-msg current-ice broken-subs card)))
                 :effect (req (let [subroutines (:subroutines current-ice)
                                    target (->> subroutines
                                                (filter #(and (not (:broken %))

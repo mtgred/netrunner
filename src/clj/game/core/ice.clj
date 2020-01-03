@@ -372,9 +372,10 @@
                                                              :early-exit (zero? (count (breakable-subroutines-choice ice)))})))))}))
 
 (defn break-subroutines-msg
-  ([ice broken-subs] (break-subroutines-msg ice broken-subs nil))
-  ([ice broken-subs args]
-   (str "break " (quantify (count broken-subs)
+  ([ice broken-subs breaker] (break-subroutines-msg ice broken-subs breaker nil))
+  ([ice broken-subs breaker args]
+   (str "use " (:title breaker)
+        " to break " (quantify (count broken-subs)
                            (str (when-let [subtype (:subtype args)]
                                   (when (not= "All" subtype)
                                     (str subtype " ")))
@@ -403,7 +404,7 @@
                                                                        :broken-subs broken-subs)
                                                                 card ice))
                            message (when (seq broken-subs)
-                                     (break-subroutines-msg ice broken-subs args))]
+                                     (break-subroutines-msg ice broken-subs breaker args))]
                        (wait-for (pay-sync state side (make-eid state {:source-type :ability}) card total-cost)
                                  (if-let [cost-str async-result]
                                    (do (system-msg state :runner (str cost-str " to " message))
