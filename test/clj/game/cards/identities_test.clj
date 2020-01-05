@@ -2158,9 +2158,30 @@
                              "Gained 1 credit from MM ability"
                              (click-prompt state :corp "Gain 1 [Credits]"))))))
   (testing "Cases where Mirrormorph does not trigger"
-
-    ))
-
+    (testing "Using same Asset ability multiple times"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Capital Investors" 10)]}})
+        (play-from-hand state :corp "Capital Investors" "New remote")
+        (let [ci (get-content state :remote1 0)
+              mm (get-in @state [:corp :identity])]
+          (core/rez state :corp ci)
+          (dotimes [_ 2] (card-ability state :corp (refresh ci) 0))
+          (is (empty? (:prompt (get-corp))) "No MM trigger"))))
+    (testing "Using different operations"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Hedge Fund" 10)]}})
+        (dotimes [_ 3] (play-from-hand state :corp "Hedge Fund"))
+        (is (empty? (:prompt (get-corp))) "No MM trigger")))
+    (testing "Installing different cards"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :hand ["PAD Campaign" "NASX" "Wall To Wall"]}})
+        (play-from-hand state :corp "PAD Campaign" "New remote")
+        (play-from-hand state :corp "NASX" "New remote")
+        (play-from-hand state :corp "Wall To Wall" "New remote")
+        (is (empty? (:prompt (get-corp))) "No MM trigger")))))
 
 (deftest mti-mwekundu-life-improved
   ;; Mti Mwekundu: Life Improved - when server is approached, install ice from HQ at the innermost position
