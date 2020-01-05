@@ -1101,10 +1101,14 @@
    :runner-abilities [(bioroid-break 1 1)]})
 
 (define-card "Engram Flush"
-  (let [sub {:label "Reveal the grip"
+  (let [sub {:async true
+             :label "Reveal the grip"
              :msg (msg "reveal " (quantify (count (:hand runner)) "card")
                        " from grip: " (join ", " (map :title (:hand runner))))
-             :effect (req (reveal state :corp (:hand runner)))}]
+             ;; This has to be manual instead of calling `reveal` because `reveal` isn't
+             ;; async and I don't feel like trying to make it async just for this interaction.
+             ;; TODO: Make `reveal` async
+             :effect (req (apply trigger-event-sync state side eid :corp-reveal (:hand runner)))}]
     {:on-encounter {:prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
                     :effect (req (let [cardtype target]
@@ -1114,6 +1118,7 @@
                                      state side card
                                      [{:event :corp-reveal
                                        :duration :end-of-encounter
+                                       :async true
                                        :req (req (and
                                                    ; all revealed cards are in grip
                                                    (every? in-hand? targets)
@@ -1124,8 +1129,9 @@
                                        :prompt "Select revealed card to trash"
                                        :choices (req (concat (filter #(is-type? % cardtype) targets) ["None"]))
                                        :msg (msg "trash " (:title target) " from grip")
-                                       :effect (req (when (not= "None" target)
-                                                      (trash state side target)))}])))}
+                                       :effect (req (if (= "None" target)
+                                                      (effect-completed state side eid)
+                                                      (trash state side eid target nil)))}])))}
      :subroutines [sub
                    sub]}))
 
