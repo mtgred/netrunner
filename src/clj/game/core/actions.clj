@@ -669,7 +669,7 @@
                       :card-abilities (card-as-handler c)
                       :after-active-player
                       {:effect (req (let [c (get-card state c)
-                                          points (or (get-agenda-points-2 state :corp c) points)]
+                                          points (or (get-agenda-points state :corp c) points)]
                                       (set-prop state :corp (get-card state moved-card) :advance-counter 0)
                                       (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
                                       (swap! state dissoc-in [:corp :disable-id])

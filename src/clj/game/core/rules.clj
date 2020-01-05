@@ -565,18 +565,16 @@
   "Apply agenda-point modifications to calculate the number of points this card is worth
   to the given player."
   [state side card]
-  (let [base-points (:agendapoints card)
-        runner-fn (:agendapoints-runner (card-def card))
-        corp-fn (:agendapoints-corp (card-def card))]
-    (cond
-      (and (= side :runner)
-           (some? runner-fn))
-      (runner-fn state side (make-eid state) card nil)
-      (and (= side :corp)
-           (some? corp-fn))
-      (corp-fn state side (make-eid state) card nil)
-      :else
-      base-points)))
+  (let [base-points (:agendapoints card 0)
+        as-agenda-points (:as-agenda-points card 0)
+        points-fn (if (= side :corp)
+                    (:agendapoints-corp (card-def card))
+                    (:agendapoints-runner (card-def card)))]
+    (if (fn? points-fn)
+      (points-fn state side nil card nil)
+      (+ base-points
+         as-agenda-points
+         (sum-effects state side card :agenda-value nil)))))
 
 (defn advancement-cost-bonus
   "Applies an advancement requirement increase of n the next agenda whose advancement requirement
@@ -651,24 +649,9 @@
                (not (some true? (get-effects state side nil :cannot-win-on-points))))
       (win state side "Agenda"))))
 
-(defn get-agenda-points-2
-  "Apply agenda-point modifications to calculate the number of points this card is worth
-  to the given player."
-  [state side card]
-  (let [base-points (:agendapoints card 0)
-        as-agenda-points (:as-agenda-points card 0)
-        points-fn (if (= side :corp)
-                    (:agendapoints-corp (card-def card))
-                    (:agendapoints-runner (card-def card)))]
-    (if (fn? points-fn)
-      (points-fn state side nil card nil)
-      (+ base-points
-         as-agenda-points
-         (sum-effects state side card :agenda-value nil)))))
-
 (defn update-agenda-points-card
   [state side card]
-  (update! state side (assoc card :current-points (get-agenda-points-2 state side card))))
+  (update! state side (assoc card :current-points (get-agenda-points state side card))))
 
 (defn sum-agenda-points
   [state side]
