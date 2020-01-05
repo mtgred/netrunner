@@ -31,11 +31,13 @@
    type
    uniqueness])
 
-(def cid (atom 0))
+(let [cid (atom 0)]
+  (defn make-cid []
+    (swap! cid inc)))
 
-(defn make-cid
-  []
-  (swap! cid inc))
+(let [cid (atom 0)]
+  (defn make-installed-cid []
+    (swap! cid inc)))
 
 (defn private-card
   "Returns only the public information of a given card when it's in a private state,

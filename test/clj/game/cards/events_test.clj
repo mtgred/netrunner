@@ -1406,7 +1406,7 @@
      (click-prompt state :runner "Archives")
      (run-continue state)
      (run-successful state)
-     (is (empty? (:prompt (get-corp))) "Corp not forced to discard for Alice")
+     (is (= "Waiting for Runner to resolve run-ends triggers" (:msg (prompt-map :corp))) "Corp not forced to discard for Alice")
      (click-prompt state :runner "Yes")
      (core/click-draw state :runner 1)
      (take-credits state :runner)

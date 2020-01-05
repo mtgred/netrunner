@@ -563,8 +563,8 @@
      :abilities [ability]}))
 
 (define-card "Dedicated Response Team"
-  {:events [{:event :successful-run-ends
-             :req (req tagged)
+  {:events [{:event :run-ends
+             :req (req (and tagged (:successful target)))
              :msg "do 2 meat damage"
              :async true
              :effect (effect (damage eid :meat 2 {:card card}))}]})

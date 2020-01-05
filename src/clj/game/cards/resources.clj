@@ -560,33 +560,36 @@
              :effect (effect (reveal target))}]})
 
 (define-card "Councilman"
-  {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
-   :events [{:event :rez
-             :req (req (and (or (asset? target) (upgrade? target))
-                            (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit (rez-cost state :corp target)])))
-             :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
-                                                    " that was just rezzed") "info")
-                          (toast state :corp (str "Runner has the opportunity to derez with Councilman.") "error"))}]
-   :abilities [{:prompt "Select an asset or upgrade that was just rezzed"
-                :choices {:card #(and (rezzed? %)
-                                      (or (asset? %)
-                                          (upgrade? %)))}
-                :effect (effect
-                          (continue-ability
-                            :runner
-                            (let [c target]
-                              {:cost [:credit (rez-cost state :corp c)]
-                               :msg (msg "derez " (:title c))
-                               :effect (req (derez state :corp c)
-                                            (register-turn-flag!
-                                              state side card :can-rez
-                                              (fn [state side card]
-                                                (if (same-card? card c)
-                                                  ((constantly false)
-                                                   (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
-                                                  true)))
-                                            (trash state side card {:unpreventable true}))})
-                            card nil))}]})
+  {:events [{:event :rez
+             :req (req (and (or (asset? target)
+                                (upgrade? target))
+                            (can-pay? state :runner (assoc eid :source card :source-type :ability)
+                                      card nil
+                                      [:credit (rez-cost state :corp target)])))
+             :effect (effect
+                       (continue-ability
+                         :runner
+                         (let [c target]
+                           {:optional
+                            {:prompt (str "Trash Councilman and pay " (rez-cost state :corp c)
+                                          " [Credits] to trash " (:title c) "?")
+                             :yes-ability
+                             {:async true
+                              :cost [:credit (rez-cost state :corp c)]
+                              :msg (msg "derez " (:title c)
+                                        " and prevent it from being rezzed this turn")
+                              :effect (req (wait-for (trash state side card nil)
+                                                     (when-not (get-card state card)
+                                                       (derez state :runner c)
+                                                       (register-turn-flag!
+                                                         state side card :can-rez
+                                                         (fn [state side card]
+                                                           (if (same-card? :installed-cid card c)
+                                                             ((constantly false)
+                                                              (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
+                                                             true))))
+                                                     (effect-completed state side eid)))}}})
+                         card nil))}]})
 
 (define-card "Counter Surveillance"
   {:implementation "Does not prevent access of cards installed in the root of a server"
@@ -1335,7 +1338,7 @@
              :req (req (and (first-event? state :runner :run-ends is-remote?)
                             (not (get-in @state [:run :did-steal]))
                             (get-in @state [:run :did-access])
-                            (is-remote? (:server run))))
+                            (is-remote? (:server target))))
              :effect (effect (add-counter card :power 1))
              :msg "add a power counter to itself"}
             {:event :counter-added
@@ -1998,8 +2001,10 @@
                                 (draw eid 1 nil))}]})
 
 (define-card "Psych Mike"
-  {:events [{:event :successful-run-ends
-             :req (req (first-event? state side :successful-run-ends #(= :rd (first (:server (first %))))))
+  {:events [{:event :run-ends
+             :req (req (and (:successful target)
+                            (first-event? state side :run-ends #(and (= :rd (first (:server (first %))))
+                                                                     (:successful (first %))))))
              :msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
              :effect (effect (gain-credits :runner (total-cards-accessed target :deck)))}]})
 
@@ -2658,7 +2663,7 @@
                :silent (req true)}
               {:event :run-ends
                :effect (req (when (and (not (:agenda-stolen card))
-                                       (#{:hq :rd} target))
+                                       (#{:hq :rd} (first (:server target))))
                               (add-counter state side card :power 1)
                               (system-msg state :runner (str "places a power counter on " (:title card))))
                          (update! state side (dissoc (get-card state card) :agenda-stolen)))
@@ -2794,28 +2799,29 @@
              :effect (effect (gain-credits 1))}]})
 
 (define-card "Whistleblower"
-  (letfn [(steal-events [named-agenda]
-            [{:event :run-ends
-              :effect (effect (unregister-events card {:events [{:event :access}
-                                                                {:event :run-ends}]}))}
-             {:event :access
-              :req (req (= (:title target) named-agenda))
-              :once :per-run
-              :async true
-              :effect (effect (steal eid target))}])]
-    {:events [{:event :successful-run
-               :optional {:autoresolve (get-autoresolve :auto-name-agenda)
-                          :prompt "Trash Whistleblower to name an agenda?"
-                          :yes-ability {:prompt "Name an agenda"
-                                        :choices {:card-title (req (and (corp? target)
-                                                                        (agenda? target)))}
-                                        :effect (effect (system-msg (str "trashes " (:title card)
-                                                                         " to name " (:title target)))
-                                                  (register-events (dissoc card :zone)
-                                                                   (steal-events target))
-                                                  (trash eid card {:unpreventable true
-                                                                   :cause :ability-cost}))}}}]
-     :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]}))
+  {:events [{:event :successful-run
+             :optional
+             {:autoresolve (get-autoresolve :auto-name-agenda)
+              :prompt "Trash Whistleblower to name an agenda?"
+              :yes-ability
+              {:prompt "Name an agenda"
+               :choices {:card-title (req (and (corp? target)
+                                               (agenda? target)))}
+               :msg (msg "to name " (:title target))
+               :effect (effect (system-msg (str "trashes " (:title card)
+                                                " to use " (:title card)
+                                                " to name " (:title target)))
+                               (register-events
+                                 card
+                                 (let [named-agenda target]
+                                   [{:event :access
+                                     :duration :end-of-run
+                                     :unregister-once-resolved true
+                                     :async true
+                                     :req (req (= (:title target) named-agenda))
+                                     :effect (effect (steal eid target))}]))
+                               (trash eid card {:unpreventable true}))}}}]
+   :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]})
 
 (define-card "Wireless Net Pavilion"
   {:effect (effect (trash-resource-bonus -2))

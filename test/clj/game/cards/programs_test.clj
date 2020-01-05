@@ -1808,7 +1808,25 @@
         (run-on state "HQ")
         (core/rez state :corp iw)
         (run-continue state)
-        (is (nil? (prompt-map :runner)) "Femme ability doesn't fire after uninstall")))))
+        (is (nil? (prompt-map :runner)) "Femme ability doesn't fire after uninstall"))))
+  (testing "Bypass doesn't persist if ice is uninstalled and reinstalled"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Femme Fatale"]
+                          :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Femme Fatale")
+      (click-card state :runner (get-ice state :hq 0))
+      (core/move state :corp (get-ice state :hq 0) :hand)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (nil? (prompt-map :runner)) "Femme ability doesn't fire after uninstall"))))
 
 (deftest gauss
   ;; Gauss

@@ -1261,21 +1261,19 @@
        (do (system-msg state :runner (str "attempts to jack out but can't pay (" (build-cost-string cost) ")"))
            (effect-completed state side (make-result eid false)))))))
 
-(defn- trigger-run-end-events
+(defn- run-end-fx
   [state side eid run]
   (cond
     ;; Successful
     (:successful run)
     (do
       (play-sfx state side "run-successful")
-      (wait-for (trigger-event-simult state side :successful-run-ends nil run)
-                (effect-completed state side (make-result eid {:successful true}))))
+      (effect-completed state side (make-result eid {:successful true})))
     ;; Unsuccessful
     (:unsuccessful run)
     (do
       (play-sfx state side "run-unsuccessful")
-      (wait-for (trigger-event-sync state side :unsuccessful-run-ends run)
-                (effect-completed state side (make-result eid {:unsuccessful true}))))
+      (effect-completed state side (make-result eid {:unsuccessful true})))
     ;; Neither
     :else
     (effect-completed state side (make-result eid nil))))
@@ -1287,19 +1285,15 @@
     (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
     (swap! state assoc-in [:runner :run-credit] 0)
     (swap! state assoc :run nil)
-    (update-all-icebreakers state side)
-    (update-all-ice state side)
-    (doseq [ice (get-in @state [:corp :servers (first (:server run)) :ices])]
-      (reset-all-subs! state ice))
-    (clear-run-register! state)
-    (trigger-run-end-events state side (:eid run) run)))
-
-(defn- end-run-effect-impl
-  [state side eid server run-effects]
-  (if-let [run-effect (first run-effects)]
-    (wait-for (resolve-ability state side (:end-run run-effect) (:card run-effect) [server])
-              (end-run-effect-impl state side eid server (next run-effects)))
-    (effect-completed state side eid)))
+    (wait-for (trigger-event-simult state side :run-ends nil run)
+              (unregister-floating-effects state side :end-of-run)
+              (unregister-floating-events state side :end-of-run)
+              (update-all-icebreakers state side)
+              (update-all-ice state side)
+              (doseq [ice (get-in @state [:corp :servers (first (:server run)) :ices])]
+                (reset-all-subs! state ice))
+              (clear-run-register! state)
+              (run-end-fx state side (:eid run) run))))
 
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
@@ -1309,15 +1303,9 @@
     (swap! state assoc-in [:run :ending] true)
     (swap! state assoc-in [:run :ended] true)
     (wait-for (trigger-event-simult state side event nil (get-current-ice state))
-              (wait-for (trigger-event-sync state side :run-ends server)
-                        (unregister-floating-effects state side :end-of-encounter)
-                        (unregister-floating-events state side :end-of-encounter)
-                        (unregister-floating-effects state side :end-of-run)
-                        (unregister-floating-events state side :end-of-run)
-                        (let [run-effects (get-in @state [:run :run-effects])
-                              end-of-run-effects (filter :end-run run-effects)]
-                          (wait-for (end-run-effect-impl state side server end-of-run-effects)
-                                    (run-cleanup-2 state side)))))))
+              (unregister-floating-effects state side :end-of-encounter)
+              (unregister-floating-events state side :end-of-encounter)
+              (run-cleanup-2 state side))))
 
 (defn handle-end-run
   "Initiate run resolution."

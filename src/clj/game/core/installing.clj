@@ -219,7 +219,10 @@
     (let [moved-card (if host-card
                        (host state side host-card (assoc c :installed true))
                        (move state side c slot {:front front
-                                                :index index}))]
+                                                :index index}))
+          moved-card (assoc moved-card :installed-cid (make-installed-cid))]
+      (update! state side moved-card)
+
       (when (agenda? c)
         (update-advancement-cost state side moved-card))
 
@@ -430,7 +433,10 @@
                                    (host state side host-card card)
                                    (move state side card
                                          [:rig (if facedown :facedown (to-keyword (:type card)))]))
-                               c (assoc c :installed :this-turn :new true)
+                               c (assoc c
+                                        :installed :this-turn
+                                        :new true
+                                        :installed-cid (make-installed-cid))
                                installed-card (if facedown
                                                 (do (update! state side c)
                                                     (find-latest state c))
