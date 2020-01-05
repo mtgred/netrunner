@@ -58,21 +58,6 @@
                (assoc ability :event :corp-turn-begins)]
       :abilities [ability]})))
 
-(defn as-trashed-agenda
-  "Adds the given card to the given side's :scored area as an agenda worth n points after resolving the trash prompt."
-  ([state side eid card n] (as-trashed-agenda state side eid card n nil))
-  ([state side eid card n options]
-   (or
-     ; if the runner did not trash the card on access, then this will work
-     (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored options)
-     ; allow force option in case of Blacklist/News Team
-     (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored options))
-   (no-trash-or-steal state)
-   (system-msg state :runner (str "adds " (:title card) " to their score area as an agenda worth " (quantify n "agenda point")))
-   (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
-             (gain-agenda-point state side n)
-             (effect-completed state side eid))))
-
 ;; Card definitions
 
 (define-card "Adonis Campaign"
@@ -1017,10 +1002,8 @@
                                                       (in-hand? %))}
                                 :msg (msg "add " (:title target) " to score area")
                                 :async true
-                                :effect (req (wait-for (as-agenda state :corp target (:agendapoints target)
-                                                                  {:register-events true})
-                                                       (clear-wait-prompt state :runner)
-                                                       (effect-completed state side eid)))}
+                                :effect (req (clear-wait-prompt state :runner)
+                                             (as-agenda state :corp eid target (:agendapoints target) {:register-events true}))}
                                card nil))}]
    :events [{:event :corp-turn-begins
              :effect (effect (add-counter card :power 1))}]})
@@ -1160,7 +1143,8 @@
                {:label "Gain 2 [Credits]"
                 :msg "gain 2 [Credits]"
                 :cost [:any-agenda-counter]
-                :effect (effect (gain-credits 2))}]})
+                :effect (effect (gain-credits 2)
+                                (update-all-agenda-points))}]})
 
 (define-card "Marked Accounts"
   (let [ability {:msg "take 1 [Credits]"
@@ -1362,15 +1346,19 @@
 
 (define-card "News Team"
   {:flags {:rd-reveal (req true)}
-   :access {:msg (msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point")
-            :async true
+   :access {:async true
+            :msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point"
             :effect (effect (continue-ability
                               {:player :runner
                                :async true
                                :prompt "Take 2 tags or add News Team to your score area as an agenda worth -1 agenda point?"
                                :choices ["Take 2 tags" "Add News Team to score area"]
                                :effect (req (if (= target "Add News Team to score area")
-                                              (as-trashed-agenda state :runner eid card -1 {:force true})
+                                              (do (no-trash-or-steal state)
+                                                  (system-msg state :runner (str "adds " (:title card)
+                                                                                 " to their score area as an agenda worth "
+                                                                                 (quantify -1 "agenda point")))
+                                                  (as-agenda state :runner eid card -1 {:force true}))
                                               (do (system-msg state :runner (str "takes 2 tags from News Team"))
                                                   (gain-tags state :runner eid 2))))}
                               card targets))}})
@@ -1889,7 +1877,11 @@
                                            :choices [(str "Take " dmg " net damage") "Add Shi.Kyū to score area"]
                                            :async true
                                            :effect (req (if (= target "Add Shi.Kyū to score area")
-                                                          (as-trashed-agenda state :runner eid card -1 {:force true})
+                                                          (do (no-trash-or-steal state)
+                                                              (system-msg state :runner (str "adds " (:title card)
+                                                                                             " to their score area as an agenda worth "
+                                                                                             (quantify -1 "agenda point")))
+                                                              (as-agenda state :runner eid card -1 {:force true}))
                                                           (do (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))
                                                               (damage state :corp eid :net dmg {:card card}))))}
                                           card targets)))}
@@ -2083,26 +2075,21 @@
              :effect (effect (gain-credits :corp 1))}]})
 
 (define-card "The Board"
-  (let [the-board {:req (req (and (= :runner (:as-agenda-side target))
-                                  (not (same-card? target card))))
-                   :effect (effect (lose :runner :agenda-point 1))}]
-    {:effect (effect (lose :runner :agenda-point (count (:scored runner))))
-     :leave-play (effect (gain :runner :agenda-point (count (:scored runner))))
-     :trash-effect {:when-inactive true
-                    :req (req (and (:access @state)
-                                   (= :runner side)))
-                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-                    :async true
-                    :effect (req (as-agenda state :runner eid card 2))}
-     :events [(-> the-board
-                  (dissoc :req)
-                  (assoc :event :agenda-stolen))
-              (assoc the-board :event :as-agenda)
-              {:event :pre-card-moved
-               :req (req (let [c (first targets)
-                               c-cid (:cid c)]
-                           (some #(when (= c-cid (:cid %)) %) (:scored runner))))
-               :effect (req (gain state :runner :agenda-point 1))}]}))
+  {:effect (effect (update-all-agenda-points))
+   :leave-play (effect (update-all-agenda-points))
+   :trash-effect {:when-inactive true
+                  :req (req (and (:access @state)
+                                 (= :runner side)))
+                  :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
+                  :async true
+                  :effect (req (as-agenda state :runner eid card 2))}
+   :constant-effects [{:type :agenda-value
+                       :req (req (= :runner (:scored-side target)))
+                       :value -1}]
+   :events [{:event :card-moved
+             :req (req (or (= :scored (first (:zone target)))
+                           (= :scored (first (:zone (second targets))))))
+             :effect (effect (update-all-agenda-points))}]})
 
 (define-card "The News Now Hour"
   {:events [{:event :runner-turn-begins

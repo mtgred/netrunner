@@ -638,8 +638,7 @@
                                :effect (req (let [scored target]
                                               (swap-agendas state side scored stolen)
                                               (system-msg state side (str "uses Exchange of Information to swap "
-                                                                          (:title scored) " for " (:title stolen)))
-                                              (effect-completed state side eid)))}
+                                                                          (:title scored) " for " (:title stolen)))))}
                               card nil)))}
                card nil))})
 

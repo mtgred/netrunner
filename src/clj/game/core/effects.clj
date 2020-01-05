@@ -50,7 +50,8 @@
         is-active-player #(= (:active-player @state) (get-side %))]
     (->> (:effects @state)
          (filter #(= effect-type (:type %)))
-         (sort-by (complement is-active-player)))))
+         (sort-by (complement is-active-player))
+         (into []))))
 
 (defn get-effects
   "Filters and then 'executes' the effects of a given type."
@@ -61,9 +62,10 @@
           (filter #(if-not (:req %)
                      true
                      ((:req %) state side eid (get-card state (:card %)) (cons card targets))))
-          (mapv #(if-not (fn? (:value %))
-                   (:value %)
-                   ((:value %) state side eid (get-card state (:card %)) (cons card targets))))))))
+          (map #(if-not (fn? (:value %))
+                  (:value %)
+                  ((:value %) state side eid (get-card state (:card %)) (cons card targets))))
+          (into [])))))
 
 (defn sum-effects
   "Sums the results from get-effects."

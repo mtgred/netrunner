@@ -2495,18 +2495,18 @@
 
 (define-card "The Black File"
   {:msg "prevent the Corp from winning the game unless they are flatlined"
-   :effect (req (swap! state assoc-in [:corp :cannot-win-on-points] true))
+   :constant-effects [{:type :cannot-win-on-points
+                       :req (req (and (= :corp side)
+                                      (< (get-counters card :power) 3)))
+                       :value true}]
    :events [{:event :runner-turn-begins
-             :effect (req (if (>= (get-counters card :power) 2)
+             :effect (req (if (<= 2 (get-counters card :power))
                             (do (move state side card :rfg)
-                                (swap! state update :corp dissoc :cannot-win-on-points)
                                 (system-msg state side "removes The Black File from the game")
-                                (gain-agenda-point state :corp 0))
+                                (check-winner state side))
                             (add-counter state side card :power 1)))}]
-   :trash-effect {:effect (req (swap! state update :corp dissoc :cannot-win-on-points)
-                               (gain-agenda-point state :corp 0))}
-   :leave-play (req (swap! state update :corp dissoc :cannot-win-on-points)
-                    (gain-agenda-point state :corp 0))})
+   :trash-effect (effect (check-winner))
+   :leave-play (effect (check-winner))})
 
 (define-card "The Class Act"
   (let [draw-ability {:req (req (= :this-turn (installed? card)))

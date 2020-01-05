@@ -4095,15 +4095,14 @@
   ;; The Black File - Prevent Corp from winning by agenda points
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Sure Gamble" 3)]}
+      (new-game {:corp {:deck [(qty "Sure Gamble" 5)]
+                        :hand ["Vanity Project" "Degree Mill"]}
                  :runner {:deck ["The Black File"]}})
-      (starting-hand state :corp ["Vanity Project"])
-      (core/gain state :corp :agenda-point 3)
+      (play-and-score state "Degree Mill")
       (take-credits state :corp)
       (play-from-hand state :runner "The Black File")
       (take-credits state :runner)
-      (play-from-hand state :corp "Vanity Project" "New remote")
-      (score-agenda state :corp (get-content state :remote1 0))
+      (play-and-score state "Vanity Project")
       (is (= 7 (:agenda-point (get-corp))))
       (is (not (:winner @state)) "No registered Corp win")
       (take-credits state :corp)
@@ -4119,15 +4118,14 @@
         (is (= "Agenda" (:reason @state)) "Win condition reports agendas"))))
   (testing "Corp can still win by flatlining Runner"
     (do-game
-      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Scorched Earth" 3)]}
+      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Scorched Earth" 3)]
+                        :hand ["Vanity Project" "Scorched Earth" "Degree Mill"]}
                  :runner {:deck ["The Black File"]}})
-      (starting-hand state :corp ["Vanity Project" "Scorched Earth"])
-      (core/gain state :corp :agenda-point 3)
+      (play-and-score state "Degree Mill")
       (take-credits state :corp)
       (play-from-hand state :runner "The Black File")
       (take-credits state :runner)
-      (play-from-hand state :corp "Vanity Project" "New remote")
-      (score-agenda state :corp (get-content state :remote1 0))
+      (play-and-score state "Vanity Project")
       (is (= 7 (:agenda-point (get-corp))))
       (is (not (:winner @state)) "No registered Corp win")
       (take-credits state :corp)
