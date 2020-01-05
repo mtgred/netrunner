@@ -344,7 +344,7 @@
              :req (req (and (= target :hq)
                             (first-successful-run-on-server? state :hq)))
              :msg "force the Corp to trash the top card of R&D"
-             :effect (req (mill state :runner eid :corp 1))}]})
+             :effect (req (mill state :corp eid :corp 1))}]})
 
 (define-card "Bio-Modeled Network"
   {:interactions {:prevent [{:type #{:net}
