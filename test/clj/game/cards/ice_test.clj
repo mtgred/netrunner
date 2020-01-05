@@ -2147,7 +2147,30 @@
         (click-prompt state :corp "Archives")
         (run-jack-out state)
         (click-card state :runner "Corroder")
-        (is (= "Corroder" (-> (get-runner) :deck last :title)) "Corroder is on the bottom of the deck")))))
+        (is (= "Corroder" (-> (get-runner) :deck last :title)) "Corroder is on the bottom of the deck"))))
+  (testing "Server redirection with correct state and non-program card to pay. Issue 4847"
+    (do-game
+      (new-game {:corp {:hand ["Mind Game" "Ice Wall"]}
+                 :runner {:hand ["Daily Casts"]}})
+      (play-from-hand state :corp "Mind Game" "HQ")
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Daily Casts")
+      (let [mindgame (get-ice state :hq 0)
+            icewall (get-ice state :archives 0)]
+        (run-on state :hq)
+        (core/rez state :corp mindgame)
+        (run-continue state)
+        (card-subroutine state :corp mindgame 0)
+        (click-prompt state :corp "1 [Credits]")
+        (click-prompt state :runner "0 [Credits]")
+        (is (= (set ["R&D" "Archives"]) (set (:choices (prompt-map :corp)))) "Corp cannot choose server Runner is on")
+        (click-prompt state :corp "Archives")
+        (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")
+        (is (= :approach-ice (get-in @state [:run :phase])) "Runner is in correct state")
+        (run-jack-out state)
+        (click-card state :runner "Daily Casts")
+        (is (= "Daily Casts" (-> (get-runner) :deck last :title)) "Daily Casts is on the bottom of the deck")))))
 
 (deftest minelayer
   ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost
