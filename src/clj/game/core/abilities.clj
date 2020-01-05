@@ -253,7 +253,7 @@
 
 (defn register-once
   "Register ability as having happened if :once specified"
-  [state {:keys [once once-key] :as ability} {:keys [cid] :as card}]
+  [state side {:keys [once once-key] :as ability} {:keys [cid] :as card}]
   (when once (swap! state assoc-in [once (or once-key cid)] true)))
 
 (defn- do-effect
@@ -289,7 +289,7 @@
               ;; Print the message
               (print-msg state side ability card targets cost-str)
               ;; Trigger the effect
-              (register-once state ability card)
+              (register-once state side ability card)
               (do-effect state side ability (ugly-counter-hack card cost) targets))))
 
 (defn active-prompt?
@@ -357,7 +357,7 @@
   ([state side card psi] (psi-game state side (make-eid state {:source-type :psi}) card psi))
   ([state side eid card psi]
    (swap! state assoc :psi {})
-   (register-once state psi card)
+   (register-once state side psi card)
    (let [eid (assoc eid :source-type :psi)]
      (doseq [s [:corp :runner]]
        (let [all-amounts (range (min 3 (inc (total-available-credits state s eid card))))

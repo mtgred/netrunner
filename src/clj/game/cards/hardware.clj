@@ -1304,7 +1304,7 @@
                                                     :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
                                                               (:title targetcard) " by 2 [Credits]")
                                                     :effect (req (trash state side target {:unpreventable true})
-                                                                 (register-once state patchwork-ability patchwork)
+                                                                 (register-once state side patchwork-ability patchwork)
                                                                  (effect-completed state side (make-result eid 2))) ; provide 2 credits
                                                     :cancel-effect (effect (effect-completed (make-result eid 0)))} ; provide 0 credits
                                                    nil nil)))
