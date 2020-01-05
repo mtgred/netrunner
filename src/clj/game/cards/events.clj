@@ -2667,6 +2667,7 @@
    :async true
    :effect (effect (make-run eid :rd nil card))
    :events [{:event :successful-run
+             :unregister-once-resolved true
              :silent (req true)
              :req (req (= target :rd))
              :effect (effect (access-bonus :rd 2))}]})
