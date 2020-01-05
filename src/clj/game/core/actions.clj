@@ -278,6 +278,11 @@
               (finish-prompt state side prompt card))
           (prompt-error "in a text prompt" prompt args)))
 
+      ;; Choice is a card
+      (:cid choice)
+      (do (effect choice)
+          (finish-prompt state side prompt card))
+
       :else
       (prompt-error "in an unknown prompt type" prompt args))))
 
