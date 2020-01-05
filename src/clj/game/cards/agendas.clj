@@ -442,9 +442,11 @@
              :interactive (req true)
              :psi {:req (req (= target :hq))
                    :once :per-turn
-                   :not-equal {:effect (effect (register-run-flag!
-                                                 card :corp-choose-access
-                                                 (fn [_ _ _] false))
+                   :not-equal {:effect (effect (register-floating-effect
+                                                 card
+                                                 {:type :corp-choose-hq-access
+                                                  :duration :end-of-access
+                                                  :value true})
                                                (effect-completed eid))}}}]})
 
 (define-card "Degree Mill"
