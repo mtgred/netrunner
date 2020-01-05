@@ -986,13 +986,13 @@
 
 (define-card "Housekeeping"
   {:events [{:event :runner-install
+             :req (req (first-event? state side :runner-install))
              :player :runner
-             :once :per-turn
              :prompt "Select a card from your Grip to trash for Housekeeping"
              :choices {:card #(and (runner? %)
                                    (in-hand? %))}
-             :msg (msg "force the Runner to trash " (:title target) " from their Grip")
-             :effect (effect (trash target {:unpreventable true}))}]})
+             :effect (effect (system-msg :corp (str "uses Housekeeping to force the Runner to trash " (:title target) " from their grip"))
+                             (trash :runner target {:unpreventable true}))}]})
 
 (define-card "Hunter Seeker"
   {:req (req (last-turn? state :runner :stole-agenda))
