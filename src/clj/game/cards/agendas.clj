@@ -130,7 +130,7 @@
    :choices ["OK"]
    :effect (effect (continue-ability
                      {:prompt "Install a card?"
-                      :choices (filter corp-installable-type? (take 5 (:deck corp)))
+                      :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))))
                       :async true
                       :effect (effect (corp-install eid target nil
                                                     {:ignore-all-cost true

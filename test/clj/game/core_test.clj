@@ -7,6 +7,7 @@
             [game.core :as core]
             [game.core.card :refer [make-cid get-card rezzed? active? get-counters]]
             [game.utils :as utils :refer [server-card]]
+            [game.utils-test :refer [click-prompt]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
 
@@ -145,11 +146,11 @@
                                    :cards (:deck runner)}}]})]
     (when-not dont-start-game
       (if (#{:both :corp} mulligan)
-        (core/resolve-prompt state :corp {:choice "Mulligan"})
-        (core/resolve-prompt state :corp {:choice "Keep"}))
+        (click-prompt state :corp "Mulligan")
+        (click-prompt state :corp "Keep"))
       (if (#{:both :runner} mulligan)
-        (core/resolve-prompt state :runner {:choice "Mulligan"})
-        (core/resolve-prompt state :runner {:choice "Keep"}))
+        (click-prompt state :runner "Mulligan")
+        (click-prompt state :runner "Keep"))
       (when-not dont-start-turn (core/start-turn state :corp nil)))
     ;; Gotta move cards where they need to go
     (doseq [side [:corp :runner]]

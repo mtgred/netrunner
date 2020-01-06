@@ -1506,7 +1506,7 @@
         ;; HQ
         (dotimes [_ 2]
           (click-prompt state :runner "Card from hand")
-          (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
+          (click-prompt state :runner (-> (prompt-map :runner) :choices first :value)))
         ;; R&D
         (dotimes [_ 2]
           (click-prompt state :runner "Card from deck")
@@ -1569,10 +1569,10 @@
       (play-run-event state "Divide and Conquer" :archives)
       (dotimes [_ 3]
         (click-prompt state :runner "Card from hand")
-        (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
+        (click-prompt state :runner (-> (prompt-map :runner) :choices first :value)))
       (dotimes [_ 3]
         (click-prompt state :runner "Card from deck")
-        (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
+        (click-prompt state :runner (-> (prompt-map :runner) :choices first :value)))
       (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
       (is (= 7 (-> (get-runner) :register :last-run core/total-cards-accessed)))))
   (testing "interaction with no cards in archives. Issue #4473"
@@ -5126,7 +5126,7 @@
     (testing "Trade-In lets runner search for Hardware and add it to Grip"
       (is (= 1 (count (:hand (get-runner)))) "Only 1 Trade-In in Grip")
       ;; Add sports hopper to hand
-      (click-prompt state :runner (-> (get-runner) :prompt first :choices first))
+      (click-prompt state :runner (-> (get-runner) :prompt first :choices first :value))
       (is (= 2 (count (:hand (get-runner)))) "Sports Hopper added to Grip"))
     (testing "Gain credits when install cost is greater than 1"
       (let [runner-credits (:credit (get-runner))]

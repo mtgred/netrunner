@@ -1271,11 +1271,11 @@
       (is (= 4 (:credit (get-corp))) "Starts with 4 credits")
       (dotimes [n 5]
         (core/click-draw state :corp 1)
-        (click-prompt state :corp (-> (get-corp) :prompt first :choices first))
+        (click-prompt state :corp (-> (get-corp) :prompt first :choices first :value))
         (is (= 4 (:credit (get-corp))) "Not charged to install ice")
         (is (= (inc n) (count (get-in @state [:corp :servers :remote1 :ices]))) (str n " ICE protecting Remote1")))
       (core/click-draw state :corp 1)
-      (click-prompt state :corp (-> (get-corp) :prompt first :choices first))
+      (click-prompt state :corp (-> (get-corp) :prompt first :choices first :value))
       (is (= 3 (:credit (get-corp))) "Charged to install ice")
       (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
   (testing "Drawing non-ice on runner's turn"

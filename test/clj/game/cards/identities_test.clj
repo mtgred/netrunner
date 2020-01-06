@@ -130,7 +130,7 @@
       (click-prompt state :runner "Steal")
       (click-prompt state :corp "Draw 2 cards")
       (is (prompt-is-type? state :runner :waiting) "During Jinja, Runner should wait")
-      (click-prompt state :corp (-> (get-corp) :prompt first :choices first))
+      (click-prompt state :corp (-> (get-corp) :prompt first :choices first :value))
       (is (= 2 (->> (get-runner) :prompt first :choices count)) "419 can trigger ability with 2 options")
       (is (prompt-is-type? state :corp :waiting) "Corp is waiting for runner ability")
       (click-prompt state :runner "Yes")
@@ -1741,7 +1741,9 @@
                           :deck ["Cache" "Gordian Blade"]
                           :hand ["Sure Gamble"]}})
       (card-ability state :runner (:identity (get-runner)) 0)
-      (is (= [(find-card "Gordian Blade" (:deck (get-runner))) "Cancel"] (:choices (prompt-map :runner))) "Cache shouldn't be in the prompt")
+      (is (= [(find-card "Gordian Blade" (:deck (get-runner))) "Cancel"]
+             (map :value (:choices (prompt-map :runner))))
+          "Cache shouldn't be in the prompt")
       (click-prompt state :runner "Gordian Blade")
       (is (some? (get-program state 0)) "Gordian Blade should be installed")
       (is (= 2 (:credit (get-runner))) "Runner only spends 3 for Gordian Blade")

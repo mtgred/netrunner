@@ -355,13 +355,10 @@
       (doseq [_ (range 7)
               ;; Get the first card listed in the prompt choice
               ;; TODO make this function
-              :let [card (-> @state
-                             (get-in [:corp :prompt])
-                             first
-                             (get-in [:choices 0]))]]
+              :let [card (-> (prompt-map :corp) :choices first :value :title)]]
         (click-prompt state :corp card))
-      (click-prompt state :corp "Done")                          ; Finished with trashing
-      (click-prompt state :corp "Done")                          ; Finished with move-to-hq (no cards to move)
+      (click-prompt state :corp "Done") ; Finished with trashing
+      (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
       ;; Run and prompts should be over now
       (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
       (is (empty (:prompt (get-runner))) "Bacterial Programming prompts finished")

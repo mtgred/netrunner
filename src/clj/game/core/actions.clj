@@ -228,14 +228,6 @@
         card (get-card state (:card prompt))
         choices (:choices prompt)]
     (cond
-      ;; Shortcut
-      (= choice "Cancel")
-      (do (if-let [cancel-effect (:cancel-effect prompt)]
-            ;; trigger the cancel effect
-            (cancel-effect choice)
-            (effect-completed state side (:eid prompt)))
-          (finish-prompt state side prompt card))
-
       ;; Integer prompts
       (or (= choices :credit)
           (= :trace (:prompt-type prompt))
@@ -269,14 +261,18 @@
 
       ;; Otherwise, choices is a sequence of strings and/or cards
       ;; choice is a string and should match one of the strings, or the title of one of the cards
-      (string? choice)
-      (let [match (first (filter #(or (= choice %)
-                                      (= choice (:title % "")))
-                                 choices))]
-        (if match
-          (do (effect match)
-              (finish-prompt state side prompt card))
-          (prompt-error "in a text prompt" prompt args)))
+      (:uuid choice)
+      (let [uuid (:uuid choice)
+            match (first (filter #(= uuid (:uuid %)) choices))]
+        (when match
+          (if (= (:value match) "Cancel")
+            (do (if-let [cancel-effect (:cancel-effect prompt)]
+                  ;; trigger the cancel effect
+                  (cancel-effect choice)
+                  (effect-completed state side (:eid prompt)))
+                (finish-prompt state side prompt card))
+            (do (effect (:value match))
+                (finish-prompt state side prompt card)))))
 
       :else
       (prompt-error "in an unknown prompt type" prompt args))))

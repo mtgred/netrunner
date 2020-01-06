@@ -2520,13 +2520,13 @@
                         :credits 20}
                  :runner {:hand ["Maven" "Datasucker"]
                           :credits 20}})
-      (play-from-hand state :corp "Border Control" "HQ") 
+      (play-from-hand state :corp "Border Control" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
-      (take-credits state :corp)      
-      (play-from-hand state :runner "Maven")  
+      (take-credits state :corp)
+      (play-from-hand state :runner "Maven")
       (let [maven (get-program state 0)]
         (is (= 1 (:current-strength (refresh maven))) "Maven boosts itself")
-        (play-from-hand state :runner "Datasucker") 
+        (play-from-hand state :runner "Datasucker")
         (is (= 2 (:current-strength (refresh maven))) "+1 str from Datasucker")
         (run-on state "HQ")
         (run-continue state)
@@ -3634,7 +3634,76 @@
      (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
      (is (= "Herald" (-> (get-corp) :deck first :title)) "Herald now on top of R&D")
      (card-ability state :runner (get-program state 0) 0)
-     (is (not (:run @state)) "No run ended, as Stargate is once per turn"))))
+     (is (not (:run @state)) "No run ended, as Stargate is once per turn")))
+  (testing "Different message on repeating cards"
+    (testing "bottom card"
+      (do-game
+        (new-game {:corp {:deck [(qty "Troll" 10)]
+                          :hand ["Herald" "Troll"]}
+                   :runner {:deck ["Stargate"]}})
+        (core/move state :corp (find-card "Herald" (:hand (get-corp))) :deck {:front true})
+        (core/move state :corp (find-card "Troll" (:hand (get-corp))) :deck {:front true})
+        (is (= "Troll" (-> (get-corp) :deck first :title)) "Troll 1st")
+        (is (= "Herald" (-> (get-corp) :deck second :title)) "Herald 2nd")
+        (is (= "Troll" (-> (get-corp) :deck (#(nth % 2)) :title)) "Another Troll 3rd")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Stargate")
+        (card-ability state :runner (get-program state 0) 0)
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner (->> (get-runner) :prompt first :choices (map :value) (#(nth % 2))))
+        (is (last-log-contains? state "Runner uses Stargate to trash bottom Troll.") "Correct log")))
+    (testing "middle card"
+      (do-game
+        (new-game {:corp {:deck [(qty "Troll" 10)]
+                          :hand ["Herald" "Troll"]}
+                   :runner {:deck ["Stargate"]}})
+        (core/move state :corp (find-card "Troll" (:hand (get-corp))) :deck {:front true})
+        (core/move state :corp (find-card "Herald" (:hand (get-corp))) :deck {:front true})
+        (is (= "Herald" (-> (get-corp) :deck first :title)) "Herald 1st")
+        (is (= "Troll" (-> (get-corp) :deck second :title)) "Troll 2nd")
+        (is (= "Troll" (-> (get-corp) :deck (#(nth % 2)) :title)) "Another Troll 3rd")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Stargate")
+        (card-ability state :runner (get-program state 0) 0)
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner (->> (get-runner) :prompt first :choices (map :value) second))
+        (is (last-log-contains? state "Runner uses Stargate to trash middle Troll.") "Correct log")))
+    (testing "top card"
+      (do-game
+        (new-game {:corp {:deck [(qty "Troll" 10)]
+                          :hand ["Herald" "Troll"]}
+                   :runner {:deck ["Stargate"]}})
+        (core/move state :corp (find-card "Herald" (:hand (get-corp))) :deck {:front true})
+        (core/move state :corp (find-card "Troll" (:hand (get-corp))) :deck {:front true})
+        (is (= "Troll" (-> (get-corp) :deck first :title)) "Troll 1st")
+        (is (= "Herald" (-> (get-corp) :deck second :title)) "Herald 2nd")
+        (is (= "Troll" (-> (get-corp) :deck (#(nth % 2)) :title)) "Another Troll 3rd")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Stargate")
+        (card-ability state :runner (get-program state 0) 0)
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner (->> (get-runner) :prompt first :choices (map :value) first))
+        (is (last-log-contains? state "Runner uses Stargate to trash top Troll.") "Correct log"))))
+  (testing "No position indicator if non-duplicate selected"
+    (do-game
+      (new-game {:corp {:deck [(qty "Troll" 10)]
+                        :hand ["Herald" "Troll"]}
+                 :runner {:deck ["Stargate"]}})
+      (core/move state :corp (find-card "Herald" (:hand (get-corp))) :deck {:front true})
+      (core/move state :corp (find-card "Troll" (:hand (get-corp))) :deck {:front true})
+      (is (= "Troll" (-> (get-corp) :deck first :title)) "Troll 1st")
+      (is (= "Herald" (-> (get-corp) :deck second :title)) "Herald 2nd")
+      (is (= "Troll" (-> (get-corp) :deck (#(nth % 2)) :title)) "Another Troll 3rd")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Stargate")
+      (card-ability state :runner (get-program state 0) 0)
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner (->> (get-runner) :prompt first :choices (map :value) second))
+      (is (last-log-contains? state "Runner uses Stargate to trash Herald.") "Correct log"))))
 
 (deftest study-guide
   ;; Study Guide - 2c to add a power counter; +1 strength per counter

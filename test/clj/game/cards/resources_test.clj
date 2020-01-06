@@ -1072,7 +1072,7 @@
         (core/gain state :runner :credit 3)
         ;; Re-play DJ Fenris
         (play-from-hand state :runner "DJ Fenris")
-        (is (some #(= chaos (:title %)) (:choices (prompt-map :runner))) "Chaos Theory still available")
+        (is (some #(= chaos %) (prompt-titles :runner)) "Chaos Theory still available")
         ;; Try moving CT to hand
         (game.core/move state :runner (-> (get-resource state 0) :hosted first) :hand)
         (is (not= chaos (-> (get-runner) :rfg last :title)) "Chaos Theory not moved to rfg")
@@ -2793,12 +2793,12 @@
         (click-prompt state :runner "Street Peddler")
         (let [ped1 (first (:hosted (refresh oca)))]
           (card-ability state :runner ped1 0)
-          (click-prompt state :runner (-> (get-runner) :prompt first :choices second)) ; choose Street Peddler
+          (click-prompt state :runner (-> (get-runner) :prompt first :choices second :value)) ; choose Street Peddler
           (card-ability state :runner (refresh oca) 1)
           (click-card state :runner (get-resource state 1))
           (let [ped2 (first (:hosted (refresh oca)))]
             (card-ability state :runner ped2 0)
-            (click-prompt state :runner (-> (get-runner) :prompt first :choices first)) ; choose Spy Camera
+            (click-prompt state :runner (-> (get-runner) :prompt first :choices first :value)) ; choose Spy Camera
             ;; the fact that we got this far means the bug is fixed
             (is (= 1 (count (get-hardware state))) "Spy Camera installed"))))))
   (testing "Interaction with The Class Act. Issue #4282"

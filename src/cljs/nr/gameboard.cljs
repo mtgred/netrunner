@@ -1682,17 +1682,15 @@
 
               ;; otherwise choice of all present choices
               :else
-              (map-indexed (fn [i c]
+              (map-indexed (fn [i {:keys [uuid value]}]
                              (when (not= c "Hide")
-                               (if (string? c)
-                                 [:button {:key i
-                                           :on-click #(send-command "choice" {:choice c})}
-                                  (render-message c)]
-                                 [:button {:key (or (:cid c) i)
-                                           :class (when (:rotated c) :rotated)
-                                           :on-click #(send-command "choice" {:choice (:title c)})
-                                           :id {:code c}}
-                                  (render-message (:title c))])))
+                               [:button {:key i
+                                         :on-click #(send-command "choice" {:choice {:uuid uuid}})
+                                         :id {:code value}}
+                                (render-message
+                                  (if-let [title (:title value)]
+                                    title
+                                    value))]))
                            (:choices prompt))))]
          (if @run
            [run-div side run]

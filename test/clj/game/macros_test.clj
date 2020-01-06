@@ -20,7 +20,7 @@
                        ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
          ~'prompt-map (fn [side#] (-> @~'state side# :prompt first))
-         ~'prompt-titles (fn [side#] (map :title (:choices (~'prompt-map side#))))
+         ~'prompt-titles (fn [side#] (map #(get-in % [:value :title]) (:choices (~'prompt-map side#))))
          ~'prompt-fmt (fn [side#]
                         (let [prompt# (~'prompt-map side#)
                               choices# (:choices prompt#)
@@ -31,7 +31,7 @@
                               prompt-type# (:prompt-type prompt#)]
                           (str (side-str side#) ": " (:msg prompt# "") "\n"
                                "Type: " (if (some? prompt-type#) prompt-type# "nil") "\n"
-                               (join "\n" (map #(str "[ " (or (:title %) % "nil") " ]") choices#)) "\n")))]
+                               (join "\n" (map #(str "[ " (or (:title %) % "nil") " ]") (map :value choices#))) "\n")))]
      ~@body))
 
 (defmacro deftest-pending [name & body]
