@@ -2044,6 +2044,7 @@
    :effect (effect (make-run eid target nil card))
    :events [{:event :pass-ice
              :req (req (and (rezzed? target)
+                            (not-used-once? state {:once :per-run} card)
                             (<= (get-strength target) (count (all-installed state :runner)))))
              :async true
              :effect
@@ -2056,7 +2057,7 @@
                                     " to trash " (:title ice) "?")
                        :yes-ability
                        {:async true
-                        :once :per-turn
+                        :once :per-run
                         :cost [:installed (get-strength ice)]
                         :msg (msg "trash " (card-str state ice))
                         :effect (effect (trash eid ice nil))}}}
@@ -2064,7 +2065,7 @@
                       {:prompt (str "Use Prey to trash " (:title ice) "?")
                        :yes-ability
                        {:async true
-                        :once :per-turn
+                        :once :per-run
                         :msg (msg "trash " (card-str state ice))
                         :effect (effect (trash eid ice nil))}}}))
                  card nil))}]})

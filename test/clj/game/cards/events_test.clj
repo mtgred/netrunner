@@ -3948,7 +3948,35 @@
           "Runner has correct prompt")
       (click-prompt state :runner "Yes")
       (is (find-card "Burke Bugs" (:discard (get-corp))) "Burke Bugs is trashed")
-      (is (not (get-ice state :hq 0)) "Burke Bugs is trashed"))))
+      (is (not (get-ice state :hq 0)) "Burke Bugs is trashed")))
+  (testing "Prompt should be shown only until ICE is trashed."
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Burke Bugs" "Ice Wall"]}
+                 :runner {:hand ["Prey" (qty "Clone Chip" 3)]}})
+      (play-from-hand state :corp "Burke Bugs" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (dotimes [_ 3]
+        (play-from-hand state :runner "Clone Chip"))
+      (play-from-hand state :runner "Prey")
+      (click-prompt state :runner "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (run-continue state)
+      (is (get-ice state :hq 1) "Ice Wall should not be trashed yet")
+      (is (= "Use Prey to trash 1 card to trash Ice Wall?" (:msg (prompt-map :runner)))
+          "Runner has correct prompt")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (get-hardware state 0))
+      (is (find-card "Ice Wall" (:discard (get-corp))) "Ice Wall is trashed")
+      (is (not (get-ice state :hq 1)) "Ice Wall is trashed")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (run-continue state)
+      (is (not (= "Use Prey to trash Burke Bugs?" (:msg (prompt-map :runner))))
+          "Runner has no prompt trash ice")
+      )))
 
 (deftest process-automation
   ;; Process Automation
