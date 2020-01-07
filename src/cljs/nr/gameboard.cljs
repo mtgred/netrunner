@@ -1407,9 +1407,19 @@
              [:div.mulligan
               (if (or (= :spectator @my-side) (and @my-keep @op-keep))
                 [cond-button (if (= :spectator @my-side) "Close" "Start Game") true #(swap! app-state assoc :start-shown true)]
-                (list ^{:key "keepbtn"} [cond-button "Keep" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Keep"})]
-                      ^{:key "mullbtn"} [cond-button "Mulligan" (= "mulligan" (-> @my-prompt first :prompt-type)) #(do (send-command "choice" {:choice "Mulligan"})
-                                                                                                                       (reset! mulliganed true))]))]]]
+                (list ^{:key "keepbtn"} [cond-button "Keep"
+                                         (= "mulligan" (-> @my-prompt first :prompt-type))
+                                         #(send-command "choice" {:choice {:uuid (->> (-> @my-prompt first :choices)
+                                                                                      (filter (fn [c] (= "Keep" (:value c))))
+                                                                                      first
+                                                                                      :uuid)}})]
+                      ^{:key "mullbtn"} [cond-button "Mulligan"
+                                         (= "mulligan" (-> @my-prompt first :prompt-type))
+                                         #(do (send-command "choice" {:choice {:uuid (->> (-> @my-prompt first :choices)
+                                                                                          (filter (fn [c] (= "Mulligan" (:value c))))
+                                                                                          first
+                                                                                          :uuid)}})
+                                              (reset! mulliganed true))]))]]]
            [:br]
            [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]])))))
 
@@ -1683,7 +1693,7 @@
               ;; otherwise choice of all present choices
               :else
               (map-indexed (fn [i {:keys [uuid value]}]
-                             (when (not= c "Hide")
+                             (when (not= value "Hide")
                                [:button {:key i
                                          :on-click #(send-command "choice" {:choice {:uuid uuid}})
                                          :id {:code value}}

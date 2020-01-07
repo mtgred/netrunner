@@ -262,7 +262,7 @@
       ;; Otherwise, choices is a sequence of strings and/or cards
       ;; choice is a string and should match one of the strings, or the title of one of the cards
       (:uuid choice)
-      (let [uuid (:uuid choice)
+      (let [uuid (uuid/as-uuid (:uuid choice))
             match (first (filter #(= uuid (:uuid %)) choices))]
         (when match
           (if (= (:value match) "Cancel")
