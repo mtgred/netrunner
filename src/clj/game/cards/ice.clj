@@ -446,7 +446,6 @@
                    (do-net-damage 1)]
      :events [(assoc (do-net-damage 3)
                      :event :encounter-ice-ends
-                     :unregister-once-resolved true
                      :req (req (and (= target card)
                                     (seq (remove :broken (:subroutines target))))))]}))
 

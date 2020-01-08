@@ -27,14 +27,20 @@
 
 (declare make-run encounter-ends pass-ice)
 
+(defn set-current-ice
+  ([state]
+   (let [run-ice (get-run-ices state)
+         pos (get-in @state [:run :position])]
+     (when (and pos
+                (pos? pos)
+                (<= pos (count run-ice)))
+       (set-current-ice state (nth run-ice (dec pos))))))
+  ([state card]
+   (swap! state assoc-in [:run :current-ice] (get-card state card))))
+
 (defn get-current-ice
   [state]
-  (let [run-ice (get-run-ices state)
-        pos (get-in @state [:run :position])]
-    (when (and pos
-               (pos? pos)
-               (<= pos (count run-ice)))
-      (get-card state (nth run-ice (dec pos))))))
+   (get-card state (get-in @state [:run :current-ice])))
 
 (defn set-phase
   [state phase]
@@ -114,6 +120,7 @@
 (defmethod start-next-phase :approach-ice
   [state side args]
   (set-phase state :approach-ice)
+  (set-current-ice state)
   (update-all-ice state side)
   (update-all-icebreakers state side)
   (let [ice (get-current-ice state)]

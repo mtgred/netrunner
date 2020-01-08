@@ -10,12 +10,7 @@
       run-server (get-in @state (concat [:corp :servers] (:server (:run @state))))
       run-ices (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices]))
       run-position (get-in @state [:run :position])
-      current-ice (let [position (get-in @state [:run :position])
-                        ices (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices]))]
-                    (when (and position
-                               (pos? position)
-                               (<= position (count ices)))
-                      (nth ices (dec position))))
+      current-ice (get-current-ice state)
       corp-reg (get-in @state [:corp :register])
       corp-reg-last (get-in @state [:corp :register-last-turn])
       runner-reg (get-in @state [:runner :register])
