@@ -72,3 +72,11 @@
   ([state side card effect-type] (sum-effects state side card effect-type nil))
   ([state side card effect-type targets]
    (reduce + (filter identity (get-effects state side card effect-type targets)))))
+
+(defn any-effects
+  "Check if any effects return true for pred"
+  ([state side effect-type] (any-effects state side effect-type true? nil nil))
+  ([state side effect-type pred] (any-effects state side effect-type pred nil nil))
+  ([state side effect-type pred card] (any-effects state side effect-type pred card nil))
+  ([state side effect-type pred card targets]
+   (some pred (get-effects state side card effect-type targets))))

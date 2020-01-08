@@ -149,7 +149,7 @@
 
 (defn can-bypass-ice
   [state side ice]
-  (when-not (some false? (get-effects state side ice :bypass-ice))
+  (when-not (any-effects state side :bypass-ice false? ice)
     (:bypass (:run @state))))
 
 (defmethod start-next-phase :encounter-ice
@@ -843,12 +843,9 @@
   {:async true
    :effect (req (let [cards-count (count cards)]
                   (cond
-                    ;; Only 1 card
-                    (= 1 cards-count)
-                    (access-card state side eid (first cards))
                     ;; Corp chooses accessed cards
                     (and (pos? cards-count)
-                         (not (run-flag? state side nil :corp-choose-access)))
+                         (any-effects state side :corp-choose-hq-access))
                     (do (show-wait-prompt state :runner "Corp to select cards in HQ to be accessed")
                         (continue-ability
                           state :corp
@@ -857,17 +854,22 @@
                                      :all true
                                      :max (req (access-count state side :hq-access))}
                            :async true
-                           :effect (effect (clear-wait-prompt :runner)
-                                           (continue-ability
-                                             :runner
-                                             (access-helper-hq
-                                               state (access-count state side :hq-access)
-                                               ; access-helper-hq uses a set to keep track of which cards have already
-                                               ; been accessed. Using the set difference we make the runner unable to
-                                               ; access non-selected cards from the corp prompt
-                                               (clojure.set/difference (set (:hand corp)) (set targets)))
-                                             card nil))}
+                           :effect (req (clear-wait-prompt state :runner)
+                                        (if (= 1 cards-count)
+                                          (access-card state side eid target)
+                                          (continue-ability
+                                            state :runner
+                                            (access-helper-hq
+                                              state (access-count state side :hq-access)
+                                              ; access-helper-hq uses a set to keep track of which cards have already
+                                              ; been accessed. Using the set difference we make the runner unable to
+                                              ; access non-selected cards from the corp prompt
+                                              (clojure.set/difference (set (:hand corp)) (set targets)))
+                                            card nil)))}
                           card nil))
+                    ;; Only 1 card
+                    (= 1 cards-count)
+                    (access-card state side eid (first cards))
                     ;; Normal access
                     (pos? cards-count)
                     (let [from-hq (min (access-count state side :hq-access)
@@ -1061,6 +1063,8 @@
                  (swap! state assoc-in [:runner :register :accessed-cards] true))
                (wait-for (resolve-ability state side (choose-access cards server args) nil nil)
                          (wait-for (trigger-event-sync state side :end-access-phase {:from-server (first server)})
+                                   (unregister-floating-effects state side :end-of-access)
+                                   (unregister-floating-events state side :end-of-access)
                                    (effect-completed state side eid)))))))
 
 ;;; Ending runs.

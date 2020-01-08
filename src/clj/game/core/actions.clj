@@ -330,7 +330,7 @@
                            (trigger-event-sync state side eid :spent-credits-from-card card))}
              (get-in cdef [:abilities ability]))
         cannot-play (or (:disabled card)
-                        (some true? (get-effects state side card :prevent-ability [ab])))]
+                        (any-effects state side :prevent-ability true? card [ab]))]
     (when-not cannot-play
       (do-play-ability state side card ab targets))))
 
@@ -471,7 +471,7 @@
         cdef (card-def card)
         ab (get-in cdef [:corp-abilities ability])
         cannot-play (or (:disabled card)
-                        (some true? (get-effects state side card :prevent-ability [ab])))]
+                        (any-effects state side :prevent-ability true? card [ab]))]
     (when-not cannot-play
       (do-play-ability state side card ab targets))))
 
@@ -482,7 +482,7 @@
         cdef (card-def card)
         ab (get-in cdef [:runner-abilities ability])
         cannot-play (or (:disabled card)
-                        (some true? (get-effects state side card :prevent-ability [ab])))]
+                        (any-effects state side :prevent-ability true? card [ab]))]
     (when-not cannot-play
       (do-play-ability state side card ab targets))))
 
