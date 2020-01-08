@@ -61,7 +61,8 @@
                             (if (get-in card [:special :run-again])
                               (make-run state side eid target nil card {:ignore-costs true})
                               (effect-completed state side eid)))))
-   :events [{:event :unsuccessful-run-ends
+   :events [{:event :run-ends
+             :req (req (:unsuccessful target))
              :optional {:req (req (not (get-in card [:special :run-again])))
                         :player :runner
                         :prompt "Make another run on the same server?"
@@ -404,7 +405,8 @@
    :events [{:event :run-ends
              :player :runner
              :prompt "Choose a program that was used during the run to trash "
-             :choices {:card program?}
+             :choices {:card #(and (program? %)
+                                   (installed? %))}
              :msg (msg "trash " (:title target))
              :async true
              :effect (effect (trash eid target {:unpreventable true}))}]})
@@ -587,8 +589,9 @@
                             (if (:run-again card)
                               (make-run state side eid :rd nil card)
                               (effect-completed state side eid)))))
-   :events [{:event :successful-run-ends
-             :optional {:req (req (and (not (:run-again card))
+   :events [{:event :run-ends
+             :optional {:req (req (and (:successful target)
+                                       (not (:run-again card))
                                        (= [:rd] (:server target))))
                         :prompt "Make another run on R&D?"
                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
@@ -714,6 +717,7 @@
                    :effect (effect (make-run eid target nil card))}
                   card nil))
    :events [{:event :run-ends
+             :unregister-once-resolved true
              :async true
              :effect (req (doseq [s [:corp :runner]]
                             (enable-identity state s))
@@ -724,8 +728,7 @@
                               :yes-ability
                               {:msg (msg "shuffles Direct Access into the Stack")
                                :effect (effect (move (get-card state card) :deck)
-                                               (shuffle! :deck)
-                                               (unregister-events card))}}}
+                                               (shuffle! :deck))}}}
                             card nil))}]})
 
 (define-card "Dirty Laundry"
@@ -734,7 +737,8 @@
    :prompt "Choose a server"
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
-   :events [{:event :successful-run-ends
+   :events [{:event :run-ends
+             :req (req (:successful target))
              :silent (req true)
              :msg "gain 5 [Credits]"
              :effect (effect (gain-credits :runner 5))}]})
@@ -1266,7 +1270,8 @@
                        bad-zones (keys (filter (complement unrezzed-ice) (get-in @state [:corp :servers])))]
                    (zones->sorted-names (remove (set bad-zones) (get-runnable-zones state side eid card nil)))))
    :effect (effect (make-run eid target nil card))
-   :events [{:event :successful-run-ends
+   :events [{:event :run-ends
+             :req (req (:successful target))
              :silent (req true)
              :msg "gain 12 [Credits]"
              :effect (effect (gain-credits :runner 12))}]})
@@ -1724,12 +1729,9 @@
    :prompt "Choose a server"
    :choices (req runnable-servers)
    :effect (effect (make-run eid target nil card))
-   :events [{:event :agenda-stolen
-             :silent (req true)
-             :effect (effect (update! (assoc card :steal true)))}
-            {:event :run-ends
+   :events [{:event :run-ends
              :async true
-             :effect (req (if (:steal card)
+             :effect (req (if (:did-steal target)
                             (do (system-msg state :runner
                                             (str "adds Mad Dash to their score area as an agenda worth 1 agenda point"))
                                 (as-agenda state :runner eid (get-card state card) 1))
@@ -1765,8 +1767,8 @@
    :choices (req (filter #(can-run-server? state %) remotes))
    :effect (effect (make-run eid target nil card))
    :events [{:event :run-ends
-             :effect (req (prevent-run-on-server state card (:server run))
-                          (when (:successful run)
+             :effect (req (prevent-run-on-server state card (:server target))
+                          (when (:successful target)
                             (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
                             (gain state :runner :click 1)
                             (move state :runner card :hand)
@@ -1839,9 +1841,10 @@
                             (= target :rd)))
              :msg "gain 4 [Credits]"
              :effect (effect (gain-credits 4))}
-            {:event :successful-run-ends
+            {:event :run-ends
              :interactive (req true)
-             :optional {:req (req (and (not (get-in card [:special :run-again]))
+             :optional {:req (req (and (:successful target)
+                                       (not (get-in card [:special :run-again]))
                                        (= [:rd] (:server target))))
                         :prompt "Make another run on R&D?"
                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
@@ -1990,31 +1993,26 @@
                    (play-instant eid target {:no-additional-cost true}))})
 
 (define-card "Political Graffiti"
-  (let [update-agenda-points (fn [state side target amount]
-                               (set-prop state side (get-card state target) :agendapoints (+ amount (:agendapoints (get-card state target))))
-                               (gain-agenda-point state side amount))]
-    {:async true
-     :makes-run true
-     :req (req archives-runnable)
-     :effect (effect (make-run
-                       eid :archives
-                       {:req (req (= target :archives))
-                        :replace-access
-                        {:mandatory true
-                         :prompt "Select an agenda to host Political Graffiti"
-                         :choices {:card #(in-corp-scored? state side %)}
-                         :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
-                         :effect (req (host state :runner (get-card state target)
-                                            ; keep host cid in :agenda-cid because `trash` will clear :host
-                                            (assoc card :installed true :agenda-cid (:cid (get-card state target))))
-                                      (update-agenda-points state :corp target -1))}}
-                       card))
-     :events [{:event :purge
-               :effect (effect (trash card {:cause :purge}))}]
-     :trash-effect {:effect (req (let [current-side (get-scoring-owner state {:cid (:agenda-cid target)})]
-                                   (update-agenda-points state current-side
-                                                         (find-cid (:agenda-cid target) (get-in @state [current-side :scored]))
-                                                         1)))}}))
+  {:async true
+   :makes-run true
+   :req (req archives-runnable)
+   :effect (effect (make-run
+                     eid :archives
+                     {:req (req (= target :archives))
+                      :replace-access
+                      {:mandatory true
+                       :prompt "Select an agenda to host Political Graffiti"
+                       :choices {:card #(in-corp-scored? state side %)}
+                       :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
+                       :effect (effect (host :runner (get-card state target) (assoc card :installed true))
+                                       (update-all-agenda-points))}}
+                     card))
+   :constant-effects [{:type :agenda-value
+                       :req (req (same-card? (:host card) target))
+                       :value -1}]
+   :events [{:event :purge
+             :effect (effect (trash card {:cause :purge})
+                             (update-all-agenda-points))}]})
 
 (define-card "Populist Rally"
   {:req (req (seq (filter #(has-subtype? % "Seedy") (all-active-installed state :runner))))

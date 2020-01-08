@@ -147,7 +147,7 @@
                     :effect (req (let [ice current-ice
                                        stargets (:subtype-target ice)
                                        stypes (:subtype ice)]
-                                   (register-once state {:once :per-turn} card)
+                                   (register-once state side {:once :per-turn} card)
                                    (update! state side
                                             (assoc ice
                                                    :subtype-target (combine-subtypes false stargets ice-type)
@@ -403,9 +403,9 @@
                                 (add-counter card :virus 1))}]
    :strength-bonus (req (get-virus-counters state card))
    :events [{:event :run-ends
-             :req (req (and (not (or (get-in @state [:run :did-trash])
-                                     (get-in @state [:run :did-steal])))
-                            (get-in @state [:run :did-access])))
+             :req (req (and (not (or (:did-trash target)
+                                     (:did-steal target)))
+                            (:did-access target)))
              :effect (effect (add-counter card :virus 1))}
             {:event :expose
              :effect (effect (add-counter card :virus 1))}
@@ -698,29 +698,33 @@
 (define-card "Cordyceps"
   {:data {:counter {:virus 2}}
    :events [{:event :successful-run
-             :optional {:req (req (and (is-central? target)
-                                       (pos? (get-counters card :virus))
-                                       (not-empty (get-in @state [:corp :servers target :ices]))
-                                       (<= 2 (count (filter ice? (all-installed state :corp))))))
-                        :once :per-turn
-                        :prompt "Use Cordyceps to swap ice?"
-                        :yes-ability {:prompt "Select ice protecting this server"
-                                      :choices {:req (req (and (installed? target)
-                                                               (ice? target)
-                                                               (= (first (:server (:run @state))) (second (:zone target)))))}
-                                      :async true
-                                      :effect (req (let [first-ice target]
-                                                     (continue-ability state side
-                                                                       {:prompt "Select ice to swap with"
-                                                                        :choices {:req (req (and (installed? target)
-                                                                                                 (ice? target)
-                                                                                                 (not= first-ice target)))}
-                                                                        :msg (msg "swap the positions of " (card-str state first-ice) " and " (card-str state target))
-                                                                        :async true
-                                                                        :effect (req (wait-for (add-counter state side card :virus -1 nil)
-                                                                                               (swap-ice state side first-ice target)
-                                                                                               (effect-completed state side eid)))}
-                                                                       card nil)))}}}]})
+             :interactive (req true)
+             :optional
+             {:req (req (and (is-central? target)
+                             (pos? (get-counters card :virus))
+                             (not-empty (get-in @state [:corp :servers target :ices]))
+                             (<= 2 (count (filter ice? (all-installed state :corp))))))
+              :once :per-turn
+              :prompt "Use Cordyceps to swap ice?"
+              :yes-ability
+              {:prompt "Select ice protecting this server"
+               :choices {:req (req (and (installed? target)
+                                        (ice? target)
+                                        (= (first (:server (:run @state))) (second (:zone target)))))}
+               :async true
+               :effect (effect
+                         (continue-ability
+                           (let [first-ice target]
+                             {:prompt "Select ice to swap with"
+                              :choices {:req (req (and (installed? target)
+                                                       (ice? target)
+                                                       (not= first-ice target)))}
+                              :msg (msg "swap the positions of " (card-str state first-ice) " and " (card-str state target))
+                              :async true
+                              :effect (req (wait-for (add-counter state side card :virus -1 nil)
+                                                     (swap-ice state side first-ice target)
+                                                     (effect-completed state side eid)))})
+                           card nil))}}}]})
 
 (define-card "Corroder"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
@@ -1172,7 +1176,7 @@
                       state side card
                       [{:event :encounter-ice
                         :optional
-                        {:req (req (and (same-card? ice target)
+                        {:req (req (and (same-card? :installed-cid ice target)
                                         (can-pay? state :runner eid target nil [:credit (count (:subroutines (get-card state ice)))])))
                          :prompt (str "Pay " (count (:subroutines (get-card state ice)))
                                       " [Credits] to bypass " (:title ice) "?")
@@ -1271,7 +1275,7 @@
                                             first)
                                 broken-subs (->> (:subroutines current-ice)
                                                  (remove #(= (:index %) (:index target))))]
-                            (break-subroutines-msg current-ice broken-subs)))
+                            (break-subroutines-msg current-ice broken-subs card)))
                 :effect (req (let [subroutines (:subroutines current-ice)
                                    target (->> subroutines
                                                (filter #(and (not (:broken %))
@@ -1778,18 +1782,20 @@
                                  state :runner
                                  {:prompt (msg "Choose a subtype")
                                   :choices ["Sentry" "Code Gate" "Barrier"]
-                                  :msg (msg "spend [Click] and make " (card-str state ice) " gain " (lower-case target)
+                                  :msg (msg "spend [Click] and make " (card-str state ice)
+                                            " gain " (lower-case target)
                                             " until the end of the next run this turn")
                                   :effect (effect (update! (assoc ice :subtype (combine-subtypes true stypes target)))
                                                   (update-ice-strength (get-card state ice))
                                                   (register-events
                                                     card
-                                                    [{:event :run-ends
-                                                      :effect (effect (update! (assoc (get-card state ice) :subtype stypes))
-                                                                      (unregister-events card)
-                                                                      (update-ice-strength (get-card state ice)))}]))}
-                                 card nil)))}]
-   :events [{:event :run-ends}]})
+                                                    (let [chosen-type target]
+                                                      [{:event :run-ends
+                                                        :duration :end-of-run
+                                                        :effect (effect (update! (assoc (get-card state ice) :subtype (remove-subtypes-once (:subtype (get-card state ice)) chosen-type)))
+                                                                        (system-say :runner (str (card-str state (get-card state ice))
+                                                                                                 " loses " chosen-type ".")))}])))}
+                                 card nil)))}]})
 
 (define-card "Panchatantra"
   {:events [{:event :encounter-ice
@@ -1810,7 +1816,7 @@
                :effect (req (let [ice current-ice
                                   chosen-type target
                                   stypes (combine-subtypes false (:subtype ice) chosen-type)]
-                              (register-once state side {:once :per-turn} card)
+                              (register-once state {:once :per-turn} card)
                               (update! state side (assoc ice :subtype stypes))
                               (update-all-ice state side)
                               (register-events

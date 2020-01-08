@@ -1808,7 +1808,25 @@
         (run-on state "HQ")
         (core/rez state :corp iw)
         (run-continue state)
-        (is (nil? (prompt-map :runner)) "Femme ability doesn't fire after uninstall")))))
+        (is (nil? (prompt-map :runner)) "Femme ability doesn't fire after uninstall"))))
+  (testing "Bypass doesn't persist if ice is uninstalled and reinstalled"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Femme Fatale"]
+                          :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Femme Fatale")
+      (click-card state :runner (get-ice state :hq 0))
+      (core/move state :corp (get-ice state :hq 0) :hand)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (nil? (prompt-map :runner)) "Femme ability doesn't fire after uninstall"))))
 
 (deftest gauss
   ;; Gauss
@@ -2493,6 +2511,33 @@
         (click-prompt state :runner "Pay 1 [Credits]")
         (click-prompt state :runner "Pay 1 [Credits]")
         (is (empty? (:prompt (get-runner))) "No more prompts open")))))
+
+(deftest maven
+  ;; Maven
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["Border Control"]
+                        :credits 20}
+                 :runner {:hand ["Maven" "Datasucker"]
+                          :credits 20}})
+      (play-from-hand state :corp "Border Control" "HQ") 
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)      
+      (play-from-hand state :runner "Maven")  
+      (let [maven (get-program state 0)]
+        (is (= 1 (:current-strength (refresh maven))) "Maven boosts itself")
+        (play-from-hand state :runner "Datasucker") 
+        (is (= 2 (:current-strength (refresh maven))) "+1 str from Datasucker")
+        (run-on state "HQ")
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh maven)})
+        (is (second-last-log-contains? state "Runner pays 4 \\[Credits\\] to use Maven to break all 2 subroutines on Border Control.") "Correct log with autopump ability")
+        (run-jack-out state)
+        (run-on state "HQ")
+        (run-continue state)
+        (card-ability state :runner (refresh maven) 0)
+        (click-prompt state :runner "End the run")
+        (is (last-log-contains? state "Runner pays 2 \\[Credits\\] to use Maven to break 1 subroutine on Border Control.") "Correct log with single sub break")))))
 
 (deftest multithreader
   ;; Multithreader

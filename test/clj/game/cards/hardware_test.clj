@@ -359,7 +359,12 @@
         (run-successful state)
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No")
-        (run-empty-server state :archives)
+        (run-on state :hq)
+        (run-continue state)
+        (run-continue state)
+        (run-continue state)
+        (run-successful state)
+        (click-prompt state :runner "No action")
         (is (empty? (:prompt (get-runner))) "No prompt for shuffling Boomerang in"))))
   (testing "Cannot use Boomerang on other ice"
     (do-game
@@ -1245,7 +1250,29 @@
       (is (= 2 (count (:deck (get-runner)))) "2 cards remain in deck")
       (is (= 0 (count (:rfg (get-runner)))) "Removed no cards from game")
       (is (empty? (:prompt (get-runner))) "No more prompts")
-      (is (empty? (:prompt (get-corp))) "Waiting prompt cleared"))))
+      (is (empty? (:prompt (get-corp))) "Waiting prompt cleared")))
+  (testing "No programs or virtual resources are revealed. Issue #4826"
+    (do-game
+      (new-game {:runner {:hand ["Acacia" "Blackmail" "Capstone" "Daredevil" "Easy Mark" "Frame Job" "Gachapon"]}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Acacia" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Blackmail" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Capstone" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Daredevil" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Easy Mark" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Frame Job" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B C
+      (play-from-hand state :runner "Gachapon")
+      (card-ability state :runner (get-hardware state 0) 0)
+      (click-prompt state :runner "OK")
+      (is (= ["No action"] (:choices (prompt-map :runner))) "Runner can't choose ineligable cards")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Acacia")
+      (click-prompt state :runner "Blackmail")
+      (click-prompt state :runner "Capstone")
+      (click-prompt state :runner "Done")
+      (is (= 3 (count (:deck (get-runner)))) "3 card back in deck")
+      (is (= 3 (count (:rfg (get-runner)))) "3 card removed from the game"))))
 
 (deftest gebrselassie
   ;; Gebrselassie
@@ -1518,29 +1545,52 @@
 
 (deftest knobkierie
   ;; Knobkierie - first successful run, place a virus counter on a virus program
-  (do-game
-    (new-game {:runner {:deck ["Knobkierie" "Hivemind" "Eater"]}})
-    (core/gain state :runner :credit 20)
-    (take-credits state :corp)
-    (play-from-hand state :runner "Knobkierie")
-    (play-from-hand state :runner "Eater")
-    (run-empty-server state "HQ")
-    (click-prompt state :runner "No action")
-    (is (empty? (:prompt (get-runner))) "No prompt if not virus program installed")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (play-from-hand state :runner "Hivemind")
-    (let [hv (find-card "Hivemind" (get-program state))]
-      (is (= 1 (get-counters (refresh hv) :virus)) "Hivemind starts with 1 virus counters")
-      (run-empty-server state "HQ")
-      (click-prompt state :runner "Yes") ; gain virus counter
-      (click-card state :runner (find-card "Hivemind" (get-program state)))
-      (click-prompt state :runner "No action")
-      (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind gains a counter on successful run")
+  (testing "functionality"
+    (do-game
+      (new-game {:runner {:deck ["Knobkierie" "Hivemind" "Eater"]}})
+      (core/gain state :runner :credit 20)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Knobkierie")
+      (play-from-hand state :runner "Eater")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
-      (is (empty? (:prompt (get-runner))) "No prompt after first run")
-      (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind doesn't gain a counter after first run"))))
+      (is (empty? (:prompt (get-runner))) "No prompt if not virus program installed")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hivemind")
+      (let [hv (find-card "Hivemind" (get-program state))]
+        (is (= 1 (get-counters (refresh hv) :virus)) "Hivemind starts with 1 virus counters")
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "Yes") ; gain virus counter
+        (click-card state :runner (find-card "Hivemind" (get-program state)))
+        (click-prompt state :runner "No action")
+        (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind gains a counter on successful run")
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "No action")
+        (is (empty? (:prompt (get-runner))) "No prompt after first run")
+        (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind doesn't gain a counter after first run"))))
+  (testing "Interaction with Cordyceps. Issue #4781"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall" "Enigma"]}
+                 :runner {:hand ["Knobkierie" "Cordyceps"]
+                          :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Knobkierie")
+      (play-from-hand state :runner "Cordyceps")
+      (run-empty-server state "HQ")
+      (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))) "Runner has simult prompt")
+      (click-prompt state :runner "Knobkierie")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Cordyceps")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Enigma")
+      (click-card state :runner "Ice Wall")
+      (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is now protecting HQ")
+      (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma is now protecting R&D")
+      (is (empty? (:prompt (get-runner))) "No prompt if not virus program installed"))))
 
 (deftest llds-processor
   ;; LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install

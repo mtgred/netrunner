@@ -638,8 +638,7 @@
                                :effect (req (let [scored target]
                                               (swap-agendas state side scored stolen)
                                               (system-msg state side (str "uses Exchange of Information to swap "
-                                                                          (:title scored) " for " (:title stolen)))
-                                              (effect-completed state side eid)))}
+                                                                          (:title scored) " for " (:title stolen)))))}
                               card nil)))}
                card nil))})
 
@@ -987,13 +986,13 @@
 
 (define-card "Housekeeping"
   {:events [{:event :runner-install
+             :req (req (first-event? state side :runner-install))
              :player :runner
-             :once :per-turn
              :prompt "Select a card from your Grip to trash for Housekeeping"
              :choices {:card #(and (runner? %)
                                    (in-hand? %))}
-             :msg (msg "force the Runner to trash " (:title target) " from their Grip")
-             :effect (effect (trash target {:unpreventable true}))}]})
+             :effect (effect (system-msg :corp (str "uses Housekeeping to force the Runner to trash " (:title target) " from their grip"))
+                             (trash :runner target {:unpreventable true}))}]})
 
 (define-card "Hunter Seeker"
   {:req (req (last-turn? state :runner :stole-agenda))
@@ -1219,7 +1218,7 @@
                 (swap! state update-in [:runner :tag :additional] inc)
                 (trigger-event state :corp :runner-additional-tag-change 1))
    :leave-play (req (swap! state update-in [:runner :tag :additional] dec)
-                    (trigger-event state :corp :runner-additional-tag-change 1)
+                    (trigger-event state :corp :runner-additional-tag-change -1)
                     (system-msg state :corp "trashes MCA Informant"))
    :runner-abilities [{:label "Trash MCA Informant host"
                        :cost [:click 1 :credit 2]

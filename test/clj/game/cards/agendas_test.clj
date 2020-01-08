@@ -685,35 +685,48 @@
 
 (deftest dedicated-neural-net
   ;; Dedicated Neural Net
-  (do-game
-    (new-game {:corp {:deck ["Dedicated Neural Net" (qty "Scorched Earth" 2)
-                             "Hedge Fund" "Caprice Nisei"]}
-               :runner {:deck ["HQ Interface"]}})
-    (play-from-hand state :corp "Caprice Nisei" "HQ")
-    (play-and-score state "Dedicated Neural Net")
-    (take-credits state :corp)
-    (run-empty-server state :hq)
-    (click-prompt state :runner "0 [Credits]")
-    (click-prompt state :corp "1 [Credits]")
-    (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
-    (click-prompt state :runner "Card from hand")
-    (click-prompt state :runner "No action")
-    ;; test for #2376
-    (click-prompt state :runner "Unrezzed upgrade in HQ")
-    (click-prompt state :runner "No action")
-    (is (not (:run @state)) "Run completed")
-    (run-empty-server state :hq)
-    (click-prompt state :runner "Card from hand")
-    (click-prompt state :runner "No action")
-    (click-prompt state :runner "Unrezzed upgrade in HQ")
-    (click-prompt state :runner "No action")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (play-from-hand state :runner "HQ Interface")
-    (run-empty-server state "HQ")
-    (click-prompt state :runner "0 [Credits]")
-    (click-prompt state :corp "1 [Credits]")
-    (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access")))
+  (testing "Corp chooses card to access. Issue #4874"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}})
+      (play-and-score state "Dedicated Neural Net")
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "0 [Credits]")
+      (click-prompt state :corp "1 [Credits]")
+      (click-card state :corp "Domestic Sleepers")
+      (click-prompt state :runner "Steal")
+      (is (= "Government Takeover" (:title (first (:hand (get-corp))))) "Gov Takeover isn't stolen")
+      (is (= "Domestic Sleepers" (:title (first (:scored (get-runner))))) "Domestic Sleepers is stolen")))
+  (testing "Allows for accessing upgrades. Issue #2376"
+    (do-game
+      (new-game {:corp {:deck ["Dedicated Neural Net" (qty "Scorched Earth" 2)
+                               "Hedge Fund" "Caprice Nisei"]}
+                 :runner {:deck ["HQ Interface"]}})
+      (play-from-hand state :corp "Caprice Nisei" "HQ")
+      (play-and-score state "Dedicated Neural Net")
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "0 [Credits]")
+      (click-prompt state :corp "1 [Credits]")
+      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (click-prompt state :runner "Card from hand")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Unrezzed upgrade in HQ")
+      (click-prompt state :runner "No action")
+      (is (not (:run @state)) "Run completed")))
+  (testing "Multiaccess works properly"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}
+                 :runner {:deck ["HQ Interface"]}})
+      (play-and-score state "Dedicated Neural Net")
+      (take-credits state :corp)
+      (play-from-hand state :runner "HQ Interface")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "0 [Credits]")
+      (click-prompt state :corp "1 [Credits]")
+      (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access"))))
 
 (deftest degree-mill
   ;; Degree Mill
@@ -857,16 +870,32 @@
 
 (deftest domestic-sleepers
   ;; Domestic Sleepers
-  (do-game
-    (new-game {:corp {:deck ["Domestic Sleepers"]}})
-    (play-and-score state "Domestic Sleepers")
-    (core/gain state :corp :click 3)
-    (let [ds_scored (get-scored state :corp 0)]
-      (is (zero? (get-counters (refresh ds_scored) :agenda)) "Should start with 0 agenda counters")
-      (is (zero? (:agenda-point (get-corp))) "Should provide 0 agenda points initially")
-      (card-ability state :corp ds_scored 0)
-      (is (= 1 (get-counters (refresh ds_scored) :agenda)) "Should gain 1 agenda counter")
-      (is (= 1 (:agenda-point (get-corp))) "Should provide 1 agenda point after ability use"))))
+  (testing "Ability changes points"
+    (do-game
+      (new-game {:corp {:deck ["Domestic Sleepers"]}})
+      (play-and-score state "Domestic Sleepers")
+      (core/gain state :corp :click 3)
+      (let [ds_scored (get-scored state :corp 0)]
+        (is (zero? (get-counters (refresh ds_scored) :agenda)) "Should start with 0 agenda counters")
+        (is (zero? (:agenda-point (get-corp))) "Should provide 0 agenda points initially")
+        (card-ability state :corp ds_scored 0)
+        (is (= 1 (get-counters (refresh ds_scored) :agenda)) "Should gain 1 agenda counter")
+        (is (= 1 (:agenda-point (get-corp))) "Should provide 1 agenda point after ability use"))))
+  (testing "Interaction with Mark Yale (issue #2920)"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Domestic Sleepers" "Mark Yale"]
+                        :credits 10}})
+      (core/gain state :corp :click 5)
+      (play-from-hand state :corp "Mark Yale" "New remote")
+      (play-and-score state "Domestic Sleepers")
+      (let [sleepers (get-scored state :corp 0)
+            yale (get-content state :remote1 0)]
+        (card-ability state :corp sleepers 0)
+        (core/rez state :corp yale)
+        (card-ability state :corp yale 1)
+        (click-card state :corp "Domestic Sleepers")
+        (is (zero? (:agenda-point (get-corp))) "Domestic Sleepers is worth 0 points after losing the agenda counter")))))
 
 (deftest eden-fragment
   ;; Test that Eden Fragment ignores the install cost of the first ice
@@ -2004,14 +2033,22 @@
   ;; Obotaka Protocol
   (do-game
     (new-game {:corp {:id "Jinteki: Personal Evolution"
-                      :deck [(qty "Obokata Protocol" 10)]}
-               :runner {:deck [(qty "Sure Gamble" 4)]}})
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["Obokata Protocol" "Merger" "Hostile Takeover"]}
+               :runner {:hand [(qty "Sure Gamble" 6)]}})
     (play-from-hand state :corp "Obokata Protocol" "New remote")
     (take-credits state :corp)
-    (core/gain state :runner :agenda-point 6)
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Steal")
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (take-credits state :corp)
     (run-empty-server state "Server 1")
-    (click-prompt state :runner "Pay to steal")
-    (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")
+    (changes-val-macro
+      4 (count (:discard (get-runner)))
+      "Runner paid 4 net damage"
+      (click-prompt state :runner "Pay to steal"))
     (is (= :runner (:winner @state)) "Runner wins")
     (is (= "Agenda" (:reason @state)) "Win condition reports agenda points")))
 
@@ -2505,7 +2542,26 @@
         (card-ability state :corp pyu-scored 0)
         (click-card state :corp eli1)
         (click-prompt state :corp "Done")
-        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during second selection should bring back counter")))))
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during second selection should bring back counter"))))
+  (testing "Swap inner ice with HQ. Issue #4831"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Project Yagi-Uda" "Eli 1.0" (qty "Ice Wall" 2)]
+                        :credits 20}})
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+      (let [pyu (get-content state :remote1 0)]
+        (advance state pyu 4)
+        (core/score state :corp {:card (refresh pyu)}))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (let [pyu-scored (get-scored state :corp 0)]
+        (run-on state :hq)
+        (card-ability state :corp pyu-scored 0)
+        (click-card state :corp (get-ice state :hq 0))
+        (click-card state :corp "Eli 1.0")
+        (is (= (:title (get-ice state :hq 0)) "Eli 1.0") "Swapped Ice Wall with Eli 1.0")))))
 
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.

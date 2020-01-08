@@ -279,25 +279,42 @@
 
 (deftest aryabhata-tech
   ;; Aryabhata Tech
-  (do-game
-    (new-game {:corp {:deck ["Aryabhata Tech"
-                             "Hunter"]}})
-    (play-from-hand state :corp "Aryabhata Tech" "New remote")
-    (play-from-hand state :corp "Hunter" "HQ")
-    (let [at (get-content state :remote1 0)
-          h (get-ice state :hq 0)]
-      (core/rez state :corp (refresh at))
-      (core/rez state :corp (refresh h))
+  (testing "Credit gain and loss"
+    (do-game
+      (new-game {:corp {:deck ["Aryabhata Tech"
+                               "Hunter"]}})
+      (play-from-hand state :corp "Aryabhata Tech" "New remote")
+      (play-from-hand state :corp "Hunter" "HQ")
+      (let [at (get-content state :remote1 0)
+            h (get-ice state :hq 0)]
+        (core/rez state :corp (refresh at))
+        (core/rez state :corp (refresh h))
+        (take-credits state :corp)
+        (run-on state :hq)
+        (run-continue state)
+        (let [c-credits (:credit (get-corp))
+              r-credits (:credit (get-runner))]
+          (card-subroutine state :corp h 0)
+          (click-prompt state :corp "0")
+          (click-prompt state :runner "0")
+          (is (= 1 (- (:credit (get-corp)) c-credits)))
+          (is (= -1 (- (:credit (get-runner)) r-credits)))))))
+  (testing "Interaction with trash effects like CtM (issue #2541)"
+    (do-game
+      (new-game {:corp {:id "NBN: Controlling the Message"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Aryabhata Tech"]}})
+      (play-from-hand state :corp "Aryabhata Tech" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
-      (run-on state :hq)
-      (run-continue state)
-      (let [c-credits (:credit (get-corp))
-            r-credits (:credit (get-runner))]
-        (card-subroutine state :corp h 0)
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Runner loses no additional credits from successful trace"
+        (click-prompt state :corp "Yes")
         (click-prompt state :corp "0")
-        (click-prompt state :runner "0")
-        (is (= 1 (- (:credit (get-corp)) c-credits)))
-        (is (= -1 (- (:credit (get-runner)) r-credits)))))))
+        (click-prompt state :runner "0")))))
 
 (deftest bass-ch1r180g4
   (do-game

@@ -299,19 +299,32 @@
 
 (deftest bhagat
   ;; Bhagat - only trigger on first run
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)]}
-               :runner {:deck ["Bhagat"]}})
-    (starting-hand state :corp [])
-    (take-credits state :corp)
-    (run-empty-server state :hq)
-    (play-from-hand state :runner "Bhagat")
-    (run-empty-server state :hq)
-    (is (empty? (:discard (get-corp))) "Bhagat did not trigger on second successful run")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (run-empty-server state :hq)
-    (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
+  (testing "only trigger on first run"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)]}
+                :runner {:deck ["Bhagat"]}})
+      (starting-hand state :corp [])
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (play-from-hand state :runner "Bhagat")
+      (run-empty-server state :hq)
+      (is (empty? (:discard (get-corp))) "Bhagat did not trigger on second successful run")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
+  (testing "only trigger on first run"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)]
+                        :hand ["AR-Enhanced Security"]}
+                :runner {:deck ["Bhagat"]}})
+      (core/gain state :corp :click 10 :credit 10)
+      (play-and-score state "AR-Enhanced Security")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bhagat")
+      (run-empty-server state :hq)
+      (is (= 0 (count-tags state)) "Runner has no tag")
+      (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card"))))
 
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
@@ -498,47 +511,68 @@
       (is (zero? (get-counters (refresh ce) :recurring)) "Has used recurring credit"))))
 
 (deftest councilman
-  ;; Councilman reverses the rezz and prevents re-rezz
-  (do-game
-    (new-game {:corp {:deck ["Jackson Howard"]}
-               :runner {:deck ["Councilman"]}})
-    (play-from-hand state :corp "Jackson Howard" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Councilman")
-    (let [jesus (get-content state :remote1 0)
-          judas (get-resource state 0)]
-      (core/rez state :corp jesus)
-      ;; Runner triggers Councilman
-      (card-ability state :runner judas 0)
-      (click-card state :runner jesus)
-      (is (not (rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
-      (core/rez state :corp (refresh jesus))
-      (is (not (rezzed? (refresh jesus))) "Jackson Howard cannot be rezzed")
+  ;; Councilman reverses the rez and prevents re-rez
+  (testing "Rez prevention"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Chief Slee"]
+                        :credits 10}
+                 :runner {:deck ["Councilman"]}})
+      (play-from-hand state :corp "Chief Slee" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Councilman")
+      (let [slee (get-content state :remote1 0)]
+        (core/rez state :corp slee)
+        (changes-val-macro
+          -2 (:credit (get-runner))
+          "Runner pays 2 credits to derez Slee"
+          ;; Runner triggers Councilman
+          (click-prompt state :runner "Yes"))
+        (is (not (rezzed? (refresh slee))) "Chief Slee no longer rezzed")
+        (core/rez state :corp (refresh slee))
+        (is (not (rezzed? (refresh slee))) "Chief Slee cannot be rezzed")
+        (take-credits state :runner)
+        ;; Next turn
+        (core/rez state :corp (refresh slee))
+        (is (rezzed? (refresh slee)) "Chief Slee can be rezzed next turn"))))
+  (testing "Rezz no longer prevented when card changes zone (issues #1571)"
+    (do-game
+      (new-game {:corp {:deck ["Jackson Howard"]}
+                 :runner {:deck ["Councilman"]}})
+      (play-from-hand state :corp "Jackson Howard" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Councilman")
       (take-credits state :runner)
-      ;; Next turn
-      (core/rez state :corp (refresh jesus))
-      (is (rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
-(deftest-pending councilman-zone-change
-  ;; Rezz no longer prevented when card changes zone (issues #1571)
-  (do-game
-    (new-game {:corp {:deck ["Jackson Howard"]}
-               :runner {:deck ["Councilman"]}})
-    (play-from-hand state :corp "Jackson Howard" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Councilman")
-    (take-credits state :runner)
-    (let [jesus (get-content state :remote1 0)
-          judas (get-resource state 0)]
-      (core/rez state :corp jesus)
-      ;; Runner triggers Councilman
-      (card-ability state :runner judas 0)
-      (click-card state :runner jesus)
-      (is (not (rezzed? (refresh jesus))) "Jackson Howard no longer rezzed")
-      (core/move state :corp (refresh jesus) :hand))
-    (play-from-hand state :corp "Jackson Howard" "New remote")
-    (let [jesus (get-content state :remote2 0)]
-      (core/rez state :corp jesus)
-      (is (rezzed? (refresh jesus)) "Jackson Howard can be rezzed after changing zone"))))
+      (let [jhow (get-content state :remote1 0)]
+        (core/rez state :corp jhow)
+        (click-prompt state :runner "Yes")
+        (is (not (rezzed? (refresh jhow))) "Jackson Howard no longer rezzed")
+        (core/move state :corp (refresh jhow) :hand))
+      (play-from-hand state :corp "Jackson Howard" "New remote")
+      (let [jhow (get-content state :remote2 0)]
+        (core/rez state :corp jhow)
+        (is (rezzed? (refresh jhow)) "Jackson Howard can be rezzed after changing zone"))))
+  (testing "Preventing Councilman's self-trash prevents the rez prevention effect"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Chief Slee"]}
+                 :runner {:deck ["Councilman" "Fall Guy"]}})
+      (play-from-hand state :corp "Chief Slee" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Councilman")
+      (play-from-hand state :runner "Fall Guy")
+      (take-credits state :runner)
+      (let [slee (get-content state :remote1 0)
+            councilman (get-resource state 0)
+            fall-guy (get-resource state 1)]
+        (core/rez state :corp slee)
+        (changes-val-macro
+          -2 (:credit (get-runner))
+          "Runner still pays for Councilman effect"
+          (click-prompt state :runner "Yes")
+          (card-ability state :runner fall-guy 0)
+          (is (rezzed? (refresh slee)) "Chief Slee still rezzed")
+          (is (refresh councilman) "Councilman's trash is prevented"))))))
 
 (deftest counter-surveillance
   ;; Counter-Surveillance
@@ -3037,7 +3071,27 @@
           (card-ability state :runner pau 1)
           (changes-val-macro -3 (:credit (get-runner))
                              "Pay 3 for Corroder install (1+2)"
-                             (click-card state :runner cor)))))))
+                             (click-card state :runner cor))))))
+  (testing "Can't lower cost below 1. Issue #4816"
+    (do-game
+      (new-game {:runner {:hand ["Paule's Café" "Hernando Cortez" "Kati Jones""Fan Site" "Miss Bones" "Corroder"]}})
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10 :click 10)
+      (play-from-hand state :runner "Paule's Café")
+      (play-from-hand state :runner "Hernando Cortez")
+      (play-from-hand state :runner "Kati Jones")
+      (play-from-hand state :runner "Fan Site")
+      (play-from-hand state :runner "Miss Bones")
+      (let [pau (get-resource state 0)]
+        (card-ability state :runner pau 0)
+        (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
+        (is (= 0 (count (:hand (get-runner)))) "Hosted Corroder on the Café")
+        (let [cor (find-card "Corroder" (:hosted (refresh pau)))]
+          (changes-val-macro
+            -1 (:credit (get-runner))
+            "Pay 1 credit for Corroder (2 - 4 + 1 base)"
+            (card-ability state :runner pau 1)
+            (click-card state :runner cor)))))))
 
 (deftest penumbral-toolkit
   ;; Penumbral Toolkit
@@ -3572,19 +3626,35 @@
 
 (deftest spoilers
   ;; Spoilers - Mill the Corp when it scores an agenda
-  (do-game
-    (new-game {:corp {:deck ["Hostile Takeover" "Hedge Fund"]}
-               :runner {:deck ["Spoilers"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Spoilers")
-    (take-credits state :runner)
-    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
-    (is (= 1 (count (:deck (get-corp)))))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (let [ht (get-content state :remote1 0)]
-      (score-agenda state :corp ht)
-      (is (= 1 (count (:discard (get-corp)))))
-      (is (zero? (count (:deck (get-corp)))) "Last card from R&D milled"))))
+  (testing "basic functionality"
+    (do-game
+      (new-game {:corp {:deck ["Hostile Takeover" "Hedge Fund"]}
+                 :runner {:deck ["Spoilers"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Spoilers")
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (is (= 1 (count (:deck (get-corp)))))
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (let [ht (get-content state :remote1 0)]
+        (score-agenda state :corp ht)
+        (is (= 1 (count (:discard (get-corp)))))
+        (is (zero? (count (:deck (get-corp)))) "Last card from R&D milled"))))
+  (testing "Interaction with Friday Chip. Issue #4838"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hostile Takeover"]}
+                 :runner {:deck ["Spoilers" "Friday Chip"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Spoilers")
+      (play-from-hand state :runner "Friday Chip")
+      (take-credits state :runner)
+      (changes-val-macro
+        0 (get-counters (get-hardware state 0) :virus)
+        "Friday Chip shouldn't gain counters from Spoilers"
+        (score-agenda state :corp (get-content state :remote1 0))
+        (is (empty? (:prompt (get-runner))) "Runner has no Friday Chip prompt")))))
 
 (deftest stim-dealer
   ;; Stim Dealer - Take 1 brain damage when it accumulates 2 power counters
@@ -4060,15 +4130,14 @@
   ;; The Black File - Prevent Corp from winning by agenda points
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Sure Gamble" 3)]}
+      (new-game {:corp {:deck [(qty "Sure Gamble" 5)]
+                        :hand ["Vanity Project" "Degree Mill"]}
                  :runner {:deck ["The Black File"]}})
-      (starting-hand state :corp ["Vanity Project"])
-      (core/gain state :corp :agenda-point 3)
+      (play-and-score state "Degree Mill")
       (take-credits state :corp)
       (play-from-hand state :runner "The Black File")
       (take-credits state :runner)
-      (play-from-hand state :corp "Vanity Project" "New remote")
-      (score-agenda state :corp (get-content state :remote1 0))
+      (play-and-score state "Vanity Project")
       (is (= 7 (:agenda-point (get-corp))))
       (is (not (:winner @state)) "No registered Corp win")
       (take-credits state :corp)
@@ -4084,15 +4153,14 @@
         (is (= "Agenda" (:reason @state)) "Win condition reports agendas"))))
   (testing "Corp can still win by flatlining Runner"
     (do-game
-      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Scorched Earth" 3)]}
+      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Scorched Earth" 3)]
+                        :hand ["Vanity Project" "Scorched Earth" "Degree Mill"]}
                  :runner {:deck ["The Black File"]}})
-      (starting-hand state :corp ["Vanity Project" "Scorched Earth"])
-      (core/gain state :corp :agenda-point 3)
+      (play-and-score state "Degree Mill")
       (take-credits state :corp)
       (play-from-hand state :runner "The Black File")
       (take-credits state :runner)
-      (play-from-hand state :corp "Vanity Project" "New remote")
-      (score-agenda state :corp (get-content state :remote1 0))
+      (play-and-score state "Vanity Project")
       (is (= 7 (:agenda-point (get-corp))))
       (is (not (:winner @state)) "No registered Corp win")
       (take-credits state :corp)

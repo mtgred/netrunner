@@ -88,6 +88,11 @@
 (define-card "Acme Consulting: The Truth You Need"
   (letfn [(activate [state card active]
             (update! state :corp (assoc-in card [:special :acme-active] active))
+            (system-msg state :corp
+                        (str "uses Acme Consulting: The Truth You Need to"
+                             (if active
+                               " give the runner 1 additional tag"
+                               " remove 1 additional tag")))
             (swap! state update-in [:runner :tag :additional] (if active inc dec))
             (trigger-event state :corp :runner-additional-tag-change (if active 1 -1)))
           (outermost? [run-position run-ices]

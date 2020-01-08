@@ -180,10 +180,10 @@
 
 (defn breakable-subroutines-choice
   "Takes an ice, returns the breakable subroutines for a choices prompt"
-  [ice]
+  [state side eid card ice]
   (for [sub (remove #(or (:broken %)
                          (not (if (fn? (:breakable %))
-                                ((:breakable %) ice)
+                                ((:breakable %) state side eid ice [card])
                                 (:breakable % true)))) (:subroutines ice))]
     (make-label (:sub-effect sub))))
 
@@ -354,9 +354,9 @@
                  (when (and target-count (< 1 target-count))
                    (str " (" (count broken-subs)
                         " of " target-count ")")))
-    :choices (req (concat (breakable-subroutines-choice ice)
+    :choices (req (concat (breakable-subroutines-choice state side eid card ice)
                           (when-not (and (:all args)
-                                         (pos? (count (breakable-subroutines-choice ice)))
+                                         (pos? (count (breakable-subroutines-choice state side eid card ice)))
                                          (< 1 target-count))
                             '("Done"))))
     :effect (req (if (= "Done" target)
@@ -364,17 +364,19 @@
                                                          :early-exit true})
                    (let [sub (first (filter #(and (not (:broken %)) (= target (make-label (:sub-effect %)))) (:subroutines ice)))
                          ice (break-subroutine ice sub)
-                         broken-subs (cons sub broken-subs)]
-                     (if (and (pos? (count (breakable-subroutines-choice ice)))
+                         broken-subs (cons sub broken-subs)
+                         breakable-subs (breakable-subroutines-choice state side eid card ice)]
+                     (if (and (pos? (count breakable-subs))
                               (< (count broken-subs) (if (pos? target-count) target-count (count (:subroutines ice)))))
                        (continue-ability state side (break-subroutines-impl ice target-count broken-subs args) card nil)
                        (complete-with-result state side eid {:broken-subs broken-subs
-                                                             :early-exit (zero? (count (breakable-subroutines-choice ice)))})))))}))
+                                                             :early-exit (zero? (count breakable-subs))})))))}))
 
 (defn break-subroutines-msg
-  ([ice broken-subs] (break-subroutines-msg ice broken-subs nil))
-  ([ice broken-subs args]
-   (str "break " (quantify (count broken-subs)
+  ([ice broken-subs breaker] (break-subroutines-msg ice broken-subs breaker nil))
+  ([ice broken-subs breaker args]
+   (str "use " (:title breaker)
+        " to break " (quantify (count broken-subs)
                            (str (when-let [subtype (:subtype args)]
                                   (when (not= "All" subtype)
                                     (str subtype " ")))
@@ -403,7 +405,7 @@
                                                                        :broken-subs broken-subs)
                                                                 card ice))
                            message (when (seq broken-subs)
-                                     (break-subroutines-msg ice broken-subs args))]
+                                     (break-subroutines-msg ice broken-subs breaker args))]
                        (wait-for (pay-sync state side (make-eid state {:source-type :ability}) card total-cost)
                                  (if-let [cost-str async-result]
                                    (do (system-msg state :runner (str cost-str " to " message))
@@ -446,7 +448,7 @@
                              (if subtype
                                (or (= subtype "All")
                                    (has-subtype? current-ice subtype)))
-                             (pos? (count (breakable-subroutines-choice current-ice)))
+                             (pos? (count (breakable-subroutines-choice state side eid card current-ice)))
                              (if (:req args)
                                ((:req args) state side eid card targets)
                                true)))
@@ -535,7 +537,7 @@
                                     (:break break-ability 1))
               unbroken-subs (count (remove :broken (:subroutines current-ice)))
               no-unbreakable-subs (empty? (filter #(if (fn? (:breakable %)) ; filter for possibly unbreakable subs
-                                                     (if (= :unrestricted ((:breakable %) current-ice)) false true) ; breakable is a 1-fn
+                                                     (not= :unrestricted ((:breakable %) state side eid current-ice [card]))
                                                      (not (:breakable % true))) ; breakable is a bool
                                                   (:subroutines current-ice)))
               times-break (when (and (pos? unbroken-subs)

@@ -226,15 +226,9 @@
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
   [state side scored stolen]
-  (let [corp-ap-stolen (get-agenda-points state :corp stolen)
-        corp-ap-scored (get-agenda-points state :corp scored)
-        runner-ap-stolen (get-agenda-points state :runner stolen)
-        runner-ap-scored (get-agenda-points state :runner scored)
-        corp-ap-change (- corp-ap-stolen corp-ap-scored)
-        runner-ap-change (- runner-ap-scored runner-ap-stolen)]
-    ;; Remove end of turn events for swapped out agenda
-    (swap! state update-in [:corp :register :end-turn]
-           (fn [events] (remove #(same-card? scored (:card %)) events)))
+  ;; Update location information
+  (let [scored (assoc scored :scored-side :runner)
+        stolen (assoc stolen :scored-side :corp)]
     ;; Move agendas
     (swap! state update-in [:corp :scored]
            (fn [coll] (conj (remove-once #(same-card? % scored) coll) stolen)))
@@ -242,9 +236,6 @@
            (fn [coll] (conj (remove-once #(same-card? % stolen) coll)
                             (if-not (card-flag? scored :has-abilities-when-stolen true)
                               (dissoc scored :abilities :events) scored))))
-    ;; Update agenda points
-    (gain-agenda-point state :runner runner-ap-change)
-    (gain-agenda-point state :corp corp-ap-change)
     ;; Set up abilities and events for new scored agenda
     (let [new-scored (find-cid (:cid stolen) (get-in @state [:corp :scored]))
           abilities (:abilities (card-def new-scored))
@@ -258,7 +249,10 @@
     ;; Set up abilities and events for new stolen agenda
     (when-not (card-flag? scored :has-events-when-stolen true)
       (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
-        (deactivate state :corp new-stolen)))))
+        (deactivate state :corp new-stolen)))
+    ;; Update agenda points
+    (update-all-agenda-points state side)
+    (check-winner state side)))
 
 (defn remove-old-current
   "Removes the old current when a new one is played, or an agenda is stolen / scored"
