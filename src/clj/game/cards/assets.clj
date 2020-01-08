@@ -2121,16 +2121,18 @@
                            (in-hand? %))}
      :msg "swap it for an asset or agenda from HQ"
      :effect (req (let [c (get-counters card :advancement)
-                        target (assoc target :advance-counter c)]
-                    (move state side card :hand)
-                    (wait-for (corp-install state side target (zone->name (butlast (:zone card))) {:index (:index card)})
-                              (let [new-card (nth (get-in @state (cons :corp (:zone card))) (:index card))]
+                        target (assoc target :advance-counter c)
+                        server (zone->name (butlast (:zone card)))
+                        index (:index card)]
+                    (move state :corp card :hand)
+                    (wait-for (corp-install state :corp target server {:index index})
+                              (let [new-card async-result]
                                 (continue-ability
                                   state :runner
                                   {:optional
                                    {:prompt "Access the newly installed card?"
                                     :yes-ability {:async true
-                                                  :effect (effect (access-card new-card))}}}
+                                                  :effect (effect (access-card eid new-card))}}}
                                   card nil)))))}
     "Swap Toshiyuki Sakai with an agenda or asset from HQ?"))
 
