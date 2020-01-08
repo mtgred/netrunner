@@ -3987,7 +3987,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Government Investigations")
       (play-from-hand state :runner "Push Your Luck")
-      (is (= '("0" "1" "3") (-> (get-runner) :prompt first :choices)) "Runner can't choose 2 because of Government Investigations"))))
+      (is (= ["0" "1" "3"] (prompt-buttons :runner)) "Runner can't choose 2 because of Government Investigations"))))
 
 (deftest pushing-the-envelope
   ;; Run. Add 2 strength to each installer breaker.

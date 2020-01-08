@@ -355,7 +355,7 @@
       (doseq [_ (range 7)
               ;; Get the first card listed in the prompt choice
               ;; TODO make this function
-              :let [card (-> (prompt-map :corp) :choices first :value :title)]]
+              :let [card (first (prompt-titles :corp))]]
         (click-prompt state :corp card))
       (click-prompt state :corp "Done") ; Finished with trashing
       (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
@@ -1854,7 +1854,7 @@
                       grip (count (:hand (get-runner)))]
                   (core/gain-tags state :runner tags)
                   (play-and-score state "Meteor Mining")
-                  (is (= num-choices (count (:choices (first (get-in @state [:corp :prompt]))))))
+                  (is (= num-choices (count (prompt-buttons :corp))))
                   (click-prompt state :corp pick)
                   (is (= (+ credits creds) (:credit (get-corp)))
                       (str "Corp should have " (+ credits creds) " credits"))
@@ -2817,7 +2817,7 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "Remote 1")
       (let [cache (get-program state 0)]
-        (is (= ["Pay to steal" "No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal")
+        (is (= ["Pay to steal" "No action"] (prompt-buttons :runner)) "Runner should not be able to steal")
         (click-prompt state :runner "Pay to steal")
         (click-card state :runner "Cache")
         (is (nil? (refresh cache)) "Cache is trashed")
@@ -2829,7 +2829,7 @@
       (play-from-hand state :corp "SDS Drone Deployment" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Remote 1")
-      (is (= ["No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal"))))
+      (is (= ["No action"] (prompt-buttons :runner)) "Runner should not be able to steal"))))
 
 (deftest self-destruct-chips
   ;; Self-Destruct Chips
@@ -3356,7 +3356,7 @@
     (advance state (get-content state :remote2 0))
     (take-credits state :corp)
     (run-empty-server state "Server 2")
-    (is (= ["Pay to steal" "No action"] (:choices (prompt-map :runner))))
+    (is (= ["Pay to steal" "No action"] (prompt-buttons :runner)))
     (click-prompt state :runner "Pay to steal")
     (is (= 1 (:agenda-point (get-runner))))
     (is (= 3 (:credit (get-runner))))))
@@ -3420,7 +3420,7 @@
       (run-empty-server state "Server 1")
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Viral Weaponization" (:hand (get-corp))))
-      (is (= ["Pay 1 [Credits] to trash" "No action"] (:choices (prompt-map :runner))))
+      (is (= ["Pay 1 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
       (take-credits state :runner)
@@ -3460,7 +3460,7 @@
         (run-empty-server state "Server 1")
         (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Viral Weaponization" (:hand (get-corp))))
-        (is (= ["Pay 1 [Credits] to trash" "No action"] (:choices (prompt-map :runner))))
+        (is (= ["Pay 1 [Credits] to trash" "No action"] (prompt-buttons :runner)))
         (click-prompt state :runner "No action")
         (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
         (take-credits state :runner)
