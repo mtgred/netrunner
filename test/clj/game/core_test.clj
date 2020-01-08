@@ -7,6 +7,7 @@
             [game.core :as core]
             [game.core.card :refer [make-cid get-card rezzed? active? get-counters]]
             [game.utils :as utils :refer [server-card]]
+            [game.core.eid :as eid]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]))
 
@@ -359,17 +360,15 @@
   `(let [run# (:run @~state)]
      (is (some? run#) "There is a run happening")
      (is (:jack-out run#) "Runner is allowed to jack out")
-     (core/jack-out ~state :runner nil)
+     (core/jack-out ~state :runner (eid/make-eid ~state))
      true))
 
 (defmacro run-empty-server
   "Make a successful run on specified server, assumes no ice in place."
   [state server]
   `(when (run-on ~state ~server)
-     ; (when (run-next-phase ~state)
-       (when (run-continue ~state)
-         (run-successful ~state))))
-  ; )
+     (when (run-continue ~state)
+       (run-successful ~state))))
 
 (defmacro fire-subs
   [state card]
