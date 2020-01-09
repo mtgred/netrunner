@@ -248,7 +248,7 @@
     (run-successful state)
     (click-prompt state :runner "Analog Dreamers")
     (click-card state :runner "Hostile Takeover")
-    (is (= "Choose a card to shuffle into R&D" (-> (get-runner) :prompt first :msg))
+    (is (= "Choose a card to shuffle into R&D" (:msg (prompt-map :runner)))
         "Can't click on Hostile Takeover")
     (let [number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))
           pad (get-content state :remote2 0)]
@@ -1442,13 +1442,13 @@
     (take-credits state :runner)
     (play-from-hand state :corp "SEA Source")
     (click-prompt state :runner "Yes")
-    (is (zero? (-> (get-corp) :prompt first :base)) "Base trace should now be 0")
+    (is (zero? (:base (prompt-map :corp))) "Base trace should now be 0")
     (is (= 1 (-> (get-runner) :discard count)) "Disrupter should be in Heap")
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
     (is (zero? (count-tags state)) "Runner should gain no tag from beating trace")
     (play-from-hand state :corp "SEA Source")
-    (is (= 3 (-> (get-corp) :prompt first :base)) "Base trace should be reset to 3")))
+    (is (= 3 (:base (prompt-map :corp))) "Base trace should be reset to 3")))
 
 (deftest diwan
   ;; Diwan - Full test
@@ -2113,7 +2113,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Imp")
       (run-empty-server state "Archives")
-      (is (= ["Steal"] (->> (get-runner) :prompt first :choices)) "Should only get the option to steal Hostile on access in Archives"))))
+      (is (= ["Steal"] (prompt-buttons :runner)) "Should only get the option to steal Hostile on access in Archives"))))
 
 (deftest incubator
   ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program
@@ -3472,7 +3472,7 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (= 3 (:credit (get-runner))) "Gained 2 credits from Gabe's ability")
-        (is (= (:cid ash) (-> (get-runner) :prompt first :card :cid)) "Ash interrupted HQ access after Sneakdoor run")
+        (is (= (:cid ash) (-> (prompt-map :runner) :card :cid)) "Ash interrupted HQ access after Sneakdoor run")
         (is (= :hq (-> (get-runner) :register :successful-run first)) "Successful Run on HQ recorded"))))
   (testing "do not switch to HQ if Archives has Crisium Grid. Issue #1229."
     (do-game
@@ -3544,12 +3544,12 @@
       (click-prompt state :runner "Yes")
       ;; rezzed ice scenario
       (run-on state "HQ")
-      (is (empty? (get-in @state [:runner :prompt])) "No option to jack out")
+      (is (empty? (:prompt (get-runner))) "No option to jack out")
       (run-continue state)
       (run-jack-out state)
       ;; no ice scenario
       (run-on state "Archives")
-      (is (empty? (get-in @state [:runner :prompt])) "No option to jack out"))))
+      (is (empty? (:prompt (get-runner))) "No option to jack out"))))
 
 (deftest snowball
   (testing "Strength boost until end of run when used to break a subroutine"
@@ -3651,7 +3651,7 @@
         (card-ability state :runner (get-program state 0) 0)
         (run-continue state)
         (run-successful state)
-        (click-prompt state :runner (->> (get-runner) :prompt first :choices (map :value) (#(nth % 2))))
+        (click-prompt state :runner (nth (prompt-buttons :runner) 2))
         (is (last-log-contains? state "Runner uses Stargate to trash bottom Troll.") "Correct log")))
     (testing "middle card"
       (do-game
@@ -3668,7 +3668,7 @@
         (card-ability state :runner (get-program state 0) 0)
         (run-continue state)
         (run-successful state)
-        (click-prompt state :runner (->> (get-runner) :prompt first :choices (map :value) second))
+        (click-prompt state :runner (second (prompt-buttons :runner)))
         (is (last-log-contains? state "Runner uses Stargate to trash middle Troll.") "Correct log")))
     (testing "top card"
       (do-game
@@ -3685,7 +3685,7 @@
         (card-ability state :runner (get-program state 0) 0)
         (run-continue state)
         (run-successful state)
-        (click-prompt state :runner (->> (get-runner) :prompt first :choices (map :value) first))
+        (click-prompt state :runner (first (prompt-buttons :runner)))
         (is (last-log-contains? state "Runner uses Stargate to trash top Troll.") "Correct log"))))
   (testing "No position indicator if non-duplicate selected"
     (do-game
@@ -3702,7 +3702,7 @@
       (card-ability state :runner (get-program state 0) 0)
       (run-continue state)
       (run-successful state)
-      (click-prompt state :runner (->> (get-runner) :prompt first :choices (map :value) second))
+      (click-prompt state :runner (second (prompt-buttons :runner)))
       (is (last-log-contains? state "Runner uses Stargate to trash Herald.") "Correct log"))))
 
 (deftest study-guide
@@ -4026,7 +4026,7 @@
     (click-prompt state :runner "Barrier")
     (click-card state :runner (get-ice state :rd 0))
     (is (= 1 (count (:discard (get-runner)))) "Wari in heap")
-    (is (seq (get-in @state [:runner :prompt])) "Runner is currently accessing Ice Wall")))
+    (is (seq (:prompt (get-runner))) "Runner is currently accessing Ice Wall")))
 
 (deftest wyrm
   ;; Wyrm reduces strength of ice

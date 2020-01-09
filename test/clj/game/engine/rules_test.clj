@@ -759,7 +759,7 @@
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Apocalypse")
     (is (= #{"Hostile Infrastructure" "Marilyn Campaign" "Calvin B4L3Y"}
-           (->> (get-corp) :prompt first :choices (map :title) (into #{})))
+           (into #{} (prompt-titles :corp)))
         "Corp has the simultaneous prompt")
     (click-prompt state :corp "Marilyn Campaign")
     (click-prompt state :corp "Yes")

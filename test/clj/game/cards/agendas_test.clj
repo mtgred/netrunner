@@ -2204,7 +2204,7 @@
     (play-from-hand state :runner "Clone Chip")
     (take-credits state :runner)
     (play-and-score state "Project Ares")
-    (is (empty? (get-in @state [:runner :prompt])) "No prompt for Runner if scored with 4 advancement tokens")
+    (is (empty? (:prompt (get-runner))) "No prompt for Runner if scored with 4 advancement tokens")
     (core/gain state :corp :click 5)
     (play-from-hand state :corp "Project Ares" "New remote")
     (let [ares (get-content state :remote2 0)]
@@ -2213,7 +2213,7 @@
       (core/score state :corp {:card (refresh ares)})
       (is (prompt-is-card? state :runner ares) "Runner has Ares prompt to trash installed cards"))
     (click-card state :runner (find-card "Clone Chip" (:hardware (:rig (get-runner)))))
-    (is (empty? (get-in @state [:runner :prompt])) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
+    (is (empty? (:prompt (get-runner))) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
     (is (= 1 (count (:discard (get-runner)))))
     (is (= 1 (count-bad-pub state)))))
 
@@ -2807,7 +2807,7 @@
     (do-game
       (new-game {:corp {:hand ["SDS Drone Deployment"]}})
       (play-and-score state "SDS Drone Deployment")
-      (is (nil? (seq (:prompt (get-corp)))) "Corp doesn't get any choices when runner has no installed programs")))
+      (is (empty? (:prompt (get-corp))) "Corp doesn't get any choices when runner has no installed programs")))
   (testing "Runner steal, a program is installed"
     (do-game
       (new-game {:corp {:hand ["SDS Drone Deployment"]}

@@ -165,7 +165,7 @@
         (click-prompt state :corp "Medical Breakthrough") ; simult. effect resolution
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "0")
-        (is (= 3 (-> (get-runner) :prompt first :strength)) "Trace base strength is 3 after stealing first Breakthrough")
+        (is (= 3 (:strength (prompt-map :runner))) "Trace base strength is 3 after stealing first Breakthrough")
         (click-prompt state :runner "0")
         (let [grip (-> (get-runner) :hand count)]
           (is (= 1 (count (get-program state))) "There is an Analog Dreamers installed")
@@ -177,7 +177,7 @@
         ;; (click-prompt state :corp "Medical Breakthrough") ; there is no simult. effect resolution on score for some reason
         (click-prompt state :corp "Yes") ; corp should get to trigger trace even when no runner cards are installed
         (click-prompt state :corp "0")
-        (is (= 2 (-> (get-runner) :prompt first :strength)) "Trace base strength is 2 after scoring second Breakthrough"))))
+        (is (= 2 (:strength (prompt-map :runner))) "Trace base strength is 2 after scoring second Breakthrough"))))
   (testing "with Team Sponsorship"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -713,7 +713,7 @@
       (card-ability state :corp clyde 0)
       (is (zero? (:credit (get-runner))))
       (is (zero? (count (:deck (get-runner)))))
-      (is (empty? (-> @state :corp :prompt))))))
+      (is (empty? (:prompt (get-corp)))))))
 
 (deftest commercial-bankers-group
   ;; Commercial Bankers Group - Gain 3 credits at turn start if unprotected by ice
@@ -759,7 +759,7 @@
         (is (zero? (get-counters (refresh iw) :advancement)))
         (is (= 2 (get-counters (refresh fw) :advancement)))
         (core/end-phase-12 state :corp nil)
-        (is (nil? (-> (get-runner) :prompt first))))))
+        (is (empty? (:prompt (get-runner)))))))
   (testing "Variable number of advanceable cards"
     (do-game
       (new-game {:corp {:deck ["Constellation Protocol" "Ice Wall" "Hive"]}})
@@ -958,7 +958,7 @@
             "Resistor second last card in deck")
         ;; Try to use first Sensie again
         (card-ability state :corp sensie1 0)
-        (is (empty? (-> @state :corp :prompt)) "Sensie didn't activate")
+        (is (empty? (:prompt (get-runner))) "Sensie didn't activate")
         (is (= 3 (count (:hand (get-corp)))))
         ;; Use second Sensie
         (starting-hand state :corp ["Hedge Fund" "Jackson Howard"])
@@ -1285,7 +1285,7 @@
     (run-continue state)
     ;; server
     (run-successful state)
-    (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner waiting for Corp to act")
+    (is (= :waiting (prompt-type :runner)) "Runner waiting for Corp to act")
     (click-prompt state :corp "Yes")
     (click-prompt state :runner "Pay 0 [Credits] to trash")
     (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
@@ -2232,7 +2232,7 @@
       (take-credits state :runner)
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
       (card-ability state :corp (refresh kuwinda) 0)
-      (is (zero? (-> (get-corp) :prompt first :base)) "Base Trace should start at 0")
+      (is (zero? (:base (prompt-map :corp))) "Base Trace should start at 0")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (zero? (-> (get-runner) :discard count)) "Runner shouldn't take any damage")
@@ -2242,7 +2242,7 @@
       (take-credits state :runner)
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
       (card-ability state :corp (refresh kuwinda) 0)
-      (is (= 1 (-> (get-corp) :prompt first :base)) "Base Trace should now start at 1")
+      (is (= 1 (:base (prompt-map :corp))) "Base Trace should now start at 1")
       (click-prompt state :corp "0")
       (click-prompt state :runner "1")
       (is (zero? (-> (get-runner) :discard count)) "Runner shouldn't take any damage")
@@ -2252,7 +2252,7 @@
       (take-credits state :runner)
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
       (card-ability state :corp (refresh kuwinda) 0)
-      (is (= 2 (-> (get-corp) :prompt first :base)) "Base Trace should be up to 2")
+      (is (= 2 (:base (prompt-map :corp))) "Base Trace should be up to 2")
       (click-prompt state :corp "1")
       (click-prompt state :runner "0")
       (is (= 1 (:brain-damage (get-runner))) "Trace succeeded so runner should take 1 brain damage")
@@ -2316,7 +2316,7 @@
         (is (= 3 (:agenda-point (get-corp))) "Gained 3 agenda points")
         (take-credits state :corp)
         (run-empty-server state "HQ")
-        (is (= "Select a card to place 1 advancement token on" (:msg (first (:prompt (get-corp))))) "Puppet Master event fired")))))
+        (is (= "Select a card to place 1 advancement token on" (:msg (prompt-map :corp))) "Puppet Master event fired")))))
 
 (deftest lakshmi-smartfabrics
   ;; Lakshmi Smartfabrics - Gain power counter when rezzing a card; use counters to protect agenda in HQ
@@ -3058,7 +3058,7 @@
      (core/lose state :runner :click 3)
      (is (empty? (:hand (get-runner))) "Runner's grip is still empty")
      (core/end-turn state :runner nil)
-     (is (= 5 (prompt-buttons :runner)) "Runner has 5 card choices")
+     (is (= 5 (count (prompt-buttons :runner))) "Runner has 5 card choices")
      (is (= 6 (count (:deck (get-runner)))) "No cards have been drawn yet")
      (is (not (empty? (:prompt (get-runner)))) "Runner prompted to be classy")
      (is (not (empty? (:prompt (get-corp)))) "Corp waiting for Runner to be classy")
@@ -3066,7 +3066,7 @@
      (is (empty? (:prompt (get-runner))) "Runner done being classy")
      (is (empty? (:prompt (get-corp))) "Corp not waiting for Runner to be classy")
      (core/start-turn state :corp nil) ;; this causes portals to trigger
-     (is (= 2 (prompt-buttons :runner)) "Runner has 2 card choices")
+     (is (= 2 (count (prompt-buttons :runner))) "Runner has 2 card choices")
      (is (= 2 (count (:deck (get-runner)))) "2 cards in deck before drawing")
      (is (= 4 (:credit (get-corp))) "Corp has not gained credits yet")
      (click-prompt state :runner "Motivation")
@@ -3986,7 +3986,7 @@
         (is (:corp-phase-12 @state) "Corp is in Step 1.2 because SIU is on the table")
         (card-ability state :corp (refresh siu) 0)
         (is (= 1 (-> (get-corp) :discard count)) "SIU should discard to fire trace")
-        (is (= 3 (-> (get-corp) :prompt first :base)) "Base Trace should be 3")
+        (is (= 3 (:base (prompt-map :corp))) "Base Trace should be 3")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (= 1 (count-tags state)) "Runner has 1 tag")))))
@@ -3999,7 +3999,7 @@
       (play-from-hand state :corp "Snare!" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+      (is (= :waiting (prompt-type :runner))
           "Runner has prompt to wait for Snare!")
       (click-prompt state :corp "Yes")
       (is (= 3 (:credit (get-corp))) "Corp had 7 and paid 4 for Snare! 1 left")
@@ -4013,7 +4013,7 @@
       (take-credits state :corp)
       (core/lose state :corp :credit 7)
       (run-empty-server state "Server 1")
-      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+      (is (= :waiting (prompt-type :runner))
           "Runner has prompt to wait for Snare!")
       (click-prompt state :corp "Yes")
       (is (zero? (count-tags state)) "Runner has 0 tags")
@@ -4033,7 +4033,7 @@
         (core/rez state :corp drt)
         (run-continue state)
         (run-successful state)
-        (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+        (is (= :waiting (prompt-type :runner))
             "Runner has prompt to wait for Snare!")
         (click-prompt state :corp "Yes")
         (is (= 1 (count-tags state)) "Runner has 1 tag")
@@ -4216,7 +4216,7 @@
         (take-credits state :corp)
         (is (= 10 (:credit (get-corp))) "Corp now has 10cr")
         ; run without spending click
-        (is (not (empty? (get-in @state [:runner :prompt]))))
+        (is (some? (prompt-map :runner)))
         (click-prompt state :runner "Yes")
         (click-prompt state :runner "Archives")
         (is (= 10 (:credit (get-corp))) "Corp did not gain credits from Ashes (no click spent)")
@@ -4231,7 +4231,7 @@
         (take-credits state :corp)
         (is (= 15 (:credit (get-corp))) "Corp now has 15cr")
         ; run without spending click
-        (is (not (empty? (get-in @state [:runner :prompt]))))
+        (is (some? (prompt-map :runner)))
         (click-prompt state :runner "Yes")
         (click-prompt state :runner "Archives")
         (is (= 15 (:credit (get-corp))) "Corp did not gain credits from Ashes (no click spent)")
@@ -4671,7 +4671,7 @@
       (take-credits state :corp)
       (is (= 2 (get-counters (refresh toshi) :advancement)) "Toshiyuki has 2 advancements")
       (run-empty-server state "Server 1")
-      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+      (is (= :waiting (prompt-type :runner))
           "Runner has prompt to wait for Toshiyuki")
       (click-prompt state :corp "Yes") ; choose to do a swap
       (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
@@ -4760,7 +4760,7 @@
         (core/rez state :corp (get-content state :remote1 0))
         (card-ability state :corp (get-content state :remote1 0) 0)
         (click-card state :corp "Ice Wall")
-        (is (= ["Archives" "R&D" "HQ" "Server 1" "New remote"] (prompt-buttons :runner))
+        (is (= ["Archives" "R&D" "HQ" "Server 1" "New remote"] (prompt-buttons :corp))
             "Can install in the same server as Vaporframe Fabricator")
         (click-prompt state :corp "New remote")
         (is (= "Ice Wall" (:title (get-ice state :remote2 0))) "Ice Wall is now installed")))
@@ -4773,7 +4773,7 @@
         (core/rez state :corp (get-content state :remote1 0))
         (card-ability state :corp (get-content state :remote1 0) 0)
         (click-card state :corp "Ice Wall")
-        (is (= ["Archives" "R&D" "HQ" "Server 1" "New remote"] (prompt-buttons :runner))
+        (is (= ["Archives" "R&D" "HQ" "Server 1" "New remote"] (prompt-buttons :corp))
             "Can install in the same server as Vaporframe Fabricator")
         (changes-val-macro
           0 (:credit (get-corp))
@@ -4815,7 +4815,7 @@
         (run-empty-server state :remote1)
         (click-prompt state :runner "Pay 3 [Credits] to trash")
         (click-card state :corp "Ice Wall")
-        (is (= ["Archives" "R&D" "HQ" "New remote"] (prompt-buttons :runner))
+        (is (= ["Archives" "R&D" "HQ" "New remote"] (prompt-buttons :corp))
             "Can't install in the same server as Vaporframe Fabricator")
         (click-prompt state :corp "New remote")
         (is (= "Ice Wall" (:title (get-ice state :remote2 0))) "Ice Wall is now installed")))
@@ -4830,7 +4830,7 @@
         (run-empty-server state :remote1)
         (click-prompt state :runner "Pay 3 [Credits] to trash")
         (click-card state :corp "Ice Wall")
-        (is (= ["Archives" "R&D" "HQ" "New remote"] (prompt-buttons :runner))
+        (is (= ["Archives" "R&D" "HQ" "New remote"] (prompt-buttons :corp))
             "Can install in the same server as Vaporframe Fabricator")
         (changes-val-macro
           0 (:credit (get-corp))
@@ -5003,7 +5003,7 @@
       (run-empty-server state "HQ")
       (card-ability state :runner code 0)
       (click-card state :runner (refresh iw))
-      (is (some? (-> (get-corp) :prompt first)) "Corp should get the option to rez Zaibatsu Loyalty before expose")
+      (is (some? (prompt-map :corp)) "Corp should get the option to rez Zaibatsu Loyalty before expose")
       (click-prompt state :corp "Yes")
       (is (rezzed? (refresh zai)) "Zaibatsu Loyalty should be rezzed")
       (let [credits (:credit (get-corp))]
@@ -5012,7 +5012,7 @@
         (click-prompt state :corp "Done"))
       (card-ability state :runner code 0)
       (click-card state :runner (refresh iw))
-      (is (some? (-> (get-corp) :prompt first)) "Corp should be prompted to prevent")
+      (is (some? (prompt-map :corp)) "Corp should be prompted to prevent")
       (is (zero? (-> (get-corp) :discard count)) "No trashed cards")
       (card-ability state :corp zai 1)
       (is (= 1 (-> (get-corp) :discard count)) "Zaibatsu Loyalty should be in discard after using ability"))))

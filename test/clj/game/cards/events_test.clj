@@ -457,7 +457,7 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Bravado")
-      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Only HQ is runnable")
+      (is (= 1 (count (prompt-buttons :runner))) "Only HQ is runnable")
       (click-prompt state :runner "HQ")
       (run-continue state)
       (run-continue state)
@@ -541,7 +541,7 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Bravado")
-      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Only HQ is runnable")
+      (is (= 1 (count (prompt-buttons :runner))) "Only HQ is runnable")
       (click-prompt state :runner "HQ")
       (let [icew (get-ice state :hq 0)]
         (core/rez state :corp icew)
@@ -671,7 +671,7 @@
       (is (= 1 (count (:discard (get-runner)))) "By Any Means has been played")
       (run-empty-server state "HQ")
       (is (= #{"Film Critic" "By Any Means"}
-             (->> (get-runner) :prompt first :choices (map :title) (into #{})))
+             (into #{} (prompt-titles :runner)))
           "A choice of which to trigger first")
       (click-prompt state :runner "Film Critic")
       (click-prompt state :runner "No")
@@ -683,10 +683,10 @@
       (play-from-hand state :runner "By Any Means")
       (run-empty-server state "HQ")
       (is (= #{"Film Critic" "By Any Means"}
-             (->> (get-runner) :prompt first :choices (map :title) (into #{})))
+             (into #{} (prompt-titles :runner)))
           "A choice of which to trigger first")
       (click-prompt state :runner "By Any Means")
-      (is (nil? (->> (get-runner) :prompt first :choices)) "By Any Means trashes with no prompt")
+      (is (empty? (:prompt (get-runner))) "By Any Means trashes with no prompt")
       (is (= 2 (count (:discard (get-corp)))) "Agenda was trashed")
       (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
   (testing "Effect persists when moved from discard"
@@ -854,7 +854,7 @@
     (run-continue state)
     (run-continue state)
     (run-successful state)
-    (is (= ["Code Siphon" "Access cards"] (-> (get-runner) :prompt first :choices))
+    (is (= ["Code Siphon" "Access cards"] (prompt-buttons :runner))
         "Replacement effect isn't mandatory")
     (click-prompt state :runner "Code Siphon")
     (let [credits (:credit (get-runner))]
@@ -1550,7 +1550,7 @@
         (run-phase-43 state)
         (card-ability state :corp (refresh scored-nisei) 0)
         (click-prompt state :corp "Done") ; close 4.3 corp
-        (is (nil? (-> @state :runner :prompt first)) "No access prompts for runner")
+        (is (empty? (:prompt (get-runner))) "No access prompts for runner")
         (is (not (:run @state)) "Run ended by using Nisei counter")
         (is (zero? (-> (get-runner) :register :last-run core/total-cards-accessed))
             "Runner should access 0 cards"))))
@@ -1739,7 +1739,7 @@
       (play-from-hand state :runner "Emergent Creativity")
       (click-card state :runner "Heartbeat")
       (click-card state :runner "Gordian Blade")
-      (is (= ["Cancel"] (-> (get-runner) :prompt first :choices)) "Liberated Account shouldn't be shown in prompt (only Cancel)")
+      (is (= ["Cancel"] (prompt-buttons :runner)) "Liberated Account shouldn't be shown in prompt (only Cancel)")
       (click-prompt state :runner "Cancel"))))
 
 (deftest employee-strike
@@ -1930,7 +1930,7 @@
       (click-prompt state :runner "No action")
       (run-empty-server state :hq)
       (play-from-hand state :runner "Exploit")
-      (is (= :select (-> (get-runner) :prompt first :prompt-type)) "Runner has Exploit select prompt")
+      (is (= :select (prompt-type :runner)) "Runner has Exploit select prompt")
       (click-card state :runner (refresh iw))
       (click-card state :runner (refresh enigma))
       (click-card state :runner (refresh hunter))
@@ -1982,7 +1982,7 @@
     (take-credits state :corp)
     (let [num-shuffles (count (core/turn-events state :runner :runner-shuffle-deck))]
       (play-from-hand state :runner "Express Delivery")
-      (is (= 4 (-> (get-runner) :prompt first :choices count)) "Runner sees 4 cards")
+      (is (= 4 (count (prompt-buttons :runner))) "Runner sees 4 cards")
       (click-prompt state :runner "Magnum Opus")
       (is (= (inc num-shuffles) (count (core/turn-events state :runner :runner-shuffle-deck)))
                 "Runner should shuffle the stack")
@@ -2181,15 +2181,13 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Frantic Coding")
       (click-prompt state :runner "OK")
-      (let [get-prompt (fn [] (first (#(get-in @state [:runner :prompt]))))
-            prompt-names (fn [] (map :title (:choices (get-prompt))))]
-        (is (= (list "Corroder" "Magnum Opus" nil) (prompt-names)) "No Torch in list because can't afford")
-        (is (= 2 (:credit (get-runner))))
-        (is (zero? (count (:discard (get-runner)))))
-        (click-prompt state :runner "Magnum Opus")
-        (is (= 1 (count (get-program state))))
-        (is (= 2 (:credit (get-runner))) "Magnum Opus installed for free")
-        (is (= 10 (count (:discard (get-runner))))))))
+      (is (= ["Corroder" "Magnum Opus" nil] (prompt-titles :runner)) "No Torch in list because can't afford")
+      (is (= 2 (:credit (get-runner))))
+      (is (zero? (count (:discard (get-runner)))))
+      (click-prompt state :runner "Magnum Opus")
+      (is (= 1 (count (get-program state))))
+      (is (= 2 (:credit (get-runner))) "Magnum Opus installed for free")
+      (is (= 10 (count (:discard (get-runner)))))))
   (testing "Don't install anything, all 10 cards are trashed"
     (do-game
       (new-game {:runner {:deck ["Frantic Coding" "Torch" "Corroder"
@@ -2199,13 +2197,11 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Frantic Coding")
       (click-prompt state :runner "OK")
-      (let [get-prompt (fn [] (first (#(get-in @state [:runner :prompt]))))
-            prompt-names (fn [] (map :title (:choices (get-prompt))))]
-        (is (= (list "Corroder" "Magnum Opus" nil) (prompt-names)) "No Torch in list because can't afford")
-        (is (zero? (count (:discard (get-runner)))))
-        (click-prompt state :runner "No install")
-        (is (zero? (count (get-program state))))
-        (is (= 11 (count (:discard (get-runner)))))))))
+      (is (= ["Corroder" "Magnum Opus" nil] (prompt-titles :runner)) "No Torch in list because can't afford")
+      (is (zero? (count (:discard (get-runner)))))
+      (click-prompt state :runner "No install")
+      (is (zero? (count (get-program state))))
+      (is (= 11 (count (:discard (get-runner))))))))
 
 (deftest freedom-through-equality
   ;; Move Freedom Through Equality to runner score on another steal
@@ -2295,7 +2291,7 @@
     (is (:prompt (get-corp)) "There is still a prompt")
     (click-card state :corp "Enigma")
     (click-card state :corp "Rototurret")
-    (is (nil? (-> (get-corp) :prompt first)) "Selecting 5 cards closed prompt")
+    (is (empty? (:prompt (get-corp))) "Selecting 5 cards closed prompt")
     (let [discard (:discard (get-corp))]
       (is (find-card "Beanstalk Royalties" discard) "Beanstalk Royalties is still in Archives")
       (is (= 6 (count discard)) "There are 6 cards in Archives")
@@ -2313,13 +2309,13 @@
     (run-empty-server state :archives)
     (take-credits state :runner)
     (play-from-hand state :corp "Cerebral Cast")
-    (is (= ["Roll a d6" "0 [Credits]" "1 [Credits]"] (:choices (prompt-map :corp))))
-    (is (= ["Roll a d6" "0 [Credits]" "1 [Credits]"] (:choices (prompt-map :runner))))
+    (is (= ["Roll a d6" "0 [Credits]" "1 [Credits]"] (prompt-buttons :corp)))
+    (is (= ["Roll a d6" "0 [Credits]" "1 [Credits]"] (prompt-buttons :runner)))
     (click-prompt state :corp "0 [Credits]")
     (click-prompt state :runner "0 [Credits]")
     (take-credits state :corp)
     (play-from-hand state :runner "Push Your Luck")
-    (is (= ["0" "1" "3" "4" "5"] (:choices (prompt-map :runner))) "Runner can't choose 2")))
+    (is (= ["0" "1" "3" "4" "5"] (prompt-buttons :runner)) "Runner can't choose 2")))
 
 (deftest guinea-pig
   ;; Guinea Pig
@@ -2370,7 +2366,7 @@
       (dotimes [_ 12] (core/move state :runner (first (:hand (get-runner))) :discard))
       (core/draw state :runner 1)
       (play-from-hand state :runner "Harmony AR Therapy")
-      (is (= 6 (-> (get-runner) :prompt first :choices count)) "Cards are shown distinctly")
+      (is (= 6 (count (prompt-buttons :runner))) "Cards are shown distinctly")
       (click-prompt state :runner "Dirty Laundry")
       (click-prompt state :runner "Astrolabe")
       (click-prompt state :runner "Bankroll")
@@ -2397,7 +2393,7 @@
       (dotimes [_ 12] (core/move state :runner (first (:hand (get-runner))) :discard))
       (core/draw state :runner 1)
       (play-from-hand state :runner "Harmony AR Therapy")
-      (is (= 6 (-> (get-runner) :prompt first :choices count)) "Cards are shown distinctly")
+      (is (= 6 (count (prompt-buttons :runner))) "Cards are shown distinctly")
       (click-prompt state :runner "Dirty Laundry")
       (click-prompt state :runner "Astrolabe")
       (click-prompt state :runner "Bankroll")
@@ -2417,7 +2413,7 @@
       (dotimes [_ 12] (core/move state :runner (first (:hand (get-runner))) :discard))
       (core/draw state :runner 1)
       (play-from-hand state :runner "Harmony AR Therapy")
-      (is (= 6 (-> (get-runner) :prompt first :choices count)) "Cards are shown distinctly")
+      (is (= 6 (count (prompt-buttons :runner))) "Cards are shown distinctly")
       (click-prompt state :runner "Dirty Laundry")
       (click-prompt state :runner "Astrolabe")
       (click-prompt state :runner "Bankroll")
@@ -2447,7 +2443,7 @@
     (core/gain state :runner :credit 1)
     (is (= 6 (:credit (get-runner))) "Runner starts with 6 credits")
     (play-from-hand state :runner "High-Stakes Job")
-    (is (= ["HQ"] (-> (get-runner) :prompt first :choices)) "Only has 1 server to choose from")
+    (is (= ["HQ"] (prompt-buttons :runner)) "Only has 1 server to choose from")
     (click-prompt state :runner "HQ")
     (run-continue state)
     (run-continue state)
@@ -2801,13 +2797,13 @@
     (is (zero? (count (:hand (get-corp)))))
     (is (= 4 (count (:deck (get-corp)))))
     (play-from-hand state :runner "Insight")
-    (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner is waiting for Corp to reorder")
+    (is (= :waiting (prompt-type :runner)) "Runner is waiting for Corp to reorder")
     (click-prompt state :corp (find-card "Director Haas" (:deck (get-corp))))
     (click-prompt state :corp (find-card "Elizabeth Mills" (:deck (get-corp))))
     (click-prompt state :corp (find-card "Jackson Howard" (:deck (get-corp))))
     (click-prompt state :corp (find-card "Caprice Nisei" (:deck (get-corp))))
     (click-prompt state :corp "Done")
-    (is (not= :waiting (-> (get-runner) :prompt first :prompt-type)) "Waiting prompt done")
+    (is (not= :waiting (prompt-type :runner)) "Waiting prompt done")
     (is (= "Caprice Nisei" (:title (nth (:deck (get-corp)) 0))))
     (is (= "Jackson Howard" (:title (nth (:deck (get-corp)) 1))))
     (is (= "Elizabeth Mills" (:title (nth (:deck (get-corp)) 2))))
@@ -2946,7 +2942,7 @@
       (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
       (click-prompt state :runner "Brainstorm")
       (click-prompt state :runner "No action")
-      (is (empty? (-> @state :runner :prompt)) "No access prompt on C or D, so no other cards were accessed")))
+      (is (empty? (:prompt (get-runner))) "No access prompt on C or D, so no other cards were accessed")))
   (testing "When played with no installed cards"
     (do-game
       (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "Dedicated Technician Team"]}
@@ -3466,7 +3462,7 @@
     (changes-val-macro 1 (count-bad-pub state)
                        "Corp took 1 BP without getting a prompt"
                        (play-from-hand state :runner "Mining Accident")
-                       (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to pay credits if corp is below 5c")
+                       (is (= 1 (count (prompt-buttons :corp))) "No option to pay credits if corp is below 5c")
                        (click-prompt state :corp "Take 1 Bad Publicity"))))
 
 (deftest mobius
@@ -3737,7 +3733,7 @@
     (take-credits state :corp)
     ;; remove 5 Out of the Ashes from the game
     (dotimes [_ 5]
-      (is (seq (get-in @state [:runner :prompt])))
+      (is (seq (:prompt (get-runner))))
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "Archives")
       (run-continue state)
@@ -3748,7 +3744,7 @@
     (take-credits state :runner)
     (take-credits state :corp)
     ;; ensure that if you decline the rfg, game will still ask the next turn
-    (is (seq (get-in @state [:runner :prompt])))
+    (is (seq (:prompt (get-runner))))
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Archives")
     (run-continue state)
@@ -4380,7 +4376,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Government Investigations")
       (play-from-hand state :runner "Rigged Results")
-      (is (= '("0" "1") (-> (get-runner) :prompt first :choices)) "Runner can't choose 2 because of Government Investigations"))))
+      (is (= ["0" "1"] (prompt-buttons :runner)) "Runner can't choose 2 because of Government Investigations"))))
 
 (deftest rip-deal
   ;; Rip Deal - replaces number of HQ accesses with heap retrieval
@@ -4632,7 +4628,7 @@
       (core/move state :corp (find-card "Fire Wall" (:deck (get-corp))) :deck)
       (take-credits state :corp)
       (play-run-event state "Showing Off" :rd)
-      (is (= "You accessed Fire Wall." (-> (get-runner) :prompt first :msg)) "The accessed card is on the bottom of the deck")
+      (is (= "You accessed Fire Wall." (:msg (prompt-map :runner))) "The accessed card is on the bottom of the deck")
       (is (= "Accelerated Beta Test" (-> (get-corp) :deck first :title)) "The top of the deck is an entirely different card")
       (click-prompt state :runner "No action")))
 
@@ -5004,13 +5000,13 @@
     (take-credits state :corp)
     (play-run-event state "The Maker's Eye" :rd)
     (click-prompt state :runner "Card from deck")
-    (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "1st quandary")
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "1st quandary")
     (click-prompt state :runner "No action")
     (click-prompt state :runner "Card from deck")
-    (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "2nd quandary")
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "2nd quandary")
     (click-prompt state :runner "No action")
     (click-prompt state :runner "Card from deck")
-    (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "3rd quandary")
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "3rd quandary")
     (click-prompt state :runner "No action")
     (is (not (:run @state)))))
 
@@ -5126,7 +5122,7 @@
     (testing "Trade-In lets runner search for Hardware and add it to Grip"
       (is (= 1 (count (:hand (get-runner)))) "Only 1 Trade-In in Grip")
       ;; Add sports hopper to hand
-      (click-prompt state :runner (-> (get-runner) :prompt first :choices first :value))
+      (click-prompt state :runner (first (prompt-buttons :runner)))
       (is (= 2 (count (:hand (get-runner)))) "Sports Hopper added to Grip"))
     (testing "Gain credits when install cost is greater than 1"
       (let [runner-credits (:credit (get-runner))]
@@ -5325,7 +5321,7 @@
     (take-credits state :corp)
     (run-empty-server state :rd)
     (play-from-hand state :runner "White Hat")
-    (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner is waiting for Corp to boost")
+    (is (= :waiting (prompt-type :runner)) "Runner is waiting for Corp to boost")
     (click-prompt state :corp "0")
     (click-prompt state :runner "4")
     (click-prompt state :runner (find-card "Ice Wall" (:hand (get-corp))))

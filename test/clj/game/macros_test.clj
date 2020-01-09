@@ -20,6 +20,7 @@
                        ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
          ~'prompt-map (fn [side#] (-> @~'state side# :prompt first))
+         ~'prompt-type (fn [side#] (:prompt-type (~'prompt-map side#)))
          ~'prompt-buttons (fn [side#] (->> (~'prompt-map side#) :choices (map :value)))
          ~'prompt-titles (fn [side#] (map :title (~'prompt-buttons side#)))
          ~'prompt-fmt (fn [side#]
