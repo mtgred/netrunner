@@ -2930,6 +2930,7 @@
       (is (= 2 (:credit (get-runner))) "No charge to install Ninja"))))
 
 (deftest paladin-poemu
+  ;; Paladin Poemu
   (testing "Basic test"
     (do-game
       (new-game {:corp {:deck ["Project Vitruvius"]}

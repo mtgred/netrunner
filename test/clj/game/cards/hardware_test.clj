@@ -1272,7 +1272,35 @@
       (click-prompt state :runner "Capstone")
       (click-prompt state :runner "Done")
       (is (= 3 (count (:deck (get-runner)))) "3 card back in deck")
-      (is (= 3 (count (:rfg (get-runner)))) "3 card removed from the game"))))
+      (is (= 3 (count (:rfg (get-runner)))) "3 card removed from the game")))
+  (testing "Gachapon + Credits for Installs. Issue #4888"
+    (do-game
+      (new-game {:runner {:hand ["Au Revoir" "Bankroll" "Clone Chip" "DDoS" "Equivocation" "Falsified Credentials" "Gachapon" "Paladin Poemu"]
+                          :credits 1}})
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Au Revoir" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Bankroll" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Clone Chip" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "DDoS" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Equivocation" (:hand (get-runner))) :deck)
+      (core/move state :runner (find-card "Falsified Credentials" (:hand (get-runner))) :deck)
+      ; Deck is now top to bottom: A B C D E F
+      (play-from-hand state :runner "Paladin Poemu")
+      (let [pp (get-resource state 0)]
+        (core/add-counter state :runner (refresh pp) :credit 2)
+        (play-from-hand state :runner "Gachapon")
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (= (-> (get-runner) :prompt first :msg)
+              "The set aside cards are: Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials")
+            "Shown correct six cards")
+        (click-prompt state :runner "OK")
+        (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
+        (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
+        (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
+        (click-prompt state :runner "DDoS")
+        (click-card state :runner pp)
+        (is (= 0 (:credit (get-runner))) "DDoS installed with 2c discount using only Paladin Poemu credits")
+        (is (= "DDoS" (:title (get-resource state 1))) "DDoS is installed")))))
 
 (deftest gebrselassie
   ;; Gebrselassie
