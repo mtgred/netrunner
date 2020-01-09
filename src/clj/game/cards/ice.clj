@@ -367,9 +367,9 @@
 ;; Card definitions
 
 (define-card "Afshar"
-  (let [breakable-fn (fn [ice] (if (= :hq (second (:zone ice)))
-                                 (empty? (filter #(and (:broken %) (:printed %)) (:subroutines ice)))
-                                 :unrestricted))]
+  (let [breakable-fn (req (if (= :hq (second (:zone card)))
+                            (empty? (filter #(and (:broken %) (:printed %)) (:subroutines card)))
+                            :unrestricted))]
     {:subroutines [{:msg "make the Runner lose 2 [Credits]"
                     :breakable breakable-fn
                     :effect (effect (lose-credits :runner 2))}
@@ -395,9 +395,9 @@
                                          (trash state side eid card nil)))}]})
 
 (define-card "Akhet"
-  (let [breakable-fn (fn [ice] (if (<= 3 (get-counters ice :advancement))
-                                 (empty? (filter #(and (:broken %) (:printed %)) (:subroutines ice)))
-                                 :unrestricted))] ; returning :unrestricted allows auto-pump-and-break to break this ice
+  (let [breakable-fn (req (if (<= 3 (get-counters card :advancement))
+                            (empty? (filter #(and (:broken %) (:printed %)) (:subroutines card)))
+                            :unrestricted))]
     {:advanceable :always
      :subroutines [{:label "Gain 1[Credit]. Place 1 advancement token."
                     :breakable breakable-fn
@@ -1101,10 +1101,14 @@
    :runner-abilities [(bioroid-break 1 1)]})
 
 (define-card "Engram Flush"
-  (let [sub {:label "Reveal the grip"
+  (let [sub {:async true
+             :label "Reveal the grip"
              :msg (msg "reveal " (quantify (count (:hand runner)) "card")
                        " from grip: " (join ", " (map :title (:hand runner))))
-             :effect (req (reveal state :corp (:hand runner)))}]
+             ;; This has to be manual instead of calling `reveal` because `reveal` isn't
+             ;; async and I don't feel like trying to make it async just for this interaction.
+             ;; TODO: Make `reveal` async
+             :effect (req (apply trigger-event-sync state side eid :corp-reveal (:hand runner)))}]
     {:on-encounter {:prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
                     :effect (req (let [cardtype target]
@@ -1114,6 +1118,7 @@
                                      state side card
                                      [{:event :corp-reveal
                                        :duration :end-of-encounter
+                                       :async true
                                        :req (req (and
                                                    ; all revealed cards are in grip
                                                    (every? in-hand? targets)
@@ -1124,8 +1129,9 @@
                                        :prompt "Select revealed card to trash"
                                        :choices (req (concat (filter #(is-type? % cardtype) targets) ["None"]))
                                        :msg (msg "trash " (:title target) " from grip")
-                                       :effect (req (when (not= "None" target)
-                                                      (trash state side target)))}])))}
+                                       :effect (req (if (= "None" target)
+                                                      (effect-completed state side eid)
+                                                      (trash state side eid target nil)))}])))}
      :subroutines [sub
                    sub]}))
 
@@ -1510,21 +1516,26 @@
                                     (do (shuffle! state side :deck)
                                         (system-msg state side (str "shuffles R&D"))
                                         (effect-completed state side eid))))})]
-    {:advanceable :always
-     :subroutines [{:label "Gain 1 [Credits] (Gain 4 [Credits])"
-                    :msg (msg "gain " (if (wonder-sub card 3) "4" "1") " [Credits]")
-                    :effect (effect (gain-credits :corp (if (wonder-sub card 3) 4 1)))}
-                   {:label "End the run (Search R&D for up to 2 cards and add them to HQ, shuffle R&D, end the run)"
-                    :async true
-                    :effect (req (if (wonder-sub card 3)
-                                   (wait-for
-                                     (resolve-ability state side (hort 1) card nil)
-                                     (do (system-msg state side
-                                                     (str "uses Hortum to add 2 cards to HQ from R&D, "
-                                                          "shuffle R&D, and end the run"))
-                                         (end-run state side eid card)))
-                                   (do (system-msg state side (str "uses Hortum to end the run"))
-                                       (end-run state side eid card))))}]}))
+    (let [breakable-fn (req (if (<= 3 (get-counters card :advancement))
+                              (not (has-subtype? target "AI"))
+                              :unrestricted))]
+      {:advanceable :always
+       :subroutines [{:label "Gain 1 [Credits] (Gain 4 [Credits])"
+                      :breakable breakable-fn
+                      :msg (msg "gain " (if (wonder-sub card 3) "4" "1") " [Credits]")
+                      :effect (effect (gain-credits :corp (if (wonder-sub card 3) 4 1)))}
+                     {:label "End the run (Search R&D for up to 2 cards and add them to HQ, shuffle R&D, end the run)"
+                      :async true
+                      :breakable breakable-fn
+                      :effect (req (if (wonder-sub card 3)
+                                     (wait-for
+                                       (resolve-ability state side (hort 1) card nil)
+                                       (do (system-msg state side
+                                                       (str "uses Hortum to add 2 cards to HQ from R&D, "
+                                                            "shuffle R&D, and end the run"))
+                                           (end-run state side eid card)))
+                                     (do (system-msg state side (str "uses Hortum to end the run"))
+                                         (end-run state side eid card))))}]})))
 
 (define-card "Hourglass"
   {:subroutines [runner-loses-click

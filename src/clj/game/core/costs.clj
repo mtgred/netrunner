@@ -800,7 +800,7 @@
 
 (defn ignore-install-cost?
   [state side card]
-  (some true? (get-effects state side card :ignore-install-cost)))
+  (any-effects state side :ignore-install-cost true? card))
 
 (defn run-cost
   "Get a list of all costs required to run a server."

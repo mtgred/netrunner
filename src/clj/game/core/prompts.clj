@@ -1,6 +1,7 @@
 (ns game.core.prompts
   (:require [game.core.eid :refer [make-eid effect-completed]]
-            [game.core.toasts :refer [toast]]))
+            [game.core.toasts :refer [toast]]
+            [clj-uuid :as uuid]))
 
 (defn- add-to-prompt-queue
   "Adds a newly created prompt to the current prompt queue"
@@ -11,6 +12,16 @@
         update-fn #(let [[head tail] (split-with split-fn %)] (concat head (cons prompt tail)))]
     (swap! state update-in [side :prompt] update-fn)))
 
+(defn choice-parser
+  [choices]
+  (if (or (map? choices) (keyword? choices))
+    choices
+    (into
+      []
+      (for [choice choices]
+        {:value choice
+         :uuid (uuid/v1)}))))
+
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked
   when the prompt is resolved. All prompts flow through this method."
@@ -19,6 +30,7 @@
   ([state side eid card message choices f
     {:keys [priority prompt-type show-discard cancel-effect end-effect] :as args}]
    (let [prompt (if (string? message) message (message state side nil card nil))
+         choices (choice-parser choices)
          newitem {:eid eid
                   :msg prompt
                   :choices choices
@@ -41,7 +53,7 @@
   If user chooses to roll d6, reveal the result to user and re-display
   the prompt without the 'roll d6 button'."
   ([state side card message other-choices f]
-   (show-prompt state side card message other-choices f nil))
+   (show-prompt-with-dice state side card message other-choices f nil))
   ([state side card message other-choices f args]
    (let [dice-msg "Roll a d6",
          choices (conj other-choices dice-msg)]

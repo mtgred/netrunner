@@ -331,7 +331,7 @@
     (play-from-hand state :runner "Mass-Driver")
     (take-credits state :runner)
     (play-from-hand state :corp "Best Defense")
-    (is (= "Choose a Runner card with an install cost of 0 or less to trash" (-> (get-corp) :prompt first :msg)))
+    (is (= "Choose a Runner card with an install cost of 0 or less to trash" (:msg (prompt-map :corp))))
     (click-card state :corp "Mass-Driver")
     (is (get-program state 0) "Mass-Driver should still be installed")
     (click-card state :corp "Dorm Computer")
@@ -671,11 +671,9 @@
       (is (= 5 (:credit (get-corp))))
       (starting-hand state :corp ["Consulting Visit"])
       (play-from-hand state :corp "Consulting Visit")
-      (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
-            prompt-names (fn [] (map :title (:choices (get-prompt))))]
-        (is (= (list "Beanstalk Royalties" "Green Level Clearance" nil) (prompt-names)))
-        (click-prompt state :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
-        (is (= 6 (:credit (get-corp)))))))
+      (is (= ["Beanstalk Royalties" "Green Level Clearance" nil] (prompt-titles :corp)))
+      (click-prompt state :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
+      (is (= 6 (:credit (get-corp))))))
   (testing "Works properly when played with Mumbad City Hall"
     (do-game
       (new-game {:corp {:deck ["Mumbad City Hall"
@@ -688,15 +686,13 @@
       (is (= 5 (:credit (get-corp))))
       (starting-hand state :corp ["Mumbad City Hall"])
       (play-from-hand state :corp "Mumbad City Hall" "New remote")
-      (let [hall (get-content state :remote1 0)
-            get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
-            prompt-names (fn [] (map :title (:choices (get-prompt))))]
+      (let [hall (get-content state :remote1 0)]
         (core/rez state :corp hall)
         (card-ability state :corp (refresh hall) 0)
-        (is (= (list "Consulting Visit" "Mumba Temple" nil) (prompt-names)))
+        (is (= ["Consulting Visit" "Mumba Temple" nil] (prompt-titles :corp)))
         (click-prompt state :corp (find-card "Consulting Visit" (:deck (get-corp))))
         (is (= 2 (:credit (get-corp))))
-        (is (= (list "Beanstalk Royalties" "Green Level Clearance" nil) (prompt-names)))
+        (is (= ["Beanstalk Royalties" "Green Level Clearance" nil] (prompt-titles :corp)))
         (click-prompt state :corp (find-card "Green Level Clearance" (:deck (get-corp))))
         (is (= 4 (:credit (get-corp))))))))
 
@@ -799,12 +795,12 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "Digital Rights Management")
-      (is (= 2 (-> (get-corp) :prompt first :choices count)) "Only Beale and 'None' option displayed")
+      (is (= 2 (count (prompt-buttons :corp))) "Only Beale and 'None' option displayed")
       (let [cards-in-hand (count (:hand (get-corp)))]
         (click-prompt state :corp "Project Beale")
         (is (= (inc cards-in-hand) (count (:hand (get-corp)))) "Beale added to hand"))
       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
-      (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to install on centrals")
+      (is (= 1 (count (prompt-buttons :corp))) "No option to install on centrals")
       (click-prompt state :corp "New remote")
       (core/gain state :corp :click 1)
       (let [beale (get-content state :remote1 0)]
@@ -824,7 +820,7 @@
       (play-from-hand state :corp "Digital Rights Management")
       (click-prompt state :corp "Project Beale")
       (click-card state :corp (find-card "Project Beale" (:hand (get-corp))))
-      (is (= 1 (-> (get-corp) :prompt first :choices count)) "No option to install on centrals")
+      (is (= 1 (count (prompt-buttons :corp))) "No option to install on centrals")
       (click-prompt state :corp "New remote")))
   (testing "Cannot score Agenda installed by DRM"
     (do-game
@@ -992,7 +988,7 @@
     (run-on state :hq)
     (core/rez state :corp (get-ice state :hq 0))
     (run-continue state)
-    (is (= :trace (:prompt-type (prompt-map :corp))) "Corp should initiate a trace")
+    (is (= :trace (prompt-type :corp)) "Corp should initiate a trace")
     (is (zero? (count-tags state)) "Runner should have no tags")
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
@@ -1335,7 +1331,7 @@
           credits (:credit (get-corp))]
       (click-prompt state :corp "0")
       (is (= hand (-> (get-corp) :hand count)) "Corp should draw no cards as they're allowed to draw no cards")
-      (is (some #{"Server 2"} (:choices (prompt-map :corp))) "Corp should be able to choose existing remotes")
+      (is (some #{"Server 2"} (prompt-buttons :corp)) "Corp should be able to choose existing remotes")
       (click-prompt state :corp "Server 2")
       (click-card state :corp (find-card "Haas Arcology AI" (:hand (get-corp))))
       (click-card state :corp (find-card "Research Station" (:hand (get-corp))))
@@ -1925,22 +1921,18 @@
     (click-prompt state :corp "0") ; default trace
     (click-prompt state :runner "0") ; Runner won't match
     (is (= 5 (count (:hand (get-runner)))))
-    (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
-          prompt-names (fn [] (map :title (:choices (get-prompt))))]
-      (is (= (list "Fall Guy" "Sure Gamble" nil) (prompt-names)))
-      (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
-      (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner)))))
+    (is (= ["Fall Guy" "Sure Gamble" nil] (prompt-titles :corp)))
+    (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
+    (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
     (is (= 3 (count (:hand (get-runner)))))
     ;; able to trash 2 cards but only 1 available target in Runner's hand
     (play-from-hand state :corp "Invasion of Privacy")
     (click-prompt state :corp "0") ; default trace
     (click-prompt state :runner "0") ; Runner won't match
     (is (= 3 (count (:hand (get-runner)))))
-    (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
-          prompt-names (fn [] (map :title (:choices (get-prompt))))]
-      (is (= (list "Fall Guy" nil) (prompt-names)))
-      (click-prompt state :corp (find-card "Fall Guy" (:hand (get-runner))))
-      (is (empty? (get-in @state [:corp :prompt])) "No prompt for second card"))
+    (is (= ["Fall Guy" nil] (prompt-titles :corp)))
+    (click-prompt state :corp (find-card "Fall Guy" (:hand (get-runner))))
+    (is (empty? (:prompt (get-corp))) "No prompt for second card")
     (is (= 2 (count (:hand (get-runner)))))
     ;; failed trace - take the bad publicity
     (play-from-hand state :corp "Invasion of Privacy")
@@ -2616,7 +2608,7 @@
     (take-credits state :corp)
     (run-empty-server state :hq)
     (let [credits (:credit (get-runner))]
-      (is (= ["Pay to steal" "No action"] (:choices (prompt-map :runner))) "Runner has option to pay to steal")
+      (is (= ["Pay to steal" "No action"] (prompt-buttons :runner)) "Runner has option to pay to steal")
       (click-prompt state :runner "Pay to steal")
       (is (= (+ credits -2) (:credit (get-runner))) "Runner should pay 2 to steal"))))
 
@@ -2708,7 +2700,7 @@
     (starting-hand state :corp ["Psychokinesis" "Psychokinesis" "Psychokinesis"])
     ;; Test installing an Upgrade
     (play-from-hand state :corp "Psychokinesis")
-    (is (not-any? #{"Mwanza City Grid"} (map :title (-> (get-corp) :prompt first :choices)))
+    (is (not-any? #{"Mwanza City Grid"} (prompt-buttons :corp))
         "Mwanza City Grid is not on the list of installable cards")
     (click-prompt state :corp (find-card "Caprice Nisei" (:deck (get-corp))))
     (click-prompt state :corp "New remote")
@@ -2786,7 +2778,7 @@
       (click-prompt state :corp "Gain 2 [Credits]")
       (is (= 3 (count (:choices (prompt-map :corp)))))
       (is (= ["Draw 2 cards" "Gain [Click]" "Install a non-agenda from hand"]
-             (vec (:choices (prompt-map :corp)))))
+             (prompt-buttons :corp)))
       (click-prompt state :corp "Gain [Click]")
       (is (empty? (:prompt (get-runner))) "Runner should have no more prompt"))))
 
@@ -3427,7 +3419,8 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Subcontract")
       (click-card state :corp (find-card "Scorched Earth" (:hand (get-corp))))
-      (is (and (= 1 (count (:prompt (get-corp)))) (= :waiting (-> (get-corp) :prompt first :prompt-type)))
+      (is (and (= 1 (count (:prompt (get-corp))))
+               (= :waiting (prompt-type :corp)))
           "Corp does not have Subcontract prompt until damage prevention completes")
       (click-prompt state :runner "Done")
       (is (not-empty (:prompt (get-corp))) "Corp can now play second Subcontract operation")))
@@ -3483,7 +3476,7 @@
       (run-continue state)
       (run-jack-out state)
       (take-credits state :runner)
-      (is (empty? (get-in @state [:corp :prompt])) "No prompt here because runner made a run last turn")
+      (is (empty? (:prompt (get-corp))) "No prompt here because runner made a run last turn")
       (take-credits state :corp)
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:discard (get-corp)))) "1 Subliminal not returned because runner made a run last turn")))
@@ -3499,13 +3492,13 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (click-prompt state :corp "No")
-      (is (empty? (get-in @state [:corp :prompt])) "Only 1 Subliminal prompt")
+      (is (empty? (:prompt (get-corp))) "Only 1 Subliminal prompt")
       (play-from-hand state :corp "Subliminal Messaging")
       (take-credits state :corp)
       (take-credits state :runner)
       (click-prompt state :corp "Yes")
       (click-prompt state :corp "Yes")
-      (is (empty? (get-in @state [:corp :prompt]))
+      (is (empty? (:prompt (get-corp)))
           "Only 2 Subliminal prompts - there will be a third if flag not cleared")))
   (testing "Scenario involving Subliminal being reshuffled into R&D with Jackson"
     (do-game
@@ -3525,7 +3518,7 @@
       (take-credits state :runner)
       (click-prompt state :corp "Yes")
       (is (= 1 (count (:hand (get-corp)))) "Subliminal returned to HQ")
-      (is (empty? (get-in @state [:corp :prompt]))
+      (is (empty? (:prompt (get-corp)))
           "Subliminal prompt cleared - there will be a second prompt if flag not cleared")))
   (testing "Runner made run, ensure game asks again next turn"
     (do-game
@@ -3537,7 +3530,7 @@
       (run-continue state)
       (run-jack-out state)
       (take-credits state :runner)
-      (is (empty? (get-in @state [:corp :prompt])) "No prompt here because runner made a run last turn")
+      (is (empty? (:prompt (get-corp))) "No prompt here because runner made a run last turn")
       (take-credits state :corp)
       (take-credits state :runner)
       (click-prompt state :corp "Yes")
@@ -3668,7 +3661,7 @@
       (play-and-score state "Restructured Datapool")
       (let [rd-scored (get-scored state :corp 0)]
         (card-ability state :corp rd-scored 0)
-        (is (not= :waiting (-> (get-corp) :prompt first :prompt-type)) "Surveillance Sweep only works during a run")
+        (is (not= :waiting (prompt-type :corp)) "Surveillance Sweep only works during a run")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (= 1 (count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))
@@ -4070,11 +4063,11 @@
     (core/gain state :corp :click 3 :credit 7)
     (play-from-hand state :corp "Ultraviolet Clearance")
     (click-card state :corp (find-card "Improved Tracers" (:hand (get-corp))))
-    (is (= 1 (count (:choices (first (:prompt (get-corp)))))) "Wrong number of options in install prompt")
+    (is (= 1 (count (prompt-buttons :corp))) "Wrong number of options in install prompt")
     (click-prompt state :corp "New remote")
     (play-from-hand state :corp "Ultraviolet Clearance")
     (click-card state :corp (find-card "Remote Enforcement" (:hand (get-corp))))
-    (is (= 2 (count (:choices (first (:prompt (get-corp)))))) "Wrong number of options in install prompt")))
+    (is (= 2 (count (prompt-buttons :corp))) "Wrong number of options in install prompt")))
 
 (deftest under-the-bus
   ;; Under the Bus
@@ -4217,7 +4210,7 @@
     (let [eli (get-ice state :rd 0)
           vanilla (get-ice state :hq 0)]
       (play-from-hand state :corp "Wetwork Refit")
-      (is (not-any? #{"Eli 1.0"} (get-in @state [:corp :prompt :choices]))
+      (is (not-any? #{"Eli 1.0"} (prompt-buttons :corp))
           "Unrezzed Eli 1.0 is not a choice to host Wetwork Refit")
       (click-prompt state :corp "Done")
       (take-credits state :corp)

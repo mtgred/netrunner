@@ -386,7 +386,11 @@
   (let [typing (r/cursor game-state [:typing])
         username (get-in @app-state [:user :username])]
     (when (seq (remove nil? (remove #{username} @typing)))
-      [:div [:p.typing (for [i (range 10)] ^{:key i} [:span " " influence-dot " "])]])))
+      [:div [:p.typing
+             (doall
+               (for [i (range 10)]
+                 ^{:key i}
+                 [:span " " influence-dot " "]))]])))
 
 (defn send-msg [s]
   (let [text (:msg @s)]
@@ -795,8 +799,8 @@
        [:div.hosted
         (doall
           (for [card hosted]
-            ^{:key (:cid card)}
             (let [flipped (face-down? card)]
+              ^{:key (:cid card)}
               [card-view card flipped])))])]))
 
 (defn drop-area [server hmap]
@@ -977,9 +981,10 @@
               [:div
                [:a {:on-click #(close-popup % (:rfg-popup @dom) nil false false)} "Close"]
                [:label (str size " card" (when (not= 1 size) "s") ".")]]
-              (doall (for [c @cards]
-                ^{:key (:cid c)}
-                [card-view c]))])])))))
+              (doall
+                (for [c @cards]
+                  ^{:key (:cid c)}
+                  [card-view c]))])])))))
 
 (defn play-area-view [user name cards]
   (fn [user name cards]
@@ -1146,13 +1151,13 @@
       (when (and run (not current-ice))
         [run-arrow])]
      [:div.content
-      (for [card content]
-        (let [is-first (= card (first content))
-              flipped (not (:rezzed card))]
-          [:div.server-card {:key (:cid card)
-                             :class (str (when (and (< 1 (count content)) (not is-first))
-                                           "shift"))}
-           [card-view card flipped]]))
+      (doall (for [card content]
+               (let [is-first (= card (first content))
+                     flipped (not (:rezzed card))]
+                 [:div.server-card {:key (:cid card)
+                                    :class (str (when (and (< 1 (count content)) (not is-first))
+                                                  "shift"))}
+                  [card-view card flipped]])))
       [stacked-label content similar-servers opts]]]))
 
 (defn compare-servers-for-stacking [s1]
@@ -1215,9 +1220,9 @@
 (defn board-view-runner [player-side identity deck discard rig run]
   (let [is-me (= player-side :runner)
         centrals [:div.runner-centrals
-                    [discard-view-runner player-side discard]
-                    [deck-view :runner player-side identity deck]
-                    [identity-view identity]]
+                  [discard-view-runner player-side discard]
+                  [deck-view :runner player-side identity deck]
+                  [identity-view identity]]
         runner-f (if (and (not is-me)
                           (not (get-in @app-state [:options :runner-board-order])))
                    reverse
@@ -1402,9 +1407,19 @@
              [:div.mulligan
               (if (or (= :spectator @my-side) (and @my-keep @op-keep))
                 [cond-button (if (= :spectator @my-side) "Close" "Start Game") true #(swap! app-state assoc :start-shown true)]
-                (list ^{:key "keepbtn"} [cond-button "Keep" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Keep"})]
-                      ^{:key "mullbtn"} [cond-button "Mulligan" (= "mulligan" (-> @my-prompt first :prompt-type)) #(do (send-command "choice" {:choice "Mulligan"})
-                                                                                                                       (reset! mulliganed true))]))]]]
+                (list ^{:key "keepbtn"} [cond-button "Keep"
+                                         (= "mulligan" (-> @my-prompt first :prompt-type))
+                                         #(send-command "choice" {:choice {:uuid (->> (-> @my-prompt first :choices)
+                                                                                      (filter (fn [c] (= "Keep" (:value c))))
+                                                                                      first
+                                                                                      :uuid)}})]
+                      ^{:key "mullbtn"} [cond-button "Mulligan"
+                                         (= "mulligan" (-> @my-prompt first :prompt-type))
+                                         #(do (send-command "choice" {:choice {:uuid (->> (-> @my-prompt first :choices)
+                                                                                          (filter (fn [c] (= "Mulligan" (:value c))))
+                                                                                          first
+                                                                                          :uuid)}})
+                                              (reset! mulliganed true))]))]]]
            [:br]
            [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]])))))
 
@@ -1455,7 +1470,9 @@
     "pass-ice" (if (zero? (:position @run))
                  "Approach server"
                  "Approach ice")
-    "approach-server" "Approach server"))
+    "approach-server" "Approach server"
+    ;; Error
+    "No current run"))
 
 (defn get-run-ices []
   (let [server (-> (:run @game-state)
@@ -1596,8 +1613,8 @@
             [:div
              [:div.credit-select
               [:select#credit {:default-value (get-in prompt [:choices :default] 0)}
-               (for [i (range (inc n))]
-                 [:option {:value i} i])]]
+               (doall (for [i (range (inc n))]
+                        [:option {:key i :value i} i]))]]
              [:button {:on-click #(send-command "choice"
                                                 {:choice (-> "#credit" js/$ .val str->int)})}
               "OK"]]
@@ -1631,8 +1648,9 @@
                       [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )]
                       (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
                         [:span (str strength " + ")]))))
-                [:select#credit (for [i (range (inc (:choices prompt)))]
-                                  [:option {:value i :key i} i])] " credits"]
+                [:select#credit
+                 (doall (for [i (range (inc (:choices prompt)))]
+                          [:option {:value i :key i} i]))] " credits"]
                [:button {:on-click #(send-command "choice"
                                                   {:choice (-> "#credit" js/$ .val str->int)})}
                 "OK"]]
@@ -1641,8 +1659,9 @@
               (= (:choices prompt) "credit")
               [:div
                [:div.credit-select
-                [:select#credit (for [i (range (inc (:credit @me)))]
-                                  [:option {:value i :key i} i])] " credits"]
+                [:select#credit
+                 (doall (for [i (range (inc (:credit @me)))]
+                          [:option {:value i :key i} i]))] " credits"]
                [:button {:on-click #(send-command "choice"
                                                   {:choice (-> "#credit" js/$ .val str->int)})}
                 "OK"]]
@@ -1664,25 +1683,24 @@
                     num-counters (get-in prompt [:card :counter counter-type] 0)]
                 [:div
                  [:div.credit-select
-                  [:select#credit (for [i (range (inc num-counters))]
-                                    [:option {:value i} i])] " credits"]
+                  [:select#credit
+                   (doall (for [i (range (inc num-counters))]
+                            [:option {:key i :value i} i]))] " credits"]
                  [:button {:on-click #(send-command "choice"
                                                     {:choice (-> "#credit" js/$ .val str->int)})}
                   "OK"]])
 
               ;; otherwise choice of all present choices
               :else
-              (map-indexed (fn [i c]
-                             (when (not= c "Hide")
-                               (if (string? c)
-                                 [:button {:key i
-                                           :on-click #(send-command "choice" {:choice c})}
-                                  (render-message c)]
-                                 [:button {:key (or (:cid c) i)
-                                           :class (when (:rotated c) :rotated)
-                                           :on-click #(send-command "choice" {:choice (:title c)})
-                                           :id {:code c}}
-                                  (render-message (:title c))])))
+              (map-indexed (fn [i {:keys [uuid value]}]
+                             (when (not= value "Hide")
+                               [:button {:key i
+                                         :on-click #(send-command "choice" {:choice {:uuid uuid}})
+                                         :id {:code value}}
+                                (render-message
+                                  (if-let [title (:title value)]
+                                    title
+                                    value))]))
                            (:choices prompt))))]
          (if @run
            [run-div side run]

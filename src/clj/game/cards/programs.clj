@@ -2317,7 +2317,11 @@
                            :prompt "Choose a card to trash"
                            :not-distinct true
                            :choices (req (take 3 (:deck corp)))
-                           :msg (msg "trash " (:title target))
+                           :msg (msg (let [card-titles (map :title (take 3 (:deck corp)))
+                                           target-position (first (positions #{target} (take 3 (:deck corp))))]
+                                       (if (= 1 (count (filter #{(:title target)} card-titles)))
+                                         (str "trash " (:title target))
+                                         (str "trash " (case target-position 0 "top " 1 "middle " 2 "bottom " "this-should-not-happen ") (:title target)))))
                            :effect (effect (trash :runner eid (assoc target :seen true) nil))}
                           card nil))}}
                     card))}]})

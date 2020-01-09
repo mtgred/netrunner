@@ -355,13 +355,10 @@
       (doseq [_ (range 7)
               ;; Get the first card listed in the prompt choice
               ;; TODO make this function
-              :let [card (-> @state
-                             (get-in [:corp :prompt])
-                             first
-                             (get-in [:choices 0]))]]
+              :let [card (first (prompt-titles :corp))]]
         (click-prompt state :corp card))
-      (click-prompt state :corp "Done")                          ; Finished with trashing
-      (click-prompt state :corp "Done")                          ; Finished with move-to-hq (no cards to move)
+      (click-prompt state :corp "Done") ; Finished with trashing
+      (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
       ;; Run and prompts should be over now
       (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
       (is (empty (:prompt (get-runner))) "Bacterial Programming prompts finished")
@@ -685,35 +682,48 @@
 
 (deftest dedicated-neural-net
   ;; Dedicated Neural Net
-  (do-game
-    (new-game {:corp {:deck ["Dedicated Neural Net" (qty "Scorched Earth" 2)
-                             "Hedge Fund" "Caprice Nisei"]}
-               :runner {:deck ["HQ Interface"]}})
-    (play-from-hand state :corp "Caprice Nisei" "HQ")
-    (play-and-score state "Dedicated Neural Net")
-    (take-credits state :corp)
-    (run-empty-server state :hq)
-    (click-prompt state :runner "0 [Credits]")
-    (click-prompt state :corp "1 [Credits]")
-    (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
-    (click-prompt state :runner "Card from hand")
-    (click-prompt state :runner "No action")
-    ;; test for #2376
-    (click-prompt state :runner "Unrezzed upgrade in HQ")
-    (click-prompt state :runner "No action")
-    (is (not (:run @state)) "Run completed")
-    (run-empty-server state :hq)
-    (click-prompt state :runner "Card from hand")
-    (click-prompt state :runner "No action")
-    (click-prompt state :runner "Unrezzed upgrade in HQ")
-    (click-prompt state :runner "No action")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (play-from-hand state :runner "HQ Interface")
-    (run-empty-server state "HQ")
-    (click-prompt state :runner "0 [Credits]")
-    (click-prompt state :corp "1 [Credits]")
-    (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access")))
+  (testing "Corp chooses card to access. Issue #4874"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}})
+      (play-and-score state "Dedicated Neural Net")
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "0 [Credits]")
+      (click-prompt state :corp "1 [Credits]")
+      (click-card state :corp "Domestic Sleepers")
+      (click-prompt state :runner "Steal")
+      (is (= "Government Takeover" (:title (first (:hand (get-corp))))) "Gov Takeover isn't stolen")
+      (is (= "Domestic Sleepers" (:title (first (:scored (get-runner))))) "Domestic Sleepers is stolen")))
+  (testing "Allows for accessing upgrades. Issue #2376"
+    (do-game
+      (new-game {:corp {:deck ["Dedicated Neural Net" (qty "Scorched Earth" 2)
+                               "Hedge Fund" "Caprice Nisei"]}
+                 :runner {:deck ["HQ Interface"]}})
+      (play-from-hand state :corp "Caprice Nisei" "HQ")
+      (play-and-score state "Dedicated Neural Net")
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "0 [Credits]")
+      (click-prompt state :corp "1 [Credits]")
+      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (click-prompt state :runner "Card from hand")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Unrezzed upgrade in HQ")
+      (click-prompt state :runner "No action")
+      (is (not (:run @state)) "Run completed")))
+  (testing "Multiaccess works properly"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Dedicated Neural Net" "Government Takeover" "Domestic Sleepers"]}
+                 :runner {:deck ["HQ Interface"]}})
+      (play-and-score state "Dedicated Neural Net")
+      (take-credits state :corp)
+      (play-from-hand state :runner "HQ Interface")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "0 [Credits]")
+      (click-prompt state :corp "1 [Credits]")
+      (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access"))))
 
 (deftest degree-mill
   ;; Degree Mill
@@ -1844,7 +1854,7 @@
                       grip (count (:hand (get-runner)))]
                   (core/gain-tags state :runner tags)
                   (play-and-score state "Meteor Mining")
-                  (is (= num-choices (count (:choices (first (get-in @state [:corp :prompt]))))))
+                  (is (= num-choices (count (prompt-buttons :corp))))
                   (click-prompt state :corp pick)
                   (is (= (+ credits creds) (:credit (get-corp)))
                       (str "Corp should have " (+ credits creds) " credits"))
@@ -2194,7 +2204,7 @@
     (play-from-hand state :runner "Clone Chip")
     (take-credits state :runner)
     (play-and-score state "Project Ares")
-    (is (empty? (get-in @state [:runner :prompt])) "No prompt for Runner if scored with 4 advancement tokens")
+    (is (empty? (:prompt (get-runner))) "No prompt for Runner if scored with 4 advancement tokens")
     (core/gain state :corp :click 5)
     (play-from-hand state :corp "Project Ares" "New remote")
     (let [ares (get-content state :remote2 0)]
@@ -2203,7 +2213,7 @@
       (core/score state :corp {:card (refresh ares)})
       (is (prompt-is-card? state :runner ares) "Runner has Ares prompt to trash installed cards"))
     (click-card state :runner (find-card "Clone Chip" (:hardware (:rig (get-runner)))))
-    (is (empty? (get-in @state [:runner :prompt])) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
+    (is (empty? (:prompt (get-runner))) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
     (is (= 1 (count (:discard (get-runner)))))
     (is (= 1 (count-bad-pub state)))))
 
@@ -2798,7 +2808,7 @@
     (do-game
       (new-game {:corp {:hand ["SDS Drone Deployment"]}})
       (play-and-score state "SDS Drone Deployment")
-      (is (nil? (seq (:prompt (get-corp)))) "Corp doesn't get any choices when runner has no installed programs")))
+      (is (empty? (:prompt (get-corp))) "Corp doesn't get any choices when runner has no installed programs")))
   (testing "Runner steal, a program is installed"
     (do-game
       (new-game {:corp {:hand ["SDS Drone Deployment"]}
@@ -2808,7 +2818,7 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "Remote 1")
       (let [cache (get-program state 0)]
-        (is (= ["Pay to steal" "No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal")
+        (is (= ["Pay to steal" "No action"] (prompt-buttons :runner)) "Runner should not be able to steal")
         (click-prompt state :runner "Pay to steal")
         (click-card state :runner "Cache")
         (is (nil? (refresh cache)) "Cache is trashed")
@@ -2820,7 +2830,7 @@
       (play-from-hand state :corp "SDS Drone Deployment" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Remote 1")
-      (is (= ["No action"] (:choices (prompt-map :runner))) "Runner should not be able to steal"))))
+      (is (= ["No action"] (prompt-buttons :runner)) "Runner should not be able to steal"))))
 
 (deftest self-destruct-chips
   ;; Self-Destruct Chips
@@ -3347,7 +3357,7 @@
     (advance state (get-content state :remote2 0))
     (take-credits state :corp)
     (run-empty-server state "Server 2")
-    (is (= ["Pay to steal" "No action"] (:choices (prompt-map :runner))))
+    (is (= ["Pay to steal" "No action"] (prompt-buttons :runner)))
     (click-prompt state :runner "Pay to steal")
     (is (= 1 (:agenda-point (get-runner))))
     (is (= 3 (:credit (get-runner))))))
@@ -3411,7 +3421,7 @@
       (run-empty-server state "Server 1")
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Viral Weaponization" (:hand (get-corp))))
-      (is (= ["Pay 1 [Credits] to trash" "No action"] (:choices (prompt-map :runner))))
+      (is (= ["Pay 1 [Credits] to trash" "No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
       (take-credits state :runner)
@@ -3451,7 +3461,7 @@
         (run-empty-server state "Server 1")
         (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Viral Weaponization" (:hand (get-corp))))
-        (is (= ["Pay 1 [Credits] to trash" "No action"] (:choices (prompt-map :runner))))
+        (is (= ["Pay 1 [Credits] to trash" "No action"] (prompt-buttons :runner)))
         (click-prompt state :runner "No action")
         (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
         (take-credits state :runner)

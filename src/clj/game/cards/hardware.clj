@@ -771,7 +771,7 @@
                                                    (continue-ability state side (shuffle-next set-aside nil nil) card nil)
                                                    (let [to-install target
                                                          set-aside (remove-once #(= % target) set-aside)]
-                                                     (wait-for (runner-install state side (assoc eid :source card :source-type :ability) target {:cost-bonus -2})
+                                                     (wait-for (runner-install state side (assoc eid :source card :source-type :runner-install) target {:cost-bonus -2})
                                                                (continue-ability state side (shuffle-next set-aside nil nil) card nil)))))}
                                    card nil)))}]}))
 

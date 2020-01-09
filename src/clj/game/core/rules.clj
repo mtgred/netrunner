@@ -646,7 +646,7 @@
   [state side]
   (doseq [side [:corp :runner]]
     (when (and (>= (get-in @state [side :agenda-point]) (get-in @state [side :agenda-point-req]))
-               (not (some true? (get-effects state side nil :cannot-win-on-points))))
+               (not (any-effects state side :cannot-win-on-points)))
       (win state side "Agenda"))))
 
 (defn update-agenda-points-card
