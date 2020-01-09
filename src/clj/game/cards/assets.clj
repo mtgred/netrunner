@@ -2114,35 +2114,26 @@
 (define-card "Toshiyuki Sakai"
   (advance-ambush
     0
-    {:effect (effect (continue-ability
-                       {:prompt "Select an asset or agenda in HQ"
-                        :choices {:card #(and (or (agenda? %)
-                                                  (asset? %))
-                                              (in-hand? %))}
-                        :msg "swap it for an asset or agenda from HQ"
-                        :effect (req (let [tidx (ice-index state card)
-                                           srvcont (get-in @state (cons :corp (:zone card)))
-                                           c (get-counters (get-card state card) :advancement)
-                                           newcard (assoc target :zone (:zone card) :advance-counter c)
-                                           newcont (apply conj (subvec srvcont 0 tidx) newcard (subvec srvcont tidx))]
-                                       (resolve-ability
-                                         state side
-                                         {:effect (req (swap! state assoc-in (cons :corp (:zone card)) newcont)
-                                                       (swap! state update-in [:corp :hand]
-                                                              (fn [coll] (remove-once #(same-card? % newcard) coll)))
-                                                       (trigger-event state side :corp-install newcard)
-                                                       (move state side card :hand))} card nil)
-                                       (resolve-prompt state :runner {:choice "No action"})
-                                       ; gets rid of prompt to trash Toshiyuki since it's back in HQ now
-                                       (resolve-ability
-                                         state :runner
-                                         {:optional
-                                          {:player :runner
-                                           :priority true
-                                           :prompt "Access the newly installed card?"
-                                           :yes-ability {:effect (effect (access-card newcard))}}}
-                                         card nil)))}
-                       card nil))}
+    {:async true
+     :prompt "Select an asset or agenda in HQ"
+     :choices {:card #(and (or (agenda? %)
+                               (asset? %))
+                           (in-hand? %))}
+     :msg "swap it for an asset or agenda from HQ"
+     :effect (req (let [c (get-counters card :advancement)
+                        target (assoc target :advance-counter c)
+                        server (zone->name (butlast (:zone card)))
+                        index (:index card)]
+                    (move state :corp card :hand)
+                    (wait-for (corp-install state :corp target server {:index index})
+                              (let [new-card async-result]
+                                (continue-ability
+                                  state :runner
+                                  {:optional
+                                   {:prompt "Access the newly installed card?"
+                                    :yes-ability {:async true
+                                                  :effect (effect (access-card eid new-card))}}}
+                                  card nil)))))}
     "Swap Toshiyuki Sakai with an agenda or asset from HQ?"))
 
 (define-card "Turtlebacks"

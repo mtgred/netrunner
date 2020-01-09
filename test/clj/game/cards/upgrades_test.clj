@@ -35,7 +35,7 @@
             diff-tg (get-content state :remote2 0)]
         (core/rez state :corp arella)
         (score-agenda state :corp (refresh diff-tg))
-        (is (empty? (get-in @state [:corp :prompt])) "Arella not triggered for different remote score")
+        (is (empty? (:prompt (get-corp))) "Arella not triggered for different remote score")
         (is (= 1 (count (get-scored state :corp))) "1 Agenda scored")
         (score-agenda state :corp (refresh same-tg))
         (click-card state :corp (find-card "Bryan Stinson" (:hand (get-corp))))
@@ -106,7 +106,7 @@
        (run-empty-server state "HQ")
        (click-prompt state :corp "0")
        (click-prompt state :runner "0")
-       (is (= "Ash 2X3ZB9CY" (-> (get-runner) :prompt first :card :title)) "Should access Ash")
+       (is (= "Ash 2X3ZB9CY" (-> (prompt-map :runner) :card :title)) "Should access Ash")
        (click-prompt state :runner "Pay 3 [Credits] to trash")
        (is (not (:run @state)) "Accessing Ash then ends the run"))))
   (testing "Ash+Dirty Laundry interaction"
@@ -210,7 +210,7 @@
         ;; runner now chooses which to access.
         (click-card state :runner hok)
         ;; prompt should be asking for the 2 net damage cost
-        (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
+        (is (= "House of Knives" (:title (:card (prompt-map :runner))))
             "Prompt to pay 2 net damage")
         (click-prompt state :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner did not pay 2 net damage")
@@ -234,7 +234,7 @@
         ;; runner now chooses which to access.
         (click-prompt state :runner "Card from deck")
         ;; prompt should be asking for the 2 net damage cost
-        (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
+        (is (= "House of Knives" (:title (:card (prompt-map :runner))))
             "Prompt to pay 2 net damage")
         (click-prompt state :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner did not pay 2 net damage")
@@ -279,7 +279,7 @@
         ;; runner now chooses which to access.
         (click-card state :runner op)
         ;; prompt should be asking for the net damage costs
-        (is (= "Obokata Protocol" (:title (:card (first (:prompt (get-runner))))))
+        (is (= "Obokata Protocol" (:title (:card (prompt-map :runner))))
             "Prompt to pay steal costs")
         (click-prompt state :runner "Pay to steal")
         (is (= 6 (count (:discard (get-runner)))) "Runner took 4 net damage")
@@ -298,7 +298,7 @@
         ;; runner now chooses which to access.
         (click-card state :runner fai)
         ;; prompt should be asking for the net damage costs
-        (is (= "Fetal AI" (:title (:card (first (:prompt (get-runner))))))
+        (is (= "Fetal AI" (:title (:card (prompt-map :runner))))
             "Prompt to pay steal costs")
         (click-prompt state :runner "Pay to steal")
         (is (= 3 (:credit (get-runner))) "Runner paid 2 credits")
@@ -333,7 +333,7 @@
       (run-empty-server state :rd)
       (click-prompt state :corp "0")
       (click-prompt state :runner "10")
-      (is (:card (first (:prompt (get-runner)))) "Accessing a card from R&D; not showing Bernice Mai as possible access")))
+      (is (:card (prompt-map :runner)) "Accessing a card from R&D; not showing Bernice Mai as possible access")))
   (testing "interaction with Dedicated Response Team"
     (do-game
       (new-game {:corp {:deck [(qty "Bernice Mai" 3) "Dedicated Response Team"]}})
@@ -475,7 +475,7 @@
       (take-credits state :corp)
       ;; Check Caprice triggers properly on multiple ice
       (run-on state "Server 1")
-      (is (empty? (get-in @state [:corp :prompt])) "Caprice not trigger on first ice")
+      (is (empty? (:prompt (get-corp))) "Caprice not trigger on first ice")
       (run-continue state)
       (run-continue state) ; Caprice should trigger here
       (is (prompt-is-card? state :corp caprice)
@@ -484,10 +484,10 @@
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
       (is (not (:run @state)) "Run ended by Caprice")
-      (is (empty? (get-in @state [:corp :prompt])) "Caprice prompted cleared")
+      (is (empty? (:prompt (get-corp))) "Caprice prompted cleared")
       ;; Check Caprice does not trigger on other servers
       (run-on state "HQ")
-      (is (empty? (get-in @state [:corp :prompt])) "Caprice does not trigger on other servers"))))
+      (is (empty? (:prompt (get-corp))) "Caprice does not trigger on other servers"))))
 
 (deftest cayambe-grid
   ;; Cayambe Grid
@@ -501,7 +501,7 @@
           (core/rez state :corp cg))
         (take-credits state :corp)
         (take-credits state :runner)
-        (is (zero? (->> (get-corp) :prompt count)) "corp has no prompts when no ice is installed in this server")))
+        (is (empty? (:prompt (get-corp))) "corp has no prompts when no ice is installed in this server")))
     (testing "1 ice in same server"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -514,7 +514,7 @@
         (take-credits state :runner)
         (let [enigma (get-ice state :hq 0)]
           (is (zero? (get-counters (refresh enigma) :advancement)) "Enigma has 0 counters to start")
-          (is (= (-> (get-corp) :prompt first :msg) "Place 1 advancement token on an ice protecting HQ") "Correct server in prompt title")
+          (is (= "Place 1 advancement token on an ice protecting HQ" (:msg (prompt-map :corp))) "Correct server in prompt title")
           (click-card state :corp enigma)
           (is (= 1 (get-counters (refresh enigma) :advancement)) "Enigma has 1 counter"))))
     (testing "1 ice in another server"
@@ -529,7 +529,7 @@
         (take-credits state :runner)
         (let [enigma (get-ice state :remote1 0)]
           (is (zero? (get-counters (refresh enigma) :advancement)) "Enigma has 0 counters to start")
-          (is (zero? (->> (get-corp) :prompt count)) "corp has no prompts when no ice is installed in this server")))))
+          (is (empty? (:prompt (get-corp))) "corp has no prompts when no ice is installed in this server")))))
   (testing "Payment ability"
     (testing "No ice"
       (do-game
@@ -542,7 +542,7 @@
           (run-on state :hq)
           (run-continue state)
           (let [credits (:credit (get-runner))]
-            (is (= "Pay 0 [Credits] or end the run?" (->> (get-runner) :prompt first :msg)))
+            (is (= "Pay 0 [Credits] or end the run?" (:msg (prompt-map :runner))))
             (click-prompt state :runner "Pay 0 [Credits]")
             (is (= credits (:credit (get-runner))))
             (is (:run @state) "Run hasn't ended")))))
@@ -559,7 +559,7 @@
           (run-on state :hq)
           (run-continue state)
           (let [credits (:credit (get-runner))]
-            (is (= "Pay 0 [Credits] or end the run?" (->> (get-runner) :prompt first :msg)))
+            (is (= "Pay 0 [Credits] or end the run?" (:msg (prompt-map :runner))))
             (click-prompt state :runner "Pay 0 [Credits]")
             (is (= credits (:credit (get-runner))))
             (is (:run @state) "Run hasn't ended")))))
@@ -578,7 +578,7 @@
           (run-on state :hq)
           (run-continue state)
           (let [credits (:credit (get-runner))]
-            (is (= "Pay 2 [Credits] or end the run?" (->> (get-runner) :prompt first :msg)))
+            (is (= "Pay 2 [Credits] or end the run?" (:msg (prompt-map :runner))))
             (click-prompt state :runner "Pay 2 [Credits]")
             (is (= (- credits 2) (:credit (get-runner))))
             (is (:run @state) "Run hasn't ended")))))
@@ -602,7 +602,7 @@
           (run-continue state)
           (run-continue state)
           (let [credits (:credit (get-runner))]
-            (is (= "Pay 4 [Credits] or end the run?" (->> (get-runner) :prompt first :msg)))
+            (is (= "Pay 4 [Credits] or end the run?" (:msg (prompt-map :runner))))
             (click-prompt state :runner "Pay 4 [Credits]")
             (is (= (- credits 4) (:credit (get-runner))))
             (is (:run @state) "Run hasn't ended")))))
@@ -630,11 +630,11 @@
           (run-continue state)
           (run-continue state)
           (let [credits (:credit (get-runner))]
-            (is (= "Pay 6 [Credits] or end the run?" (->> (get-runner) :prompt first :msg)))
-            (is (= 1 (->> (get-runner) :prompt first :choices count)))
+            (is (= "Pay 6 [Credits] or end the run?" (:msg (prompt-map :runner))))
+            (is (= ["End the run"] (prompt-buttons :runner)))
             (click-prompt state :runner "End the run")
             (is (= credits (:credit (get-runner))))
-            (is (not (:run @state)) "Run has ended"))))))
+            (is (not (:run @state)) "Run has ended")))))
   (testing "Prompt from starting ability"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -654,10 +654,12 @@
           (take-credits state :corp)
           (take-credits state :runner)
           (click-prompt state :corp "Cayambe Grid")
-          (is (= (-> (get-corp) :prompt first :msg) "Place 1 advancement token on an ice protecting HQ") "Correct server in prompt title (HQ)")
+          (is (= (:msg (prompt-map :corp)) "Place 1 advancement token on an ice protecting HQ")
+              "Correct server in prompt title (HQ)")
           (click-card state :corp iw1)
-          (is (= (-> (get-corp) :prompt first :msg) "Place 1 advancement token on an ice protecting Server 1") "Correct server in prompt title (Server 1)")
-          (click-card state :corp iw2)))))
+          (is (= (:msg (prompt-map :corp)) "Place 1 advancement token on an ice protecting Server 1")
+              "Correct server in prompt title (Server 1)")
+          (click-card state :corp iw2))))))
 
 (deftest chilo-city-grid
   ;; ChiLo City Grid - Give 1 tag for successful traces during runs on its server
@@ -757,7 +759,7 @@
        (core/rez state :corp (refresh css))
        (is (= 2 (get-counters (refresh css) :power)) "Still 2 counters on Cold Site Server")
        (play-from-hand state :runner "Dirty Laundry")
-       (is (not (some #{"HQ"} (-> (get-runner) :prompt first :choices)))
+       (is (not (some #{"HQ"} (prompt-buttons :runner)))
            "Runner should not get to choose HQ due to increased cost")
        (click-prompt state :runner "R&D")
        (run-jack-out state)
@@ -904,6 +906,7 @@
         (run-empty-server state "Archives")
         (click-prompt state :runner "Cyberdex Virus Suite")
         (click-prompt state :corp "Yes")
+        (println (:prompt (get-runner)))
         (is (pos? (count (:prompt (get-runner)))) "CVS purge did not interrupt archives access")
         ;; purged counters
         (is (zero? (get-counters (refresh cache) :virus))
@@ -1061,8 +1064,7 @@
         (is (= (- credits 6) (:credit (get-runner))) "Runner pays 6 credits to not end the run"))
       (click-prompt state :runner "No action")
       (run-empty-server state "Server 1")
-      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner should only get 1 choice")
-      (is (= "End the run" (-> (get-runner) :prompt first :choices first)) "Only choice should be End the run")
+      (is (= ["End the run"] (prompt-buttons :runner)) "Only choice should be End the run")
       (click-prompt state :runner "End the run")
       (is (not (:run @state)) "Run should be ended from Giordano Memorial Field ability")))
   (testing "Ending the run doesn't mark the run as unsuccessful. Issue #4223"
@@ -1271,11 +1273,11 @@
       (is (= 4 (:credit (get-corp))) "Starts with 4 credits")
       (dotimes [n 5]
         (core/click-draw state :corp 1)
-        (click-prompt state :corp (-> (get-corp) :prompt first :choices first))
+        (click-prompt state :corp (first (prompt-buttons :corp)))
         (is (= 4 (:credit (get-corp))) "Not charged to install ice")
         (is (= (inc n) (count (get-in @state [:corp :servers :remote1 :ices]))) (str n " ICE protecting Remote1")))
       (core/click-draw state :corp 1)
-      (click-prompt state :corp (-> (get-corp) :prompt first :choices first))
+      (click-prompt state :corp (first (prompt-buttons :corp)))
       (is (= 3 (:credit (get-corp))) "Charged to install ice")
       (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
   (testing "Drawing non-ice on runner's turn"
@@ -1291,7 +1293,7 @@
       (click-prompt state :runner "Eden Shard")
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "Yes")
-      (is (= :bogus (-> (get-corp) :prompt first :prompt-type)) "Corp has a bogus prompt to fake out the runner")
+      (is (= :bogus (prompt-type :corp)) "Corp has a bogus prompt to fake out the runner")
       (click-prompt state :corp "Carry on!"))))
 
 (deftest keegan-lane
@@ -1337,8 +1339,7 @@
   (testing "La Costa Grid cannot be installed in a central server"
     (do-game
       (new-game {:corp {:hand ["La Costa Grid"]}})
-      (is (not (some (zipmap ["HQ", "R&D", "Archives"] (repeat true))
-                     (:choices (first (:prompt (get-corp)))))) "Central servers are not listed in the install prompt")))
+      (is (not (some #{"HQ" "R&D" "Archives"} (prompt-buttons :corp))) "Central servers are not listed in the install prompt")))
   (testing "At the start of their turn The Corp may place an advancement token on a card in La Costa Grid's server"
     (do-game
       (new-game {:corp {:hand ["La Costa Grid", "Breaking News"]}})
@@ -1485,7 +1486,7 @@
         (run-on state "HQ")
         (core/rez state :corp iw)
         (card-ability state :corp mb 0)
-        (is (= :psi (:prompt-type (prompt-map :corp))))
+        (is (= :psi (prompt-type :corp)))
         (click-prompt state :corp "1 [Credits]")
         (click-prompt state :runner "0 [Credits]")
         (click-card state :corp iw)
@@ -1585,7 +1586,7 @@
     (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT in HQ")
     (is (empty? (:discard (get-corp))) "MVT in HQ is not trashed")
     (run-empty-server state "Server 1")
-    (is (= 1 (-> @state :runner :prompt first :choices count)) "Should only have a single option")
+    (is (= ["Pay 5 [Credits] to trash"] (prompt-buttons :runner)) "Should only have a single option")
     (click-prompt state :runner "Pay 5 [Credits] to trash")
     (is (zero? (:credit (get-runner))) "Runner forced to trash MVT")
     (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed"))
@@ -1601,7 +1602,7 @@
       (core/gain state :runner :credit 2)
       (run-empty-server state "Server 1")
       ;; Runner not force to trash since Imp is installed
-      (is (= 2 (-> @state :runner :prompt first :choices count)) "Runner has 2 choices when Imp is installed")
+      (is (= 2 (count (prompt-buttons :runner))) "Runner has 2 choices when Imp is installed")
       (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT when Imp installed")
       (is (empty? (:discard (get-corp))) "MVT is not force-trashed when Imp installed")
       (let [imp (get-program state 0)]
@@ -1618,21 +1619,21 @@
       (core/gain state :runner :credit 2)
       (run-empty-server state "Server 1")
       (is (= #{"[Imp] Hosted virus counter: Trash card" "Pay 5 [Credits] to trash"}
-             (->> (get-runner) :prompt first :choices (into #{}))) "Should have Imp and MVT options")
+             (into #{} (prompt-buttons :runner))) "Should have Imp and MVT options")
       (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
       (take-credits state :runner)
       (core/lose state :runner :credit (:credit (get-runner)))
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 2")
-      (is (= ["[Imp] Hosted virus counter: Trash card"] (-> (get-runner) :prompt first :choices)) "Should only have Imp option")
+      (is (= ["[Imp] Hosted virus counter: Trash card"] (prompt-buttons :runner)) "Should only have Imp option")
       (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
       (take-credits state :runner)
       (core/lose state :runner :credit (:credit (get-runner)))
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 3")
-      (is (= ["No action"] (-> (get-runner) :prompt first :choices)) "Should only have no action option")
+      (is (= ["No action"] (prompt-buttons :runner)) "Should only have no action option")
       (click-prompt state :runner "No action")
       (is (= 2 (->> (get-corp) :discard count)) "Runner was not forced to trash MVT")))
   (testing "not forced to trash when credits below 5"
@@ -1644,7 +1645,7 @@
       (play-from-hand state :runner "Daily Casts")
       (is (= 2 (:credit (get-runner))) "Runner paid install costs")
       (run-empty-server state "Server 1")
-      (is (= ["No action"] (-> (get-runner) :prompt first :choices)) "Runner is not given the choice")))
+      (is (= ["No action"] (prompt-buttons :runner)) "Runner is not given the choice")))
   (testing "forced to trash when playing as Khumalo"
     (do-game
       (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}
@@ -1655,7 +1656,7 @@
       (play-from-hand state :runner "Daily Casts")
       (is (= 2 (:credit (get-runner))) "Runner paid install costs")
       (run-empty-server state "Server 1")
-      (is (= ["[Freedom Khumalo] Trash card"] (-> (get-runner) :prompt first :choices)) "Runner is not given the choice")))
+      (is (= ["[Freedom Khumalo] Trash card"] (prompt-buttons :runner)) "Runner is not given the choice")))
   (testing "forced to trash after playing Demolition Run"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1668,7 +1669,7 @@
       (click-prompt state :runner "R&D")
       (run-successful state)
       (click-prompt state :runner "Unrezzed upgrade in R&D")
-      (is (= ["[Demolition Run] Trash card"] (-> (get-runner) :prompt first :choices)) "Runner is not given the choice")))
+      (is (= ["[Demolition Run] Trash card"] (prompt-buttons :runner)) "Runner is not given the choice")))
   (testing "not to trash after installing Salsette Slums"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1681,7 +1682,7 @@
       (is (= 8 (:credit (get-runner))) "Runner paid install costs")
       (run-empty-server state "R&D")
       (click-prompt state :runner "Unrezzed upgrade in R&D")
-      (is (= ["Pay 5 [Credits] to trash"] (-> (get-runner) :prompt first :choices)) "Runner is not given the choice"))))
+      (is (= ["Pay 5 [Credits] to trash"] (prompt-buttons :runner)) "Runner is not given the choice"))))
 
 (deftest mwanza-city-grid
   ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
@@ -1689,7 +1690,7 @@
     (do-game
       (new-game {:corp {:deck ["Mwanza City Grid" (qty "Hedge Fund" 5)]}})
       (play-from-hand state :corp "Mwanza City Grid")
-      (is (= #{"R&D" "HQ"} (-> (get-corp) :prompt first :choices set)) "Mwanza can only be installed in root of HQ or R&D")
+      (is (= ["R&D" "HQ"] (prompt-buttons :corp)) "Mwanza can only be installed in root of HQ or R&D")
       (click-prompt state :corp "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
@@ -2105,7 +2106,7 @@
       ;; Runner trashes Prisec
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (run-empty-server state "HQ")
-      (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
+      (is (empty? (:prompt (get-corp))) "Prisec does not trigger from HQ")))
   (testing "Multiple unrezzed upgrades in Archives interaction with DRT"
     (do-game
       (new-game {:corp {:deck [(qty "Prisec" 2) "Dedicated Response Team"]}
@@ -2121,11 +2122,11 @@
       (click-prompt state :runner "Unrezzed upgrade in Archives")
       (click-card state :runner (get-content state :archives 0))
       (click-prompt state :corp "Yes") ; corp pay for PriSec
-      (click-prompt state :runner "No action") ; runner don't pay to trash
+      (click-prompt state :runner "No action") ; runner doesn't pay to trash
       (is (:run @state) "Run still active")
       (click-prompt state :runner "Unrezzed upgrade in Archives")
       (click-prompt state :corp "Yes") ; corp pay for PriSec
-      (click-prompt state :runner "No action") ; runner don't pay to trash
+      (click-prompt state :runner "No action") ; runner doesn't pay to trash
       (is (not (:run @state)) "Run ended")
       (is (= 4 (count (:discard (get-runner)))) "Runner took 4 meat damage"))))
 
@@ -2159,7 +2160,7 @@
         ;; runner now chooses which to access.
         (click-card state :runner hok)
         ;; prompt should be asking for the 5cr cost
-        (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
+        (is (= "House of Knives" (:title (:card (prompt-map :runner))))
             "Prompt to pay 5cr")
         (click-prompt state :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner was not charged 5cr")
@@ -2198,8 +2199,7 @@
       (take-credits state :corp)
       (run-empty-server state "HQ")
       ;; prompt should be asking to steal HoK
-      (is (= "Steal" (first (:choices (first (:prompt (get-runner))))))
-          "Runner being asked to Steal")))
+      (is (= ["Steal"] (prompt-buttons :runner)) "Runner being asked to Steal")))
   (testing "Don't affect runs on other servers"
     (do-game
       (new-game {:corp {:deck ["Red Herrings" "House of Knives"]}})
@@ -2228,7 +2228,7 @@
                             (click-prompt state :corp "4")))
        (is (= 4 (get-counters (refresh rs) :power)) "4 counters placed on Reduced Service")
        (play-from-hand state :runner "Dirty Laundry")
-       (is (not (some #{"HQ"} (-> (get-runner) :prompt first :choices)))
+       (is (not (some #{"HQ"} (prompt-buttons :runner)))
            "Runner should not get to choose HQ due to increased cost")
        (click-prompt state :runner "Archives")
        (is (= 4 (get-counters (refresh rs) :power)) "No counter removed by only making a run")
@@ -2346,7 +2346,7 @@
       (core/rez state :corp self)
       (card-ability state :corp (refresh self) 0)
       (is (= 3 (-> (get-corp) :discard count)) "All 3 cards from Server 1 should be in discard")
-      (is (= 2 (-> (get-corp) :prompt first :base)) "Self-destruct base trace should start at 2")
+      (is (= 2 (:base (prompt-map :corp))) "Self-destruct base trace should start at 2")
       (is (zero? (-> (get-runner) :discard count)) "Runner should have no cards in heap")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
@@ -2411,7 +2411,7 @@
         (core/rez state :corp sb)
         (run-empty-server state "Server 1")
         (click-card state :runner hok)
-        (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
+        (is (= "House of Knives" (:title (:card (prompt-map :runner))))
             "Prompt to pay 5cr")
         (click-prompt state :runner "No action")
         (is (= 3 (:click (get-runner))) "Runner was not charged 1click")
@@ -2456,7 +2456,7 @@
       (core/rez state :corp scg1)
       (core/rez state :corp cvs1)
       (is (= 15 (:credit (get-corp))))
-      (is (= (:cid scg1) (-> (get-corp) :prompt first :card :cid)) "Surat City Grid triggered from upgrade in same remote")
+      (is (= (:cid scg1) (-> (prompt-map :corp) :card :cid)) "Surat City Grid triggered from upgrade in same remote")
       (click-prompt state :corp "Yes")
       (click-card state :corp wrap)
       (is (rezzed? (refresh wrap)) "Wraparound is rezzed")
@@ -2472,7 +2472,7 @@
         (is (empty? (:prompt (get-corp))) "SCG didn't trigger, upgrades in root of same central aren't considered in server")
         (core/derez state :corp (refresh wrap))
         (core/rez state :corp enig)
-        (is (= (:cid scg2) (-> (get-corp) :prompt first :card :cid)) "SCG did trigger for ICE protecting HQ")))))
+        (is (= (:cid scg2) (-> (prompt-map :corp) :card :cid)) "SCG did trigger for ICE protecting HQ")))))
 
 (deftest tranquility-home-grid
   ;; Tranquility Home Grid
@@ -2503,8 +2503,7 @@
     (do-game
       (new-game {:corp {:hand ["Tranquility Home Grid"]}})
       (play-from-hand state :corp "Tranquility Home Grid")
-      (is (= 1 (-> (get-corp) :prompt first :choices count)) "Only one option for installable servers")
-      (is (= "New remote" (-> (get-corp) :prompt first :choices first)) "Only installable in a remote server")))
+      (is (= ["New remote"] (prompt-buttons :corp)) "Only installable in a remote server")))
   (testing "Restore interaction"
     (do-game
       (new-game {:corp {:hand ["Tranquility Home Grid" "Restore"]}})
@@ -2895,4 +2894,3 @@
         (click-prompt state :runner "Pay 5 [Credits] to trash")
         (is (empty? (:prompt (get-corp))) "Corp has no prompt")
         (is (empty? (:prompt (get-runner))) "Runner has no prompt")))))
-

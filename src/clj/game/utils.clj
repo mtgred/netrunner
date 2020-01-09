@@ -284,3 +284,11 @@
   "true if coll contains elm"
   [coll elm]
   (some #(= elm %) coll))
+
+(defn positions
+  "Returns the positions of elements in coll matching pred"
+  [pred coll]
+  (keep-indexed (fn [idx x]
+                  (when (pred x)
+                    idx))
+                coll))

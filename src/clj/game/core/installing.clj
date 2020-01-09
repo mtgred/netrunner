@@ -229,7 +229,9 @@
       ;; Check to see if a second agenda/asset was installed.
       (wait-for (corp-install-asset-agenda state side moved-card dest-zone server)
                 (letfn [(event [state side eid _]
-                          (trigger-event-simult state side eid :corp-install nil (get-card state moved-card) install-state))]
+                          (let [new-eid (make-eid state eid)]
+                            (wait-for (trigger-event-simult state side new-eid :corp-install nil (get-card state moved-card) install-state)
+                                      (complete-with-result state side eid (get-card state moved-card)))))]
                   (case install-state
                     ;; Ignore all costs. Pass eid to rez.
                     :rezzed-no-cost
@@ -458,9 +460,11 @@
                            (when (and (not facedown)
                                       (has-subtype? installed-card "Icebreaker"))
                              (update-breaker-strength state side installed-card))
-                           (trigger-event-simult state side eid :runner-install
-                                                 (when-not facedown
-                                                   {:card-abilities (card-as-handler (get-card state installed-card))})
-                                                 (get-card state installed-card)))
+                           (let [new-eid (make-eid state eid)]
+                             (wait-for (trigger-event-simult state side :runner-install
+                                                             (when-not facedown
+                                                               {:card-abilities (card-as-handler (get-card state installed-card))})
+                                                             (get-card state installed-card))
+                                       (complete-with-result state side eid (get-card state installed-card)))))
                          (effect-completed state side eid))))))
        (effect-completed state side eid)))))

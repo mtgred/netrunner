@@ -1,6 +1,6 @@
 (ns game.utils-test
   (:require [game.core :as core]
-            [game.utils :as utils :refer [side-str]]
+            [game.utils :as utils :refer [side-str same-card?]]
             [clojure.test :refer :all]
             [clojure.string :refer [lower-case split]]))
 
@@ -89,11 +89,15 @@
 
       ;; Default text prompt
       :else
-      (when-not (core/resolve-prompt state side {:choice (if (string? choice) choice (:title choice))})
-        (is (= choice (first choices))
-            (str (side-str side) " expected to click [ "
-                 (if (string? choice) choice (:title choice ""))
-                 " ] but couldn't find it. Current prompt is: \n" prompt))))))
+      (let [choice-fn #(or (= choice (:value %))
+                           (= choice (get-in % [:value :title]))
+                           (same-card? choice (:value %)))
+            chosen (first (filter choice-fn choices))]
+        (when-not (core/resolve-prompt state side {:choice {:uuid (:uuid chosen)}})
+          (is (= choice (first choices))
+              (str (side-str side) " expected to click [ "
+                   (if (string? choice) choice (:title choice ""))
+                   " ] but couldn't find it. Current prompt is: \n" prompt)))))))
 
 (defn last-log-contains?
   [state content]
