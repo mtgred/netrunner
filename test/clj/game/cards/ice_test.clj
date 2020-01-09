@@ -3312,7 +3312,7 @@
             (run-continue state)
             (changes-val-macro
               0 (:credit (get-corp))
-              "Corp does not gain any credits when runner has 1 or less cards in deck"
+              "Corp does not gain any credits when runner has 2 cards with different types in deck"
               (card-subroutine state :corp sm 1)))))
       (testing "Enough cards in deck"
         (do-game
