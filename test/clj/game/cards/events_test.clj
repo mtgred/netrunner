@@ -78,7 +78,7 @@
       (play-from-hand state :runner "Always Have a Backup Plan")
       (click-prompt state :runner "Archives")
       (is (= [:archives] (:server (:run @state))) "Running on Archives")
-      (core/end-run state :corp)
+      (run-jack-out state)
       (is (not (:run @state)) "Run ended")
       (click-prompt state :runner "Yes")
       (is (= [:archives] (:server (:run @state))) "Running on Archives again")))

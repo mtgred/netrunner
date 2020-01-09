@@ -2441,7 +2441,8 @@
       (is (last-log-contains? state "End the run"))
       (is (= 2 (get-counters (refresh wot-scored) :agenda)) "Wotan should only have 2 agenda counters")
       (is (= 3 (count (:subroutines (refresh eli)))) "Eli gains a sub from Project Wotan")
-      (core/end-run state :corp)
+      (run-continue state)
+      (run-jack-out state)
       (is (= 2 (count (:subroutines (refresh eli)))) "Eli resets to normal number of subs"))))
 
 (deftest project-yagi-uda

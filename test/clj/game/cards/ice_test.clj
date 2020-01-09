@@ -3062,7 +3062,7 @@
       (core/rez state :corp offer)
       (run-continue state)
       (is (= 2 (count (:subroutines (refresh offer)))) "Special Offer gains 1 sub from Sensei")
-      (core/end-run state :corp)
+      (run-jack-out state)
       (is (= 1 (count (:subroutines (refresh offer)))) "Special Offer resets on run-end")
       (is (= 1 (count (:subroutines (refresh snow)))) "Snowflake resets on run-end"))))
 
@@ -3970,7 +3970,7 @@
       (is (:fired (first (:subroutines (refresh wormhole))))
           "Subroutine fires even when there are no viable ice.")
       (is (empty? (:prompt (get-corp))) "No choice prompt for the Corp")
-      (core/end-run state :corp)
+      (run-jack-out state)
       (run-on state :hq)
       (core/rez state :corp iw)
       (run-continue state)

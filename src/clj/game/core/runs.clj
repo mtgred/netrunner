@@ -1212,8 +1212,6 @@
 
 (defn end-run
   "After checking for prevents, end this run, and set it as UNSUCCESSFUL."
-  ([state side] (end-run state side (make-eid state)))
-  ([state side eid] (end-run state side eid nil))
   ([state side eid card]
    (swap! state update-in [:end-run] dissoc :end-run-prevent)
    (let [prevent (get-prevent-list state :runner :end-run)]
@@ -1238,13 +1236,13 @@
 
 (defn- resolve-jack-out
   [state side eid]
-  (end-run state side)
-  (system-msg state side "jacks out")
-  (trigger-event-sync state side (make-result eid true) :jack-out))
+  (wait-for (end-run state side nil)
+            (system-msg state side "jacks out")
+            (wait-for (trigger-event-sync state side :jack-out)
+                      (complete-with-result state side eid true))))
 
 (defn jack-out
   "The runner decides to jack out."
-  ([state side] (jack-out state side (make-eid state)))
   ([state side eid]
    (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
    (let [cost (jack-out-cost state side)]
