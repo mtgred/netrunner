@@ -2231,8 +2231,11 @@
                                                (str "shuffle their Stack")))
                                    :priority true
                                    :choices (req (cancellable
-                                                   (conj (vec (sort-by :title (filter program?
-                                                                                      (:deck runner))))
+                                                   (conj (filter #(can-pay? state side
+                                                                      (assoc eid :source card :source-type :runner-install) 
+                                                                      % nil [:credit (install-cost state side % {:cost-bonus 2})])                                                                                      
+                                                               (vec (sort-by :title (filter program? (:deck runner))))
+                                                               )
                                                          "No install")))
                                    :cost [:credit 2]
                                    :async true
