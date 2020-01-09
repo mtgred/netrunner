@@ -2,10 +2,11 @@
 
 (defn make-eid
   ([state] (make-eid state nil))
-  ([state {:keys [source source-type]}]
+  ([state {:keys [source source-type source-info]}]
    (merge {:eid (:eid (swap! state update-in [:eid] inc))}
           (when source {:source source})
-          (when source-type {:source-type source-type}))))
+          (when source-type {:source-type source-type})
+          (when source-info {:source-info source-info}))))
 
 (defn eid-set-defaults
   "Set default values for fields in the `eid` if they are not already set."

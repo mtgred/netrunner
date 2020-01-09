@@ -21,6 +21,7 @@
             [web.ws :as ws]
             [game.cards.agendas]
             [game.cards.assets]
+            [game.cards.basic]
             [game.cards.events]
             [game.cards.hardware]
             [game.cards.ice]

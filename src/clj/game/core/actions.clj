@@ -8,7 +8,7 @@
          update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size free-mu total-run-cost
          reset-all-subs! resolve-subroutine! resolve-unbroken-subs! break-subroutine!
-         update-all-ice update-all-icebreakers continue
+         update-all-ice update-all-icebreakers continue play-ability
          installable-servers get-runnable-zones)
 
 ;;; Neutral actions
@@ -17,12 +17,8 @@
   [state side {:keys [card server]}]
   (when-let [card (get-card state card)]
     (case (:type card)
-      ("Event" "Operation") (play-instant state side (make-eid state {:source :action
-                                                                      :source-type :play}) card {:base-cost [:click 1]})
-      ("Hardware" "Resource" "Program") (runner-install state side (make-eid state {:source :action
-                                                                                    :source-type :runner-install}) card {:base-cost [:click 1]})
-      ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side (make-eid state {:source server
-                                                                                   :source-type :corp-install}) card server {:base-cost [:click 1] :action :corp-click-install}))))
+      ("Event" "Operation") (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 3 :targets [card]})
+      ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda") (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 2 :targets [card server]}))))
 
 (defn shuffle-deck
   "Shuffle R&D/Stack."
@@ -37,24 +33,12 @@
 (defn click-draw
   "Click to draw."
   [state side args]
-  (when (and (not (get-in @state [side :register :cannot-draw]))
-             (pay state side nil :click 1 {:action :corp-click-draw}))
-    (system-msg state side "spends [Click] to draw a card")
-    (wait-for (trigger-event-simult state side (if (= side :corp) :pre-corp-click-draw :pre-runner-click-draw) nil nil)
-              (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw) (->> @state side :deck (take 1)))
-              (draw state side)
-              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
-              (play-sfx state side "click-card"))))
+  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 1}))
 
 (defn click-credit
   "Click to gain 1 credit."
   [state side args]
-  (when (pay state side nil :click 1 {:action :corp-click-credit})
-    (system-msg state side "spends [Click] to gain 1 [Credits]")
-    (gain-credits state side 1 (if (= :corp side) :corp-click-credit :runner-click-credit))
-    (swap! state update-in [:stats side :click :credit] (fnil inc 0))
-    (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
-    (play-sfx state side "click-credit")))
+  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 0}))
 
 (defn- change-msg
   "Send a system message indicating the property change"
@@ -302,13 +286,13 @@
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side update! resolve-ability)))))))
 
-(defn- do-play-ability [state side card ability targets]
+(defn- do-play-ability [state side card ability ability-idx targets]
   (let [cost (card-ability-cost state side ability card targets)]
     (when (or (nil? cost)
-              (can-pay? state side (make-eid state {:source card :source-type :ability}) card (:title card) cost))
+              (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) card (:title card) cost))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
-      (resolve-ability state side (assoc ability :cost cost) card targets))))
+      (resolve-ability state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) (assoc ability :cost cost) card targets))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."
@@ -326,9 +310,9 @@
                            (trigger-event-sync state side eid :spent-credits-from-card card))}
              (get-in cdef [:abilities ability]))
         cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-ability true? card [ab]))]
+                        (any-effects state side :prevent-ability true? card [ab ability]))]
     (when-not cannot-play
-      (do-play-ability state side card ab targets))))
+      (do-play-ability state side card ab ability targets))))
 
 (defn play-auto-pump
   "Use the 'match strength with ice' function of icebreakers."
@@ -447,7 +431,7 @@
         abi (when (< -1 index (count source-abis))
               (nth source-abis index))]
     (when abi
-      (do-play-ability state side card abi nil))))
+      (do-play-ability state side card abi index nil))))
 
 (def dynamic-abilities
   {"auto-pump" play-auto-pump
@@ -467,9 +451,9 @@
         cdef (card-def card)
         ab (get-in cdef [:corp-abilities ability])
         cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-ability true? card [ab]))]
+                        (any-effects state side :prevent-ability true? card [ab ability]))]
     (when-not cannot-play
-      (do-play-ability state side card ab targets))))
+      (do-play-ability state side card ab ability targets))))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
@@ -478,9 +462,9 @@
         cdef (card-def card)
         ab (get-in cdef [:runner-abilities ability])
         cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-ability true? card [ab]))]
+                        (any-effects state side :prevent-ability true? card [ab ability]))]
     (when-not cannot-play
-      (do-play-ability state side card ab targets))))
+      (do-play-ability state side card ab ability targets))))
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
@@ -501,29 +485,12 @@
 (defn trash-resource
   "Click to trash a resource."
   [state side args]
-  (let [trash-cost (max 0 (- 2 (get-in @state [:corp :trash-cost-bonus] 0)))]
-    (when-let [cost-str (pay state side nil :click 1 :credit trash-cost {:action :corp-trash-resource})]
-      (resolve-ability state side
-                       {:prompt  "Choose a resource to trash"
-                        :choices {:card (fn [card]
-                                          (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
-                                                   (> (count (filter resource? (all-active-installed state :runner))) 1))
-                                            (and (resource? card) (not (untrashable-while-resources? card)))
-                                            (resource? card)))}
-                        :cancel-effect (effect (gain :credit trash-cost :click 1))
-                        :effect  (effect (trash target)
-                                         (system-msg (str (build-spend-msg cost-str "trash")
-                                                          (:title target))))} nil nil))))
+  (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 5}))
 
 (defn do-purge
   "Purge viruses."
   [state side args]
-  (when-let [cost (pay state side nil :click 3 {:action :corp-click-purge})]
-    (purge state side)
-    (let [spent (build-spend-msg cost "purge")
-          message (str spent "all virus counters")]
-      (system-msg state side message))
-    (play-sfx state side "virus-purge")))
+  (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 6}))
 
 (defn get-rez-cost
   [state side card {:keys [ignore-cost alternative-cost cost-bonus] :as args}]
@@ -623,6 +590,12 @@
     (unregister-constant-effects state side card)
     (trigger-event state side :derez card side)))
 
+(defn click-advance
+  "Click to advance installed card."
+  [state side {:keys [card]}]
+  (when-let [card (get-card state card)]
+    (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 4 :targets [card]})))
+
 (defn advance
   "Advance a corp card that can be advanced.
    If you pass in a truthy value as the no-cost parameter, it will advance at no cost (for the card Success)."
@@ -678,19 +651,13 @@
 (defn click-run
   "Click to start a run."
   [state side {:keys [server] :as args}]
-  (make-run state side (make-eid state) server nil nil {:click-run true}))
+  (play-ability state side {:card (get-in @state [:runner :basic-action-card]) :ability 4 :targets [server]}))
 
 (defn remove-tag
   "Click to remove a tag."
   ([state side args] (remove-tag state side (make-eid state) args))
   ([state side eid args]
-  (let [remove-cost (max 0 (- 2 (get-in @state [:runner :tag-remove-bonus] 0)))]
-    (wait-for (pay-sync state side (make-eid state {:source :action :source-type :remove-tag}) nil :click 1 :credit remove-cost)
-              (when-let [cost-str async-result]
-                (lose-tags state :runner 1)
-                (system-msg state side (string/trimr (build-spend-msg cost-str "remove 1 tag" "removes 1 tag")))
-                (play-sfx state side "click-remove-tag"))
-              (effect-completed state side eid)))))
+   (play-ability state side {:card (get-in @state [:runner :basic-action-card]) :ability 5})))
 
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."

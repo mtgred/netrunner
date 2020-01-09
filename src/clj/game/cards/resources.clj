@@ -622,7 +622,9 @@
 (define-card "Crash Space"
   {:interactions {:prevent [{:type #{:meat}
                              :req (req true)}]
-                  :pay-credits {:req (req (= :remove-tag (:source-type eid)))
+                  :pay-credits {:req (req (or (= :remove-tag (:source-type eid))
+                                              (and (same-card? (:source eid) (:basic-action-card runner))
+                                                   (= 5 (:ability-idx (:source-info eid))))))
                                 :type :recurring}}
    :recurring 2
    :abilities [{:label "Trash to prevent up to 3 meat damage"
@@ -2824,8 +2826,12 @@
    :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]})
 
 (define-card "Wireless Net Pavilion"
-  {:effect (effect (trash-resource-bonus -2))
-   :leave-play (effect (trash-resource-bonus 2))
+  {:constant-effects [{:type :card-ability-additional-cost
+                       :req (req (let [targetcard (first targets)
+                                       target (second targets)]
+                                   (and (same-card? targetcard (:basic-action-card corp))
+                                        (= "Trash 1 resource if the Runner is tagged" (:label target)))))
+                       :value [:credit 2]}]
    :implementation "Errata from FAQ 3.0.1: should be unique"})
 
 (define-card "Woman in the Red Dress"

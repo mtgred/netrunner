@@ -2043,6 +2043,149 @@
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total")))))
 
+(deftest mirrormorph-endless-iteration
+  ;; MirrorMorph: Endless Iteration
+  (testing "Mirrormorph triggers on three different actions"
+    (testing "Gain credit from MM"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Hedge Fund" 10)]}})
+        (core/click-draw state :corp nil)
+        (core/click-credit state :corp nil)
+        (play-from-hand state :corp "Hedge Fund")
+        (changes-val-macro 1 (:credit (get-corp))
+                           "Gained 1 credit from MM ability"
+                           (click-prompt state :corp "Gain 1 [Credits]"))))
+    (testing "Gain click from using Asset ability"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Capital Investors" 10)]}})
+        (core/click-draw state :corp nil)
+        (play-from-hand state :corp "Capital Investors" "New remote")
+        (let [ci (get-content state :remote1 0)
+              mm (get-in @state [:corp :identity])]
+          (core/rez state :corp ci)
+          (card-ability state :corp (refresh ci) 0)
+          (click-prompt state :corp "Gain [Click]")
+          (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
+          (card-ability state :corp (refresh ci) 0)
+          (is (= 1 (:click (get-corp))) "Could not use Capital Investors again with MM click")
+          (core/click-credit state :corp nil)
+          (is (= 0 (:click (get-corp))) "Was able to click for credit"))))
+    (testing "Gain click from using Upgrade ability"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Cold Site Server" 10)]}})
+        (core/click-draw state :corp nil)
+        (play-from-hand state :corp "Cold Site Server" "New remote")
+        (let [css (get-content state :remote1 0)
+              mm (get-in @state [:corp :identity])]
+          (core/rez state :corp css)
+          (card-ability state :corp (refresh css) 0)
+          (click-prompt state :corp "Gain [Click]")
+          (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
+          (card-ability state :corp (refresh css) 0)
+          (is (= 1 (:click (get-corp))) "Could not use Hedge Fund again with MM click")
+          (core/click-credit state :corp nil)
+          (is (= 0 (:click (get-corp))) "Was able to click for credit"))))
+    (testing "Gain click from playing an Operation"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Hedge Fund" 10)]}})
+        (core/click-draw state :corp nil)
+        (core/click-credit state :corp nil)
+        (play-from-hand state :corp "Hedge Fund")
+        (click-prompt state :corp "Gain [Click]")
+        (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
+        (play-from-hand state :corp "Hedge Fund")
+        (is (= 1 (:click (get-corp))) "Could not use Hedge Fund again with MM click")))
+    (testing "Gain click from installing card"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "PAD Campaign" 10)]}})
+        (core/click-draw state :corp nil)
+        (core/click-credit state :corp nil)
+        (play-from-hand state :corp "PAD Campaign" "New remote")
+        (click-prompt state :corp "Gain [Click]")
+        (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
+        (play-from-hand state :corp "PAD Campaign" "New remote")
+        (is (= 1 (:click (get-corp))) "Could not install another card with MM click")))
+    (testing "Gain click from trashing three different PAD Taps"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :credits 9}
+                   :runner {:deck [(qty "PAD Tap" 3)]}})
+        (take-credits state :corp)
+        (dotimes [_ 3] (play-from-hand state :runner "PAD Tap"))
+        (take-credits state :runner)
+        (let [tap1 (get-resource state 0)
+              tap2 (get-resource state 1)
+              tap3 (get-resource state 2)
+              mm (get-in @state [:corp :identity])]
+          (card-side-ability state :corp tap1 0)
+          (card-side-ability state :corp tap2 0)
+          (card-side-ability state :corp tap3 0)
+          (click-prompt state :corp "Gain [Click]")
+          (is (= 1 (:click (get-corp))) "Gained 1 click from MM"))))
+    (testing "Trigger Mirrormorph with double Operation"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :hand ["Mandatory Upgrades" "Blue Level Clearance"]
+                          :deck [(qty "Hedge Fund" 10)]}})
+        (play-and-score state "Mandatory Upgrades")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (core/click-credit state :corp nil)
+        (core/click-draw state :corp nil)
+        (play-from-hand state :corp "Blue Level Clearance")
+        (changes-val-macro 1 (:credit (get-corp))
+                           "Gained 1 credit from MM ability"
+                           (click-prompt state :corp "Gain 1 [Credits]"))))
+    (testing "Trigger Mirrormorph with MCAAP"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :hand ["MCA Austerity Policy"]
+                          :deck [(qty "Hedge Fund" 10)]}})
+        (play-from-hand state :corp "MCA Austerity Policy" "New remote")
+        (let [mcaap (get-content state :remote1 0)
+              mm (get-in @state [:corp :identity])]
+          (core/rez state :corp mcaap)
+          (card-ability state :corp mcaap 0)
+          (dotimes [_ 2]
+            (take-credits state :corp)
+            (take-credits state :runner)
+            (card-ability state :corp mcaap 0))
+          (core/click-credit state :corp nil)
+          (card-ability state :corp mcaap 1)
+          (changes-val-macro 1 (:credit (get-corp))
+                             "Gained 1 credit from MM ability"
+                             (click-prompt state :corp "Gain 1 [Credits]"))))))
+  (testing "Cases where Mirrormorph does not trigger"
+    (testing "Using same Asset ability multiple times"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Capital Investors" 10)]}})
+        (play-from-hand state :corp "Capital Investors" "New remote")
+        (let [ci (get-content state :remote1 0)
+              mm (get-in @state [:corp :identity])]
+          (core/rez state :corp ci)
+          (dotimes [_ 2] (card-ability state :corp (refresh ci) 0))
+          (is (empty? (:prompt (get-corp))) "No MM trigger"))))
+    (testing "Using different operations"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :deck [(qty "Hedge Fund" 10)]}})
+        (dotimes [_ 3] (play-from-hand state :corp "Hedge Fund"))
+        (is (empty? (:prompt (get-corp))) "No MM trigger")))
+    (testing "Installing different cards"
+      (do-game
+        (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                          :hand ["PAD Campaign" "NASX" "Wall To Wall"]}})
+        (play-from-hand state :corp "PAD Campaign" "New remote")
+        (play-from-hand state :corp "NASX" "New remote")
+        (play-from-hand state :corp "Wall To Wall" "New remote")
+        (is (empty? (:prompt (get-corp))) "No MM trigger")))))
+
 (deftest mti-mwekundu-life-improved
   ;; Mti Mwekundu: Life Improved - when server is approached, install ice from HQ at the innermost position
   (testing "No ice"
@@ -2897,6 +3040,28 @@
       (take-credits state :runner)
       (is (zero? (count (:prompt (get-corp))))
           "Corp not prompted to trigger Strategic Innovations"))))
+
+(deftest sync-everything-everywhere
+  ;; SYNC: Everything, Everywhere
+  (do-game
+    (new-game {:corp {:id "SYNC: Everything, Everywhere"}
+               :runner {:deck ["Fan Site"]}
+               :options {:start-as :runner}})
+    (play-from-hand state :runner "Fan Site")
+    (core/gain-tags state :runner 1)
+    (is (= 1 (count-tags state)) "Runner has 1 tag")
+    (changes-val-macro -3 (:credit (get-runner))
+                       "Paid 3c to remove tag"
+                       (core/remove-tag state :runner nil))
+    (is (= 0 (count-tags state)) "Runner removed tag")
+    (take-credits state :runner)
+    (core/gain-tags state :runner 1)
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (changes-val-macro 0 (:credit (get-runner))
+                       "Paid 0c to trash resource"
+                       (core/trash-resource state :corp nil)
+                       (click-card state :corp (get-resource state 0)))
+    (is (= 1 (count (:discard (get-runner)))) "Trashed Fan Site")))
 
 (deftest the-foundry-refining-the-process
   ;; The Foundry

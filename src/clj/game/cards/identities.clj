@@ -958,6 +958,48 @@
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
+(define-card "MirrorMorph: Endless Iteration"
+  (let [mm-ability {:prompt "Gain [Click] or gain 1 [Credits]"
+                    :choices ["Gain [Click]" "Gain 1 [Credits]"]
+                    :msg (msg (decapitalize target))
+                    :once :per-turn
+                    :label "Manually trigger ability"
+                    :effect (req (if (= "Gain [Click]" target)
+                                   (do (gain state side :click 1)
+                                       (update! state side (assoc-in (get-card state card) [:special :mm-click] true)))
+                                   (gain-credits state side 1)))}]
+    {:implementation "Does not work with terminal Operations"
+     :abilities [mm-ability]
+     :events [{:event :corp-spent-click
+               :effect (req (let [cid (first target)
+                                  ability-idx (:ability-idx (:source-info eid))
+                                  bac-cid (get-in @state [:corp :basic-action-card :cid])
+                                  cause (if (number? (first target))
+                                          (seq [cid ability-idx])
+                                          (case (first target)
+                                            :play-instant (seq [bac-cid 3])
+                                            :corp-click-install (seq [bac-cid 2])
+                                            (first target)))
+                                  prev-actions (get-in card [:special :mm-actions] [])
+                                  actions (conj prev-actions cause)]
+                              (update! state side (assoc-in card [:special :mm-actions] actions))
+                              (update! state side (assoc-in (get-card state card) [:special :mm-click] false))
+                              (when (and (= 3 (count actions))
+                                         (= 3 (count (distinct actions))))
+                                (resolve-ability state side mm-ability (get-card state card) nil))))}
+              {:event :corp-turn-ends
+               :effect (effect (update! (assoc-in card [:special :mm-actions] [])))}]
+     :constant-effects [{:type :prevent-ability
+                         :req (req (and (get-in card [:special :mm-click])
+                                        (let [cid (:cid target)
+                                              ability-idx (nth targets 2 nil)
+                                              cause (seq [cid ability-idx])
+                                              prev-actions (get-in card [:special :mm-actions] [])
+                                              actions (conj prev-actions cause)]
+                                          (not (and (= 4 (count actions))
+                                                    (= 4 (count (distinct actions))))))))
+                         :value true}]}))
+
 (define-card "Mti Mwekundu: Life Improved"
   {:events [{:event :approach-server
              :optional
@@ -1396,29 +1438,26 @@
   {})
 
 (define-card "SYNC: Everything, Everywhere"
-  {:effect (req (when (> (:turn @state) 1)
-                  (if (:sync-front card)
-                    (tag-remove-bonus state side -1)
-                    (trash-resource-bonus state side 2))))
-   :events [{:event :pre-first-turn
-             :req (req (= side :corp))
-             :effect (effect (update! (assoc card :sync-front true))
-                             (tag-remove-bonus -1))}]
+  {:constant-effects [{:type :card-ability-additional-cost
+                       :req (req (let [targetcard (first targets)
+                                       target (second targets)]
+                                   (and (not (:sync-flipped card))
+                                        (same-card? targetcard (:basic-action-card runner))
+                                        (= "Remove 1 tag" (:label target)))))
+                       :value [:credit 1]}
+                      {:type :card-ability-additional-cost
+                       :req (req (let [targetcard (first targets)
+                                       target (second targets)]
+                                   (and (:sync-flipped card)
+                                        (same-card? targetcard (:basic-action-card corp))
+                                        (= "Trash 1 resource if the Runner is tagged" (:label target)))))
+                       :value [:credit -2]}]
    :abilities [{:cost [:click 1]
-                :effect (req (if (:sync-front card)
-                               (do (tag-remove-bonus state side 1)
-                                   (trash-resource-bonus state side 2)
-                                   (update! state side (-> card (assoc :sync-front false
-                                                                       :code "sync"))))
-                               (do (tag-remove-bonus state side -1)
-                                   (trash-resource-bonus state side -2)
-                                   (update! state side (-> card (assoc :sync-front true
-                                                                       :code "09001"))))))
+                :effect (req (if (:sync-flipped card)
+                               (update! state side (-> card (assoc :sync-flipped false :code "09001")))
+                               (update! state side (-> card (assoc :sync-flipped true :code "sync")))))
                 :label "Flip this identity"
-                :msg (msg "flip their ID")}]
-   :leave-play (req (if (:sync-front card)
-                      (tag-remove-bonus state side 1)
-                      (trash-resource-bonus state side -2)))})
+                :msg (msg "flip their ID")}]})
 
 (define-card "Synthetic Systems: The World Re-imagined"
   {:events [{:event :pre-start-game

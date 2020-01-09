@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare all-active card-flag-fn? clear-turn-register! create-deck hand-size keep-hand mulligan
-         make-card turn-message add-sub)
+         make-card turn-message add-sub create-basic-action-cards)
 
 (defn- card-implemented
   "Checks if the card is implemented. Looks for a valid return from `card-def`.
@@ -74,12 +74,18 @@
         runner-identity (get-in @state [:runner :identity])]
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
+    (create-basic-action-cards state)
     (let [side :corp]
       (wait-for (trigger-event-sync state side :pre-start-game nil)
                 (let [side :runner]
                   (wait-for (trigger-event-sync state side :pre-start-game nil)
                             (init-hands state)))))
     state))
+
+(defn create-basic-action-cards
+  [state]
+  (swap! state assoc-in [:corp :basic-action-card] (make-card {:side "Corp" :type "Basic Action" :title "Corp Basic Action Card"}))
+  (swap! state assoc-in [:runner :basic-action-card] (make-card {:side "Runner" :type "Basic Action" :title "Runner Basic Action Card"})))
 
 (defn- subroutines-init
   "Initialised the subroutines associated with the card, these work as abilities"
