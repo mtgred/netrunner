@@ -163,8 +163,7 @@
         (changes-val-macro 0 (count (:hand (get-runner)))
                            "3 net damage from passing Anansi"
                            (card-ability state :corp (refresh border) 0))           
-        (is (nil? (get-run)))
-        ))))
+        (is (nil? (get-run)))))))
 
 (deftest akhet
   ;; Akhet
