@@ -71,11 +71,11 @@ To run all tests:
 
 To run a single test file:
 
-    $ lein test game-test.cards.agendas
+    $ lein test game.cards.agendas-test
 
 Or a single test:
 
-    $ lein test :only game-test.cards.agendas/fifteen-minutes
+    $ lein test :only game.cards.agendas-test/fifteen-minutes
 
 For more information refer to the [development guide](https://github.com/mtgred/netrunner/wiki/Getting-Started-with-Development).
 
