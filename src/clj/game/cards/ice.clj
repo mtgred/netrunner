@@ -2794,10 +2794,12 @@
                    {:label "Gain 3 [Credits]"
                     :effect (req (let [et (effect-type card)
                                        unique-types (top-3-types state card et)]
-                                   ;; When there are two or fewer unique types
-                                   ;; and at least 2 cards in the deck
-                                   (when (and (<= unique-types 2)
-                                              (<= 2 (count (first (get-effects state :corp card et)))))
+                                   ;; When there are 3 cards in the deck, sub needs 2 or fewer unique types
+                                   ;; When there are 2 cards in the deck, sub needs 1 unique type
+                                   (when (or (and (<= unique-types 2)
+                                                  (= 3 (count (first (get-effects state :corp card et)))))
+                                             (and (= unique-types 1)
+                                                  (= 2 (count (first (get-effects state :corp card et))))))
                                      (system-msg state :corp (str "uses Slot Machine to gain 3 [Credits]"))
                                      (gain-credits state :corp 3))))}
                    {:label "Place 3 advancement tokens"

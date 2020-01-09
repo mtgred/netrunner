@@ -3283,6 +3283,36 @@
               0 (:credit (get-corp))
               "Corp does not gain any credits when runner has 1 or less cards in deck"
               (card-subroutine state :corp sm 1)))))
+      (testing "2 same cards in deck"
+        (do-game
+          (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
+                     :runner {:deck [(qty "Sure Gamble" 2)]
+                              :hand ["Sure Gamble"]}})
+          (play-from-hand state :corp "Slot Machine" "HQ")
+          (take-credits state :corp)
+          (run-on state :hq)
+          (let [sm (get-ice state :hq 0)]
+            (core/rez state :corp sm)
+            (run-continue state)
+            (changes-val-macro
+              3 (:credit (get-corp))
+              "Corp gains credits when runner has 2 same cards in deck"
+              (card-subroutine state :corp sm 1)))))
+      (testing "2 different cards in deck. Issue #4884"
+        (do-game
+          (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
+                     :runner {:deck ["Harbinger" "Aesop's Pawnshop"]
+                              :hand ["Sure Gamble"]}})
+          (play-from-hand state :corp "Slot Machine" "HQ")
+          (take-credits state :corp)
+          (run-on state :hq)
+          (let [sm (get-ice state :hq 0)]
+            (core/rez state :corp sm)
+            (run-continue state)
+            (changes-val-macro
+              0 (:credit (get-corp))
+              "Corp does not gain any credits when runner has 2 cards with different types in deck"
+              (card-subroutine state :corp sm 1)))))
       (testing "Enough cards in deck"
         (do-game
           (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
