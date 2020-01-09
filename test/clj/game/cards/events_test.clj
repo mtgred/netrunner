@@ -3975,8 +3975,7 @@
       (run-continue state)
       (run-continue state)
       (is (not (= "Use Prey to trash Burke Bugs?" (:msg (prompt-map :runner))))
-          "Runner has no prompt trash ice")
-      )))
+          "Runner has no prompt trash ice"))))
 
 (deftest process-automation
   ;; Process Automation
