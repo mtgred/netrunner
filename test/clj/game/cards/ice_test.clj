@@ -137,7 +137,33 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mongoose)})
         (changes-val-macro 0 (count (:hand (get-runner)))
                            "3 net damage from passing Anansi"
-                           (core/no-action state :corp nil))))))
+                           (core/no-action state :corp nil)))))
+  (testing "Anansi and Border Control. Issue #4769"
+    (do-game
+      (new-game {:corp {:hand ["Anansi" "Border Control"]
+                        :credits 20}
+                 :runner {:hand [(qty "Sure Gamble" 6) "Corroder"]
+                          :credits 90}})
+      (play-from-hand state :corp "Border Control" "HQ")
+      (play-from-hand state :corp "Anansi" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [anansi (get-ice state :hq 1)
+            border (get-ice state :hq 0)
+            corroder (get-program state 0)]
+        (run-on state :hq)
+        (core/rez state :corp anansi)
+        (run-continue state)
+        (changes-val-macro -3 (count (:hand (get-runner)))
+                           "3 net damage from passing Anansi"
+                           (run-continue state))
+        (core/rez state :corp border)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+        (core/no-action state :corp nil)
+        (changes-val-macro 0 (count (:hand (get-runner)))
+                           "3 net damage from passing Anansi"
+                           (card-ability state :corp (refresh border) 0))           
+        (is (nil? (get-run)))))))
 
 (deftest akhet
   ;; Akhet
