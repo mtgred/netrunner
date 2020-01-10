@@ -2600,9 +2600,8 @@
           (card-subroutine state :corp dm 0)
           (card-ability state :runner rr1 0)
           (click-prompt state :runner "1")
-          (is (last-log-contains? state "Sure Gamble")
+          (is (second-last-log-contains? state "Sure Gamble")
               "Ramujan did log trashed card names")
-          (click-prompt state :runner "Done")
           (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
           (run-continue state)
           (run-continue state)
@@ -2616,7 +2615,7 @@
           (click-prompt state :corp "Yes")
           (card-ability state :runner rr2 0)
           (click-prompt state :runner "3")
-          (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble")
+          (is (second-last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble")
               "Ramujan did log trashed card names")
           (is (= 1 (count (:hand (get-runner)))) "3 net damage prevented")))))
   (testing "Prevent up to X net or brain damage. Empty stack"
@@ -2671,7 +2670,6 @@
       (click-prompt state :corp "Yes")
       (card-ability state :runner rd1 0)
       (click-prompt state :runner "3")
-      (click-prompt state :runner "Done")
       (click-prompt state :runner "No action")
       (is (= 5 (count (:hand (get-runner)))) "Runner took no net damage")
       ; fire HOK while accessing Snare!
@@ -2704,7 +2702,6 @@
       (card-ability state :runner rd3 0)
       (is (= 1 (:number (:choices (prompt-map :runner)))) "Recon Drone choice limited to 1 meat")
       (click-prompt state :runner "1")
-      (click-prompt state :runner "Done")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (= 2 (count (:hand (get-runner)))) "Runner took no meat damage")
       (run-empty-server state "Server 4")
@@ -2712,7 +2709,6 @@
       (click-prompt state :corp "Yes")
       (card-ability state :runner rd4 0)
       (click-prompt state :runner "1")
-      (click-prompt state :runner "Done")
       (is (= 2 (count (:hand (get-runner)))) "Runner took no brain damage"))))
 
 (deftest record-reconstructor

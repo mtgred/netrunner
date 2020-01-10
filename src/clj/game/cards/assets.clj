@@ -104,7 +104,6 @@
                                   {:prompt "Prevent Alexa Belsky from shuffling back in 1 card for every 2 [Credits] spent. How many credits?"
                                    :choices :credit
                                    :player :runner
-                                   :priority 2
                                    :msg (msg "shuffle "
                                              (quantify (- (count (:hand corp)) (quot target 2)) "card")
                                              " in HQ into R&D")
@@ -281,7 +280,6 @@
                                   (continue-ability :corp
                                                     {:optional
                                                      {:prompt "Draw 2 cards?"
-                                                      :priority 1
                                                       :player :corp
                                                       :yes-ability {:msg "draw 2 cards"
                                                                     :effect (effect (draw eid 2 nil))}
@@ -1124,7 +1122,6 @@
                                       {:optional
                                        {:prompt "Shuffle Marilyn Campaign into R&D?"
                                         :autoresolve (get-autoresolve :auto-reshuffle)
-                                        :priority 1
                                         :player :corp
                                         :yes-ability {:msg "shuffle it back into R&D"
                                                       :effect (effect (move :corp card :deck)
@@ -1247,7 +1244,6 @@
                                                          (rezzed? %))
                                                    (all-installed state :corp))))}
                 :show-discard true
-                :priority 1
                 :once :per-turn
                 :once-key :museum-of-history
                 :msg (msg "shuffle "
@@ -1309,7 +1305,7 @@
                                    {:optional
                                     {:prompt "Draw from Net Analytics?"
                                      :yes-ability {:msg (msg "draw a card")
-                                                   :effect (effect (draw :corp 1))}
+                                                   :effect (effect (draw :corp eid 1 nil))}
                                      :end-effect (effect (clear-wait-prompt :runner))}}
                                    card nil))}]
     {:events [(assoc ability

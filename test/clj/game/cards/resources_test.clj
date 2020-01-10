@@ -2423,8 +2423,8 @@
       (is (= 3 (count (:hosted (refresh lib)))) "Still 3 programs hosted")
       (is (= 2 (:click (get-runner))) "Failed Darwin didn't use a click")
       (is (= 1 (count (:hand (get-runner)))))
-      (card-ability state :runner lib 1) ; Add a program hosted on London Library to your Grip
       (click-prompt state :runner "Done")
+      (card-ability state :runner lib 1) ; Add a program hosted on London Library to your Grip
       (click-card state :runner (find-card "Study Guide" (:hosted (refresh lib))))
       (is (= 2 (count (:hand (get-runner)))) "Return Study Guide to hand")
       (is (= 2 (count (:hosted (refresh lib)))) "2 programs hosted")
@@ -2734,7 +2734,6 @@
       (card-ability state :runner noh 0)
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (click-prompt state :runner "Done")
       (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
       (run-continue state)
       (run-continue state)
@@ -4568,7 +4567,6 @@
       (is (= 3 (:credit (get-runner))) "Runner is now at 3 credits")
       (core/gain-tags state :corp 1)
       (card-ability state :runner (get-resource state 1) 0)
-      (click-prompt state :runner "Done")
       (click-card state :runner "Corroder")
       (is (zero? (:credit (get-runner))) "Runner paid one less to install")
       (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed")))

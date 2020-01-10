@@ -1340,7 +1340,6 @@
              :req (req (same-card? target card))
              :effect (effect (update-all-icebreakers))}]
    :abilities [{:req (req (pos? (get-counters card :virus)))
-                :priority true
                 :prompt "Move a virus counter to which card?"
                 :choices {:card #(has-subtype? % "Virus")}
                 :effect (req (let [abilities (:abilities (card-def target))
@@ -2213,7 +2212,7 @@
                                                    (runner-install (assoc eid :source card :source-type :runner-install) target {:host-card card}))}
                                   card nil))}
                {:label "Host an installed program"
-                :prompt "Choose a program to host on Scheherazade" :priority 2
+                :prompt "Choose a program to host on Scheherazade"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
                 :msg (msg "host " (:title target) " and gain 1 [Credits]")
@@ -2229,7 +2228,6 @@
                                    :msg (req (if (not= target "No install")
                                                (str "install " (:title target))
                                                (str "shuffle their Stack")))
-                                   :priority true
                                    :choices (req (conj (filter #(can-pay? state side
                                                                   (assoc eid :source card :source-type :runner-install)
                                                                   % nil [:credit (install-cost state side % {:cost-bonus 2})])

@@ -1481,7 +1481,7 @@
                 :effect (effect (runner-install eid target {:host-card card :ignore-install-cost true}))}
                {:label "Add a program hosted on London Library to your Grip"
                 :cost [:click 1]
-                :choices {:card #(:host %)} ;TODO: this seems to allow all hosted cards to be bounced
+                :choices {:req (req (same-card? card (:host target)))}
                 :msg (msg "add " (:title target) " to their Grip")
                 :effect (effect (move target :hand))}]
    :events [{:event :runner-turn-ends
@@ -1670,7 +1670,6 @@
               {:player :corp
                :label (str "Trace 0 - if unsuccessful, " message)
                :trace {:base 0
-                       :priority 11
                        :unsuccessful {:msg message
                                       :effect (req (if (= type :net)
                                                      (damage-prevent state :runner :net Integer/MAX_VALUE)
@@ -2338,12 +2337,12 @@
                                                           [:credit (install-cost state side target {:cost-bonus -1})])))
                                         (:hosted card))))
                 :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
-                :effect (req (trash state side (update-in card [:hosted]
-                                                          (fn [coll]
-                                                            (remove-once #(same-card? % target) coll)))
-                                    {:cause :ability-cost})
-                             (runner-install state side (assoc eid :source card :source-type :runner-install)
-                                             (dissoc target :facedown) {:cost-bonus -1}))}]})
+                :effect (req (wait-for (trash state side (update-in card [:hosted]
+                                                                    (fn [coll]
+                                                                      (remove-once #(same-card? % target) coll)))
+                                              {:cause :ability-cost})
+                                       (runner-install state side (assoc eid :source card :source-type :runner-install)
+                                                       (dissoc target :facedown) {:cost-bonus -1})))}]})
 
 (define-card "Symmetrical Visage"
   {:events [{:event :runner-click-draw
@@ -2536,7 +2535,8 @@
                                 (show-wait-prompt state :corp "Runner to use The Class Act")
                                 (continue-ability
                                   state :runner
-                                  {:prompt "Select 1 card to add to the bottom of the stack"
+                                  {:async true
+                                   :prompt "Select 1 card to add to the bottom of the stack"
                                    :msg "add 1 card to the bottom of the Stack"
                                    :choices to-draw
                                    :effect (effect (move target :deck)

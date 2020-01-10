@@ -468,7 +468,6 @@
                                            {:optional
                                             {:player :runner
                                              :prompt "You are encountering Archangel. Allow its subroutine to fire?"
-                                             :priority 1
                                              :yes-ability {:async true
                                                            :effect (effect (resolve-unbroken-subs! eid card))}
                                              :no-ability {:effect (effect (effect-completed eid))}}}
@@ -490,7 +489,6 @@
    :subroutines [{:label "Look at the top 5 cards of R&D"
                   :prompt "Choose a card to install"
                   :async true
-                  :priority true
                   :activatemsg "uses Architect to look at the top 5 cards of R&D"
                   :req (req (and (not (string? target))
                                  (not (operation? target))))
@@ -503,7 +501,6 @@
                  {:label "Install a card from HQ or Archives"
                   :prompt "Select a card to install from Archives or HQ"
                   :show-discard true
-                  :priority true
                   :choices {:card #(and (corp? %)
                                         (not (operation? %))
                                         (or (in-hand? %)
@@ -778,7 +775,6 @@
                               :runner {:optional
                                        {:player :runner
                                         :prompt "You are encountering Chrysalis. Allow its subroutine to fire?"
-                                        :priority 1
                                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
                                                                       (resolve-unbroken-subs! :corp eid card))}
                                         :no-ability {:effect (effect (clear-wait-prompt :corp)
@@ -879,7 +875,6 @@
   {:subroutines [{:label "install a card from Archives"
                   :prompt "Select a card to install from Archives"
                   :show-discard true
-                  :priority true
                   :async true
                   :choices {:card #(and (not (operation? %))
                                         (in-discard? %)
@@ -1458,7 +1453,6 @@
                               :runner {:optional
                                        {:player :runner
                                         :prompt "You are encountering Herald. Allow its subroutines to fire?"
-                                        :priority 1
                                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
                                                                       (resolve-unbroken-subs! :corp eid card))}
                                         :no-ability {:effect (effect (clear-wait-prompt :corp)
@@ -1742,7 +1736,6 @@
                                      (continue-ability
                                        state :runner
                                        {:player :runner
-                                        :priority 1
                                         :prompt "Select a card to move to the Stack"
                                         :choices {:card #(some (partial same-card? %) targets)}
                                         :effect (req (clear-wait-prompt state :corp)
@@ -2660,7 +2653,6 @@
                               {:optional
                                {:player :runner
                                 :prompt "Allow Sapper subroutine to fire?"
-                                :priority 1
                                 :yes-ability
                                 {:effect (effect (clear-wait-prompt :corp)
                                                  (show-wait-prompt :runner "Corp to trash a program with Sapper")

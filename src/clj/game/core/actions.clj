@@ -187,8 +187,6 @@
 (defn- finish-prompt [state side prompt card]
   (when-let [end-effect (:end-effect prompt)]
     (end-effect state side (make-eid state) card nil))
-  ;; remove the prompt from the queue
-  (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
   ;; This is a dirty hack to end the run when the last access prompt is resolved.
   (when (empty? (get-in @state [:runner :prompt]))
     (when-let [run (:run @state)]
@@ -218,7 +216,8 @@
           (:counter choices)
           (:number choices))
       (if (number? choice)
-        (do (when (= choices :credit) ; :credit prompts require payment
+        (do (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
+            (when (= choices :credit) ; :credit prompts require payment
               (pay state side card :credit (min choice (get-in @state [side :credit]))))
             (when (:counter choices)
               ;; :Counter prompts deduct counters from the card
@@ -236,7 +235,8 @@
               found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (server-cards))]
           (if found
             (if (title-fn state side (make-eid state) card [found])
-              (do (when effect
+              (do (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
+                  (when effect
                     (effect (or choice card)))
                   (finish-prompt state side prompt card))
               (toast state side (str "You cannot choose " choice " for this effect.") "warning"))
@@ -249,6 +249,8 @@
       (let [uuid (uuid/as-uuid (:uuid choice))
             match (first (filter #(= uuid (:uuid %)) choices))]
         (when match
+          ;; remove the prompt from the queue
+          (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % prompt) pr)))
           (if (= (:value match) "Cancel")
             (do (if-let [cancel-effect (:cancel-effect prompt)]
                   ;; trigger the cancel effect
@@ -282,9 +284,13 @@
           (swap! state update-in [side :selected 0 :cards] #(conj % c))
           (swap! state update-in [side :selected 0 :cards]
                  (fn [coll] (remove-once #(same-card? % target) coll))))
-        (let [selected (get-in @state [side :selected 0])]
+        (let [selected (get-in @state [side :selected 0])
+              prompt (first (get-in @state [side :prompt]))
+              card (:card prompt)]
           (when (= (count (:cards selected)) (or (:max selected) 1))
-            (resolve-select state side update! resolve-ability)))))))
+            (resolve-select state side card (select-keys prompt [:cancel-effect]) update! resolve-ability)))))))
+
+(declare check-for-empty-server handle-end-run)
 
 (defn- do-play-ability [state side card ability ability-idx targets]
   (let [cost (card-ability-cost state side ability card targets)]
@@ -292,7 +298,10 @@
               (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) card (:title card) cost))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
-      (resolve-ability state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) (assoc ability :cost cost) card targets))))
+      (let [eid (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}})]
+        (wait-for (resolve-ability state side eid (assoc ability :cost cost) card targets)
+                  (when (check-for-empty-server state)
+                    (handle-end-run state side)))))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."

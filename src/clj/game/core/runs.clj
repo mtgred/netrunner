@@ -116,6 +116,15 @@
                        (effect-completed state side eid))))
        (effect-completed state side eid)))))
 
+(defn check-for-empty-server
+  [state]
+  (let [run (:run @state)
+        server (first (:server run))]
+    (and run
+         (is-remote? server)
+         (empty? (get-in @state [:corp :servers server :content]))
+         (empty? (get-in @state [:corp :servers server :ices])))))
+
 (defmethod start-next-phase :approach-ice
   [state side args]
   (set-phase state :approach-ice)
@@ -125,7 +134,8 @@
   (let [ice (get-current-ice state)]
     (system-msg state :runner (str "approaches " (card-str state ice)))
     (wait-for (trigger-event-simult state :runner :approach-ice
-                                    {:cancel-fn (fn [state] (:ended (:run @state)))}
+                                    {:cancel-fn (fn [state] (or (:ended (:run @state))
+                                                                (check-for-empty-server state)))}
                                     ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
@@ -176,7 +186,8 @@
                                      ;; * run is moved to another server
                                      :cancel-fn (fn [state] (or (:ended (:run @state))
                                                                 (can-bypass-ice state side (get-card state ice))
-                                                                (not= current-server (:server (:run @state)))))}
+                                                                (not= current-server (:server (:run @state)))
+                                                                (check-for-empty-server state)))}
                                     ice)
               (update-all-ice state side)
               (update-all-icebreakers state side)
@@ -227,7 +238,8 @@
                ;; * run ends
                ;; * run is moved to another server
                :cancel-fn (fn [state] (or (:ended (:run @state))
-                                          (not= current-server (:server (:run @state))))))]
+                                          (not= current-server (:server (:run @state)))
+                                          (check-for-empty-server state))))]
     (set-phase state :pass-ice)
     (update-all-ice state side)
     (update-all-icebreakers state side)
@@ -256,7 +268,8 @@
                (when (and no-ice
                           (= :initiation (get-in @state [:run :phase])))
                  {:card-abilities (gather-events state side :pass-all-ice nil)})
-               :cancel-fn (fn [state] (:ended (:run @state))))]
+               :cancel-fn (fn [state] (or (:ended (:run @state))
+                                          (check-for-empty-server state))))]
         (set-phase state :approach-server)
         (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
         (wait-for (trigger-event-simult state side :approach-server args (count (get-run-ices state)))
@@ -295,18 +308,22 @@
 (defn access-end
   "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"
   [state side eid c]
-  (when-not (find-cid (:cid c) (get-in @state [:corp :discard]))
-    ;; Do not trigger :no-trash if card has already been trashed
-    (trigger-event state side :no-trash c))
-  (when (and (agenda? c)
-             (not (find-cid (:cid c) (get-in @state [:runner :scored]))))
-    (trigger-event state side :no-steal c))
-  (when (and (get-card state c)
-             ;; Don't increment :no-trash-or-steal if accessing a card in Archives
-             (not= (:zone c) [:discard]))
-    (no-trash-or-steal state))
-  (swap! state dissoc :access)
-  (trigger-event-sync state side eid :post-access-card c))
+  ;; Do not trigger :no-trash if card has already been trashed
+  (wait-for (trigger-event-sync state side
+                                (when-not (find-cid (:cid c) (get-in @state [:corp :discard]))
+                                  :no-trash)
+                                c)
+            (wait-for (trigger-event-sync state side
+                                          (when (and (agenda? c)
+                                                     (not (find-cid (:cid c) (get-in @state [:runner :scored]))))
+                                            :no-steal)
+                                          c)
+                      (when (and (get-card state c)
+                                 ;; Don't increment :no-trash-or-steal if accessing a card in Archives
+                                 (not= (:zone c) [:discard]))
+                        (no-trash-or-steal state))
+                      (swap! state dissoc :access)
+                      (trigger-event-sync state side eid :post-access-card c))))
 
 ;;; Stealing agendas
 (defn steal
@@ -1311,7 +1328,6 @@
   [state side]
   (let [server (-> @state :run :server first)
         event (when (= :encounter-ice (get-in @state [:run :phase])) :encounter-ice-ends)]
-    (swap! state assoc-in [:run :ending] true)
     (swap! state assoc-in [:run :ended] true)
     (wait-for (trigger-event-simult state side event nil (get-current-ice state))
               (unregister-floating-effects state side :end-of-encounter)
