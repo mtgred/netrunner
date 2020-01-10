@@ -10,7 +10,7 @@
         split-fn #(>= (priority-comp (:priority %)) (priority-comp priority))
         ;; insert the new prompt into the already-sorted queue based on its priority.
         update-fn #(let [[head tail] (split-with split-fn %)] (concat head (cons prompt tail)))]
-    (swap! state update-in [side :prompt] update-fn)))
+    (swap! state update-in [side :prompt] #(cons prompt %))))
 
 (defn choice-parser
   [choices]
@@ -38,7 +38,6 @@
                   :card card
                   :prompt-type prompt-type
                   :show-discard show-discard
-                  :priority priority
                   :cancel-effect cancel-effect
                   :end-effect end-effect}]
      (when (or (= prompt-type :waiting)
@@ -81,7 +80,6 @@
                   :prompt-type :trace
                   :effect f
                   :card card
-                  :priority priority
                   :player player
                   :other other
                   :base base
@@ -93,17 +91,18 @@
 (defn resolve-select
   "Resolves a selection prompt by invoking the prompt's ability with the targeted cards.
   Called when the user clicks 'Done' or selects the :max number of cards."
-  [state side update! resolve-ability]
+  [state side card args update! resolve-ability]
   (let [selected (get-in @state [side :selected 0])
         cards (map #(dissoc % :selected) (:cards selected))
-        curprompt (first (get-in @state [side :prompt]))]
+        prompt (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt])))]
     (swap! state update-in [side :selected] #(vec (rest %)))
-    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % curprompt) pr)))
+    (when prompt
+      (swap! state update-in [side :prompt] (fn [prompts] (remove #(= % prompt) prompts))))
     (if (seq cards)
       (do (doseq [card cards]
             (update! state side card))
-          (resolve-ability state side (:ability selected) (:card curprompt) cards))
-      (if-let [cancel-effect (:cancel-effect curprompt)]
+          (resolve-ability state side (:ability selected) card cards))
+      (if-let [cancel-effect (:cancel-effect args)]
         (cancel-effect nil)
         (effect-completed state side (:eid (:ability selected)))))))
 
@@ -139,7 +138,10 @@
                       (fn [choice]
                         (toast state side (str "You must choose " m))
                         (show-select state side card ability args))
-                      (fn [choice] (resolve-select state side update! resolve-ability)))
+                      (fn [choice]
+                        (resolve-select state side card
+                                        (select-keys (wrap-function args :cancel-effect) [:cancel-effect])
+                                        update! resolve-ability)))
                     (-> args
                         (assoc :prompt-type :select
                                :show-discard (:show-discard ability))
@@ -158,5 +160,5 @@
 (defn clear-wait-prompt
   "Removes the first 'Waiting for...' prompt from the given side's prompt queue."
   [state side]
-  (when-let [wait (some #(when (= :waiting (:prompt-type %)) %) (-> @state side :prompt))]
-    (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % wait) pr)))))
+  (when-let [wait (first (filter #(= :waiting (:prompt-type %)) (-> @state side :prompt)))]
+    (swap! state update-in [side :prompt] (fn [pr] (remove #(= % wait) pr)))))

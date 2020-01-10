@@ -1950,7 +1950,6 @@
         ashes-flag [{:event :runner-phase-12
                      :location :discard
                      :condition :in-discard
-                     :priority -1
                      :once :per-turn
                      :once-key :out-of-ashes
                      :effect (effect (continue-ability

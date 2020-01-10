@@ -209,7 +209,6 @@
   ([state side eid ice subroutines msgs]
    (if (and (seq subroutines)
             (:run @state)
-            (not (get-in @state [:run :ending]))
             (not (get-in @state [:run :ended])))
      (let [sub (first subroutines)]
        (wait-for (resolve-subroutine! state side (make-eid state eid) ice sub)
@@ -510,8 +509,7 @@
    (req (let [abs (remove #(or (= (:dynamic %) :auto-pump)
                                (= (:dynamic %) :auto-pump-and-break))
                           (:abilities card))
-              current-ice (when-not (or (get-in @state [:run :ending])
-                                        (get-in @state [:run :ended]))
+              current-ice (when-not (get-in @state [:run :ended])
                             (get-card state current-ice))
               ;; match strength
               can-pump (fn [ability]

@@ -173,9 +173,6 @@
                         (is-remote? z)
                         (empty? (get-in @state (conj z :content)))
                         (empty? (get-in @state (conj z :ices))))
-               (when-let [run (:run @state)]
-                 (when (= (last (:server run)) (last z))
-                   (handle-end-run state side)))
                (swap! state dissoc-in z)))
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
              (move-zone-fn state side (make-eid state) moved-card card))

@@ -234,6 +234,7 @@
                                                       (same-server? card %)))
                                         count
                                         pos?))
+                 :async true
                  :effect
                  (effect
                    (continue-ability
@@ -252,6 +253,7 @@
               {:event :approach-server
                :interactive (req true)
                :req (req this-server)
+               :async true
                :effect
                (effect
                  (show-wait-prompt :corp "Runner to choose for Cayambe Grid")
@@ -625,20 +627,19 @@
 (define-card "Increased Drop Rates"
   {:flags {:rd-reveal (req true)}
    :access {:interactive (req true)
+            :async true
             :effect (effect (show-wait-prompt :corp "Runner to decide if they will take 1 tag")
                             (continue-ability
                               {:optional
                                {:player :runner
                                 :prompt "Take 1 tag to prevent Corp from removing 1 bad publicity?"
                                 :yes-ability {:async true
-                                              :effect (req (gain-tags state :runner eid 1 {:unpreventable true})
-                                                           (system-msg
-                                                             state :runner
-                                                             "takes 1 tag to prevent Corp from removing 1 bad publicity"))}
+                                              :effect (effect (system-msg "takes 1 tag to prevent Corp from removing 1 bad publicity")
+                                                              (gain-tags eid 1 {:unpreventable true}))}
                                 :no-ability {:msg "remove 1 bad publicity"
-                                             :effect (effect (lose-bad-publicity :corp 1))}
-                                :end-effect (effect (clear-wait-prompt :corp)
-                                                    (effect-completed eid))}}
+                                             :effect (effect (lose-bad-publicity :corp 1)
+                                                             (effect-completed eid))}
+                                :end-effect (effect (clear-wait-prompt :corp))}}
                               card nil))}})
 
 (define-card "Intake"
@@ -658,9 +659,11 @@
                                                                   (and (resource? %)
                                                                        (has-subtype? % "Virtual"))))}
                                         :msg (msg "move " (:title target) " to the Grip")
-                                        :effect (effect (move :runner target :hand))
-                                        :end-effect (req (clear-wait-prompt state :runner)
-                                                         (effect-completed state side eid))}
+                                        :effect (req (move state :runner target :hand)
+                                                     (clear-wait-prompt state :runner)
+                                                     (effect-completed state side eid))
+                                        :cancel-effect (req (clear-wait-prompt state :runner)
+                                                            (effect-completed state side eid))}
                                        card nil))}}}})
 
 (define-card "Jinja City Grid"
