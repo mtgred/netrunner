@@ -2791,8 +2791,8 @@
       (run-empty-server state "Server 1")
       (click-prompt state :corp "Yes") ; Ghost Branch ability
       (card-ability state :runner nach 0)
-      (click-prompt state :runner "Done")
       (click-prompt state :corp "Yes") ; Draw from Net Analytics
+      (click-prompt state :runner "Done")
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
       (is (zero? (count-tags state)) "Avoided 1 Ghost Branch tag")

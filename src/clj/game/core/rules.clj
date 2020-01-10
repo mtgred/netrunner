@@ -203,11 +203,10 @@
                           "meat" :meat)
             prevented (get-in @state [:damage :damage-prevent promptdtype] 0)
             newprompt (assoc oldprompt :msg (str "Prevent any of the " dnumber " " (name promptdtype) " damage? (" prevented "/" dnumber " prevented)"))
-            update-fn #(cons newprompt (rest %))
-            done-update-fn #(rest %)]
+            update-fn #(cons newprompt (rest %))]
         (if (>= prevented dnumber)
-          (do ((:effect oldprompt) nil)
-              (swap! state update-in [side :prompt] done-update-fn))
+          (do (swap! state update-in [side :prompt] next)
+              ((:effect oldprompt) nil))
           (swap! state update-in [side :prompt] update-fn))))))
 
 (defn damage-prevent

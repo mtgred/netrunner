@@ -771,7 +771,6 @@
 
 (define-card "Friends in High Places"
   (let [fhelper (fn fhp [n] {:prompt "Select a card in Archives to install with Friends in High Places"
-                             :priority -1
                              :async true
                              :show-discard true
                              :choices {:card #(and (corp? %)
@@ -1688,7 +1687,6 @@
   {:async true
    :effect (effect (continue-ability
                      {:prompt "Select a card in Archives to install & rez with Restore"
-                      :priority -1
                       :async true
                       :show-discard true
                       :choices {:card #(and (corp? %)

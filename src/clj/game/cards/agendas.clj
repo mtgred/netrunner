@@ -1461,11 +1461,10 @@
                                        (clear-wait-prompt state :runner)
                                        (effect-completed state :corp eid))))
              :effect (req (wait-for (trash state side target {:unpreventable true})
-                                    (do
-                                      (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
-                                      (clear-wait-prompt state (other-side side))
-                                      (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
-                                      (continue-ability state (other-side side) (stand (other-side side)) card nil))))})]
+                                    (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
+                                    (clear-wait-prompt state (other-side side))
+                                    (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
+                                    (continue-ability state (other-side side) (stand (other-side side)) card nil)))})]
     {:interactive (req true)
      :async true
      :effect (effect (show-wait-prompt (str (side-str (other-side side)) " to trash a card for Standoff"))
@@ -1484,7 +1483,6 @@
 (define-card "Successful Field Test"
   (letfn [(sft [n max-ops]
             {:prompt "Select a card in HQ to install with Successful Field Test"
-             :priority -1
              :async true
              :choices {:card #(and (corp? %)
                                    (not (operation? %))

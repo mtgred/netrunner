@@ -443,7 +443,6 @@
                                 :max amount
                                 :card select-fn}
                       :async true
-                      :priority 11
                       :effect (req (wait-for (trash-cards state side targets (merge args {:unpreventable true}))
                                              (complete-with-result
                                                state side eid
@@ -516,7 +515,6 @@
   (continue-ability
     state side
     {:prompt (str "Choose a " card-type " to trash from your grip")
-     :priority 11
      :async true
      :choices {:all true
                :max amount
@@ -563,7 +561,6 @@
                                   :max amount
                                   :card select-fn}
                         :async true
-                        :priority 11
                         :effect (req (doseq [c targets]
                                        (move state side target :deck (select-keys args [:front])))
                                      (complete-with-result

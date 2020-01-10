@@ -54,7 +54,6 @@
                       state side
                       {:optional
                        {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
-                        :priority 2
                         :player :runner
                         :autoresolve (get-autoresolve :auto-419)
                         :no-ability {:effect (req (clear-wait-prompt state :corp))}
@@ -1427,7 +1426,6 @@
                                    (in-discard? %))}
              :player :corp
              :show-discard true
-             :priority true
              :msg (msg "shuffle " (if (:seen target) (:title target) "a card")
                        " into R&D")
              :effect (effect (move :corp target :deck)

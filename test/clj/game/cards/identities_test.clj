@@ -2321,7 +2321,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner took 1 unpreventable tag")
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT")))
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 0 meat damage from DRT cuz it's trashed")))
   (testing "Trace shouldn't fire on second trash after trash during Direct Access run. #4168"
     (do-game
       (new-game {:corp {:id "NBN: Controlling the Message"

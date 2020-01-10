@@ -290,7 +290,6 @@
 
 (define-card "Clone Chip"
   {:abilities [{:prompt "Select a program to install from your Heap"
-                :priority true
                 :show-discard true
                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                (not (install-locked? state side))
@@ -389,7 +388,7 @@
    :events [{:event :runner-install
              :optional
              {:req (req (has-subtype? target "Caïssa"))
-              :prompt "Use Deep Red?" :priority 1
+              :prompt "Use Deep Red?"
               :yes-ability {:async true
                             :effect (req (let [cid (:cid target)]
                                            (continue-ability
@@ -1299,7 +1298,6 @@
                                                    state side
                                                    {:prompt (str "Trash a card to lower the " cost-type
                                                                  " cost of " (:title targetcard) " by 2 [Credits].")
-                                                    :priority 2
                                                     :async true
                                                     :choices {:card #(and (in-hand? %)
                                                                           (runner? %)
@@ -1447,7 +1445,6 @@
                                  state side
                                  {:async true
                                   :prompt "Choose how much damage to prevent"
-                                  :priority 50
                                   :choices {:number (req (min n (count (:deck runner))))}
                                   :msg (msg "trash " (join ", " (map :title (take target (:deck runner))))
                                             " from their Stack and prevent " target " damage")
@@ -1469,7 +1466,6 @@
                                (:cid (first (:pre-access-card (eventmap @state))))))
                   :effect (effect (continue-ability
                                     {:prompt "Choose how much damage to prevent"
-                                     :priority 50
                                      :choices {:number (req (min (last (:pre-damage (eventmap @state)))
                                                                  (:credit runner)))}
                                      :msg (msg "prevent " target " damage")

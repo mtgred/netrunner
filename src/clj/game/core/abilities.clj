@@ -65,10 +65,6 @@
         or 2) the keyword :req with a value of the req 5-fn returning true or false. Triggers a 'select' prompt
         with targeting cursor; only cards that cause the 1-argument function to return true will be allowed.
   :prompt -- a string or 4-argument function returning a string to display in the prompt menu.
-  :priority -- a numeric value, or true (equivalent to 1). Prompts are inserted into the prompt queue and sorted base
-               on priority, with higher priorities coming first. The sort is stable, so if two prompts have the same
-               priority, the prompt that was inserted first will remain first after the sort. You should rarely need
-               to use a priority larger than 1.
   :not-distinct -- true if the prompt should not collapse :choices entries of the same string to one button.
                    Defaults to false.
   :cancel-effect -- if the prompt uses a Cancel button, this 4-argument function will be called if the user
@@ -523,7 +519,6 @@
                                        :base base
                                        :bonus bonus
                                        :link link
-                                       :priority (or priority 2)
                                        :corp-credits corp-credits
                                        :runner-credits runner-credits})]
                (trace-start state side eid card trace)))))

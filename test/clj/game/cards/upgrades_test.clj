@@ -653,7 +653,7 @@
           (core/rez state :corp cg2)
           (take-credits state :corp)
           (take-credits state :runner)
-          (click-prompt state :corp "Cayambe Grid")
+          (click-prompt state :corp cg1)
           (is (= (:msg (prompt-map :corp)) "Place 1 advancement token on an ice protecting HQ")
               "Correct server in prompt title (HQ)")
           (click-card state :corp iw1)
@@ -906,7 +906,6 @@
         (run-empty-server state "Archives")
         (click-prompt state :runner "Cyberdex Virus Suite")
         (click-prompt state :corp "Yes")
-        (println (:prompt (get-runner)))
         (is (pos? (count (:prompt (get-runner)))) "CVS purge did not interrupt archives access")
         ;; purged counters
         (is (zero? (get-counters (refresh cache) :virus))
@@ -1229,37 +1228,27 @@
     (click-card state :corp (get-program state 0))
     (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
     (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash
-    ;; TODO: Understand weird :waiting prompt on Runner side here:
-    ;; Corp:
-    ;; Type: nil
-    ;;
-    ;; Runner: Waiting for Corp to resolve runner-trash triggers
-    ;; Type: :waiting
-    ; (run-empty-server state "Archives")
-    ; (is (empty? (:prompt (get-corp))) "No prompt from Archives access")
-    ; (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
-    ; (run-on state "Server 1")
-    ; (run-successful state)
-    ; (click-prompt state :corp "0") ; trace
-    ; (click-prompt state :runner "0")
-    ; (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
-    ; (click-card state :corp (get-resource state 0))
-    ; (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
-    ; (click-prompt state :runner "No action") ; trash
-    ; (run-on state "HQ")
-    ; (run-successful state)
-    ; (click-prompt state :corp "0") ; trace
-    ; (click-prompt state :runner "0")
-    ; (click-prompt state :corp "Done")
-    ; (click-prompt state :runner "No action") ; trash
-    ; (is (empty? (:prompt (get-corp))) "Prompt closes after done")
-    ; (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
-    ; (run-on state "HQ")
-    ; (run-successful state)
-    ; (click-prompt state :corp "0") ; trace
-    ; (click-prompt state :runner "5")
-    ; (is (empty? (:prompt (get-corp))) "Prompt closes after lost trace")
-    ))
+    (run-empty-server state "Archives")
+    (is (empty? (:prompt (get-corp))) "No prompt from Archives access")
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+    (run-empty-server state "Server 1")
+    (click-prompt state :corp "0") ; trace
+    (click-prompt state :runner "0")
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+    (click-card state :corp (get-resource state 0))
+    (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+    (click-prompt state :runner "No action") ; trash
+    (run-empty-server state "HQ")
+    (click-prompt state :corp "0") ; trace
+    (click-prompt state :runner "0")
+    (click-prompt state :corp "Done")
+    (click-prompt state :runner "No action") ; trash
+    (is (empty? (:prompt (get-corp))) "Prompt closes after done")
+    (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+    (run-empty-server state "HQ")
+    (click-prompt state :corp "0") ; trace
+    (click-prompt state :runner "5")
+    (is (empty? (:prompt (get-corp))) "Prompt closes after lost trace")))
 
 (deftest jinja-city-grid
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
@@ -2850,7 +2839,6 @@
       (is (= 2 (-> (get-corp) :discard count)) "Corp has both cards in discard")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0") ; Corp wins trace
-      (is (= 1 (-> (get-runner) :discard count)) "Runner should start with only Singularity in heap")
       (dotimes [_ 4]
         (click-card state :runner (get-program state 0)))
       (is (empty? (:prompt (get-corp))) "Warroid Tracker can't trash anything else")
