@@ -1425,7 +1425,7 @@
                                                              (ice? %)
                                                              (not (same-card? % ice)))}
                                        :msg (msg "swap the positions of " (card-str state ice) " and " (card-str state target))
-                                       :effect (effect (swap-ice ice target))}}})
+                                       :effect (effect (swap-ice (get-card state ice) (get-card state target)))}}})
                                   card nil))}]}))
 
 (define-card "Ixodidae"
@@ -2229,10 +2229,10 @@
                                                (str "install " (:title target))
                                                (str "shuffle their Stack")))
                                    :choices (req (conj (filter #(can-pay? state side
-                                                                  (assoc eid :source card :source-type :runner-install) 
-                                                                  % nil [:credit (install-cost state side % {:cost-bonus 2})])
+                                                                          (assoc eid :source card :source-type :runner-install)
+                                                                          % nil [:credit (install-cost state side % {:cost-bonus 2})])
                                                                (vec (sort-by :title (filter program? (:deck runner)))))
-                                                        "No install"))
+                                                       "No install"))
                                    :cost [:credit 2]
                                    :async true
                                    :effect (req (trigger-event state side :searched-stack nil)

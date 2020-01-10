@@ -172,6 +172,11 @@
   [state ice]
   (update! state :corp (reset-all-subs ice)))
 
+(defn reset-all-ice
+  [state _]
+  (doseq [ice (filter ice? (all-installed state :corp))]
+    (reset-all-subs! state ice)))
+
 (defn unbroken-subroutines-choice
   "Takes an ice, returns the unbroken subroutines for a choices prompt"
   [ice]
@@ -505,7 +510,8 @@
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
   auto-pump routine in core, IF we are encountering a rezzed ice with a subtype
   we can break."
-  {:effect
+  {:silent (req true)
+   :effect
    (req (let [abs (remove #(or (= (:dynamic %) :auto-pump)
                                (= (:dynamic %) :auto-pump-and-break))
                           (:abilities card))
