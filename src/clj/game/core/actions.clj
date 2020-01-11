@@ -187,11 +187,6 @@
 (defn- finish-prompt [state side prompt card]
   (when-let [end-effect (:end-effect prompt)]
     (end-effect state side (make-eid state) card nil))
-  ;; This is a dirty hack to end the run when the last access prompt is resolved.
-  (when (empty? (get-in @state [:runner :prompt]))
-    (when-let [run (:run @state)]
-      (when (:ended run)
-        (handle-end-run state :runner))))
   true)
 
 (defn- prompt-error

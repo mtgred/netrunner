@@ -499,8 +499,7 @@
                            :effect (req (forfeit state card-side card)
                                         (move state side stolen-agenda :hand)
                                         (update-all-agenda-points state side)
-                                        (gain-credits state side 5)
-                                        (effect-completed state side eid))}
+                                        (gain-credits state side 5))}
                           :end-effect (effect (clear-wait-prompt :runner))}}
                         card nil))))}]})
 

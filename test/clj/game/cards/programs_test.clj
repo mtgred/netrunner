@@ -2138,32 +2138,125 @@
       (is (= 3 (:click (get-runner)))))))
 
 (deftest inversificator
-  ;; Inversificator shouldn't hook up events for unrezzed ice
-  (do-game
-    (new-game {:corp {:deck ["Turing" "Kakugo"]}
-               :runner {:deck ["Inversificator" "Sure Gamble"]}})
-    (play-from-hand state :corp "Kakugo" "HQ")
-    (play-from-hand state :corp "Turing" "HQ")
-    (take-credits state :corp)
-    (core/gain state :runner :credit 10)
-    (play-from-hand state :runner "Inversificator")
-    (let [inv (get-program state 0)
-          tur (get-ice state :hq 1)]
-      (is (= 1 (count (:hand (get-runner)))) "Runner starts with 1 card in hand")
-      (run-on state :hq)
-      (core/rez state :corp (refresh tur))
+  ;; Inversificator
+  (testing "Shouldn't hook up events for unrezzed ice"
+    (do-game
+      (new-game {:corp {:deck ["Turing" "Kakugo"]}
+                 :runner {:deck ["Inversificator" "Sure Gamble"]}})
+      (play-from-hand state :corp "Kakugo" "HQ")
+      (play-from-hand state :corp "Turing" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Inversificator")
+      (let [inv (get-program state 0)
+            tur (get-ice state :hq 1)]
+        (is (= 1 (count (:hand (get-runner)))) "Runner starts with 1 card in hand")
+        (run-on state "HQ")
+        (core/rez state :corp (refresh tur))
+        (run-continue state)
+        (card-ability state :runner (refresh inv) 0)
+        (click-prompt state :runner "End the run unless the Runner spends [Click][Click][Click]")
+        (run-continue state)
+        (click-prompt state :runner "Yes")
+        (click-card state :runner (get-ice state :hq 1))
+        (click-card state :runner (get-ice state :hq 0))
+        (run-jack-out state)
+        (is (= 1 (count (:hand (get-runner)))) "Runner still has 1 card in hand")
+        (run-on state :hq)
+        (run-continue state)
+        (is (= 1 (count (:hand (get-runner)))) "Kakugo doesn't fire when unrezzed"))))
+  (testing "Switched ice resets broken subs. Issue #4857"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Viktor 1.0" 2)]
+                        :credits 20}
+                 :runner {:hand ["Inversificator"]
+                          :credits 20}})
+      (play-from-hand state :corp "Viktor 1.0" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (play-from-hand state :corp "Viktor 1.0" "New remote")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inversificator")
+      (run-on state "HQ")
       (run-continue state)
-      (card-ability state :runner (refresh inv) 0)
-      (click-prompt state :runner "End the run unless the Runner spends [Click][Click][Click]")
+      (let [inv (get-program state 0)]
+        (card-ability state :runner (refresh inv) 1)
+        (card-ability state :runner (refresh inv) 0)
+        (click-prompt state :runner "Do 1 brain damage")
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (click-prompt state :runner "Yes")
+        (click-card state :runner (get-ice state :hq 0))
+        (click-card state :runner (get-ice state :remote1 0))
+        (run-continue state)
+        (is (not-any? :broken (:subroutines (get-ice state :remote1 0)))
+            "None of the subs are marked as broken anymore"))))
+  (testing "Doesn't fire when other programs break an ice. Issue #4858"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Viktor 1.0" 2)]
+                        :credits 20}
+                 :runner {:hand ["Inversificator" "Maven" "Cache"]
+                          :credits 20}})
+      (play-from-hand state :corp "Viktor 1.0" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (play-from-hand state :corp "Viktor 1.0" "New remote")
+      (core/rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (core/gain state :runner :click 10)
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Maven")
+      (play-from-hand state :runner "Inversificator")
+      ;; Use Inversificator in another run first
+      (run-on state "Server 1")
       (run-continue state)
-      (click-prompt state :runner "Yes")
-      (click-card state :runner (get-ice state :hq 1))
-      (click-card state :runner (get-ice state :hq 0))
-      (run-jack-out state)
-      (is (= 1 (count (:hand (get-runner)))) "Runner still has 1 card in hand")
-      (run-on state :hq)
+      (let [maven (get-program state 1)
+            inv (get-program state 2)]
+        (card-ability state :runner (refresh inv) 1)
+        (card-ability state :runner (refresh inv) 0)
+        (click-prompt state :runner "Do 1 brain damage")
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (click-prompt state :runner "No")
+        (run-continue state)
+        (run-successful state)
+        ;; Use non-Inversificator breaker
+        (run-on state "HQ")
+        (run-continue state)
+        (card-ability state :runner (refresh maven) 0)
+        (click-prompt state :runner "Do 1 brain damage")
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (is (not (prompt-is-card? state :runner inv)) "Prompt shouldn't be Inversificator")
+        (is (empty? (:prompt (get-corp))) "Corp shouldn't have a prompt")
+        (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt"))))
+  (testing "Inversificator shouldn't fire when ice is unrezzed. Issue #4859"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Viktor 1.0" "Quandary"]
+                        :credits 20}
+                 :runner {:hand ["Inversificator"]
+                          :credits 20}})
+      (play-from-hand state :corp "Quandary" "HQ")
+      (play-from-hand state :corp "Viktor 1.0" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inversificator")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 1))
       (run-continue state)
-      (is (= 1 (count (:hand (get-runner)))) "Kakugo doesn't fire when unrezzed"))))
+      (let [inv (get-program state 0)]
+        (card-ability state :runner (refresh inv) 1)
+        (card-ability state :runner (refresh inv) 0)
+        (click-prompt state :runner "Do 1 brain damage")
+        (click-prompt state :runner "End the run")
+        (run-continue state)
+        (click-prompt state :runner "No")
+        (run-continue state)
+        (run-continue state)
+        (is (not (prompt-is-card? state :runner inv)) "Prompt shouldn't be Inversificator")
+        (is (empty? (:prompt (get-corp))) "Corp shouldn't have a prompt")
+        (is (empty? (:prompt (get-runner))) "Runner shouldn't have a prompt")))))
 
 (deftest ixodidae
   ;; Ixodidae should not trigger on psi-games
