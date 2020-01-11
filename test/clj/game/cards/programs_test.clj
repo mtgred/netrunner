@@ -2539,6 +2539,31 @@
         (click-prompt state :runner "End the run")
         (is (last-log-contains? state "Runner pays 2 \\[Credits\\] to use Maven to break 1 subroutine on Border Control.") "Correct log with single sub break")))))
 
+(deftest misdirection
+  ;; Misdirection
+  (testing "Recurring credits interaction. Issue #4868"
+    (do-game
+      (new-game {:runner {:hand ["Misdirection" "Multithreader"]
+                          :credits 10
+                          :tags 2}})
+      (take-credits state :corp)
+      (core/gain state :runner :click 2)
+      (play-from-hand state :runner "Misdirection")
+      (play-from-hand state :runner "Multithreader")
+      (let [mis (get-program state 0)
+            multi (get-program state 1)]
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Using recurring credits"
+          (card-ability state :runner mis 0)
+          (click-prompt state :runner "2")
+          (is (= "Select a credit providing card (0 of 2 credits)"
+                 (:msg (prompt-map :runner)))
+              "Runner has pay-credit prompt")
+          (click-card state :runner multi)
+          (click-card state :runner multi))
+        (is (zero? (count-tags state)) "Runner has lost both tags")))))
+
 (deftest multithreader
   ;; Multithreader
   (testing "Pay-credits prompt"
@@ -2553,6 +2578,9 @@
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 2 credits from Multithreader"
                            (card-ability state :runner ab 1)
+                           (is (= "Select a credit providing card (0 of 2 credits)"
+                                  (:msg (prompt-map :runner)))
+                               "Runner has pay-credit prompt")
                            (click-card state :runner mt)
                            (click-card state :runner mt))))))
 
