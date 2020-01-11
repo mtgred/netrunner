@@ -881,10 +881,12 @@
                     (do (show-wait-prompt state :runner "Corp to select cards in HQ to be accessed")
                         (continue-ability
                           state :corp
-                          {:prompt (msg "Select " (access-count state side :hq-access) " cards in HQ for the Runner to access")
+                          {:prompt (msg "Select " (min (access-count state side :hq-access)
+                                                       (-> @state :corp :hand count)) " cards in HQ for the Runner to access")
                            :choices {:card #(and (in-hand? %) (corp? %))
                                      :all true
-                                     :max (req (access-count state side :hq-access))}
+                                     :max (req (min (access-count state side :hq-access)
+                                                    (-> @state :corp :hand count)))}
                            :async true
                            :effect (req (clear-wait-prompt state :runner)
                                         (if (= 1 cards-count)
