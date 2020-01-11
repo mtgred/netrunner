@@ -817,9 +817,14 @@
 
 (defn has-trash-ability?
   [card]
-  (let [abilities (:abilities (card-def card))]
-    (or (some :trash-icon abilities)
-        (some #(= :trash (first %)) (merge-costs (map :cost abilities))))))
+  (let [abilities (:abilities (card-def card))
+        events (:events (card-def card))]
+    (or (some :trash-icon (concat abilities events))
+        (some #(= :trash (first %))
+              (->> abilities
+                   (map :cost)
+                   (map merge-costs)
+                   (apply concat))))))
 
 (defn card-ability-cost
   "Returns a list of all costs (printed and additional) required to use a given ability"
