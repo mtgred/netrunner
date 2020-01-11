@@ -135,6 +135,9 @@
   (let [ice (get-current-ice state)]
     (system-msg state :runner (str "approaches " (card-str state ice)))
     (wait-for (trigger-event-simult state :runner :approach-ice
+                                    ;; Immediately end approach step if:
+                                    ;; * run ends
+                                    ;; * server becomes empty
                                     {:cancel-fn (fn [state] (or (:ended (:run @state))
                                                                 (check-for-empty-server state)))}
                                     ice)
@@ -185,6 +188,7 @@
                                      ;; * run ends
                                      ;; * ice is bypassed
                                      ;; * run is moved to another server
+                                     ;; * server becomes empty
                                      :cancel-fn (fn [state] (or (:ended (:run @state))
                                                                 (can-bypass-ice state side (get-card state ice))
                                                                 (not= current-server (:server (:run @state)))
@@ -238,6 +242,7 @@
                ;; Immediately end pass ice step if:
                ;; * run ends
                ;; * run is moved to another server
+               ;; * server becomes empty
                :cancel-fn (fn [state] (or (:ended (:run @state))
                                           (not= current-server (:server (:run @state)))
                                           (check-for-empty-server state))))]
@@ -268,6 +273,9 @@
                (when (and no-ice
                           (= :initiation (get-in @state [:run :phase])))
                  {:card-abilities (gather-events state side :pass-all-ice nil)})
+               ;; Immediately end pass ice step if:
+               ;; * run ends
+               ;; * server becomes empty
                :cancel-fn (fn [state] (or (:ended (:run @state))
                                           (check-for-empty-server state))))]
         (set-phase state :approach-server)

@@ -1219,19 +1219,22 @@
 
 (define-card "Self-destruct"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :abilities [{:req (req this-server)
+   :abilities [{:async true
+                :req (req this-server)
+                :cost [:trash]
                 :label "Trace X - Do 3 net damage"
                 :effect (req (let [serv (card->server state card)
                                    cards (concat (:ices serv) (:content serv))]
-                               (trash state side card)
-                               (doseq [c cards]
-                                 (trash state side c))
-                               (resolve-ability
-                                 state side
-                                 {:trace {:base (req (dec (count cards)))
-                                          :successful {:msg "do 3 net damage"
-                                                       :effect (effect (damage eid :net 3 {:card card}))}}}
-                                 card nil)))}]})
+                               (wait-for (trash-cards state side cards nil)
+                                         (continue-ability
+                                           state side
+                                           {:trace
+                                            {:base (count cards)
+                                             :successful
+                                             {:async true
+                                              :msg "do 3 net damage"
+                                              :effect (effect (damage eid :net 3 {:card card}))}}}
+                                           card nil))))}]})
 
 (define-card "Shell Corporation"
   {:abilities

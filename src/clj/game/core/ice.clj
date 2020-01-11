@@ -425,7 +425,9 @@
                                            (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
                                            (let [ice (get-card state ice)
                                                  card (get-card state card)]
-                                             (if (and (not early-exit)
+                                             (if (and ice
+                                                      card
+                                                      (not early-exit)
                                                       (:repeatable args)
                                                       (seq broken-subs)
                                                       (pos? (count (unbroken-subroutines-choice ice)))
