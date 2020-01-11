@@ -1648,9 +1648,17 @@
                 :prompt "How many [Credits] to spend to remove that number of tags?"
                 :choices {:number (req (min (total-available-credits state :runner eid card)
                                             (get-in runner [:tag :base])))}
-                :msg (msg "spend " target " [Credits] and remove " target " tags")
-                :effect (effect (lose-credits target)
-                                (lose-tags target))}]})
+                :async true
+                ;; TODO use :x-credits when it's built
+                :effect (req (let [new-eid (make-eid state (assoc eid :source card :source-type :ability))]
+                               (wait-for (pay-sync state :runner new-eid card [:credit target])
+                                         (if-let [cost-str async-result]
+                                           (do (system-msg state :runner
+                                                           (str (build-spend-msg cost-str "use")
+                                                                (:title card)
+                                                                " to remove " target " tags"))
+                                               (lose-tags state :runner eid target))
+                                           (effect-completed state side eid)))))}]})
 
 (define-card "MKUltra"
   (install-from-heap "MKUltra" "Sentry"
