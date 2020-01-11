@@ -221,12 +221,24 @@
                             :on-change #(swap! s assoc-in [:stacked-servers] (.. % -target -checked))}]
             "Server stacking is on by default"]]
 
+          [:br]
+          [:h4 "Runner layout from Corp perspective"]
           [:div
-           [:label [:input {:type "checkbox"
-                            :value true
-                            :checked (:runner-board-order @s)
-                            :on-change #(swap! s assoc-in [:runner-board-order] (.. % -target -checked))}]
-            "Runner rig layout is jnet-classic (Top to bottom: Programs, Hardware, Resources)"]]]
+           [:div.radio
+            [:label [:input {:name "runner-board-order"
+                             :type "radio"
+                             :value "jnet"
+                             :checked (= "jnet" (:runner-board-order @s))
+                             :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
+             "Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)"]]
+
+           [:div.radio
+            [:label [:input {:name "runner-board-order"
+                             :type "radio"
+                             :value "irl"
+                             :checked (= "irl" (:runner-board-order @s))
+                             :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
+             "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"]]]]
 
          [log-width-option s]
          [log-top-option s]

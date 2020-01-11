@@ -116,7 +116,8 @@
   (swap! app-state update-in [:options :stacked-servers] not))
 
 (defn flip-runner-board []
-  (swap! app-state update-in [:options :runner-board-order] not))
+  (let [layout (if (= "irl" (get-in @app-state [:options :runner-board-order])) "jnet" "irl")]
+    (swap! app-state assoc-in [:options :runner-board-order] layout)))
 
 (defn concede []
   (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}]))
