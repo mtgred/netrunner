@@ -1684,13 +1684,17 @@
                                                      [:credit (install-cost state side % {:cost-bonus -3})]))
                                      (:discard runner))))
                 :cost [:trash]
-                :show-discard true
-                :choices {:req (req (and (in-discard? target)
-                                         (program? target)
-                                         (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                                   [:credit (install-cost state side target {:cost-bonus -3})])))}
-                :msg (msg "install " (:title target))
-                :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))}]})
+                :msg "install a program"
+                :effect
+                (effect
+                  (continue-ability
+                    {:show-discard true
+                     :choices {:req (req (and (in-discard? target)
+                                              (program? target)
+                                              (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                                        [:credit (install-cost state side target {:cost-bonus -3})])))}
+                     :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))}
+                    card nil))}]})
 
 (define-card "Skulljack"
   {:effect (effect (damage eid :brain 1 {:card card}))

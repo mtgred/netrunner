@@ -2987,12 +2987,13 @@
           0 (:credit (get-runner))
           "Corroder is installed for free"
           (card-ability state :runner (get-hardware state 0) 0)
-          (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
-              "Runner chooses ability target first")
-          (click-card state :runner "Mantle")
+          ;; Issue #4889
           (is (= "Choose 1 program to trash" (:msg (prompt-map :runner)))
               "Runner chooses program to trash as a cost")
           (click-card state :runner "Corroder"))
+          (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
+              "Runner chooses ability target first")
+          (click-card state :runner "Mantle")
         (is (get-program state 0) "Mantle is installed for free")
         (is (find-card "Corroder" (:discard (get-runner))) "Corroder has been trashed")))
     (testing "and no program trashed this turn and no card to trash as additional cost"
