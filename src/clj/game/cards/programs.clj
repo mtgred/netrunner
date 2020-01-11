@@ -1412,7 +1412,8 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 1 1)]
                     :events [{:event :pass-ice
-                              :req (req (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card)))
+                              :req (req (and (all-subs-broken-by-card? target card)
+                                             (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card))))
                               :effect
                               (effect
                                 (continue-ability
