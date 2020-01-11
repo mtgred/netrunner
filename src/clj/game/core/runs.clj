@@ -607,7 +607,7 @@
               ; make sure the card has not been moved by a handler
               ; and we're still accessing the card
               (if (and (get-card state c)
-                       (:access @state))
+                       (same-card? c (:access @state)))
                 (if (agenda? c)
                   (access-agenda state side eid c)
                   ;; Accessing a non-agenda
@@ -670,7 +670,7 @@
   ([state side eid card] (access-card state side eid card (:title card)))
   ([state side eid card title]
     ;; Indicate that we are in the access step.
-   (swap! state assoc :access true)
+   (swap! state assoc :access card)
     ;; Reset counters for increasing costs of trash, steal, and access.
    (swap! state update-in [:bonus] dissoc :trash)
    (swap! state update-in [:bonus] dissoc :steal-cost)

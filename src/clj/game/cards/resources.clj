@@ -1043,15 +1043,16 @@
                :interactive (req true)
                :async true
                :effect (effect (continue-ability (host-agenda? target) card nil))}]
-     :abilities [{:cost [:click 2] :label "Add hosted agenda to your score area"
+     :abilities [{:cost [:click 2]
+                  :label "Add hosted agenda to your score area"
                   :req (req (get-agenda card))
                   :async true
-                  :effect (req (let [c (get-agenda card)
-                                     points (get-agenda-points state :runner c)]
-                                 (as-agenda state :runner eid c points {:register-events true})))
                   :msg (msg (let [c (get-agenda card)]
                               (str "add " (:title c) " to their score area and gain "
-                                   (quantify (get-agenda-points state :runner c) "agenda point"))))}]}))
+                                   (quantify (get-agenda-points state :runner c) "agenda point"))))
+                  :effect (req (let [c (get-agenda card)
+                                     points (get-agenda-points state :runner c)]
+                                 (as-agenda state :runner eid c points {:register-events true})))}]}))
 
 (define-card "Find the Truth"
   {:events [{:event :post-runner-draw
@@ -2327,6 +2328,7 @@
    :effect (req (doseq [c (take 3 (:deck runner))]
                   (host state side (get-card state card) c {:facedown true})))
    :abilities [{:async true
+                :trash-icon true
                 :req (req (not (install-locked? state side)))
                 :prompt "Choose a card on Street Peddler to install"
                 :choices (req (cancellable
@@ -2383,7 +2385,7 @@
 (define-card "Tech Trader"
   {:events [{:event :runner-trash
              :req (req (and (= side :runner)
-                            (= (second targets) :ability-cost)))
+                            (= :ability-cost (:cause (last targets)))))
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits 1))}]})
 
@@ -2494,8 +2496,7 @@
                                          (has-trash-ability? target)))}
                 :msg (msg "shuffle " (join ", " (map :title targets))
                           " into their Stack")
-                :effect (req (system-msg state side (str ))
-                             (doseq [c targets] (move state side c :deck))
+                :effect (req (doseq [c targets] (move state side c :deck))
                              (shuffle! state side :deck)
                              (effect-completed state side eid))}]})
 

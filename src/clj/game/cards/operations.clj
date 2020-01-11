@@ -1058,7 +1058,8 @@
                             :effect (effect (gain-bad-publicity :corp 1))}}}))
 
 (define-card "IPO"
-  {:msg "gain 13 [Credits]" :effect (effect (gain-credits 13))})
+  {:msg "gain 13 [Credits]"
+   :effect (effect (gain-credits 13))})
 
 (define-card "Kakurenbo"
   (let [install-abi {:async true

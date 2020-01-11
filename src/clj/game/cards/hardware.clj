@@ -962,9 +962,9 @@
                 :effect (effect (draw :runner eid 1 nil))}]
    :events [{:event :runner-trash
              :once :per-turn
-             :req (req (and (some corp? targets)
-                            (:access @state)
-                            (:trash target)))
+             :req (req (some #(and (:trash %)
+                                   (same-card? % (:access @state)))
+                             targets))
              :effect (effect (system-msg (str "places " (trash-cost state side target) " power counters on Mâché"))
                              (add-counter card :power (trash-cost state side target)))}]})
 
@@ -1002,23 +1002,20 @@
                                 :type :recurring}}})
 
 (define-card "Maw"
-  (let [ability {:label "Trash a card from HQ"
-                 :req (req (and (= 1 (get-in @state [:runner :register :no-trash-or-steal]))
-                                (pos? (count (:hand corp)))
-                                (not= (first (:zone target)) :discard)))
-                 :once :per-turn
-                 :msg "force the Corp to trash a random card from HQ"
-                 :effect (req (let [card-to-trash (first (shuffle (:hand corp)))
-                                    card-seen? (same-card? target card-to-trash)
-                                    card-to-trash (if card-seen? (assoc card-to-trash :seen true)
-                                                    card-to-trash)]
-                                ;; toggle access flag to prevent Hiro issue #2638
-                                (swap! state dissoc :access)
-                                (trash state :corp card-to-trash)
-                                (swap! state assoc :access true)))}]
-    {:in-play [:memory 2]
-     :abilities [ability]
-     :events [(assoc ability :event :post-access-card)]}))
+  {:in-play [:memory 2]
+   :events [{:event :post-access-card
+             :label "Trash a card from HQ"
+             :async true
+             :req (req (and (= 1 (get-in @state [:runner :register :no-trash-or-steal]))
+                            (pos? (count (:hand corp)))
+                            (not= (first (:zone target)) :discard)))
+             :once :per-turn
+             :msg "force the Corp to trash a random card from HQ"
+             :effect (req (let [card-to-trash (first (shuffle (:hand corp)))
+                                card-seen? (same-card? target card-to-trash)
+                                card-to-trash (if card-seen? (assoc card-to-trash :seen true)
+                                                card-to-trash)]
+                            (trash state :corp eid card-to-trash nil)))}]})
 
 (define-card "Maya"
   {:in-play [:memory 2]
@@ -1600,8 +1597,7 @@
              :msg (msg "trash " (quantify (count targets) "card")
                        " and access " (quantify (quot (count targets) 2) "additional card"))
              :effect (req (let [bonus (quot (count targets) 2)]
-                            (wait-for (trash-cards state side targets {:unpreventable true
-                                                                       :suppress-event true})
+                            (wait-for (trash-cards state side targets {:unpreventable true})
                                       (register-events
                                         state side card
                                         [{:event :pre-access
@@ -1674,7 +1670,8 @@
                                                        (installed? (first %))
                                                        (program? (first %)))]
                                         (zero? (+ (event-count state nil :runner-trash pred)
-                                                  (event-count state nil :corp-trash pred))))))
+                                                  (event-count state nil :corp-trash pred)
+                                                  (event-count state nil :game-trash pred))))))
                        :value [:program 1]}]
    :abilities [{:async true
                 :label "Install a program from the heap"
