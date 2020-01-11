@@ -1313,8 +1313,10 @@
                             :effect (req (reveal state side targets)
                                          (doseq [c targets]
                                            (move state :corp c :deck))
-                                         (shuffle! state :corp :deck))
-                            :cancel-effect (effect (shuffle! :deck))
+                                         (shuffle! state :corp :deck)
+                                         (effect-completed state :corp eid))
+                            :cancel-effect (effect (shuffle! :deck)
+                                                   (effect-completed eid))
                             :msg (msg "add "
                                       (str (join ", " (map :title targets)))
                                       " to R&D")}
