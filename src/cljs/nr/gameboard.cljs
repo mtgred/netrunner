@@ -412,6 +412,14 @@
         (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
                                          :typing true}])))))
 
+(defn indicate-action []
+  (when (not-spectator?)
+    [:button {:style {:width "98%"}
+              :on-click #(do (.preventDefault %)
+                             (send-command "indicate-action"))
+              :key "Indicate action"}
+     "Indicate action"]))
+
 (let [s (r/atom {})]
   (defn log-input []
     (let [gameid (r/cursor game-state [:gameid])
@@ -419,14 +427,16 @@
           game (some #(when (= @gameid (str (:gameid %))) %) @games)]
       (when (or (not-spectator?)
                 (not (:mutespectators game)))
-        [:form {:on-submit #(do (.preventDefault %)
-                                (send-msg s))
-                :on-input #(do (.preventDefault %)
-                               (send-typing s))}
-         [:input {:placeholder "Say something"
-                  :type "text"
-                  :value (:msg @s)
-                  :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]))))
+        [:div
+         [:form {:on-submit #(do (.preventDefault %)
+                                 (send-msg s))
+                 :on-input #(do (.preventDefault %)
+                                (send-typing s))}
+          [:input {:placeholder "Say something"
+                   :type "text"
+                   :value (:msg @s)
+                   :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+         [indicate-action]]))))
 
 (defn handle-dragstart [e card]
   (-> e .-target js/$ (.addClass "dragged"))
@@ -1526,11 +1536,7 @@
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
          (not= "corp" (:no-action @run)))
-    #(send-command "no-action")]
-
-   [:button {:on-click #(send-command "indicate-action")
-             :key "Indicate action"}
-    "Indicate action"]])
+    #(send-command "no-action")]])
 
 (defn runner-run-div
   [run]
@@ -1571,11 +1577,7 @@
       (and (:jack-out @run)
            (not (:cannot-jack-out @run))
            (not (= "encounter-ice" phase)))
-      #(send-command "jack-out")]
-
-     [:button {:on-click #(send-command "indicate-action")
-               :key "Indicate action"}
-      "Indicate action"]]))
+      #(send-command "jack-out")]]))
 
 (defn run-div
   [side run]
@@ -1758,10 +1760,7 @@
             [cond-button "Gain Credit"
              (and (not (or @runner-phase-12 @corp-phase-12))
                   (pos? (:click @me)))
-             #(send-command "credit")]
-            [:button {:on-click #(send-command "indicate-action")
-                      :key "Indicate action"}
-             "Indicate action"]]))])})))
+             #(send-command "credit")]]))])})))
 
 (defn starting-timestamp []
   [:div.panel.blue-shade

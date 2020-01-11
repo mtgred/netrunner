@@ -52,8 +52,8 @@
 
 (defn indicate-action
   [state side args]
-  (system-msg state side
-              (str "Please pause, " (if (= side :corp) "Corp" "Runner") " is acting."))
+  (system-say state side
+              (str "[!] Please pause, " (if (= side :corp) "Corp" "Runner") " is acting."))
   (toast state side
          "You have indicated action to your opponent"
          "info"
