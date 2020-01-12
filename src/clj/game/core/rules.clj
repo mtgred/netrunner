@@ -61,10 +61,6 @@
 
 (defn play-instant
   "Plays an Event or Operation."
-  ([state side card] (play-instant state side (make-eid state) card nil))
-  ([state side eid? card?] (if (:eid eid?)
-                             (play-instant state side eid? card? nil)
-                             (play-instant state side (make-eid state) eid? card?)))
   ([state side eid card {:keys [targets ignore-cost base-cost no-additional-cost]}]
    (let [eid (eid-set-defaults eid :source nil :source-type :play)
          cdef (card-def card)

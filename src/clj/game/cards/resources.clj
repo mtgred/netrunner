@@ -2199,7 +2199,8 @@
                             card nil))}]})
 
 (define-card "Same Old Thing"
-  {:abilities [{:cost [:click 2 :trash]
+  {:abilities [{:async true
+                :cost [:click 2 :trash]
                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                (pos? (count (filter event? (:discard runner))))))
                 :prompt "Select an event to play"
@@ -2207,7 +2208,7 @@
                 :show-discard true
                 :choices {:card #(and (event? %)
                                       (in-discard? %))}
-                :effect (effect (play-instant target))}]})
+                :effect (effect (play-instant eid target {:no-additional-cost true}))}]})
 
 (define-card "Scrubber"
   {:recurring 2
@@ -2589,13 +2590,14 @@
 
 (define-card "The Shadow Net"
   (letfn [(events [runner] (filter #(and (event? %) (not (has-subtype? % "Priority"))) (:discard runner)))]
-    {:abilities [{:cost [:click 1 :forfeit]
+    {:abilities [{:async true
+                  :cost [:click 1 :forfeit]
                   :req (req (pos? (count (events runner))))
                   :label "Play an event from your Heap, ignoring all costs"
                   :prompt "Choose an event to play"
                   :msg (msg "play " (:title target) " from the Heap, ignoring all costs")
                   :choices (req (cancellable (events runner) :sorted))
-                  :effect (effect (play-instant nil target {:ignore-cost true}))}]}))
+                  :effect (effect (play-instant eid target {:ignore-cost true}))}]}))
 
 (define-card "The Source"
   {:effect (effect (update-all-advancement-costs))
