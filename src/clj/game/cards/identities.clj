@@ -127,8 +127,9 @@
                                                          :card #(and (runner? %)
                                                                      (in-play-area? %))}
                                                :effect (req (doseq [c targets]
-                                                              (runner-install state side c {:ignore-all-cost true
-                                                                                            :custom-message (str "starts with " (:title c) " in play")}))
+                                                              (runner-install state side c
+                                                                              {:ignore-all-cost true
+                                                                               :custom-message (fn [_] (str "starts with " (:title c) " in play"))}))
                                                             (swap! state assoc-in [:runner :play-area] [])
                                                             (clear-wait-prompt state :corp))}
                                               card nil)))}]})
