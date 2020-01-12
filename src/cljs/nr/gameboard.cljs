@@ -1235,7 +1235,7 @@
                   [deck-view :runner player-side identity deck]
                   [identity-view identity]]
         runner-f (if (and (not is-me)
-                          (not (get-in @app-state [:options :runner-board-order])))
+                          (= "irl" (get-in @app-state [:options :runner-board-order])))
                    reverse
                    seq)]
     [:div.runner-board {:class (if is-me "me" "opponent")}
