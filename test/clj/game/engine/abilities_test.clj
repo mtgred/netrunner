@@ -1,10 +1,13 @@
 (ns game.engine.abilities-test
   (:require [game.core :as core]
             [game.core.eid :as eid]
+            [game.core.card :refer :all]
             [game.cards.ice :as ice]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
+            [game.core.card-defs :refer :all]
+            [jinteki.cards :refer [all-cards]]
             [clojure.test :refer :all]))
 
 (deftest combine-abilities
@@ -51,3 +54,9 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (= (+ 6 cr) (:credit (get-corp))) "Corp gained 3 credits")))))
+
+(deftest trash-icon
+  (doseq [card (->> @all-cards
+                    vals
+                    (filter #(re-find #"(?i)\[trash\].*:" (:text % ""))))]
+    (is (core/has-trash-ability? card) (str (:title card) " needs either :cost [:trash] or :trash-icon true"))))

@@ -1674,20 +1674,24 @@
              :effect (effect (add-counter card :advancement 1)
                              (system-msg "adds 1 advancement token to Reconstruction Contract"))}]
    :abilities [{:label "Move advancement tokens to another card"
+                :async true
+                :trash-icon true
                 :prompt "Select a card that can be advanced"
                 :choices {:card can-be-advanced?}
-                :effect (req (let [move-to target]
-                               (resolve-ability
-                                 state side
-                                 {:prompt "Move how many tokens?"
-                                  :choices {:number (req (get-counters card :advancement))
-                                            :default (req (get-counters card :advancement))}
-                                  :cost [:trash]
-                                  :effect (effect (add-counter move-to :advancement target {:placed true})
-                                                  (system-msg (str "trashes Reconstruction Contract to move " target
-                                                                   (pluralize " advancement token" target) " to "
-                                                                   (card-str state move-to))))}
-                                 card nil)))}]})
+                :effect (effect
+                          (continue-ability
+                            (let [move-to target]
+                              {:async true
+                               :prompt "Move how many tokens?"
+                               :choices {:number (req (get-counters card :advancement))
+                                         :default (req (get-counters card :advancement))}
+                               :cost [:trash]
+                               :effect (effect (add-counter move-to :advancement target {:placed true})
+                                               (system-msg (str "trashes Reconstruction Contract to move "
+                                                                target (pluralize " advancement token" target)
+                                                                " to " (card-str state move-to)))
+                                               (effect-completed eid))})
+                            card nil))}]})
 
 (define-card "Reversed Accounts"
   {:advanceable :always

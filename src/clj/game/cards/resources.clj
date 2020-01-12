@@ -2181,17 +2181,20 @@
 
 (define-card "Salvaged Vanadis Armory"
   {:events [{:event :damage
+             :async true
+             :trash-icon true
              :effect (req (show-wait-prompt state :corp "Runner to use Salvaged Vanadis Armory")
-                          (resolve-ability
+                          (continue-ability
                             state :runner
                             {:optional
                              {:prompt "Use Salvaged Vanadis Armory?"
-                              :yes-ability {:msg (msg "force the Corp to trash the top "
+                              :yes-ability {:async true
+                                            :cost [:trash]
+                                            :msg (msg "force the Corp to trash the top "
                                                       (get-turn-damage state :runner)
                                                       " cards of R&D and trash itself")
-                                            :effect (req (clear-wait-prompt :corp)
-                                                         (wait-for (mill state :corp :corp (get-turn-damage state :runner))
-                                                                   (trash state side eid card {:unpreventable true})))}
+                                            :effect (effect (clear-wait-prompt :corp)
+                                                            (mill :corp eid :corp (get-turn-damage state :runner)))}
                               :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                             card nil))}]})
 

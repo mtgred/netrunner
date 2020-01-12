@@ -966,6 +966,7 @@
   {:events
    [{:event :pre-init-trace
      :async true
+     :trash-icon true
      :effect (effect (show-wait-prompt :corp "Runner to use Disrupter")
                      (continue-ability
                        :runner

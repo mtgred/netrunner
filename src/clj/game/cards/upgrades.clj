@@ -396,21 +396,19 @@
 
 (define-card "Defense Construct"
   {:advanceable :always
-   :abilities [{:label "Add 1 facedown card from Archives to HQ for each advancement token"
+   :abilities [{:label "Add cards from Archives to HQ"
                 :req (req (and run
                                (= (:server run) [:archives])
                                (pos? (get-counters card :advancement))))
-                :effect (effect (resolve-ability
-                                  {:show-discard true
-                                   :choices {:max (get-counters card :advancement)
-                                             :card #(and (corp? %)
-                                                         (not (:seen %))
-                                                         (in-discard? %))}
-                                   :msg (msg "add " (count targets) " facedown cards in Archives to HQ")
-                                   :effect (req (doseq [c targets]
-                                                  (move state side c :hand)))}
-                                  card nil)
-                                (trash card))}]})
+                :cost [:trash]
+                :show-discard true
+                :choices {:max (req (get-counters card :advancement))
+                          :card #(and (corp? %)
+                                      (not (:seen %))
+                                      (in-discard? %))}
+                :msg (msg "add " (count targets) " facedown cards in Archives to HQ")
+                :effect (req (doseq [c targets]
+                               (move state side c :hand)))}]})
 
 (define-card "Disposable HQ"
   (letfn [(dhq [n i]
@@ -1189,9 +1187,11 @@
 
 (define-card "Ryon Knight"
   {:abilities [{:label "Do 1 brain damage"
-                :msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
+                :req (req (and this-server (zero? (:click runner))))
+                :cost [:trash]
+                :msg "do 1 brain damage"
                 :async true
-                :effect (effect (trash card) (damage eid :brain 1 {:card card}))}]})
+                :effect (effect (damage eid :brain 1 {:card card}))}]})
 
 (define-card "SanSan City Grid"
   {:effect (req (when-let [agenda (some #(when (agenda? %) %)
@@ -1428,7 +1428,7 @@
   {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ICE from being broken"
                 :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
                                (has-subtype? current-ice "Bioroid")))
-                :effect (effect (trash card))
+                :cost [:trash]
                 :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]})
 
 (define-card "Underway Grid"
