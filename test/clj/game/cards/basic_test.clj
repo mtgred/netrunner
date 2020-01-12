@@ -51,13 +51,13 @@
     (do-game
       (new-game {:corp {:deck ["Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (core/advance state :corp {:card (get-ice state :hq 0)})
+      (core/click-advance state :corp {:card (get-ice state :hq 0)})
       (is (= 1 (get-counters (get-ice state :hq 0) :advancement)) "Placed 1 advancement on Ice Wall")))
   (testing "Advance agenda"
     (do-game
       (new-game {:corp {:deck ["Project Beale"]}})
       (play-from-hand state :corp "Project Beale" "New remote")
-      (core/advance state :corp {:card (get-content state :remote1 0)})
+      (core/click-advance state :corp {:card (get-content state :remote1 0)})
       (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "Placed 1 advancement on Project Beale")))
   (testing "Trash resource if runner is tagged"
     (do-game
