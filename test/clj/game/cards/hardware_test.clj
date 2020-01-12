@@ -483,6 +483,7 @@
     (is (= 4 (core/available-mu state)) "Memory limit reset")))
 
 (deftest buffer-drive
+  ;; Buffer Drive
   (testing "The player may decline to move a card to the bottom of the stack"
     (do-game
       (new-game {:runner {:hand ["Buffer Drive", "Sure Gamble"]}})
@@ -649,6 +650,34 @@
       (play-from-hand state :runner "Buffer Drive")
       (core/trash state :corp (first (:hand (get-runner))))
       (is (= 2 (count (:discard (get-runner)))))
+      (is (empty? (:prompt (get-runner))))))
+  (testing "Doesn't activate on trashed corp card. Issue #4908"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Archer" "Hostile Takeover"]}
+                 :runner {:hand ["Hippo" "Odore" "Buffer Drive"]
+                          :credits 50}})
+      (play-and-score state "Hostile Takeover")
+      (play-from-hand state :corp "Archer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Odore")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Buffer Drive")
+      (core/click-credit state :runner nil)
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (click-card state :corp "Hostile Takeover")
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 2)
+      (card-ability state :runner (get-program state 0) 2)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "Gain 2 [Credits]")
+      (click-prompt state :runner "Trash a program")
+      (click-prompt state :runner "Trash a program")
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Yes")
       (is (empty? (:prompt (get-runner)))))))
 
 (deftest chop-bot-3000

@@ -223,8 +223,12 @@
                              (some #(and (runner? %)
                                          (or (in-hand? %) (in-deck? %)))
                                    event))]
-                     (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
-                             (event-count state side :corp-trash grip-or-stack-trash?)))))
+                     (and (some #(and (runner? %)
+                                      (or (in-hand? %)
+                                          (in-deck? %)))
+                                targets)
+                       (= 1 (+ (event-count state side :runner-trash grip-or-stack-trash?)
+                               (event-count state side :corp-trash grip-or-stack-trash?))))))
          :prompt "Add a trashed card to the bottom of the stack"
          :choices (req (conj (mapv #(assoc % :zone [:discard]) (sort-by :title (filter :cid targets))) "No action"))
          :effect (req (when-not (= "No action" target)
