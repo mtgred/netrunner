@@ -277,10 +277,10 @@
 (defn build-socr-legality
   [valid deck]
   (let [mwl (legal-format? :socr deck)
-        big-boxes ["creation-and-control"
-                   "honor-and-profit"
+        big-boxes ["honor-and-profit"
                    "order-and-chaos"
-                   "data-and-destiny"]
+                   "data-and-destiny"
+                   "reign-and-reverie"]
         single-set? (as-> deck d
                       (combine-id-and-cards d)
                       (group-by #(get-in % [:card :cycle_code]) d)
