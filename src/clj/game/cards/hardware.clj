@@ -1512,22 +1512,36 @@
 
 (define-card "Respirocytes"
   (let [ability {:once :per-turn
-                 :msg "draw 1 card and add a power counter to itself"
+                 :msg "draw 1 card and add a power counter"
                  :async true
                  :effect (req (wait-for (draw state :runner 1 nil)
                                         (add-counter state side (get-card state card) :power 1)
                                         (if (= 3 (get-counters (get-card state card) :power))
                                           (do (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
                                               (trash state side eid card {:unpreventable true}))
-                                          (effect-completed state side eid))))}]
-    {:async true
+                                          (effect-completed state side eid))))}
+        event {:req (req (zero? (count (:hand runner))))
+               :async true
+               :effect (req (continue-ability state side ability card nil))}]
+    {:implementation "Only watches trashes, playing events, and installing"
+     :async true
      :effect (effect (damage eid :meat 1 {:unboostable true :card card}))
      :msg "suffer 1 meat damage"
-     :events [{:event :runner-hand-change
-               :req (req (and (zero? target)
-                              (first-event? state side :runner-hand-change #(zero? (first %)))))
-               :async true
-               :effect (req (continue-ability state side ability card nil))}
+     :events [(assoc event :event :play-event)
+              (assoc event
+                     :event :runner-trash
+                     :req (req (and (some #(and (runner? %)
+                                                (in-hand? %)) targets)
+                                    (zero? (count (:hand runner))))))
+              (assoc event
+                     :event :corp-trash
+                     :req (req (and (some #(and (runner? %)
+                                                (in-hand? %)) targets)
+                                    (zero? (count (:hand runner))))))
+              (assoc event
+                     :event :runner-install
+                     :req (req (and (some #{:hand} (:previous-zone target))
+                                    (zero? (count (:hand runner))))))
               {:event :runner-turn-begins
                :req (req (empty? (:hand runner)))
                :async true
@@ -1535,7 +1549,8 @@
               {:event :corp-turn-begins
                :req (req (empty? (:hand runner)))
                :async true
-               :effect (effect (continue-ability ability card nil))}]}))
+               :effect (effect (continue-ability ability card nil))}]
+     :abilities [ability]}))
 
 (define-card "Rubicon Switch"
   {:abilities [{:cost [:click 1]

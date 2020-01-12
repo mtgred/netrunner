@@ -176,13 +176,6 @@
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
              (move-zone-fn state side (make-eid state) moved-card card))
            (trigger-event state side :card-moved card (assoc moved-card :move-to-side side))
-           (when-let [zone (or (#{:discard :hand :deck} src-zone)
-                               (#{:discard :hand :deck} to))]
-             (let [event (keyword (str (name side) "-" (name zone) "-change"))]
-               ; To easily grep:
-               ; :corp-hand-change :corp-deck-change :corp-discard-change
-               ; :runner-hand-change :runner-deck-change :runner-discard-change
-               (trigger-event-sync state side (make-eid state) event (count (get-in @state [side zone])) moved-card)))
            ; This is for removing `:location :X` events that are non-default locations,
            ; such as Subliminal Messaging only registering in :discard. We first unregister
            ; any non-default events from the previous zone and the register the non-default
