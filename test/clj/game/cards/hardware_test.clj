@@ -2991,9 +2991,9 @@
           (is (= "Choose 1 program to trash" (:msg (prompt-map :runner)))
               "Runner chooses program to trash as a cost")
           (click-card state :runner "Corroder"))
-          (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
-              "Runner chooses ability target first")
-          (click-card state :runner "Mantle")
+        (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
+            "Runner chooses ability target first")
+        (click-card state :runner "Mantle")
         (is (get-program state 0) "Mantle is installed for free")
         (is (find-card "Corroder" (:discard (get-runner))) "Corroder has been trashed")))
     (testing "and no program trashed this turn and no card to trash as additional cost"
@@ -3059,7 +3059,29 @@
         (play-from-hand state :runner "Corroder")
         (play-from-hand state :runner "Simulchip")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (empty? (:prompt (get-runner))) "No Simulchip prompt")))))
+        (is (empty? (:prompt (get-runner))) "No Simulchip prompt"))))
+  (testing "No additional cost when hosted program is trashed. Issue #4897"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Simulchip" "Chisel"]
+                          :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :click 5)
+      (play-from-hand state :runner "Chisel")
+      (click-card state :runner "Ice Wall")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (run-jack-out state)
+      (run-on state "HQ")
+      (run-continue state)
+      (run-jack-out state)
+      (play-from-hand state :runner "Simulchip")
+      (card-ability state :runner (get-hardware state 0) 0)
+      (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
+          "Runner has ability target prompt"))))
 
 (deftest spinal-modem
   ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run

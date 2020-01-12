@@ -70,9 +70,8 @@
                        (trash state side
                               (update-in h [:zone] #(map to-keyword %))
                               {:unpreventable true
-                               :suppress-event true
-                               ;; this handles executives getting trashed before World's Plaza #2949
-                               :host-trashed true})
+                               :host-trashed true
+                               :game-trash true})
                        ())
         update-hosted (fn [h]
                         (let [newz (flatten (list dest))

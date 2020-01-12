@@ -2051,7 +2051,8 @@
                                                           (ice? %))
                                               :max 2
                                               :all true}
-                                    :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
+                                    :msg (msg "swap the positions of " (card-str state (first targets))
+                                              " and " (card-str state (second targets)))
                                     :effect (req (when (= (count targets) 2)
                                                    (swap-ice state side (first targets) (second targets))
                                                    (effect-completed state side eid)))}
@@ -3153,6 +3154,7 @@
   (constellation-ice (give-tags 1)))
 
 (define-card "Waiver"
+  ;; FIXME: bad implementation
   {:subroutines [(trace-ability 5 {:label "Reveal the Runner's Grip and trash cards"
                                    :msg (msg "reveal all cards in the Runner's Grip: " (join ", " (map :title (:hand runner)))
                                              ". Cards with a play/install cost less than or equal to " (- target (second targets))
