@@ -285,7 +285,7 @@
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side card (select-keys prompt [:cancel-effect]) update! resolve-ability)))))))
 
-(declare check-for-empty-server handle-end-run)
+(declare check-for-empty-server handle-end-run get-current-ice)
 
 (defn- do-play-ability [state side card ability ability-idx targets]
   (let [cost (card-ability-cost state side ability card targets)]
@@ -295,8 +295,13 @@
         (system-msg state side activatemsg))
       (let [eid (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}})]
         (wait-for (resolve-ability state side eid (assoc ability :cost cost) card targets)
-                  (when (check-for-empty-server state)
-                    (handle-end-run state side)))))))
+                  (cond
+                    (check-for-empty-server state)
+                    (handle-end-run state side)
+                    (and (:run @state)
+                         (not (get-current-ice state)))
+                    (do (println "here")
+                        (continue state side nil))))))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."

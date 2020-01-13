@@ -1585,7 +1585,25 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (is (empty? (:prompt (get-runner))) "No Hippo prompt on later ice"))))
+      (is (empty? (:prompt (get-runner))) "No Hippo prompt on later ice")))
+  (testing "Continues run"
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Nfr" "Hippo"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Nfr")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Yes")
+      (is (= 1 (get-counters (get-program state 0) :power)) "Nfr gains 1 counter")
+      ))
+  )
 
 (deftest keiko
   ;; Keiko
