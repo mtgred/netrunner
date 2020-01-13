@@ -28,9 +28,6 @@
 (defn- init-hands [state]
   (draw state :corp 5 {:suppress-event true})
   (draw state :runner 5 {:suppress-event true})
-  (when (and (-> @state :corp :identity :title)
-             (-> @state :runner :identity :title))
-    (show-wait-prompt state :runner "Corp to keep hand or mulligan"))
   (doseq [side [:corp :runner]]
     (when (-> @state side :identity :title)
       (show-prompt state side nil "Keep hand?"
@@ -38,7 +35,10 @@
                    #(if (= % "Keep")
                       (keep-hand state side nil)
                       (mulligan state side nil))
-                   {:prompt-type :mulligan}))))
+                   {:prompt-type :mulligan})))
+  (when (and (-> @state :corp :identity :title)
+             (-> @state :runner :identity :title))
+    (show-wait-prompt state :runner "Corp to keep hand or mulligan")))
 
 (defn- init-game-state
   "Initialises the game state"
