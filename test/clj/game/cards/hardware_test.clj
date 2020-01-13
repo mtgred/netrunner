@@ -678,7 +678,26 @@
       (click-prompt state :runner "Trash a program")
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "Yes")
-      (is (empty? (:prompt (get-runner)))))))
+      (is (empty? (:prompt (get-runner))))))
+  (testing "Trashing a played event doesn't trigger it. Issue #4922"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Patchwork" "Buffer Drive"
+                                 "Sure Gamble" "Easy Mark"]
+                          :credits 20}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (play-from-hand state :runner "Patchwork")
+      (play-from-hand state :runner "Sure Gamble")
+      (click-card state :runner "Patchwork")
+      (click-card state :runner "Easy Mark")
+      (is (prompt-is-card? state :runner (get-hardware state 0))
+          "Buffer Drive prompt is open")
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "Runner has no open prompt")
+      (is (not (prompt-is-card? state :runner (get-hardware state 0)))
+          "Buffer Drive doesn't open a prompt"))))
 
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn beings trash 1 card, then draw or remove tag
