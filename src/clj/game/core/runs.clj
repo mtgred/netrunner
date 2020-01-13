@@ -266,6 +266,14 @@
                   (do (set-next-phase state :approach-server)
                       (start-next-phase state side nil)))))))
 
+(defmethod continue :pass-ice
+  [state side args]
+  (.println *err* (with-out-str
+                    (print-stack-trace
+                      (Exception. "Continue clicked at the wrong time")
+                      2500)))
+  (.println *err* (str "Run: " (:run @state) "\n")))
+
 (defmethod start-next-phase :approach-server
   [state side args]
   (let [no-ice (zero? (count (get-run-ices state)))
