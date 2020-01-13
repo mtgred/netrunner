@@ -411,20 +411,21 @@
                                (move state side c :hand)))}]})
 
 (define-card "Disposable HQ"
-  (letfn [(dhq [n i]
-            {:req (req (pos? i))
+  (letfn [(dhq [i n]
+            {:req (req (pos? n))
              :prompt "Select a card in HQ to add to the bottom of R&D"
              :choices {:card #(and (corp? %)
                                    (in-hand? %))}
              :async true
              :msg "add a card to the bottom of R&D"
              :effect (req (move state side target :deck)
-                          (if (< n i)
-                            (continue-ability state side (dhq (inc n) i) card nil)
+                          (if (< i n)
+                            (continue-ability state side (dhq (inc i) n) card nil)
                             (do
                               (clear-wait-prompt state :runner)
                               (effect-completed state side eid))))
-             :cancel-effect (effect (clear-wait-prompt :runner))})]
+             :cancel-effect (effect (clear-wait-prompt :runner)
+                                    (effect-completed eid))})]
     {:flags {:rd-reveal (req true)}
      :access {:async true
               :effect (req (let [n (count (:hand corp))]
