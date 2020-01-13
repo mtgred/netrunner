@@ -563,7 +563,7 @@
     (let [implemented (:implementation card)]
       (case implemented
         (:full "full") nil
-        [:div.panel.blue-shade.implementation
+        [:div.panel.blue-shade.implementation {:style {:right (get-in @app-state [:options :log-width])}}
          (case implemented
            nil [:span.unimplemented "Unimplemented"]
            [:span.impl-msg implemented])]))))
