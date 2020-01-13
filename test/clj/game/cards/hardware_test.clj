@@ -2845,7 +2845,7 @@
       (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
   (testing "Respirocytes should not trigger after being trashed (issue #3699)"
     (do-game
-      (new-game {:runner {:deck ["Respirocytes" (qty "Sure Gamble" 20)]
+      (new-game {:runner {:deck [(qty "Sure Gamble" 20)]
                           :hand ["Respirocytes" "Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Respirocytes")
