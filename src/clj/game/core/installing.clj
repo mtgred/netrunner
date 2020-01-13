@@ -397,7 +397,7 @@
   (if facedown
     (system-msg state side "installs a card facedown")
     (if custom-message
-      (system-msg state side custom-message)
+      (system-msg state side (custom-message cost-str))
       (system-msg state side
                   (str (build-spend-msg cost-str "install") card-title
                        (when host-card (str " on " (card-str state host-card)))
