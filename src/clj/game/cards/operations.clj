@@ -409,16 +409,17 @@
      :effect (effect (continue-ability (name-a-card) card nil))}))
 
 (define-card "Consulting Visit"
-  {:prompt  "Choose an Operation from R&D to play"
+  {:async true
+   :prompt  "Choose an Operation from R&D to play"
    :choices (req (cancellable
                    (filter #(and (operation? %)
                                  (<= (:cost %) (:credit corp)))
                            (:deck corp))
                    :sorted))
-   :effect  (effect (shuffle! :deck)
-                    (system-msg "shuffles their deck")
-                    (play-instant target))
-   :msg (msg "search R&D for " (:title target) " and play it")})
+   :msg (msg "search R&D for " (:title target) " and play it")
+   :effect (effect (shuffle! :deck)
+                   (system-msg "shuffles their deck")
+                   (play-instant eid target nil))})
 
 (define-card "Corporate Shuffle"
   {:msg "shuffle all cards in HQ into R&D and draw 5 cards"
@@ -2045,7 +2046,7 @@
                                    (in-hand? %))}
              :async true
              :msg (msg "play " (:title target))
-             :effect (req (wait-for (play-instant state side target)
+             :effect (req (wait-for (play-instant state side target nil)
                                     (if (and (not (get-in @state [:corp :register :terminal])) (< i 2))
                                       (continue-ability state side (sc (inc i) sccard) sccard nil)
                                       (effect-completed state side eid))))})]

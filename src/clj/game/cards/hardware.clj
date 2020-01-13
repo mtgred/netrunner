@@ -316,13 +316,14 @@
              :effect (req (system-msg state :runner
                                       (str "can play another event without spending a [Click] by clicking on Comet"))
                           (update! state side (assoc card :comet-event true)))}]
-   :abilities [{:req (req (:comet-event card))
+   :abilities [{:async true
+                :req (req (:comet-event card))
                 :prompt "Select an Event in your Grip to play"
                 :choices {:card #(and (event? %)
                                       (in-hand? %))}
                 :msg (msg "play " (:title target))
-                :effect (effect (play-instant target)
-                                (update! (dissoc (get-card state card) :comet-event)))}]})
+                :effect (effect (update! (dissoc (get-card state card) :comet-event))
+                                (play-instant eid target nil))}]})
 
 (define-card "Cortez Chip"
   {:abilities [{:prompt "Select a piece of ICE"
