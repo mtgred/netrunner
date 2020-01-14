@@ -936,6 +936,7 @@
   {:constant-effects [{:type :prevent-ability
                        :req (req (let [target-card (first targets)]
                                    (and run
+                                        (= (:side target-card) "Runner")
                                         (= (first (:server run)) (second (:zone card)))
                                         (not (has-subtype? target-card "Icebreaker")))))
                        :value true}]})
