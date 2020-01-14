@@ -65,9 +65,10 @@
                (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])
             [:a.stack-servers-button {:on-click #(stack-servers)}
              (if (get-in @app-state [:options :stacked-servers]) "Unstack servers" "Stack servers")]
-            (when (= :corp (:side @game-state))
+            (when (not= :runner (:side @game-state))
               [:a.stack-servers-button {:on-click #(flip-runner-board)}
-               (if (get-in @app-state [:options :runner-board-order]) "Rig layout: IRL" "Rig layout: jnet")])]))
+               (if (= "irl" (get-in @app-state [:options :runner-board-order]))
+                 "Rig layout: IRL" "Rig layout: jnet")])]))
        (when (not (nil? @gameid))
          [:div.float-right [:a {:on-click #(leave-game)} "Leave game"]]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]

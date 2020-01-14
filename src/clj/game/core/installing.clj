@@ -397,7 +397,7 @@
   (if facedown
     (system-msg state side "installs a card facedown")
     (if custom-message
-      (system-msg state side custom-message)
+      (system-msg state side (custom-message cost-str))
       (system-msg state side
                   (str (build-spend-msg cost-str "install") card-title
                        (when host-card (str " on " (card-str state host-card)))
@@ -419,7 +419,9 @@
    (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)]
      (if (and (empty? (get-in @state [side :locked (-> card :zone first)]))
               (not (install-locked? state :runner)))
-       (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
+       (if-let [hosting (and (not host-card)
+                             (not facedown)
+                             (:hosting (card-def card)))]
          (continue-ability state side
                            {:choices hosting
                             :prompt (str "Choose a card to host " (:title card) " on")

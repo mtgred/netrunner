@@ -49,9 +49,10 @@
                 :async true
                 :msg (msg "advance " (card-str state target))
                 :req (req (can-advance? state side target))
-                :effect (req (update-advancement-cost state side card)
-                             (add-prop state side (get-card state card) :advance-counter 1)
-                             (play-sfx state side "click-advance"))}
+                :effect (effect (update-advancement-cost target)
+                                (add-prop (get-card state target) :advance-counter 1)
+                                (play-sfx "click-advance")
+                                (effect-completed eid))}
                {:label "Trash 1 resource if the Runner is tagged"
                 :cost [:click 1 :credit 2]
                 :async true

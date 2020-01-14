@@ -723,7 +723,21 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "0 [Credits]")
       (click-prompt state :corp "1 [Credits]")
-      (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access"))))
+      (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access")))
+  (testing "Multiaccess respects cards in hand"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Dedicated Neural Net" "Mwanza City Grid" (qty "Domestic Sleepers" 3)]}
+                 :runner {:deck ["HQ Interface"]}})
+      (play-and-score state "Dedicated Neural Net")
+      (play-from-hand state :corp "Mwanza City Grid" "HQ")
+      (core/rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "HQ Interface")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "0 [Credits]")
+      (click-prompt state :corp "1 [Credits]")
+      (is (= 3 (-> (get-corp) :selected first :max)) "Corp chooses 3 cards for Runner to access because there are only 3 cards in hand"))))
 
 (deftest degree-mill
   ;; Degree Mill

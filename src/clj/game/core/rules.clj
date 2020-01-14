@@ -61,10 +61,6 @@
 
 (defn play-instant
   "Plays an Event or Operation."
-  ([state side card] (play-instant state side (make-eid state) card nil))
-  ([state side eid? card?] (if (:eid eid?)
-                             (play-instant state side eid? card? nil)
-                             (play-instant state side (make-eid state) eid? card?)))
   ([state side eid card {:keys [targets ignore-cost base-cost no-additional-cost]}]
    (let [eid (eid-set-defaults eid :source nil :source-type :play)
          cdef (card-def card)
@@ -518,14 +514,18 @@
   added or not added to the trash list, all of those cards are trashed"
   ([state side cards] (trash-cards state side (make-eid state) cards nil))
   ([state side eid cards] (trash-cards state side eid cards nil))
-  ([state side eid cards {:keys [cause suppress-event keep-server-alive host-trashed] :as args}]
+  ([state side eid cards {:keys [cause keep-server-alive host-trashed game-trash] :as args}]
    (let [num-cards (< 1 (count cards))]
-     (letfn [(get-card? [s c] (if num-cards (get-card s c) c))
+     (letfn [(get-card? [s c]
+               ;; Holdover from old code. Should be `get-card` in all cases, but that
+               ;; requires fixing a bunch of cards and there's not been time yet.
+               (if num-cards (get-card s c) c))
              (preventrec [cs]
                (if (seq cs)
                  (wait-for (prevent-trash state side (get-card? state (first cs)) eid args)
                            (preventrec (rest cs)))
                  (let [trashlist (get-in @state [:trash :trash-list eid])
+                       ;; Criteria for abilities that trigger when the card is trashed
                        get-trash-effect (fn [card]
                                           (when (and card
                                                      (not (:disabled card))
@@ -538,20 +538,44 @@
                                                               (not host-trashed))
                                                          (in-play-area? card)))
                                             (:trash-effect (card-def card))))
+                       ;; No card should end up in the opponent's discard pile, so instead
+                       ;; of using `side`, we use the card's `:side`.
+                       move-card #(move state (to-keyword (:side %)) % :discard {:keep-server-alive keep-server-alive})
+                       ;; Perform the move of the cards from their current location to
+                       ;; the discard. At the same time, gather their `:trash-effect`s
+                       ;; to be used in the simult event later.
                        moved-cards (->> trashlist
                                         (map #(get-card? state %))
                                         (filter identity)
-                                        (map (juxt #(move state (to-keyword (:side %)) % :discard {:keep-server-alive keep-server-alive})
-                                                   get-trash-effect))
+                                        ;; juxt is used to perform both the move and
+                                        ;; `get-trash-effect` on each card in the list.
+                                        ;; This gives us a list of tuples:
+                                        ;; the moved card and the trash effect
+                                        ;; This is used when we build the `card-abilities`
+                                        ;; list of effects, applying the pair to
+                                        ;; `ability-as-handler`, which is the format
+                                        ;; `trigger-event-simult` handles the additional
+                                        ;; abilities.
+                                        (map (juxt move-card get-trash-effect))
+                                        (map #(apply ability-as-handler %))
                                         (into []))]
                    (swap! state update-in [:trash :trash-list] dissoc eid)
                    (when (seq (remove #{side} (map #(to-keyword (:side %)) trashlist)))
                      (swap! state assoc-in [side :register :trashed-card] true))
-                   (apply trigger-event-simult state side eid
-                          (when-not suppress-event
-                            (if (= side :corp) :corp-trash :runner-trash))
-                          {:card-abilities (map #(apply ability-as-handler %) moved-cards)}
-                          (first trashlist) cause (rest trashlist)))))]
+                   (let [;; The trash event will be determined by who is performing the
+                         ;; trash. `:game-trash` in this case refers to when a checkpoint
+                         ;; sees a card has been trashed and it has hosted cards, so it
+                         ;; trashes each hosted card. (Rule 10.3.1g)
+                         ;; This doesn't count as either player trashing the card, but
+                         ;; the cards are counted as trashed by the engine and so
+                         ;; abilities that don't care who performed the trash (Simulchip
+                         ;; for example) still need it either logged or watchable.
+                         trash-event (cond
+                                       game-trash :game-trash
+                                       (= side :corp) :corp-trash
+                                       (= side :runner) :runner-trash)
+                         targets (concat trashlist (list {:cause cause}))]
+                     (apply trigger-event-simult state side eid trash-event {:card-abilities moved-cards} targets)))))]
        (preventrec cards)))))
 
 (defn trash

@@ -396,37 +396,36 @@
 
 (define-card "Defense Construct"
   {:advanceable :always
-   :abilities [{:label "Add 1 facedown card from Archives to HQ for each advancement token"
+   :abilities [{:label "Add cards from Archives to HQ"
                 :req (req (and run
                                (= (:server run) [:archives])
                                (pos? (get-counters card :advancement))))
-                :effect (effect (resolve-ability
-                                  {:show-discard true
-                                   :choices {:max (get-counters card :advancement)
-                                             :card #(and (corp? %)
-                                                         (not (:seen %))
-                                                         (in-discard? %))}
-                                   :msg (msg "add " (count targets) " facedown cards in Archives to HQ")
-                                   :effect (req (doseq [c targets]
-                                                  (move state side c :hand)))}
-                                  card nil)
-                                (trash card))}]})
+                :cost [:trash]
+                :show-discard true
+                :choices {:max (req (get-counters card :advancement))
+                          :card #(and (corp? %)
+                                      (not (:seen %))
+                                      (in-discard? %))}
+                :msg (msg "add " (count targets) " facedown cards in Archives to HQ")
+                :effect (req (doseq [c targets]
+                               (move state side c :hand)))}]})
 
 (define-card "Disposable HQ"
-  (letfn [(dhq [n i]
-            {:req (req (pos? i))
+  (letfn [(dhq [i n]
+            {:req (req (pos? n))
              :prompt "Select a card in HQ to add to the bottom of R&D"
              :choices {:card #(and (corp? %)
                                    (in-hand? %))}
              :async true
              :msg "add a card to the bottom of R&D"
              :effect (req (move state side target :deck)
-                          (if (< n i)
-                            (continue-ability state side (dhq (inc n) i) card nil)
+                          (if (< i n)
+                            (continue-ability state side (dhq (inc i) n) card nil)
                             (do
                               (clear-wait-prompt state :runner)
                               (effect-completed state side eid))))
-             :cancel-effect (effect (clear-wait-prompt :runner))})]
+             :cancel-effect (effect (clear-wait-prompt :runner)
+                                    (effect-completed eid))})]
     {:flags {:rd-reveal (req true)}
      :access {:async true
               :effect (req (let [n (count (:hand corp))]
@@ -1190,9 +1189,11 @@
 
 (define-card "Ryon Knight"
   {:abilities [{:label "Do 1 brain damage"
-                :msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))
+                :req (req (and this-server (zero? (:click runner))))
+                :cost [:trash]
+                :msg "do 1 brain damage"
                 :async true
-                :effect (effect (trash card) (damage eid :brain 1 {:card card}))}]})
+                :effect (effect (damage eid :brain 1 {:card card}))}]})
 
 (define-card "SanSan City Grid"
   {:effect (req (when-let [agenda (some #(when (agenda? %) %)
@@ -1220,19 +1221,22 @@
 
 (define-card "Self-destruct"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :abilities [{:req (req this-server)
+   :abilities [{:async true
+                :req (req this-server)
+                :cost [:trash]
                 :label "Trace X - Do 3 net damage"
                 :effect (req (let [serv (card->server state card)
                                    cards (concat (:ices serv) (:content serv))]
-                               (trash state side card)
-                               (doseq [c cards]
-                                 (trash state side c))
-                               (resolve-ability
-                                 state side
-                                 {:trace {:base (req (dec (count cards)))
-                                          :successful {:msg "do 3 net damage"
-                                                       :effect (effect (damage eid :net 3 {:card card}))}}}
-                                 card nil)))}]})
+                               (wait-for (trash-cards state side cards nil)
+                                         (continue-ability
+                                           state side
+                                           {:trace
+                                            {:base (count cards)
+                                             :successful
+                                             {:async true
+                                              :msg "do 3 net damage"
+                                              :effect (effect (damage eid :net 3 {:card card}))}}}
+                                           card nil))))}]})
 
 (define-card "Shell Corporation"
   {:abilities
@@ -1426,7 +1430,7 @@
   {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ICE from being broken"
                 :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
                                (has-subtype? current-ice "Bioroid")))
-                :effect (effect (trash card))
+                :cost [:trash]
                 :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]})
 
 (define-card "Underway Grid"

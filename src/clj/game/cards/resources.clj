@@ -1043,15 +1043,16 @@
                :interactive (req true)
                :async true
                :effect (effect (continue-ability (host-agenda? target) card nil))}]
-     :abilities [{:cost [:click 2] :label "Add hosted agenda to your score area"
+     :abilities [{:cost [:click 2]
+                  :label "Add hosted agenda to your score area"
                   :req (req (get-agenda card))
                   :async true
-                  :effect (req (let [c (get-agenda card)
-                                     points (get-agenda-points state :runner c)]
-                                 (as-agenda state :runner eid c points {:register-events true})))
                   :msg (msg (let [c (get-agenda card)]
                               (str "add " (:title c) " to their score area and gain "
-                                   (quantify (get-agenda-points state :runner c) "agenda point"))))}]}))
+                                   (quantify (get-agenda-points state :runner c) "agenda point"))))
+                  :effect (req (let [c (get-agenda card)
+                                     points (get-agenda-points state :runner c)]
+                                 (as-agenda state :runner eid c points {:register-events true})))}]}))
 
 (define-card "Find the Truth"
   {:events [{:event :post-runner-draw
@@ -2180,22 +2181,26 @@
 
 (define-card "Salvaged Vanadis Armory"
   {:events [{:event :damage
+             :async true
+             :trash-icon true
              :effect (req (show-wait-prompt state :corp "Runner to use Salvaged Vanadis Armory")
-                          (resolve-ability
+                          (continue-ability
                             state :runner
                             {:optional
                              {:prompt "Use Salvaged Vanadis Armory?"
-                              :yes-ability {:msg (msg "force the Corp to trash the top "
+                              :yes-ability {:async true
+                                            :cost [:trash]
+                                            :msg (msg "force the Corp to trash the top "
                                                       (get-turn-damage state :runner)
                                                       " cards of R&D and trash itself")
-                                            :effect (req (clear-wait-prompt :corp)
-                                                         (wait-for (mill state :corp :corp (get-turn-damage state :runner))
-                                                                   (trash state side eid card {:unpreventable true})))}
+                                            :effect (effect (clear-wait-prompt :corp)
+                                                            (mill :corp eid :corp (get-turn-damage state :runner)))}
                               :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                             card nil))}]})
 
 (define-card "Same Old Thing"
-  {:abilities [{:cost [:click 2 :trash]
+  {:abilities [{:async true
+                :cost [:click 2 :trash]
                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                (pos? (count (filter event? (:discard runner))))))
                 :prompt "Select an event to play"
@@ -2203,7 +2208,7 @@
                 :show-discard true
                 :choices {:card #(and (event? %)
                                       (in-discard? %))}
-                :effect (effect (play-instant target))}]})
+                :effect (effect (play-instant eid target {:no-additional-cost true}))}]})
 
 (define-card "Scrubber"
   {:recurring 2
@@ -2327,6 +2332,7 @@
    :effect (req (doseq [c (take 3 (:deck runner))]
                   (host state side (get-card state card) c {:facedown true})))
    :abilities [{:async true
+                :trash-icon true
                 :req (req (not (install-locked? state side)))
                 :prompt "Choose a card on Street Peddler to install"
                 :choices (req (cancellable
@@ -2383,7 +2389,7 @@
 (define-card "Tech Trader"
   {:events [{:event :runner-trash
              :req (req (and (= side :runner)
-                            (= (second targets) :ability-cost)))
+                            (= :ability-cost (:cause (last targets)))))
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits 1))}]})
 
@@ -2494,8 +2500,7 @@
                                          (has-trash-ability? target)))}
                 :msg (msg "shuffle " (join ", " (map :title targets))
                           " into their Stack")
-                :effect (req (system-msg state side (str ))
-                             (doseq [c targets] (move state side c :deck))
+                :effect (req (doseq [c targets] (move state side c :deck))
                              (shuffle! state side :deck)
                              (effect-completed state side eid))}]})
 
@@ -2585,13 +2590,14 @@
 
 (define-card "The Shadow Net"
   (letfn [(events [runner] (filter #(and (event? %) (not (has-subtype? % "Priority"))) (:discard runner)))]
-    {:abilities [{:cost [:click 1 :forfeit]
+    {:abilities [{:async true
+                  :cost [:click 1 :forfeit]
                   :req (req (pos? (count (events runner))))
                   :label "Play an event from your Heap, ignoring all costs"
                   :prompt "Choose an event to play"
                   :msg (msg "play " (:title target) " from the Heap, ignoring all costs")
                   :choices (req (cancellable (events runner) :sorted))
-                  :effect (effect (play-instant nil target {:ignore-cost true}))}]}))
+                  :effect (effect (play-instant eid target {:ignore-cost true}))}]}))
 
 (define-card "The Source"
   {:effect (effect (update-all-advancement-costs))

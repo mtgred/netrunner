@@ -483,6 +483,7 @@
     (is (= 4 (core/available-mu state)) "Memory limit reset")))
 
 (deftest buffer-drive
+  ;; Buffer Drive
   (testing "The player may decline to move a card to the bottom of the stack"
     (do-game
       (new-game {:runner {:hand ["Buffer Drive", "Sure Gamble"]}})
@@ -649,7 +650,54 @@
       (play-from-hand state :runner "Buffer Drive")
       (core/trash state :corp (first (:hand (get-runner))))
       (is (= 2 (count (:discard (get-runner)))))
-      (is (empty? (:prompt (get-runner)))))))
+      (is (empty? (:prompt (get-runner))))))
+  (testing "Doesn't activate on trashed corp card. Issue #4908"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Archer" "Hostile Takeover"]}
+                 :runner {:hand ["Hippo" "Odore" "Buffer Drive"]
+                          :credits 50}})
+      (play-and-score state "Hostile Takeover")
+      (play-from-hand state :corp "Archer" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Odore")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Buffer Drive")
+      (core/click-credit state :runner nil)
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (click-card state :corp "Hostile Takeover")
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 2)
+      (card-ability state :runner (get-program state 0) 2)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "Gain 2 [Credits]")
+      (click-prompt state :runner "Trash a program")
+      (click-prompt state :runner "Trash a program")
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Yes")
+      (is (empty? (:prompt (get-runner))))))
+  (testing "Trashing a played event doesn't trigger it. Issue #4922"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Patchwork" "Buffer Drive"
+                                 "Sure Gamble" "Easy Mark"]
+                          :credits 20}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (play-from-hand state :runner "Patchwork")
+      (play-from-hand state :runner "Sure Gamble")
+      (click-card state :runner "Patchwork")
+      (click-card state :runner "Easy Mark")
+      (is (prompt-is-card? state :runner (get-hardware state 0))
+          "Buffer Drive prompt is open")
+      (click-prompt state :runner "No action")
+      (is (empty? (:prompt (get-runner))) "Runner has no open prompt")
+      (is (not (prompt-is-card? state :runner (get-hardware state 0)))
+          "Buffer Drive doesn't open a prompt"))))
 
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn beings trash 1 card, then draw or remove tag
@@ -926,19 +974,49 @@
 
 (deftest doppelganger
   ;; Doppelgänger - run again when successful
-  (do-game
-    (new-game {:runner {:deck ["Doppelgänger"]}})
-    (core/gain state :corp :bad-publicity 1)
-    (take-credits state :corp)
-    (play-from-hand state :runner "Doppelgänger")
-    (run-empty-server state :hq)
-    (click-prompt state :runner "No action")
-    (is (zero? (:run-credit (get-runner))) "Runner lost BP credits")
-    (click-prompt state :runner "Yes")
-    (click-prompt state :runner "R&D")
-    (is (:run @state) "New run started")
-    (is (= [:rd] (:server (:run @state))) "Running on R&D")
-    (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+  (testing "Basic test"
+    (do-game
+      (new-game {:runner {:deck ["Doppelgänger"]}})
+      (core/gain state :corp :bad-publicity 1)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Doppelgänger")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (is (zero? (:run-credit (get-runner))) "Runner lost BP credits")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "R&D")
+      (is (:run @state) "New run started")
+      (is (= [:rd] (:server (:run @state))) "Running on R&D")
+      (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+  (testing "Makers eye interaction"
+    (do-game
+      (new-game {:corp {:deck [(qty "Quandary" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Doppelgänger" "The Maker's Eye"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Doppelgänger")
+      (play-from-hand state :runner "The Maker's Eye")
+      (run-continue state)
+      (run-successful state)
+      (click-prompt state :runner "Card from deck")
+      (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "1st quandary")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Card from deck")
+      (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "2nd quandary")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Card from deck")
+      (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "3rd quandary")
+      (click-prompt state :runner "No action")
+      (is (not (:run @state)))
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "R&D")
+      (is (:run @state) "New run started")
+      (run-continue state)
+      (run-successful state)
+      (is (= [:rd] (:server (:run @state))) "Running on R&D")
+      (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "1st quandary")
+      (click-prompt state :runner "No action")
+      (is (not (:run @state))))))
 
 (deftest dorm-computer
   ;; make a run and avoid all tags for the remainder of the run
@@ -2767,7 +2845,7 @@
       (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
   (testing "Respirocytes should not trigger after being trashed (issue #3699)"
     (do-game
-      (new-game {:runner {:deck ["Respirocytes" (qty "Sure Gamble" 20)]
+      (new-game {:runner {:deck [(qty "Sure Gamble" 20)]
                           :hand ["Respirocytes" "Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Respirocytes")
@@ -2987,12 +3065,13 @@
           0 (:credit (get-runner))
           "Corroder is installed for free"
           (card-ability state :runner (get-hardware state 0) 0)
-          (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
-              "Runner chooses ability target first")
-          (click-card state :runner "Mantle")
+          ;; Issue #4889
           (is (= "Choose 1 program to trash" (:msg (prompt-map :runner)))
               "Runner chooses program to trash as a cost")
           (click-card state :runner "Corroder"))
+        (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
+            "Runner chooses ability target first")
+        (click-card state :runner "Mantle")
         (is (get-program state 0) "Mantle is installed for free")
         (is (find-card "Corroder" (:discard (get-runner))) "Corroder has been trashed")))
     (testing "and no program trashed this turn and no card to trash as additional cost"
@@ -3058,7 +3137,29 @@
         (play-from-hand state :runner "Corroder")
         (play-from-hand state :runner "Simulchip")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (empty? (:prompt (get-runner))) "No Simulchip prompt")))))
+        (is (empty? (:prompt (get-runner))) "No Simulchip prompt"))))
+  (testing "No additional cost when hosted program is trashed. Issue #4897"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:hand ["Simulchip" "Chisel"]
+                          :credits 20}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :click 5)
+      (play-from-hand state :runner "Chisel")
+      (click-card state :runner "Ice Wall")
+      (run-on state "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (run-jack-out state)
+      (run-on state "HQ")
+      (run-continue state)
+      (run-jack-out state)
+      (play-from-hand state :runner "Simulchip")
+      (card-ability state :runner (get-hardware state 0) 0)
+      (is (= "Select a target for Simulchip" (:msg (prompt-map :runner)))
+          "Runner has ability target prompt"))))
 
 (deftest spinal-modem
   ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run

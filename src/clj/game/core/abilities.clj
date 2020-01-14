@@ -304,17 +304,18 @@
    (letfn [(prompt-fn [prompt-choice]
              (let [yes-ability (:yes-ability ability)
                    no-ability (:no-ability ability)
-                   end-effect (:end-effect ability)]
-               (if (and (= prompt-choice "Yes")
-                        yes-ability
-                        (can-pay? state side eid card (:title card) (:cost yes-ability)))
-                 (resolve-ability state side (assoc yes-ability :eid eid) card targets)
-                 (if no-ability
-                   (resolve-ability state side (assoc no-ability :eid eid) card targets)
-                   (effect-completed state side eid)))
-               (if end-effect
-                 (end-effect state side eid card nil))))]
-     (let [autoresolve-fn     (:autoresolve ability)
+                   end-effect (:end-effect ability)
+                   new-eid (make-eid state eid)
+                   ability-to-do (if (and (= prompt-choice "Yes")
+                                          yes-ability
+                                          (can-pay? state side eid card (:title card) (:cost yes-ability)))
+                                   yes-ability
+                                   no-ability)]
+               (wait-for (resolve-ability state side new-eid ability-to-do card targets)
+                         (when end-effect
+                           (end-effect state side new-eid card nil))
+                         (effect-completed state side eid))))]
+     (let [autoresolve-fn (:autoresolve ability)
            autoresolve-answer (when autoresolve-fn
                                 (autoresolve-fn state side eid card targets))]
        (case autoresolve-answer

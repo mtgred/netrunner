@@ -300,8 +300,9 @@
               :no-ability {:effect (effect (clear-wait-prompt :runner))}}})
 
 (define-card "Brain Rewiring"
-  {:effect (effect (show-wait-prompt :runner "Corp to use Brain Rewiring")
-                   (resolve-ability
+  {:async true
+   :effect (effect (show-wait-prompt :runner "Corp to use Brain Rewiring")
+                   (continue-ability
                      {:optional
                       {:prompt "Pay credits to add random cards from Runner's Grip to the bottom of their Stack?"
                        :yes-ability {:prompt "How many credits?"
@@ -499,8 +500,7 @@
                            :effect (req (forfeit state card-side card)
                                         (move state side stolen-agenda :hand)
                                         (update-all-agenda-points state side)
-                                        (gain-credits state side 5)
-                                        (effect-completed state side eid))}
+                                        (gain-credits state side 5))}
                           :end-effect (effect (clear-wait-prompt :runner))}}
                         card nil))))}]})
 

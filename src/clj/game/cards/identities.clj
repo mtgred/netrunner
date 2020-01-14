@@ -127,8 +127,9 @@
                                                          :card #(and (runner? %)
                                                                      (in-play-area? %))}
                                                :effect (req (doseq [c targets]
-                                                              (runner-install state side c {:ignore-all-cost true
-                                                                                            :custom-message (str "starts with " (:title c) " in play")}))
+                                                              (runner-install state side c
+                                                                              {:ignore-all-cost true
+                                                                               :custom-message (fn [_] (str "starts with " (:title c) " in play"))}))
                                                             (swap! state assoc-in [:runner :play-area] [])
                                                             (clear-wait-prompt state :corp))}
                                               card nil)))}]})
@@ -218,7 +219,7 @@
              :async true
              :interactive (req true)
              :req (req (and (= side :runner)
-                            (= (second targets) :ability-cost)))
+                            (= :ability-cost (:cause (last targets)))))
              :msg "draw a card"
              :effect (effect (draw eid 1 nil))}]})
 
@@ -1111,7 +1112,7 @@
                                                     (corp? %)
                                                     (#{[:hand] [:discard]} (:zone %)))}
                               :msg (msg "play a current from " (name-zone "Corp" (:zone target)))
-                              :effect (effect (play-instant eid target))}}}]
+                              :effect (effect (play-instant eid target nil))}}}]
     {:events [(assoc nasol :event :agenda-scored)
               (assoc nasol :event :agenda-stolen)]}))
 

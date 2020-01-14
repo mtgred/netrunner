@@ -58,6 +58,14 @@
                (assoc ability :event :corp-turn-begins)]
       :abilities [ability]})))
 
+(def executive-trash-effect
+  {:when-inactive true
+   :req (req (and (= side :runner)
+                  (same-card? card (:access @state))))
+   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
+   :async true
+   :effect (req (as-agenda state :runner eid card 2))})
+
 ;; Card definitions
 
 (define-card "Adonis Campaign"
@@ -319,12 +327,7 @@
 (define-card "Chairman Hiro"
   {:effect (effect (lose :runner :hand-size 2))
    :leave-play (effect (gain :runner :hand-size 2))
-   :trash-effect {:when-inactive true
-                  :req (req (and (= side :runner)
-                                 (:access @state)))
-                  :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-                  :async true
-                  :effect (req (as-agenda state :runner eid card 2))}})
+   :trash-effect executive-trash-effect})
 
 (define-card "Chief Slee"
   {:events [{:event :encounter-ice-ends
@@ -575,12 +578,7 @@
 
 (define-card "Director Haas"
   {:in-play [:click-per-turn 1]
-   :trash-effect {:when-inactive true
-                  :req (req (and (= side :runner)
-                                 (:access @state)))
-                  :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-                  :async true
-                  :effect (req (as-agenda state :runner eid card 2))}})
+   :trash-effect executive-trash-effect})
 
 (define-card "Docklands Crackdown"
   {:abilities [{:cost [:click 2]
@@ -1489,7 +1487,7 @@
                                   agendas (filter agenda? drawn)]
                               (continue-ability state side (pdhelper agendas 0) card nil)))}]}))
 
-(define-card "Prāna Condenser" ; Prana Condenser
+(define-card "Prāna Condenser"
   {:events [{:event :pre-resolve-damage
              :async true
              :req (req (and (not (get-in card [:special :prana-disabled]))
@@ -1511,7 +1509,8 @@
                                               (clear-wait-prompt state :runner)
                                               (add-counter state side (get-card state card) :power 1)
                                               (gain state side :credit 3)
-                                              (update! state side (assoc-in (get-card state card) [:special :prana-disabled] true)) ;temporarily disable prana to not trigger on X-1 net damage
+                                              ;temporarily disable prana to not trigger on X-1 net damage
+                                              (update! state side (assoc-in (get-card state card) [:special :prana-disabled] true))
                                               (wait-for (damage state side :net (dec amount) {:card damagecard})
                                                         (swap! state assoc-in [:damage :damage-replace] true)
                                                         (update! state side (assoc-in (get-card state card) [:special :prana-disabled] false))
@@ -1675,20 +1674,24 @@
              :effect (effect (add-counter card :advancement 1)
                              (system-msg "adds 1 advancement token to Reconstruction Contract"))}]
    :abilities [{:label "Move advancement tokens to another card"
+                :async true
+                :trash-icon true
                 :prompt "Select a card that can be advanced"
                 :choices {:card can-be-advanced?}
-                :effect (req (let [move-to target]
-                               (resolve-ability
-                                 state side
-                                 {:prompt "Move how many tokens?"
-                                  :choices {:number (req (get-counters card :advancement))
-                                            :default (req (get-counters card :advancement))}
-                                  :cost [:trash]
-                                  :effect (effect (add-counter move-to :advancement target {:placed true})
-                                                  (system-msg (str "trashes Reconstruction Contract to move " target
-                                                                   (pluralize " advancement token" target) " to "
-                                                                   (card-str state move-to))))}
-                                 card nil)))}]})
+                :effect (effect
+                          (continue-ability
+                            (let [move-to target]
+                              {:async true
+                               :prompt "Move how many tokens?"
+                               :choices {:number (req (get-counters card :advancement))
+                                         :default (req (get-counters card :advancement))}
+                               :cost [:trash]
+                               :effect (effect (add-counter move-to :advancement target {:placed true})
+                                               (system-msg (str "trashes Reconstruction Contract to move "
+                                                                target (pluralize " advancement token" target)
+                                                                " to " (card-str state move-to)))
+                                               (effect-completed eid))})
+                            card nil))}]})
 
 (define-card "Reversed Accounts"
   {:advanceable :always
@@ -2073,12 +2076,7 @@
 (define-card "The Board"
   {:effect (effect (update-all-agenda-points))
    :leave-play (effect (update-all-agenda-points))
-   :trash-effect {:when-inactive true
-                  :req (req (and (:access @state)
-                                 (= :runner side)))
-                  :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-                  :async true
-                  :effect (req (as-agenda state :runner eid card 2))}
+   :trash-effect executive-trash-effect
    :constant-effects [{:type :agenda-value
                        :req (req (= :runner (:scored-side target)))
                        :value -1}]
@@ -2177,12 +2175,7 @@
 (define-card "Victoria Jenkins"
   {:effect (req (lose state :runner :click-per-turn 1))
    :leave-play (req (gain state :runner :click-per-turn 1))
-   :trash-effect {:when-inactive true
-                  :req (req (and (:access @state)
-                                 (= side :runner)))
-                  :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-                  :async true
-                  :effect (req (as-agenda state :runner eid card 2))}})
+   :trash-effect executive-trash-effect})
 
 (define-card "Wall To Wall"
   (let [all [{:msg "gain 1 [Credits]"

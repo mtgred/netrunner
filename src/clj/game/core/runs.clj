@@ -3,7 +3,7 @@
 (declare any-flag-fn? clear-run-register! run-cleanup gain-run-credits
          update-ice-in-server update-all-ice get-agenda-points get-remote-names
          card-name can-access-loud can-steal?  prevent-jack-out card-flag? can-run?
-         update-all-agenda-points)
+         update-all-agenda-points reset-all-ice)
 
 (defn add-run-effect
   [state side run-effect]
@@ -131,9 +131,13 @@
   (set-current-ice state)
   (update-all-ice state side)
   (update-all-icebreakers state side)
+  (reset-all-ice state side)
   (let [ice (get-current-ice state)]
     (system-msg state :runner (str "approaches " (card-str state ice)))
     (wait-for (trigger-event-simult state :runner :approach-ice
+                                    ;; Immediately end approach step if:
+                                    ;; * run ends
+                                    ;; * server becomes empty
                                     {:cancel-fn (fn [state] (or (:ended (:run @state))
                                                                 (check-for-empty-server state)))}
                                     ice)
@@ -184,6 +188,7 @@
                                      ;; * run ends
                                      ;; * ice is bypassed
                                      ;; * run is moved to another server
+                                     ;; * server becomes empty
                                      :cancel-fn (fn [state] (or (:ended (:run @state))
                                                                 (can-bypass-ice state side (get-card state ice))
                                                                 (not= current-server (:server (:run @state)))
@@ -237,6 +242,7 @@
                ;; Immediately end pass ice step if:
                ;; * run ends
                ;; * run is moved to another server
+               ;; * server becomes empty
                :cancel-fn (fn [state] (or (:ended (:run @state))
                                           (not= current-server (:server (:run @state)))
                                           (check-for-empty-server state))))]
@@ -247,10 +253,9 @@
     (system-msg state :runner (str "passes " (card-str state ice)))
     (swap! state update-in [:run :position] (fnil dec 1))
     (wait-for (trigger-event-simult state side :pass-ice args ice)
-              (when ice
-                (reset-all-subs! state (get-card state ice)))
               (update-all-ice state side)
               (update-all-icebreakers state side)
+              (reset-all-ice state side)
               (cond
                 (:ended (:run @state))
                 (handle-end-run state side)
@@ -261,6 +266,14 @@
                   (do (set-next-phase state :approach-server)
                       (start-next-phase state side nil)))))))
 
+(defmethod continue :pass-ice
+  [state side args]
+  (.println *err* (with-out-str
+                    (print-stack-trace
+                      (Exception. "Continue clicked at the wrong time")
+                      2500)))
+  (.println *err* (str "Run: " (:run @state) "\n")))
+
 (defmethod start-next-phase :approach-server
   [state side args]
   (let [no-ice (zero? (count (get-run-ices state)))
@@ -268,6 +281,9 @@
                (when (and no-ice
                           (= :initiation (get-in @state [:run :phase])))
                  {:card-abilities (gather-events state side :pass-all-ice nil)})
+               ;; Immediately end pass ice step if:
+               ;; * run ends
+               ;; * server becomes empty
                :cancel-fn (fn [state] (or (:ended (:run @state))
                                           (check-for-empty-server state))))]
         (set-phase state :approach-server)
@@ -599,7 +615,7 @@
               ; make sure the card has not been moved by a handler
               ; and we're still accessing the card
               (if (and (get-card state c)
-                       (:access @state))
+                       (same-card? c (:access @state)))
                 (if (agenda? c)
                   (access-agenda state side eid c)
                   ;; Accessing a non-agenda
@@ -662,7 +678,7 @@
   ([state side eid card] (access-card state side eid card (:title card)))
   ([state side eid card title]
     ;; Indicate that we are in the access step.
-   (swap! state assoc :access true)
+   (swap! state assoc :access card)
     ;; Reset counters for increasing costs of trash, steal, and access.
    (swap! state update-in [:bonus] dissoc :trash)
    (swap! state update-in [:bonus] dissoc :steal-cost)
@@ -873,10 +889,12 @@
                     (do (show-wait-prompt state :runner "Corp to select cards in HQ to be accessed")
                         (continue-ability
                           state :corp
-                          {:prompt (msg "Select " (access-count state side :hq-access) " cards in HQ for the Runner to access")
+                          {:prompt (msg "Select " (min (access-count state side :hq-access)
+                                                       (-> @state :corp :hand count)) " cards in HQ for the Runner to access")
                            :choices {:card #(and (in-hand? %) (corp? %))
                                      :all true
-                                     :max (req (access-count state side :hq-access))}
+                                     :max (req (min (access-count state side :hq-access)
+                                                    (-> @state :corp :hand count)))}
                            :async true
                            :effect (req (clear-wait-prompt state :runner)
                                         (if (= 1 cards-count)
@@ -1316,8 +1334,7 @@
               (unregister-floating-events state side :end-of-run)
               (update-all-icebreakers state side)
               (update-all-ice state side)
-              (doseq [ice (get-in @state [:corp :servers (first (:server run)) :ices])]
-                (reset-all-subs! state ice))
+              (reset-all-ice state side)
               (clear-run-register! state)
               (run-end-fx state side (:eid run) run))))
 

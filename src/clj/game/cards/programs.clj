@@ -966,6 +966,7 @@
   {:events
    [{:event :pre-init-trace
      :async true
+     :trash-icon true
      :effect (effect (show-wait-prompt :corp "Runner to use Disrupter")
                      (continue-ability
                        :runner
@@ -1412,7 +1413,8 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 1 1)]
                     :events [{:event :pass-ice
-                              :req (req (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card)))
+                              :req (req (and (all-subs-broken-by-card? target card)
+                                             (first-event? state side :encounter-ice-ends #(all-subs-broken-by-card? (first %) card))))
                               :effect
                               (effect
                                 (continue-ability
@@ -1425,7 +1427,7 @@
                                                              (ice? %)
                                                              (not (same-card? % ice)))}
                                        :msg (msg "swap the positions of " (card-str state ice) " and " (card-str state target))
-                                       :effect (effect (swap-ice ice target))}}})
+                                       :effect (effect (swap-ice (get-card state ice) (get-card state target)))}}})
                                   card nil))}]}))
 
 (define-card "Ixodidae"
@@ -1647,9 +1649,17 @@
                 :prompt "How many [Credits] to spend to remove that number of tags?"
                 :choices {:number (req (min (total-available-credits state :runner eid card)
                                             (get-in runner [:tag :base])))}
-                :msg (msg "spend " target " [Credits] and remove " target " tags")
-                :effect (effect (lose-credits target)
-                                (lose-tags target))}]})
+                :async true
+                ;; TODO use :x-credits when it's built
+                :effect (req (let [new-eid (make-eid state (assoc eid :source card :source-type :ability))]
+                               (wait-for (pay-sync state :runner new-eid card [:credit target])
+                                         (if-let [cost-str async-result]
+                                           (do (system-msg state :runner
+                                                           (str (build-spend-msg cost-str "use")
+                                                                (:title card)
+                                                                " to remove " target " tags"))
+                                               (lose-tags state :runner eid target))
+                                           (effect-completed state side eid)))))}]})
 
 (define-card "MKUltra"
   (install-from-heap "MKUltra" "Sentry"
@@ -1815,7 +1825,7 @@
                :effect (req (let [ice current-ice
                                   chosen-type target
                                   stypes (combine-subtypes false (:subtype ice) chosen-type)]
-                              (register-once state {:once :per-turn} card)
+                              (register-once state side {:once :per-turn} card)
                               (update! state side (assoc ice :subtype stypes))
                               (update-all-ice state side)
                               (register-events
@@ -2229,10 +2239,10 @@
                                                (str "install " (:title target))
                                                (str "shuffle their Stack")))
                                    :choices (req (conj (filter #(can-pay? state side
-                                                                  (assoc eid :source card :source-type :runner-install) 
-                                                                  % nil [:credit (install-cost state side % {:cost-bonus 2})])
+                                                                          (assoc eid :source card :source-type :runner-install)
+                                                                          % nil [:credit (install-cost state side % {:cost-bonus 2})])
                                                                (vec (sort-by :title (filter program? (:deck runner)))))
-                                                        "No install"))
+                                                       "No install"))
                                    :cost [:credit 2]
                                    :async true
                                    :effect (req (trigger-event state side :searched-stack nil)

@@ -1318,7 +1318,7 @@
    :effect (effect (draw eid 3 nil))
    :trash-effect {:when-inactive true
                   :async true
-                  :req (req (some #{:meat :net} targets))
+                  :req (req (#{:meat :net} (:cause (last targets))))
                   :msg "draw 3 cards"
                   :effect (effect (draw :runner eid 3 nil))}})
 
@@ -2254,7 +2254,8 @@
                          (not (rezzed? %))
                          (ice? %))
              :max 2}
-   :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
+   :msg (msg "swap the positions of " (card-str state (first targets))
+             " and " (card-str state (second targets)))
    :effect (req (when (= (count targets) 2)
                   (swap-ice state side (first targets) (second targets))))})
 
@@ -2667,6 +2668,7 @@
    :async true
    :effect (effect (make-run eid :rd nil card))
    :events [{:event :successful-run
+             :unregister-once-resolved true
              :silent (req true)
              :req (req (= target :rd))
              :effect (effect (access-bonus :rd 2))}]})

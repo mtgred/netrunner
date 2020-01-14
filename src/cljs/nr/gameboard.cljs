@@ -116,7 +116,8 @@
   (swap! app-state update-in [:options :stacked-servers] not))
 
 (defn flip-runner-board []
-  (swap! app-state update-in [:options :runner-board-order] not))
+  (let [layout (if (= "irl" (get-in @app-state [:options :runner-board-order])) "jnet" "irl")]
+    (swap! app-state assoc-in [:options :runner-board-order] layout)))
 
 (defn concede []
   (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}]))
@@ -411,6 +412,14 @@
         (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
                                          :typing true}])))))
 
+(defn indicate-action []
+  (when (not-spectator?)
+    [:button {:style {:width "98%"}
+              :on-click #(do (.preventDefault %)
+                             (send-command "indicate-action"))
+              :key "Indicate action"}
+     "Indicate action"]))
+
 (let [s (r/atom {})]
   (defn log-input []
     (let [gameid (r/cursor game-state [:gameid])
@@ -418,14 +427,16 @@
           game (some #(when (= @gameid (str (:gameid %))) %) @games)]
       (when (or (not-spectator?)
                 (not (:mutespectators game)))
-        [:form {:on-submit #(do (.preventDefault %)
-                                (send-msg s))
-                :on-input #(do (.preventDefault %)
-                               (send-typing s))}
-         [:input {:placeholder "Say something"
-                  :type "text"
-                  :value (:msg @s)
-                  :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]))))
+        [:div
+         [:form {:on-submit #(do (.preventDefault %)
+                                 (send-msg s))
+                 :on-input #(do (.preventDefault %)
+                                (send-typing s))}
+          [:input {:placeholder "Say something"
+                   :type "text"
+                   :value (:msg @s)
+                   :on-change #(swap! s assoc :msg (-> % .-target .-value))}]]
+         [indicate-action]]))))
 
 (defn handle-dragstart [e card]
   (-> e .-target js/$ (.addClass "dragged"))
@@ -552,7 +563,7 @@
     (let [implemented (:implementation card)]
       (case implemented
         (:full "full") nil
-        [:div.panel.blue-shade.implementation
+        [:div.panel.blue-shade.implementation {:style {:right (get-in @app-state [:options :log-width])}}
          (case implemented
            nil [:span.unimplemented "Unimplemented"]
            [:span.impl-msg implemented])]))))
@@ -1224,7 +1235,7 @@
                   [deck-view :runner player-side identity deck]
                   [identity-view identity]]
         runner-f (if (and (not is-me)
-                          (not (get-in @app-state [:options :runner-board-order])))
+                          (= "irl" (get-in @app-state [:options :runner-board-order])))
                    reverse
                    seq)]
     [:div.runner-board {:class (if is-me "me" "opponent")}
@@ -1525,11 +1536,7 @@
     (and (not= "initiation" (:phase @run))
          (not= "pass-ice" (:phase @run))
          (not= "corp" (:no-action @run)))
-    #(send-command "no-action")]
-
-   [:button {:on-click #(send-command "indicate-action")
-             :key "Indicate action"}
-    "Indicate action"]])
+    #(send-command "no-action")]])
 
 (defn runner-run-div
   [run]
@@ -1570,11 +1577,7 @@
       (and (:jack-out @run)
            (not (:cannot-jack-out @run))
            (not (= "encounter-ice" phase)))
-      #(send-command "jack-out")]
-
-     [:button {:on-click #(send-command "indicate-action")
-               :key "Indicate action"}
-      "Indicate action"]]))
+      #(send-command "jack-out")]]))
 
 (defn run-div
   [side run]
@@ -1757,10 +1760,7 @@
             [cond-button "Gain Credit"
              (and (not (or @runner-phase-12 @corp-phase-12))
                   (pos? (:click @me)))
-             #(send-command "credit")]
-            [:button {:on-click #(send-command "indicate-action")
-                      :key "Indicate action"}
-             "Indicate action"]]))])})))
+             #(send-command "credit")]]))])})))
 
 (defn starting-timestamp []
   [:div.panel.blue-shade
