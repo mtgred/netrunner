@@ -156,6 +156,7 @@
                (or (= last-zone :play-area)
                    (same-side? side (:side card))))
       (let [move-card-to (partial move state s c)
+            card-prompts (filter #(= (get-in % [:card :title]) (:title c) ) (get-in @state [side :prompt]))
             log-move (fn [verb & text]
                        (system-msg state side (str verb " " label from-str
                                                    (when (seq text)
@@ -167,7 +168,9 @@
             (do (move-card-to :discard {:force true})
                 (log-move "discards"))
             (do (trash state s c {:unpreventable true})
-                (log-move "trashes")))
+                (log-move "trashes")
+                (println card-prompts)
+                ))
           ("Grip" "HQ")
           (do (move-card-to :hand {:force true})
               (log-move "moves" "to " server))
