@@ -163,14 +163,16 @@
                                                      (apply str " " text)))))]
         (case server
           ("Heap" "Archives")
-          (if (= :hand (first (:zone c)))
-            ;; Discard from hand, do not trigger trash
-            (do (move-card-to :discard {:force true})
-                (log-move "discards"))
-            (do (trash state s c {:unpreventable true})
-                (log-move "trashes")
-                (println card-prompts)
-                ))
+          (do (if (not (zero? (count card-prompts)))
+                  ;remove all prompts associated with the trashed card
+                  (do (swap! state update-in [side :prompt] #(filter (fn [p] (not= (get-in p [:card :title]) (:title c))) %))
+                      (map #(effect-completed state side (:eid %)) card-prompts)))
+              (if (= :hand (first (:zone c)))
+                ;; Discard from hand, do not trigger trash
+                (do (move-card-to :discard {:force true})
+                    (log-move "discards"))
+                (do (trash state s c {:unpreventable true})
+                    (log-move "trashes"))))
           ("Grip" "HQ")
           (do (move-card-to :hand {:force true})
               (log-move "moves" "to " server))
