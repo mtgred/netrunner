@@ -149,18 +149,29 @@
 
 (deftest an-offer-you-can-t-refuse
   ;; An Offer You Can't Refuse - exact card added to score area, not the last discarded one
-  (do-game
-    (new-game {:corp {:hand ["An Offer You Can't Refuse"]
-                      :discard ["Celebrity Gift"]}})
-    (play-from-hand state :corp "An Offer You Can't Refuse")
-    (click-prompt state :corp "R&D")
-    (is (= 1 (count (:discard (get-corp)))))
-    (click-prompt state :runner "No")
-    (is (= 1 (:agenda-point (get-corp))) "An Offer the Runner refused")
-    (is (= 1 (count (:scored (get-corp)))))
-    (is (find-card "An Offer You Can't Refuse" (:scored (get-corp))))
-    (is (= 1 (count (:discard (get-corp)))))
-    (is (find-card "Celebrity Gift" (:discard (get-corp))))))
+  (testing "add card to score area"
+    (do-game
+      (new-game {:corp {:hand ["An Offer You Can't Refuse"]
+                        :discard ["Celebrity Gift"]}})
+      (play-from-hand state :corp "An Offer You Can't Refuse")
+      (click-prompt state :corp "R&D")
+      (is (= 1 (count (:discard (get-corp)))))
+      (click-prompt state :runner "No")
+      (is (= 1 (:agenda-point (get-corp))) "An Offer the Runner refused")
+      (is (= 1 (count (:scored (get-corp)))))
+      (is (find-card "An Offer You Can't Refuse" (:scored (get-corp))))
+      (is (= 1 (count (:discard (get-corp)))))
+      (is (find-card "Celebrity Gift" (:discard (get-corp))))))
+  (testing "prevent jack out during run"
+    (do-game
+      (new-game {:corp {:hand ["An Offer You Can't Refuse" "Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "An Offer You Can't Refuse")
+      (click-prompt state :corp "R&D")
+      (click-prompt state :runner "Yes")
+      (is (:run @state) "Run started")
+      (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
+      (is (not (find-card "An Offer You Can't Refuse" (:scored (get-corp)))) "Offer isn't in score area"))))
 
 (deftest anonymous-tip
   ;; Anonymous Tip
